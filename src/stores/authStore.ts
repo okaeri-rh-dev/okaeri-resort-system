@@ -8,89 +8,17 @@ import { devtools } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import type { User, AuthState } from "@/types/common";
 import { apiClient } from "@/lib/api-client";
-// Note: Security utilities will be implemented in Phase 2
-// For now, creating minimal implementations for type safety
-const tokenManager = {
-  storeTokens: (token: string, refreshToken: string) => {
-    // TODO: Implement secure token storage
-  },
-  getAccessToken: () => null as string | null,
-  getRefreshToken: () => null as string | null,
-  clearTokens: () => {
-    // TODO: Implement secure token clearing
-  },
-  validateTokenStructure: (token: string) => ({ valid: true }),
-  isTokenExpired: (token: string, buffer: number) => false,
-  onTokenRefresh: (callback: () => Promise<void>) => {
-    // TODO: Implement token refresh callback registration
-  },
-};
+import { secureTokenManager as tokenManager } from "@/lib/security/secure-token-manager";
 
-const sessionMonitor = {
-  start: (config: any) => {
-    // TODO: Implement session monitoring
-  },
-  stop: () => {
-    // TODO: Implement session stop
-  },
-  extendSession: () => {
-    // TODO: Implement session extension
-  },
-};
+import { sessionMonitor } from "@/lib/security/session-monitor";
 
-const auditLogger = {
-  logAuth: (action: string, user: any, success: boolean, details?: any) => {
-    // TODO: Implement audit logging
-    console.log(`Auth: ${action}`, { user, success, details });
-  },
-  log: (event: string, data: any) => {
-    // TODO: Implement general audit logging
-    console.log(`Audit: ${event}`, data);
-  },
-  logDataOperation: (operation: string, resource: string, resourceId: any, user: any) => {
-    // TODO: Implement data operation logging
-    console.log(`Data: ${operation} ${resource}`, { resourceId, user });
-  },
-  logAccess: (resource: string, action: string, allowed: boolean, user: any) => {
-    // TODO: Implement access logging
-    console.log(`Access: ${resource}.${action}`, { allowed, user });
-  },
-};
+import { auditLogger } from "@/lib/security/audit-logger";
 
-const rateLimiter = {
-  check: (action: string, config: any) => ({
-    allowed: true,
-    retryAfter: 0,
-  }),
-  trackSuccess: (action: string) => {
-    // TODO: Implement success tracking
-  },
-  trackFailure: (action: string) => {
-    // TODO: Implement failure tracking
-  },
-};
+import { rateLimiter } from "@/lib/security/rate-limiter";
 
-const permissionGuard = {
-  hasPermission: (user: any, permission: { resource: string; action: string }) => ({
-    allowed: true, // TODO: Implement proper permission checking
-  }),
-};
+import { permissionGuard } from "@/lib/security/permission-guard";
 
-const TOKEN_EXPIRY = {
-  ACCESS_TOKEN: 15 * 60 * 1000, // 15 minutes
-  REFRESH_TOKEN: 7 * 24 * 60 * 60 * 1000, // 7 days
-  SESSION_TIMEOUT: 60 * 60 * 1000, // 1 hour
-};
-
-const RATE_LIMITS = {
-  LOGIN_ATTEMPTS: { MAX: 5, WINDOW: 15 * 60 * 1000 },
-  PASSWORD_RESET: { MAX: 3, WINDOW: 60 * 60 * 1000 },
-};
-
-const AUDIT_EVENTS = {
-  DATA_CREATE: "data.create",
-  AUTH_PASSWORD_CHANGE: "auth.password_change",
-};
+import { TOKEN_EXPIRY, RATE_LIMITS, AUDIT_EVENTS, SESSION_CONFIG } from "@/lib/security/constants";
 
 interface AuthActions {
   // Auth actions
@@ -193,7 +121,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           // Start session monitoring
           sessionMonitor.start({
             timeout: TOKEN_EXPIRY.SESSION_TIMEOUT,
-            warningTime: 5 * 60 * 1000, // 5 minutes warning
+            warningTime: TOKEN_EXPIRY.SESSION_WARNING,
             onTimeout: () => {
               get().logout();
             },
@@ -311,7 +239,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           // Start session monitoring
           sessionMonitor.start({
             timeout: TOKEN_EXPIRY.SESSION_TIMEOUT,
-            warningTime: 5 * 60 * 1000,
+            warningTime: TOKEN_EXPIRY.SESSION_WARNING,
             onTimeout: () => {
               get().logout();
             },
@@ -620,7 +548,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               // Restart session monitoring
               sessionMonitor.start({
                 timeout: TOKEN_EXPIRY.SESSION_TIMEOUT,
-                warningTime: 5 * 60 * 1000,
+                warningTime: TOKEN_EXPIRY.SESSION_WARNING,
                 onTimeout: () => {
                   get().logout();
                 },

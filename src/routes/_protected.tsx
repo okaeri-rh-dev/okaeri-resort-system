@@ -1,144 +1,76 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { useAuthStore } from "@/stores/authStore";
-import { useProjectStore } from "@/stores/projectStore";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { tokenManager, auditLogger, sessionMonitor } from "@/lib/security";
+import { requireAuth } from "@/lib/router-guards";
 
 /**
  * Protected route layout with enhanced security
- * Implements token validation, session monitoring, and audit logging
+ * Implements comprehensive authentication guards using reusable router-guards
  */
 export const Route = createFileRoute("/_protected")({
-  beforeLoad: async ({ location, context }) => {
-    const authStore = useAuthStore.getState();
-    const token = tokenManager.getAccessToken();
-
-    // Check if user has valid token
-    if (!token) {
-      // Log unauthorized access attempt
-      auditLogger.logSecurityEvent("invalid_token", {
-        path: location.pathname,
-        reason: "no_token",
-      });
-
-      throw redirect({
-        to: "/login",
-        search: {
-          redirect: location.href,
-        },
-      });
-    }
-
-    // Validate token structure and expiry
-    const validation = tokenManager.validateTokenStructure(token);
-    if (!validation.valid) {
-      // Log invalid token
-      auditLogger.logSecurityEvent("invalid_token", {
-        path: location.pathname,
-        reason: validation.error,
-      });
-
-      // Clear invalid auth state
-      await authStore.logout();
-
-      throw redirect({
-        to: "/login",
-        search: {
-          redirect: location.href,
-        },
-      });
-    }
-
-    // Check if token is expired
-    if (tokenManager.isTokenExpired(token, 0)) {
-      try {
-        // Attempt to refresh token
-        await authStore.refreshToken();
-      } catch (error) {
-        // Refresh failed, redirect to login
-        auditLogger.logSecurityEvent("invalid_token", {
-          path: location.pathname,
-          reason: "token_expired_refresh_failed",
-        });
-
-        throw redirect({
-          to: "/login",
-          search: {
-            redirect: location.href,
-          },
-        });
-      }
-    }
-
-    // Check if user data is loaded
-    if (!authStore.user) {
-      try {
-        await authStore.fetchCurrentUser();
-      } catch (error) {
-        // Failed to fetch user, redirect to login
-        auditLogger.logSecurityEvent("invalid_token", {
-          path: location.pathname,
-          reason: "user_fetch_failed",
-        });
-
-        throw redirect({
-          to: "/login",
-          search: {
-            redirect: location.href,
-          },
-        });
-      }
-    }
-
-    // Ensure session monitoring is active
-    if (!sessionMonitor.isSessionActive()) {
-      sessionMonitor.start({
-        timeout: 30 * 60 * 1000, // 30 minutes
-        warningTime: 5 * 60 * 1000, // 5 minutes warning
-        onTimeout: () => {
-          authStore.logout();
-          window.location.href = "/login?reason=session_timeout";
-        },
-        onWarning: (timeLeft) => {
-          // Could show a warning modal here
-          console.warn(`Session will expire in ${timeLeft / 1000} seconds`);
-        },
-      });
-    }
-
-    // Load projects for authenticated users
-    const projectStore = useProjectStore.getState();
-    if (!projectStore.activeProjectId && projectStore.projects.length === 0) {
-      try {
-        await projectStore.fetchProjects();
-      } catch (error) {
-        console.warn("Failed to load projects:", error);
-        // Don't block navigation, UI will handle empty projects state
-      }
-    }
-
-    // Log successful navigation
-    auditLogger.logAccess("route", "navigate", true, authStore.user, { path: location.pathname });
-  },
-
-  errorComponent: ({ error }) => {
-    // Log route error
-    auditLogger.logSecurityEvent("suspicious", {
-      error: error.message,
-      stack: error.stack,
+  beforeLoad: async ({ location }) => {
+    // Use the comprehensive auth guard
+    const authResult = await requireAuth(location, {
+      redirectTo: "/login",
+      preserveRedirect: true,
+      loadProjects: true,
+      enableSessionMonitoring: true,
     });
 
+    // Return context for child routes
+    return {
+      user: authResult.user,
+      authChecked: authResult.authChecked,
+    };
+  },
+
+  errorComponent: ({ error, reset }) => {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600">Access Denied</h1>
-          <p className="mt-2 text-gray-600">You don't have permission to access this page.</p>
-          <button
-            onClick={() => (window.location.href = "/login")}
-            className="mt-4 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
-            Return to Login
-          </button>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800">
+          <div className="text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
+              <svg
+                className="h-6 w-6 text-red-600 dark:text-red-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 0h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">
+              Access Denied
+            </h3>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              You don't have permission to access this page.
+            </p>
+            {error.message && (
+              <p className="mt-2 rounded bg-red-50 p-2 font-mono text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
+                {error.message}
+              </p>
+            )}
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={reset}
+                className="bg-ocean-600 hover:bg-ocean-700 focus:ring-ocean-500 flex-1 rounded-md px-4 py-2 text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-800"
+              >
+                Try Again
+              </button>
+              <button
+                type="button"
+                onClick={() => (window.location.href = "/login")}
+                className="flex-1 rounded-md border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 dark:focus:ring-offset-gray-800"
+              >
+                Login
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );

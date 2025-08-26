@@ -1,4 +1,4 @@
-import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ErrorBoundary } from "react-error-boundary";
@@ -8,12 +8,30 @@ import { useProjectStore } from "@/stores/projectStore";
 import { useUIStore } from "@/stores/uiStore";
 import { useEffect } from "react";
 import type { ReactNode } from "react";
+import type { User } from "@/types/common";
+
+/**
+ * Enhanced authentication state for TanStack Router context
+ */
+interface AuthContext {
+  isAuthenticated: boolean;
+  user: User | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  checkAuth: () => boolean;
+  hasPermission: (resource: string, action: string) => boolean;
+  hasRole: (role: string) => boolean;
+  refreshToken: () => Promise<void>;
+  initializeAuth: () => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
+}
 
 /**
  * Root route context providing authentication and project state
  */
 interface RootContext {
-  auth: ReturnType<typeof useAuthStore.getState>;
+  auth: AuthContext;
   project: ReturnType<typeof useProjectStore.getState>;
 }
 
@@ -157,7 +175,7 @@ function RootLayoutComponent({ children }: { children: ReactNode }) {
   );
 }
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<RootContext>()({
   component: RootComponent,
 
   validateSearch: (search: Record<string, unknown>) => {
@@ -166,17 +184,43 @@ export const Route = createRootRoute({
       theme: search.theme as string | undefined,
       lang: search.lang as string | undefined,
       debug: Boolean(search.debug),
+      redirect: search.redirect as string | undefined,
     };
   },
 
-  beforeLoad: ({ search }) => {
+  beforeLoad: async ({ search }) => {
     // Apply global settings from search parameters
     if (search?.theme && ["light", "dark", "system"].includes(search.theme)) {
       useUIStore.getState().setTheme(search.theme as "light" | "dark" | "system");
     }
 
+    // Get auth state and ensure it's initialized
+    const authStore = useAuthStore.getState();
+
+    // Initialize auth on first load if needed
+    try {
+      await authStore.initializeAuth();
+    } catch (error) {
+      console.warn("Failed to initialize auth:", error);
+    }
+
+    // Create auth context with all necessary methods
+    const authContext: AuthContext = {
+      isAuthenticated: authStore.isAuthenticated,
+      user: authStore.user,
+      login: authStore.login,
+      logout: authStore.logout,
+      checkAuth: authStore.checkAuth,
+      hasPermission: authStore.hasPermission,
+      hasRole: authStore.hasRole,
+      refreshToken: authStore.refreshToken,
+      initializeAuth: authStore.initializeAuth,
+      isLoading: authStore.isLoading,
+      error: authStore.error,
+    };
+
     return {
-      auth: useAuthStore.getState(),
+      auth: authContext,
       project: useProjectStore.getState(),
       globalSearch: search,
     } as RootContext & { globalSearch: any };

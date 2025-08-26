@@ -34,8 +34,11 @@ async function handler(req: VercelRequest, res: VercelResponse, context?: Tenant
     }
   }
 
-  // Clear authentication cookie
-  res.setHeader("Set-Cookie", "token=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0");
+  // Clear authentication cookies
+  res.setHeader("Set-Cookie", [
+    "token=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0",
+    "refreshToken=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0",
+  ]);
 
   return res.status(200).json(successResponse(null, "Logout successful"));
 }

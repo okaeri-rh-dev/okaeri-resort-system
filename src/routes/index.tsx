@@ -1,19 +1,21 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, Link } from "@tanstack/react-router";
 import { Suspense } from "react";
-import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RouteErrorBoundary, RouteLoadingFallback } from "@/lib/route-utils";
 
 export const Route = createFileRoute("/")({
-  beforeLoad: async () => {
+  beforeLoad: async ({ context }) => {
     // Redirect to dashboard if already authenticated
-    const { isAuthenticated } = useAuthStore.getState();
-    if (isAuthenticated) {
+    if (context.auth?.isAuthenticated) {
       throw redirect({
         to: "/dashboard",
       });
     }
+
+    return {
+      isHomePage: true,
+    };
   },
 
   errorComponent: ({ error, reset }) => (
@@ -48,9 +50,11 @@ function HomePage() {
             <CardDescription>Real-time insights into your resort performance</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="ocean" className="w-full">
-              Coming Soon
-            </Button>
+            <Link to="/login" className="w-full">
+              <Button variant="ocean" className="w-full">
+                Get Started
+              </Button>
+            </Link>
           </CardContent>
         </Card>
 
@@ -60,9 +64,11 @@ function HomePage() {
             <CardDescription>Manage Airbnb and direct bookings seamlessly</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="coral" className="w-full">
-              Coming Soon
-            </Button>
+            <Link to="/register" className="w-full">
+              <Button variant="coral" className="w-full">
+                Sign Up Now
+              </Button>
+            </Link>
           </CardContent>
         </Card>
 
@@ -72,43 +78,65 @@ function HomePage() {
             <CardDescription>Track income, expenses, and generate reports</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="palm" className="w-full">
-              Coming Soon
-            </Button>
+            <Link to="/login" className="w-full">
+              <Button variant="palm" className="w-full">
+                View Demo
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
 
+      {/* Call to Action Section */}
+      <div className="from-ocean-50 to-sand-50 mt-8 rounded-lg border bg-gradient-to-r p-6 text-center">
+        <h2 className="mb-4 text-2xl font-semibold">Ready to Get Started?</h2>
+        <p className="text-muted-foreground mb-6">
+          Join hundreds of resort owners who trust Okaeri to manage their properties.
+        </p>
+        <div className="flex justify-center gap-4">
+          <Link to="/register">
+            <Button variant="ocean" size="lg">
+              Create Account
+            </Button>
+          </Link>
+          <Link to="/login">
+            <Button variant="outline" size="lg">
+              Sign In
+            </Button>
+          </Link>
+        </div>
+      </div>
+
       <div className="from-ocean-50 to-sand-50 mt-12 rounded-lg border bg-gradient-to-r p-6">
-        <h2 className="mb-4 text-2xl font-semibold">Phase 1.4 Complete ✅</h2>
+        <h2 className="mb-4 text-2xl font-semibold">Phase 1.6 Complete ✅</h2>
         <p className="text-muted-foreground mb-4">
-          Enhanced TanStack Router with comprehensive routing enhancements:
+          Protected routes with TanStack Router and comprehensive security:
         </p>
         <ul className="space-y-2 text-sm">
           <li className="flex items-center gap-2">
-            <span className="text-palm-600">✓</span> File-based routing with full type safety
+            <span className="text-palm-600">✓</span> Authentication guards with beforeLoad hooks
           </li>
           <li className="flex items-center gap-2">
-            <span className="text-palm-600">✓</span> Authentication guards with enhanced security
+            <span className="text-palm-600">✓</span> Role-based access control with permissions
           </li>
           <li className="flex items-center gap-2">
-            <span className="text-palm-600">✓</span> Route loaders with intelligent data prefetching
+            <span className="text-palm-600">✓</span> Session monitoring and timeout handling
           </li>
           <li className="flex items-center gap-2">
-            <span className="text-palm-600">✓</span> Zod schema validation for search parameters
+            <span className="text-palm-600">✓</span> Secure token validation and refresh
           </li>
           <li className="flex items-center gap-2">
-            <span className="text-palm-600">✓</span> Comprehensive error boundaries and suspense
+            <span className="text-palm-600">✓</span> Project context loading and validation
           </li>
           <li className="flex items-center gap-2">
-            <span className="text-palm-600">✓</span> Optimized caching strategies with
-            stale-while-revalidate
+            <span className="text-palm-600">✓</span> Comprehensive audit logging and security events
           </li>
           <li className="flex items-center gap-2">
-            <span className="text-palm-600">✓</span> Context-aware navigation with loading states
+            <span className="text-palm-600">✓</span> Enhanced error boundaries with user-friendly
+            messages
           </li>
           <li className="flex items-center gap-2">
-            <span className="text-palm-600">✓</span> Production-ready route utilities and helpers
+            <span className="text-palm-600">✓</span> Mobile-optimized navigation and auth flows
           </li>
         </ul>
       </div>

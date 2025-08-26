@@ -1,26 +1,17 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
-import { useAuthStore } from "@/stores/authStore";
 import { LoginPage } from "@/pages/LoginPage";
 import { RouteErrorBoundary, RouteLoadingFallback, validateSearchParams } from "@/lib/route-utils";
-import { LoginSearchSchema, type LoginSearchParams } from "@/types/route-params";
+import { LoginSearchSchema } from "@/types/route-params";
 
-export const Route = createFileRoute("/login")({
+export const Route = createFileRoute("/_auth/login")({
   validateSearch: LoginSearchSchema,
 
   beforeLoad: async ({ search }) => {
     // Validate search parameters
     const searchParams = validateSearchParams(LoginSearchSchema, search);
 
-    // Redirect to dashboard if already authenticated
-    const { isAuthenticated } = useAuthStore.getState();
-    if (isAuthenticated) {
-      const redirectTo = searchParams.redirect || "/dashboard";
-      throw redirect({
-        to: redirectTo,
-      });
-    }
-
+    // Auth layout already handles guest requirement
     return { searchParams };
   },
 

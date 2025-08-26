@@ -1,6 +1,6 @@
 # Database Migrations
 
-This directory contains all database migrations for the Okaeri Resort Management System.
+This directory contains all database migrations for the Okaeri Resort Management System, specifically designed for Neon PostgreSQL with Philippine business requirements.
 
 ## Structure
 
@@ -12,6 +12,11 @@ migrations/
 │   ├── *.down.sql                # Rollback files for each migration
 ├── 0001_initial_global_schema.sql # Initial global schema setup
 ├── 0002_project_schema_template.sql # Template for project schemas
+├── 001_auth_tables.sql            # Enhanced authentication tables (Phase 1.6)
+├── 002_auth_indexes.sql           # Performance indexes for auth system
+├── 003_auth_triggers.sql          # Security triggers and audit functions
+├── seed_auth_data.sql             # Development seed data (test users & resorts)
+├── run_auth_migrations.sql        # Complete auth migration runner
 └── README.md                      # This file
 ```
 
@@ -181,14 +186,105 @@ DEFAULT_ADMIN_EMAIL=admin@okaeri.ph
 DEFAULT_ADMIN_PASSWORD=SecurePassword123!
 ```
 
+## Authentication System Migrations (Phase 1.6)
+
+### 🔐 Enhanced Security Features
+- **Enhanced Users Table**: Philippine timezone (Asia/Manila), PHP currency, E.164 phone format (+63)
+- **Sessions Table**: Comprehensive session tracking with device information and security
+- **Security Audit Logs**: 5-year retention for BIR compliance with monthly partitioning
+- **Login Attempts**: Rate limiting and suspicious activity detection with geolocation
+- **Token Management**: Secure password reset and email verification with expiration
+
+### 🇵🇭 Philippine Business Context
+- Default timezone: `Asia/Manila` for all timestamps
+- Default currency: `PHP` (Philippine Peso) with DECIMAL(12,2) precision
+- Phone format: E.164 with +63 country code validation
+- Locale support: `en-PH` (English-Philippines), `fil-PH` (Filipino-Philippines)
+- BIR compliance: 5-year audit log retention requirement
+- GCash payment method integration ready
+
+### ⚡ Serverless Optimizations for Neon PostgreSQL
+- Connection pooling configuration optimized for serverless functions
+- Partitioned audit logs by month for better query performance
+- Strategic indexes for frequent authentication queries
+- Automated cleanup procedures for expired tokens and sessions
+- Connection warm-up functions for cold start mitigation
+
+### 🛡️ Security Features
+- Bcrypt password hashing with configurable rounds (default: 10)
+- Account lockout: 5 failed attempts = 30 minute lock
+- Session token management with configurable expiration
+- Two-factor authentication (TOTP) support structure
+- Comprehensive audit trail with risk scoring
+- Row-level security policies for sensitive data
+
+### Quick Start - Authentication Migration
+```bash
+# Run complete authentication system migration
+psql -d your_database -f migrations/run_auth_migrations.sql
+
+# Or run individual files in sequence:
+psql -d your_database -f migrations/001_auth_tables.sql
+psql -d your_database -f migrations/002_auth_indexes.sql  
+psql -d your_database -f migrations/003_auth_triggers.sql
+
+# Seed development data (DEVELOPMENT ONLY - never in production)
+psql -d your_database -f migrations/seed_auth_data.sql
+```
+
+### Test Accounts (Development Only)
+```
+Resort Owner: owner@bayanresort.ph / ResortOwner123!
+Admin User:   admin@okaeri.ph / AdminUser123!  
+Staff Member: staff@bayanresort.ph / StaffUser123!
+Unverified:   unverified@example.ph / UnverifiedUser123!
+Locked User:  locked@example.ph / LockedUser123! (account locked)
+```
+
+### Test Resorts Included
+- **Bayan Beach Resort** (Batangas) - Beachfront resort with full amenities
+- **Mountain View Lodge** (Tagaytay) - Mountain retreat perfect for families
+
+### Monitoring & Analytics Views
+```sql
+-- User security overview
+SELECT * FROM v_user_security_status;
+
+-- Active session monitoring
+SELECT * FROM v_session_monitoring;
+
+-- Security event analytics
+SELECT * FROM v_security_analytics;
+
+-- Login pattern analysis
+SELECT * FROM v_login_analysis;
+```
+
+### Helper Functions Available
+```sql
+-- Check if user has valid active session
+SELECT has_valid_session('user-uuid');
+
+-- Calculate user's security score (0-100)
+SELECT get_user_security_score('user-uuid');
+
+-- Generate cryptographically secure tokens
+SELECT generate_secure_token(32);
+
+-- Run daily maintenance (cleanup expired data)
+SELECT daily_auth_maintenance();
+```
+
 ## Philippine-Specific Considerations
 
-Our migrations include:
-- Currency fields using DECIMAL(12,2) for Philippine Peso
-- Timezone settings defaulting to Asia/Manila
-- GCash payment method support
-- Philippine province/city data in seed scripts
-- BIR-compliant audit trail structures
+Our migrations include comprehensive support for Philippine business requirements:
+- Currency fields using DECIMAL(12,2) for Philippine Peso precision
+- Timezone settings defaulting to Asia/Manila with proper conversion
+- GCash payment method support in project payment settings
+- Philippine province/city data structure for addresses
+- BIR-compliant audit trail with 5-year retention requirement
+- E.164 phone number validation with +63 country code
+- Bilingual support for English and Filipino languages
 
 ## Security Notes
 

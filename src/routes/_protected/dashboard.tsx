@@ -23,26 +23,34 @@ const DashboardPage = createLazyRoute(
 export const Route = createFileRoute("/_protected/dashboard")({
   validateSearch: DashboardSearchSchema,
 
-  beforeLoad: ({ search, location }) => {
+  beforeLoad: ({ search, location, context }) => {
     const loadStart = performance.now();
+
+    // Auth is already validated by _protected layout
+    // User is guaranteed to be authenticated at this point
+    const user = context.user;
 
     // Queue intelligent prefetch for likely next routes
     const navigationStore = useNavigationStore.getState();
 
     // High priority prefetch for frequently accessed routes from dashboard
-    navigationStore.queuePrefetch("/bookings", 9);
-    navigationStore.queuePrefetch("/properties", 8);
-    navigationStore.queuePrefetch("/expenses", 7);
+    navigationStore.queuePrefetch("/_protected/bookings", 9);
+    navigationStore.queuePrefetch("/_protected/properties", 8);
+    navigationStore.queuePrefetch("/_protected/expenses", 7);
 
     // Lower priority prefetch for settings routes
-    navigationStore.queuePrefetch("/reports", 5);
-    navigationStore.queuePrefetch("/team", 4);
+    navigationStore.queuePrefetch("/_protected/reports", 5);
+    navigationStore.queuePrefetch("/_protected/team", 4);
 
     // Track navigation performance
     const loadEnd = performance.now();
     performanceBudgetManager.checkBudget("routeLoadTime", loadEnd - loadStart, location.pathname);
 
-    return { search };
+    return {
+      search,
+      user,
+      isDashboard: true,
+    };
   },
 
   loader: dashboardLoader,

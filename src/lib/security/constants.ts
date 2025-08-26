@@ -10,7 +10,8 @@ export const TOKEN_EXPIRY = {
   ACCESS_TOKEN: 15 * 60 * 1000, // 15 minutes
   REFRESH_TOKEN: 7 * 24 * 60 * 60 * 1000, // 7 days
   REFRESH_BUFFER: 2 * 60 * 1000, // Refresh 2 minutes before expiry
-  SESSION_TIMEOUT: 30 * 60 * 1000, // 30 minutes of inactivity
+  SESSION_TIMEOUT: 60 * 60 * 1000, // 60 minutes of inactivity (1 hour as per requirement)
+  SESSION_WARNING: 5 * 60 * 1000, // 5 minutes before timeout
 } as const;
 
 /**

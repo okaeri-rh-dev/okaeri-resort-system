@@ -6,11 +6,23 @@ dotenv.config();
 
 export default defineConfig({
   schema: "./src/lib/db/schema/*.ts",
-  out: "./drizzle",
-  driver: "pg",
+  out: "./migrations",
+  dialect: "postgresql",
   dbCredentials: {
-    connectionString: process.env.DATABASE_URL!,
+    url: process.env.DATABASE_URL!,
   },
   verbose: true,
   strict: true,
+  // Migration configuration
+  migrations: {
+    prefix: "timestamp",
+    schema: "public",
+  },
+  // Neon PostgreSQL specific optimizations
+  introspect: {
+    casing: "snake_case",
+  },
+  // Enhanced configuration for authentication schema
+  tablesFilter: ["!pg_*", "!information_schema.*"],
+  schemaFilter: ["public"],
 });

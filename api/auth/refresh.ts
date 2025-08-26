@@ -4,11 +4,11 @@
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { withErrorHandler, withMethod, withValidation, compose } from "../_lib/middleware";
 import { successResponse, AuthenticationError, type TokenPayload } from "../_lib/types";
 import { getPool } from "../_lib/database";
+import { verifyRefreshToken, generateAccessToken, rotateRefreshToken } from "../lib/jwt";
 
 // Request validation schema
 const refreshSchema = z.object({
@@ -23,11 +23,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // Verify refresh token
-    if (!process.env.JWT_REFRESH_SECRET) {
-      throw new AuthenticationError("JWT_REFRESH_SECRET not configured");
-    }
-
-    const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET) as { userId: string };
+    const { userId } = verifyRefreshToken(refreshToken);
 
     // Get user from database
     const pool = getPool();
@@ -43,7 +39,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
           u.is_active
         FROM users u
         WHERE u.id = $1`,
-        [payload.userId]
+        [userId]
       );
 
       if (userResult.rows.length === 0) {
@@ -110,16 +106,10 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         permissions,
       };
 
-      if (!process.env.JWT_SECRET) {
-        throw new AuthenticationError("JWT_SECRET not configured");
-      }
-
-      const newToken = jwt.sign(tokenPayload, process.env.JWT_SECRET, { expiresIn: "24h" });
+      const newToken = generateAccessToken(tokenPayload);
 
       // Generate new refresh token (rotate refresh tokens for security)
-      const newRefreshToken = jwt.sign({ userId: user.id }, process.env.JWT_REFRESH_SECRET, {
-        expiresIn: "90d",
-      });
+      const newRefreshToken = rotateRefreshToken(user.id);
 
       // Log token refresh
       await client.query(
@@ -136,11 +126,11 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         ]
       );
 
-      // Set secure cookie for new token
-      res.setHeader(
-        "Set-Cookie",
-        `token=${newToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=86400`
-      );
+      // Set secure cookies for new tokens
+      res.setHeader("Set-Cookie", [
+        `token=${newToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${15 * 60}`, // 15 minutes
+        `refreshToken=${newRefreshToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`, // 7 days
+      ]);
 
       return res.status(200).json(
         successResponse(
@@ -156,10 +146,10 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       client.release();
     }
   } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
+    if (error instanceof Error && error.message.includes("expired")) {
       throw new AuthenticationError("Refresh token expired");
     }
-    if (error instanceof jwt.JsonWebTokenError) {
+    if (error instanceof Error && error.message.includes("Invalid")) {
       throw new AuthenticationError("Invalid refresh token");
     }
     throw error;

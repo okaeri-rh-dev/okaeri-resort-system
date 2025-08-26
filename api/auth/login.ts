@@ -4,16 +4,8 @@
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { z } from "zod";
-import {
-  withErrorHandler,
-  withMethod,
-  withValidation,
-  withRateLimit,
-  compose,
-} from "../_lib/middleware";
+import { withErrorHandler, withMethod, withValidation, compose } from "../_lib/middleware";
 import {
   successResponse,
   ValidationError as _ValidationError,
@@ -21,6 +13,9 @@ import {
   type TokenPayload,
 } from "../_lib/types";
 import { getPool } from "../_lib/database";
+import { verifyPassword } from "../lib/password";
+import { generateTokenPair } from "../lib/jwt";
+import { rateLimit } from "../middleware/rate-limit";
 
 // Request validation schema
 const loginSchema = z.object({
@@ -179,7 +174,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    const isValidPassword = await verifyPassword(password, user.password_hash);
     if (!isValidPassword) {
       throw new AuthenticationError("Invalid email or password");
     }
@@ -200,17 +195,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       permissions,
     };
 
-    if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
-      throw new AuthenticationError("JWT secrets not configured");
-    }
-
-    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
-      expiresIn: rememberMe ? "30d" : "24h",
-    });
-
-    const refreshToken = jwt.sign({ userId: user.id }, process.env.JWT_REFRESH_SECRET, {
-      expiresIn: "90d",
-    });
+    const { accessToken, refreshToken, expiresIn } = generateTokenPair(tokenPayload, rememberMe);
 
     // Update last login
     await client.query("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1", [user.id]);
@@ -218,13 +203,13 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     // Log authentication event
     await logAuthenticationEvent(client, user.id, email, currentProject?.id, req);
 
-    // Set secure cookie for token
-    res.setHeader(
-      "Set-Cookie",
-      `token=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${
-        rememberMe ? 2592000 : 86400
-      }`
-    );
+    // Set secure cookies
+    res.setHeader("Set-Cookie", [
+      `token=${accessToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${expiresIn}`,
+      `refreshToken=${refreshToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${
+        rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60
+      }`,
+    ]);
 
     // Return success response
     return res.status(200).json(
@@ -237,8 +222,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
             role: user.role,
             avatar: user.avatar,
           },
-          token,
-          refreshToken,
+          accessToken,
+          expiresIn,
           projects,
           currentProject,
         },
@@ -254,6 +239,5 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 export default compose(
   withErrorHandler,
   withMethod(["POST"]),
-  (handler) => withRateLimit(handler, "login"),
   withValidation(loginSchema, "body")
-)(handler);
+)(rateLimit("login")(handler));

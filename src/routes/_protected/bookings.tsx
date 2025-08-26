@@ -50,8 +50,11 @@ const bookingsLoader = createRouteLoader<{
 export const Route = createFileRoute("/_protected/bookings")({
   validateSearch: BookingsSearchSchema,
 
-  beforeLoad: ({ search, location }) => {
+  beforeLoad: ({ search, location, context }) => {
     const loadStart = performance.now();
+
+    // Auth is already validated by _protected layout
+    const user = context.user;
 
     // Validate search parameters early
     const validatedSearch = validateSearchParams(BookingsSearchSchema, search);
@@ -60,15 +63,19 @@ export const Route = createFileRoute("/_protected/bookings")({
     const navigationStore = useNavigationStore.getState();
 
     // Likely next navigation paths from bookings
-    navigationStore.queuePrefetch("/properties", 8); // Often need to check property details
-    navigationStore.queuePrefetch("/expenses", 6); // Track booking-related expenses
-    navigationStore.queuePrefetch("/dashboard", 5); // Return to overview
+    navigationStore.queuePrefetch("/_protected/properties", 8); // Often need to check property details
+    navigationStore.queuePrefetch("/_protected/expenses", 6); // Track booking-related expenses
+    navigationStore.queuePrefetch("/_protected/dashboard", 5); // Return to overview
 
     // Track performance
     const loadEnd = performance.now();
     performanceBudgetManager.checkBudget("routeLoadTime", loadEnd - loadStart, location.pathname);
 
-    return { validatedSearch };
+    return {
+      validatedSearch,
+      user,
+      isBookingsPage: true,
+    };
   },
 
   loader: bookingsLoader,

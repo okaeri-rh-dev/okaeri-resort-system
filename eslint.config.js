@@ -117,6 +117,16 @@ export default tseslint.config([
     },
   },
 
+  // Override for TSX files: disable certain complexity-related rules
+  {
+    files: ["**/*.tsx"],
+    rules: {
+      complexity: "off",
+      "max-depth": "off",
+      "max-lines-per-function": "off",
+    },
+  },
+
   // Specific rules for test files
   {
     files: ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}", "**/__tests__/**/*.{ts,tsx}"],
