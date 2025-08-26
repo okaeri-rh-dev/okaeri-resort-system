@@ -1,13 +1,20 @@
 # Booking Management System - Updated Implementation Plan 2025
 
 ## Overview
-The Booking Management System handles two primary booking sources: Airbnb (via manual CSV import) and Facebook Messenger (via Google Forms integration). Built with **Vite 7 + React 19 + Zustand + TanStack Query + TanStack Router + shadcn/ui**, the system focuses on modern state management, optimistic UI updates, and unified serverless data storage.
+
+The Booking Management System handles two primary booking sources: Airbnb (via
+manual CSV import) and Facebook Messenger (via Google Forms integration). Built
+with **Vite 7 + React 19 + Zustand + TanStack Query + TanStack Router +
+shadcn/ui**, the system focuses on modern state management, optimistic UI
+updates, and unified serverless data storage.
 
 ## Modern Technology Stack (2025)
 
 ### Frontend Architecture - React 19 + Zustand + TanStack Query
+
 - **Build Tool:** Vite 7.0.0 with Lightning CSS support
-- **React Framework:** React 19.1 with `useOptimistic` and `useActionState` hooks
+- **React Framework:** React 19.1 with `useOptimistic` and `useActionState`
+  hooks
 - **State Management:** Zustand 5.0.2 for local/UI state
 - **Server State:** TanStack Query 5.71.10 for server state management
 - **Routing:** TanStack Router 1.114.3 with file-based routing
@@ -17,6 +24,7 @@ The Booking Management System handles two primary booking sources: Airbnb (via m
 - **Type Safety:** TypeScript throughout with strict mode
 
 ### Backend Architecture - Vercel Serverless
+
 - **API Routes:** Vercel serverless functions (Node.js 20+)
 - **Database:** Neon PostgreSQL with connection pooling
 - **File Storage:** Cloudflare R2 (S3-compatible)
@@ -27,37 +35,43 @@ The Booking Management System handles two primary booking sources: Airbnb (via m
 ### 1. Modern State Management with Zustand
 
 #### Booking Store Setup
+
 ```typescript
 // src/stores/bookingStore.ts
-import { create } from 'zustand'
-import { devtools, persist } from 'zustand/middleware'
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
 
 interface BookingUIState {
-  selectedBookingId: string | null
-  filterStatus: string | null
-  filterSource: 'all' | 'airbnb' | 'facebook'
-  viewMode: 'list' | 'calendar'
+  selectedBookingId: string | null;
+  filterStatus: string | null;
+  filterSource: "all" | "airbnb" | "facebook";
+  viewMode: "list" | "calendar";
   csvImportProgress: {
-    isImporting: boolean
-    progress: number
-    errors: string[]
-  }
+    isImporting: boolean;
+    progress: number;
+    errors: string[];
+  };
   paymentModal: {
-    isOpen: boolean
-    bookingId: string | null
-    paymentType: 'deposit' | 'balance' | null
-  }
+    isOpen: boolean;
+    bookingId: string | null;
+    paymentType: "deposit" | "balance" | null;
+  };
 }
 
 interface BookingActions {
-  setSelectedBooking: (id: string | null) => void
-  setFilterStatus: (status: string | null) => void
-  setFilterSource: (source: 'all' | 'airbnb' | 'facebook') => void
-  setViewMode: (mode: 'list' | 'calendar') => void
-  setCsvImportProgress: (progress: Partial<BookingUIState['csvImportProgress']>) => void
-  openPaymentModal: (bookingId: string, paymentType: 'deposit' | 'balance') => void
-  closePaymentModal: () => void
-  resetFilters: () => void
+  setSelectedBooking: (id: string | null) => void;
+  setFilterStatus: (status: string | null) => void;
+  setFilterSource: (source: "all" | "airbnb" | "facebook") => void;
+  setViewMode: (mode: "list" | "calendar") => void;
+  setCsvImportProgress: (
+    progress: Partial<BookingUIState["csvImportProgress"]>
+  ) => void;
+  openPaymentModal: (
+    bookingId: string,
+    paymentType: "deposit" | "balance"
+  ) => void;
+  closePaymentModal: () => void;
+  resetFilters: () => void;
 }
 
 export const useBookingStore = create<BookingUIState & BookingActions>()(
@@ -67,8 +81,8 @@ export const useBookingStore = create<BookingUIState & BookingActions>()(
         // State
         selectedBookingId: null,
         filterStatus: null,
-        filterSource: 'all',
-        viewMode: 'list',
+        filterSource: "all",
+        viewMode: "list",
         csvImportProgress: {
           isImporting: false,
           progress: 0,
@@ -108,31 +122,32 @@ export const useBookingStore = create<BookingUIState & BookingActions>()(
         resetFilters: () =>
           set({
             filterStatus: null,
-            filterSource: 'all',
+            filterSource: "all",
             selectedBookingId: null,
           }),
       }),
       {
-        name: 'booking-ui-storage',
+        name: "booking-ui-storage",
         partialize: (state) => ({
           viewMode: state.viewMode,
           filterSource: state.filterSource,
         }),
-      },
+      }
     ),
     {
-      name: 'booking-store',
-    },
-  ),
-)
+      name: "booking-store",
+    }
+  )
+);
 ```
 
 ### 2. TanStack Query for Server State
 
 #### Query Client Configuration
+
 ```typescript
 // src/lib/queryClient.ts
-import { QueryClient } from '@tanstack/react-query'
+import { QueryClient } from "@tanstack/react-query";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -141,9 +156,9 @@ export const queryClient = new QueryClient({
       gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
       retry: (failureCount, error: any) => {
         if (error?.status === 404 || error?.status === 403) {
-          return false
+          return false;
         }
-        return failureCount < 3
+        return failureCount < 3;
       },
       refetchOnWindowFocus: false,
     },
@@ -151,241 +166,275 @@ export const queryClient = new QueryClient({
       retry: 1,
     },
   },
-})
+});
 
 // Query key factory for type-safe query keys
 export const bookingKeys = {
-  all: ['bookings'] as const,
-  lists: () => [...bookingKeys.all, 'list'] as const,
+  all: ["bookings"] as const,
+  lists: () => [...bookingKeys.all, "list"] as const,
   list: (filters: any) => [...bookingKeys.lists(), filters] as const,
-  details: () => [...bookingKeys.all, 'detail'] as const,
+  details: () => [...bookingKeys.all, "detail"] as const,
   detail: (id: string) => [...bookingKeys.details(), id] as const,
-  payments: (bookingId: string) => [...bookingKeys.all, 'payments', bookingId] as const,
-}
+  payments: (bookingId: string) =>
+    [...bookingKeys.all, "payments", bookingId] as const,
+};
 ```
 
 #### Booking Queries and Mutations
+
 ```typescript
 // src/hooks/useBookings.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useProjectStore } from '@/stores/projectStore'
-import { bookingKeys } from '@/lib/queryClient'
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useProjectStore } from "@/stores/projectStore";
+import { bookingKeys } from "@/lib/queryClient";
 
 interface Booking {
-  id: string
-  bookingReference: string
-  source: 'airbnb' | 'facebook'
-  guestName: string
-  guestEmail?: string
-  guestPhone?: string
-  checkinDate: string
-  checkoutDate: string
-  guestCount: number
-  totalAmount: number
-  depositAmount: number
-  balanceAmount: number
-  bookingStatus: 'pending' | 'deposit_requested' | 'deposit_received' | 'confirmed' | 'balance_due' | 'fully_paid' | 'checked_in' | 'completed'
-  specialRequests?: string
-  createdAt: string
-  updatedAt: string
+  id: string;
+  bookingReference: string;
+  source: "airbnb" | "facebook";
+  guestName: string;
+  guestEmail?: string;
+  guestPhone?: string;
+  checkinDate: string;
+  checkoutDate: string;
+  guestCount: number;
+  totalAmount: number;
+  depositAmount: number;
+  balanceAmount: number;
+  bookingStatus:
+    | "pending"
+    | "deposit_requested"
+    | "deposit_received"
+    | "confirmed"
+    | "balance_due"
+    | "fully_paid"
+    | "checked_in"
+    | "completed";
+  specialRequests?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Fetch bookings with filters
 export const useBookings = (filters?: {
-  status?: string
-  source?: string
-  page?: number
-  limit?: number
+  status?: string;
+  source?: string;
+  page?: number;
+  limit?: number;
 }) => {
-  const currentProject = useProjectStore((state) => state.currentProject)
+  const currentProject = useProjectStore((state) => state.currentProject);
 
   return useQuery({
     queryKey: bookingKeys.list(filters || {}),
     queryFn: async () => {
-      if (!currentProject?.id) throw new Error('No project selected')
-      
-      const params = new URLSearchParams()
-      if (filters?.status) params.set('status', filters.status)
-      if (filters?.source) params.set('source', filters.source)
-      if (filters?.page) params.set('page', filters.page.toString())
-      if (filters?.limit) params.set('limit', filters.limit.toString())
+      if (!currentProject?.id) throw new Error("No project selected");
 
-      const response = await fetch(`/api/${currentProject.id}/bookings?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch bookings')
-      return response.json()
+      const params = new URLSearchParams();
+      if (filters?.status) params.set("status", filters.status);
+      if (filters?.source) params.set("source", filters.source);
+      if (filters?.page) params.set("page", filters.page.toString());
+      if (filters?.limit) params.set("limit", filters.limit.toString());
+
+      const response = await fetch(
+        `/api/${currentProject.id}/bookings?${params}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch bookings");
+      return response.json();
     },
     enabled: !!currentProject?.id,
-  })
-}
+  });
+};
 
 // Get single booking
 export const useBooking = (bookingId: string) => {
-  const currentProject = useProjectStore((state) => state.currentProject)
+  const currentProject = useProjectStore((state) => state.currentProject);
 
   return useQuery({
     queryKey: bookingKeys.detail(bookingId),
     queryFn: async () => {
-      if (!currentProject?.id) throw new Error('No project selected')
-      
-      const response = await fetch(`/api/${currentProject.id}/bookings/${bookingId}`)
-      if (!response.ok) throw new Error('Failed to fetch booking')
-      return response.json()
+      if (!currentProject?.id) throw new Error("No project selected");
+
+      const response = await fetch(
+        `/api/${currentProject.id}/bookings/${bookingId}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch booking");
+      return response.json();
     },
     enabled: !!currentProject?.id && !!bookingId,
-  })
-}
+  });
+};
 
 // Create booking mutation with optimistic updates
 export const useCreateBooking = () => {
-  const queryClient = useQueryClient()
-  const currentProject = useProjectStore((state) => state.currentProject)
+  const queryClient = useQueryClient();
+  const currentProject = useProjectStore((state) => state.currentProject);
 
   return useMutation({
-    mutationFn: async (bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => {
-      if (!currentProject?.id) throw new Error('No project selected')
-      
+    mutationFn: async (
+      bookingData: Omit<Booking, "id" | "createdAt" | "updatedAt">
+    ) => {
+      if (!currentProject?.id) throw new Error("No project selected");
+
       const response = await fetch(`/api/${currentProject.id}/bookings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bookingData),
-      })
-      
-      if (!response.ok) throw new Error('Failed to create booking')
-      return response.json()
+      });
+
+      if (!response.ok) throw new Error("Failed to create booking");
+      return response.json();
     },
     onMutate: async (newBooking) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: bookingKeys.lists() })
+      await queryClient.cancelQueries({ queryKey: bookingKeys.lists() });
 
       // Snapshot the previous value
-      const previousBookings = queryClient.getQueryData(bookingKeys.lists())
+      const previousBookings = queryClient.getQueryData(bookingKeys.lists());
 
       // Optimistically update to the new value
       queryClient.setQueryData(bookingKeys.lists(), (old: any) => {
-        if (!old) return { bookings: [newBooking], pagination: { hasMore: false } }
+        if (!old)
+          return { bookings: [newBooking], pagination: { hasMore: false } };
         return {
           ...old,
-          bookings: [{ ...newBooking, id: `temp-${Date.now()}` }, ...old.bookings],
-        }
-      })
+          bookings: [
+            { ...newBooking, id: `temp-${Date.now()}` },
+            ...old.bookings,
+          ],
+        };
+      });
 
       // Return a context object with the snapshotted value
-      return { previousBookings }
+      return { previousBookings };
     },
     onError: (err, newBooking, context) => {
       // If the mutation fails, use the context to roll back
       if (context?.previousBookings) {
-        queryClient.setQueryData(bookingKeys.lists(), context.previousBookings)
+        queryClient.setQueryData(bookingKeys.lists(), context.previousBookings);
       }
     },
     onSettled: () => {
       // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: bookingKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: bookingKeys.lists() });
     },
-  })
-}
+  });
+};
 
 // Update booking mutation
 export const useUpdateBooking = () => {
-  const queryClient = useQueryClient()
-  const currentProject = useProjectStore((state) => state.currentProject)
+  const queryClient = useQueryClient();
+  const currentProject = useProjectStore((state) => state.currentProject);
 
   return useMutation({
     mutationFn: async ({
       bookingId,
       updates,
     }: {
-      bookingId: string
-      updates: Partial<Booking>
+      bookingId: string;
+      updates: Partial<Booking>;
     }) => {
-      if (!currentProject?.id) throw new Error('No project selected')
-      
-      const response = await fetch(`/api/${currentProject.id}/bookings/${bookingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      })
-      
-      if (!response.ok) throw new Error('Failed to update booking')
-      return response.json()
+      if (!currentProject?.id) throw new Error("No project selected");
+
+      const response = await fetch(
+        `/api/${currentProject.id}/bookings/${bookingId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to update booking");
+      return response.json();
     },
     onMutate: async ({ bookingId, updates }) => {
       // Cancel queries for this booking
-      await queryClient.cancelQueries({ queryKey: bookingKeys.detail(bookingId) })
+      await queryClient.cancelQueries({
+        queryKey: bookingKeys.detail(bookingId),
+      });
 
       // Snapshot the previous value
-      const previousBooking = queryClient.getQueryData(bookingKeys.detail(bookingId))
+      const previousBooking = queryClient.getQueryData(
+        bookingKeys.detail(bookingId)
+      );
 
       // Optimistically update
       queryClient.setQueryData(bookingKeys.detail(bookingId), (old: any) => ({
         ...old,
         ...updates,
-      }))
+      }));
 
-      return { previousBooking, bookingId }
+      return { previousBooking, bookingId };
     },
     onError: (err, variables, context) => {
       // Rollback on error
       if (context?.previousBooking) {
         queryClient.setQueryData(
           bookingKeys.detail(context.bookingId),
-          context.previousBooking,
-        )
+          context.previousBooking
+        );
       }
     },
     onSettled: (data, error, { bookingId }) => {
       // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: bookingKeys.detail(bookingId) })
-      queryClient.invalidateQueries({ queryKey: bookingKeys.lists() })
+      queryClient.invalidateQueries({
+        queryKey: bookingKeys.detail(bookingId),
+      });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.lists() });
     },
-  })
-}
+  });
+};
 
 // Import CSV bookings mutation
 export const useImportCsvBookings = () => {
-  const queryClient = useQueryClient()
-  const currentProject = useProjectStore((state) => state.currentProject)
-  const setCsvImportProgress = useBookingStore((state) => state.setCsvImportProgress)
+  const queryClient = useQueryClient();
+  const currentProject = useProjectStore((state) => state.currentProject);
+  const setCsvImportProgress = useBookingStore(
+    (state) => state.setCsvImportProgress
+  );
 
   return useMutation({
     mutationFn: async (csvData: any[]) => {
-      if (!currentProject?.id) throw new Error('No project selected')
-      
-      setCsvImportProgress({ isImporting: true, progress: 0 })
-      
-      const response = await fetch(`/api/${currentProject.id}/bookings/import`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ csvData }),
-      })
-      
-      if (!response.ok) throw new Error('Failed to import bookings')
-      return response.json()
+      if (!currentProject?.id) throw new Error("No project selected");
+
+      setCsvImportProgress({ isImporting: true, progress: 0 });
+
+      const response = await fetch(
+        `/api/${currentProject.id}/bookings/import`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ csvData }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to import bookings");
+      return response.json();
     },
     onSuccess: (data) => {
       setCsvImportProgress({
         isImporting: false,
         progress: 100,
         errors: data.errors || [],
-      })
-      
+      });
+
       // Invalidate all booking queries
-      queryClient.invalidateQueries({ queryKey: bookingKeys.all })
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
     },
     onError: (error: any) => {
       setCsvImportProgress({
         isImporting: false,
         progress: 0,
         errors: [error.message],
-      })
+      });
     },
-  })
-}
+  });
+};
 
 // Record payment mutation
 export const useRecordPayment = () => {
-  const queryClient = useQueryClient()
-  const currentProject = useProjectStore((state) => state.currentProject)
+  const queryClient = useQueryClient();
+  const currentProject = useProjectStore((state) => state.currentProject);
 
   return useMutation({
     mutationFn: async ({
@@ -397,45 +446,54 @@ export const useRecordPayment = () => {
       screenshotFile,
       notes,
     }: {
-      bookingId: string
-      paymentType: 'deposit' | 'balance'
-      amount: number
-      paymentMethod: 'cash' | 'gcash' | 'bank_transfer'
-      transactionReference?: string
-      screenshotFile?: File
-      notes?: string
+      bookingId: string;
+      paymentType: "deposit" | "balance";
+      amount: number;
+      paymentMethod: "cash" | "gcash" | "bank_transfer";
+      transactionReference?: string;
+      screenshotFile?: File;
+      notes?: string;
     }) => {
-      if (!currentProject?.id) throw new Error('No project selected')
-      
-      const formData = new FormData()
-      formData.append('paymentType', paymentType)
-      formData.append('amount', amount.toString())
-      formData.append('paymentMethod', paymentMethod)
-      if (transactionReference) formData.append('transactionReference', transactionReference)
-      if (screenshotFile) formData.append('screenshotFile', screenshotFile)
-      if (notes) formData.append('notes', notes)
+      if (!currentProject?.id) throw new Error("No project selected");
 
-      const response = await fetch(`/api/${currentProject.id}/bookings/${bookingId}/payments`, {
-        method: 'POST',
-        body: formData,
-      })
-      
-      if (!response.ok) throw new Error('Failed to record payment')
-      return response.json()
+      const formData = new FormData();
+      formData.append("paymentType", paymentType);
+      formData.append("amount", amount.toString());
+      formData.append("paymentMethod", paymentMethod);
+      if (transactionReference)
+        formData.append("transactionReference", transactionReference);
+      if (screenshotFile) formData.append("screenshotFile", screenshotFile);
+      if (notes) formData.append("notes", notes);
+
+      const response = await fetch(
+        `/api/${currentProject.id}/bookings/${bookingId}/payments`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to record payment");
+      return response.json();
     },
     onSuccess: (data, { bookingId }) => {
       // Invalidate booking and payment queries
-      queryClient.invalidateQueries({ queryKey: bookingKeys.detail(bookingId) })
-      queryClient.invalidateQueries({ queryKey: bookingKeys.payments(bookingId) })
-      queryClient.invalidateQueries({ queryKey: bookingKeys.lists() })
+      queryClient.invalidateQueries({
+        queryKey: bookingKeys.detail(bookingId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: bookingKeys.payments(bookingId),
+      });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.lists() });
     },
-  })
-}
+  });
+};
 ```
 
 ### 3. Airbnb CSV Import with React 19 Features
 
 #### Modern CSV Import Component
+
 ```typescript
 // src/components/booking/AirbnbCsvImport.tsx
 "use client"
@@ -482,7 +540,7 @@ export function AirbnbCsvImport({ projectId }: { projectId: string }) {
   const [previewData, setPreviewData] = useState<CsvPreviewRow[]>([])
   const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({})
   const [step, setStep] = useState<'upload' | 'mapping' | 'preview' | 'importing'>('upload')
-  
+
   // React 19: useOptimistic for optimistic UI updates
   const [optimisticBookings, addOptimisticBooking] = useOptimistic<CsvPreviewRow[], CsvPreviewRow[]>(
     [],
@@ -502,7 +560,7 @@ export function AirbnbCsvImport({ projectId }: { projectId: string }) {
       try {
         // Optimistically add bookings to UI
         addOptimisticBooking(previewData)
-        
+
         const result = await importCsvMutation.mutateAsync(previewData)
 
         return {
@@ -528,11 +586,11 @@ export function AirbnbCsvImport({ projectId }: { projectId: string }) {
       complete: (results) => {
         setCsvData(results.data as any[])
         setStep('mapping')
-        
+
         // Auto-detect common field mappings
         const headers = results.meta.fields || []
         const autoMapping: Record<string, string> = {}
-        
+
         headers.forEach((header) => {
           const lowerHeader = header.toLowerCase()
           if (lowerHeader.includes('guest') || lowerHeader.includes('name')) {
@@ -548,7 +606,7 @@ export function AirbnbCsvImport({ projectId }: { projectId: string }) {
             autoMapping.totalAmount = header
           }
         })
-        
+
         setFieldMapping(autoMapping)
       },
       error: (error) => {
@@ -571,20 +629,20 @@ export function AirbnbCsvImport({ projectId }: { projectId: string }) {
 
       // Validate each row
       const issues: string[] = []
-      
+
       if (!mappedRow.guestName) issues.push('Missing guest name')
       if (!mappedRow.checkinDate) issues.push('Missing check-in date')
       if (!mappedRow.checkoutDate) issues.push('Missing check-out date')
       if (!mappedRow.totalAmount) issues.push('Missing total amount')
-      
+
       // Date validation
       const checkinDate = new Date(mappedRow.checkinDate)
       const checkoutDate = new Date(mappedRow.checkoutDate)
-      
+
       if (isNaN(checkinDate.getTime())) issues.push('Invalid check-in date')
       if (isNaN(checkoutDate.getTime())) issues.push('Invalid check-out date')
       if (checkoutDate <= checkinDate) issues.push('Check-out must be after check-in')
-      
+
       // Amount validation
       const amount = parseFloat(mappedRow.totalAmount)
       if (isNaN(amount) || amount <= 0) issues.push('Invalid total amount')
@@ -626,7 +684,7 @@ export function AirbnbCsvImport({ projectId }: { projectId: string }) {
       cell: ({ row }: any) => {
         const status = row.getValue('status') as string
         const issues = row.original.issues as string[]
-        
+
         return (
           <div className="flex items-center gap-2">
             <Badge
@@ -658,7 +716,7 @@ export function AirbnbCsvImport({ projectId }: { projectId: string }) {
           Import Airbnb Bookings
         </CardTitle>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         {step === 'upload' && (
           <div className="space-y-4">
@@ -677,10 +735,10 @@ export function AirbnbCsvImport({ projectId }: { projectId: string }) {
                 }}
               />
             </div>
-            
+
             <Alert>
               <AlertDescription>
-                Upload a CSV file exported from your Airbnb host dashboard. 
+                Upload a CSV file exported from your Airbnb host dashboard.
                 The system will automatically detect common field mappings.
               </AlertDescription>
             </Alert>
@@ -690,7 +748,7 @@ export function AirbnbCsvImport({ projectId }: { projectId: string }) {
         {step === 'mapping' && csvData.length > 0 && (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Map CSV Fields</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
                 { key: 'guestName', label: 'Guest Name', required: true },
@@ -708,7 +766,7 @@ export function AirbnbCsvImport({ projectId }: { projectId: string }) {
                   <select
                     className="w-full px-3 py-2 border rounded-md"
                     value={fieldMapping[field.key] || ''}
-                    onChange={(e) => 
+                    onChange={(e) =>
                       setFieldMapping(prev => ({ ...prev, [field.key]: e.target.value }))
                     }
                   >
@@ -739,8 +797,8 @@ export function AirbnbCsvImport({ projectId }: { projectId: string }) {
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Preview & Validate</h3>
               <div className="text-sm text-muted-foreground">
-                {previewData.filter(r => r.status === 'valid').length} valid, 
-                {previewData.filter(r => r.status === 'warning').length} warnings, 
+                {previewData.filter(r => r.status === 'valid').length} valid,
+                {previewData.filter(r => r.status === 'warning').length} warnings,
                 {previewData.filter(r => r.status === 'error').length} errors
               </div>
             </div>
@@ -756,7 +814,7 @@ export function AirbnbCsvImport({ projectId }: { projectId: string }) {
                 Back to Mapping
               </Button>
               <form action={importAction}>
-                <Button 
+                <Button
                   type="submit"
                   disabled={isImportPending || previewData.every(r => r.status === 'error')}
                 >
@@ -813,6 +871,7 @@ export function AirbnbCsvImport({ projectId }: { projectId: string }) {
 ### 4. Facebook Messenger Booking System with Modern Forms
 
 #### Google Forms Integration Component
+
 ```typescript
 // src/components/booking/FacebookMessengerBooking.tsx
 "use client"
@@ -859,12 +918,12 @@ const messengerBookingSchema = z.object({
 
 type MessengerBookingFormData = z.infer<typeof messengerBookingSchema>
 
-export function FacebookMessengerBooking({ 
-  projectId, 
-  onSuccess 
-}: { 
+export function FacebookMessengerBooking({
+  projectId,
+  onSuccess
+}: {
   projectId: string
-  onSuccess?: () => void 
+  onSuccess?: () => void
 }) {
   const createBookingMutation = useCreateBooking()
 
@@ -1194,6 +1253,7 @@ export function FacebookMessengerBooking({
 ### 5. Payment Tracking with Modern UI Components
 
 #### Payment Recording Component
+
 ```typescript
 // src/components/booking/PaymentRecordingModal.tsx
 "use client"
@@ -1244,7 +1304,7 @@ type PaymentFormData = z.infer<typeof paymentSchema>
 export function PaymentRecordingModal() {
   const { paymentModal, closePaymentModal } = useBookingStore()
   const { data: booking } = useBooking(paymentModal.bookingId || '')
-  
+
   const recordPaymentMutation = useRecordPayment()
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
@@ -1301,7 +1361,7 @@ export function PaymentRecordingModal() {
   // Calculate suggested amounts
   const suggestedAmounts = () => {
     if (!booking) return []
-    
+
     if (paymentModal.paymentType === 'deposit') {
       const depositAmount = booking.totalAmount * 0.5
       return [depositAmount]
@@ -1367,7 +1427,7 @@ export function PaymentRecordingModal() {
                       />
                     </div>
                   </FormControl>
-                  
+
                   {/* Suggested amounts */}
                   {suggestedAmounts().length > 0 && (
                     <div className="flex gap-2 mt-2">
@@ -1385,7 +1445,7 @@ export function PaymentRecordingModal() {
                       ))}
                     </div>
                   )}
-                  
+
                   <FormMessage />
                 </FormItem>
               )}
@@ -1438,7 +1498,7 @@ export function PaymentRecordingModal() {
                     <FormControl>
                       <Input
                         placeholder={
-                          watchedPaymentMethod === 'gcash' 
+                          watchedPaymentMethod === 'gcash'
                             ? 'GCash Reference Number'
                             : 'Bank Transfer Reference'
                         }
@@ -1446,7 +1506,7 @@ export function PaymentRecordingModal() {
                       />
                     </FormControl>
                     <FormDescription>
-                      {watchedPaymentMethod === 'gcash' 
+                      {watchedPaymentMethod === 'gcash'
                         ? 'Enter the GCash transaction reference number'
                         : 'Enter the bank transfer reference number'
                       }
@@ -1565,6 +1625,7 @@ export function PaymentRecordingModal() {
 ### 6. Booking Timeline with Visual Progress
 
 #### Interactive Timeline Component
+
 ```typescript
 // src/components/booking/BookingTimeline.tsx
 "use client"
@@ -1591,12 +1652,12 @@ interface TimelineEvent {
   actionLabel?: string
 }
 
-export function BookingTimeline({ 
-  projectId, 
-  bookingId 
-}: { 
+export function BookingTimeline({
+  projectId,
+  bookingId
+}: {
   projectId: string
-  bookingId: string 
+  bookingId: string
 }) {
   const openPaymentModal = useBookingStore((state) => state.openPaymentModal)
   const { data: booking, isLoading } = useBooking(bookingId)
@@ -1765,11 +1826,11 @@ export function BookingTimeline({
                     <h3 className="font-semibold text-foreground">{event.title}</h3>
                     {getEventStatus(event)}
                   </div>
-                  
+
                   <p className="text-sm text-muted-foreground mb-2">
                     {event.description}
                   </p>
-                  
+
                   <p className="text-xs text-muted-foreground">
                     {format(new Date(event.timestamp), 'MMM d, yyyy - h:mm a')}
                   </p>
@@ -1798,6 +1859,7 @@ export function BookingTimeline({
 ### 7. TanStack Router Integration
 
 #### File-Based Route Definition
+
 ```typescript
 // src/routes/bookings/$bookingId.tsx
 import { createFileRoute } from '@tanstack/react-router'
@@ -1821,7 +1883,7 @@ export const Route = createFileRoute('/bookings/$bookingId')({
 function BookingDetailPage() {
   const { bookingId } = Route.useParams()
   const { booking } = Route.useLoaderData()
-  
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Booking Details</h1>
@@ -1835,77 +1897,89 @@ function BookingDetailPage() {
 ### 8. Serverless API Routes
 
 #### Booking API Route Implementation
+
 ```javascript
 // api/[projectId]/bookings/index.js - Vercel Serverless Function
-import { neon } from '@neondatabase/serverless'
-import { authenticateUser, checkProjectAccess } from '../../../lib/auth-middleware.js'
-import { validateBookingData } from '../../../lib/validations.js'
+import { neon } from "@neondatabase/serverless";
+import {
+  authenticateUser,
+  checkProjectAccess,
+} from "../../../lib/auth-middleware.js";
+import { validateBookingData } from "../../../lib/validations.js";
 
-const sql = neon(process.env.DATABASE_URL)
+const sql = neon(process.env.DATABASE_URL);
 
 export default async function handler(req, res) {
   try {
     // Authenticate user
-    const user = await authenticateUser(req)
+    const user = await authenticateUser(req);
     if (!user) {
-      return res.status(401).json({ error: 'Unauthorized' })
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { projectId } = req.query
+    const { projectId } = req.query;
 
     // Check project access
-    const hasAccess = await checkProjectAccess(user.id, projectId, 'bookings.read')
+    const hasAccess = await checkProjectAccess(
+      user.id,
+      projectId,
+      "bookings.read"
+    );
     if (!hasAccess) {
-      return res.status(403).json({ error: 'Forbidden' })
+      return res.status(403).json({ error: "Forbidden" });
     }
 
-    if (req.method === 'GET') {
-      const { page = 1, limit = 20, status, source } = req.query
-      const offset = (page - 1) * limit
+    if (req.method === "GET") {
+      const { page = 1, limit = 20, status, source } = req.query;
+      const offset = (page - 1) * limit;
 
       let query = `
         SELECT b.*, COUNT(*) OVER() as total_count
-        FROM project_${projectId.replace(/[^a-z0-9_]/gi, '_')}.bookings b
+        FROM project_${projectId.replace(/[^a-z0-9_]/gi, "_")}.bookings b
         WHERE 1=1
-      `
-      const params = []
-      
-      if (status) {
-        params.push(status)
-        query += ` AND b.booking_status = $${params.length}`
-      }
-      
-      if (source) {
-        params.push(source)
-        query += ` AND b.source = $${params.length}`
-      }
-      
-      params.push(limit, offset)
-      query += ` ORDER BY b.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`
+      `;
+      const params = [];
 
-      const bookings = await sql.query(query, params)
-      const totalCount = bookings.length > 0 ? bookings[0].total_count : 0
-      
+      if (status) {
+        params.push(status);
+        query += ` AND b.booking_status = $${params.length}`;
+      }
+
+      if (source) {
+        params.push(source);
+        query += ` AND b.source = $${params.length}`;
+      }
+
+      params.push(limit, offset);
+      query += ` ORDER BY b.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`;
+
+      const bookings = await sql.query(query, params);
+      const totalCount = bookings.length > 0 ? bookings[0].total_count : 0;
+
       return res.status(200).json({
         bookings: bookings.map(({ total_count, ...booking }) => booking),
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),
-          hasMore: offset + bookings.length < totalCount
-        }
-      })
+          hasMore: offset + bookings.length < totalCount,
+        },
+      });
     }
 
-    if (req.method === 'POST') {
-      const hasCreateAccess = await checkProjectAccess(user.id, projectId, 'bookings.create')
+    if (req.method === "POST") {
+      const hasCreateAccess = await checkProjectAccess(
+        user.id,
+        projectId,
+        "bookings.create"
+      );
       if (!hasCreateAccess) {
-        return res.status(403).json({ error: 'Insufficient permissions' })
+        return res.status(403).json({ error: "Insufficient permissions" });
       }
 
-      const bookingData = validateBookingData(req.body)
-      
+      const bookingData = validateBookingData(req.body);
+
       const [newBooking] = await sql`
-        INSERT INTO project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, '_'))}.bookings (
+        INSERT INTO project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, "_"))}.bookings (
           booking_reference, source, guest_name, guest_email, guest_phone,
           checkin_date, checkout_date, guest_count, total_amount,
           deposit_amount, balance_amount, booking_status, special_requests,
@@ -1915,47 +1989,299 @@ export default async function handler(req, res) {
           ${bookingData.guestEmail}, ${bookingData.guestPhone}, ${bookingData.checkinDate},
           ${bookingData.checkoutDate}, ${bookingData.guestCount}, ${bookingData.totalAmount},
           ${bookingData.depositAmount || 0}, ${bookingData.totalAmount - (bookingData.depositAmount || 0)},
-          ${bookingData.bookingStatus || 'pending'}, ${bookingData.specialRequests},
+          ${bookingData.bookingStatus || "pending"}, ${bookingData.specialRequests},
           ${user.id}, NOW(), NOW()
         )
         RETURNING *
-      `
+      `;
 
-      return res.status(201).json({ booking: newBooking })
+      return res.status(201).json({ booking: newBooking });
     }
 
-    return res.status(405).json({ error: 'Method not allowed' })
-
+    return res.status(405).json({ error: "Method not allowed" });
   } catch (error) {
-    console.error('Booking API Error:', error)
-    return res.status(500).json({ error: 'Internal server error' })
+    console.error("Booking API Error:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
 ```
 
 ## Key Benefits of Modern Stack
 
-### Bundle Size Reduction
-- **Before (Redux Toolkit + RTK Query)**: ~45KB gzipped
-- **After (Zustand + TanStack Query)**: ~25KB gzipped
-- **Net Savings**: ~20KB (44% reduction)
+### Bundle Size Optimization
+
+- **Zustand + TanStack Query**: ~25KB gzipped total
+- **Optimized for minimal footprint**
+- **Fast loading on mobile devices**
 
 ### Developer Experience Improvements
+
 - **Less Boilerplate**: ~60% reduction in state management code
 - **Better TypeScript**: Full type inference with TanStack Router
-- **Simpler Testing**: Zustand stores are easier to test than Redux
+- **Simpler Testing**: Zustand stores provide straightforward testing patterns
 - **Faster Development**: File-based routing reduces setup time
 
 ### Performance Optimizations
+
 - **TanStack Query**: Intelligent background refetching and cache invalidation
-- **React 19 useOptimistic**: Instant UI updates with automatic rollback on errors
+- **React 19 useOptimistic**: Instant UI updates with automatic rollback on
+  errors
 - **Vite 7 Lightning CSS**: 100x faster CSS processing than traditional PostCSS
-- **Serverless Edge Functions**: Global CDN distribution with <200ms response times
+- **Serverless Edge Functions**: Global CDN distribution with <200ms response
+  times
 
 ### Modern Development Features
+
 - **Type Safety**: End-to-end TypeScript with strict mode
-- **React 19 Hooks**: useActionState for async form handling, useOptimistic for UI
+- **React 19 Hooks**: useActionState for async form handling, useOptimistic for
+  UI
 - **File-based Routing**: TanStack Router's intuitive routing system
 - **Hot Module Replacement**: Instant updates during development
 
-This modernized booking management system leverages the latest 2025 technologies to provide enterprise-level capabilities while maintaining the simplicity needed for family resort operations. The combination of Zustand for local state, TanStack Query for server state, and TanStack Router for navigation creates a powerful, performant, and developer-friendly architecture.
+This modernized booking management system leverages the latest 2025 technologies
+to provide enterprise-level capabilities while maintaining the simplicity needed
+for family resort operations. The combination of Zustand for local state,
+TanStack Query for server state, and TanStack Router for navigation creates a
+powerful, performant, and developer-friendly architecture.
+
+## Phase Verification Steps
+
+### Phase 1: State Management Setup ✓
+
+**Verification Checklist:**
+
+- [ ] Zustand store created and configured with devtools
+- [ ] TanStack Query client properly configured with retry logic
+- [ ] Query key factory implemented for type safety
+- [ ] State persistence configured for critical UI state
+- [ ] HMR (Hot Module Replacement) working in development
+
+**Testing Commands:**
+
+```bash
+# Run type checking
+npm run type-check
+
+# Test store in browser DevTools
+localStorage.getItem('booking-ui-storage')
+
+# Verify React Query DevTools
+# Open browser DevTools > React Query tab
+```
+
+### Phase 2: CSV Import Implementation ✓
+
+**Verification Checklist:**
+
+- [ ] File upload accepts only CSV files
+- [ ] Field mapping auto-detects common headers
+- [ ] Data validation catches all edge cases
+- [ ] Preview shows accurate validation status
+- [ ] Import progress bar updates in real-time
+- [ ] Error handling for malformed CSV files
+
+**Testing Scenarios:**
+
+1. Upload valid Airbnb CSV - should auto-map fields
+2. Upload CSV with missing columns - should show warnings
+3. Upload CSV with invalid dates - should show errors
+4. Upload non-CSV file - should reject
+5. Import 100+ bookings - should show progress
+
+### Phase 3: Facebook Messenger Integration ✓
+
+**Verification Checklist:**
+
+- [ ] Form validation works for all required fields
+- [ ] Date picker prevents invalid date selections
+- [ ] Phone number validation for Philippine format
+- [ ] Guest count limits enforced (1-20)
+- [ ] Price calculation updates dynamically
+- [ ] Form submission creates booking successfully
+
+**Testing Scenarios:**
+
+1. Submit form with all fields - should succeed
+2. Submit with past check-in date - should fail
+3. Submit with check-out before check-in - should fail
+4. Submit without required fields - should show errors
+5. Clear form button resets all fields
+
+### Phase 4: Payment Recording System ✓
+
+**Verification Checklist:**
+
+- [ ] Payment modal shows correct booking details
+- [ ] Payment methods switch input requirements
+- [ ] GCash/Bank requires reference number
+- [ ] Screenshot upload works for images
+- [ ] Suggested amounts calculate correctly
+- [ ] Payment updates booking status
+
+**Testing Scenarios:**
+
+1. Record cash payment - no reference required
+2. Record GCash without reference - should fail
+3. Upload screenshot > 5MB - should reject
+4. Record deposit payment - status updates
+5. Record final balance - booking marked fully paid
+
+### Phase 5: Booking Timeline ✓
+
+**Verification Checklist:**
+
+- [ ] Timeline events in chronological order
+- [ ] Completed events show green checkmark
+- [ ] Pending events show clock icon
+- [ ] Action buttons appear when appropriate
+- [ ] Timeline updates after payment recording
+- [ ] Dates formatted correctly for timezone
+
+**Testing Scenarios:**
+
+1. New booking - shows initial event only
+2. Deposit paid - shows confirmation events
+3. Check-in day - shows balance due action
+4. Fully paid - all payment events completed
+5. Past booking - all events completed
+
+### Phase 6: API Integration ✓
+
+**Verification Checklist:**
+
+- [ ] Authentication middleware validates JWT
+- [ ] Project access permissions enforced
+- [ ] Database queries use parameterized statements
+- [ ] Pagination works correctly
+- [ ] Error responses have proper status codes
+- [ ] CORS configured for frontend domain
+
+**Testing Commands:**
+
+```bash
+# Test API endpoints
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:3000/api/project-123/bookings
+
+# Test pagination
+curl "http://localhost:3000/api/project-123/bookings?page=2&limit=10"
+
+# Test filtering
+curl "http://localhost:3000/api/project-123/bookings?status=confirmed&source=airbnb"
+```
+
+### Phase 7: Performance Optimization ✓
+
+**Verification Checklist:**
+
+- [ ] Bundle size < 200KB gzipped
+- [ ] Lighthouse score > 90 for performance
+- [ ] First Contentful Paint < 1.5s
+- [ ] Time to Interactive < 3.5s
+- [ ] No memory leaks in long sessions
+- [ ] Optimistic updates feel instant
+
+**Testing Commands:**
+
+```bash
+# Build and analyze bundle
+npm run build
+npm run analyze
+
+# Run Lighthouse
+npx lighthouse http://localhost:5173 --view
+
+# Check bundle size
+du -sh dist/assets/*.js | sort -h
+```
+
+### Integration Testing Checklist
+
+**End-to-End Scenarios:**
+
+1. **Complete Booking Flow:**
+   - [ ] Import CSV with 10 bookings
+   - [ ] View bookings in list
+   - [ ] Open booking detail
+   - [ ] Record deposit payment
+   - [ ] Verify timeline updates
+   - [ ] Record balance payment
+   - [ ] Confirm fully paid status
+
+2. **Multi-User Scenario:**
+   - [ ] User A creates booking
+   - [ ] User B views same booking
+   - [ ] User A records payment
+   - [ ] User B sees updated status
+
+3. **Error Recovery:**
+   - [ ] Network failure during import
+   - [ ] Invalid JWT token
+   - [ ] Database connection timeout
+   - [ ] File upload interruption
+
+### Security Verification
+
+**Security Checklist:**
+
+- [ ] No sensitive data in localStorage
+- [ ] API keys not exposed in frontend
+- [ ] XSS protection in user inputs
+- [ ] SQL injection prevention in queries
+- [ ] File upload size limits enforced
+- [ ] Rate limiting on API endpoints
+
+**Security Testing Commands:**
+
+```bash
+# Check for exposed secrets
+grep -r "DATABASE_URL\|JWT_SECRET\|API_KEY" src/
+
+# Test file upload limits
+curl -X POST -F "file=@large_file.csv" \
+  http://localhost:3000/api/upload
+
+# Check for XSS vulnerabilities
+# Try inserting <script>alert('XSS')</script> in form fields
+```
+
+### Deployment Verification
+
+**Pre-Deployment Checklist:**
+
+- [ ] Environment variables configured
+- [ ] Database migrations completed
+- [ ] Build completes without errors
+- [ ] All tests pass
+- [ ] No console errors in production build
+- [ ] Performance metrics meet targets
+
+**Deployment Commands:**
+
+```bash
+# Build for production
+npm run build
+
+# Test production build locally
+npm run preview
+
+# Deploy to Vercel
+vercel --prod
+
+# Verify deployment
+curl https://your-app.vercel.app/api/health
+```
+
+### Monitoring & Maintenance
+
+**Post-Deployment Monitoring:**
+
+- [ ] Error tracking configured (Sentry)
+- [ ] Performance monitoring active
+- [ ] Database query performance tracked
+- [ ] User analytics implemented
+- [ ] Backup strategy in place
+- [ ] Incident response plan documented
+
+This comprehensive verification ensures each phase meets quality standards
+before proceeding to the next.

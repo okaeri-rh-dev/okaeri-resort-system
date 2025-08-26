@@ -31,7 +31,7 @@ Phase 1 establishes the core technical foundation for the Okaeri Resort Manageme
 ### [Sub-Phase 1.3: State Management Infrastructure](./sub-phase-1-3-state-management.md)
 **Duration:** 3 days  
 **Dependencies:** Sub-Phase 1.2  
-**Validation Agents:** `react-redux-resort-architect`, `typescript-react-quality-expert`  
+**Validation Agents:** `zustand-tanstack-resort-architect`, `typescript-react-quality-expert`  
 - Setup Zustand stores with TypeScript
 - Configure TanStack Query for server state
 - Implement persistence and offline support
@@ -39,7 +39,7 @@ Phase 1 establishes the core technical foundation for the Okaeri Resort Manageme
 ### [Sub-Phase 1.4: Serverless API Foundation](./sub-phase-1-4-api-foundation.md)
 **Duration:** 3 days  
 **Dependencies:** Sub-Phase 1.1  
-**Validation Agents:** `vercel-resort-api-architect`, `serverless-saas-architect`  
+**Validation Agents:** `tanstack-router-expert`, `vercel-resort-api-architect`, `serverless-saas-architect`  
 - Create Vercel API routes structure
 - Implement middleware architecture
 - Setup database connection utilities
@@ -178,7 +178,7 @@ Phase 1 establishes the core technical foundation for the Okaeri Resort Manageme
 - [ ] `security-compliance-auditor` - Security validation
 - [ ] `vercel-deployment-optimizer` - Deployment readiness
 - [ ] `postgres-serverless-architect` - Database architecture approval
-- [ ] `react-redux-resort-architect` - State management approval
+- [ ] `zustand-tanstack-resort-architect` - State management approval
 - [ ] `serverless-saas-architect` - Overall architecture approval
 
 ### Handoff to Phase 2

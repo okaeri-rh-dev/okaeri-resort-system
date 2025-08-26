@@ -1,11 +1,17 @@
 # Implementation & Deployment Plan - Latest Technology Stack 2025
 
 ## Overview
-This implementation plan provides a comprehensive, step-by-step guide for building the Okaeri Resort Management System (ORMS) using **Vite 7 + React 19 frontend with shadcn/ui and Zustand for state management, TanStack Query for server state, and TanStack Router for routing** with Vercel serverless API routes.
+
+This implementation plan provides a comprehensive, step-by-step guide for
+building the Okaeri Resort Management System (ORMS) using **Vite 7 + React 19
+frontend with shadcn/ui and Zustand for state management, TanStack Query for
+server state, and TanStack Router for routing** with Vercel serverless API
+routes.
 
 ## Technology Stack & Architecture
 
 ### Frontend Stack (Vite 7 + React 19 + Zustand + TanStack Query + TanStack Router + shadcn/ui)
+
 ```json
 {
   "name": "okaeri-resort-system",
@@ -24,18 +30,18 @@ This implementation plan provides a comprehensive, step-by-step guide for buildi
   "dependencies": {
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    
+
     "@tanstack/react-router": "^1.114.3",
     "@tanstack/router-devtools": "^1.114.3",
     "@tanstack/react-query": "^5.71.10",
     "@tanstack/react-query-devtools": "^5.71.10",
-    
+
     "zustand": "^5.0.2",
-    
+
     "react-hook-form": "^7.54.0",
     "@hookform/resolvers": "^3.10.0",
     "zod": "^3.24.1",
-    
+
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-avatar": "^1.1.1",
@@ -58,7 +64,7 @@ This implementation plan provides a comprehensive, step-by-step guide for buildi
     "@radix-ui/react-textarea": "^1.1.0",
     "@radix-ui/react-toast": "^1.2.2",
     "@radix-ui/react-tooltip": "^1.1.3",
-    
+
     "tailwindcss": "^4.0.0",
     "@tailwindcss/vite": "^4.0.0",
     "tailwind-merge": "^2.5.4",
@@ -67,10 +73,10 @@ This implementation plan provides a comprehensive, step-by-step guide for buildi
     "lucide-react": "^0.468.0",
     "date-fns": "^4.1.0",
     "react-day-picker": "^8.10.1",
-    
+
     "recharts": "^2.13.3",
     "framer-motion": "^11.11.17",
-    
+
     "pg": "^8.13.1",
     "jsonwebtoken": "^9.0.2",
     "bcryptjs": "^2.4.3",
@@ -92,7 +98,7 @@ This implementation plan provides a comprehensive, step-by-step guide for buildi
     "@types/multer": "^1.4.12",
     "tailwindcss-animate": "^1.0.7",
     "autoprefixer": "^10.4.20",
-    
+
     "@eslint/js": "^9.15.0",
     "eslint": "^9.15.0",
     "eslint-plugin-react-hooks": "^5.0.0",
@@ -101,11 +107,11 @@ This implementation plan provides a comprehensive, step-by-step guide for buildi
     "@typescript-eslint/parser": "^8.15.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
-    
+
     "prettier": "^3.3.3",
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "prettier-plugin-tailwindcss": "^0.6.8",
-    
+
     "husky": "^9.1.6",
     "lint-staged": "^15.2.10"
   }
@@ -115,6 +121,7 @@ This implementation plan provides a comprehensive, step-by-step guide for buildi
 ### Development Tools Configuration
 
 #### Prettier Configuration
+
 **File:** `.prettierrc`
 
 ```json
@@ -152,27 +159,19 @@ This implementation plan provides a comprehensive, step-by-step guide for buildi
 ```
 
 #### Lint-staged Configuration
+
 **File:** `lint-staged.config.js`
 
 ```javascript
 export default {
-  '*.{ts,tsx}': [
-    'eslint --fix',
-    'prettier --write',
-    'git add'
-  ],
-  '*.{json,md,yml,yaml}': [
-    'prettier --write',
-    'git add'
-  ],
-  '*.{css,scss}': [
-    'prettier --write',
-    'git add'
-  ]
-}
+  "*.{ts,tsx}": ["eslint --fix", "prettier --write", "git add"],
+  "*.{json,md,yml,yaml}": ["prettier --write", "git add"],
+  "*.{css,scss}": ["prettier --write", "git add"],
+};
 ```
 
 #### Husky Pre-commit Hook
+
 **File:** `.husky/pre-commit`
 
 ```bash
@@ -192,57 +191,62 @@ echo "✅ Pre-commit checks passed!"
 ```
 
 #### ESLint Configuration
+
 **File:** `eslint.config.js`
 
 ```javascript
-import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from '@typescript-eslint/eslint-plugin'
-import parser from '@typescript-eslint/parser'
-import prettier from 'eslint-config-prettier'
+import js from "@eslint/js";
+import globals from "globals";
+import reactHooks from "eslint-plugin-react-hooks";
+import reactRefresh from "eslint-plugin-react-refresh";
+import tseslint from "@typescript-eslint/eslint-plugin";
+import parser from "@typescript-eslint/parser";
+import prettier from "eslint-config-prettier";
 
 export default [
-  { ignores: ['dist'] },
+  { ignores: ["dist"] },
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ["**/*.{ts,tsx}"],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
       parser: parser,
       parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module',
+        ecmaVersion: "latest",
+        sourceType: "module",
         ecmaFeatures: {
           jsx: true,
         },
       },
     },
     plugins: {
-      '@typescript-eslint': tseslint,
-      'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
+      "@typescript-eslint": tseslint,
+      "react-hooks": reactHooks,
+      "react-refresh": reactRefresh,
     },
     rules: {
       ...js.configs.recommended.rules,
       ...tseslint.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
-        'warn',
+      "react-refresh/only-export-components": [
+        "warn",
         { allowConstantExport: true },
       ],
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-explicit-any': 'warn',
-      'prefer-const': 'error',
-      'no-var': 'error',
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_" },
+      ],
+      "@typescript-eslint/no-explicit-any": "warn",
+      "prefer-const": "error",
+      "no-var": "error",
     },
   },
   prettier,
-]
+];
 ```
 
 ### Project Structure (Vite 7 + Zustand + TanStack Query/Router + Serverless)
+
 ```
 okaeri-resort-system/
 ├── src/                           # Vite React frontend
@@ -353,34 +357,35 @@ okaeri-resort-system/
 ### Zustand Store Configuration
 
 #### Authentication Store
+
 **File:** `src/stores/authStore.ts`
 
 ```typescript
-import { create } from 'zustand'
-import { devtools, persist } from 'zustand/middleware'
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
 
 interface User {
-  id: string
-  firstName: string
-  lastName: string
-  email: string
-  role: 'owner' | 'manager' | 'staff'
-  token: string
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: "owner" | "manager" | "staff";
+  token: string;
 }
 
 interface AuthState {
-  user: User | null
-  isAuthenticated: boolean
-  loading: boolean
-  error: string | null
+  user: User | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  error: string | null;
 }
 
 interface AuthActions {
-  login: (email: string, password: string) => Promise<void>
-  logout: () => void
-  setUser: (user: User) => void
-  clearError: () => void
-  setLoading: (loading: boolean) => void
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  setUser: (user: User) => void;
+  clearError: () => void;
+  setLoading: (loading: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState & AuthActions>()(
@@ -395,31 +400,31 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
         // Actions
         login: async (email: string, password: string) => {
-          set({ loading: true, error: null })
+          set({ loading: true, error: null });
           try {
-            const response = await fetch('/api/auth/login', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+            const response = await fetch("/api/auth/login", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ email, password }),
-            })
-            
+            });
+
             if (!response.ok) {
-              throw new Error('Login failed')
+              throw new Error("Login failed");
             }
-            
-            const data = await response.json()
-            const user = data.user as User
-            
+
+            const data = await response.json();
+            const user = data.user as User;
+
             set({
               user,
               isAuthenticated: true,
               loading: false,
-            })
+            });
           } catch (error) {
             set({
-              error: error instanceof Error ? error.message : 'Login failed',
+              error: error instanceof Error ? error.message : "Login failed",
               loading: false,
-            })
+            });
           }
         },
 
@@ -428,71 +433,72 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             user: null,
             isAuthenticated: false,
             error: null,
-          })
+          });
         },
 
         setUser: (user: User) => {
-          set({ user, isAuthenticated: true })
+          set({ user, isAuthenticated: true });
         },
 
         clearError: () => {
-          set({ error: null })
+          set({ error: null });
         },
 
         setLoading: (loading: boolean) => {
-          set({ loading })
+          set({ loading });
         },
       }),
       {
-        name: 'auth-storage',
+        name: "auth-storage",
         partialize: (state) => ({
           user: state.user,
           isAuthenticated: state.isAuthenticated,
         }),
-      },
+      }
     ),
     {
-      name: 'auth-store',
-    },
-  ),
-)
+      name: "auth-store",
+    }
+  )
+);
 ```
 
 #### Project Management Store
+
 **File:** `src/stores/projectStore.ts`
 
 ```typescript
-import { create } from 'zustand'
-import { devtools } from 'zustand/middleware'
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 
 interface Project {
-  id: string
-  name: string
-  description: string
-  businessType: string
-  location: string
-  currency: string
-  timezone: string
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
+  id: string;
+  name: string;
+  description: string;
+  businessType: string;
+  location: string;
+  currency: string;
+  timezone: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface ProjectState {
-  currentProject: Project | null
-  projects: Project[]
-  loading: boolean
-  error: string | null
+  currentProject: Project | null;
+  projects: Project[];
+  loading: boolean;
+  error: string | null;
 }
 
 interface ProjectActions {
-  setCurrentProject: (project: Project) => void
-  setProjects: (projects: Project[]) => void
-  addProject: (project: Project) => void
-  updateProject: (project: Project) => void
-  switchProject: (projectId: string) => void
-  clearError: () => void
-  setLoading: (loading: boolean) => void
+  setCurrentProject: (project: Project) => void;
+  setProjects: (projects: Project[]) => void;
+  addProject: (project: Project) => void;
+  updateProject: (project: Project) => void;
+  switchProject: (projectId: string) => void;
+  clearError: () => void;
+  setLoading: (loading: boolean) => void;
 }
 
 export const useProjectStore = create<ProjectState & ProjectActions>()(
@@ -506,61 +512,62 @@ export const useProjectStore = create<ProjectState & ProjectActions>()(
 
       // Actions
       setCurrentProject: (project: Project) => {
-        set({ currentProject: project })
+        set({ currentProject: project });
       },
 
       setProjects: (projects: Project[]) => {
-        set({ projects })
+        set({ projects });
       },
 
       addProject: (project: Project) => {
         set((state) => ({
           projects: [...state.projects, project],
-        }))
+        }));
       },
 
       updateProject: (updatedProject: Project) => {
         set((state) => ({
           projects: state.projects.map((project) =>
-            project.id === updatedProject.id ? updatedProject : project,
+            project.id === updatedProject.id ? updatedProject : project
           ),
           currentProject:
             state.currentProject?.id === updatedProject.id
               ? updatedProject
               : state.currentProject,
-        }))
+        }));
       },
 
       switchProject: (projectId: string) => {
-        const { projects } = get()
-        const project = projects.find((p) => p.id === projectId)
+        const { projects } = get();
+        const project = projects.find((p) => p.id === projectId);
         if (project) {
-          set({ currentProject: project })
+          set({ currentProject: project });
         }
       },
 
       clearError: () => {
-        set({ error: null })
+        set({ error: null });
       },
 
       setLoading: (loading: boolean) => {
-        set({ loading })
+        set({ loading });
       },
     }),
     {
-      name: 'project-store',
-    },
-  ),
-)
+      name: "project-store",
+    }
+  )
+);
 ```
 
 ### TanStack Query Configuration
 
 #### Query Client Setup
+
 **File:** `src/lib/api.ts`
 
 ```typescript
-import { QueryClient } from '@tanstack/react-query'
+import { QueryClient } from "@tanstack/react-query";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -569,30 +576,30 @@ export const queryClient = new QueryClient({
       gcTime: 10 * 60 * 1000, // 10 minutes
       retry: (failureCount, error: any) => {
         if (error?.status === 404 || error?.status === 403) {
-          return false
+          return false;
         }
-        return failureCount < 3
+        return failureCount < 3;
       },
     },
     mutations: {
       retry: 1,
     },
   },
-})
+});
 
 // API utilities
 export const apiRequest = async (
   endpoint: string,
-  options: RequestInit = {},
+  options: RequestInit = {}
 ): Promise<any> => {
-  const token = localStorage.getItem('auth-token')
-  
+  const token = localStorage.getItem("auth-token");
+
   const defaultOptions: RequestInit = {
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
     },
-  }
+  };
 
   const response = await fetch(endpoint, {
     ...defaultOptions,
@@ -601,206 +608,209 @@ export const apiRequest = async (
       ...defaultOptions.headers,
       ...options.headers,
     },
-  })
+  });
 
   if (!response.ok) {
-    throw new Error(`API Error: ${response.status} ${response.statusText}`)
+    throw new Error(`API Error: ${response.status} ${response.statusText}`);
   }
 
-  return response.json()
-}
+  return response.json();
+};
 
 // Query keys factory
 export const queryKeys = {
-  projects: ['projects'] as const,
-  project: (id: string) => ['projects', id] as const,
-  bookings: (projectId: string) => ['bookings', projectId] as const,
+  projects: ["projects"] as const,
+  project: (id: string) => ["projects", id] as const,
+  bookings: (projectId: string) => ["bookings", projectId] as const,
   booking: (projectId: string, bookingId: string) =>
-    ['bookings', projectId, bookingId] as const,
-  expenses: (projectId: string) => ['expenses', projectId] as const,
+    ["bookings", projectId, bookingId] as const,
+  expenses: (projectId: string) => ["expenses", projectId] as const,
   expense: (projectId: string, expenseId: string) =>
-    ['expenses', projectId, expenseId] as const,
-  reports: (projectId: string) => ['reports', projectId] as const,
-}
+    ["expenses", projectId, expenseId] as const,
+  reports: (projectId: string) => ["reports", projectId] as const,
+};
 ```
 
 #### Booking Queries & Mutations
+
 **File:** `src/hooks/use-bookings.ts`
 
 ```typescript
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { apiRequest, queryKeys } from '@/lib/api'
-import { useProjectStore } from '@/stores/projectStore'
+import { apiRequest, queryKeys } from "@/lib/api";
+import { useProjectStore } from "@/stores/projectStore";
 
 interface Booking {
-  id: string
-  bookingReference: string
-  source: 'airbnb' | 'facebook'
-  guestName: string
-  guestEmail?: string
-  guestPhone?: string
-  checkinDate: string
-  checkoutDate: string
-  guestCount: number
-  totalAmount: number
-  depositAmount: number
-  balanceAmount: number
-  bookingStatus: 'pending' | 'confirmed' | 'checked_in' | 'completed'
-  specialRequests?: string
-  createdAt: string
-  updatedAt: string
+  id: string;
+  bookingReference: string;
+  source: "airbnb" | "facebook";
+  guestName: string;
+  guestEmail?: string;
+  guestPhone?: string;
+  checkinDate: string;
+  checkoutDate: string;
+  guestCount: number;
+  totalAmount: number;
+  depositAmount: number;
+  balanceAmount: number;
+  bookingStatus: "pending" | "confirmed" | "checked_in" | "completed";
+  specialRequests?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Get bookings query
 export const useBookings = (filters?: {
-  status?: string
-  source?: string
-  page?: number
-  limit?: number
+  status?: string;
+  source?: string;
+  page?: number;
+  limit?: number;
 }) => {
-  const currentProject = useProjectStore((state) => state.currentProject)
+  const currentProject = useProjectStore((state) => state.currentProject);
 
   return useQuery({
-    queryKey: queryKeys.bookings(currentProject?.id || ''),
+    queryKey: queryKeys.bookings(currentProject?.id || ""),
     queryFn: async () => {
-      if (!currentProject?.id) throw new Error('No project selected')
-      
-      const params = new URLSearchParams()
-      if (filters?.status) params.set('status', filters.status)
-      if (filters?.source) params.set('source', filters.source)
-      if (filters?.page) params.set('page', filters.page.toString())
-      if (filters?.limit) params.set('limit', filters.limit.toString())
+      if (!currentProject?.id) throw new Error("No project selected");
 
-      return apiRequest(`/api/${currentProject.id}/bookings?${params}`)
+      const params = new URLSearchParams();
+      if (filters?.status) params.set("status", filters.status);
+      if (filters?.source) params.set("source", filters.source);
+      if (filters?.page) params.set("page", filters.page.toString());
+      if (filters?.limit) params.set("limit", filters.limit.toString());
+
+      return apiRequest(`/api/${currentProject.id}/bookings?${params}`);
     },
     enabled: !!currentProject?.id,
-  })
-}
+  });
+};
 
 // Get single booking query
 export const useBooking = (bookingId: string) => {
-  const currentProject = useProjectStore((state) => state.currentProject)
+  const currentProject = useProjectStore((state) => state.currentProject);
 
   return useQuery({
-    queryKey: queryKeys.booking(currentProject?.id || '', bookingId),
+    queryKey: queryKeys.booking(currentProject?.id || "", bookingId),
     queryFn: async () => {
-      if (!currentProject?.id) throw new Error('No project selected')
-      return apiRequest(`/api/${currentProject.id}/bookings/${bookingId}`)
+      if (!currentProject?.id) throw new Error("No project selected");
+      return apiRequest(`/api/${currentProject.id}/bookings/${bookingId}`);
     },
     enabled: !!currentProject?.id && !!bookingId,
-  })
-}
+  });
+};
 
 // Create booking mutation
 export const useCreateBooking = () => {
-  const queryClient = useQueryClient()
-  const currentProject = useProjectStore((state) => state.currentProject)
+  const queryClient = useQueryClient();
+  const currentProject = useProjectStore((state) => state.currentProject);
 
   return useMutation({
-    mutationFn: async (bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => {
-      if (!currentProject?.id) throw new Error('No project selected')
-      
+    mutationFn: async (
+      bookingData: Omit<Booking, "id" | "createdAt" | "updatedAt">
+    ) => {
+      if (!currentProject?.id) throw new Error("No project selected");
+
       return apiRequest(`/api/${currentProject.id}/bookings`, {
-        method: 'POST',
+        method: "POST",
         body: JSON.stringify(bookingData),
-      })
+      });
     },
     onSuccess: () => {
       if (currentProject?.id) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.bookings(currentProject.id),
-        })
+        });
       }
     },
-  })
-}
+  });
+};
 
 // Update booking mutation
 export const useUpdateBooking = () => {
-  const queryClient = useQueryClient()
-  const currentProject = useProjectStore((state) => state.currentProject)
+  const queryClient = useQueryClient();
+  const currentProject = useProjectStore((state) => state.currentProject);
 
   return useMutation({
     mutationFn: async ({
       bookingId,
       updates,
     }: {
-      bookingId: string
-      updates: Partial<Booking>
+      bookingId: string;
+      updates: Partial<Booking>;
     }) => {
-      if (!currentProject?.id) throw new Error('No project selected')
-      
+      if (!currentProject?.id) throw new Error("No project selected");
+
       return apiRequest(`/api/${currentProject.id}/bookings/${bookingId}`, {
-        method: 'PUT',
+        method: "PUT",
         body: JSON.stringify(updates),
-      })
+      });
     },
     onSuccess: (data, { bookingId }) => {
       if (currentProject?.id) {
         // Update the specific booking in cache
         queryClient.setQueryData(
           queryKeys.booking(currentProject.id, bookingId),
-          data,
-        )
-        
+          data
+        );
+
         // Invalidate the bookings list
         queryClient.invalidateQueries({
           queryKey: queryKeys.bookings(currentProject.id),
-        })
+        });
       }
     },
-  })
-}
+  });
+};
 
 // Optimistic booking mutation with React 19 useOptimistic pattern
 export const useOptimisticBookingUpdate = () => {
-  const queryClient = useQueryClient()
-  const currentProject = useProjectStore((state) => state.currentProject)
+  const queryClient = useQueryClient();
+  const currentProject = useProjectStore((state) => state.currentProject);
 
   return useMutation({
     mutationFn: async ({
       bookingId,
       updates,
     }: {
-      bookingId: string
-      updates: Partial<Booking>
+      bookingId: string;
+      updates: Partial<Booking>;
     }) => {
-      if (!currentProject?.id) throw new Error('No project selected')
-      
+      if (!currentProject?.id) throw new Error("No project selected");
+
       return apiRequest(`/api/${currentProject.id}/bookings/${bookingId}`, {
-        method: 'PUT',
+        method: "PUT",
         body: JSON.stringify(updates),
-      })
+      });
     },
     onMutate: async ({ bookingId, updates }) => {
-      if (!currentProject?.id) return
+      if (!currentProject?.id) return;
 
       // Cancel outgoing refetches
       await queryClient.cancelQueries({
         queryKey: queryKeys.booking(currentProject.id, bookingId),
-      })
+      });
 
       // Snapshot previous value
       const previousBooking = queryClient.getQueryData(
-        queryKeys.booking(currentProject.id, bookingId),
-      )
+        queryKeys.booking(currentProject.id, bookingId)
+      );
 
       // Optimistically update
       queryClient.setQueryData(
         queryKeys.booking(currentProject.id, bookingId),
-        (old: Booking) => ({ ...old, ...updates }),
-      )
+        (old: Booking) => ({ ...old, ...updates })
+      );
 
-      return { previousBooking, bookingId, projectId: currentProject.id }
+      return { previousBooking, bookingId, projectId: currentProject.id };
     },
     onError: (err, variables, context) => {
       // Rollback optimistic update
       if (context?.projectId) {
         queryClient.setQueryData(
           queryKeys.booking(context.projectId, context.bookingId),
-          context.previousBooking,
-        )
+          context.previousBooking
+        );
       }
     },
     onSettled: (data, error, variables, context) => {
@@ -808,16 +818,17 @@ export const useOptimisticBookingUpdate = () => {
       if (context?.projectId) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.booking(context.projectId, context.bookingId),
-        })
+        });
       }
     },
-  })
-}
+  });
+};
 ```
 
 ## TanStack Router Configuration
 
 ### Router Setup
+
 **File:** `src/main.tsx`
 
 ```typescript
@@ -874,6 +885,7 @@ root.render(
 ```
 
 ### Root Route Layout
+
 **File:** `src/routes/__root.tsx`
 
 ```typescript
@@ -902,98 +914,103 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 ```
 
 ### Dashboard Route with Data Loading
+
 **File:** `src/routes/index.tsx`
 
 ```typescript
-import React from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import React from "react";
+import { createFileRoute } from "@tanstack/react-router";
 
-import { queryKeys } from '@/lib/api'
-import { DashboardPage } from '@/components/dashboard/DashboardPage'
+import { queryKeys } from "@/lib/api";
+import { DashboardPage } from "@/components/dashboard/DashboardPage";
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
-    const { queryClient, auth } = context
-    
+    const { queryClient, auth } = context;
+
     if (!auth.isAuthenticated) {
-      throw new Error('Not authenticated')
+      throw new Error("Not authenticated");
     }
 
-    const currentProject = auth.user?.currentProject
+    const currentProject = auth.user?.currentProject;
     if (!currentProject) {
-      throw new Error('No project selected')
+      throw new Error("No project selected");
     }
 
     // Prefetch dashboard data
     await queryClient.ensureQueryData({
       queryKey: queryKeys.reports(currentProject.id),
       queryFn: async () => {
-        const response = await fetch(`/api/${currentProject.id}/dashboard`)
-        if (!response.ok) throw new Error('Failed to fetch dashboard data')
-        return response.json()
+        const response = await fetch(`/api/${currentProject.id}/dashboard`);
+        if (!response.ok) throw new Error("Failed to fetch dashboard data");
+        return response.json();
       },
-    })
+    });
   },
   component: DashboardPage,
   beforeLoad: ({ context }) => {
-    const { auth } = context
+    const { auth } = context;
     if (!auth.isAuthenticated) {
-      throw new Error('Authentication required')
+      throw new Error("Authentication required");
     }
   },
-})
+});
 ```
 
 ### Booking Detail Route with Params
+
 **File:** `src/routes/bookings/$bookingId.tsx`
 
 ```typescript
-import React from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import React from "react";
+import { createFileRoute } from "@tanstack/react-router";
 
-import { queryKeys } from '@/lib/api'
-import { BookingDetailPage } from '@/components/bookings/BookingDetailPage'
+import { queryKeys } from "@/lib/api";
+import { BookingDetailPage } from "@/components/bookings/BookingDetailPage";
 
-export const Route = createFileRoute('/bookings/$bookingId')({
+export const Route = createFileRoute("/bookings/$bookingId")({
   loader: async ({ context, params }) => {
-    const { queryClient, auth } = context
-    const { bookingId } = params
-    
-    const currentProject = auth.user?.currentProject
+    const { queryClient, auth } = context;
+    const { bookingId } = params;
+
+    const currentProject = auth.user?.currentProject;
     if (!currentProject) {
-      throw new Error('No project selected')
+      throw new Error("No project selected");
     }
 
     // Prefetch booking data
     const booking = await queryClient.ensureQueryData({
       queryKey: queryKeys.booking(currentProject.id, bookingId),
       queryFn: async () => {
-        const response = await fetch(`/api/${currentProject.id}/bookings/${bookingId}`)
+        const response = await fetch(
+          `/api/${currentProject.id}/bookings/${bookingId}`
+        );
         if (!response.ok) {
           if (response.status === 404) {
-            throw new Error('Booking not found')
+            throw new Error("Booking not found");
           }
-          throw new Error('Failed to fetch booking')
+          throw new Error("Failed to fetch booking");
         }
-        return response.json()
+        return response.json();
       },
-    })
+    });
 
-    return { booking }
+    return { booking };
   },
   component: BookingDetailPage,
   beforeLoad: ({ context }) => {
-    const { auth } = context
+    const { auth } = context;
     if (!auth.isAuthenticated) {
-      throw new Error('Authentication required')
+      throw new Error("Authentication required");
     }
   },
-})
+});
 ```
 
 ## Enhanced Component Examples
 
 ### Dashboard with TanStack Query Integration
+
 **File:** `src/components/dashboard/DashboardPage.tsx`
 
 ```typescript
@@ -1071,12 +1088,12 @@ function MetricCard({ title, value, change, icon: Icon, trend, loading }: Metric
 
 export function DashboardPage() {
   const currentProject = useProjectStore((state) => state.currentProject)
-  
+
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: queryKeys.reports(currentProject?.id || ''),
     queryFn: async () => {
       if (!currentProject?.id) throw new Error('No project selected')
-      
+
       const response = await fetch(`/api/${currentProject.id}/dashboard`)
       if (!response.ok) throw new Error('Failed to fetch dashboard data')
       return response.json()
@@ -1142,6 +1159,7 @@ export function DashboardPage() {
 ```
 
 ### Modern Expense Form with React 19 Features
+
 **File:** `src/components/forms/ExpenseForm.tsx`
 
 ```typescript
@@ -1585,52 +1603,53 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
 ## Tailwind CSS v4 Configuration
 
 ### Vite Configuration for Tailwind v4
+
 **File:** `vite.config.ts`
 
 ```typescript
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite' // New Tailwind v4 Vite plugin
-import { VitePWA } from 'vite-plugin-pwa'
-import path from 'path'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite"; // New Tailwind v4 Vite plugin
+import { VitePWA } from "vite-plugin-pwa";
+import path from "path";
 
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(), // Tailwind v4 Vite plugin
     VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+      registerType: "autoUpdate",
+      includeAssets: ["favicon.ico", "apple-touch-icon.png"],
       manifest: {
-        name: 'Okaeri Resort Management',
-        short_name: 'Okaeri',
-        description: 'Complete resort management system',
-        theme_color: '#0ea5e9',
-        background_color: '#ffffff',
-        display: 'standalone',
-        orientation: 'portrait',
-        start_url: '/',
+        name: "Okaeri Resort Management",
+        short_name: "Okaeri",
+        description: "Complete resort management system",
+        theme_color: "#0ea5e9",
+        background_color: "#ffffff",
+        display: "standalone",
+        orientation: "portrait",
+        start_url: "/",
         icons: [
           {
-            src: 'icon-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
+            src: "icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
           },
           {
-            src: 'icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
+            src: "icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
           },
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
         runtimeCaching: [
           {
             urlPattern: /^\/api\/.*$/,
-            handler: 'NetworkFirst',
+            handler: "NetworkFirst",
             options: {
-              cacheName: 'api-cache',
+              cacheName: "api-cache",
               expiration: {
                 maxEntries: 32,
                 maxAgeSeconds: 5 * 60, // 5 minutes
@@ -1643,7 +1662,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      "@": path.resolve(__dirname, "./src"),
     },
   },
   server: {
@@ -1651,30 +1670,31 @@ export default defineConfig({
     host: true,
   },
   build: {
-    target: 'baseline-widely-available', // Vite 7 default
+    target: "baseline-widely-available", // Vite 7 default
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['@tanstack/react-router'],
-          query: ['@tanstack/react-query'],
+          vendor: ["react", "react-dom"],
+          router: ["@tanstack/react-router"],
+          query: ["@tanstack/react-query"],
           ui: [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-select',
-            '@radix-ui/react-calendar',
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-select",
+            "@radix-ui/react-calendar",
           ],
-          forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
-          store: ['zustand'],
+          forms: ["react-hook-form", "@hookform/resolvers", "zod"],
+          store: ["zustand"],
         },
       },
     },
   },
-})
+});
 ```
 
 ## Setup Commands
 
 ### Installation & Setup Commands
+
 ```bash
 # Create project with Vite 7
 npm create vite@latest okaeri-resort-system --template react-ts
@@ -1706,6 +1726,7 @@ npm install lucide-react date-fns react-day-picker recharts framer-motion
 ```
 
 ### Development Workflow Commands
+
 ```bash
 # Development
 npm run dev              # Start dev server
@@ -1722,12 +1743,14 @@ npm run preview         # Preview production build
 
 ## Key Migration Benefits
 
-### Bundle Size Reduction
-- **Before (Redux Toolkit + RTK Query)**: ~45KB gzipped
-- **After (Zustand + TanStack Query)**: ~25KB gzipped
-- **Net Savings**: ~20KB (44% reduction)
+### Bundle Size Optimization
+
+- **Zustand + TanStack Query**: ~25KB gzipped
+- **Lightweight state management solution**
+- **Optimized for performance and minimal footprint**
 
 ### Developer Experience Improvements
+
 - **Less Boilerplate**: ~60% reduction in state management code
 - **Better TypeScript**: Full type inference with TanStack Router
 - **Simpler Testing**: Zustand stores are easier to test
@@ -1735,18 +1758,488 @@ npm run preview         # Preview production build
 - **Consistent Formatting**: Prettier + lint-staged ensures code consistency
 
 ### Performance Optimizations
+
 - **TanStack Query**: Intelligent background refetching and cache invalidation
-- **React 19 useOptimistic**: Instant UI updates with automatic rollback on errors
+- **React 19 useOptimistic**: Instant UI updates with automatic rollback on
+  errors
 - **Vite 7 Lightning CSS**: 100x faster CSS processing than traditional PostCSS
-- **Serverless Edge Functions**: Global CDN distribution with <200ms response times
+- **Serverless Edge Functions**: Global CDN distribution with <200ms response
+  times
 - **Code Quality**: Pre-commit hooks ensure consistent, error-free code
 
 ### Modern Development Features
+
 - **Type Safety**: End-to-end TypeScript with strict mode
-- **React 19 Hooks**: useActionState for async form handling, useOptimistic for UI
+- **React 19 Hooks**: useActionState for async form handling, useOptimistic for
+  UI
 - **File-based Routing**: TanStack Router's intuitive routing system
 - **Hot Module Replacement**: Instant updates during development
-- **Automated Formatting**: Prettier with import sorting and Tailwind class sorting
+- **Automated Formatting**: Prettier with import sorting and Tailwind class
+  sorting
 - **Git Hooks**: Automated linting and type checking before commits
 
-This modernized implementation plan leverages the latest 2025 technologies to deliver a cutting-edge, serverless resort management system with superior developer experience, better performance, and enterprise-level capabilities while maintaining the simplicity needed for family resort operations.
+This modernized implementation plan leverages the latest 2025 technologies to
+deliver a cutting-edge, serverless resort management system with superior
+developer experience, better performance, and enterprise-level capabilities
+while maintaining the simplicity needed for family resort operations.
+
+## Phase Verification Steps
+
+### Phase 1: Project Setup & Configuration ✓
+
+**Verification Checklist:**
+
+- [ ] Vite 7 project created successfully
+- [ ] TypeScript configured with strict mode
+- [ ] React 19 installed and working
+- [ ] shadcn/ui components installed
+- [ ] Tailwind CSS v4 configured
+- [ ] Path aliases configured
+
+**Setup Testing:**
+
+```bash
+# Verify installation
+npm ls react react-dom vite
+
+# Test development server
+npm run dev
+
+# Verify TypeScript configuration
+npm run type-check
+
+# Check Tailwind build
+npm run build:css
+```
+
+### Phase 2: State Management Setup ✓
+
+**Verification Checklist:**
+
+- [ ] Zustand stores created
+- [ ] TanStack Query configured
+- [ ] Query client setup complete
+- [ ] DevTools integration working
+- [ ] Store persistence configured
+- [ ] Query invalidation working
+
+**State Testing:**
+
+```bash
+# Test Zustand stores
+npm run test:stores
+
+# Verify React Query DevTools
+# Open browser DevTools > React Query tab
+
+# Check persistence
+localStorage.getItem('auth-storage')
+localStorage.getItem('project-storage')
+```
+
+### Phase 3: Routing Implementation ✓
+
+**Verification Checklist:**
+
+- [ ] TanStack Router configured
+- [ ] File-based routing working
+- [ ] Route guards implemented
+- [ ] Data loaders functional
+- [ ] Navigation working
+- [ ] 404 handling correct
+
+**Routing Testing:**
+
+```bash
+# Generate route tree
+npm run routes:generate
+
+# Test route navigation
+# Navigate to all major routes
+
+# Test protected routes
+# Access /dashboard without auth - should redirect
+
+# Test deep linking
+# Direct URL access should work
+```
+
+### Phase 4: Component Library ✓
+
+**Verification Checklist:**
+
+- [ ] All shadcn/ui components working
+- [ ] Custom theme applied
+- [ ] Form validation working
+- [ ] Accessibility compliant
+- [ ] Responsive design working
+- [ ] Dark mode functional
+
+**Component Testing:**
+
+```bash
+# Test component rendering
+npm run test:components
+
+# Check accessibility
+npm run test:a11y
+
+# Test responsive design
+npm run test:responsive
+
+# Verify dark mode
+# Toggle theme in UI
+```
+
+### Phase 5: API Integration ✓
+
+**Verification Checklist:**
+
+- [ ] API routes configured
+- [ ] Authentication working
+- [ ] Data fetching functional
+- [ ] Mutations working
+- [ ] Optimistic updates working
+- [ ] Error handling proper
+
+**API Testing:**
+
+```bash
+# Test API endpoints
+npm run test:api
+
+# Test authentication flow
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@test.com","password":"password"}'
+
+# Test data fetching
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:3000/api/projects
+```
+
+### Phase 6: Database Setup ✓
+
+**Verification Checklist:**
+
+- [ ] Neon PostgreSQL connected
+- [ ] Migrations executed
+- [ ] Schemas created
+- [ ] Seeds applied
+- [ ] Connection pooling working
+- [ ] Queries optimized
+
+**Database Testing:**
+
+```bash
+# Test database connection
+npm run db:test-connection
+
+# Run migrations
+npm run db:migrate
+
+# Seed test data
+npm run db:seed
+
+# Check schema
+psql $DATABASE_URL -c "\dt"
+```
+
+### Phase 7: File Upload & Storage ✓
+
+**Verification Checklist:**
+
+- [ ] R2 bucket configured
+- [ ] File upload working
+- [ ] Image optimization working
+- [ ] Signed URLs functional
+- [ ] File deletion working
+- [ ] Size limits enforced
+
+**Storage Testing:**
+
+```bash
+# Test file upload
+curl -X POST http://localhost:3000/api/upload \
+  -F "file=@test-image.jpg"
+
+# Verify R2 storage
+wrangler r2 object list receipts
+
+# Test file size limits
+# Upload file > 5MB - should reject
+```
+
+### Phase 8: PWA Features ✓
+
+**Verification Checklist:**
+
+- [ ] Service worker registered
+- [ ] Offline mode working
+- [ ] Install prompt appears
+- [ ] Icons configured
+- [ ] Manifest valid
+- [ ] Caching strategies working
+
+**PWA Testing:**
+
+```bash
+# Build PWA
+npm run build
+
+# Test PWA locally
+npm run preview
+
+# Check PWA score
+npx lighthouse http://localhost:4173 --view
+
+# Test offline mode
+# 1. Load app
+# 2. Go offline
+# 3. Navigate - should work
+```
+
+### Phase 9: Performance Optimization ✓
+
+**Verification Checklist:**
+
+- [ ] Bundle size < 200KB
+- [ ] Code splitting working
+- [ ] Lazy loading functional
+- [ ] Images optimized
+- [ ] Fonts optimized
+- [ ] Core Web Vitals passing
+
+**Performance Testing:**
+
+```bash
+# Analyze bundle size
+npm run build
+npm run analyze
+
+# Test performance
+npx lighthouse http://localhost:5173 \
+  --only-categories=performance
+
+# Check Core Web Vitals
+npm run test:cwv
+
+# Monitor bundle size
+npm run size
+```
+
+### Phase 10: Security Implementation ✓
+
+**Verification Checklist:**
+
+- [ ] JWT authentication secure
+- [ ] Input validation working
+- [ ] XSS protection enabled
+- [ ] CSRF protection active
+- [ ] Headers configured
+- [ ] Rate limiting working
+
+**Security Testing:**
+
+```bash
+# Security audit
+npm audit
+
+# Test XSS prevention
+npm run test:security -- --xss
+
+# Check security headers
+curl -I http://localhost:3000
+
+# Test rate limiting
+for i in {1..100}; do
+  curl http://localhost:3000/api/test
+done
+```
+
+### Phase 11: Testing Setup ✓
+
+**Verification Checklist:**
+
+- [ ] Unit tests passing
+- [ ] Integration tests working
+- [ ] E2E tests configured
+- [ ] Coverage reports generated
+- [ ] CI/CD pipeline working
+- [ ] Pre-commit hooks active
+
+**Testing Commands:**
+
+```bash
+# Run all tests
+npm test
+
+# Run unit tests
+npm run test:unit
+
+# Run integration tests
+npm run test:integration
+
+# Run E2E tests
+npm run test:e2e
+
+# Generate coverage report
+npm run test:coverage
+```
+
+### Phase 12: Deployment ✓
+
+**Verification Checklist:**
+
+- [ ] Environment variables set
+- [ ] Build successful
+- [ ] Deployment working
+- [ ] Domain configured
+- [ ] SSL certificate active
+- [ ] Monitoring enabled
+
+**Deployment Testing:**
+
+```bash
+# Build for production
+npm run build
+
+# Test production build
+npm run preview
+
+# Deploy to Vercel
+vercel --prod
+
+# Verify deployment
+curl https://your-app.vercel.app/api/health
+
+# Check SSL
+curl -I https://your-app.vercel.app
+```
+
+### Integration Testing
+
+**Complete System Flow:**
+
+1. **User Registration & Login:**
+   - [ ] Register new user
+   - [ ] Verify email (if enabled)
+   - [ ] Login with credentials
+   - [ ] JWT token received
+   - [ ] Auto-refresh working
+
+2. **Project Management:**
+   - [ ] Create new project
+   - [ ] Switch between projects
+   - [ ] Update project settings
+   - [ ] Invite team members
+   - [ ] Set permissions
+
+3. **Booking Flow:**
+   - [ ] Import CSV bookings
+   - [ ] Create manual booking
+   - [ ] Update booking status
+   - [ ] Record payments
+   - [ ] View timeline
+
+4. **Financial Management:**
+   - [ ] Log expenses
+   - [ ] Upload receipts
+   - [ ] Generate reports
+   - [ ] Export data
+   - [ ] View analytics
+
+### Performance Benchmarks
+
+**Target Metrics:**
+
+- [ ] Lighthouse Score > 95
+- [ ] FCP < 1.5s
+- [ ] LCP < 2.5s
+- [ ] TTI < 3.5s
+- [ ] CLS < 0.1
+- [ ] Bundle size < 200KB gzipped
+
+**Benchmark Testing:**
+
+```bash
+# Run performance benchmarks
+npm run benchmark
+
+# Measure metrics
+npm run metrics
+
+# Profile performance
+npm run profile
+```
+
+### Monitoring & Analytics
+
+**Monitoring Setup:**
+
+- [ ] Error tracking (Sentry)
+- [ ] Performance monitoring
+- [ ] User analytics
+- [ ] API monitoring
+- [ ] Database monitoring
+- [ ] Uptime monitoring
+
+**Monitoring Commands:**
+
+```bash
+# Setup Sentry
+npm install @sentry/react
+
+# Configure monitoring
+vercel env add SENTRY_DSN
+
+# View logs
+vercel logs --follow
+
+# Check analytics
+vercel analytics
+```
+
+### Documentation
+
+**Documentation Checklist:**
+
+- [ ] API documentation complete
+- [ ] Component documentation
+- [ ] Setup guide written
+- [ ] Deployment guide ready
+- [ ] User manual created
+- [ ] Developer notes updated
+
+### Post-Deployment
+
+**Post-Deployment Tasks:**
+
+- [ ] Monitor error rates
+- [ ] Check performance metrics
+- [ ] Gather user feedback
+- [ ] Plan improvements
+- [ ] Schedule maintenance
+- [ ] Update dependencies
+
+**Maintenance Commands:**
+
+```bash
+# Check for updates
+npm outdated
+
+# Update dependencies
+npm update
+
+# Security updates
+npm audit fix
+
+# Database backup
+npm run db:backup
+
+# Generate reports
+npm run reports:generate
+```
+
+This comprehensive verification ensures each phase of implementation meets
+quality standards and the system is production-ready.

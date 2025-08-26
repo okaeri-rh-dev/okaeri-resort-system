@@ -24,7 +24,7 @@ Phase 3 implements a comprehensive financial management system that consolidates
 ### [Sub-Phase 3.2: Expense Management System](./sub-phase-3-2-expense-management.md)
 **Duration:** 2 days  
 **Dependencies:** Sub-Phase 3.1  
-**Validation Agents:** `vercel-resort-api-architect`, `security-compliance-auditor`  
+**Validation Agents:** `modern-form-validation-expert`, `vercel-resort-api-architect`, `security-compliance-auditor`  
 - Implement expense CRUD operations
 - Create categorization system
 - Build receipt upload to Cloudflare R2
@@ -42,7 +42,7 @@ Phase 3 implements a comprehensive financial management system that consolidates
 ### [Sub-Phase 3.4: Financial Dashboard](./sub-phase-3-4-financial-dashboard.md)
 **Duration:** 2 days  
 **Dependencies:** Sub-Phases 3.2-3.3  
-**Validation Agents:** `resort-ui-designer`, `react-redux-resort-architect`  
+**Validation Agents:** `resort-ui-designer`, `zustand-tanstack-resort-architect`  
 - Build real-time metrics display
 - Create interactive charts with Recharts
 - Implement period comparisons
@@ -268,7 +268,7 @@ useAnalytics() → Trends and predictions
 - [ ] `postgres-serverless-architect` - Database design approval
 - [ ] `resort-finance-architect` - Financial logic validation
 - [ ] `vercel-resort-api-architect` - API architecture approval
-- [ ] `react-redux-resort-architect` - State management validation
+- [ ] `zustand-tanstack-resort-architect` - State management validation
 - [ ] `resort-ui-designer` - UI/UX approval
 - [ ] `security-compliance-auditor` - Security validation
 - [ ] `pwa-performance-optimizer` - Performance approval

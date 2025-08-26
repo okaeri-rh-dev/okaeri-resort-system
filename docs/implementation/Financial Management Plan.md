@@ -1,13 +1,21 @@
 # Financial Management System - Updated Implementation Plan 2025
 
 ## Overview
-The Financial Management System consolidates income from multiple booking sources and tracks all operational expenses with comprehensive categorization, reporting, and analytics capabilities. Built with **Vite 7 + React 19 + Zustand + TanStack Query + TanStack Router + shadcn/ui**, the system provides real-time financial insights with optimistic UI updates and serverless scalability.
+
+The Financial Management System consolidates income from multiple booking
+sources and tracks all operational expenses with comprehensive categorization,
+reporting, and analytics capabilities. Built with **Vite 7 + React 19 +
+Zustand + TanStack Query + TanStack Router + shadcn/ui**, the system provides
+real-time financial insights with optimistic UI updates and serverless
+scalability.
 
 ## Modern Technology Stack (2025)
 
 ### Frontend Architecture - React 19 + Zustand + TanStack Query
+
 - **Build Tool:** Vite 7.0.0 with Lightning CSS support
-- **React Framework:** React 19.1 with `useOptimistic` and `useActionState` hooks
+- **React Framework:** React 19.1 with `useOptimistic` and `useActionState`
+  hooks
 - **State Management:** Zustand 5.0.2 for local/UI state
 - **Server State:** TanStack Query 5.71.10 for server state management
 - **Routing:** TanStack Router 1.114.3 with file-based routing
@@ -17,6 +25,7 @@ The Financial Management System consolidates income from multiple booking source
 - **Type Safety:** TypeScript throughout with strict mode
 
 ### Backend Architecture - Vercel Serverless
+
 - **API Routes:** Vercel serverless functions (Node.js 20+)
 - **Database:** Neon PostgreSQL with optimized connection pooling
 - **File Storage:** Cloudflare R2 for receipt storage
@@ -27,49 +36,61 @@ The Financial Management System consolidates income from multiple booking source
 ### 1. Modern State Management with Zustand and TanStack Query
 
 #### Financial Store with Zustand
+
 ```typescript
 // src/stores/financialStore.ts
-import { create } from 'zustand'
-import { devtools, persist } from 'zustand/middleware'
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
 
 interface FinancialUIState {
-  selectedExpenseId: string | null
+  selectedExpenseId: string | null;
   filterDateRange: {
-    startDate: string | null
-    endDate: string | null
-  }
-  filterCategory: string | null
-  filterPaymentMethod: string | null
-  viewMode: 'list' | 'chart' | 'calendar'
+    startDate: string | null;
+    endDate: string | null;
+  };
+  filterCategory: string | null;
+  filterPaymentMethod: string | null;
+  viewMode: "list" | "chart" | "calendar";
   reportModal: {
-    isOpen: boolean
-    reportType: 'monthly' | 'quarterly' | 'annual' | 'custom' | null
-  }
+    isOpen: boolean;
+    reportType: "monthly" | "quarterly" | "annual" | "custom" | null;
+  };
   expenseModal: {
-    isOpen: boolean
-    expenseId: string | null
-    mode: 'create' | 'edit' | 'view'
-  }
+    isOpen: boolean;
+    expenseId: string | null;
+    mode: "create" | "edit" | "view";
+  };
   bulkOperations: {
-    selectedExpenseIds: string[]
-    isExporting: boolean
-    exportProgress: number
-  }
+    selectedExpenseIds: string[];
+    isExporting: boolean;
+    exportProgress: number;
+  };
 }
 
 interface FinancialActions {
-  setSelectedExpense: (id: string | null) => void
-  setDateRange: (range: { startDate: string | null; endDate: string | null }) => void
-  setFilterCategory: (category: string | null) => void
-  setFilterPaymentMethod: (method: string | null) => void
-  setViewMode: (mode: 'list' | 'chart' | 'calendar') => void
-  openReportModal: (type: 'monthly' | 'quarterly' | 'annual' | 'custom') => void
-  closeReportModal: () => void
-  openExpenseModal: (params: { expenseId?: string; mode: 'create' | 'edit' | 'view' }) => void
-  closeExpenseModal: () => void
-  toggleExpenseSelection: (id: string) => void
-  clearExpenseSelection: () => void
-  setExportProgress: (params: { isExporting: boolean; progress: number }) => void
+  setSelectedExpense: (id: string | null) => void;
+  setDateRange: (range: {
+    startDate: string | null;
+    endDate: string | null;
+  }) => void;
+  setFilterCategory: (category: string | null) => void;
+  setFilterPaymentMethod: (method: string | null) => void;
+  setViewMode: (mode: "list" | "chart" | "calendar") => void;
+  openReportModal: (
+    type: "monthly" | "quarterly" | "annual" | "custom"
+  ) => void;
+  closeReportModal: () => void;
+  openExpenseModal: (params: {
+    expenseId?: string;
+    mode: "create" | "edit" | "view";
+  }) => void;
+  closeExpenseModal: () => void;
+  toggleExpenseSelection: (id: string) => void;
+  clearExpenseSelection: () => void;
+  setExportProgress: (params: {
+    isExporting: boolean;
+    progress: number;
+  }) => void;
 }
 
 export const useFinancialStore = create<FinancialUIState & FinancialActions>()(
@@ -84,7 +105,7 @@ export const useFinancialStore = create<FinancialUIState & FinancialActions>()(
         },
         filterCategory: null,
         filterPaymentMethod: null,
-        viewMode: 'list',
+        viewMode: "list",
         reportModal: {
           isOpen: false,
           reportType: null,
@@ -92,7 +113,7 @@ export const useFinancialStore = create<FinancialUIState & FinancialActions>()(
         expenseModal: {
           isOpen: false,
           expenseId: null,
-          mode: 'create',
+          mode: "create",
         },
         bulkOperations: {
           selectedExpenseIds: [],
@@ -104,7 +125,8 @@ export const useFinancialStore = create<FinancialUIState & FinancialActions>()(
         setSelectedExpense: (id) => set({ selectedExpenseId: id }),
         setDateRange: (range) => set({ filterDateRange: range }),
         setFilterCategory: (category) => set({ filterCategory: category }),
-        setFilterPaymentMethod: (method) => set({ filterPaymentMethod: method }),
+        setFilterPaymentMethod: (method) =>
+          set({ filterPaymentMethod: method }),
         setViewMode: (mode) => set({ viewMode: mode }),
         openReportModal: (type) =>
           set({
@@ -133,16 +155,19 @@ export const useFinancialStore = create<FinancialUIState & FinancialActions>()(
             expenseModal: {
               isOpen: false,
               expenseId: null,
-              mode: 'create',
+              mode: "create",
             },
           }),
         toggleExpenseSelection: (id) =>
           set((state) => ({
             bulkOperations: {
               ...state.bulkOperations,
-              selectedExpenseIds: state.bulkOperations.selectedExpenseIds.includes(id)
-                ? state.bulkOperations.selectedExpenseIds.filter((expId) => expId !== id)
-                : [...state.bulkOperations.selectedExpenseIds, id],
+              selectedExpenseIds:
+                state.bulkOperations.selectedExpenseIds.includes(id)
+                  ? state.bulkOperations.selectedExpenseIds.filter(
+                      (expId) => expId !== id
+                    )
+                  : [...state.bulkOperations.selectedExpenseIds, id],
             },
           })),
         clearExpenseSelection: () =>
@@ -162,7 +187,7 @@ export const useFinancialStore = create<FinancialUIState & FinancialActions>()(
           })),
       }),
       {
-        name: 'financial-storage',
+        name: "financial-storage",
         partialize: (state) => ({
           filterDateRange: state.filterDateRange,
           filterCategory: state.filterCategory,
@@ -172,98 +197,108 @@ export const useFinancialStore = create<FinancialUIState & FinancialActions>()(
       }
     )
   )
-)
+);
 ```
 
 #### TanStack Query Hooks for Financial Data
+
 ```typescript
 // src/hooks/useFinancialQueries.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '@/lib/api'
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
 // Types
 interface ExpenseCategory {
-  id: string
-  name: string
-  parentCategory?: string
-  colorCode: string
-  isActive: boolean
-  projectId: string
+  id: string;
+  name: string;
+  parentCategory?: string;
+  colorCode: string;
+  isActive: boolean;
+  projectId: string;
 }
 
 interface Expense {
-  id: string
-  amount: number
-  currency: string
-  categoryId: string
-  category?: ExpenseCategory
-  subcategory?: string
-  paymentMethod: 'cash' | 'gcash' | 'bank_transfer' | 'card'
-  vendorName?: string
-  receiptUrl?: string
-  expenseDate: string
-  description?: string
-  createdBy: string
-  createdAt: string
-  updatedAt: string
+  id: string;
+  amount: number;
+  currency: string;
+  categoryId: string;
+  category?: ExpenseCategory;
+  subcategory?: string;
+  paymentMethod: "cash" | "gcash" | "bank_transfer" | "card";
+  vendorName?: string;
+  receiptUrl?: string;
+  expenseDate: string;
+  description?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Income {
-  id: string
-  bookingId?: string
-  source: 'airbnb' | 'facebook' | 'other'
-  amount: number
-  currency: string
-  paymentMethod: 'cash' | 'gcash' | 'bank_transfer' | 'card'
-  transactionDate: string
-  description?: string
-  category: string
-  createdAt: string
+  id: string;
+  bookingId?: string;
+  source: "airbnb" | "facebook" | "other";
+  amount: number;
+  currency: string;
+  paymentMethod: "cash" | "gcash" | "bank_transfer" | "card";
+  transactionDate: string;
+  description?: string;
+  category: string;
+  createdAt: string;
 }
 
 interface FinancialSummary {
-  totalIncome: number
-  totalExpenses: number
-  netProfit: number
-  profitMargin: number
+  totalIncome: number;
+  totalExpenses: number;
+  netProfit: number;
+  profitMargin: number;
   topExpenseCategories: Array<{
-    categoryName: string
-    amount: number
-    percentage: number
-  }>
+    categoryName: string;
+    amount: number;
+    percentage: number;
+  }>;
   monthlyTrends: Array<{
-    month: string
-    income: number
-    expenses: number
-    profit: number
-  }>
+    month: string;
+    income: number;
+    expenses: number;
+    profit: number;
+  }>;
 }
 
 // Query Keys
 export const financialKeys = {
-  all: ['financial'] as const,
-  expenses: (projectId: string) => [...financialKeys.all, 'expenses', projectId] as const,
-  expense: (projectId: string, expenseId: string) => [...financialKeys.expenses(projectId), expenseId] as const,
-  categories: (projectId: string) => [...financialKeys.all, 'categories', projectId] as const,
-  incomes: (projectId: string) => [...financialKeys.all, 'incomes', projectId] as const,
-  summary: (projectId: string) => [...financialKeys.all, 'summary', projectId] as const,
-  metrics: (projectId: string) => [...financialKeys.all, 'metrics', projectId] as const,
-}
+  all: ["financial"] as const,
+  expenses: (projectId: string) =>
+    [...financialKeys.all, "expenses", projectId] as const,
+  expense: (projectId: string, expenseId: string) =>
+    [...financialKeys.expenses(projectId), expenseId] as const,
+  categories: (projectId: string) =>
+    [...financialKeys.all, "categories", projectId] as const,
+  incomes: (projectId: string) =>
+    [...financialKeys.all, "incomes", projectId] as const,
+  summary: (projectId: string) =>
+    [...financialKeys.all, "summary", projectId] as const,
+  metrics: (projectId: string) =>
+    [...financialKeys.all, "metrics", projectId] as const,
+};
 
 // Queries
-export function useExpenses(projectId: string, filters?: {
-  page?: number
-  limit?: number
-  categoryId?: string
-  paymentMethod?: string
-  startDate?: string
-  endDate?: string
-}) {
+export function useExpenses(
+  projectId: string,
+  filters?: {
+    page?: number;
+    limit?: number;
+    categoryId?: string;
+    paymentMethod?: string;
+    startDate?: string;
+    endDate?: string;
+  }
+) {
   return useQuery({
     queryKey: [...financialKeys.expenses(projectId), filters],
     queryFn: () => api.get(`/${projectId}/expenses`, { params: filters }),
     staleTime: 1000 * 60 * 5, // 5 minutes
-  })
+  });
 }
 
 export function useExpense(projectId: string, expenseId: string) {
@@ -271,40 +306,50 @@ export function useExpense(projectId: string, expenseId: string) {
     queryKey: financialKeys.expense(projectId, expenseId),
     queryFn: () => api.get<Expense>(`/${projectId}/expenses/${expenseId}`),
     enabled: !!expenseId,
-  })
+  });
 }
 
 export function useExpenseCategories(projectId: string) {
   return useQuery({
     queryKey: financialKeys.categories(projectId),
-    queryFn: () => api.get<ExpenseCategory[]>(`/${projectId}/expenses/categories`),
+    queryFn: () =>
+      api.get<ExpenseCategory[]>(`/${projectId}/expenses/categories`),
     staleTime: 1000 * 60 * 30, // 30 minutes
-  })
+  });
 }
 
-export function useIncomes(projectId: string, filters?: {
-  page?: number
-  limit?: number
-  source?: string
-  startDate?: string
-  endDate?: string
-}) {
+export function useIncomes(
+  projectId: string,
+  filters?: {
+    page?: number;
+    limit?: number;
+    source?: string;
+    startDate?: string;
+    endDate?: string;
+  }
+) {
   return useQuery({
     queryKey: [...financialKeys.incomes(projectId), filters],
     queryFn: () => api.get(`/${projectId}/incomes`, { params: filters }),
     staleTime: 1000 * 60 * 5,
-  })
+  });
 }
 
-export function useFinancialSummary(projectId: string, dateRange?: {
-  startDate?: string
-  endDate?: string
-}) {
+export function useFinancialSummary(
+  projectId: string,
+  dateRange?: {
+    startDate?: string;
+    endDate?: string;
+  }
+) {
   return useQuery({
     queryKey: [...financialKeys.summary(projectId), dateRange],
-    queryFn: () => api.get<FinancialSummary>(`/${projectId}/financial-summary`, { params: dateRange }),
+    queryFn: () =>
+      api.get<FinancialSummary>(`/${projectId}/financial-summary`, {
+        params: dateRange,
+      }),
     staleTime: 1000 * 60 * 10, // 10 minutes
-  })
+  });
 }
 
 export function useDashboardMetrics(projectId: string) {
@@ -312,43 +357,47 @@ export function useDashboardMetrics(projectId: string) {
     queryKey: financialKeys.metrics(projectId),
     queryFn: () => api.get(`/${projectId}/dashboard-metrics`),
     refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
-  })
+  });
 }
 
 // Mutations
 export function useCreateExpense() {
-  const queryClient = useQueryClient()
-  
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async ({ projectId, receiptFile, ...expense }: {
-      projectId: string
-      amount: number
-      categoryId: string
-      paymentMethod: 'cash' | 'gcash' | 'bank_transfer' | 'card'
-      expenseDate: string
-      description?: string
-      vendorName?: string
-      receiptFile?: File
+    mutationFn: async ({
+      projectId,
+      receiptFile,
+      ...expense
+    }: {
+      projectId: string;
+      amount: number;
+      categoryId: string;
+      paymentMethod: "cash" | "gcash" | "bank_transfer" | "card";
+      expenseDate: string;
+      description?: string;
+      vendorName?: string;
+      receiptFile?: File;
     }) => {
-      const formData = new FormData()
+      const formData = new FormData();
       Object.entries(expense).forEach(([key, value]) => {
-        if (value !== undefined) formData.append(key, value.toString())
-      })
-      if (receiptFile) formData.append('receiptFile', receiptFile)
-      
-      return api.post<Expense>(`/${projectId}/expenses`, formData)
+        if (value !== undefined) formData.append(key, value.toString());
+      });
+      if (receiptFile) formData.append("receiptFile", receiptFile);
+
+      return api.post<Expense>(`/${projectId}/expenses`, formData);
     },
     onMutate: async (newExpense) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ 
-        queryKey: financialKeys.expenses(newExpense.projectId) 
-      })
-      
+      await queryClient.cancelQueries({
+        queryKey: financialKeys.expenses(newExpense.projectId),
+      });
+
       // Snapshot previous value
       const previousExpenses = queryClient.getQueryData(
         financialKeys.expenses(newExpense.projectId)
-      )
-      
+      );
+
       // Optimistically update
       queryClient.setQueryData(
         financialKeys.expenses(newExpense.projectId),
@@ -356,9 +405,9 @@ export function useCreateExpense() {
           ...old,
           expenses: [newExpense, ...(old?.expenses || [])],
         })
-      )
-      
-      return { previousExpenses }
+      );
+
+      return { previousExpenses };
     },
     onError: (err, newExpense, context) => {
       // Rollback on error
@@ -366,146 +415,175 @@ export function useCreateExpense() {
         queryClient.setQueryData(
           financialKeys.expenses(newExpense.projectId),
           context.previousExpenses
-        )
+        );
       }
     },
     onSettled: (data, error, variables) => {
       // Invalidate and refetch
-      queryClient.invalidateQueries({ 
-        queryKey: financialKeys.expenses(variables.projectId) 
-      })
-      queryClient.invalidateQueries({ 
-        queryKey: financialKeys.summary(variables.projectId) 
-      })
-      queryClient.invalidateQueries({ 
-        queryKey: financialKeys.metrics(variables.projectId) 
-      })
+      queryClient.invalidateQueries({
+        queryKey: financialKeys.expenses(variables.projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: financialKeys.summary(variables.projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: financialKeys.metrics(variables.projectId),
+      });
     },
-  })
+  });
 }
 
 export function useUpdateExpense() {
-  const queryClient = useQueryClient()
-  
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: ({ projectId, expenseId, ...updates }: {
-      projectId: string
-      expenseId: string
-    } & Partial<Expense>) => 
+    mutationFn: ({
+      projectId,
+      expenseId,
+      ...updates
+    }: {
+      projectId: string;
+      expenseId: string;
+    } & Partial<Expense>) =>
       api.put<Expense>(`/${projectId}/expenses/${expenseId}`, updates),
     onMutate: async ({ projectId, expenseId, ...updates }) => {
-      await queryClient.cancelQueries({ 
-        queryKey: financialKeys.expense(projectId, expenseId) 
-      })
-      
+      await queryClient.cancelQueries({
+        queryKey: financialKeys.expense(projectId, expenseId),
+      });
+
       const previousExpense = queryClient.getQueryData(
         financialKeys.expense(projectId, expenseId)
-      )
-      
+      );
+
       queryClient.setQueryData(
         financialKeys.expense(projectId, expenseId),
         (old: any) => ({ ...old, ...updates })
-      )
-      
-      return { previousExpense }
+      );
+
+      return { previousExpense };
     },
     onError: (err, variables, context) => {
       if (context?.previousExpense) {
         queryClient.setQueryData(
           financialKeys.expense(variables.projectId, variables.expenseId),
           context.previousExpense
-        )
+        );
       }
     },
     onSettled: (data, error, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: financialKeys.expense(variables.projectId, variables.expenseId) 
-      })
-      queryClient.invalidateQueries({ 
-        queryKey: financialKeys.expenses(variables.projectId) 
-      })
-      queryClient.invalidateQueries({ 
-        queryKey: financialKeys.summary(variables.projectId) 
-      })
+      queryClient.invalidateQueries({
+        queryKey: financialKeys.expense(
+          variables.projectId,
+          variables.expenseId
+        ),
+      });
+      queryClient.invalidateQueries({
+        queryKey: financialKeys.expenses(variables.projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: financialKeys.summary(variables.projectId),
+      });
     },
-  })
+  });
 }
 
 export function useDeleteExpense() {
-  const queryClient = useQueryClient()
-  
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: ({ projectId, expenseId }: { projectId: string; expenseId: string }) =>
-      api.delete(`/${projectId}/expenses/${expenseId}`),
+    mutationFn: ({
+      projectId,
+      expenseId,
+    }: {
+      projectId: string;
+      expenseId: string;
+    }) => api.delete(`/${projectId}/expenses/${expenseId}`),
     onSettled: (data, error, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: financialKeys.expenses(variables.projectId) 
-      })
-      queryClient.invalidateQueries({ 
-        queryKey: financialKeys.summary(variables.projectId) 
-      })
-      queryClient.invalidateQueries({ 
-        queryKey: financialKeys.metrics(variables.projectId) 
-      })
+      queryClient.invalidateQueries({
+        queryKey: financialKeys.expenses(variables.projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: financialKeys.summary(variables.projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: financialKeys.metrics(variables.projectId),
+      });
     },
-  })
+  });
 }
 
 export function useCreateExpenseCategory() {
-  const queryClient = useQueryClient()
-  
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: ({ projectId, ...category }: {
-      projectId: string
-      name: string
-      parentCategory?: string
-      colorCode: string
-    }) => api.post<ExpenseCategory>(`/${projectId}/expenses/categories`, category),
+    mutationFn: ({
+      projectId,
+      ...category
+    }: {
+      projectId: string;
+      name: string;
+      parentCategory?: string;
+      colorCode: string;
+    }) =>
+      api.post<ExpenseCategory>(`/${projectId}/expenses/categories`, category),
     onSettled: (data, error, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: financialKeys.categories(variables.projectId) 
-      })
+      queryClient.invalidateQueries({
+        queryKey: financialKeys.categories(variables.projectId),
+      });
     },
-  })
+  });
 }
 
 export function useImportExpenses() {
-  const queryClient = useQueryClient()
-  
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: ({ projectId, csvData }: { projectId: string; csvData: any[] }) =>
-      api.post(`/${projectId}/expenses/import`, { csvData }),
+    mutationFn: ({
+      projectId,
+      csvData,
+    }: {
+      projectId: string;
+      csvData: any[];
+    }) => api.post(`/${projectId}/expenses/import`, { csvData }),
     onSettled: (data, error, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: financialKeys.expenses(variables.projectId) 
-      })
-      queryClient.invalidateQueries({ 
-        queryKey: financialKeys.summary(variables.projectId) 
-      })
-      queryClient.invalidateQueries({ 
-        queryKey: financialKeys.metrics(variables.projectId) 
-      })
+      queryClient.invalidateQueries({
+        queryKey: financialKeys.expenses(variables.projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: financialKeys.summary(variables.projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: financialKeys.metrics(variables.projectId),
+      });
     },
-  })
+  });
 }
 
 export function useGenerateReport() {
   return useMutation({
-    mutationFn: ({ projectId, ...reportData }: {
-      projectId: string
-      reportType: 'monthly' | 'quarterly' | 'annual' | 'custom'
-      format: 'pdf' | 'excel' | 'csv'
-      startDate?: string
-      endDate?: string
-      categories?: string[]
-    }) => api.post<{ reportUrl: string }>(`/${projectId}/reports/generate`, reportData),
-  })
+    mutationFn: ({
+      projectId,
+      ...reportData
+    }: {
+      projectId: string;
+      reportType: "monthly" | "quarterly" | "annual" | "custom";
+      format: "pdf" | "excel" | "csv";
+      startDate?: string;
+      endDate?: string;
+      categories?: string[];
+    }) =>
+      api.post<{ reportUrl: string }>(
+        `/${projectId}/reports/generate`,
+        reportData
+      ),
+  });
 }
 ```
 
 ### 2. Modern Expense Entry with React 19 Features
 
 #### Enhanced Expense Form Component
+
 ```typescript
 // src/components/financial/ExpenseForm.tsx
 "use client"
@@ -577,7 +655,7 @@ export function ExpenseForm({ projectId, expenseId, mode = 'create' }: ExpenseFo
   const closeExpenseModal = useFinancialStore((state) => state.closeExpenseModal)
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null)
   const [recentExpenses, setRecentExpenses] = useState<ExpenseFormData[]>([])
-  
+
   // React 19: useOptimistic for optimistic UI updates
   const [optimisticExpenses, addOptimisticExpense] = useOptimistic<ExpenseFormData[], ExpenseFormData>(
     recentExpenses,
@@ -604,7 +682,7 @@ export function ExpenseForm({ projectId, expenseId, mode = 'create' }: ExpenseFo
     async (prevState: any, formData: FormData) => {
       try {
         const values = form.getValues()
-        
+
         // Optimistically add expense to recent list
         addOptimisticExpense(values)
 
@@ -621,7 +699,7 @@ export function ExpenseForm({ projectId, expenseId, mode = 'create' }: ExpenseFo
 
         form.reset()
         setReceiptPreview(null)
-        
+
         return {
           success: true,
           message: 'Expense created successfully!',
@@ -736,8 +814,8 @@ export function ExpenseForm({ projectId, expenseId, mode = 'create' }: ExpenseFo
                           {categories?.map((category) => (
                             <SelectItem key={category.id} value={category.id}>
                               <div className="flex items-center gap-2">
-                                <div 
-                                  className="w-3 h-3 rounded-full" 
+                                <div
+                                  className="w-3 h-3 rounded-full"
                                   style={{ backgroundColor: category.colorCode }}
                                 />
                                 {category.name}
@@ -1025,6 +1103,7 @@ export function ExpenseForm({ projectId, expenseId, mode = 'create' }: ExpenseFo
 ### 3. Financial Dashboard with Real-time Analytics
 
 #### Modern Financial Dashboard Component
+
 ```typescript
 // src/components/financial/FinancialDashboard.tsx
 "use client"
@@ -1131,7 +1210,7 @@ export function FinancialDashboard({ projectId }: { projectId: string }) {
     )
   }
 
-  const profitMargin = metrics?.monthlyRevenue ? 
+  const profitMargin = metrics?.monthlyRevenue ?
     ((metrics.netProfit / metrics.monthlyRevenue) * 100) : 0
 
   return (
@@ -1236,27 +1315,27 @@ export function FinancialDashboard({ projectId }: { projectId: string }) {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: number) => [`₱${value.toLocaleString()}`, '']}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="income" 
-                      stroke="#10b981" 
+                    <Line
+                      type="monotone"
+                      dataKey="income"
+                      stroke="#10b981"
                       strokeWidth={2}
                       name="Revenue"
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="expenses" 
-                      stroke="#ef4444" 
+                    <Line
+                      type="monotone"
+                      dataKey="expenses"
+                      stroke="#ef4444"
                       strokeWidth={2}
                       name="Expenses"
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="profit" 
-                      stroke="#3b82f6" 
+                    <Line
+                      type="monotone"
+                      dataKey="profit"
+                      stroke="#3b82f6"
                       strokeWidth={2}
                       name="Profit"
                     />
@@ -1298,8 +1377,8 @@ export function FinancialDashboard({ projectId }: { projectId: string }) {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Recent Transactions</CardTitle>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => openExpenseModal({ mode: 'create' })}
               >
@@ -1448,6 +1527,7 @@ export function FinancialDashboard({ projectId }: { projectId: string }) {
 ### 4. Advanced Report Generation
 
 #### Modern Report Generation Component
+
 ```typescript
 // src/components/financial/ReportGenerator.tsx
 "use client"
@@ -1815,8 +1895,8 @@ export function ReportGenerator({ projectId }: { projectId: string }) {
                                   />
                                 </FormControl>
                                 <FormLabel className="text-sm font-normal flex items-center gap-2">
-                                  <div 
-                                    className="w-3 h-3 rounded-full" 
+                                  <div
+                                    className="w-3 h-3 rounded-full"
                                     style={{ backgroundColor: category.colorCode }}
                                   />
                                   {category.name}
@@ -1934,48 +2014,56 @@ export function ReportGenerator({ projectId }: { projectId: string }) {
 ### 5. Serverless API Routes
 
 #### Financial API Route Implementation
+
 ```javascript
 // api/[projectId]/expenses/index.js - Vercel Serverless Function
-import { neon } from '@neondatabase/serverless'
-import { authenticateUser, checkProjectAccess } from '../../../lib/auth-middleware.js'
-import { validateExpenseData } from '../../../lib/validations.js'
-import formidable from 'formidable'
-import { uploadToR2 } from '../../../lib/file-upload.js'
+import { neon } from "@neondatabase/serverless";
+import {
+  authenticateUser,
+  checkProjectAccess,
+} from "../../../lib/auth-middleware.js";
+import { validateExpenseData } from "../../../lib/validations.js";
+import formidable from "formidable";
+import { uploadToR2 } from "../../../lib/file-upload.js";
 
-const sql = neon(process.env.DATABASE_URL)
+const sql = neon(process.env.DATABASE_URL);
 
 export const config = {
   api: {
     bodyParser: false,
   },
-}
+};
 
 export default async function handler(req, res) {
   try {
     // Authenticate user
-    const user = await authenticateUser(req)
+    const user = await authenticateUser(req);
     if (!user) {
-      return res.status(401).json({ error: 'Unauthorized' })
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { projectId } = req.query
+    const { projectId } = req.query;
 
     // Check project access
-    const hasAccess = await checkProjectAccess(user.id, projectId, 'expenses.read')
+    const hasAccess = await checkProjectAccess(
+      user.id,
+      projectId,
+      "expenses.read"
+    );
     if (!hasAccess) {
-      return res.status(403).json({ error: 'Forbidden' })
+      return res.status(403).json({ error: "Forbidden" });
     }
 
-    if (req.method === 'GET') {
-      const { 
-        page = 1, 
-        limit = 20, 
-        categoryId, 
-        paymentMethod, 
-        startDate, 
-        endDate 
-      } = req.query
-      const offset = (page - 1) * limit
+    if (req.method === "GET") {
+      const {
+        page = 1,
+        limit = 20,
+        categoryId,
+        paymentMethod,
+        startDate,
+        endDate,
+      } = req.query;
+      const offset = (page - 1) * limit;
 
       let query = `
         SELECT 
@@ -1984,70 +2072,76 @@ export default async function handler(req, res) {
           ec.color_code as category_color,
           u.first_name || ' ' || u.last_name as created_by_name,
           COUNT(*) OVER() as total_count
-        FROM project_${projectId.replace(/[^a-z0-9_]/gi, '_')}.expenses e
-        LEFT JOIN project_${projectId.replace(/[^a-z0-9_]/gi, '_')}.expense_categories ec ON e.category_id = ec.id
+        FROM project_${projectId.replace(/[^a-z0-9_]/gi, "_")}.expenses e
+        LEFT JOIN project_${projectId.replace(/[^a-z0-9_]/gi, "_")}.expense_categories ec ON e.category_id = ec.id
         LEFT JOIN users u ON u.id = e.created_by
         WHERE 1=1
-      `
-      const params = []
-      
-      if (categoryId) {
-        params.push(categoryId)
-        query += ` AND e.category_id = $${params.length}`
-      }
-      
-      if (paymentMethod) {
-        params.push(paymentMethod)
-        query += ` AND e.payment_method = $${params.length}`
-      }
-      
-      if (startDate) {
-        params.push(startDate)
-        query += ` AND e.expense_date >= $${params.length}`
-      }
-      
-      if (endDate) {
-        params.push(endDate)
-        query += ` AND e.expense_date <= $${params.length}`
-      }
-      
-      params.push(limit, offset)
-      query += ` ORDER BY e.expense_date DESC, e.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`
+      `;
+      const params = [];
 
-      const expenses = await sql.query(query, params)
-      const totalCount = expenses.length > 0 ? expenses[0].total_count : 0
-      
+      if (categoryId) {
+        params.push(categoryId);
+        query += ` AND e.category_id = $${params.length}`;
+      }
+
+      if (paymentMethod) {
+        params.push(paymentMethod);
+        query += ` AND e.payment_method = $${params.length}`;
+      }
+
+      if (startDate) {
+        params.push(startDate);
+        query += ` AND e.expense_date >= $${params.length}`;
+      }
+
+      if (endDate) {
+        params.push(endDate);
+        query += ` AND e.expense_date <= $${params.length}`;
+      }
+
+      params.push(limit, offset);
+      query += ` ORDER BY e.expense_date DESC, e.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`;
+
+      const expenses = await sql.query(query, params);
+      const totalCount = expenses.length > 0 ? expenses[0].total_count : 0;
+
       return res.status(200).json({
         expenses: expenses.map(({ total_count, ...expense }) => ({
           ...expense,
-          category: expense.category_name ? {
-            name: expense.category_name,
-            colorCode: expense.category_color,
-          } : null,
+          category: expense.category_name
+            ? {
+                name: expense.category_name,
+                colorCode: expense.category_color,
+              }
+            : null,
         })),
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),
           hasMore: offset + expenses.length < totalCount,
           total: totalCount,
-        }
-      })
+        },
+      });
     }
 
-    if (req.method === 'POST') {
-      const hasCreateAccess = await checkProjectAccess(user.id, projectId, 'expenses.create')
+    if (req.method === "POST") {
+      const hasCreateAccess = await checkProjectAccess(
+        user.id,
+        projectId,
+        "expenses.create"
+      );
       if (!hasCreateAccess) {
-        return res.status(403).json({ error: 'Insufficient permissions' })
+        return res.status(403).json({ error: "Insufficient permissions" });
       }
 
       // Parse multipart form data
       const form = formidable({
         maxFileSize: 5 * 1024 * 1024, // 5MB
         allowEmptyFiles: false,
-      })
+      });
 
-      const [fields, files] = await form.parse(req)
-      
+      const [fields, files] = await form.parse(req);
+
       const expenseData = {
         amount: parseFloat(fields.amount[0]),
         categoryId: fields.categoryId[0],
@@ -2055,22 +2149,22 @@ export default async function handler(req, res) {
         expenseDate: fields.expenseDate[0],
         description: fields.description?.[0] || null,
         vendorName: fields.vendorName?.[0] || null,
-      }
+      };
 
       // Validate expense data
-      validateExpenseData(expenseData)
+      validateExpenseData(expenseData);
 
-      let receiptUrl = null
-      
+      let receiptUrl = null;
+
       // Handle receipt file upload
       if (files.receiptFile && files.receiptFile[0]) {
-        const receiptFile = files.receiptFile[0]
-        const fileName = `receipts/${projectId}/${Date.now()}-${receiptFile.originalFilename}`
-        receiptUrl = await uploadToR2(receiptFile, fileName)
+        const receiptFile = files.receiptFile[0];
+        const fileName = `receipts/${projectId}/${Date.now()}-${receiptFile.originalFilename}`;
+        receiptUrl = await uploadToR2(receiptFile, fileName);
       }
 
       const [newExpense] = await sql`
-        INSERT INTO project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, '_'))}.expenses (
+        INSERT INTO project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, "_"))}.expenses (
           amount, currency, category_id, subcategory, payment_method,
           vendor_name, receipt_url, expense_date, description,
           created_by, created_at, updated_at
@@ -2081,7 +2175,7 @@ export default async function handler(req, res) {
           ${user.id}, NOW(), NOW()
         )
         RETURNING *
-      `
+      `;
 
       // Fetch the complete expense with category info
       const [completeExpense] = await sql`
@@ -2089,76 +2183,87 @@ export default async function handler(req, res) {
           e.*,
           ec.name as category_name,
           ec.color_code as category_color
-        FROM project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, '_'))}.expenses e
-        LEFT JOIN project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, '_'))}.expense_categories ec ON e.category_id = ec.id
+        FROM project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, "_"))}.expenses e
+        LEFT JOIN project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, "_"))}.expense_categories ec ON e.category_id = ec.id
         WHERE e.id = ${newExpense.id}
-      `
+      `;
 
-      return res.status(201).json({ 
+      return res.status(201).json({
         expense: {
           ...completeExpense,
-          category: completeExpense.category_name ? {
-            name: completeExpense.category_name,
-            colorCode: completeExpense.category_color,
-          } : null,
-        }
-      })
+          category: completeExpense.category_name
+            ? {
+                name: completeExpense.category_name,
+                colorCode: completeExpense.category_color,
+              }
+            : null,
+        },
+      });
     }
 
-    return res.status(405).json({ error: 'Method not allowed' })
-
+    return res.status(405).json({ error: "Method not allowed" });
   } catch (error) {
-    console.error('Expense API Error:', error)
-    return res.status(500).json({ error: 'Internal server error' })
+    console.error("Expense API Error:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
 ```
 
 #### Dashboard Metrics API Route
+
 ```javascript
 // api/[projectId]/dashboard-metrics.js - Vercel Serverless Function
-import { neon } from '@neondatabase/serverless'
-import { authenticateUser, checkProjectAccess } from '../../lib/auth-middleware.js'
+import { neon } from "@neondatabase/serverless";
+import {
+  authenticateUser,
+  checkProjectAccess,
+} from "../../lib/auth-middleware.js";
 
-const sql = neon(process.env.DATABASE_URL)
+const sql = neon(process.env.DATABASE_URL);
 
 export default async function handler(req, res) {
   try {
-    const user = await authenticateUser(req)
+    const user = await authenticateUser(req);
     if (!user) {
-      return res.status(401).json({ error: 'Unauthorized' })
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { projectId } = req.query
-    const hasAccess = await checkProjectAccess(user.id, projectId, 'financial.read')
+    const { projectId } = req.query;
+    const hasAccess = await checkProjectAccess(
+      user.id,
+      projectId,
+      "financial.read"
+    );
     if (!hasAccess) {
-      return res.status(403).json({ error: 'Forbidden' })
+      return res.status(403).json({ error: "Forbidden" });
     }
 
-    if (req.method === 'GET') {
-      const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM
-      const lastMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 7)
+    if (req.method === "GET") {
+      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+      const lastMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 7);
 
       // Get current month metrics
       const [currentMetrics] = await sql`
         WITH monthly_income AS (
           SELECT COALESCE(SUM(amount), 0) as total_income
-          FROM project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, '_'))}.income 
+          FROM project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, "_"))}.income 
           WHERE DATE_TRUNC('month', transaction_date) = DATE_TRUNC('month', CURRENT_DATE)
         ),
         monthly_expenses AS (
           SELECT COALESCE(SUM(amount), 0) as total_expenses
-          FROM project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, '_'))}.expenses 
+          FROM project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, "_"))}.expenses 
           WHERE DATE_TRUNC('month', expense_date) = DATE_TRUNC('month', CURRENT_DATE)
         ),
         last_month_income AS (
           SELECT COALESCE(SUM(amount), 0) as last_total_income
-          FROM project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, '_'))}.income 
+          FROM project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, "_"))}.income 
           WHERE DATE_TRUNC('month', transaction_date) = DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month'
         ),
         last_month_expenses AS (
           SELECT COALESCE(SUM(amount), 0) as last_total_expenses
-          FROM project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, '_'))}.expenses 
+          FROM project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, "_"))}.expenses 
           WHERE DATE_TRUNC('month', expense_date) = DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month'
         )
         SELECT 
@@ -2168,16 +2273,24 @@ export default async function handler(req, res) {
           lmi.last_total_income,
           lme.last_total_expenses
         FROM monthly_income mi, monthly_expenses me, last_month_income lmi, last_month_expenses lme
-      `
+      `;
 
       // Calculate percentage changes
-      const revenueChange = currentMetrics.last_total_income > 0 
-        ? ((currentMetrics.monthly_revenue - currentMetrics.last_total_income) / currentMetrics.last_total_income) * 100
-        : 0
+      const revenueChange =
+        currentMetrics.last_total_income > 0
+          ? ((currentMetrics.monthly_revenue -
+              currentMetrics.last_total_income) /
+              currentMetrics.last_total_income) *
+            100
+          : 0;
 
-      const expenseChange = currentMetrics.last_total_expenses > 0
-        ? ((currentMetrics.monthly_expenses - currentMetrics.last_total_expenses) / currentMetrics.last_total_expenses) * 100
-        : 0
+      const expenseChange =
+        currentMetrics.last_total_expenses > 0
+          ? ((currentMetrics.monthly_expenses -
+              currentMetrics.last_total_expenses) /
+              currentMetrics.last_total_expenses) *
+            100
+          : 0;
 
       // Get top expense categories
       const topCategories = await sql`
@@ -2185,13 +2298,13 @@ export default async function handler(req, res) {
           ec.name,
           ec.color_code as color,
           SUM(e.amount) as amount
-        FROM project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, '_'))}.expenses e
-        JOIN project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, '_'))}.expense_categories ec ON e.category_id = ec.id
+        FROM project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, "_"))}.expenses e
+        JOIN project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, "_"))}.expense_categories ec ON e.category_id = ec.id
         WHERE DATE_TRUNC('month', e.expense_date) = DATE_TRUNC('month', CURRENT_DATE)
         GROUP BY ec.id, ec.name, ec.color_code
         ORDER BY amount DESC
         LIMIT 5
-      `
+      `;
 
       // Get recent transactions
       const recentTransactions = await sql`
@@ -2203,7 +2316,7 @@ export default async function handler(req, res) {
             payment_method,
             expense_date as date,
             created_at
-          FROM project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, '_'))}.expenses
+          FROM project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, "_"))}.expenses
           ORDER BY created_at DESC
           LIMIT 10
         )
@@ -2216,32 +2329,33 @@ export default async function handler(req, res) {
             payment_method,
             transaction_date as date,
             created_at
-          FROM project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, '_'))}.income
+          FROM project_${sql.unsafe(projectId.replace(/[^a-z0-9_]/gi, "_"))}.income
           ORDER BY created_at DESC
           LIMIT 10
         )
         ORDER BY created_at DESC
         LIMIT 10
-      `
+      `;
 
       return res.status(200).json({
         monthlyRevenue: currentMetrics.monthly_revenue,
         monthlyExpenses: currentMetrics.monthly_expenses,
         netProfit: currentMetrics.net_profit,
-        profitMargin: currentMetrics.monthly_revenue > 0 
-          ? (currentMetrics.net_profit / currentMetrics.monthly_revenue) * 100 
-          : 0,
+        profitMargin:
+          currentMetrics.monthly_revenue > 0
+            ? (currentMetrics.net_profit / currentMetrics.monthly_revenue) * 100
+            : 0,
         revenueChange,
         expenseChange,
         topCategories,
         recentTransactions,
-      })
+      });
     }
 
-    return res.status(405).json({ error: 'Method not allowed' })
+    return res.status(405).json({ error: "Method not allowed" });
   } catch (error) {
-    console.error('Dashboard metrics error:', error)
-    return res.status(500).json({ error: 'Internal server error' })
+    console.error("Dashboard metrics error:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
 ```
@@ -2249,22 +2363,32 @@ export default async function handler(req, res) {
 ## Key Benefits of Modern Stack
 
 ### Performance Optimizations
-- **TanStack Query Smart Caching:** Background refetching, optimistic updates, and automatic cache invalidation
-- **React 19 useOptimistic:** Instant expense entry with automatic error rollback
-- **Zustand Minimal Bundle:** ~8KB gzipped vs ~45KB for Redux Toolkit, 80% smaller footprint
-- **Vite 7 Lightning CSS:** 100x faster CSS processing for responsive financial dashboards
-- **Serverless Edge Functions:** Global CDN distribution with <200ms response times for real-time financial data
+
+- **TanStack Query Smart Caching:** Background refetching, optimistic updates,
+  and automatic cache invalidation
+- **React 19 useOptimistic:** Instant expense entry with automatic error
+  rollback
+- **Zustand Minimal Bundle:** ~8KB gzipped, optimized for small footprint
+- **Vite 7 Lightning CSS:** 100x faster CSS processing for responsive financial
+  dashboards
+- **Serverless Edge Functions:** Global CDN distribution with <200ms response
+  times for real-time financial data
 
 ### Developer Experience
-- **Simplified State Management:** Zustand reduces boilerplate by ~60% compared to Redux Toolkit
+
+- **Simplified State Management:** Zustand provides minimal boilerplate for
+  clean code
 - **Type-Safe Queries:** TanStack Query with full TypeScript inference
 - **File-Based Routing:** TanStack Router automatic route generation
 - **Modern Form Handling:** React Hook Form + Zod for robust form validation
-- **Component-Based Architecture:** Reusable shadcn/ui components with accessibility built-in
+- **Component-Based Architecture:** Reusable shadcn/ui components with
+  accessibility built-in
 - **Hot Module Replacement:** Instant updates during development
 
 ### Business Value
-- **Real-time Financial Insights:** Live dashboard updates with intelligent caching
+
+- **Real-time Financial Insights:** Live dashboard updates with intelligent
+  caching
 - **Mobile-First Design:** Touch-optimized expense entry for on-site operations
 - **Advanced Analytics:** Interactive charts and trend analysis
 - **Automated Reporting:** PDF, Excel, and CSV export capabilities
@@ -2272,10 +2396,332 @@ export default async function handler(req, res) {
 - **Faster Initial Load:** Smaller bundle sizes mean faster time-to-interactive
 
 ### Security & Compliance
+
 - **Encrypted File Storage:** Secure receipt storage in Cloudflare R2
 - **Role-Based Access:** Granular permissions for financial data
 - **Audit Trails:** Complete transaction history and user activity logging
 - **Data Validation:** Comprehensive input sanitization and validation
-- **Persistent State Security:** Selective state persistence with Zustand partialize
+- **Persistent State Security:** Selective state persistence with Zustand
+  partialize
 
-This modernized financial management system leverages Zustand + TanStack Query to provide enterprise-level financial tracking and reporting capabilities with significantly reduced complexity and bundle size, perfect for family resort operations.
+This modernized financial management system leverages Zustand + TanStack Query
+to provide enterprise-level financial tracking and reporting capabilities with
+significantly reduced complexity and bundle size, perfect for family resort
+operations.
+
+## Phase Verification Steps
+
+### Phase 1: Financial State Management Setup ✓
+
+**Verification Checklist:**
+
+- [ ] Zustand financial store configured with proper persistence
+- [ ] TanStack Query hooks for expenses and income
+- [ ] Query key factory for financial endpoints
+- [ ] Optimistic updates for expense creation
+- [ ] DevTools integration for state debugging
+
+**Testing Commands:**
+
+```bash
+# Type checking for financial stores
+npm run type-check
+
+# Verify persistence in browser
+localStorage.getItem('financial-ui-storage')
+
+# Check React Query cache
+# Open DevTools > React Query > View cached financial data
+```
+
+### Phase 2: Expense Management Implementation ✓
+
+**Verification Checklist:**
+
+- [ ] Expense form validates all required fields
+- [ ] Amount field accepts decimal values correctly
+- [ ] Category selection loads from database
+- [ ] Payment method options work properly
+- [ ] Receipt upload accepts images < 5MB
+- [ ] Date picker prevents future dates
+
+**Testing Scenarios:**
+
+1. Create expense with receipt - should upload to R2
+2. Create expense without receipt - should save without file
+3. Enter negative amount - should reject
+4. Upload receipt > 5MB - should show error
+5. Select custom date range - should filter correctly
+
+### Phase 3: Income Tracking Integration ✓
+
+**Verification Checklist:**
+
+- [ ] Booking income auto-syncs from bookings
+- [ ] Manual income entry form works
+- [ ] Income sources properly categorized
+- [ ] Payment methods tracked accurately
+- [ ] Income reconciliation with bookings
+- [ ] Currency conversion (if applicable)
+
+**Testing Scenarios:**
+
+1. Complete booking payment - income auto-created
+2. Add manual income entry - appears in list
+3. Edit income amount - updates totals
+4. Delete income record - requires confirmation
+5. Filter by income source - shows correct data
+
+### Phase 4: Financial Dashboard ✓
+
+**Verification Checklist:**
+
+- [ ] Monthly revenue calculates correctly
+- [ ] Expense breakdown by category accurate
+- [ ] Net profit/loss displays properly
+- [ ] Trend charts render without errors
+- [ ] Top expense categories sorted correctly
+- [ ] Recent transactions list updates real-time
+
+**Testing Scenarios:**
+
+1. Current month view - shows accurate totals
+2. Compare to last month - percentages correct
+3. Drill down to category - detailed view works
+4. Export dashboard data - generates PDF/CSV
+5. Mobile view - responsive charts render
+
+### Phase 5: Report Generation ✓
+
+**Verification Checklist:**
+
+- [ ] Monthly reports include all transactions
+- [ ] Quarterly summaries calculate correctly
+- [ ] Annual reports show yearly trends
+- [ ] Custom date ranges work properly
+- [ ] PDF generation formats correctly
+- [ ] Excel export preserves formulas
+
+**Testing Scenarios:**
+
+1. Generate monthly P&L - all sections included
+2. Export quarterly report - Excel format works
+3. Custom date range report - filters correctly
+4. Email report - attachment sends properly
+5. Print report - formatting preserved
+
+### Phase 6: Analytics & Insights ✓
+
+**Verification Checklist:**
+
+- [ ] Expense trends chart renders correctly
+- [ ] Category breakdown pie chart accurate
+- [ ] Payment method analysis works
+- [ ] Seasonal patterns identified
+- [ ] Profit margin calculations correct
+- [ ] Forecast projections reasonable
+
+**Testing Commands:**
+
+```bash
+# Test chart rendering
+npm run test:charts
+
+# Verify calculations
+npm run test:analytics
+
+# Check responsive design
+npm run test:responsive
+```
+
+### Phase 7: API Security & Performance ✓
+
+**Verification Checklist:**
+
+- [ ] JWT authentication working
+- [ ] Project-based data isolation
+- [ ] SQL injection prevention
+- [ ] Rate limiting implemented
+- [ ] File upload validation
+- [ ] Response caching configured
+
+**Testing Commands:**
+
+```bash
+# Test authentication
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:3000/api/project-123/expenses
+
+# Test SQL injection attempts
+curl -X POST http://localhost:3000/api/project-123/expenses \
+  -d "categoryId=1'; DROP TABLE expenses;--"
+
+# Test rate limiting
+for i in {1..100}; do
+  curl http://localhost:3000/api/project-123/dashboard-metrics
+done
+```
+
+### Integration Testing Checklist
+
+**End-to-End Financial Flow:**
+
+1. **Complete Financial Cycle:**
+   - [ ] Record 5 different expense types
+   - [ ] Upload receipts for 3 expenses
+   - [ ] Process booking income
+   - [ ] Generate monthly report
+   - [ ] Verify dashboard metrics
+   - [ ] Export to Excel
+   - [ ] Check audit trail
+
+2. **Multi-User Financial Access:**
+   - [ ] Admin creates expense
+   - [ ] Manager approves expense
+   - [ ] Viewer sees updated dashboard
+   - [ ] Owner downloads reports
+
+3. **Data Consistency:**
+   - [ ] Expense totals match report totals
+   - [ ] Income from bookings synced correctly
+   - [ ] Dashboard metrics = sum of transactions
+   - [ ] Category totals accurate
+
+### Performance Verification
+
+**Performance Metrics:**
+
+- [ ] Dashboard loads < 2 seconds
+- [ ] Expense list renders < 1 second
+- [ ] Report generation < 5 seconds
+- [ ] Chart updates < 500ms
+- [ ] Search/filter < 300ms
+- [ ] File upload < 3 seconds for 5MB
+
+**Performance Testing:**
+
+```bash
+# Load test dashboard
+npm run test:load -- dashboard
+
+# Measure bundle size
+npm run build && npm run analyze
+
+# Profile render performance
+npm run profile
+
+# Test with 1000+ transactions
+npm run seed:large-dataset && npm run test:performance
+```
+
+### Security Verification
+
+**Security Checklist:**
+
+- [ ] No financial data in localStorage (except UI state)
+- [ ] Receipt URLs signed and expiring
+- [ ] API endpoints require authentication
+- [ ] Cross-project data access blocked
+- [ ] Sensitive data masked in logs
+- [ ] HTTPS enforced in production
+
+**Security Testing:**
+
+```bash
+# Check for exposed credentials
+grep -r "API_KEY\|SECRET\|PASSWORD" src/
+
+# Test unauthorized access
+curl http://localhost:3000/api/project-123/expenses
+# Should return 401
+
+# Test cross-project access
+curl -H "Authorization: Bearer $USER_A_TOKEN" \
+  http://localhost:3000/api/project-b/expenses
+# Should return 403
+```
+
+### Deployment Verification
+
+**Pre-Deployment:**
+
+- [ ] Environment variables set
+- [ ] Database migrations complete
+- [ ] R2 bucket configured
+- [ ] Build passes all checks
+- [ ] No TypeScript errors
+- [ ] All tests passing
+
+**Deployment Commands:**
+
+```bash
+# Production build
+npm run build
+
+# Type check
+npm run type-check
+
+# Run all tests
+npm run test
+
+# Deploy to Vercel
+vercel --prod
+
+# Verify health endpoint
+curl https://your-app.vercel.app/api/health
+```
+
+### Post-Deployment Monitoring
+
+**Monitoring Checklist:**
+
+- [ ] Error tracking (Sentry) configured
+- [ ] Performance monitoring active
+- [ ] Database query performance tracked
+- [ ] File storage usage monitored
+- [ ] API response times logged
+- [ ] User activity tracked
+
+**Monitoring Commands:**
+
+```bash
+# Check error logs
+vercel logs --follow
+
+# Monitor database connections
+neon connection-stats
+
+# Check R2 storage usage
+wrangler r2 bucket info receipts
+
+# View API metrics
+vercel analytics
+```
+
+### Data Validation & Integrity
+
+**Validation Checklist:**
+
+- [ ] Expense amounts positive only
+- [ ] Dates within reasonable range
+- [ ] Categories exist in database
+- [ ] Currency codes valid
+- [ ] Receipt file types validated
+- [ ] Transaction descriptions sanitized
+
+**Data Integrity Tests:**
+
+```bash
+# Run data validation suite
+npm run test:validation
+
+# Check database constraints
+psql -c "SELECT * FROM information_schema.table_constraints
+         WHERE table_schema = 'project_123'"
+
+# Verify foreign key relationships
+npm run db:check-integrity
+```
+
+This comprehensive verification ensures the financial management system meets
+all quality, security, and performance standards before deployment.

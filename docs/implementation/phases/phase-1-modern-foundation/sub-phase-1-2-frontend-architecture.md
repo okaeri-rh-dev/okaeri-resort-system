@@ -1,9 +1,14 @@
 # Sub-Phase 1.2: Frontend Architecture Foundation
 
 ## Overview
-This sub-phase establishes the core frontend architecture using TanStack Router for file-based routing, shadcn/ui for the component library, and Tailwind CSS v4 for styling. It creates the foundational UI structure that will support all user interactions throughout the application.
+
+This sub-phase establishes the core frontend architecture using TanStack Router
+for file-based routing, shadcn/ui for the component library, and Tailwind CSS v4
+for styling. It creates the foundational UI structure that will support all user
+interactions throughout the application.
 
 ## Objectives
+
 1. Implement TanStack Router with type-safe file-based routing
 2. Integrate shadcn/ui component library with customization
 3. Configure Tailwind CSS v4 with modern features
@@ -13,6 +18,7 @@ This sub-phase establishes the core frontend architecture using TanStack Router 
 ## Technical Requirements
 
 ### Core Dependencies
+
 ```json
 {
   "dependencies": {
@@ -48,22 +54,24 @@ This sub-phase establishes the core frontend architecture using TanStack Router 
 ```
 
 ### TanStack Router Configuration
+
 ```typescript
 // vite.config.ts updates
-import { TanStackRouterVite } from '@tanstack/router-vite-plugin'
+import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
 
 export default defineConfig({
   plugins: [
     react(),
     TanStackRouterVite({
-      routesDirectory: './src/routes',
-      generatedRouteTree: './src/routeTree.gen.ts',
+      routesDirectory: "./src/routes",
+      generatedRouteTree: "./src/routeTree.gen.ts",
     }),
   ],
-})
+});
 ```
 
 ### Router Setup
+
 ```typescript
 // src/routes/__root.tsx
 import { createRootRoute, Outlet } from '@tanstack/react-router'
@@ -84,6 +92,7 @@ export const Route = createRootRoute({
 ## Implementation Steps
 
 ### Step 1: Install and Configure TanStack Router
+
 ```typescript
 // src/main.tsx
 import { StrictMode } from 'react'
@@ -115,6 +124,7 @@ createRoot(document.getElementById('root')!).render(
 ```
 
 ### Step 2: Create Route Structure
+
 ```typescript
 // src/routes structure
 routes/
@@ -141,26 +151,27 @@ routes/
 ```
 
 ### Step 3: Configure Tailwind CSS v4
+
 ```css
 /* src/index.css */
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
   /* Modern oklch color palette */
   --color-primary-50: oklch(97% 0.02 280);
   --color-primary-100: oklch(94% 0.04 280);
   --color-primary-200: oklch(88% 0.08 280);
   --color-primary-300: oklch(80% 0.12 280);
   --color-primary-400: oklch(68% 0.16 280);
-  --color-primary-500: oklch(55% 0.20 280);
+  --color-primary-500: oklch(55% 0.2 280);
   --color-primary-600: oklch(45% 0.18 280);
   --color-primary-700: oklch(38% 0.16 280);
   --color-primary-800: oklch(32% 0.14 280);
   --color-primary-900: oklch(26% 0.12 280);
-  
+
   /* Semantic colors */
   --color-background: oklch(99% 0 0);
   --color-foreground: oklch(10% 0 0);
@@ -170,7 +181,7 @@ routes/
   --color-card-foreground: oklch(10% 0 0);
   --color-border: oklch(90% 0 0);
   --color-input: oklch(90% 0 0);
-  
+
   /* Radius */
   --radius-sm: 0.125rem;
   --radius: 0.375rem;
@@ -197,39 +208,35 @@ routes/
 ```javascript
 // tailwind.config.js
 export default {
-  content: [
-    './index.html',
-    './src/**/*.{js,ts,jsx,tsx}',
-  ],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     container: {
       center: true,
-      padding: '2rem',
+      padding: "2rem",
       screens: {
-        '2xl': '1400px',
+        "2xl": "1400px",
       },
     },
     extend: {
       animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
   },
-  plugins: [
-    require('tailwindcss-animate'),
-  ],
-}
+  plugins: [require("tailwindcss-animate")],
+};
 ```
 
 ### Step 4: Setup shadcn/ui Components
+
 ```typescript
 // src/lib/utils.ts
-import { type ClassValue, clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 ```
 
@@ -290,6 +297,7 @@ export { Button, buttonVariants }
 ```
 
 ### Step 5: Create Layout Components
+
 ```typescript
 // src/components/layout/RootLayout.tsx
 import type { ReactNode } from 'react'
@@ -314,18 +322,18 @@ export function RootLayout({ children }: RootLayoutProps) {
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { NavigationMenu } from '@/components/ui/navigation-menu'
-import { 
-  Home, 
-  Calendar, 
-  DollarSign, 
-  FileText, 
-  Settings, 
-  LogOut 
+import {
+  Home,
+  Calendar,
+  DollarSign,
+  FileText,
+  Settings,
+  LogOut
 } from 'lucide-react'
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
-  
+
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
@@ -334,7 +342,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           <div className="p-6">
             <h1 className="text-2xl font-bold">Okaeri Resort</h1>
           </div>
-          
+
           <nav className="flex-1 px-4">
             <ul className="space-y-2">
               <li>
@@ -382,7 +390,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               </li>
             </ul>
           </nav>
-          
+
           <div className="border-t p-4">
             <Button
               variant="ghost"
@@ -398,7 +406,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </aside>
-      
+
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
         {children}
@@ -411,52 +419,55 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 ## Type Definitions
 
 ### Route Types
+
 ```typescript
 // src/types/routes.ts
-import type { FileRoutesByPath } from '@tanstack/react-router'
+import type { FileRoutesByPath } from "@tanstack/react-router";
 
-export type RoutePaths = keyof FileRoutesByPath
+export type RoutePaths = keyof FileRoutesByPath;
 
 export interface RouteContext {
   auth: {
-    isAuthenticated: boolean
-    user: User | null
-    projectId: string | null
-  }
+    isAuthenticated: boolean;
+    user: User | null;
+    projectId: string | null;
+  };
 }
 
 export interface SearchParams {
-  page?: number
-  limit?: number
-  sort?: string
-  filter?: Record<string, unknown>
+  page?: number;
+  limit?: number;
+  sort?: string;
+  filter?: Record<string, unknown>;
 }
 ```
 
 ### Component Types
+
 ```typescript
 // src/types/components.ts
 export interface LayoutProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export interface PageProps<T = unknown> {
-  params?: T
-  searchParams?: SearchParams
+  params?: T;
+  searchParams?: SearchParams;
 }
 
 export interface NavigationItem {
-  label: string
-  href: string
-  icon?: ReactNode
-  children?: NavigationItem[]
-  requiredPermission?: string
+  label: string;
+  href: string;
+  icon?: ReactNode;
+  children?: NavigationItem[];
+  requiredPermission?: string;
 }
 ```
 
 ## Test Requirements
 
 ### Component Testing
+
 ```typescript
 // tests/unit/components/Button.test.tsx
 import { describe, it, expect } from 'vitest'
@@ -470,15 +481,15 @@ describe('Button Component', () => {
     const button = screen.getByRole('button')
     expect(button).toHaveClass('bg-primary')
   })
-  
+
   it('handles click events', async () => {
     const handleClick = vi.fn()
     render(<Button onClick={handleClick}>Click me</Button>)
-    
+
     await userEvent.click(screen.getByRole('button'))
     expect(handleClick).toHaveBeenCalledTimes(1)
   })
-  
+
   it('respects disabled state', () => {
     render(<Button disabled>Disabled</Button>)
     const button = screen.getByRole('button')
@@ -489,6 +500,7 @@ describe('Button Component', () => {
 ```
 
 ### Route Testing
+
 ```typescript
 // tests/integration/routing.test.tsx
 import { describe, it, expect } from 'vitest'
@@ -502,22 +514,22 @@ describe('Routing', () => {
       routeTree,
       initialLocation: '/dashboard',
     })
-    
+
     render(<RouterProvider router={router} />)
-    
+
     await waitFor(() => {
       expect(screen.getByText('Dashboard')).toBeInTheDocument()
     })
   })
-  
+
   it('shows 404 for unknown routes', async () => {
     const router = createMemoryRouter({
       routeTree,
       initialLocation: '/unknown-route',
     })
-    
+
     render(<RouterProvider router={router} />)
-    
+
     await waitFor(() => {
       expect(screen.getByText('Page not found')).toBeInTheDocument()
     })
@@ -527,7 +539,19 @@ describe('Routing', () => {
 
 ## Agent Validation Checklist
 
+### tailwind-v4-design-expert Validation
+
+- [ ] Design system architecture established
+- [ ] Component styling patterns defined
+- [ ] Responsive breakpoints configured
+- [ ] Dark mode implementation working
+- [ ] Animation utilities created
+- [ ] Typography scale defined
+- [ ] Spacing system consistent
+- [ ] Color palette properly structured
+
 ### resort-ui-designer Validation
+
 - [ ] Mobile-first responsive design implemented
 - [ ] Accessibility standards met (WCAG 2.1 AA)
 - [ ] Touch-friendly interface elements
@@ -538,6 +562,7 @@ describe('Routing', () => {
 - [ ] Error states with clear messaging
 
 ### pwa-performance-optimizer Validation
+
 - [ ] Lighthouse score > 95 for performance
 - [ ] First Contentful Paint < 1.5s
 - [ ] Cumulative Layout Shift < 0.1
@@ -548,6 +573,7 @@ describe('Routing', () => {
 - [ ] Service worker ready structure
 
 ## Success Criteria
+
 1. **Routing** - File-based routing fully functional with type safety
 2. **Components** - shadcn/ui components integrated and customized
 3. **Styling** - Tailwind CSS v4 with modern features working
@@ -557,6 +583,7 @@ describe('Routing', () => {
 7. **Type Safety** - All components and routes fully typed
 
 ## Deliverables
+
 - [ ] Complete routing structure with layouts
 - [ ] shadcn/ui component library integrated
 - [ ] Tailwind CSS v4 configuration
@@ -567,6 +594,7 @@ describe('Routing', () => {
 - [ ] Performance optimization implemented
 
 ## Completion Checklist
+
 - [ ] TanStack Router configured and working
 - [ ] All route files created with proper types
 - [ ] shadcn/ui components installed and customized
@@ -580,4 +608,5 @@ describe('Routing', () => {
 
 ---
 
-*Sub-Phase 1.2 establishes the visual and navigational foundation of the application with modern, performant, and accessible components.*
+_Sub-Phase 1.2 establishes the visual and navigational foundation of the
+application with modern, performant, and accessible components._

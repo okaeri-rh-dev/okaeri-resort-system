@@ -1,9 +1,13 @@
 # Sub-Phase 4.3: Interactive Dashboard
 
 ## Overview
-This sub-phase implements an executive-level interactive dashboard with real-time metrics, drill-down capabilities, customizable widgets, and mobile-responsive design for comprehensive business monitoring.
+
+This sub-phase implements an executive-level interactive dashboard with
+real-time metrics, drill-down capabilities, customizable widgets, and
+mobile-responsive design for comprehensive business monitoring.
 
 ## Objectives
+
 1. Build executive dashboard interface
 2. Create drill-down navigation capabilities
 3. Implement real-time data updates
@@ -13,6 +17,7 @@ This sub-phase implements an executive-level interactive dashboard with real-tim
 ## Technical Requirements
 
 ### Core Dependencies
+
 ```json
 {
   "dependencies": {
@@ -28,7 +33,19 @@ This sub-phase implements an executive-level interactive dashboard with real-tim
 
 ## Agent Validation Checklist
 
+### tanstack-router-expert Validation
+
+- [ ] Dashboard routes properly configured
+- [ ] Drill-down navigation using route params
+- [ ] Widget-specific routes defined
+- [ ] Deep linking to dashboard states
+- [ ] Query params for filter persistence
+- [ ] Route-based data prefetching
+- [ ] Navigation animations smooth
+- [ ] Browser back/forward working correctly
+
 ### resort-ui-designer Validation
+
 - [ ] Dashboard layout intuitive for executives
 - [ ] Visual hierarchy guides attention
 - [ ] Color coding meaningful and consistent
@@ -39,6 +56,7 @@ This sub-phase implements an executive-level interactive dashboard with real-tim
 - [ ] Accessibility WCAG 2.1 AA compliant
 
 ### pwa-performance-optimizer Validation
+
 - [ ] Initial load time < 2s
 - [ ] Widget rendering optimized
 - [ ] Charts animate at 60fps
@@ -49,6 +67,7 @@ This sub-phase implements an executive-level interactive dashboard with real-tim
 - [ ] Mobile Lighthouse > 85
 
 ## Success Criteria
+
 1. **Load Performance** - Dashboard renders < 2s
 2. **Real-time Updates** - Data refresh < 5s
 3. **Interactivity** - Drill-down < 500ms
@@ -59,6 +78,7 @@ This sub-phase implements an executive-level interactive dashboard with real-tim
 8. **Responsiveness** - Adapts to all screens
 
 ## Deliverables
+
 - [ ] Executive dashboard layout
 - [ ] Widget component library
 - [ ] Drill-down navigation system
@@ -70,4 +90,5 @@ This sub-phase implements an executive-level interactive dashboard with real-tim
 
 ---
 
-*Sub-Phase 4.3 creates an intuitive executive dashboard with real-time insights and interactive exploration.*
+_Sub-Phase 4.3 creates an intuitive executive dashboard with real-time insights
+and interactive exploration._

@@ -1,9 +1,13 @@
 # Sub-Phase 3.2: Expense Management System
 
 ## Overview
-This sub-phase implements a comprehensive expense management system with CRUD operations, intelligent categorization, receipt upload to Cloudflare R2, and bulk operations for efficient financial tracking.
+
+This sub-phase implements a comprehensive expense management system with CRUD
+operations, intelligent categorization, receipt upload to Cloudflare R2, and
+bulk operations for efficient financial tracking.
 
 ## Objectives
+
 1. Implement expense CRUD operations with optimistic updates
 2. Create intelligent categorization with auto-suggestions
 3. Build receipt upload system with image optimization
@@ -13,6 +17,7 @@ This sub-phase implements a comprehensive expense management system with CRUD op
 ## Technical Requirements
 
 ### Core Dependencies
+
 ```json
 {
   "dependencies": {
@@ -28,7 +33,19 @@ This sub-phase implements a comprehensive expense management system with CRUD op
 
 ## Agent Validation Checklist
 
+### modern-form-validation-expert Validation
+
+- [ ] Expense form with React Hook Form configured
+- [ ] Zod validation for amount, date, category
+- [ ] File upload validation for receipts
+- [ ] Multi-currency input handling
+- [ ] Date picker with range validation
+- [ ] Category selection with auto-complete
+- [ ] Bulk import form validation
+- [ ] Error recovery and field persistence
+
 ### vercel-resort-api-architect Validation
+
 - [ ] API endpoints optimized for serverless execution
 - [ ] Receipt upload uses presigned URLs efficiently
 - [ ] Bulk operations handle large datasets
@@ -39,6 +56,7 @@ This sub-phase implements a comprehensive expense management system with CRUD op
 - [ ] Response times < 200ms for CRUD operations
 
 ### security-compliance-auditor Validation
+
 - [ ] Receipt files validated for type and size
 - [ ] Presigned URLs expire appropriately (15 min)
 - [ ] No sensitive data in logs or responses
@@ -49,6 +67,7 @@ This sub-phase implements a comprehensive expense management system with CRUD op
 - [ ] PII handling compliant with regulations
 
 ## Success Criteria
+
 1. **CRUD Operations** - All expense operations < 200ms
 2. **Receipt Upload** - Images optimized and stored in < 2s
 3. **Categorization** - Auto-suggestions with 90% accuracy
@@ -59,6 +78,7 @@ This sub-phase implements a comprehensive expense management system with CRUD op
 8. **Performance** - UI updates optimistically
 
 ## Deliverables
+
 - [ ] Expense CRUD API implementation
 - [ ] Receipt upload with presigned URLs
 - [ ] Image optimization pipeline
@@ -70,4 +90,5 @@ This sub-phase implements a comprehensive expense management system with CRUD op
 
 ---
 
-*Sub-Phase 3.2 implements secure and efficient expense management optimized for serverless architecture.*
+_Sub-Phase 3.2 implements secure and efficient expense management optimized for
+serverless architecture._

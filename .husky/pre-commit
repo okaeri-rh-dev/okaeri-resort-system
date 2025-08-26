@@ -1,0 +1,72 @@
+# Exit on any failure
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo "${GREEN}🔍 Running pre-commit checks...${NC}"
+
+# Workaround for Windows 10, Git Bash, and stdin issues
+command_exists () {
+  command -v "$1" >/dev/null 2>&1
+}
+
+# Fix for TTY issues with Git hooks
+if command_exists winpty && test -t 1; then
+  exec < /dev/tty
+fi
+
+# 1. Run lint-staged for file-specific checks
+echo "${YELLOW}📝 Running lint-staged...${NC}"
+npx lint-staged
+
+# 2. Run TypeScript type checking
+echo "${YELLOW}🔍 Running TypeScript type check...${NC}"
+npx tsc --noEmit --pretty true 2>&1 || {
+  exit_code=$?
+  echo "${RED}❌ TypeScript type check failed with exit code $exit_code${NC}"
+  exit $exit_code
+}
+echo "${GREEN}✅ TypeScript type check passed${NC}"
+
+# 3. Check for common issues
+echo "${YELLOW}🔍 Checking for common issues...${NC}"
+
+# Check for console.log statements (warn only)
+if git diff --cached --name-only | xargs grep -l "console.log" 2>/dev/null; then
+  echo "${YELLOW}⚠️  Warning: Found console.log statements in staged files${NC}"
+fi
+
+# Check for debugger statements (error)
+if git diff --cached --name-only | xargs grep -l "debugger" 2>/dev/null; then
+  echo "${RED}❌ Error: Found debugger statements in staged files${NC}"
+  exit 1
+fi
+
+# Check for TODO/FIXME comments (info only)
+if git diff --cached --name-only | xargs grep -l "TODO\|FIXME" 2>/dev/null; then
+  echo "${YELLOW}📝 Info: Found TODO/FIXME comments in staged files${NC}"
+fi
+
+# 5. Verify no large files are being committed
+echo "${YELLOW}📏 Checking file sizes...${NC}"
+large_files=$(git diff --cached --name-only | xargs ls -la 2>/dev/null | awk '$5 > 1048576 {print $9, $5}')
+if [ -n "$large_files" ]; then
+  echo "${RED}❌ Error: Large files detected (>1MB):${NC}"
+  echo "$large_files"
+  echo "${RED}Please use Git LFS for large files or exclude them${NC}"
+  exit 1
+fi
+
+# 6. Check for sensitive information patterns
+echo "${YELLOW}🔐 Checking for sensitive information...${NC}"
+sensitive_patterns="password|secret|key|token|credential"
+if git diff --cached --name-only | xargs grep -i -E "$sensitive_patterns" 2>/dev/null; then
+  echo "${YELLOW}⚠️  Warning: Potential sensitive information detected${NC}"
+  echo "${YELLOW}Please review before committing${NC}"
+fi
+
+echo "${GREEN}✅ Pre-commit checks completed successfully!${NC}"

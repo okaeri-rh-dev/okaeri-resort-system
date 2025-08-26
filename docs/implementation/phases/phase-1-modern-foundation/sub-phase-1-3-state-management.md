@@ -1,9 +1,14 @@
 # Sub-Phase 1.3: State Management Infrastructure
 
 ## Overview
-This sub-phase implements a modern state management architecture using Zustand for local/UI state and TanStack Query for server state. It establishes patterns for data fetching, caching, optimistic updates, and offline support that will be used throughout the application.
+
+This sub-phase implements a modern state management architecture using Zustand
+for local/UI state and TanStack Query for server state. It establishes patterns
+for data fetching, caching, optimistic updates, and offline support that will be
+used throughout the application.
 
 ## Objectives
+
 1. Setup Zustand stores with TypeScript for local state management
 2. Configure TanStack Query for server state and caching
 3. Implement persistence layer for offline support
@@ -13,6 +18,7 @@ This sub-phase implements a modern state management architecture using Zustand f
 ## Technical Requirements
 
 ### Core Dependencies
+
 ```json
 {
   "dependencies": {
@@ -29,27 +35,28 @@ This sub-phase implements a modern state management architecture using Zustand f
 ```
 
 ### Zustand Store Architecture
+
 ```typescript
 // src/stores/authStore.ts
-import { create } from 'zustand'
-import { devtools, persist, subscribeWithSelector } from 'zustand/middleware'
-import { immer } from 'zustand/middleware/immer'
-import type { User, AuthTokens } from '@/types/auth'
+import { create } from "zustand";
+import { devtools, persist, subscribeWithSelector } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
+import type { User, AuthTokens } from "@/types/auth";
 
 interface AuthState {
-  user: User | null
-  tokens: AuthTokens | null
-  isAuthenticated: boolean
-  isLoading: boolean
-  error: string | null
+  user: User | null;
+  tokens: AuthTokens | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
 }
 
 interface AuthActions {
-  login: (credentials: LoginCredentials) => Promise<void>
-  logout: () => void
-  refreshToken: () => Promise<void>
-  updateUser: (user: Partial<User>) => void
-  clearError: () => void
+  login: (credentials: LoginCredentials) => Promise<void>;
+  logout: () => void;
+  refreshToken: () => Promise<void>;
+  updateUser: (user: Partial<User>) => void;
+  clearError: () => void;
 }
 
 export const useAuthStore = create<AuthState & AuthActions>()(
@@ -67,69 +74,70 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           // Actions
           login: async (credentials) => {
             set((state) => {
-              state.isLoading = true
-              state.error = null
-            })
+              state.isLoading = true;
+              state.error = null;
+            });
 
             try {
-              const response = await authApi.login(credentials)
-              
+              const response = await authApi.login(credentials);
+
               set((state) => {
-                state.user = response.user
-                state.tokens = response.tokens
-                state.isAuthenticated = true
-                state.isLoading = false
-              })
+                state.user = response.user;
+                state.tokens = response.tokens;
+                state.isAuthenticated = true;
+                state.isLoading = false;
+              });
             } catch (error) {
               set((state) => {
-                state.error = error instanceof Error ? error.message : 'Login failed'
-                state.isLoading = false
-              })
+                state.error =
+                  error instanceof Error ? error.message : "Login failed";
+                state.isLoading = false;
+              });
             }
           },
 
           logout: () => {
             set((state) => {
-              state.user = null
-              state.tokens = null
-              state.isAuthenticated = false
-              state.error = null
-            })
+              state.user = null;
+              state.tokens = null;
+              state.isAuthenticated = false;
+              state.error = null;
+            });
           },
 
           refreshToken: async () => {
-            const { tokens } = get()
-            if (!tokens?.refreshToken) return
+            const { tokens } = get();
+            if (!tokens?.refreshToken) return;
 
             try {
-              const response = await authApi.refresh(tokens.refreshToken)
-              
+              const response = await authApi.refresh(tokens.refreshToken);
+
               set((state) => {
-                state.tokens = response.tokens
-              })
+                state.tokens = response.tokens;
+              });
             } catch (error) {
               // If refresh fails, logout user
-              get().logout()
+              get().logout();
             }
           },
 
           updateUser: (updates) => {
             set((state) => {
               if (state.user) {
-                Object.assign(state.user, updates)
+                Object.assign(state.user, updates);
               }
-            })
+            });
           },
 
           clearError: () => {
             set((state) => {
-              state.error = null
-            })
+              state.error = null;
+            });
           },
         }))
       ),
       {
-        name: 'auth-storage',
+        name: "auth-storage",
         partialize: (state) => ({
           user: state.user,
           tokens: state.tokens,
@@ -138,13 +146,14 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       }
     ),
     {
-      name: 'AuthStore',
+      name: "AuthStore",
     }
   )
-)
+);
 ```
 
 ### Project Store
+
 ```typescript
 // src/stores/projectStore.ts
 import { create } from 'zustand'
@@ -202,7 +211,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()(
             const index = state.projects.findIndex(p => p.id === id)
             if (index !== -1) {
               Object.assign(state.projects[index], updates)
-              
+
               // Update current project if it's the one being updated
               if (state.currentProjectId === id) {
                 Object.assign(state.currentProject!, updates)
@@ -214,7 +223,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()(
         deleteProject: (id) => {
           set((state) => {
             state.projects = state.projects.filter(p => p.id !== id)
-            
+
             // Clear current project if it was deleted
             if (state.currentProjectId === id) {
               state.currentProjectId = null
@@ -253,11 +262,12 @@ export const useProjectStore = create<ProjectState & ProjectActions>()(
 ```
 
 ### TanStack Query Configuration
+
 ```typescript
 // src/lib/query-client.ts
-import { QueryClient } from '@tanstack/react-query'
-import { persistQueryClient } from '@tanstack/react-query-persist-client'
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
+import { QueryClient } from "@tanstack/react-query";
+import { persistQueryClient } from "@tanstack/react-query-persist-client";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -266,94 +276,95 @@ export const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 60 * 24, // 24 hours
       retry: (failureCount, error) => {
         // Don't retry on 4xx errors
-        if (error instanceof Error && error.message.includes('4')) {
-          return false
+        if (error instanceof Error && error.message.includes("4")) {
+          return false;
         }
-        return failureCount < 3
+        return failureCount < 3;
       },
       refetchOnWindowFocus: false,
-      refetchOnReconnect: 'always',
+      refetchOnReconnect: "always",
     },
     mutations: {
       retry: false,
       onError: (error) => {
         // Global error handling
-        console.error('Mutation error:', error)
+        console.error("Mutation error:", error);
       },
     },
   },
-})
+});
 
 // Setup persistence for offline support
 const persister = createSyncStoragePersister({
   storage: window.localStorage,
-  key: 'ORMS_QUERY_CACHE',
-})
+  key: "ORMS_QUERY_CACHE",
+});
 
 persistQueryClient({
   queryClient,
   persister,
   maxAge: 1000 * 60 * 60 * 24, // 24 hours
-})
+});
 ```
 
 ### Query Hooks with Optimistic Updates
+
 ```typescript
 // src/hooks/queries/useBookings.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useOptimistic } from 'react'
-import { bookingsApi } from '@/api/bookings'
-import { useProjectStore } from '@/stores/projectStore'
-import type { Booking, CreateBookingDto } from '@/types/booking'
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useOptimistic } from "react";
+import { bookingsApi } from "@/api/bookings";
+import { useProjectStore } from "@/stores/projectStore";
+import type { Booking, CreateBookingDto } from "@/types/booking";
 
-export function useBookings(options?: { 
-  page?: number
-  limit?: number
-  status?: string 
+export function useBookings(options?: {
+  page?: number;
+  limit?: number;
+  status?: string;
 }) {
-  const projectId = useProjectStore((state) => state.currentProjectId)
-  
+  const projectId = useProjectStore((state) => state.currentProjectId);
+
   return useQuery({
-    queryKey: ['bookings', projectId, options],
+    queryKey: ["bookings", projectId, options],
     queryFn: () => bookingsApi.list(projectId!, options),
     enabled: !!projectId,
     placeholderData: (previousData) => previousData,
-  })
+  });
 }
 
 export function useBooking(bookingId: string) {
-  const projectId = useProjectStore((state) => state.currentProjectId)
-  
+  const projectId = useProjectStore((state) => state.currentProjectId);
+
   return useQuery({
-    queryKey: ['bookings', projectId, bookingId],
+    queryKey: ["bookings", projectId, bookingId],
     queryFn: () => bookingsApi.get(projectId!, bookingId),
     enabled: !!projectId && !!bookingId,
-  })
+  });
 }
 
 export function useCreateBooking() {
-  const queryClient = useQueryClient()
-  const projectId = useProjectStore((state) => state.currentProjectId)
-  
+  const queryClient = useQueryClient();
+  const projectId = useProjectStore((state) => state.currentProjectId);
+
   return useMutation({
-    mutationFn: (data: CreateBookingDto) => 
+    mutationFn: (data: CreateBookingDto) =>
       bookingsApi.create(projectId!, data),
-    
+
     onMutate: async (newBooking) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ 
-        queryKey: ['bookings', projectId] 
-      })
-      
+      await queryClient.cancelQueries({
+        queryKey: ["bookings", projectId],
+      });
+
       // Snapshot previous value
       const previousBookings = queryClient.getQueryData<Booking[]>([
-        'bookings', 
-        projectId
-      ])
-      
+        "bookings",
+        projectId,
+      ]);
+
       // Optimistically update
       queryClient.setQueryData<Booking[]>(
-        ['bookings', projectId],
+        ["bookings", projectId],
         (old = []) => [
           {
             ...newBooking,
@@ -363,43 +374,44 @@ export function useCreateBooking() {
           } as Booking,
           ...old,
         ]
-      )
-      
-      return { previousBookings }
+      );
+
+      return { previousBookings };
     },
-    
+
     onError: (err, newBooking, context) => {
       // Rollback on error
       if (context?.previousBookings) {
         queryClient.setQueryData(
-          ['bookings', projectId],
+          ["bookings", projectId],
           context.previousBookings
-        )
+        );
       }
     },
-    
+
     onSettled: () => {
       // Always refetch after error or success
-      queryClient.invalidateQueries({ 
-        queryKey: ['bookings', projectId] 
-      })
+      queryClient.invalidateQueries({
+        queryKey: ["bookings", projectId],
+      });
     },
-  })
+  });
 }
 ```
 
 ### React 19 useOptimistic Integration
+
 ```typescript
 // src/hooks/useOptimisticBookings.ts
-import { useOptimistic, useTransition } from 'react'
-import { useBookings, useCreateBooking } from './queries/useBookings'
-import type { Booking, CreateBookingDto } from '@/types/booking'
+import { useOptimistic, useTransition } from "react";
+import { useBookings, useCreateBooking } from "./queries/useBookings";
+import type { Booking, CreateBookingDto } from "@/types/booking";
 
 export function useOptimisticBookings() {
-  const { data: bookings = [], isLoading } = useBookings()
-  const createMutation = useCreateBooking()
-  const [isPending, startTransition] = useTransition()
-  
+  const { data: bookings = [], isLoading } = useBookings();
+  const createMutation = useCreateBooking();
+  const [isPending, startTransition] = useTransition();
+
   const [optimisticBookings, addOptimisticBooking] = useOptimistic(
     bookings,
     (state: Booking[], newBooking: CreateBookingDto) => [
@@ -408,30 +420,31 @@ export function useOptimisticBookings() {
         id: `optimistic-${Date.now()}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        status: 'pending',
+        status: "pending",
       } as Booking,
       ...state,
     ]
-  )
-  
+  );
+
   const createBooking = (data: CreateBookingDto) => {
     startTransition(async () => {
-      addOptimisticBooking(data)
-      await createMutation.mutateAsync(data)
-    })
-  }
-  
+      addOptimisticBooking(data);
+      await createMutation.mutateAsync(data);
+    });
+  };
+
   return {
     bookings: optimisticBookings,
     isLoading: isLoading || isPending,
     createBooking,
-  }
+  };
 }
 ```
 
 ## Implementation Steps
 
 ### Step 1: Install Dependencies
+
 ```bash
 pnpm add zustand immer @tanstack/react-query @tanstack/react-query-devtools \
   @tanstack/query-sync-storage-persister @tanstack/react-query-persist-client \
@@ -439,6 +452,7 @@ pnpm add zustand immer @tanstack/react-query @tanstack/react-query-devtools \
 ```
 
 ### Step 2: Setup Query Client Provider
+
 ```typescript
 // src/main.tsx
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -456,82 +470,89 @@ createRoot(document.getElementById('root')!).render(
 ```
 
 ### Step 3: Create Store Selectors
+
 ```typescript
 // src/stores/selectors.ts
-import { useAuthStore } from './authStore'
-import { useProjectStore } from './projectStore'
+import { useAuthStore } from "./authStore";
+import { useProjectStore } from "./projectStore";
 
 // Auth selectors
-export const useUser = () => useAuthStore((state) => state.user)
-export const useIsAuthenticated = () => useAuthStore((state) => state.isAuthenticated)
-export const useAuthLoading = () => useAuthStore((state) => state.isLoading)
+export const useUser = () => useAuthStore((state) => state.user);
+export const useIsAuthenticated = () =>
+  useAuthStore((state) => state.isAuthenticated);
+export const useAuthLoading = () => useAuthStore((state) => state.isLoading);
 
 // Project selectors
-export const useCurrentProject = () => useProjectStore((state) => state.currentProject)
-export const useProjects = () => useProjectStore((state) => state.projects)
-export const useCurrentProjectId = () => useProjectStore((state) => state.currentProjectId)
+export const useCurrentProject = () =>
+  useProjectStore((state) => state.currentProject);
+export const useProjects = () => useProjectStore((state) => state.projects);
+export const useCurrentProjectId = () =>
+  useProjectStore((state) => state.currentProjectId);
 ```
 
 ## Type Definitions
 
 ### Store Types
+
 ```typescript
 // src/types/stores.ts
 export interface StoreState<T> {
-  data: T
-  isLoading: boolean
-  error: string | null
+  data: T;
+  isLoading: boolean;
+  error: string | null;
 }
 
 export interface StoreActions<T> {
-  set: (data: T) => void
-  update: (updates: Partial<T>) => void
-  reset: () => void
-  setLoading: (isLoading: boolean) => void
-  setError: (error: string | null) => void
+  set: (data: T) => void;
+  update: (updates: Partial<T>) => void;
+  reset: () => void;
+  setLoading: (isLoading: boolean) => void;
+  setError: (error: string | null) => void;
 }
 
-export type Store<T> = StoreState<T> & StoreActions<T>
+export type Store<T> = StoreState<T> & StoreActions<T>;
 ```
 
 ### Query Types
+
 ```typescript
 // src/types/queries.ts
 export interface PaginatedResponse<T> {
-  data: T[]
+  data: T[];
   meta: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-    hasMore: boolean
-  }
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
 }
 
 export interface QueryOptions {
-  page?: number
-  limit?: number
-  sort?: string
-  filter?: Record<string, unknown>
+  page?: number;
+  limit?: number;
+  sort?: string;
+  filter?: Record<string, unknown>;
 }
 
 export interface MutationCallbacks<T> {
-  onSuccess?: (data: T) => void
-  onError?: (error: Error) => void
-  onSettled?: () => void
+  onSuccess?: (data: T) => void;
+  onError?: (error: Error) => void;
+  onSettled?: () => void;
 }
 ```
 
 ## Test Requirements
 
 ### Store Testing
+
 ```typescript
 // tests/unit/stores/authStore.test.ts
-import { describe, it, expect, beforeEach } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
-import { useAuthStore } from '@/stores/authStore'
+import { describe, it, expect, beforeEach } from "vitest";
+import { renderHook, act } from "@testing-library/react";
+import { useAuthStore } from "@/stores/authStore";
 
-describe('AuthStore', () => {
+describe("AuthStore", () => {
   beforeEach(() => {
     useAuthStore.setState({
       user: null,
@@ -539,39 +560,40 @@ describe('AuthStore', () => {
       isAuthenticated: false,
       isLoading: false,
       error: null,
-    })
-  })
-  
-  it('handles login successfully', async () => {
-    const { result } = renderHook(() => useAuthStore())
-    
+    });
+  });
+
+  it("handles login successfully", async () => {
+    const { result } = renderHook(() => useAuthStore());
+
     await act(async () => {
       await result.current.login({
-        email: 'test@example.com',
-        password: 'password',
-      })
-    })
-    
-    expect(result.current.isAuthenticated).toBe(true)
-    expect(result.current.user).toBeDefined()
-    expect(result.current.tokens).toBeDefined()
-  })
-  
-  it('handles logout', () => {
-    const { result } = renderHook(() => useAuthStore())
-    
+        email: "test@example.com",
+        password: "password",
+      });
+    });
+
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.user).toBeDefined();
+    expect(result.current.tokens).toBeDefined();
+  });
+
+  it("handles logout", () => {
+    const { result } = renderHook(() => useAuthStore());
+
     act(() => {
-      result.current.logout()
-    })
-    
-    expect(result.current.isAuthenticated).toBe(false)
-    expect(result.current.user).toBeNull()
-    expect(result.current.tokens).toBeNull()
-  })
-})
+      result.current.logout();
+    });
+
+    expect(result.current.isAuthenticated).toBe(false);
+    expect(result.current.user).toBeNull();
+    expect(result.current.tokens).toBeNull();
+  });
+});
 ```
 
 ### Query Hook Testing
+
 ```typescript
 // tests/unit/hooks/useBookings.test.tsx
 import { describe, it, expect } from 'vitest'
@@ -585,7 +607,7 @@ const createWrapper = () => {
       queries: { retry: false },
     },
   })
-  
+
   return ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>
       {children}
@@ -598,11 +620,11 @@ describe('useBookings', () => {
     const { result } = renderHook(() => useBookings(), {
       wrapper: createWrapper(),
     })
-    
+
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true)
     })
-    
+
     expect(result.current.data).toBeDefined()
     expect(Array.isArray(result.current.data)).toBe(true)
   })
@@ -611,7 +633,8 @@ describe('useBookings', () => {
 
 ## Agent Validation Checklist
 
-### react-redux-resort-architect Validation
+### zustand-tanstack-resort-architect Validation
+
 - [ ] Zustand stores properly structured with TypeScript
 - [ ] TanStack Query configured for optimal caching
 - [ ] Optimistic updates implemented correctly
@@ -622,6 +645,7 @@ describe('useBookings', () => {
 - [ ] State synchronization patterns established
 
 ### typescript-react-quality-expert Validation
+
 - [ ] All stores fully typed with no `any`
 - [ ] Query hooks with proper generic types
 - [ ] Discriminated unions for complex states
@@ -632,6 +656,7 @@ describe('useBookings', () => {
 - [ ] Module augmentation where needed
 
 ## Success Criteria
+
 1. **State Management** - Zustand stores operational with persistence
 2. **Server State** - TanStack Query handling all API calls
 3. **Type Safety** - 100% TypeScript coverage with strict mode
@@ -641,6 +666,7 @@ describe('useBookings', () => {
 7. **Developer Experience** - DevTools integration working
 
 ## Deliverables
+
 - [ ] Zustand stores for auth and projects
 - [ ] TanStack Query configuration with persistence
 - [ ] Complete set of query and mutation hooks
@@ -651,6 +677,7 @@ describe('useBookings', () => {
 - [ ] Documentation for state patterns
 
 ## Completion Checklist
+
 - [ ] All stores created with TypeScript
 - [ ] Query client configured with persistence
 - [ ] Auth flow with token refresh working
@@ -664,4 +691,5 @@ describe('useBookings', () => {
 
 ---
 
-*Sub-Phase 1.3 establishes modern state management patterns that ensure excellent user experience with instant feedback and offline capabilities.*
+_Sub-Phase 1.3 establishes modern state management patterns that ensure
+excellent user experience with instant feedback and offline capabilities._

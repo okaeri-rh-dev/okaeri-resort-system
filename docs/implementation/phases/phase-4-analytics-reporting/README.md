@@ -33,7 +33,7 @@ Phase 4 implements comprehensive business analytics and reporting capabilities t
 ### [Sub-Phase 4.3: Interactive Dashboard](./sub-phase-4-3-interactive-dashboard.md)
 **Duration:** 2 days  
 **Dependencies:** Sub-Phase 4.2  
-**Validation Agents:** `resort-ui-designer`, `pwa-performance-optimizer`  
+**Validation Agents:** `tanstack-router-expert`, `resort-ui-designer`, `pwa-performance-optimizer`  
 - Build executive dashboard
 - Create drill-down capabilities
 - Implement real-time updates
@@ -42,7 +42,7 @@ Phase 4 implements comprehensive business analytics and reporting capabilities t
 ### [Sub-Phase 4.4: Custom Report Builder](./sub-phase-4-4-custom-report-builder.md)
 **Duration:** 2 days  
 **Dependencies:** Sub-Phases 4.1-4.2  
-**Validation Agents:** `react-redux-resort-architect`, `resort-ui-designer`  
+**Validation Agents:** `modern-form-validation-expert`, `zustand-tanstack-resort-architect`, `resort-ui-designer`  
 - Create drag-and-drop report designer
 - Build report template library
 - Implement scheduling system
@@ -265,7 +265,7 @@ usePredictions() → ML predictions
 - [ ] `vercel-resort-api-architect` - API performance validation
 - [ ] `resort-finance-architect` - Business logic verification
 - [ ] `resort-ui-designer` - Dashboard UX approval
-- [ ] `react-redux-resort-architect` - State management validation
+- [ ] `zustand-tanstack-resort-architect` - State management validation
 - [ ] `security-compliance-auditor` - Data security approval
 - [ ] `pwa-performance-optimizer` - Performance validation
 - [ ] `serverless-saas-architect` - Scalability approval

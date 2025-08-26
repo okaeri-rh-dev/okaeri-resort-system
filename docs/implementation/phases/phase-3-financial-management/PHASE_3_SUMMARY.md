@@ -4,24 +4,26 @@
 
 ### Documentation Status
 
-| Sub-Phase | Documentation | Agent Validation | Status |
-|-----------|--------------|------------------|---------|
-| 3.1: Financial Data Model | ✅ Complete | postgres-serverless-architect, resort-finance-architect | Ready |
-| 3.2: Expense Management | ✅ Complete | vercel-resort-api-architect, security-compliance-auditor | Ready |
-| 3.3: Income Consolidation | ✅ Complete | resort-finance-architect, typescript-react-quality-expert | Ready |
-| 3.4: Financial Dashboard | ✅ Complete | resort-ui-designer, react-redux-resort-architect | Ready |
-| 3.5: Report Generation | ✅ Complete | serverless-saas-architect, pwa-performance-optimizer | Ready |
-| 3.6: Advanced Analytics | ✅ Complete | resort-finance-architect, vercel-resort-api-architect | Ready |
-| 3.7: Integration & Performance | ✅ Complete | All relevant agents | Ready |
+| Sub-Phase                      | Documentation | Agent Validation                                          | Status |
+| ------------------------------ | ------------- | --------------------------------------------------------- | ------ |
+| 3.1: Financial Data Model      | ✅ Complete   | postgres-serverless-architect, resort-finance-architect   | Ready  |
+| 3.2: Expense Management        | ✅ Complete   | vercel-resort-api-architect, security-compliance-auditor  | Ready  |
+| 3.3: Income Consolidation      | ✅ Complete   | resort-finance-architect, typescript-react-quality-expert | Ready  |
+| 3.4: Financial Dashboard       | ✅ Complete   | resort-ui-designer, zustand-tanstack-resort-architect     | Ready  |
+| 3.5: Report Generation         | ✅ Complete   | serverless-saas-architect, pwa-performance-optimizer      | Ready  |
+| 3.6: Advanced Analytics        | ✅ Complete   | resort-finance-architect, vercel-resort-api-architect     | Ready  |
+| 3.7: Integration & Performance | ✅ Complete   | All relevant agents                                       | Ready  |
 
 ## Key Technologies
 
 ### State Management
-- **Zustand 5.0.2** - Local UI state (8KB vs Redux 45KB)
+
+- **Zustand 5.0.2** - Local UI state (8KB gzipped)
 - **TanStack Query 5.71.10** - Server state with caching
 - **React 19.1** - useOptimistic for instant feedback
 
 ### Financial Libraries
+
 - **Decimal.js** - Precise financial calculations
 - **Recharts** - Interactive financial charts
 - **date-fns** - Date manipulation
@@ -29,6 +31,7 @@
 - **React-PDF** - PDF report creation
 
 ### Backend Services
+
 - **Vercel Serverless** - API endpoints
 - **Neon PostgreSQL** - Financial database
 - **Cloudflare R2** - Receipt storage
@@ -37,6 +40,7 @@
 ## Success Metrics
 
 ### Performance Targets
+
 - Dashboard load: < 1s ⏱️
 - Report generation: < 3s 📊
 - Receipt upload: < 2s 📸
@@ -44,6 +48,7 @@
 - Search/filter: < 100ms 🔍
 
 ### Quality Standards
+
 - TypeScript coverage: 100% ✅
 - Test coverage: > 85% 🧪
 - Lighthouse score: > 90 🚀
@@ -53,6 +58,7 @@
 ## Agent Validation Requirements
 
 ### Primary Validations
+
 1. **postgres-serverless-architect**
    - Financial schema optimization
    - Query performance tuning
@@ -76,6 +82,7 @@
 ## Phase Deliverables
 
 ### Core Components
+
 - ✅ Financial data model and schemas
 - ✅ Expense CRUD with categorization
 - ✅ Income consolidation from all sources
@@ -85,6 +92,7 @@
 - ✅ Receipt management system
 
 ### Integration Points
+
 - Booking system → Income tracking
 - Receipt upload → Cloudflare R2
 - Report scheduler → Email delivery
@@ -92,26 +100,29 @@
 
 ## Risk Mitigation Strategies
 
-| Risk | Mitigation | Status |
-|------|------------|---------|
+| Risk                      | Mitigation                 | Status  |
+| ------------------------- | -------------------------- | ------- |
 | Large dataset performance | Pagination, virtualization | Planned |
-| Receipt storage costs | Image optimization | Planned |
-| Report generation load | Background processing | Planned |
-| Financial accuracy | Decimal.js precision | Planned |
+| Receipt storage costs     | Image optimization         | Planned |
+| Report generation load    | Background processing      | Planned |
+| Financial accuracy        | Decimal.js precision       | Planned |
 
 ## Next Steps for Implementation
 
 ### Week 7 Tasks
+
 1. Implement financial data model
 2. Create expense CRUD operations
 3. Begin income consolidation
 
 ### Week 8 Tasks
+
 1. Complete income aggregation
 2. Build financial dashboard
 3. Implement report generation
 
 ### Week 9 Tasks
+
 1. Add advanced analytics
 2. Performance optimization
 3. Integration testing
@@ -119,12 +130,14 @@
 ## Dependencies on Previous Phases
 
 ### From Phase 1 (Foundation)
+
 - Authentication system ✅
 - Database setup ✅
 - API structure ✅
 - UI components ✅
 
 ### From Phase 2 (Booking System)
+
 - Booking data for income ✅
 - Payment tracking ✅
 - Guest information ✅
@@ -132,6 +145,7 @@
 ## Handoff Requirements to Phase 4
 
 ### Required for Analytics Phase
+
 - [ ] Financial data available via API
 - [ ] Report generation functional
 - [ ] Dashboard metrics defined
@@ -140,6 +154,7 @@
 ## Team Notes
 
 ### Critical Implementation Points
+
 1. Use Decimal.js for ALL monetary calculations
 2. Implement optimistic updates for better UX
 3. Cache expensive aggregations with materialized views
@@ -147,6 +162,7 @@
 5. Maintain comprehensive audit trail
 
 ### Testing Priorities
+
 1. Financial calculation accuracy
 2. Report generation correctness
 3. Dashboard real-time updates
@@ -155,4 +171,5 @@
 
 ---
 
-*Phase 3 planning complete. Ready for implementation with comprehensive financial management capabilities designed for Philippine resort operations.*
+_Phase 3 planning complete. Ready for implementation with comprehensive
+financial management capabilities designed for Philippine resort operations._

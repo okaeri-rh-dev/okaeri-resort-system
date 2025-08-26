@@ -1,56 +1,75 @@
 # User Interface & Experience Design Plan - Updated 2025 Stack
 
 ## Overview
-The UI/UX design leverages the **latest 2025 technology stack**: **Vite 7 + React 19 + Zustand + TanStack Query + TanStack Router + shadcn/ui + Tailwind CSS v4**, creating a mobile-first Progressive Web Application (PWA) that provides an intuitive, efficient experience for family-owned resort management with optimistic UI updates and real-time state synchronization.
+
+The UI/UX design leverages the **latest 2025 technology stack**: **Vite 7 +
+React 19 + Zustand + TanStack Query + TanStack Router + shadcn/ui + Tailwind CSS
+v4**, creating a mobile-first Progressive Web Application (PWA) that provides an
+intuitive, efficient experience for family-owned resort management with
+optimistic UI updates and real-time state synchronization.
 
 ## Updated Technology Foundation
 
 ### Core Stack (2025)
+
 - **Build Tool:** Vite 7.0.0 with Lightning CSS support
 - **Framework:** React 19.1 with `useOptimistic` and `useActionState` hooks
 - **State Management:** Zustand 5.0.2 for local/UI state
 - **Server State:** TanStack Query 5.71.10 for server state management
 - **Routing:** TanStack Router 1.114.3 with file-based routing
 - **UI Components:** shadcn/ui (latest) with Radix UI primitives
-- **Styling:** Tailwind CSS v4.0 with oklch() color space and CSS-first configuration
+- **Styling:** Tailwind CSS v4.0 with oklch() color space and CSS-first
+  configuration
 - **Forms:** React Hook Form 7.54.0 + Zod validation
 - **Type Safety:** TypeScript throughout with strict mode
 
 ## Modern Design Philosophy
 
 ### Updated Core Principles
+
 - **Mobile-First PWA:** React 19 concurrent features + Vite 7 performance
-- **Modern State Architecture:** TanStack Query for server state + Zustand for local state
+- **Modern State Architecture:** TanStack Query for server state + Zustand for
+  local state
 - **Optimistic UI:** React 19 `useOptimistic` for instant user feedback
 - **shadcn/ui Design System:** Copy-paste components with full accessibility
 - **CSS-First Configuration:** Tailwind v4 `@theme` directive for design tokens
-- **Filipino User Context:** Localized for Philippine business practices with modern UX
+- **Filipino User Context:** Localized for Philippine business practices with
+  modern UX
 
 ### Design Language Evolution
+
 - **Clean & Performant:** React 19 concurrent rendering for smooth interactions
-- **Tropical Professional:** Modern oklch() color space for accurate tropical colors
+- **Tropical Professional:** Modern oklch() color space for accurate tropical
+  colors
 - **Data-Driven:** TanStack Query intelligent caching with real-time updates
 - **Touch-Optimized:** Large tap targets with haptic feedback considerations
 
 ## Visual Design System - Tailwind CSS v4
 
 ### Modern Color Palette (oklch() Color Space)
+
 ```css
 /* Modern CSS-First Configuration using @theme directive */
 @import "tailwindcss";
 
 @theme {
   /* Primary Colors - Ocean & Beach Inspired (oklch format) */
-  --color-primary: oklch(59.69% 0.156 252.77);      /* Ocean blue for primary actions */
+  --color-primary: oklch(
+    59.69% 0.156 252.77
+  ); /* Ocean blue for primary actions */
   --color-primary-foreground: oklch(98.35% 0.007 252.77);
-  
-  --color-accent: oklch(64.23% 0.192 26.46);        /* Sunset coral for accents */
+
+  --color-accent: oklch(64.23% 0.192 26.46); /* Sunset coral for accents */
   --color-accent-foreground: oklch(98.35% 0.007 252.77);
-  
-  --color-secondary: oklch(69.07% 0.147 60.75);     /* Warm sand orange for highlights */
+
+  --color-secondary: oklch(
+    69.07% 0.147 60.75
+  ); /* Warm sand orange for highlights */
   --color-secondary-foreground: oklch(15.05% 0.017 252.77);
-  
-  --color-destructive: oklch(64.23% 0.192 26.46);   /* Coral red for alerts/warnings */
+
+  --color-destructive: oklch(
+    64.23% 0.192 26.46
+  ); /* Coral red for alerts/warnings */
   --color-destructive-foreground: oklch(98.35% 0.007 252.77);
 
   /* Background and Surface Colors */
@@ -60,49 +79,51 @@ The UI/UX design leverages the **latest 2025 technology stack**: **Vite 7 + Reac
   --color-card-foreground: oklch(15.05% 0.017 252.77);
   --color-popover: oklch(100% 0 0);
   --color-popover-foreground: oklch(15.05% 0.017 252.77);
-  
+
   /* Borders and Interactive Elements */
   --color-border: oklch(91.97% 0.007 252.77);
   --color-input: oklch(91.97% 0.007 252.77);
   --color-ring: oklch(59.69% 0.156 252.77);
-  
+
   /* Muted Colors for Secondary Text */
   --color-muted: oklch(96.47% 0.007 252.77);
   --color-muted-foreground: oklch(64.82% 0.021 252.77);
-  
+
   /* Status Colors */
-  --color-success: oklch(69.71% 0.144 142.49);      /* Success green */
-  --color-warning: oklch(77.84% 0.134 84.57);       /* Warning yellow */
-  --color-info: oklch(58.12% 0.089 221.28);         /* Info blue */
-  
+  --color-success: oklch(69.71% 0.144 142.49); /* Success green */
+  --color-warning: oklch(77.84% 0.134 84.57); /* Warning yellow */
+  --color-info: oklch(58.12% 0.089 221.28); /* Info blue */
+
   /* Resort-Specific Status Colors */
-  --color-status-pending: oklch(77.84% 0.134 84.57);    /* Warning yellow */
+  --color-status-pending: oklch(77.84% 0.134 84.57); /* Warning yellow */
   --color-status-confirmed: oklch(69.71% 0.144 142.49); /* Success green */
-  --color-status-overdue: oklch(64.23% 0.192 26.46);    /* Destructive red */
-  --color-status-paid: oklch(58.12% 0.089 221.28);      /* Info blue */
+  --color-status-overdue: oklch(64.23% 0.192 26.46); /* Destructive red */
+  --color-status-paid: oklch(58.12% 0.089 221.28); /* Info blue */
 
   /* Typography */
-  --font-family-primary: 'Inter Variable', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-family-mono: 'JetBrains Mono Variable', 'Courier New', monospace;
+  --font-family-primary:
+    "Inter Variable", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-mono: "JetBrains Mono Variable", "Courier New", monospace;
 
   /* Spacing System (8px base unit) */
-  --spacing-1: 0.25rem;    /* 4px */
-  --spacing-2: 0.5rem;     /* 8px */
-  --spacing-3: 0.75rem;    /* 12px */
-  --spacing-4: 1rem;       /* 16px */
-  --spacing-5: 1.25rem;    /* 20px */
-  --spacing-6: 1.5rem;     /* 24px */
-  --spacing-8: 2rem;       /* 32px */
-  --spacing-10: 2.5rem;    /* 40px */
-  --spacing-12: 3rem;      /* 48px */
+  --spacing-1: 0.25rem; /* 4px */
+  --spacing-2: 0.5rem; /* 8px */
+  --spacing-3: 0.75rem; /* 12px */
+  --spacing-4: 1rem; /* 16px */
+  --spacing-5: 1.25rem; /* 20px */
+  --spacing-6: 1.5rem; /* 24px */
+  --spacing-8: 2rem; /* 32px */
+  --spacing-10: 2.5rem; /* 40px */
+  --spacing-12: 3rem; /* 48px */
 
   /* Border Radius */
   --radius: 0.75rem;
-  
+
   /* Custom Resort Theme Properties */
   --ease-fluid: cubic-bezier(0.3, 0, 0, 1);
   --ease-snappy: cubic-bezier(0.2, 0, 0, 1);
-  --shadow-resort: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-resort:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Dark Mode Support */
@@ -114,10 +135,10 @@ The UI/UX design leverages the **latest 2025 technology stack**: **Vite 7 + Reac
     --color-card-foreground: oklch(98.35% 0.007 252.77);
     --color-popover: oklch(15.05% 0.017 252.77);
     --color-popover-foreground: oklch(98.35% 0.007 252.77);
-    
+
     --color-muted: oklch(24.26% 0.021 252.77);
     --color-muted-foreground: oklch(70.73% 0.021 252.77);
-    
+
     --color-border: oklch(24.26% 0.021 252.77);
     --color-input: oklch(24.26% 0.021 252.77);
   }
@@ -126,27 +147,31 @@ The UI/UX design leverages the **latest 2025 technology stack**: **Vite 7 + Reac
 /* Resort-specific utility classes */
 @layer components {
   .resort-gradient {
-    background: linear-gradient(135deg, oklch(59.69% 0.156 252.77), oklch(64.23% 0.192 26.46));
+    background: linear-gradient(
+      135deg,
+      oklch(59.69% 0.156 252.77),
+      oklch(64.23% 0.192 26.46)
+    );
   }
-  
+
   .status-badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border;
+    @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium;
   }
-  
+
   .status-pending {
-    @apply bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800;
+    @apply border-yellow-200 bg-yellow-100 text-yellow-800 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400;
   }
-  
+
   .status-confirmed {
-    @apply bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800;
+    @apply border-green-200 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400;
   }
-  
+
   .status-overdue {
-    @apply bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800;
+    @apply border-red-200 bg-red-100 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400;
   }
-  
+
   .status-paid {
-    @apply bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800;
+    @apply border-blue-200 bg-blue-100 text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400;
   }
 }
 ```
@@ -154,6 +179,7 @@ The UI/UX design leverages the **latest 2025 technology stack**: **Vite 7 + Reac
 ## Modern Component Library - shadcn/ui Integration
 
 ### Installation & Configuration
+
 ```bash
 # Latest shadcn/ui setup
 npx shadcn@latest init
@@ -167,6 +193,7 @@ npx shadcn@latest add button input label form card dialog sheet select calendar 
 #### Modern Navigation Components
 
 ##### Top Navigation Bar with Zustand Integration
+
 ```typescript
 // src/components/layout/Navbar.tsx
 "use client"
@@ -191,7 +218,7 @@ export function Navbar() {
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
   const currentProject = useProjectStore((state) => state.currentProject)
-  
+
   const handleLogout = () => {
     logout()
   }
@@ -258,6 +285,7 @@ export function Navbar() {
 ```
 
 ##### Bottom Navigation (Mobile) with React 19 Features
+
 ```typescript
 // src/components/layout/MobileNav.tsx
 "use client"
@@ -279,13 +307,13 @@ const navItems = [
 
 export function MobileNav() {
   const [activeTab, setActiveTab] = useState("/")
-  
+
   // React 19: useOptimistic for instant tab switching
   const [optimisticActiveTab, addOptimisticActiveTab] = useOptimistic(
     activeTab,
     (state, newTab) => newTab
   )
-  
+
   const pendingBookingsCount = useBookingStore((state) => state.pendingCount || 0)
 
   const handleTabClick = (href: string) => {
@@ -301,7 +329,7 @@ export function MobileNav() {
         {navItems.map((item) => {
           const isActive = optimisticActiveTab === item.href
           const badgeCount = item.badge === "pending" ? pendingBookingsCount : null
-          
+
           return (
             <Button
               key={item.href}
@@ -342,6 +370,7 @@ export function MobileNav() {
 ### Dashboard Components with Modern State Management
 
 #### Enhanced Summary Cards with TanStack Query
+
 ```typescript
 // src/components/dashboard/SummaryCards.tsx
 "use client"
@@ -426,7 +455,7 @@ export function SummaryCards() {
       description: "Total bookings income"
     },
     {
-      title: "Monthly Expenses", 
+      title: "Monthly Expenses",
       value: metrics?.monthlyExpenses ? `₱${metrics.monthlyExpenses.toLocaleString()}` : "₱0",
       change: metrics?.expenseChange,
       trend: (metrics?.expenseChange || 0) <= 0 ? 'up' as const : 'down' as const,
@@ -460,6 +489,7 @@ export function SummaryCards() {
 ### Form Components with React 19 + Modern State Management
 
 #### Modern Expense Form with useOptimistic and TanStack Query
+
 ```typescript
 // src/components/forms/ExpenseForm.tsx
 "use client"
@@ -529,7 +559,7 @@ interface OptimisticExpense extends ExpenseFormData {
 export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
   const currentProject = useProjectStore((state) => state.currentProject)
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null)
-  
+
   // React 19: useOptimistic for immediate UI feedback
   const [recentExpenses, addOptimisticExpense] = useOptimistic<OptimisticExpense[], OptimisticExpense>(
     [],
@@ -556,14 +586,14 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
     async (prevState: any, formData: FormData) => {
       try {
         const values = form.getValues()
-        
+
         // Create optimistic expense
         const optimisticExpense: OptimisticExpense = {
           id: `temp-${Date.now()}`,
           ...values,
           status: 'pending'
         }
-        
+
         // Add optimistic update immediately
         addOptimisticExpense(optimisticExpense)
 
@@ -582,7 +612,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
         form.reset()
         setReceiptPreview(null)
         onSuccess?.()
-        
+
         return { success: true, expense: result }
       } catch (error: any) {
         toast.error(error.message || 'Failed to create expense')
@@ -658,8 +688,8 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                           {categories?.map((category) => (
                             <SelectItem key={category.id} value={category.id}>
                               <div className="flex items-center gap-2">
-                                <div 
-                                  className="w-3 h-3 rounded-full" 
+                                <div
+                                  className="w-3 h-3 rounded-full"
                                   style={{ backgroundColor: category.colorCode }}
                                 />
                                 {category.name}
@@ -931,17 +961,18 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
 ## Modern Responsive Design - Tailwind CSS v4
 
 ### Mobile-First Breakpoints
+
 ```css
 /* Tailwind CSS v4 Responsive Design */
 @theme {
   /* Custom breakpoints for resort management */
-  --breakpoint-xs: 475px;    /* Small phones */
-  --breakpoint-sm: 640px;    /* Large phones */
-  --breakpoint-md: 768px;    /* Tablets */
-  --breakpoint-lg: 1024px;   /* Laptops */
-  --breakpoint-xl: 1280px;   /* Desktops */
-  --breakpoint-2xl: 1536px;  /* Large screens */
-  --breakpoint-3xl: 1920px;  /* Ultra-wide screens */
+  --breakpoint-xs: 475px; /* Small phones */
+  --breakpoint-sm: 640px; /* Large phones */
+  --breakpoint-md: 768px; /* Tablets */
+  --breakpoint-lg: 1024px; /* Laptops */
+  --breakpoint-xl: 1280px; /* Desktops */
+  --breakpoint-2xl: 1536px; /* Large screens */
+  --breakpoint-3xl: 1920px; /* Ultra-wide screens */
 }
 
 /* Container Query Support */
@@ -949,7 +980,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
   .container-query {
     container-type: inline-size;
   }
-  
+
   @container (min-width: 768px) {
     .cq-md\:grid-cols-2 {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -961,6 +992,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
 ### Performance Optimizations
 
 #### Optimized Component Loading
+
 ```typescript
 // src/components/OptimizedComponents.tsx
 import { lazy, Suspense } from 'react'
@@ -1000,6 +1032,7 @@ function BookingListSkeleton() {
 ## Accessibility Implementation (WCAG 2.1 AA+)
 
 ### Enhanced Accessibility Features
+
 ```typescript
 // Enhanced accessibility with shadcn/ui components
 export function AccessibleComponents() {
@@ -1009,17 +1042,17 @@ export function AccessibleComponents() {
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {/* Dynamic announcements for optimistic updates */}
       </div>
-      
+
       {/* Keyboard navigation support */}
       <div className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
         {/* Interactive elements */}
       </div>
-      
+
       {/* High contrast mode support */}
       <div className="contrast-more:border-2 contrast-more:border-solid">
         {/* Content with enhanced contrast */}
       </div>
-      
+
       {/* Reduced motion support */}
       <div className="motion-reduce:transition-none motion-reduce:animate-none">
         {/* Animated content */}
@@ -1032,85 +1065,88 @@ export function AccessibleComponents() {
 ### Modern PWA Features
 
 #### Progressive Web App Configuration
+
 ```typescript
 // vite.config.ts - PWA Configuration
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import { VitePWA } from 'vite-plugin-pwa'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+      registerType: "autoUpdate",
+      includeAssets: ["favicon.ico", "apple-touch-icon.png"],
       manifest: {
-        name: 'Okaeri Resort Management',
-        short_name: 'Okaeri',
-        description: 'Complete resort management system',
-        theme_color: '#2E86AB', // Primary blue
-        background_color: '#ffffff',
-        display: 'standalone',
-        orientation: 'portrait',
-        start_url: '/',
+        name: "Okaeri Resort Management",
+        short_name: "Okaeri",
+        description: "Complete resort management system",
+        theme_color: "#2E86AB", // Primary blue
+        background_color: "#ffffff",
+        display: "standalone",
+        orientation: "portrait",
+        start_url: "/",
         icons: [
           {
-            src: 'icon-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
+            src: "icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
           },
           {
-            src: 'icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
-          }
+            src: "icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable",
+          },
         ],
-        categories: ['business', 'productivity']
+        categories: ["business", "productivity"],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         runtimeCaching: [
           {
             urlPattern: /^\/api\/.*$/,
-            handler: 'NetworkFirst',
+            handler: "NetworkFirst",
             options: {
-              cacheName: 'api-cache',
+              cacheName: "api-cache",
               expiration: {
                 maxEntries: 32,
-                maxAgeSeconds: 5 * 60 // 5 minutes
-              }
-            }
+                maxAgeSeconds: 5 * 60, // 5 minutes
+              },
+            },
           },
           {
             urlPattern: /.*\.(?:png|jpg|jpeg|svg|gif|webp)$/,
-            handler: 'CacheFirst',
+            handler: "CacheFirst",
             options: {
-              cacheName: 'images-cache',
+              cacheName: "images-cache",
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
-              }
-            }
-          }
-        ]
-      }
-    })
+                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+              },
+            },
+          },
+        ],
+      },
+    }),
   ],
-})
+});
 ```
 
 ## Performance & Developer Experience
 
 ### Core Web Vitals Optimization
+
 - **Largest Contentful Paint (LCP):** < 2.5s with Vite 7 Lightning CSS
 - **First Input Delay (FID):** < 100ms with React 19 concurrent features
 - **Cumulative Layout Shift (CLS):** < 0.1 with proper skeleton loading
 - **Time to Interactive (TTI):** < 3s on 3G with code splitting
 
 ### Modern Development Tools
+
 ```bash
 # Development setup
 npm create vite@latest okaeri-resort --template react-ts
@@ -1132,18 +1168,22 @@ npx shadcn@latest add button input label form card dialog sheet select calendar 
 ## Key Benefits of 2025 Stack
 
 ### Performance Advantages
+
 - **Vite 7 Lightning CSS:** 100x faster CSS processing than traditional PostCSS
 - **React 19 Concurrent Features:** Automatic batching and concurrent rendering
-- **RTK Query Intelligent Caching:** Background refetching with optimistic updates
+- **RTK Query Intelligent Caching:** Background refetching with optimistic
+  updates
 - **shadcn/ui Radix Primitives:** Optimized accessibility and performance
 
 ### Developer Experience Improvements
+
 - **CSS-First Configuration:** No more JavaScript config files with Tailwind v4
 - **Type-Safe State Management:** RTK Query auto-generates typed hooks
 - **Copy-Paste Components:** shadcn/ui components with full customization
 - **Modern React Patterns:** useOptimistic and useActionState for better UX
 
 ### User Experience Enhancements
+
 - **Optimistic Updates:** Instant feedback with automatic error handling
 - **Offline-First PWA:** Service worker with intelligent caching
 - **Accessibility by Default:** WCAG 2.1 AA compliance built-in
@@ -1151,4 +1191,373 @@ npx shadcn@latest add button input label form card dialog sheet select calendar 
 
 ---
 
-*This modernized UI/UX design plan leverages the cutting-edge 2025 technology stack to deliver a professional, accessible, and performant resort management system that feels native on all devices while providing enterprise-level capabilities for family business operations.*****
+_This modernized UI/UX design plan leverages the cutting-edge 2025 technology
+stack to deliver a professional, accessible, and performant resort management
+system that feels native on all devices while providing enterprise-level
+capabilities for family business operations._
+
+## Phase Verification Steps
+
+### Phase 1: Design System Setup ✓
+
+**Verification Checklist:**
+
+- [ ] Tailwind CSS v4 configured with @theme directive
+- [ ] oklch() color palette displays correctly
+- [ ] Font variables loaded properly
+- [ ] CSS-first configuration working
+- [ ] Dark mode toggle functional
+- [ ] Design tokens accessible in components
+
+**Testing Commands:**
+
+```bash
+# Verify Tailwind build
+npm run build:css
+
+# Check CSS output size
+du -sh dist/assets/*.css
+
+# Test color contrast ratios
+npm run test:a11y -- --colors
+
+# Verify font loading
+npm run audit:fonts
+```
+
+### Phase 2: Component Library Implementation ✓
+
+**Verification Checklist:**
+
+- [ ] All shadcn/ui components installed
+- [ ] Custom theme applied to components
+- [ ] Touch targets minimum 44x44px
+- [ ] Focus states visible and accessible
+- [ ] Animation performance smooth
+- [ ] Component variants working
+
+**Testing Scenarios:**
+
+1. Test all button variants - hover, focus, disabled states
+2. Modal/dialog accessibility - keyboard navigation works
+3. Form components - validation states display correctly
+4. Data tables - sorting and pagination functional
+5. Toast notifications - appear and dismiss properly
+
+### Phase 3: Mobile Responsiveness ✓
+
+**Verification Checklist:**
+
+- [ ] Layout adapts to all breakpoints
+- [ ] Touch gestures work correctly
+- [ ] No horizontal scrolling on mobile
+- [ ] Text remains readable at all sizes
+- [ ] Images lazy load properly
+- [ ] Modals fit mobile screens
+
+**Testing Devices:**
+
+```bash
+# Test on various viewports
+npm run test:responsive
+
+# Device emulation testing
+# Test on: iPhone SE, iPhone 14, iPad, Samsung Galaxy S23
+
+# Check viewport meta tag
+grep -r "viewport" public/index.html
+```
+
+### Phase 4: Accessibility Compliance ✓
+
+**Verification Checklist:**
+
+- [ ] WCAG 2.1 AA compliant
+- [ ] Keyboard navigation complete
+- [ ] Screen reader compatible
+- [ ] Color contrast ratios pass
+- [ ] ARIA labels present
+- [ ] Focus trap in modals
+
+**Accessibility Testing:**
+
+```bash
+# Run automated accessibility tests
+npm run test:a11y
+
+# Check WAVE report
+npx @axe-core/cli http://localhost:5173
+
+# Test with screen reader
+# Enable VoiceOver (Mac) or NVDA (Windows)
+
+# Keyboard navigation test
+# Tab through entire app without mouse
+```
+
+### Phase 5: State Management UI ✓
+
+**Verification Checklist:**
+
+- [ ] Zustand stores update UI correctly
+- [ ] TanStack Query loading states work
+- [ ] Optimistic updates feel instant
+- [ ] Error states display properly
+- [ ] Stale data indicators visible
+- [ ] Background refetch indicators
+
+**Testing Scenarios:**
+
+1. Create item - optimistic update shows immediately
+2. Network failure - error boundary catches errors
+3. Slow connection - loading skeletons appear
+4. Data refresh - background sync indicator shows
+5. Concurrent updates - no race conditions
+
+### Phase 6: Form Validation & UX ✓
+
+**Verification Checklist:**
+
+- [ ] Real-time validation feedback
+- [ ] Error messages clear and helpful
+- [ ] Success states celebrated
+- [ ] Form progress indicators
+- [ ] Auto-save functionality
+- [ ] Dirty form warnings
+
+**Form Testing:**
+
+```bash
+# Test form validation
+npm run test:forms
+
+# Check field validation
+# - Required fields
+# - Email format
+# - Phone numbers (Philippine format)
+# - Date ranges
+# - Amount fields (currency)
+```
+
+### Phase 7: Navigation & Routing ✓
+
+**Verification Checklist:**
+
+- [ ] TanStack Router navigation smooth
+- [ ] Browser back/forward works
+- [ ] Deep linking functional
+- [ ] Route guards protect pages
+- [ ] Loading states between routes
+- [ ] 404 page displays correctly
+
+**Navigation Testing:**
+
+1. Direct URL access - deep links work
+2. Protected routes - redirect to login
+3. Browser navigation - back/forward functional
+4. Route transitions - smooth and fast
+5. Error routes - 404/500 pages display
+
+### Phase 8: PWA Features ✓
+
+**Verification Checklist:**
+
+- [ ] Service worker registered
+- [ ] Offline mode functional
+- [ ] Install prompt appears
+- [ ] Icons and splash screens
+- [ ] Push notifications work
+- [ ] Background sync enabled
+
+**PWA Testing:**
+
+```bash
+# Build and test PWA
+npm run build
+npm run preview
+
+# Test offline mode
+# 1. Load app
+# 2. Go offline in DevTools
+# 3. Navigate around app
+
+# Check PWA score
+npx lighthouse http://localhost:4173 --view
+
+# Verify manifest
+cat public/manifest.json
+```
+
+### Phase 9: Performance Optimization ✓
+
+**Verification Checklist:**
+
+- [ ] Bundle size < 200KB gzipped
+- [ ] Code splitting working
+- [ ] Images optimized
+- [ ] Fonts subset and preloaded
+- [ ] Critical CSS inlined
+- [ ] No layout shifts
+
+**Performance Testing:**
+
+```bash
+# Analyze bundle
+npm run build
+npm run analyze
+
+# Measure performance
+npx lighthouse http://localhost:5173 \
+  --only-categories=performance
+
+# Check Core Web Vitals
+npm run test:cwv
+
+# Profile React components
+npm run profile
+```
+
+### Integration Testing
+
+**Complete User Flows:**
+
+1. **New User Onboarding:**
+   - [ ] Welcome screens display
+   - [ ] Tutorial tooltips appear
+   - [ ] First action guided
+   - [ ] Settings accessible
+   - [ ] Help documentation linked
+
+2. **Daily Operations Flow:**
+   - [ ] Dashboard loads quickly
+   - [ ] Quick actions accessible
+   - [ ] Data entry smooth
+   - [ ] Navigation intuitive
+   - [ ] Logout/session management
+
+3. **Error Recovery:**
+   - [ ] Network errors handled gracefully
+   - [ ] Form data persists on error
+   - [ ] Retry mechanisms work
+   - [ ] Error messages helpful
+
+### Visual Regression Testing
+
+**Visual Testing Checklist:**
+
+- [ ] Components match design specs
+- [ ] Consistent spacing throughout
+- [ ] Colors match brand guidelines
+- [ ] Typography hierarchy clear
+- [ ] Icons consistent style
+- [ ] Animations smooth
+
+**Visual Testing Tools:**
+
+```bash
+# Setup visual regression testing
+npm install -D @percy/cli @percy/cypress
+
+# Run visual tests
+npm run test:visual
+
+# Compare screenshots
+npm run test:visual:compare
+```
+
+### Browser Compatibility
+
+**Browser Testing Matrix:**
+
+- [ ] Chrome (latest)
+- [ ] Safari (latest)
+- [ ] Firefox (latest)
+- [ ] Edge (latest)
+- [ ] Chrome Mobile
+- [ ] Safari iOS
+
+**Compatibility Testing:**
+
+```bash
+# Cross-browser testing
+npm run test:browsers
+
+# Check CSS compatibility
+npx browserslist
+
+# Polyfill verification
+grep -r "polyfill" dist/
+```
+
+### Localization & i18n
+
+**Localization Checklist:**
+
+- [ ] Philippine peso (₱) displays correctly
+- [ ] Date formats (MM/DD/YYYY)
+- [ ] Time formats (12-hour with AM/PM)
+- [ ] Phone number formats (+63)
+- [ ] Local language support ready
+- [ ] RTL layout support (if needed)
+
+**Localization Testing:**
+
+```bash
+# Test currency formatting
+npm run test:i18n -- --currency
+
+# Test date/time formatting
+npm run test:i18n -- --datetime
+
+# Check for hardcoded strings
+grep -r "₱\|PHP\|peso" src/
+```
+
+### User Feedback Integration
+
+**Feedback Mechanisms:**
+
+- [ ] Loading indicators clear
+- [ ] Success messages positive
+- [ ] Error messages actionable
+- [ ] Progress bars accurate
+- [ ] Tooltips helpful
+- [ ] Empty states informative
+
+### Security UI Considerations
+
+**Security Checklist:**
+
+- [ ] Password strength indicators
+- [ ] Session timeout warnings
+- [ ] Secure form submissions
+- [ ] XSS prevention in inputs
+- [ ] Content Security Policy headers
+- [ ] HTTPS enforcement
+
+**Security Testing:**
+
+```bash
+# Check for XSS vulnerabilities
+npm run test:security -- --xss
+
+# Verify CSP headers
+curl -I http://localhost:5173
+
+# Test input sanitization
+# Try injecting <script> tags in forms
+```
+
+### Documentation & Help
+
+**Help System Verification:**
+
+- [ ] Contextual help available
+- [ ] Tooltips on complex features
+- [ ] User guide accessible
+- [ ] Keyboard shortcuts documented
+- [ ] FAQ section helpful
+- [ ] Contact support visible
+
+This comprehensive verification ensures the UI/UX implementation meets all
+design, accessibility, performance, and usability standards.

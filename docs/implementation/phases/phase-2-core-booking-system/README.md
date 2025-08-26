@@ -24,7 +24,7 @@ Phase 2 implements the comprehensive booking management system for the Okaeri Re
 ### [Sub-Phase 2.2: Booking CRUD Operations](./sub-phase-2-2-booking-crud-operations.md)
 **Duration:** 2 days  
 **Dependencies:** Sub-Phase 2.1  
-**Validation Agents:** `react-redux-resort-architect`, `typescript-react-quality-expert`  
+**Validation Agents:** `modern-form-validation-expert`, `zustand-tanstack-resort-architect`, `typescript-react-quality-expert`  
 - Implement CRUD API endpoints
 - Create TanStack Query hooks with caching
 - Setup Zustand store for booking UI state
@@ -262,7 +262,7 @@ useImportCSV() → Bulk import with progress
 ### Agent Sign-offs Required
 - [ ] `postgres-serverless-architect` - Database design approval
 - [ ] `vercel-resort-api-architect` - API architecture validation
-- [ ] `react-redux-resort-architect` - State management approval
+- [ ] `zustand-tanstack-resort-architect` - State management approval
 - [ ] `resort-finance-architect` - Payment system validation
 - [ ] `resort-ui-designer` - UI/UX approval
 - [ ] `security-compliance-auditor` - Security validation
