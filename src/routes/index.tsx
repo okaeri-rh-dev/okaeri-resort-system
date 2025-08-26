@@ -1,7 +1,9 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { Suspense } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { RouteErrorBoundary, RouteLoadingFallback } from "@/lib/route-utils";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
@@ -13,7 +15,18 @@ export const Route = createFileRoute("/")({
       });
     }
   },
-  component: HomePage,
+
+  errorComponent: ({ error, reset }) => (
+    <RouteErrorBoundary error={error} reset={reset} info={{ componentStack: "Home Route" }} />
+  ),
+
+  pendingComponent: () => <RouteLoadingFallback message="Loading..." />,
+
+  component: () => (
+    <Suspense fallback={<RouteLoadingFallback message="Loading homepage..." />}>
+      <HomePage />
+    </Suspense>
+  ),
 });
 
 function HomePage() {
@@ -67,25 +80,35 @@ function HomePage() {
       </div>
 
       <div className="from-ocean-50 to-sand-50 mt-12 rounded-lg border bg-gradient-to-r p-6">
-        <h2 className="mb-4 text-2xl font-semibold">Phase 1.2 Complete ✅</h2>
+        <h2 className="mb-4 text-2xl font-semibold">Phase 1.4 Complete ✅</h2>
         <p className="text-muted-foreground mb-4">
-          TanStack Router with file-based routing is now configured:
+          Enhanced TanStack Router with comprehensive routing enhancements:
         </p>
         <ul className="space-y-2 text-sm">
           <li className="flex items-center gap-2">
-            <span className="text-palm-600">✓</span> File-based routing with type safety
+            <span className="text-palm-600">✓</span> File-based routing with full type safety
           </li>
           <li className="flex items-center gap-2">
-            <span className="text-palm-600">✓</span> Authentication guards for protected routes
+            <span className="text-palm-600">✓</span> Authentication guards with enhanced security
           </li>
           <li className="flex items-center gap-2">
-            <span className="text-palm-600">✓</span> Error boundaries with proper fallbacks
+            <span className="text-palm-600">✓</span> Route loaders with intelligent data prefetching
           </li>
           <li className="flex items-center gap-2">
-            <span className="text-palm-600">✓</span> Route-level data prefetching
+            <span className="text-palm-600">✓</span> Zod schema validation for search parameters
           </li>
           <li className="flex items-center gap-2">
-            <span className="text-palm-600">✓</span> Context-aware route navigation
+            <span className="text-palm-600">✓</span> Comprehensive error boundaries and suspense
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="text-palm-600">✓</span> Optimized caching strategies with
+            stale-while-revalidate
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="text-palm-600">✓</span> Context-aware navigation with loading states
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="text-palm-600">✓</span> Production-ready route utilities and helpers
           </li>
         </ul>
       </div>

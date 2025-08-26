@@ -6,7 +6,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import type { Project, ProjectMembership, Property } from "@/types/common";
-import { apiClient } from "@/api/client";
+import { apiClient } from "@/lib/api-client";
 
 interface ProjectState {
   // Current active project

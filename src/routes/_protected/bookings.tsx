@@ -1,21 +1,91 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useProjectStore } from "@/stores/projectStore";
+import { Suspense } from "react";
 import { queryClient } from "@/lib/query-client";
-import { BookingsPage } from "@/pages/BookingsPage";
+import {
+  PrefetchManager,
+  RouteErrorBoundary,
+  RouteLoadingFallback,
+  createRouteLoader,
+  requireActiveProject,
+} from "@/lib/route-utils";
+import {
+  BookingsSearchSchema,
+  type BookingsSearchParams,
+  validateSearchParams,
+} from "@/types/route-params";
+import {
+  createLazyRoute,
+  routeTransitionManager,
+  performanceBudgetManager,
+} from "@/lib/route-optimization";
+import { useNavigationStore } from "@/lib/store-router-integration";
+
+// Lazy load BookingsPage with intelligent prefetching
+const BookingsPage = createLazyRoute(
+  () => import("@/pages/BookingsPage").then((m) => ({ default: m.BookingsPage })),
+  "bookings",
+  {
+    onHover: true,
+    delay: 200,
+    priority: "high",
+  }
+);
+
+// Initialize prefetch manager
+const prefetcher = new PrefetchManager(queryClient);
+
+// Enhanced bookings loader with search parameter validation
+const bookingsLoader = createRouteLoader<{
+  search: BookingsSearchParams;
+}>(async ({ search }) => {
+  const projectId = requireActiveProject();
+  const searchParams = validateSearchParams(BookingsSearchSchema, search);
+
+  // Prefetch bookings with search parameters
+  await prefetcher.prefetchBookings(projectId, searchParams);
+
+  return { projectId, searchParams };
+});
 
 export const Route = createFileRoute("/_protected/bookings")({
-  loader: async () => {
-    const projectId = useProjectStore.getState().activeProjectId;
-    if (!projectId) return null;
+  validateSearch: BookingsSearchSchema,
 
-    // Prefetch bookings list
-    await queryClient.prefetchQuery({
-      queryKey: ["bookings", "list", projectId],
-      queryFn: () => fetch(`/api/projects/${projectId}/bookings`).then((r) => r.json()),
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    });
+  beforeLoad: ({ search, location }) => {
+    const loadStart = performance.now();
 
-    return null;
+    // Validate search parameters early
+    const validatedSearch = validateSearchParams(BookingsSearchSchema, search);
+
+    // Queue smart prefetch based on current context
+    const navigationStore = useNavigationStore.getState();
+
+    // Likely next navigation paths from bookings
+    navigationStore.queuePrefetch("/properties", 8); // Often need to check property details
+    navigationStore.queuePrefetch("/expenses", 6); // Track booking-related expenses
+    navigationStore.queuePrefetch("/dashboard", 5); // Return to overview
+
+    // Track performance
+    const loadEnd = performance.now();
+    performanceBudgetManager.checkBudget("routeLoadTime", loadEnd - loadStart, location.pathname);
+
+    return { validatedSearch };
   },
-  component: BookingsPage,
+
+  loader: bookingsLoader,
+
+  errorComponent: ({ error, reset }) => (
+    <RouteErrorBoundary error={error} reset={reset} info={{ componentStack: "Bookings Route" }} />
+  ),
+
+  pendingComponent: () => <RouteLoadingFallback message="Loading bookings..." />,
+
+  component: () => (
+    <div data-route-container className="route-container">
+      <Suspense fallback={<RouteLoadingFallback message="Loading bookings..." />}>
+        <div className="route-enter">
+          <BookingsPage />
+        </div>
+      </Suspense>
+    </div>
+  ),
 });

@@ -133,4 +133,12 @@ export default tseslint.config([
       "@typescript-eslint/no-explicit-any": "warn",
     },
   },
+
+  // Security-specific rules - allow debugger in security token manager for suspicious activity detection
+  {
+    files: ["**/src/lib/security/secure-token-manager.ts"],
+    rules: {
+      "no-debugger": "off",
+    },
+  },
 ]);

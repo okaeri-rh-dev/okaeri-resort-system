@@ -159,12 +159,32 @@ function RootLayoutComponent({ children }: { children: ReactNode }) {
 
 export const Route = createRootRoute({
   component: RootComponent,
-  beforeLoad: () => {
+
+  validateSearch: (search: Record<string, unknown>) => {
+    // Optional global search parameter validation
+    return {
+      theme: search.theme as string | undefined,
+      lang: search.lang as string | undefined,
+      debug: Boolean(search.debug),
+    };
+  },
+
+  beforeLoad: ({ search }) => {
+    // Apply global settings from search parameters
+    if (search?.theme && ["light", "dark", "system"].includes(search.theme)) {
+      useUIStore.getState().setTheme(search.theme as "light" | "dark" | "system");
+    }
+
     return {
       auth: useAuthStore.getState(),
       project: useProjectStore.getState(),
-    } as RootContext;
+      globalSearch: search,
+    } as RootContext & { globalSearch: any };
   },
+
+  errorComponent: ({ error, reset }) => (
+    <RouteErrorFallback error={error} resetErrorBoundary={reset} />
+  ),
 });
 
 function RootComponent() {

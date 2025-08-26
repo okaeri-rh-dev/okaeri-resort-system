@@ -40,9 +40,11 @@ if git diff --cached --name-only | xargs grep -l "console.log" 2>/dev/null; then
   echo "${YELLOW}⚠️  Warning: Found console.log statements in staged files${NC}"
 fi
 
-# Check for debugger statements (error)
-if git diff --cached --name-only | xargs grep -l "debugger" 2>/dev/null; then
-  echo "${RED}❌ Error: Found debugger statements in staged files${NC}"
+# Check for debugger statements (error) - exclude security files and built assets
+debugger_files=$(git diff --cached --name-only | grep -v "src/lib/security/secure-token-manager.ts" | grep -v "assets/" | grep -v "\.config\." | xargs grep -l "^[[:space:]]*debugger[[:space:]]*;" 2>/dev/null || true)
+if [ -n "$debugger_files" ]; then
+  echo "${RED}❌ Error: Found debugger statements in staged files:${NC}"
+  echo "$debugger_files"
   exit 1
 fi
 

@@ -1,4 +1,5 @@
 import { useAuthStore } from "@/stores/authStore";
+import { z } from "zod";
 
 export interface ApiConfig {
   baseURL: string;
@@ -23,6 +24,37 @@ export interface RequestOptions extends RequestInit {
   params?: Record<string, any>;
   timeout?: number;
   skipAuth?: boolean;
+  // Add optional schema for runtime validation
+  schema?: z.ZodSchema<any>;
+}
+
+/**
+ * Type guard to check if an object is an ApiError
+ */
+export function isApiError(error: unknown): error is ApiError {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    "status" in error &&
+    typeof (error as ApiError).message === "string" &&
+    typeof (error as ApiError).status === "number"
+  );
+}
+
+/**
+ * Type guard to check if a response is valid
+ */
+export function isValidApiResponse<T>(response: unknown): response is ApiResponse<T> {
+  return (
+    typeof response === "object" &&
+    response !== null &&
+    "data" in response &&
+    "status" in response &&
+    "success" in response &&
+    typeof (response as ApiResponse<T>).status === "number" &&
+    typeof (response as ApiResponse<T>).success === "boolean"
+  );
 }
 
 class ApiClient {
@@ -76,7 +108,10 @@ class ApiClient {
     return url.toString();
   }
 
-  private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
+  private async handleResponse<T>(
+    response: Response,
+    schema?: z.ZodSchema<T>
+  ): Promise<ApiResponse<T>> {
     const contentType = response.headers.get("content-type");
     const isJson = contentType?.includes("application/json");
 
@@ -104,23 +139,52 @@ class ApiClient {
       throw error;
     }
 
-    let data: any;
+    let rawData: any;
 
     try {
       if (response.status === 204) {
-        data = null;
+        rawData = null;
       } else if (isJson) {
-        data = await response.json();
+        rawData = await response.json();
       } else {
-        data = await response.text();
+        rawData = await response.text();
       }
     } catch {
-      data = null;
+      rawData = null;
+    }
+
+    // Extract the actual data
+    const data = rawData?.data || rawData;
+
+    // Validate response data with schema if provided
+    if (schema && data !== null) {
+      try {
+        const validatedData = schema.parse(data);
+        return {
+          data: validatedData,
+          message: rawData?.message,
+          status: response.status,
+          success: true,
+        };
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          console.warn("API response validation failed:", error.errors);
+          // In development, throw validation errors
+          if (process.env.NODE_ENV === "development") {
+            throw new Error(
+              `API response validation failed: ${error.errors
+                .map((e) => `${e.path.join(".")}: ${e.message}`)
+                .join(", ")}`
+            );
+          }
+        }
+        // In production, log the error but return the raw data
+      }
     }
 
     return {
-      data: data?.data || data,
-      message: data?.message,
+      data: data as T,
+      message: rawData?.message,
       status: response.status,
       success: true,
     };
@@ -137,6 +201,7 @@ class ApiClient {
       skipAuth = false,
       headers = {},
       body,
+      schema,
       ...restOptions
     } = options;
 
@@ -179,7 +244,7 @@ class ApiClient {
         ...restOptions,
       });
 
-      return await this.handleResponse<T>(response);
+      return await this.handleResponse<T>(response, schema);
     } catch (error: any) {
       if (error.name === "AbortError") {
         throw {
@@ -271,7 +336,7 @@ export const apiClient = new ApiClient({
   timeout: 30000,
 });
 
-// Export for use in React Query
+// Export for use in React Query with optional schema validation
 export const api = {
   get: <T = any>(endpoint: string, options?: RequestOptions) =>
     apiClient.get<T>(endpoint, options).then((res) => res.data),
@@ -290,6 +355,34 @@ export const api = {
 
   upload: <T = any>(endpoint: string, formData: FormData, options?: RequestOptions) =>
     apiClient.upload<T>(endpoint, formData, options).then((res) => res.data),
+
+  // Type-safe API calls with schema validation
+  getTyped: <T>(
+    endpoint: string,
+    schema: z.ZodSchema<T>,
+    options?: Omit<RequestOptions, "schema">
+  ) => apiClient.get<T>(endpoint, { ...options, schema }).then((res) => res.data),
+
+  postTyped: <T>(
+    endpoint: string,
+    data: any,
+    schema: z.ZodSchema<T>,
+    options?: Omit<RequestOptions, "schema">
+  ) => apiClient.post<T>(endpoint, data, { ...options, schema }).then((res) => res.data),
+
+  putTyped: <T>(
+    endpoint: string,
+    data: any,
+    schema: z.ZodSchema<T>,
+    options?: Omit<RequestOptions, "schema">
+  ) => apiClient.put<T>(endpoint, data, { ...options, schema }).then((res) => res.data),
+
+  patchTyped: <T>(
+    endpoint: string,
+    data: any,
+    schema: z.ZodSchema<T>,
+    options?: Omit<RequestOptions, "schema">
+  ) => apiClient.patch<T>(endpoint, data, { ...options, schema }).then((res) => res.data),
 };
 
 export default apiClient;
