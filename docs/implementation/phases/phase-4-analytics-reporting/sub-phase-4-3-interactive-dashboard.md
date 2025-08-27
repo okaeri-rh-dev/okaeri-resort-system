@@ -23,6 +23,52 @@ mobile-responsive design for comprehensive business monitoring.
   "dependencies": {
     "recharts": "^2.13.3",
     "d3": "^7.9.0",
+```
+
+## Test-First Development Process
+
+### Step 1: Define Test Specifications
+
+- Agent writes comprehensive test suite based on requirements
+- Tests cover expected input/output pairs for interactive dashboard
+- Include edge cases, error scenarios, and Philippine-specific requirements
+- Reference test templates from `/tests/templates/`
+
+### Step 2: Validate Tests Fail
+
+- Run test suite to confirm all tests fail (no implementation exists)
+- Command: `npm test interactive-dashboard.test.ts`
+- Expected: All tests should fail with clear error messages
+- NO implementation code should be written at this stage
+
+### Step 3: Commit Test Suite
+
+- Tests are committed as the immutable specification
+- Commit message: "test: add failing tests for interactive dashboard"
+- These tests CANNOT be modified during implementation
+
+### Step 4: Implement Feature
+
+- Agent writes minimal code to pass ALL tests
+- Tests remain unchanged - implementation must adapt
+- Use repository patterns from `/src/lib/repositories/`
+- Apply dependency injection for testability
+
+### Step 5: Independent Verification
+
+- Different specialized agent reviews implementation
+- Ensures no overfitting to test cases
+- Validates general solution beyond test scenarios
+- Confirms best practices and patterns are followed
+
+## Original Technical Requirements (continued)
+
+### Core Dependencies (continued)
+
+```json
+  "dependencies": {
+    "recharts": "^2.13.3",
+    "d3": "^7.9.0",
     "react-grid-layout": "^1.5.0",
     "framer-motion": "^11.15.0",
     "@tanstack/react-query": "^5.71.10",

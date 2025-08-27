@@ -1,9 +1,13 @@
 # Sub-Phase 3.6: Advanced Analytics
 
 ## Overview
-This sub-phase implements advanced financial analytics including seasonal analysis, predictive modeling, trend visualization, and anomaly detection to provide actionable insights for resort management decisions.
+
+This sub-phase implements advanced financial analytics including seasonal
+analysis, predictive modeling, trend visualization, and anomaly detection to
+provide actionable insights for resort management decisions.
 
 ## Objectives
+
 1. Implement seasonal pattern analysis
 2. Create predictive analytics for revenue forecasting
 3. Build trend visualization components
@@ -13,6 +17,7 @@ This sub-phase implements advanced financial analytics including seasonal analys
 ## Technical Requirements
 
 ### Core Dependencies
+
 ```json
 {
   "dependencies": {
@@ -26,9 +31,46 @@ This sub-phase implements advanced financial analytics including seasonal analys
 }
 ```
 
+## Test-First Development Process
+
+### Step 1: Define Test Specifications
+
+- Agent writes comprehensive test suite based on requirements
+- Tests cover expected input/output pairs for advanced analytics
+- Include edge cases, error scenarios, and Philippine-specific requirements
+- Reference test templates from `/tests/templates/`
+
+### Step 2: Validate Tests Fail
+
+- Run test suite to confirm all tests fail (no implementation exists)
+- Command: `npm test advanced-analytics.test.ts`
+- Expected: All tests should fail with clear error messages
+- NO implementation code should be written at this stage
+
+### Step 3: Commit Test Suite
+
+- Tests are committed as the immutable specification
+- Commit message: "test: add failing tests for advanced analytics"
+- These tests CANNOT be modified during implementation
+
+### Step 4: Implement Feature
+
+- Agent writes minimal code to pass ALL tests
+- Tests remain unchanged - implementation must adapt
+- Use repository patterns from `/src/lib/repositories/`
+- Apply dependency injection for testability
+
+### Step 5: Independent Verification
+
+- Different specialized agent reviews implementation
+- Ensures no overfitting to test cases
+- Validates general solution beyond test scenarios
+- Confirms best practices and patterns are followed
+
 ## Agent Validation Checklist
 
 ### resort-finance-architect Validation
+
 - [ ] Seasonal patterns accurately identified
 - [ ] Revenue forecasting models appropriate
 - [ ] Anomaly thresholds properly calibrated
@@ -39,6 +81,7 @@ This sub-phase implements advanced financial analytics including seasonal analys
 - [ ] Insights actionable for business
 
 ### vercel-resort-api-architect Validation
+
 - [ ] Analytics computations optimized
 - [ ] Caching strategy for expensive calculations
 - [ ] Background processing for predictions
@@ -49,6 +92,7 @@ This sub-phase implements advanced financial analytics including seasonal analys
 - [ ] Real-time updates supported
 
 ## Success Criteria
+
 1. **Prediction Accuracy** - > 85% for 30-day forecast
 2. **Anomaly Detection** - 95% accuracy rate
 3. **Seasonal Analysis** - Patterns identified
@@ -59,6 +103,7 @@ This sub-phase implements advanced financial analytics including seasonal analys
 8. **Mobile** - Analytics viewable on devices
 
 ## Deliverables
+
 - [ ] Seasonal analysis engine
 - [ ] Revenue prediction model
 - [ ] Anomaly detection system
@@ -70,4 +115,5 @@ This sub-phase implements advanced financial analytics including seasonal analys
 
 ---
 
-*Sub-Phase 3.6 provides advanced analytics for data-driven resort management decisions.*
+_Sub-Phase 3.6 provides advanced analytics for data-driven resort management
+decisions._

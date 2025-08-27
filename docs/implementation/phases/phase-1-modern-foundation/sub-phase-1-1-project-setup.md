@@ -28,6 +28,52 @@ used throughout the project lifecycle.
   "devDependencies": {
     "@types/node": "^22.12.0",
     "@types/react": "^19.1.0",
+```
+
+## Test-First Development Process
+
+### Step 1: Define Test Specifications
+
+- Agent writes comprehensive test suite based on requirements
+- Tests cover expected input/output pairs for project setup & configuration
+- Include edge cases, error scenarios, and Philippine-specific requirements
+- Reference test templates from `/tests/templates/`
+
+### Step 2: Validate Tests Fail
+
+- Run test suite to confirm all tests fail (no implementation exists)
+- Command: `npm test project-setup.test.ts`
+- Expected: All tests should fail with clear error messages
+- NO implementation code should be written at this stage
+
+### Step 3: Commit Test Suite
+
+- Tests are committed as the immutable specification
+- Commit message: "test: add failing tests for project setup & configuration"
+- These tests CANNOT be modified during implementation
+
+### Step 4: Implement Feature
+
+- Agent writes minimal code to pass ALL tests
+- Tests remain unchanged - implementation must adapt
+- Use repository patterns from `/src/lib/repositories/`
+- Apply dependency injection for testability
+
+### Step 5: Independent Verification
+
+- Different specialized agent reviews implementation
+- Ensures no overfitting to test cases
+- Validates general solution beyond test scenarios
+- Confirms best practices and patterns are followed
+
+## Original Technical Requirements (continued)
+
+### Core Dependencies (continued)
+
+```json
+  "devDependencies": {
+    "@types/node": "^22.12.0",
+    "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@typescript-eslint/eslint-plugin": "^8.20.0",
     "@typescript-eslint/parser": "^8.20.0",

@@ -1,5 +1,115 @@
 import { useAuthStore } from "@/stores/authStore";
 import { z } from "zod";
+import type { User } from "@/types/common";
+
+// Dependency injection interfaces
+export interface AuthProvider {
+  getToken(): string | null;
+  getRefreshToken(): string | null;
+  getUser(): User | null;
+  getProjectId(): string | null;
+  refreshSession(): Promise<void>;
+  logout(): void;
+  isTokenExpired(token: string, buffer?: number): boolean;
+}
+
+export interface TokenManager {
+  getAccessToken(): string | null;
+  getRefreshToken(): string | null;
+  storeTokens(accessToken: string, refreshToken: string): void;
+  clearTokens(): void;
+  isTokenExpired(token: string, buffer?: number): boolean;
+  validateTokenStructure(token: string): { valid: boolean; error?: string };
+}
+
+// Default auth provider implementation
+class DefaultAuthProvider implements AuthProvider {
+  getToken(): string | null {
+    return useAuthStore.getState().token;
+  }
+
+  getRefreshToken(): string | null {
+    return useAuthStore.getState().refreshToken;
+  }
+
+  getUser(): User | null {
+    return useAuthStore.getState().user;
+  }
+
+  getProjectId(): string | null {
+    return useAuthStore.getState().user?.projects?.[0] || null;
+  }
+
+  async refreshSession(): Promise<void> {
+    await useAuthStore.getState().refreshSession();
+  }
+
+  logout(): void {
+    useAuthStore.getState().logout();
+  }
+
+  isTokenExpired(token: string, buffer: number = 0): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const expiryTime = payload.exp * 1000;
+      return Date.now() > expiryTime - buffer;
+    } catch {
+      return true;
+    }
+  }
+}
+
+// Default token manager implementation (simplified to avoid circular imports)
+class DefaultTokenManager implements TokenManager {
+  private accessToken: string | null = null;
+  private refreshToken: string | null = null;
+
+  getAccessToken(): string | null {
+    // In production, this will be overridden by the factory with secure token manager
+    return this.accessToken;
+  }
+
+  getRefreshToken(): string | null {
+    return this.refreshToken;
+  }
+
+  storeTokens(accessToken: string, refreshToken: string): void {
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken;
+  }
+
+  clearTokens(): void {
+    this.accessToken = null;
+    this.refreshToken = null;
+  }
+
+  isTokenExpired(token: string, buffer: number = 0): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const expiryTime = payload.exp * 1000;
+      return Date.now() > expiryTime - buffer;
+    } catch {
+      return true;
+    }
+  }
+
+  validateTokenStructure(token: string): { valid: boolean; error?: string } {
+    try {
+      const parts = token.split(".");
+      if (parts.length !== 3) {
+        return { valid: false, error: "JWT must have 3 parts" };
+      }
+
+      // Try to decode the header and payload
+      JSON.parse(atob(parts[0]));
+      JSON.parse(atob(parts[1]));
+
+      return { valid: true };
+    } catch (error) {
+      return { valid: false, error: "Invalid JWT format" };
+    }
+  }
+}
 
 export interface ApiConfig {
   baseURL: string;
@@ -57,36 +167,47 @@ export function isValidApiResponse<T>(response: unknown): response is ApiRespons
   );
 }
 
+export interface ApiClientConfig extends ApiConfig {
+  authProvider?: AuthProvider;
+  tokenManager?: TokenManager;
+}
+
 class ApiClient {
   private baseURL: string;
   private timeout: number;
   private defaultHeaders: Record<string, string>;
   private abortControllers: Map<string, AbortController> = new Map();
+  private authProvider: AuthProvider;
+  private tokenManager: TokenManager;
 
-  constructor(config: ApiConfig) {
-    this.baseURL = config.baseURL || import.meta.env.VITE_API_URL || "/api";
+  constructor(config: ApiClientConfig) {
+    this.baseURL =
+      config.baseURL || (typeof window !== "undefined" && (window as any).VITE_API_URL) || "/api";
     this.timeout = config.timeout || 30000;
     this.defaultHeaders = {
       "Content-Type": "application/json",
       ...config.headers,
     };
+    // Use provided dependencies or defaults
+    this.authProvider = config.authProvider || new DefaultAuthProvider();
+    this.tokenManager = config.tokenManager || new DefaultTokenManager();
   }
 
   private async refreshTokenIfNeeded(): Promise<string | null> {
-    const authStore = useAuthStore.getState();
-    const { token, refreshToken, sessionExpiry } = authStore;
+    const token = this.authProvider.getToken();
+    const refreshToken = this.authProvider.getRefreshToken();
 
     if (!token || !refreshToken) {
       return null;
     }
 
     // Check if token is about to expire (within 5 minutes)
-    if (sessionExpiry && Date.now() > sessionExpiry - 5 * 60 * 1000) {
+    if (this.authProvider.isTokenExpired(token, 5 * 60 * 1000)) {
       try {
-        await authStore.refreshSession();
-        return useAuthStore.getState().token;
+        await this.authProvider.refreshSession();
+        return this.authProvider.getToken();
       } catch {
-        authStore.logout();
+        this.authProvider.logout();
         return null;
       }
     }
@@ -133,7 +254,7 @@ class ApiClient {
 
       // Handle specific error codes
       if (response.status === 401) {
-        useAuthStore.getState().logout();
+        this.authProvider.logout();
       }
 
       throw error;
@@ -230,8 +351,8 @@ class ApiClient {
         requestHeaders["Authorization"] = `Bearer ${token}`;
       }
 
-      // Get current project from store if available
-      const projectId = useAuthStore.getState().user?.projects?.[0];
+      // Get current project from auth provider if available
+      const projectId = this.authProvider.getProjectId();
       if (projectId && !skipAuth) {
         requestHeaders["X-Project-Id"] = projectId;
       }
@@ -330,11 +451,16 @@ class ApiClient {
   }
 }
 
-// Create and export singleton instance
+// Create and export singleton instance with default configuration
 export const apiClient = new ApiClient({
-  baseURL: import.meta.env.VITE_API_URL || "/api",
+  baseURL: (typeof window !== "undefined" && (window as any).VITE_API_URL) || "/api",
   timeout: 30000,
 });
+
+// Export factory function for creating configured API clients
+export function createApiClient(config: ApiClientConfig): ApiClient {
+  return new ApiClient(config);
+}
 
 // Export for use in React Query with optional schema validation
 export const api = {

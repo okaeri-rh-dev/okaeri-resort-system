@@ -1,9 +1,13 @@
 # Sub-Phase 5.5: Production Deployment
 
 ## Overview
-This sub-phase implements production deployment infrastructure including environment setup, CI/CD pipelines, blue-green deployment strategy, and rollback mechanisms for zero-downtime deployments on Vercel.
+
+This sub-phase implements production deployment infrastructure including
+environment setup, CI/CD pipelines, blue-green deployment strategy, and rollback
+mechanisms for zero-downtime deployments on Vercel.
 
 ## Objectives
+
 1. Setup production environment on Vercel
 2. Configure comprehensive CI/CD pipelines
 3. Implement blue-green deployment
@@ -13,6 +17,7 @@ This sub-phase implements production deployment infrastructure including environ
 ## Technical Requirements
 
 ### Core Dependencies
+
 ```json
 {
   "devDependencies": {
@@ -23,6 +28,44 @@ This sub-phase implements production deployment infrastructure including environ
     "@commitlint/cli": "^19.6.0"
   }
 }
+```
+
+## Test-First Development Process
+
+### Step 1: Define Test Specifications
+
+- Agent writes comprehensive test suite based on requirements
+- Tests cover expected input/output pairs for production deployment
+- Include edge cases, error scenarios, and Philippine-specific requirements
+- Reference test templates from `/tests/templates/`
+
+### Step 2: Validate Tests Fail
+
+- Run test suite to confirm all tests fail (no implementation exists)
+- Command: `npm test production-deployment.test.ts`
+- Expected: All tests should fail with clear error messages
+- NO implementation code should be written at this stage
+
+### Step 3: Commit Test Suite
+
+- Tests are committed as the immutable specification
+- Commit message: "test: add failing tests for production deployment"
+- These tests CANNOT be modified during implementation
+
+### Step 4: Implement Feature
+
+- Agent writes minimal code to pass ALL tests
+- Tests remain unchanged - implementation must adapt
+- Use repository patterns from `/src/lib/repositories/`
+- Apply dependency injection for testability
+
+### Step 5: Independent Verification
+
+- Different specialized agent reviews implementation
+- Ensures no overfitting to test cases
+- Validates general solution beyond test scenarios
+- Confirms best practices and patterns are followed
+
 ```
 
 ## Agent Validation Checklist
@@ -70,3 +113,4 @@ This sub-phase implements production deployment infrastructure including environ
 ---
 
 *Sub-Phase 5.5 establishes robust deployment infrastructure for reliable, zero-downtime production releases.*
+```

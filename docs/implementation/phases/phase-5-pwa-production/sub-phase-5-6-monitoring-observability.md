@@ -1,9 +1,13 @@
 # Sub-Phase 5.6: Monitoring & Observability
 
 ## Overview
-This sub-phase implements comprehensive monitoring and observability including application performance monitoring, error tracking, business metrics, and real-time alerting for proactive issue resolution.
+
+This sub-phase implements comprehensive monitoring and observability including
+application performance monitoring, error tracking, business metrics, and
+real-time alerting for proactive issue resolution.
 
 ## Objectives
+
 1. Setup application performance monitoring
 2. Configure comprehensive error tracking
 3. Implement business metrics tracking
@@ -13,6 +17,7 @@ This sub-phase implements comprehensive monitoring and observability including a
 ## Technical Requirements
 
 ### Core Dependencies
+
 ```json
 {
   "dependencies": {
@@ -23,6 +28,44 @@ This sub-phase implements comprehensive monitoring and observability including a
     "pino-pretty": "^13.0.0"
   }
 }
+```
+
+## Test-First Development Process
+
+### Step 1: Define Test Specifications
+
+- Agent writes comprehensive test suite based on requirements
+- Tests cover expected input/output pairs for monitoring & observability
+- Include edge cases, error scenarios, and Philippine-specific requirements
+- Reference test templates from `/tests/templates/`
+
+### Step 2: Validate Tests Fail
+
+- Run test suite to confirm all tests fail (no implementation exists)
+- Command: `npm test monitoring-observability.test.ts`
+- Expected: All tests should fail with clear error messages
+- NO implementation code should be written at this stage
+
+### Step 3: Commit Test Suite
+
+- Tests are committed as the immutable specification
+- Commit message: "test: add failing tests for monitoring & observability"
+- These tests CANNOT be modified during implementation
+
+### Step 4: Implement Feature
+
+- Agent writes minimal code to pass ALL tests
+- Tests remain unchanged - implementation must adapt
+- Use repository patterns from `/src/lib/repositories/`
+- Apply dependency injection for testability
+
+### Step 5: Independent Verification
+
+- Different specialized agent reviews implementation
+- Ensures no overfitting to test cases
+- Validates general solution beyond test scenarios
+- Confirms best practices and patterns are followed
+
 ```
 
 ## Agent Validation Checklist
@@ -70,3 +113,4 @@ This sub-phase implements comprehensive monitoring and observability including a
 ---
 
 *Sub-Phase 5.6 provides complete observability for proactive monitoring and rapid issue resolution.*
+```

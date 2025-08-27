@@ -22,6 +22,10 @@ export default tseslint.config([
       "*.config.ts",
       "vite.config.ts",
       "vitest.config.ts",
+      // Template scaffolds
+      "tests/templates/**/*",
+      "**/*.template.ts",
+      "**/*.template.tsx",
     ],
   },
 

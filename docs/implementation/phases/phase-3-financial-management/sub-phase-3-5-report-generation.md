@@ -1,9 +1,13 @@
 # Sub-Phase 3.5: Report Generation System
 
 ## Overview
-This sub-phase implements automated report generation with customizable templates, PDF/Excel export capabilities, scheduled generation, and a custom report builder for flexible financial reporting needs.
+
+This sub-phase implements automated report generation with customizable
+templates, PDF/Excel export capabilities, scheduled generation, and a custom
+report builder for flexible financial reporting needs.
 
 ## Objectives
+
 1. Create monthly/quarterly/annual report templates
 2. Implement PDF and Excel export functionality
 3. Build custom report builder interface
@@ -13,6 +17,7 @@ This sub-phase implements automated report generation with customizable template
 ## Technical Requirements
 
 ### Core Dependencies
+
 ```json
 {
   "dependencies": {
@@ -26,9 +31,46 @@ This sub-phase implements automated report generation with customizable template
 }
 ```
 
+## Test-First Development Process
+
+### Step 1: Define Test Specifications
+
+- Agent writes comprehensive test suite based on requirements
+- Tests cover expected input/output pairs for report generation
+- Include edge cases, error scenarios, and Philippine-specific requirements
+- Reference test templates from `/tests/templates/`
+
+### Step 2: Validate Tests Fail
+
+- Run test suite to confirm all tests fail (no implementation exists)
+- Command: `npm test report-generation.test.ts`
+- Expected: All tests should fail with clear error messages
+- NO implementation code should be written at this stage
+
+### Step 3: Commit Test Suite
+
+- Tests are committed as the immutable specification
+- Commit message: "test: add failing tests for report generation"
+- These tests CANNOT be modified during implementation
+
+### Step 4: Implement Feature
+
+- Agent writes minimal code to pass ALL tests
+- Tests remain unchanged - implementation must adapt
+- Use repository patterns from `/src/lib/repositories/`
+- Apply dependency injection for testability
+
+### Step 5: Independent Verification
+
+- Different specialized agent reviews implementation
+- Ensures no overfitting to test cases
+- Validates general solution beyond test scenarios
+- Confirms best practices and patterns are followed
+
 ## Agent Validation Checklist
 
 ### serverless-saas-architect Validation
+
 - [ ] Report generation optimized for serverless
 - [ ] Background job processing efficient
 - [ ] Template rendering performant
@@ -39,6 +81,7 @@ This sub-phase implements automated report generation with customizable template
 - [ ] Multi-tenant isolation maintained
 
 ### pwa-performance-optimizer Validation
+
 - [ ] Report preview loads quickly
 - [ ] Export process shows progress
 - [ ] Large reports handle gracefully
@@ -49,6 +92,7 @@ This sub-phase implements automated report generation with customizable template
 - [ ] Mobile export functionality works
 
 ## Success Criteria
+
 1. **Generation Speed** - Reports created < 3s
 2. **Export Quality** - Professional formatting
 3. **Customization** - Flexible templates
@@ -59,6 +103,7 @@ This sub-phase implements automated report generation with customizable template
 8. **Performance** - No UI blocking
 
 ## Deliverables
+
 - [ ] Report template system
 - [ ] PDF generation service
 - [ ] Excel export functionality
@@ -70,4 +115,5 @@ This sub-phase implements automated report generation with customizable template
 
 ---
 
-*Sub-Phase 3.5 enables comprehensive financial reporting with automated generation and flexible export options.*
+_Sub-Phase 3.5 enables comprehensive financial reporting with automated
+generation and flexible export options._

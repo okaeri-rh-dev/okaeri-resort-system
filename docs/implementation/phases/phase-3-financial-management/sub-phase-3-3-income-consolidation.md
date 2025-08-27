@@ -1,9 +1,14 @@
 # Sub-Phase 3.3: Income Consolidation
 
 ## Overview
-This sub-phase implements automated income consolidation from multiple booking sources (Airbnb, Google Sheets, Direct), with commission tracking, reconciliation tools, and net income calculations for comprehensive revenue management.
+
+This sub-phase implements automated income consolidation from multiple booking
+sources (Airbnb, Google Sheets, Direct), with commission tracking,
+reconciliation tools, and net income calculations for comprehensive revenue
+management.
 
 ## Objectives
+
 1. Aggregate income from all booking sources
 2. Create automated income calculation pipelines
 3. Build reconciliation tools for accuracy
@@ -13,6 +18,7 @@ This sub-phase implements automated income consolidation from multiple booking s
 ## Technical Requirements
 
 ### Core Dependencies
+
 ```json
 {
   "dependencies": {
@@ -25,9 +31,46 @@ This sub-phase implements automated income consolidation from multiple booking s
 }
 ```
 
+## Test-First Development Process
+
+### Step 1: Define Test Specifications
+
+- Agent writes comprehensive test suite based on requirements
+- Tests cover expected input/output pairs for income consolidation
+- Include edge cases, error scenarios, and Philippine-specific requirements
+- Reference test templates from `/tests/templates/`
+
+### Step 2: Validate Tests Fail
+
+- Run test suite to confirm all tests fail (no implementation exists)
+- Command: `npm test income-consolidation.test.ts`
+- Expected: All tests should fail with clear error messages
+- NO implementation code should be written at this stage
+
+### Step 3: Commit Test Suite
+
+- Tests are committed as the immutable specification
+- Commit message: "test: add failing tests for income consolidation"
+- These tests CANNOT be modified during implementation
+
+### Step 4: Implement Feature
+
+- Agent writes minimal code to pass ALL tests
+- Tests remain unchanged - implementation must adapt
+- Use repository patterns from `/src/lib/repositories/`
+- Apply dependency injection for testability
+
+### Step 5: Independent Verification
+
+- Different specialized agent reviews implementation
+- Ensures no overfitting to test cases
+- Validates general solution beyond test scenarios
+- Confirms best practices and patterns are followed
+
 ## Agent Validation Checklist
 
 ### resort-finance-architect Validation
+
 - [ ] Income aggregation calculations accurate
 - [ ] Commission calculations match platform rates
 - [ ] Net income properly computed after fees
@@ -38,6 +81,7 @@ This sub-phase implements automated income consolidation from multiple booking s
 - [ ] Financial periods align with business needs
 
 ### typescript-react-quality-expert Validation
+
 - [ ] 100% TypeScript coverage with strict mode
 - [ ] No use of `any` type in financial logic
 - [ ] Decimal.js used for all money calculations
@@ -48,6 +92,7 @@ This sub-phase implements automated income consolidation from multiple booking s
 - [ ] Memoization optimizes expensive calculations
 
 ## Success Criteria
+
 1. **Aggregation** - All income sources consolidated
 2. **Accuracy** - 100% calculation precision
 3. **Reconciliation** - Mismatches identified < 1s
@@ -58,6 +103,7 @@ This sub-phase implements automated income consolidation from multiple booking s
 8. **Testing** - 95% code coverage
 
 ## Deliverables
+
 - [ ] Income aggregation service
 - [ ] Commission calculation engine
 - [ ] Reconciliation tools and UI
@@ -69,4 +115,5 @@ This sub-phase implements automated income consolidation from multiple booking s
 
 ---
 
-*Sub-Phase 3.3 creates automated income consolidation with accurate commission tracking and reconciliation.*
+_Sub-Phase 3.3 creates automated income consolidation with accurate commission
+tracking and reconciliation._

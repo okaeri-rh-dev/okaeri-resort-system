@@ -10,6 +10,50 @@ Phase 4 implements comprehensive business analytics and reporting capabilities t
 4. **Predictive Analytics** - Forecast trends and seasonal patterns
 5. **Data Democratization** - Self-service analytics for all users
 
+## Agent-Driven TDD Workflow
+
+This phase follows strict Test-Driven Development methodology with agent delegation:
+
+### 1. Test Definition Phase (RED)
+- The relevant specialized agent writes comprehensive tests based on expected input/output pairs
+- Tests must cover ALL acceptance criteria, edge cases, and error scenarios
+- Tests are written WITHOUT any implementation code existing
+- Tests should use the test utilities and templates from `/tests/utils/tdd-helpers.ts`
+
+### 2. Test Validation Phase
+- Agent runs all tests to confirm they FAIL (proving no implementation exists)
+- NO implementation code should be written at this stage
+- All tests must fail with clear, meaningful error messages
+- This validates that tests are actually testing the intended functionality
+
+### 3. Test Commit Phase
+- Once the agent is satisfied with test coverage and quality, tests are committed
+- Commit message: "test: add failing tests for [feature]"
+- These tests become the immutable contract that implementation must fulfill
+- Tests serve as the living specification for the feature
+
+### 4. Implementation Phase (GREEN)
+- Agent writes the MINIMAL code necessary to make tests pass
+- Tests MUST NOT be modified during implementation
+- Keep iterating on implementation until ALL tests pass
+- No shortcuts, workarounds, or test-specific hacks allowed
+- Use repository patterns for database operations (see `/src/lib/repositories/`)
+
+### 5. Verification Phase
+- An independent specialized agent reviews the implementation to ensure:
+  - Code isn't overfitting to specific test cases
+  - Solution is general and handles cases beyond the tests
+  - Implementation follows project best practices and patterns
+  - No test-specific hacks or hardcoded values were used
+  - Code is maintainable and follows SOLID principles
+
+### TDD Compliance Requirements
+- ❌ NEVER write implementation before tests
+- ❌ NEVER modify tests to make them pass
+- ✅ ALWAYS commit tests before implementation
+- ✅ ALWAYS have independent verification
+- ✅ ALWAYS maintain 80% minimum code coverage
+
 ## Sub-Phases Structure
 
 ### [Sub-Phase 4.1: Analytics Data Architecture](./sub-phase-4-1-analytics-data-architecture.md)
@@ -144,6 +188,8 @@ usePredictions() → ML predictions
 - [ ] Offline report viewing
 
 ## Testing Requirements
+
+All testing follows the Agent-Driven TDD Workflow outlined above, with tests written before implementation and serving as the specification contract.
 
 ### Unit Testing
 - Metric calculation logic

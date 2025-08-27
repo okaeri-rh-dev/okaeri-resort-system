@@ -1,9 +1,14 @@
 # Sub-Phase 3.1: Financial Data Model & Architecture
 
 ## Overview
-This sub-phase establishes the foundational data model and architecture for the financial management system, including expense tracking, income consolidation, category management, and financial reporting structures optimized for serverless PostgreSQL.
+
+This sub-phase establishes the foundational data model and architecture for the
+financial management system, including expense tracking, income consolidation,
+category management, and financial reporting structures optimized for serverless
+PostgreSQL.
 
 ## Objectives
+
 1. Design comprehensive expense and income schemas
 2. Create financial API endpoint specifications
 3. Implement Zod validation schemas for all financial entities
@@ -13,6 +18,7 @@ This sub-phase establishes the foundational data model and architecture for the 
 ## Technical Requirements
 
 ### Core Dependencies
+
 ```json
 {
   "dependencies": {
@@ -26,6 +32,7 @@ This sub-phase establishes the foundational data model and architecture for the 
 ```
 
 ### Database Schema
+
 ```sql
 -- Expense Categories
 CREATE TABLE expense_categories (
@@ -92,7 +99,7 @@ CREATE TABLE income_records (
 
 -- Financial Summaries (Materialized View)
 CREATE MATERIALIZED VIEW financial_summaries AS
-SELECT 
+SELECT
   project_id,
   DATE_TRUNC('month', expense_date) as period,
   SUM(amount) as total_expenses,
@@ -107,6 +114,7 @@ CREATE INDEX idx_financial_summaries ON financial_summaries(project_id, period);
 ## Agent Validation Checklist
 
 ### postgres-serverless-architect Validation
+
 - [ ] Schema optimized for serverless connection patterns
 - [ ] Proper indexing for common query patterns
 - [ ] Materialized views for expensive aggregations
@@ -117,6 +125,7 @@ CREATE INDEX idx_financial_summaries ON financial_summaries(project_id, period);
 - [ ] Multi-tenant isolation properly enforced
 
 ### resort-finance-architect Validation
+
 - [ ] Decimal precision adequate for currency calculations
 - [ ] Commission calculation fields comprehensive
 - [ ] Tax handling provisions included
@@ -126,201 +135,90 @@ CREATE INDEX idx_financial_summaries ON financial_summaries(project_id, period);
 - [ ] Reconciliation workflow supported
 - [ ] Philippine business requirements met
 
-## Implementation Details
+## Test-First Development Process
 
-### 1. Type Definitions
+### Step 1: Define Test Specifications
+
+- Agent writes comprehensive test suite based on requirements
+- Tests cover expected input/output pairs for financial data model
+- Include edge cases, error scenarios, and Philippine-specific requirements
+- Reference test templates from `/tests/templates/`
+
+### Step 2: Validate Tests Fail
+
+- Run test suite to confirm all tests fail (no implementation exists)
+- Command: `npm test financial-data-model.test.ts`
+- Expected: All tests should fail with clear error messages
+- NO implementation code should be written at this stage
+
+### Step 3: Commit Test Suite
+
+- Tests are committed as the immutable specification
+- Commit message: "test: add failing tests for financial data model"
+- These tests CANNOT be modified during implementation
+
+### Step 4: Implement Feature
+
+- Agent writes minimal code to pass ALL tests
+- Tests remain unchanged - implementation must adapt
+- Use repository patterns from `/src/lib/repositories/`
+- Apply dependency injection for testability
+
+### Step 5: Independent Verification
+
+- Different specialized agent reviews implementation
+- Ensures no overfitting to test cases
+- Validates general solution beyond test scenarios
+- Confirms best practices and patterns are followed
+
+### Test Coverage Areas
+
+#### Database Schema Tests
+
 ```typescript
-// src/types/financial.ts
-import { z } from 'zod';
-import Decimal from 'decimal.js';
-
-// Expense Category Types
-export const ExpenseCategorySchema = z.object({
-  id: z.string().uuid(),
-  projectId: z.string().uuid(),
-  name: z.string().min(1).max(100),
-  slug: z.string().min(1).max(100),
-  color: z.string().regex(/^#[0-9A-F]{6}$/i).optional(),
-  icon: z.string().max(50).optional(),
-  parentId: z.string().uuid().optional(),
-  isActive: z.boolean().default(true),
-  createdAt: z.date(),
-  updatedAt: z.date()
-});
-
-export type ExpenseCategory = z.infer<typeof ExpenseCategorySchema>;
-
-// Expense Types
-export const ExpenseSchema = z.object({
-  id: z.string().uuid(),
-  projectId: z.string().uuid(),
-  categoryId: z.string().uuid(),
-  amount: z.string().transform(val => new Decimal(val)),
-  currency: z.enum(['PHP', 'USD', 'EUR']).default('PHP'),
-  title: z.string().min(1).max(255),
-  description: z.string().optional(),
-  expenseDate: z.date(),
-  paymentMethod: z.enum(['cash', 'gcash', 'bank_transfer', 'credit_card', 'other']).optional(),
-  vendor: z.string().max(255).optional(),
-  receiptUrl: z.string().url().optional(),
-  receiptMetadata: z.object({
-    fileName: z.string(),
-    fileSize: z.number(),
-    mimeType: z.string(),
-    uploadedAt: z.date()
-  }).optional(),
-  tags: z.array(z.string()).default([]),
-  isRecurring: z.boolean().default(false),
-  recurrencePattern: z.object({
-    frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
-    interval: z.number().min(1),
-    endDate: z.date().optional()
-  }).optional(),
-  createdBy: z.string().uuid(),
-  createdAt: z.date(),
-  updatedAt: z.date()
-});
-
-export type Expense = z.infer<typeof ExpenseSchema>;
-
-// Income Types
-export const IncomeRecordSchema = z.object({
-  id: z.string().uuid(),
-  projectId: z.string().uuid(),
-  bookingId: z.string().uuid().optional(),
-  source: z.enum(['airbnb', 'direct', 'fb_messenger', 'other']),
-  amount: z.string().transform(val => new Decimal(val)),
-  currency: z.enum(['PHP', 'USD', 'EUR']).default('PHP'),
-  incomeDate: z.date(),
-  paymentMethod: z.enum(['cash', 'gcash', 'bank_transfer', 'platform', 'other']).optional(),
-  commissionAmount: z.string().transform(val => new Decimal(val)).default('0'),
-  netAmount: z.string().transform(val => new Decimal(val)),
-  referenceNumber: z.string().max(255).optional(),
-  notes: z.string().optional(),
-  metadata: z.record(z.any()).optional(),
-  reconciled: z.boolean().default(false),
-  reconciledAt: z.date().optional(),
-  createdAt: z.date(),
-  updatedAt: z.date()
-});
-
-export type IncomeRecord = z.infer<typeof IncomeRecordSchema>;
-
-// Financial Summary Types
-export interface FinancialSummary {
-  projectId: string;
-  period: Date;
-  totalExpenses: Decimal;
-  totalIncome: Decimal;
-  netProfit: Decimal;
-  expensesByCategory: Record<string, Decimal>;
-  incomeBySource: Record<string, Decimal>;
-  topExpenses: Expense[];
-  metrics: {
-    avgDailyExpense: Decimal;
-    avgDailyIncome: Decimal;
-    occupancyRate: number;
-    avgBookingValue: Decimal;
-  };
-}
-```
-
-### 2. API Endpoint Specifications
-```typescript
-// src/api/financial/routes.ts
-
-// Expense Endpoints
-POST   /api/expenses                 // Create expense
-GET    /api/expenses                 // List expenses with filters
-GET    /api/expenses/:id            // Get expense details
-PUT    /api/expenses/:id            // Update expense
-DELETE /api/expenses/:id            // Delete expense
-POST   /api/expenses/bulk           // Bulk create expenses
-POST   /api/expenses/:id/receipt    // Upload receipt
-
-// Income Endpoints
-POST   /api/income                  // Create income record
-GET    /api/income                  // List income with filters
-GET    /api/income/:id             // Get income details
-PUT    /api/income/:id             // Update income
-POST   /api/income/reconcile       // Reconcile income records
-GET    /api/income/pending         // Get unreconciled income
-
-// Category Endpoints
-GET    /api/categories              // List categories
-POST   /api/categories              // Create category
-PUT    /api/categories/:id         // Update category
-DELETE /api/categories/:id         // Delete category
-
-// Summary Endpoints
-GET    /api/financial/summary      // Get financial summary
-GET    /api/financial/metrics      // Get KPI metrics
-GET    /api/financial/trends       // Get trend analysis
-```
-
-### 3. Validation Schemas
-```typescript
-// src/validations/financial.ts
-import { z } from 'zod';
-
-export const CreateExpenseSchema = z.object({
-  body: z.object({
-    categoryId: z.string().uuid(),
-    amount: z.string().regex(/^\d+(\.\d{1,2})?$/),
-    title: z.string().min(1).max(255),
-    description: z.string().optional(),
-    expenseDate: z.string().datetime(),
-    paymentMethod: z.enum(['cash', 'gcash', 'bank_transfer', 'credit_card', 'other']).optional(),
-    vendor: z.string().max(255).optional(),
-    tags: z.array(z.string()).optional()
-  })
-});
-
-export const ExpenseFilterSchema = z.object({
-  query: z.object({
-    projectId: z.string().uuid(),
-    categoryId: z.string().uuid().optional(),
-    startDate: z.string().datetime().optional(),
-    endDate: z.string().datetime().optional(),
-    minAmount: z.string().optional(),
-    maxAmount: z.string().optional(),
-    paymentMethod: z.string().optional(),
-    search: z.string().optional(),
-    page: z.string().transform(Number).default('1'),
-    limit: z.string().transform(Number).default('20')
-  })
+describe("Financial Schema", () => {
+  it("should create expense categories with proper constraints", () => {});
+  it("should handle hierarchical categories", () => {});
+  it("should maintain referential integrity for expenses", () => {});
+  it("should calculate materialized view summaries correctly", () => {});
 });
 ```
 
-## Testing Requirements
+#### Type Definition Tests
 
-### Unit Tests
 ```typescript
-describe('Financial Calculations', () => {
-  it('should calculate net income correctly', () => {});
-  it('should handle currency conversions', () => {});
-  it('should aggregate expenses by category', () => {});
-  it('should calculate financial metrics', () => {});
-});
-
-describe('Validation Schemas', () => {
-  it('should validate expense creation data', () => {});
-  it('should validate income records', () => {});
-  it('should reject invalid amounts', () => {});
+describe("Financial Types", () => {
+  it("should validate expense creation with proper decimal handling", () => {});
+  it("should enforce currency format validation", () => {});
+  it("should validate income record transformations", () => {});
+  it("should calculate financial summary metrics", () => {});
 });
 ```
 
-### Integration Tests
+#### Validation Schema Tests
+
 ```typescript
-describe('Financial API', () => {
-  it('should create expense with receipt', async () => {});
-  it('should reconcile income records', async () => {});
-  it('should generate financial summary', async () => {});
-  it('should handle concurrent transactions', async () => {});
+describe("Financial Validations", () => {
+  it("should validate expense creation data", () => {});
+  it("should validate income records", () => {});
+  it("should reject invalid amounts", () => {});
+  it("should handle Philippine currency formatting", () => {});
+});
+```
+
+#### API Endpoint Tests
+
+```typescript
+describe("Financial API", () => {
+  it("should create expense with receipt upload", async () => {});
+  it("should reconcile income records correctly", async () => {});
+  it("should generate accurate financial summaries", async () => {});
+  it("should handle concurrent financial transactions", async () => {});
 });
 ```
 
 ## Success Criteria
+
 1. **Data Model** - All schemas created and optimized
 2. **Type Safety** - 100% TypeScript coverage with no `any`
 3. **Validation** - All inputs validated with Zod
@@ -331,6 +229,7 @@ describe('Financial API', () => {
 8. **Testing** - 90% test coverage achieved
 
 ## Deliverables
+
 - [ ] Complete database schema with migrations
 - [ ] TypeScript type definitions
 - [ ] Zod validation schemas
@@ -342,4 +241,5 @@ describe('Financial API', () => {
 
 ---
 
-*Sub-Phase 3.1 establishes a robust financial data foundation optimized for serverless architecture and Philippine business requirements.*
+_Sub-Phase 3.1 establishes a robust financial data foundation optimized for
+serverless architecture and Philippine business requirements._

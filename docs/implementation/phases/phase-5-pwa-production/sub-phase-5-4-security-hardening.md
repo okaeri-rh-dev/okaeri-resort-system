@@ -1,9 +1,13 @@
 # Sub-Phase 5.4: Security Hardening
 
 ## Overview
-This sub-phase implements enterprise-grade security measures including Content Security Policy, security monitoring, Web Application Firewall configuration, and comprehensive penetration testing to protect resort data and operations.
+
+This sub-phase implements enterprise-grade security measures including Content
+Security Policy, security monitoring, Web Application Firewall configuration,
+and comprehensive penetration testing to protect resort data and operations.
 
 ## Objectives
+
 1. Implement comprehensive CSP headers
 2. Add real-time security monitoring
 3. Configure WAF rules and DDoS protection
@@ -13,8 +17,61 @@ This sub-phase implements enterprise-grade security measures including Content S
 ## Technical Requirements
 
 ### Core Dependencies
+
 ```json
 {
+  "dependencies": {
+    "helmet": "^8.0.0",
+    "express-rate-limit": "^7.5.0",
+    "express-slow-down": "^2.0.0",
+    "hpp": "^0.2.3",
+    "express-mongo-sanitize": "^2.2.0",
+    "bcrypt": "^5.1.1"
+  }
+}
+```
+
+## Test-First Development Process
+
+### Step 1: Define Test Specifications
+
+- Agent writes comprehensive test suite based on requirements
+- Tests cover expected input/output pairs for security hardening
+- Include edge cases, error scenarios, and Philippine-specific requirements
+- Reference test templates from `/tests/templates/`
+
+### Step 2: Validate Tests Fail
+
+- Run test suite to confirm all tests fail (no implementation exists)
+- Command: `npm test security-hardening.test.ts`
+- Expected: All tests should fail with clear error messages
+- NO implementation code should be written at this stage
+
+### Step 3: Commit Test Suite
+
+- Tests are committed as the immutable specification
+- Commit message: "test: add failing tests for security hardening"
+- These tests CANNOT be modified during implementation
+
+### Step 4: Implement Feature
+
+- Agent writes minimal code to pass ALL tests
+- Tests remain unchanged - implementation must adapt
+- Use repository patterns from `/src/lib/repositories/`
+- Apply dependency injection for testability
+
+### Step 5: Independent Verification
+
+- Different specialized agent reviews implementation
+- Ensures no overfitting to test cases
+- Validates general solution beyond test scenarios
+- Confirms best practices and patterns are followed
+
+## Original Technical Requirements (continued)
+
+### Core Dependencies (continued)
+
+```json
   "dependencies": {
     "helmet": "^8.0.0",
     "express-rate-limit": "^7.5.0",
@@ -29,6 +86,7 @@ This sub-phase implements enterprise-grade security measures including Content S
 ## Agent Validation Checklist
 
 ### security-compliance-auditor Validation
+
 - [ ] CSP headers properly configured
 - [ ] XSS protection implemented
 - [ ] CSRF tokens in place
@@ -39,6 +97,7 @@ This sub-phase implements enterprise-grade security measures including Content S
 - [ ] OWASP Top 10 addressed
 
 ### vercel-deployment-optimizer Validation
+
 - [ ] WAF rules configured
 - [ ] DDoS protection active
 - [ ] Rate limiting appropriate
@@ -49,6 +108,7 @@ This sub-phase implements enterprise-grade security measures including Content S
 - [ ] Monitoring alerts configured
 
 ## Success Criteria
+
 1. **Security Score** - A+ on SecurityHeaders.io
 2. **Penetration Test** - No critical vulnerabilities
 3. **CSP** - Strict policy without inline scripts
@@ -59,6 +119,7 @@ This sub-phase implements enterprise-grade security measures including Content S
 8. **Response** - < 5min incident detection
 
 ## Deliverables
+
 - [ ] Security headers configuration
 - [ ] WAF rules implementation
 - [ ] Rate limiting setup
@@ -70,4 +131,5 @@ This sub-phase implements enterprise-grade security measures including Content S
 
 ---
 
-*Sub-Phase 5.4 implements defense-in-depth security to protect sensitive resort and guest data.*
+_Sub-Phase 5.4 implements defense-in-depth security to protect sensitive resort
+and guest data._

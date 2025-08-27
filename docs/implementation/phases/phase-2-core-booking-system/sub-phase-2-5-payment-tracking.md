@@ -1,9 +1,14 @@
 # Sub-Phase 2.5: Payment Tracking System
 
 ## Overview
-This sub-phase implements a comprehensive payment tracking system supporting the resort's 50% deposit + 50% balance workflow, multiple payment methods (Cash, GCash, Bank Transfer), receipt upload to Cloudflare R2, and automated payment notifications.
+
+This sub-phase implements a comprehensive payment tracking system supporting the
+resort's 50% deposit + 50% balance workflow, multiple payment methods (Cash,
+GCash, Bank Transfer), receipt upload to Cloudflare R2, and automated payment
+notifications.
 
 ## Objectives
+
 1. Implement 50% deposit + 50% balance payment workflow
 2. Support multiple payment methods with validation
 3. Create receipt upload system with Cloudflare R2
@@ -13,6 +18,7 @@ This sub-phase implements a comprehensive payment tracking system supporting the
 ## Technical Requirements
 
 ### Core Dependencies
+
 ```json
 {
   "dependencies": {
@@ -25,9 +31,46 @@ This sub-phase implements a comprehensive payment tracking system supporting the
 }
 ```
 
+## Test-First Development Process
+
+### Step 1: Define Test Specifications
+
+- Agent writes comprehensive test suite based on requirements
+- Tests cover expected input/output pairs for payment tracking system
+- Include edge cases, error scenarios, and Philippine-specific requirements
+- Reference test templates from `/tests/templates/`
+
+### Step 2: Validate Tests Fail
+
+- Run test suite to confirm all tests fail (no implementation exists)
+- Command: `npm test payment-tracking.test.ts`
+- Expected: All tests should fail with clear error messages
+- NO implementation code should be written at this stage
+
+### Step 3: Commit Test Suite
+
+- Tests are committed as the immutable specification
+- Commit message: "test: add failing tests for payment tracking system"
+- These tests CANNOT be modified during implementation
+
+### Step 4: Implement Feature
+
+- Agent writes minimal code to pass ALL tests
+- Tests remain unchanged - implementation must adapt
+- Use repository patterns from `/src/lib/repositories/`
+- Apply dependency injection for testability
+
+### Step 5: Independent Verification
+
+- Different specialized agent reviews implementation
+- Ensures no overfitting to test cases
+- Validates general solution beyond test scenarios
+- Confirms best practices and patterns are followed
+
 ## Agent Validation Checklist
 
 ### resort-finance-architect Validation
+
 - [ ] 50% deposit calculation accurate
 - [ ] Balance tracking correct with partial payments
 - [ ] Multiple payment methods properly tracked
@@ -38,6 +81,7 @@ This sub-phase implements a comprehensive payment tracking system supporting the
 - [ ] Refund workflow properly designed
 
 ### security-compliance-auditor Validation
+
 - [ ] Payment data encrypted at rest
 - [ ] Receipt uploads use presigned URLs
 - [ ] No sensitive payment info in logs
@@ -48,6 +92,7 @@ This sub-phase implements a comprehensive payment tracking system supporting the
 - [ ] PCI compliance considerations
 
 ## Success Criteria
+
 1. **Payment Workflow** - 50% deposit + 50% balance tracked accurately
 2. **Payment Methods** - Cash, GCash, Bank Transfer supported
 3. **Receipt Upload** - Images uploaded to R2 with < 2s response
@@ -58,6 +103,7 @@ This sub-phase implements a comprehensive payment tracking system supporting the
 8. **Performance** - Payment updates < 200ms
 
 ## Deliverables
+
 - [ ] Payment CRUD API endpoints
 - [ ] Receipt upload with presigned URLs
 - [ ] Payment method validation
@@ -69,4 +115,5 @@ This sub-phase implements a comprehensive payment tracking system supporting the
 
 ---
 
-*Sub-Phase 2.5 implements secure payment tracking with receipt management for Philippine resort operations.*
+_Sub-Phase 2.5 implements secure payment tracking with receipt management for
+Philippine resort operations._

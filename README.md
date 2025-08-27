@@ -245,6 +245,126 @@ vercel --prod
 - File storage redundancy with R2
 - Configuration backups in Git
 
+## Test-Driven Development (TDD)
+
+This project follows Test-Driven Development practices to ensure reliability and maintainability of our resort management system. TDD is critical for financial calculations, booking logic, and data integrity - areas where bugs can have significant business impact.
+
+### Quick Start Commands
+
+```bash
+# Run tests in watch mode (recommended for TDD)
+npm test
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Run tests with UI interface
+npm run test:ui
+
+# Run specific test file
+npm test booking.test.ts
+
+# Run tests matching pattern
+npm test --grep "booking calculation"
+```
+
+### Test File Naming Conventions
+
+```
+src/
+├── components/
+│   └── BookingForm/
+│       ├── BookingForm.tsx
+│       └── __tests__/
+│           └── BookingForm.test.tsx
+├── services/
+│   └── __tests__/
+│       ├── booking.service.test.ts
+│       └── payment.service.test.ts
+├── hooks/
+│   └── queries/
+│       └── __tests__/
+│           └── use-bookings.test.ts
+└── stores/
+    └── __tests__/
+        └── bookingStore.test.ts
+```
+
+### TDD Workflow Example
+
+Here's a basic example of writing a test first for a booking feature:
+
+```typescript
+// 1. RED: Write failing test
+describe('BookingCalculation', () => {
+  it('should calculate total with Philippine tax and service charge', () => {
+    const booking = {
+      baseAmount: 5000,
+      nights: 3,
+      taxRate: 0.12,      // Philippines VAT
+      serviceRate: 0.10    // Service charge
+    };
+    
+    const result = calculateBookingTotal(booking);
+    
+    expect(result.subtotal).toBe(15000);  // 5000 * 3
+    expect(result.tax).toBe(1800);        // 15000 * 0.12
+    expect(result.service).toBe(1500);    // 15000 * 0.10
+    expect(result.total).toBe(18300);     // 15000 + 1800 + 1500
+  });
+});
+
+// 2. GREEN: Write minimal implementation
+function calculateBookingTotal(booking) {
+  const subtotal = booking.baseAmount * booking.nights;
+  const tax = subtotal * booking.taxRate;
+  const service = subtotal * booking.serviceRate;
+  return {
+    subtotal,
+    tax,
+    service,
+    total: subtotal + tax + service
+  };
+}
+
+// 3. REFACTOR: Improve while keeping tests green
+```
+
+### Comprehensive TDD Guide
+
+For detailed implementation patterns, testing strategies, and real-world examples specific to resort management systems, see our [TDD Implementation Guide](/docs/implementation/TDD_Implementation_Guide.md).
+
+The guide covers:
+- **Business case** for TDD in resort/hospitality systems
+- **TypeScript-first TDD** approach with type safety
+- **React component testing** patterns with accessibility
+- **Zustand store testing** with multi-tenant considerations  
+- **TanStack Query integration** testing
+- **Booking and payment processing** examples
+- **Philippine market-specific** features and validations
+
+### Team TDD Expectations
+
+**For New Features:**
+1. **Write tests first** - Start with failing tests that describe the desired behavior
+2. **Test business logic** - Focus on calculations, validations, and data transformations
+3. **Test edge cases** - Handle Philippine holidays, peak seasons, currency formatting
+4. **Maintain coverage** - Aim for 80%+ coverage on business-critical code
+5. **Document test intent** - Use descriptive test names explaining the business scenario
+
+**Pull Request Requirements:**
+- All new features must include tests
+- Tests must pass in CI/CD pipeline
+- Coverage reports reviewed during code review
+- Integration tests for multi-component features
+
+**TDD Benefits for Resort Management:**
+- **Financial accuracy** - Prevents booking calculation errors
+- **Seasonal reliability** - Handles peak season edge cases  
+- **Multi-tenant safety** - Ensures data isolation between projects
+- **Regulatory compliance** - Validates Philippine tax calculations
+- **Customer confidence** - Reduces booking errors and disputes
+
 ## Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.

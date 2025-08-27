@@ -22,6 +22,7 @@ export default defineConfig({
       "@/pages": resolve(__dirname, "./src/pages"),
       "@/layouts": resolve(__dirname, "./src/layouts"),
       "@/test": resolve(__dirname, "./src/test"),
+      "@tests": resolve(__dirname, "./tests"),
     },
   },
 

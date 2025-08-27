@@ -1,9 +1,13 @@
 # Sub-Phase 2.6: Interactive Booking Timeline
 
 ## Overview
-This sub-phase implements an interactive visual timeline component for booking management, featuring drag-and-drop capabilities, calendar view with availability, and mobile-responsive design using shadcn/ui components.
+
+This sub-phase implements an interactive visual timeline component for booking
+management, featuring drag-and-drop capabilities, calendar view with
+availability, and mobile-responsive design using shadcn/ui components.
 
 ## Objectives
+
 1. Build timeline visualization component
 2. Implement drag-and-drop booking management
 3. Create calendar view with availability display
@@ -13,6 +17,7 @@ This sub-phase implements an interactive visual timeline component for booking m
 ## Technical Requirements
 
 ### Core Dependencies
+
 ```json
 {
   "dependencies": {
@@ -26,9 +31,46 @@ This sub-phase implements an interactive visual timeline component for booking m
 }
 ```
 
+## Test-First Development Process
+
+### Step 1: Define Test Specifications
+
+- Agent writes comprehensive test suite based on requirements
+- Tests cover expected input/output pairs for interactive booking timeline
+- Include edge cases, error scenarios, and Philippine-specific requirements
+- Reference test templates from `/tests/templates/`
+
+### Step 2: Validate Tests Fail
+
+- Run test suite to confirm all tests fail (no implementation exists)
+- Command: `npm test booking-timeline.test.ts`
+- Expected: All tests should fail with clear error messages
+- NO implementation code should be written at this stage
+
+### Step 3: Commit Test Suite
+
+- Tests are committed as the immutable specification
+- Commit message: "test: add failing tests for interactive booking timeline"
+- These tests CANNOT be modified during implementation
+
+### Step 4: Implement Feature
+
+- Agent writes minimal code to pass ALL tests
+- Tests remain unchanged - implementation must adapt
+- Use repository patterns from `/src/lib/repositories/`
+- Apply dependency injection for testability
+
+### Step 5: Independent Verification
+
+- Different specialized agent reviews implementation
+- Ensures no overfitting to test cases
+- Validates general solution beyond test scenarios
+- Confirms best practices and patterns are followed
+
 ## Agent Validation Checklist
 
 ### resort-ui-designer Validation
+
 - [ ] Timeline design intuitive and visually clear
 - [ ] Color coding for booking status effective
 - [ ] Mobile touch interactions smooth
@@ -39,6 +81,7 @@ This sub-phase implements an interactive visual timeline component for booking m
 - [ ] Visual feedback for all interactions
 
 ### pwa-performance-optimizer Validation
+
 - [ ] Timeline renders < 1s for 50+ bookings
 - [ ] Drag-and-drop maintains 60fps
 - [ ] Virtual scrolling for large datasets
@@ -49,6 +92,7 @@ This sub-phase implements an interactive visual timeline component for booking m
 - [ ] Mobile Lighthouse score > 90
 
 ## Success Criteria
+
 1. **Timeline Rendering** - Display 50+ bookings smoothly
 2. **Drag-and-Drop** - Seamless booking rescheduling
 3. **Calendar View** - Clear availability visualization
@@ -59,6 +103,7 @@ This sub-phase implements an interactive visual timeline component for booking m
 8. **Responsiveness** - Adaptive layouts for all devices
 
 ## Deliverables
+
 - [ ] Timeline visualization component
 - [ ] Drag-and-drop implementation
 - [ ] Calendar view with availability
@@ -70,4 +115,5 @@ This sub-phase implements an interactive visual timeline component for booking m
 
 ---
 
-*Sub-Phase 2.6 creates an intuitive visual interface for managing resort bookings with modern UX patterns.*
+_Sub-Phase 2.6 creates an intuitive visual interface for managing resort
+bookings with modern UX patterns._

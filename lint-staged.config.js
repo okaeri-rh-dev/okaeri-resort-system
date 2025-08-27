@@ -1,10 +1,15 @@
 /** @type {import('lint-staged').Config} */
 export default {
   // TypeScript files
-  "*.{ts,tsx}": [
-    // Format with Prettier
-    "prettier --write",
-  ],
+  "*.{ts,tsx}": (files) => {
+    const filtered = files.filter((f) => !/tests\/templates\/|\.template\.tsx?$/.test(f));
+    return filtered.length
+      ? [
+          // Format with Prettier
+          `prettier --write ${filtered.join(" ")}`,
+        ]
+      : [];
+  },
 
   // JavaScript files
   "*.{js,jsx}": [

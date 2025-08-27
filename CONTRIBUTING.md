@@ -10,6 +10,7 @@ the project.
 - [Getting Started](#getting-started)
 - [Development Process](#development-process)
 - [Coding Standards](#coding-standards)
+- [TDD Requirements](#tdd-requirements)
 - [Testing Guidelines](#testing-guidelines)
 - [Commit Guidelines](#commit-guidelines)
 - [Pull Request Process](#pull-request-process)
@@ -107,7 +108,10 @@ Before contributing, ensure you have:
 - `test/[test-description]`: Test additions or updates
 - `perf/[optimization-description]`: Performance improvements
 
-### Workflow Steps
+### TDD Workflow
+
+We follow Test-Driven Development (TDD) practices. **All new features must be
+implemented using TDD**.
 
 1. **Create a New Branch**
 
@@ -115,13 +119,18 @@ Before contributing, ensure you have:
    git checkout -b feature/your-feature-name
    ```
 
-2. **Make Your Changes**
-   - Write clean, maintainable code
+2. **Follow TDD Red-Green-Refactor Cycle**
+   - **Red**: Write a failing test first
+   - **Green**: Write minimal code to make the test pass
+   - **Refactor**: Improve code structure while keeping tests green
+3. **Implementation Guidelines**
+   - Start with failing tests before any implementation
+   - Write only enough code to make tests pass
+   - Refactor with confidence knowing tests will catch regressions
    - Follow the coding standards
-   - Add tests for new functionality
    - Update documentation as needed
 
-3. **Test Your Changes**
+4. **Test Your Changes**
 
    ```bash
    npm run test
@@ -129,20 +138,20 @@ Before contributing, ensure you have:
    npm run lint
    ```
 
-4. **Commit Your Changes**
+5. **Commit Your Changes**
 
    ```bash
    git add .
    git commit -m "feat: add new booking feature"
    ```
 
-5. **Push to Your Fork**
+6. **Push to Your Fork**
 
    ```bash
    git push origin feature/your-feature-name
    ```
 
-6. **Create a Pull Request**
+7. **Create a Pull Request**
    - Use the PR template
    - Link related issues
    - Provide clear description
@@ -250,6 +259,163 @@ src/
 <div style={{ padding: '16px', borderRadius: '8px' }}>
 ```
 
+## TDD Requirements
+
+### Mandatory TDD for All New Features
+
+**Every new feature, component, or significant change must follow Test-Driven
+Development practices.** This means:
+
+- Tests must be written **before** implementation
+- No code should be committed without corresponding tests
+- All tests must pass before creating a pull request
+- Minimum 80% code coverage must be maintained
+
+### TDD Workflow Process
+
+#### 1. Red Phase - Write Failing Tests
+
+```typescript
+// Example: Testing a booking calculation feature
+describe("BookingCalculator", () => {
+  it("should calculate total with tax and fees", () => {
+    // This test will fail initially - that's expected!
+    const booking = { basePrice: 100, nights: 2 };
+    const calculator = new BookingCalculator();
+
+    const result = calculator.calculateTotal(booking);
+
+    expect(result.subtotal).toBe(200);
+    expect(result.tax).toBe(24); // 12% tax
+    expect(result.total).toBe(224);
+  });
+});
+```
+
+#### 2. Green Phase - Make Tests Pass
+
+```typescript
+// Write minimal implementation to make the test pass
+export class BookingCalculator {
+  calculateTotal(booking: { basePrice: number; nights: number }) {
+    const subtotal = booking.basePrice * booking.nights;
+    const tax = subtotal * 0.12;
+    const total = subtotal + tax;
+
+    return { subtotal, tax, total };
+  }
+}
+```
+
+#### 3. Refactor Phase - Improve Code Structure
+
+```typescript
+// Refactor for better structure while keeping tests green
+export class BookingCalculator {
+  private readonly TAX_RATE = 0.12;
+
+  calculateTotal(booking: BookingRequest): BookingTotal {
+    const subtotal = this.calculateSubtotal(booking);
+    const tax = this.calculateTax(subtotal);
+    const total = subtotal + tax;
+
+    return { subtotal, tax, total };
+  }
+
+  private calculateSubtotal({ basePrice, nights }: BookingRequest): number {
+    return basePrice * nights;
+  }
+
+  private calculateTax(amount: number): number {
+    return amount * this.TAX_RATE;
+  }
+}
+```
+
+### Coverage Requirements
+
+- **Minimum 80% overall code coverage** must be maintained
+- **90% coverage for business-critical modules** (bookings, payments, user
+  management)
+- **100% coverage for utility functions** and pure functions
+- Coverage reports are generated automatically in CI/CD
+
+### Test-First Development Examples
+
+#### React Component Example
+
+```tsx
+// 1. Write test first (Red phase)
+describe("BookingForm", () => {
+  it("should validate required fields before submission", async () => {
+    const mockOnSubmit = vi.fn();
+    render(<BookingForm onSubmit={mockOnSubmit} />);
+
+    const submitButton = screen.getByRole("button", { name: /submit/i });
+    fireEvent.click(submitButton);
+
+    expect(screen.getByText("Guest name is required")).toBeInTheDocument();
+    expect(screen.getByText("Check-in date is required")).toBeInTheDocument();
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+});
+
+// 2. Implement component (Green phase)
+export function BookingForm({ onSubmit }: BookingFormProps) {
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const newErrors: Record<string, string> = {};
+
+    if (!guestName) newErrors.guestName = "Guest name is required";
+    if (!checkInDate) newErrors.checkInDate = "Check-in date is required";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    onSubmit(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>{/* Form fields with error display */}</form>
+  );
+}
+```
+
+#### API Endpoint Example
+
+```typescript
+// 1. Write test first (Red phase)
+describe("POST /api/bookings", () => {
+  it("should create booking with valid data", async () => {
+    const bookingData = {
+      guestName: "John Doe",
+      checkIn: "2024-03-15",
+      checkOut: "2024-03-17",
+      roomType: "deluxe",
+    };
+
+    const response = await request(app)
+      .post("/api/bookings")
+      .send(bookingData)
+      .expect(201);
+
+    expect(response.body.id).toBeDefined();
+    expect(response.body.status).toBe("confirmed");
+    expect(response.body.guestName).toBe("John Doe");
+  });
+});
+
+// 2. Implement endpoint (Green phase)
+app.post("/api/bookings", async (req, res) => {
+  const booking = await bookingService.create(req.body);
+  res.status(201).json(booking);
+});
+```
+
 ## Testing Guidelines
 
 ### Test File Naming
@@ -280,13 +446,132 @@ describe("Button", () => {
 });
 ```
 
+### Test Writing Standards
+
+#### Test Naming Conventions
+
+```typescript
+// Use descriptive names that explain behavior
+describe("UserAuthService", () => {
+  describe("login", () => {
+    it("should return user token for valid credentials", () => {});
+    it("should throw AuthError for invalid password", () => {});
+    it("should lock account after 5 failed attempts", () => {});
+  });
+});
+```
+
+#### AAA Pattern (Arrange-Act-Assert)
+
+```typescript
+it("should calculate booking total with discount", () => {
+  // Arrange
+  const booking = { basePrice: 100, nights: 3 };
+  const discount = { type: "percentage", value: 10 };
+  const calculator = new BookingCalculator();
+
+  // Act
+  const result = calculator.calculateWithDiscount(booking, discount);
+
+  // Assert
+  expect(result.total).toBe(270); // 300 - 10% discount
+  expect(result.discountApplied).toBe(30);
+});
+```
+
+#### Test Isolation Requirements
+
+```typescript
+// Each test should be independent
+describe("BookingRepository", () => {
+  beforeEach(() => {
+    // Clean state before each test
+    database.clear();
+    vi.resetAllMocks();
+  });
+
+  it("should save booking to database", () => {
+    // Test doesn't depend on other tests
+  });
+});
+```
+
+#### Mock Usage Guidelines
+
+```typescript
+// Mock external dependencies, not internal logic
+describe("PaymentService", () => {
+  it("should process payment through gateway", async () => {
+    // Mock external payment gateway
+    const mockGateway = {
+      charge: vi.fn().mockResolvedValue({ id: "txn_123", status: "success" }),
+    };
+
+    const service = new PaymentService(mockGateway);
+    const result = await service.processPayment({ amount: 100 });
+
+    expect(mockGateway.charge).toHaveBeenCalledWith({ amount: 100 });
+    expect(result.transactionId).toBe("txn_123");
+  });
+});
+```
+
+#### Testing Business Logic Examples
+
+**Booking Logic Testing:**
+
+```typescript
+describe("BookingBusinessLogic", () => {
+  describe("room availability", () => {
+    it("should return false when room is already booked for dates", () => {
+      // Arrange
+      const existingBookings = [
+        { roomId: "room-1", checkIn: "2024-03-10", checkOut: "2024-03-15" },
+      ];
+      const newBooking = {
+        roomId: "room-1",
+        checkIn: "2024-03-12",
+        checkOut: "2024-03-14",
+      };
+
+      // Act
+      const isAvailable = checkRoomAvailability(existingBookings, newBooking);
+
+      // Assert
+      expect(isAvailable).toBe(false);
+    });
+  });
+});
+```
+
+**Payment Logic Testing:**
+
+```typescript
+describe("PaymentCalculator", () => {
+  it("should apply correct tax based on location", () => {
+    // Arrange
+    const booking = { amount: 1000, location: "philippines" };
+
+    // Act
+    const total = calculatePaymentTotal(booking);
+
+    // Assert
+    expect(total.tax).toBe(120); // 12% VAT in Philippines
+    expect(total.total).toBe(1120);
+  });
+});
+```
+
 ### Testing Requirements
 
-- All new features must have tests
+- **All new features must follow TDD workflow**
+- **Tests must be written before implementation**
 - Maintain test coverage above 80%
 - Test edge cases and error scenarios
-- Mock external dependencies
-- Use meaningful test descriptions
+- Mock external dependencies appropriately
+- Use descriptive test names that explain behavior
+- Follow AAA pattern for test structure
+- Ensure test isolation and independence
 
 ## Commit Guidelines
 
@@ -365,6 +650,21 @@ perf(dashboard): optimize chart rendering
    - Add/update JSDoc comments
    - Update API documentation
 
+### Enhanced Pull Request Checklist
+
+Before submitting a pull request, ensure all TDD requirements are met:
+
+#### TDD Compliance Checklist
+
+- [ ] **Tests written before implementation** (Red phase completed)
+- [ ] **All tests passing** (Green phase completed)
+- [ ] **Code refactored for quality** (Refactor phase completed)
+- [ ] **Test coverage maintained or improved** (minimum 80%)
+- [ ] **Test descriptions are clear and descriptive**
+- [ ] **Edge cases and error scenarios tested**
+- [ ] **Mocks used appropriately** (external dependencies only)
+- [ ] **Tests follow AAA pattern** (Arrange-Act-Assert)
+
 ### PR Template
 
 ```markdown
@@ -379,11 +679,49 @@ Brief description of changes
 - [ ] Breaking change
 - [ ] Documentation update
 
+## TDD Compliance
+
+- [ ] Tests written before implementation (TDD Red phase)
+- [ ] Minimal code written to pass tests (TDD Green phase)
+- [ ] Code refactored for quality (TDD Refactor phase)
+- [ ] Test coverage maintained/improved (≥80%)
+- [ ] Test descriptions are clear and meaningful
+- [ ] AAA pattern followed in test structure
+- [ ] External dependencies properly mocked
+- [ ] Edge cases and error scenarios covered
+
 ## Testing
 
 - [ ] Unit tests pass
 - [ ] Integration tests pass
 - [ ] Manual testing completed
+- [ ] Coverage report reviewed
+
+### Test Coverage Report
+```
+
+Current Coverage: XX% Previous Coverage: XX% Change: +/-XX%
+
+````
+
+## Examples of TDD Implementation
+
+### Tests Written First (Red Phase)
+```typescript
+// Show the failing tests that drove implementation
+````
+
+### Implementation (Green Phase)
+
+```typescript
+// Show minimal code that made tests pass
+```
+
+### Refactored Code (Refactor Phase)
+
+```typescript
+// Show improved code structure
+```
 
 ## Checklist
 
@@ -392,8 +730,8 @@ Brief description of changes
 - [ ] Comments added for complex code
 - [ ] Documentation updated
 - [ ] No new warnings generated
-- [ ] Tests added/updated
-- [ ] All tests passing
+- [ ] TDD workflow followed completely
+- [ ] Reference to TDD Implementation Guide (if applicable)
 
 ## Screenshots (if applicable)
 
@@ -402,15 +740,22 @@ Add screenshots for UI changes
 ## Related Issues
 
 Closes #(issue number)
-```
+
+````
 
 ### Review Process
 
-1. At least one maintainer approval required
-2. All CI checks must pass
-3. No merge conflicts
-4. Code coverage maintained or improved
-5. Documentation updated
+1. **TDD Compliance Verification**
+   - Tests written before implementation confirmed
+   - Red-Green-Refactor cycle evidence provided
+   - Test quality and coverage reviewed
+
+2. At least one maintainer approval required
+3. All CI checks must pass
+4. No merge conflicts
+5. **Code coverage maintained or improved** (≥80%)
+6. Documentation updated
+7. **TDD Implementation Guide referenced** where applicable
 
 ## Architecture Decisions
 
@@ -459,7 +804,7 @@ export function calculateBookingTotal(
 ): number {
   // Implementation
 }
-```
+````
 
 ### Documentation Requirements
 
@@ -468,6 +813,9 @@ export function calculateBookingTotal(
 - Update README for new features
 - Maintain changelog for releases
 - Document breaking changes
+- **Reference TDD Implementation Guide** for complex features
+- **Include test examples** in API documentation
+- **Document test patterns** for domain-specific logic
 
 ## Community
 
