@@ -79,6 +79,9 @@
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.spec.ts",
-    "**/*.spec.tsx"
+    "**/*.spec.tsx",
+    "tests/templates/**/*",
+    "**/*.template.ts",
+    "**/*.template.tsx"
   ]
 }
