@@ -350,6 +350,10 @@ test.describe("Authentication Flow E2E Tests", () => {
     });
 
     test("should allow access to protected routes for authenticated users", async ({ page }) => {
+      // Navigate to login page first
+      await page.goto("/login");
+      await waitForNetworkIdle(page);
+
       // Login first
       await fillLoginForm(page, EXISTING_USER.email, EXISTING_USER.password);
       await page.click('button[type="submit"]');
@@ -368,6 +372,10 @@ test.describe("Authentication Flow E2E Tests", () => {
     });
 
     test("should handle role-based access control", async ({ page }) => {
+      // Navigate to login page first
+      await page.goto("/login");
+      await waitForNetworkIdle(page);
+
       // Login as non-admin user
       await fillLoginForm(page, "staff@okaeriresort.ph", "correct-password");
       await page.click('button[type="submit"]');
@@ -385,6 +393,10 @@ test.describe("Authentication Flow E2E Tests", () => {
 
   test.describe("Logout Flow", () => {
     test.beforeEach(async ({ page }) => {
+      // Navigate to login page first
+      await page.goto("/login");
+      await waitForNetworkIdle(page);
+
       // Login before each logout test
       await fillLoginForm(page, EXISTING_USER.email, EXISTING_USER.password);
       await page.click('button[type="submit"]');
@@ -424,6 +436,10 @@ test.describe("Authentication Flow E2E Tests", () => {
 
   test.describe("Session Management", () => {
     test.beforeEach(async ({ page }) => {
+      // Navigate to login page first
+      await page.goto("/login");
+      await waitForNetworkIdle(page);
+
       await fillLoginForm(page, EXISTING_USER.email, EXISTING_USER.password);
       await page.click('button[type="submit"]');
       await expect(page).toHaveURL("/dashboard");

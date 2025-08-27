@@ -158,7 +158,8 @@ export const ProjectSettingsSearchSchema = z.object({
 
 // Auth route search parameters
 export const LoginSearchSchema = z.object({
-  redirect: z.string().url().optional(),
+  // [PHASE 1 TEMPORARY - Update in Phase 5.2 to properly validate URLs]
+  redirect: z.string().optional(), // Allow any string for now, including relative paths
   reason: z
     .enum(["session_expired", "access_denied", "logout", "registration_complete"])
     .optional(),

@@ -20,6 +20,10 @@ import { permissionGuard } from "@/lib/security/permission-guard";
 
 import { TOKEN_EXPIRY, RATE_LIMITS, AUDIT_EVENTS, SESSION_CONFIG } from "@/lib/security/constants";
 
+// [PHASE 1-4 MOCK AUTH - Remove in Phase 5.2]
+import { config } from "@/config";
+import { mockAuthService } from "@/mocks/auth-service";
+
 interface AuthActions {
   // Auth actions
   login: (email: string, password: string) => Promise<void>;
@@ -77,6 +81,54 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
       // Authentication actions with enhanced security
       login: async (email: string, password: string) => {
+        // [PHASE 1-4 MOCK AUTH - Remove this block in Phase 5.2]
+        if (import.meta.env.DEV && config.development.mockAuth) {
+          set((state) => {
+            state.isLoading = true;
+            state.error = null;
+          });
+
+          try {
+            const mockResponse = await mockAuthService.login(email, password);
+            const { user, token, refreshToken } = mockResponse;
+
+            // Use existing token management
+            tokenManager.storeTokens(token, refreshToken);
+            apiClient.setAuthToken(token);
+
+            // Start session monitoring
+            sessionMonitor.start({
+              timeout: TOKEN_EXPIRY.SESSION_TIMEOUT,
+              warningTime: TOKEN_EXPIRY.SESSION_WARNING,
+              onTimeout: () => {
+                get().logout();
+              },
+              onWarning: (timeLeft) => {
+                console.warn(`Session will expire in ${timeLeft / 1000} seconds`);
+              },
+            });
+
+            set((state) => {
+              state.user = user;
+              state.token = token;
+              state.refreshToken = refreshToken;
+              state.sessionExpiry = Date.now() + TOKEN_EXPIRY.ACCESS_TOKEN;
+              state.isAuthenticated = true;
+              state.isLoading = false;
+            });
+
+            auditLogger.logAuth("login", user, true);
+            return;
+          } catch (error: any) {
+            set((state) => {
+              state.isLoading = false;
+              state.error = error.message || "Login failed";
+            });
+            throw error;
+          }
+        }
+        // [END PHASE 1-4 MOCK AUTH]
+
         // Check rate limit
         const rateLimit = rateLimiter.check("login", {
           max: RATE_LIMITS.LOGIN_ATTEMPTS.MAX,
@@ -162,6 +214,25 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       },
 
       logout: async () => {
+        // [PHASE 1-4 MOCK AUTH - Remove this block in Phase 5.2]
+        if (import.meta.env.DEV && config.development.mockAuth) {
+          await mockAuthService.logout();
+          sessionMonitor.stop();
+          tokenManager.clearTokens();
+          apiClient.setAuthToken(null);
+
+          set((state) => {
+            state.user = null;
+            state.token = null;
+            state.refreshToken = null;
+            state.isAuthenticated = false;
+            state.isLoading = false;
+            state.error = null;
+          });
+          return;
+        }
+        // [END PHASE 1-4 MOCK AUTH]
+
         const { token } = get();
         const { user } = get();
 
@@ -200,6 +271,47 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       },
 
       register: async (data: RegisterData) => {
+        // [PHASE 1-4 MOCK AUTH - Remove this block in Phase 5.2]
+        if (import.meta.env.DEV && config.development.mockAuth) {
+          set((state) => {
+            state.isLoading = true;
+            state.error = null;
+          });
+
+          try {
+            const response = await mockAuthService.register(data);
+            const { user, token, refreshToken } = response;
+
+            tokenManager.storeTokens(token, refreshToken);
+            apiClient.setAuthToken(token);
+
+            sessionMonitor.start({
+              timeout: TOKEN_EXPIRY.SESSION_TIMEOUT,
+              warningTime: TOKEN_EXPIRY.SESSION_WARNING,
+              onTimeout: () => {
+                get().logout();
+              },
+            });
+
+            set((state) => {
+              state.user = user;
+              state.token = token;
+              state.refreshToken = refreshToken;
+              state.sessionExpiry = Date.now() + TOKEN_EXPIRY.ACCESS_TOKEN;
+              state.isAuthenticated = true;
+              state.isLoading = false;
+            });
+            return;
+          } catch (error: any) {
+            set((state) => {
+              state.isLoading = false;
+              state.error = error.message || "Registration failed";
+            });
+            throw error;
+          }
+        }
+        // [END PHASE 1-4 MOCK AUTH]
+
         // Check rate limit for registration
         const rateLimit = rateLimiter.check("register", {
           max: 3,
@@ -277,6 +389,30 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         if (!refreshToken) {
           throw new Error("No refresh token available");
         }
+
+        // [PHASE 1-4 MOCK AUTH - Remove this block in Phase 5.2]
+        if (import.meta.env.DEV && config.development.mockAuth) {
+          try {
+            const response = await mockAuthService.refresh(refreshToken);
+            const { token, refreshToken: newRefreshToken } = response;
+
+            tokenManager.storeTokens(token, newRefreshToken);
+            apiClient.setAuthToken(token);
+
+            set((state) => {
+              state.token = token;
+              state.refreshToken = newRefreshToken;
+              state.sessionExpiry = Date.now() + TOKEN_EXPIRY.ACCESS_TOKEN;
+            });
+
+            sessionMonitor.extendSession();
+            return;
+          } catch (error) {
+            get().logout();
+            throw error;
+          }
+        }
+        // [END PHASE 1-4 MOCK AUTH]
 
         try {
           const response = await apiClient.post<{ token: string; refreshToken: string }>(
@@ -428,6 +564,26 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         if (!token) {
           return;
         }
+
+        // [PHASE 1-4 MOCK AUTH - Remove this block in Phase 5.2]
+        if (import.meta.env.DEV && config.development.mockAuth) {
+          set((state) => {
+            state.isLoading = true;
+          });
+
+          try {
+            const user = await mockAuthService.fetchCurrentUser(token);
+            set((state) => {
+              state.user = user;
+              state.isAuthenticated = true;
+              state.isLoading = false;
+            });
+          } catch (error) {
+            get().logout();
+          }
+          return;
+        }
+        // [END PHASE 1-4 MOCK AUTH]
 
         set((state) => {
           state.isLoading = true;

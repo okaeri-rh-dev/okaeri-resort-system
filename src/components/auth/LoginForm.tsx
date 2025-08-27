@@ -16,6 +16,8 @@ import { Label } from "@/components/ui/label";
 
 import { loginSchema, type LoginFormData } from "@/lib/validations/auth";
 import { useAuthStore } from "@/stores/authStore";
+// [PHASE 1-4 DEV UI - Remove in Phase 5.2]
+import { config } from "@/config";
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -27,6 +29,7 @@ export function LoginForm() {
     formState: { errors, isSubmitting },
     setError,
     clearErrors,
+    setValue, // Add this to expose setValue for dev UI
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -60,6 +63,9 @@ export function LoginForm() {
 
   const isFormLoading = isSubmitting || isLoading;
 
+  // [PHASE 1-4 DEV UI - Remove this block in Phase 5.2]
+  const isDevelopmentMode = import.meta.env.DEV && config.development?.mockAuth;
+
   return (
     <Card className="mx-auto w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
@@ -70,6 +76,68 @@ export function LoginForm() {
           Sign in to your Okaeri Resort account to continue managing your paradise.
         </CardDescription>
       </CardHeader>
+
+      {/* [PHASE 1-4 DEV UI - Remove in Phase 5.2] */}
+      {isDevelopmentMode && (
+        <div className="mx-6 mb-4 rounded-md border border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20">
+          <div className="flex items-center gap-2 px-3 py-2">
+            <span className="text-lg">🔧</span>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-orange-800 dark:text-orange-300">
+                Development Mode - Mock Authentication Active
+              </p>
+              <p className="text-xs text-orange-600 dark:text-orange-400">
+                Using mock authentication service. DO NOT USE IN PRODUCTION.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* [PHASE 1-4 DEV UI - Remove in Phase 5.2] */}
+      {isDevelopmentMode && (
+        <div className="mx-6 mb-2 flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              // Auto-fill owner credentials
+              const form = document.querySelector("form");
+              if (form) {
+                const emailInput = form.querySelector('input[type="email"]') as HTMLInputElement;
+                const passwordInput = form.querySelector(
+                  'input[type="password"]'
+                ) as HTMLInputElement;
+                if (emailInput) emailInput.value = "owner@okaeriresort.ph";
+                if (passwordInput) passwordInput.value = "correct-password";
+
+                // Trigger React Hook Form to recognize the values
+                setValue("email", "owner@okaeriresort.ph");
+                setValue("password", "correct-password");
+              }
+            }}
+            className="flex items-center gap-1 border-orange-300 text-orange-700 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/20"
+          >
+            <span className="text-xs">⚡</span>
+            Use Owner Test Account
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              // Auto-fill staff credentials
+              setValue("email", "staff@okaeriresort.ph");
+              setValue("password", "correct-password");
+            }}
+            className="flex items-center gap-1 border-orange-300 text-orange-700 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/20"
+          >
+            <span className="text-xs">👤</span>
+            Use Staff Test Account
+          </Button>
+        </div>
+      )}
 
       <CardContent className="space-y-6">
         {/* Global Error Message */}

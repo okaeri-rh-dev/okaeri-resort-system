@@ -8,6 +8,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { useProjectStore } from "@/stores/projectStore";
 import { tokenManager, auditLogger, sessionMonitor } from "@/lib/security";
 import type { User } from "@/types/common";
+// [PHASE 1-4 MOCK AUTH - Remove in Phase 5.2]
+import { config } from "@/config";
 
 // Re-export for easier imports
 export { redirect };
@@ -75,7 +77,7 @@ export interface AuthGuardResult {
  */
 export async function requireAuth(
   location: { pathname: string; href: string },
-  config: AuthGuardConfig = {}
+  guardConfig: AuthGuardConfig = {}
 ): Promise<{ user: User; authChecked: true }> {
   const {
     redirectTo = "/login",
@@ -85,10 +87,56 @@ export async function requireAuth(
     loadProjects = true,
     customValidation,
     enableSessionMonitoring = true,
-  } = config;
+  } = guardConfig;
 
   const authStore = useAuthStore.getState();
   const token = tokenManager.getAccessToken();
+
+  // [PHASE 1-4 MOCK AUTH - Remove this block in Phase 5.2]
+  if (import.meta.env.DEV && config.development?.mockAuth && token) {
+    console.warn("[DEV MODE] Using mock authentication - DO NOT USE IN PRODUCTION");
+
+    // For mock auth, skip strict token validation
+    if (token.includes("mock") || token.startsWith("eyJ")) {
+      // Mock tokens are always valid in dev mode
+      // Just ensure user data is loaded
+      if (!authStore.user) {
+        try {
+          await authStore.fetchCurrentUser();
+        } catch (error) {
+          console.warn("[DEV MODE] Failed to fetch mock user, attempting login redirect");
+          const redirectUrl = preserveRedirect
+            ? `${redirectTo}?redirect=${encodeURIComponent(location.href)}`
+            : redirectTo;
+          throw redirect({ to: redirectUrl });
+        }
+      }
+
+      const user = authStore.user;
+      if (user) {
+        // Skip other validations for mock auth, just return success
+        auditLogger.logAccess("route", "navigate", true, user, {
+          path: location.pathname,
+          mockAuth: true,
+        });
+
+        // Load projects if needed
+        if (loadProjects) {
+          const projectStore = useProjectStore.getState();
+          if (!projectStore.activeProjectId && projectStore.projects.length === 0) {
+            try {
+              await projectStore.fetchProjects();
+            } catch (error) {
+              console.warn("Failed to load projects:", error);
+            }
+          }
+        }
+
+        return { user, authChecked: true };
+      }
+    }
+  }
+  // [END PHASE 1-4 MOCK AUTH]
 
   // Step 1: Check if user has valid token
   if (!token) {
@@ -106,7 +154,10 @@ export async function requireAuth(
 
   // Step 2: Validate token structure and expiry
   const validation = tokenManager.validateTokenStructure(token);
-  if (!validation.valid) {
+
+  // [PHASE 1-4 MOCK AUTH - Remove condition in Phase 5.2]
+  // In dev mode with mock auth, be more lenient with token validation
+  if (!validation.valid && !(import.meta.env.DEV && config.development?.mockAuth)) {
     auditLogger.logSecurityEvent("invalid_token", {
       path: location.pathname,
       reason: validation.error,
@@ -123,7 +174,13 @@ export async function requireAuth(
   }
 
   // Step 3: Check if token is expired
-  if (tokenManager.isTokenExpired(token, 0)) {
+  // [PHASE 1-4 MOCK AUTH - Skip expiry check for mock tokens in Phase 5.2]
+  const isMockToken =
+    import.meta.env.DEV &&
+    config.development?.mockAuth &&
+    (token.includes("mock") || token.includes("dev-user"));
+
+  if (!isMockToken && tokenManager.isTokenExpired(token, 0)) {
     try {
       await authStore.refreshToken();
     } catch (error) {
@@ -288,12 +345,12 @@ export async function requireGuest(
 export async function requireRole(
   roles: string | string[],
   location: { pathname: string; href: string },
-  config: Omit<AuthGuardConfig, "requiredRole"> = {}
+  guardConfig: Omit<AuthGuardConfig, "requiredRole"> = {}
 ): Promise<{ user: User; authChecked: true }> {
   const roleArray = Array.isArray(roles) ? roles : [roles];
 
   return requireAuth(location, {
-    ...config,
+    ...guardConfig,
     customValidation: (user) => {
       return roleArray.some((role) => user.role === role);
     },
@@ -310,10 +367,10 @@ export async function requireRole(
 export async function requirePermissions(
   permissions: Array<{ resource: string; action: string }>,
   location: { pathname: string; href: string },
-  config: Omit<AuthGuardConfig, "requiredPermissions"> = {}
+  guardConfig: Omit<AuthGuardConfig, "requiredPermissions"> = {}
 ): Promise<{ user: User; authChecked: true }> {
   return requireAuth(location, {
-    ...config,
+    ...guardConfig,
     requiredPermissions: permissions,
   });
 }
@@ -328,9 +385,9 @@ export async function requirePermissions(
 export async function requireProjectAccess(
   projectId: string,
   location: { pathname: string; href: string },
-  config: AuthGuardConfig = {}
+  guardConfig: AuthGuardConfig = {}
 ): Promise<{ user: User; project: any; authChecked: true }> {
-  const authResult = await requireAuth(location, config);
+  const authResult = await requireAuth(location, guardConfig);
   const projectStore = useProjectStore.getState();
 
   // Ensure project is loaded
@@ -394,6 +451,15 @@ export async function requireDevelopment(location: {
 export function checkAuth(): AuthGuardResult {
   const authStore = useAuthStore.getState();
   const token = tokenManager.getAccessToken();
+
+  // [PHASE 1-4 MOCK AUTH - Remove in Phase 5.2]
+  if (import.meta.env.DEV && config.development?.mockAuth && token) {
+    console.warn("[DEV MODE] Mock authentication check - DO NOT USE IN PRODUCTION");
+    if (authStore.user) {
+      return { allowed: true, user: authStore.user };
+    }
+  }
+  // [END PHASE 1-4 MOCK AUTH]
 
   if (!token) {
     return { allowed: false, reason: "no_token" };
