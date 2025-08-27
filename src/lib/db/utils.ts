@@ -17,7 +17,7 @@ import { createProjectSchema } from "./schema/project";
  * Create a new project schema in the database
  * This function creates a new PostgreSQL schema for project isolation
  */
-export async function createProjectSchema(
+export async function setupProjectSchema(
   projectId: string,
   schemaName: string
 ): Promise<{ success: boolean; error?: string }> {

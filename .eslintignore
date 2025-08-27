@@ -1,0 +1,104 @@
+# Build outputs
+dist/
+dist-ssr/
+build/
+.vercel/
+assets/
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Coverage and test reports
+coverage/
+.nyc_output/
+.coverage/
+test-results/
+test-report.html
+test-results.json
+playwright-report/
+
+# Cache directories
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+
+# Generated files
+*.min.js
+*.min.css
+*.bundle.js
+*.bundle.css
+*.map
+src/routeTree.gen.ts
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Logs
+logs/
+*.log
+
+# Static assets
+public/
+static/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Binary and media files
+*.exe
+*.dll
+*.so
+*.dylib
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.svg
+*.ico
+*.webp
+*.avif
+*.mp4
+*.mp3
+*.wav
+*.woff
+*.woff2
+*.ttf
+*.eot
+*.otf
+
+# Compressed files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+
+# Configuration files that should not be linted
+vite.config.ts.timestamp-*
+*.config.js.map
+
+# Test templates (contain invalid TS/TSX placeholders)
+tests/templates/

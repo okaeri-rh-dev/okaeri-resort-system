@@ -159,14 +159,28 @@ export { DatabaseConnection };
 // Export convenience function for schema-specific queries
 export function getSchemaConnection(schemaName: string) {
   const db = DatabaseConnection.getInstance();
-  const sql = db.getSql();
+  const baseSql = db.getSql();
+
+  // Create a schema-specific SQL client that sets the search path
+  const schemaSql = async (strings: TemplateStringsArray | string, ...values: any[]) => {
+    // First set the search path
+    await baseSql`SET search_path TO ${baseSql(schemaName)}, public`;
+
+    // Then execute the actual query
+    if (typeof strings === "string") {
+      // Handle raw SQL strings
+      return baseSql(strings, ...values);
+    } else {
+      // Handle template literals
+      return baseSql(strings as TemplateStringsArray, ...values);
+    }
+  };
+
+  // Add identifier method for proper SQL identifier escaping
+  (schemaSql as any).identifier = (name: string) => baseSql(name);
 
   return {
-    sql: async (strings: TemplateStringsArray, ...values: any[]) => {
-      // Set search_path for this query
-      await sql`SET search_path TO ${sql(schemaName)}, public`;
-      return sql(strings, ...values);
-    },
+    sql: schemaSql,
     drizzle: db.getDrizzle(),
   };
 }

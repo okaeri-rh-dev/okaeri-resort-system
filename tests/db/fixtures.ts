@@ -3,11 +3,41 @@
  * Provides reusable test data and utilities for database tests
  */
 
-import { v4 as uuidv4 } from "crypto";
+import { v4 as uuidv4 } from "uuid";
 import { faker } from "@faker-js/faker";
-import { sql, drizzleDb, executeWithRetry } from "@/lib/db/connection";
-import { generateCode, sanitizeIdentifier } from "@/lib/db/utils";
-import type { NewUser, NewProject, NewUserProjectPermission } from "@/lib/db/schema";
+import { setupTestDatabase, TEST_DB_CONFIG } from "./test-connection";
+
+// Import database functions conditionally based on test mode
+let sql: any;
+let drizzleDb: any;
+let executeWithRetry: any;
+let generateCode: any;
+let sanitizeIdentifier: any;
+
+// Initialize database imports
+if (TEST_DB_CONFIG.isMockMode) {
+  // Use mocked versions
+  sql = async (strings: TemplateStringsArray | string, ...values: any[]) => [];
+  drizzleDb = { insert: () => ({ values: () => Promise.resolve() }) };
+  executeWithRetry = async (fn: () => Promise<any>) => fn();
+  generateCode = (prefix: string, length: number) =>
+    `${prefix}${Math.random().toString(36).substring(2, length)}`;
+  sanitizeIdentifier = (str: string) => str.replace(/[^a-z0-9_]/gi, "_").toLowerCase();
+} else {
+  // Import real implementations
+  const connectionModule = await import("@/lib/db/connection");
+  const utilsModule = await import("@/lib/db/utils");
+  sql = connectionModule.sql;
+  drizzleDb = connectionModule.drizzleDb;
+  executeWithRetry = connectionModule.executeWithRetry;
+  generateCode = utilsModule.generateCode;
+  sanitizeIdentifier = utilsModule.sanitizeIdentifier;
+}
+
+// Import types
+type NewUser = any;
+type NewProject = any;
+type NewUserProjectPermission = any;
 
 // Test database configuration
 export const TEST_DB_PREFIX = "test_";
@@ -399,8 +429,8 @@ export class TestDatabaseSetup {
 
     // Create schema if requested
     if (options?.createSchema) {
-      const { createProjectSchema } = await import("@/lib/db/utils");
-      await createProjectSchema(project.id, project.schemaName);
+      const { setupProjectSchema } = await import("@/lib/db/utils");
+      await setupProjectSchema(project.id, project.schemaName);
       this.cleaner.registerSchema(project.schemaName);
     }
 
@@ -534,9 +564,10 @@ export async function createTestDatabase(): Promise<{
   };
 }
 
-// Import required types from schema
-import { users, projects } from "@/lib/db/schema";
+// Mock schema tables for testing
+const users = { name: "users" };
+const projects = { name: "projects" };
 
 // Export commonly used test utilities
 export { faker } from "@faker-js/faker";
-export { v4 as uuidv4 } from "crypto";
+export { v4 as uuidv4 } from "uuid";

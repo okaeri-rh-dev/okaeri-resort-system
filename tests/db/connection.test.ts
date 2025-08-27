@@ -4,25 +4,70 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, vi, beforeEach, afterEach } from "vitest";
-import {
-  DatabaseConnection,
-  sql,
-  drizzleDb,
-  executeWithRetry,
-  healthCheck,
-  getSchemaConnection,
-} from "@/lib/db/connection";
+import { setupTestDatabase, cleanupTestDatabase, TEST_DB_CONFIG } from "./test-connection";
 import { TEST_TIMEOUT, generateTestSchemaName, DatabaseCleaner } from "./fixtures";
+
+// Conditionally import database functions based on test mode
+const getDbFunctions = async () => {
+  if (TEST_DB_CONFIG.isMockMode) {
+    // Return mocked functions for mock mode
+    const mockSql = vi.fn(async () => [{ test: 1 }]);
+    (mockSql as any).identifier = (name: string) => ({ identifier: name });
+
+    return {
+      DatabaseConnection: {
+        getInstance: () => ({
+          getSql: () => mockSql,
+          getDrizzle: () => ({}),
+          transaction: vi.fn(async (fn: any) => fn({ execute: vi.fn() })),
+          healthCheck: vi.fn(async () => true),
+          close: vi.fn(),
+        }),
+      },
+      sql: mockSql,
+      drizzleDb: {},
+      executeWithRetry: vi.fn(async (fn: any) => fn()),
+      healthCheck: vi.fn(async () => true),
+      getSchemaConnection: vi.fn((schema: string) => ({
+        sql: mockSql,
+        drizzle: {},
+      })),
+    };
+  } else {
+    // Import real implementations
+    return import("@/lib/db/connection");
+  }
+};
+
+let DatabaseConnection: any;
+let sql: any;
+let drizzleDb: any;
+let executeWithRetry: any;
+let healthCheck: any;
+let getSchemaConnection: any;
 
 describe("Database Connection", () => {
   let cleaner: DatabaseCleaner;
 
-  beforeAll(() => {
+  beforeAll(async () => {
+    // Setup test database
+    await setupTestDatabase();
+
+    // Get database functions
+    const dbFunctions = await getDbFunctions();
+    DatabaseConnection = dbFunctions.DatabaseConnection;
+    sql = dbFunctions.sql;
+    drizzleDb = dbFunctions.drizzleDb;
+    executeWithRetry = dbFunctions.executeWithRetry;
+    healthCheck = dbFunctions.healthCheck;
+    getSchemaConnection = dbFunctions.getSchemaConnection;
+
     cleaner = new DatabaseCleaner();
   });
 
   afterAll(async () => {
     await cleaner.cleanup();
+    await cleanupTestDatabase();
   });
 
   describe("Connection Establishment", () => {
