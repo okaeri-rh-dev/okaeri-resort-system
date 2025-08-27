@@ -5,30 +5,57 @@
 import { Pool, type PoolConfig } from "pg";
 import { neon, neonConfig } from "@neondatabase/serverless";
 import type { TenantContext } from "./types";
+import { env } from "../../src/lib/env";
+import { createDatabaseLogger } from "../../src/lib/logger";
+import { createDatabaseError, ErrorHandler } from "../../src/lib/error-handler";
 
 // Configure Neon for Vercel Edge
 neonConfig.fetchConnectionCache = true;
 
+// Initialize database logger
+const dbLogger = createDatabaseLogger("pool");
+
 // Connection pool configuration
 const poolConfig: PoolConfig = {
-  connectionString: process.env.DATABASE_URL,
+  connectionString: env.DATABASE_URL,
   max: 10, // Maximum number of connections
   idleTimeoutMillis: 30000, // 30 seconds
   connectionTimeoutMillis: 5000, // 5 seconds
   // Enable SSL for production
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+  ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 };
+
+dbLogger.info("Database pool configuration initialized", {
+  maxConnections: poolConfig.max,
+  idleTimeout: poolConfig.idleTimeoutMillis,
+  connectionTimeout: poolConfig.connectionTimeoutMillis,
+  sslEnabled: !!poolConfig.ssl,
+});
 
 // Create connection pool
 let pool: Pool | null = null;
 
 export function getPool(): Pool {
   if (!pool) {
+    dbLogger.info("Creating new database connection pool");
     pool = new Pool(poolConfig);
 
-    // Handle pool errors
+    // Handle pool events
     pool.on("error", (err) => {
-      console.error("Unexpected pool error:", err);
+      const dbError = createDatabaseError("Unexpected pool error");
+      dbLogger.error("Database pool error", dbError, err);
+    });
+
+    pool.on("connect", () => {
+      dbLogger.debug("New client connected to pool");
+    });
+
+    pool.on("acquire", () => {
+      dbLogger.debug("Client acquired from pool");
+    });
+
+    pool.on("remove", () => {
+      dbLogger.debug("Client removed from pool");
     });
   }
   return pool;
@@ -36,10 +63,13 @@ export function getPool(): Pool {
 
 // Get database client for Edge runtime
 export function getEdgeClient() {
-  if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL not configured");
+  if (!env.DATABASE_URL) {
+    const error = createDatabaseError("DATABASE_URL not configured");
+    dbLogger.error("Failed to get edge client", error);
+    throw error;
   }
-  return neon(process.env.DATABASE_URL);
+  dbLogger.debug("Creating edge database client");
+  return neon(env.DATABASE_URL);
 }
 
 // Multi-tenant query builder
@@ -66,23 +96,55 @@ export class TenantQuery {
    * Execute query with tenant context
    */
   async query<T = unknown>(text: string, params?: unknown[], useEdge = false): Promise<T[]> {
-    if (useEdge) {
-      const sql = getEdgeClient();
-      // For edge runtime, prepend schema to table names
-      const modifiedText = this.prependSchema(text);
-      const result = await sql(modifiedText, params);
-      return result as T[];
-    }
-
-    const pool = getPool();
-    const client = await pool.connect();
+    const queryLogger = createDatabaseLogger("query", this.projectId);
+    const startTime = performance.now();
 
     try {
-      await this.setSearchPath(client);
-      const result = await client.query(text, params);
-      return result.rows;
-    } finally {
-      client.release();
+      if (useEdge) {
+        const sql = getEdgeClient();
+        // For edge runtime, prepend schema to table names
+        const modifiedText = this.prependSchema(text);
+        queryLogger.debug("Executing edge query", {
+          schema: this.schema,
+          query: text.substring(0, 100),
+        });
+        const result = await sql(modifiedText, params);
+
+        const duration = performance.now() - startTime;
+        queryLogger.debug("Edge query completed", { duration: Math.round(duration) });
+        return result as T[];
+      }
+
+      const pool = getPool();
+      const client = await pool.connect();
+
+      try {
+        await this.setSearchPath(client);
+        queryLogger.debug("Executing pooled query", {
+          schema: this.schema,
+          query: text.substring(0, 100),
+        });
+        const result = await client.query(text, params);
+
+        const duration = performance.now() - startTime;
+        queryLogger.debug("Pooled query completed", {
+          duration: Math.round(duration),
+          rowCount: result.rows.length,
+        });
+        return result.rows;
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      const duration = performance.now() - startTime;
+      const dbError = ErrorHandler.handle(error, {
+        schema: this.schema,
+        query: text.substring(0, 100),
+        duration,
+        projectId: this.projectId,
+      });
+      queryLogger.error("Query failed", dbError);
+      throw dbError;
     }
   }
 
@@ -94,18 +156,39 @@ export class TenantQuery {
       query: (text: string, params?: unknown[]) => Promise<unknown>;
     }) => Promise<T>
   ): Promise<T> {
+    const txLogger = createDatabaseLogger("transaction", this.projectId);
+    const startTime = performance.now();
+
     const pool = getPool();
     const client = await pool.connect();
 
     try {
+      txLogger.debug("Beginning transaction", { schema: this.schema });
       await client.query("BEGIN");
       await this.setSearchPath(client);
+
       const result = await callback(client);
+
       await client.query("COMMIT");
+      const duration = performance.now() - startTime;
+      txLogger.info("Transaction committed successfully", {
+        duration: Math.round(duration),
+        schema: this.schema,
+      });
       return result;
     } catch (error) {
       await client.query("ROLLBACK");
-      throw error;
+      const duration = performance.now() - startTime;
+
+      const dbError = ErrorHandler.handle(error, {
+        schema: this.schema,
+        duration,
+        projectId: this.projectId,
+        operation: "transaction",
+      });
+
+      txLogger.error("Transaction rolled back", dbError);
+      throw dbError;
     } finally {
       client.release();
     }
@@ -139,9 +222,15 @@ export class TenantQuery {
 
 // Database migration utilities
 export async function ensureTenantSchema(projectId: string): Promise<void> {
+  const migrationLogger = createDatabaseLogger("migration", projectId);
   const pool = getPool();
   const client = await pool.connect();
   const schemaName = `project_${projectId.replace(/-/g, "_")}`;
+
+  migrationLogger.info("Ensuring tenant schema exists", {
+    projectId,
+    schemaName,
+  });
 
   try {
     await client.query("BEGIN");
@@ -249,9 +338,19 @@ export async function ensureTenantSchema(projectId: string): Promise<void> {
     );
 
     await client.query("COMMIT");
+    migrationLogger.info("Tenant schema created/verified successfully", {
+      projectId,
+      schemaName,
+    });
   } catch (error) {
     await client.query("ROLLBACK");
-    throw error;
+    const dbError = ErrorHandler.handle(error, {
+      projectId,
+      schemaName,
+      operation: "ensureTenantSchema",
+    });
+    migrationLogger.error("Failed to ensure tenant schema", dbError);
+    throw dbError;
   } finally {
     client.release();
   }

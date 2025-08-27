@@ -1,5 +1,6 @@
 /**
- * Middleware utilities for Vercel API routes
+ * Enhanced Middleware utilities for Vercel API routes
+ * Integrates with comprehensive error handling and logging
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
@@ -7,6 +8,7 @@ import { z } from "zod";
 import jwt from "jsonwebtoken";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { randomUUID } from "crypto";
 import {
   ApiError,
   AuthenticationError,
@@ -18,33 +20,82 @@ import {
   type TenantContext,
 } from "./types";
 
+// Import enhanced error handling and logging
+import { logger, createRequestLogger, type LogContext } from "../../src/lib/logger";
+import {
+  ErrorHandler,
+  createAuthenticationError,
+  createAuthorizationError,
+  createValidationError,
+  type AppError,
+} from "../../src/lib/error-handler";
+import { env, corsOrigin } from "../../src/lib/env";
+
 // Initialize rate limiter (requires Upstash Redis)
 const redis =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+  env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
     ? new Redis({
-        url: process.env.UPSTASH_REDIS_REST_URL,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+        url: env.UPSTASH_REDIS_REST_URL,
+        token: env.UPSTASH_REDIS_REST_TOKEN,
       })
     : null;
 
 const ratelimit = redis
   ? new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(100, "1 m"), // 100 requests per minute
+      limiter: Ratelimit.slidingWindow(env.RATE_LIMIT_MAX || 100, "1 m"), // Configurable requests per minute
     })
   : null;
 
-// CORS configuration
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": process.env.ALLOWED_ORIGINS || "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Project-ID",
-  "Access-Control-Max-Age": "86400",
+// Log rate limiter initialization status
+if (ratelimit) {
+  logger.info("Rate limiter initialized", {
+    maxRequests: env.RATE_LIMIT_MAX || 100,
+    window: "1 minute",
+  });
+} else {
+  logger.warn("Rate limiter not configured - Upstash Redis credentials missing");
+}
+
+// Enhanced CORS configuration
+const getCorsHeaders = (origin?: string) => {
+  const allowedOrigins = Array.isArray(corsOrigin) ? corsOrigin : [corsOrigin];
+  const requestOrigin = origin || "";
+
+  // Check if origin is allowed
+  const isAllowed = allowedOrigins.some((allowed) => {
+    if (allowed === "*") return true;
+    if (allowed.includes("*")) {
+      // Handle wildcard domains like *.vercel.app
+      const pattern = allowed.replace(/\*/g, ".*");
+      return new RegExp(`^${pattern}$`).test(requestOrigin);
+    }
+    return allowed === requestOrigin;
+  });
+
+  return {
+    "Access-Control-Allow-Origin": isAllowed ? requestOrigin : allowedOrigins[0],
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Project-ID, X-Request-ID",
+    "Access-Control-Max-Age": "86400",
+    "Access-Control-Allow-Credentials": "true",
+    // Security headers
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-XSS-Protection": "1; mode=block",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+  };
 };
+
+// Extended request interface with request ID
+interface ExtendedRequest extends VercelRequest {
+  requestId?: string;
+  requestLogger?: ReturnType<typeof createRequestLogger>;
+}
 
 // Method handler wrapper
 export type ApiHandler = (
-  req: VercelRequest,
+  req: ExtendedRequest,
   res: VercelResponse,
   context?: TenantContext
 ) => Promise<void> | void;
@@ -52,9 +103,17 @@ export type ApiHandler = (
 export const withMethod = (methods: string[], handler: ApiHandler): ApiHandler => {
   return async (req, res, context) => {
     if (!methods.includes(req.method || "")) {
+      const requestLogger = req.requestLogger || logger;
+      requestLogger.warn("Method not allowed", {
+        method: req.method,
+        allowed: methods,
+        path: req.url,
+      });
+
       return res.status(405).json({
         error: "Method not allowed",
         allowed: methods,
+        requestId: req.requestId,
       });
     }
     return handler(req, res, context);
@@ -64,17 +123,26 @@ export const withMethod = (methods: string[], handler: ApiHandler): ApiHandler =
 // Authentication middleware
 export const withAuth = (handler: ApiHandler): ApiHandler => {
   return async (req, res) => {
+    const requestLogger = req.requestLogger || logger;
+
     try {
       const token = extractToken(req);
       if (!token) {
-        throw new AuthenticationError("No token provided");
+        const error = createAuthenticationError("No token provided");
+        requestLogger.warn("Authentication failed - no token", {
+          path: req.url,
+          method: req.method,
+        });
+        throw error;
       }
 
-      if (!process.env.JWT_SECRET) {
-        throw new AuthenticationError("JWT_SECRET not configured");
+      if (!env.JWT_SECRET) {
+        const error = createAuthenticationError("JWT_SECRET not configured");
+        requestLogger.error("JWT_SECRET not configured in environment");
+        throw error;
       }
 
-      const payload = jwt.verify(token, process.env.JWT_SECRET) as TokenPayload;
+      const payload = jwt.verify(token, env.JWT_SECRET) as TokenPayload;
 
       const context: TenantContext = {
         userId: payload.userId,
@@ -83,18 +151,33 @@ export const withAuth = (handler: ApiHandler): ApiHandler => {
         permissions: payload.permissions || [],
       };
 
+      requestLogger.debug("Authentication successful", {
+        userId: context.userId,
+        projectId: context.projectId,
+        role: context.userRole,
+      });
+
       return handler(req, res, context);
     } catch (error) {
+      let appError: AppError;
+
       if (error instanceof jwt.JsonWebTokenError) {
-        return res.status(401).json(errorResponse(new AuthenticationError("Invalid token")));
+        appError = createAuthenticationError("Invalid token");
+        requestLogger.warn("Invalid JWT token", { error: error.message });
+      } else if (error instanceof jwt.TokenExpiredError) {
+        appError = createAuthenticationError("Token expired");
+        requestLogger.warn("JWT token expired");
+      } else if (error instanceof ApiError) {
+        appError = ErrorHandler.handle(error, { middleware: "withAuth" });
+      } else {
+        appError = ErrorHandler.handle(error, { middleware: "withAuth" });
       }
-      if (error instanceof jwt.TokenExpiredError) {
-        return res.status(401).json(errorResponse(new AuthenticationError("Token expired")));
-      }
-      if (error instanceof ApiError) {
-        return res.status(error.statusCode).json(errorResponse(error));
-      }
-      return res.status(500).json(errorResponse(new Error("Authentication failed")));
+
+      return res.status(appError.statusCode || 500).json({
+        error: ErrorHandler.getUserMessage(appError),
+        code: appError.code,
+        requestId: req.requestId,
+      });
     }
   };
 };
@@ -102,9 +185,26 @@ export const withAuth = (handler: ApiHandler): ApiHandler => {
 // Project authorization middleware
 export const withProject = (handler: ApiHandler): ApiHandler => {
   return withAuth(async (req, res, context) => {
+    const requestLogger = req.requestLogger || logger;
+
     if (!context?.projectId) {
-      throw new AuthorizationError("Project context required");
+      const error = createAuthorizationError("Project context required");
+      requestLogger.warn("Project authorization failed - no project context", {
+        userId: context?.userId,
+        path: req.url,
+      });
+
+      return res.status(403).json({
+        error: ErrorHandler.getUserMessage(error),
+        code: error.code,
+        requestId: req.requestId,
+      });
     }
+
+    requestLogger.debug("Project authorization successful", {
+      userId: context.userId,
+      projectId: context.projectId,
+    });
 
     // Verify user has access to the project
     // This would typically check against database
@@ -117,9 +217,31 @@ export const withProject = (handler: ApiHandler): ApiHandler => {
 // Permission check middleware
 export const withPermission = (permission: string, handler: ApiHandler): ApiHandler => {
   return withProject(async (req, res, context) => {
+    const requestLogger = req.requestLogger || logger;
+
     if (!context?.permissions.includes(permission)) {
-      throw new AuthorizationError(`Permission "${permission}" required`);
+      const error = createAuthorizationError(`Permission "${permission}" required`);
+      requestLogger.warn("Permission check failed", {
+        userId: context?.userId,
+        projectId: context?.projectId,
+        requiredPermission: permission,
+        userPermissions: context?.permissions,
+        path: req.url,
+      });
+
+      return res.status(403).json({
+        error: ErrorHandler.getUserMessage(error),
+        code: error.code,
+        details: { requiredPermission: permission },
+        requestId: req.requestId,
+      });
     }
+
+    requestLogger.debug("Permission check successful", {
+      userId: context.userId,
+      permission,
+    });
+
     return handler(req, res, context);
   });
 };
@@ -131,8 +253,15 @@ export const withValidation = <T extends z.ZodSchema>(
 ) => {
   return (handler: ApiHandler): ApiHandler => {
     return async (req, res, context) => {
+      const requestLogger = req.requestLogger || logger;
+
       try {
         const data = target === "body" ? req.body : req.query;
+
+        requestLogger.debug("Validating request data", {
+          target,
+          dataKeys: data ? Object.keys(data) : [],
+        });
 
         const validated = await schema.parseAsync(data);
 
@@ -143,12 +272,27 @@ export const withValidation = <T extends z.ZodSchema>(
           req.query = validated;
         }
 
+        requestLogger.debug("Validation successful");
         return handler(req, res, context);
       } catch (error) {
         if (error instanceof z.ZodError) {
-          return res
-            .status(400)
-            .json(errorResponse(new ValidationError("Validation failed", error.errors)));
+          const validationError = createValidationError("Validation failed", {
+            errors: error.errors,
+            target,
+          });
+
+          requestLogger.warn("Validation failed", {
+            target,
+            errors: error.errors,
+            path: req.url,
+          });
+
+          return res.status(400).json({
+            error: ErrorHandler.getUserMessage(validationError),
+            code: validationError.code,
+            details: error.errors,
+            requestId: req.requestId,
+          });
         }
         throw error;
       }
@@ -159,105 +303,211 @@ export const withValidation = <T extends z.ZodSchema>(
 // Rate limiting middleware
 export const withRateLimit = (handler: ApiHandler, identifier?: string): ApiHandler => {
   return async (req, res, context) => {
+    const requestLogger = req.requestLogger || logger;
+
     if (!ratelimit) {
       // If rate limiting is not configured, pass through
+      requestLogger.debug("Rate limiting bypassed - not configured");
       return handler(req, res, context);
     }
 
     const id =
       identifier || context?.userId || (req.headers["x-forwarded-for"] as string) || "anonymous";
 
-    const { success, limit, reset, remaining } = await ratelimit.limit(id);
+    try {
+      const { success, limit, reset, remaining } = await ratelimit.limit(id);
 
-    res.setHeader("X-RateLimit-Limit", limit);
-    res.setHeader("X-RateLimit-Remaining", remaining);
-    res.setHeader("X-RateLimit-Reset", new Date(reset).toISOString());
+      res.setHeader("X-RateLimit-Limit", limit.toString());
+      res.setHeader("X-RateLimit-Remaining", remaining.toString());
+      res.setHeader("X-RateLimit-Reset", new Date(reset).toISOString());
 
-    if (!success) {
-      return res.status(429).json(errorResponse(new RateLimitError(reset)));
+      if (!success) {
+        requestLogger.warn("Rate limit exceeded", {
+          identifier: id,
+          limit,
+          reset: new Date(reset).toISOString(),
+          path: req.url,
+        });
+
+        return res.status(429).json({
+          error: "Too many requests. Please try again later.",
+          code: "RATE_LIMIT_EXCEEDED",
+          retryAfter: new Date(reset).toISOString(),
+          requestId: req.requestId,
+        });
+      }
+
+      requestLogger.debug("Rate limit check passed", {
+        identifier: id,
+        remaining,
+      });
+
+      return handler(req, res, context);
+    } catch (error) {
+      // If rate limiting fails, log but don't block the request
+      requestLogger.error("Rate limiting error", error as Error);
+      return handler(req, res, context);
     }
-
-    return handler(req, res, context);
   };
 };
 
-// Error handling wrapper
+// Error handling wrapper with request tracking
 export const withErrorHandler = (handler: ApiHandler): ApiHandler => {
-  return async (req, res, context) => {
+  return async (req: ExtendedRequest, res, context) => {
+    // Generate request ID
+    const requestId = (req.headers["x-request-id"] as string) || randomUUID();
+    req.requestId = requestId;
+
+    // Create request-specific logger
+    const requestLogger = createRequestLogger(requestId, context?.userId, context?.projectId);
+    req.requestLogger = requestLogger;
+
+    // Log incoming request
+    requestLogger.info("Incoming request", {
+      method: req.method,
+      url: req.url,
+      userAgent: req.headers["user-agent"],
+      ip: req.headers["x-forwarded-for"] || req.socket?.remoteAddress,
+      referer: req.headers.referer,
+    });
+
+    const startTime = Date.now();
+
     try {
-      // Set CORS headers
+      // Set CORS headers using env configuration
+      const corsHeaders = getCorsHeaders(req.headers.origin as string);
       Object.entries(corsHeaders).forEach(([key, value]) => {
         res.setHeader(key, value);
       });
 
+      // Add request ID to response headers
+      res.setHeader("X-Request-ID", requestId);
+
       // Handle OPTIONS request
       if (req.method === "OPTIONS") {
+        requestLogger.debug("OPTIONS request handled");
         return res.status(200).end();
       }
 
       await handler(req, res, context);
+
+      // Log successful response
+      const duration = Date.now() - startTime;
+      requestLogger.info("Request completed", {
+        statusCode: res.statusCode,
+        duration,
+      });
     } catch (error) {
-      console.error("API Error:", error);
+      const duration = Date.now() - startTime;
 
-      if (error instanceof ApiError) {
-        return res.status(error.statusCode).json(errorResponse(error));
-      }
+      // Handle error using ErrorHandler
+      const appError = ErrorHandler.handle(error, {
+        requestId,
+        method: req.method,
+        url: req.url,
+        userId: context?.userId,
+        projectId: context?.projectId,
+        duration,
+      });
 
-      // Log unexpected errors
-      if (process.env.NODE_ENV === "production") {
-        // Send to error tracking service (Sentry, etc.)
-        console.error("Unexpected error:", error);
-      }
+      // Determine status code
+      const statusCode =
+        appError.statusCode || (appError instanceof ApiError ? appError.statusCode : 500);
 
-      return res.status(500).json(errorResponse(new Error("Internal server error")));
+      // Log error with full context
+      requestLogger.error(
+        "Request failed",
+        {
+          statusCode,
+          duration,
+          errorType: appError.type,
+          errorCode: appError.code,
+          errorMessage: appError.message,
+        },
+        appError
+      );
+
+      // Send error response
+      return res.status(statusCode).json({
+        error: ErrorHandler.getUserMessage(appError),
+        code: appError.code || "INTERNAL_ERROR",
+        requestId,
+        ...(env.NODE_ENV === "development" && {
+          details: appError.details,
+          stack: appError.stack,
+        }),
+      });
     }
   };
 };
 
 // Audit logging middleware
 export const withAuditLog = (action: string, resource: string): ApiHandler => {
-  return async (req, res, context) => {
-    const startTime = Date.now();
-    const originalEnd = res.end;
+  return (handler: ApiHandler): ApiHandler => {
+    return async (req, res, context) => {
+      const requestLogger = req.requestLogger || logger;
+      const startTime = Date.now();
+      const originalEnd = res.end;
 
-    // Override res.end to capture response
-    res.end = function (...args: unknown[]) {
-      const duration = Date.now() - startTime;
+      // Override res.end to capture response
+      res.end = function (...args: unknown[]) {
+        const duration = Date.now() - startTime;
 
-      // Log audit entry
-      void logAuditEntry({
-        userId: context?.userId || "anonymous",
-        projectId: context?.projectId,
-        action,
-        resource,
-        method: req.method || "UNKNOWN",
-        path: req.url || "",
-        statusCode: res.statusCode,
-        duration,
-        ip: (req.headers["x-forwarded-for"] as string) || req.socket?.remoteAddress,
-        userAgent: req.headers["user-agent"],
-        timestamp: new Date().toISOString(),
-      });
+        const auditEntry: AuditEntry = {
+          userId: context?.userId || "anonymous",
+          projectId: context?.projectId,
+          action,
+          resource,
+          method: req.method || "UNKNOWN",
+          path: req.url || "",
+          statusCode: res.statusCode,
+          duration,
+          ip: (req.headers["x-forwarded-for"] as string) || req.socket?.remoteAddress,
+          userAgent: req.headers["user-agent"],
+          timestamp: new Date().toISOString(),
+          requestId: req.requestId,
+        };
 
-      // Call original end
-      return originalEnd.apply(res, args);
+        // Log audit entry
+        requestLogger.info("Audit log", {
+          action,
+          resource,
+          statusCode: res.statusCode,
+          duration,
+          userId: auditEntry.userId,
+          projectId: auditEntry.projectId,
+        });
+
+        // Async log to external service
+        void logAuditEntry(auditEntry);
+
+        // Call original end
+        return originalEnd.apply(res, args);
+      };
+
+      return await handler(req, res, context);
     };
-
-    return await handler(req, res, context);
   };
 };
 
 // Helper functions
-function extractToken(req: VercelRequest): string | null {
+function extractToken(req: ExtendedRequest): string | null {
   const authHeader = req.headers.authorization;
   if (authHeader?.startsWith("Bearer ")) {
     return authHeader.substring(7);
   }
+  // Also check for token in cookies
   return req.cookies?.token || null;
 }
 
-function extractProjectId(req: VercelRequest): string | null {
-  return (req.headers["x-project-id"] as string) || (req.query.projectId as string) || null;
+function extractProjectId(req: ExtendedRequest): string | null {
+  // Check multiple sources for project ID
+  return (
+    (req.headers["x-project-id"] as string) ||
+    (req.query.projectId as string) ||
+    (req.body?.projectId as string) ||
+    null
+  );
 }
 
 interface AuditEntry {
@@ -272,16 +522,42 @@ interface AuditEntry {
   ip?: string;
   userAgent?: string;
   timestamp: string;
+  requestId?: string;
 }
 
-async function logAuditEntry(_entry: AuditEntry): Promise<void> {
-  // In production, this would send to a logging service
-  // For now, just console log in development
-  if (process.env.NODE_ENV !== "production") {
-    // Development logging - consider using a proper logger in production
-  }
+async function logAuditEntry(entry: AuditEntry): Promise<void> {
+  try {
+    // In production, send to logging service
+    if (env.NODE_ENV === "production") {
+      // TODO: Implement integration with external audit service
+      // Examples: CloudWatch, Datadog, Sumo Logic, etc.
+      // await sendToAuditService(entry);
+    } else {
+      // Development logging
+      logger.debug("Audit entry created", entry);
+    }
 
-  // TODO: Send to logging service (CloudWatch, Datadog, etc.)
+    // Optional: Store critical audit logs in database
+    // This would be for compliance or security-sensitive operations
+    if (isCriticalOperation(entry.action)) {
+      // await storeAuditInDatabase(entry);
+    }
+  } catch (error) {
+    // Don't let audit logging failures break the main flow
+    logger.error("Failed to log audit entry", error as Error);
+  }
+}
+
+// Helper to identify critical operations that require persistent audit
+function isCriticalOperation(action: string): boolean {
+  const criticalActions = [
+    "delete_user",
+    "delete_project",
+    "change_permissions",
+    "financial_transaction",
+    "export_data",
+  ];
+  return criticalActions.includes(action.toLowerCase());
 }
 
 // Combine multiple middleware
@@ -292,3 +568,13 @@ export const compose = (
     return middlewares.reduceRight((acc, middleware) => middleware(acc), handler);
   };
 };
+
+// Pre-composed middleware for common patterns
+export const withStandardMiddleware = compose(withErrorHandler, withRateLimit);
+
+export const withAuthenticatedRoute = compose(withErrorHandler, withRateLimit, withAuth);
+
+export const withProjectRoute = compose(withErrorHandler, withRateLimit, withProject);
+
+// Export types for external use
+export type { ExtendedRequest, AuditEntry };

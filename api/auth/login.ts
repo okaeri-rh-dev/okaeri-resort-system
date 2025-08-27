@@ -5,17 +5,21 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
-import { withErrorHandler, withMethod, withValidation, compose } from "../_lib/middleware";
 import {
-  successResponse,
-  ValidationError as _ValidationError,
-  AuthenticationError,
-  type TokenPayload,
-} from "../_lib/types";
+  withErrorHandler,
+  withMethod,
+  withValidation,
+  withRateLimit,
+  withAuditLog,
+  compose,
+  type ExtendedRequest,
+} from "../_lib/middleware";
+import { successResponse, AuthenticationError, type TokenPayload } from "../_lib/types";
 import { getPool } from "../_lib/database";
 import { verifyPassword } from "../lib/password";
 import { generateTokenPair } from "../lib/jwt";
-import { rateLimit } from "../middleware/rate-limit";
+import { createAuthLogger } from "../../src/lib/logger";
+import { createAuthenticationError, ErrorHandler } from "../../src/lib/error-handler";
 
 // Request validation schema
 const loginSchema = z.object({
@@ -138,12 +142,12 @@ async function logAuthenticationEvent(
   userId: string,
   email: string,
   projectId: string | undefined,
-  req: VercelRequest
+  req: ExtendedRequest
 ): Promise<void> {
   await client.query(
     `INSERT INTO activity_logs 
-      (user_id, action, resource, details, ip_address, user_agent)
-    VALUES ($1, $2, $3, $4, $5, $6)`,
+      (user_id, action, resource, details, ip_address, user_agent, request_id)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)`,
     [
       userId,
       "LOGIN",
@@ -151,13 +155,23 @@ async function logAuthenticationEvent(
       { email, projectId },
       req.headers["x-forwarded-for"] || req.socket?.remoteAddress,
       req.headers["user-agent"],
+      req.requestId,
     ]
   );
 }
 
 // Main handler
-async function handler(req: VercelRequest, res: VercelResponse) {
+async function handler(req: ExtendedRequest, res: VercelResponse) {
   const { email, password, projectId, rememberMe } = req.body as LoginRequest;
+
+  // Create auth-specific logger
+  const authLogger = req.requestLogger ? req.requestLogger : createAuthLogger(email);
+
+  authLogger.info("Login attempt", {
+    email,
+    projectId,
+    rememberMe,
+  });
 
   const pool = getPool();
   const client = await pool.connect();
@@ -166,18 +180,29 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     // Find and validate user
     const user = await findUserByEmail(client, email);
     if (!user) {
-      throw new AuthenticationError("Invalid email or password");
+      authLogger.warn("Login failed - user not found", { email });
+      throw createAuthenticationError("Invalid email or password");
     }
 
     if (!user.is_active) {
-      throw new AuthenticationError("Account is disabled");
+      authLogger.warn("Login failed - account disabled", {
+        email,
+        userId: user.id,
+      });
+      throw createAuthenticationError("Account is disabled");
     }
 
     // Verify password
     const isValidPassword = await verifyPassword(password, user.password_hash);
     if (!isValidPassword) {
-      throw new AuthenticationError("Invalid email or password");
+      authLogger.warn("Login failed - invalid password", {
+        email,
+        userId: user.id,
+      });
+      throw createAuthenticationError("Invalid email or password");
     }
+
+    authLogger.debug("Password verification successful", { userId: user.id });
 
     // Get user projects and permissions
     const { projects, currentProject, permissions } = await getUserProjects(
@@ -185,6 +210,12 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       user.id,
       projectId
     );
+
+    authLogger.debug("User projects loaded", {
+      userId: user.id,
+      projectCount: projects.length,
+      currentProjectId: currentProject?.id,
+    });
 
     // Generate tokens
     const tokenPayload: TokenPayload = {
@@ -202,6 +233,13 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Log authentication event
     await logAuthenticationEvent(client, user.id, email, currentProject?.id, req);
+
+    authLogger.info("Login successful", {
+      userId: user.id,
+      email: user.email,
+      projectId: currentProject?.id,
+      role: user.role,
+    });
 
     // Set secure cookies
     res.setHeader("Set-Cookie", [
@@ -226,10 +264,19 @@ async function handler(req: VercelRequest, res: VercelResponse) {
           expiresIn,
           projects,
           currentProject,
+          requestId: req.requestId,
         },
         "Login successful"
       )
     );
+  } catch (error) {
+    // Log the error before re-throwing
+    const appError = ErrorHandler.handle(error, {
+      email,
+      endpoint: "login",
+    });
+    authLogger.error("Login error", appError);
+    throw appError;
   } finally {
     client.release();
   }
@@ -239,5 +286,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 export default compose(
   withErrorHandler,
   withMethod(["POST"]),
-  withValidation(loginSchema, "body")
-)(rateLimit("login")(handler));
+  withValidation(loginSchema, "body"),
+  withRateLimit,
+  withAuditLog("login", "authentication")
+)(handler);

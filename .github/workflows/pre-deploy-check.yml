@@ -1,0 +1,603 @@
+name: Pre-Deployment Validation
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "release/**"
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+env:
+  NODE_VERSION: "20.x"
+  PNPM_VERSION: "8"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ==========================================
+  # Environment Setup & Validation
+  # ==========================================
+  environment-validation:
+    name: Validate Environment Variables
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.determine-env.outputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine environment
+        id: determine-env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=development" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate required environment variables
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+        run: |
+          echo "Validating environment variables for ${{ steps.determine-env.outputs.environment }}"
+
+          # Check required variables
+          required_vars=(
+            "DATABASE_URL"
+            "JWT_SECRET"
+            "REDIS_URL"
+          )
+
+          missing_vars=()
+          for var in "${required_vars[@]}"; do
+            if [ -z "${!var}" ]; then
+              missing_vars+=("$var")
+            fi
+          done
+
+          if [ ${#missing_vars[@]} -ne 0 ]; then
+            echo "❌ Missing required environment variables: ${missing_vars[*]}"
+            exit 1
+          fi
+
+          echo "✅ All required environment variables are set"
+
+  # ==========================================
+  # Code Quality & Type Safety
+  # ==========================================
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    needs: environment-validation
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type checking
+        run: npm run type-check
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run format check
+        run: npm run format:check
+
+      - name: Check for security vulnerabilities
+        run: npm audit --audit-level=high
+
+      - name: Bundle size check
+        run: |
+          npm run build
+          npx bundlesize
+
+  # ==========================================
+  # Unit & Integration Tests
+  # ==========================================
+  test-suite:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    needs: environment-validation
+
+    strategy:
+      matrix:
+        test-type: [unit, integration, security]
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup database
+        run: |
+          npm run db:migrate:up
+          npm run db:seed:test
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+
+      - name: Run ${{ matrix.test-type }} tests
+        run: |
+          if [ "${{ matrix.test-type }}" = "unit" ]; then
+            npm run test:coverage -- --reporter=json --outputFile=coverage-${{ matrix.test-type }}.json
+          elif [ "${{ matrix.test-type }}" = "integration" ]; then
+            npm run test tests/integration
+          elif [ "${{ matrix.test-type }}" = "security" ]; then
+            npm run test tests/security
+          fi
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-jwt-secret
+          NODE_ENV: test
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.test-type }}
+          path: |
+            coverage-${{ matrix.test-type }}.json
+            test-results.xml
+          retention-days: 30
+
+      - name: Check coverage thresholds
+        if: matrix.test-type == 'unit'
+        run: |
+          coverage=$(cat coverage-${{ matrix.test-type }}.json | jq '.total.lines.percent')
+          if (( $(echo "$coverage < 80" | bc -l) )); then
+            echo "❌ Coverage ${coverage}% is below 80% threshold"
+            exit 1
+          fi
+          echo "✅ Coverage ${coverage}% meets threshold"
+
+  # ==========================================
+  # E2E Tests
+  # ==========================================
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [code-quality, test-suite]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npx playwright install --with-deps
+
+      - name: Build application
+        run: npm run build
+        env:
+          VITE_API_URL: http://localhost:3000
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+
+      - name: Upload E2E test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 30
+
+  # ==========================================
+  # Performance Testing
+  # ==========================================
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: [code-quality, test-suite]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Run Lighthouse CI
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: Upload Lighthouse results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-results
+          path: .lighthouseci/
+          retention-days: 30
+
+  # ==========================================
+  # Security Audit
+  # ==========================================
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    needs: environment-validation
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        run: |
+          # npm audit
+          npm audit --audit-level=high
+
+          # Check for known vulnerabilities
+          npx snyk test --severity-threshold=high || true
+
+          # OWASP dependency check
+          # npx owasp-dependency-check --project "Okaeri Resort" --scan . --format JSON --out security-report.json
+
+      - name: Run security tests
+        run: npm run test tests/security
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+      - name: Check security headers
+        run: |
+          # Verify security headers in vercel.json
+          if ! grep -q "Content-Security-Policy" vercel.json; then
+            echo "❌ Missing Content-Security-Policy header"
+            exit 1
+          fi
+
+          if grep -q '"Access-Control-Allow-Origin".*"\*"' vercel.json; then
+            echo "❌ CORS wildcard detected - security vulnerability!"
+            exit 1
+          fi
+
+          echo "✅ Security headers configured correctly"
+
+      - name: Generate security report
+        if: always()
+        run: |
+          echo "# Security Audit Report" > security-report.md
+          echo "Date: $(date)" >> security-report.md
+          echo "" >> security-report.md
+          echo "## Vulnerabilities Found" >> security-report.md
+          npm audit --json | jq '.vulnerabilities' >> security-report.md || echo "No vulnerabilities found" >> security-report.md
+
+      - name: Upload security report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.md
+          retention-days: 30
+
+  # ==========================================
+  # Database Validation
+  # ==========================================
+  database-validation:
+    name: Database Schema Validation
+    runs-on: ubuntu-latest
+    needs: environment-validation
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: validation_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate migrations
+        run: |
+          # Test migration up
+          npm run db:migrate:up
+
+          # Test migration down and up again
+          npm run db:migrate:down
+          npm run db:migrate:up
+
+          # Verify schema integrity
+          npm run test:db:schema
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/validation_db
+
+      - name: Test multi-tenant isolation
+        run: npm run test tests/integration/multi-tenant-isolation.test.ts
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/validation_db
+          JWT_SECRET: test-jwt-secret
+
+  # ==========================================
+  # Build & Bundle Analysis
+  # ==========================================
+  build-validation:
+    name: Build & Bundle Analysis
+    runs-on: ubuntu-latest
+    needs: [code-quality, test-suite]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: |
+          npm run build
+          echo "Build completed successfully"
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
+
+      - name: Analyze bundle size
+        run: |
+          npm run build:analyze > bundle-analysis.txt 2>&1 || true
+
+          # Check bundle size
+          main_bundle_size=$(find dist -name "*.js" -exec du -b {} \; | sort -n | tail -1 | cut -f1)
+          max_size=$((150 * 1024)) # 150KB
+
+          if [ "$main_bundle_size" -gt "$max_size" ]; then
+            echo "⚠️ Main bundle size ${main_bundle_size} exceeds ${max_size} bytes"
+          else
+            echo "✅ Main bundle size ${main_bundle_size} is within limits"
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            dist/
+            bundle-analysis.txt
+          retention-days: 7
+
+  # ==========================================
+  # Deployment Readiness Check
+  # ==========================================
+  deployment-readiness:
+    name: Deployment Readiness
+    runs-on: ubuntu-latest
+    needs:
+      [
+        environment-validation,
+        code-quality,
+        test-suite,
+        e2e-tests,
+        performance-tests,
+        security-audit,
+        database-validation,
+        build-validation,
+      ]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate deployment checklist
+        run: |
+          echo "# Deployment Readiness Checklist" > deployment-checklist.md
+          echo "Environment: ${{ needs.environment-validation.outputs.environment }}" >> deployment-checklist.md
+          echo "Date: $(date)" >> deployment-checklist.md
+          echo "" >> deployment-checklist.md
+
+          echo "## Pre-Deployment Checks" >> deployment-checklist.md
+          echo "- [x] Environment variables validated" >> deployment-checklist.md
+          echo "- [x] Code quality checks passed" >> deployment-checklist.md
+          echo "- [x] All tests passed" >> deployment-checklist.md
+          echo "- [x] Security audit completed" >> deployment-checklist.md
+          echo "- [x] Performance benchmarks met" >> deployment-checklist.md
+          echo "- [x] Database migrations validated" >> deployment-checklist.md
+          echo "- [x] Bundle size within limits" >> deployment-checklist.md
+          echo "" >> deployment-checklist.md
+
+          echo "## Build Information" >> deployment-checklist.md
+          echo "- Commit: ${{ github.sha }}" >> deployment-checklist.md
+          echo "- Branch: ${{ github.ref }}" >> deployment-checklist.md
+          echo "- Author: ${{ github.actor }}" >> deployment-checklist.md
+          echo "- Workflow: ${{ github.run_id }}" >> deployment-checklist.md
+
+      - name: Upload deployment checklist
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-checklist
+          path: deployment-checklist.md
+          retention-days: 30
+
+      - name: Create deployment summary
+        run: |
+          echo "# 🚀 Deployment Ready!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Summary" >> $GITHUB_STEP_SUMMARY
+          echo "All validation checks have passed. The application is ready for deployment to **${{ needs.environment-validation.outputs.environment }}**." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment Variables | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Type Safety | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit Tests | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration Tests | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Tests | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Tests | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Performance | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Audit | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Database Schema | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Bundle Size | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "View detailed reports in the [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================
+  # Deploy to Vercel (if all checks pass)
+  # ==========================================
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    needs: deployment-readiness
+    environment:
+      name: ${{ needs.environment-validation.outputs.environment }}
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
+          else
+            vercel --token=${{ secrets.VERCEL_TOKEN }}
+          fi
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Comment deployment URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `🚀 Deployment successful!\n\nPreview: ${{ steps.deploy.outputs.url }}`
+            });

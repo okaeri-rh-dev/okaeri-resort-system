@@ -1,11 +1,11 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import tsconfigPaths from "vite-tsconfig-paths";
-import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
+import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
+import react from "@vitejs/plugin-react-swc";
 import { resolve } from "path";
 import { visualizer } from "rollup-plugin-visualizer";
+import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -24,145 +24,141 @@ export default defineConfig({
     tsconfigPaths(),
     // Tailwind CSS v4 Vite plugin
     tailwindcss(),
-    // PWA configuration with offline support
-    VitePWA({
-      registerType: "autoUpdate",
-      workbox: {
-        // Cache all static assets
-        globPatterns: ["**/*.{js,css,html,ico,png,jpg,jpeg,webp,svg,woff2}"],
-        // Custom runtime caching
-        runtimeCaching: [
-          // API responses with network-first strategy
-          {
-            urlPattern: /^\/api\//,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "api-cache",
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 5 * 60, // 5 minutes
-              },
-              networkTimeoutSeconds: 3,
-              cacheKeyWillBeUsed: async ({ request }) => {
-                // Remove cache-busting parameters for consistent caching
-                const url = new URL(request.url);
-                url.searchParams.delete("_t");
-                return url.href;
+    // PWA configuration with offline support (disabled in development)
+    process.env.NODE_ENV === "production" &&
+      VitePWA({
+        registerType: "autoUpdate",
+        workbox: {
+          // Cache all static assets
+          globPatterns: ["**/*.{js,css,html,ico,png,jpg,jpeg,webp,svg,woff2}"],
+          // Custom runtime caching
+          runtimeCaching: [
+            // API responses with network-first strategy
+            {
+              urlPattern: /^\/api\//,
+              handler: "NetworkFirst",
+              options: {
+                cacheName: "api-cache",
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 5 * 60, // 5 minutes
+                },
+                networkTimeoutSeconds: 3,
               },
             },
-          },
-          // Route data with stale-while-revalidate
-          {
-            urlPattern: ({ request }) => request.destination === "document",
-            handler: "StaleWhileRevalidate",
-            options: {
-              cacheName: "route-cache",
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 24 * 60 * 60, // 24 hours
+            // Route data with stale-while-revalidate
+            {
+              urlPattern: ({ request }) => request.destination === "document",
+              handler: "StaleWhileRevalidate",
+              options: {
+                cacheName: "route-cache",
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 24 * 60 * 60, // 24 hours
+                },
               },
             },
-          },
-          // Static assets with cache-first
-          {
-            urlPattern: /\.(js|css|png|jpg|jpeg|webp|svg|woff2)$/,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "static-assets",
-              expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+            // Static assets with cache-first
+            {
+              urlPattern: /\.(js|css|png|jpg|jpeg|webp|svg|woff2)$/,
+              handler: "CacheFirst",
+              options: {
+                cacheName: "static-assets",
+                expiration: {
+                  maxEntries: 200,
+                  maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+                },
               },
             },
-          },
-        ],
-        // Skip waiting and claim clients immediately
-        skipWaiting: true,
-        clientsClaim: true,
-      },
-      manifest: {
-        name: "Okaeri Resort System",
-        short_name: "Okaeri Resort",
-        description: "Comprehensive resort management system for booking, expenses, and analytics",
-        theme_color: "#0EA5E9",
-        background_color: "#0F172A",
-        display: "standalone",
-        orientation: "portrait-primary",
-        start_url: "/dashboard",
-        scope: "/",
-        icons: [
-          {
-            src: "/icons/icon-72x72.png",
-            sizes: "72x72",
-            type: "image/png",
-            purpose: "maskable any",
-          },
-          {
-            src: "/icons/icon-96x96.png",
-            sizes: "96x96",
-            type: "image/png",
-            purpose: "maskable any",
-          },
-          {
-            src: "/icons/icon-128x128.png",
-            sizes: "128x128",
-            type: "image/png",
-            purpose: "maskable any",
-          },
-          {
-            src: "/icons/icon-144x144.png",
-            sizes: "144x144",
-            type: "image/png",
-            purpose: "maskable any",
-          },
-          {
-            src: "/icons/icon-152x152.png",
-            sizes: "152x152",
-            type: "image/png",
-            purpose: "maskable any",
-          },
-          {
-            src: "/icons/icon-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "maskable any",
-          },
-          {
-            src: "/icons/icon-384x384.png",
-            sizes: "384x384",
-            type: "image/png",
-            purpose: "maskable any",
-          },
-          {
-            src: "/icons/icon-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable any",
-          },
-        ],
-        categories: ["business", "productivity"],
-        screenshots: [
-          {
-            src: "/screenshots/dashboard.png",
-            sizes: "1280x720",
-            type: "image/png",
-            form_factor: "wide",
-            label: "Dashboard Overview",
-          },
-          {
-            src: "/screenshots/mobile-dashboard.png",
-            sizes: "390x844",
-            type: "image/png",
-            form_factor: "narrow",
-            label: "Mobile Dashboard",
-          },
-        ],
-      },
-      devOptions: {
-        enabled: true,
-        type: "module",
-      },
-    }),
+          ],
+          // Skip waiting and claim clients immediately
+          skipWaiting: true,
+          clientsClaim: true,
+        },
+        manifest: {
+          name: "Okaeri Resort System",
+          short_name: "Okaeri Resort",
+          description:
+            "Comprehensive resort management system for booking, expenses, and analytics",
+          theme_color: "#0EA5E9",
+          background_color: "#0F172A",
+          display: "standalone",
+          orientation: "portrait-primary",
+          start_url: "/dashboard",
+          scope: "/",
+          icons: [
+            {
+              src: "/icons/icon-72x72.png",
+              sizes: "72x72",
+              type: "image/png",
+              purpose: "maskable any",
+            },
+            {
+              src: "/icons/icon-96x96.png",
+              sizes: "96x96",
+              type: "image/png",
+              purpose: "maskable any",
+            },
+            {
+              src: "/icons/icon-128x128.png",
+              sizes: "128x128",
+              type: "image/png",
+              purpose: "maskable any",
+            },
+            {
+              src: "/icons/icon-144x144.png",
+              sizes: "144x144",
+              type: "image/png",
+              purpose: "maskable any",
+            },
+            {
+              src: "/icons/icon-152x152.png",
+              sizes: "152x152",
+              type: "image/png",
+              purpose: "maskable any",
+            },
+            {
+              src: "/icons/icon-192x192.png",
+              sizes: "192x192",
+              type: "image/png",
+              purpose: "maskable any",
+            },
+            {
+              src: "/icons/icon-384x384.png",
+              sizes: "384x384",
+              type: "image/png",
+              purpose: "maskable any",
+            },
+            {
+              src: "/icons/icon-512x512.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "maskable any",
+            },
+          ],
+          categories: ["business", "productivity"],
+          screenshots: [
+            {
+              src: "/screenshots/dashboard.png",
+              sizes: "1280x720",
+              type: "image/png",
+              form_factor: "wide",
+              label: "Dashboard Overview",
+            },
+            {
+              src: "/screenshots/mobile-dashboard.png",
+              sizes: "390x844",
+              type: "image/png",
+              form_factor: "narrow",
+              label: "Mobile Dashboard",
+            },
+          ],
+        },
+        devOptions: {
+          enabled: false,
+          type: "module",
+        },
+      }),
     // Bundle analyzer for production builds
     process.env.ANALYZE &&
       visualizer({

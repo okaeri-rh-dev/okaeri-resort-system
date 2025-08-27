@@ -49,7 +49,7 @@ export const nameSchema = z
 export const projectNameSchema = z
   .string()
   .max(100, "Project name must be less than 100 characters")
-  .regex(/^[a-zA-ZñÑáéíóúÁÉÍÓÚüÜ0-9\s'-&.()]+$/, "Project name contains invalid characters")
+  .regex(/^[a-zA-ZñÑáéíóúÁÉÍÓÚüÜ0-9\s'&.()-]+$/, "Project name contains invalid characters")
   .transform((val) => val.trim())
   .optional();
 

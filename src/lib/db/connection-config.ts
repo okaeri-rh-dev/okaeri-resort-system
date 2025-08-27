@@ -7,6 +7,7 @@
 import { Pool, PoolConfig } from "pg";
 import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
 import { logger } from "@/lib/logger";
+import { env } from "@/lib/env";
 import * as schema from "./schema";
 
 // =============================================
@@ -21,7 +22,7 @@ const createPoolConfig = (databaseUrl: string): PoolConfig => ({
   connectionString: databaseUrl,
 
   // Connection limits optimized for serverless
-  max: process.env.NODE_ENV === "production" ? 10 : 5, // Total connections
+  max: env.NODE_ENV === "production" ? 10 : 5, // Total connections
   min: 2, // Keep minimum connections alive
 
   // Aggressive timeouts for serverless efficiency
@@ -32,10 +33,10 @@ const createPoolConfig = (databaseUrl: string): PoolConfig => ({
   query_timeout: 60000, // 1 minute max query time
 
   // SSL configuration for Neon
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+  ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 
   // Application name for monitoring
-  application_name: `okaeri-resort-${process.env.NODE_ENV || "development"}`,
+  application_name: `okaeri-resort-${env.NODE_ENV}`,
 
   // Philippine timezone setting
   options: "-c timezone=Asia/Manila",
@@ -85,12 +86,7 @@ class DatabaseConnectionManager {
     const poolKey = "main";
 
     if (!this.databases.has(poolKey)) {
-      const databaseUrl = process.env.DATABASE_URL;
-      if (!databaseUrl) {
-        throw new Error("DATABASE_URL environment variable is required");
-      }
-
-      const pool = this.getPool(databaseUrl, poolKey);
+      const pool = this.getPool(env.DATABASE_URL, poolKey);
       const database = drizzle(pool, { schema });
 
       this.databases.set(poolKey, database);
@@ -107,15 +103,10 @@ class DatabaseConnectionManager {
     const poolKey = `project_${projectId}`;
 
     if (!this.databases.has(poolKey)) {
-      const databaseUrl = process.env.DATABASE_URL;
-      if (!databaseUrl) {
-        throw new Error("DATABASE_URL environment variable is required");
-      }
-
       // Create URL with schema-specific search path
       const urlWithSchema = schemaName
-        ? `${databaseUrl}?options=-c search_path=${schemaName},public`
-        : databaseUrl;
+        ? `${env.DATABASE_URL}?options=-c search_path=${schemaName},public`
+        : env.DATABASE_URL;
 
       const pool = this.getPool(urlWithSchema, poolKey);
       const database = drizzle(pool, { schema });
