@@ -201,7 +201,9 @@ export const Route = createRootRouteWithContext<RootContext>()({
     try {
       await authStore.initializeAuth();
     } catch (error) {
+      // Log error but don't break the app
       console.warn("Failed to initialize auth:", error);
+      // Don't call logout() here - let the app continue to render
     }
 
     // Create auth context with all necessary methods

@@ -221,17 +221,31 @@ if (typeof window !== "undefined") {
   }
 }
 
-// Initialize application with all integrations
-initializeApp().catch((error) => {
-  console.error("Failed to initialize application:", error);
-});
-
+// Get root element first
 const rootElement = document.getElementById("root");
 if (!rootElement) {
   throw new Error("Root element not found");
 }
 
-const root = createRoot(rootElement);
+// Initialize application without router (router isn't ready yet)
+// This will set up stores, offline support, performance monitoring, and error handling
+async function startApp() {
+  try {
+    await initializeApp(); // No router parameter
+
+    // NOW create and render React after initialization is complete
+    const root = createRoot(rootElement);
+    root.render(<App />);
+  } catch (error) {
+    console.error("Failed to start application:", error);
+    // Still try to render even if initialization fails
+    const root = createRoot(rootElement);
+    root.render(<App />);
+  }
+}
+
+// Start the application
+startApp();
 
 // Inner app component that provides auth context to router
 function InnerApp() {
@@ -283,4 +297,4 @@ function App() {
   );
 }
 
-root.render(<App />);
+// Render is now handled in startApp() function above

@@ -49,6 +49,8 @@
     "test:load:spike": "./scripts/run-load-tests.sh spike",
     "test:load:staging": "./scripts/run-load-tests.sh load staging",
     "test:load:stress": "./scripts/run-load-tests.sh stress",
+    "test:runtime-errors": "playwright test runtime-errors.spec.ts",
+    "test:runtime-errors:debug": "playwright test runtime-errors.spec.ts --debug",
     "test:ui": "vitest --ui",
     "type-check": "tsc --noEmit"
   },
@@ -97,7 +99,7 @@
     "@axe-core/react": "^4.8.2",
     "@eslint/js": "^9.33.0",
     "@faker-js/faker": "^8.4.1",
-    "@playwright/test": "^1.40.1",
+    "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4.1.12",
     "@tailwindcss/vite": "^4.1.12",
     "@tanstack/react-query-devtools": "^5.85.5",

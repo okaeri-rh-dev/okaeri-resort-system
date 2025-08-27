@@ -22,13 +22,16 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: "http://localhost:5173",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000",
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
     /* Take screenshot only on failure */
     screenshot: "only-on-failure",
     /* Record video only on failure */
     video: "retain-on-failure",
+    /* Timeouts */
+    actionTimeout: 10000,
+    navigationTimeout: 30000,
   },
 
   /* Configure projects for major browsers */
@@ -42,6 +45,13 @@ export default defineConfig({
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
+      },
+    },
+
+    {
+      name: "chromium-authenticated",
+      use: {
+        ...devices["Desktop Chrome"],
         // Use prepared auth state
         storageState: "playwright/.auth/user.json",
       },
@@ -52,18 +62,14 @@ export default defineConfig({
       name: "firefox",
       use: {
         ...devices["Desktop Firefox"],
-        storageState: "playwright/.auth/user.json",
       },
-      dependencies: ["setup"],
     },
 
     {
       name: "webkit",
       use: {
         ...devices["Desktop Safari"],
-        storageState: "playwright/.auth/user.json",
       },
-      dependencies: ["setup"],
     },
 
     /* Test against mobile viewports. */
@@ -71,17 +77,13 @@ export default defineConfig({
       name: "Mobile Chrome",
       use: {
         ...devices["Pixel 5"],
-        storageState: "playwright/.auth/user.json",
       },
-      dependencies: ["setup"],
     },
     {
       name: "Mobile Safari",
       use: {
         ...devices["iPhone 12"],
-        storageState: "playwright/.auth/user.json",
       },
-      dependencies: ["setup"],
     },
 
     /* Test against branded browsers. */
@@ -96,16 +98,20 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:5173",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000, // 2 minutes
-  },
+  webServer: process.env.CI
+    ? undefined
+    : {
+        command: "npm run dev",
+        url: "http://localhost:3000",
+        reuseExistingServer: !process.env.CI,
+        timeout: 120 * 1000, // 2 minutes
+        stdout: "pipe",
+        stderr: "pipe",
+      },
 
   /* Global setup and teardown */
-  globalSetup: require.resolve("./tests/e2e/global-setup.ts"),
-  globalTeardown: require.resolve("./tests/e2e/global-teardown.ts"),
+  // globalSetup: "./tests/e2e/global-setup.ts",
+  // globalTeardown: "./tests/e2e/global-teardown.ts",
 
   /* Test timeout */
   timeout: 30 * 1000, // 30 seconds

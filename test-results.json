@@ -1,0 +1,454 @@
+{
+  "numTotalTestSuites": 13,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 13,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 27,
+  "numPassedTests": 6,
+  "numFailedTests": 21,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1756300296688,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Token Generation and Validation"
+          ],
+          "fullName": "CSRF Protection Security Tests Token Generation and Validation should generate cryptographically secure tokens",
+          "status": "failed",
+          "title": "should generate cryptographically secure tokens",
+          "duration": 6.603958999999975,
+          "failureMessages": [
+            "AssertionError: expected null to be 'token-first-call' // Object.is equality\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:95:22\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11",
+            "AssertionError: expected null to be 'token-first-call' // Object.is equality\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:95:22\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11"
+          ],
+          "location": { "line": 65, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Token Generation and Validation"
+          ],
+          "fullName": "CSRF Protection Security Tests Token Generation and Validation should prevent token reuse attacks",
+          "status": "failed",
+          "title": "should prevent token reuse attacks",
+          "duration": 0.7842919999999935,
+          "failureMessages": [
+            "AssertionError: expected null to be 'test-csrf-token-123' // Object.is equality\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:112:21\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11",
+            "AssertionError: expected null to be 'test-csrf-token-123' // Object.is equality\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:112:21\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11"
+          ],
+          "location": { "line": 100, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Token Generation and Validation"
+          ],
+          "fullName": "CSRF Protection Security Tests Token Generation and Validation should handle token refresh race conditions",
+          "status": "failed",
+          "title": "should handle token refresh race conditions",
+          "duration": 1.5086660000000052,
+          "failureMessages": [
+            "AssertionError: expected +0 to be 1 // Object.is equality\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:156:30\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11",
+            "AssertionError: expected +0 to be 1 // Object.is equality\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:156:30\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11"
+          ],
+          "location": { "line": 125, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Token Generation and Validation"
+          ],
+          "fullName": "CSRF Protection Security Tests Token Generation and Validation should automatically refresh expired tokens",
+          "status": "failed",
+          "title": "should automatically refresh expired tokens",
+          "duration": 0.8750410000000102,
+          "failureMessages": [
+            "AssertionError: expected \"spy\" to be called 2 times, but got 0 times\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:183:28\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11",
+            "AssertionError: expected \"spy\" to be called 2 times, but got 0 times\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:183:28\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11"
+          ],
+          "location": { "line": 159, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Double-Submit Cookie Pattern"
+          ],
+          "fullName": "CSRF Protection Security Tests Double-Submit Cookie Pattern should implement double-submit cookie protection",
+          "status": "failed",
+          "title": "should implement double-submit cookie protection",
+          "duration": 2.167874999999981,
+          "failureMessages": [
+            "AssertionError: expected '' to contain 'csrf_token=c97ec87ef05560f51489d388f1…'\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:193:31\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)",
+            "AssertionError: expected '' to contain 'csrf_token=fe863b63f83ea687307a87d998…'\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:193:31\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)"
+          ],
+          "location": { "line": 189, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Double-Submit Cookie Pattern"
+          ],
+          "fullName": "CSRF Protection Security Tests Double-Submit Cookie Pattern should prevent cookie tampering",
+          "status": "passed",
+          "title": "should prevent cookie tampering",
+          "duration": 0.4500840000000039,
+          "failureMessages": [],
+          "location": { "line": 206, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Double-Submit Cookie Pattern"
+          ],
+          "fullName": "CSRF Protection Security Tests Double-Submit Cookie Pattern should handle missing cookies gracefully",
+          "status": "passed",
+          "title": "should handle missing cookies gracefully",
+          "duration": 0.23962500000004638,
+          "failureMessages": [],
+          "location": { "line": 217, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Request Protection"
+          ],
+          "fullName": "CSRF Protection Security Tests Request Protection should add CSRF headers to state-changing requests",
+          "status": "failed",
+          "title": "should add CSRF headers to state-changing requests",
+          "duration": 0.7283329999999637,
+          "failureMessages": [
+            "TypeError: Cannot read properties of undefined (reading '1')\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:248:22\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11",
+            "TypeError: Cannot read properties of undefined (reading '1')\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:248:22\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11"
+          ],
+          "location": { "line": 227, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Request Protection"
+          ],
+          "fullName": "CSRF Protection Security Tests Request Protection should not add CSRF headers to safe requests",
+          "status": "passed",
+          "title": "should not add CSRF headers to safe requests",
+          "duration": 0.1960409999999797,
+          "failureMessages": [],
+          "location": { "line": 251, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Request Protection"
+          ],
+          "fullName": "CSRF Protection Security Tests Request Protection should validate CSRF token in responses",
+          "status": "failed",
+          "title": "should validate CSRF token in responses",
+          "duration": 2.425125000000037,
+          "failureMessages": [
+            "Error: promise resolved \"{ ok: true, json: [AsyncFunction json] }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:1805:21)\n    at _Assertion.propertyGetter (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/chai/index.js:1557:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/chai/index.js:1645:22)\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:293:9\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)",
+            "Error: promise resolved \"{ ok: true, json: [AsyncFunction json] }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:1805:21)\n    at _Assertion.propertyGetter (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/chai/index.js:1557:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/chai/index.js:1645:22)\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:293:9\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)"
+          ],
+          "location": { "line": 265, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Session Binding"
+          ],
+          "fullName": "CSRF Protection Security Tests Session Binding should bind CSRF tokens to sessions",
+          "status": "failed",
+          "title": "should bind CSRF tokens to sessions",
+          "duration": 0.8026659999999879,
+          "failureMessages": [
+            "AssertionError: expected null to be '85e16f5d64c7d8045e809bc4696333e3' // Object.is equality\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:317:43\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)",
+            "AssertionError: expected null to be '85e16f5d64c7d8045e809bc4696333e3' // Object.is equality\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:317:43\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)"
+          ],
+          "location": { "line": 302, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Session Binding"
+          ],
+          "fullName": "CSRF Protection Security Tests Session Binding should regenerate session ID on new instance",
+          "status": "passed",
+          "title": "should regenerate session ID on new instance",
+          "duration": 0.5346669999999563,
+          "failureMessages": [],
+          "location": { "line": 320, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Philippine Compliance"
+          ],
+          "fullName": "CSRF Protection Security Tests Philippine Compliance should log security events for audit trail (Data Privacy Act compliance)",
+          "status": "failed",
+          "title": "should log security events for audit trail (Data Privacy Act compliance)",
+          "duration": 1.67674999999997,
+          "failureMessages": [
+            "AssertionError: expected \"spy\" to be called with arguments: [ 'csrf', ObjectContaining{…} ]\n\nReceived: \n\n\n\nNumber of calls: 0\n\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:1465:13)\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:972:17)\n    at Proxy.toHaveBeenCalledWith (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/chai/index.js:1686:25)\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:348:27\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)",
+            "AssertionError: expected \"spy\" to be called with arguments: [ 'csrf', ObjectContaining{…} ]\n\nReceived: \n\n\n\nNumber of calls: 0\n\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:1465:13)\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:972:17)\n    at Proxy.toHaveBeenCalledWith (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/chai/index.js:1686:25)\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:348:27\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)"
+          ],
+          "location": { "line": 333, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Philippine Compliance"
+          ],
+          "fullName": "CSRF Protection Security Tests Philippine Compliance should track CSRF events in session storage for compliance reporting",
+          "status": "failed",
+          "title": "should track CSRF events in session storage for compliance reporting",
+          "duration": 0.9501659999999674,
+          "failureMessages": [
+            "AssertionError: expected \"log\" to be called with arguments: [ 'CSRF Event:', ObjectContaining{…} ]\n\nReceived: \n\n\n\nNumber of calls: 0\n\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:1465:13)\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:972:17)\n    at Proxy.toHaveBeenCalledWith (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/chai/index.js:1686:25)\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:374:28\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)",
+            "AssertionError: expected \"log\" to be called with arguments: [ 'CSRF Event:', ObjectContaining{…} ]\n\nReceived: \n\n\n\nNumber of calls: 0\n\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:1465:13)\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:972:17)\n    at Proxy.toHaveBeenCalledWith (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/chai/index.js:1686:25)\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:374:28\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)"
+          ],
+          "location": { "line": 358, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Resort Management Specific Scenarios"
+          ],
+          "fullName": "CSRF Protection Security Tests Resort Management Specific Scenarios should protect guest registration endpoints",
+          "status": "failed",
+          "title": "should protect guest registration endpoints",
+          "duration": 0.7126670000000104,
+          "failureMessages": [
+            "TypeError: Cannot read properties of undefined (reading '1')\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:415:22\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11",
+            "TypeError: Cannot read properties of undefined (reading '1')\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:415:22\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11"
+          ],
+          "location": { "line": 385, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Resort Management Specific Scenarios"
+          ],
+          "fullName": "CSRF Protection Security Tests Resort Management Specific Scenarios should protect payment processing endpoints",
+          "status": "failed",
+          "title": "should protect payment processing endpoints",
+          "duration": 0.4862920000000486,
+          "failureMessages": [
+            "TypeError: Cannot read properties of undefined (reading '1')\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:447:22\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11",
+            "TypeError: Cannot read properties of undefined (reading '1')\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:447:22\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11"
+          ],
+          "location": { "line": 418, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Resort Management Specific Scenarios"
+          ],
+          "fullName": "CSRF Protection Security Tests Resort Management Specific Scenarios should protect booking modification endpoints",
+          "status": "failed",
+          "title": "should protect booking modification endpoints",
+          "duration": 0.5675840000000107,
+          "failureMessages": [
+            "TypeError: Cannot read properties of undefined (reading '1')\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:471:22\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11",
+            "TypeError: Cannot read properties of undefined (reading '1')\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:471:22\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11"
+          ],
+          "location": { "line": 450, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Error Handling and Recovery"
+          ],
+          "fullName": "CSRF Protection Security Tests Error Handling and Recovery should retry on network failures",
+          "status": "failed",
+          "title": "should retry on network failures",
+          "duration": 4.548999999999978,
+          "failureMessages": [
+            "AssertionError: expected null to be 'retry-token' // Object.is equality\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:503:21\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11\n    at withEnv (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:90:5)",
+            "AssertionError: expected null to be 'retry-token' // Object.is equality\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:503:21\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11\n    at withEnv (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:90:5)"
+          ],
+          "location": { "line": 476, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Error Handling and Recovery"
+          ],
+          "fullName": "CSRF Protection Security Tests Error Handling and Recovery should handle invalid server responses",
+          "status": "failed",
+          "title": "should handle invalid server responses",
+          "duration": 1.5316249999999627,
+          "failureMessages": [
+            "AssertionError: expected \"spy\" to be called with arguments: [ …(2) ]\n\nReceived: \n\n\n\nNumber of calls: 0\n\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:1465:13)\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:972:17)\n    at Proxy.toHaveBeenCalledWith (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/chai/index.js:1686:25)\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:522:26\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)",
+            "AssertionError: expected \"spy\" to be called with arguments: [ …(2) ]\n\nReceived: \n\n\n\nNumber of calls: 0\n\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:1465:13)\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:972:17)\n    at Proxy.toHaveBeenCalledWith (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/chai/index.js:1686:25)\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:522:26\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)"
+          ],
+          "location": { "line": 509, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Error Handling and Recovery"
+          ],
+          "fullName": "CSRF Protection Security Tests Error Handling and Recovery should handle server errors gracefully",
+          "status": "failed",
+          "title": "should handle server errors gracefully",
+          "duration": 1.1497499999999263,
+          "failureMessages": [
+            "AssertionError: expected \"spy\" to be called with arguments: [ …(2) ]\n\nReceived: \n\n\n\nNumber of calls: 0\n\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:1465:13)\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:972:17)\n    at Proxy.toHaveBeenCalledWith (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/chai/index.js:1686:25)\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:535:26\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)",
+            "AssertionError: expected \"spy\" to be called with arguments: [ …(2) ]\n\nReceived: \n\n\n\nNumber of calls: 0\n\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:1465:13)\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:972:17)\n    at Proxy.toHaveBeenCalledWith (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/chai/index.js:1686:25)\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:535:26\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)"
+          ],
+          "location": { "line": 525, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "React Hook Integration"
+          ],
+          "fullName": "CSRF Protection Security Tests React Hook Integration should provide CSRF token through React hook",
+          "status": "failed",
+          "title": "should provide CSRF token through React hook",
+          "duration": 10014.064209,
+          "failureMessages": [
+            "Error: Test timed out in 10000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at Timeout.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:44:18)\n    at listOnTimeout (node:internal/timers:581:17)\n    at processTimers (node:internal/timers:519:7)",
+            "TypeError: Cannot read properties of null (reading 'loading')\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:552:29\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)"
+          ],
+          "location": { "line": 540, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Security Headers Validation"
+          ],
+          "fullName": "CSRF Protection Security Tests Security Headers Validation should add all required security headers",
+          "status": "failed",
+          "title": "should add all required security headers",
+          "duration": 1.602375000000393,
+          "failureMessages": [
+            "AssertionError: expected null to be 'test-token' // Object.is equality\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:576:43\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)",
+            "AssertionError: expected null to be 'test-token' // Object.is equality\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:576:43\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)"
+          ],
+          "location": { "line": 566, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Security Headers Validation"
+          ],
+          "fullName": "CSRF Protection Security Tests Security Headers Validation should handle different header formats",
+          "status": "failed",
+          "title": "should handle different header formats",
+          "duration": 1.0622920000005251,
+          "failureMessages": [
+            "AssertionError: expected undefined to be 'test-token' // Object.is equality\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:590:45\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)",
+            "AssertionError: expected undefined to be 'test-token' // Object.is equality\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:590:45\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)"
+          ],
+          "location": { "line": 580, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Status and Monitoring"
+          ],
+          "fullName": "CSRF Protection Security Tests Status and Monitoring should provide accurate CSRF protection status",
+          "status": "failed",
+          "title": "should provide accurate CSRF protection status",
+          "duration": 0.8500829999993584,
+          "failureMessages": [
+            "AssertionError: expected true to be false // Object.is equality\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:615:32\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11\n    at withEnv (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:90:5)",
+            "AssertionError: expected true to be false // Object.is equality\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:615:32\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:5\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:11)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1262:5)\n    at startTests (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1271:3)\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:126:11\n    at withEnv (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/vitest/dist/chunks/runBaseTests.3qpJUEJM.js:90:5)"
+          ],
+          "location": { "line": 600, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Status and Monitoring"
+          ],
+          "fullName": "CSRF Protection Security Tests Status and Monitoring should detect expired tokens in status",
+          "status": "passed",
+          "title": "should detect expired tokens in status",
+          "duration": 0.42712500000016007,
+          "failureMessages": [],
+          "location": { "line": 620, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Cleanup and Lifecycle"
+          ],
+          "fullName": "CSRF Protection Security Tests Cleanup and Lifecycle should clean up on page unload",
+          "status": "failed",
+          "title": "should clean up on page unload",
+          "duration": 0.9226660000003903,
+          "failureMessages": [
+            "AssertionError: expected \"cleanup\" to be called at least once\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:1448:13)\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:972:17)\n    at Proxy.toHaveBeenCalled (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/chai/index.js:1686:25)\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:647:26\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)",
+            "AssertionError: expected \"cleanup\" to be called at least once\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:1448:13)\n    at Proxy.<anonymous> (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/expect/dist/index.js:972:17)\n    at Proxy.toHaveBeenCalled (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/chai/index.js:1686:25)\n    at /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts:647:26\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/node_modules/@vitest/runner/dist/index.js:1205:15)"
+          ],
+          "location": { "line": 640, "column": 5 },
+          "meta": {}
+        },
+        {
+          "ancestorTitles": [
+            "CSRF Protection Security Tests",
+            "Cleanup and Lifecycle"
+          ],
+          "fullName": "CSRF Protection Security Tests Cleanup and Lifecycle should clear all data on cleanup",
+          "status": "passed",
+          "title": "should clear all data on cleanup",
+          "duration": 0.4550829999989219,
+          "failureMessages": [],
+          "location": { "line": 650, "column": 5 },
+          "meta": {}
+        }
+      ],
+      "startTime": 1756300297206,
+      "endTime": 1756300307256.455,
+      "status": "failed",
+      "message": "",
+      "name": "/Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/lib/security/__tests__/csrf-protection.test.ts"
+    }
+  ]
+}

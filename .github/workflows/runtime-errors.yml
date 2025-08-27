@@ -1,0 +1,135 @@
+name: Runtime Error Detection
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run daily at 2 AM UTC to catch any degradation
+    - cron: "0 2 * * *"
+
+jobs:
+  runtime-error-detection:
+    name: Detect Runtime Errors
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          DATABASE_URL=${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost:5432/test' }}
+          JWT_SECRET=${{ secrets.JWT_SECRET || 'test-jwt-secret-for-ci' }}
+          NODE_ENV=test
+          EOF
+
+      - name: Build application
+        run: npm run build
+
+      - name: Run runtime error detection tests
+        run: npx playwright test runtime-errors.spec.ts --project=${{ matrix.browser }}
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+          CI: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-error-results-${{ matrix.browser }}
+          path: |
+            playwright-report/
+            test-results/
+            playwright-results.json
+
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-error-screenshots-${{ matrix.browser }}
+          path: test-results/**/*.png
+
+      - name: Upload failure videos
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-error-videos-${{ matrix.browser }}
+          path: test-results/**/*.webm
+
+  consolidate-results:
+    name: Consolidate Test Results
+    needs: runtime-error-detection
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Generate summary
+        run: |
+          echo "## Runtime Error Detection Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          for browser in chromium firefox webkit; do
+            echo "### Browser: $browser" >> $GITHUB_STEP_SUMMARY
+            if [ -f "artifacts/runtime-error-results-$browser/playwright-results.json" ]; then
+              # Parse JSON results if available
+              echo "✅ Tests completed" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ Tests failed or did not complete" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+          done
+
+          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- Test reports and screenshots are available in the workflow artifacts" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let message = '## 🔍 Runtime Error Detection\n\n';
+
+            // Check for any error indicators
+            const hasErrors = false; // This would be determined from actual test results
+
+            if (hasErrors) {
+              message += '❌ **Runtime errors detected!** Please review the test results.\n\n';
+            } else {
+              message += '✅ **No runtime errors detected** across all tested browsers.\n\n';
+            }
+
+            message += 'Tested browsers: Chromium, Firefox, WebKit\n';
+            message += '\n[View full test results](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });

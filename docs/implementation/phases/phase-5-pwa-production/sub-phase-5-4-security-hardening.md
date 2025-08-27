@@ -90,6 +90,9 @@ and comprehensive penetration testing to protect resort data and operations.
 - [ ] CSP headers properly configured
 - [ ] XSS protection implemented
 - [ ] CSRF tokens in place
+  - [ ] Backend `/api/csrf-token` endpoint implemented
+  - [ ] Test with flag enabled in development: `VITE_ENABLE_CSRF="true"`
+  - [ ] Remove conditional logic once stable (optional)
 - [ ] SQL injection prevented
 - [ ] Authentication secure
 - [ ] Authorization enforced

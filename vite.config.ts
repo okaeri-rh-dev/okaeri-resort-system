@@ -414,6 +414,12 @@ export default defineConfig({
       "vitest",
       "@vitejs/plugin-react-swc",
       "rollup-plugin-visualizer",
+      // Exclude Playwright from browser bundle
+      "playwright",
+      "playwright-core",
+      "@playwright/test",
+      "chromium-bidi",
+      "fsevents",
     ],
     // Force re-optimization on dependency changes
     force: process.env.NODE_ENV === "development",

@@ -237,7 +237,8 @@ export class SecureTokenManager {
 
   /**
    * Store tokens securely in memory only
-   * Refresh token should be stored as httpOnly cookie by server
+   * WARNING: Only access tokens are stored client-side
+   * Refresh tokens MUST be managed server-side via httpOnly cookies in production
    */
   storeTokens(accessToken: string, refreshToken?: string): void {
     // Validate token before storing
@@ -254,10 +255,12 @@ export class SecureTokenManager {
     this.tokenRotationCount++;
     this.lastTokenRotation = Date.now();
 
-    // Note: Refresh token should be managed server-side as httpOnly cookie
-    // Not stored in client memory or storage
-    if (refreshToken) {
-      console.warn("Refresh token should be managed server-side as httpOnly cookie");
+    // WARNING: Refresh tokens are NOT stored client-side for security
+    // In Phase 5, refresh tokens will be managed server-side via httpOnly cookies
+    if (refreshToken && import.meta.env.DEV) {
+      console.warn(
+        "[PHASE 1 DEV] Refresh token provided but not stored - will use mock token for development"
+      );
     }
 
     // Set up automatic refresh
@@ -284,14 +287,42 @@ export class SecureTokenManager {
   }
 
   /**
+   * Retrieve refresh token (Phase 1 development mock only)
+   * In production, refresh tokens are managed server-side via httpOnly cookies
+   *
+   * SECURITY NOTE: This method returns a mock token in development only
+   * Production environments will throw an error to prevent security vulnerabilities
+   */
+  getRefreshToken(): string | null {
+    // Development only - return mock token for testing
+    if (import.meta.env.DEV) {
+      console.warn(
+        "[PHASE 1 DEV] Returning mock refresh token - Production will use httpOnly cookies"
+      );
+      // Return a consistent mock token for development
+      return "mock-refresh-token-phase1-dev";
+    }
+
+    // Production - refresh tokens are managed server-side
+    throw new Error(
+      "Refresh tokens must be managed server-side via httpOnly cookies in production"
+    );
+  }
+
+  /**
    * Clear all tokens securely
+   * Only access tokens are cleared client-side
+   * Refresh token invalidation is handled server-side in production
    */
   clearTokens(): void {
-    // Overwrite token in memory
+    // Overwrite access token in memory
     if (this.accessToken) {
       this.accessToken = crypto.getRandomValues(new Uint8Array(this.accessToken.length)).toString();
       this.accessToken = null;
     }
+
+    // Note: Refresh tokens are not stored client-side, so no clearing needed
+    // In Phase 5, server-side refresh token invalidation will be handled via API call
 
     this.tokenFingerprint = null;
     this.tokenRotationCount = 0;

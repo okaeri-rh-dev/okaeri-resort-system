@@ -14,34 +14,32 @@ import {
   routeStateManager,
   useNavigationStore,
 } from "@/lib/store-router-integration";
-import { router } from "@tanstack/react-router";
+import type { Router } from "@tanstack/react-router";
 
 /**
  * Initialize the application with all integrations
+ * Note: Router and auth initialization are handled separately in their own contexts
  */
 export async function initializeApp() {
   console.log("🚀 Initializing Okaeri Resort System...");
 
-  // 1. Initialize stores
+  // 1. Initialize stores (UI preferences, offline queue, etc.)
   await initializeStores();
 
-  // 2. Set up router integrations
-  setupRouterIntegrations();
-
-  // 3. Initialize offline support
+  // 2. Initialize offline support
   setupOfflineSupport();
 
-  // 4. Set up performance monitoring
+  // 3. Set up performance monitoring
   setupPerformanceMonitoring();
 
-  // 5. Initialize cache synchronization
+  // 4. Initialize cache synchronization
   cacheSyncManager.initialize();
 
-  // 6. Set up global error handling
+  // 5. Set up global error handling
   setupErrorHandling();
 
-  // 7. Initialize authentication
-  await initializeAuthentication();
+  // Note: Router integrations and auth initialization are now handled by the router itself
+  // This prevents race conditions and circular dependencies
 
   console.log("✅ Application initialized successfully");
 }
@@ -73,42 +71,7 @@ async function initializeStores() {
   }
 }
 
-/**
- * Set up router integrations with stores
- */
-function setupRouterIntegrations() {
-  console.log("🔄 Setting up router integrations...");
-
-  // Subscribe to route changes
-  router.subscribe("onBeforeLoad", ({ location }) => {
-    const navigationStore = useNavigationStore.getState();
-    navigationStore.startNavigation(location.pathname);
-  });
-
-  router.subscribe("onLoad", ({ location }) => {
-    const navigationStore = useNavigationStore.getState();
-    navigationStore.completeNavigation(location.pathname);
-
-    // Update breadcrumbs
-    updateBreadcrumbs(location.pathname);
-  });
-
-  router.subscribe("onError", ({ error }) => {
-    const navigationStore = useNavigationStore.getState();
-    navigationStore.failNavigation(error as Error);
-  });
-
-  // Handle browser back/forward navigation
-  window.addEventListener("popstate", () => {
-    const navigationStore = useNavigationStore.getState();
-    const currentPath = window.location.pathname;
-
-    // Clean up previous route
-    if (navigationStore.currentRoute !== currentPath) {
-      routeStateManager.cleanupRoute(navigationStore.currentRoute);
-    }
-  });
-}
+// Router integrations are now handled by the router itself to prevent race conditions
 
 /**
  * Set up offline support and PWA features
@@ -288,68 +251,10 @@ function setupErrorHandling() {
   });
 }
 
-/**
- * Initialize authentication and session
- */
-async function initializeAuthentication() {
-  console.log("🔐 Initializing authentication...");
+// Authentication initialization is now handled in the router's beforeLoad hook
+// This ensures auth is initialized in the correct context and prevents race conditions
 
-  const authStore = useAuthStore.getState();
-
-  try {
-    // Initialize auth from stored tokens
-    await authStore.initializeAuth();
-
-    // If authenticated, fetch user projects
-    if (authStore.isAuthenticated) {
-      const projectStore = useProjectStore.getState();
-      await projectStore.fetchProjects();
-
-      // Set up session refresh interval
-      setInterval(() => {
-        if (authStore.checkAuth()) {
-          // Session is valid
-        }
-      }, 60000); // Check every minute
-    }
-  } catch (error) {
-    console.error("Auth initialization error:", error);
-
-    // Clear invalid auth state
-    authStore.logout();
-  }
-}
-
-/**
- * Update breadcrumbs based on route
- */
-function updateBreadcrumbs(pathname: string) {
-  const segments = pathname.split("/").filter(Boolean);
-  const breadcrumbs: Array<{ label: string; href?: string }> = [
-    { label: "Home", href: "/dashboard" },
-  ];
-
-  let currentPath = "";
-  segments.forEach((segment, index) => {
-    currentPath += `/${segment}`;
-
-    // Skip underscore routes
-    if (segment.startsWith("_")) return;
-
-    // Format segment
-    const label = segment
-      .split("-")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-
-    breadcrumbs.push({
-      label,
-      href: index === segments.length - 1 ? undefined : currentPath,
-    });
-  });
-
-  useUIStore.getState().setBreadcrumbs(breadcrumbs);
-}
+// Breadcrumb updates are now handled by individual route components
 
 /**
  * Clean up function for app teardown

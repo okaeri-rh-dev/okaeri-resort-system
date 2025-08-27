@@ -22,12 +22,26 @@ export class CSRFProtectionManager {
   private tokenExpiry: number = 0;
   private sessionId: string | null = null;
   private tokenRefreshPromise: Promise<void> | null = null;
+  private isEnabled: boolean = false;
+  private isInitialized: boolean = false;
 
   private readonly TOKEN_LIFETIME = 60 * 60 * 1000; // 1 hour
   private readonly TOKEN_REFRESH_BUFFER = 5 * 60 * 1000; // 5 minutes
 
   private constructor() {
-    this.initializeCSRFProtection();
+    // Check environment flag - default to true in production for security
+    this.isEnabled =
+      import.meta.env.VITE_ENABLE_CSRF === "true" ||
+      (import.meta.env.PROD && import.meta.env.VITE_ENABLE_CSRF !== "false");
+
+    // Only initialize if enabled
+    if (this.isEnabled) {
+      this.initializeCSRFProtection();
+    } else {
+      // Generate session ID even when disabled for consistency
+      this.sessionId = this.generateSessionId();
+      this.logCSRFEvent("csrf_disabled", { environment: import.meta.env.MODE });
+    }
   }
 
   static getInstance(): CSRFProtectionManager {
@@ -41,6 +55,9 @@ export class CSRFProtectionManager {
    * Initialize CSRF protection
    */
   private async initializeCSRFProtection(): Promise<void> {
+    if (this.isInitialized) return;
+    this.isInitialized = true;
+
     // Generate session ID for CSRF token binding
     this.sessionId = this.generateSessionId();
 
@@ -69,6 +86,16 @@ export class CSRFProtectionManager {
    * Get current CSRF token
    */
   async getCSRFToken(): Promise<string | null> {
+    // Return null if CSRF is disabled
+    if (!this.isEnabled) {
+      return null;
+    }
+
+    // Ensure initialization is complete
+    if (!this.isInitialized) {
+      await this.initializeCSRFProtection();
+    }
+
     // Check if token needs refresh
     if (this.isTokenExpired()) {
       await this.refreshCSRFToken();
@@ -81,6 +108,11 @@ export class CSRFProtectionManager {
    * Refresh CSRF token from server
    */
   private async refreshCSRFToken(): Promise<void> {
+    // Skip if disabled
+    if (!this.isEnabled) {
+      return;
+    }
+
     // Prevent multiple simultaneous refresh requests
     if (this.tokenRefreshPromise) {
       return this.tokenRefreshPromise;
@@ -172,6 +204,11 @@ export class CSRFProtectionManager {
    * Add CSRF token to request headers
    */
   addCSRFHeader(headers: HeadersInit): HeadersInit {
+    // Return headers unchanged if disabled
+    if (!this.isEnabled) {
+      return headers;
+    }
+
     if (!this.csrfToken) {
       console.warn("CSRF token not available");
       return headers;
@@ -195,6 +232,11 @@ export class CSRFProtectionManager {
    * Validate CSRF token in response
    */
   validateResponse(response: Response): boolean {
+    // Always return true if disabled
+    if (!this.isEnabled) {
+      return true;
+    }
+
     const responseToken = response.headers.get("X-CSRF-Token");
 
     if (responseToken && responseToken !== this.csrfToken) {
@@ -210,6 +252,11 @@ export class CSRFProtectionManager {
    * Handle CSRF validation failure
    */
   handleCSRFFailure(): void {
+    // Skip if disabled
+    if (!this.isEnabled) {
+      return;
+    }
+
     // Clear current token
     this.csrfToken = null;
     this.tokenExpiry = 0;
@@ -285,12 +332,14 @@ export class CSRFProtectionManager {
    * Get CSRF protection status
    */
   getStatus(): {
+    isEnabled: boolean;
     hasToken: boolean;
     isExpired: boolean;
     sessionId: string | null;
     expiresAt: number;
   } {
     return {
+      isEnabled: this.isEnabled,
       hasToken: this.csrfToken !== null,
       isExpired: this.isTokenExpired(),
       sessionId: this.sessionId,
@@ -313,15 +362,18 @@ export async function csrfFetch(url: string, options: RequestInit = {}): Promise
   if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
     const token = await csrfProtection.getCSRFToken();
 
-    if (!token) {
+    // Only enforce token requirement if CSRF is enabled
+    if (csrfProtection.getStatus().isEnabled && !token) {
       throw new Error("CSRF token not available");
     }
 
-    // Add CSRF token to headers
-    const headers = new Headers(options.headers || {});
-    headers.set("X-CSRF-Token", token);
+    if (token) {
+      // Add CSRF token to headers
+      const headers = new Headers(options.headers || {});
+      headers.set("X-CSRF-Token", token);
 
-    options.headers = headers;
+      options.headers = headers;
+    }
   }
 
   // Perform fetch
