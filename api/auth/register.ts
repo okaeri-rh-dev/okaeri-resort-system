@@ -32,7 +32,7 @@ const registerSchema = z
     path: ["confirmPassword"],
   });
 
-type RegisterRequest = z.infer<typeof registerSchema>;
+type _RegisterRequest = z.infer<typeof registerSchema>;
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {

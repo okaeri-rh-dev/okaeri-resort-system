@@ -3,7 +3,7 @@
  * POST /api/auth/update-password
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { VercelRequest as _VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
 import { hashPassword, verifyPassword, validatePassword } from "../lib/password";
 import { transaction, db } from "../lib/db";
@@ -31,7 +31,7 @@ const updatePasswordSchema = z
     path: ["newPassword"],
   });
 
-type UpdatePasswordRequest = z.infer<typeof updatePasswordSchema>;
+type _UpdatePasswordRequest = z.infer<typeof updatePasswordSchema>;
 
 async function handler(req: AuthenticatedRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -72,7 +72,7 @@ async function handler(req: AuthenticatedRequest, res: VercelResponse) {
     await transaction(async (client) => {
       // Get current user password hash
       const userResult = await client.query("SELECT id, password_hash FROM users WHERE id = $1", [
-        req.user!.userId,
+        req.user.userId,
       ]);
 
       if (userResult.rows.length === 0) {
@@ -98,14 +98,14 @@ async function handler(req: AuthenticatedRequest, res: VercelResponse) {
           password_changed_at: new Date(),
           updated_at: new Date(),
         },
-        { id: req.user!.userId }
+        { id: req.user.userId }
       );
 
       await client.query(updateQuery.text, updateQuery.values);
 
       // Invalidate all existing sessions (optional - forces re-login)
       // This is a security measure to ensure old sessions can't be used
-      await client.query("DELETE FROM sessions WHERE user_id = $1", [req.user!.userId]);
+      await client.query("DELETE FROM sessions WHERE user_id = $1", [req.user.userId]);
 
       // Log password change
       await client.query(
@@ -113,7 +113,7 @@ async function handler(req: AuthenticatedRequest, res: VercelResponse) {
           (user_id, action, resource, details, ip_address, user_agent, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)`,
         [
-          req.user!.userId,
+          req.user.userId,
           "PASSWORD_CHANGED",
           "auth",
           { method: "user_initiated" },
@@ -124,7 +124,7 @@ async function handler(req: AuthenticatedRequest, res: VercelResponse) {
 
       // Send notification email (stub for now)
       // TODO: Implement email notification
-      console.log(`[UpdatePassword] Password changed for user ${req.user!.userId}`);
+      // console.log(`[UpdatePassword] Password changed for user ${req.user.userId}`);
     });
 
     // Clear authentication cookies (force re-login)

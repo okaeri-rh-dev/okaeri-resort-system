@@ -243,8 +243,8 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const action = event.action;
-  const data = event.notification.data;
+  const { action } = event;
+  const { data } = event.notification;
 
   if (action === "dismiss") {
     return;

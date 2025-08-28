@@ -25,9 +25,30 @@ export class TokenManager {
   private static instance: TokenManager;
   private refreshTimer: NodeJS.Timeout | null = null;
   private tokenRefreshCallbacks: Set<() => Promise<void>> = new Set();
+  private refreshTokenMemory: string | null = null; // Memory storage for refresh token
 
   private constructor() {
     // Singleton pattern
+    // In development mode with mock auth, restore tokens from sessionStorage
+    if (this.isDevelopmentMockAuth()) {
+      const storedRefreshToken = sessionStorage.getItem("okaeri_refresh_token");
+      if (storedRefreshToken) {
+        console.log("[TokenManager] Restoring refresh token from sessionStorage (dev mode)");
+        this.refreshTokenMemory = storedRefreshToken;
+      }
+    }
+  }
+
+  /**
+   * Check if running in development mode with mock authentication
+   * SECURITY: This is the ONLY condition where browser storage should be used
+   */
+  private isDevelopmentMockAuth(): boolean {
+    return (
+      import.meta.env.DEV &&
+      ((window as any).__VITE_ENV__?.VITE_MOCK_AUTH === "true" ||
+        import.meta.env.VITE_MOCK_AUTH === "true")
+    );
   }
 
   static getInstance(): TokenManager {
@@ -90,9 +111,19 @@ export class TokenManager {
     // Store access token in memory only (not in localStorage to prevent XSS)
     window.__OKAERI_ACCESS_TOKEN__ = accessToken;
 
-    // In production, refresh token should be in httpOnly cookie
-    // For now, we'll use sessionStorage as a safer alternative to localStorage
-    sessionStorage.setItem("okaeri_refresh_token", refreshToken);
+    // Store refresh token in memory
+    this.refreshTokenMemory = refreshToken;
+
+    // SECURITY: Only use sessionStorage in development mode with mock auth
+    if (this.isDevelopmentMockAuth()) {
+      console.log("[TokenManager] Persisting refresh token to sessionStorage (dev mode only)");
+      sessionStorage.setItem("okaeri_refresh_token", refreshToken);
+    } else if (import.meta.env.DEV) {
+      console.warn(
+        "[TokenManager] Refresh token stored in memory only. " +
+          "In production, use httpOnly cookies for refresh tokens."
+      );
+    }
 
     // Set up automatic refresh
     this.scheduleTokenRefresh(accessToken);
@@ -109,16 +140,45 @@ export class TokenManager {
    * Retrieve stored refresh token
    */
   getRefreshToken(): string | null {
-    // In production, this would be handled server-side via httpOnly cookie
-    return sessionStorage.getItem("okaeri_refresh_token");
+    // First try memory storage
+    if (this.refreshTokenMemory) {
+      return this.refreshTokenMemory;
+    }
+
+    // SECURITY: Only check sessionStorage in development mode with mock auth
+    if (this.isDevelopmentMockAuth()) {
+      const storedToken = sessionStorage.getItem("okaeri_refresh_token");
+      if (storedToken) {
+        this.refreshTokenMemory = storedToken; // Cache in memory
+        return storedToken;
+      }
+    }
+
+    // In production, refresh tokens should be handled server-side via httpOnly cookie
+    if (!import.meta.env.DEV) {
+      console.error(
+        "[SECURITY] Refresh tokens must be managed server-side via httpOnly cookies in production"
+      );
+    }
+
+    return null;
   }
 
   /**
    * Clear all tokens
    */
   clearTokens(): void {
+    // Clear access token from memory
     window.__OKAERI_ACCESS_TOKEN__ = undefined;
-    sessionStorage.removeItem("okaeri_refresh_token");
+
+    // Clear refresh token from memory
+    this.refreshTokenMemory = null;
+
+    // SECURITY: Only clear sessionStorage in development mode with mock auth
+    if (this.isDevelopmentMockAuth()) {
+      sessionStorage.removeItem("okaeri_refresh_token");
+    }
+
     this.cancelTokenRefresh();
   }
 

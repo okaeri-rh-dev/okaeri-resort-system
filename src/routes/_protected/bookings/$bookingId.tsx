@@ -26,7 +26,7 @@ const bookingDetailLoader = createRouteLoader<{
   params: BookingParams;
   search: BookingSearchParams;
 }>(async ({ params, search }) => {
-  const projectId = requireActiveProject();
+  const projectId = await requireActiveProject();
   const { bookingId } = validateRouteParams(BookingParamsSchema, params);
   const searchParams = validateSearchParams(BookingSearchSchema, search);
 

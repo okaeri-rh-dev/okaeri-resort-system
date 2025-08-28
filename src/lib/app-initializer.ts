@@ -23,6 +23,9 @@ import type { Router } from "@tanstack/react-router";
 export async function initializeApp() {
   console.log("🚀 Initializing Okaeri Resort System...");
 
+  // Note: Immer MapSet plugin is now enabled at the top of main.tsx
+  // to ensure it's available before any store imports
+
   // 1. Initialize stores (UI preferences, offline queue, etc.)
   await initializeStores();
 
@@ -107,7 +110,7 @@ function setupOfflineSupport() {
 async function handleOnline() {
   console.log("✅ Connection restored");
 
-  const toast = useUIStore.getState().toast;
+  const { toast } = useUIStore.getState();
   toast.success("Back online", "Connection restored. Syncing data...");
 
   // Process offline queue
@@ -137,7 +140,7 @@ async function handleOnline() {
 function handleOffline() {
   console.log("⚠️ Connection lost");
 
-  const toast = useUIStore.getState().toast;
+  const { toast } = useUIStore.getState();
   toast.warning(
     "Offline mode",
     "You're currently offline. Changes will be synced when connection is restored."
@@ -184,7 +187,7 @@ function setupPerformanceMonitoring() {
   // Monitor memory usage (Chrome only)
   if ("memory" in performance) {
     setInterval(() => {
-      const memory = (performance as any).memory;
+      const { memory } = performance as any;
       const usedMB = Math.round(memory.usedJSHeapSize / 1048576);
       const totalMB = Math.round(memory.jsHeapSizeLimit / 1048576);
 
@@ -209,7 +212,7 @@ function setupErrorHandling() {
   window.addEventListener("unhandledrejection", (event) => {
     console.error("Unhandled promise rejection:", event.reason);
 
-    const toast = useUIStore.getState().toast;
+    const { toast } = useUIStore.getState();
     toast.error("An error occurred", "Something went wrong. Please try refreshing the page.");
 
     // Prevent default browser error handling
@@ -244,7 +247,7 @@ function setupErrorHandling() {
       onError: (error) => {
         console.error("Mutation error:", error);
 
-        const toast = useUIStore.getState().toast;
+        const { toast } = useUIStore.getState();
         toast.error("Operation failed", (error as any)?.message || "Please try again later");
       },
     },

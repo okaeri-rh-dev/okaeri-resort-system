@@ -3,12 +3,12 @@
  * Implements role-based and permission-based access control
  */
 
-import type { ReactNode } from "react";
-import { useEffect } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { auditLogger, permissionGuard, PERMISSIONS } from "@/lib/security";
 import { useAuthStore } from "@/stores/authStore";
-import { permissionGuard, auditLogger, PERMISSIONS } from "@/lib/security";
-import type { UserRole, ProjectRole } from "@/types/common";
+import type { ProjectRole, UserRole } from "@/types/common";
+import { useNavigate } from "@tanstack/react-router";
+import type { ReactNode } from "react";
+import { useEffect, useCallback } from "react";
 
 export interface RouteGuardConfig {
   requiredRoles?: UserRole[];
@@ -46,6 +46,29 @@ export function RouteGuard({
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const activeProjectId = useAuthStore((state) => state.activeProjectId);
+
+  // Memoize handleAccessDenied to prevent recreation on every render
+  const handleAccessDenied = useCallback(
+    (reason: string) => {
+      // Log access denial
+      auditLogger.logSecurityEvent("violation", {
+        route: name || window.location.pathname,
+        reason,
+        userId: user?.id,
+        userEmail: user?.email,
+        projectId: activeProjectId,
+      });
+
+      // Call custom handler if provided
+      if (onAccessDenied) {
+        onAccessDenied();
+      }
+
+      // Redirect
+      navigate({ to: redirectTo });
+    },
+    [name, user?.id, user?.email, activeProjectId, onAccessDenied, redirectTo, navigate]
+  );
 
   useEffect(() => {
     if (!user) {
@@ -120,26 +143,22 @@ export function RouteGuard({
       handleAccessDenied("custom_check_failed");
       return;
     }
-  }, [user, activeProjectId, navigate]);
-
-  function handleAccessDenied(reason: string) {
-    // Log access denial
-    auditLogger.logSecurityEvent("violation", {
-      route: name || window.location.pathname,
-      reason,
-      userId: user?.id,
-      userEmail: user?.email,
-      projectId: activeProjectId,
-    });
-
-    // Call custom handler if provided
-    if (onAccessDenied) {
-      onAccessDenied();
-    }
-
-    // Redirect
-    navigate({ to: redirectTo });
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    user,
+    activeProjectId,
+    handleAccessDenied,
+    // Stable prop dependencies
+    requireAllRoles,
+    requireAllPermissions,
+    requireProjectAccess,
+    // Note: Arrays are converted to stable strings to avoid reference changes
+    // that would cause unnecessary re-renders
+    requiredRoles.join(","),
+    requiredProjectRoles.join(","),
+    JSON.stringify(requiredPermissions),
+    customCheck,
+  ]);
 
   return <>{children}</>;
 }

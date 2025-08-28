@@ -6,7 +6,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { Eye, EyeOff, LogIn, Mail, Lock, AlertCircle, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,18 @@ import { config } from "@/config";
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const { login, isLoading, error, clearError } = useAuthStore();
+  const navigate = useNavigate();
+
+  // Get search params to handle redirect
+  let redirectTo = "/dashboard"; // default redirect
+  try {
+    const search = useSearch({ from: "/_auth/login" });
+    if (search?.redirect) {
+      redirectTo = search.redirect;
+    }
+  } catch {
+    // If we can't get search params, use default
+  }
 
   const {
     register,
@@ -44,6 +56,12 @@ export function LoginForm() {
       clearError();
       clearErrors();
       await login(data.email, data.password);
+
+      // Wait a tick to ensure auth state is fully propagated
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Force a hard navigation to ensure router context is refreshed
+      window.location.href = redirectTo;
     } catch (error: any) {
       // Handle specific error types
       if (error.message.includes("Invalid credentials")) {

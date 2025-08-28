@@ -22,7 +22,7 @@ const prefetcher = new PrefetchManager(queryClient);
 const projectSettingsLoader = createRouteLoader<{
   search: ProjectSettingsSearchParams;
 }>(async ({ search }) => {
-  const projectId = requireActiveProject();
+  const projectId = await requireActiveProject();
   const searchParams = validateSearchParams(ProjectSettingsSearchSchema, search);
 
   // Prefetch project settings and related data

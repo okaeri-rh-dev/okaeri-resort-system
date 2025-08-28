@@ -4,8 +4,10 @@
  * Designed for Philippine timezone and business requirements
  */
 
-import { Pool, PoolConfig } from "pg";
-import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
+import type { PoolConfig } from "pg";
+import { Pool } from "pg";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { logger } from "@/lib/logger";
 import { env } from "@/lib/env";
 import * as schema from "./schema";

@@ -7,6 +7,7 @@
 import { create } from "zustand";
 import { subscribeWithSelector, devtools } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
+import { shallow } from "zustand/shallow";
 import { queryClient, queryKeys, invalidateQueries } from "@/lib/query-client";
 import { useAuthStore } from "@/stores/authStore";
 import { useProjectStore } from "@/stores/projectStore";
@@ -211,6 +212,28 @@ export const useNavigationStore = create<NavigationState & NavigationActions>()(
     { name: "NavigationStore" }
   )
 );
+
+// Stable selectors for navigation store to prevent re-renders
+export const useNavigation = () =>
+  useNavigationStore(
+    (state) => ({
+      currentRoute: state.currentRoute,
+      isNavigating: state.isNavigating,
+      startNavigation: state.startNavigation,
+      completeNavigation: state.completeNavigation,
+    }),
+    shallow
+  );
+
+export const usePrefetch = () =>
+  useNavigationStore(
+    (state) => ({
+      prefetchedRoutes: state.prefetchedRoutes,
+      queuePrefetch: state.queuePrefetch,
+      markPrefetched: state.markPrefetched,
+    }),
+    shallow
+  );
 
 /**
  * Cache Synchronization Manager

@@ -19,7 +19,7 @@ const verifyEmailSchema = z.object({
   token: z.string().min(1, "Verification token is required"),
 });
 
-type VerifyEmailRequest = z.infer<typeof verifyEmailSchema>;
+type _VerifyEmailRequest = z.infer<typeof verifyEmailSchema>;
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -52,7 +52,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       if (tokenData.type !== "email_verification") {
         throw new Error("Invalid token type");
       }
-    } catch (error) {
+    } catch (_error) {
       return res
         .status(400)
         .json(errorResponse(new AuthenticationError("Invalid or expired verification token")));

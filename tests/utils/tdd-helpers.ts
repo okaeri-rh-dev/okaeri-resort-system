@@ -226,7 +226,7 @@ export const PhilippineDataGenerator = {
       ? faker.helpers.arrayElement(["Jr.", "Sr.", "II", "III"])
       : "";
 
-    return `${firstName} ${lastName}${suffix ? " " + suffix : ""}`;
+    return `${firstName} ${lastName}${suffix ? ` ${suffix}` : ""}`;
   },
 
   /**
@@ -244,7 +244,7 @@ export const PhilippineDataGenerator = {
    * Generate a BIR (Bureau of Internal Revenue) TIN
    */
   tin: (): string => {
-    return faker.string.numeric(9) + "-" + faker.string.numeric(3);
+    return `${faker.string.numeric(9)}-${faker.string.numeric(3)}`;
   },
 
   /**

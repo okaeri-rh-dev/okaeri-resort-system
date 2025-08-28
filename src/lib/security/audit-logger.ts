@@ -38,10 +38,11 @@ export class AuditLogger {
   private config: AuditConfig;
   private flushTimer: NodeJS.Timeout | null = null;
   private sessionId: string;
+  private memoryLogs: AuditEntry[] = []; // Memory storage for production
 
   private constructor() {
     this.config = {
-      enableLocalStorage: true,
+      enableLocalStorage: import.meta.env.DEV, // Only enable in dev mode
       enableRemoteLogging: true,
       batchSize: 50,
       flushInterval: 30000, // 30 seconds
@@ -60,6 +61,14 @@ export class AuditLogger {
       AuditLogger.instance = new AuditLogger();
     }
     return AuditLogger.instance;
+  }
+
+  /**
+   * Check if running in development mode
+   * SECURITY: Audit logs should only use browser storage in development
+   */
+  private isDevelopmentMode(): boolean {
+    return import.meta.env.DEV;
   }
 
   /**
@@ -264,22 +273,33 @@ export class AuditLogger {
    */
   private storeLocally(entry: AuditEntry): void {
     try {
-      const stored = this.getStoredLogs();
-      stored.push(entry);
+      // SECURITY: Use memory storage in production, sessionStorage only in dev
+      if (this.isDevelopmentMode()) {
+        const stored = this.getStoredLogs();
+        stored.push(entry);
 
-      // Keep only recent logs (last 1000)
-      if (stored.length > 1000) {
-        stored.splice(0, stored.length - 1000);
+        // Keep only recent logs (last 1000)
+        if (stored.length > 1000) {
+          stored.splice(0, stored.length - 1000);
+        }
+
+        // Encrypt if configured
+        const data = this.config.encryptLogs
+          ? this.encrypt(JSON.stringify(stored))
+          : JSON.stringify(stored);
+
+        sessionStorage.setItem("audit_logs", data);
+      } else {
+        // Production: Store in memory only
+        this.memoryLogs.push(entry);
+
+        // Keep only recent logs in memory (last 100 for performance)
+        if (this.memoryLogs.length > 100) {
+          this.memoryLogs.splice(0, this.memoryLogs.length - 100);
+        }
       }
-
-      // Encrypt if configured
-      const data = this.config.encryptLogs
-        ? this.encrypt(JSON.stringify(stored))
-        : JSON.stringify(stored);
-
-      sessionStorage.setItem("audit_logs", data);
     } catch (error) {
-      console.error("Failed to store audit log locally:", error);
+      console.error("Failed to store audit log:", error);
     }
   }
 
@@ -288,12 +308,17 @@ export class AuditLogger {
    */
   private getStoredLogs(): AuditEntry[] {
     try {
-      const data = sessionStorage.getItem("audit_logs");
-      if (!data) return [];
+      // SECURITY: Use memory storage in production, sessionStorage only in dev
+      if (this.isDevelopmentMode()) {
+        const data = sessionStorage.getItem("audit_logs");
+        if (!data) return [];
 
-      const decrypted = this.config.encryptLogs ? this.decrypt(data) : data;
-
-      return JSON.parse(decrypted);
+        const decrypted = this.config.encryptLogs ? this.decrypt(data) : data;
+        return JSON.parse(decrypted);
+      } else {
+        // Production: Return from memory
+        return [...this.memoryLogs];
+      }
     } catch {
       return [];
     }
@@ -428,7 +453,13 @@ export class AuditLogger {
     });
 
     if (filtered.length < logs.length) {
-      sessionStorage.setItem("audit_logs", JSON.stringify(filtered));
+      // SECURITY: Update storage based on environment
+      if (this.isDevelopmentMode()) {
+        sessionStorage.setItem("audit_logs", JSON.stringify(filtered));
+      } else {
+        // Production: Update memory storage
+        this.memoryLogs = filtered;
+      }
 
       // Log the retention action
       this.log(AUDIT_EVENTS.DATA_RETENTION_DELETE, {

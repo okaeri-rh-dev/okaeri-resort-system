@@ -3,8 +3,9 @@
  * Provides wrapped render functions and common test helpers
  */
 
-import { ReactElement } from "react";
-import { render, RenderOptions } from "@testing-library/react";
+import type { ReactElement } from "react";
+import type { RenderOptions } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Router, RouterProvider, createMemoryHistory } from "@tanstack/react-router";
 import userEvent from "@testing-library/user-event";
@@ -391,7 +392,7 @@ export const performanceHelpers = {
   checkMemoryLeaks: () => {
     // Basic memory usage check
     if (typeof window !== "undefined" && "performance" in window && "memory" in performance) {
-      const memory = (performance as any).memory;
+      const { memory } = performance as any;
       return {
         used: memory.usedJSHeapSize,
         total: memory.totalJSHeapSize,

@@ -16,7 +16,7 @@ const resetPasswordSchema = z.object({
   email: z.string().email("Invalid email format"),
 });
 
-type ResetPasswordRequest = z.infer<typeof resetPasswordSchema>;
+type _ResetPasswordRequest = z.infer<typeof resetPasswordSchema>;
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -45,7 +45,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Always return success to prevent email enumeration
     if (!user) {
-      console.log(`[ResetPassword] User not found for email: ${email}`);
+      // console.log(`[ResetPassword] User not found for email: ${email}`);
       return res
         .status(200)
         .json(
@@ -90,10 +90,10 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     );
 
     // Send reset email (stub for now)
-    const resetUrl = `${process.env.APP_URL || "https://app.okaeri.ph"}/reset-password?token=${resetToken}`;
+    const _resetUrl = `${process.env.APP_URL || "https://app.okaeri.ph"}/reset-password?token=${resetToken}`;
 
     // TODO: Implement email sending
-    console.log(`[ResetPassword] Reset URL for ${email}: ${resetUrl}`);
+    // console.log(`[ResetPassword] Reset URL for ${email}: ${resetUrl}`);
 
     // In production, you would send an email like this:
     // await sendPasswordResetEmail({

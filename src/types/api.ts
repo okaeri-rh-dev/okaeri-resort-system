@@ -22,9 +22,7 @@ import type {
   Timestamp,
 } from "./database";
 
-import {
-  PaginatedResponseSchema,
-  UserSchema,
+import type {
   ProjectSchema,
   BookingSchema,
   PaymentSchema,
@@ -33,6 +31,10 @@ import {
   IncomeSchema,
   UserProjectPermissionSchema,
   AuditLogSchema,
+} from "./schemas";
+import {
+  PaginatedResponseSchema,
+  UserSchema,
   UuidSchema,
   TimestampSchema,
   EmailSchema,

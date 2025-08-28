@@ -2,7 +2,7 @@ import { Outlet } from "@tanstack/react-router";
 import { Waves, Sun, MapPin, Wifi, WifiOff, Shield, Heart } from "lucide-react";
 import { useUIStore } from "@/stores/uiStore";
 
-export function AuthLayout() {
+export function AuthLayout({ children }: { children?: React.ReactNode }) {
   const theme = useUIStore((state) => state.theme);
   const isOnline = navigator.onLine;
 
@@ -161,7 +161,7 @@ export function AuthLayout() {
 
             {/* Auth Card */}
             <div className="rounded-2xl border border-white/20 bg-white/95 p-8 shadow-2xl backdrop-blur-xl dark:border-gray-700 dark:bg-gray-900/95">
-              <Outlet />
+              {children || <Outlet />}
             </div>
 
             {/* Mobile Features */}

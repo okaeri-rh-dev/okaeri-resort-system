@@ -3,7 +3,7 @@
  * GET /api/health/check
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { VercelRequest as _VercelRequest, VercelResponse } from "@vercel/node";
 import { withErrorHandler, withMethod, compose, type ExtendedRequest } from "../_lib/middleware";
 import { successResponse } from "../_lib/types";
 import { getPool } from "../_lib/database";

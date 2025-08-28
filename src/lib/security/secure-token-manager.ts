@@ -37,6 +37,15 @@ export class SecureTokenManager {
   private refreshTimer: NodeJS.Timeout | null = null;
   private tokenRefreshCallbacks: Set<() => Promise<void>> = new Set();
 
+  // Development mode helper for auth persistence
+  private isDevelopmentMockAuth(): boolean {
+    return (
+      import.meta.env.DEV &&
+      ((window as any).__VITE_ENV__?.VITE_MOCK_AUTH === "true" ||
+        import.meta.env.VITE_MOCK_AUTH === "true")
+    );
+  }
+
   // Token rotation tracking
   private tokenRotationCount: number = 0;
   private lastTokenRotation: number = 0;
@@ -44,6 +53,18 @@ export class SecureTokenManager {
   private constructor() {
     // Singleton pattern
     this.initializeSecurityListeners();
+
+    // In development mode with mock auth, restore tokens from sessionStorage
+    if (this.isDevelopmentMockAuth()) {
+      const storedToken = sessionStorage.getItem("mock_access_token");
+      const storedRefreshToken = sessionStorage.getItem("mock_refresh_token");
+
+      if (storedToken) {
+        console.log("[SecureTokenManager] Restoring mock tokens from sessionStorage");
+        this.accessToken = storedToken;
+        // Note: We don't validate mock tokens as strictly
+      }
+    }
   }
 
   static getInstance(): SecureTokenManager {
@@ -106,7 +127,7 @@ export class SecureTokenManager {
       // Warn about debugger usage
       setInterval(() => {
         const start = performance.now();
-        // eslint-disable-next-line no-debugger
+
         debugger;
         const end = performance.now();
         if (end - start > 100) {
@@ -241,23 +262,40 @@ export class SecureTokenManager {
    * Refresh tokens MUST be managed server-side via httpOnly cookies in production
    */
   storeTokens(accessToken: string, refreshToken?: string): void {
-    // Validate token before storing
-    const validation = this.validateTokenStructure(accessToken);
-    if (!validation.valid) {
-      throw new Error(validation.error || "Invalid token");
+    // [PHASE 1-4 MOCK AUTH] Skip validation for mock tokens in development
+    const isMockAuth =
+      import.meta.env.DEV &&
+      ((window as any).__VITE_ENV__?.VITE_MOCK_AUTH === "true" ||
+        import.meta.env.VITE_MOCK_AUTH === "true");
+
+    if (!isMockAuth) {
+      // Validate token before storing (only in non-mock mode)
+      const validation = this.validateTokenStructure(accessToken);
+      if (!validation.valid) {
+        throw new Error(validation.error || "Invalid token");
+      }
     }
 
-    // Store access token in memory only
+    // Store access token in memory only (or sessionStorage in dev mode)
     this.accessToken = accessToken;
     this.tokenFingerprint = this.generateFingerprint();
+
+    // In development mode with mock auth, also persist to sessionStorage
+    if (this.isDevelopmentMockAuth()) {
+      console.log("[SecureTokenManager] Persisting mock tokens to sessionStorage for dev mode");
+      sessionStorage.setItem("mock_access_token", accessToken);
+      if (refreshToken) {
+        sessionStorage.setItem("mock_refresh_token", refreshToken);
+      }
+    }
 
     // Track token rotation
     this.tokenRotationCount++;
     this.lastTokenRotation = Date.now();
 
-    // WARNING: Refresh tokens are NOT stored client-side for security
+    // WARNING: Refresh tokens are NOT stored client-side for security in production
     // In Phase 5, refresh tokens will be managed server-side via httpOnly cookies
-    if (refreshToken && import.meta.env.DEV) {
+    if (refreshToken && import.meta.env.DEV && !this.isDevelopmentMockAuth()) {
       console.warn(
         "[PHASE 1 DEV] Refresh token provided but not stored - will use mock token for development"
       );
@@ -274,6 +312,16 @@ export class SecureTokenManager {
    * Retrieve stored access token with fingerprint validation
    */
   getAccessToken(): string | null {
+    // [PHASE 1-4 MOCK AUTH] Skip fingerprint validation in dev mode with mock auth
+    if (import.meta.env.DEV) {
+      const mockAuth =
+        (window as any).__VITE_ENV__?.VITE_MOCK_AUTH === "true" ||
+        import.meta.env.VITE_MOCK_AUTH === "true";
+      if (mockAuth) {
+        return this.accessToken;
+      }
+    }
+
     // Validate fingerprint hasn't changed (detect token theft)
     const currentFingerprint = this.generateFingerprint();
     if (this.tokenFingerprint && this.tokenFingerprint !== currentFingerprint) {
@@ -294,8 +342,16 @@ export class SecureTokenManager {
    * Production environments will throw an error to prevent security vulnerabilities
    */
   getRefreshToken(): string | null {
-    // Development only - return mock token for testing
+    // Development only - return stored or mock token for testing
     if (import.meta.env.DEV) {
+      // In mock auth mode, try to retrieve from sessionStorage first
+      if (this.isDevelopmentMockAuth()) {
+        const storedRefreshToken = sessionStorage.getItem("mock_refresh_token");
+        if (storedRefreshToken) {
+          return storedRefreshToken;
+        }
+      }
+
       console.warn(
         "[PHASE 1 DEV] Returning mock refresh token - Production will use httpOnly cookies"
       );
@@ -321,7 +377,13 @@ export class SecureTokenManager {
       this.accessToken = null;
     }
 
-    // Note: Refresh tokens are not stored client-side, so no clearing needed
+    // In development mode with mock auth, also clear sessionStorage
+    if (this.isDevelopmentMockAuth()) {
+      sessionStorage.removeItem("mock_access_token");
+      sessionStorage.removeItem("mock_refresh_token");
+    }
+
+    // Note: Refresh tokens are not stored client-side in production, so no clearing needed
     // In Phase 5, server-side refresh token invalidation will be handled via API call
 
     this.tokenFingerprint = null;
@@ -409,6 +471,27 @@ export class SecureTokenManager {
    * Validate token structure and claims
    */
   validateTokenStructure(token: string): { valid: boolean; error?: string } {
+    // [PHASE 1-4 MOCK AUTH] Be more lenient with mock tokens in development
+    if (import.meta.env.DEV) {
+      const mockAuth =
+        (window as any).__VITE_ENV__?.VITE_MOCK_AUTH === "true" ||
+        import.meta.env.VITE_MOCK_AUTH === "true";
+      if (mockAuth && (token.includes("mock") || token.startsWith("eyJ"))) {
+        // For mock tokens, only do basic validation
+        const payload = this.parseToken(token);
+        if (!payload) {
+          return { valid: false, error: "Invalid token format" };
+        }
+
+        // Only check for basic required claims for mock tokens
+        if (!payload.sub || !payload.email) {
+          return { valid: false, error: "Missing required claims" };
+        }
+
+        return { valid: true };
+      }
+    }
+
     const payload = this.parseToken(token);
 
     if (!payload) {

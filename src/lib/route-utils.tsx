@@ -1,5 +1,6 @@
-import { QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import { redirect } from "@tanstack/react-router";
+import { z } from "zod";
 import { api } from "@/lib/api-client";
 import { useProjectStore } from "@/stores/projectStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -39,12 +40,25 @@ export function validateSearchParams<T extends z.ZodType>(
 
 /**
  * Project validation utility for protected routes
+ * Returns a promise that resolves to the active project ID or redirects if none
  */
-export function requireActiveProject() {
-  const projectId = useProjectStore.getState().activeProjectId;
+export async function requireActiveProject(): Promise<string> {
+  // Use getState to avoid hook usage in non-component context
+  const state = useProjectStore.getState();
+  const projectId = state.activeProjectId;
+
   if (!projectId) {
-    throw redirect({ to: "/dashboard", search: { error: "no_project" } });
+    // Give a small delay to allow stores to sync if needed
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Check one more time after microtask
+    const recheckProjectId = useProjectStore.getState().activeProjectId;
+    if (!recheckProjectId) {
+      throw redirect({ to: "/dashboard", search: { error: "no_project" } });
+    }
+    return recheckProjectId;
   }
+
   return projectId;
 }
 

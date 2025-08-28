@@ -29,16 +29,20 @@ export const MOCK_USERS = {
 // Mock JWT tokens
 export function generateMockToken(userId: string): string {
   // Create a valid JWT structure (header.payload.signature)
-  const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+  const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" })).replace(/=/g, "");
+  const userKey = userId === "dev-user-001" ? "owner" : "staff";
+  const userEmail = MOCK_USERS[userKey]?.email || "unknown@example.com";
+
   const payload = btoa(
     JSON.stringify({
       sub: userId,
-      email: MOCK_USERS[userId === "dev-user-001" ? "owner" : "staff"].email,
+      email: userEmail,
+      role: MOCK_USERS[userKey]?.role || "MEMBER",
       exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour
       iat: Math.floor(Date.now() / 1000),
     })
-  );
-  const signature = btoa("mock-signature");
+  ).replace(/=/g, "");
+  const signature = btoa("mock-signature").replace(/=/g, "");
 
   return `${header}.${payload}.${signature}`;
 }

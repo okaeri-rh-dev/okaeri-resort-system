@@ -1376,7 +1376,7 @@ describe("BookingStore - Comprehensive Tests", () => {
           status: BookingStatus.CANCELLED,
           paidAmount: 35000 - refundAmount, // 7000 retained as cancellation fee
           paymentStatus: "REFUNDED",
-          refundAmount: refundAmount,
+          refundAmount,
           cancellationFee: 7000,
           notes: "Cancellation reason: Guest request. Refund: ₱28,000.00, Fee: ₱7,000.00",
         },
@@ -1462,7 +1462,7 @@ describe("BookingStore - Comprehensive Tests", () => {
       });
 
       // Calculate occupancy for current period (next 7 days)
-      const properties = useProjectStore.getState().properties;
+      const { properties } = useProjectStore.getState();
       const totalProperties = properties.length; // 2 properties
       const occupiedToday = 2; // property-1 and property-2 are occupied
       const occupancyRate = (occupiedToday / totalProperties) * 100;
@@ -1488,7 +1488,7 @@ describe("BookingStore - Comprehensive Tests", () => {
         totalAmount: 500, // USD
         currency: "USD",
         totalAmountPHP: 500 * conversionRate, // 28,250 PHP
-        conversionRate: conversionRate,
+        conversionRate,
         conversionDate: new Date().toISOString(),
       };
 

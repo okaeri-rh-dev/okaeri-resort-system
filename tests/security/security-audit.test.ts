@@ -114,7 +114,7 @@ describe("Security Audit Test Suite", () => {
     });
 
     it("should enforce password complexity requirements", async () => {
-      const weakPasswords = testPassword.weakPasswords;
+      const { weakPasswords } = testPassword;
 
       for (const password of weakPasswords) {
         const response = await testAuth.register({

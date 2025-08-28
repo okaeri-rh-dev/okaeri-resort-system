@@ -22,7 +22,7 @@ const prefetcher = new PrefetchManager(queryClient);
 const expensesLoader = createRouteLoader<{
   search: ExpensesSearchParams;
 }>(async ({ search }) => {
-  const projectId = requireActiveProject();
+  const projectId = await requireActiveProject();
   const searchParams = validateSearchParams(ExpensesSearchSchema, search);
 
   // Prefetch expenses with search parameters

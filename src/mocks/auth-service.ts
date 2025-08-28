@@ -14,7 +14,8 @@ class MockAuthService {
 
   async login(email: string, password: string): Promise<LoginResponse> {
     // Check if mock auth is enabled
-    if (!import.meta.env.DEV || !import.meta.env.VITE_MOCK_AUTH) {
+
+    if (!import.meta.env.DEV || import.meta.env.VITE_MOCK_AUTH !== "true") {
       throw new Error("Mock auth only available in development");
     }
 
@@ -45,7 +46,7 @@ class MockAuthService {
     return {
       user: userWithoutPassword as User,
       token: generateMockToken(user.id),
-      refreshToken: generateMockToken(user.id) + "-refresh",
+      refreshToken: `${generateMockToken(user.id)}-refresh`,
     };
   }
 
@@ -72,7 +73,7 @@ class MockAuthService {
     return {
       user: newUser,
       token: generateMockToken(newUser.id),
-      refreshToken: generateMockToken(newUser.id) + "-refresh",
+      refreshToken: `${generateMockToken(newUser.id)}-refresh`,
     };
   }
 
@@ -90,7 +91,7 @@ class MockAuthService {
 
     return {
       token: generateMockToken(userId),
-      refreshToken: generateMockToken(userId) + "-refresh",
+      refreshToken: `${generateMockToken(userId)}-refresh`,
     };
   }
 

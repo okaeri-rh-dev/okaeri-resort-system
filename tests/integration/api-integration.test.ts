@@ -7,6 +7,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import type { TestUser } from "./test-helpers";
 import {
   setupTestDatabase,
   teardownTestDatabase,
@@ -16,7 +17,6 @@ import {
   apiRequest,
   cleanupAllTestData,
   verifyDatabaseConnection,
-  TestUser,
   PerformanceTimer,
 } from "./test-helpers";
 

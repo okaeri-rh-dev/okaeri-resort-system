@@ -8,15 +8,21 @@
  */
 
 import { z } from "zod";
-import {
+import type {
   // Database types
   User,
   Booking,
-  Payment,
   CreateUserInput,
   CreateBookingInput,
-  CreatePaymentInput,
   EntityId,
+
+  // API types
+  ApiSuccessResponse,
+  ApiPaginatedResponse,
+} from "../types";
+import {
+  Payment,
+  CreatePaymentInput,
 
   // Validation schemas
   UserSchema,
@@ -24,10 +30,6 @@ import {
   CreateBookingSchema,
   CreatePaymentSchema,
   PhilippinePhoneSchema,
-
-  // API types
-  ApiSuccessResponse,
-  ApiPaginatedResponse,
   ApiError,
   createSuccessResponse,
   createErrorResponse,
@@ -410,7 +412,7 @@ class MockBookingService {
     // In real implementation, this would make HTTP request
     const booking: Booking = {
       id: crypto.randomUUID(),
-      bookingCode: "BK-" + Date.now(),
+      bookingCode: `BK-${Date.now()}`,
       ...validatedData,
       status: "pending",
       paymentStatus: "pending",

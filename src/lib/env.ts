@@ -205,7 +205,7 @@ class EnvironmentValidator {
 const envValidator = new EnvironmentValidator();
 
 // Export validated environment
-export const env = envValidator.env;
+export const { env } = envValidator;
 
 // Export utility functions
 export const { isProduction, isDevelopment, isTest, databaseUrl, corsOrigin, isFeatureEnabled } =

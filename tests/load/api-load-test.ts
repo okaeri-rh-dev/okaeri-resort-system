@@ -67,7 +67,7 @@ export const scenarios = {
 };
 
 // Test data
-const testUsers = new SharedArray("users", function () {
+const testUsers = new SharedArray("users", () => {
   return [
     { email: "test1@okaeri.ph", password: "TestPassword123!" },
     { email: "test2@okaeri.ph", password: "TestPassword123!" },
@@ -77,7 +77,7 @@ const testUsers = new SharedArray("users", function () {
   ];
 });
 
-const bookingData = new SharedArray("bookings", function () {
+const bookingData = new SharedArray("bookings", () => {
   const bookings = [];
   const today = new Date();
 

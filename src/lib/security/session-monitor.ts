@@ -31,6 +31,7 @@ export class SessionMonitor {
   private pausedAt: number = 0;
   private visibilityChangeHandler: (() => void) | null = null;
   private storageEventHandler: ((event: StorageEvent) => void) | null = null;
+  private memorySessionEvents: any[] = []; // Memory storage for production
 
   // Events to monitor for user activity
   private readonly ACTIVITY_EVENTS = [
@@ -53,6 +54,14 @@ export class SessionMonitor {
       SessionMonitor.instance = new SessionMonitor();
     }
     return SessionMonitor.instance;
+  }
+
+  /**
+   * Check if running in development mode
+   * SECURITY: Session events should only use browser storage in development
+   */
+  private isDevelopmentMode(): boolean {
+    return import.meta.env.DEV;
   }
 
   /**
@@ -389,27 +398,46 @@ export class SessionMonitor {
    * Log session events for audit trail
    */
   private logSessionEvent(event: string): void {
-    // Store in session storage for later submission to server
-    const events = JSON.parse(sessionStorage.getItem("session_events") || "[]");
-    events.push({
+    const newEvent = {
       event,
       timestamp: new Date().toISOString(),
       lastActivity: this.lastActivity,
-    });
+    };
 
-    // Keep only last 50 events
-    if (events.length > 50) {
-      events.shift();
+    // SECURITY: Use memory storage in production, sessionStorage only in dev
+    if (this.isDevelopmentMode()) {
+      // Development: Store in sessionStorage for debugging
+      const events = JSON.parse(sessionStorage.getItem("session_events") || "[]");
+      events.push(newEvent);
+
+      // Keep only last 50 events
+      if (events.length > 50) {
+        events.shift();
+      }
+
+      sessionStorage.setItem("session_events", JSON.stringify(events));
+    } else {
+      // Production: Store in memory only
+      this.memorySessionEvents.push(newEvent);
+
+      // Keep only last 50 events in memory
+      if (this.memorySessionEvents.length > 50) {
+        this.memorySessionEvents.shift();
+      }
     }
-
-    sessionStorage.setItem("session_events", JSON.stringify(events));
   }
 
   /**
    * Get session events for audit submission
    */
   getSessionEvents(): any[] {
-    return JSON.parse(sessionStorage.getItem("session_events") || "[]");
+    // SECURITY: Use memory storage in production, sessionStorage only in dev
+    if (this.isDevelopmentMode()) {
+      return JSON.parse(sessionStorage.getItem("session_events") || "[]");
+    } else {
+      // Production: Return from memory
+      return [...this.memorySessionEvents];
+    }
   }
 
   /**
@@ -417,7 +445,13 @@ export class SessionMonitor {
    */
   clearSessionEvents(): void {
     try {
-      sessionStorage.removeItem("session_events");
+      // SECURITY: Clear based on environment
+      if (this.isDevelopmentMode()) {
+        sessionStorage.removeItem("session_events");
+      } else {
+        // Production: Clear memory
+        this.memorySessionEvents = [];
+      }
     } catch (error) {
       console.error("Failed to clear session events:", error);
     }

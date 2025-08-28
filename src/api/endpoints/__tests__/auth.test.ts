@@ -95,7 +95,7 @@ describe("Auth API Endpoints", () => {
     });
 
     it("should handle rate limiting correctly", async () => {
-      const email = MOCK_USERS.OWNER.email;
+      const { email } = MOCK_USERS.OWNER;
 
       // Set rate limit to trigger
       mockHelpers.setRateLimit(`login:${email}`, 5, Date.now() + 300000);
@@ -504,7 +504,7 @@ describe("Auth API Endpoints", () => {
     });
 
     it("should handle rate limiting for password reset", async () => {
-      const email = MOCK_USERS.OWNER.email;
+      const { email } = MOCK_USERS.OWNER;
       mockHelpers.setRateLimit(`password-reset:${email}`, 3, Date.now() + 3600000);
 
       await expect(

@@ -60,7 +60,6 @@ vi.mock("@/components/navigation", () => ({
 
 // Mock TanStack Router
 vi.mock("@tanstack/react-router", () => ({
-  Outlet: () => <div data-testid="router-outlet">Page Content</div>,
   Link: ({ to, children, className, title, ...props }: any) => (
     <a href={to} className={className} title={title} {...props}>
       {children}
@@ -73,6 +72,9 @@ vi.mock("@tanstack/react-router", () => ({
 describe("DashboardLayout", () => {
   const mockSetSidebarOpen = vi.fn();
   const mockNavigate = vi.fn();
+
+  // Helper component to provide children for DashboardLayout
+  const TestContent = () => <div data-testid="router-outlet">Page Content</div>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -103,7 +105,11 @@ describe("DashboardLayout", () => {
 
   describe("Desktop Layout", () => {
     it("should render desktop layout with sidebar", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       // Check Philippine branding
       expect(screen.getByText("Okaeri Resort")).toBeInTheDocument();
@@ -124,21 +130,33 @@ describe("DashboardLayout", () => {
     });
 
     it("should highlight active navigation item", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       const dashboardLink = screen.getByRole("link", { name: /dashboard/i });
       expect(dashboardLink).toHaveClass("from-ocean-100");
     });
 
     it("should show navigation item descriptions on active state", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       // Dashboard should be active and show description
       expect(screen.getByText("Overview & Analytics")).toBeInTheDocument();
     });
 
     it("should render user profile dropdown in sidebar", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       expect(screen.getByTestId("user-profile-dropdown")).toBeInTheDocument();
     });
@@ -160,7 +178,11 @@ describe("DashboardLayout", () => {
     });
 
     it("should render mobile header with menu button", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       // Mobile menu button should be visible
       const menuButton = screen.getByRole("button", { name: /open menu/i });
@@ -175,7 +197,11 @@ describe("DashboardLayout", () => {
 
     it("should toggle mobile menu when menu button is clicked", async () => {
       const user = userEvent.setup();
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       const menuButton = screen.getByRole("button", { name: /open menu/i });
       await user.click(menuButton);
@@ -191,14 +217,22 @@ describe("DashboardLayout", () => {
         setOpen: mockSetSidebarOpen,
       });
 
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       const mobileMenu = screen.getByTestId("mobile-menu");
       expect(mobileMenu).toHaveAttribute("aria-hidden", "false");
     });
 
     it("should render mobile user profile button", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       expect(screen.getByTestId("user-profile-button")).toBeInTheDocument();
     });
@@ -208,7 +242,11 @@ describe("DashboardLayout", () => {
 
       // Initial render
       (useLocation as any).mockReturnValue({ pathname: "/dashboard" });
-      const { rerender } = renderWithProviders(<DashboardLayout />);
+      const { rerender } = renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       // Simulate route change
       (useLocation as any).mockReturnValue({ pathname: "/bookings" });
@@ -223,26 +261,42 @@ describe("DashboardLayout", () => {
 
   describe("Header Elements", () => {
     it("should render search bar", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       expect(screen.getByTestId("search-bar-button")).toBeInTheDocument();
     });
 
     it("should render notification bell", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       expect(screen.getByTestId("notification-bell")).toBeInTheDocument();
     });
 
     it("should render connection status indicator", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       expect(screen.getByText("Online")).toBeInTheDocument();
     });
 
     it("should render new booking button with Philippine context", async () => {
       const user = userEvent.setup();
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       const newBookingButton = screen.getByRole("button", { name: /create new booking/i });
       expect(newBookingButton).toBeInTheDocument();
@@ -254,13 +308,21 @@ describe("DashboardLayout", () => {
 
   describe("Philippine-specific Features", () => {
     it("should display Philippines location indicator", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       expect(screen.getByText("Philippines")).toBeInTheDocument();
     });
 
     it("should show resort branding with Filipino context", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       expect(screen.getByText("Okaeri Resort")).toBeInTheDocument();
 
@@ -270,7 +332,11 @@ describe("DashboardLayout", () => {
     });
 
     it("should use appropriate color scheme for tropical theme", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       const layout = screen.getByText("Okaeri Resort").closest("div");
       expect(layout).toHaveClass("from-ocean-500", "to-ocean-600");
@@ -279,14 +345,22 @@ describe("DashboardLayout", () => {
 
   describe("Accessibility", () => {
     it("should have proper ARIA labels for navigation", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       const menuButton = screen.getByRole("button", { name: /open menu/i });
       expect(menuButton).toHaveAttribute("aria-label", "Open menu");
     });
 
     it("should have proper link titles for navigation items", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       const dashboardLink = screen.getByRole("link", { name: /dashboard/i });
       expect(dashboardLink).toHaveAttribute("title", "Overview & Analytics");
@@ -294,7 +368,11 @@ describe("DashboardLayout", () => {
 
     it("should support keyboard navigation", async () => {
       const user = userEvent.setup();
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       const menuButton = screen.getByRole("button", { name: /open menu/i });
 
@@ -317,7 +395,11 @@ describe("DashboardLayout", () => {
         return selector ? selector(state) : state;
       });
 
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       // Check that interactive elements have minimum 44px height
       const menuButton = screen.getByRole("button", { name: /open menu/i });
@@ -339,7 +421,11 @@ describe("DashboardLayout", () => {
         return selector ? selector(state) : state;
       });
 
-      const { rerender } = renderWithProviders(<DashboardLayout />);
+      const { rerender } = renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       expect(screen.getByTestId("project-switcher-full")).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /open menu/i })).not.toBeInTheDocument();
@@ -363,7 +449,11 @@ describe("DashboardLayout", () => {
     });
 
     it("should show appropriate button text based on screen size", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       // Desktop should show full text
       const newBookingButton = screen.getByRole("button", { name: /create new booking/i });
@@ -384,7 +474,11 @@ describe("DashboardLayout", () => {
         return selector ? selector(state) : state;
       });
 
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       const layout = document.querySelector(".dark\\:from-gray-950");
       expect(layout).toBeInTheDocument();
@@ -398,7 +492,11 @@ describe("DashboardLayout", () => {
       (useNavigate as any).mockReturnValue(mockNavigateWithError);
 
       const user = userEvent.setup();
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       const newBookingButton = screen.getByRole("button", { name: /create new booking/i });
 
@@ -409,7 +507,11 @@ describe("DashboardLayout", () => {
 
   describe("Performance", () => {
     it("should render efficiently without unnecessary re-renders", () => {
-      const { rerender } = renderWithProviders(<DashboardLayout />);
+      const { rerender } = renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       // Measure render performance
       const startTime = performance.now();
@@ -423,13 +525,21 @@ describe("DashboardLayout", () => {
 
   describe("Integration with TanStack Router", () => {
     it("should render router outlet for page content", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       expect(screen.getByTestId("router-outlet")).toBeInTheDocument();
     });
 
     it("should render breadcrumb component", () => {
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       expect(screen.getByTestId("breadcrumb")).toBeInTheDocument();
     });
@@ -438,7 +548,11 @@ describe("DashboardLayout", () => {
       const { useLocation } = require("@tanstack/react-router");
       (useLocation as any).mockReturnValue({ pathname: "/bookings" });
 
-      renderWithProviders(<DashboardLayout />);
+      renderWithProviders(
+        <DashboardLayout>
+          <TestContent />
+        </DashboardLayout>
+      );
 
       const bookingsLink = screen.getByRole("link", { name: /bookings/i });
       expect(bookingsLink).toHaveClass("from-ocean-100");

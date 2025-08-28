@@ -6,15 +6,17 @@
  * across all database operations and provide helper types for CRUD operations.
  */
 
-import { InferSelectModel, InferInsertModel } from "drizzle-orm";
+import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
 
 // Import database schemas
-import {
+import { createProjectSchema } from "../lib/db/schema";
+
+import type {
+  ProjectSchema,
   users,
   projects,
   userProjectPermissions,
   auditLogs,
-  createProjectSchema,
   USER_ROLES,
   BOOKING_STATUS,
   PAYMENT_STATUS,
@@ -23,8 +25,6 @@ import {
   AUDIT_CATEGORIES,
   AUDIT_SEVERITIES,
 } from "../lib/db/schema";
-
-import type { ProjectSchema } from "../lib/db/schema";
 
 // ====================================
 // GLOBAL SCHEMA TYPES
@@ -55,14 +55,14 @@ export type UserWithoutSensitiveData = Omit<
   "passwordHash" | "emailVerificationToken" | "passwordResetToken"
 >;
 
-export type LoginAttempt = {
+export interface LoginAttempt {
   timestamp: string;
   ipAddress: string;
   userAgent: string;
   success: boolean;
-};
+}
 
-export type UserPreferences = {
+export interface UserPreferences {
   language?: "en" | "fil";
   timezone?: string;
   notifications?: {
@@ -70,7 +70,7 @@ export type UserPreferences = {
     sms: boolean;
     push: boolean;
   };
-};
+}
 
 /**
  * Project entity types
@@ -90,42 +90,42 @@ export type UpdateProjectInput = Partial<Omit<CreateProjectInput, "ownerId" | "s
   // Owner and slug changes require special handling
 };
 
-export type ProjectCoordinates = {
+export interface ProjectCoordinates {
   lat: number;
   lng: number;
-};
+}
 
-export type ProjectSocialMedia = {
+export interface ProjectSocialMedia {
   facebook?: string;
   instagram?: string;
   twitter?: string;
-};
+}
 
-export type ProjectBookingRules = {
+export interface ProjectBookingRules {
   advanceBookingDays?: number;
   cancellationHours?: number;
   requireDeposit?: boolean;
   depositPercentage?: number;
-};
+}
 
-export type ProjectPaymentMethods = {
+export interface ProjectPaymentMethods {
   cash?: boolean;
   gcash?: boolean;
   bankTransfer?: boolean;
   creditCard?: boolean;
-};
+}
 
-export type ProjectNotificationSettings = {
+export interface ProjectNotificationSettings {
   bookingConfirmation?: boolean;
   paymentReceived?: boolean;
   dailyReport?: boolean;
-};
+}
 
-export type ProjectSettings = {
+export interface ProjectSettings {
   bookingRules?: ProjectBookingRules;
   paymentMethods?: ProjectPaymentMethods;
   notifications?: ProjectNotificationSettings;
-};
+}
 
 /**
  * User Project Permission entity types
@@ -143,14 +143,14 @@ export type UpdateUserProjectPermissionInput = Partial<
   Omit<CreateUserProjectPermissionInput, "userId" | "projectId">
 >;
 
-export type PermissionActions = {
+export interface PermissionActions {
   view?: boolean;
   create?: boolean;
   update?: boolean;
   delete?: boolean;
-};
+}
 
-export type ResourcePermissions = {
+export interface ResourcePermissions {
   bookings?: PermissionActions;
   payments?: PermissionActions;
   expenses?: PermissionActions;
@@ -168,7 +168,7 @@ export type ResourcePermissions = {
     remove?: boolean;
     updateRoles?: boolean;
   };
-};
+}
 
 /**
  * Audit Log entity types
@@ -186,7 +186,7 @@ export type CreateAuditLogInput = Omit<NewAuditLog, "id" | "createdAt">;
 /**
  * Helper type to infer types from project schema
  */
-type ProjectSchemaTypes<T extends ProjectSchema> = {
+interface ProjectSchemaTypes<T extends ProjectSchema> {
   Booking: InferSelectModel<T["bookings"]>;
   NewBooking: InferInsertModel<T["bookings"]>;
   Payment: InferSelectModel<T["payments"]>;
@@ -201,7 +201,7 @@ type ProjectSchemaTypes<T extends ProjectSchema> = {
   NewBookingTimeline: InferInsertModel<T["bookingTimeline"]>;
   ProjectSettings: InferSelectModel<T["projectSettings"]>;
   NewProjectSettings: InferInsertModel<T["projectSettings"]>;
-};
+}
 
 // Create a sample project schema for type inference
 const sampleProjectSchema = createProjectSchema("sample");
@@ -277,12 +277,12 @@ export type UpdateExpenseInput = Partial<Omit<CreateExpenseInput, "createdBy">> 
   approvedBy?: string;
 };
 
-export type ExpenseAttachment = {
+export interface ExpenseAttachment {
   url: string;
   filename: string;
   size: number;
   mimeType: string;
-};
+}
 
 /**
  * Income entity types
@@ -353,11 +353,11 @@ export type PhpAmount = string;
 /**
  * Generic entity with audit fields
  */
-export type EntityWithAudit = {
+export interface EntityWithAudit {
   id: EntityId;
   createdAt: Timestamp;
   updatedAt: Timestamp;
-};
+}
 
 /**
  * Generic entity with user tracking
@@ -370,22 +370,22 @@ export type EntityWithUserTracking = EntityWithAudit & {
 /**
  * Pagination metadata for database queries
  */
-export type PaginationMeta = {
+export interface PaginationMeta {
   total: number;
   page: number;
   limit: number;
   totalPages: number;
   hasNext: boolean;
   hasPrev: boolean;
-};
+}
 
 /**
  * Generic paginated response from database
  */
-export type PaginatedResult<T> = {
+export interface PaginatedResult<T> {
   data: T[];
   meta: PaginationMeta;
-};
+}
 
 /**
  * Database filter operators
@@ -407,11 +407,11 @@ export type FilterOperator =
 /**
  * Generic database filter
  */
-export type DatabaseFilter<T = unknown> = {
+export interface DatabaseFilter<T = unknown> {
   field: string;
   operator: FilterOperator;
   value: T;
-};
+}
 
 /**
  * Database sort order
@@ -421,21 +421,21 @@ export type SortOrder = "asc" | "desc";
 /**
  * Database sort specification
  */
-export type DatabaseSort = {
+export interface DatabaseSort {
   field: string;
   order: SortOrder;
-};
+}
 
 /**
  * Database query options
  */
-export type DatabaseQueryOptions = {
+export interface DatabaseQueryOptions {
   page?: number;
   limit?: number;
   filters?: DatabaseFilter[];
   sorts?: DatabaseSort[];
   include?: string[]; // Relations to include
-};
+}
 
 // ====================================
 // TYPE GUARDS

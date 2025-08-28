@@ -586,7 +586,7 @@ describe("API Client", () => {
       expect(response.data).toHaveProperty("filename", "test.txt");
 
       // Verify Content-Type header was removed
-      const headers = fetchSpy.mock.calls[0][1].headers;
+      const { headers } = fetchSpy.mock.calls[0][1];
       expect(headers).not.toHaveProperty("Content-Type");
 
       global.fetch = originalFetch;

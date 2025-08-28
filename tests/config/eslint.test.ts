@@ -629,7 +629,7 @@ describe("🔧 ESLint Configuration - Phase 1.1 Foundation", () => {
     it("should ignore unnecessary files for faster linting", () => {
       const ignoresConfig = eslintConfig.find((config) => config.ignores && !config.files);
 
-      const ignores = ignoresConfig.ignores;
+      const { ignores } = ignoresConfig;
 
       // Should ignore large directories that don't need linting
       expect(ignores).toContain("node_modules/**/*");

@@ -536,7 +536,7 @@ describe("Security Integration Tests", () => {
   describe("Cross-Module Integration Scenarios", () => {
     it("should handle complete login flow with all security features", () => {
       const mockUser = MOCK_USERS.OWNER;
-      const email = mockUser.email;
+      const { email } = mockUser;
 
       // Check rate limiting first
       const rateLimitResult = rateLimiter.check("login", {

@@ -5,6 +5,7 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
+import { shallow } from "zustand/shallow";
 import type { Notification } from "@/types/common";
 
 interface Modal {
@@ -237,10 +238,8 @@ export const useUIStore = create<UIState & UIActions>()(
       setIsMobile: (isMobile: boolean) => {
         set((state) => {
           state.isMobile = isMobile;
-          // Auto-close sidebar on mobile
-          if (isMobile) {
-            state.sidebarOpen = false;
-          }
+          // Note: Sidebar closing on mobile is handled by DashboardLayout useEffect
+          // to prevent infinite loop with mobile detection
         });
       },
 
@@ -330,30 +329,40 @@ export const useUIStore = create<UIState & UIActions>()(
 );
 
 // Selector hooks for better performance
+// Use shallow comparison to prevent infinite loops
 export const useSidebar = () =>
-  useUIStore((state) => ({
-    open: state.sidebarOpen,
-    collapsed: state.sidebarCollapsed,
-    toggle: state.toggleSidebar,
-    setOpen: state.setSidebarOpen,
-    setCollapsed: state.setSidebarCollapsed,
-  }));
+  useUIStore(
+    (state) => ({
+      open: state.sidebarOpen,
+      collapsed: state.sidebarCollapsed,
+      toggle: state.toggleSidebar,
+      setOpen: state.setSidebarOpen,
+      setCollapsed: state.setSidebarCollapsed,
+    }),
+    shallow
+  );
 
 export const useModals = () =>
-  useUIStore((state) => ({
-    modals: state.modals,
-    open: state.openModal,
-    close: state.closeModal,
-    closeAll: state.closeAllModals,
-  }));
+  useUIStore(
+    (state) => ({
+      modals: state.modals,
+      open: state.openModal,
+      close: state.closeModal,
+      closeAll: state.closeAllModals,
+    }),
+    shallow
+  );
 
 export const useNotifications = () =>
-  useUIStore((state) => ({
-    notifications: state.notifications,
-    add: state.addNotification,
-    remove: state.removeNotification,
-    clear: state.clearNotifications,
-  }));
+  useUIStore(
+    (state) => ({
+      notifications: state.notifications,
+      add: state.addNotification,
+      remove: state.removeNotification,
+      clear: state.clearNotifications,
+    }),
+    shallow
+  );
 
 export const useToast = () => useUIStore((state) => state.toast);
 

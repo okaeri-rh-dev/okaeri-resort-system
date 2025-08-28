@@ -4,7 +4,7 @@
  * DELETE /api/auth/sessions/:id - Revoke a session
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { VercelRequest as _VercelRequest, VercelResponse } from "@vercel/node";
 import { requireAuth, type AuthenticatedRequest } from "../middleware/auth";
 import { query, execute } from "../lib/db";
 import { successResponse, errorResponse, AuthorizationError } from "../_lib/types";

@@ -6,9 +6,9 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
+import { BookingStatus } from "@/types/common";
 import type {
   Booking,
-  BookingStatus,
   CreateBookingData,
   UpdateBookingData,
   BookingCalendarEvent,
@@ -469,7 +469,7 @@ export const useBookingStore = create<BookingState & BookingActions>()(
         // View data
         getCalendarEvents: (startDate: Date, endDate: Date) => {
           const bookings = [...get().bookings, ...get().optimisticBookings];
-          const properties = useProjectStore.getState().properties;
+          const { properties } = useProjectStore.getState();
 
           const events: BookingCalendarEvent[] = bookings
             .filter((booking) => {
@@ -504,7 +504,7 @@ export const useBookingStore = create<BookingState & BookingActions>()(
 
         getTimelineData: (startDate: Date, endDate: Date) => {
           const bookings = [...get().bookings, ...get().optimisticBookings];
-          const properties = useProjectStore.getState().properties;
+          const { properties } = useProjectStore.getState();
 
           const timeline: BookingTimelineData[] = properties.map((property) => {
             const propertyBookings = bookings

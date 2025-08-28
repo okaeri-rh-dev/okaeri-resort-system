@@ -99,7 +99,7 @@ describe("Database Performance", () => {
         const stop = tracker.start("indexed_query");
         await sql`
           SELECT * FROM ${sql.identifier(testSchema)}.bookings
-          WHERE booking_code = ${"BK-TEST-" + i}
+          WHERE booking_code = ${`BK-TEST-${i}`}
         `;
         stop();
       }

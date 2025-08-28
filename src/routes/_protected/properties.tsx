@@ -22,7 +22,7 @@ const prefetcher = new PrefetchManager(queryClient);
 const propertiesLoader = createRouteLoader<{
   search: PropertiesSearchParams;
 }>(async ({ search }) => {
-  const projectId = requireActiveProject();
+  const projectId = await requireActiveProject();
   const searchParams = validateSearchParams(PropertiesSearchSchema, search);
 
   // Prefetch properties with search parameters

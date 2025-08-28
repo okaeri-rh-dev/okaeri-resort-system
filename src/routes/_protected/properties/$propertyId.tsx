@@ -26,7 +26,7 @@ const propertyDetailLoader = createRouteLoader<{
   params: PropertyParams;
   search: PropertySearchParams;
 }>(async ({ params, search }) => {
-  const projectId = requireActiveProject();
+  const projectId = await requireActiveProject();
   const { propertyId } = validateRouteParams(PropertyParamsSchema, params);
   const searchParams = validateSearchParams(PropertySearchSchema, search);
 

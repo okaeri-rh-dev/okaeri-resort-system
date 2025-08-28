@@ -28,7 +28,7 @@ const confirmResetSchema = z
     path: ["confirmPassword"],
   });
 
-type ConfirmResetRequest = z.infer<typeof confirmResetSchema>;
+type _ConfirmResetRequest = z.infer<typeof confirmResetSchema>;
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -53,7 +53,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     let tokenData: { userId: string; email: string };
     try {
       tokenData = verifyPasswordResetToken(token);
-    } catch (error) {
+    } catch {
       return res
         .status(400)
         .json(errorResponse(new AuthenticationError("Invalid or expired reset token")));
@@ -135,7 +135,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       );
 
       // Send confirmation email (stub for now)
-      console.log(`[ConfirmReset] Password reset completed for ${tokenData.email}`);
+      // console.log(`[ConfirmReset] Password reset completed for ${tokenData.email}`);
       // TODO: Send email notification about password change
     });
 

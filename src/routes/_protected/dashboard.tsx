@@ -28,19 +28,10 @@ export const Route = createFileRoute("/_protected/dashboard")({
 
     // Auth is already validated by _protected layout
     // User is guaranteed to be authenticated at this point
-    const user = context.user;
+    const { user } = context;
 
-    // Queue intelligent prefetch for likely next routes
-    const navigationStore = useNavigationStore.getState();
-
-    // High priority prefetch for frequently accessed routes from dashboard
-    navigationStore.queuePrefetch("/_protected/bookings", 9);
-    navigationStore.queuePrefetch("/_protected/properties", 8);
-    navigationStore.queuePrefetch("/_protected/expenses", 7);
-
-    // Lower priority prefetch for settings routes
-    navigationStore.queuePrefetch("/_protected/reports", 5);
-    navigationStore.queuePrefetch("/_protected/team", 4);
+    // Note: Prefetching is now handled in the component to avoid store access issues
+    // This prevents the "Maximum update depth exceeded" error
 
     // Track navigation performance
     const loadEnd = performance.now();

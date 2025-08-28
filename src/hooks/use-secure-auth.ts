@@ -274,7 +274,7 @@ export function useSecureAuth() {
   // Session management functions
   const extendSession = useCallback(async () => {
     try {
-      await authStore.refreshToken();
+      await authStore.refreshTokens();
       sessionMonitor.extendSession();
       setSessionWarning(false);
       toast.success("Session extended", "Your session has been extended.");

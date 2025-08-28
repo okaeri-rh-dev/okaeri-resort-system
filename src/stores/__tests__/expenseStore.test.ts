@@ -778,7 +778,7 @@ describe("ExpenseStore - Comprehensive Tests", () => {
         result.current.queueOfflineExpense(ExpenseTestBuilder.create().build());
       });
 
-      const tempId = result.current.offlineQueue[0]!.tempId;
+      const { tempId } = result.current.offlineQueue[0]!;
 
       act(() => {
         result.current.removeFromQueue(tempId);

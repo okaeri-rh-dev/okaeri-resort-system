@@ -26,7 +26,7 @@ const expenseDetailLoader = createRouteLoader<{
   params: ExpenseParams;
   search: ExpenseSearchParams;
 }>(async ({ params, search }) => {
-  const projectId = requireActiveProject();
+  const projectId = await requireActiveProject();
   const { expenseId } = validateRouteParams(ExpenseParamsSchema, params);
   const searchParams = validateSearchParams(ExpenseSearchSchema, search);
 

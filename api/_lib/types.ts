@@ -104,7 +104,7 @@ export interface RateLimitConfig {
 export class ApiError extends Error {
   constructor(
     public statusCode: number,
-    public message: string,
+    public override message: string, // PHASE 1 TEMPORARY: Added override modifier
     public code?: string
   ) {
     super(message);

@@ -227,8 +227,8 @@ export default defineConfig({
     outDir: "dist",
     assetsDir: "assets",
 
-    // Enable source maps for debugging
-    sourcemap: true,
+    // Enable source maps for debugging (hidden in production)
+    sourcemap: process.env.NODE_ENV === "development" ? true : "hidden",
 
     // Minification
     minify: "esbuild",

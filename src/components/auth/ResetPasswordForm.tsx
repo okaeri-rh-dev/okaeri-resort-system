@@ -150,7 +150,7 @@ export function ResetPasswordForm() {
   } = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
-      token: token,
+      token,
       password: "",
       confirmPassword: "",
     },

@@ -22,7 +22,7 @@ const prefetcher = new PrefetchManager(queryClient);
 const teamLoader = createRouteLoader<{
   search: TeamSearchParams;
 }>(async ({ search }) => {
-  const projectId = requireActiveProject();
+  const projectId = await requireActiveProject();
   const searchParams = validateSearchParams(TeamSearchSchema, search);
 
   // Prefetch team members with search parameters

@@ -3,12 +3,12 @@
  * Implements secure token management, session monitoring, and audit logging
  */
 
+import { apiClient } from "@/lib/api-client";
+import { secureTokenManager as tokenManager } from "@/lib/security/secure-token-manager";
+import type { AuthState, User } from "@/types/common";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import type { User, AuthState } from "@/types/common";
-import { apiClient } from "@/lib/api-client";
-import { secureTokenManager as tokenManager } from "@/lib/security/secure-token-manager";
 
 import { sessionMonitor } from "@/lib/security/session-monitor";
 
@@ -18,7 +18,7 @@ import { rateLimiter } from "@/lib/security/rate-limiter";
 
 import { permissionGuard } from "@/lib/security/permission-guard";
 
-import { TOKEN_EXPIRY, RATE_LIMITS, AUDIT_EVENTS, SESSION_CONFIG } from "@/lib/security/constants";
+import { AUDIT_EVENTS, RATE_LIMITS, TOKEN_EXPIRY } from "@/lib/security/constants";
 
 // [PHASE 1-4 MOCK AUTH - Remove in Phase 5.2]
 import { config } from "@/config";
@@ -29,7 +29,7 @@ interface AuthActions {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
-  refreshToken: () => Promise<void>;
+  refreshTokens: () => Promise<void>; // PHASE 1 TEMPORARY: Renamed to avoid collision
   refreshSession: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
@@ -69,6 +69,7 @@ interface LoginResponse {
 // Enhanced auth store without localStorage persistence for security
 export const useAuthStore = create<AuthState & AuthActions>()(
   devtools(
+    // eslint-disable-next-line max-lines-per-function
     immer((set, get) => ({
       // Initial state
       user: null,
@@ -94,7 +95,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
             // Use existing token management
             tokenManager.storeTokens(token, refreshToken);
-            apiClient.setAuthToken(token);
+            // Token is managed by TokenManager, not directly by apiClient
 
             // Start session monitoring
             sessionMonitor.start({
@@ -115,6 +116,13 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               state.sessionExpiry = Date.now() + TOKEN_EXPIRY.ACCESS_TOKEN;
               state.isAuthenticated = true;
               state.isLoading = false;
+            });
+
+            // Debug logging for auth state
+            console.log("[AUTH] Login successful:", {
+              user: user.email,
+              isAuthenticated: get().isAuthenticated,
+              hasToken: !!tokenManager.getAccessToken(),
             });
 
             auditLogger.logAuth("login", user, true);
@@ -168,7 +176,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           tokenManager.storeTokens(token, refreshToken);
 
           // Set auth token in API client
-          apiClient.setAuthToken(token);
+          // Token is managed by TokenManager, not directly by apiClient
 
           // Start session monitoring
           sessionMonitor.start({
@@ -184,7 +192,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
           // Register token refresh callback
           tokenManager.onTokenRefresh(async () => {
-            await get().refreshToken();
+            await get().refreshTokens();
           });
 
           set((state) => {
@@ -219,7 +227,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           await mockAuthService.logout();
           sessionMonitor.stop();
           tokenManager.clearTokens();
-          apiClient.setAuthToken(null);
+          // Token clearing is managed by TokenManager, not directly by apiClient
 
           set((state) => {
             state.user = null;
@@ -254,7 +262,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           tokenManager.clearTokens();
 
           // Clear auth token from API client
-          apiClient.setAuthToken(null);
+          // Token clearing is managed by TokenManager, not directly by apiClient
 
           // Log logout
           auditLogger.logAuth("logout", user, true);
@@ -283,7 +291,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             const { user, token, refreshToken } = response;
 
             tokenManager.storeTokens(token, refreshToken);
-            apiClient.setAuthToken(token);
+            // Token is managed by TokenManager, not directly by apiClient
 
             sessionMonitor.start({
               timeout: TOKEN_EXPIRY.SESSION_TIMEOUT,
@@ -343,10 +351,20 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           }
 
           // Store tokens securely
+          console.log("[DEBUG] Storing tokens:", {
+            token: `${token.substring(0, 20)}...`,
+            refreshToken,
+          });
           tokenManager.storeTokens(token, refreshToken);
+          console.log("[DEBUG] Tokens stored, checking retrieval...");
+          const storedToken = tokenManager.getAccessToken();
+          console.log(
+            "[DEBUG] Retrieved token:",
+            storedToken ? `${storedToken.substring(0, 20)}...` : null
+          );
 
           // Set auth token in API client
-          apiClient.setAuthToken(token);
+          // Token is managed by TokenManager, not directly by apiClient
 
           // Start session monitoring
           sessionMonitor.start({
@@ -382,7 +400,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         }
       },
 
-      refreshToken: async () => {
+      refreshTokens: async () => {
+        // PHASE 1 TEMPORARY: Renamed to avoid collision with state property
         const refreshToken = tokenManager.getRefreshToken();
         const { user } = get();
 
@@ -397,7 +416,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             const { token, refreshToken: newRefreshToken } = response;
 
             tokenManager.storeTokens(token, newRefreshToken);
-            apiClient.setAuthToken(token);
+            // Token is managed by TokenManager, not directly by apiClient
 
             set((state) => {
               state.token = token;
@@ -432,7 +451,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           tokenManager.storeTokens(token, newRefreshToken);
 
           // Update auth token in API client
-          apiClient.setAuthToken(token);
+          // Token is managed by TokenManager, not directly by apiClient
 
           set((state) => {
             state.token = token;
@@ -457,8 +476,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
       refreshSession: async () => {
         // This is a wrapper to maintain compatibility with API client
-        // It calls the existing refreshToken method
-        await get().refreshToken();
+        // It calls the existing refreshTokens method
+        await get().refreshTokens();
       },
 
       resetPassword: async (email: string) => {
@@ -575,10 +594,13 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             const user = await mockAuthService.fetchCurrentUser(token);
             set((state) => {
               state.user = user;
+              state.token = token; // Ensure token is set
               state.isAuthenticated = true;
               state.isLoading = false;
             });
+            console.log("[AUTH] User fetched successfully:", user.email);
           } catch (error) {
+            console.error("[AUTH] Failed to fetch user:", error);
             get().logout();
           }
           return;
@@ -614,7 +636,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         if (token) {
           tokenManager.storeTokens(token, get().refreshToken || "");
         }
-        apiClient.setAuthToken(token);
+        // Token is managed by TokenManager, not directly by apiClient
         set((state) => {
           state.token = token;
         });
@@ -659,7 +681,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         if (tokenManager.isTokenExpired(token, 0)) {
           // Token expired, trigger refresh
           get()
-            .refreshToken()
+            .refreshTokens()
             .catch(() => {
               get().logout();
             });
@@ -689,17 +711,36 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
       // Initialize auth on app start
       initializeAuth: async () => {
+        console.log("[AUTH] Initializing auth...");
         const token = tokenManager.getAccessToken();
         const refreshToken = tokenManager.getRefreshToken();
+
+        console.log("[AUTH] Found stored tokens:", {
+          hasToken: !!token,
+          hasRefreshToken: !!refreshToken,
+        });
 
         if (token && refreshToken) {
           // Check if token is valid
           if (!tokenManager.isTokenExpired(token, 0)) {
-            // Restore session
-            apiClient.setAuthToken(token);
+            console.log("[AUTH] Token is valid, restoring session...");
+
+            // First, restore tokens to state
+            set((state) => {
+              state.token = token;
+              state.refreshToken = refreshToken;
+              state.sessionExpiry = Date.now() + TOKEN_EXPIRY.ACCESS_TOKEN;
+            });
 
             try {
               await get().fetchCurrentUser();
+
+              // Ensure auth state is properly set
+              const currentState = get();
+              console.log("[AUTH] Session restored:", {
+                user: currentState.user?.email,
+                isAuthenticated: currentState.isAuthenticated,
+              });
 
               // Restart session monitoring
               sessionMonitor.start({
@@ -712,21 +753,24 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
               // Register token refresh
               tokenManager.onTokenRefresh(async () => {
-                await get().refreshToken();
+                await get().refreshTokens();
               });
             } catch (error) {
-              console.error("Failed to restore session:", error);
+              console.error("[AUTH] Failed to restore session:", error);
               get().logout();
             }
           } else {
+            console.log("[AUTH] Token expired, trying to refresh...");
             // Token expired, try to refresh
             try {
-              await get().refreshToken();
+              await get().refreshTokens();
             } catch (error) {
-              console.error("Failed to refresh token:", error);
+              console.error("[AUTH] Failed to refresh token:", error);
               get().logout();
             }
           }
+        } else {
+          console.log("[AUTH] No stored tokens found");
         }
       },
     })),

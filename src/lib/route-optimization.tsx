@@ -4,7 +4,8 @@
  * Optimized for mobile-first performance and PWA capabilities
  */
 
-import { lazy, ComponentType, ReactNode } from "react";
+import type { ComponentType } from "react";
+import { lazy, ReactNode } from "react";
 import { QueryClient } from "@tanstack/react-query";
 import { RouteApi } from "@tanstack/react-router";
 

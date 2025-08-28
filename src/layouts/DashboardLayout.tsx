@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useUser } from "@/stores/authStore";
 import { useUIStore, useSidebar } from "@/stores/uiStore";
@@ -27,7 +27,7 @@ import {
   Wifi,
 } from "lucide-react";
 
-export function DashboardLayout() {
+export function DashboardLayout({ children }: { children?: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const user = useUser();
@@ -187,7 +187,7 @@ export function DashboardLayout() {
         <main className="from-sand-25 to-ocean-25 dark:to-ocean-950 flex-1 overflow-y-auto bg-gradient-to-br via-white dark:from-gray-950 dark:via-gray-900">
           <div className="container mx-auto max-w-7xl px-4 py-6">
             <ResortBreadcrumb />
-            <Outlet />
+            {children}
           </div>
         </main>
       </div>

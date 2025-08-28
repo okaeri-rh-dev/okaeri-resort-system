@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useProjectStore } from "@/stores/projectStore";
 import { queryKeys } from "@/lib/query-client";
+import { useNavigationStore } from "@/lib/store-router-integration";
 import {
   TrendingUp,
   TrendingDown,
@@ -16,6 +18,20 @@ import {
 
 export function DashboardPage() {
   const { currentProject } = useProjectStore();
+
+  // Handle route prefetching in the component to avoid store access in beforeLoad
+  useEffect(() => {
+    const navigationStore = useNavigationStore.getState();
+
+    // High priority prefetch for frequently accessed routes from dashboard
+    navigationStore.queuePrefetch("/_protected/bookings", 9);
+    navigationStore.queuePrefetch("/_protected/properties", 8);
+    navigationStore.queuePrefetch("/_protected/expenses", 7);
+
+    // Lower priority prefetch for settings routes
+    navigationStore.queuePrefetch("/_protected/reports", 5);
+    navigationStore.queuePrefetch("/_protected/team", 4);
+  }, []);
 
   // Fetch dashboard data
   const { data: dashboardData, isLoading } = useQuery({

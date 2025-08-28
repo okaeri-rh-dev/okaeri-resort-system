@@ -3,11 +3,11 @@
  * POST /api/auth/resend-verification
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { VercelRequest as _VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
 import jwt from "jsonwebtoken";
 import { queryOne, execute } from "../lib/db";
-import { requireAuth, type AuthenticatedRequest } from "../middleware/auth";
+import { requireAuth as _requireAuth, type AuthenticatedRequest } from "../middleware/auth";
 import { rateLimit } from "../middleware/rate-limit";
 import { successResponse, errorResponse, ValidationError } from "../_lib/types";
 
@@ -16,7 +16,7 @@ const resendVerificationSchema = z.object({
   email: z.string().email("Invalid email format").optional(),
 });
 
-type ResendVerificationRequest = z.infer<typeof resendVerificationSchema>;
+type _ResendVerificationRequest = z.infer<typeof resendVerificationSchema>;
 
 async function handler(req: AuthenticatedRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -118,10 +118,10 @@ async function handler(req: AuthenticatedRequest, res: VercelResponse) {
     );
 
     // Send verification email (stub for now)
-    const verificationUrl = `${process.env.APP_URL || "https://app.okaeri.ph"}/verify-email?token=${verificationToken}`;
+    const _verificationUrl = `${process.env.APP_URL || "https://app.okaeri.ph"}/verify-email?token=${verificationToken}`;
 
     // TODO: Implement email sending
-    console.log(`[ResendVerification] Verification URL for ${userEmail}: ${verificationUrl}`);
+    // console.log(`[ResendVerification] Verification URL for ${userEmail}: ${verificationUrl}`);
 
     // In production, you would send an email like this:
     // await sendVerificationEmail({

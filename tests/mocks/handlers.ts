@@ -4,7 +4,14 @@
  */
 
 import { http, HttpResponse } from "msw";
-import { MOCK_USERS, TEST_CONSTANTS, philippineTestData } from "../utils/test-utils";
+import { MOCK_USERS, philippineTestData } from "../utils/test-utils";
+
+// Test constants
+const TEST_CONSTANTS = {
+  API_BASE_URL: "http://localhost:3000",
+  MOCK_USER_ID: "test-user-123",
+  MOCK_PROJECT_ID: "test-project-456",
+};
 import type { User, Booking, Project, ProjectMembership } from "@/types/common";
 
 // Enhanced mock database for comprehensive testing

@@ -6,6 +6,10 @@
 import { beforeAll, afterEach, afterAll, vi } from "vitest";
 import "@testing-library/jest-dom";
 import { config } from "dotenv";
+import { enableMapSet } from "immer";
+
+// Enable Immer MapSet plugin for zustand stores
+enableMapSet();
 
 // Load test environment variables
 config({ path: ".env.test" });

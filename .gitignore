@@ -143,10 +143,24 @@ Thumbs.db
 *.bak
 *.backup
 
-# Test artifacts
+# Test artifacts and results
 test-results/
+test-results.json
 playwright-report/
+playwright-results.json
 test-results.xml
+
+# Build artifacts
+*.meta.json.gz
+html.meta.json.gz
+
+# Browser testing artifacts
+cookies.txt
+*.cookie
+
+# Temporary test files
+test-*.html
+verify-*.html
 
 # Storybook build outputs
 storybook-static/

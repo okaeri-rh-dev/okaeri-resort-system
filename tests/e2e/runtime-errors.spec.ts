@@ -1,4 +1,5 @@
-import { test, expect, ConsoleMessage, Page } from "@playwright/test";
+import type { ConsoleMessage, Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 // Runtime error detection configuration
 const RUNTIME_ERROR_PATTERNS = [
@@ -38,8 +39,8 @@ const RUNTIME_ERROR_PATTERNS = [
 // Pages to check for runtime errors
 const PAGES_TO_CHECK = [
   { path: "/", name: "Home" },
-  { path: "/auth/login", name: "Login" },
-  { path: "/auth/register", name: "Register" },
+  { path: "/login", name: "Login" },
+  { path: "/register", name: "Register" },
   { path: "/dashboard", name: "Dashboard" },
   { path: "/bookings", name: "Bookings" },
   { path: "/properties", name: "Properties" },
@@ -97,7 +98,7 @@ test.describe("Runtime Error Detection", () => {
     const errors = await detectConsoleErrors(page);
 
     // Navigate to registration page where regex validation might occur
-    await page.goto("/auth/register", { waitUntil: "domcontentloaded" });
+    await page.goto("/register", { waitUntil: "domcontentloaded" });
 
     // Try to trigger validation by entering invalid characters
     const projectNameInput = page.locator('input[name="projectName"]');
@@ -262,13 +263,13 @@ test.describe("Runtime Error Detection", () => {
 // Smoke test for critical functionality
 test.describe("Critical Path Smoke Tests", () => {
   test("should be able to navigate to login", async ({ page }) => {
-    await page.goto("/auth/login");
+    await page.goto("/login");
 
-    // Check for login form elements
-    await expect(page.locator('input[type="email"], input[name="email"]')).toBeVisible({
+    // Check for login form elements - use id selectors that exist in the form
+    await expect(page.locator('input#email, input[type="email"]')).toBeVisible({
       timeout: 5000,
     });
-    await expect(page.locator('input[type="password"], input[name="password"]')).toBeVisible({
+    await expect(page.locator('input#password, input[type="password"]')).toBeVisible({
       timeout: 5000,
     });
   });

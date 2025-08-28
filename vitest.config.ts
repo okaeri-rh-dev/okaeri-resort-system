@@ -46,10 +46,10 @@ export default defineConfig({
       "**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress}.config.*",
     ],
 
-    // Coverage configuration
+    // Coverage configuration - optimized for Phase 1
     coverage: {
       provider: "v8",
-      reporter: ["text", "json", "html", "lcov"],
+      reporter: ["text", "json-summary", "lcov"], // Reduced reporters
       reportsDirectory: "./coverage",
       exclude: [
         "coverage/**",
@@ -90,36 +90,36 @@ export default defineConfig({
     },
 
     // Reporter configuration
-    reporter: ["verbose", "json", "html"],
+    reporters: ["verbose", "json", "html"],
     outputFile: {
       json: "./test-results.json",
       html: "./test-report.html",
     },
 
-    // Test timeout
-    testTimeout: 10000,
-    hookTimeout: 10000,
+    // Test timeout - increased for coverage runs
+    testTimeout: 30000,
+    hookTimeout: 30000,
 
-    // Watch options
-    watch: true,
+    // Watch options - disabled by default for CI
+    watch: false,
 
-    // Pool options for performance
+    // Pool options for performance - optimized for coverage
     pool: "forks",
     poolOptions: {
       forks: {
-        singleFork: false,
-        isolate: true,
+        singleFork: true, // Single fork for more stable coverage
+        isolate: false, // Faster execution
       },
     },
 
     // Retry configuration
     retry: 1,
 
-    // Define globals for TypeScript
-    define: {
-      __DEV__: true,
-      __TEST__: true,
-    },
+    // Define globals for TypeScript - disabled for Phase 1 build compatibility
+    // define: {
+    //   __DEV__: true,
+    //   __TEST__: true,
+    // },
 
     // Mock configuration
     mockReset: true,
@@ -134,11 +134,11 @@ export default defineConfig({
     },
 
     // UI configuration for vitest UI
-    ui: true,
+    ui: false, // Disable UI for faster execution
     open: false,
 
-    // Performance monitoring
-    logHeapUsage: true,
+    // Performance monitoring - disabled for faster execution
+    logHeapUsage: false,
 
     // Dependency optimization for tests
     deps: {

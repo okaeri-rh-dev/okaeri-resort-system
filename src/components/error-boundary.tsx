@@ -3,7 +3,8 @@
  * Handles runtime errors with graceful fallback UI
  */
 
-import React, { Component, ReactNode, ErrorInfo } from "react";
+import type { ReactNode, ErrorInfo } from "react";
+import React, { Component } from "react";
 import { AlertTriangle, RefreshCw, Home, Bug } from "lucide-react";
 import { logger } from "@/lib/logger";
 
@@ -43,7 +44,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    const errorId = this.state.errorId;
+    const { errorId } = this.state;
 
     // Log the error with context
     logger.error(

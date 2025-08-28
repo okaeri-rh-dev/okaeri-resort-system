@@ -1,3 +1,8 @@
+// Enable Immer MapSet plugin before any store imports
+// This MUST be at the very top to prevent "plugin not loaded" errors
+import { enableMapSet } from "immer";
+enableMapSet();
+
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
@@ -168,7 +173,7 @@ if (typeof window !== "undefined") {
 
   // Monitor connection changes for adaptive loading
   if ("connection" in navigator) {
-    const connection = (navigator as any).connection;
+    const { connection } = navigator as any;
     const updateConnectionInfo = () => {
       console.log(`Connection: ${connection.effectiveType}, Downlink: ${connection.downlink}Mbps`);
 
@@ -233,6 +238,20 @@ async function startApp() {
   try {
     await initializeApp(); // No router parameter
 
+    // Development helpers for testing auth persistence
+    if (config.isDevelopment) {
+      // Expose auth store and token manager for testing
+      const authStore = useAuthStore;
+      const { secureTokenManager } = await import("@/lib/security/secure-token-manager");
+
+      (window as any).__AUTH_STORE__ = authStore;
+      (window as any).__TOKEN_MANAGER__ = secureTokenManager;
+
+      console.log("[DEV] Auth persistence helpers loaded:");
+      console.log("  - window.__AUTH_STORE__ (useAuthStore)");
+      console.log("  - window.__TOKEN_MANAGER__ (secureTokenManager)");
+    }
+
     // NOW create and render React after initialization is complete
     const root = createRoot(rootElement);
     root.render(<App />);
@@ -261,7 +280,7 @@ function InnerApp() {
     checkAuth: authStore.checkAuth,
     hasPermission: authStore.hasPermission,
     hasRole: authStore.hasRole,
-    refreshToken: authStore.refreshToken,
+    refreshToken: authStore.refreshTokens,
     initializeAuth: authStore.initializeAuth,
     isLoading: authStore.isLoading,
     error: authStore.error,

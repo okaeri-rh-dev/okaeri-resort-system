@@ -3,9 +3,9 @@
  * Provides generic CRUD operations and transaction support for all entities
  */
 
-import { eq, and, or, desc, asc, sql, SQL } from "drizzle-orm";
+import { eq, and, or, desc, asc, sql } from "drizzle-orm";
 import type { PgTable, PgTransaction } from "drizzle-orm/pg-core";
-import type { ExtractTablesWithRelations } from "drizzle-orm";
+import type { ExtractTablesWithRelations, SQL } from "drizzle-orm";
 import { drizzleDb, transaction as dbTransaction } from "../db/connection";
 
 /**

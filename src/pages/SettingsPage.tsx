@@ -131,7 +131,7 @@ export function SettingsPage() {
     resolver: zodResolver(preferencesSchema),
     defaultValues: {
       ...mockDefaultPreferences,
-      theme: theme,
+      theme,
     },
   });
 

@@ -215,7 +215,7 @@ export const Route = createRootRouteWithContext<RootContext>()({
       checkAuth: authStore.checkAuth,
       hasPermission: authStore.hasPermission,
       hasRole: authStore.hasRole,
-      refreshToken: authStore.refreshToken,
+      refreshToken: authStore.refreshTokens,
       initializeAuth: authStore.initializeAuth,
       isLoading: authStore.isLoading,
       error: authStore.error,

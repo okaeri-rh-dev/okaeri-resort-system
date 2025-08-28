@@ -11,17 +11,17 @@ import { Redis } from "@upstash/redis";
 import { randomUUID } from "crypto";
 import {
   ApiError,
-  AuthenticationError,
-  AuthorizationError,
-  ValidationError,
-  RateLimitError,
-  errorResponse,
+  AuthenticationError as _AuthenticationError,
+  AuthorizationError as _AuthorizationError,
+  ValidationError as _ValidationError,
+  RateLimitError as _RateLimitError,
+  errorResponse as _errorResponse,
   type TokenPayload,
   type TenantContext,
 } from "./types";
 
 // Import enhanced error handling and logging
-import { logger, createRequestLogger, type LogContext } from "../../src/lib/logger";
+import { logger, createRequestLogger, type LogContext as _LogContext } from "../../src/lib/logger";
 import {
   ErrorHandler,
   createAuthenticationError,
@@ -93,12 +93,12 @@ interface ExtendedRequest extends VercelRequest {
   requestLogger?: ReturnType<typeof createRequestLogger>;
 }
 
-// Method handler wrapper
+// Method handler wrapper - PHASE 1 TEMPORARY: Allow returning response for chaining
 export type ApiHandler = (
   req: ExtendedRequest,
   res: VercelResponse,
   context?: TenantContext
-) => Promise<void> | void;
+) => Promise<VercelResponse | undefined> | VercelResponse | undefined;
 
 export const withMethod = (methods: string[], handler: ApiHandler): ApiHandler => {
   return async (req, res, context) => {
@@ -301,55 +301,58 @@ export const withValidation = <T extends z.ZodSchema>(
 };
 
 // Rate limiting middleware
-export const withRateLimit = (handler: ApiHandler, identifier?: string): ApiHandler => {
-  return async (req, res, context) => {
-    const requestLogger = req.requestLogger || logger;
+export const withRateLimit =
+  (identifier?: string) =>
+  (handler: ApiHandler): ApiHandler => {
+    // PHASE 1 TEMPORARY: Fixed middleware pattern
+    return async (req, res, context) => {
+      const requestLogger = req.requestLogger || logger;
 
-    if (!ratelimit) {
-      // If rate limiting is not configured, pass through
-      requestLogger.debug("Rate limiting bypassed - not configured");
-      return handler(req, res, context);
-    }
-
-    const id =
-      identifier || context?.userId || (req.headers["x-forwarded-for"] as string) || "anonymous";
-
-    try {
-      const { success, limit, reset, remaining } = await ratelimit.limit(id);
-
-      res.setHeader("X-RateLimit-Limit", limit.toString());
-      res.setHeader("X-RateLimit-Remaining", remaining.toString());
-      res.setHeader("X-RateLimit-Reset", new Date(reset).toISOString());
-
-      if (!success) {
-        requestLogger.warn("Rate limit exceeded", {
-          identifier: id,
-          limit,
-          reset: new Date(reset).toISOString(),
-          path: req.url,
-        });
-
-        return res.status(429).json({
-          error: "Too many requests. Please try again later.",
-          code: "RATE_LIMIT_EXCEEDED",
-          retryAfter: new Date(reset).toISOString(),
-          requestId: req.requestId,
-        });
+      if (!ratelimit) {
+        // If rate limiting is not configured, pass through
+        requestLogger.debug("Rate limiting bypassed - not configured");
+        return handler(req, res, context);
       }
 
-      requestLogger.debug("Rate limit check passed", {
-        identifier: id,
-        remaining,
-      });
+      const id =
+        identifier || context?.userId || (req.headers["x-forwarded-for"] as string) || "anonymous";
 
-      return handler(req, res, context);
-    } catch (error) {
-      // If rate limiting fails, log but don't block the request
-      requestLogger.error("Rate limiting error", error as Error);
-      return handler(req, res, context);
-    }
+      try {
+        const { success, limit, reset, remaining } = await ratelimit.limit(id);
+
+        res.setHeader("X-RateLimit-Limit", limit.toString());
+        res.setHeader("X-RateLimit-Remaining", remaining.toString());
+        res.setHeader("X-RateLimit-Reset", new Date(reset).toISOString());
+
+        if (!success) {
+          requestLogger.warn("Rate limit exceeded", {
+            identifier: id,
+            limit,
+            reset: new Date(reset).toISOString(),
+            path: req.url,
+          });
+
+          return res.status(429).json({
+            error: "Too many requests. Please try again later.",
+            code: "RATE_LIMIT_EXCEEDED",
+            retryAfter: new Date(reset).toISOString(),
+            requestId: req.requestId,
+          });
+        }
+
+        requestLogger.debug("Rate limit check passed", {
+          identifier: id,
+          remaining,
+        });
+
+        return handler(req, res, context);
+      } catch (error) {
+        // If rate limiting fails, log but don't block the request
+        requestLogger.error("Rate limiting error", error as Error);
+        return handler(req, res, context);
+      }
+    };
   };
-};
 
 // Error handling wrapper with request tracking
 export const withErrorHandler = (handler: ApiHandler): ApiHandler => {
@@ -377,7 +380,10 @@ export const withErrorHandler = (handler: ApiHandler): ApiHandler => {
       // Set CORS headers using env configuration
       const corsHeaders = getCorsHeaders(req.headers.origin as string);
       Object.entries(corsHeaders).forEach(([key, value]) => {
-        res.setHeader(key, value);
+        if (value !== undefined) {
+          // PHASE 1 TEMPORARY: Guard against undefined values
+          res.setHeader(key, value);
+        }
       });
 
       // Add request ID to response headers
@@ -389,7 +395,7 @@ export const withErrorHandler = (handler: ApiHandler): ApiHandler => {
         return res.status(200).end();
       }
 
-      await handler(req, res, context);
+      const result = await handler(req, res, context);
 
       // Log successful response
       const duration = Date.now() - startTime;
@@ -397,6 +403,8 @@ export const withErrorHandler = (handler: ApiHandler): ApiHandler => {
         statusCode: res.statusCode,
         duration,
       });
+
+      return result;
     } catch (error) {
       const duration = Date.now() - startTime;
 
@@ -441,8 +449,8 @@ export const withErrorHandler = (handler: ApiHandler): ApiHandler => {
   };
 };
 
-// Audit logging middleware
-export const withAuditLog = (action: string, resource: string): ApiHandler => {
+// Audit logging middleware - PHASE 1 TEMPORARY: Fixed return type
+export const withAuditLog = (action: string, resource: string) => {
   return (handler: ApiHandler): ApiHandler => {
     return async (req, res, context) => {
       const requestLogger = req.requestLogger || logger;
@@ -481,8 +489,8 @@ export const withAuditLog = (action: string, resource: string): ApiHandler => {
         // Async log to external service
         void logAuditEntry(auditEntry);
 
-        // Call original end
-        return originalEnd.apply(res, args);
+        // Call original end - PHASE 1 TEMPORARY: Type assertion for args
+        return originalEnd.apply(res, args as Parameters<typeof originalEnd>);
       };
 
       return await handler(req, res, context);
@@ -511,6 +519,7 @@ function extractProjectId(req: ExtendedRequest): string | null {
 }
 
 interface AuditEntry {
+  [key: string]: unknown; // PHASE 1 TEMPORARY: Make compatible with LogContext
   userId: string;
   projectId?: string;
   action: string;
@@ -570,11 +579,11 @@ export const compose = (
 };
 
 // Pre-composed middleware for common patterns
-export const withStandardMiddleware = compose(withErrorHandler, withRateLimit);
+export const withStandardMiddleware = compose(withErrorHandler, withRateLimit("standard")); // PHASE 1 TEMPORARY: Added identifier
 
-export const withAuthenticatedRoute = compose(withErrorHandler, withRateLimit, withAuth);
+export const withAuthenticatedRoute = compose(withErrorHandler, withRateLimit("auth"), withAuth); // PHASE 1 TEMPORARY: Added identifier
 
-export const withProjectRoute = compose(withErrorHandler, withRateLimit, withProject);
+export const withProjectRoute = compose(withErrorHandler, withRateLimit("project"), withProject); // PHASE 1 TEMPORARY: Added identifier
 
 // Export types for external use
 export type { ExtendedRequest, AuditEntry };

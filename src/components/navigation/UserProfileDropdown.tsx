@@ -131,6 +131,7 @@ export function UserProfileDropdown({ className }: UserProfileDropdownProps) {
         aria-expanded={isOpen}
         aria-haspopup="true"
         aria-label={`User menu for ${user.name}`}
+        data-testid="user-menu"
       >
         {/* Avatar */}
         <div className="relative">

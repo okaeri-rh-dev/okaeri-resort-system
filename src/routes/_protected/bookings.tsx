@@ -38,7 +38,7 @@ const prefetcher = new PrefetchManager(queryClient);
 const bookingsLoader = createRouteLoader<{
   search: BookingsSearchParams;
 }>(async ({ search }) => {
-  const projectId = requireActiveProject();
+  const projectId = await requireActiveProject();
   const searchParams = validateSearchParams(BookingsSearchSchema, search);
 
   // Prefetch bookings with search parameters
@@ -54,7 +54,7 @@ export const Route = createFileRoute("/_protected/bookings")({
     const loadStart = performance.now();
 
     // Auth is already validated by _protected layout
-    const user = context.user;
+    const { user } = context;
 
     // Validate search parameters early
     const validatedSearch = validateSearchParams(BookingsSearchSchema, search);

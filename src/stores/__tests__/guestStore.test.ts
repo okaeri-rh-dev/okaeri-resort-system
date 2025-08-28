@@ -9,7 +9,7 @@ import { useGuestStore } from "../guestStore";
 import { useProjectStore } from "../projectStore";
 import { useUIStore } from "../uiStore";
 import { PhilippineDataGenerator } from "@tests/utils/tdd-helpers";
-import { Guest, GuestPreferences, Booking } from "@/types/common";
+import type { Guest, GuestPreferences, Booking } from "@/types/common";
 
 // Mock dependencies
 vi.mock("@/api/client", () => ({

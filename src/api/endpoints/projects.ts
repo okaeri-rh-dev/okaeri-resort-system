@@ -3,6 +3,7 @@
  */
 
 import { apiClient } from "@/api/client";
+import { secureTokenManager } from "@/lib/security/secure-token-manager";
 import type {
   Project,
   ProjectMembership,
@@ -184,12 +185,22 @@ export const projectsApi = {
    * Export project data
    */
   exportProjectData: async (projectId: string, format: "json" | "csv" | "excel"): Promise<Blob> => {
+    const token = secureTokenManager.getAccessToken();
+    if (!token) {
+      throw new Error("No authentication token available");
+    }
+
     const response = await fetch(`/api/projects/${projectId}/export?format=${format}`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${token}`,
       },
     });
+
+    if (!response.ok) {
+      throw new Error(`Export failed: ${response.statusText}`);
+    }
+
     return response.blob();
   },
 

@@ -422,7 +422,7 @@ export const expensesLoader = createAuthenticatedLoader<{
     ]);
 
     // Prefetch approval queue for managers
-    const user = useAuthStore.getState().user;
+    const { user } = useAuthStore.getState();
     if (user?.role === "MANAGER" || user?.role === "ADMIN") {
       queryClient.prefetchQuery({
         queryKey: ["expenses", "approval-queue", projectId],

@@ -482,7 +482,7 @@ describe("Multi-Tenant Isolation", () => {
               check_in_date, check_out_date,
               base_price, total_amount, balance_amount
             ) VALUES (
-              ${"RAPID-" + i}, ${"Guest " + i}, '09171234567',
+              ${`RAPID-${i}`}, ${`Guest ${i}`}, '09171234567',
               '2024-12-01', '2024-12-03',
               5000, 5000, 5000
             )

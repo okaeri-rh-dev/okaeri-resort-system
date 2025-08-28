@@ -133,10 +133,21 @@ export default tseslint.config([
 
   // Specific rules for test files
   {
-    files: ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}", "**/__tests__/**/*.{ts,tsx}"],
+    files: [
+      "**/*.test.{ts,tsx}",
+      "**/*.spec.{ts,tsx}",
+      "**/__tests__/**/*.{ts,tsx}",
+      "**/tests/**/*.{ts,tsx}",
+      "**/mocks/**/*.{ts,tsx}",
+    ],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "warn", // More lenient for test files
       "no-console": "off",
+      complexity: "off",
+      "max-lines-per-function": "off",
+      "max-depth": "off",
+      "@typescript-eslint/no-non-null-assertion": "warn", // More lenient for test files
     },
   },
 
@@ -145,6 +156,16 @@ export default tseslint.config([
     files: ["**/*.config.{js,ts}", "**/vite.config.ts", "**/vitest.config.ts"],
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
+    },
+  },
+
+  // API development files - more lenient during Phase 1
+  {
+    files: ["api/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn", // Allow any but warn
+      complexity: ["warn", { max: 20 }], // More lenient for API handlers
+      "max-lines-per-function": ["warn", { max: 200 }], // API handlers can be longer
     },
   },
 

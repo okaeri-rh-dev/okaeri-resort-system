@@ -26,7 +26,7 @@ export const queryClient = new QueryClient({
             if (failureCount === 0) {
               useAuthStore
                 .getState()
-                .refreshToken()
+                .refreshTokens()
                 .catch(() => {
                   // If refresh fails, logout
                   useAuthStore.getState().logout();

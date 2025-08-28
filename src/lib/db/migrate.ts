@@ -415,7 +415,7 @@ export class MigrationRunner {
         inFunction = true;
       }
 
-      currentStatement += line + "\n";
+      currentStatement += `${line}\n`;
 
       // Check for statement end
       if (inFunction && trimmedLine.match(/^\$\$\s+(LANGUAGE|language)/i)) {

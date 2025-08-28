@@ -276,7 +276,7 @@ export class PerformanceMonitor {
    * Monitor network conditions
    */
   private monitorNetworkConditions() {
-    const connection = (navigator as any).connection;
+    const { connection } = navigator as any;
     if (!connection) return;
 
     const trackConnection = () => {
@@ -428,7 +428,7 @@ export class PerformanceMonitor {
    * Get connection information
    */
   private getConnectionInfo() {
-    const connection = (navigator as any).connection;
+    const { connection } = navigator as any;
     return connection
       ? {
           effectiveType: connection.effectiveType,

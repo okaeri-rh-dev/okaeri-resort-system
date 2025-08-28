@@ -22,7 +22,7 @@ const prefetcher = new PrefetchManager(queryClient);
 const reportsLoader = createRouteLoader<{
   search: ReportsSearchParams;
 }>(async ({ search }) => {
-  const projectId = requireActiveProject();
+  const projectId = await requireActiveProject();
   const searchParams = validateSearchParams(ReportsSearchSchema, search);
 
   // Prefetch reports data with search parameters

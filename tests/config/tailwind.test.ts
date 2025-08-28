@@ -755,7 +755,7 @@ function extractColorDefinitions(styles: string): string[] {
  * Helper to validate CSS selector exists
  */
 function validateCSSSelector(styles: string, selector: string): boolean {
-  return styles.includes(selector + " {") || styles.includes(selector + "{");
+  return styles.includes(`${selector} {`) || styles.includes(`${selector}{`);
 }
 
 /**

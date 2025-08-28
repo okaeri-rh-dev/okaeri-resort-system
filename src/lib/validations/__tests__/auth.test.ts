@@ -55,7 +55,7 @@ describe("Auth Validation Schemas", () => {
         "invalid..email@example.com",
         "invalid@example",
         "user@domain..com",
-        "a".repeat(95) + "@example.com", // Too long
+        `${"a".repeat(95)}@example.com`, // Too long
         null,
         undefined,
       ];
@@ -128,7 +128,7 @@ describe("Auth Validation Schemas", () => {
     it("should validate password length requirements", () => {
       const sevenCharPassword = "Short1!";
       const eightCharPassword = "LongPass1!";
-      const maxLengthPassword = "a".repeat(125) + "A1!";
+      const maxLengthPassword = `${"a".repeat(125)}A1!`;
       const tooLongPassword = "a".repeat(130);
 
       expect(passwordSchema.safeParse(sevenCharPassword).success).toBe(false);
@@ -797,9 +797,9 @@ describe("Auth Validation Schemas", () => {
       const result = loginSchema.safeParse(loginData);
       if (result.success) {
         // These should be properly typed
-        const email: string = result.data.email;
-        const password: string = result.data.password;
-        const rememberMe: boolean = result.data.rememberMe;
+        const { email } = result.data;
+        const { password } = result.data;
+        const { rememberMe } = result.data;
 
         expect(typeof email).toBe("string");
         expect(typeof password).toBe("string");

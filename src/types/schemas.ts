@@ -61,7 +61,7 @@ export const PhilippinePhoneSchema = z
     // Normalize phone number to +63 format
     let normalized = phone.replace(/^0/, "63");
     if (!normalized.startsWith("+")) {
-      normalized = "+" + normalized;
+      normalized = `+${normalized}`;
     }
     if (normalized.startsWith("+630")) {
       normalized = normalized.replace("+630", "+63");

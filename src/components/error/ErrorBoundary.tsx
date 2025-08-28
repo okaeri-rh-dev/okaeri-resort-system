@@ -113,18 +113,47 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   };
 
   private getUserId = (): string | null => {
-    // Get user ID from your auth system
+    // SECURITY: User ID should be retrieved from token/auth context, not browser storage
+    // This is only for development debugging purposes
     try {
-      return localStorage.getItem("userId") || sessionStorage.getItem("userId");
+      // In development mode, check browser storage for debugging
+      if (import.meta.env.DEV) {
+        const devUserId = sessionStorage.getItem("userId");
+        if (devUserId) {
+          console.warn(
+            "[DEV WARNING] User ID found in sessionStorage. " +
+              "In production, retrieve user ID from authentication context."
+          );
+          return devUserId;
+        }
+      }
+
+      // TODO: In production, get user ID from auth context/token
+      // Example: return authStore.currentUser?.id || null;
+      return null;
     } catch {
       return null;
     }
   };
 
   private getProjectId = (): string | null => {
-    // Get current project ID
+    // SECURITY: Project ID should be retrieved from app state/context, not browser storage
     try {
-      return localStorage.getItem("currentProjectId");
+      // In development mode, check browser storage for debugging
+      if (import.meta.env.DEV) {
+        const devProjectId = sessionStorage.getItem("currentProjectId");
+        if (devProjectId) {
+          console.warn(
+            "[DEV WARNING] Project ID found in sessionStorage. " +
+              "In production, retrieve project ID from application state."
+          );
+          return devProjectId;
+        }
+      }
+
+      // TODO: In production, get project ID from app state/context
+      // Example: return projectStore.currentProjectId || null;
+      return null;
     } catch {
       return null;
     }

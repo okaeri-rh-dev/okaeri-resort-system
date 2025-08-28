@@ -6,7 +6,7 @@
 import { redirect } from "@tanstack/react-router";
 import { useAuthStore } from "@/stores/authStore";
 import { useProjectStore } from "@/stores/projectStore";
-import { tokenManager, auditLogger, sessionMonitor } from "@/lib/security";
+import { secureTokenManager as tokenManager, auditLogger, sessionMonitor } from "@/lib/security";
 import type { User } from "@/types/common";
 // [PHASE 1-4 MOCK AUTH - Remove in Phase 5.2]
 import { config } from "@/config";
@@ -93,11 +93,11 @@ export async function requireAuth(
   const token = tokenManager.getAccessToken();
 
   // [PHASE 1-4 MOCK AUTH - Remove this block in Phase 5.2]
-  if (import.meta.env.DEV && config.development?.mockAuth && token) {
+  if (import.meta.env.DEV && config.development?.mockAuth) {
     console.warn("[DEV MODE] Using mock authentication - DO NOT USE IN PRODUCTION");
 
-    // For mock auth, skip strict token validation
-    if (token.includes("mock") || token.startsWith("eyJ")) {
+    // For mock auth, be more lenient with token requirements
+    if (token && (token.includes("mock") || token.startsWith("eyJ"))) {
       // Mock tokens are always valid in dev mode
       // Just ensure user data is loaded
       if (!authStore.user) {
@@ -112,7 +112,7 @@ export async function requireAuth(
         }
       }
 
-      const user = authStore.user;
+      const { user } = authStore;
       if (user) {
         // Skip other validations for mock auth, just return success
         auditLogger.logAccess("route", "navigate", true, user, {
@@ -134,6 +134,13 @@ export async function requireAuth(
 
         return { user, authChecked: true };
       }
+    } else if (!token) {
+      // In dev mode with mock auth, if no token exists, redirect to login
+      console.warn("[DEV MODE] No token found, redirecting to login");
+      const redirectUrl = preserveRedirect
+        ? `${redirectTo}?redirect=${encodeURIComponent(location.href)}`
+        : redirectTo;
+      throw redirect({ to: redirectUrl });
     }
   }
   // [END PHASE 1-4 MOCK AUTH]
@@ -182,7 +189,7 @@ export async function requireAuth(
 
   if (!isMockToken && tokenManager.isTokenExpired(token, 0)) {
     try {
-      await authStore.refreshToken();
+      await authStore.refreshTokens();
     } catch (error) {
       auditLogger.logSecurityEvent("token_refresh_failed", {
         path: location.pathname,
@@ -215,7 +222,7 @@ export async function requireAuth(
     }
   }
 
-  const user = authStore.user;
+  const { user } = authStore;
   if (!user) {
     throw redirect({ to: redirectTo });
   }
@@ -453,9 +460,9 @@ export function checkAuth(): AuthGuardResult {
   const token = tokenManager.getAccessToken();
 
   // [PHASE 1-4 MOCK AUTH - Remove in Phase 5.2]
-  if (import.meta.env.DEV && config.development?.mockAuth && token) {
+  if (import.meta.env.DEV && config.development?.mockAuth) {
     console.warn("[DEV MODE] Mock authentication check - DO NOT USE IN PRODUCTION");
-    if (authStore.user) {
+    if (token && authStore.user) {
       return { allowed: true, user: authStore.user };
     }
   }

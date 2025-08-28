@@ -413,7 +413,7 @@ export class LazyImageLoader {
    * Load image
    */
   private loadImage(img: HTMLImageElement) {
-    const src = img.dataset.src;
+    const { src } = img.dataset;
     if (src) {
       img.src = src;
       img.classList.remove("lazy");
@@ -439,12 +439,12 @@ export const lazyImageLoader = new LazyImageLoader();
 
 // Connection-aware image loading
 if (typeof window !== "undefined") {
-  const connection = (navigator as any).connection;
+  const { connection } = navigator as any;
 
   if (connection) {
     // Adjust image quality based on connection speed
     const getQualityByConnection = () => {
-      const effectiveType = connection.effectiveType;
+      const { effectiveType } = connection;
 
       if (effectiveType === "4g" && connection.downlink > 2) {
         return 85; // High quality for fast connections

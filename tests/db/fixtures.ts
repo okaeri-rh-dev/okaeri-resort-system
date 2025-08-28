@@ -62,7 +62,7 @@ export const userFactory = {
     passwordHash: "$2a$10$test.hash.for.testing.only",
     firstName: faker.person.firstName(),
     lastName: faker.person.lastName(),
-    phone: faker.phone.number("+639#########"),
+    phone: faker.helpers.fromRegExp("+639[0-9]{9}"),
     isActive: true,
     isEmailVerified: true,
     preferences: {
@@ -100,14 +100,14 @@ export const projectFactory = {
       ownerId: uuidv4(),
       businessType: "resort",
       description: faker.lorem.paragraph(),
-      businessName: name + " Resort",
+      businessName: `${name} Resort`,
       address: faker.location.streetAddress(),
       city: faker.location.city(),
       province: "Batangas",
       postalCode: faker.location.zipCode(),
       country: "PH",
       contactEmail: faker.internet.email(),
-      contactPhone: faker.phone.number("+639#########"),
+      contactPhone: faker.helpers.fromRegExp("+639[0-9]{9}"),
       currency: "PHP",
       timezone: "Asia/Manila",
       settings: {
@@ -219,7 +219,7 @@ export const bookingFactory = {
     bookingCode: generateCode("BK", 8),
     guestName: faker.person.fullName(),
     guestEmail: faker.internet.email(),
-    guestPhone: faker.phone.number("+639#########"),
+    guestPhone: faker.helpers.fromRegExp("+639[0-9]{9}"),
     guestAddress: faker.location.streetAddress(),
     numberOfGuests: faker.number.int({ min: 1, max: 10 }),
     numberOfChildren: faker.number.int({ min: 0, max: 4 }),
@@ -285,7 +285,7 @@ export const paymentFactory = {
     paymentType: "deposit",
     gcashReferenceNumber: faker.string.numeric(13),
     gcashAccountName: faker.person.fullName(),
-    gcashAccountNumber: faker.phone.number("09#########"),
+    gcashAccountNumber: faker.helpers.fromRegExp("09[0-9]{9}"),
     status: "completed",
     verifiedAt: new Date().toISOString(),
   }),
@@ -306,7 +306,7 @@ export const expenseFactory = {
     paymentStatus: "paid",
     paidAt: faker.date.recent().toISOString(),
     vendorName: faker.company.name(),
-    vendorContact: faker.phone.number("+639#########"),
+    vendorContact: faker.helpers.fromRegExp("+639[0-9]{9}"),
     status: "approved",
     notes: faker.lorem.sentence(),
     ...overrides,
@@ -378,7 +378,7 @@ export class DatabaseCleaner {
       const result = await sql`
         SELECT schema_name 
         FROM information_schema.schemata 
-        WHERE schema_name LIKE ${TEST_DB_PREFIX + "%"}
+        WHERE schema_name LIKE ${`${TEST_DB_PREFIX}%`}
       `;
 
       for (const row of result) {

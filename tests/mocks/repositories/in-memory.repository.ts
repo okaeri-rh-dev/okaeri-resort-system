@@ -122,7 +122,7 @@ export class InMemoryBaseRepository<T extends { id: string }, TInsert, TUpdate>
     options: PaginationOptions,
     filters?: FilterCondition<T>[]
   ): Promise<PaginatedResult<T>> {
-    let items = await this.findMany(filters);
+    const items = await this.findMany(filters);
 
     // Sort items
     if (options.orderBy) {

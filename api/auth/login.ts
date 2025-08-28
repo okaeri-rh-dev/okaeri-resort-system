@@ -3,7 +3,7 @@
  * POST /api/auth/login
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { VercelRequest as _VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
 import {
   withErrorHandler,
@@ -287,6 +287,6 @@ export default compose(
   withErrorHandler,
   withMethod(["POST"]),
   withValidation(loginSchema, "body"),
-  withRateLimit,
+  withRateLimit("login"), // PHASE 1 TEMPORARY: Added identifier parameter
   withAuditLog("login", "authentication")
 )(handler);
