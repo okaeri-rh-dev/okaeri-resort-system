@@ -626,7 +626,7 @@ test.describe("Critical User Flows", () => {
             entries.forEach((entry: any) => {
               if (entry.name === "FCP") vitals.fcp = entry.value;
               if (entry.name === "LCP") vitals.lcp = entry.value;
-              if (entry.name === "FID") vitals.fid = entry.value;
+              if (entry.name === "INP") vitals.inp = entry.value;
               if (entry.name === "CLS") vitals.cls = entry.value;
             });
 

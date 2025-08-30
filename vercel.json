@@ -1,11 +1,12 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "name": "okaeri-resort-system",
   "alias": ["okaeri-resort.vercel.app"],
 
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm ci",
+  "installCommand": "npm ci --prefer-offline --no-audit",
 
   "framework": "vite",
   "nodeVersion": "20.x",
@@ -14,7 +15,16 @@
     "api/**/*.ts": {
       "runtime": "nodejs20.x",
       "regions": ["cle1", "hnd1"],
-      "maxDuration": 30
+      "maxDuration": 25,
+      "memory": 1024,
+      "environment": {
+        "NODE_ENV": "production",
+        "DATABASE_MAX_CONNECTIONS": "5",
+        "JWT_EXPIRES_IN": "1h",
+        "SESSION_TIMEOUT": "1800000",
+        "RATE_LIMIT_MAX": "100",
+        "RATE_LIMIT_WINDOW": "900000"
+      }
     }
   },
 
@@ -40,15 +50,19 @@
         },
         {
           "key": "Permissions-Policy",
-          "value": "camera=(), microphone=(), geolocation=(), payment=()"
+          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), serial=(), magnetometer=(), gyroscope=(), accelerometer=()"
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.neon.tech wss://*.neon.tech https://api.cloudflare.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+          "value": "default-src 'self'; script-src 'self' https://vercel.live https://vercel.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.neon.tech wss://*.neon.tech https://api.cloudflare.com https://vitals.vercel-analytics.com; media-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
         },
         {
           "key": "Strict-Transport-Security",
           "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "Feature-Policy",
+          "value": "camera 'none'; microphone 'none'; geolocation 'none'; payment 'none'"
         }
       ]
     },
@@ -57,7 +71,11 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
+          "value": "public, max-age=31536000, s-maxage=31536000, immutable"
+        },
+        {
+          "key": "Vary",
+          "value": "Accept-Encoding"
         }
       ]
     },
@@ -70,11 +88,11 @@
         },
         {
           "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, PUT, DELETE, OPTIONS"
+          "value": "GET, POST, PUT, DELETE, OPTIONS, PATCH"
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization, X-Requested-With, X-CSRF-Token"
+          "value": "Content-Type, Authorization, X-Requested-With, X-API-Key, Accept, Origin"
         },
         {
           "key": "Access-Control-Allow-Credentials",
@@ -83,6 +101,49 @@
         {
           "key": "Access-Control-Max-Age",
           "value": "86400"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
+      ]
+    },
+    {
+      "source": "/(favicon\\.ico|robots\\.txt|sitemap\\.xml)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
         }
       ]
     }
@@ -94,7 +155,11 @@
       "destination": "/api/$1"
     },
     {
-      "source": "/((?!api).*)",
+      "source": "/health-check",
+      "destination": "/api/health-check"
+    },
+    {
+      "source": "/((?!api|assets|icons|screenshots|sw\\.js|manifest\\.json|favicon\\.ico|robots\\.txt|sitemap\\.xml).*)",
       "destination": "/index.html"
     }
   ],
@@ -102,19 +167,15 @@
   "redirects": [
     {
       "source": "/home",
-      "destination": "/",
-      "permanent": true
-    }
-  ],
-
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "destination": "/dashboard",
+      "permanent": true,
+      "statusCode": 301
     },
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/admin",
+      "destination": "/dashboard",
+      "permanent": true,
+      "statusCode": 301
     }
   ],
 
@@ -122,13 +183,17 @@
 
   "env": {
     "NODE_ENV": "production",
-    "VITE_APP_VERSION": "@now",
-    "VITE_BUILD_TIME": "@now-iso"
+    "VITE_APP_VERSION": "@vercel-git-commit-sha",
+    "VITE_BUILD_TIME": "@now-iso",
+    "VITE_DEPLOYMENT_URL": "@vercel-url",
+    "VERCEL_ENV": "@vercel-env"
   },
 
   "build": {
     "env": {
-      "NODE_OPTIONS": "--max-old-space-size=4096"
+      "NODE_OPTIONS": "--max-old-space-size=4096",
+      "VITE_NODE_ENV": "production",
+      "CI": "true"
     }
   },
 
@@ -140,6 +205,10 @@
     {
       "path": "/api/cleanup-sessions",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/maintenance/optimize-database",
+      "schedule": "0 3 * * 0"
     }
   ],
 
@@ -148,6 +217,15 @@
 
   "github": {
     "enabled": true,
-    "autoAlias": true
+    "autoAlias": true,
+    "autoJobCancelation": true
+  },
+
+  "outputFileTracing": true,
+  "speedInsights": {
+    "enabled": true
+  },
+  "webAnalytics": {
+    "enabled": true
   }
 }

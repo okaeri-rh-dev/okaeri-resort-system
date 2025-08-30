@@ -1,0 +1,156 @@
+# TDD-First Implementation Documentation
+
+## Overview
+
+This documentation outlines the Test-Driven Development (TDD) approach for rebuilding the Okaeri Resort Management System. After completing Phase 1 infrastructure, we are implementing a clean-slate UI development strategy with comprehensive testing and specialized agent delegation.
+
+## Quick Start
+
+### Essential Reading
+
+- **[Implementation Readiness Checklist](./IMPLEMENTATION_READINESS_CHECKLIST.md)** - Pre-flight checks before starting
+- **[TDD Single Source of Truth](./TDD_SINGLE_SOURCE_OF_TRUTH.md)** - Authoritative testing standards
+- **[Glossary](./GLOSSARY.md)** - Key terms and concepts
+
+## Documentation Structure
+
+### Core Strategy & Standards
+
+- **[TDD Master Plan](./TDD_Master_Plan.md)** - Complete strategy and timeline
+- **[TDD Single Source of Truth](./TDD_SINGLE_SOURCE_OF_TRUTH.md)** - All testing standards and requirements
+- **[Agent Delegation Matrix](./Agent_Delegation_Matrix.md)** - Agent assignments and responsibilities
+- **[Verification Protocol](./Verification_Protocol.md)** - Quality gates and handoff procedures
+
+### Testing & Quality
+
+- **[Mock API Architecture](./Mock_API_Architecture.md)** - Comprehensive mock service design
+- **[Component Testing Patterns](./COMPONENT_TESTING_PATTERNS.md)** - Component test strategies
+- **[Test Data Seeding Strategy](./Test_Data_Seeding_Strategy.md)** - Test data management
+- **[Test Type Safety Specification](./TEST_TYPE_SAFETY_SPECIFICATION.md)** - TypeScript testing patterns
+- **[Performance Budgets](./Performance_Budgets.md)** - Performance thresholds and monitoring
+- **[Test Infrastructure Summary](./Robust_Test_Infrastructure_Summary.md)** - Testing infrastructure overview
+
+### Database & Architecture
+
+- **[Simple Database Guide](./SIMPLE_DATABASE_GUIDE.md)** - Practical database patterns for family resorts (START HERE)
+- **[Financial Database Schema](./FINANCIAL_DATABASE_SCHEMA.md)** - Financial data structures
+- **[Currency Type Standard](./Currency_Type_Standard.md)** - Money handling standards
+- **[Neon Connection Pooling](./NEON_CONNECTION_POOLING.md)** - Connection management for serverless
+- **[Query Patterns](./QUERY_PATTERNS_OPTIMIZATION.md)** - Optimized query examples
+
+### CI/CD & Deployment
+
+- **[CI/CD Pipeline Guide](./CI_CD_PIPELINE_GUIDE.md)** - Complete CI/CD configuration
+- **[Branch Protection Guide](./Branch_Protection_Guide.md)** - Git branch protection rules
+- **[Vercel API Verification](./VERCEL_API_VERIFICATION.md)** - API deployment validation
+
+### API & Services
+
+- **[Simple API Examples](./SIMPLE_API_EXAMPLES.md)** - API implementation patterns
+- **[Secure Base Service Pattern](./SECURE_BASE_SERVICE_PATTERN.md)** - Service security patterns
+
+### Phase Documentation
+
+Each phase follows the TDD methodology with specialized agent ownership:
+
+- **[Phase 0: Foundation & Cleanup](./phases/phase-0-cleanup/)** - Repository preparation
+- **[Phase 1: Login System TDD](./phases/phase-1-login-tdd/)** - Authentication implementation
+- **[Phase 2: Dashboard TDD](./phases/phase-2-dashboard-tdd/)** - Dashboard and metrics
+- **[Phase 3: Booking System TDD](./phases/phase-3-booking-tdd/)** - Booking management
+- **[Phase 4: Financial Features TDD](./phases/phase-4-financial-tdd/)** - Financial tracking
+- **[Phase 5: Production Deployment](./phases/phase-5-deployment/)** - Deployment and optimization
+
+## Getting Started
+
+### For Developers
+
+1. Complete the [Implementation Readiness Checklist](./IMPLEMENTATION_READINESS_CHECKLIST.md)
+2. Review [TDD Single Source of Truth](./TDD_SINGLE_SOURCE_OF_TRUTH.md) for testing standards
+3. Check [Agent Delegation Matrix](./Agent_Delegation_Matrix.md) for your assignments
+4. Follow the [Verification Protocol](./Verification_Protocol.md) for quality gates
+5. Reference [Mock API Architecture](./Mock_API_Architecture.md) for service patterns
+
+### For Project Managers
+
+1. Monitor progress in [Master Verification Index](./phases/MASTER_VERIFICATION_INDEX.md)
+2. Review quality gates in [Verification Protocol](./Verification_Protocol.md)
+3. Track agent performance in [Agent Delegation Matrix](./Agent_Delegation_Matrix.md)
+4. Check [Performance Budgets](./Performance_Budgets.md) for thresholds
+
+## Key Principles
+
+### TDD Methodology
+
+1. **RED**: Write failing tests first
+2. **GREEN**: Implement minimal code to pass tests
+3. **REFACTOR**: Improve code quality while keeping tests green
+
+### Agent Collaboration
+
+- Each phase has a lead agent and support agents
+- Clear handoff protocols between agents
+- Verification required at each transition
+- Iteration allowed for quality improvement
+
+### Quality Standards
+
+- **Test Coverage**: Minimum 90%
+- **TypeScript**: 100% strict mode compliance
+- **Performance**: Lighthouse score >90
+- **Security**: Zero critical vulnerabilities
+- **Accessibility**: WCAG 2.1 AA compliance
+
+## Current Status
+
+| Phase | Status | Lead Agent | Completion |
+|-------|--------|------------|------------|
+| Phase 0 | ✅ Complete | context-manager | 100% |
+| Phase 1 | ⏳ Pending | typescript-react-quality-expert | 0% |
+| Phase 2 | ⏳ Pending | zustand-tanstack-resort-architect | 0% |
+| Phase 3 | ⏳ Pending | postgres-serverless-architect | 0% |
+| Phase 4 | ⏳ Pending | resort-finance-architect | 0% |
+| Phase 5 | ⏳ Pending | vercel-deployment-optimizer | 0% |
+
+## Infrastructure Preserved
+
+The following infrastructure from Phase 1 implementation is preserved:
+
+```
+/src/lib/           # Security, API client, utilities
+/src/stores/        # Zustand stores with security
+/src/types/         # TypeScript definitions
+/src/mocks/         # Mock services
+/api/               # API route templates
+/migrations/        # Database schemas
+```
+
+## Components to Rewrite
+
+The following will be rewritten using TDD:
+
+```
+/src/pages/         # All page components
+/src/components/    # UI components (except /ui)
+/src/routes/        # Route components (except __root.tsx)
+/src/layouts/       # Layout components
+```
+
+## Archive
+
+Previous implementation documentation has been archived at:
+`/docs/archive-2025-08-25-initial/`
+
+This preserves the complete history while allowing clean slate development.
+
+## Contact
+
+For questions or issues, consult:
+- **Technical**: Lead agent for the specific phase
+- **Process**: context-manager agent
+- **Security**: security-compliance-auditor agent
+- **Performance**: pwa-performance-optimizer agent
+
+---
+
+*Last Updated: August 2025*
+*Version: 2.0.0 (TDD Rewrite)*

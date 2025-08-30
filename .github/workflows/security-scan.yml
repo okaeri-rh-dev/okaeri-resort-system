@@ -1,0 +1,402 @@
+name: Security Scan
+
+on:
+  schedule:
+    # Run daily security scans at 3 AM UTC
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+  push:
+    paths:
+      - "package*.json"
+      - ".env*"
+      - "src/**"
+      - "api/**"
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  # ==========================================
+  # Comprehensive Security Assessment
+  # ==========================================
+
+  dependency-scan:
+    name: Dependency Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      # NPM Audit - comprehensive dependency check
+      - name: Run npm audit
+        run: |
+          echo "=== NPM Audit Report ===" | tee security-audit.txt
+          npm audit --audit-level=low --json > npm-audit.json || true
+
+          # Parse and categorize vulnerabilities
+          if [ -s npm-audit.json ]; then
+            critical=$(cat npm-audit.json | jq '.vulnerabilities | to_entries[] | select(.value.severity == "critical") | length' | wc -l)
+            high=$(cat npm-audit.json | jq '.vulnerabilities | to_entries[] | select(.value.severity == "high") | length' | wc -l)
+            moderate=$(cat npm-audit.json | jq '.vulnerabilities | to_entries[] | select(.value.severity == "moderate") | length' | wc -l)
+            low=$(cat npm-audit.json | jq '.vulnerabilities | to_entries[] | select(.value.severity == "low") | length' | wc -l)
+            
+            echo "Critical: $critical, High: $high, Moderate: $moderate, Low: $low" | tee -a security-audit.txt
+            
+            # Fail on critical or high vulnerabilities
+            if [ "$critical" -gt 0 ] || [ "$high" -gt 0 ]; then
+              echo "❌ Critical or high severity vulnerabilities found!"
+              cat npm-audit.json | jq '.vulnerabilities'
+              exit 1
+            fi
+          fi
+
+      # Snyk - advanced vulnerability scanning
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --json --file=package.json
+          json: true
+        continue-on-error: true
+
+      - name: Process Snyk results
+        if: always()
+        run: |
+          if [ -f snyk.json ]; then
+            echo "=== Snyk Scan Results ===" | tee -a security-audit.txt
+            vulnerabilities=$(cat snyk.json | jq '.vulnerabilities | length')
+            echo "Total vulnerabilities found: $vulnerabilities" | tee -a security-audit.txt
+            
+            # Extract high/critical issues
+            cat snyk.json | jq '.vulnerabilities[] | select(.severity == "high" or .severity == "critical")' >> security-audit.txt
+          fi
+
+      - name: Upload security audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-security-scan
+          path: |
+            security-audit.txt
+            npm-audit.json
+            snyk.json
+          retention-days: 30
+
+  secret-scan:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # TruffleHog - comprehensive secret scanning
+      - name: Run TruffleHog secret scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified --json
+
+      # GitLeaks - additional secret detection
+      - name: Run GitLeaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Custom checks for common leaks
+      - name: Check for hardcoded secrets
+        run: |
+          echo "=== Custom Secret Detection ===" | tee secret-report.txt
+
+          # Check for common secret patterns
+          secrets_found=false
+
+          # API keys
+          if grep -r -E "(api[_-]?key|apikey|API_KEY)" --include="*.ts" --include="*.js" --include="*.json" src/ | grep -v ".example" | grep -E "=['\"][a-zA-Z0-9]{20,}['\"]"; then
+            echo "❌ Potential API keys found in code" | tee -a secret-report.txt
+            secrets_found=true
+          fi
+
+          # Database URLs with embedded credentials
+          if grep -r -E "postgresql://[^:]+:[^@]+@" --include="*.ts" --include="*.js" src/ | grep -v ".example"; then
+            echo "❌ Database URLs with credentials found in code" | tee -a secret-report.txt
+            secrets_found=true
+          fi
+
+          # JWT secrets
+          if grep -r -E "jwt[_-]?secret" --include="*.ts" --include="*.js" src/ | grep -v ".example" | grep -E "=['\"][a-zA-Z0-9]{32,}['\"]"; then
+            echo "❌ JWT secrets found in code" | tee -a secret-report.txt
+            secrets_found=true
+          fi
+
+          # Private keys
+          if grep -r -E "BEGIN (RSA )?PRIVATE KEY" --include="*.ts" --include="*.js" --include="*.json" .; then
+            echo "❌ Private keys found in code" | tee -a secret-report.txt
+            secrets_found=true
+          fi
+
+          if [ "$secrets_found" = true ]; then
+            echo "❌ Secrets detected in codebase!"
+            exit 1
+          else
+            echo "✅ No secrets detected in codebase" | tee -a secret-report.txt
+          fi
+
+      - name: Upload secret scan results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: secret-detection-scan
+          path: |
+            secret-report.txt
+          retention-days: 30
+
+  code-analysis:
+    name: Static Code Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # CodeQL - GitHub's semantic code analysis
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+          queries: security-extended,security-and-quality
+          config: |
+            paths-ignore:
+              - node_modules
+              - dist
+              - coverage
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Build application for analysis
+        run: npm run build
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript"
+          output: codeql-results.sarif
+
+      # ESLint security rules
+      - name: Run ESLint security analysis
+        run: |
+          echo "=== ESLint Security Analysis ===" | tee eslint-security.txt
+
+          # Install security plugins if not already present
+          npm install --no-save eslint-plugin-security eslint-plugin-no-secrets
+
+          # Run security-focused linting
+          npx eslint src/ --ext .ts,.tsx --format json -o eslint-security.json || {
+            echo "ESLint found security issues:"
+            cat eslint-security.json | jq '.[] | select(.messages[].severity == 2)'
+            echo "❌ Security linting issues found"
+          }
+
+          echo "✅ ESLint security analysis completed" | tee -a eslint-security.txt
+
+      - name: Upload code analysis results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-code-analysis
+          path: |
+            codeql-results.sarif
+            eslint-security.json
+            eslint-security.txt
+          retention-days: 30
+
+  configuration-security:
+    name: Configuration Security Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate security configurations
+        run: |
+          echo "=== Configuration Security Assessment ===" | tee config-security.txt
+
+          # Check Vercel configuration
+          echo "Checking Vercel configuration..." | tee -a config-security.txt
+
+          # Validate security headers
+          required_headers=("X-Content-Type-Options" "X-Frame-Options" "Content-Security-Policy" "Strict-Transport-Security")
+          for header in "${required_headers[@]}"; do
+            if ! grep -q "$header" vercel.json; then
+              echo "❌ Missing security header: $header" | tee -a config-security.txt
+              exit 1
+            else
+              echo "✅ Found security header: $header" | tee -a config-security.txt
+            fi
+          done
+
+          # Check for CORS wildcards
+          if grep -q '"Access-Control-Allow-Origin".*"\*"' vercel.json; then
+            echo "❌ Dangerous CORS wildcard found!" | tee -a config-security.txt
+            exit 1
+          else
+            echo "✅ No dangerous CORS wildcards found" | tee -a config-security.txt
+          fi
+
+          # Check CSP configuration
+          if grep -q "script-src.*'unsafe-eval'" vercel.json; then
+            echo "❌ CSP allows unsafe-eval - this is a security risk!" | tee -a config-security.txt
+            exit 1
+          fi
+
+          if grep -q "script-src.*'unsafe-inline'" vercel.json; then
+            echo "❌ CSP allows unsafe-inline - this is a security risk!" | tee -a config-security.txt
+            exit 1
+          fi
+
+          if grep -q "style-src.*'unsafe-inline'" vercel.json; then
+            echo "⚠️ CSP allows unsafe-inline for styles - consider using CSS-in-JS or nonces" | tee -a config-security.txt
+          fi
+
+          # Validate function configuration
+          if jq -e '.functions."api/**/*.ts".maxDuration > 30' vercel.json; then
+            echo "⚠️ Function timeout > 30s may impact performance" | tee -a config-security.txt
+          fi
+
+          # Check environment variable handling
+          echo "Checking environment variable security..." | tee -a config-security.txt
+
+          # Ensure no secrets in .env files (non-example)
+          if find . -name ".env*" -not -name "*.example" -exec grep -l "secret\|key\|password\|token" {} \; | head -1; then
+            echo "❌ Potential secrets found in environment files" | tee -a config-security.txt
+            exit 1
+          else
+            echo "✅ No secrets detected in environment files" | tee -a config-security.txt
+          fi
+
+          echo "✅ Configuration security check completed" | tee -a config-security.txt
+
+      - name: Upload configuration security results
+        uses: actions/upload-artifact@v4
+        with:
+          name: configuration-security-check
+          path: config-security.txt
+          retention-days: 30
+
+  # ==========================================
+  # Security Report Generation
+  # ==========================================
+
+  generate-security-report:
+    name: Generate Security Report
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, secret-scan, code-analysis, configuration-security]
+    if: always()
+
+    steps:
+      - name: Download all security scan results
+        uses: actions/download-artifact@v4
+        with:
+          path: security-results/
+
+      - name: Generate comprehensive security report
+        run: |
+          echo "# 🔒 Security Scan Report" > SECURITY_REPORT.md
+          echo "Generated: $(date)" >> SECURITY_REPORT.md
+          echo "Repository: ${{ github.repository }}" >> SECURITY_REPORT.md
+          echo "Commit: ${{ github.sha }}" >> SECURITY_REPORT.md
+          echo "" >> SECURITY_REPORT.md
+
+          echo "## Executive Summary" >> SECURITY_REPORT.md
+          echo "" >> SECURITY_REPORT.md
+
+          # Check each scan result
+          scan_results=("dependency-security-scan" "secret-detection-scan" "static-code-analysis" "configuration-security-check")
+          all_passed=true
+
+          for scan in "${scan_results[@]}"; do
+            echo "### $scan" >> SECURITY_REPORT.md
+            if [ -d "security-results/$scan" ]; then
+              echo "✅ Completed" >> SECURITY_REPORT.md
+              
+              # Include relevant details
+              if [ -f "security-results/$scan/security-audit.txt" ]; then
+                echo "\`\`\`" >> SECURITY_REPORT.md
+                head -20 "security-results/$scan/security-audit.txt" >> SECURITY_REPORT.md
+                echo "\`\`\`" >> SECURITY_REPORT.md
+              fi
+            else
+              echo "❌ Failed or missing" >> SECURITY_REPORT.md
+              all_passed=false
+            fi
+            echo "" >> SECURITY_REPORT.md
+          done
+
+          echo "## Recommendations" >> SECURITY_REPORT.md
+          echo "" >> SECURITY_REPORT.md
+          echo "- Regularly update dependencies to patch vulnerabilities" >> SECURITY_REPORT.md
+          echo "- Review security headers configuration quarterly" >> SECURITY_REPORT.md
+          echo "- Implement automated secret scanning in pre-commit hooks" >> SECURITY_REPORT.md
+          echo "- Monitor for new security advisories in used packages" >> SECURITY_REPORT.md
+          echo "- Conduct penetration testing for production deployments" >> SECURITY_REPORT.md
+
+          if [ "$all_passed" = true ]; then
+            echo "## Overall Status: ✅ PASSED" >> SECURITY_REPORT.md
+          else
+            echo "## Overall Status: ❌ ISSUES FOUND" >> SECURITY_REPORT.md
+          fi
+
+      - name: Upload comprehensive security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: comprehensive-security-report
+          path: SECURITY_REPORT.md
+          retention-days: 90
+
+      - name: Comment on PR if security issues found
+        if: github.event_name == 'pull_request' && needs.dependency-scan.result == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '⚠️ **Security scan detected issues**\n\nPlease review the security report in the workflow artifacts before merging.\n\nDirect link: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+            });
+
+      - name: Create security summary
+        run: |
+          echo "# 🛡️ Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Scan | ${{ needs.dependency-scan.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secret Detection | ${{ needs.secret-scan.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Analysis | ${{ needs.code-analysis.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Configuration Check | ${{ needs.configuration-security.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📄 [View detailed security report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY

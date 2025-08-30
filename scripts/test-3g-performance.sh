@@ -103,7 +103,7 @@ cat > performance-reports/summary.md << EOF
 
 ## Performance Targets
 - **LCP**: < 2.5s (Good)
-- **FID**: < 100ms (Good)  
+- **INP**: < 200ms (Good)  
 - **CLS**: < 0.1 (Good)
 - **FCP**: < 1.8s (Good)
 - **SI**: < 3.4s (Good)
@@ -132,7 +132,7 @@ for report in performance-reports/*.json; do
         
         const metrics = {
             'largest-contentful-paint': { name: 'LCP', target: 2500, unit: 'ms' },
-            'first-input-delay': { name: 'FID', target: 100, unit: 'ms' },
+            'interaction-to-next-paint': { name: 'INP', target: 200, unit: 'ms' },
             'cumulative-layout-shift': { name: 'CLS', target: 0.1, unit: '' },
             'first-contentful-paint': { name: 'FCP', target: 1800, unit: 'ms' },
             'speed-index': { name: 'SI', target: 3400, unit: 'ms' },

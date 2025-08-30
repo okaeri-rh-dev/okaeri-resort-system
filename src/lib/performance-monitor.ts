@@ -12,7 +12,7 @@ interface PerformanceConfig {
   reportInterval: number;
   budgets: {
     lcp: number;
-    fid: number;
+    inp: number;
     cls: number;
     fcp: number;
     ttfb: number;
@@ -26,7 +26,7 @@ const defaultConfig: PerformanceConfig = {
   reportInterval: 60000, // Report every minute
   budgets: {
     lcp: 2500, // 2.5s
-    fid: 100, // 100ms
+    inp: 200, // 200ms
     cls: 0.1, // 0.1
     fcp: 1500, // 1.5s
     ttfb: 800, // 800ms
@@ -308,9 +308,9 @@ export class PerformanceMonitor {
         const responseTime = performance.now() - startTime;
         this.recordMetric("click-response-time", responseTime);
 
-        // Check FID budget
-        if (responseTime > this.config.budgets.fid) {
-          performanceBudgetManager.checkBudget("fid", responseTime, window.location.pathname);
+        // Check INP budget
+        if (responseTime > this.config.budgets.inp) {
+          performanceBudgetManager.checkBudget("inp", responseTime, window.location.pathname);
         }
       });
     });

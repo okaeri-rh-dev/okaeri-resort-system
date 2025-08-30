@@ -14,6 +14,25 @@ enableMapSet();
 // Load test environment variables
 config({ path: ".env.test" });
 
+// Set deterministic test environment for TDD
+process.env.TZ = "Asia/Manila";
+process.env.MOCK_DELAY = "0";
+
+// Use fake timers with fixed time for deterministic tests
+vi.useFakeTimers();
+vi.setSystemTime(new Date("2025-08-25T00:00:00.000Z"));
+
+// Mock Math.random for deterministic randomness
+const originalRandom = Math.random;
+beforeAll(() => {
+  vi.spyOn(Math, "random").mockReturnValue(0.5);
+});
+
+afterAll(() => {
+  Math.random = originalRandom;
+  vi.useRealTimers();
+});
+
 // Set default test environment variables if not provided
 if (!process.env.DATABASE_URL) {
   process.env.DATABASE_URL =

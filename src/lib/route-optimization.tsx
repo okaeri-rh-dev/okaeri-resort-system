@@ -239,7 +239,7 @@ export class PerformanceBudgetManager {
     routeLoadTime: 3000, // 3 seconds
     renderTime: 100, // 100ms
     lcp: 2500, // 2.5 seconds
-    fid: 100, // 100ms
+    inp: 200, // 200ms
     cls: 0.1, // 0.1 cumulative layout shift
   };
 
@@ -337,8 +337,8 @@ export class CoreWebVitalsMonitor {
     // Largest Contentful Paint (LCP)
     this.observeLCP();
 
-    // First Input Delay (FID)
-    this.observeFID();
+    // Interaction to Next Paint (INP)
+    this.observeINP();
 
     // Cumulative Layout Shift (CLS)
     this.observeCLS();
@@ -379,28 +379,28 @@ export class CoreWebVitalsMonitor {
   }
 
   /**
-   * Observe First Input Delay
+   * Observe Interaction to Next Paint
    */
-  private observeFID() {
+  private observeINP() {
     try {
       const observer = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         entries.forEach((entry) => {
-          const fid = (entry as any).processingStart - entry.startTime;
-          this.metrics.fid = fid;
+          const inp = (entry as any).processingStart - entry.startTime;
+          this.metrics.inp = Math.max(this.metrics.inp || 0, inp);
 
           // Check against budget
-          performanceBudgetManager.checkBudget("fid", fid, getCurrentRoute());
+          performanceBudgetManager.checkBudget("inp", inp, getCurrentRoute());
 
           // Report to analytics
-          this.reportMetric("fid", fid);
+          this.reportMetric("inp", inp);
         });
       });
 
-      observer.observe({ entryTypes: ["first-input"] });
+      observer.observe({ entryTypes: ["event"] });
       this.observers.push(observer);
     } catch (error) {
-      console.warn("FID observation not supported:", error);
+      console.warn("INP observation not supported:", error);
     }
   }
 

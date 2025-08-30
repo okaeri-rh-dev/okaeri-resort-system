@@ -1,48 +1,133 @@
 {
   "files": [
     {
-      "path": "dist/assets/index-*.js",
-      "maxSize": "150kb",
+      "name": "Main Application Bundle",
+      "path": "dist/assets/app-*.js",
+      "maxSize": "120kb",
       "compression": "gzip"
     },
     {
-      "path": "dist/assets/index-*.css",
-      "maxSize": "50kb",
-      "compression": "gzip"
-    },
-    {
-      "path": "dist/assets/vendor-*.js",
-      "maxSize": "200kb",
-      "compression": "gzip"
-    },
-    {
-      "path": "dist/assets/react-vendor-*.js",
-      "maxSize": "45kb",
-      "compression": "gzip"
-    },
-    {
-      "path": "dist/assets/router-*.js",
-      "maxSize": "30kb",
-      "compression": "gzip"
-    },
-    {
-      "path": "dist/assets/query-*.js",
-      "maxSize": "35kb",
-      "compression": "gzip"
-    },
-    {
-      "path": "dist/assets/ui-critical-*.js",
+      "name": "Main CSS Bundle",
+      "path": "dist/assets/styles/index-*.css",
       "maxSize": "40kb",
       "compression": "gzip"
     },
     {
+      "name": "React Vendor Bundle",
+      "path": "dist/assets/react-vendor-*.js",
+      "maxSize": "42kb",
+      "compression": "gzip"
+    },
+    {
+      "name": "Router Bundle",
+      "path": "dist/assets/router-*.js",
+      "maxSize": "28kb",
+      "compression": "gzip"
+    },
+    {
+      "name": "Query Bundle",
+      "path": "dist/assets/query-*.js",
+      "maxSize": "32kb",
+      "compression": "gzip"
+    },
+    {
+      "name": "Critical UI Components",
+      "path": "dist/assets/ui-critical-*.js",
+      "maxSize": "38kb",
+      "compression": "gzip"
+    },
+    {
+      "name": "Extended UI Components",
+      "path": "dist/assets/ui-extended-*.js",
+      "maxSize": "65kb",
+      "compression": "gzip"
+    },
+    {
+      "name": "Form Handling",
       "path": "dist/assets/forms-*.js",
+      "maxSize": "22kb",
+      "compression": "gzip"
+    },
+    {
+      "name": "Utilities Bundle",
+      "path": "dist/assets/utils-*.js",
+      "maxSize": "18kb",
+      "compression": "gzip"
+    },
+    {
+      "name": "Icons Bundle (lazy loaded)",
+      "path": "dist/assets/icons-*.js",
       "maxSize": "25kb",
+      "compression": "gzip"
+    },
+    {
+      "name": "State Management",
+      "path": "dist/assets/state-*.js",
+      "maxSize": "15kb",
+      "compression": "gzip"
+    },
+    {
+      "name": "Dashboard Route",
+      "path": "dist/assets/route-dashboard-*.js",
+      "maxSize": "35kb",
+      "compression": "gzip"
+    },
+    {
+      "name": "Bookings Route",
+      "path": "dist/assets/route-bookings-*.js",
+      "maxSize": "45kb",
+      "compression": "gzip"
+    },
+    {
+      "name": "Properties Route",
+      "path": "dist/assets/route-properties-*.js",
+      "maxSize": "30kb",
+      "compression": "gzip"
+    },
+    {
+      "name": "Expenses Route",
+      "path": "dist/assets/route-expenses-*.js",
+      "maxSize": "35kb",
+      "compression": "gzip"
+    },
+    {
+      "name": "Other Routes",
+      "path": "dist/assets/route-misc-*.js",
+      "maxSize": "25kb",
+      "compression": "gzip"
+    },
+    {
+      "name": "Public Routes",
+      "path": "dist/assets/route-public-*.js",
+      "maxSize": "20kb",
+      "compression": "gzip"
+    },
+    {
+      "name": "Fallback Vendor Bundle",
+      "path": "dist/assets/vendor-*.js",
+      "maxSize": "150kb",
       "compression": "gzip"
     }
   ],
   "ci": {
     "trackBranches": ["main", "develop"],
-    "repoBranchBase": "main"
+    "repoBranchBase": "main",
+    "reportBuildStatus": true
+  },
+  "globalThreshold": {
+    "maxSize": "1.5mb",
+    "compression": "gzip"
+  },
+  "defaultCompression": "gzip",
+  "algorithm": "gzip",
+  "config": {
+    "mobile": {
+      "maxSize": "400kb",
+      "compression": "gzip"
+    },
+    "desktop": {
+      "maxSize": "800kb",
+      "compression": "gzip"
+    }
   }
 }
