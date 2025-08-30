@@ -19,6 +19,159 @@ seamless migration paths to production APIs.
 5. **Testability**: Predictable responses for testing with deterministic mode
 6. **State Persistence**: Local storage for development continuity
 
+## Service Maturity Levels
+
+### Level Definitions
+
+Mock services progress through three maturity levels as features develop:
+
+#### Level 1 (L1): Basic CRUD Operations
+
+**Purpose**: Enable basic feature development and unit testing
+
+**Capabilities**:
+
+- Create, Read, Update, Delete operations
+- Basic validation (required fields, data types)
+- Simple success/error responses
+- Deterministic test data
+- No delays or complex scenarios
+
+**Example**:
+
+```typescript
+class L1MockService {
+  async create(data: any) {
+    if (!data.name) throw new Error("Name required");
+    return { id: 1, ...data };
+  }
+  async get(id: number) {
+    return { id, name: "Test" };
+  }
+}
+```
+
+#### Level 2 (L2): Business Logic Simulation
+
+**Purpose**: Support integration testing and complex workflows
+
+**Capabilities**:
+
+- All L1 features plus:
+- Business rule validation
+- Calculated fields and derived data
+- Related data handling (joins, references)
+- Basic error scenarios (404, 409 conflicts)
+- Pagination and filtering
+- State transitions
+
+**Example**:
+
+```typescript
+class L2MockService extends L1MockService {
+  async calculateTotal(items: any[]) {
+    return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  }
+
+  async validateBusinessRules(booking: any) {
+    if (booking.checkOut <= booking.checkIn) {
+      throw new Error("Check-out must be after check-in");
+    }
+    if (booking.guests > booking.room.capacity) {
+      throw new Error("Guest count exceeds room capacity");
+    }
+  }
+}
+```
+
+#### Level 3 (L3): Production Simulation
+
+**Purpose**: Complete E2E testing with production-like behavior
+
+**Capabilities**:
+
+- All L2 features plus:
+- Network delays and latency simulation
+- Rate limiting and throttling
+- Complex error scenarios (timeouts, retries)
+- Edge cases and race conditions
+- Performance characteristics
+- Security features (auth tokens, permissions)
+- Webhooks and async operations
+- Data consistency and transactions
+
+**Example**:
+
+```typescript
+class L3MockService extends L2MockService {
+  private requestCount = 0;
+  private readonly rateLimit = 100;
+
+  async processWithDelay(operation: () => Promise<any>) {
+    // Rate limiting
+    if (this.requestCount++ > this.rateLimit) {
+      throw new Error("Rate limit exceeded");
+    }
+
+    // Network latency simulation
+    const delay = this.config.scenario === "SLOW" ? 2000 : 100;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+
+    // Random failures for chaos testing
+    if (Math.random() < 0.01 && this.config.scenario === "UNSTABLE") {
+      throw new Error("Service temporarily unavailable");
+    }
+
+    return operation();
+  }
+
+  async authenticate(token: string) {
+    // Token expiry simulation
+    const decoded = jwt.decode(token);
+    if (decoded.exp < Date.now() / 1000) {
+      throw new Error("Token expired");
+    }
+
+    // Permission checking
+    if (!decoded.permissions.includes(requiredPermission)) {
+      throw new Error("Insufficient permissions");
+    }
+  }
+}
+```
+
+### Maturity Level Requirements by Phase
+
+| Phase                   | Service  | Required Level | Justification                                   |
+| ----------------------- | -------- | -------------- | ----------------------------------------------- |
+| **Phase 1: Login**      | auth     | L3             | Critical security features need full simulation |
+| **Phase 2: Dashboard**  | auth     | L2             | Session management complexity                   |
+|                         | property | L1             | Basic property list display                     |
+|                         | metrics  | L1             | Simple aggregation display                      |
+| **Phase 3: Booking**    | booking  | L3             | Complex business rules and state management     |
+|                         | payment  | L2             | Payment flow simulation needed                  |
+|                         | guest    | L1             | Basic guest information                         |
+| **Phase 4: Financial**  | expense  | L3             | Financial accuracy critical                     |
+|                         | report   | L2             | Complex aggregations and calculations           |
+|                         | payment  | L3             | Complete payment processing                     |
+| **Phase 5: Production** | ALL      | L3             | Full production parity required                 |
+
+### Implementation Status
+
+Current mock service maturity levels:
+
+| Service  | Current Level | Target for Next Phase | Gap Analysis                      |
+| -------- | ------------- | --------------------- | --------------------------------- |
+| auth     | L3 ✅         | L3                    | Ready for Phase 1                 |
+| booking  | L2 ⚠️         | L3                    | Add rate limiting, complex errors |
+| guest    | Not Started   | L1                    | Need basic CRUD                   |
+| expense  | Not Started   | L1                    | Need basic CRUD                   |
+| property | Not Started   | L1                    | Need basic CRUD                   |
+| payment  | Not Started   | L2                    | Need payment flow simulation      |
+| report   | Not Started   | L1                    | Need basic generation             |
+| user     | Not Started   | L1                    | Need role management              |
+| project  | Not Started   | L1                    | Need tenant isolation             |
+
 ## Complete Service Registry
 
 ### All Available Services (9 Total)

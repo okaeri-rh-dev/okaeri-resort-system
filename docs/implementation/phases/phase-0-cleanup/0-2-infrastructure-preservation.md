@@ -458,16 +458,15 @@ describe("Preserved Infrastructure Integration", () => {
       expect(secureTokenManager.isTokenValid()).toBe(true);
     });
 
-    it("should maintain CSRF protection", async () => {
-      const { csrfProtection } = await import("@/lib/security/csrf-protection");
+    it("should use JWT authentication with Authorization headers", async () => {
       const { apiClient } = await import("@/lib/api-client");
 
-      // Verify CSRF token included in requests
+      // Verify JWT token included in Authorization header (CSRF-immune)
+      // Note: JWT in Authorization headers doesn't need CSRF tokens
       const config = await apiClient.getRequestConfig();
-      expect(config.headers["X-CSRF-Token"]).toBeDefined();
-      expect(csrfProtection.validateToken(config.headers["X-CSRF-Token"])).toBe(
-        true
-      );
+      expect(config.headers["Authorization"]).toMatch(/^Bearer .+/);
+      // Verify NO CSRF token is used (not needed for JWT)
+      expect(config.headers["X-CSRF-Token"]).toBeUndefined();
     });
   });
 

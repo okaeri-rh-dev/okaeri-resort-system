@@ -248,10 +248,10 @@ describe("Security Features", () => {
     // RED: No script execution
   });
 
-  it("should handle CSRF token refresh", () => {
-    // RED: Mock CSRF token expiry
-    // RED: Form should refresh token and retry
-    // RED: User experience uninterrupted
+  it("should use JWT authentication without CSRF tokens", () => {
+    // RED: Verify JWT is sent via Authorization header
+    // RED: Confirm NO CSRF token is needed (JWT is CSRF-immune)
+    // RED: JWT provides better security than CSRF tokens
   });
 });
 ```
@@ -1131,7 +1131,7 @@ describe("Mobile Accessibility", () => {
 - [ ] Mobile users can complete forms with touch/voice
 - [ ] Network errors handled gracefully with recovery options
 - [ ] Forms persist data appropriately across sessions
-- [ ] Security requirements met (XSS, CSRF, rate limiting)
+- [ ] Security requirements met (XSS prevention, JWT auth, rate limiting)
 - [ ] Performance budgets met for all form interactions
 
 This comprehensive test specification ensures that Phase 1 authentication forms

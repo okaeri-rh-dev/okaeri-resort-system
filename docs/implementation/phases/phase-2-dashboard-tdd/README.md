@@ -70,6 +70,65 @@ Phase 2 focuses on implementing a comprehensive dashboard system using Test-Driv
 - **Revenue Graph**: Daily revenue comparison
 - **Booking Sources**: Pie chart of booking channels
 
+## NPM Scripts
+
+### Phase 2 Specific Commands
+
+```json
+{
+  "scripts": {
+    // Scaffolding - Get dashboard test specifications
+    "scaffold:phase2": "echo 'See docs/implementation/phases/phase-2-dashboard-tdd/README.md'",
+    
+    // Testing - Run Phase 2 dashboard tests
+    "test:phase2": "vitest run src/features/dashboard/**/__tests__/*.test.{ts,tsx}",
+    "test:phase2:coverage": "vitest run --coverage src/features/dashboard/**/__tests__/*.test.{ts,tsx}",
+    "test:phase2:watch": "vitest watch src/features/dashboard/**/__tests__/*.test.{ts,tsx}"
+  }
+}
+```
+
+### TDD Workflow Commands
+
+```bash
+# RED Phase - Write failing tests
+npm run scaffold:phase2           # Get dashboard test specifications
+npm run test:phase2               # Run tests (should fail initially)
+
+# GREEN Phase - Implement until tests pass
+npm run test:phase2:watch         # Watch mode for rapid development
+npm run test:phase2               # Verify all tests pass
+
+# REFACTOR Phase - Optimize performance
+npm run test:phase2:coverage      # Check coverage meets 90% requirement
+
+# Performance verification
+npm run build && npm run preview  # Test production build
+npm run verify:performance        # Run Lighthouse checks
+
+# Integration with Phase 1
+npm run test:phase1 && npm run test:phase2  # Ensure auth works before dashboard
+```
+
+### Coverage Requirements
+
+- **Minimum Coverage**: 90% (standard dashboard components)
+- **Critical Paths**: 95% for financial metrics and calculations
+- **Integration Tests**: 85% coverage required
+- **E2E Tests**: Key user journeys (view metrics, quick actions)
+- **Performance Tests**: Core Web Vitals must pass
+
+### Common Phase 2 Testing Issues
+
+| Issue | Solution |
+|-------|---------|
+| Tests not found | Ensure tests are in `src/features/dashboard/**/__tests__/` |
+| Coverage below 90% | Add tests for loading and error states |
+| Mock data inconsistent | Use centralized mock factories |
+| WebSocket tests failing | Mock WebSocket connections properly |
+| TanStack Query errors | Configure QueryClient for testing |
+| Zustand store issues | Reset stores between tests |
+
 ## Implementation Phases
 
 ### Sub-Phase 2.1: Test Metrics Display (RED)

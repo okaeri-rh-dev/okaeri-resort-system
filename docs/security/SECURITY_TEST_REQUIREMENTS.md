@@ -23,6 +23,56 @@ through CI/CD pipelines and provide concrete validation of security measures.
 - Generate realistic but anonymized test datasets
 - Maintain separate test tenant data
 
+## JWT Authentication Security
+
+### JWT-Only Authentication Policy
+
+**MANDATORY REQUIREMENT**: The Okaeri Resort System uses JWT tokens exclusively
+via Authorization headers. Cookie-based token storage is strictly prohibited.
+
+```javascript
+// ✅ CORRECT - Authorization header only
+headers: {
+  'Authorization': `Bearer ${token}`
+}
+
+// ❌ PROHIBITED - Never store JWT in cookies
+document.cookie = `token=${jwt}`; // SECURITY VIOLATION
+```
+
+### CSRF Protection Analysis
+
+JWT tokens sent via Authorization headers provide inherent CSRF protection:
+
+- Browsers don't automatically include Authorization headers in cross-origin
+  requests
+- Each request must explicitly include the token
+- No ambient authority vulnerability exists
+- CSRF tokens are NOT required with this approach
+
+### Security Test Patterns
+
+1. **Token Storage Tests**
+   - Verify tokens stored ONLY in memory/sessionStorage/localStorage
+   - Ensure NO tokens ever stored in cookies
+   - Test complete token cleanup on logout
+   - Verify token isolation between tabs/windows
+2. **Token Transmission Tests**
+   - Verify ALL authenticated requests use Authorization header
+   - Test that cookie-based tokens are rejected
+   - Ensure tokens never appear in URLs
+   - Validate Bearer scheme format
+3. **XSS Prevention Tests**
+   - Verify all user input is sanitized
+   - Test script injection attempts
+   - Validate CSP headers block inline scripts
+   - Test for DOM-based XSS vulnerabilities
+4. **Authorization Tests**
+   - Verify protected routes require valid token
+   - Test expired token handling
+   - Validate token signature verification
+   - Test token replay prevention
+
 ## 1. Authentication Security Tests
 
 ### 1.1 JWT Token Validation Tests
@@ -36,6 +86,9 @@ describe("JWT Token Structure", () => {
   test("should validate JWT signature integrity");
   test("should reject malformed tokens");
   test("should reject tokens with invalid algorithms");
+  test("should reject tokens with 'none' algorithm");
+  test("should validate issuer and audience claims");
+  test("should enforce required claims (sub, iat, exp)");
 });
 ```
 
@@ -50,10 +103,13 @@ describe("JWT Token Structure", () => {
 ```typescript
 describe("JWT Token Expiry", () => {
   test("should accept valid non-expired tokens");
-  test("should reject expired tokens");
+  test("should reject expired tokens with 401 status");
   test("should handle tokens expiring during request");
-  test("should validate refresh token expiry");
+  test("should validate refresh token expiry separately");
   test("should prevent token replay after expiry");
+  test("should enforce maximum token lifetime (30 minutes)");
+  test("should validate 'nbf' (not before) claim");
+  test("should handle clock skew gracefully (±30 seconds)");
 });
 ```
 
@@ -69,11 +125,14 @@ describe("JWT Token Expiry", () => {
 
 ```typescript
 describe("Token Refresh Security", () => {
-  test("should invalidate old tokens on refresh");
-  test("should prevent refresh token reuse");
-  test("should limit refresh token lifetime");
-  test("should track refresh token usage");
-  test("should detect refresh token theft");
+  test("should invalidate old access tokens on refresh");
+  test("should rotate refresh tokens on use (no reuse)");
+  test("should enforce refresh token absolute expiry (7 days)");
+  test("should track refresh token family for theft detection");
+  test("should revoke entire token family on suspicious activity");
+  test("should limit refresh rate (max 1 per minute)");
+  test("should require valid refresh token for new access token");
+  test("should maintain audit log of all refresh events");
 });
 ```
 
@@ -83,7 +142,34 @@ describe("Token Refresh Security", () => {
 - Old access tokens become invalid immediately
 - Suspicious refresh patterns trigger account lockout
 
-### 1.3 Session Management Tests
+### 1.3 Token Storage Security Tests
+
+#### Test: Secure Token Storage
+
+```typescript
+describe("Token Storage Security", () => {
+  test("should NEVER store tokens in cookies", async () => {
+    await login();
+    const cookies = document.cookie.split(";");
+    cookies.forEach((cookie) => {
+      expect(cookie).not.toMatch(/token|jwt|auth|bearer/i);
+    });
+  });
+
+  test("should clear tokens from all storage on logout", async () => {
+    await logout();
+    expect(localStorage.getItem("token")).toBeNull();
+    expect(sessionStorage.getItem("token")).toBeNull();
+    expect(document.cookie).not.toContain("token");
+  });
+
+  test("should not expose tokens in browser history");
+  test("should not include tokens in error messages");
+  test("should not log tokens to console");
+});
+```
+
+### 1.4 Session Management Tests
 
 #### Test: Session Security
 
@@ -103,7 +189,7 @@ describe("Session Management", () => {
 - Session anomalies trigger security alerts
 - All sessions terminate on logout
 
-### 1.4 Password Policy Tests
+### 1.5 Password Policy Tests
 
 #### Test: Password Strength Enforcement
 
@@ -123,7 +209,7 @@ describe("Password Policy", () => {
 - Password strength meter provides real-time feedback
 - Historical password comparison prevents reuse
 
-### 1.5 Account Lockout Tests
+### 1.6 Account Lockout Tests
 
 #### Test: Brute Force Protection
 
@@ -555,21 +641,83 @@ SecurityTestFactory.createSQLInjectionAttempt();
 - Regular security test review and updates
 - Integration with security scanning tools
 
-## 10. Implementation Guidelines
+## 10. JWT Security Gates
 
-### 10.1 Test Environment Setup
+### 10.1 Pre-Deployment Security Gates
+
+```typescript
+interface JWTSecurityGates {
+  // Gate 1: Token Storage Validation
+  tokenStorage: {
+    noCookieStorage: boolean; // MUST be true
+    secureStorageOnly: boolean; // MUST be true
+    cleanupOnLogout: boolean; // MUST be true
+  };
+
+  // Gate 2: Token Transmission Validation
+  tokenTransmission: {
+    authorizationHeaderOnly: boolean; // MUST be true
+    bearerSchemeFormat: boolean; // MUST be true
+    noUrlParameters: boolean; // MUST be true
+  };
+
+  // Gate 3: Token Security Validation
+  tokenSecurity: {
+    signatureVerification: boolean; // MUST be true
+    expiryValidation: boolean; // MUST be true
+    algorithmValidation: boolean; // MUST be true
+    claimsValidation: boolean; // MUST be true
+  };
+
+  // Gate 4: Refresh Token Validation
+  refreshToken: {
+    rotationEnabled: boolean; // MUST be true
+    familyTracking: boolean; // MUST be true
+    absoluteExpiry: boolean; // MUST be true
+  };
+}
+```
+
+### 10.2 Security Test Automation
+
+```yaml
+# CI/CD Security Pipeline
+jwt_security_tests:
+  - token_storage_tests:
+      - no_cookies_test
+      - secure_storage_test
+      - cleanup_test
+  - token_transmission_tests:
+      - authorization_header_test
+      - bearer_format_test
+      - url_parameter_test
+  - token_validation_tests:
+      - signature_test
+      - expiry_test
+      - algorithm_test
+  - refresh_token_tests:
+      - rotation_test
+      - family_tracking_test
+      - theft_detection_test
+```
+
+## 11. Implementation Guidelines
+
+### 11.1 Test Environment Setup
 
 - Isolated test databases with realistic data
 - Mock external services for security testing
 - Secure test credential management
 - Network isolation for security tests
+- JWT-specific test fixtures and factories
 
-### 10.2 Test Maintenance
+### 11.2 Test Maintenance
 
 - Regular review of security test effectiveness
 - Update tests based on new threat intelligence
 - Maintain test documentation and procedures
 - Train development team on security testing practices
+- Quarterly JWT security audit reviews
 
 This comprehensive security test requirements document provides concrete,
 enforceable tests that can be automated and integrated into the CI/CD pipeline

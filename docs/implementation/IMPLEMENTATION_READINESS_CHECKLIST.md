@@ -105,6 +105,15 @@ ls -la src/lib/validations/
 - [x] `/.github/workflows/security-scan.yml` - Security scanning
 - [x] `/.github/workflows/lighthouse-ci.yml` - Performance testing
 
+### Test Infrastructure Verification
+
+- [x] TypeScript paths configured (@/\* aliases working)
+- [x] Vitest aliases match tsconfig configuration
+- [x] Mock services present in src/services/mock/
+- [x] Test factories available in src/test/factories/
+- [x] Deterministic test configuration using seeded PRNG (not fixed 0.5)
+- [x] All phase-specific NPM scripts documented and available
+
 ---
 
 ## 3. Phase 1 RED Readiness ✅
@@ -299,10 +308,40 @@ echo "Checking test infrastructure..."
 [ -f "src/test/helpers.tsx" ] && echo "✓ Test helpers" || echo "✗ Test helpers missing"
 [ -d "src/test/factories" ] && echo "✓ Test factories" || echo "✗ Test factories missing"
 
+# Verify TypeScript/Vitest aliases
+echo "Checking TypeScript configuration..."
+grep -q '"@/\*": \["src/\*"\]' tsconfig.app.json && echo "✓ TypeScript paths configured" || echo "✗ TypeScript paths missing"
+grep -q '"@/test": resolve(__dirname, "./src/test")' vitest.config.ts && echo "✓ Vitest aliases configured" || echo "✗ Vitest aliases missing"
+
+# Test alias resolution
+echo "Testing path resolution..."
+npm run verify:aliases 2>/dev/null && echo "✓ Path aliases working" || echo "⚠ Path alias verification failed"
+
 # Check mock services
 echo "Checking mock services..."
 [ -f "src/services/mock/auth.mock.service.ts" ] && echo "✓ Auth mock" || echo "✗ Auth mock missing"
 [ -f "src/services/mock/booking.mock.service.ts" ] && echo "✓ Booking mock" || echo "✗ Booking mock missing"
+[ -f "src/services/registry.ts" ] && echo "✓ Service registry" || echo "✗ Service registry missing"
+
+# Verify deterministic test configuration
+echo "Checking test configuration..."
+if grep -q "createSeededRandom" src/test/setup.ts; then
+  echo "✓ Deterministic PRNG configured"
+elif grep -q "Math.random.*0.5" src/test/setup.ts; then
+  echo "⚠ Using fixed 0.5 - consider seeded PRNG for better distribution"
+else
+  echo "✗ Deterministic randomness not configured"
+fi
+
+# Check required NPM scripts
+echo "Checking NPM scripts..."
+for phase in 1 2 3 4 5; do
+  if npm run scaffold:phase$phase --silent 2>/dev/null | grep -q "docs/implementation/phases"; then
+    echo "✓ Phase $phase scaffold script"
+  else
+    echo "✗ Phase $phase scaffold script missing"
+  fi
+done
 
 # Check CI/CD
 echo "Checking CI/CD..."
@@ -314,6 +353,12 @@ echo "Running test suite..."
 npm run test -- --run --reporter=verbose || echo "✗ Tests not configured"
 
 echo "=== Readiness Check Complete ==="
+echo ""
+echo "If any items show ✗, refer to:"
+echo "- Mock_API_Architecture.md for missing mock services"
+echo "- TDD_SINGLE_SOURCE_OF_TRUTH.md for NPM scripts"
+echo "- DETERMINISTIC_TEST_CONFIGURATION.md for test setup"
+echo "- LOCAL_TESTING_ERGONOMICS.md for troubleshooting"
 ```
 
 ---

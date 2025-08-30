@@ -1059,7 +1059,7 @@ After RED phase completion, implement minimal code to pass tests:
 After GREEN phase, optimize and polish:
 
 1. **Security Review** (Sub-Phase 1.4)
-   - CSRF protection validation
+   - JWT authentication validation (CSRF-immune via Authorization headers)
    - XSS prevention verification
    - Session security audit
    - Compliance verification
@@ -1090,7 +1090,7 @@ After GREEN phase, optimize and polish:
 
 - **OWASP Compliance**: All Top 10 vulnerabilities addressed
 - **CSP Headers**: Content Security Policy implemented
-- **CSRF Protection**: All forms protected
+- **JWT Authentication**: Authorization headers (CSRF-immune)
 - **XSS Prevention**: All inputs sanitized
 
 ## Development Workflow

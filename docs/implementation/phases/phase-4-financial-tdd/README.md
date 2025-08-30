@@ -15,6 +15,82 @@ Phase 4 implements comprehensive financial features tailored for small to medium
 - Designs multi-currency support with PHP as primary
 - Implements audit trails and security measures
 
+## NPM Scripts
+
+### Phase 4 Specific Commands
+
+```json
+{
+  "scripts": {
+    // Scaffolding - Get financial system test specifications
+    "scaffold:phase4": "echo 'See docs/implementation/phases/phase-4-financial-tdd/README.md'",
+    
+    // Testing - Run Phase 4 financial tests
+    "test:phase4": "vitest run src/features/financial/**/__tests__/*.test.{ts,tsx}",
+    "test:phase4:coverage": "vitest run --coverage src/features/financial/**/__tests__/*.test.{ts,tsx}",
+    "test:phase4:watch": "vitest watch src/features/financial/**/__tests__/*.test.{ts,tsx}"
+  }
+}
+```
+
+### TDD Workflow Commands
+
+```bash
+# RED Phase - Write failing tests
+npm run scaffold:phase4           # Get financial test specifications
+npm run test:phase4               # Run tests (should fail initially)
+
+# GREEN Phase - Implement until tests pass
+npm run test:phase4:watch         # Watch mode for rapid development
+npm run test:phase4               # Verify all tests pass
+
+# REFACTOR Phase - Optimize calculations
+npm run test:phase4:coverage      # Check coverage meets 95% requirement
+
+# Financial calculation testing
+npm run test:tax:calculations     # Test VAT, withholding, discounts
+npm run test:reporting:accuracy   # Test report generation accuracy
+
+# Integration with booking system
+npm run test:phase3 && npm run test:phase4  # Ensure booking data flows to financial
+```
+
+### Coverage Requirements
+
+- **Minimum Coverage**: 95% (financial calculations are critical)
+- **Tax Calculations**: 100% coverage required (regulatory compliance)
+- **Expense Management**: 95% coverage required
+- **Income Tracking**: 95% coverage required
+- **Report Generation**: 90% coverage required
+- **Receipt Processing**: 90% coverage required
+
+### Common Phase 4 Testing Issues
+
+| Issue | Solution |
+|-------|---------|
+| Tests not found | Ensure tests are in `src/features/financial/**/__tests__/` |
+| Coverage below 95% | Add tests for all tax scenarios and edge cases |
+| Calculation precision | Use decimal.js for financial calculations |
+| VAT calculation errors | Test both VAT-inclusive and VAT-exclusive amounts |
+| Senior discount failing | Test VAT exemption on discounted amounts |
+| Report totals mismatch | Verify rounding at transaction level, not totals |
+| Currency conversion | Mock exchange rates with fixed values |
+
+### Financial Accuracy Testing
+
+```bash
+# Run precision tests for financial calculations
+npm run test:financial:precision   # Test decimal precision
+npm run test:tax:compliance       # Test BIR compliance rules
+npm run test:discount:scenarios   # Test all discount combinations
+
+# Expected precision requirements
+# - Money values: 2 decimal places
+# - Tax rates: 4 decimal places
+# - Exchange rates: 6 decimal places
+# - No floating point errors in calculations
+```
+
 ## Core Financial Components
 
 ### 1. Expense Management

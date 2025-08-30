@@ -1,5 +1,26 @@
 # Verification & Handoff Protocol
 
+## Quick Start: Run Local Verification
+
+```bash
+# Run complete local verification suite
+npm run verify
+
+# This runs all quality checks:
+# - Tests with coverage (verify:tests)
+# - TypeScript type checking (verify:types)
+# - ESLint with zero warnings (verify:lint)
+# - Security audit for vulnerabilities (verify:security)
+```
+
+For specific verifications:
+
+```bash
+npm run verify:accessibility  # Check WCAG 2.1 AA compliance
+npm run verify:performance    # Check Lighthouse scores
+npm run verify:bundle        # Enforce bundle size limits (FAILS if exceeded)
+```
+
 ## Overview
 
 This document establishes the quality gates, verification procedures, and
@@ -141,29 +162,67 @@ verification standards.
 
 #### Verification Checklist
 
+##### JWT Security Verification
+
+- [ ] **Token Storage**: Verify NO tokens in cookies
+
+  ```bash
+  # Check for cookie usage in auth code
+  grep -r "document.cookie" src/ | grep -i "token\|jwt\|auth"
+  # Should return no results
+  ```
+
+- [ ] **Authorization Headers**: Verify Bearer token format
+
+  ```typescript
+  // All API calls must include:
+  headers: { 'Authorization': `Bearer ${token}` }
+  ```
+
+- [ ] **Token Cleanup**: Verify logout clears all tokens
+
+  ```typescript
+  // After logout:
+  localStorage.getItem("token") === null;
+  sessionStorage.getItem("token") === null;
+  document.cookie.includes("token") === false;
+  ```
+
+- [ ] **CSRF Immunity**: Verify no CSRF tokens needed
+  ```typescript
+  // No CSRF token generation or validation code should exist
+  // Authorization header provides CSRF protection
+  ```
+
 ##### Authentication & Authorization
 
-- [ ] JWT tokens properly validated
-- [ ] Session management secure
-- [ ] Role-based access enforced
-- [ ] Password policies implemented
-- [ ] Multi-factor auth supported
+- [ ] JWT tokens properly validated (signature, expiry, claims)
+- [ ] Tokens transmitted ONLY via Authorization header
+- [ ] NO tokens stored in cookies (security violation if found)
+- [ ] Session management secure (token rotation, cleanup)
+- [ ] Role-based access enforced (RBAC validation)
+- [ ] Password policies implemented (12+ chars, complexity)
+- [ ] Multi-factor auth supported (TOTP/SMS ready)
 
 ##### Data Protection
 
-- [ ] Input validation comprehensive
-- [ ] XSS protection verified
-- [ ] JWT authentication properly secured (CSRF-immune)
-- [ ] SQL injection prevented
-- [ ] Sensitive data encrypted
+- [ ] Input validation comprehensive (all user inputs sanitized)
+- [ ] XSS protection verified (CSP headers, output encoding)
+- [ ] JWT authentication properly secured (CSRF-immune via Authorization header)
+- [ ] Cookie authentication prohibited (must fail if tokens in cookies)
+- [ ] SQL injection prevented (parameterized queries only)
+- [ ] Sensitive data encrypted (AES-256 at rest, TLS 1.3 in transit)
+- [ ] Token exposure prevented (no tokens in logs/URLs/errors)
 
 ##### API Security
 
-- [ ] Rate limiting active
-- [ ] CORS properly configured
-- [ ] API authentication required
-- [ ] Error messages sanitized
-- [ ] Audit logging enabled
+- [ ] Rate limiting active (100 req/min per user)
+- [ ] CORS properly configured (whitelist only)
+- [ ] API authentication required (Bearer token validation)
+- [ ] Authorization header validation (format: Bearer <JWT>)
+- [ ] Error messages sanitized (no token/PII exposure)
+- [ ] Audit logging enabled (all auth events tracked)
+- [ ] Token refresh security (rotation, family tracking)
 
 #### Exit Criteria
 
@@ -198,12 +257,13 @@ verification standards.
 
 ##### Bundle Analysis
 
-| Category    | Budget | Actual | Pass/Fail |
-| ----------- | ------ | ------ | --------- |
-| Initial JS  | <100KB | -      | -         |
-| Initial CSS | <50KB  | -      | -         |
-| Total Size  | <200KB | -      | -         |
-| Lazy Loaded | <500KB | -      | -         |
+| Category         | Budget | Actual | Pass/Fail |
+| ---------------- | ------ | ------ | --------- |
+| Main Application | <120KB | -      | -         |
+| Main CSS         | <40KB  | -      | -         |
+| React Vendor     | <42KB  | -      | -         |
+| Total Initial    | <200KB | -      | -         |
+| Global Threshold | <1.5MB | -      | -         |
 
 ##### Network Performance
 
@@ -216,7 +276,7 @@ verification standards.
 #### Exit Criteria
 
 - [ ] All Core Web Vitals green
-- [ ] Bundle budgets met
+- [ ] Bundle budgets enforced (not just visualized)
 - [ ] Lighthouse score >90
 - [ ] Performance report generated
 
@@ -427,6 +487,115 @@ graph TD
 - Lessons Learned: [Key takeaways]
 ```
 
+## Critical Server Lifecycle Management
+
+### Lighthouse Testing Requirements
+
+**Issue Addressed**: Lighthouse verification scripts must manage server
+lifecycle to function properly. Previous implementations failed because they
+assumed a running server without starting one.
+
+#### Required Dependency
+
+All Lighthouse testing requires the `start-server-and-test` package:
+
+```bash
+npm install --save-dev start-server-and-test
+```
+
+#### Server Lifecycle Process
+
+1. **Build Phase**: `npm run build` creates production assets
+2. **Server Start**: `start-server-and-test preview http://localhost:4173`
+   starts preview server
+3. **Health Check**: Waits for server to respond at `http://localhost:4173` (60s
+   timeout)
+4. **Test Execution**: Runs Lighthouse commands against live server
+5. **Automatic Cleanup**: Terminates server process when tests complete
+
+#### Troubleshooting Server Issues
+
+**Port Already in Use**:
+
+```bash
+# Kill existing processes on port 4173
+lsof -ti:4173 | xargs kill -9
+
+# Or use alternative port
+npm run preview -- --port 4174
+```
+
+**Server Won't Start**:
+
+```bash
+# Verify preview works independently
+npm run build && npm run preview
+
+# Check for build artifacts
+ls -la dist/
+
+# Test server health manually
+curl -I http://localhost:4173
+```
+
+**Lighthouse Connection Refused**:
+
+```bash
+# Increase wait time or add explicit health check
+start-server-and-test preview http://localhost:4173 --wait-on-timeout 120000
+```
+
+### Deterministic Environment Requirements
+
+**Issue Addressed**: CI tests must use deterministic environment variables to
+ensure consistent, reproducible results between local and CI environments.
+
+#### Required Environment Variables
+
+All testing environments (local and CI) must set these variables:
+
+```bash
+export FIXED_TIME="2024-01-01T00:00:00Z"
+export RANDOM_SEED="test-seed-2024"
+export TEST_SCENARIO="STABLE"
+export MOCK_DELAY="0"
+export TZ="Asia/Manila"
+export VITEST_DETERMINISTIC="true"
+export NODE_ENV="test"
+export VITE_USE_MOCK_API="true"
+```
+
+#### Local Environment Setup
+
+Create `.env.test`:
+
+```env
+NODE_ENV=test
+FIXED_TIME=2024-01-01T00:00:00Z
+RANDOM_SEED=test-seed-2024
+TEST_SCENARIO=STABLE
+MOCK_DELAY=0
+TZ=Asia/Manila
+VITE_USE_MOCK_API=true
+VITEST_DETERMINISTIC=true
+TEST_TIMEOUT=30000
+```
+
+#### CI Environment Validation
+
+CI workflows must validate deterministic environment:
+
+```bash
+# Verify all required variables are set
+[ -n "$FIXED_TIME" ] || { echo "❌ FIXED_TIME not set"; exit 1; }
+[ -n "$RANDOM_SEED" ] || { echo "❌ RANDOM_SEED not set"; exit 1; }
+[ -n "$TEST_SCENARIO" ] || { echo "❌ TEST_SCENARIO not set"; exit 1; }
+[ -n "$MOCK_DELAY" ] || { echo "❌ MOCK_DELAY not set"; exit 1; }
+[ -n "$TZ" ] || { echo "❌ TZ not set"; exit 1; }
+
+echo "✅ All deterministic environment variables are set"
+```
+
 ## Verification Tools
 
 ### Automated Verification
@@ -435,16 +604,45 @@ graph TD
 {
   "scripts": {
     "verify": "npm run verify:all",
-    "verify:all": "npm run verify:tests && npm run verify:types && npm run verify:lint && npm run verify:security",
+    "verify:all": "npm run verify:tests && npm run verify:types && npm run verify:lint && npm run verify:security && npm run verify:jwt",
     "verify:tests": "vitest run --coverage",
     "verify:types": "tsc --noEmit",
     "verify:lint": "eslint . --max-warnings 0",
     "verify:security": "npm audit --audit-level=high",
-    "verify:performance": "npm run build && npx lighthouse http://localhost:4173 --preset=desktop --output=json",
-    "verify:accessibility": "npm run build && npx lighthouse http://localhost:4173 --only-categories=accessibility --output=json",
-    "verify:bundle": "npm run build:analyze"
+    "verify:jwt": "npm run test:jwt:security && npm run audit:jwt:cookies",
+    "test:jwt:security": "vitest run src/__tests__/security/jwt.security.test.ts",
+    "audit:jwt:cookies": "! grep -r 'document.cookie' src/ | grep -i 'token\\|jwt\\|auth' || echo 'JWT cookie check passed'",
+    "verify:performance": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=./lighthouse-performance.json'",
+    "verify:accessibility": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=./lighthouse-accessibility.json'",
+    "verify:bundle": "npm run perf:budget", // Bundle size ENFORCEMENT
+    "perf:budget": "npm run build && bundlesize",
+    "build:analyze": "ANALYZE=true npm run build" // Bundle VISUALIZATION only
   }
 }
+```
+
+### Pre-commit and Pre-push Hooks
+
+#### Installation
+
+```bash
+npx husky-init && npm install
+```
+
+#### Hook Configuration
+
+```bash
+# .husky/pre-commit
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+npm run verify:types && npm run verify:lint
+
+# .husky/pre-push
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+npm run test:coverage:quick -- --changed
 ```
 
 ### Manual Verification Checklist

@@ -57,6 +57,106 @@ The system already has a solid foundation with:
 - ✅ Performance monitoring with Lighthouse CI
 - ✅ Cron jobs for maintenance tasks
 
+## NPM Scripts
+
+### Phase 5 Specific Commands
+
+```json
+{
+  "scripts": {
+    // Scaffolding - Get deployment test specifications
+    "scaffold:phase5": "echo 'See docs/implementation/phases/phase-5-deployment/README.md'",
+    
+    // Testing - Run Phase 5 E2E and deployment tests
+    "test:phase5": "vitest run tests/e2e/**/*.test.{ts,tsx}",
+    "test:phase5:coverage": "vitest run --coverage tests/e2e/**/*.test.{ts,tsx}",
+    "test:phase5:watch": "vitest watch tests/e2e/**/*.test.{ts,tsx}",
+    
+    // E2E Testing with Playwright
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug"
+  }
+}
+```
+
+### TDD Workflow Commands
+
+```bash
+# RED Phase - Write E2E tests
+npm run scaffold:phase5           # Get E2E test specifications
+npm run test:phase5               # Run deployment tests (should fail initially)
+
+# GREEN Phase - Implement deployment features
+npm run test:phase5:watch         # Watch mode for rapid development
+npm run test:e2e                  # Run full E2E suite with Playwright
+
+# REFACTOR Phase - Optimize deployment
+npm run test:phase5:coverage      # Check coverage meets 90% requirement
+
+# Deployment verification
+npm run build                     # Build production bundle
+npm run preview                   # Test production build locally
+vercel --prod                     # Deploy to production
+
+# Performance testing
+npm run verify:performance        # Run Lighthouse CI
+npm run verify:bundle            # Check bundle size constraints
+```
+
+### Coverage Requirements
+
+- **Minimum Coverage**: 90% (E2E and critical paths)
+- **User Journeys**: 100% for critical flows (login, booking, payment)
+- **API Integration**: 90% coverage required
+- **Error Scenarios**: 85% coverage for error handling
+- **Security Tests**: 100% for authentication and authorization
+
+### Common Phase 5 Testing Issues
+
+| Issue | Solution |
+|-------|---------|
+| E2E tests not found | Ensure tests are in `tests/e2e/` directory |
+| Coverage below 90% | Add tests for error recovery and edge cases |
+| Playwright timeouts | Increase timeout or optimize test selectors |
+| Deployment tests failing | Check environment variables and API keys |
+| Performance budget exceeded | Optimize bundle splitting and lazy loading |
+| Vercel build errors | Review build logs and function size limits |
+
+### Deployment Testing Checklist
+
+```bash
+# Pre-deployment verification
+npm run test:all-phases           # All phase tests must pass
+npm run verify:all                # All quality checks must pass
+npm run build                     # Production build must succeed
+
+# Deployment scenarios to test
+npm run test:deployment:preview   # Test preview deployments
+npm run test:deployment:rollback  # Test rollback procedures
+npm run test:deployment:canary    # Test canary releases
+
+# Post-deployment verification
+npm run test:production:smoke     # Quick smoke tests on production
+npm run test:production:health    # Health check all endpoints
+npm run test:production:monitor   # Verify monitoring is active
+```
+
+### Performance Requirements
+
+```bash
+# Core Web Vitals targets
+# - LCP (Largest Contentful Paint): < 2.5s
+# - FID (First Input Delay): < 100ms
+# - CLS (Cumulative Layout Shift): < 0.1
+# - TTFB (Time to First Byte): < 200ms
+
+# Bundle size limits
+# - Main bundle: < 120KB
+# - Vendor bundle: < 200KB
+# - Total JS: < 350KB
+```
+
 ## Phase Structure
 
 This phase follows the TDD approach with five focused sub-phases:
@@ -150,8 +250,9 @@ VERCEL_ANALYTICS_ID=...
 
 ### Security Environment Variables
 ```bash
-# CSRF Protection
-CSRF_SECRET=...
+# Security Configuration  
+# Note: JWT via Authorization headers is CSRF-immune
+CSRF_SECRET=...  # Only needed for non-JWT form submissions
 ALLOWED_ORIGINS=https://okaeri-resort.vercel.app
 
 # Rate Limiting

@@ -78,6 +78,79 @@ export async function executeWithProjectContext<T>(
 }
 ```
 
+## NPM Scripts
+
+### Phase 3 Specific Commands
+
+```json
+{
+  "scripts": {
+    // Scaffolding - Get booking system test specifications
+    "scaffold:phase3": "echo 'See docs/implementation/phases/phase-3-booking-tdd/README.md'",
+    
+    // Testing - Run Phase 3 booking tests
+    "test:phase3": "vitest run src/features/booking/**/__tests__/*.test.{ts,tsx}",
+    "test:phase3:coverage": "vitest run --coverage src/features/booking/**/__tests__/*.test.{ts,tsx}",
+    "test:phase3:watch": "vitest watch src/features/booking/**/__tests__/*.test.{ts,tsx}"
+  }
+}
+```
+
+### TDD Workflow Commands
+
+```bash
+# RED Phase - Write failing tests
+npm run scaffold:phase3           # Get booking test specifications
+npm run test:phase3               # Run tests (should fail initially)
+
+# GREEN Phase - Implement until tests pass
+npm run test:phase3:watch         # Watch mode for rapid development
+npm run test:phase3               # Verify all tests pass
+
+# REFACTOR Phase - Optimize and improve
+npm run test:phase3:coverage      # Check coverage meets 95% requirement
+
+# Database testing
+npm run test:db:booking           # Test database operations
+npm run test:db:availability      # Test availability queries
+
+# Integration with previous phases
+npm run test:phase1 && npm run test:phase2 && npm run test:phase3
+```
+
+### Coverage Requirements
+
+- **Minimum Coverage**: 95% (critical booking operations)
+- **Calendar Component**: 90% coverage required
+- **Availability Logic**: 95% coverage required (business critical)
+- **Payment Processing**: 95% coverage required (financial critical)
+- **Database Operations**: 90% coverage with transaction tests
+
+### Common Phase 3 Testing Issues
+
+| Issue | Solution |
+|-------|---------|
+| Tests not found | Ensure tests are in `src/features/booking/**/__tests__/` |
+| Coverage below 95% | Add tests for edge cases in availability logic |
+| Calendar tests failing | Mock date/time properly with fixed timestamps |
+| Database tests failing | Use transaction rollback for test isolation |
+| Conflict detection issues | Test overlapping booking scenarios thoroughly |
+| RLS context errors | Ensure project context is set in transactions |
+
+### Performance Testing
+
+```bash
+# Run performance benchmarks for booking operations
+npm run bench:booking              # Benchmark booking creation
+npm run bench:availability         # Benchmark availability queries
+npm run bench:calendar             # Benchmark calendar rendering
+
+# Expected performance targets
+# - Booking creation: <100ms
+# - Availability check: <50ms
+# - Calendar month load: <200ms
+```
+
 ## Implementation Timeline
 
 ### Sub-Phases

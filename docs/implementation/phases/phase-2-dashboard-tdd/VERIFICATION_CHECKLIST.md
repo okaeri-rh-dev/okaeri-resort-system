@@ -113,7 +113,7 @@
 
 - [ ] Input validation verified
 - [ ] XSS prevention confirmed
-- [ ] CSRF protection active
+- [ ] JWT authentication with Authorization headers (CSRF-immune)
 - [ ] Rate limiting functional
 - [ ] Audit logging working
 

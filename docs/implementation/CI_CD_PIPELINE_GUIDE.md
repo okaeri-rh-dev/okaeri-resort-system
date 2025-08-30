@@ -123,7 +123,8 @@ _Reference: [ci.yml lines 105-187](.github/workflows/ci.yml)_
 #### Phase 3: Build & Performance Analysis (2-3 minutes)
 
 - **Production build** with bundle optimization (`npm run build`)
-- **Bundle size analysis** against performance budgets (`npm run perf:budget`)
+- **Bundle size enforcement** against performance budgets
+  (`npm run perf:budget`)
 - **Asset optimization** with compression and caching
 - **Bundle visualization** generation (`npm run build:analyze`)
 
@@ -347,6 +348,20 @@ npm run verify:performance  # Lighthouse JSON output for CI
 npm run verify:bundle       # Bundle analysis verification
 ```
 
+#### Required DevDependencies
+
+The following dependencies are required for the CI/CD pipeline functionality:
+
+```json
+{
+  "devDependencies": {
+    "start-server-and-test": "^2.0.0",
+    "bundlesize": "^0.18.0",
+    "husky": "^8.0.0"
+  }
+}
+```
+
 #### Performance Thresholds
 
 | Bundle   | Mobile Limit | Desktop Limit | Rationale               |
@@ -356,6 +371,21 @@ npm run verify:bundle       # Bundle analysis verification
 | CSS      | 40KB         | 50KB          | Styling and layout      |
 | Icons    | 25KB         | 30KB          | Lazy-loaded iconography |
 | Routes   | 35KB         | 45KB          | Feature-specific code   |
+
+#### CI Bundle Enforcement
+
+The CI workflow enforces bundle size limits with automatic failure on
+violations:
+
+```yaml
+- name: Enforce Bundle Size
+  run: |
+    npm run build
+    npx bundlesize
+  env:
+    CI: true
+    BUNDLESIZE_GITHUB_TOKEN: ${{ secrets.BUNDLESIZE_GITHUB_TOKEN }}
+```
 
 #### Lighthouse Integration
 

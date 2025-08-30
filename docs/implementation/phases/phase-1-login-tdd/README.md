@@ -30,12 +30,90 @@ Phase 1 implements the complete authentication system using strict Test-Driven D
 **Duration**: 3 days (Week 1, Wednesday-Friday)
 **Status**: ⏳ Pending
 
+## NPM Scripts
+
+### Phase 1 Specific Commands
+
+```json
+{
+  "scripts": {
+    // Scaffolding - Get test specifications and templates
+    "scaffold:phase1": "echo 'See docs/implementation/phases/phase-1-login-tdd/PHASE_1_FORM_TEST_SPECIFICATIONS.md'",
+    
+    // Testing - Run Phase 1 authentication tests
+    "test:phase1": "vitest run src/features/auth/**/__tests__/*.test.{ts,tsx}",
+    "test:phase1:coverage": "vitest run --coverage src/features/auth/**/__tests__/*.test.{ts,tsx}",
+    "test:phase1:watch": "vitest watch src/features/auth/**/__tests__/*.test.{ts,tsx}"
+  }
+}
+```
+
+### TDD Workflow Commands
+
+```bash
+# RED Phase - Write failing tests
+npm run scaffold:phase1           # Get test specifications
+npm run test:phase1               # Run tests (should fail initially)
+
+# GREEN Phase - Implement until tests pass
+npm run test:phase1:watch         # Watch mode for rapid development
+npm run test:phase1               # Verify all tests pass
+
+# REFACTOR Phase - Improve while maintaining green
+npm run test:phase1:coverage      # Check coverage meets 95% requirement
+
+# Integration with other phases
+npm run test:phase1 && npm run test:phase2  # Run Phase 1 then Phase 2
+npm run test:all-phases           # Run all phase tests sequentially
+```
+
+### Coverage Requirements
+
+- **Minimum Coverage**: 95% (critical authentication paths)
+- **Unit Tests**: 95% coverage required
+- **Integration Tests**: 90% coverage required
+- **E2E Tests**: 100% for login/logout flows
+- **Security Tests**: 100% for auth vulnerabilities
+
+### Common Phase 1 Testing Issues
+
+| Issue | Solution |
+|-------|---------|
+| Tests not found | Ensure tests are in `src/features/auth/**/__tests__/` |
+| Coverage below 95% | Add tests for error handling and edge cases |
+| Mock service errors | Verify `MockAuthService` is properly configured |
+| Token tests failing | Check JWT configuration matches test expectations |
+| Form validation failing | Ensure Zod schemas match test specifications |
+
 ## Test Requirements (RED Phase)
+
+### Test File Locations
+
+All Phase 1 tests follow this standardized structure:
+
+```
+src/features/auth/
+├── __tests__/
+│   ├── components/
+│   │   ├── LoginForm.test.tsx
+│   │   ├── RegisterForm.test.tsx
+│   │   └── TwoFactorAuth.test.tsx
+│   ├── pages/
+│   │   ├── LoginPage.test.tsx
+│   │   ├── RegisterPage.test.tsx
+│   │   └── PasswordResetPage.test.tsx
+│   ├── integration/
+│   │   └── auth-flow.test.tsx
+│   ├── security/
+│   │   └── auth-security.test.tsx
+│   └── accessibility/
+│       └── auth-a11y.test.tsx
+```
 
 ### Test Categories
 
 ```typescript
-// src/pages/__tests__/LoginPage.test.tsx
+// src/features/auth/__tests__/pages/LoginPage.test.tsx
 import { renderWithProviders, MOCK_USERS, formHelpers } from '@/test/helpers';
 import { createUser } from '@/test/factories/user.factory';
 import { MockAuthService } from '@/services/mock/auth.mock.service';
@@ -253,7 +331,7 @@ export const registerSchema = z.object({
 
 ### Performance
 - [ ] Lighthouse score >95
-- [ ] Bundle size <50KB
+- [ ] Bundle size <20KB (Public Routes budget)
 - [ ] First paint <1s
 - [ ] No memory leaks
 
@@ -270,7 +348,7 @@ export const registerSchema = z.object({
 | Test Coverage | >95% | - |
 | TypeScript Coverage | 100% | - |
 | Lighthouse Score | >95 | - |
-| Bundle Size | <50KB | - |
+| Bundle Size | <20KB | - |
 | Security Score | A+ | - |
 | Accessibility Score | 100 | - |
 

@@ -48,7 +48,7 @@ SENTRY_DSN=https://... ✅
 VERCEL_ANALYTICS_ID=[ID] ✅
 
 # Security Configuration
-CSRF_SECRET=[SECURE_KEY] ✅
+CSRF_SECRET=[SECURE_KEY] ✅  # Note: Not needed for JWT API calls (CSRF-immune)
 ALLOWED_ORIGINS=https://okaeri-resort.vercel.app ✅
 RATE_LIMIT_WINDOW=900000 ✅
 RATE_LIMIT_MAX=100 ✅
