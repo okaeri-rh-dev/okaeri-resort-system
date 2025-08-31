@@ -8,6 +8,8 @@ This documentation outlines the Test-Driven Development (TDD) approach for rebui
 
 ### Essential Reading
 
+- **🚨 [FINAL IMPLEMENTATION REQUIREMENTS](./FINAL_IMPLEMENTATION_REQUIREMENTS.md)** - Action items before Phase 1 RED
+- **[TDD Documentation Alignment Complete](./TDD_DOCUMENTATION_ALIGNMENT_COMPLETE.md)** - ✅ Verification that all infrastructure is ready
 - **[Implementation Readiness Checklist](./IMPLEMENTATION_READINESS_CHECKLIST.md)** - Pre-flight checks before starting
 - **[TDD Single Source of Truth](./TDD_SINGLE_SOURCE_OF_TRUTH.md)** - Authoritative testing standards
 - **[Glossary](./GLOSSARY.md)** - Key terms and concepts
@@ -23,11 +25,17 @@ This documentation outlines the Test-Driven Development (TDD) approach for rebui
 
 ### Testing & Quality
 
+- **[Test Infrastructure Requirements](./TEST_INFRASTRUCTURE_REQUIREMENTS.md)** - 🆕 DevDependencies and setup requirements
 - **[Mock API Architecture](./Mock_API_Architecture.md)** - Comprehensive mock service design
 - **[Component Testing Patterns](./COMPONENT_TESTING_PATTERNS.md)** - Component test strategies
 - **[Test Data Seeding Strategy](./Test_Data_Seeding_Strategy.md)** - Test data management
 - **[Test Type Safety Specification](./TEST_TYPE_SAFETY_SPECIFICATION.md)** - TypeScript testing patterns
+- **[Deterministic Test Configuration](./DETERMINISTIC_TEST_CONFIGURATION.md)** - Fixed time and seed configuration for reproducible tests
+- **[Local Testing Ergonomics](./LOCAL_TESTING_ERGONOMICS.md)** - Server lifecycle management for local testing
+- **[Verification Script Suite](./VERIFICATION_SCRIPT_SUITE.md)** - Complete documentation of all verification scripts
+- **[Performance Testing Requirements](./PERFORMANCE_TESTING_REQUIREMENTS.md)** - 🆕 Performance testing tools and configuration
 - **[Performance Budgets](./Performance_Budgets.md)** - Performance thresholds and monitoring
+- **[Performance Budget Verification](./PERFORMANCE_BUDGET_VERIFICATION.md)** - Bundle size enforcement and validation
 - **[Test Infrastructure Summary](./Robust_Test_Infrastructure_Summary.md)** - Testing infrastructure overview
 
 ### Database & Architecture
@@ -41,6 +49,7 @@ This documentation outlines the Test-Driven Development (TDD) approach for rebui
 ### CI/CD & Deployment
 
 - **[CI/CD Pipeline Guide](./CI_CD_PIPELINE_GUIDE.md)** - Complete CI/CD configuration
+- **[CI/CD TDD Enforcement](./CI_CD_TDD_ENFORCEMENT.md)** - Deterministic testing and TDD gates in CI/CD
 - **[Branch Protection Guide](./Branch_Protection_Guide.md)** - Git branch protection rules
 - **[Vercel API Verification](./VERCEL_API_VERIFICATION.md)** - API deployment validation
 
@@ -49,10 +58,21 @@ This documentation outlines the Test-Driven Development (TDD) approach for rebui
 - **[Simple API Examples](./SIMPLE_API_EXAMPLES.md)** - API implementation patterns
 - **[Secure Base Service Pattern](./SECURE_BASE_SERVICE_PATTERN.md)** - Service security patterns
 
+### Security & Authentication
+
+- **[Security Verification Scripts](./SECURITY_VERIFICATION_SCRIPTS.md)** - 🆕 JWT verification and security audit scripts
+- **[Security Overview](../security/README.md)** - Complete security model and policies
+- **[JWT Authorization Policy](../security/JWT_AUTHORIZATION_HEADER_ONLY_POLICY.md)** - JWT-only authentication (no cookies/CSRF)
+- **[Modern Security Headers Guide](../security/MODERN_SECURITY_HEADERS_GUIDE.md)** - CSP and modern header configuration
+- **[Security Test Requirements](../security/SECURITY_TEST_REQUIREMENTS.md)** - Security testing standards
+- **[Security Checklist](../security/SECURITY_CHECKLIST.md)** - Security validation checklist
+- **[Security Update Summary 2025-08](../security/SECURITY_UPDATE_SUMMARY_2025_08.md)** - Recent security improvements
+
 ### Phase Documentation
 
 Each phase follows the TDD methodology with specialized agent ownership:
 
+- **[Phase Scaffolding Requirements](./PHASE_SCAFFOLDING_REQUIREMENTS.md)** - 🆕 Phase 2-5 structure and CI matrix setup
 - **[Phase 0: Foundation & Cleanup](./phases/phase-0-cleanup/)** - Repository preparation
 - **[Phase 1: Login System TDD](./phases/phase-1-login-tdd/)** - Authentication implementation
 - **[Phase 2: Dashboard TDD](./phases/phase-2-dashboard-tdd/)** - Dashboard and metrics
@@ -105,11 +125,19 @@ Each phase follows the TDD methodology with specialized agent ownership:
 | Phase | Status | Lead Agent | Completion |
 |-------|--------|------------|------------|
 | Phase 0 | ✅ Complete | context-manager | 100% |
-| Phase 1 | ⏳ Pending | typescript-react-quality-expert | 0% |
+| **Documentation Alignment** | ✅ Complete | context-manager | 100% |
+| **Final Requirements** | 📋 Ready | All Agents | 100% |
+| Phase 1 | 🚨 Action Required | typescript-react-quality-expert | 0% |
 | Phase 2 | ⏳ Pending | zustand-tanstack-resort-architect | 0% |
 | Phase 3 | ⏳ Pending | postgres-serverless-architect | 0% |
 | Phase 4 | ⏳ Pending | resort-finance-architect | 0% |
 | Phase 5 | ⏳ Pending | vercel-deployment-optimizer | 0% |
+
+**Latest Update** (August 31, 2025): 
+- ✅ Documentation 100% complete with all requirements specified
+- 🚨 **ACTION REQUIRED**: Run commands in [FINAL IMPLEMENTATION REQUIREMENTS](./FINAL_IMPLEMENTATION_REQUIREMENTS.md) before starting Phase 1 RED
+- 📋 All gaps identified in feedback have been documented with solutions
+- 🚀 Ready for implementation once requirements are executed
 
 ## Infrastructure Preserved
 

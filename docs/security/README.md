@@ -25,7 +25,7 @@ Authorization: Bearer <jwt-token>
 ### Token Security
 - **Access Token**: 1 hour expiry
 - **Refresh Token**: 7 days expiry with rotation
-- **Storage**: localStorage with XSS protection via React's built-in escaping
+- **Storage**: See Token Storage Best Practices section below
 - **Transmission**: HTTPS only (enforced by HSTS headers)
 
 ## Data Isolation: Application-Level Filtering
@@ -97,15 +97,27 @@ CSRF (Cross-Site Request Forgery) exploits the browser's automatic inclusion of 
 ## Security Best Practices
 
 ### Headers Configuration
+
+#### Modern Security Headers (Recommended)
 ```json
 {
+  "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; connect-src 'self' https://*.neon.tech wss://*.neon.tech; font-src 'self' data:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
-  "X-XSS-Protection": "1; mode=block",
-  "Strict-Transport-Security": "max-age=63072000",
-  "Content-Security-Policy": "default-src 'self'..."
+  "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  "Referrer-Policy": "strict-origin-when-cross-origin"
 }
 ```
+
+#### Legacy Browser Support (Optional)
+```json
+{
+  "X-XSS-Protection": "0"  // Disabled to prevent filter bypasses in legacy browsers
+}
+```
+
+**Note on X-XSS-Protection**: This header is deprecated in modern browsers and can actually introduce vulnerabilities through filter bypasses. Modern browsers have built-in XSS protections that supersede this header. Set to "0" to disable the problematic filter, or omit entirely for modern applications.
 
 ### Input Validation
 - All user inputs validated with Zod schemas
@@ -122,6 +134,88 @@ CSRF (Cross-Site Request Forgery) exploits the browser's automatic inclusion of 
 - Data modifications
 - Failed access attempts
 - Suspicious patterns
+
+## Token Storage Best Practices
+
+### Current Implementation: localStorage
+The resort management system currently uses localStorage for JWT token storage. This approach is acceptable for an internal family business application with proper mitigations:
+
+#### Pros:
+- Simple implementation
+- Tokens persist across browser tabs
+- Works with the current architecture
+
+#### Cons:
+- Vulnerable to XSS attacks if mitigations fail
+- Tokens accessible to any JavaScript code
+
+#### Required Mitigations:
+1. **Strict Content Security Policy**
+   - No `unsafe-inline` or `unsafe-eval` for scripts
+   - Whitelist only trusted domains
+   - Use nonces or hashes for any inline scripts
+
+2. **Input Sanitization**
+   - All user inputs validated with Zod schemas
+   - React's automatic escaping for rendered content
+   - DOMPurify for any HTML content if needed
+
+3. **Third-Party Script Control**
+   - No third-party scripts without security review
+   - Subresource Integrity (SRI) for external resources
+   - Regular dependency vulnerability scanning
+
+4. **Regular Security Audits**
+   - Quarterly security assessments
+   - Automated vulnerability scanning in CI/CD
+   - Penetration testing for production releases
+
+### Alternative: In-Memory Storage (More Secure)
+For enhanced security, consider storing tokens only in JavaScript memory:
+
+```typescript
+// Token stored in memory only
+class TokenManager {
+  private accessToken: string | null = null;
+  private refreshToken: string | null = null;
+  
+  // Tokens lost on page refresh - requires refresh token in httpOnly cookie
+  // or silent re-authentication flow
+}
+```
+
+#### Pros:
+- Immune to XSS localStorage attacks
+- Tokens cleared on page navigation/refresh
+- Better for high-security requirements
+
+#### Cons:
+- Complex implementation with refresh flows
+- Poor user experience (frequent re-authentication)
+- Requires additional infrastructure
+
+### Alternative: HttpOnly Cookies (Most Secure)
+For maximum security, store tokens in httpOnly cookies:
+
+#### Pros:
+- Not accessible via JavaScript (XSS-proof)
+- Automatic inclusion in requests
+- Works with browser security model
+
+#### Cons:
+- Requires CSRF protection
+- More complex server-side implementation
+- Not suitable for current JWT-only architecture
+- Would require significant refactoring
+
+### Recommendation for Okaeri Resort System
+Given the internal nature of the application and family business context:
+
+1. **Continue with localStorage** but ensure all mitigations are in place
+2. **Implement strict CSP** without unsafe-inline/unsafe-eval
+3. **Regular security audits** to verify XSS protections
+4. **Monitor for suspicious activity** through audit logs
+5. **Consider migration to in-memory storage** in future phases if security requirements increase
 
 ## Compliance Considerations
 
@@ -156,6 +250,8 @@ CSRF (Cross-Site Request Forgery) exploits the browser's automatic inclusion of 
 
 ## References
 
+- **JWT Authentication Policy**: `/docs/security/JWT_AUTHORIZATION_HEADER_ONLY_POLICY.md`
+- **Security Test Requirements**: `/docs/security/SECURITY_TEST_REQUIREMENTS.md`
 - **Implementation Guide**: `/docs/implementation/SIMPLE_DATABASE_GUIDE.md`
 - **Technical Decisions**: `/docs/TECHNICAL_DECISIONS.md`
 - **Security Checklist**: `/docs/security/SECURITY_CHECKLIST.md`

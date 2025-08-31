@@ -24,6 +24,19 @@ concurrency:
 
 env:
   NODE_VERSION: "20"
+  # Deterministic testing environment (from TDD_SINGLE_SOURCE_OF_TRUTH.md)
+  FIXED_TIME: "2024-01-01T00:00:00Z"
+  RANDOM_SEED: "test-seed-2024"
+  TEST_SCENARIO: "STABLE"
+  MOCK_DELAY: "0"
+  TZ: "Asia/Manila"
+
+  # Test configuration
+  NODE_ENV: "test"
+  VITE_USE_MOCK_API: "true"
+  VITEST_DETERMINISTIC: "true"
+  TEST_TIMEOUT: "30000"
+
   # Performance budget thresholds
   MAX_BUNDLE_SIZE_KB: 150
   MAX_VENDOR_SIZE_KB: 200
@@ -129,13 +142,8 @@ jobs:
         run: |
           # Create deterministic test environment
           cp .env.test.example .env.test
-          echo "NODE_ENV=test" >> .env.test
-          echo "VITE_USE_MOCK_API=true" >> .env.test
-          echo "VITEST_DETERMINISTIC=true" >> .env.test
-          echo "TEST_TIMEOUT=30000" >> .env.test
-
-          # Set deterministic random seeds
-          echo "TEST_SEED=stable-ci-seed-$(date +%Y%m%d)" >> .env.test
+          # The canonical values are already in .env.test.example
+          # No need to append additional values since they're defined at workflow level
 
       - name: Run ${{ matrix.test-suite }} tests (deterministic mode)
         run: |

@@ -16,16 +16,28 @@ export const TOKEN_EXPIRY = {
 
 /**
  * Security headers configuration
+ * Updated to remove deprecated headers and strengthen CSP
  */
 export const SECURITY_HEADERS = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
-  "X-XSS-Protection": "1; mode=block",
-  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+  // X-XSS-Protection removed - deprecated and can introduce vulnerabilities
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
   "Content-Security-Policy":
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';",
+    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; connect-src 'self' https://*.neon.tech wss://*.neon.tech; font-src 'self' data:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests",
   "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
+  "Permissions-Policy":
+    "camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=()",
+} as const;
+
+/**
+ * Development-only security headers
+ * Less restrictive CSP for local development
+ */
+export const DEV_SECURITY_HEADERS = {
+  ...SECURITY_HEADERS,
+  "Content-Security-Policy":
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; connect-src 'self' ws://localhost:* http://localhost:* https://*.neon.tech wss://*.neon.tech; font-src 'self' data:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
 } as const;
 
 /**

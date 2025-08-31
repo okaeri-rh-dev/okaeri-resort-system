@@ -14,18 +14,43 @@ enableMapSet();
 // Load test environment variables
 config({ path: ".env.test" });
 
+// Canonical defaults from TDD_SINGLE_SOURCE_OF_TRUTH.md
+const FIXED_TIME = process.env.FIXED_TIME ?? "2024-01-01T00:00:00Z";
+const RANDOM_SEED = process.env.RANDOM_SEED ?? "test-seed-2024";
+const TEST_SCENARIO = process.env.TEST_SCENARIO ?? "STABLE";
+const MOCK_DELAY = process.env.MOCK_DELAY ?? "0";
+
 // Set deterministic test environment for TDD
 process.env.TZ = "Asia/Manila";
-process.env.MOCK_DELAY = "0";
+process.env.NODE_ENV = "test";
+process.env.TEST_SCENARIO = TEST_SCENARIO;
+process.env.MOCK_DELAY = MOCK_DELAY;
+process.env.RANDOM_SEED = RANDOM_SEED;
 
-// Use fake timers with fixed time for deterministic tests
+// Use fake timers with canonical fixed time for deterministic tests
 vi.useFakeTimers();
-vi.setSystemTime(new Date("2025-08-25T00:00:00.000Z"));
+vi.setSystemTime(new Date(FIXED_TIME));
 
-// Mock Math.random for deterministic randomness
+// Implement seeded PRNG instead of fixed value
+let seed = 0;
+for (let i = 0; i < RANDOM_SEED.length; i++) {
+  seed = (seed * 31 + RANDOM_SEED.charCodeAt(i)) >>> 0;
+}
+
+// Simple Linear Congruential Generator for deterministic random
+const seededRandom = (() => {
+  let state = seed || 123456789;
+  return () => {
+    // Numerical Recipes LCG parameters
+    state = (1664525 * state + 1013904223) >>> 0;
+    return (state & 0xffffffff) / 0x100000000;
+  };
+})();
+
+// Mock Math.random with seeded PRNG
 const originalRandom = Math.random;
 beforeAll(() => {
-  vi.spyOn(Math, "random").mockReturnValue(0.5);
+  vi.spyOn(Math, "random").mockImplementation(() => seededRandom());
 });
 
 afterAll(() => {
@@ -38,9 +63,6 @@ if (!process.env.DATABASE_URL) {
   process.env.DATABASE_URL =
     process.env.DATABASE_URL || "postgresql://test:test@localhost:5432/test_db";
 }
-
-// Set NODE_ENV to test
-process.env.NODE_ENV = "test";
 
 // Mock window.matchMedia for tests that use responsive components
 Object.defineProperty(window, "matchMedia", {

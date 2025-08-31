@@ -53,10 +53,13 @@ JWT tokens sent via Authorization headers provide inherent CSRF protection:
 ### Security Test Patterns
 
 1. **Token Storage Tests**
-   - Verify tokens stored ONLY in memory/sessionStorage/localStorage
+   - Verify tokens stored in appropriate storage mechanism
+   - For localStorage: Verify XSS mitigations are in place
+   - For in-memory: Verify tokens cleared on navigation
    - Ensure NO tokens ever stored in cookies
    - Test complete token cleanup on logout
    - Verify token isolation between tabs/windows
+   - Validate CSP prevents XSS attack vectors
 2. **Token Transmission Tests**
    - Verify ALL authenticated requests use Authorization header
    - Test that cookie-based tokens are rejected
@@ -65,8 +68,10 @@ JWT tokens sent via Authorization headers provide inherent CSRF protection:
 3. **XSS Prevention Tests**
    - Verify all user input is sanitized
    - Test script injection attempts
-   - Validate CSP headers block inline scripts
+   - Validate CSP headers block inline scripts (no unsafe-inline)
+   - Ensure CSP includes proper script-src directives
    - Test for DOM-based XSS vulnerabilities
+   - Verify no unsafe-eval in CSP configuration
 4. **Authorization Tests**
    - Verify protected routes require valid token
    - Test expired token handling
@@ -154,6 +159,14 @@ describe("Token Storage Security", () => {
     cookies.forEach((cookie) => {
       expect(cookie).not.toMatch(/token|jwt|auth|bearer/i);
     });
+  });
+
+  test("should validate XSS protections for localStorage tokens", async () => {
+    // If using localStorage, ensure CSP prevents XSS
+    const response = await fetch("/api/test");
+    const csp = response.headers.get("Content-Security-Policy");
+    expect(csp).not.toContain("unsafe-inline");
+    expect(csp).not.toContain("unsafe-eval");
   });
 
   test("should clear tokens from all storage on logout", async () => {
@@ -463,19 +476,23 @@ describe("CORS Security", () => {
 
 ```typescript
 describe("Content Security Policy", () => {
-  test("should prevent inline script execution");
+  test("should prevent inline script execution without nonce");
   test("should restrict resource loading sources");
   test("should block unsafe-eval usage");
+  test("should block unsafe-inline for scripts");
   test("should report CSP violations");
-  test("should implement nonce-based script loading");
+  test("should implement nonce-based script loading if needed");
+  test("should not rely on X-XSS-Protection header");
 });
 ```
 
 **Expected Outcomes:**
 
 - CSP headers are present on all responses
-- Inline scripts and styles are blocked
+- No `unsafe-inline` or `unsafe-eval` in script-src directive
+- Inline scripts blocked unless using nonces/hashes
 - CSP violations are logged and monitored
+- X-XSS-Protection header either omitted or set to "0"
 
 ## 6. Phase-Specific Security Requirements
 

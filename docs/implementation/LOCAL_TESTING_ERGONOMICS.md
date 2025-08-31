@@ -12,31 +12,68 @@ fast, and provide actionable feedback.
 
 ## Critical Issues & Solutions
 
-### Issue 1: Lighthouse Scripts Don't Start Server
+### Issue 1: Server Lifecycle Management for Lighthouse Verification
 
-**Problem**: Current Lighthouse verification scripts (`verify:accessibility` and
-`verify:performance`) assume a server is already running at
-`http://localhost:4173`, but they only run the build step without starting the
-preview server, causing test failures.
+**Problem**: Current Lighthouse verification scripts fail in both CI and local
+environments because they don't properly manage server lifecycle. The scripts
+assume a server is already running at `http://localhost:4173`, but only execute
+`npm run build` without starting the preview server.
 
-**Root Cause**: The scripts run
-`npm run build && npx lighthouse http://localhost:4173` but never execute
-`npm run preview` to start the server.
+**Root Cause**: Scripts execute
+`npm run build && lighthouse http://localhost:4173` but never run
+`npm run preview` to serve the built assets, causing connection failures.
 
-**Solution**: Use the `start-server-and-test` package for automatic server
-lifecycle management:
+**Critical Impact**:
+
+- CI pipeline fails on Lighthouse verification steps
+- Local testing produces inconsistent results
+- Developers can't reproduce CI environment locally
+- Phase 1 TDD implementation is blocked
+
+**Required Solution**: Install `start-server-and-test` dependency for automatic
+server lifecycle management:
 
 ```bash
-# Install the required dependency
+# Install the required dependency (CRITICAL for CI/local parity)
 npm install --save-dev start-server-and-test
-
-# Updated scripts automatically handle server start/stop
-npm run verify:accessibility  # Now works reliably
-npm run verify:performance    # Now works reliably
 ```
 
-**Migration Required**: The package.json scripts section below shows the
-corrected implementations.
+**Why start-server-and-test is Necessary**:
+
+1. **Automated Server Management**: Starts preview server and waits for
+   readiness
+2. **CI/Local Parity**: Ensures identical behavior in all environments
+3. **Process Cleanup**: Automatically terminates server after tests complete
+4. **Timeout Handling**: Fails gracefully if server doesn't start within 60s
+5. **Port Conflict Resolution**: Handles port availability checks
+
+**Updated Scripts** (implement these exact versions):
+
+```json
+{
+  "verify:accessibility": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=./lighthouse-accessibility.json'",
+  "verify:performance": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=./lighthouse-performance.json'"
+}
+```
+
+### Issue 2: Bundle Size Verification Script Error
+
+**Problem**: The `verify:bundle` script references incorrect command.
+
+**Current Broken Script**:
+
+```json
+"verify:bundle": "npm run build:analyze"
+```
+
+**Required Fix**:
+
+```json
+"verify:bundle": "npm run perf:budget"
+```
+
+**Why This Matters**: Bundle size verification is part of the performance budget
+enforcement required by TDD_SINGLE_SOURCE_OF_TRUTH.md
 
 ## Quick Reference Card
 
@@ -502,28 +539,10 @@ npm run verify:aliases
 
 ## Testing Scripts Package.json
 
-Ensure these scripts are in package.json.
+### Complete Corrected Script Implementation
 
-### Critical Fix Required
-
-**Current Problem**: The existing Lighthouse scripts in package.json are broken:
-
-```json
-{
-  "verify:accessibility": "npm run build && npx lighthouse http://localhost:4173 --only-categories=accessibility --output=json",
-  "verify:performance": "npm run build && npx lighthouse http://localhost:4173 --preset=desktop --output=json"
-}
-```
-
-These fail because no server is started after the build.
-
-**Required Solution**: Install dependency and update scripts:
-
-```bash
-npm install --save-dev start-server-and-test
-```
-
-**Updated Scripts** (copy these to package.json):
+**CRITICAL**: Copy these exact scripts to package.json to fix server lifecycle
+issues:
 
 ```json
 {
@@ -536,7 +555,7 @@ npm install --save-dev start-server-and-test
     "verify:security": "npm audit --audit-level=high",
     "verify:accessibility": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=./lighthouse-accessibility.json'",
     "verify:performance": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=./lighthouse-performance.json'",
-    "verify:bundle": "npm run build:analyze",
+    "verify:bundle": "npm run perf:budget",
     "test:lighthouse:full": "npm run build && start-server-and-test preview http://localhost:4173 'npm run lighthouse:all-checks'",
     "lighthouse:all-checks": "npm run lighthouse:performance && npm run lighthouse:accessibility",
     "lighthouse:accessibility": "npx lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=lighthouse-accessibility.json",
@@ -548,20 +567,157 @@ npm install --save-dev start-server-and-test
 }
 ```
 
-### How the Fix Works
+### How Server Lifecycle Management Works
 
 1. **`start-server-and-test preview http://localhost:4173`**:
-   - Starts `npm run preview` (serves built assets)
-   - Waits for `http://localhost:4173` to respond
-   - Times out after 60 seconds if server doesn't start
+   - Executes `npm run preview` command to serve built assets
+   - Performs HTTP health check against `http://localhost:4173`
+   - Waits up to 60 seconds for server to become ready
+   - Fails fast if server doesn't start (prevents hanging CI jobs)
 
-2. **`'lighthouse http://localhost:4173 ...'`**:
-   - Runs once server is confirmed ready
-   - Executes Lighthouse against the running server
+2. **`'lighthouse http://localhost:4173 ...'`** (quoted command):
+   - Executes only after server readiness is confirmed
+   - Runs Lighthouse audit against the live server
+   - Generates JSON reports for CI processing
 
-3. **Automatic Cleanup**:
-   - Server process is terminated when Lighthouse completes
-   - No manual cleanup required
+3. **Automatic Process Management**:
+   - Server process automatically terminated when Lighthouse completes
+   - Handles SIGTERM cleanup gracefully
+   - No orphaned processes or port conflicts
+   - Works identically in CI and local environments
+
+### Script Verification Commands
+
+Test the corrected scripts work properly:
+
+```bash
+# 1. Install required dependency first
+npm install --save-dev start-server-and-test
+
+# 2. Test accessibility verification
+npm run verify:accessibility
+# Expected: lighthouse-accessibility.json generated
+
+# 3. Test performance verification
+npm run verify:performance
+# Expected: lighthouse-performance.json generated
+
+# 4. Test bundle size verification
+npm run verify:bundle
+# Expected: Bundle size analysis output
+
+# 5. Verify CI simulation works
+npm run test:ci:simulation
+# Expected: Both performance and accessibility reports
+```
+
+### Troubleshooting Script Failures
+
+**Issue**: `start-server-and-test: command not found`
+
+**Solution**:
+
+```bash
+# Install missing dependency
+npm install --save-dev start-server-and-test
+
+# Verify installation
+npx start-server-and-test --version
+```
+
+**Issue**: Server fails to start within timeout
+
+**Solution**:
+
+```bash
+# Check if port 4173 is available
+lsof -ti:4173 | xargs kill -9 2>/dev/null || true
+
+# Test preview server manually
+npm run build
+npm run preview
+# Should show: "Local: http://localhost:4173"
+```
+
+**Issue**: Lighthouse command not found
+
+**Solution**:
+
+```bash
+# Install Lighthouse globally or locally
+npm install --save-dev lighthouse
+# OR
+npm install -g lighthouse
+
+# Verify installation
+npx lighthouse --version
+```
+
+**Issue**: Scripts hang indefinitely
+
+**Solution**:
+
+```bash
+# Kill any hanging processes
+pkill -f "start-server-and-test"
+pkill -f "vite preview"
+pkill -f "lighthouse"
+
+# Clean up port
+lsof -ti:4173 | xargs kill -9 2>/dev/null || true
+
+# Retry with verbose output
+DEBUG=start-server-and-test npm run verify:accessibility
+```
+
+**Issue**: Different results between local and CI
+
+**Root Cause**: Environment differences in Chrome/Chromium versions or system
+resources.
+
+**Solution**:
+
+```bash
+# Use consistent Chrome flags
+export CHROME_PATH="/path/to/chrome"
+export LIGHTHOUSE_CHROMIUM_PATH="/path/to/chromium"
+
+# Run with consistent settings
+npm run verify:performance -- --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage"
+```
+
+**Issue**: JSON reports not generated
+
+**Solution**:
+
+```bash
+# Check write permissions
+touch lighthouse-accessibility.json
+touch lighthouse-performance.json
+
+# Verify output path
+ls -la lighthouse-*.json
+
+# Run with explicit path
+npm run verify:accessibility -- --output-path="$(pwd)/lighthouse-accessibility.json"
+```
+
+### Integration with TDD Workflow
+
+These corrected scripts integrate with the broader TDD workflow:
+
+1. **TDD_SINGLE_SOURCE_OF_TRUTH.md**: Scripts provide the verification layer
+2. **Verification_Protocol.md**: Scripts implement the automated verification
+   steps
+3. **CI_CD_PIPELINE_GUIDE.md**: Scripts ensure CI/local parity
+4. **Phase 1 TDD Implementation**: Scripts unblock testing workflow
+
+**Critical Success Criteria**:
+
+- All scripts must pass locally before CI deployment
+- Scripts must produce identical results in CI and local environments
+- Performance budgets enforced through `verify:bundle` script
+- Accessibility compliance verified through `verify:accessibility` script
 
 ## Quick Decision Tree
 

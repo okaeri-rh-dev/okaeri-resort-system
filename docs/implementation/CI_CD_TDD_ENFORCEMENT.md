@@ -475,6 +475,63 @@ npm run test:coverage:quick -- --changed || exit 1
 echo "✅ Pre-push TDD gates passed"
 ```
 
+### Gate 2.5: Comprehensive Pre-push Verification
+
+For more thorough pre-push verification, use the composite `verify:push` script:
+
+```json
+// package.json
+{
+  "scripts": {
+    // Composite verification for pre-push
+    "verify:push": "npm run verify:all && npm run verify:bundle && npm run verify:performance",
+
+    // Individual verification scripts
+    "verify:all": "npm run verify:tests && npm run verify:types && npm run verify:lint && npm run verify:security",
+    "verify:tests": "vitest run",
+    "verify:types": "tsc --noEmit",
+    "verify:lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0",
+    "verify:security": "npm audit --audit-level=high",
+    "verify:bundle": "npm run perf:budget",
+    "verify:performance": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=./lighthouse-performance.json'"
+  }
+}
+```
+
+**Usage in pre-push hook**:
+
+```bash
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🚀 Running comprehensive pre-push verification..."
+
+# Export deterministic environment
+export FIXED_TIME="2024-01-01T00:00:00Z"
+export RANDOM_SEED="test-seed-local"
+export TEST_SCENARIO="STABLE"
+export MOCK_DELAY="0"
+export TZ="Asia/Manila"
+export VITEST_DETERMINISTIC="true"
+
+# Run comprehensive verification
+npm run verify:push || {
+  echo "❌ Pre-push verification failed"
+  echo "Please fix issues before pushing"
+  exit 1
+}
+
+echo "✅ All pre-push verifications passed"
+```
+
+**Benefits of verify:push**:
+
+- Catches issues before they reach CI
+- Reduces CI failures and saves time
+- Ensures performance budgets are met
+- Validates build and bundle sizes
+- Comprehensive quality gate
+
 ### Gate 3: Pull Request Checks
 
 Branch protection rules must require:
