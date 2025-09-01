@@ -103,52 +103,78 @@ cat .env.test | grep -E "FIXED_TIME|RANDOM_SEED|TEST_SCENARIO"
 
 **File**: `package.json`
 
+**CRITICAL CHANGES**:
+
+- Replace `npx bundlesize` with `bundlesize` (use devDependency)
+- Replace `npx lighthouse` with `lighthouse` (use devDependency)
+- Fix Phase 5 to use `deployment/` directory (not `monitoring/`)
+- Add comprehensive JWT security verification scripts
+- Add scaffold scripts with directory creation
+
 Add these scripts:
 
 ```json
 {
   "scripts": {
+    // Bundle enforcement via devDependency bundlesize (NOT npx)
+    "perf:budget": "npm run build && bundlesize --enable-github-checks",
+    "perf:budget-ci": "npm run build && bundlesize --enable-github-checks --json > bundle-report.json",
+    "verify:bundle": "npm run perf:budget",
+
+    // Performance verification with server lifecycle management
+    "verify:performance": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=./reports/lighthouse-performance.json'",
+    "verify:accessibility": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=./reports/lighthouse-accessibility.json'",
+
     // Composite verification script
-    "verify:push": "npm run verify:all && npm run verify:bundle && npm run verify:performance",
+    "verify:push": "npm run verify:all && npm run verify:bundle && npm run verify:performance && npm run verify:accessibility",
 
     // JWT security scripts
-    "verify:jwt": "vitest run src/__tests__/security/jwt.security.test.ts && npm run audit:jwt:cookies",
-    "audit:jwt:cookies": "! grep -r 'document.cookie' src/ | grep -i 'token\\|jwt\\|auth' || (echo '✅ No JWT cookie usage detected' && exit 0)",
-    "audit:jwt:storage": "grep -r 'localStorage.*token\\|sessionStorage.*token' src/ || (echo '⚠️ No token storage found - verify implementation' && exit 1)",
-    "audit:jwt:headers": "grep -r 'Authorization.*Bearer' src/ || (echo '⚠️ No Authorization header usage found' && exit 1)",
-    "security:jwt:full": "npm run verify:jwt && npm run audit:jwt:storage && npm run audit:jwt:headers",
+    "verify:jwt": "vitest run src/__tests__/security/jwt.security.test.ts --reporter=verbose && npm run audit:jwt:cookies",
+    "audit:jwt:cookies": "bash -c \"! grep -r 'document\\.cookie' src/ api/ --include='*.ts' --include='*.tsx' --include='*.js' --include='*.jsx' | grep -iE '(token|jwt|auth|bearer|session)' || (echo '✅ No JWT cookie usage detected' && exit 0)\"",
+    "audit:jwt:storage": "bash -c \"! grep -r 'localStorage.*token\\|localStorage.*jwt\\|localStorage.*auth' src/ --include='*.ts' --include='*.tsx' --exclude-dir='__tests__' --exclude='*.test.ts' --exclude='*.test.tsx' && echo '✅ No localStorage token usage detected (secure memory-only storage)' || (echo '❌ ERROR: localStorage token usage detected - security violation! Tokens must be stored in memory only' && exit 1)\"",
+    "audit:jwt:headers": "bash -c \"grep -r 'Authorization.*Bearer' src/ api/ --include='*.ts' --include='*.tsx' && echo '✅ Authorization Bearer headers detected' || (echo '⚠️ WARNING: No Authorization Bearer headers found' && exit 1)\"",
+    "audit:jwt:no-cookies": "bash -c \"! grep -rE '(Set-Cookie|withCredentials|credentials:\\s*[\\\"'\\`]include)' src/ api/ --include='*.ts' --include='*.tsx' | grep -iE '(token|jwt|auth)' || (echo '✅ No cookie-based auth patterns' && exit 0)\"",
+    "security:jwt:full": "npm run verify:jwt && npm run audit:jwt:storage && npm run audit:jwt:headers && npm run audit:jwt:no-cookies",
 
-    // Phase 2-5 placeholder scripts
-    "scaffold:phase2": "echo 'Phase 2: Dashboard - See docs/implementation/phases/phase-2-dashboard-tdd/README.md'",
+    // Phase 2-5 scaffold scripts with directory creation
+    "scaffold:phase2": "echo 'Phase 2: Dashboard - See docs/implementation/phases/phase-2-dashboard-tdd/README.md' && npm run scaffold:phase2:dirs",
+    "scaffold:phase2:dirs": "mkdir -p src/features/dashboard/{components,hooks,stores,types,__tests__} && touch src/features/dashboard/__tests__/.gitkeep",
     "test:phase2": "vitest run src/features/dashboard/**/__tests__/*.test.{ts,tsx}",
     "test:phase2:coverage": "vitest run --coverage src/features/dashboard/**/__tests__/*.test.{ts,tsx}",
     "test:phase2:watch": "vitest watch src/features/dashboard/**/__tests__/*.test.{ts,tsx}",
 
-    "scaffold:phase3": "echo 'Phase 3: Booking - See docs/implementation/phases/phase-3-booking-tdd/README.md'",
+    "scaffold:phase3": "echo 'Phase 3: Booking - See docs/implementation/phases/phase-3-booking-tdd/README.md' && npm run scaffold:phase3:dirs",
+    "scaffold:phase3:dirs": "mkdir -p src/features/booking/{components,hooks,stores,types,__tests__} && touch src/features/booking/__tests__/.gitkeep",
     "test:phase3": "vitest run src/features/booking/**/__tests__/*.test.{ts,tsx}",
     "test:phase3:coverage": "vitest run --coverage src/features/booking/**/__tests__/*.test.{ts,tsx}",
     "test:phase3:watch": "vitest watch src/features/booking/**/__tests__/*.test.{ts,tsx}",
 
-    "scaffold:phase4": "echo 'Phase 4: Financial - See docs/implementation/phases/phase-4-financial-tdd/README.md'",
+    "scaffold:phase4": "echo 'Phase 4: Financial - See docs/implementation/phases/phase-4-financial-tdd/README.md' && npm run scaffold:phase4:dirs",
+    "scaffold:phase4:dirs": "mkdir -p src/features/financial/{components,hooks,stores,types,__tests__} && touch src/features/financial/__tests__/.gitkeep",
     "test:phase4": "vitest run src/features/financial/**/__tests__/*.test.{ts,tsx}",
     "test:phase4:coverage": "vitest run --coverage src/features/financial/**/__tests__/*.test.{ts,tsx}",
     "test:phase4:watch": "vitest watch src/features/financial/**/__tests__/*.test.{ts,tsx}",
 
-    "scaffold:phase5": "echo 'Phase 5: Deployment - See docs/implementation/phases/phase-5-deployment/README.md'",
+    "scaffold:phase5": "echo 'Phase 5: Deployment - See docs/implementation/phases/phase-5-deployment/README.md' && npm run scaffold:phase5:dirs",
+    "scaffold:phase5:dirs": "mkdir -p src/features/deployment/{components,utils,__tests__} && touch src/features/deployment/__tests__/.gitkeep",
     "test:phase5": "vitest run src/features/deployment/**/__tests__/*.test.{ts,tsx}",
     "test:phase5:coverage": "vitest run --coverage src/features/deployment/**/__tests__/*.test.{ts,tsx}",
     "test:phase5:watch": "vitest watch src/features/deployment/**/__tests__/*.test.{ts,tsx}",
 
     // Composite phase scripts
+    "scaffold:all-phases": "npm run scaffold:phase2:dirs && npm run scaffold:phase3:dirs && npm run scaffold:phase4:dirs && npm run scaffold:phase5:dirs",
     "test:all-phases": "npm run test:phase1 && npm run test:phase2 && npm run test:phase3 && npm run test:phase4 && npm run test:phase5",
     "test:all-phases:coverage": "vitest run --coverage src/features/**/__tests__/*.test.{ts,tsx}"
   }
 }
 ```
 
-### 7. Create Phase Directory Structure
+### 7. Create Phase Directory Structure and Reports Directory
 
 ```bash
+# Create reports directory for Lighthouse outputs
+mkdir -p reports
+
 # Create phase directories with placeholders
 mkdir -p src/features/dashboard/{components,hooks,stores,types,__tests__}
 mkdir -p src/features/booking/{components,hooks,stores,types,__tests__}
@@ -160,6 +186,9 @@ touch src/features/dashboard/__tests__/.gitkeep
 touch src/features/booking/__tests__/.gitkeep
 touch src/features/financial/__tests__/.gitkeep
 touch src/features/deployment/__tests__/.gitkeep
+
+# Alternative: Use scaffold scripts
+npm run scaffold:all-phases
 ```
 
 ### 8. Create JWT Security Test File
@@ -183,11 +212,15 @@ describe("JWT Security Verification", () => {
       expect(document.cookie).not.toContain("token");
     });
 
-    it("should store JWT only in localStorage", () => {
-      // Placeholder - implement with actual token manager
-      localStorage.setItem("auth_token", "test-token");
-      expect(localStorage.getItem("auth_token")).toBeTruthy();
+    it("should store JWT only in memory (not localStorage or sessionStorage)", () => {
+      // JWT tokens must be stored in memory only via SecureTokenManager
+      const tokenManager = SecureTokenManager.getInstance();
+      tokenManager.storeTokens("test-access-token", "test-refresh-token");
+
+      // Verify tokens are NOT in browser storage (security requirement)
+      expect(localStorage.getItem("auth_token")).toBeNull();
       expect(sessionStorage.getItem("auth_token")).toBeNull();
+      expect(document.cookie).not.toContain("token");
     });
   });
 
@@ -293,20 +326,26 @@ npm run verify:push
 ```bash
 # Complete setup in one go:
 
-# 1. Install all dependencies
+# 1. Install all dependencies (CRITICAL - Use devDependencies, not npx)
 npm i -D lighthouse bundlesize jest-axe axe-core @types/jest-axe
 
-# 2. Create phase directories
+# 2. Create reports directory for Lighthouse outputs
+mkdir -p reports
+
+# 3. Create phase directories using scaffold scripts
 mkdir -p src/features/{dashboard,booking,financial,deployment}/{components,hooks,stores,types,__tests__}
 touch src/features/{dashboard,booking,financial,deployment}/__tests__/.gitkeep
 
-# 3. Create security test directory
+# Or use the scaffold scripts:
+# npm run scaffold:all-phases
+
+# 4. Create security test directory
 mkdir -p src/__tests__/security
 
-# 4. Make scripts executable
+# 5. Make scripts executable
 chmod +x scripts/*.sh
 
-# 5. Run initial verification
+# 6. Run initial verification
 npm run verify:all
 ```
 
@@ -327,16 +366,17 @@ env:
 
 ## Summary of Changes Required
 
-| Category        | Items                | Priority    | Blocking Phase 1? |
-| --------------- | -------------------- | ----------- | ----------------- |
-| DevDependencies | 5 packages           | 🔴 Critical | Yes               |
-| Vitest Config   | Coverage thresholds  | 🔴 Critical | Yes               |
-| Test Setup      | jest-axe integration | 🔴 Critical | Yes               |
-| Package.json    | 25+ scripts          | 🟡 High     | Partially         |
-| Directories     | Phase 2-5 structure  | 🟡 High     | No (CI Matrix)    |
-| Security Tests  | JWT verification     | 🟡 High     | No                |
-| Shell Scripts   | Already exist        | ✅ Done     | No                |
-| .env.test       | Already configured   | ✅ Done     | No                |
+| Category        | Items                | Priority    | Blocking Phase 1? | Notes                                    |
+| --------------- | -------------------- | ----------- | ----------------- | ---------------------------------------- |
+| DevDependencies | 5 packages           | 🔴 Critical | Yes               | Must use local deps, not npx             |
+| Vitest Config   | Coverage thresholds  | 🔴 Critical | Yes               | Auth requires 95%, not global 90%        |
+| Test Setup      | jest-axe integration | 🔴 Critical | Yes               | Required for accessibility testing       |
+| Package.json    | 30+ scripts          | 🟡 High     | Partially         | Bundle/perf scripts must use devDeps     |
+| Reports Dir     | Lighthouse outputs   | 🟡 High     | No                | Create reports/ directory                |
+| Directories     | Phase 2-5 structure  | 🟡 High     | No (CI Matrix)    | Phase 5 uses deployment/, not monitoring |
+| Security Tests  | JWT verification     | 🟡 High     | No                | Create jwt.security.test.ts              |
+| Shell Scripts   | Already exist        | ✅ Done     | No                | Make executable with chmod +x            |
+| .env.test       | Already configured   | ✅ Done     | No                | Deterministic values set                 |
 
 ## Final Validation
 

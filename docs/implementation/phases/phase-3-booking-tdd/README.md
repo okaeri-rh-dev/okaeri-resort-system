@@ -3,39 +3,59 @@
 > **📊 Status**: ⏳ Pending | **Tests**: 0/250 | **Coverage**: 0%  
 > **📍 Source of Truth**: [Master Verification Index](../MASTER_VERIFICATION_INDEX.md#phase-3-booking-system)
 
+## 📦 RUNTIME SCOPE FOR PHASE 3 TDD
+
+```
+IMPORTANT: Database Scope Clarification
+----------------------------------------
+✅ IN SCOPE:
+- Testing: Use mocked database interactions (no real DB connections in tests)
+- Implementation: Application-level tenant isolation (project_id filtering)
+- Authority: Follow SIMPLE_DATABASE_GUIDE.md for all database patterns
+- Query Pattern: Simple WHERE project_id = ? clauses on all queries
+
+❌ NOT IN SCOPE (Reference Only):
+- Row Level Security (RLS) - NOT implemented in Phase 3
+- Advanced connection pooling configurations
+- NEON_CONNECTION_POOLING.md - reference only for future optimization
+- Complex database optimizations - post-MVP concern
+
+📚 Authoritative Guide: docs/implementation/SIMPLE_DATABASE_GUIDE.md
+```
+
 ## Overview
 
-Phase 3 implements a comprehensive booking management system for the Okaeri Resort System using Test-Driven Development (TDD). This phase focuses on calendar visualization, availability checking, conflict detection, and CRUD operations with multi-tenant database architecture optimized for Neon PostgreSQL.
+Phase 3 implements a comprehensive booking management system for the Okaeri Resort System using Test-Driven Development (TDD). This phase focuses on calendar visualization, availability checking, conflict detection, and CRUD operations with simple application-level tenant isolation.
 
 ## Phase Objectives
 
 ### Primary Goals
 - Implement visual calendar interface with real-time availability
 - Create robust booking CRUD operations with conflict detection
-- Design multi-tenant database schema with project isolation
-- Optimize for serverless deployment with connection pooling
+- Design simple application-level tenant isolation using project_id filtering
+- Follow SIMPLE_DATABASE_GUIDE.md patterns for all database operations
 - Ensure Philippine business compliance (BIR, tax receipts)
 
 ### Technical Requirements
-- **Database**: Neon PostgreSQL with PgBouncer pooling
-- **Architecture**: Schema-isolated multi-tenancy
-- **Testing**: Comprehensive test coverage (>90%)
+- **Database**: Simple application-level filtering (no RLS)
+- **Architecture**: Tenant isolation via project_id column filtering
+- **Testing**: Comprehensive test coverage (>90%) with mocked DB interactions
 - **Performance**: Sub-100ms query response times
 - **Compliance**: Philippine tax and receipt requirements
 
 ## Database Architecture
 
-### RLS Multi-Tenant Design
+### Application-Level Tenant Isolation Design
 
 ```sql
--- Single Schema with RLS (Row-Level Security)
--- All tables in public schema with project_id column
+-- Single public schema with application-level filtering
+-- All tables include project_id column for tenant isolation
 public.projects
 public.users
 public.user_project_roles
 public.audit_logs
 
--- Booking tables with project_id for tenant isolation
+-- Booking tables with project_id for application-level tenant isolation
 public.bookings (project_id UUID NOT NULL)
 public.booking_guests (project_id UUID NOT NULL)
 public.booking_payments (project_id UUID NOT NULL)
@@ -44,38 +64,69 @@ public.room_types (project_id UUID NOT NULL)
 public.availability_rules (project_id UUID NOT NULL)
 public.booking_status_history (project_id UUID NOT NULL)
 
--- RLS policies enforce project isolation
-ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
-CREATE POLICY project_isolation ON bookings
-  USING (project_id = current_setting('app.current_project')::uuid);
+-- Foreign key constraints ensure referential integrity
+ALTER TABLE bookings ADD CONSTRAINT fk_bookings_project 
+  FOREIGN KEY (project_id) REFERENCES projects(id);
 ```
 
-### Connection Strategy with RLS Context
+### Application-Level Access Control Implementation
 
 ```typescript
-// Connection pooling with transaction-scoped RLS context
-const poolConfig = {
-  max: 8,               // Optimized for Neon free tier
-  min: 1,               // Minimal idle connections
-  idleTimeoutMillis: 10000,
-  connectionTimeoutMillis: 3000,
-  statement_timeout: 30000,
-  query_timeout: 30000
-};
+// IMPORTANT: Connection pooling configuration shown here is REFERENCE ONLY
+// Phase 3 uses simple database connections per SIMPLE_DATABASE_GUIDE.md
+// Advanced pooling is a post-MVP optimization
 
-// Always use transaction-scoped context for RLS
-export async function executeWithProjectContext<T>(
-  projectId: string,
-  userId: string,
-  operation: () => Promise<T>
-): Promise<T> {
-  return await db.transaction(async (tx) => {
-    // SET LOCAL ensures context doesn't bleed between connections
-    await tx.execute(sql`SELECT set_config('app.current_project', ${projectId}, true)`);
-    await tx.execute(sql`SELECT set_config('app.current_user', ${userId}, true)`);
-    return await operation();
-  });
+// Service layer ensures all queries include project_id filtering
+export class BookingService {
+  // CRITICAL: Always validate project access before operations
+  private async validateProjectAccess(userId: string, projectId: string): Promise<void> {
+    const hasAccess = await db
+      .select()
+      .from(userProjectRoles)
+      .where(
+        and(
+          eq(userProjectRoles.userId, userId),
+          eq(userProjectRoles.projectId, projectId)
+        )
+      )
+      .limit(1);
+    
+    if (!hasAccess.length) {
+      throw new ForbiddenError('No access to project');
+    }
+  }
+
+  // All queries MUST include explicit project_id filtering
+  async getBookings(userId: string, projectId: string): Promise<Booking[]> {
+    await this.validateProjectAccess(userId, projectId);
+    
+    return await db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.projectId, projectId)); // CRITICAL: Always filter by project_id
+  }
 }
+```
+
+## Pre-Implementation Setup
+
+Before starting Phase 3 implementation, run the scaffold script to create the necessary directory structure:
+
+> 📚 **See Also**: [Scaffold Scripts Reference](../../SCAFFOLD_SCRIPTS_REFERENCE.md) | [Composite Scripts Guide](../../COMPOSITE_SCRIPTS_GUIDE.md) | [Database Security Patterns](../../DATABASE_SECURITY_PATTERNS.md)
+
+```bash
+# Run the scaffold script for Phase 3
+npm run scaffold:phase3
+
+# This will:
+# 1. Display the path to this documentation
+# 2. Create all necessary directories:
+#    - src/features/booking/components/
+#    - src/features/booking/hooks/
+#    - src/features/booking/stores/
+#    - src/features/booking/types/
+#    - src/features/booking/__tests__/
+# 3. Add .gitkeep files to preserve empty directories
 ```
 
 ## NPM Scripts
@@ -86,7 +137,8 @@ export async function executeWithProjectContext<T>(
 {
   "scripts": {
     // Scaffolding - Get booking system test specifications
-    "scaffold:phase3": "echo 'See docs/implementation/phases/phase-3-booking-tdd/README.md'",
+    "scaffold:phase3": "echo 'Phase 3: Booking - See docs/implementation/phases/phase-3-booking-tdd/README.md' && npm run scaffold:phase3:dirs",
+    "scaffold:phase3:dirs": "mkdir -p src/features/booking/{components,hooks,stores,types,__tests__} && touch src/features/booking/__tests__/.gitkeep",
     
     // Testing - Run Phase 3 booking tests
     "test:phase3": "vitest run src/features/booking/**/__tests__/*.test.{ts,tsx}",
@@ -135,7 +187,7 @@ npm run test:phase1 && npm run test:phase2 && npm run test:phase3
 | Calendar tests failing | Mock date/time properly with fixed timestamps |
 | Database tests failing | Use transaction rollback for test isolation |
 | Conflict detection issues | Test overlapping booking scenarios thoroughly |
-| RLS context errors | Ensure project context is set in transactions |
+| Missing project_id filter | Ensure all queries include WHERE project_id clause |
 
 ### Performance Testing
 
@@ -193,7 +245,7 @@ npm run bench:calendar             # Benchmark calendar rendering
 ```typescript
 interface Booking {
   id: string;
-  projectId: string;  // Required for RLS tenant isolation
+  projectId: string;  // Required for application-level tenant isolation
   roomId: string;
   guestName: string;
   checkIn: Date;
@@ -208,24 +260,46 @@ interface Booking {
 }
 ```
 
-### Availability Checking with RLS
-```sql
--- Efficient availability query with RLS context
-WITH availability_windows AS (
-  SELECT 
-    room_id,
-    date_range,
-    COUNT(*) OVER (
-      PARTITION BY room_id 
-      ORDER BY check_in 
-      RANGE BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING
-    ) as conflicts
-  FROM bookings  -- RLS automatically filters by current project
-  WHERE status != 'cancelled'
-    AND project_id = current_setting('app.current_project')::uuid  -- Explicit for query planner
-    AND daterange(check_in, check_out) && daterange($1, $2)
-)
-SELECT * FROM availability_windows WHERE conflicts = 0;
+### Availability Checking with Tenant Isolation
+```typescript
+// Application-level tenant isolation using project_id filtering
+async function checkAvailability(
+  projectId: string,
+  roomId: string,
+  checkIn: Date,
+  checkOut: Date
+): Promise<boolean> {
+  const conflicts = await db
+    .select()
+    .from(bookings)
+    .where(
+      and(
+        eq(bookings.projectId, projectId), // CRITICAL: Always filter by project
+        eq(bookings.roomId, roomId),
+        ne(bookings.status, 'cancelled'),
+        or(
+          // Check-in date falls within existing booking
+          and(
+            lte(bookings.checkIn, checkIn),
+            gt(bookings.checkOut, checkIn)
+          ),
+          // Check-out date falls within existing booking
+          and(
+            lt(bookings.checkIn, checkOut),
+            gte(bookings.checkOut, checkOut)
+          ),
+          // New booking completely encompasses existing booking
+          and(
+            gte(bookings.checkIn, checkIn),
+            lte(bookings.checkOut, checkOut)
+          )
+        )
+      )
+    )
+    .limit(1);
+  
+  return conflicts.length === 0;
+}
 ```
 
 ## Testing Strategy
@@ -250,36 +324,61 @@ SELECT * FROM availability_windows WHERE conflicts = 0;
    - Payment confirmation
    - Receipt generation
 
-### Test Database Setup with RLS
+### Test Database Setup with Tenant Isolation
 
-```sql
--- Test project setup with RLS
-INSERT INTO projects (id, name, slug, is_active)
-VALUES ('test-project-001'::uuid, 'Test Resort', 'test-resort', true);
-
--- Test data fixtures with project_id
-BEGIN;
-  -- Set context for test project
-  SELECT set_config('app.current_project', 'test-project-001', true);
-  SELECT set_config('app.current_user', 'test-user-001', true);
+```typescript
+// IMPORTANT: For Phase 3 TDD, use mocked database interactions
+// The code below shows the pattern but tests should use mocks, not real DB
+// Test fixtures with application-level tenant isolation (for reference)
+export async function setupTestProject() {
+  const testProjectId = 'test-project-001';
+  const testUserId = 'test-user-001';
   
-  -- Insert test rooms with project_id
-  INSERT INTO rooms (id, project_id, name, type_id, capacity)
-  VALUES 
-    ('room-1'::uuid, 'test-project-001'::uuid, 'Deluxe Suite A', 'type-deluxe'::uuid, 4),
-    ('room-2'::uuid, 'test-project-001'::uuid, 'Standard Room B', 'type-standard'::uuid, 2);
-COMMIT;
+  // Create test project
+  await db.insert(projects).values({
+    id: testProjectId,
+    name: 'Test Resort',
+    slug: 'test-resort',
+    isActive: true
+  });
+  
+  // Create test user with project access
+  await db.insert(userProjectRoles).values({
+    userId: testUserId,
+    projectId: testProjectId,
+    role: 'admin'
+  });
+  
+  // Insert test rooms - ALWAYS include project_id
+  await db.insert(rooms).values([
+    {
+      id: 'room-1',
+      projectId: testProjectId, // CRITICAL: Always set project_id
+      name: 'Deluxe Suite A',
+      typeId: 'type-deluxe',
+      capacity: 4
+    },
+    {
+      id: 'room-2',
+      projectId: testProjectId, // CRITICAL: Always set project_id
+      name: 'Standard Room B',
+      typeId: 'type-standard',
+      capacity: 2
+    }
+  ]);
+}
 ```
 
 ## Performance Optimization
 
-### Database Indexes for RLS Performance
+> **Note**: The optimizations below are for REFERENCE ONLY. Phase 3 focuses on functionality with simple queries. Performance optimization is a post-MVP concern.
+
+### Database Indexes for Tenant-Isolated Queries (Future Reference)
 
 ```sql
--- Composite indexes with project_id for RLS performance
+-- Composite indexes with project_id as leading column for efficient tenant filtering
 CREATE INDEX CONCURRENTLY idx_bookings_project_date_range 
-  ON bookings(project_id) 
-  INCLUDE (room_id, check_in, check_out)
+  ON bookings(project_id, room_id, check_in, check_out)
   WHERE status != 'cancelled';
 
 CREATE INDEX CONCURRENTLY idx_bookings_project_status 
@@ -289,50 +388,86 @@ CREATE INDEX CONCURRENTLY idx_bookings_project_status
 CREATE INDEX CONCURRENTLY idx_bookings_project_room_dates 
   ON bookings(project_id, room_id, check_in, check_out);
 
--- GiST index for date range queries
+-- GiST index for date range queries (project_id first for partition pruning)
 CREATE INDEX CONCURRENTLY idx_bookings_date_range_gist
-  ON bookings USING GIST (project_id, daterange(check_in, check_out));
+  ON bookings USING GIST (daterange(check_in, check_out))
+  WHERE project_id IS NOT NULL;
+
+-- Ensure project_id is always indexed as the leading column
+CREATE INDEX CONCURRENTLY idx_bookings_project_id ON bookings(project_id);
 ```
 
-### Query Optimization
+### Query Optimization (Future Reference)
 
 ```typescript
-// Batched availability check with RLS context
-const checkBulkAvailability = async (
-  projectId: string,
-  userId: string,
-  roomIds: string[],
-  dateRange: DateRange
-): Promise<AvailabilityMap> => {
-  return await executeWithProjectContext(projectId, userId, async () => {
-    const query = `
-      SELECT 
-        r.id as room_id,
-        COALESCE(
-          array_agg(
-            jsonb_build_object(
-              'date', d.date,
-              'available', NOT EXISTS (
-                SELECT 1 FROM bookings b
-                WHERE b.room_id = r.id
-                  AND b.project_id = $4::uuid  -- Explicit for query planner
-                  AND b.status != 'cancelled'
-                  AND d.date BETWEEN b.check_in AND b.check_out - INTERVAL '1 day'
-              )
-            ) ORDER BY d.date
-          ),
-          '{}'::jsonb[]
-        ) as availability
-      FROM rooms r
-      CROSS JOIN generate_series($1::date, $2::date, '1 day'::interval) d(date)
-      WHERE r.id = ANY($3::uuid[])
-        AND r.project_id = $4::uuid  -- Explicit project filter
-      GROUP BY r.id
-    `;
+// NOTE: Advanced query optimization is POST-MVP. Phase 3 uses simple queries.
+// Batched availability check with tenant isolation (reference pattern)
+export class AvailabilityService {
+  constructor(private bookingService: BookingService) {}
+
+  async checkBulkAvailability(
+    userId: string,
+    projectId: string,
+    roomIds: string[],
+    dateRange: { start: Date; end: Date }
+  ): Promise<Map<string, DayAvailability[]>> {
+    // Validate access first
+    await this.bookingService.validateProjectAccess(userId, projectId);
     
-    return await db.query(query, [dateRange.start, dateRange.end, roomIds, projectId]);
-  });
-};
+    // Query with explicit project_id filtering using Drizzle ORM
+    const bookings = await db
+      .select({
+        roomId: bookings.roomId,
+        checkIn: bookings.checkIn,
+        checkOut: bookings.checkOut
+      })
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.projectId, projectId), // CRITICAL: Always filter by project
+          inArray(bookings.roomId, roomIds),
+          ne(bookings.status, 'cancelled'),
+          or(
+            and(
+              lte(bookings.checkIn, dateRange.end),
+              gte(bookings.checkOut, dateRange.start)
+            )
+          )
+        )
+      );
+    
+    // Process availability in application layer
+    return this.processAvailability(roomIds, dateRange, bookings);
+  }
+  
+  private processAvailability(
+    roomIds: string[],
+    dateRange: { start: Date; end: Date },
+    bookings: Array<{ roomId: string; checkIn: Date; checkOut: Date }>
+  ): Map<string, DayAvailability[]> {
+    const availabilityMap = new Map<string, DayAvailability[]>();
+    
+    for (const roomId of roomIds) {
+      const roomBookings = bookings.filter(b => b.roomId === roomId);
+      const days: DayAvailability[] = [];
+      
+      for (let date = new Date(dateRange.start); date <= dateRange.end; date.setDate(date.getDate() + 1)) {
+        const isAvailable = !roomBookings.some(booking => 
+          date >= booking.checkIn && date < booking.checkOut
+        );
+        
+        days.push({
+          date: new Date(date),
+          available: isAvailable
+        });
+      }
+      
+      availabilityMap.set(roomId, days);
+    }
+    
+    return availabilityMap;
+  }
+}
 ```
 
 ## Philippine Business Requirements
@@ -354,10 +489,10 @@ interface PhilippineBookingCompliance {
 }
 ```
 
-### Receipt Generation with RLS
+### Receipt Generation with Tenant Isolation
 
 ```sql
--- Receipt tracking table with project isolation
+-- Receipt tracking table with application-level tenant isolation
 CREATE TABLE booking_receipts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID NOT NULL REFERENCES projects(id),
@@ -372,76 +507,171 @@ CREATE TABLE booking_receipts (
   CONSTRAINT unique_or_number_per_project UNIQUE(project_id, or_number)
 );
 
--- Enable RLS
-ALTER TABLE booking_receipts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY project_isolation ON booking_receipts
-  USING (project_id = current_setting('app.current_project')::uuid);
+-- Index for performance (project_id as leading column)
+CREATE INDEX idx_booking_receipts_project ON booking_receipts(project_id, issued_at DESC);
+```
 
--- Index for performance
-CREATE INDEX idx_booking_receipts_project ON booking_receipts(project_id);
+```typescript
+// Receipt service with application-level project isolation
+export class ReceiptService {
+  async generateReceipt(
+    userId: string,
+    projectId: string,
+    bookingId: string,
+    receiptData: ReceiptData
+  ): Promise<Receipt> {
+    // Validate project access
+    await this.validateProjectAccess(userId, projectId);
+    
+    // Verify booking belongs to project
+    const booking = await db
+      .select()
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.id, bookingId),
+          eq(bookings.projectId, projectId) // CRITICAL: Verify ownership
+        )
+      )
+      .limit(1);
+    
+    if (!booking.length) {
+      throw new ForbiddenError('Booking not found in project');
+    }
+    
+    // Generate receipt with project_id
+    return await db.insert(bookingReceipts).values({
+      projectId, // CRITICAL: Always set project_id
+      bookingId,
+      orNumber: await this.generateORNumber(projectId),
+      vatAmount: receiptData.vatAmount,
+      totalAmount: receiptData.totalAmount,
+      paymentMethod: receiptData.paymentMethod,
+      metadata: receiptData.metadata
+    });
+  }
+}
 ```
 
 ## Security Considerations
 
-### Data Isolation with RLS Policies
+### Application-Level Tenant Isolation Enforcement
 
-```sql
--- Comprehensive RLS policies for all operations
-ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE bookings FORCE ROW LEVEL SECURITY;
+```typescript
+// Security middleware for all booking operations
+export class BookingSecurityMiddleware {
+  // Validate all queries include project_id filtering
+  async validateQuery(query: any, projectId: string): Promise<void> {
+    if (!query.where?.projectId || query.where.projectId !== projectId) {
+      throw new SecurityError('Query must filter by project_id');
+    }
+  }
+  
+  // Validate all inserts include correct project_id
+  async validateInsert(data: any, projectId: string): Promise<void> {
+    if (data.projectId !== projectId) {
+      throw new SecurityError('Insert must include correct project_id');
+    }
+  }
+  
+  // Validate updates don't change project_id
+  async validateUpdate(data: any, existingProjectId: string): Promise<void> {
+    if (data.projectId && data.projectId !== existingProjectId) {
+      throw new SecurityError('Cannot change project_id on update');
+    }
+  }
+}
 
--- SELECT: Can only see bookings from current project
-CREATE POLICY project_isolation_select ON bookings
-  FOR SELECT
-  USING (project_id = current_setting('app.current_project')::uuid);
-
--- INSERT: Can only insert with current project_id
-CREATE POLICY project_isolation_insert ON bookings
-  FOR INSERT
-  WITH CHECK (project_id = current_setting('app.current_project')::uuid);
-
--- UPDATE: Can only update current project's bookings
-CREATE POLICY project_isolation_update ON bookings
-  FOR UPDATE
-  USING (project_id = current_setting('app.current_project')::uuid)
-  WITH CHECK (project_id = current_setting('app.current_project')::uuid);
-
--- DELETE: Can only delete from current project
-CREATE POLICY project_isolation_delete ON bookings
-  FOR DELETE
-  USING (project_id = current_setting('app.current_project')::uuid);
+// Example service implementation with security checks
+export class SecureBookingService {
+  constructor(private security: BookingSecurityMiddleware) {}
+  
+  async createBooking(
+    userId: string,
+    projectId: string,
+    bookingData: CreateBookingDto
+  ): Promise<Booking> {
+    // Validate user has access to project
+    await this.validateProjectAccess(userId, projectId);
+    
+    // Ensure booking data includes project_id
+    const dataWithProject = {
+      ...bookingData,
+      projectId // CRITICAL: Always set project_id
+    };
+    
+    // Validate insert security
+    await this.security.validateInsert(dataWithProject, projectId);
+    
+    // Create booking with transaction for atomicity
+    return await db.transaction(async (tx) => {
+      const [booking] = await tx
+        .insert(bookings)
+        .values(dataWithProject)
+        .returning();
+      
+      // Audit log the creation
+      await this.auditLog(tx, userId, projectId, 'CREATE', 'bookings', booking.id, null, booking);
+      
+      return booking;
+    });
+  }
+}
 ```
 
-### Audit Trail with RLS
+### Audit Trail with Tenant Isolation
 
-```sql
--- Comprehensive audit logging with proper isolation
-CREATE TABLE audit_logs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id UUID NOT NULL,
-  user_id UUID,
-  action VARCHAR(50),
-  table_name VARCHAR(100),
-  record_id UUID,
-  old_values JSONB,
-  new_values JSONB,
-  ip_address INET,
-  user_agent TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Enable RLS on audit logs
-ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE audit_logs FORCE ROW LEVEL SECURITY;
-
--- Audit logs visible only to project members
-CREATE POLICY project_audit_isolation ON audit_logs
-  FOR SELECT
-  USING (project_id = current_setting('app.current_project')::uuid);
-
--- Index for performance
-CREATE INDEX idx_audit_logs_project_created 
-  ON audit_logs(project_id, created_at DESC);
+```typescript
+// Audit service with application-level tenant isolation
+export class AuditService {
+  async logAction(
+    userId: string,
+    projectId: string,
+    action: string,
+    tableName: string,
+    recordId: string,
+    oldValues: any,
+    newValues: any,
+    request: Request
+  ): Promise<void> {
+    await db.insert(auditLogs).values({
+      projectId, // CRITICAL: Always include project_id
+      userId,
+      action,
+      tableName,
+      recordId,
+      oldValues,
+      newValues,
+      ipAddress: request.ip,
+      userAgent: request.headers['user-agent'],
+      createdAt: new Date()
+    });
+  }
+  
+  async getAuditLogs(
+    userId: string,
+    projectId: string,
+    filters?: AuditFilters
+  ): Promise<AuditLog[]> {
+    // Validate access
+    await this.validateProjectAccess(userId, projectId);
+    
+    // Query with explicit project_id filtering
+    return await db
+      .select()
+      .from(auditLogs)
+      .where(
+        and(
+          eq(auditLogs.projectId, projectId), // CRITICAL: Always filter by project
+          filters?.startDate ? gte(auditLogs.createdAt, filters.startDate) : undefined,
+          filters?.endDate ? lte(auditLogs.createdAt, filters.endDate) : undefined,
+          filters?.action ? eq(auditLogs.action, filters.action) : undefined
+        )
+      )
+      .orderBy(desc(auditLogs.createdAt))
+      .limit(filters?.limit || 100);
+  }
+}
 ```
 
 ## Agent Responsibilities
@@ -499,10 +729,10 @@ CREATE INDEX idx_audit_logs_project_created
 ## Risk Mitigation
 
 ### Technical Risks
-- **Connection exhaustion**: Implement aggressive pooling and timeout strategies
-- **Race conditions**: Use database-level locking and transactions
-- **Data inconsistency**: Enforce foreign key constraints and triggers
-- **Performance degradation**: Monitor query performance and add indexes proactively
+- **Test isolation**: Use mocked database interactions in all tests
+- **Race conditions**: Plan for database-level locking in implementation
+- **Data inconsistency**: Enforce project_id filtering in all queries
+- **Scope creep**: Defer advanced optimizations (RLS, pooling) to post-MVP
 
 ### Business Risks
 - **Compliance violations**: Regular audit of tax calculations
@@ -519,7 +749,12 @@ CREATE INDEX idx_audit_logs_project_created
 
 ## References
 
-- [Neon PostgreSQL Documentation](https://neon.tech/docs)
-- [PgBouncer Configuration Guide](https://www.pgbouncer.org/config.html)
-- [Philippine BIR Requirements](https://www.bir.gov.ph)
+### Primary (Required Reading)
+- [SIMPLE_DATABASE_GUIDE.md](../../SIMPLE_DATABASE_GUIDE.md) - **Authoritative database patterns for Phase 3**
 - [TDD Best Practices](https://martinfowler.com/bliki/TestDrivenDevelopment.html)
+- [Philippine BIR Requirements](https://www.bir.gov.ph)
+
+### Secondary (Future Reference Only)
+- [Neon PostgreSQL Documentation](https://neon.tech/docs) - Post-MVP optimization
+- [PgBouncer Configuration Guide](https://www.pgbouncer.org/config.html) - Post-MVP optimization
+- [NEON_CONNECTION_POOLING.md](../../NEON_CONNECTION_POOLING.md) - Reference only, NOT in Phase 3 scope

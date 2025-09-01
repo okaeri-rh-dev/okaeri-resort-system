@@ -52,28 +52,50 @@ npm i -D pwa-asset-generator dotenv-cli
 **Current Issue**: Global thresholds are 90% but Phase 1 auth requires 95% per
 documentation.
 
-**Required vitest.config.ts Update**:
+**CRITICAL: Complete vitest.config.ts Configuration Required**:
 
 ```typescript
-// vitest.config.ts
+// vitest.config.ts - COMPLETE CONFIGURATION
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
+import path from "path";
+
 export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
   test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.ts"],
+
+    // CRITICAL: Phase-specific coverage thresholds
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary", "lcov", "html"],
       reportsDirectory: "./coverage",
 
-      // CRITICAL: Phase-specific thresholds
+      // Phase-specific thresholds (EXACT CONFIGURATION REQUIRED)
       thresholds: {
-        // Global thresholds (Phase 2+)
+        // Global thresholds (Phase 2+) - 90% minimum
         global: {
           branches: 90,
           functions: 90,
           lines: 90,
           statements: 90,
         },
-        // Phase 1 auth requires higher coverage
+        // Phase 1 auth requires higher coverage - 95% minimum
         "src/features/auth/**": {
+          branches: 95,
+          functions: 95,
+          lines: 95,
+          statements: 95,
+        },
+        // Critical business logic requires higher coverage
+        "src/stores/**": {
           branches: 95,
           functions: 95,
           lines: 95,
@@ -91,76 +113,223 @@ export default defineConfig({
         "**/__mocks__/**",
         "**/mock*/**",
         "src/test/**",
+        "src/components/ui/**", // shadcn/ui components
+        "**/*.config.{ts,js}",
+        "**/*.stories.{ts,tsx}",
       ],
       all: true,
       skipFull: false,
     },
-    // Ensure setup files are loaded
-    setupFiles: ["./src/test/setup.ts"],
+
+    // Deterministic test configuration
+    pool: "forks",
+    poolOptions: {
+      forks: {
+        singleFork: true, // Prevent race conditions
+      },
+    },
   },
 });
 ```
 
+**Why Phase 1 Auth Needs 95% Coverage**:
+
+1. **Security Critical**: Authentication logic must be thoroughly tested
+2. **User Trust**: Login/logout failures break user confidence
+3. **Attack Surface**: Auth components are primary security entry points
+4. **Business Impact**: Auth failures prevent all other system use
+
 ### Test Setup Configuration
 
-**Required src/test/setup.ts Additions**:
+**CRITICAL: Complete src/test/setup.ts Configuration**:
 
 ```typescript
-// src/test/setup.ts - Add after existing imports
-import { expect } from "vitest";
-import { toHaveNoViolations } from "jest-axe";
+// src/test/setup.ts - COMPLETE CONFIGURATION WITH JEST-AXE
+import { expect, afterEach, beforeAll } from "vitest";
+import { cleanup } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import { config } from "dotenv";
 
-// Extend Vitest matchers with jest-axe
+// CRITICAL: Load test environment variables
+config({ path: ".env.test" });
+
+// CRITICAL: Jest-axe integration for accessibility testing
+import { toHaveNoViolations } from "jest-axe";
 expect.extend({ toHaveNoViolations });
 
-// Existing setup code...
-// (deterministic time, seeded random, etc.)
+// CRITICAL: Deterministic time setup
+beforeAll(() => {
+  // Set fixed time for deterministic tests
+  const FIXED_TIME = process.env.FIXED_TIME || "2024-01-01T00:00:00Z";
+  const fixedDate = new Date(FIXED_TIME);
+
+  // Mock Date constructor
+  vi.setSystemTime(fixedDate);
+
+  // Set timezone for consistent testing
+  process.env.TZ = "Asia/Manila";
+});
+
+// CRITICAL: Seeded random for deterministic tests
+beforeAll(() => {
+  const RANDOM_SEED = process.env.RANDOM_SEED || "test-seed-2024";
+  // Use seedrandom or similar if needed for complex randomization
+  Math.random = vi.fn(() => 0.5); // Deterministic for tests
+});
+
+// Clean up after each test
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
+
+// CRITICAL: Global test configuration
+Object.defineProperty(window, "matchMedia", {
+  writable: true,
+  value: vi.fn().mockImplementation((query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
+// Mock ResizeObserver for components that use it
+global.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
+// Mock IntersectionObserver for lazy loading components
+global.IntersectionObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
 ```
 
 ## Accessibility Testing Setup
 
-### jest-axe Integration with Vitest
+### CRITICAL: jest-axe Integration with Vitest
 
-**Pattern for Component Tests**:
+**Required DevDependencies Installation**:
+
+```bash
+# MUST install these exact packages for accessibility testing
+npm i -D jest-axe@^9.0.0 axe-core@^4.8.0 @types/jest-axe@^3.3.0
+```
+
+**Complete Integration Pattern**:
 
 ```typescript
 // Example: src/features/auth/__tests__/LoginForm.test.tsx
-import { render } from '@testing-library/react';
-import { axe } from 'jest-axe';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { axe, toHaveNoViolations } from 'jest-axe';
 import { LoginForm } from '../LoginForm';
+import { axeConfig } from '../../../test/axe.config';
+
+// Extend expect matchers (already done globally in setup.ts)
+expect.extend(toHaveNoViolations);
 
 describe('LoginForm Accessibility', () => {
-  it('should have no accessibility violations', async () => {
+  it('should have no accessibility violations on initial render', async () => {
     const { container } = render(<LoginForm />);
-    const results = await axe(container);
+    const results = await axe(container, axeConfig);
+    expect(results).toHaveNoViolations();
+  });
+
+  it('should have no accessibility violations with validation errors', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<LoginForm />);
+
+    // Trigger validation errors
+    const submitButton = screen.getByRole('button', { name: /sign in/i });
+    await user.click(submitButton);
+
+    const results = await axe(container, axeConfig);
+    expect(results).toHaveNoViolations();
+  });
+
+  it('should have no accessibility violations in loading state', async () => {
+    const { container } = render(<LoginForm isLoading={true} />);
+    const results = await axe(container, axeConfig);
     expect(results).toHaveNoViolations();
   });
 });
 ```
 
-### Configuration for axe-core
+### CRITICAL: axe-core Configuration
 
-Create `src/test/axe.config.ts`:
+**Create `src/test/axe.config.ts`**:
 
 ```typescript
-// src/test/axe.config.ts
-export const axeConfig = {
+// src/test/axe.config.ts - EXACT CONFIGURATION REQUIRED
+import type { AxeOptions } from "axe-core";
+
+export const axeConfig: AxeOptions = {
   rules: {
-    // Disable color contrast in tests (handled by design system)
-    "color-contrast": { enabled: false },
-    // Ensure all interactive elements are keyboard accessible
-    "keyboard-accessible": { enabled: true },
-    // Require labels for all form controls
+    // CRITICAL: Disable problematic rules for testing environment
+    "color-contrast": { enabled: false }, // Design system responsibility
+    "duplicate-id": { enabled: false }, // Portal components create duplicates
+
+    // CRITICAL: Enable essential accessibility rules
+    "aria-allowed-attr": { enabled: true },
+    "aria-required-attr": { enabled: true },
+    "button-name": { enabled: true },
+    "form-field-multiple-labels": { enabled: true },
+    "input-button-name": { enabled: true },
     label: { enabled: true },
-    // Ensure proper heading hierarchy
+    "link-name": { enabled: true },
     "heading-order": { enabled: true },
+    "landmark-unique": { enabled: true },
+    region: { enabled: true },
+    "skip-link": { enabled: true },
   },
-  // Focus on WCAG 2.1 AA compliance
+
+  // CRITICAL: Focus on WCAG 2.1 AA compliance
   runOnly: {
     type: "tag",
-    values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"],
+    values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"],
   },
+
+  // CRITICAL: Test environment optimizations
+  resultTypes: ["violations", "incomplete"],
+
+  // CRITICAL: Performance optimization for CI
+  preload: false,
+  timeout: 30000,
 };
+
+// Export for direct use in tests
+export default axeConfig;
+```
+
+### TypeScript Integration Requirements
+
+**Add to `src/test/setup.ts` (already included above)**:
+
+```typescript
+// CRITICAL: This must be in setup.ts for global availability
+import { toHaveNoViolations } from "jest-axe";
+expected.extend({ toHaveNoViolations });
+```
+
+**Verification Commands**:
+
+```bash
+# Test jest-axe installation
+npm run test:phase1 -- --run
+# Should recognize toHaveNoViolations matcher
+
+# Test axe-core functionality
+node -e "console.log(require('axe-core').version)"
+# Should output version number
 ```
 
 ## Test File Organization
@@ -210,22 +379,36 @@ config({ path: ".env.test" });
 
 ## TypeScript Configuration
 
-### Required tsconfig.json Types
+### TypeScript Configuration Requirements
 
-Ensure these types are included:
+**CRITICAL: Complete tsconfig.app.json types configuration**:
 
 ```json
-// tsconfig.json
+// tsconfig.app.json - Add to types array
 {
   "compilerOptions": {
     "types": [
       "vite/client",
       "vitest/globals",
       "@testing-library/jest-dom",
-      "jest-axe"
+      "jest-axe",
+      "@types/jest-axe"
     ]
   }
 }
+```
+
+**CRITICAL: Vitest globals configuration for TypeScript**:
+
+Ensure `vitest/globals` is included to enable global test functions (`describe`,
+`it`, `expect`) without imports.
+
+**Verification Command**:
+
+```bash
+# Verify TypeScript recognizes jest-axe types
+npx tsc --noEmit
+# Should not show errors for toHaveNoViolations matcher
 ```
 
 ## Verification Commands

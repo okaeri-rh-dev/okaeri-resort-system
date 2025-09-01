@@ -31,9 +31,9 @@ export class TokenManager {
     // Singleton pattern
     // In development mode with mock auth, restore tokens from sessionStorage
     if (this.isDevelopmentMockAuth()) {
-      const storedRefreshToken = sessionStorage.getItem("okaeri_refresh_token");
+      const storedRefreshToken = sessionStorage.getItem("mock_refresh_token");
       if (storedRefreshToken) {
-        console.log("[TokenManager] Restoring refresh token from sessionStorage (dev mode)");
+        console.log("[TokenManager] Restoring mock refresh token from sessionStorage (dev mode)");
         this.refreshTokenMemory = storedRefreshToken;
       }
     }
@@ -116,8 +116,8 @@ export class TokenManager {
 
     // SECURITY: Only use sessionStorage in development mode with mock auth
     if (this.isDevelopmentMockAuth()) {
-      console.log("[TokenManager] Persisting refresh token to sessionStorage (dev mode only)");
-      sessionStorage.setItem("okaeri_refresh_token", refreshToken);
+      console.log("[TokenManager] Persisting mock refresh token to sessionStorage (dev mode only)");
+      sessionStorage.setItem("mock_refresh_token", refreshToken);
     } else if (import.meta.env.DEV) {
       console.warn(
         "[TokenManager] Refresh token stored in memory only. " +
@@ -147,7 +147,7 @@ export class TokenManager {
 
     // SECURITY: Only check sessionStorage in development mode with mock auth
     if (this.isDevelopmentMockAuth()) {
-      const storedToken = sessionStorage.getItem("okaeri_refresh_token");
+      const storedToken = sessionStorage.getItem("mock_refresh_token");
       if (storedToken) {
         this.refreshTokenMemory = storedToken; // Cache in memory
         return storedToken;
@@ -176,7 +176,7 @@ export class TokenManager {
 
     // SECURITY: Only clear sessionStorage in development mode with mock auth
     if (this.isDevelopmentMockAuth()) {
-      sessionStorage.removeItem("okaeri_refresh_token");
+      sessionStorage.removeItem("mock_refresh_token");
     }
 
     this.cancelTokenRefresh();

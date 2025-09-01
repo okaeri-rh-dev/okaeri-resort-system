@@ -17,6 +17,16 @@ TypeScript. All patterns ensure type safety, accessibility, and maintainability.
 5. **Maintain type safety throughout**
 6. **Use deterministic test data**
 
+### Related Documentation
+
+- **[TEST_UTILITIES_SPECIFICATION.md](./TEST_UTILITIES_SPECIFICATION.md)** -
+  Comprehensive accessibility testing utilities, Philippine business context
+  helpers, and mobile-first testing patterns
+- **[COMPONENT_TESTING_PATTERNS.md](./COMPONENT_TESTING_PATTERNS.md)** - This
+  document - Basic component testing patterns with React Testing Library
+- **Phase-specific testing guides** - Feature-specific testing requirements and
+  examples
+
 ### Component Testing Hierarchy
 
 ```
@@ -32,7 +42,9 @@ E2E Tests (10%) → Critical user flows
 **Pattern**: Test form validation, submission, and error handling.
 
 ```typescript
-import { render, fireEvent, waitFor, screen } from '@/test/helpers';
+import { renderWithProviders, screen } from '@/test/helpers';
+// For comprehensive accessibility testing patterns, see TEST_UTILITIES_SPECIFICATION.md
+import { testResortAccessibility, testMobileAccessibility } from '@/test/utilities';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import LoginForm from '@/components/LoginForm';
@@ -47,7 +59,7 @@ describe('LoginForm', () => {
   });
 
   it('should render form fields with proper accessibility', () => {
-    render(<LoginForm onSubmit={mockOnSubmit} />);
+    renderWithProviders(<LoginForm onSubmit={mockOnSubmit} />);
 
     // Use semantic queries
     expect(screen.getByRole('textbox', { name: /email/i })).toBeInTheDocument();
@@ -57,7 +69,7 @@ describe('LoginForm', () => {
   });
 
   it('should show validation errors for invalid input', async () => {
-    render(<LoginForm onSubmit={mockOnSubmit} />);
+    renderWithProviders(<LoginForm onSubmit={mockOnSubmit} />);
 
     const emailInput = screen.getByRole('textbox', { name: /email/i });
     const passwordInput = screen.getByLabelText(/password/i);
@@ -78,7 +90,7 @@ describe('LoginForm', () => {
   });
 
   it('should submit form with valid data', async () => {
-    render(<LoginForm onSubmit={mockOnSubmit} />);
+    renderWithProviders(<LoginForm onSubmit={mockOnSubmit} />);
 
     const emailInput = screen.getByRole('textbox', { name: /email/i });
     const passwordInput = screen.getByLabelText(/password/i);
@@ -107,7 +119,7 @@ describe('LoginForm', () => {
       message: 'Invalid credentials'
     });
 
-    render(<LoginForm onSubmit={mockSubmitWithError} />);
+    renderWithProviders(<LoginForm onSubmit={mockSubmitWithError} />);
 
     const emailInput = screen.getByRole('textbox', { name: /email/i });
     const passwordInput = screen.getByLabelText(/password/i);
@@ -131,7 +143,7 @@ describe('LoginForm', () => {
       })
     );
 
-    render(<LoginForm onSubmit={mockAsyncSubmit} />);
+    renderWithProviders(<LoginForm onSubmit={mockAsyncSubmit} />);
 
     const emailInput = screen.getByRole('textbox', { name: /email/i });
     const passwordInput = screen.getByLabelText(/password/i });
@@ -168,7 +180,7 @@ describe('BookingForm', () => {
   const user = userEvent.setup();
 
   it('should handle conditional field validation', async () => {
-    render(<BookingForm onSubmit={mockOnSubmit} />);
+    renderWithProviders(<BookingForm onSubmit={mockOnSubmit} />);
 
     const numberOfGuestsInput = screen.getByRole('spinbutton', { name: /number of guests/i });
     const numberOfChildrenInput = screen.getByRole('spinbutton', { name: /number of children/i });
@@ -190,7 +202,7 @@ describe('BookingForm', () => {
   });
 
   it('should calculate total amount dynamically', async () => {
-    render(<BookingForm onSubmit={mockOnSubmit} />);
+    renderWithProviders(<BookingForm onSubmit={mockOnSubmit} />);
 
     const checkInInput = screen.getByLabelText(/check-in date/i);
     const checkOutInput = screen.getByLabelText(/check-out date/i);
@@ -368,11 +380,7 @@ function createTestQueryClient() {
 
 function renderWithQueryClient(component: React.ReactElement) {
   const queryClient = createTestQueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      {component}
-    </QueryClientProvider>
-  );
+  return renderWithProviders(component, { queryClient });
 }
 
 describe('BookingList with TanStack Query', () => {
@@ -537,7 +545,7 @@ function renderWithRouter(initialEntries: string[] = ['/']) {
     }
   });
 
-  return render(<RouterProvider router={router} />);
+  return renderWithProviders(<></>, { initialRoute: initialEntries[0] });
 }
 
 describe('BookingDetailPage', () => {
@@ -595,7 +603,7 @@ describe('BookingCard Navigation', () => {
   });
 
   it('should navigate to booking detail on click', async () => {
-    render(<BookingCard booking={mockBooking} />);
+    renderWithProviders(<BookingCard booking={mockBooking} />);
 
     const bookingCard = screen.getByTestId(`booking-card-${mockBooking.id}`);
     await user.click(bookingCard);
@@ -606,7 +614,7 @@ describe('BookingCard Navigation', () => {
   });
 
   it('should navigate to edit page on edit button click', async () => {
-    render(<BookingCard booking={mockBooking} />);
+    renderWithProviders(<BookingCard booking={mockBooking} />);
 
     const editButton = screen.getByRole('button', { name: /edit/i });
     await user.click(editButton);
@@ -624,23 +632,39 @@ describe('BookingCard Navigation', () => {
 
 **Pattern**: Ensure components meet accessibility standards.
 
+> **Note**: For comprehensive accessibility testing utilities including jest-axe
+> setup, Philippine business context, and mobile-first patterns, see
+> [TEST_UTILITIES_SPECIFICATION.md](./TEST_UTILITIES_SPECIFICATION.md)
+
 ```typescript
 import { axe, toHaveNoViolations } from 'jest-axe';
+import { testResortAccessibility, testMobileAccessibility } from '@/test/utilities';
 
 // Add jest-axe matcher
 expect.extend(toHaveNoViolations);
 
 describe('LoginForm Accessibility', () => {
   it('should not have accessibility violations', async () => {
-    const { container } = render(<LoginForm />);
+    const { container } = renderWithProviders(<LoginForm />);
 
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 
+  it('should pass resort-specific accessibility checks', async () => {
+    await testResortAccessibility(<LoginForm />, {
+      locale: 'en-PH',
+      viewport: 'mobile',
+    });
+  });
+
+  it('should be accessible on mobile devices (primary use case)', async () => {
+    await testMobileAccessibility(<LoginForm />);
+  });
+
   it('should have proper focus management', async () => {
     const user = userEvent.setup();
-    render(<LoginForm />);
+    renderWithProviders(<LoginForm />);
 
     const emailInput = screen.getByRole('textbox', { name: /email/i });
     const passwordInput = screen.getByLabelText(/password/i);
@@ -659,7 +683,7 @@ describe('LoginForm Accessibility', () => {
 
   it('should announce errors to screen readers', async () => {
     const user = userEvent.setup();
-    render(<LoginForm />);
+    renderWithProviders(<LoginForm />);
 
     const submitButton = screen.getByRole('button', { name: /sign in/i });
     await user.click(submitButton);
@@ -668,6 +692,17 @@ describe('LoginForm Accessibility', () => {
       const errorMessage = screen.getByRole('alert');
       expect(errorMessage).toBeInTheDocument();
       expect(errorMessage).toHaveAttribute('aria-live', 'polite');
+    });
+  });
+
+  it('should support touch targets on mobile', () => {
+    const { container } = renderWithProviders(<LoginForm />, { viewport: 'mobile' });
+
+    // All interactive elements should be at least 44px for touch
+    const interactiveElements = container.querySelectorAll('button, input, a');
+    interactiveElements.forEach(element => {
+      const rect = element.getBoundingClientRect();
+      expect(Math.min(rect.width, rect.height)).toBeGreaterThanOrEqual(44);
     });
   });
 });
@@ -688,7 +723,7 @@ describe('BookingList Performance', () => {
     const largeBookingList = createBookings(1000);
 
     const { duration } = measureRenderTime(() =>
-      render(<BookingList bookings={largeBookingList} />)
+      renderWithProviders(<BookingList bookings={largeBookingList} />)
     );
 
     // Should render in under 100ms
@@ -696,7 +731,7 @@ describe('BookingList Performance', () => {
   });
 
   it('should not cause memory leaks on unmount', () => {
-    const { unmount } = render(<BookingList />);
+    const { unmount } = renderWithProviders(<BookingList />);
 
     const initialMemory = performance.memory?.usedJSHeapSize;
 
@@ -748,7 +783,7 @@ describe('ErrorBoundary', () => {
   });
 
   it('should catch and display errors', () => {
-    render(
+    renderWithProviders(
       <ErrorBoundary fallback={<div>Something went wrong</div>}>
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>
@@ -759,7 +794,7 @@ describe('ErrorBoundary', () => {
   });
 
   it('should render children when no error', () => {
-    render(
+    renderWithProviders(
       <ErrorBoundary fallback={<div>Something went wrong</div>}>
         <ThrowError shouldThrow={false} />
       </ErrorBoundary>

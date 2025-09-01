@@ -31,13 +31,22 @@ consistency.
 The following areas require **95% minimum coverage** due to their critical
 nature:
 
-| Area                       | Justification       | Test Categories             |
-| -------------------------- | ------------------- | --------------------------- |
-| **Authentication**         | Security critical   | Unit, Integration, Security |
-| **Financial Calculations** | Business critical   | Unit, Integration, E2E      |
-| **Payment Processing**     | Revenue critical    | Unit, Integration, Security |
-| **Booking Management**     | Core business logic | Unit, Integration, E2E      |
-| **Data Validation**        | Data integrity      | Unit, Integration           |
+| Area                       | Justification       | Test Categories             | Enforcement Method        |
+| -------------------------- | ------------------- | --------------------------- | ------------------------- |
+| **Authentication**         | Security critical   | Unit, Integration, Security | scripts/check-coverage.js |
+| **Financial Calculations** | Business critical   | Unit, Integration, E2E      | scripts/check-coverage.js |
+| **Payment Processing**     | Revenue critical    | Unit, Integration, Security | scripts/check-coverage.js |
+| **Booking Management**     | Core business logic | Unit, Integration, E2E      | scripts/check-coverage.js |
+| **Data Validation**        | Data integrity      | Unit, Integration           | scripts/check-coverage.js |
+
+**Coverage Enforcement Implementation**:
+
+- **Global thresholds**: Enforced via vitest.config.ts (90% minimum for all
+  code)
+- **Path-specific thresholds**: Enforced via `scripts/check-coverage.js` (95%
+  for auth, financial, etc.)
+- **Verification command**: `npm run verify:coverage:paths`
+- **CI Integration**: Automatic execution via `verify:all` script
 
 ### Phase-Specific Coverage
 
@@ -332,19 +341,21 @@ Required NPM scripts for phase-based testing:
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
+    "preview": "vite preview --port 4173",
 
     // Verification commands
     "verify": "npm run verify:all",
     "verify:all": "npm run verify:tests && npm run verify:types && npm run verify:lint && npm run verify:security",
+    "verify:push": "npm run verify:all && npm run perf:budget && npm run verify:performance && npm run verify:accessibility",
     "verify:tests": "vitest run --coverage",
     "verify:types": "tsc --noEmit",
     "verify:lint": "eslint . --max-warnings 0",
     "verify:security": "npm audit --audit-level=high",
-    "verify:accessibility": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=./lighthouse-accessibility.json'",
-    "verify:performance": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=./lighthouse-performance.json'",
-    "verify:bundle": "npm run perf:budget", // ENFORCES bundle limits
-    "perf:budget": "npm run build && bundlesize", // Actual enforcement
-    "build:analyze": "ANALYZE=true npm run build" // Visualization only
+    "verify:accessibility": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=./reports/lighthouse-accessibility.json'",
+    "verify:performance": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=./reports/lighthouse-performance.json'",
+    "verify:bundle": "npm run perf:budget",
+    "perf:budget": "npm run build && bundlesize",
+    "build:analyze": "ANALYZE=true npm run build"
   }
 }
 ```
@@ -353,19 +364,63 @@ Required NPM scripts for phase-based testing:
 at `scripts/scaffold-phase1.js` that materializes test files from the RED test
 skeletons.
 
-**Required Dependencies**:
+**Version Pinning Policy**:
 
-Bundle verification requires `bundlesize`:
+To ensure deterministic builds and local-CI parity, critical testing
+dependencies MUST use exact versions (no caret ranges). The following versions
+align with the current package.json:
 
-```bash
-npm install --save-dev bundlesize
-```
-
-Lighthouse verification requires `start-server-and-test`:
+**Required Dependencies with Exact Versions**:
 
 ```bash
-npm install --save-dev start-server-and-test
+npm install --save-dev --save-exact bundlesize@0.18.2
+npm install --save-dev --save-exact start-server-and-test@2.0.13
+npm install --save-dev --save-exact lighthouse@12.8.2
+npm install --save-dev --save-exact jest-axe@10.0.0
+npm install --save-dev --save-exact @types/jest-axe@3.5.9
 ```
+
+**Package.json devDependencies (Authoritative Versions)**:
+
+```json
+{
+  "devDependencies": {
+    "bundlesize": "0.18.2",
+    "start-server-and-test": "2.0.13",
+    "lighthouse": "12.8.2",
+    "jest-axe": "10.0.0",
+    "@types/jest-axe": "3.5.9"
+  }
+}
+```
+
+**Version Pinning Policy**:
+
+- **Testing Tools**: Use exact versions (no ^ or ~) to prevent version drift
+  between local and CI
+- **Build Tools**: Use exact versions for bundlesize, lighthouse, and
+  accessibility tools
+- **Type Definitions**: Pin @types/\* packages to prevent TypeScript
+  compatibility issues
+- **Server Tools**: Pin start-server-and-test to ensure consistent server
+  lifecycle management
+- **Runtime Dependencies**: Allow caret ranges for application dependencies
+  where appropriate
+
+**CI/Local Parity Check**:
+
+```bash
+# Verify exact versions match between local and CI
+npm list bundlesize lighthouse jest-axe start-server-and-test --depth=0
+```
+
+**Critical Requirements**:
+
+- **preview script**: `"preview": "vite preview --port 4173"` is REQUIRED for
+  performance testing scripts
+- **verify:push script**:
+  `"verify:push": "npm run verify:all && npm run perf:budget && npm run verify:performance && npm run verify:accessibility"`
+  is the authoritative definition for pre-push verification
 
 ### Pre-commit Requirements
 
@@ -387,18 +442,54 @@ npm install --save-dev start-server-and-test
 | Security Scan | No high/critical                            | Block merge       |
 | Lighthouse    | ≥90 score                                   | Warning only      |
 
-## Required NPM Scripts
+---
 
-### Phase-Specific Scripts
+## 8. Required npm Scripts - Single Source of Truth
 
-All phase-specific scripts must be present in package.json for proper TDD
-workflow:
+### Core Verification Scripts (Authoritative Definitions)
+
+All projects MUST include these exact script definitions in package.json:
+
+```json
+{
+  "scripts": {
+    // Build and preview (required for testing)
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --port 4173",
+
+    // Core testing
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui",
+
+    // Verification pipeline
+    "verify": "npm run verify:all",
+    "verify:all": "npm run verify:tests && npm run verify:types && npm run verify:lint && npm run verify:security",
+    "verify:push": "npm run verify:all && npm run perf:budget && npm run verify:performance && npm run verify:accessibility",
+    "verify:tests": "vitest run --coverage",
+    "verify:types": "tsc --noEmit",
+    "verify:lint": "eslint . --max-warnings 0",
+    "verify:security": "npm audit --audit-level=high",
+
+    // Performance verification
+    "verify:bundle": "npm run perf:budget",
+    "verify:performance": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=./reports/lighthouse-performance.json'",
+    "verify:accessibility": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=./reports/lighthouse-accessibility.json'",
+    "perf:budget": "npm run build && bundlesize",
+
+    // Analysis (visualization only)
+    "build:analyze": "ANALYZE=true npm run build"
+  }
+}
+```
+
+### Phase-Specific Testing Scripts
 
 ```json
 {
   "scripts": {
     // Phase 1: Authentication & Login
-    "scaffold:phase1": "echo 'See docs/implementation/phases/phase-1-login-tdd/PHASE_1_FORM_TEST_SPECIFICATIONS.md'",
+    "scaffold:phase1": "echo 'See docs/implementation/phases/phase-1-login-tdd/PHASE_1_RED_TEST_SKELETONS.md'",
     "test:phase1": "vitest run src/features/auth/**/__tests__/*.test.{ts,tsx}",
     "test:phase1:coverage": "vitest run --coverage src/features/auth/**/__tests__/*.test.{ts,tsx}",
     "test:phase1:watch": "vitest watch src/features/auth/**/__tests__/*.test.{ts,tsx}",
@@ -423,9 +514,9 @@ workflow:
 
     // Phase 5: Deployment & E2E
     "scaffold:phase5": "echo 'See docs/implementation/phases/phase-5-deployment/README.md'",
-    "test:phase5": "vitest run tests/e2e/**/*.test.{ts,tsx}",
-    "test:phase5:coverage": "vitest run --coverage tests/e2e/**/*.test.{ts,tsx}",
-    "test:phase5:watch": "vitest watch tests/e2e/**/*.test.{ts,tsx}",
+    "test:phase5": "vitest run src/features/deployment/**/__tests__/*.test.{ts,tsx} && playwright test tests/e2e/deployment",
+    "test:phase5:coverage": "vitest run --coverage src/features/deployment/**/__tests__/*.test.{ts,tsx}",
+    "test:phase5:watch": "vitest watch src/features/deployment/**/__tests__/*.test.{ts,tsx}",
 
     // Combined phase testing
     "test:all-phases": "npm run test:phase1 && npm run test:phase2 && npm run test:phase3 && npm run test:phase4 && npm run test:phase5",
@@ -433,6 +524,138 @@ workflow:
   }
 }
 ```
+
+### Git Hook Setup with Husky
+
+**Required Husky Configuration**:
+
+1. **Install Husky**:
+
+```bash
+npm install --save-dev husky
+npx husky init
+```
+
+2. **Pre-commit Hook** (`.husky/pre-commit`):
+
+```bash
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+npm run verify:all
+```
+
+3. **Pre-push Hook** (`.husky/pre-push`):
+
+```bash
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+npm run verify:push
+```
+
+4. **Commit Message Hook** (`.husky/commit-msg`):
+
+```bash
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+npx --no -- commitlint --edit $1
+```
+
+### Script Execution Flow
+
+```mermaid
+flowchart TD
+    A[verify:push] --> B[verify:all]
+    A --> C[perf:budget]
+    A --> D[verify:performance]
+    A --> E[verify:accessibility]
+
+    B --> F[verify:tests]
+    B --> G[verify:types]
+    B --> H[verify:lint]
+    B --> I[verify:security]
+
+    C --> J[build]
+    C --> K[bundlesize]
+
+    D --> L[build]
+    D --> M[start-server-and-test preview]
+    D --> N[lighthouse performance]
+
+    E --> O[build]
+    E --> P[start-server-and-test preview]
+    E --> Q[lighthouse accessibility]
+```
+
+### Script Purpose and Usage
+
+| Script Category          | Purpose                        | When to Use                   |
+| ------------------------ | ------------------------------ | ----------------------------- |
+| **verify:push**          | Complete pre-push verification | Before pushing to remote      |
+| **verify:all**           | Core quality checks            | Daily development, pre-commit |
+| **verify:bundle**        | Bundle size enforcement        | Performance regression checks |
+| **verify:performance**   | Lighthouse performance audit   | Performance optimization      |
+| **verify:accessibility** | WCAG compliance check          | Accessibility verification    |
+| **test:phase{N}**        | Phase-specific testing         | TDD development workflow      |
+| **preview**              | Production preview server      | Required for Lighthouse tests |
+
+---
+
+## 9. Bundle Verification - Critical Configuration Fix
+
+**CRITICAL CONFIGURATION ISSUE**: Any `verify:bundle` script that uses
+visualization (`build:analyze`) instead of enforcement (`perf:budget`) allows
+performance regressions and must be fixed immediately.
+
+**Current (Incorrect) Configuration**:
+
+```json
+{
+  "scripts": {
+    "verify:bundle": "npm run build:analyze" // ❌ Visualization only - NO ENFORCEMENT
+  }
+}
+```
+
+**Required (Correct) Configuration**:
+
+```json
+{
+  "scripts": {
+    "verify:bundle": "npm run perf:budget" // ✅ Actual enforcement with bundlesize
+  }
+}
+```
+
+**Verification Command**:
+
+```bash
+# Check if bundle enforcement is properly configured
+npm run verify:bundle-config 2>/dev/null || echo "⚠️ Bundle verification script needs manual check"
+
+# Manual verification
+grep '"verify:bundle"' package.json
+# Should show: "verify:bundle": "npm run perf:budget"
+# NOT: "verify:bundle": "npm run build:analyze"
+```
+
+---
+
+## 10. Phase-Specific Script Requirements
+
+### Complete Phase Script Set
+
+Each phase MUST include all four script variants:
+
+| Phase   | Scaffold Script   | Test Script   | Coverage Script        | Watch Script        |
+| ------- | ----------------- | ------------- | ---------------------- | ------------------- |
+| Phase 1 | `scaffold:phase1` | `test:phase1` | `test:phase1:coverage` | `test:phase1:watch` |
+| Phase 2 | `scaffold:phase2` | `test:phase2` | `test:phase2:coverage` | `test:phase2:watch` |
+| Phase 3 | `scaffold:phase3` | `test:phase3` | `test:phase3:coverage` | `test:phase3:watch` |
+| Phase 4 | `scaffold:phase4` | `test:phase4` | `test:phase4:coverage` | `test:phase4:watch` |
+| Phase 5 | `scaffold:phase5` | `test:phase5` | `test:phase5:coverage` | `test:phase5:watch` |
 
 ### Phase Script Naming Convention
 
@@ -461,7 +684,7 @@ All phase scripts follow a consistent naming pattern:
 | **Phase 2** | `src/features/dashboard/**/__tests__/` | `src/features/dashboard/` |
 | **Phase 3** | `src/features/booking/**/__tests__/`   | `src/features/booking/`   |
 | **Phase 4** | `src/features/financial/**/__tests__/` | `src/features/financial/` |
-| **Phase 5** | `tests/e2e/`                           | Full application          |
+| **Phase 5** | `tests/e2e/deployment/`                | Full application          |
 
 ### TDD Workflow Usage Examples
 
@@ -616,7 +839,7 @@ Reviewers must verify:
 
 ---
 
-## 8. Standards References
+## 11. Standards References
 
 ### Performance Standards
 
@@ -663,7 +886,7 @@ Key requirements:
 
 ---
 
-## 9. Conflict Resolution
+## 12. Conflict Resolution
 
 ### Previously Conflicting Standards (Now Resolved)
 
@@ -677,7 +900,7 @@ Key requirements:
 
 ---
 
-## 10. Change Management
+## 13. Change Management
 
 ### Update Process
 
@@ -694,13 +917,15 @@ Key requirements:
 
 ### Version History
 
-| Version | Date       | Changes                        | Author                          |
-| ------- | ---------- | ------------------------------ | ------------------------------- |
-| 1.0.0   | 2025-08-29 | Initial consolidated standards | typescript-react-quality-expert |
+| Version | Date       | Changes                                                                                                                                                                                       | Author                          |
+| ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| 1.2.0   | 2025-09-01 | Updated to align with current package.json versions, added Version Pinning Policy, fixed coverage enforcement documentation to reference scripts/check-coverage.js, updated Phase 5 E2E paths | typescript-react-quality-expert |
+| 1.1.0   | 2025-08-31 | Added authoritative script definitions, locked devDependency versions, and Husky git hook setup                                                                                               | vercel-deployment-optimizer     |
+| 1.0.0   | 2025-08-29 | Initial consolidated standards                                                                                                                                                                | typescript-react-quality-expert |
 
 ---
 
-## 11. Enforcement and Monitoring
+## 14. Enforcement and Monitoring
 
 ### Automated Enforcement
 
@@ -728,7 +953,7 @@ Weekly metrics:
 
 ---
 
-## 12. Success Metrics
+## 15. Success Metrics
 
 ### Quality Indicators
 
@@ -753,7 +978,7 @@ Weekly metrics:
 
 ---
 
-## 13. Quick Start - Do Now Checklist
+## 16. Quick Start - Do Now Checklist
 
 ### Immediate Setup Actions
 
@@ -782,41 +1007,59 @@ grep "2024-01-01" src/test/setup.ts && echo "✅ Time constant aligned" || echo 
 grep "test-seed-2024" src/test/setup.ts && echo "✅ Seed aligned" || echo "⚠️ Seed needs update"
 ```
 
-#### 3. Install Phase Scripts
+#### 3. Install Required DevDependencies with Locked Versions
 
-Add these scripts to your package.json if missing:
+```bash
+# Install exact versions to ensure consistency
+npm install --save-dev --save-exact bundlesize@0.18.2
+npm install --save-dev --save-exact start-server-and-test@2.0.13
+npm install --save-dev --save-exact lighthouse@12.8.2
+npm install --save-dev --save-exact jest-axe@10.0.0
+npm install --save-dev --save-exact @types/jest-axe@3.5.9
+```
+
+#### 4. Install Critical Scripts
+
+Add these REQUIRED scripts to your package.json:
 
 ```json
 {
+  "preview": "vite preview --port 4173",
+  "verify:push": "npm run verify:all && npm run perf:budget && npm run verify:performance && npm run verify:accessibility",
+  "verify:bundle": "npm run perf:budget",
+  "perf:budget": "npm run build && bundlesize",
   "scaffold:phase1": "echo 'See docs/implementation/phases/phase-1-login-tdd/PHASE_1_RED_TEST_SKELETONS.md'",
   "test:phase1": "vitest run src/features/auth/**/__tests__/*.test.{ts,tsx}",
   "test:phase1:coverage": "vitest run --coverage src/features/auth/**/__tests__/*.test.{ts,tsx}"
 }
 ```
 
-#### 4. Verify Bundle Configuration
+#### 5. Verify Bundle Configuration
 
 ```bash
 # Check bundle size limits match Performance_Budgets.md
 test -f bundlesize.config.json && echo "✅ Bundle config exists" || echo "❌ Missing bundle config"
 grep '"120kb"' bundlesize.config.json && echo "✅ Main bundle limit correct" || echo "⚠️ Check main bundle limit"
+
+# CRITICAL: Verify bundle enforcement (not visualization)
+grep '"verify:bundle".*"perf:budget"' package.json && echo "✅ Bundle enforcement enabled" || echo "❌ Bundle enforcement BROKEN - using visualization only"
 ```
 
-#### 5. Run Full Verification
+#### 6. Run Full Verification
 
 ```bash
-# Complete verification suite
-npm run verify
+# Complete verification suite including new verify:push
+npm run verify:push
 ```
 
-#### 6. Check Coverage Baseline
+#### 7. Check Coverage Baseline
 
 ```bash
 # Establish current coverage baseline
 npm run test:coverage
 ```
 
-#### 7. Validate Mock Services
+#### 8. Validate Mock Services
 
 ```bash
 # Check mock service readiness
@@ -824,11 +1067,17 @@ ls -la src/services/mock/
 npm run test src/services/mock/*.test.ts 2>/dev/null || echo "Note: Add mock service tests"
 ```
 
-#### 8. PR Template Verification
+#### 9. PR Template and Git Hook Setup
 
 ```bash
 # Confirm PR template includes TDD sections
 grep "TDD Phase" .github/pull_request_template.md && echo "✅ TDD sections present" || echo "❌ Update PR template"
+
+# Setup Husky git hooks
+npm install --save-dev husky
+npx husky init
+echo 'npm run verify:all' > .husky/pre-commit
+echo 'npm run verify:push' > .husky/pre-push
 ```
 
 ### Ready for TDD Checklist
@@ -837,11 +1086,23 @@ Before beginning Phase 1:
 
 - [ ] All infrastructure files verified to exist
 - [ ] Test configuration aligned with SSoT (2024-01-01T00:00:00Z)
+- [ ] **CRITICAL**: Required devDependencies installed with locked versions:
+  - [ ] bundlesize@0.18.2
+  - [ ] start-server-and-test@2.0.13
+  - [ ] lighthouse@12.8.2
+  - [ ] jest-axe@10.0.0
+  - [ ] @types/jest-axe@3.5.9
+- [ ] **REQUIRED**: `preview` script configured:
+      `"preview": "vite preview --port 4173"`
+- [ ] **REQUIRED**: `verify:push` script configured with authoritative
+      definition
 - [ ] Phase-specific NPM scripts added to package.json
 - [ ] Bundle size configuration matches Performance_Budgets.md
 - [ ] **CRITICAL**: `verify:bundle` uses `perf:budget` (enforcement) not
       `build:analyze` (visualization)
-- [ ] Full verification suite passes (`npm run verify`)
+- [ ] Git hooks configured with Husky (pre-commit: verify:all, pre-push:
+      verify:push)
+- [ ] Full verification suite passes (`npm run verify:push`)
 - [ ] Coverage reporting configured and working
 - [ ] Mock services available for Phase 1 (Auth at L3)
 - [ ] PR template includes TDD compliance sections
@@ -857,15 +1118,24 @@ npm run test:phase1            # Run Phase 1 tests (should fail)
 npm run test:phase1:coverage   # Check Phase 1 coverage
 
 # Daily workflow
-npm run verify                 # Run all quality checks
-npm run test:coverage         # Check overall coverage
-npm run verify:performance    # Check performance metrics
-npm run verify:accessibility  # Check accessibility compliance
+npm run verify                 # Run core quality checks
+npm run verify:all             # Run all quality checks
+npm run test:coverage          # Check overall coverage
+npm run verify:performance     # Check performance metrics
+npm run verify:accessibility   # Check accessibility compliance
 
-# Before PR
-npm run verify:all            # Complete verification
-git log --oneline            # Verify test-first commits
-npm run build                # Ensure build succeeds
+# Before commit
+npm run verify:all             # Pre-commit verification
+
+# Before push (AUTHORITATIVE)
+npm run verify:push            # Complete pre-push verification (verify:all + perf + performance + accessibility)
+git log --oneline              # Verify test-first commits
+npm run build                  # Ensure build succeeds
+
+# Bundle enforcement verification
+npm run verify:bundle          # Enforce bundle size limits (uses perf:budget)
+npm run perf:budget           # Direct bundle size enforcement
+npm run build:analyze          # Bundle visualization only (no enforcement)
 ```
 
 ---

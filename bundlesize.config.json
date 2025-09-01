@@ -2,110 +2,98 @@
   "files": [
     {
       "name": "Main Application Bundle",
-      "path": "dist/assets/app-*.js",
+      "path": "dist/assets/index-*.js",
       "maxSize": "120kb",
       "compression": "gzip"
     },
     {
-      "name": "Main CSS Bundle",
-      "path": "dist/assets/styles/index-*.css",
+      "name": "Critical CSS",
+      "path": "dist/assets/index-*.css",
       "maxSize": "40kb",
       "compression": "gzip"
     },
     {
       "name": "React Vendor Bundle",
-      "path": "dist/assets/react-vendor-*.js",
+      "path": "dist/assets/vendor-*.js",
       "maxSize": "42kb",
       "compression": "gzip"
     },
     {
-      "name": "Router Bundle",
-      "path": "dist/assets/router-*.js",
+      "name": "Router Bundle (TanStack Router)",
+      "path": "dist/assets/chunk-*router*.js",
       "maxSize": "28kb",
       "compression": "gzip"
     },
     {
-      "name": "Query Bundle",
-      "path": "dist/assets/query-*.js",
+      "name": "Query Bundle (TanStack Query)",
+      "path": "dist/assets/chunk-*query*.js",
       "maxSize": "32kb",
       "compression": "gzip"
     },
     {
       "name": "Critical UI Components",
-      "path": "dist/assets/ui-critical-*.js",
+      "path": "dist/assets/chunk-*ui-critical*.js",
       "maxSize": "38kb",
       "compression": "gzip"
     },
     {
       "name": "Extended UI Components",
-      "path": "dist/assets/ui-extended-*.js",
+      "path": "dist/assets/chunk-*ui-extended*.js",
       "maxSize": "65kb",
       "compression": "gzip"
     },
     {
-      "name": "Form Handling",
-      "path": "dist/assets/forms-*.js",
+      "name": "Form Handling Bundle",
+      "path": "dist/assets/chunk-*form*.js",
       "maxSize": "22kb",
       "compression": "gzip"
     },
     {
-      "name": "Utilities Bundle",
-      "path": "dist/assets/utils-*.js",
-      "maxSize": "18kb",
-      "compression": "gzip"
-    },
-    {
-      "name": "Icons Bundle (lazy loaded)",
-      "path": "dist/assets/icons-*.js",
-      "maxSize": "25kb",
-      "compression": "gzip"
-    },
-    {
-      "name": "State Management",
-      "path": "dist/assets/state-*.js",
+      "name": "State Management Bundle",
+      "path": "dist/assets/chunk-*store*.js",
       "maxSize": "15kb",
       "compression": "gzip"
     },
     {
-      "name": "Dashboard Route",
-      "path": "dist/assets/route-dashboard-*.js",
+      "name": "Dashboard Route Bundle",
+      "path": "dist/assets/dashboard-*.js",
       "maxSize": "35kb",
       "compression": "gzip"
     },
     {
-      "name": "Bookings Route",
-      "path": "dist/assets/route-bookings-*.js",
+      "name": "Bookings Route Bundle",
+      "path": "dist/assets/bookings-*.js",
       "maxSize": "45kb",
       "compression": "gzip"
     },
     {
-      "name": "Properties Route",
-      "path": "dist/assets/route-properties-*.js",
+      "name": "Properties Route Bundle",
+      "path": "dist/assets/properties-*.js",
       "maxSize": "30kb",
       "compression": "gzip"
     },
     {
-      "name": "Expenses Route",
-      "path": "dist/assets/route-expenses-*.js",
+      "name": "Expenses Route Bundle",
+      "path": "dist/assets/expenses-*.js",
       "maxSize": "35kb",
       "compression": "gzip"
     },
     {
-      "name": "Other Routes",
-      "path": "dist/assets/route-misc-*.js",
+      "name": "Other Routes Bundle",
+      "path": "dist/assets/route-*.js",
       "maxSize": "25kb",
       "compression": "gzip"
     },
     {
-      "name": "Public Routes",
-      "path": "dist/assets/route-public-*.js",
+      "name": "Public Routes Bundle",
+      "path": "dist/assets/public-*.js",
       "maxSize": "20kb",
       "compression": "gzip"
     },
     {
-      "name": "Fallback Vendor Bundle",
-      "path": "dist/assets/vendor-*.js",
-      "maxSize": "150kb",
+      "name": "Generic Code-Split Chunks",
+      "path": "dist/assets/chunk-*.js",
+      "maxSize": "25kb",
       "compression": "gzip"
     }
   ],

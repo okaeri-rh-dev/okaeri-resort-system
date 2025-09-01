@@ -15,6 +15,27 @@ Phase 4 implements comprehensive financial features tailored for small to medium
 - Designs multi-currency support with PHP as primary
 - Implements audit trails and security measures
 
+## Pre-Implementation Setup
+
+Before starting Phase 4 implementation, run the scaffold script to create the necessary directory structure:
+
+> 📚 **See Also**: [Scaffold Scripts Reference](../../SCAFFOLD_SCRIPTS_REFERENCE.md) | [Composite Scripts Guide](../../COMPOSITE_SCRIPTS_GUIDE.md) | [Currency Type Standard](../../Currency_Type_Standard.md)
+
+```bash
+# Run the scaffold script for Phase 4
+npm run scaffold:phase4
+
+# This will:
+# 1. Display the path to this documentation
+# 2. Create all necessary directories:
+#    - src/features/financial/components/
+#    - src/features/financial/hooks/
+#    - src/features/financial/stores/
+#    - src/features/financial/types/
+#    - src/features/financial/__tests__/
+# 3. Add .gitkeep files to preserve empty directories
+```
+
 ## NPM Scripts
 
 ### Phase 4 Specific Commands
@@ -23,7 +44,8 @@ Phase 4 implements comprehensive financial features tailored for small to medium
 {
   "scripts": {
     // Scaffolding - Get financial system test specifications
-    "scaffold:phase4": "echo 'See docs/implementation/phases/phase-4-financial-tdd/README.md'",
+    "scaffold:phase4": "echo 'Phase 4: Financial - See docs/implementation/phases/phase-4-financial-tdd/README.md' && npm run scaffold:phase4:dirs",
+    "scaffold:phase4:dirs": "mkdir -p src/features/financial/{components,hooks,stores,types,__tests__} && touch src/features/financial/__tests__/.gitkeep",
     
     // Testing - Run Phase 4 financial tests
     "test:phase4": "vitest run src/features/financial/**/__tests__/*.test.{ts,tsx}",

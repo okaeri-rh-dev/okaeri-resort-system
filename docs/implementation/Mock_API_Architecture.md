@@ -1227,18 +1227,21 @@ export class ErrorSimulator {
 
   /**
    * Create seeded random number generator for deterministic tests
+   * Uses the same LCG algorithm as src/test/setup.ts for consistency
    */
   private createSeededRandom(seed: string): () => number {
-    let hash = 0;
+    // Convert seed string to numeric value (same as setup.ts)
+    let seedNum = 0;
     for (let i = 0; i < seed.length; i++) {
-      const char = seed.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32bit integer
+      seedNum = (seedNum * 31 + seed.charCodeAt(i)) >>> 0;
     }
 
+    // Simple Linear Congruential Generator for deterministic random
+    let state = seedNum || 123456789;
     return () => {
-      hash = (hash * 9301 + 49297) % 233280;
-      return hash / 233280;
+      // Numerical Recipes LCG parameters (same as setup.ts)
+      state = (1664525 * state + 1013904223) >>> 0;
+      return (state & 0xffffffff) / 0x100000000;
     };
   }
 

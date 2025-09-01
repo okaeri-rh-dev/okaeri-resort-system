@@ -612,8 +612,8 @@ echo "✅ All deterministic environment variables are set"
     "verify:jwt": "npm run test:jwt:security && npm run audit:jwt:cookies",
     "test:jwt:security": "vitest run src/__tests__/security/jwt.security.test.ts",
     "audit:jwt:cookies": "! grep -r 'document.cookie' src/ | grep -i 'token\\|jwt\\|auth' || echo 'JWT cookie check passed'",
-    "verify:performance": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=./lighthouse-performance.json'",
-    "verify:accessibility": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=./lighthouse-accessibility.json'",
+    "verify:performance": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=./reports/lighthouse-performance.json'",
+    "verify:accessibility": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=./reports/lighthouse-accessibility.json'",
     "verify:bundle": "npm run perf:budget", // Bundle size ENFORCEMENT
     "perf:budget": "npm run build && bundlesize",
     "build:analyze": "ANALYZE=true npm run build" // Bundle VISUALIZATION only

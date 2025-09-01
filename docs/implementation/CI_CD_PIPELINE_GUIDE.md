@@ -364,6 +364,11 @@ The following dependencies are required for the CI/CD pipeline functionality:
 
 #### Performance Thresholds
 
+**Note**: All bundle size limits are defined in
+[Performance_Budgets.md](./Performance_Budgets.md). The following table
+summarizes the current values, but Performance_Budgets.md is the authoritative
+source.
+
 | Bundle   | Mobile Limit | Desktop Limit | Rationale               |
 | -------- | ------------ | ------------- | ----------------------- |
 | Main App | 120KB        | 150KB         | Core functionality      |

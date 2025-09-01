@@ -44,8 +44,9 @@ ls -la src/lib/validations/
 
 - [x] **Performance_Budgets.md** exists at
       `/docs/implementation/Performance_Budgets.md`
-  - Single source for performance metrics
-  - Bundle sizes: 120KB main, 200KB initial
+  - Single source for performance metrics (See Performance_Budgets.md for
+    authoritative thresholds)
+  - Bundle size enforcement via bundlesize.config.json
   - Lighthouse scores: ≥90 production
 
 - [x] **MASTER_VERIFICATION_INDEX.md** exists at
@@ -199,7 +200,8 @@ ls -la src/lib/validations/
 
 ### Performance Budgets Defined
 
-- [x] Bundle sizes per Performance_Budgets.md
+- [x] Bundle sizes per Performance_Budgets.md (See Performance_Budgets.md for
+      authoritative thresholds)
 - [x] Lighthouse scores ≥90
 - [x] Core Web Vitals targets set
 - [x] CI/CD configured to validate
@@ -310,7 +312,14 @@ echo "Checking test infrastructure..."
 
 # Verify TypeScript/Vitest aliases
 echo "Checking TypeScript configuration..."
-grep -q '"@/\*": \["src/\*"\]' tsconfig.app.json && echo "✓ TypeScript paths configured" || echo "✗ TypeScript paths missing"
+# Check multiple tsconfig files that might exist
+if [ -f "tsconfig.app.json" ]; then
+  grep -q '"@/\*": \["\./src/\*"\]' tsconfig.app.json && echo "✓ TypeScript paths configured (tsconfig.app.json)" || echo "✗ TypeScript paths missing in tsconfig.app.json"
+elif [ -f "tsconfig.json" ]; then
+  grep -q '"@/\*": \["\./src/\*"\]' tsconfig.json && echo "✓ TypeScript paths configured (tsconfig.json)" || echo "✗ TypeScript paths missing in tsconfig.json"
+else
+  echo "✗ No TypeScript config files found"
+fi
 grep -q '"@/test": resolve(__dirname, "./src/test")' vitest.config.ts && echo "✓ Vitest aliases configured" || echo "✗ Vitest aliases missing"
 
 # Test alias resolution
@@ -325,12 +334,24 @@ echo "Checking mock services..."
 
 # Verify deterministic test configuration
 echo "Checking test configuration..."
-if grep -q "createSeededRandom" src/test/setup.ts; then
+if grep -q "vi\.setSystemTime" src/test/setup.ts && grep -q "FIXED_TIME" src/test/setup.ts; then
+  echo "✓ Deterministic time mocking configured"
+else
+  echo "✗ Deterministic time mocking not configured"
+fi
+
+if (grep -q "vi\.spyOn(Math, \"random\")" src/test/setup.ts || grep -q "Math\.random = vi\.fn" src/test/setup.ts) && grep -q "RANDOM_SEED" src/test/setup.ts; then
   echo "✓ Deterministic PRNG configured"
-elif grep -q "Math.random.*0.5" src/test/setup.ts; then
+elif grep -q "Math.random.*0\.5" src/test/setup.ts; then
   echo "⚠ Using fixed 0.5 - consider seeded PRNG for better distribution"
 else
   echo "✗ Deterministic randomness not configured"
+fi
+
+if grep -q "FIXED_TIME=.*Z" .env.test && grep -q "RANDOM_SEED=test-seed" .env.test; then
+  echo "✓ Test environment variables configured"
+else
+  echo "✗ Test environment variables missing or incorrect"
 fi
 
 # Check required NPM scripts

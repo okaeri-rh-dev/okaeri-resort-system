@@ -505,26 +505,27 @@ export function validateMockConfig(config: MockServiceConfig): {
 
 /**
  * Convert string to seed number for deterministic random generation
+ * Uses same algorithm as src/test/setup.ts for consistency
  */
 export function stringToSeed(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32-bit integer
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
   }
-  return Math.abs(hash);
+  return hash || 123456789;
 }
 
 /**
  * Create seeded random function
+ * Uses same LCG parameters as src/test/setup.ts for consistency
  */
 export function createSeededRandom(seed: string): () => number {
-  let seedNumber = stringToSeed(seed);
+  let state = stringToSeed(seed);
 
   return () => {
-    seedNumber = (seedNumber * 9301 + 49297) % 233280;
-    return seedNumber / 233280;
+    // Numerical Recipes LCG parameters (matches setup.ts)
+    state = (1664525 * state + 1013904223) >>> 0;
+    return (state & 0xffffffff) / 0x100000000;
   };
 }
 

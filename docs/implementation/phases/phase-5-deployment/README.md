@@ -57,6 +57,23 @@ The system already has a solid foundation with:
 - ✅ Performance monitoring with Lighthouse CI
 - ✅ Cron jobs for maintenance tasks
 
+## Pre-Implementation Setup
+
+Before starting Phase 5 implementation, run the scaffold script to create the necessary directory structure:
+
+```bash
+# Run the scaffold script for Phase 5
+npm run scaffold:phase5
+
+# This will:
+# 1. Display the path to this documentation
+# 2. Create all necessary directories:
+#    - src/features/deployment/components/
+#    - src/features/deployment/utils/
+#    - src/features/deployment/__tests__/
+# 3. Add .gitkeep files to preserve empty directories
+```
+
 ## NPM Scripts
 
 ### Phase 5 Specific Commands
@@ -65,12 +82,13 @@ The system already has a solid foundation with:
 {
   "scripts": {
     // Scaffolding - Get deployment test specifications
-    "scaffold:phase5": "echo 'See docs/implementation/phases/phase-5-deployment/README.md'",
+    "scaffold:phase5": "echo 'Phase 5: Deployment - See docs/implementation/phases/phase-5-deployment/README.md' && npm run scaffold:phase5:dirs",
+    "scaffold:phase5:dirs": "mkdir -p src/features/deployment/{components,utils,__tests__} tests/e2e/deployment && touch src/features/deployment/__tests__/.gitkeep tests/e2e/deployment/.gitkeep",
     
     // Testing - Run Phase 5 E2E and deployment tests
-    "test:phase5": "vitest run tests/e2e/**/*.test.{ts,tsx}",
-    "test:phase5:coverage": "vitest run --coverage tests/e2e/**/*.test.{ts,tsx}",
-    "test:phase5:watch": "vitest watch tests/e2e/**/*.test.{ts,tsx}",
+    "test:phase5": "vitest run src/features/deployment/**/__tests__/*.test.{ts,tsx} && playwright test tests/e2e/deployment",
+    "test:phase5:coverage": "vitest run --coverage src/features/deployment/**/__tests__/*.test.{ts,tsx}",
+    "test:phase5:watch": "vitest watch src/features/deployment/**/__tests__/*.test.{ts,tsx}",
     
     // E2E Testing with Playwright
     "test:e2e": "playwright test",
@@ -116,7 +134,7 @@ npm run verify:bundle            # Check bundle size constraints
 
 | Issue | Solution |
 |-------|---------|
-| E2E tests not found | Ensure tests are in `tests/e2e/` directory |
+| E2E tests not found | Ensure tests are in `tests/e2e/deployment/` directory |
 | Coverage below 90% | Add tests for error recovery and edge cases |
 | Playwright timeouts | Increase timeout or optimize test selectors |
 | Deployment tests failing | Check environment variables and API keys |
@@ -131,10 +149,11 @@ npm run test:all-phases           # All phase tests must pass
 npm run verify:all                # All quality checks must pass
 npm run build                     # Production build must succeed
 
-# Deployment scenarios to test
-npm run test:deployment:preview   # Test preview deployments
-npm run test:deployment:rollback  # Test rollback procedures
-npm run test:deployment:canary    # Test canary releases
+# Deployment scenarios to test (E2E tests in tests/e2e/deployment/)
+npm run test:deployment:flow      # Test deployment workflows (critical-path/)
+npm run test:deployment:perf      # Test performance monitoring (performance/)
+npm run test:deployment:security  # Test security validation (security/)
+npm run test:deployment:health    # Test health monitoring (health-checks/)
 
 # Post-deployment verification
 npm run test:production:smoke     # Quick smoke tests on production
@@ -151,38 +170,43 @@ npm run test:production:monitor   # Verify monitoring is active
 # - CLS (Cumulative Layout Shift): < 0.1
 # - TTFB (Time to First Byte): < 200ms
 
-# Bundle size limits
-# - Main bundle: < 120KB
-# - Vendor bundle: < 200KB
-# - Total JS: < 350KB
+# Bundle size limits (see Performance_Budgets.md for authoritative thresholds)
+# - Main bundle: < Performance_Budgets.md limit
+# - Vendor bundle: < Performance_Budgets.md limit
+# - Total JS: < Performance_Budgets.md limit
 ```
 
 ## Phase Structure
 
-This phase follows the TDD approach with five focused sub-phases:
+This phase follows the TDD approach with five focused sub-phases. See [PHASE_5_STRUCTURE.md](./PHASE_5_STRUCTURE.md) for complete directory structure and testing patterns.
 
 ### 5.1 Test Deployment Pipeline (RED Phase)
 - **Focus**: Comprehensive testing for CI/CD and build processes
+- **Test Location**: `tests/e2e/deployment/critical-path/`
 - **Deliverables**: Deployment test suite, build validation, integration tests
 - **Duration**: 2-3 days
 
 ### 5.2 Security Hardening
 - **Focus**: Production security implementation and vulnerability testing
+- **Test Location**: `tests/e2e/deployment/security/`
 - **Deliverables**: Security audit, threat protection, compliance verification
 - **Duration**: 3-4 days
 
 ### 5.3 Performance Optimization (REFACTOR Phase)
 - **Focus**: CDN optimization, edge functions, and caching strategies
+- **Test Location**: `tests/e2e/deployment/performance/`
 - **Deliverables**: Performance budget compliance, load time optimization
 - **Duration**: 3-4 days
 
 ### 5.4 Monitoring Setup
 - **Focus**: Observability, error tracking, and real-time analytics
+- **Test Location**: `tests/e2e/deployment/monitoring/`
 - **Deliverables**: Monitoring dashboards, alerting system, SLA tracking
 - **Duration**: 2-3 days
 
 ### 5.5 Go-Live Checklist
 - **Focus**: Final verification and production release
+- **Test Location**: `tests/e2e/deployment/integration/`
 - **Deliverables**: Production deployment, health checks, documentation
 - **Duration**: 2-3 days
 

@@ -51,8 +51,8 @@ npm install --save-dev start-server-and-test
 
 ```json
 {
-  "verify:accessibility": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=./lighthouse-accessibility.json'",
-  "verify:performance": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=./lighthouse-performance.json'"
+  "verify:accessibility": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=./reports/lighthouse-accessibility.json'",
+  "verify:performance": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=./reports/lighthouse-performance.json'"
 }
 ```
 
@@ -163,7 +163,7 @@ SERVER_PID=$!
 sleep 3
 
 # Run Lighthouse accessibility audit
-npx lighthouse http://localhost:4173 \
+lighthouse http://localhost:4173 \
   --only-categories=accessibility \
   --output=html \
   --output-path=./accessibility-report.html
@@ -283,13 +283,13 @@ sleep 3
 
 # Run Lighthouse with different profiles
 echo "Testing Desktop Performance..."
-npx lighthouse http://localhost:4173 \
+lighthouse http://localhost:4173 \
   --preset=desktop \
   --output=json \
   --output-path=./perf-desktop.json
 
 echo "Testing Mobile 3G Performance..."
-npx lighthouse http://localhost:4173 \
+lighthouse http://localhost:4173 \
   --throttling-method=devtools \
   --throttling.cpuSlowdownMultiplier=4 \
   --throttling.requestLatencyMs=560 \
@@ -553,13 +553,13 @@ issues:
     "verify:types": "tsc --noEmit",
     "verify:lint": "eslint . --max-warnings 0",
     "verify:security": "npm audit --audit-level=high",
-    "verify:accessibility": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=./lighthouse-accessibility.json'",
-    "verify:performance": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=./lighthouse-performance.json'",
+    "verify:accessibility": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=./reports/lighthouse-accessibility.json'",
+    "verify:performance": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=./reports/lighthouse-performance.json'",
     "verify:bundle": "npm run perf:budget",
     "test:lighthouse:full": "npm run build && start-server-and-test preview http://localhost:4173 'npm run lighthouse:all-checks'",
     "lighthouse:all-checks": "npm run lighthouse:performance && npm run lighthouse:accessibility",
-    "lighthouse:accessibility": "npx lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=lighthouse-accessibility.json",
-    "lighthouse:performance": "npx lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=lighthouse-performance.json",
+    "lighthouse:accessibility": "lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=reports/lighthouse-accessibility.json",
+    "lighthouse:performance": "lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=reports/lighthouse-performance.json",
     "test:accessibility:local": "./scripts/test-accessibility-local.sh",
     "test:performance:local": "./scripts/test-performance-local.sh",
     "test:ci:simulation": "npm run test:performance:local && npm run test:accessibility:local"
@@ -596,11 +596,11 @@ npm install --save-dev start-server-and-test
 
 # 2. Test accessibility verification
 npm run verify:accessibility
-# Expected: lighthouse-accessibility.json generated
+# Expected: reports/lighthouse-accessibility.json generated
 
 # 3. Test performance verification
 npm run verify:performance
-# Expected: lighthouse-performance.json generated
+# Expected: reports/lighthouse-performance.json generated
 
 # 4. Test bundle size verification
 npm run verify:bundle
@@ -650,7 +650,7 @@ npm install --save-dev lighthouse
 npm install -g lighthouse
 
 # Verify installation
-npx lighthouse --version
+lighthouse --version
 ```
 
 **Issue**: Scripts hang indefinitely
@@ -692,14 +692,15 @@ npm run verify:performance -- --chrome-flags="--headless --no-sandbox --disable-
 
 ```bash
 # Check write permissions
-touch lighthouse-accessibility.json
-touch lighthouse-performance.json
+mkdir -p reports
+touch reports/lighthouse-accessibility.json
+touch reports/lighthouse-performance.json
 
 # Verify output path
-ls -la lighthouse-*.json
+ls -la reports/lighthouse-*.json
 
 # Run with explicit path
-npm run verify:accessibility -- --output-path="$(pwd)/lighthouse-accessibility.json"
+npm run verify:accessibility -- --output-path="$(pwd)/reports/lighthouse-accessibility.json"
 ```
 
 ### Integration with TDD Workflow

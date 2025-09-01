@@ -70,6 +70,27 @@ Phase 2 focuses on implementing a comprehensive dashboard system using Test-Driv
 - **Revenue Graph**: Daily revenue comparison
 - **Booking Sources**: Pie chart of booking channels
 
+## Pre-Implementation Setup
+
+Before starting Phase 2 implementation, run the scaffold script to create the necessary directory structure:
+
+> 📚 **See Also**: [Scaffold Scripts Reference](../../SCAFFOLD_SCRIPTS_REFERENCE.md) | [Composite Scripts Guide](../../COMPOSITE_SCRIPTS_GUIDE.md)
+
+```bash
+# Run the scaffold script for Phase 2
+npm run scaffold:phase2
+
+# This will:
+# 1. Display the path to this documentation
+# 2. Create all necessary directories:
+#    - src/features/dashboard/components/
+#    - src/features/dashboard/hooks/
+#    - src/features/dashboard/stores/
+#    - src/features/dashboard/types/
+#    - src/features/dashboard/__tests__/
+# 3. Add .gitkeep files to preserve empty directories
+```
+
 ## NPM Scripts
 
 ### Phase 2 Specific Commands
@@ -77,8 +98,9 @@ Phase 2 focuses on implementing a comprehensive dashboard system using Test-Driv
 ```json
 {
   "scripts": {
-    // Scaffolding - Get dashboard test specifications
-    "scaffold:phase2": "echo 'See docs/implementation/phases/phase-2-dashboard-tdd/README.md'",
+    // Scaffolding - Create directory structure and show documentation
+    "scaffold:phase2": "echo 'Phase 2: Dashboard - See docs/implementation/phases/phase-2-dashboard-tdd/README.md' && npm run scaffold:phase2:dirs",
+    "scaffold:phase2:dirs": "mkdir -p src/features/dashboard/{components,hooks,stores,types,__tests__} && touch src/features/dashboard/__tests__/.gitkeep",
     
     // Testing - Run Phase 2 dashboard tests
     "test:phase2": "vitest run src/features/dashboard/**/__tests__/*.test.{ts,tsx}",

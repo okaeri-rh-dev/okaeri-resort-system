@@ -131,25 +131,23 @@ afterAll(() => {
   vi.useRealTimers();
 });
 
-// Simple hash function to convert seed string to number
+// Convert seed string to numeric value (matches src/test/setup.ts)
 function hashCode(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32bit integer
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
   }
-  return Math.abs(hash);
+  return hash;
 }
 
 // Simple Linear Congruential Generator (LCG) for deterministic randomness
+// Uses same implementation as src/test/setup.ts for consistency
 function createSeededRandom(seed: number): () => number {
-  let state = seed;
+  let state = seed || 123456789;
   return () => {
-    // LCG formula: (a * state + c) % m
-    // Using values from Numerical Recipes
-    state = (state * 1664525 + 1013904223) % Math.pow(2, 32);
-    return state / Math.pow(2, 32);
+    // Numerical Recipes LCG parameters (matches setup.ts)
+    state = (1664525 * state + 1013904223) >>> 0;
+    return (state & 0xffffffff) / 0x100000000;
   };
 }
 

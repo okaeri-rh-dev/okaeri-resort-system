@@ -65,15 +65,15 @@ npm run db:studio              # Open Drizzle Studio GUI
 
 ### Multi-Tenant Database Architecture
 
-- **Schema-based isolation**: Each project gets its own PostgreSQL schema
-- **Row-level security**: Additional data protection layer
-- **Connection pattern**: Always use `getProjectDb(projectId)` for
-  tenant-specific queries
-- **Migration strategy**: Migrations apply to all project schemas automatically
+- **Application-level isolation**: All data filtered by project_id column
+- **Simple query pattern**: All queries include WHERE project_id = ? clauses
+- **Connection pattern**: Single shared database connection pool
+- **Migration strategy**: Simple migrations apply to single database schema
 
 ### Authentication & Security
 
-- **JWT Storage**: ONLY via HTTP-only cookies (never localStorage)
+- **JWT Storage**: ONLY via Authorization headers (Bearer tokens)
+- **NO COOKIES**: JWT authentication does not use cookies - all auth via headers
 - **Token Lifecycle**: 15-minute access tokens, 7-day refresh tokens with
   rotation
 - **Session Management**: 60-minute timeout with activity tracking
@@ -167,7 +167,7 @@ const form = useForm<z.infer<typeof schema>>({
 
 ### Bundle Size Management
 
-- Keep initial bundle under 200KB
+- Keep initial bundle under limits defined in Performance_Budgets.md
 - Lazy load routes and heavy components
 - Use dynamic imports for modals and forms
 - Monitor with `npm run analyze`

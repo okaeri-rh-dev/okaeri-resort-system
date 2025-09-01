@@ -47,6 +47,10 @@ Based on CI configuration, all tests must meet these thresholds:
 
 ### Bundle Size Limits (Gzipped)
 
+**Note**: All bundle size limits are defined in
+[Performance_Budgets.md](../implementation/Performance_Budgets.md) - the
+authoritative source.
+
 - Main Application Bundle: 120KB
 - Main CSS Bundle: 40KB
 - React Vendor Bundle: 42KB
@@ -178,9 +182,9 @@ npm run verify:performance  # Full performance verification
 npm run perf:budget
 
 # Expected output should show all bundles within limits:
-# ✓ Main Application Bundle: 98KB < 120KB
-# ✓ Main CSS Bundle: 35KB < 40KB
-# ✓ React Vendor Bundle: 38KB < 42KB
+# ✓ Main Application Bundle: 98KB < Performance_Budgets.md limit
+# ✓ Main CSS Bundle: 35KB < Performance_Budgets.md limit
+# ✓ React Vendor Bundle: 38KB < Performance_Budgets.md limit
 # ... etc
 ```
 
@@ -570,9 +574,9 @@ perfbudget --budget=bundlesize.config.json --url=http://localhost:4173
 ✓ Time to Interactive: 2.9s
 
 Bundle Sizes:
-✓ Main Bundle: 115KB < 120KB
-✓ CSS Bundle: 38KB < 40KB
-✓ Vendor Bundle: 40KB < 42KB
+✓ Main Bundle: 115KB < Performance_Budgets.md limit
+✓ CSS Bundle: 38KB < Performance_Budgets.md limit
+✓ Vendor Bundle: 40KB < Performance_Budgets.md limit
 ```
 
 ### Failed Performance Test
@@ -584,8 +588,8 @@ Bundle Sizes:
 ✗ Total Blocking Time: 350ms (> 300ms limit)
 
 Bundle Sizes:
-✗ Main Bundle: 125KB > 120KB limit
-✓ CSS Bundle: 35KB < 40KB
+✗ Main Bundle: 125KB > Performance_Budgets.md limit
+✓ CSS Bundle: 35KB < Performance_Budgets.md limit
 ```
 
 This comprehensive guide ensures you can reproduce all performance tests locally

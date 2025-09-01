@@ -7,6 +7,7 @@ import { beforeAll, afterEach, afterAll, vi } from "vitest";
 import "@testing-library/jest-dom";
 import { config } from "dotenv";
 import { enableMapSet } from "immer";
+import { toHaveNoViolations } from "jest-axe";
 
 // Enable Immer MapSet plugin for zustand stores
 enableMapSet();
@@ -131,6 +132,7 @@ declare global {
 
 // Add custom matchers if needed
 expect.extend({
+  toHaveNoViolations,
   toBeWithinRange(received: number, min: number, max: number) {
     const pass = received >= min && received <= max;
     if (pass) {

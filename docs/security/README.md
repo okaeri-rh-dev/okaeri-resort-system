@@ -23,10 +23,10 @@ Authorization: Bearer <jwt-token>
 ```
 
 ### Token Security
-- **Access Token**: 1 hour expiry
-- **Refresh Token**: 7 days expiry with rotation
-- **Storage**: See Token Storage Best Practices section below
-- **Transmission**: HTTPS only (enforced by HSTS headers)
+- **Access Token**: 15 minutes expiry (short-lived for security)
+- **Refresh Token**: 7 days expiry with rotation (server-side only)
+- **Storage**: Memory-only via SecureTokenManager (XSS-resistant)
+- **Transmission**: HTTPS only with Authorization Bearer headers
 
 ## Data Isolation: Application-Level Filtering
 
@@ -137,62 +137,103 @@ CSRF (Cross-Site Request Forgery) exploits the browser's automatic inclusion of 
 
 ## Token Storage Best Practices
 
-### Current Implementation: localStorage
-The resort management system currently uses localStorage for JWT token storage. This approach is acceptable for an internal family business application with proper mitigations:
+### Current Implementation: Memory-Only Storage (MOST SECURE)
+The resort management system uses **memory-only storage** for JWT tokens via the `SecureTokenManager` class. This is the most secure approach for client-side token storage:
 
-#### Pros:
-- Simple implementation
-- Tokens persist across browser tabs
-- Works with the current architecture
-
-#### Cons:
-- Vulnerable to XSS attacks if mitigations fail
-- Tokens accessible to any JavaScript code
-
-#### Required Mitigations:
-1. **Strict Content Security Policy**
-   - No `unsafe-inline` or `unsafe-eval` for scripts
-   - Whitelist only trusted domains
-   - Use nonces or hashes for any inline scripts
-
-2. **Input Sanitization**
-   - All user inputs validated with Zod schemas
-   - React's automatic escaping for rendered content
-   - DOMPurify for any HTML content if needed
-
-3. **Third-Party Script Control**
-   - No third-party scripts without security review
-   - Subresource Integrity (SRI) for external resources
-   - Regular dependency vulnerability scanning
-
-4. **Regular Security Audits**
-   - Quarterly security assessments
-   - Automated vulnerability scanning in CI/CD
-   - Penetration testing for production releases
-
-### Alternative: In-Memory Storage (More Secure)
-For enhanced security, consider storing tokens only in JavaScript memory:
-
+#### Implementation:
 ```typescript
-// Token stored in memory only
-class TokenManager {
-  private accessToken: string | null = null;
-  private refreshToken: string | null = null;
+// Tokens stored in private class variables only
+class SecureTokenManager {
+  private accessToken: string | null = null;  // Memory only
+  private tokenFingerprint: string | null = null;
   
-  // Tokens lost on page refresh - requires refresh token in httpOnly cookie
-  // or silent re-authentication flow
+  // Tokens are NEVER stored in localStorage, sessionStorage, or cookies
+  // This prevents XSS attacks from accessing tokens
 }
 ```
 
-#### Pros:
-- Immune to XSS localStorage attacks
-- Tokens cleared on page navigation/refresh
-- Better for high-security requirements
+#### Security Benefits:
+1. **XSS Resistant**: Tokens in memory cannot be accessed by injected scripts
+2. **No Persistence Vulnerability**: localStorage/sessionStorage can be read by any script
+3. **Automatic Cleanup**: Tokens cleared when tab/browser closes
+4. **Reduced Attack Surface**: No browser storage API exposure
+5. **OWASP Compliant**: Aligns with latest security best practices
 
-#### Cons:
-- Complex implementation with refresh flows
-- Poor user experience (frequent re-authentication)
-- Requires additional infrastructure
+#### Additional Security Features:
+1. **Browser Fingerprinting**: Detects token theft attempts
+2. **Automatic Token Refresh**: Built-in lifecycle management
+3. **Token Validation**: Format and XSS injection checks
+4. **Suspicious Activity Detection**: Monitors for debugger usage
+
+### Token Storage Environment Matrix
+
+| Environment | Storage Method | Persistence | Web Storage | Security Level | Configuration |
+|------------|---------------|-------------|-------------|----------------|---------------|
+| **Production** | Memory-only | No | ❌ Forbidden | Maximum | Default, enforced |
+| **Test/CI** | Memory-only | No | ❌ Forbidden | Maximum | Default, enforced |
+| **Development** | Memory-only | No* | ⚠️ Conditional | High | Default |
+| **Dev + Mock Auth** | Memory + SessionStorage | Yes (tab only) | ✅ Allowed | Medium | `VITE_MOCK_AUTH=true` |
+
+#### Environment-Specific Behavior:
+
+##### Production Environment
+- **Storage**: Memory-only via private class variables
+- **Persistence**: None - tokens cleared on page refresh
+- **Web Storage**: Strictly forbidden - security audits fail if detected
+- **Configuration**: Automatic, no configuration needed
+
+##### Test/CI Environment
+- **Storage**: Memory-only, all mocks use in-memory storage
+- **Persistence**: None - fresh state for each test
+- **Web Storage**: Forbidden - tests fail if localStorage/sessionStorage used
+- **Configuration**: Enforced via test setup
+
+##### Development Environment (Default)
+- **Storage**: Memory-only by default
+- **Persistence**: None unless mock auth enabled
+- **Web Storage**: Not used unless `VITE_MOCK_AUTH=true`
+- **Configuration**: Default secure behavior
+
+##### Development with Mock Authentication
+- **Storage**: Memory + optional sessionStorage for convenience
+- **Persistence**: Tab-level only (sessionStorage)
+- **Web Storage**: Allowed ONLY when `VITE_MOCK_AUTH=true` in `.env.development`
+- **Configuration**: Explicitly opt-in via environment variable
+- **Purpose**: Developer convenience for testing auth flows without constant re-login
+- **Security Note**: This is ONLY for mock tokens, never real authentication
+
+#### Enabling Development Token Persistence
+
+To enable token persistence in development (for mock auth only):
+
+```bash
+# .env.development
+VITE_MOCK_AUTH="true"  # Enables mock authentication mode
+# This automatically enables sessionStorage for mock tokens
+```
+
+**Important Security Notes:**
+1. Production ALWAYS uses memory-only storage regardless of configuration
+2. sessionStorage is ONLY used for mock tokens in development
+3. Real authentication tokens are NEVER persisted to Web Storage
+4. Security audits check for production compliance only
+5. The `VITE_MOCK_AUTH` flag is ignored in production builds
+
+### Why NOT localStorage (Security Risk)
+LocalStorage was the previous standard but has significant vulnerabilities:
+
+#### Vulnerabilities:
+- **XSS Exposure**: Any injected script can read localStorage
+- **Persistence Risk**: Tokens remain even after closing tab
+- **No Access Control**: Any JavaScript on the page can access
+- **Cross-Tab Leakage**: Shared across all tabs of same origin
+
+#### When localStorage Might Be Acceptable:
+- Internal tools with strict CSP
+- Non-sensitive applications
+- Legacy systems with proper mitigations
+
+However, memory-only storage is always preferred for security-critical applications
 
 ### Alternative: HttpOnly Cookies (Most Secure)
 For maximum security, store tokens in httpOnly cookies:
@@ -250,11 +291,17 @@ Given the internal nature of the application and family business context:
 
 ## References
 
+### Core Security Documentation
 - **JWT Authentication Policy**: `/docs/security/JWT_AUTHORIZATION_HEADER_ONLY_POLICY.md`
+- **JWT Testing Patterns**: `/docs/security/JWT_TESTING_PATTERNS.md` - Comprehensive testing and implementation guide
 - **Security Test Requirements**: `/docs/security/SECURITY_TEST_REQUIREMENTS.md`
+- **Security Verification Scripts**: `/docs/implementation/SECURITY_VERIFICATION_SCRIPTS.md` - Automated security audits
+- **Security Checklist**: `/docs/security/SECURITY_CHECKLIST.md`
+- **Modern Security Headers**: `/docs/security/MODERN_SECURITY_HEADERS_GUIDE.md`
+
+### Implementation References
 - **Implementation Guide**: `/docs/implementation/SIMPLE_DATABASE_GUIDE.md`
 - **Technical Decisions**: `/docs/TECHNICAL_DECISIONS.md`
-- **Security Checklist**: `/docs/security/SECURITY_CHECKLIST.md`
 - **Environment Config**: `/src/config/environment.ts`
 
 ---

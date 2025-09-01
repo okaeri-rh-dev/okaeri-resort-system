@@ -119,10 +119,12 @@ killall node
 
 ## Bundle Size Targets
 
+**Note**: All bundle size targets are defined in [Performance_Budgets.md](../implementation/Performance_Budgets.md) - the authoritative source.
+
 | Bundle | Target (Gzipped) | Purpose |
 |--------|------------------|---------|
-| **Main Application** | 120KB | Core app functionality |
-| **React Vendor** | 42KB | React & React DOM |
+| **Main Application** | See Performance_Budgets.md | Core app functionality |
+| **React Vendor** | See Performance_Budgets.md | React & React DOM |
 | **UI Components (Critical)** | 38KB | Essential UI components |
 | **UI Components (Extended)** | 65KB | Additional UI components |
 | **Dashboard Route** | 35KB | Dashboard page code |

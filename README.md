@@ -29,7 +29,7 @@ The Okaeri Resort Management System is a Progressive Web Application (PWA) that 
 
 ### Backend (Planned)
 - **API**: Vercel Serverless Functions
-- **Database**: Neon PostgreSQL with schema-based multi-tenancy
+- **Database**: Neon PostgreSQL with application-level multi-tenancy
 - **Storage**: Cloudflare R2 for cost-effective file storage
 - **Authentication**: JWT-based with refresh token rotation
 
@@ -108,6 +108,26 @@ npm run format
 npm run format:check
 ```
 
+### Verification Suite and Pre-push
+
+- Run the complete verification suite before pushing:
+
+```bash
+npm run verify:push
+```
+
+- See detailed guides:
+  - docs/implementation/VERIFICATION_SCRIPT_SUITE.md
+  - docs/implementation/TEST_INFRASTRUCTURE_REQUIREMENTS.md
+  - docs/implementation/SECURITY_VERIFICATION_SCRIPTS.md
+
+- Deterministic env is configured in CI; locally you can export:
+
+```bash
+export FIXED_TIME="2024-01-01T00:00:00Z"
+export TZ="Asia/Manila"
+```
+
 ## Project Structure
 
 ```
@@ -142,9 +162,9 @@ okaeri-resort-system/
 ## Architecture Overview
 
 ### Multi-Tenant Architecture
-The system implements schema-based multi-tenancy with complete data isolation between projects:
+The system implements application-level multi-tenancy with complete data isolation between projects:
 - Each resort/property operates as a separate project
-- Row-level security ensures data privacy
+- All queries filter by project_id for data isolation
 - Project switching maintains security boundaries
 - Maximum 5 projects per account for optimal performance
 
@@ -304,9 +324,9 @@ describe('BookingCalculation', () => {
       taxRate: 0.12,      // Philippines VAT
       serviceRate: 0.10    // Service charge
     };
-    
+
     const result = calculateBookingTotal(booking);
-    
+
     expect(result.subtotal).toBe(15000);  // 5000 * 3
     expect(result.tax).toBe(1800);        // 15000 * 0.12
     expect(result.service).toBe(1500);    // 15000 * 0.10
@@ -338,7 +358,7 @@ The guide covers:
 - **Business case** for TDD in resort/hospitality systems
 - **TypeScript-first TDD** approach with type safety
 - **React component testing** patterns with accessibility
-- **Zustand store testing** with multi-tenant considerations  
+- **Zustand store testing** with multi-tenant considerations
 - **TanStack Query integration** testing
 - **Booking and payment processing** examples
 - **Philippine market-specific** features and validations
@@ -360,7 +380,7 @@ The guide covers:
 
 **TDD Benefits for Resort Management:**
 - **Financial accuracy** - Prevents booking calculation errors
-- **Seasonal reliability** - Handles peak season edge cases  
+- **Seasonal reliability** - Handles peak season edge cases
 - **Multi-tenant safety** - Ensures data isolation between projects
 - **Regulatory compliance** - Validates Philippine tax calculations
 - **Customer confidence** - Reduces booking errors and disputes
@@ -387,6 +407,6 @@ For support and questions:
 
 ---
 
-**Version**: 1.0.0  
-**Last Updated**: December 2024  
+**Version**: 1.0.0
+**Last Updated**: December 2024
 **Maintained By**: Okaeri Development Team

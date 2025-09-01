@@ -72,8 +72,9 @@ export default defineConfig({
         "**/*.config.{js,ts}",
         "**/mock*/**",
       ],
-      // Coverage thresholds
+      // Coverage thresholds - Global requirements only (path-based checking via custom script)
       thresholds: {
+        // Global default threshold (90% for all code)
         global: {
           branches: 90,
           functions: 90,
