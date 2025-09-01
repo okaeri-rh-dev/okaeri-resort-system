@@ -120,6 +120,7 @@
     "verify:all": "npm run verify:tests && npm run verify:coverage:paths && npm run verify:types && npm run verify:lint && npm run verify:security",
     "verify:bundle": "npm run perf:budget",
     "verify:coverage:paths": "node scripts/check-coverage.js",
+    "verify:environment": "node scripts/verify-environment.js",
     "verify:jwt": "vitest run src/__tests__/security/jwt.security.test.ts --reporter=verbose && npm run security:jwt:full",
     "verify:lint": "eslint . --max-warnings 0",
     "verify:performance": "npm run build && mkdir -p reports && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=./reports/lighthouse-performance.json'",

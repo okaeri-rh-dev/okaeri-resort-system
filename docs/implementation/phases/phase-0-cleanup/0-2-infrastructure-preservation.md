@@ -1,5 +1,11 @@
 # Sub-Phase 0.2: Infrastructure Preservation
 
+> **Implementation Note**: This document describes the original plan. The actual
+> implementation used a Git branch strategy
+> (`backup/pre-phase0-cleanup-2025-09-01`) instead of directory duplication to
+> avoid repository bloat. See PRESERVATION_REFERENCE.md for the actual
+> implementation details.
+
 ## Overview
 
 This sub-phase implements the systematic preservation of valuable infrastructure

@@ -13,7 +13,9 @@
 
 const fs = require('fs');
 const path = require('path');
-const { glob } = require('glob');
+const glob = require('glob');
+const { promisify } = require('util');
+const globAsync = promisify(glob);
 
 // Color codes for terminal output
 const colors = {
@@ -51,7 +53,7 @@ async function searchInFiles(patterns, searchRegex, excludeTests = true) {
   }
   
   try {
-    const files = await glob(patterns, { ignore: ignorePatterns });
+    const files = await globAsync(patterns, { ignore: ignorePatterns });
     
     for (const file of files) {
       const content = fs.readFileSync(file, 'utf8');
@@ -227,7 +229,7 @@ async function runAudit() {
   console.log('3. Analyzing API calls for proper authentication...');
   
   try {
-    const files = await glob(sourcePatterns, { 
+    const files = await globAsync(sourcePatterns, { 
       ignore: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.git/**']
     });
     

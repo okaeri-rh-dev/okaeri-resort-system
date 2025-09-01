@@ -13,7 +13,9 @@
 
 const fs = require('fs');
 const path = require('path');
-const { glob } = require('glob');
+const glob = require('glob');
+const { promisify } = require('util');
+const globAsync = promisify(glob);
 
 // Color codes for terminal output
 const colors = {
@@ -42,7 +44,7 @@ async function searchInFiles(patterns, searchRegex, filterRegex = null) {
   const results = [];
   
   try {
-    const files = await glob(patterns, { 
+    const files = await globAsync(patterns, { 
       ignore: [
         '**/node_modules/**', 
         '**/dist/**', 
