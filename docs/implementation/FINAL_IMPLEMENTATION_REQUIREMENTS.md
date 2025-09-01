@@ -22,39 +22,36 @@ npm i -D lighthouse bundlesize jest-axe axe-core @types/jest-axe
 npm list lighthouse bundlesize jest-axe axe-core @types/jest-axe
 ```
 
-### 2. Update Vitest Configuration for Coverage Thresholds
+### 2. Coverage Threshold Configuration (Already Correctly Implemented)
 
-**File**: `vitest.config.ts`
+**Current Implementation Status**: ✅ **CORRECT** - No changes needed
 
-Add phase-specific coverage thresholds:
+The coverage threshold configuration is already correctly implemented following
+the TDD Single Source of Truth pattern:
 
-```typescript
-// vitest.config.ts - UPDATE coverage section
-coverage: {
-  provider: "v8",
-  reporter: ["text", "json-summary", "lcov", "html"],
-  reportsDirectory: "./coverage",
+- **Global thresholds (90%)**: Enforced via `vitest.config.ts`
+- **Path-specific thresholds (95% for auth, financial, etc.)**: Enforced via
+  `scripts/check-coverage.js`
+- **Verification**: Runs automatically via `npm run verify:coverage:paths`
 
-  // ADD THIS: Phase-specific thresholds
-  thresholds: {
-    // Global thresholds (existing)
-    global: {
-      branches: 90,
-      functions: 90,
-      lines: 90,
-      statements: 90,
-    },
-    // ADD: Phase 1 auth requires 95%
-    "src/features/auth/**": {
-      branches: 95,
-      functions: 95,
-      lines: 95,
-      statements: 95,
-    },
-  },
+**Why this separation is intentional**:
 
-  // ... rest of existing configuration
-}
+- Vitest's native path-specific thresholds have limitations and inconsistencies
+- Custom script provides better control and clearer error messages
+- Global thresholds ensure baseline quality across all code
+- Path-specific thresholds target critical business areas
+
+**Verification Commands**:
+
+```bash
+# Verify global thresholds (90% minimum for all code)
+npm run test:coverage
+
+# Verify path-specific thresholds (95% for auth, financial, etc.)
+npm run verify:coverage:paths
+
+# Both are included in the complete verification suite
+npm run verify:all
 ```
 
 ### 3. Add jest-axe Integration to Test Setup

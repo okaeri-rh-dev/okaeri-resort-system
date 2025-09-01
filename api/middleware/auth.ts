@@ -20,8 +20,8 @@ export async function authenticateRequest(
   next?: () => Promise<void>
 ): Promise<void> {
   try {
-    // Extract token from header or cookie
-    const token = extractToken(req.headers.authorization as string, req.cookies?.token);
+    // Extract token from Authorization header only (JWT-only auth)
+    const token = extractToken(req.headers.authorization as string);
 
     if (!token) {
       res.status(401).json({
@@ -141,7 +141,7 @@ export function optionalAuth(
 ) {
   return async (req: AuthenticatedRequest, res: VercelResponse) => {
     try {
-      const token = extractToken(req.headers.authorization as string, req.cookies?.token);
+      const token = extractToken(req.headers.authorization as string);
 
       if (token) {
         const payload = verifyAccessToken(token);

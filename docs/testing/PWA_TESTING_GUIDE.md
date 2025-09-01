@@ -986,7 +986,7 @@ lighthouse http://localhost:4173 \
   --only-categories=pwa \
   --chrome-flags="--enable-features=VirtualTime" \
   --output=json \
-  --output-path=./lighthouse-pwa-performance.json
+  --output-path=./reports/lighthouse-pwa-performance.json
 ```
 
 ### 2. Service Worker Performance Impact

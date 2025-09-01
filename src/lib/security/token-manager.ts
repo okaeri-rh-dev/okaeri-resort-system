@@ -29,13 +29,10 @@ export class TokenManager {
 
   private constructor() {
     // Singleton pattern
-    // In development mode with mock auth, restore tokens from sessionStorage
+    // In development mode with mock auth, tokens are still memory-only
+    // No sessionStorage usage for security compliance
     if (this.isDevelopmentMockAuth()) {
-      const storedRefreshToken = sessionStorage.getItem("mock_refresh_token");
-      if (storedRefreshToken) {
-        console.log("[TokenManager] Restoring mock refresh token from sessionStorage (dev mode)");
-        this.refreshTokenMemory = storedRefreshToken;
-      }
+      console.log("[TokenManager] Mock auth mode enabled - using memory-only storage");
     }
   }
 
@@ -115,9 +112,9 @@ export class TokenManager {
     this.refreshTokenMemory = refreshToken;
 
     // SECURITY: Only use sessionStorage in development mode with mock auth
+    // SECURITY: Refresh tokens are ALWAYS memory-only, even in development
     if (this.isDevelopmentMockAuth()) {
-      console.log("[TokenManager] Persisting mock refresh token to sessionStorage (dev mode only)");
-      sessionStorage.setItem("mock_refresh_token", refreshToken);
+      console.log("[TokenManager] Mock refresh token stored in memory only (no persistence)");
     } else if (import.meta.env.DEV) {
       console.warn(
         "[TokenManager] Refresh token stored in memory only. " +
@@ -145,13 +142,10 @@ export class TokenManager {
       return this.refreshTokenMemory;
     }
 
-    // SECURITY: Only check sessionStorage in development mode with mock auth
-    if (this.isDevelopmentMockAuth()) {
-      const storedToken = sessionStorage.getItem("mock_refresh_token");
-      if (storedToken) {
-        this.refreshTokenMemory = storedToken; // Cache in memory
-        return storedToken;
-      }
+    // SECURITY: Refresh tokens are always retrieved from memory only
+    // No sessionStorage check even in development for security compliance
+    if (this.isDevelopmentMockAuth() && !this.refreshTokenMemory) {
+      console.log("[TokenManager] No refresh token in memory (mock auth mode)");
     }
 
     // In production, refresh tokens should be handled server-side via httpOnly cookie
@@ -174,9 +168,9 @@ export class TokenManager {
     // Clear refresh token from memory
     this.refreshTokenMemory = null;
 
-    // SECURITY: Only clear sessionStorage in development mode with mock auth
+    // SECURITY: No sessionStorage to clear - tokens are memory-only
     if (this.isDevelopmentMockAuth()) {
-      sessionStorage.removeItem("mock_refresh_token");
+      console.log("[TokenManager] Mock tokens cleared from memory");
     }
 
     this.cancelTokenRefresh();

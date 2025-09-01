@@ -54,16 +54,11 @@ export class SecureTokenManager {
     // Singleton pattern
     this.initializeSecurityListeners();
 
-    // In development mode with mock auth, restore tokens from sessionStorage
+    // In development mode with mock auth, tokens are still memory-only
+    // No sessionStorage usage for security compliance
     if (this.isDevelopmentMockAuth()) {
-      const storedToken = sessionStorage.getItem("mock_access_token");
-      const storedRefreshToken = sessionStorage.getItem("mock_refresh_token");
-
-      if (storedToken) {
-        console.log("[SecureTokenManager] Restoring mock tokens from sessionStorage");
-        this.accessToken = storedToken;
-        // Note: We don't validate mock tokens as strictly
-      }
+      console.log("[SecureTokenManager] Mock auth mode enabled - using memory-only storage");
+      // Mock tokens will be set via storeTokens() method only
     }
   }
 
@@ -280,13 +275,10 @@ export class SecureTokenManager {
     this.accessToken = accessToken;
     this.tokenFingerprint = this.generateFingerprint();
 
-    // In development mode with mock auth, also persist to sessionStorage
+    // SECURITY: Tokens are ALWAYS memory-only, even in development
+    // No sessionStorage usage for security compliance
     if (this.isDevelopmentMockAuth()) {
-      console.log("[SecureTokenManager] Persisting mock tokens to sessionStorage for dev mode");
-      sessionStorage.setItem("mock_access_token", accessToken);
-      if (refreshToken) {
-        sessionStorage.setItem("mock_refresh_token", refreshToken);
-      }
+      console.log("[SecureTokenManager] Mock tokens stored in memory only (no persistence)");
     }
 
     // Track token rotation
@@ -344,12 +336,9 @@ export class SecureTokenManager {
   getRefreshToken(): string | null {
     // Development only - return stored or mock token for testing
     if (import.meta.env.DEV) {
-      // In mock auth mode, try to retrieve from sessionStorage first
-      if (this.isDevelopmentMockAuth()) {
-        const storedRefreshToken = sessionStorage.getItem("mock_refresh_token");
-        if (storedRefreshToken) {
-          return storedRefreshToken;
-        }
+      // In mock auth mode, refresh token is still memory-only
+      if (this.isDevelopmentMockAuth() && !this.refreshToken) {
+        console.log("[SecureTokenManager] No refresh token in memory (mock auth mode)");
       }
 
       console.warn(
@@ -377,10 +366,9 @@ export class SecureTokenManager {
       this.accessToken = null;
     }
 
-    // In development mode with mock auth, also clear sessionStorage
+    // SECURITY: No sessionStorage to clear - tokens are memory-only
     if (this.isDevelopmentMockAuth()) {
-      sessionStorage.removeItem("mock_access_token");
-      sessionStorage.removeItem("mock_refresh_token");
+      console.log("[SecureTokenManager] Mock tokens cleared from memory");
     }
 
     // Note: Refresh tokens are not stored client-side in production, so no clearing needed

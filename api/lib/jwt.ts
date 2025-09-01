@@ -233,11 +233,12 @@ export function rotateRefreshToken(userId: string): string {
 }
 
 /**
- * Extract token from authorization header or cookie
+ * Extract token from authorization header only (JWT-only auth)
  */
-export function extractToken(authHeader?: string, cookieToken?: string): string | null {
+export function extractToken(authHeader?: string): string | null {
   if (authHeader?.startsWith("Bearer ")) {
     return authHeader.substring(7);
   }
-  return cookieToken || null;
+  // JWT-only auth: Never check cookies for tokens
+  return null;
 }

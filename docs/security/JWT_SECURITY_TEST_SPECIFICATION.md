@@ -3,8 +3,8 @@
 ## Overview
 
 This document provides the complete test specification for
-`src/__tests__/security/jwt.security.test.ts`, enforcing the localStorage-only
-JWT storage strategy and Authorization header transmission policy.
+`src/__tests__/security/jwt.security.test.ts`, enforcing the memory-only JWT
+storage strategy and Authorization header transmission policy.
 
 **Owner**: security-compliance-auditor  
 **Status**: Authoritative Test Specification  
@@ -15,21 +15,21 @@ JWT storage strategy and Authorization header transmission policy.
 
 ### 1. Storage Security Tests
 
-#### 1.1 localStorage Exclusive Storage
+#### 1.1 Memory-Only Storage (No localStorage or Cookies)
 
 ```typescript
 describe("JWT Storage Security", () => {
-  describe("localStorage Exclusive Storage", () => {
-    it("should store tokens in localStorage only", () => {
+  describe("Memory-Only Storage", () => {
+    it("should store tokens in memory only (NOT in localStorage or cookies)", () => {
       const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature";
       const refreshToken =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh.signature";
 
       tokenManager.setTokens(accessToken, refreshToken);
 
-      // Verify localStorage storage
-      expect(localStorage.getItem("auth_token")).toBe(accessToken);
-      expect(localStorage.getItem("refresh_token")).toBe(refreshToken);
+      // Verify NO localStorage storage (memory-only for security)
+      expect(localStorage.getItem("auth_token")).toBeNull();
+      expect(localStorage.getItem("refresh_token")).toBeNull();
 
       // Verify NO cookie storage
       expect(document.cookie).toBe("");
@@ -65,12 +65,12 @@ describe("JWT Storage Security", () => {
 
       const token = tokenManager.getToken();
 
-      // Should only read from localStorage
-      expect(token).toBeNull(); // No token in localStorage
+      // Should only read from memory (not cookies or localStorage)
+      expect(token).toBeNull(); // No token in memory yet
       expect(tokenManager.getCookieToken()).toBeUndefined(); // Method should not exist
     });
 
-    it("should handle localStorage unavailability gracefully", () => {
+    it("should work without localStorage (memory-only storage)", () => {
       const originalLocalStorage = global.localStorage;
 
       // Simulate localStorage blocked
@@ -83,8 +83,9 @@ describe("JWT Storage Security", () => {
 
       const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature";
 
+      // Should work fine with memory-only storage
       expect(() => tokenManager.setToken(token)).not.toThrow();
-      expect(tokenManager.isStorageAvailable()).toBe(false);
+      expect(tokenManager.getToken()).toBe(token); // Token in memory
 
       // Restore localStorage
       Object.defineProperty(global, "localStorage", {
@@ -312,7 +313,9 @@ describe("Input Sanitization", () => {
 
     tokenManager.setToken(dirtyToken);
 
-    expect(localStorage.getItem("auth_token")).toBe(cleanToken);
+    // Token should be cleaned and stored in memory only
+    expect(tokenManager.getToken()).toBe(cleanToken);
+    expect(localStorage.getItem("auth_token")).toBeNull();
   });
 
   it("should escape token in error messages", () => {
@@ -368,17 +371,17 @@ describe("Token Lifecycle", () => {
       expect(tokenManager.getToken()).toBeNull(); // Auto-cleared
     });
 
-    it("should auto-clear expired tokens from localStorage", () => {
+    it("should auto-clear expired tokens from memory", () => {
       const expiredToken = createToken({
         exp: Math.floor(Date.now() / 1000) - 1,
       });
 
-      localStorage.setItem("auth_token", expiredToken);
+      tokenManager.setToken(expiredToken);
 
       const token = tokenManager.getToken();
 
-      expect(token).toBeNull();
-      expect(localStorage.getItem("auth_token")).toBeNull();
+      expect(token).toBeNull(); // Auto-cleared from memory
+      expect(localStorage.getItem("auth_token")).toBeNull(); // Never stored there
     });
 
     it("should refresh token before expiration", async () => {
@@ -403,7 +406,9 @@ describe("Token Lifecycle", () => {
         "Token refresh failed"
       );
 
-      // Should clear all tokens on refresh failure
+      // Should clear all tokens from memory on refresh failure
+      expect(tokenManager.getToken()).toBeNull();
+      // Verify NOT in localStorage (never stored there)
       expect(localStorage.getItem("auth_token")).toBeNull();
       expect(localStorage.getItem("refresh_token")).toBeNull();
     });
@@ -712,7 +717,7 @@ npm run test:security:jwt:coverage:html
 ### Critical Failures (Block Deployment)
 
 1. Any JWT found in cookies
-2. Use of sessionStorage for tokens
+2. Use of localStorage or sessionStorage for tokens
 3. Missing Authorization headers
 4. credentials: include detected
 5. XSS payload acceptance
@@ -720,7 +725,7 @@ npm run test:security:jwt:coverage:html
 
 ### Warning Scenarios (Log but Continue)
 
-1. localStorage unavailable (fallback to memory)
+1. Memory-only storage working correctly
 2. Token near expiration
 3. Refresh token rotation delay
 4. Audit log write failure

@@ -248,6 +248,73 @@ export type SecureTokenManager = typeof secureTokenManager;
 | `getRefreshToken`   | `() => string \| null`    | Retrieve refresh token | Not accessible client-side in production          |
 | `clearRefreshToken` | `() => void`              | Remove refresh token   | Clear from memory                                 |
 
+## CRITICAL: Memory-Only JWT Storage Policy
+
+### Security Architecture
+
+This system implements a **memory-only JWT storage policy** for maximum XSS
+protection:
+
+1. **Access Tokens (Client-Side)**:
+   - **Storage**: In-memory JavaScript variables ONLY
+   - **Transmission**: Via `Authorization: Bearer <token>` header
+   - **Prohibited Storage**: NEVER in localStorage, sessionStorage, or cookies
+   - **Lifetime**: 15 minutes (short-lived for security)
+   - **XSS Protection**: Tokens lost on page refresh (by design)
+
+2. **Refresh Tokens (Server-Side)**:
+   - **Storage**: Server-managed only (httpOnly cookies on backend)
+   - **Client Access**: Frontend NEVER directly handles refresh tokens
+   - **Transmission**: Automatic via httpOnly cookie (backend concern)
+   - **Lifetime**: 7 days with rotation on use
+   - **CSRF Protection**: SameSite=Strict cookie attribute
+
+3. **Frontend Security Rules**:
+   - **NEVER** use `localStorage.setItem()` for tokens
+   - **NEVER** use `sessionStorage.setItem()` for tokens
+   - **NEVER** use `document.cookie` to set JWT tokens
+   - **NEVER** read cookies for JWT/refresh tokens from frontend
+   - **ALWAYS** use the `secureTokenManager` for token operations
+   - **ALWAYS** send tokens via Authorization header only
+
+4. **Why Memory-Only Storage**:
+   - **XSS Immunity**: JavaScript attacks cannot access tokens after page unload
+   - **No Persistence Attack Surface**: No stored tokens to steal
+   - **Forced Re-authentication**: Natural session timeout on browser close
+   - **Compliance**: Exceeds OWASP recommendations for token storage
+
+### Implementation Pattern
+
+```typescript
+// CORRECT: Memory-only storage
+class SecureTokenManager {
+  private accessToken: string | null = null; // Memory only
+
+  setToken(token: string): void {
+    // Validate and sanitize
+    if (this.isValidToken(token)) {
+      this.accessToken = this.sanitizeToken(token);
+    }
+    // NO localStorage, NO sessionStorage, NO cookies
+  }
+
+  getToken(): string | null {
+    return this.accessToken; // From memory only
+  }
+
+  clearToken(): void {
+    this.accessToken = null; // Clear from memory
+    // NO need to clear localStorage/cookies
+  }
+}
+
+// INCORRECT: These patterns are PROHIBITED
+// ❌ localStorage.setItem('token', jwt)
+// ❌ sessionStorage.setItem('token', jwt)
+// ❌ document.cookie = `token=${jwt}`
+// ❌ Cookies.set('token', jwt)
+```
+
 ### Token Validation
 
 | Export           | Type                                                 | Purpose             | Test Expectation           |

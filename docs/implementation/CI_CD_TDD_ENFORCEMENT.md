@@ -66,6 +66,61 @@ env:
 | `TZ`                   | Timezone consistency           | `"Asia/Manila"`          | Timezone-dependent operations fail          |
 | `VITEST_DETERMINISTIC` | Enable deterministic mode      | `"true"`                 | Test runner uses non-deterministic features |
 
+## Cross-Platform Compatibility
+
+**Important**: All CI/CD examples have been designed for cross-platform
+compatibility. The commands used avoid bash-specific dependencies that may not
+be available in all CI environments:
+
+- **JSON Parsing**: Uses Node.js built-in `JSON.parse()` instead of `jq`
+- **Arithmetic Operations**: Uses Node.js arithmetic instead of `bc`
+- **String Manipulation**: Uses Node.js string methods instead of `sed`
+
+This ensures the pipeline works reliably on:
+
+- Ubuntu runners (default)
+- Windows runners
+- macOS runners
+- Minimal Docker containers
+
+The Node.js approach provides consistent behavior across all platforms while
+eliminating external dependencies.
+
+### Cross-Platform Examples
+
+**JSON Parsing**:
+
+```bash
+# ❌ Old (bash-specific, requires jq)
+coverage=$(cat coverage.json | jq -r '.total.lines.percent // 0')
+
+# ✅ New (cross-platform Node.js)
+coverage=$(node -e "const data=JSON.parse(require('fs').readFileSync('coverage.json')); console.log(data.total?.lines?.percent || 0)")
+```
+
+**Arithmetic Operations**:
+
+```bash
+# ❌ Old (bash-specific, requires bc)
+if (( $(echo "$coverage < 90" | bc -l) )); then
+  echo "Coverage too low"
+  exit 1
+fi
+
+# ✅ New (cross-platform Node.js)
+node -e "const coverage=${coverage}; if(coverage < 90) { console.error('Coverage too low'); process.exit(1); }"
+```
+
+**String Manipulation**:
+
+```bash
+# ❌ Old (bash-specific, uses sed)
+phase=$(echo $file | sed 's/coverage-\(.*\)\.json/\1/')
+
+# ✅ New (cross-platform Node.js)
+phase=$(node -e "console.log('$file'.replace(/coverage-(.+)\.json/, '\$1'))")
+```
+
 ## GitHub Actions Workflow Configuration
 
 ### Complete CI Workflow
@@ -304,25 +359,20 @@ jobs:
           echo "=== Test Results Validation ==="
 
           if [ "${{ matrix.test-suite }}" = "unit" ] && [ -f coverage-unit.json ]; then
-            # Extract coverage metrics
-            coverage_lines=$(cat coverage-unit.json | jq -r '.total.lines.percent // 0')
-            coverage_functions=$(cat coverage-unit.json | jq -r '.total.functions.percent // 0')
-            coverage_branches=$(cat coverage-unit.json | jq -r '.total.branches.percent // 0')
+            # Extract coverage metrics (cross-platform Node.js approach)
+            coverage_lines=$(node -e "const data=JSON.parse(require('fs').readFileSync('coverage-unit.json')); console.log(data.total?.lines?.percent || 0)")
+            coverage_functions=$(node -e "const data=JSON.parse(require('fs').readFileSync('coverage-unit.json')); console.log(data.total?.functions?.percent || 0)")
+            coverage_branches=$(node -e "const data=JSON.parse(require('fs').readFileSync('coverage-unit.json')); console.log(data.total?.branches?.percent || 0)")
             
             echo "Coverage Results:"
             echo "  Lines: ${coverage_lines}%"
             echo "  Functions: ${coverage_functions}%"
             echo "  Branches: ${coverage_branches}%"
             
-            # TDD Coverage Gates
-            if (( $(echo "$coverage_lines < 90" | bc -l) )); then
-              echo "❌ FAILED: Line coverage ${coverage_lines}% below 90% TDD requirement"
-              exit 1
-            fi
+            # TDD Coverage Gates (cross-platform Node.js approach)
+            node -e "const lines=${coverage_lines}; if(lines < 90) { console.error('❌ FAILED: Line coverage ' + lines + '% below 90% TDD requirement'); process.exit(1); }"
             
-            if (( $(echo "$coverage_functions < 75" | bc -l) )); then
-              echo "⚠️ WARNING: Function coverage ${coverage_functions}% below 75% target"
-            fi
+            node -e "const funcs=${coverage_functions}; if(funcs < 75) { console.log('⚠️ WARNING: Function coverage ' + funcs + '% below 75% target'); }"
             
             echo "✅ TDD coverage requirements met"
           fi
@@ -387,26 +437,23 @@ jobs:
         run: |
           echo "Running Lighthouse with automatic server management..."
 
-          # Use start-server-and-test to handle server lifecycle
-          npx start-server-and-test preview http://localhost:4173 'npx lighthouse http://localhost:4173 --preset=desktop --output=json --output-path=reports/lighthouse-performance.json --chrome-flags="--headless --no-sandbox"'
+          # Use the verify:performance script which handles server lifecycle
+          npm run verify:performance
 
           echo "✅ Lighthouse performance test completed with server lifecycle management"
 
       - name: Validate Lighthouse scores against TDD performance requirements
         run: |
           if [ -f reports/lighthouse-performance.json ]; then
-            performance_score=$(cat reports/lighthouse-performance.json | jq -r '.categories.performance.score * 100')
-            accessibility_score=$(cat reports/lighthouse-performance.json | jq -r '.categories.accessibility.score * 100')
+            performance_score=$(node -e "const data=JSON.parse(require('fs').readFileSync('reports/lighthouse-performance.json')); console.log(Math.round(data.categories.performance.score * 100))")
+            accessibility_score=$(node -e "const data=JSON.parse(require('fs').readFileSync('reports/lighthouse-performance.json')); console.log(Math.round(data.categories.accessibility.score * 100))")
             
             echo "Lighthouse Scores:"
             echo "  Performance: ${performance_score}"
             echo "  Accessibility: ${accessibility_score}"
             
-            # TDD Performance Gates
-            if (( $(echo "$performance_score < ${{ env.LIGHTHOUSE_SCORE_THRESHOLD }}" | bc -l) )); then
-              echo "❌ FAILED: Performance score ${performance_score} below ${{ env.LIGHTHOUSE_SCORE_THRESHOLD }} TDD requirement"
-              exit 1
-            fi
+            # TDD Performance Gates (cross-platform Node.js approach)
+            node -e "const score=${performance_score}; const threshold=${{ env.LIGHTHOUSE_SCORE_THRESHOLD }}; if(score < threshold) { console.error('❌ FAILED: Performance score ' + score + ' below ' + threshold + ' TDD requirement'); process.exit(1); }"
             
             echo "✅ TDD performance requirements met"
           else
@@ -573,25 +620,17 @@ phase-matrix-validation:
       if: matrix.critical == 'true'
       run: |
         if [ -f "coverage-${{ matrix.phase }}.json" ]; then
-          lines_actual=$(cat coverage-${{ matrix.phase }}.json | jq -r '.total.lines.percent // 0')
-          functions_actual=$(cat coverage-${{ matrix.phase }}.json | jq -r '.total.functions.percent // 0')
+          lines_actual=$(node -e "const data=JSON.parse(require('fs').readFileSync('coverage-${{ matrix.phase }}.json')); console.log(data.total?.lines?.percent || 0)")
+          functions_actual=$(node -e "const data=JSON.parse(require('fs').readFileSync('coverage-${{ matrix.phase }}.json')); console.log(data.total?.functions?.percent || 0)")
           
           echo "=== CRITICAL PHASE: ${{ matrix.name }} ==="
           echo "Lines: ${lines_actual}% (required: ${{ matrix.coverage_lines }}%)"
           echo "Functions: ${functions_actual}% (required: ${{ matrix.coverage_functions }}%)"
           
-          # Strict validation for critical phases
-          if (( $(echo "$lines_actual < ${{ matrix.coverage_lines }}" | bc -l) )); then
-            echo "❌ CRITICAL FAILURE: ${{ matrix.name }} lines coverage insufficient"
-            echo "🔒 Deployment BLOCKED - critical business logic not adequately tested"
-            exit 1
-          fi
+          # Strict validation for critical phases (cross-platform Node.js approach)
+          node -e "const lines=${lines_actual}; const req=${{ matrix.coverage_lines }}; if(lines < req) { console.error('❌ CRITICAL FAILURE: ${{ matrix.name }} lines coverage insufficient'); console.error('🔒 Deployment BLOCKED - critical business logic not adequately tested'); process.exit(1); }"
           
-          if (( $(echo "$functions_actual < ${{ matrix.coverage_functions }}" | bc -l) )); then
-            echo "❌ CRITICAL FAILURE: ${{ matrix.name }} functions coverage insufficient"
-            echo "🔒 Deployment BLOCKED - critical functions not adequately tested" 
-            exit 1
-          fi
+          node -e "const funcs=${functions_actual}; const req=${{ matrix.coverage_functions }}; if(funcs < req) { console.error('❌ CRITICAL FAILURE: ${{ matrix.name }} functions coverage insufficient'); console.error('🔒 Deployment BLOCKED - critical functions not adequately tested'); process.exit(1); }"
           
           echo "✅ Critical phase ${{ matrix.name }} meets all TDD requirements"
         else
@@ -638,16 +677,16 @@ coverage-aggregation:
         # Analyze each phase
         for phase_file in coverage-phase*.json; do
           if [ -f "$phase_file" ]; then
-            phase=$(echo $phase_file | sed 's/coverage-\(.*\)\.json/\1/')
-            lines=$(cat $phase_file | jq -r '.total.lines.percent // 0')
-            functions=$(cat $phase_file | jq -r '.total.functions.percent // 0')
+            phase=$(node -e "console.log('$phase_file'.replace(/coverage-(.+)\.json/, '\$1'))")
+            lines=$(node -e "const data=JSON.parse(require('fs').readFileSync('$phase_file')); console.log(data.total?.lines?.percent || 0)")
+            functions=$(node -e "const data=JSON.parse(require('fs').readFileSync('$phase_file')); console.log(data.total?.functions?.percent || 0)")
             
             # Determine business impact
             case $phase in
               "phase1") 
                 feature="Authentication"
                 impact="🔴 CRITICAL - Guest access, security"
-                if (( $(echo "$lines >= 95" | bc -l) )); then
+                if node -e "process.exit($lines >= 95 ? 0 : 1)" 2>/dev/null; then
                   critical_phases_passed=$((critical_phases_passed + 1))
                 fi
                 ;;
@@ -658,14 +697,14 @@ coverage-aggregation:
               "phase3") 
                 feature="Booking System" 
                 impact="🔴 CRITICAL - Revenue generation"
-                if (( $(echo "$lines >= 95" | bc -l) )); then
+                if node -e "process.exit($lines >= 95 ? 0 : 1)" 2>/dev/null; then
                   critical_phases_passed=$((critical_phases_passed + 1))
                 fi
                 ;;
               "phase4") 
                 feature="Financial Management"
                 impact="🔴 CRITICAL - Business operations"
-                if (( $(echo "$lines >= 95" | bc -l) )); then
+                if node -e "process.exit($lines >= 95 ? 0 : 1)" 2>/dev/null; then
                   critical_phases_passed=$((critical_phases_passed + 1))
                 fi
                 ;;
@@ -677,14 +716,14 @@ coverage-aggregation:
             
             echo "| $phase | $feature | ${lines}% | ${functions}% | $impact |" >> $GITHUB_STEP_SUMMARY
             
-            overall_coverage=$(echo "$overall_coverage + $lines" | bc -l)
+            overall_coverage=$(node -e "console.log($overall_coverage + $lines)")
             phase_count=$((phase_count + 1))
           fi
         done
 
         # Calculate overall metrics
         if [ $phase_count -gt 0 ]; then
-          avg_coverage=$(echo "scale=1; $overall_coverage / $phase_count" | bc -l)
+          avg_coverage=$(node -e "console.log(($overall_coverage / $phase_count).toFixed(1))")
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📈 Overall System Health" >> $GITHUB_STEP_SUMMARY
           echo "- **Average Coverage**: ${avg_coverage}%" >> $GITHUB_STEP_SUMMARY

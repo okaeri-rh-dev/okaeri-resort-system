@@ -119,7 +119,7 @@ lighthouse http://localhost:4173 \
 lighthouse http://localhost:4173 \
   --only-categories=accessibility,seo,best-practices \
   --output=json \
-  --output-path=./lighthouse-full-a11y.json
+  --output-path=./reports/lighthouse-full-a11y.json
 ```
 
 ### 3. Mobile Accessibility Testing
@@ -144,7 +144,7 @@ for route in "${ROUTES[@]}"; do
   lighthouse "http://localhost:4173$route" \
     --only-categories=accessibility \
     --output=json \
-    --output-path="./lighthouse-a11y$route.json" \
+    --output-path="./reports/lighthouse-a11y$route.json" \
     --quiet
 done
 ```
@@ -701,11 +701,11 @@ lighthouse http://localhost:4173 \
   --only-categories=accessibility \
   --chrome-flags="--no-sandbox --disable-dev-shm-usage" \
   --output=json \
-  --output-path=./lighthouse-ci-a11y.json
+  --output-path=./reports/lighthouse-ci-a11y.json
 
 # Check if score meets 95% threshold (CI currently uses 90%)
 node -e "
-const report = require('./lighthouse-ci-a11y.json');
+const report = require('./reports/lighthouse-ci-a11y.json');
 const score = report.lhr.categories.accessibility.score * 100;
 console.log('Accessibility Score:', score);
 console.log('Meets 95% threshold:', score >= 95 ? '✓' : '✗');

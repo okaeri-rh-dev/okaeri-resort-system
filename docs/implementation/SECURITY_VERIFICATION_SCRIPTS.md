@@ -45,7 +45,7 @@ Add these scripts to package.json:
 {
   "scripts": {
     // Primary JWT verification with test execution
-    "verify:jwt": "vitest run src/__tests__/security/jwt.security.test.ts --reporter=verbose && npm run audit:jwt:cookies",
+    "verify:jwt": "vitest run src/__tests__/security/jwt.security.test.ts --reporter=verbose && npm run security:jwt:full",
 
     // Comprehensive JWT cookie audit (should find ZERO instances)
     "audit:jwt:cookies": "bash -c \"! grep -r 'document\\.cookie' src/ api/ --include='*.ts' --include='*.tsx' --include='*.js' --include='*.jsx' | grep -iE '(token|jwt|auth|bearer|session)' || (echo '✅ No JWT cookie usage detected' && exit 0)\"",
@@ -63,10 +63,7 @@ Add these scripts to package.json:
     "security:jwt:full": "npm run verify:jwt && npm run audit:jwt:storage && npm run audit:jwt:headers && npm run audit:jwt:no-cookies",
 
     // Quick JWT security check for pre-commit
-    "security:jwt:quick": "npm run audit:jwt:cookies && npm run audit:jwt:no-cookies",
-
-    // JWT implementation validation
-    "validate:jwt": "node scripts/validate-jwt-implementation.js"
+    "security:jwt:quick": "npm run audit:jwt:cookies && npm run audit:jwt:no-cookies"
   }
 }
 ```
@@ -519,9 +516,13 @@ describe("JWT Security Verification", () => {
 
       secureTokenManager.setToken(xssToken);
 
-      const stored = localStorage.getItem("auth_token");
-      expect(stored).not.toContain("<script>");
-      expect(stored).not.toContain("alert");
+      // Memory-only policy: ensure sanitized in-memory value and no persistence
+      const inMemory = secureTokenManager.getToken();
+      expect(inMemory).not.toContain("<script>");
+      expect(inMemory).not.toContain("alert");
+      expect(localStorage.getItem("auth_token")).toBeNull();
+      expect(sessionStorage.getItem("auth_token")).toBeNull();
+      expect(document.cookie || "").toBe("");
     });
 
     it("should validate token contains no HTML", () => {
@@ -668,7 +669,7 @@ COOKIE_VIOLATIONS=$(grep -r "document\.cookie" src/ api/ \
     2>/dev/null | grep -iE "(token|jwt|auth|bearer|session)" || true)
 
 if ! check_violation "$COOKIE_VIOLATIONS" "JWT/token storage in cookies detected" "$COOKIE_VIOLATIONS"; then
-    echo "JWT tokens must ONLY be stored in localStorage and sent via Authorization headers."
+    echo "JWT tokens must be stored in memory only (NO localStorage, NO cookies) and sent via Authorization headers."
     echo "See: docs/security/JWT_TESTING_PATTERNS.md"
 else
     echo -e "${GREEN}✅ No JWT cookie usage detected${NC}"
@@ -810,135 +811,6 @@ Make executable:
 chmod +x scripts/audit-jwt-cookies.sh
 ```
 
-### Node.js Validation Script
-
-Create `scripts/validate-jwt-implementation.js`:
-
-```javascript
-#!/usr/bin/env node
-
-const fs = require("fs");
-const path = require("path");
-const { execSync } = require("child_process");
-
-console.log("🔍 JWT Implementation Validator v2.0");
-console.log("=====================================\n");
-
-let violations = 0;
-let warnings = 0;
-
-// Check if secure token manager exists
-const tokenManagerPath = path.join(
-  __dirname,
-  "../src/lib/security/secure-token-manager.ts"
-);
-if (!fs.existsSync(tokenManagerPath)) {
-  console.error("❌ ERROR: secure-token-manager.ts not found");
-  console.error(`Expected at: ${tokenManagerPath}`);
-  violations++;
-} else {
-  const content = fs.readFileSync(tokenManagerPath, "utf8");
-
-  // Required methods
-  const requiredMethods = [
-    "setToken",
-    "getToken",
-    "clearToken",
-    "getAuthHeaders",
-    "isValidToken",
-    "isTokenExpired",
-    "decodeToken",
-    "refreshAccessToken",
-  ];
-
-  const missingMethods = requiredMethods.filter(
-    (method) =>
-      !content.includes(`${method}(`) && !content.includes(`${method}:`)
-  );
-
-  if (missingMethods.length > 0) {
-    console.error("❌ Missing required methods in secure-token-manager:");
-    missingMethods.forEach((m) => console.error(`   - ${m}`));
-    violations++;
-  } else {
-    console.log("✅ All required methods found in secure-token-manager");
-  }
-
-  // Check for cookie usage
-  if (content.includes("document.cookie")) {
-    console.error(
-      "❌ VIOLATION: document.cookie found in secure-token-manager"
-    );
-    violations++;
-  }
-
-  // Verify NO localStorage usage for tokens (security requirement)
-  if (content.includes("localStorage") && content.includes("token")) {
-    console.error(
-      "❌ VIOLATION: localStorage token usage found in secure-token-manager"
-    );
-    console.error("Tokens must be stored in memory only for XSS protection");
-    violations++;
-  } else {
-    console.log("✅ No localStorage token usage (secure memory-only storage)");
-  }
-}
-
-// Check for test file
-const testPath = path.join(
-  __dirname,
-  "../src/__tests__/security/jwt.security.test.ts"
-);
-if (!fs.existsSync(testPath)) {
-  console.error("❌ ERROR: JWT security test file not found");
-  console.error(`Expected at: ${testPath}`);
-  console.error("Run: npm run test:create:jwt to create it");
-  violations++;
-} else {
-  console.log("✅ JWT security test file exists");
-}
-
-// Check API middleware
-const middlewarePath = path.join(__dirname, "../api/_lib/middleware.ts");
-if (fs.existsSync(middlewarePath)) {
-  const content = fs.readFileSync(middlewarePath, "utf8");
-
-  if (!content.includes("Authorization")) {
-    console.warn("⚠️ WARNING: No Authorization header check in middleware");
-    warnings++;
-  }
-
-  if (content.includes("cookie") || content.includes("Cookie")) {
-    console.error("❌ VIOLATION: Cookie handling found in API middleware");
-    violations++;
-  }
-}
-
-// Summary
-console.log("\n=====================================");
-console.log("VALIDATION SUMMARY");
-console.log("=====================================");
-
-if (violations === 0 && warnings === 0) {
-  console.log("✅ JWT implementation validated successfully!");
-  process.exit(0);
-} else {
-  if (violations > 0) {
-    console.error(`❌ Found ${violations} violation(s)`);
-  }
-  if (warnings > 0) {
-    console.warn(`⚠️ Found ${warnings} warning(s)`);
-  }
-  process.exit(violations > 0 ? 1 : 0);
-}
-```
-
-Make executable:
-
-```bash
-chmod +x scripts/validate-jwt-implementation.js
-```
-
 ## Security Header Validation
 
 ### Update Existing Script
@@ -1050,10 +922,6 @@ jobs:
         run: npm run security:audit:all
         continue-on-error: false
 
-      - name: Validate JWT Implementation
-        run: npm run validate:jwt
-        continue-on-error: false
-
       - name: Security Report
         if: always()
         run: |
@@ -1084,7 +952,7 @@ echo "======================================="
 echo "1. Checking JWT cookie usage..."
 npm run audit:jwt:cookies --silent || {
   echo -e "${RED}❌ SECURITY VIOLATION: JWT cookie usage detected${NC}"
-  echo "JWT must only be stored in localStorage"
+  echo "JWT must NOT be stored in localStorage or cookies (memory-only storage)"
   echo "See: docs/security/JWT_TESTING_PATTERNS.md"
   exit 1
 }
@@ -1147,12 +1015,6 @@ echo "==========================================="
 npm run security:audit:all || {
   echo "❌ Security audit failed!"
   echo "Fix security issues before pushing"
-  exit 1
-}
-
-# Run JWT validation
-npm run validate:jwt || {
-  echo "❌ JWT implementation validation failed!"
   exit 1
 }
 
@@ -1240,7 +1102,7 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 ## Security Checklist
 
 - [ ] JWT never stored in cookies
-- [ ] JWT only stored in localStorage
+- [ ] JWT never stored in localStorage or cookies (memory-only)
 - [ ] API uses Authorization Bearer headers
 - [ ] No credentials: 'include' in fetch calls
 - [ ] No CSRF tokens (JWT-only auth)

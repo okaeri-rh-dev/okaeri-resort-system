@@ -167,6 +167,7 @@ storybook-static/
 
 # Analytics and monitoring
 .lighthouseci/
+reports/
 
 # Package manager lock files (keep one based on your choice)
 # Uncomment the ones you don't use:

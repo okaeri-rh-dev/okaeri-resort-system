@@ -180,7 +180,7 @@ lighthouse http://localhost:4173 \
 lighthouse http://localhost:4173 \
   --only-audits="first-contentful-paint,largest-contentful-paint,total-blocking-time" \
   --output=json \
-  --output-path=./lighthouse-metrics.json
+  --output-path=./reports/lighthouse-metrics.json
 ```
 
 **Common Causes & Fixes:**

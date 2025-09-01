@@ -146,7 +146,7 @@ lighthouse http://localhost:4173 \
   --screenEmulation.deviceScaleFactor=2.625 \
   --emulated-user-agent="Mozilla/5.0 (Linux; Android 11; moto g power) AppleWebKit/537.36" \
   --output=json \
-  --output-path=./lighthouse-mobile.json
+  --output-path=./reports/lighthouse-mobile.json
 ```
 
 ### 4. Multi-Page Testing
@@ -159,7 +159,7 @@ for route in "${ROUTES[@]}"; do
   echo "Testing route: $route"
   lighthouse "http://localhost:4173$route" \
     --output=json \
-    --output-path="./lighthouse-$route.json" \
+    --output-path="./reports/lighthouse-$route.json" \
     --quiet
 done
 ```
@@ -274,7 +274,7 @@ lighthouse http://localhost:4173 \
   --throttling.cpuSlowdownMultiplier=4 \
   --emulated-user-agent="Mozilla/5.0 (Linux; Android 11; moto g power) AppleWebKit/537.36" \
   --output=json \
-  --output-path=./lighthouse-android.json
+  --output-path=./reports/lighthouse-android.json
 ```
 
 ### 2. Battery-Conscious Testing
@@ -294,7 +294,7 @@ lighthouse http://localhost:4173 \
 lighthouse http://localhost:4173 \
   --chrome-flags="--max_old_space_size=512 --no-sandbox" \
   --output=json \
-  --output-path=./lighthouse-memory-constrained.json
+  --output-path=./reports/lighthouse-memory-constrained.json
 ```
 
 ## PWA Performance Testing
@@ -330,7 +330,7 @@ node scripts/test-offline-performance.js
 lighthouse http://localhost:4173 \
   --disable-storage-reset \
   --output=json \
-  --output-path=./lighthouse-cached.json
+  --output-path=./reports/lighthouse-cached.json
 ```
 
 ## Resort-Specific Testing
@@ -370,7 +370,7 @@ lighthouse http://localhost:4173/expenses \
 for property_id in {1..3}; do
   lighthouse "http://localhost:4173/properties/$property_id" \
     --output=json \
-    --output-path="./lighthouse-property-$property_id.json"
+    --output-path="./reports/lighthouse-property-$property_id.json"
 done
 ```
 
@@ -411,7 +411,7 @@ for i in {1..3}; do
   echo "Run $i of 3"
   lighthouse http://localhost:4173 \
     --output=json \
-    --output-path="./lighthouse-run-$i.json" \
+    --output-path="./reports/lighthouse-run-$i.json" \
     --quiet
 done
 
@@ -523,7 +523,7 @@ critical http://localhost:4173 --base dist --inline --css dist/assets/*.css
 
 ```javascript
 // Parse Lighthouse JSON report
-const report = require("./lighthouse-mobile.json");
+const report = require("./reports/lighthouse-mobile.json");
 console.log(
   "Performance Score:",
   report.lhr.categories.performance.score * 100

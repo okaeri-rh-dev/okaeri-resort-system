@@ -417,9 +417,9 @@ echo "✅ Coverage passed: Lines: $lines%, Branches: $branches%, Functions: $fun
 #### `npm run verify:jwt`
 
 **Command**:
-`vitest run src/__tests__/security/jwt.security.test.ts --reporter=verbose && npm run audit:jwt:cookies`
-**Purpose**: Run JWT security tests and verify no cookie usage **Critical**:
-Must pass for security compliance
+`vitest run src/__tests__/security/jwt.security.test.ts --reporter=verbose && npm run security:jwt:full`
+**Purpose**: Run JWT security tests and then the full JWT audit suite
+**Critical**: Must pass for security compliance
 
 #### `npm run audit:jwt:cookies`
 

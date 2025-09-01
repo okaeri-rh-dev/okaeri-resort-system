@@ -78,7 +78,7 @@ const getCorsHeaders = (origin?: string) => {
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Project-ID, X-Request-ID",
     "Access-Control-Max-Age": "86400",
-    "Access-Control-Allow-Credentials": "true",
+    // JWT-only auth: No credentials needed (removed Access-Control-Allow-Credentials)
     // Security headers
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
@@ -503,8 +503,8 @@ function extractToken(req: ExtendedRequest): string | null {
   if (authHeader?.startsWith("Bearer ")) {
     return authHeader.substring(7);
   }
-  // Also check for token in cookies
-  return req.cookies?.token || null;
+  // JWT-only auth: Never check cookies for tokens
+  return null;
 }
 
 function extractProjectId(req: ExtendedRequest): string | null {
