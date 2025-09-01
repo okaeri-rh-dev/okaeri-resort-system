@@ -58,6 +58,19 @@ npm run verify:tests && npm run verify:types && npm run verify:lint && npm run v
 
 **Success Criteria**: All checks must pass
 
+**Note on Script Composition**: This repository includes `verify:coverage:paths`
+as part of `verify:all` for stricter local gating. This is an enhancement over
+the base SSOT specification and ensures path-based coverage is always enforced
+during local development. The actual implementation in package.json is:
+
+```bash
+npm run verify:tests && npm run verify:coverage:paths && npm run verify:types && npm run verify:lint && npm run verify:security
+```
+
+This enhancement aligns with TDD_SINGLE_SOURCE_OF_TRUTH.md which states that
+`verify:coverage:paths` should have "automatic execution via verify:all script"
+for CI Integration.
+
 ---
 
 ### 2. Test Verification Scripts
@@ -180,7 +193,7 @@ composition **Output**: Bundle analysis HTML report
 
 ```json
 {
-  "scaffold:phase1": "echo 'See docs/implementation/phases/phase-1-login-tdd/PHASE_1_FORM_TEST_SPECIFICATIONS.md'",
+  "scaffold:phase1": "echo 'See docs/implementation/phases/phase-1-login-tdd/PHASE_1_RED_TEST_SKELETONS.md'",
   "test:phase1": "vitest run src/features/auth/**/__tests__/*.test.{ts,tsx}",
   "test:phase1:coverage": "vitest run --coverage src/features/auth/**/__tests__/*.test.{ts,tsx}",
   "test:phase1:watch": "vitest watch src/features/auth/**/__tests__/*.test.{ts,tsx}"
@@ -509,7 +522,7 @@ and recovery
 ```json
 {
   "scripts": {
-    "verify:push": "npm run verify:all && npm run verify:bundle && npm run verify:performance && npm run verify:accessibility"
+    "verify:push": "npm run verify:all && npm run perf:budget && npm run verify:performance && npm run verify:accessibility"
   }
 }
 ```

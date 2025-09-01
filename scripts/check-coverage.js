@@ -35,12 +35,12 @@ const COVERAGE_THRESHOLDS = {
     lines: 90,
     statements: 90,
   },
-  // Phase 3 - Booking (93% coverage required)
+  // Phase 3 - Booking (95% coverage required - critical business logic)
   "src/features/booking": {
-    branches: 93,
-    functions: 93,
-    lines: 93,
-    statements: 93,
+    branches: 95,
+    functions: 95,
+    lines: 95,
+    statements: 95,
   },
   // Phase 4 - Financial (95% coverage required)
   "src/features/financial": {

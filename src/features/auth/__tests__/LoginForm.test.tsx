@@ -3,7 +3,7 @@
  * RED Phase: Tests written before implementation
  *
  * These tests define the contract for the LoginForm component
- * following TDD methodology from PHASE_1_FORM_TEST_SPECIFICATIONS.md
+ * following TDD methodology from PHASE_1_RED_TEST_SKELETONS.md
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";

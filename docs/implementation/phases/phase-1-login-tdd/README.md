@@ -38,7 +38,7 @@ Phase 1 implements the complete authentication system using strict Test-Driven D
 {
   "scripts": {
     // Scaffolding - Get test specifications and templates
-    "scaffold:phase1": "echo 'See docs/implementation/phases/phase-1-login-tdd/PHASE_1_FORM_TEST_SPECIFICATIONS.md'",
+    "scaffold:phase1": "echo 'See docs/implementation/phases/phase-1-login-tdd/PHASE_1_RED_TEST_SKELETONS.md'",
     
     // Testing - Run Phase 1 authentication tests
     "test:phase1": "vitest run src/features/auth/**/__tests__/*.test.{ts,tsx}",

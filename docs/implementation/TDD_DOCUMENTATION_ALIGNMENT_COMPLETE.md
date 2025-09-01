@@ -228,7 +228,7 @@ ls .husky/pre-commit .husky/pre-push && echo "✅ Git hooks ready"
 
 1. **Begin with typescript-react-quality-expert agent**:
    - Write failing tests for login form components
-   - Follow test specifications in PHASE_1_FORM_TEST_SPECIFICATIONS.md
+   - Follow test specifications in PHASE_1_RED_TEST_SKELETONS.md
    - Use TDD RED-GREEN-REFACTOR cycle
 
 2. **Run Phase 1 test commands**:
@@ -296,7 +296,7 @@ ls .husky/pre-commit .husky/pre-push && echo "✅ Git hooks ready"
 
 - [phases/phase-1-login-tdd/README.md](./phases/phase-1-login-tdd/README.md) -
   Phase 1 overview
-- [phases/phase-1-login-tdd/PHASE_1_FORM_TEST_SPECIFICATIONS.md](./phases/phase-1-login-tdd/PHASE_1_FORM_TEST_SPECIFICATIONS.md) -
+- [phases/phase-1-login-tdd/PHASE_1_RED_TEST_SKELETONS.md](./phases/phase-1-login-tdd/PHASE_1_RED_TEST_SKELETONS.md) -
   Test specs
 
 ## Summary of Alignment Status

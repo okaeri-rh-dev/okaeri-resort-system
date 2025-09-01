@@ -103,7 +103,7 @@ added even as placeholders:
 {
   "scripts": {
     // Phase 1 (Already exists)
-    "scaffold:phase1": "echo 'See docs/implementation/phases/phase-1-login-tdd/PHASE_1_FORM_TEST_SPECIFICATIONS.md'",
+    "scaffold:phase1": "echo 'See docs/implementation/phases/phase-1-login-tdd/PHASE_1_RED_TEST_SKELETONS.md'",
     "test:phase1": "vitest run src/features/auth/**/__tests__/*.test.{ts,tsx}",
     "test:phase1:coverage": "vitest run --coverage src/features/auth/**/__tests__/*.test.{ts,tsx}",
     "test:phase1:watch": "vitest watch src/features/auth/**/__tests__/*.test.{ts,tsx}",

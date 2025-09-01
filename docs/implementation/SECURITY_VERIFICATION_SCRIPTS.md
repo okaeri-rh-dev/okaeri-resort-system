@@ -31,7 +31,7 @@ updated to reflect the actual secure implementation.
 The `SecureTokenManager` class stores tokens in private class variables:
 
 - Access tokens: Stored in private `accessToken` variable
-- Refresh tokens: Server-side only (httpOnly cookies in production)
+- Refresh tokens: Server-managed only, never exposed to client (no cookies)
 - Fingerprinting: Additional browser fingerprint validation
 - Auto-refresh: Built-in token lifecycle management
 

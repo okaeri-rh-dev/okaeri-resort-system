@@ -235,7 +235,7 @@ import { LoginForm } from '../LoginForm';
 import { axeConfig } from '../../../test/axe.config';
 
 // Extend expect matchers (already done globally in setup.ts)
-expect.extend(toHaveNoViolations);
+expect.extend({ toHaveNoViolations });
 
 describe('LoginForm Accessibility', () => {
   it('should have no accessibility violations on initial render', async () => {

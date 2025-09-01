@@ -11,17 +11,17 @@ This document provides implementation guidance for aligning test configuration
 with the Single Source of Truth standards. All test environments must use these
 exact settings to ensure deterministic, reproducible test results.
 
-**⚠️ CRITICAL ISSUE IDENTIFIED**: The current `src/test/setup.ts` uses
-`2025-08-25T00:00:00.000Z`, but the SSoT specifies `2024-01-01T00:00:00Z`. This
-document provides the migration path to resolve this mismatch.
+**✅ RESOLVED**: The `src/test/setup.ts` now correctly uses
+`2024-01-01T00:00:00Z` aligned with SSoT. Migration steps retained below for
+reference.
 
 ## Standard Test Configuration
 
 ### Current State Analysis
 
 **Documentation (SSoT)**: `2024-01-01T00:00:00Z` ✅  
-**Repository Reality**: `2025-08-25T00:00:00.000Z` ❌  
-**Impact**: CI/local divergence, non-reproducible tests
+**Repository Reality**: `2024-01-01T00:00:00Z` ✅  
+**Status**: Fully aligned - no action required
 
 ### Authoritative Values (from TDD_SINGLE_SOURCE_OF_TRUTH.md)
 
@@ -297,6 +297,63 @@ grep "FIXED_TIME" .github/workflows/ci.yml && echo "✅ CI has explicit time con
 grep "2025-08-25" .github/workflows/ && echo "⚠️ Found non-SSoT date in CI" || echo "✅ No non-SSoT dates in CI"
 ```
 
+## Local Development Setup
+
+### Environment File Configuration
+
+The `.env.test` file provides environment variables for local testing:
+
+**Location**: Project root directory
+(`/Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/.env.test`)
+
+**Git Status**: NOT committed to repository (included in `.gitignore`)
+
+**Purpose**: Override default test values for local development without
+affecting CI/CD
+
+### Creating .env.test File
+
+```bash
+# Create .env.test in project root with canonical values
+cat > .env.test << 'EOF'
+# Deterministic Test Configuration - Must match CI exactly
+NODE_ENV=test
+FIXED_TIME=2024-01-01T00:00:00Z
+RANDOM_SEED=test-seed-2024
+TEST_SCENARIO=STABLE
+MOCK_DELAY=0
+TZ=Asia/Manila
+VITEST_DETERMINISTIC=true
+EOF
+```
+
+### Canonical Environment Variables
+
+These values MUST be identical between local development and CI/CD:
+
+| Variable               | Canonical Value        | Purpose                                |
+| ---------------------- | ---------------------- | -------------------------------------- |
+| `NODE_ENV`             | `test`                 | Ensures test mode                      |
+| `FIXED_TIME`           | `2024-01-01T00:00:00Z` | Fixed timestamp for all tests          |
+| `RANDOM_SEED`          | `test-seed-2024`       | Seed for deterministic randomness      |
+| `TEST_SCENARIO`        | `STABLE`               | Test scenario selector                 |
+| `MOCK_DELAY`           | `0`                    | No artificial delays in tests          |
+| `TZ`                   | `Asia/Manila`          | Philippine timezone for resort context |
+| `VITEST_DETERMINISTIC` | `true`                 | Enable deterministic mode              |
+
+### Verification
+
+```bash
+# Verify .env.test exists and has correct values
+if [ -f .env.test ]; then
+  echo "✅ .env.test exists"
+  grep "FIXED_TIME=2024-01-01T00:00:00Z" .env.test && echo "✅ Correct time configured"
+  grep "RANDOM_SEED=test-seed-2024" .env.test && echo "✅ Correct seed configured"
+else
+  echo "❌ .env.test missing - create it with canonical values"
+fi
+```
+
 ### Environment Variable Check
 
 ```bash
@@ -549,22 +606,28 @@ test reliability and TDD effectiveness.
 
 ## Implementation Status
 
-### Current Critical Issues
+### ✅ Current Status: Fully Aligned
 
-1. **Date Mismatch**: `src/test/setup.ts` uses `2025-08-25T00:00:00.000Z`
-   instead of canonical `2024-01-01T00:00:00Z`
-2. **Missing Environment Variable Support**: No fallback mechanism implemented
-3. **Suboptimal Random Mocking**: Uses fixed `0.5` instead of seeded generator
+The repository is now fully aligned with SSoT requirements:
 
-### Required Actions
+- Date configuration uses `2024-01-01T00:00:00Z`
+- Environment variable support implemented with proper fallbacks
+- Seeded random generator in place (not fixed 0.5)
+- All deterministic values properly configured
 
-1. **IMMEDIATE**: Update `src/test/setup.ts` line 23 to use environment variable
-   approach
-2. **IMMEDIATE**: Implement seeded random generator instead of fixed 0.5
-3. **IMMEDIATE**: Add environment variable fallbacks for all deterministic
-   values
-4. **FOLLOW-UP**: Audit all tests for date dependencies
-5. **FOLLOW-UP**: Update CI configuration to explicitly set canonical values
+### Historical Issues (Resolved)
+
+These issues were identified and have been resolved:
+
+1. **Date Mismatch** (RESOLVED): `src/test/setup.ts` previously used
+   `2025-08-25T00:00:00.000Z`
+   - ✅ Now uses canonical `2024-01-01T00:00:00Z`
+2. **Missing Environment Variable Support** (RESOLVED): No fallback mechanism
+   was implemented
+   - ✅ Now uses `process.env.FIXED_TIME ?? "2024-01-01T00:00:00Z"`
+3. **Suboptimal Random Mocking** (RESOLVED): Used fixed `0.5` instead of seeded
+   generator
+   - ✅ Now uses seeded PRNG with `RANDOM_SEED`
 
 ### Success Criteria
 

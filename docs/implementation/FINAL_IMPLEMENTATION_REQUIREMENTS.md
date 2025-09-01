@@ -16,7 +16,7 @@ blocks in priority order.
 
 ```bash
 # Run this command NOW - Critical for CI/local parity
-npm i -D lighthouse bundlesize jest-axe axe-core @types/jest-axe
+npm i -D --save-exact lighthouse@12.8.2 bundlesize@0.18.2 jest-axe@10.0.0 axe-core@4.10.3 @types/jest-axe@3.5.9
 
 # Verify installation
 npm list lighthouse bundlesize jest-axe axe-core @types/jest-axe
@@ -123,7 +123,7 @@ Add these scripts:
     "verify:accessibility": "npm run build && start-server-and-test preview http://localhost:4173 'lighthouse http://localhost:4173 --only-categories=accessibility --output=json --output-path=./reports/lighthouse-accessibility.json'",
 
     // Composite verification script
-    "verify:push": "npm run verify:all && npm run verify:bundle && npm run verify:performance && npm run verify:accessibility",
+    "verify:push": "npm run verify:all && npm run perf:budget && npm run verify:performance && npm run verify:accessibility",
 
     // JWT security scripts
     "verify:jwt": "vitest run src/__tests__/security/jwt.security.test.ts --reporter=verbose && npm run audit:jwt:cookies",
@@ -194,6 +194,7 @@ npm run scaffold:all-phases
 
 ```typescript
 import { describe, it, expect, beforeEach } from "vitest";
+import { secureTokenManager } from "@/lib/security/secure-token-manager";
 
 describe("JWT Security Verification", () => {
   beforeEach(() => {
@@ -210,9 +211,8 @@ describe("JWT Security Verification", () => {
     });
 
     it("should store JWT only in memory (not localStorage or sessionStorage)", () => {
-      // JWT tokens must be stored in memory only via SecureTokenManager
-      const tokenManager = SecureTokenManager.getInstance();
-      tokenManager.storeTokens("test-access-token", "test-refresh-token");
+      // JWT tokens must be stored in memory only via secureTokenManager
+      secureTokenManager.setToken("test-access-token");
 
       // Verify tokens are NOT in browser storage (security requirement)
       expect(localStorage.getItem("auth_token")).toBeNull();
@@ -286,8 +286,8 @@ chmod +x scripts/audit-jwt-cookies.sh
 Run these commands in order to verify all requirements are met:
 
 ```bash
-# 1. Verify dependencies installed
-npm list lighthouse bundlesize jest-axe axe-core @types/jest-axe
+# 1. Verify dependencies installed with exact versions
+npm list bundlesize lighthouse jest-axe start-server-and-test --depth=0
 
 # 2. Verify Phase 1 tests run (expect RED/failures initially)
 npm run test:phase1
@@ -324,7 +324,7 @@ npm run verify:push
 # Complete setup in one go:
 
 # 1. Install all dependencies (CRITICAL - Use devDependencies, not npx)
-npm i -D lighthouse bundlesize jest-axe axe-core @types/jest-axe
+npm i -D --save-exact lighthouse@12.8.2 bundlesize@0.18.2 jest-axe@10.0.0 axe-core@4.10.3 @types/jest-axe@3.5.9
 
 # 2. Create reports directory for Lighthouse outputs
 mkdir -p reports
@@ -381,7 +381,7 @@ After completing all requirements:
 
 ```bash
 # This should pass without errors:
-npm run verify:all && npm run verify:bundle && npm run verify:performance
+npm run verify:all && npm run perf:budget && npm run verify:performance
 
 # This should show 95% threshold for auth:
 npm run test:phase1:coverage
@@ -393,7 +393,7 @@ npm run test:all-phases
 ## Next Steps After Requirements Complete
 
 1. Begin Phase 1 RED with typescript-react-quality-expert agent
-2. Write failing tests following PHASE_1_FORM_TEST_SPECIFICATIONS.md
+2. Write failing tests following PHASE_1_RED_TEST_SKELETONS.md
 3. Use `npm run test:phase1:watch` for TDD development
 4. Achieve RED state for all Phase 1 tests
 5. Proceed to GREEN implementation
