@@ -1,23 +1,23 @@
 /**
- * PasswordResetForm Component Tests - RED Phase
- * TDD RED Phase: All tests designed to FAIL until implementation
+ * PasswordResetForm Component Tests - GREEN Phase
+ * TDD GREEN Phase: Functional tests for implemented component
  *
  * Following strict TDD methodology:
- * 1. RED: Write failing tests that define the component contract
- * 2. GREEN: Implement minimum code to make tests pass
+ * 1. RED: Write failing tests that define the component contract ✅
+ * 2. GREEN: Implement minimum code to make tests pass ✅
  * 3. REFACTOR: Improve code while keeping tests green
  *
- * Target: 35+ comprehensive failing tests covering all requirements
+ * Testing the fully implemented PasswordResetForm component
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-// RED PHASE: Component doesn't exist yet - import commented out
-// import { PasswordResetForm } from "@/components/auth/PasswordResetForm";
+// GREEN PHASE: Import the implemented component
+import { PasswordResetForm } from "@/features/auth/components/PasswordResetForm";
 
-// RED PHASE: Mock dependencies that don't exist yet
+// GREEN PHASE: Mock dependencies for testing
 const mockSendResetLink = vi.fn();
 const mockResetPassword = vi.fn();
 const mockClearError = vi.fn();
@@ -78,6 +78,67 @@ vi.mock("@/stores/authStore", () => ({
   useAuthStore: () => mockUseAuthStore(),
 }));
 
+// Mock zodResolver instead of validation schema
+vi.mock("@hookform/resolvers/zod", () => ({
+  zodResolver: vi.fn(() => ({
+    resolver: vi.fn(() => ({ values: {}, errors: {} })),
+  })),
+}));
+
+// Mock validation schemas
+vi.mock("@/lib/validations/auth", () => ({
+  forgotPasswordSchema: {
+    parse: vi.fn((data) => data),
+    safeParse: vi.fn((data) => ({ success: true, data })),
+  },
+  ForgotPasswordFormData: {} as any,
+}));
+
+// Mock UI components
+vi.mock("@/components/ui/button", () => ({
+  Button: ({ children, loading, loadingText, ...props }: any) => (
+    <button {...props}>{loading ? loadingText || "Loading..." : children}</button>
+  ),
+}));
+
+vi.mock("@/components/ui/input", () => ({
+  Input: ({ error, ...props }: any) => (
+    <input {...props} style={error ? { borderColor: "red" } : {}} />
+  ),
+}));
+
+vi.mock("@/components/ui/label", () => ({
+  Label: ({ children, ...props }: any) => <label {...props}>{children}</label>,
+}));
+
+// Mock design system
+vi.mock("@/styles/design-system", () => ({
+  designSystem: {
+    colors: {
+      primary: { 600: "#1e40af" },
+      success: { 50: "#f0fdf4", 500: "#22c55e" },
+      error: { 50: "#fef2f2", 500: "#ef4444", 600: "#dc2626", 700: "#b91c1c" },
+      gray: { 600: "#4b5563", 700: "#374151" },
+    },
+  },
+  getInputClasses: vi.fn(() => "input-classes"),
+  getButtonClasses: vi.fn(() => "button-classes"),
+  getLabelClasses: vi.fn(() => "label-classes"),
+  getTypographyClasses: vi.fn(() => "typography-classes"),
+  getCheckboxClasses: vi.fn(() => "checkbox-classes"),
+  getErrorMessageClasses: vi.fn(() => "error-message-classes"),
+  getLinkClasses: vi.fn(() => "link-classes"),
+}));
+
+// Mock routes
+vi.mock("@/routes/paths", () => ({
+  ROUTES: {
+    login: "/auth/login",
+    register: "/auth/register",
+    dashboard: "/dashboard",
+  },
+}));
+
 // Mock React Hook Form (will be implemented in GREEN)
 vi.mock("react-hook-form", () => ({
   useForm: () => {
@@ -94,15 +155,15 @@ vi.mock("@/lib/validations/auth", () => ({
   newPasswordSchema: { throw: new Error("New password validation schema not implemented") },
 }));
 
-// RED PHASE: Placeholder component for testing structure
-function MockPasswordResetForm({ token }: { token?: string }) {
-  throw new Error(`PasswordResetForm component not implemented yet. Token: ${token || "none"}`);
+// Test wrapper component for rendering with providers
+function TestWrapper({ children }: { children: React.ReactNode }) {
+  return <div>{children}</div>;
 }
 
-describe("PasswordResetForm Component - RED Phase", () => {
+describe("PasswordResetForm Component - GREEN Phase", () => {
   const user = userEvent.setup();
 
-  // RED PHASE: Test data for future implementation
+  // GREEN PHASE: Test data for implemented component
   const validEmail = "user@okaeriresort.ph";
   const validToken = "valid-reset-token-12345";
   const expiredToken = "expired-reset-token-67890";
@@ -126,57 +187,49 @@ describe("PasswordResetForm Component - RED Phase", () => {
 
   describe("Email Request Flow - Comprehensive UX", () => {
     it("should render complete email request form", () => {
-      // RED: Component doesn't exist
-      expect(() => render(<MockPasswordResetForm />)).toThrow(
-        "PasswordResetForm component not implemented yet"
+      // GREEN: Render the actual component
+      render(
+        <TestWrapper>
+          <PasswordResetForm />
+        </TestWrapper>
       );
 
-      // RED: Define what should exist when implemented
-      const expectedElements = [
-        "Reset Your Password",
-        "Enter your email address",
-        "Email Address",
-        "Send Reset Link",
-        "Back to Login",
-        "Remember your password?",
-      ];
-
-      // RED: All these assertions will fail
-      expectedElements.forEach((element) => {
-        expect(false).toBe(true); // Explicit failure for RED phase
-      });
+      // GREEN: Verify expected elements are present
+      expect(screen.getByRole("heading", { name: /reset password/i })).toBeInTheDocument();
+      expect(
+        screen.getByText(/enter your email to receive reset instructions/i)
+      ).toBeInTheDocument();
+      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /send reset link/i })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /sign in/i })).toBeInTheDocument();
+      expect(screen.getByText(/remember your password/i)).toBeInTheDocument();
     });
 
     it("should validate email format with comprehensive patterns", async () => {
-      // RED: Component doesn't exist
-      expect(() => render(<MockPasswordResetForm />)).toThrow();
+      // GREEN: Render the component
+      render(
+        <TestWrapper>
+          <PasswordResetForm />
+        </TestWrapper>
+      );
 
-      // RED: Define comprehensive email validation test cases
-      const invalidEmails = [
-        "invalid-email",
-        "@example.com",
-        "user@",
-        "user@.com",
-        "user name@example.com", // spaces
-        "user@exam ple.com", // spaces in domain
-        "user@example", // no TLD
-        "user@@example.com", // double @
-        "", // empty
-        "   ", // whitespace only
-      ];
+      const emailInput = screen.getByLabelText(/email/i);
+      const submitButton = screen.getByRole("button", { name: /send reset link/i });
 
-      const validEmails = [
-        "user@example.com",
-        "user.name@example.com",
-        "user+tag@example.co.uk",
-        "juan@okaeriresort.ph", // Philippine domain
-        "test@gmail.com", // Common provider
-        "admin@yahoo.com.ph", // Philippine Yahoo
-      ];
+      // Test invalid email - should show validation error
+      await user.type(emailInput, "invalid-email");
+      await user.click(submitButton);
 
-      // RED: Email validation will fail until implemented
-      [...invalidEmails, ...validEmails].forEach((email) => {
-        expect(false).toBe(true); // Email validation not implemented
+      await waitFor(() => {
+        expect(screen.getByText(/invalid email address/i)).toBeInTheDocument();
+      });
+
+      // Test valid email - should not show validation error
+      await user.clear(emailInput);
+      await user.type(emailInput, "user@example.com");
+
+      await waitFor(() => {
+        expect(screen.queryByText(/invalid email address/i)).not.toBeInTheDocument();
       });
     });
 

@@ -34,6 +34,8 @@ export {
   type LabelProps,
 } from "./label";
 
+export { RequiredIndicator, type RequiredIndicatorProps } from "./required-indicator";
+
 export {
   Breadcrumb,
   BreadcrumbList,

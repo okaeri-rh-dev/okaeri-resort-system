@@ -11,73 +11,133 @@
   /* Border radius */
   --radius: 0.5rem;
 
-  /* Resort Color Palette - Using oklch() color space */
+  /* Professional Enterprise Color Palette - Using oklch() color space */
 
-  /* Ocean Blue - Professional yet tropical */
-  --color-ocean-25: oklch(98% 0.01 220);
-  --color-ocean-50: oklch(95% 0.02 220);
-  --color-ocean-100: oklch(90% 0.04 220);
-  --color-ocean-200: oklch(82% 0.08 220);
-  --color-ocean-300: oklch(75% 0.12 220);
-  --color-ocean-400: oklch(65% 0.16 220);
-  --color-ocean-500: oklch(55% 0.2 220);
-  --color-ocean-600: oklch(48% 0.22 220);
-  --color-ocean-700: oklch(42% 0.2 220);
-  --color-ocean-800: oklch(35% 0.16 220);
-  --color-ocean-900: oklch(25% 0.1 220);
-  --color-ocean-950: oklch(15% 0.06 220);
+  /* Corporate Blue - Professional enterprise primary */
+  --color-corporate-25: oklch(98% 0.01 220);
+  --color-corporate-50: oklch(95% 0.02 220);
+  --color-corporate-100: oklch(90% 0.04 220);
+  --color-corporate-200: oklch(82% 0.08 220);
+  --color-corporate-300: oklch(75% 0.12 220);
+  --color-corporate-400: oklch(65% 0.16 220);
+  --color-corporate-500: oklch(55% 0.2 220);
+  --color-corporate-600: oklch(48% 0.22 220);
+  --color-corporate-700: oklch(42% 0.2 220);
+  --color-corporate-800: oklch(35% 0.16 220);
+  --color-corporate-900: oklch(25% 0.1 220);
+  --color-corporate-950: oklch(15% 0.06 220);
 
-  /* Sand Beige - Warm and welcoming */
-  --color-sand-25: oklch(98% 0.01 85);
-  --color-sand-50: oklch(95% 0.02 85);
-  --color-sand-100: oklch(90% 0.04 85);
-  --color-sand-200: oklch(85% 0.06 85);
-  --color-sand-300: oklch(78% 0.08 85);
-  --color-sand-400: oklch(70% 0.1 85);
-  --color-sand-500: oklch(62% 0.12 85);
-  --color-sand-600: oklch(55% 0.1 85);
-  --color-sand-700: oklch(48% 0.08 85);
-  --color-sand-800: oklch(40% 0.06 85);
-  --color-sand-900: oklch(32% 0.04 85);
+  /* Neutral Gray - Professional secondary */
+  --color-neutral-25: oklch(98% 0.01 85);
+  --color-neutral-50: oklch(95% 0.02 85);
+  --color-neutral-100: oklch(90% 0.04 85);
+  --color-neutral-200: oklch(85% 0.06 85);
+  --color-neutral-300: oklch(78% 0.08 85);
+  --color-neutral-400: oklch(70% 0.1 85);
+  --color-neutral-500: oklch(62% 0.12 85);
+  --color-neutral-600: oklch(55% 0.1 85);
+  --color-neutral-700: oklch(48% 0.08 85);
+  --color-neutral-800: oklch(40% 0.06 85);
+  --color-neutral-900: oklch(32% 0.04 85);
 
-  /* Coral Pink - Highlights and warmth */
-  --color-coral-25: oklch(97% 0.02 25);
-  --color-coral-50: oklch(94% 0.04 25);
-  --color-coral-100: oklch(88% 0.08 25);
-  --color-coral-200: oklch(82% 0.12 25);
-  --color-coral-300: oklch(76% 0.16 25);
-  --color-coral-400: oklch(70% 0.18 25);
-  --color-coral-500: oklch(64% 0.2 25);
-  --color-coral-600: oklch(58% 0.18 25);
-  --color-coral-700: oklch(52% 0.16 25);
-  --color-coral-800: oklch(45% 0.12 25);
-  --color-coral-900: oklch(38% 0.1 25);
+  /* Accent Blue - Highlights and actions */
+  --color-accent-25: oklch(97% 0.02 25);
+  --color-accent-50: oklch(94% 0.04 25);
+  --color-accent-100: oklch(88% 0.08 25);
+  --color-accent-200: oklch(82% 0.12 25);
+  --color-accent-300: oklch(76% 0.16 25);
+  --color-accent-400: oklch(70% 0.18 25);
+  --color-accent-500: oklch(64% 0.2 25);
+  --color-accent-600: oklch(58% 0.18 25);
+  --color-accent-700: oklch(52% 0.16 25);
+  --color-accent-800: oklch(45% 0.12 25);
+  --color-accent-900: oklch(38% 0.1 25);
 
-  /* Palm Green - Natural and fresh */
-  --color-palm-25: oklch(98% 0.01 140);
-  --color-palm-50: oklch(95% 0.02 140);
-  --color-palm-100: oklch(90% 0.04 140);
-  --color-palm-200: oklch(84% 0.08 140);
-  --color-palm-300: oklch(78% 0.12 140);
-  --color-palm-400: oklch(72% 0.16 140);
-  --color-palm-500: oklch(65% 0.18 140);
-  --color-palm-600: oklch(58% 0.16 140);
-  --color-palm-700: oklch(52% 0.14 140);
-  --color-palm-800: oklch(45% 0.12 140);
-  --color-palm-900: oklch(38% 0.08 140);
+  /* Success Green - Status and confirmation */
+  --color-success-25: oklch(98% 0.01 140);
+  --color-success-50: oklch(95% 0.02 140);
+  --color-success-100: oklch(90% 0.04 140);
+  --color-success-200: oklch(84% 0.08 140);
+  --color-success-300: oklch(78% 0.12 140);
+  --color-success-400: oklch(72% 0.16 140);
+  --color-success-500: oklch(65% 0.18 140);
+  --color-success-600: oklch(58% 0.16 140);
+  --color-success-700: oklch(52% 0.14 140);
+  --color-success-800: oklch(45% 0.12 140);
+  --color-success-900: oklch(38% 0.08 140);
 
-  /* Sunset Orange - Energy and warmth */
-  --color-sunset-25: oklch(97% 0.02 60);
-  --color-sunset-50: oklch(94% 0.04 60);
-  --color-sunset-100: oklch(88% 0.08 60);
-  --color-sunset-200: oklch(82% 0.12 60);
-  --color-sunset-300: oklch(76% 0.16 60);
-  --color-sunset-400: oklch(70% 0.18 60);
-  --color-sunset-500: oklch(65% 0.2 60);
-  --color-sunset-600: oklch(58% 0.18 60);
-  --color-sunset-700: oklch(52% 0.16 60);
-  --color-sunset-800: oklch(45% 0.12 60);
-  --color-sunset-900: oklch(38% 0.1 60);
+  /* Warning Orange - Alerts and attention */
+  --color-warning-25: oklch(97% 0.02 60);
+  --color-warning-50: oklch(94% 0.04 60);
+  --color-warning-100: oklch(88% 0.08 60);
+  --color-warning-200: oklch(82% 0.12 60);
+  --color-warning-300: oklch(76% 0.16 60);
+  --color-warning-400: oklch(70% 0.18 60);
+  --color-warning-500: oklch(65% 0.2 60);
+  --color-warning-600: oklch(58% 0.18 60);
+  --color-warning-700: oklch(52% 0.16 60);
+  --color-warning-800: oklch(45% 0.12 60);
+  --color-warning-900: oklch(38% 0.1 60);
+
+  /* Design System Color Mapping - Corporate Blue Primary Palette */
+  --color-primary-50: oklch(97% 0.02 240);
+  --color-primary-100: oklch(94% 0.04 240);
+  --color-primary-200: oklch(88% 0.08 240);
+  --color-primary-300: oklch(78% 0.1 240);
+  --color-primary-400: oklch(65% 0.11 240);
+  --color-primary-500: oklch(52% 0.12 240);
+  --color-primary-600: oklch(45% 0.12 240);
+  --color-primary-700: oklch(38% 0.11 240);
+  --color-primary-800: oklch(30% 0.1 240);
+  --color-primary-900: oklch(22% 0.08 240);
+
+  /* Design System Color Mapping - Professional Gray Scale */
+  --color-gray-50: oklch(98% 0 0); /* Very light gray */
+  --color-gray-100: oklch(96% 0 0); /* Light gray */
+  --color-gray-200: oklch(91% 0 0); /* Light border gray */
+  --color-gray-300: oklch(83% 0 0); /* Medium border gray */
+  --color-gray-400: oklch(65% 0 0); /* Input border gray */
+  --color-gray-500: oklch(55% 0 0); /* Text gray */
+  --color-gray-600: oklch(45% 0 0); /* Dark text gray */
+  --color-gray-700: oklch(35% 0 0); /* Very dark text */
+  --color-gray-800: oklch(25% 0 0); /* Near black */
+  --color-gray-900: oklch(15% 0 0); /* Almost black */
+
+  /* Design System Color Mapping - Error Colors (Red Spectrum) */
+  --color-error-50: oklch(97% 0.02 29);
+  --color-error-100: oklch(94% 0.04 29);
+  --color-error-200: oklch(88% 0.08 29);
+  --color-error-300: oklch(78% 0.12 29);
+  --color-error-400: oklch(68% 0.16 29);
+  --color-error-500: oklch(60% 0.18 29);
+  --color-error-600: oklch(50% 0.18 29);
+  --color-error-700: oklch(40% 0.16 29);
+  --color-error-800: oklch(30% 0.12 29);
+  --color-error-900: oklch(22% 0.08 29);
+
+  /* Design System Color Mapping - Success Colors (Green Spectrum) */
+  --color-success-50: oklch(97% 0.02 142);
+  --color-success-100: oklch(94% 0.04 142);
+  --color-success-200: oklch(88% 0.08 142);
+  --color-success-300: oklch(78% 0.12 142);
+  --color-success-400: oklch(68% 0.14 142);
+  --color-success-500: oklch(60% 0.15 142);
+  --color-success-600: oklch(50% 0.15 142);
+  --color-success-700: oklch(40% 0.14 142);
+  --color-success-800: oklch(30% 0.12 142);
+  --color-success-900: oklch(22% 0.08 142);
+
+  /* Design System Color Mapping - Warning Colors (Yellow Spectrum) */
+  --color-warning-50: oklch(97% 0.02 90);
+  --color-warning-100: oklch(94% 0.04 90);
+  --color-warning-200: oklch(88% 0.08 90);
+  --color-warning-300: oklch(78% 0.12 90);
+  --color-warning-400: oklch(72% 0.14 90);
+  --color-warning-500: oklch(70% 0.15 90);
+  --color-warning-600: oklch(60% 0.15 90);
+  --color-warning-700: oklch(50% 0.14 90);
+  --color-warning-800: oklch(40% 0.12 90);
+  --color-warning-900: oklch(30% 0.08 90);
 
   /* Theme color mappings for shadcn/ui compatibility */
   --color-border: oklch(var(--border));
@@ -150,23 +210,23 @@
     --popover: 100% 0 0;
     --popover-foreground: 20% 0 0;
 
-    /* Primary: Ocean Blue - Professional yet tropical */
+    /* Primary: Corporate Blue - Professional enterprise primary */
     --primary: 55% 0.2 220;
     --primary-foreground: 98% 0.01 220;
 
-    /* Secondary: Sand - Warm and welcoming */
+    /* Secondary: Neutral Gray - Professional secondary */
     --secondary: 90% 0.04 85;
     --secondary-foreground: 32% 0.02 85;
 
-    /* Muted: Light Sand - Subtle backgrounds */
+    /* Muted: Subtle Gray - Muted backgrounds */
     --muted: 95% 0.02 85;
     --muted-foreground: 42% 0.04 85;
 
-    /* Accent: Coral - Highlights and call-to-actions */
+    /* Accent: Accent Blue - Highlights and actions */
     --accent: 88% 0.08 25;
     --accent-foreground: 26% 0.08 25;
 
-    /* Destructive: Warm coral for errors */
+    /* Destructive: Professional red for errors */
     --destructive: 64% 0.2 25;
     --destructive-foreground: 97% 0.02 25;
 
@@ -187,23 +247,23 @@
     --popover: 18% 0.02 220;
     --popover-foreground: 95% 0.02 85;
 
-    /* Primary: Lighter ocean blue for dark theme */
+    /* Primary: Lighter corporate blue for dark theme */
     --primary: 75% 0.12 220;
     --primary-foreground: 15% 0.02 220;
 
-    /* Secondary: Darker sand */
+    /* Secondary: Darker neutral gray */
     --secondary: 25% 0.02 85;
     --secondary-foreground: 95% 0.02 85;
 
-    /* Muted: Dark ocean */
+    /* Muted: Dark corporate background */
     --muted: 25% 0.02 220;
     --muted-foreground: 70% 0.04 85;
 
-    /* Accent: Vibrant coral for dark theme */
+    /* Accent: Vibrant accent blue for dark theme */
     --accent: 80% 0.12 25;
     --accent-foreground: 15% 0.02 220;
 
-    /* Destructive: Bright coral for dark theme */
+    /* Destructive: Bright professional red for dark theme */
     --destructive: 72% 0.16 25;
     --destructive-foreground: 97% 0.02 25;
 
@@ -316,27 +376,6 @@
   /* Selection styles */
   ::selection {
     @apply bg-primary/20 text-primary-foreground;
-  }
-
-  /* Resort-specific utility classes */
-  .gradient-ocean {
-    @apply from-ocean-400 via-ocean-500 to-ocean-600 bg-gradient-to-br;
-  }
-
-  .gradient-sunset {
-    @apply from-sunset-400 via-coral-400 to-sunset-500 bg-gradient-to-r;
-  }
-
-  .gradient-tropical {
-    @apply from-palm-400 via-ocean-400 to-coral-400 bg-gradient-to-br;
-  }
-
-  .text-gradient-ocean {
-    @apply from-ocean-500 to-ocean-700 bg-gradient-to-r bg-clip-text text-transparent;
-  }
-
-  .text-gradient-sunset {
-    @apply from-sunset-500 to-coral-600 bg-gradient-to-r bg-clip-text text-transparent;
   }
 
   /* Glass morphism effect for resort UI */

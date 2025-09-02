@@ -1,8 +1,8 @@
 /**
- * RegisterPage Component - Phase 1.2 GREEN Implementation
+ * RegisterPage Component - Phase 1.3 REFACTOR Implementation
  *
- * Basic page wrapper around RegisterForm component.
- * Minimal implementation with simple redirect logic.
+ * Professional Enterprise Design System registration page wrapper.
+ * Implements corporate blue accents with neutral gray background.
  */
 
 import React, { useEffect } from "react";
@@ -10,6 +10,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { RegisterForm } from "@/features/auth/components/RegisterForm";
 import { useAuthStore } from "@/stores/authStore";
 import { ROUTES } from "@/routes/paths";
+import { designSystem, getTypographyClasses } from "@/styles/design-system";
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -28,9 +29,20 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-100 p-4">
+    <div
+      className="flex min-h-screen items-center justify-center p-4"
+      style={{ backgroundColor: designSystem.colors.background.secondary }}
+    >
       <div className="w-full max-w-md">
-        <div className="space-y-6 rounded-lg border bg-white p-6 shadow-sm">
+        <div
+          className={`rounded ${designSystem.borders.card} bg-white p-6 ${designSystem.shadows.card}`}
+        >
+          <div className="mb-6">
+            <h1 className={getTypographyClasses("heading")}>Create Account</h1>
+            <p className={`mt-1 ${getTypographyClasses("caption")}`}>
+              Register for resort management access
+            </p>
+          </div>
           <RegisterForm />
         </div>
       </div>

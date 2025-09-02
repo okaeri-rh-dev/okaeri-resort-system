@@ -1,5 +1,5 @@
 /**
- * Auth Components - Phase 1.2 GREEN Implementation
+ * Auth Components - Phase 1.3 REFACTOR Implementation
  * Export all authentication form components
  */
 

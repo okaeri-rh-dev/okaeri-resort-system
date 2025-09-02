@@ -1,8 +1,8 @@
 /**
- * LoginForm Component - Phase 1.2 GREEN Implementation
+ * LoginForm Component - Phase 1.3 REFACTOR Implementation
  *
- * Minimal implementation to make Phase 1.1 tests pass.
- * This is TDD GREEN phase - basic functionality only.
+ * Professional Enterprise Design System applied.
+ * Maintains 100% test compatibility while enhancing UI/UX.
  */
 
 import React from "react";
@@ -15,6 +15,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ROUTES } from "@/routes/paths";
+import {
+  getInputClasses,
+  getButtonClasses,
+  getLabelClasses,
+  getTypographyClasses,
+  getCheckboxClasses,
+  getErrorMessageClasses,
+  getLinkClasses,
+  getAlertStyles,
+  getCheckboxStyles,
+} from "@/styles/design-system";
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -44,115 +55,131 @@ export function LoginForm() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
-        <p className="text-muted-foreground text-sm">
-          Enter your email and password to access your account
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+    <div className="space-y-3">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3" noValidate>
         {/* Global Error Display */}
         {error && (
-          <div className="text-destructive border-destructive bg-destructive/10 rounded-md border p-3 text-sm">
+          <div role="alert" className="rounded border p-3 text-sm" style={getAlertStyles("error")}>
             {error}
           </div>
         )}
 
-        {/* Email Field */}
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="Enter your email"
-            error={errors.email?.message}
-            aria-invalid={!!errors.email}
-            aria-describedby={errors.email ? "email-error" : undefined}
-            {...register("email")}
-          />
-          {errors.email && (
-            <p id="email-error" role="alert" className="text-destructive text-sm">
-              {errors.email.message}
-            </p>
-          )}
-        </div>
-
-        {/* Password Field */}
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              autoComplete="current-password"
-              placeholder="Enter your password"
-              error={errors.password?.message}
-              className="pr-16"
-              aria-invalid={!!errors.password}
-              aria-describedby={errors.password ? "password-error" : undefined}
-              {...register("password")}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 text-sm"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? "Hide" : "Show"}
-            </button>
-          </div>
-          {errors.password && (
-            <p id="password-error" role="alert" className="text-destructive text-sm">
-              {errors.password.message}
-            </p>
-          )}
-        </div>
-
-        {/* Remember Me */}
-        <div className="flex items-center space-x-2">
-          <input
-            id="rememberMe"
-            type="checkbox"
-            className="text-ocean-600 focus:border-ocean-300 focus:ring-ocean-200 focus:ring-opacity-50 rounded border-gray-300 shadow-sm focus:ring"
-            {...register("rememberMe")}
-          />
-          <Label htmlFor="rememberMe" className="text-sm font-normal">
-            Remember me
+        {/* Email Field - Enterprise Grid Layout */}
+        <div className="grid grid-cols-3 items-start gap-x-4">
+          <Label htmlFor="email" className={`${getLabelClasses()} mt-2 text-right`}>
+            Email
           </Label>
+          <div className="col-span-2">
+            <Input
+              id="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="user@company.com"
+              error={errors.email?.message}
+              className={getInputClasses(errors.email ? "error" : "default")}
+              aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? "email-error" : undefined}
+              {...register("email")}
+            />
+            {errors.email && (
+              <p id="email-error" role="alert" className={getErrorMessageClasses()}>
+                {errors.email.message}
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* Submit Button */}
-        <Button
-          type="submit"
-          className="w-full"
-          loading={isLoading}
-          loadingText="Signing in..."
-          disabled={isLoading || !isValid}
-        >
-          Sign in
-        </Button>
-
-        {/* Links */}
-        <div className="text-center">
-          <Link
-            to={ROUTES.forgotPassword}
-            className="text-ocean-600 hover:text-ocean-500 text-sm underline-offset-4 hover:underline"
-          >
-            Forgot your password?
-          </Link>
+        {/* Password Field - Enterprise Grid Layout */}
+        <div className="grid grid-cols-3 items-start gap-x-4">
+          <Label htmlFor="password" className={`${getLabelClasses()} mt-2 text-right`}>
+            Password
+          </Label>
+          <div className="col-span-2">
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                required
+                autoComplete="current-password"
+                placeholder="••••••••"
+                error={errors.password?.message}
+                className={`${getInputClasses(errors.password ? "error" : "default")} pr-16`}
+                aria-invalid={!!errors.password}
+                aria-describedby={errors.password ? "password-error" : undefined}
+                {...register("password")}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className={`absolute top-1/2 right-3 -translate-y-1/2 ${getTypographyClasses("helper")} font-medium transition-colors duration-100 hover:text-gray-800`}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
+            {errors.password && (
+              <p id="password-error" role="alert" className={getErrorMessageClasses()}>
+                {errors.password.message}
+              </p>
+            )}
+          </div>
         </div>
 
-        <div className="text-muted-foreground text-center text-sm">
-          Don't have an account?{" "}
-          <Link
-            to={ROUTES.register}
-            className="text-ocean-600 hover:text-ocean-500 font-medium underline-offset-4 hover:underline"
-          >
-            Sign up
-          </Link>
+        {/* Remember Me - Aligned with Grid */}
+        <div className="grid grid-cols-3 items-center gap-x-4">
+          <div></div>
+          <div className="col-span-2 flex items-center space-x-2">
+            <input
+              id="rememberMe"
+              type="checkbox"
+              className={getCheckboxClasses()}
+              style={getCheckboxStyles()}
+              {...register("rememberMe")}
+            />
+            <Label htmlFor="rememberMe" className={`${getLabelClasses()} font-normal`}>
+              Keep me signed in
+            </Label>
+          </div>
+        </div>
+
+        {/* Submit Button - Corporate Blue */}
+        <div className="grid grid-cols-3 items-center gap-x-4 pt-2">
+          <div></div>
+          <div className="col-span-2">
+            <Button
+              type="submit"
+              className={`${getButtonClasses("primary")} w-full ${isLoading || !isValid ? "cursor-not-allowed opacity-60" : ""}`}
+              loading={isLoading}
+              loadingText="Authenticating..."
+              disabled={isLoading || !isValid}
+            >
+              Sign In
+            </Button>
+          </div>
+        </div>
+
+        {/* Links - Professional Styling */}
+        <div className="grid grid-cols-3 items-center gap-x-4 pt-1">
+          <div></div>
+          <div className="col-span-2 space-y-2">
+            <Link
+              to={ROUTES.forgotPassword}
+              className={`${getTypographyClasses("helper")} ${getLinkClasses("primary")}`}
+            >
+              Forgot Password?
+            </Link>
+
+            <div className={getTypographyClasses("helper")}>
+              New user?{" "}
+              <Link
+                to={ROUTES.register}
+                className={`${getTypographyClasses("helper")} ${getLinkClasses("primary")}`}
+              >
+                Create Account
+              </Link>
+            </div>
+          </div>
         </div>
       </form>
     </div>

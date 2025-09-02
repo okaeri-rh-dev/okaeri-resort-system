@@ -117,109 +117,109 @@ describe("🎨 Tailwind CSS Configuration - Phase 1.1 Foundation", () => {
   // ====================================
 
   describe("🔴🟢🔄 Philippine Resort Theme Configuration", () => {
-    it("🔴 RED: should fail without resort-specific color palette", () => {
-      expect(tailwindStyles).toContain("--color-ocean");
-      expect(tailwindStyles).toContain("--color-sand");
-      expect(tailwindStyles).toContain("--color-coral");
+    it("🔴 RED: should fail without enterprise-specific color palette", () => {
+      expect(tailwindStyles).toContain("--color-corporate");
+      expect(tailwindStyles).toContain("--color-neutral");
+      expect(tailwindStyles).toContain("--color-accent");
     });
 
-    it("🟢 GREEN: should define Ocean Blue color palette", () => {
-      const oceanColors = [
-        "--color-ocean-25",
-        "--color-ocean-50",
-        "--color-ocean-100",
-        "--color-ocean-200",
-        "--color-ocean-300",
-        "--color-ocean-400",
-        "--color-ocean-500",
-        "--color-ocean-600",
-        "--color-ocean-700",
-        "--color-ocean-800",
-        "--color-ocean-900",
-        "--color-ocean-950",
+    it("🟢 GREEN: should define Corporate Blue color palette", () => {
+      const corporateColors = [
+        "--color-corporate-25",
+        "--color-corporate-50",
+        "--color-corporate-100",
+        "--color-corporate-200",
+        "--color-corporate-300",
+        "--color-corporate-400",
+        "--color-corporate-500",
+        "--color-corporate-600",
+        "--color-corporate-700",
+        "--color-corporate-800",
+        "--color-corporate-900",
+        "--color-corporate-950",
       ];
 
-      oceanColors.forEach((color) => {
+      corporateColors.forEach((color) => {
         expect(tailwindStyles).toContain(color);
       });
     });
 
-    it("🔄 REFACTOR: should define Sand Beige color palette", () => {
-      const sandColors = [
-        "--color-sand-25",
-        "--color-sand-50",
-        "--color-sand-100",
-        "--color-sand-200",
-        "--color-sand-300",
-        "--color-sand-400",
-        "--color-sand-500",
-        "--color-sand-600",
-        "--color-sand-700",
-        "--color-sand-800",
-        "--color-sand-900",
+    it("🔄 REFACTOR: should define Neutral Gray color palette", () => {
+      const neutralColors = [
+        "--color-neutral-25",
+        "--color-neutral-50",
+        "--color-neutral-100",
+        "--color-neutral-200",
+        "--color-neutral-300",
+        "--color-neutral-400",
+        "--color-neutral-500",
+        "--color-neutral-600",
+        "--color-neutral-700",
+        "--color-neutral-800",
+        "--color-neutral-900",
       ];
 
-      sandColors.forEach((color) => {
+      neutralColors.forEach((color) => {
         expect(tailwindStyles).toContain(color);
       });
     });
 
-    it("🔄 REFACTOR: should define Coral Pink accent colors", () => {
-      const coralColors = [
-        "--color-coral-25",
-        "--color-coral-50",
-        "--color-coral-100",
-        "--color-coral-200",
-        "--color-coral-300",
-        "--color-coral-400",
-        "--color-coral-500",
-        "--color-coral-600",
-        "--color-coral-700",
-        "--color-coral-800",
-        "--color-coral-900",
+    it("🔄 REFACTOR: should define Accent Blue highlights colors", () => {
+      const accentColors = [
+        "--color-accent-25",
+        "--color-accent-50",
+        "--color-accent-100",
+        "--color-accent-200",
+        "--color-accent-300",
+        "--color-accent-400",
+        "--color-accent-500",
+        "--color-accent-600",
+        "--color-accent-700",
+        "--color-accent-800",
+        "--color-accent-900",
       ];
 
-      coralColors.forEach((color) => {
+      accentColors.forEach((color) => {
         expect(tailwindStyles).toContain(color);
       });
     });
 
-    it("🔄 REFACTOR: should define Palm Green natural colors", () => {
-      const palmColors = [
-        "--color-palm-25",
-        "--color-palm-50",
-        "--color-palm-100",
-        "--color-palm-200",
-        "--color-palm-300",
-        "--color-palm-400",
-        "--color-palm-500",
-        "--color-palm-600",
-        "--color-palm-700",
-        "--color-palm-800",
-        "--color-palm-900",
+    it("🔄 REFACTOR: should define Success Green status colors", () => {
+      const successColors = [
+        "--color-success-25",
+        "--color-success-50",
+        "--color-success-100",
+        "--color-success-200",
+        "--color-success-300",
+        "--color-success-400",
+        "--color-success-500",
+        "--color-success-600",
+        "--color-success-700",
+        "--color-success-800",
+        "--color-success-900",
       ];
 
-      palmColors.forEach((color) => {
+      successColors.forEach((color) => {
         expect(tailwindStyles).toContain(color);
       });
     });
 
-    it("🔄 REFACTOR: should define Sunset Orange energy colors", () => {
-      const sunsetColors = [
-        "--color-sunset-25",
-        "--color-sunset-50",
-        "--color-sunset-100",
-        "--color-sunset-200",
-        "--color-sunset-300",
-        "--color-sunset-400",
-        "--color-sunset-500",
-        "--color-sunset-600",
-        "--color-sunset-700",
-        "--color-sunset-800",
-        "--color-sunset-900",
+    it("🔄 REFACTOR: should define Warning Orange alert colors", () => {
+      const warningColors = [
+        "--color-warning-25",
+        "--color-warning-50",
+        "--color-warning-100",
+        "--color-warning-200",
+        "--color-warning-300",
+        "--color-warning-400",
+        "--color-warning-500",
+        "--color-warning-600",
+        "--color-warning-700",
+        "--color-warning-800",
+        "--color-warning-900",
       ];
 
-      sunsetColors.forEach((color) => {
+      warningColors.forEach((color) => {
         expect(tailwindStyles).toContain(color);
       });
     });
@@ -374,35 +374,36 @@ describe("🎨 Tailwind CSS Configuration - Phase 1.1 Foundation", () => {
   // ====================================
 
   describe("🔴🟢🔄 Resort-Specific Custom Utilities", () => {
-    it("🔴 RED: should fail without resort-specific gradient utilities", () => {
-      expect(tailwindStyles).toContain(".gradient-ocean");
-      expect(tailwindStyles).toContain(".gradient-sunset");
-      expect(tailwindStyles).toContain(".gradient-tropical");
+    it("🔴 RED: should fail without enterprise-specific color variables", () => {
+      expect(tailwindStyles).toContain("--color-corporate");
+      expect(tailwindStyles).toContain("--color-neutral");
+      expect(tailwindStyles).toContain("--color-accent");
     });
 
-    it("🟢 GREEN: should define ocean gradient utility", () => {
-      expect(tailwindStyles).toContain(".gradient-ocean {");
-      expect(tailwindStyles).toContain("from-ocean-400 via-ocean-500 to-ocean-600");
-      expect(tailwindStyles).toContain("bg-gradient-to-br");
+    it("🟢 GREEN: should define corporate color variables", () => {
+      expect(tailwindStyles).toContain("--color-corporate-400");
+      expect(tailwindStyles).toContain("--color-corporate-500");
+      expect(tailwindStyles).toContain("--color-corporate-600");
     });
 
-    it("🔄 REFACTOR: should define sunset gradient utility", () => {
-      expect(tailwindStyles).toContain(".gradient-sunset {");
-      expect(tailwindStyles).toContain("from-sunset-400 via-coral-400 to-sunset-500");
-      expect(tailwindStyles).toContain("bg-gradient-to-r");
+    it("🔄 REFACTOR: should define warning color variables", () => {
+      expect(tailwindStyles).toContain("--color-warning-400");
+      expect(tailwindStyles).toContain("--color-accent-400");
+      expect(tailwindStyles).toContain("--color-warning-500");
     });
 
-    it("🔄 REFACTOR: should define tropical gradient utility", () => {
-      expect(tailwindStyles).toContain(".gradient-tropical {");
-      expect(tailwindStyles).toContain("from-palm-400 via-ocean-400 to-coral-400");
-      expect(tailwindStyles).toContain("bg-gradient-to-br");
+    it("🔄 REFACTOR: should define success color variables", () => {
+      expect(tailwindStyles).toContain("--color-success-400");
+      expect(tailwindStyles).toContain("--color-corporate-400");
+      expect(tailwindStyles).toContain("--color-accent-400");
     });
 
-    it("🔄 REFACTOR: should define text gradient utilities", () => {
-      expect(tailwindStyles).toContain(".text-gradient-ocean");
-      expect(tailwindStyles).toContain(".text-gradient-sunset");
-      expect(tailwindStyles).toContain("bg-clip-text");
-      expect(tailwindStyles).toContain("text-transparent");
+    it("🔄 REFACTOR: should define enterprise color consistency", () => {
+      expect(tailwindStyles).toContain("--color-corporate-");
+      expect(tailwindStyles).toContain("--color-accent-");
+      // Should not contain old resort names
+      expect(tailwindStyles).not.toContain("--color-ocean-");
+      expect(tailwindStyles).not.toContain("--color-coral-");
     });
 
     it("🔄 REFACTOR: should define glass morphism utilities", () => {
@@ -570,8 +571,8 @@ describe("🎨 Tailwind CSS Configuration - Phase 1.1 Foundation", () => {
     });
 
     it("should work with React components", () => {
-      // Should define classes that React components can use
-      expect(tailwindStyles).toContain(".gradient-ocean");
+      // Should define variables that React components can use
+      expect(tailwindStyles).toContain("--color-corporate-");
       expect(tailwindStyles).toContain(".glass");
       expect(tailwindStyles).toContain(".currency-php");
     });
@@ -601,12 +602,12 @@ describe("🎨 Tailwind CSS Configuration - Phase 1.1 Foundation", () => {
       expect(tailwindStyles).toContain("mr-1");
     });
 
-    it("should use tropical and beach-inspired color palette", () => {
-      // Ocean, sand, coral, palm colors for tropical feel
-      expect(tailwindStyles).toContain("--color-ocean-");
-      expect(tailwindStyles).toContain("--color-sand-");
-      expect(tailwindStyles).toContain("--color-coral-");
-      expect(tailwindStyles).toContain("--color-palm-");
+    it("should use professional enterprise color palette", () => {
+      // Corporate, neutral, accent, success colors for professional feel
+      expect(tailwindStyles).toContain("--color-corporate-");
+      expect(tailwindStyles).toContain("--color-neutral-");
+      expect(tailwindStyles).toContain("--color-accent-");
+      expect(tailwindStyles).toContain("--color-success-");
     });
 
     it("should optimize for Filipino mobile usage patterns", () => {
@@ -615,9 +616,9 @@ describe("🎨 Tailwind CSS Configuration - Phase 1.1 Foundation", () => {
       expect(tailwindStyles).toContain("touch-manipulation");
     });
 
-    it("should support resort branding and aesthetics", () => {
-      expect(tailwindStyles).toContain(".gradient-tropical");
-      expect(tailwindStyles).toContain(".gradient-sunset");
+    it("should support enterprise branding and aesthetics", () => {
+      expect(tailwindStyles).toContain("--color-success-");
+      expect(tailwindStyles).toContain("--color-warning-");
       expect(tailwindStyles).toContain(".animate-float");
     });
 
@@ -715,7 +716,7 @@ describe("🎨 Tailwind CSS Configuration - Phase 1.1 Foundation", () => {
 
     it("should support brand color variations", () => {
       // Each brand color should have proper scale
-      const brandColors = ["ocean", "sand", "coral", "palm", "sunset"];
+      const brandColors = ["corporate", "neutral", "accent", "success", "warning"];
       const colorStops = [
         "25",
         "50",

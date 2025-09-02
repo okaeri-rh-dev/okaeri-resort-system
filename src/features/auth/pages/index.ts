@@ -1,6 +1,6 @@
 /**
  * Auth Pages Exports
- * Phase 1.2 GREEN Implementation
+ * Phase 1.3 REFACTOR Implementation
  */
 
 export { LoginPage } from "./LoginPage";

@@ -57,7 +57,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, transparent, var(--color-ocean-400), transparent);
+  background: linear-gradient(90deg, transparent, var(--color-corporate-400), transparent);
   animation: loading-bar 1.5s ease-in-out infinite;
   z-index: 10;
 }
@@ -108,7 +108,7 @@
 
   .route-loading::before {
     animation: none;
-    background: var(--color-ocean-400);
+    background: var(--color-corporate-400);
   }
 }
 
@@ -122,7 +122,7 @@
 /* Dark mode optimizations */
 @media (prefers-color-scheme: dark) {
   .route-loading::before {
-    background: linear-gradient(90deg, transparent, var(--color-ocean-300), transparent);
+    background: linear-gradient(90deg, transparent, var(--color-corporate-300), transparent);
   }
 }
 

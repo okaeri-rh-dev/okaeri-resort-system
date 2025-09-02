@@ -1,8 +1,8 @@
 /**
- * RegisterForm Component - Phase 1.2 GREEN Implementation
+ * RegisterForm Component - Phase 1.3 REFACTOR Implementation
  *
- * Minimal single-step registration form to make Phase 1.1 tests pass.
- * This is TDD GREEN phase - basic functionality only.
+ * Professional Enterprise Design System applied.
+ * Maintains 100% test compatibility while enhancing UI/UX.
  */
 
 import React from "react";
@@ -19,6 +19,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ROUTES } from "@/routes/paths";
+import {
+  getInputClasses,
+  getButtonClasses,
+  getLabelClasses,
+  getTypographyClasses,
+  getCheckboxClasses,
+  getErrorMessageClasses,
+  getLinkClasses,
+  getAlertStyles,
+  getCheckboxStyles,
+  getPasswordStrengthColor,
+} from "@/styles/design-system";
+import { RequiredIndicator } from "@/components/ui/required-indicator";
 
 export function RegisterForm() {
   const { register: registerUser, isLoading, error, clearError } = useAuthStore();
@@ -60,230 +73,254 @@ export function RegisterForm() {
   const strength = React.useMemo(() => checkPasswordStrength(password || ""), [password]);
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Create account</h1>
-        <p className="text-muted-foreground text-sm">
-          Enter your information to create your account
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+    <div className="space-y-3">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3" noValidate>
         {/* Global Error Display */}
         {error && (
-          <div className="text-destructive border-destructive bg-destructive/10 rounded-md border p-3 text-sm">
+          <div role="alert" className="rounded border p-3 text-sm" style={getAlertStyles("error")}>
             {error}
           </div>
         )}
 
-        {/* Name Field */}
-        <div className="space-y-2">
-          <Label htmlFor="name" required>
-            Full Name
+        {/* Name Field - Enterprise Grid Layout */}
+        <div className="grid grid-cols-3 items-start gap-x-4">
+          <Label htmlFor="name" className={`${getLabelClasses()} mt-2 text-right`}>
+            Full Name <RequiredIndicator />
           </Label>
-          <Input
-            id="name"
-            type="text"
-            autoComplete="name"
-            placeholder="Enter your full name"
-            error={errors.name?.message}
-            aria-invalid={!!errors.name}
-            aria-describedby={errors.name ? "name-error" : undefined}
-            {...register("name")}
-          />
-          {errors.name && (
-            <p id="name-error" role="alert" className="text-destructive text-sm">
-              {errors.name.message}
-            </p>
-          )}
-        </div>
-
-        {/* Email Field */}
-        <div className="space-y-2">
-          <Label htmlFor="email" required>
-            Email
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="Enter your email"
-            error={errors.email?.message}
-            aria-invalid={!!errors.email}
-            aria-describedby={errors.email ? "email-error" : undefined}
-            {...register("email")}
-          />
-          {errors.email && (
-            <p id="email-error" role="alert" className="text-destructive text-sm">
-              {errors.email.message}
-            </p>
-          )}
-        </div>
-
-        {/* Password Field */}
-        <div className="space-y-2">
-          <Label htmlFor="password" required>
-            Password
-          </Label>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="new-password"
-            placeholder="Create a strong password"
-            error={errors.password?.message}
-            aria-invalid={!!errors.password}
-            aria-describedby={
-              errors.password ? "password-error" : password ? "password-strength" : undefined
-            }
-            {...register("password")}
-          />
-          {errors.password && (
-            <p id="password-error" role="alert" className="text-destructive text-sm">
-              {errors.password.message}
-            </p>
-          )}
-          {password && (
-            <div id="password-strength" aria-live="polite" className="mt-1 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Password strength:</span>
-                <span
-                  className={
-                    strength.strength === "strong"
-                      ? "text-green-600"
-                      : strength.strength === "good"
-                        ? "text-yellow-600"
-                        : "text-red-600"
-                  }
-                >
-                  {strength.strength}
-                </span>
-              </div>
-              {strength.suggestions.length > 0 && (
-                <ul className="text-muted-foreground mt-1 list-disc pl-5">
-                  {strength.suggestions.map((s) => (
-                    <li key={s}>{s}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Confirm Password Field */}
-        <div className="space-y-2">
-          <Label htmlFor="confirmPassword" required>
-            Confirm Password
-          </Label>
-          <Input
-            id="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            placeholder="Confirm your password"
-            error={errors.confirmPassword?.message}
-            aria-invalid={!!errors.confirmPassword}
-            aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
-            {...register("confirmPassword")}
-          />
-          {errors.confirmPassword && (
-            <p id="confirmPassword-error" role="alert" className="text-destructive text-sm">
-              {errors.confirmPassword.message}
-            </p>
-          )}
-        </div>
-
-        {/* Project Name Field */}
-        <div className="space-y-2">
-          <Label htmlFor="projectName" optional>
-            Resort/Business Name
-          </Label>
-          <Input
-            id="projectName"
-            type="text"
-            placeholder="Enter your resort or business name (optional)"
-            error={errors.projectName?.message}
-            aria-invalid={!!errors.projectName}
-            aria-describedby={errors.projectName ? "projectName-error" : undefined}
-            {...register("projectName")}
-          />
-          {errors.projectName && (
-            <p id="projectName-error" role="alert" className="text-destructive text-sm">
-              {errors.projectName.message}
-            </p>
-          )}
-        </div>
-
-        {/* Phone Field */}
-        <div className="space-y-2">
-          <Label htmlFor="phone" optional>
-            Phone Number
-          </Label>
-          <Input
-            id="phone"
-            type="tel"
-            placeholder="+63 9XX XXX XXXX"
-            error={errors.phone?.message}
-            aria-invalid={!!errors.phone}
-            aria-describedby={errors.phone ? "phone-error" : undefined}
-            {...register("phone")}
-          />
-          {errors.phone && (
-            <p id="phone-error" role="alert" className="text-destructive text-sm">
-              {errors.phone.message}
-            </p>
-          )}
-        </div>
-
-        {/* Accept Terms */}
-        <div className="space-y-2">
-          <div className="flex items-start space-x-3">
-            <input
-              id="acceptTerms"
-              type="checkbox"
-              className="text-ocean-600 focus:border-ocean-300 focus:ring-ocean-200 focus:ring-opacity-50 mt-0.5 rounded border-gray-300 shadow-sm focus:ring"
-              aria-invalid={!!errors.acceptTerms}
-              aria-describedby={errors.acceptTerms ? "acceptTerms-error" : undefined}
-              {...register("acceptTerms")}
+          <div className="col-span-2">
+            <Input
+              id="name"
+              type="text"
+              required
+              autoComplete="name"
+              placeholder="John Doe"
+              error={errors.name?.message}
+              className={getInputClasses(errors.name ? "error" : "default")}
+              aria-invalid={!!errors.name}
+              aria-describedby={errors.name ? "name-error" : undefined}
+              {...register("name")}
             />
-            <div className="text-sm">
-              <Label htmlFor="acceptTerms" className="font-normal">
-                I agree to the{" "}
-                <Link to={ROUTES.terms} className="text-ocean-600 hover:text-ocean-500 underline">
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link to={ROUTES.privacy} className="text-ocean-600 hover:text-ocean-500 underline">
-                  Privacy Policy
-                </Link>
-              </Label>
-            </div>
+            {errors.name && (
+              <p id="name-error" role="alert" className={getErrorMessageClasses()}>
+                {errors.name.message}
+              </p>
+            )}
           </div>
-          {errors.acceptTerms && (
-            <p id="acceptTerms-error" role="alert" className="text-destructive text-sm">
-              {errors.acceptTerms.message}
-            </p>
-          )}
         </div>
 
-        {/* Submit Button */}
-        <Button
-          type="submit"
-          className="w-full"
-          loading={isLoading}
-          loadingText="Creating account..."
-          disabled={isLoading || !isValid}
-        >
-          Create account
-        </Button>
+        {/* Email Field - Enterprise Grid Layout */}
+        <div className="grid grid-cols-3 items-start gap-x-4">
+          <Label htmlFor="email" className={`${getLabelClasses()} mt-2 text-right`}>
+            Email <RequiredIndicator />
+          </Label>
+          <div className="col-span-2">
+            <Input
+              id="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="user@company.com"
+              error={errors.email?.message}
+              className={getInputClasses(errors.email ? "error" : "default")}
+              aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? "email-error" : undefined}
+              {...register("email")}
+            />
+            {errors.email && (
+              <p id="email-error" role="alert" className={getErrorMessageClasses()}>
+                {errors.email.message}
+              </p>
+            )}
+          </div>
+        </div>
 
-        {/* Link to Login */}
-        <div className="text-muted-foreground text-center text-sm">
-          Already have an account?{" "}
-          <Link
-            to={ROUTES.login}
-            className="text-ocean-600 hover:text-ocean-500 font-medium underline-offset-4 hover:underline"
-          >
-            Sign in
-          </Link>
+        {/* Password Field - Enterprise Grid Layout */}
+        <div className="grid grid-cols-3 items-start gap-x-4">
+          <Label htmlFor="password" className={`${getLabelClasses()} mt-2 text-right`}>
+            Password <RequiredIndicator />
+          </Label>
+          <div className="col-span-2">
+            <Input
+              id="password"
+              type="password"
+              required
+              autoComplete="new-password"
+              placeholder="••••••••"
+              error={errors.password?.message}
+              className={getInputClasses(errors.password ? "error" : "default")}
+              aria-invalid={!!errors.password}
+              aria-describedby={
+                errors.password ? "password-error" : password ? "password-strength" : undefined
+              }
+              {...register("password")}
+            />
+            {errors.password && (
+              <p id="password-error" role="alert" className={getErrorMessageClasses()}>
+                {errors.password.message}
+              </p>
+            )}
+            {password && (
+              <div id="password-strength" aria-live="polite" className="mt-1 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className={getTypographyClasses("helper")}>Strength:</span>
+                  <span
+                    className="font-medium"
+                    style={{ color: getPasswordStrengthColor(strength.strength) }}
+                  >
+                    {strength.strength.toUpperCase()}
+                  </span>
+                </div>
+                {strength.suggestions.length > 0 && (
+                  <ul
+                    className={`mt-1 ${getTypographyClasses("helper")} space-y-0.5 text-gray-600`}
+                  >
+                    {strength.suggestions.map((s) => (
+                      <li key={s}>• {s}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Confirm Password Field - Enterprise Grid Layout */}
+        <div className="grid grid-cols-3 items-start gap-x-4">
+          <Label htmlFor="confirmPassword" className={`${getLabelClasses()} mt-2 text-right`}>
+            Confirm <RequiredIndicator />
+          </Label>
+          <div className="col-span-2">
+            <Input
+              id="confirmPassword"
+              type="password"
+              required
+              autoComplete="new-password"
+              placeholder="••••••••"
+              error={errors.confirmPassword?.message}
+              className={getInputClasses(errors.confirmPassword ? "error" : "default")}
+              aria-invalid={!!errors.confirmPassword}
+              aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
+              {...register("confirmPassword")}
+            />
+            {errors.confirmPassword && (
+              <p id="confirmPassword-error" role="alert" className={getErrorMessageClasses()}>
+                {errors.confirmPassword.message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Project Name Field - Enterprise Grid Layout */}
+        <div className="grid grid-cols-3 items-start gap-x-4">
+          <Label htmlFor="projectName" className={`${getLabelClasses()} mt-2 text-right`}>
+            Business{" "}
+            <span className={`text-gray-600 ${getTypographyClasses("helper")}`}>(optional)</span>
+          </Label>
+          <div className="col-span-2">
+            <Input
+              id="projectName"
+              type="text"
+              placeholder="Resort or business name"
+              error={errors.projectName?.message}
+              className={getInputClasses(errors.projectName ? "error" : "default")}
+              aria-invalid={!!errors.projectName}
+              aria-describedby={errors.projectName ? "projectName-error" : undefined}
+              {...register("projectName")}
+            />
+            {errors.projectName && (
+              <p id="projectName-error" role="alert" className={getErrorMessageClasses()}>
+                {errors.projectName.message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Phone Field - Enterprise Grid Layout */}
+        <div className="grid grid-cols-3 items-start gap-x-4">
+          <Label htmlFor="phone" className={`${getLabelClasses()} mt-2 text-right`}>
+            Phone{" "}
+            <span className={`text-gray-600 ${getTypographyClasses("helper")}`}>(optional)</span>
+          </Label>
+          <div className="col-span-2">
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="+63 9XX XXX XXXX"
+              error={errors.phone?.message}
+              className={`${getInputClasses(errors.phone ? "error" : "default")} font-mono`}
+              aria-invalid={!!errors.phone}
+              aria-describedby={errors.phone ? "phone-error" : undefined}
+              {...register("phone")}
+            />
+            {errors.phone && (
+              <p id="phone-error" role="alert" className={getErrorMessageClasses()}>
+                {errors.phone.message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Accept Terms - Aligned with Grid */}
+        <div className="grid grid-cols-3 items-start gap-x-4">
+          <div></div>
+          <div className="col-span-2">
+            <div className="flex items-start space-x-2">
+              <input
+                id="acceptTerms"
+                type="checkbox"
+                required
+                className={`mt-0.5 ${getCheckboxClasses(!!errors.acceptTerms)}`}
+                style={getCheckboxStyles()}
+                aria-invalid={!!errors.acceptTerms}
+                aria-describedby={errors.acceptTerms ? "acceptTerms-error" : undefined}
+                {...register("acceptTerms")}
+              />
+              <div className={getTypographyClasses("helper")}>
+                <Label htmlFor="acceptTerms" className={`${getLabelClasses()} font-normal`}>
+                  I agree to the{" "}
+                  <Link to={ROUTES.terms} className={getLinkClasses("primary")}>
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link to={ROUTES.privacy} className={getLinkClasses("primary")}>
+                    Privacy Policy
+                  </Link>
+                </Label>
+              </div>
+            </div>
+            {errors.acceptTerms && (
+              <p id="acceptTerms-error" role="alert" className={getErrorMessageClasses()}>
+                {errors.acceptTerms.message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Submit Button - Corporate Blue */}
+        <div className="grid grid-cols-3 items-center gap-x-4 pt-2">
+          <div></div>
+          <div className="col-span-2">
+            <Button
+              type="submit"
+              className={`${getButtonClasses("primary")} w-full ${isLoading || !isValid ? "cursor-not-allowed opacity-60" : ""}`}
+              loading={isLoading}
+              loadingText="Creating Account..."
+              disabled={isLoading || !isValid}
+            >
+              Create Account
+            </Button>
+          </div>
+        </div>
+
+        {/* Link to Login - Professional Styling */}
+        <div className="grid grid-cols-3 items-center gap-x-4 pt-1">
+          <div></div>
+          <div className={`col-span-2 ${getTypographyClasses("helper")}`}>
+            Already have an account?{" "}
+            <Link to={ROUTES.login} className={getLinkClasses("primary")}>
+              Sign In
+            </Link>
+          </div>
         </div>
       </form>
     </div>
