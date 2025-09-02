@@ -142,18 +142,64 @@ export default defineConfig({
     logHeapUsage: false,
 
     // Dependency optimization for tests
+    // Use server.deps for regex-based patterns similar to previous config
+    server: {
+      deps: {
+        inline: [/@testing-library\/.*/, /lucide-react/, /@radix-ui\/.*/],
+        external: ["react", "react-dom"],
+      },
+    },
     deps: {
-      inline: [
-        // Inline ESM dependencies that need to be transformed
-        /@testing-library\/.*/,
-        /lucide-react/,
-        /@radix-ui\/.*/,
-      ],
-      external: [
-        // External dependencies that shouldn't be bundled
-        "react",
-        "react-dom",
-      ],
+      optimizer: {
+        web: {
+          // Replaces deprecated deps.inline/deps.external for browser-like env (jsdom)
+          include: [
+            "@testing-library/react",
+            "@testing-library/jest-dom",
+            "@testing-library/user-event",
+            "lucide-react",
+            "@radix-ui/react-alert-dialog",
+            "@radix-ui/react-avatar",
+            "@radix-ui/react-checkbox",
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-label",
+            "@radix-ui/react-progress",
+            "@radix-ui/react-radio-group",
+            "@radix-ui/react-select",
+            "@radix-ui/react-slot",
+            "@radix-ui/react-switch",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-toast",
+            "@radix-ui/react-tooltip",
+          ],
+          exclude: ["react", "react-dom"],
+        },
+        ssr: {
+          // Mirror settings for Node/SSR runs
+          include: [
+            "@testing-library/react",
+            "@testing-library/jest-dom",
+            "@testing-library/user-event",
+            "lucide-react",
+            "@radix-ui/react-alert-dialog",
+            "@radix-ui/react-avatar",
+            "@radix-ui/react-checkbox",
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-label",
+            "@radix-ui/react-progress",
+            "@radix-ui/react-radio-group",
+            "@radix-ui/react-select",
+            "@radix-ui/react-slot",
+            "@radix-ui/react-switch",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-toast",
+            "@radix-ui/react-tooltip",
+          ],
+          exclude: ["react", "react-dom"],
+        },
+      },
     },
 
     // CSS handling in tests
