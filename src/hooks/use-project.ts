@@ -9,6 +9,7 @@ import { useProjectStore } from "@/stores/projectStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useUIStore } from "@/stores/uiStore";
 import { queryClient, queryKeys, invalidateQueries } from "@/lib/query-client";
+import { ROUTES } from "@/routes/paths";
 import type { Project, Property } from "@/types/common";
 
 export function useProject() {
@@ -81,7 +82,7 @@ export function useProject() {
     onSuccess: () => {
       toast.success("Project deleted", "Project has been deleted successfully.");
       invalidateQueries.projects();
-      navigate({ to: "/dashboard" });
+      navigate({ to: ROUTES.dashboard });
     },
     onError: (error: any) => {
       toast.error("Failed to delete project", error.message);

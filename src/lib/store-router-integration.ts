@@ -13,6 +13,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useProjectStore } from "@/stores/projectStore";
 import { useUIStore } from "@/stores/uiStore";
 import { apiClient as api } from "@/lib/api-client";
+import { ROUTES } from "@/routes/paths";
 import type { QueryKey, InfiniteData } from "@tanstack/react-query";
 import type { Project, Property, Booking, Expense, PaginatedResponse } from "@/types/common";
 
@@ -62,7 +63,7 @@ export const useNavigationStore = create<NavigationState & NavigationActions>()(
     subscribeWithSelector(
       immer((set, get) => ({
         // Initial state
-        currentRoute: "/dashboard",
+        currentRoute: ROUTES.dashboard,
         previousRoute: null,
         navigationHistory: [],
         isNavigating: false,
@@ -359,7 +360,7 @@ export class CacheSyncManager {
   private updateBreadcrumbs(route: string) {
     const segments = route.split("/").filter(Boolean);
     const breadcrumbs: Array<{ label: string; href?: string }> = [
-      { label: "Home", href: "/dashboard" },
+      { label: "Home", href: ROUTES.dashboard },
     ];
 
     let currentPath = "";

@@ -70,9 +70,10 @@ describe("Form Structure", () => {
   });
 
   it("should render submit button with proper states", () => {
-    // RED: Submit button exists and is initially enabled
+    // RED: Submit button exists and is initially disabled until form is valid
     // RED: Button text is "Sign In"
     // RED: Type="submit" for form submission
+    // RED: Button becomes enabled when all fields are valid
   });
 
   it("should render password visibility toggle", () => {
@@ -380,8 +381,9 @@ describe("Terms and Conditions", () => {
 
   it("should enable submission when terms accepted", () => {
     // RED: Check terms and conditions checkbox
-    // RED: Submit button becomes enabled
+    // RED: Submit button becomes enabled (when all fields valid)
     // RED: No validation errors shown
+    // RED: Button remains disabled if other fields invalid
   });
 
   it("should open terms in modal/new tab", () => {

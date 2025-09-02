@@ -6,6 +6,8 @@
 
 import type { User } from "@/types/common";
 import { SECURITY_ERROR_CODES, TOKEN_EXPIRY } from "./constants";
+import { SECURITY_EVENTS } from "./events";
+import { ROUTES } from "@/routes/paths";
 
 interface TokenPayload {
   exp: number;
@@ -33,6 +35,7 @@ export class SecureTokenManager {
 
   // Memory-only storage - not accessible via window object
   private accessToken: string | null = null;
+  private refreshToken: string | null = null; // Refresh tokens are NEVER persisted client-side in production
   private tokenFingerprint: string | null = null;
   private refreshTimer: NodeJS.Timeout | null = null;
   private tokenRefreshCallbacks: Set<() => Promise<void>> = new Set();
@@ -73,6 +76,11 @@ export class SecureTokenManager {
    * Initialize security event listeners
    */
   private initializeSecurityListeners(): void {
+    // Guard for non-browser environments (SSR, tests)
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      return;
+    }
+
     // Detect tab visibility changes
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
@@ -86,10 +94,12 @@ export class SecureTokenManager {
 
     // Detect storage events (for logout synchronization)
     window.addEventListener("storage", (event) => {
-      if (event.key === "okaeri_logout_event") {
+      if (event.key === SECURITY_EVENTS.LOGOUT) {
         // Another tab logged out, clear tokens
         this.clearTokens();
-        window.location.href = "/login?reason=logged_out_other_tab";
+        // Using ROUTES constants for single source of truth
+        // See: src/routes/paths.ts
+        window.location.href = `${ROUTES.login}?reason=logged_out_other_tab`;
       }
     });
 
@@ -101,6 +111,11 @@ export class SecureTokenManager {
    * Prevent common token extraction attempts
    */
   private preventTokenExtraction(): void {
+    // Guard for non-browser environments
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      return;
+    }
+
     // Override console methods in production
     if (import.meta.env.PROD) {
       const noop = () => {};
@@ -119,17 +134,19 @@ export class SecureTokenManager {
         originalLog.apply(console, filtered);
       };
 
-      // Warn about debugger usage
-      setInterval(() => {
-        const start = performance.now();
+      // Warn about debugger usage (opt-in via environment flag)
+      if (import.meta.env.VITE_SECURITY_DEBUGGER_DETECT === "true") {
+        setInterval(() => {
+          const start = performance.now();
 
-        debugger;
-        const end = performance.now();
-        if (end - start > 100) {
-          consoleWarn("Debugger detected. Security measures activated.");
-          this.handleSuspiciousActivity();
-        }
-      }, 1000);
+          debugger;
+          const end = performance.now();
+          if (end - start > 100) {
+            consoleWarn("Debugger detected. Security measures activated.");
+            this.handleSuspiciousActivity();
+          }
+        }, 1000);
+      }
     }
   }
 
@@ -149,7 +166,9 @@ export class SecureTokenManager {
     // Optionally: Reduce token lifetime or require re-authentication
     if (this.tokenRotationCount > 10) {
       this.clearTokens();
-      window.location.href = "/login?reason=security_check";
+      // Using ROUTES constants for single source of truth
+      // See: src/routes/paths.ts
+      window.location.href = `${ROUTES.login}?reason=security_check`;
     }
   }
 
@@ -157,36 +176,51 @@ export class SecureTokenManager {
    * Generate secure token fingerprint
    */
   private generateFingerprint(): string {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return Math.random().toString(36);
+    // Guard for non-browser environments
+    if (
+      typeof document === "undefined" ||
+      typeof navigator === "undefined" ||
+      typeof screen === "undefined"
+    ) {
+      return "test-fingerprint-" + Math.random().toString(36).substr(2, 9);
+    }
 
-    // Create canvas fingerprint
-    ctx.textBaseline = "top";
-    ctx.font = "14px Arial";
-    ctx.textBaseline = "alphabetic";
-    ctx.fillStyle = "#f60";
-    ctx.fillRect(125, 1, 62, 20);
-    ctx.fillStyle = "#069";
-    ctx.fillText("Browser Fingerprint", 2, 15);
-    ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
-    ctx.fillText("Browser Fingerprint", 4, 17);
+    try {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return Math.random().toString(36);
 
-    const dataURL = canvas.toDataURL();
+      // Create canvas fingerprint
+      ctx.textBaseline = "top";
+      ctx.font = "14px Arial";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = "#f60";
+      ctx.fillRect(125, 1, 62, 20);
+      ctx.fillStyle = "#069";
+      ctx.fillText("Browser Fingerprint", 2, 15);
+      ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
+      ctx.fillText("Browser Fingerprint", 4, 17);
 
-    // Combine with other browser characteristics
-    const fingerprint = btoa(
-      JSON.stringify({
-        canvas: dataURL.slice(-50),
-        screen: `${screen.width}x${screen.height}x${screen.colorDepth}`,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        language: navigator.language,
-        platform: navigator.platform,
-        vendor: navigator.vendor,
-      })
-    );
+      const dataURL = canvas.toDataURL();
 
-    return fingerprint;
+      // Combine with other browser characteristics
+      const fingerprint = btoa(
+        JSON.stringify({
+          canvas: dataURL.slice(-50),
+          screen: `${screen.width}x${screen.height}x${screen.colorDepth}`,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          language: navigator.language,
+          platform: navigator.platform,
+          vendor: navigator.vendor,
+        })
+      );
+
+      return fingerprint;
+    } catch (error) {
+      // Canvas operations can fail in restricted environments (privacy browsers, headless, etc.)
+      console.warn("Canvas fingerprinting failed, using fallback:", error);
+      return "fallback-" + Math.random().toString(36).substr(2, 9);
+    }
   }
 
   /**
@@ -210,7 +244,20 @@ export class SecureTokenManager {
         return null;
       }
 
-      const payload = JSON.parse(atob(parts[1]!));
+      // Check if atob is available (not in Node.js by default)
+      // Provide polyfill for test environments using Buffer
+      const atobSafe =
+        typeof atob !== "undefined"
+          ? atob
+          : (b64: string) => Buffer.from(b64, "base64").toString("binary");
+
+      // Normalize base64url to base64 before decoding
+      const base64 = parts[1]!.replace(/-/g, "+").replace(/_/g, "/");
+      // Add padding if necessary
+      const padding = base64.length % 4 ? "=".repeat(4 - (base64.length % 4)) : "";
+      const normalized = base64 + padding;
+
+      const payload = JSON.parse(atobSafe(normalized));
 
       // Validate required fields
       if (!payload.exp || !payload.iat || !payload.sub) {
@@ -360,29 +407,26 @@ export class SecureTokenManager {
    * Refresh token invalidation is handled server-side in production
    */
   clearTokens(): void {
-    // Overwrite access token in memory
-    if (this.accessToken) {
-      this.accessToken = crypto.getRandomValues(new Uint8Array(this.accessToken.length)).toString();
-      this.accessToken = null;
-    }
-
-    // SECURITY: No sessionStorage to clear - tokens are memory-only
-    if (this.isDevelopmentMockAuth()) {
-      console.log("[SecureTokenManager] Mock tokens cleared from memory");
-    }
-
-    // Note: Refresh tokens are not stored client-side in production, so no clearing needed
-    // In Phase 5, server-side refresh token invalidation will be handled via API call
-
+    // Simply null the tokens - string overwriting is ineffective in JavaScript
+    // The JavaScript engine will handle memory cleanup via garbage collection
+    this.accessToken = null;
+    this.refreshToken = null;
     this.tokenFingerprint = null;
     this.tokenRotationCount = 0;
     this.lastTokenRotation = 0;
 
+    // SECURITY: No sessionStorage/localStorage to clear - tokens are memory-only
+    if (this.isDevelopmentMockAuth()) {
+      console.log("[SecureTokenManager] Mock tokens cleared from memory");
+    }
+
+    // Note: In production, server-side refresh token invalidation is handled via API call
+
     this.cancelTokenRefresh();
 
     // Signal logout to other tabs
-    localStorage.setItem("okaeri_logout_event", Date.now().toString());
-    setTimeout(() => localStorage.removeItem("okaeri_logout_event"), 100);
+    localStorage.setItem(SECURITY_EVENTS.LOGOUT, Date.now().toString());
+    setTimeout(() => localStorage.removeItem(SECURITY_EVENTS.LOGOUT), 100);
   }
 
   /**
@@ -530,12 +574,10 @@ export class SecureTokenManager {
    * Broadcast token update to other tabs (without token value)
    */
   private broadcastTokenUpdate(): void {
-    const event = new StorageEvent("storage", {
-      key: "okaeri_token_update",
-      newValue: Date.now().toString(),
-      url: window.location.href,
-    });
-    window.dispatchEvent(event);
+    // Write to localStorage temporarily to trigger storage event in other tabs
+    // This follows the same pattern as logout broadcast for reliable cross-tab sync
+    localStorage.setItem(SECURITY_EVENTS.TOKEN_UPDATE, Date.now().toString());
+    setTimeout(() => localStorage.removeItem(SECURITY_EVENTS.TOKEN_UPDATE), 100);
   }
 
   /**

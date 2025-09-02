@@ -6,7 +6,7 @@
 import { z } from "zod";
 
 // Password validation regex for strong passwords
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
 
 // Common email validation
 export const emailSchema = z
@@ -53,24 +53,32 @@ export const projectNameSchema = z
   .transform((val) => val.trim())
   .optional();
 
-// Philippine phone number validation
+// Philippine phone number validation with preprocessing
 export const phoneSchema = z
-  .string()
-  .regex(/^(\+63|63|0)?[89]\d{9}$/, "Please enter a valid Philippine phone number")
-  .transform((val) => {
-    // Normalize to +63 format
-    const cleaned = val.replace(/\D/g, "");
-    if (cleaned.startsWith("63")) {
-      return `+${cleaned}`;
-    }
-    if (cleaned.startsWith("0")) {
-      return `+63${cleaned.slice(1)}`;
-    }
-    if (cleaned.length === 10 && (cleaned.startsWith("9") || cleaned.startsWith("8"))) {
-      return `+63${cleaned}`;
-    }
-    return `+63${cleaned}`;
-  })
+  .preprocess(
+    (val) => {
+      // Preprocess: normalize input before validation
+      if (typeof val !== "string") return val;
+
+      // Remove all non-digit characters
+      const cleaned = val.replace(/\D/g, "");
+
+      // Normalize to +63 format
+      if (cleaned.startsWith("63")) {
+        return `+${cleaned}`;
+      }
+      if (cleaned.startsWith("0")) {
+        return `+63${cleaned.slice(1)}`;
+      }
+      if (cleaned.length === 10 && (cleaned.startsWith("9") || cleaned.startsWith("8"))) {
+        return `+63${cleaned}`;
+      }
+
+      // If already has proper format or needs 63 prefix
+      return cleaned.length > 0 ? `+63${cleaned}` : val;
+    },
+    z.string().regex(/^\+63[89]\d{9}$/, "Please enter a valid Philippine phone number")
+  )
   .optional();
 
 // Reset token validation

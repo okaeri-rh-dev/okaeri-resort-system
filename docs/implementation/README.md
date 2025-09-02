@@ -20,6 +20,8 @@ This documentation outlines the Test-Driven Development (TDD) approach for rebui
 
 To prevent documentation drift and confusion, each topic area has ONE authoritative document:
 
+**CRITICAL**: See [PHASE_1_RECONCILIATION.md](./PHASE_1_RECONCILIATION.md) for the authoritative Phase 1 structure following TDD remediation.
+
 | Topic Area | Primary Document (Authoritative) | Secondary Documents (Reference) |
 |------------|----------------------------------|----------------------------------|
 | **Testing Standards** | [TDD Single Source of Truth](./TDD_SINGLE_SOURCE_OF_TRUTH.md) | All test-related documents reference this |
@@ -44,6 +46,7 @@ To prevent documentation drift and confusion, each topic area has ONE authoritat
 - **[Test Infrastructure Requirements](./TEST_INFRASTRUCTURE_REQUIREMENTS.md)** - DevDependencies and setup requirements
 - **[Test Configuration Templates](./TEST_CONFIGURATION_TEMPLATES.md)** - ✅ Copy-paste ready configuration templates (Updated with latest package versions)
 - **[Test Utilities Specification](./TEST_UTILITIES_SPECIFICATION.md)** - ✅ Complete test utilities, accessibility patterns, and Philippine context helpers
+- **[Test Mock Templates](./TEST_MOCK_TEMPLATES.md)** - 🆕 Standardized mock patterns for consistent testing
 - **[Mock API Architecture](./Mock_API_Architecture.md)** - Comprehensive mock service design
 - **[Component Testing Patterns](./COMPONENT_TESTING_PATTERNS.md)** - Component test strategies
 - **[Test Data Seeding Strategy](./Test_Data_Seeding_Strategy.md)** - Test data management
@@ -109,6 +112,8 @@ Each phase follows the TDD methodology with specialized agent ownership:
   - **[Strategic Deviations](./phases/phase-0-cleanup/STRATEGIC_DEVIATIONS.md)** - Implementation decisions
   - **[Phase 1 Handoff](./PHASE_1_HANDOFF.md)** - Complete handoff documentation
 - **[Phase 1: Login System TDD](./phases/phase-1-login-tdd/)** - Authentication implementation
+  - **[⚠️ Phase 1.2 Lessons Learned](./PHASE_1_2_LESSONS_LEARNED.md)** - Critical lapses and prevention measures
+  - **[Phase 1 Reconciliation](./PHASE_1_RECONCILIATION.md)** - Complete remediation history
 - **[Phase 2: Dashboard TDD](./phases/phase-2-dashboard-tdd/)** - Dashboard and metrics
 - **[Phase 3: Booking System TDD](./phases/phase-3-booking-tdd/)** - Booking management
   - **[Phase 3 Database Patterns](./phases/phase-3-booking-tdd/PHASE_3_DATABASE_PATTERNS.md)** - ✅ Application-level tenant isolation patterns (Updated)

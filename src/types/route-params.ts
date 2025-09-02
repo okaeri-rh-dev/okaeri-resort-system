@@ -8,6 +8,7 @@ import {
   BookingSource,
   PaymentMethod,
 } from "./common";
+import { ROUTES } from "@/routes/paths";
 
 /**
  * Route parameter validation schemas and types
@@ -302,14 +303,14 @@ export interface RouteMetadata {
 }
 
 export const routeMetadata: Record<string, RouteMetadata> = {
-  "/": {
+  [ROUTES.root]: {
     title: "Dashboard",
     description: "Overview of your resort operations",
     icon: "dashboard",
     breadcrumb: "Dashboard",
     requiresProject: true,
   },
-  "/dashboard": {
+  [ROUTES.dashboard]: {
     title: "Dashboard",
     description: "Overview of your resort operations",
     icon: "dashboard",

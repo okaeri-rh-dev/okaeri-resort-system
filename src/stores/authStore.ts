@@ -26,7 +26,7 @@ import { mockAuthService } from "@/mocks/auth-service";
 
 interface AuthActions {
   // Auth actions
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, options?: { rememberMe?: boolean }) => Promise<void>;
   logout: () => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   refreshTokens: () => Promise<void>; // PHASE 1 TEMPORARY: Renamed to avoid collision
@@ -81,7 +81,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       error: null,
 
       // Authentication actions with enhanced security
-      login: async (email: string, password: string) => {
+      login: async (email: string, password: string, options?: { rememberMe?: boolean }) => {
         // [PHASE 1-4 MOCK AUTH - Remove this block in Phase 5.2]
         if (import.meta.env.DEV && config.development.mockAuth) {
           set((state) => {
@@ -97,9 +97,16 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             tokenManager.storeTokens(token, refreshToken);
             // Token is managed by TokenManager, not directly by apiClient
 
-            // Start session monitoring
+            // Phase 1-4 Mock Auth: rememberMe extends session timeout only
+            // Phase 5.2 Real Auth: Will request longer-lived tokens from backend
+            // This maintains consistent UX while preventing test drift
+            // Start session monitoring with Remember Me support
+            const sessionTimeout = options?.rememberMe
+              ? 7 * 24 * 60 * 60 * 1000 // 7 days for Remember Me
+              : TOKEN_EXPIRY.SESSION_TIMEOUT; // Default 1 hour
+
             sessionMonitor.start({
-              timeout: TOKEN_EXPIRY.SESSION_TIMEOUT,
+              timeout: sessionTimeout,
               warningTime: TOKEN_EXPIRY.SESSION_WARNING,
               onTimeout: () => {
                 get().logout();
@@ -178,9 +185,13 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           // Set auth token in API client
           // Token is managed by TokenManager, not directly by apiClient
 
-          // Start session monitoring
+          // Start session monitoring with Remember Me support
+          const sessionTimeout = options?.rememberMe
+            ? 7 * 24 * 60 * 60 * 1000 // 7 days for Remember Me
+            : TOKEN_EXPIRY.SESSION_TIMEOUT; // Default 1 hour
+
           sessionMonitor.start({
-            timeout: TOKEN_EXPIRY.SESSION_TIMEOUT,
+            timeout: sessionTimeout,
             warningTime: TOKEN_EXPIRY.SESSION_WARNING,
             onTimeout: () => {
               get().logout();

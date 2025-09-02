@@ -8,6 +8,7 @@ import { queryClient, queryKeys } from "@/lib/query-client";
 import { useAuthStore } from "@/stores/authStore";
 import { useProjectStore } from "@/stores/projectStore";
 import { useUIStore } from "@/stores/uiStore";
+import { ROUTES } from "@/routes/paths";
 import {
   useNavigationStore,
   cacheSyncManager,
@@ -45,7 +46,7 @@ export async function createAuthenticatedLoader<T extends Record<string, any>>(
     // Check authentication
     const authState = useAuthStore.getState();
     if (!authState.isAuthenticated || !authState.user) {
-      throw redirect({ to: "/login", search: { reason: "session_required" } });
+      throw redirect({ to: ROUTES.login, search: { reason: "session_required" } });
     }
 
     // Check for active project
@@ -156,7 +157,7 @@ export const dashboardLoader = createAuthenticatedLoader<{
     }, 100);
 
     // Store route state
-    routeStateManager.setRouteState("/dashboard", {
+    routeStateManager.setRouteState(ROUTES.dashboard, {
       stats,
       recentBookings,
       recentExpenses,

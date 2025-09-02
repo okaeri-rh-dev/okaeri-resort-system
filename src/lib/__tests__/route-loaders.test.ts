@@ -24,6 +24,7 @@ import { useUIStore } from "@/stores/uiStore";
 import { queryClient } from "@/lib/query-client";
 import { apiClient } from "@/lib/api-client";
 import { MOCK_USERS, MOCK_AUTH_STATES } from "@tests/utils/test-utils";
+import { ROUTES } from "@/routes/paths";
 
 // Mock stores
 vi.mock("@/stores/authStore", () => ({
@@ -203,7 +204,7 @@ describe("Route Loaders", () => {
 
       await expect(loader(params)).rejects.toThrow();
       expect(redirect).toHaveBeenCalledWith({
-        to: "/login",
+        to: ROUTES.login,
         search: { reason: "session_required" },
       });
     });
@@ -272,7 +273,7 @@ describe("Route Loaders", () => {
     it("should load comprehensive dashboard data", async () => {
       const params = {
         search: { dateRange: "month" },
-        location: { pathname: "/dashboard" },
+        location: { pathname: ROUTES.dashboard },
       };
 
       const result = await dashboardLoader(params);
@@ -291,7 +292,7 @@ describe("Route Loaders", () => {
     it("should set and clear global loading state", async () => {
       const params = {
         search: { dateRange: "week" },
-        location: { pathname: "/dashboard" },
+        location: { pathname: ROUTES.dashboard },
       };
 
       await dashboardLoader(params);
@@ -303,7 +304,7 @@ describe("Route Loaders", () => {
     it("should prefetch related data in background", async () => {
       const params = {
         search: { dateRange: "month" },
-        location: { pathname: "/dashboard" },
+        location: { pathname: ROUTES.dashboard },
       };
 
       await dashboardLoader(params);
@@ -319,7 +320,7 @@ describe("Route Loaders", () => {
           startDate: "2024-01-01",
           endDate: "2024-01-31",
         },
-        location: { pathname: "/dashboard" },
+        location: { pathname: ROUTES.dashboard },
       };
 
       await dashboardLoader(params);
@@ -952,7 +953,7 @@ describe("Route Loaders", () => {
 
       const params = {
         search: { dateRange: "month" },
-        location: { pathname: "/dashboard" },
+        location: { pathname: ROUTES.dashboard },
       };
 
       await expect(dashboardLoader(params)).rejects.toThrow("API Error");
@@ -975,7 +976,7 @@ describe("Route Loaders", () => {
 
       const params = {
         search: { dateRange: "month" },
-        location: { pathname: "/dashboard" },
+        location: { pathname: ROUTES.dashboard },
       };
 
       const result = await dashboardLoader(params);
@@ -988,7 +989,7 @@ describe("Route Loaders", () => {
     it("should use appropriate cache times for different data types", async () => {
       const params = {
         search: { dateRange: "month" },
-        location: { pathname: "/dashboard" },
+        location: { pathname: ROUTES.dashboard },
       };
 
       await dashboardLoader(params);

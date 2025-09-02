@@ -8,6 +8,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import { useUIStore } from "@/stores/uiStore";
 import { queryClient } from "@/lib/query-client";
+import { ROUTES } from "@/routes/paths";
 
 interface LoginCredentials {
   email: string;
@@ -48,7 +49,7 @@ export function useAuth() {
 
       // Navigate to dashboard or redirect URL
       const searchParams = new URLSearchParams(window.location.search);
-      const redirect = searchParams.get("redirect") || "/dashboard";
+      const redirect = searchParams.get("redirect") || ROUTES.dashboard;
       navigate({ to: redirect });
 
       // Invalidate and refetch all queries
@@ -66,7 +67,7 @@ export function useAuth() {
     },
     onSuccess: () => {
       toast.success("Welcome!", "Your account has been created successfully.");
-      navigate({ to: "/dashboard" });
+      navigate({ to: ROUTES.dashboard });
 
       // Invalidate and refetch all queries
       queryClient.invalidateQueries();
@@ -83,7 +84,7 @@ export function useAuth() {
     },
     onSuccess: () => {
       toast.info("Logged out", "You have been logged out successfully.");
-      navigate({ to: "/login" });
+      navigate({ to: ROUTES.login });
 
       // Clear all cached data
       queryClient.clear();
@@ -190,7 +191,7 @@ export function useRequireAuth() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       navigate({
-        to: "/login",
+        to: ROUTES.login,
         search: {
           redirect: window.location.pathname,
         },

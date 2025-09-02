@@ -9,6 +9,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import { useUIStore } from "@/stores/uiStore";
 import { queryClient } from "@/lib/query-client";
+import { ROUTES } from "@/routes/paths";
 import {
   tokenManager,
   sessionMonitor,
@@ -119,7 +120,7 @@ export function useSecureAuth() {
 
       // Navigate to dashboard or redirect URL
       const searchParams = new URLSearchParams(window.location.search);
-      const redirect = searchParams.get("redirect") || "/dashboard";
+      const redirect = searchParams.get("redirect") || ROUTES.dashboard;
       navigate({ to: redirect });
 
       // Invalidate and refetch all queries
@@ -161,7 +162,7 @@ export function useSecureAuth() {
     },
     onSuccess: () => {
       toast.success("Welcome!", "Your account has been created successfully.");
-      navigate({ to: "/dashboard" });
+      navigate({ to: ROUTES.dashboard });
       queryClient.invalidateQueries();
     },
     onError: (error: any) => {
@@ -182,7 +183,7 @@ export function useSecureAuth() {
     },
     onSuccess: () => {
       toast.info("Logged out", "You have been logged out successfully.");
-      navigate({ to: "/login" });
+      navigate({ to: ROUTES.login });
       queryClient.clear();
     },
     onError: (error: any) => {
@@ -391,7 +392,7 @@ export function useRequireSecureAuth(
 
     if (!isAuthenticated) {
       navigate({
-        to: "/login",
+        to: ROUTES.login,
         search: {
           redirect: window.location.pathname,
         },
@@ -411,7 +412,7 @@ export function useRequireSecureAuth(
           requiredPermissions,
         });
 
-        navigate({ to: "/dashboard" });
+        navigate({ to: ROUTES.dashboard });
       }
     }
   }, [isAuthenticated, isLoading, hasPermission, requiredPermissions, navigate]);

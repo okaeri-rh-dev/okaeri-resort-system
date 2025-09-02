@@ -8,6 +8,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useProjectStore } from "@/stores/projectStore";
 import { secureTokenManager as tokenManager, auditLogger, sessionMonitor } from "@/lib/security";
 import type { User } from "@/types/common";
+import { ROUTES } from "@/routes/paths";
 // [PHASE 1-4 MOCK AUTH - Remove in Phase 5.2]
 import { config } from "@/config";
 
@@ -20,7 +21,7 @@ export { redirect };
 export interface AuthGuardConfig {
   /**
    * Redirect path when authentication fails
-   * @default "/login"
+   * @default ROUTES.login
    */
   redirectTo?: string;
 
@@ -80,7 +81,7 @@ export async function requireAuth(
   guardConfig: AuthGuardConfig = {}
 ): Promise<{ user: User; authChecked: true }> {
   const {
-    redirectTo = "/login",
+    redirectTo = ROUTES.login,
     requiredRole,
     requiredPermissions = [],
     preserveRedirect = true,
@@ -105,10 +106,10 @@ export async function requireAuth(
           await authStore.fetchCurrentUser();
         } catch (error) {
           console.warn("[DEV MODE] Failed to fetch mock user, attempting login redirect");
-          const redirectUrl = preserveRedirect
-            ? `${redirectTo}?redirect=${encodeURIComponent(location.href)}`
-            : redirectTo;
-          throw redirect({ to: redirectUrl });
+          throw redirect({
+            to: redirectTo,
+            search: preserveRedirect ? { redirect: location.href } : undefined,
+          });
         }
       }
 
@@ -137,10 +138,10 @@ export async function requireAuth(
     } else if (!token) {
       // In dev mode with mock auth, if no token exists, redirect to login
       console.warn("[DEV MODE] No token found, redirecting to login");
-      const redirectUrl = preserveRedirect
-        ? `${redirectTo}?redirect=${encodeURIComponent(location.href)}`
-        : redirectTo;
-      throw redirect({ to: redirectUrl });
+      throw redirect({
+        to: redirectTo,
+        search: preserveRedirect ? { redirect: location.href } : undefined,
+      });
     }
   }
   // [END PHASE 1-4 MOCK AUTH]
@@ -152,11 +153,10 @@ export async function requireAuth(
       reason: "no_token",
     });
 
-    const redirectUrl = preserveRedirect
-      ? `${redirectTo}?redirect=${encodeURIComponent(location.href)}`
-      : redirectTo;
-
-    throw redirect({ to: redirectUrl });
+    throw redirect({
+      to: redirectTo,
+      search: preserveRedirect ? { redirect: location.href } : undefined,
+    });
   }
 
   // Step 2: Validate token structure and expiry
@@ -173,11 +173,10 @@ export async function requireAuth(
     // Clear invalid auth state
     await authStore.logout();
 
-    const redirectUrl = preserveRedirect
-      ? `${redirectTo}?redirect=${encodeURIComponent(location.href)}`
-      : redirectTo;
-
-    throw redirect({ to: redirectUrl });
+    throw redirect({
+      to: redirectTo,
+      search: preserveRedirect ? { redirect: location.href } : undefined,
+    });
   }
 
   // Step 3: Check if token is expired
@@ -196,11 +195,10 @@ export async function requireAuth(
         error: error instanceof Error ? error.message : String(error),
       });
 
-      const redirectUrl = preserveRedirect
-        ? `${redirectTo}?redirect=${encodeURIComponent(location.href)}`
-        : redirectTo;
-
-      throw redirect({ to: redirectUrl });
+      throw redirect({
+        to: redirectTo,
+        search: preserveRedirect ? { redirect: location.href } : undefined,
+      });
     }
   }
 
@@ -214,11 +212,10 @@ export async function requireAuth(
         error: error instanceof Error ? error.message : String(error),
       });
 
-      const redirectUrl = preserveRedirect
-        ? `${redirectTo}?redirect=${encodeURIComponent(location.href)}`
-        : redirectTo;
-
-      throw redirect({ to: redirectUrl });
+      throw redirect({
+        to: redirectTo,
+        search: preserveRedirect ? { redirect: location.href } : undefined,
+      });
     }
   }
 
@@ -237,7 +234,7 @@ export async function requireAuth(
     });
 
     throw redirect({
-      to: "/unauthorized",
+      to: ROUTES.unauthorized,
       search: preserveRedirect ? { redirect: location.href } : undefined,
     });
   }
@@ -252,7 +249,7 @@ export async function requireAuth(
       });
 
       throw redirect({
-        to: "/unauthorized",
+        to: ROUTES.unauthorized,
         search: preserveRedirect ? { redirect: location.href } : undefined,
       });
     }
@@ -269,7 +266,7 @@ export async function requireAuth(
         });
 
         throw redirect({
-          to: "/unauthorized",
+          to: ROUTES.unauthorized,
           search: preserveRedirect ? { redirect: location.href } : undefined,
         });
       }
@@ -325,11 +322,11 @@ export async function requireAuth(
  * Guard for routes that should redirect authenticated users (e.g., login page)
  *
  * @param location - Current location object
- * @param redirectTo - Where to redirect authenticated users (default: "/dashboard")
+ * @param redirectTo - Where to redirect authenticated users (default: "/_protected/dashboard")
  */
 export async function requireGuest(
   location: { pathname: string; href: string },
-  redirectTo: string = "/dashboard"
+  redirectTo: string = ROUTES.dashboard
 ): Promise<{ isGuest: true }> {
   const authStore = useAuthStore.getState();
   const token = tokenManager.getAccessToken();
@@ -414,7 +411,7 @@ export async function requireProjectAccess(
       userId: authResult.user.id,
     });
 
-    throw redirect({ to: "/unauthorized" });
+    throw redirect({ to: ROUTES.unauthorized });
   }
 
   // Check if user has access to this project
@@ -429,7 +426,7 @@ export async function requireProjectAccess(
       userId: authResult.user.id,
     });
 
-    throw redirect({ to: "/unauthorized" });
+    throw redirect({ to: ROUTES.unauthorized });
   }
 
   return { ...authResult, project };

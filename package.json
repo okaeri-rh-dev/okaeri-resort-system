@@ -112,6 +112,7 @@
     "test:phase5:watch": "vitest watch src/features/deployment/**/__tests__/*.test.{ts,tsx}",
     "test:runtime-errors": "playwright test runtime-errors.spec.ts",
     "test:runtime-errors:debug": "playwright test runtime-errors.spec.ts --debug",
+    "test:security": "vitest run src/features/auth/__tests__/security/*.test.tsx",
     "test:ui": "vitest --ui",
     "test:utilities": "vitest src/utils/**/__tests__/*.test.{ts,tsx} src/lib/**/__tests__/*.test.{ts,tsx}",
     "type-check": "tsc --noEmit",
@@ -127,7 +128,8 @@
     "verify:push": "npm run verify:all && npm run verify:bundle && npm run verify:performance && npm run verify:accessibility",
     "verify:security": "npm audit --audit-level=high && npm run security:jwt:full",
     "verify:tests": "vitest run --coverage",
-    "verify:types": "tsc --noEmit"
+    "verify:types": "tsc --noEmit",
+    "vitest:run": "vitest run"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

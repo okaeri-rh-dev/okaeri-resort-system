@@ -4,6 +4,7 @@ import { z } from "zod";
 import { api } from "@/lib/api-client";
 import { useProjectStore } from "@/stores/projectStore";
 import { useAuthStore } from "@/stores/authStore";
+import { ROUTES } from "@/routes/paths";
 import type { Booking, Property, Expense, DashboardStats, PaginatedResponse } from "@/types/common";
 
 // Import all route parameter types from the centralized location
@@ -54,7 +55,7 @@ export async function requireActiveProject(): Promise<string> {
     // Check one more time after microtask
     const recheckProjectId = useProjectStore.getState().activeProjectId;
     if (!recheckProjectId) {
-      throw redirect({ to: "/dashboard", search: { error: "no_project" } });
+      throw redirect({ to: ROUTES.dashboard, search: { error: "no_project" } });
     }
     return recheckProjectId;
   }
@@ -427,7 +428,7 @@ export function RouteErrorBoundary({
             </button>
             {!isNotFoundError && (
               <button
-                onClick={() => (window.location.href = "/dashboard")}
+                onClick={() => (window.location.href = ROUTES.dashboard)}
                 className="flex-1 rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none dark:border-red-600 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/30 dark:focus:ring-offset-red-900"
               >
                 Go to Dashboard
@@ -468,15 +469,15 @@ export function createRouteLoader<T extends Record<string, any>>(
 
       // Handle specific error cases
       if (error.status === 401) {
-        throw redirect({ to: "/login", search: { reason: "session_expired" } });
+        throw redirect({ to: ROUTES.login, search: { reason: "session_expired" } });
       }
 
       if (error.status === 403) {
-        throw redirect({ to: "/dashboard", search: { error: "access_denied" } });
+        throw redirect({ to: ROUTES.dashboard, search: { error: "access_denied" } });
       }
 
       if (error.status === 404) {
-        throw redirect({ to: "/dashboard", search: { error: "not_found" } });
+        throw redirect({ to: ROUTES.dashboard, search: { error: "not_found" } });
       }
 
       // Re-throw other errors to be handled by error boundary

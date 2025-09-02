@@ -208,3 +208,5 @@ jest-coverage/
 
 # TanStack Router generated files
 src/routeTree.gen.ts
+
+docs/sample-ui

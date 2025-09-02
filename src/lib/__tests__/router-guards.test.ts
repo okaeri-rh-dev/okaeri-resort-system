@@ -19,6 +19,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useProjectStore } from "@/stores/projectStore";
 import { tokenManager, auditLogger, sessionMonitor } from "@/lib/security";
 import { MOCK_USERS, MOCK_AUTH_STATES } from "@tests/utils/test-utils";
+import { ROUTES } from "@/routes/paths";
 
 // Mock stores
 vi.mock("@/stores/authStore", () => ({
@@ -57,8 +58,8 @@ vi.mock("@/lib/security", () => ({
 
 describe("Router Guards", () => {
   const mockLocation = {
-    pathname: "/dashboard",
-    href: "http://localhost:3000/dashboard",
+    pathname: ROUTES.dashboard,
+    href: `http://localhost:3000${ROUTES.dashboard}`,
   };
 
   const mockAuthState = {
@@ -127,7 +128,7 @@ describe("Router Guards", () => {
       expect(auditLogger.logSecurityEvent).toHaveBeenCalledWith(
         "unauthorized_access",
         expect.objectContaining({
-          path: "/dashboard",
+          path: ROUTES.dashboard,
           reason: "no_token",
         })
       );
@@ -139,7 +140,7 @@ describe("Router Guards", () => {
       await expect(requireAuth(mockLocation)).rejects.toThrow();
 
       expect(redirect).toHaveBeenCalledWith({
-        to: "/login?redirect=http%3A//localhost%3A3000/dashboard",
+        to: `${ROUTES.login}?redirect=http%3A//localhost%3A3000${encodeURIComponent(ROUTES.dashboard)}`,
       });
     });
 
@@ -601,7 +602,7 @@ describe("Router Guards", () => {
       expect(auditLogger.logSecurityEvent).toHaveBeenCalledWith(
         "unauthorized_access",
         expect.objectContaining({
-          path: "/dashboard",
+          path: ROUTES.dashboard,
           reason: "no_token",
         })
       );
@@ -758,8 +759,8 @@ describe("Router Guards", () => {
   describe("Security Compliance", () => {
     it("should enforce HTTPS in production", async () => {
       const httpsLocation = {
-        pathname: "/dashboard",
-        href: "https://okaeri-resort.ph/dashboard",
+        pathname: ROUTES.dashboard,
+        href: `https://okaeri-resort.ph${ROUTES.dashboard}`,
       };
 
       const result = await requireAuth(httpsLocation);
@@ -769,8 +770,8 @@ describe("Router Guards", () => {
 
     it("should validate redirect URLs to prevent open redirects", async () => {
       const maliciousLocation = {
-        pathname: "/dashboard",
-        href: "http://evil-site.com/dashboard",
+        pathname: ROUTES.dashboard,
+        href: `http://evil-site.com${ROUTES.dashboard}`,
       };
 
       (tokenManager.getAccessToken as any).mockReturnValue(null);

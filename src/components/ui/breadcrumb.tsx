@@ -2,6 +2,7 @@ import * as React from "react";
 import { ChevronRight, Home, MoreHorizontal } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
+import { ROUTES } from "@/routes/paths";
 
 const Breadcrumb = React.forwardRef<
   HTMLElement,
@@ -169,7 +170,7 @@ const ResortBreadcrumb = () => {
     <Breadcrumb className="mb-6">
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink to="/dashboard" className="flex items-center gap-1">
+          <BreadcrumbLink to={ROUTES.dashboard} className="flex items-center gap-1">
             <Home className="h-4 w-4" />
             <span className="sr-only sm:not-sr-only">Dashboard</span>
           </BreadcrumbLink>

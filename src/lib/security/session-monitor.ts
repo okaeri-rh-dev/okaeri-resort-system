@@ -5,6 +5,7 @@
  */
 
 import { TOKEN_EXPIRY, AUDIT_EVENTS, SECURITY_ERROR_CODES } from "./constants";
+import { SECURITY_EVENTS } from "./events";
 import { auditLogger } from "./audit-logger";
 
 export interface SessionConfig {
@@ -480,7 +481,7 @@ export class SessionMonitor {
   private setupCrossTabSync(): void {
     this.storageEventHandler = (event: StorageEvent) => {
       // Handle logout from another tab
-      if (event.key === "okaeri_logout_event" && event.newValue) {
+      if (event.key === SECURITY_EVENTS.LOGOUT && event.newValue) {
         this.stop();
       }
 
