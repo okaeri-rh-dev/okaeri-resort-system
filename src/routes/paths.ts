@@ -12,13 +12,13 @@
 
 export const ROUTES = {
   // Auth routes (public)
-  login: "/_auth/login",
-  register: "/_auth/register",
-  forgotPassword: "/_auth/forgot-password",
-  resetPassword: "/_auth/reset-password",
+  login: "/login",
+  register: "/register",
+  forgotPassword: "/forgot-password",
+  resetPassword: "/reset-password",
 
   // Protected routes
-  dashboard: "/_protected/dashboard",
+  dashboard: "/dashboard",
 
   // Error routes
   unauthorized: "/unauthorized",

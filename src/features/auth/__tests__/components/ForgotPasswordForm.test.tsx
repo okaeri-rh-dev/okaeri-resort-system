@@ -17,7 +17,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { screen, waitFor, fireEvent } from "@testing-library/react";
+// import { screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 // TODO: Import ForgotPasswordForm once implemented
 // import { ForgotPasswordForm } from "@/features/auth/components/ForgotPasswordForm";
@@ -102,7 +102,7 @@ vi.mock("@tanstack/react-router", () => ({
   useSearch: () => ({}),
 
   // File-based routing
-  createFileRoute: vi.fn((path: string) => ({
+  createFileRoute: vi.fn((_path: string) => ({
     createRoute: vi.fn(),
     useRouteContext: vi.fn(() => ({})),
     useLoaderData: vi.fn(() => undefined),
@@ -155,7 +155,7 @@ vi.mock("@/components/ui/toast", () => ({
 }));
 
 describe("ForgotPasswordForm Component", () => {
-  const user = userEvent.setup();
+  const _user = userEvent.setup();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -253,7 +253,7 @@ describe("ForgotPasswordForm Component", () => {
 
     it("should accept valid Philippine email domains", async () => {
       // RED PHASE: Philippine email domain validation not implemented
-      const philippineEmails = [
+      const _philippineEmails = [
         "user@gmail.com",
         "owner@okaeriresort.ph",
         "guest@yahoo.com.ph",

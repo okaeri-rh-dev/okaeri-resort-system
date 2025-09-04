@@ -13,7 +13,33 @@ export {
   projectsRelations,
   userProjectPermissionsRelations,
   auditLogsRelations,
+  // Additional security tables
+  sessions,
+  passwordResetTokens,
+  emailVerificationTokens,
+  userSessions,
+  loginAttempts,
+  securityAuditLogs,
 } from "./global";
+
+// Export DPA compliance schema tables
+export {
+  privacyConsents,
+  dataSubjectRequests,
+  dataRetentionPolicies,
+  dataProcessingActivities,
+  securityBreaches,
+  encryptedFields,
+  privacyNotices,
+  // Relations
+  privacyConsentsRelations,
+  dataSubjectRequestsRelations,
+  dataRetentionPoliciesRelations,
+  dataProcessingActivitiesRelations,
+  securityBreachesRelations,
+  encryptedFieldsRelations,
+  privacyNoticesRelations,
+} from "./dpa-compliance";
 
 // Export project schema creator and types
 export { createProjectSchema, type ProjectSchema } from "./project";

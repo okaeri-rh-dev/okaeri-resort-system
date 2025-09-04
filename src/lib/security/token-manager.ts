@@ -101,8 +101,8 @@ export class TokenManager {
   }
 
   /**
-   * Store tokens securely (using memory for access token, httpOnly cookie preferred for refresh)
-   * Note: In production, refresh token should be in httpOnly cookie set by server
+   * Store tokens securely (using memory for both access and refresh tokens)
+   * Note: In production, tokens are transmitted via Authorization headers only
    */
   storeTokens(accessToken: string, refreshToken: string): void {
     // Store access token in memory only (not in localStorage to prevent XSS)
@@ -118,7 +118,7 @@ export class TokenManager {
     } else if (import.meta.env.DEV) {
       console.warn(
         "[TokenManager] Refresh token stored in memory only. " +
-          "In production, use httpOnly cookies for refresh tokens."
+          "In production, use Authorization headers for all tokens."
       );
     }
 
@@ -148,10 +148,10 @@ export class TokenManager {
       console.log("[TokenManager] No refresh token in memory (mock auth mode)");
     }
 
-    // In production, refresh tokens should be handled server-side via httpOnly cookie
+    // In production, refresh tokens are transmitted via Authorization headers
     if (!import.meta.env.DEV) {
       console.error(
-        "[SECURITY] Refresh tokens must be managed server-side via httpOnly cookies in production"
+        "[SECURITY] Refresh tokens must be transmitted via Authorization headers in production"
       );
     }
 

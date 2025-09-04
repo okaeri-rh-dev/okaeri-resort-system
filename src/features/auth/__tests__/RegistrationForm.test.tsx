@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { screen, waitFor, render } from "@testing-library/react";
+// import { screen, waitFor, render } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 // RED PHASE: Component doesn't exist yet - import commented out
@@ -52,7 +52,7 @@ vi.mock("@tanstack/react-router", () => ({
   useSearch: () => ({}),
 
   // File-based routing
-  createFileRoute: vi.fn((path: string) => ({
+  createFileRoute: vi.fn((_path: string) => ({
     createRoute: vi.fn(),
     useRouteContext: vi.fn(() => ({})),
     useLoaderData: vi.fn(() => undefined),
@@ -120,7 +120,7 @@ const validRegistrationData = {
   tinNumber: "123-456-789-000",
 };
 
-const philippineTestData = {
+const _philippineTestData = {
   validNames: ["Juan Dela Cruz", "María Santos", "José Rizal III"],
   invalidNames: ["", "123", "Juan@Dela"],
   validPhoneNumbers: ["+639171234567", "09171234567", "+63 917 123 4567"],
@@ -130,7 +130,7 @@ const philippineTestData = {
 };
 
 describe("RegistrationForm Component - RED Phase", () => {
-  const user = userEvent.setup();
+  const _user = userEvent.setup();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -170,7 +170,7 @@ describe("RegistrationForm Component - RED Phase", () => {
       ];
 
       // RED: All these assertions will fail
-      expectedElements.forEach((element) => {
+      expectedElements.forEach((_element) => {
         expect(false).toBe(true); // Explicit failure for RED phase
       });
     });
@@ -190,7 +190,7 @@ describe("RegistrationForm Component - RED Phase", () => {
       };
 
       // RED: These will all fail until implemented
-      Object.keys(expectedAttributes).forEach((field) => {
+      Object.keys(expectedAttributes).forEach((_field) => {
         expect(false).toBe(true); // Explicit failure
       });
     });
@@ -231,7 +231,7 @@ describe("RegistrationForm Component - RED Phase", () => {
       ];
 
       // RED: All validations will fail until Zod schema implemented
-      expectedValidationErrors.forEach((error) => {
+      expectedValidationErrors.forEach((_error) => {
         expect(false).toBe(true); // Will fail until validation implemented
       });
 
@@ -262,7 +262,7 @@ describe("RegistrationForm Component - RED Phase", () => {
       ];
 
       // RED: Email validation will fail until implemented
-      [...invalidEmails, ...validEmails].forEach((email) => {
+      [...invalidEmails, ...validEmails].forEach((_email) => {
         expect(false).toBe(true); // Email validation not implemented
       });
     });
@@ -284,7 +284,7 @@ describe("RegistrationForm Component - RED Phase", () => {
       };
 
       // RED: Password strength validation will fail
-      Object.values(passwordRequirements).forEach((requirement) => {
+      Object.values(passwordRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Password validation not implemented
       });
     });
@@ -320,7 +320,7 @@ describe("RegistrationForm Component - RED Phase", () => {
       };
 
       // RED: All name validations will fail
-      Object.values(filipinoNameRequirements).forEach((requirement) => {
+      Object.values(filipinoNameRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Filipino name validation not implemented
       });
     });
@@ -343,7 +343,7 @@ describe("RegistrationForm Component - RED Phase", () => {
       };
 
       // RED: Phone validation will fail until implemented
-      Object.values(phoneValidationRequirements).forEach((requirement) => {
+      Object.values(phoneValidationRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Philippine phone validation not implemented
       });
     });
@@ -369,7 +369,7 @@ describe("RegistrationForm Component - RED Phase", () => {
       };
 
       // RED: Terms validation will fail
-      Object.values(termsRequirements).forEach((requirement) => {
+      Object.values(termsRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Terms acceptance validation not implemented
       });
     });
@@ -772,7 +772,7 @@ describe("RegistrationForm Component - RED Phase", () => {
         treeshaking: "Should eliminate unused code through tree shaking",
       };
 
-      Object.values(performanceRequirements).forEach((requirement) => {
+      Object.values(performanceRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Performance optimizations not implemented
       });
     });
@@ -788,7 +788,7 @@ describe("RegistrationForm Component - RED Phase", () => {
         persistentState: "Should persist form state efficiently",
       };
 
-      Object.values(stateManagementFeatures).forEach((feature) => {
+      Object.values(stateManagementFeatures).forEach((_feature) => {
         expect(false).toBe(true); // Efficient state management not implemented
       });
     });
@@ -808,7 +808,7 @@ describe("RegistrationForm Component - RED Phase", () => {
         addressFormat: "Should use Philippine address format",
       };
 
-      Object.values(businessContextFeatures).forEach((feature) => {
+      Object.values(businessContextFeatures).forEach((_feature) => {
         expect(false).toBe(true); // Philippine business context not implemented
       });
     });
@@ -825,7 +825,7 @@ describe("RegistrationForm Component - RED Phase", () => {
         breachNotification: "Should support data breach notification procedures",
       };
 
-      Object.values(privacyComplianceFeatures).forEach((feature) => {
+      Object.values(privacyComplianceFeatures).forEach((_feature) => {
         expect(false).toBe(true); // Privacy compliance not implemented
       });
     });
@@ -844,7 +844,7 @@ describe("RegistrationForm Component - RED Phase", () => {
         billingIntegration: "Should integrate with tenant-specific billing",
       };
 
-      Object.values(multiTenantFeatures).forEach((feature) => {
+      Object.values(multiTenantFeatures).forEach((_feature) => {
         expect(false).toBe(true); // Multi-tenant support not implemented
       });
     });

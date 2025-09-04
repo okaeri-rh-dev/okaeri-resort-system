@@ -62,8 +62,9 @@ interface RegisterData {
 
 interface LoginResponse {
   user: User;
-  token: string;
+  accessToken: string; // Changed from 'token' to match API response
   refreshToken: string;
+  expiresIn?: number;
 }
 
 // Enhanced auth store without localStorage persistence for security
@@ -169,18 +170,19 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           const response = await apiClient.post<LoginResponse>("/auth/login", {
             email,
             password,
+            rememberMe: options?.rememberMe, // Include rememberMe in request
           });
 
-          const { user, token, refreshToken } = response.data;
+          const { user, accessToken, refreshToken } = response.data; // Use accessToken
 
           // Validate token structure
-          const validation = tokenManager.validateTokenStructure(token);
+          const validation = tokenManager.validateTokenStructure(accessToken);
           if (!validation.valid) {
             throw new Error(validation.error || "Invalid token received");
           }
 
           // Store tokens securely (not in localStorage)
-          tokenManager.storeTokens(token, refreshToken);
+          tokenManager.storeTokens(accessToken, refreshToken);
 
           // Set auth token in API client
           // Token is managed by TokenManager, not directly by apiClient
@@ -208,7 +210,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
           set((state) => {
             state.user = user;
-            state.token = token;
+            state.token = accessToken; // Use accessToken from response
             state.refreshToken = refreshToken;
             state.sessionExpiry = Date.now() + TOKEN_EXPIRY.ACCESS_TOKEN;
             state.isAuthenticated = true;
@@ -353,20 +355,20 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
         try {
           const response = await apiClient.post<LoginResponse>("/auth/register", data);
-          const { user, token, refreshToken } = response.data;
+          const { user, accessToken, refreshToken } = response.data; // Use accessToken
 
           // Validate token structure
-          const validation = tokenManager.validateTokenStructure(token);
+          const validation = tokenManager.validateTokenStructure(accessToken);
           if (!validation.valid) {
             throw new Error(validation.error || "Invalid token received");
           }
 
           // Store tokens securely
           console.log("[DEBUG] Storing tokens:", {
-            token: `${token.substring(0, 20)}...`,
+            token: `${accessToken.substring(0, 20)}...`,
             refreshToken,
           });
-          tokenManager.storeTokens(token, refreshToken);
+          tokenManager.storeTokens(accessToken, refreshToken);
           console.log("[DEBUG] Tokens stored, checking retrieval...");
           const storedToken = tokenManager.getAccessToken();
           console.log(
@@ -388,7 +390,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
           set((state) => {
             state.user = user;
-            state.token = token;
+            state.token = accessToken; // Use accessToken from response
             state.refreshToken = refreshToken;
             state.sessionExpiry = Date.now() + TOKEN_EXPIRY.ACCESS_TOKEN;
             state.isAuthenticated = true;
@@ -445,27 +447,28 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         // [END PHASE 1-4 MOCK AUTH]
 
         try {
-          const response = await apiClient.post<{ token: string; refreshToken: string }>(
-            "/auth/refresh",
-            { refreshToken }
-          );
+          const response = await apiClient.post<{
+            accessToken: string;
+            refreshToken: string;
+            expiresIn?: number;
+          }>("/auth/refresh", { refreshToken });
 
-          const { token, refreshToken: newRefreshToken } = response.data;
+          const { accessToken, refreshToken: newRefreshToken } = response.data;
 
           // Validate new token
-          const validation = tokenManager.validateTokenStructure(token);
+          const validation = tokenManager.validateTokenStructure(accessToken);
           if (!validation.valid) {
             throw new Error(validation.error || "Invalid token received");
           }
 
           // Store new tokens securely
-          tokenManager.storeTokens(token, newRefreshToken);
+          tokenManager.storeTokens(accessToken, newRefreshToken);
 
           // Update auth token in API client
           // Token is managed by TokenManager, not directly by apiClient
 
           set((state) => {
-            state.token = token;
+            state.token = accessToken; // Use accessToken from response
             state.refreshToken = newRefreshToken;
             state.sessionExpiry = Date.now() + TOKEN_EXPIRY.ACCESS_TOKEN;
           });

@@ -241,15 +241,9 @@ async function handler(req: ExtendedRequest, res: VercelResponse) {
       role: user.role,
     });
 
-    // Set secure cookies
-    res.setHeader("Set-Cookie", [
-      `token=${accessToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${expiresIn}`,
-      `refreshToken=${refreshToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${
-        rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60
-      }`,
-    ]);
-
-    // Return success response
+    // CRITICAL: NO COOKIES - JWT tokens returned in response body only
+    // Client must use Authorization headers for all requests
+    // Return success response with tokens in body
     return res.status(200).json(
       successResponse(
         {
@@ -261,6 +255,7 @@ async function handler(req: ExtendedRequest, res: VercelResponse) {
             avatar: user.avatar,
           },
           accessToken,
+          refreshToken,
           expiresIn,
           projects,
           currentProject,

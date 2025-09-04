@@ -20,9 +20,9 @@ import {
   getButtonClasses,
   getLabelClasses,
   getTypographyClasses,
-  getErrorMessageClasses,
   getLinkClasses,
   getAlertStyles,
+  getErrorMessageClassesAnimated,
 } from "@/styles/design-system";
 import { RequiredIndicator } from "@/components/ui/required-indicator";
 
@@ -52,7 +52,7 @@ export function PasswordResetForm({ onSuccess }: PasswordResetFormProps) {
       await resetPassword(data.email);
       setIsSubmitted(true);
       onSuccess?.();
-    } catch (err) {
+    } catch (_err) {
       // Error is handled by the auth store
     }
   };
@@ -63,7 +63,7 @@ export function PasswordResetForm({ onSuccess }: PasswordResetFormProps) {
         <div className="space-y-1 text-center">
           <h2 className={getTypographyClasses("heading")}>Email Sent</h2>
           <div
-            className={`${getTypographyClasses("body")} mt-3 rounded border p-3`}
+            className={`${getTypographyClasses("body")} animate-in slide-in-from-top-2 mt-3 rounded border p-3 duration-200 ease-out motion-reduce:animate-none`}
             style={getAlertStyles("success")}
           >
             Password reset instructions have been sent to your email address. Please check your
@@ -72,7 +72,10 @@ export function PasswordResetForm({ onSuccess }: PasswordResetFormProps) {
         </div>
 
         <div className="space-y-3 text-center">
-          <Button onClick={() => setIsSubmitted(false)} className={getButtonClasses("secondary")}>
+          <Button
+            onClick={() => setIsSubmitted(false)}
+            className={`${getButtonClasses("secondary")} h-11 sm:h-9`}
+          >
             Use Different Email
           </Button>
 
@@ -95,17 +98,21 @@ export function PasswordResetForm({ onSuccess }: PasswordResetFormProps) {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-3" noValidate>
         {/* Global Error Display */}
         {error && (
-          <div role="alert" className="rounded border p-3 text-sm" style={getAlertStyles("error")}>
+          <div
+            role="alert"
+            className="animate-in slide-in-from-top-2 rounded border p-3 text-sm duration-200 ease-out motion-reduce:animate-none"
+            style={getAlertStyles("error")}
+          >
             {error}
           </div>
         )}
 
-        {/* Email Field - Enterprise Grid Layout */}
-        <div className="grid grid-cols-3 items-start gap-x-4">
-          <Label htmlFor="email" className={`${getLabelClasses()} mt-2 text-right`}>
+        {/* Email Field - Responsive Enterprise Grid Layout */}
+        <div className="grid grid-cols-1 gap-y-1 sm:grid-cols-3 sm:items-start sm:gap-x-4 sm:gap-y-0">
+          <Label htmlFor="email" className={`${getLabelClasses()} sm:mt-2 sm:text-right`}>
             Email <RequiredIndicator />
           </Label>
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <Input
               id="email"
               type="email"
@@ -113,26 +120,26 @@ export function PasswordResetForm({ onSuccess }: PasswordResetFormProps) {
               autoComplete="email"
               placeholder="user@company.com"
               error={errors.email?.message}
-              className={getInputClasses(errors.email ? "error" : "default")}
+              className={`${getInputClasses(errors.email ? "error" : "default")} h-11 sm:h-9`}
               aria-invalid={!!errors.email}
               aria-describedby={errors.email ? "email-error" : undefined}
               {...register("email")}
             />
             {errors.email && (
-              <p id="email-error" role="alert" className={getErrorMessageClasses()}>
+              <p id="email-error" role="alert" className={getErrorMessageClassesAnimated()}>
                 {errors.email.message}
               </p>
             )}
           </div>
         </div>
 
-        {/* Submit Button - Corporate Blue */}
-        <div className="grid grid-cols-3 items-center gap-x-4 pt-2">
-          <div></div>
-          <div className="col-span-2">
+        {/* Submit Button - Responsive Corporate Blue */}
+        <div className="grid grid-cols-1 pt-2 sm:grid-cols-3 sm:items-center sm:gap-x-4">
+          <div className="hidden sm:block"></div>
+          <div className="sm:col-span-2">
             <Button
               type="submit"
-              className={`${getButtonClasses("primary")} w-full ${isLoading || !isValid ? "cursor-not-allowed opacity-60" : ""}`}
+              className={`${getButtonClasses("primary")} h-11 w-full sm:h-9 ${isLoading || !isValid ? "cursor-not-allowed opacity-60" : ""}`}
               loading={isLoading}
               loadingText="Sending Instructions..."
               disabled={isLoading || !isValid}
@@ -142,10 +149,10 @@ export function PasswordResetForm({ onSuccess }: PasswordResetFormProps) {
           </div>
         </div>
 
-        {/* Link back to Login - Professional Styling */}
-        <div className="grid grid-cols-3 items-center gap-x-4 pt-1">
-          <div></div>
-          <div className={`col-span-2 ${getTypographyClasses("helper")}`}>
+        {/* Link back to Login - Responsive Professional Styling */}
+        <div className="grid grid-cols-1 pt-1 sm:grid-cols-3 sm:items-center sm:gap-x-4">
+          <div className="hidden sm:block"></div>
+          <div className={`sm:col-span-2 ${getTypographyClasses("helper")}`}>
             Remember your password?{" "}
             <Link
               to={ROUTES.login}

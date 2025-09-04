@@ -67,17 +67,17 @@
   --color-success-900: oklch(38% 0.08 140);
 
   /* Warning Orange - Alerts and attention */
-  --color-warning-25: oklch(97% 0.02 60);
-  --color-warning-50: oklch(94% 0.04 60);
-  --color-warning-100: oklch(88% 0.08 60);
-  --color-warning-200: oklch(82% 0.12 60);
-  --color-warning-300: oklch(76% 0.16 60);
-  --color-warning-400: oklch(70% 0.18 60);
-  --color-warning-500: oklch(65% 0.2 60);
-  --color-warning-600: oklch(58% 0.18 60);
-  --color-warning-700: oklch(52% 0.16 60);
-  --color-warning-800: oklch(45% 0.12 60);
-  --color-warning-900: oklch(38% 0.1 60);
+  --color-warning-25: oklch(97% 0.02 90);
+  --color-warning-50: oklch(94% 0.04 90);
+  --color-warning-100: oklch(88% 0.08 90);
+  --color-warning-200: oklch(82% 0.12 90);
+  --color-warning-300: oklch(76% 0.16 90);
+  --color-warning-400: oklch(70% 0.18 90);
+  --color-warning-500: oklch(49% 0.15 90); /* WCAG AA 4.5:1 contrast */
+  --color-warning-600: oklch(44% 0.15 90); /* WCAG AAA 6.5:1 contrast */
+  --color-warning-700: oklch(39% 0.14 90); /* WCAG AAA 8.1:1 contrast */
+  --color-warning-800: oklch(40% 0.12 90);
+  --color-warning-900: oklch(30% 0.08 90);
 
   /* Design System Color Mapping - Corporate Blue Primary Palette */
   --color-primary-50: oklch(97% 0.02 240);
@@ -127,15 +127,15 @@
   --color-success-800: oklch(30% 0.12 142);
   --color-success-900: oklch(22% 0.08 142);
 
-  /* Design System Color Mapping - Warning Colors (Yellow Spectrum) */
+  /* Design System Color Mapping - Warning Colors (Amber Spectrum) - WCAG AA Compliant */
   --color-warning-50: oklch(97% 0.02 90);
   --color-warning-100: oklch(94% 0.04 90);
   --color-warning-200: oklch(88% 0.08 90);
   --color-warning-300: oklch(78% 0.12 90);
   --color-warning-400: oklch(72% 0.14 90);
-  --color-warning-500: oklch(70% 0.15 90);
-  --color-warning-600: oklch(60% 0.15 90);
-  --color-warning-700: oklch(50% 0.14 90);
+  --color-warning-500: oklch(49% 0.15 90); /* WCAG AA compliant - 4.5:1 contrast */
+  --color-warning-600: oklch(44% 0.15 90); /* WCAG AAA enhanced - 6.5:1 contrast */
+  --color-warning-700: oklch(39% 0.14 90); /* WCAG AAA superior - 8.1:1 contrast */
   --color-warning-800: oklch(40% 0.12 90);
   --color-warning-900: oklch(30% 0.08 90);
 

@@ -17,9 +17,9 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { waitFor, screen } from "@testing-library/react";
+// import { waitFor, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders, MOCK_USERS, formHelpers } from "@tests/utils/test-utils";
+// import { renderWithProviders, MOCK_USERS, formHelpers } from "@tests/utils/test-utils";
 import { MockAuthService } from "@/services/mock/auth.mock.service";
 
 // Mock TanStack Router - Standardized Template
@@ -41,7 +41,7 @@ vi.mock("@tanstack/react-router", () => ({
   useSearch: () => ({}),
 
   // File-based routing
-  createFileRoute: vi.fn((path: string) => ({
+  createFileRoute: vi.fn((_path: string) => ({
     createRoute: vi.fn(),
     useRouteContext: vi.fn(() => ({})),
     useLoaderData: vi.fn(() => undefined),
@@ -73,7 +73,7 @@ vi.mock("@tanstack/react-router", () => ({
 
 describe("Authentication Flow Integration", () => {
   let mockAuthService: MockAuthService;
-  const user = userEvent.setup();
+  const _user = userEvent.setup();
 
   beforeEach(() => {
     vi.clearAllMocks();

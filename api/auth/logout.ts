@@ -34,11 +34,9 @@ async function handler(req: VercelRequest, res: VercelResponse, context?: Tenant
     }
   }
 
-  // Clear authentication cookies
-  res.setHeader("Set-Cookie", [
-    "token=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0",
-    "refreshToken=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0",
-  ]);
+  // CRITICAL: NO COOKIES - Client must clear tokens from SecureTokenManager
+  // The client is responsible for removing tokens from localStorage/memory
+  // No Set-Cookie headers are sent as per JWT-only architecture
 
   return res.status(200).json(successResponse(null, "Logout successful"));
 }

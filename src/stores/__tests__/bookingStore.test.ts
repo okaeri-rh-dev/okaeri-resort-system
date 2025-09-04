@@ -66,11 +66,8 @@ import { apiClient } from "@/api/client";
 
 describe("BookingStore - Comprehensive Tests", () => {
   beforeEach(() => {
-    // Reset store state
-    const { result } = renderHook(() => useBookingStore());
-    act(() => {
-      result.current.reset();
-    });
+    // Reset store state using getState directly
+    useBookingStore.getState().reset();
 
     // Clear all mocks
     vi.clearAllMocks();

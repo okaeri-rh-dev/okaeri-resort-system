@@ -20,7 +20,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { screen, waitFor, fireEvent } from "@testing-library/react";
+// import { screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 // TODO: Import PasswordResetPage once implemented
 // import { PasswordResetPage } from "@/features/auth/pages/PasswordResetPage";
@@ -53,7 +53,7 @@ vi.mock("@tanstack/react-router", () => ({
   useSearch: () => ({ token: null, email: null, step: "request" }),
 
   // File-based routing
-  createFileRoute: vi.fn((path: string) => ({
+  createFileRoute: vi.fn((_path: string) => ({
     createRoute: vi.fn(),
     useRouteContext: vi.fn(() => ({
       auth: {
@@ -129,7 +129,7 @@ vi.mock("@/lib/security/tokenValidation", () => ({
 import { useAuthStore } from "@/stores/authStore";
 
 describe("PasswordResetPage Component", () => {
-  const user = userEvent.setup();
+  const _user = userEvent.setup();
 
   beforeEach(() => {
     vi.clearAllMocks();

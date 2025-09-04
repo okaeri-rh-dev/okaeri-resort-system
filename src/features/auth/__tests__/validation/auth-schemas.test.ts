@@ -344,7 +344,7 @@ describe("Auth Schemas Validation", () => {
   describe("Name Validation with Philippine Characters", () => {
     it("should accept valid Filipino names", async () => {
       // RED PHASE: Filipino name validation not implemented
-      const validNames = philippineTestData.validNames;
+      const { validNames } = philippineTestData;
 
       expect(() => {
         // validNames.forEach(name => {
@@ -413,7 +413,7 @@ describe("Auth Schemas Validation", () => {
 
     it("should reject invalid names", async () => {
       // RED PHASE: Invalid name rejection not implemented
-      const invalidNames = philippineTestData.invalidNames;
+      const { invalidNames } = philippineTestData;
 
       expect(() => {
         // invalidNames.forEach(name => {

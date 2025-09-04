@@ -5,9 +5,6 @@
 
 import { z } from "zod";
 
-// Password validation regex for strong passwords
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
-
 // Common email validation
 export const emailSchema = z
   .string()
@@ -17,14 +14,38 @@ export const emailSchema = z
   .toLowerCase()
   .trim();
 
-// Strong password validation
+// Password validation with breach checking support
 export const passwordSchema = z
   .string()
   .min(8, "Password must be at least 8 characters")
   .max(128, "Password must be less than 128 characters")
-  .regex(
-    PASSWORD_REGEX,
-    "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+  .refine(
+    (password) => {
+      // Check for at least one uppercase letter
+      return /[A-Z]/.test(password);
+    },
+    { message: "Password must contain at least one uppercase letter" }
+  )
+  .refine(
+    (password) => {
+      // Check for at least one lowercase letter
+      return /[a-z]/.test(password);
+    },
+    { message: "Password must contain at least one lowercase letter" }
+  )
+  .refine(
+    (password) => {
+      // Check for at least one number
+      return /\d/.test(password);
+    },
+    { message: "Password must contain at least one number" }
+  )
+  .refine(
+    (password) => {
+      // Check for at least one special character
+      return /[@$!%*?&#]/.test(password);
+    },
+    { message: "Password must contain at least one special character (@$!%*?&#)" }
   );
 
 // Basic password (for current password fields)
@@ -33,15 +54,11 @@ export const basicPasswordSchema = z
   .min(1, "Password is required")
   .max(128, "Password is too long");
 
-// Name validation (handles Filipino names)
+// Name validation
 export const nameSchema = z
   .string()
   .min(1, "Name is required")
   .max(100, "Name must be less than 100 characters")
-  .regex(
-    /^[a-zA-ZñÑáéíóúÁÉÍÓÚüÜ\s'-]+$/,
-    "Name can only contain letters, spaces, hyphens, and apostrophes"
-  )
   .transform((val) => val.trim())
   .refine((val) => val.length >= 2, "Name must be at least 2 characters");
 
@@ -49,36 +66,13 @@ export const nameSchema = z
 export const projectNameSchema = z
   .string()
   .max(100, "Project name must be less than 100 characters")
-  .regex(/^[a-zA-ZñÑáéíóúÁÉÍÓÚüÜ0-9\s'&.()-]+$/, "Project name contains invalid characters")
   .transform((val) => val.trim())
   .optional();
 
-// Philippine phone number validation with preprocessing
+// Phone number validation
 export const phoneSchema = z
-  .preprocess(
-    (val) => {
-      // Preprocess: normalize input before validation
-      if (typeof val !== "string") return val;
-
-      // Remove all non-digit characters
-      const cleaned = val.replace(/\D/g, "");
-
-      // Normalize to +63 format
-      if (cleaned.startsWith("63")) {
-        return `+${cleaned}`;
-      }
-      if (cleaned.startsWith("0")) {
-        return `+63${cleaned.slice(1)}`;
-      }
-      if (cleaned.length === 10 && (cleaned.startsWith("9") || cleaned.startsWith("8"))) {
-        return `+63${cleaned}`;
-      }
-
-      // If already has proper format or needs 63 prefix
-      return cleaned.length > 0 ? `+63${cleaned}` : val;
-    },
-    z.string().regex(/^\+63[89]\d{9}$/, "Please enter a valid Philippine phone number")
-  )
+  .string()
+  .regex(/^[+]?[0-9\s\-()]+$/, "Please enter a valid phone number")
   .optional();
 
 // Reset token validation

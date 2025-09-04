@@ -21,10 +21,11 @@ import {
   getLabelClasses,
   getTypographyClasses,
   getCheckboxClasses,
-  getErrorMessageClasses,
   getLinkClasses,
   getAlertStyles,
   getCheckboxStyles,
+  getPasswordToggleClasses,
+  getErrorMessageClassesAnimated,
 } from "@/styles/design-system";
 
 export function LoginForm() {
@@ -49,7 +50,7 @@ export function LoginForm() {
     try {
       clearError();
       await login(data.email, data.password, { rememberMe: data.rememberMe });
-    } catch (err) {
+    } catch (_err) {
       // Error is handled by the auth store
     }
   };
@@ -59,17 +60,21 @@ export function LoginForm() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-3" noValidate>
         {/* Global Error Display */}
         {error && (
-          <div role="alert" className="rounded border p-3 text-sm" style={getAlertStyles("error")}>
+          <div
+            role="alert"
+            className="animate-in slide-in-from-top-2 rounded border p-3 text-sm duration-200 ease-out motion-reduce:animate-none"
+            style={getAlertStyles("error")}
+          >
             {error}
           </div>
         )}
 
-        {/* Email Field - Enterprise Grid Layout */}
-        <div className="grid grid-cols-3 items-start gap-x-4">
-          <Label htmlFor="email" className={`${getLabelClasses()} mt-2 text-right`}>
+        {/* Email Field - Responsive Enterprise Grid Layout */}
+        <div className="grid grid-cols-1 gap-y-1 sm:grid-cols-3 sm:items-start sm:gap-x-4 sm:gap-y-0">
+          <Label htmlFor="email" className={`${getLabelClasses()} sm:mt-2 sm:text-right`}>
             Email
           </Label>
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <Input
               id="email"
               type="email"
@@ -77,25 +82,25 @@ export function LoginForm() {
               autoComplete="email"
               placeholder="user@company.com"
               error={errors.email?.message}
-              className={getInputClasses(errors.email ? "error" : "default")}
+              className={`${getInputClasses(errors.email ? "error" : "default")} h-11 sm:h-9`}
               aria-invalid={!!errors.email}
               aria-describedby={errors.email ? "email-error" : undefined}
               {...register("email")}
             />
             {errors.email && (
-              <p id="email-error" role="alert" className={getErrorMessageClasses()}>
+              <p id="email-error" role="alert" className={getErrorMessageClassesAnimated()}>
                 {errors.email.message}
               </p>
             )}
           </div>
         </div>
 
-        {/* Password Field - Enterprise Grid Layout */}
-        <div className="grid grid-cols-3 items-start gap-x-4">
-          <Label htmlFor="password" className={`${getLabelClasses()} mt-2 text-right`}>
+        {/* Password Field - Responsive Enterprise Grid Layout */}
+        <div className="grid grid-cols-1 gap-y-1 sm:grid-cols-3 sm:items-start sm:gap-x-4 sm:gap-y-0">
+          <Label htmlFor="password" className={`${getLabelClasses()} sm:mt-2 sm:text-right`}>
             Password
           </Label>
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <div className="relative">
               <Input
                 id="password"
@@ -104,7 +109,7 @@ export function LoginForm() {
                 autoComplete="current-password"
                 placeholder="••••••••"
                 error={errors.password?.message}
-                className={`${getInputClasses(errors.password ? "error" : "default")} pr-16`}
+                className={`${getInputClasses(errors.password ? "error" : "default")} h-11 pr-16 sm:h-9`}
                 aria-invalid={!!errors.password}
                 aria-describedby={errors.password ? "password-error" : undefined}
                 {...register("password")}
@@ -112,28 +117,37 @@ export function LoginForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className={`absolute top-1/2 right-3 -translate-y-1/2 ${getTypographyClasses("helper")} font-medium transition-colors duration-100 hover:text-gray-800`}
+                className={getPasswordToggleClasses()}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? "Hide" : "Show"}
+                <span
+                  className={`transition-opacity duration-100 motion-reduce:transition-none ${showPassword ? "absolute opacity-0" : "opacity-100"}`}
+                >
+                  Show
+                </span>
+                <span
+                  className={`transition-opacity duration-100 motion-reduce:transition-none ${showPassword ? "opacity-100" : "absolute opacity-0"}`}
+                >
+                  Hide
+                </span>
               </button>
             </div>
             {errors.password && (
-              <p id="password-error" role="alert" className={getErrorMessageClasses()}>
+              <p id="password-error" role="alert" className={getErrorMessageClassesAnimated()}>
                 {errors.password.message}
               </p>
             )}
           </div>
         </div>
 
-        {/* Remember Me - Aligned with Grid */}
-        <div className="grid grid-cols-3 items-center gap-x-4">
-          <div></div>
-          <div className="col-span-2 flex items-center space-x-2">
+        {/* Remember Me - Responsive Grid Aligned */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 sm:items-center sm:gap-x-4">
+          <div className="hidden sm:block"></div>
+          <div className="flex items-center space-x-2 sm:col-span-2">
             <input
               id="rememberMe"
               type="checkbox"
-              className={getCheckboxClasses()}
+              className={`${getCheckboxClasses()} transition-transform duration-150 ease-out checked:scale-105 hover:scale-105 motion-reduce:transition-none motion-reduce:checked:scale-100 motion-reduce:hover:scale-100`}
               style={getCheckboxStyles()}
               {...register("rememberMe")}
             />
@@ -143,13 +157,13 @@ export function LoginForm() {
           </div>
         </div>
 
-        {/* Submit Button - Corporate Blue */}
-        <div className="grid grid-cols-3 items-center gap-x-4 pt-2">
-          <div></div>
-          <div className="col-span-2">
+        {/* Submit Button - Responsive Corporate Blue */}
+        <div className="grid grid-cols-1 pt-2 sm:grid-cols-3 sm:items-center sm:gap-x-4">
+          <div className="hidden sm:block"></div>
+          <div className="sm:col-span-2">
             <Button
               type="submit"
-              className={`${getButtonClasses("primary")} w-full ${isLoading || !isValid ? "cursor-not-allowed opacity-60" : ""}`}
+              className={`${getButtonClasses("primary")} h-11 w-full sm:h-9 ${isLoading || !isValid ? "cursor-not-allowed opacity-60" : ""}`}
               loading={isLoading}
               loadingText="Authenticating..."
               disabled={isLoading || !isValid}
@@ -159,10 +173,10 @@ export function LoginForm() {
           </div>
         </div>
 
-        {/* Links - Professional Styling */}
-        <div className="grid grid-cols-3 items-center gap-x-4 pt-1">
-          <div></div>
-          <div className="col-span-2 space-y-2">
+        {/* Links - Responsive Professional Styling */}
+        <div className="grid grid-cols-1 pt-1 sm:grid-cols-3 sm:items-center sm:gap-x-4">
+          <div className="hidden sm:block"></div>
+          <div className="space-y-2 sm:col-span-2">
             <Link
               to={ROUTES.forgotPassword}
               className={`${getTypographyClasses("helper")} ${getLinkClasses("primary")}`}

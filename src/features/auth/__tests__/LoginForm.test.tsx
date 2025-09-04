@@ -17,18 +17,18 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { screen, waitFor, fireEvent } from "@testing-library/react";
+// import { screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 // TODO: Import LoginForm once implemented
 // import { LoginForm } from "@/components/auth/LoginForm";
-import {
-  renderWithProviders,
-  MOCK_AUTH_STATES,
-  TEST_IDS,
-  formHelpers,
-  checkA11y,
-  philippineTestData,
-} from "@tests/utils/test-utils";
+// import {
+//   renderWithProviders,
+//   MOCK_AUTH_STATES,
+//   TEST_IDS,
+//   formHelpers,
+//   checkA11y,
+//   philippineTestData,
+// } from "@tests/utils/test-utils";
 
 // Mock TanStack Router - Standardized Template
 vi.mock("@tanstack/react-router", () => ({
@@ -49,7 +49,7 @@ vi.mock("@tanstack/react-router", () => ({
   useSearch: () => ({}),
 
   // File-based routing
-  createFileRoute: vi.fn((path: string) => ({
+  createFileRoute: vi.fn((_path: string) => ({
     createRoute: vi.fn(),
     useRouteContext: vi.fn(() => ({})),
     useLoaderData: vi.fn(() => undefined),
@@ -95,7 +95,7 @@ vi.mock("@/stores/authStore", () => ({
 import { useAuthStore } from "@/stores/authStore";
 
 describe("LoginForm Component", () => {
-  const user = userEvent.setup();
+  const _user = userEvent.setup();
 
   beforeEach(() => {
     vi.clearAllMocks();

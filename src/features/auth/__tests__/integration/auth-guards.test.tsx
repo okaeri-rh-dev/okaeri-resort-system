@@ -20,7 +20,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { screen, waitFor, fireEvent } from "@testing-library/react";
+// import { screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 // TODO: Import auth guard utilities once implemented
 // import {
@@ -62,7 +62,7 @@ vi.mock("@tanstack/react-router", () => ({
   useMatches: () => [],
 
   // File-based routing
-  createFileRoute: vi.fn((path: string) => ({
+  createFileRoute: vi.fn((_path: string) => ({
     createRoute: vi.fn(),
     useRouteContext: vi.fn(() => ({
       auth: MOCK_AUTH_STATES.AUTHENTICATED_OWNER,
@@ -145,7 +145,7 @@ vi.mock("@/lib/audit/authAuditLogger", () => ({
 }));
 
 describe("Auth Guards Integration Tests", () => {
-  const user = userEvent.setup();
+  const _user = userEvent.setup();
 
   beforeEach(() => {
     vi.clearAllMocks();

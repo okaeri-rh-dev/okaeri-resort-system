@@ -8,6 +8,9 @@ import type { User } from "@/types/common";
 import { SECURITY_ERROR_CODES, TOKEN_EXPIRY } from "./constants";
 import { SECURITY_EVENTS } from "./events";
 import { ROUTES } from "@/routes/paths";
+import { auditLogger } from "./audit-logger";
+// Use Web Crypto API for browser compatibility instead of Node.js crypto
+// import crypto from "crypto";
 
 interface TokenPayload {
   exp: number;
@@ -17,6 +20,10 @@ interface TokenPayload {
   role: string;
   projectId?: string;
   jti?: string; // JWT ID for revocation
+  sessionId?: string; // Session ID for enhanced security
+  fingerprint?: string; // Device fingerprint
+  permissions?: string[];
+  userId?: string;
 }
 
 interface StoredToken {
@@ -24,6 +31,18 @@ interface StoredToken {
   expiresAt: number;
   issuedAt: number;
   fingerprint: string;
+  sessionId?: string;
+  jti?: string;
+}
+
+interface SecurityMetrics {
+  rotationCount: number;
+  lastRotation: number;
+  isSecure: boolean;
+  fingerprint: string | null;
+  sessionId: string | null;
+  breachCheckEnabled: boolean;
+  tokenBlacklistEnabled: boolean;
 }
 
 /**
@@ -39,6 +58,15 @@ export class SecureTokenManager {
   private tokenFingerprint: string | null = null;
   private refreshTimer: NodeJS.Timeout | null = null;
   private tokenRefreshCallbacks: Set<() => Promise<void>> = new Set();
+
+  // Enhanced security features
+  private sessionId: string | null = null;
+  private currentJTI: string | null = null;
+  private tokenBlacklist: Set<string> = new Set(); // Client-side blacklist for immediate token revocation
+  private breachCheckEnabled: boolean = true;
+  private deviceFingerprint: string | null = null;
+  private suspiciousActivityCount: number = 0;
+  private lastSecurityEvent: number = 0;
 
   // Development mode helper for auth persistence
   private isDevelopmentMockAuth(): boolean {
@@ -105,6 +133,420 @@ export class SecureTokenManager {
 
     // Prevent token extraction attempts
     this.preventTokenExtraction();
+    this.initializeSecurityFeatures();
+  }
+
+  /**
+   * Initialize enhanced security features
+   */
+  private initializeSecurityFeatures(): void {
+    // Generate session ID for this session
+    this.sessionId = this.generateSecureId();
+
+    // Initialize device fingerprinting
+    this.deviceFingerprint = this.generateEnhancedFingerprint();
+
+    // Enable breach checking if available
+    this.breachCheckEnabled = this.isBreachCheckingAvailable();
+
+    // Initialize security monitoring
+    this.initializeSecurityMonitoring();
+  }
+
+  /**
+   * Generate cryptographically secure identifier
+   */
+  private generateSecureId(): string {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    // Fallback for environments without crypto.randomUUID
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+      const r = (Math.random() * 16) | 0;
+      const v = c === "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+
+  /**
+   * Enhanced device fingerprinting with additional entropy
+   */
+  private generateEnhancedFingerprint(): string {
+    // Guard for non-browser environments
+    if (typeof window === "undefined" || typeof navigator === "undefined") {
+      return "server-" + this.generateSecureId();
+    }
+
+    try {
+      const entropy = {
+        // Existing fingerprinting components
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        languages: navigator.languages?.join(",") || "",
+        platform: navigator.platform,
+        vendor: navigator.vendor,
+
+        // Enhanced components
+        hardwareConcurrency: navigator.hardwareConcurrency || 0,
+        maxTouchPoints: navigator.maxTouchPoints || 0,
+        cookieEnabled: navigator.cookieEnabled,
+        doNotTrack: navigator.doNotTrack,
+
+        // Screen information
+        screenWidth: screen.width,
+        screenHeight: screen.height,
+        colorDepth: screen.colorDepth,
+        pixelDepth: screen.pixelDepth,
+
+        // Timezone and locale
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+
+        // WebGL fingerprinting (if available)
+        webglVendor: this.getWebGLVendor(),
+        webglRenderer: this.getWebGLRenderer(),
+
+        // Canvas fingerprinting
+        canvasFingerprint: this.generateCanvasFingerprint(),
+      };
+
+      const fingerprintString = JSON.stringify(entropy);
+
+      // Use SubtleCrypto if available for better hashing
+      if (typeof crypto !== "undefined" && crypto.subtle) {
+        // For browser environments, use a simpler hash since SubtleCrypto is async
+        return this.simpleHash(fingerprintString);
+      }
+
+      return this.simpleHash(fingerprintString);
+    } catch (error) {
+      console.warn("Enhanced fingerprinting failed, using fallback:", error);
+      return "fallback-" + this.generateSecureId();
+    }
+  }
+
+  /**
+   * Get WebGL vendor information
+   */
+  private getWebGLVendor(): string {
+    try {
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+      if (!gl) return "unknown";
+
+      const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+      return debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : "unknown";
+    } catch {
+      return "unknown";
+    }
+  }
+
+  /**
+   * Get WebGL renderer information
+   */
+  private getWebGLRenderer(): string {
+    try {
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+      if (!gl) return "unknown";
+
+      const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+      return debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "unknown";
+    } catch {
+      return "unknown";
+    }
+  }
+
+  /**
+   * Generate canvas fingerprint with more entropy
+   */
+  private generateCanvasFingerprint(): string {
+    try {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return "no-canvas";
+
+      // Set canvas size for consistent fingerprinting
+      canvas.width = 200;
+      canvas.height = 50;
+
+      // Draw complex pattern for better entropy
+      ctx.textBaseline = "top";
+      ctx.font = "14px 'Arial'";
+
+      // Draw background with gradient
+      const gradient = ctx.createLinearGradient(0, 0, 200, 50);
+      gradient.addColorStop(0, "#ff0000");
+      gradient.addColorStop(0.5, "#00ff00");
+      gradient.addColorStop(1, "#0000ff");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 200, 50);
+
+      // Draw text with various styles
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText("Okaeri Resort Security", 2, 2);
+
+      ctx.fillStyle = "#000000";
+      ctx.font = "bold 12px 'Times'";
+      ctx.fillText("Fingerprint", 2, 20);
+
+      // Draw geometric shapes
+      ctx.strokeStyle = "#ff00ff";
+      ctx.beginPath();
+      ctx.arc(150, 25, 20, 0, Math.PI * 2);
+      ctx.stroke();
+
+      return canvas.toDataURL().slice(-50); // Last 50 chars for shorter fingerprint
+    } catch {
+      return "no-canvas-" + Date.now().toString(36);
+    }
+  }
+
+  /**
+   * Simple hash function for fingerprinting
+   */
+  private simpleHash(str: string): string {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString(36).padStart(8, "0");
+  }
+
+  /**
+   * Check if breach checking is available
+   */
+  private isBreachCheckingAvailable(): boolean {
+    // In a real implementation, this would check if HaveIBeenPwned API or similar is available
+    return typeof fetch !== "undefined" && !this.isDevelopmentMockAuth();
+  }
+
+  /**
+   * Initialize security monitoring
+   */
+  private initializeSecurityMonitoring(): void {
+    if (typeof window === "undefined") return;
+
+    // Monitor for suspicious activity patterns
+    let rapidTokenRequests = 0;
+    const originalFetch = window.fetch;
+
+    window.fetch = (...args) => {
+      const [resource] = args;
+      if (typeof resource === "string" && resource.includes("/api/auth")) {
+        rapidTokenRequests++;
+        if (rapidTokenRequests > 10) {
+          this.handleSuspiciousActivity("rapid_auth_requests");
+        }
+        setTimeout(() => (rapidTokenRequests = Math.max(0, rapidTokenRequests - 1)), 60000);
+      }
+      return originalFetch.apply(window, args);
+    };
+
+    // Monitor for developer tools
+    if (import.meta.env.VITE_SECURITY_DEVTOOLS_DETECT === "true") {
+      this.monitorDevTools();
+    }
+  }
+
+  /**
+   * Monitor for developer tools usage
+   */
+  private monitorDevTools(): void {
+    let devtools = { open: false, orientation: null };
+    const threshold = 160;
+
+    setInterval(() => {
+      if (typeof window === "undefined") return;
+
+      if (
+        window.outerHeight - window.innerHeight > threshold ||
+        window.outerWidth - window.innerWidth > threshold
+      ) {
+        if (!devtools.open) {
+          devtools.open = true;
+          this.handleSuspiciousActivity("devtools_opened");
+        }
+      } else {
+        devtools.open = false;
+      }
+    }, 500);
+  }
+
+  /**
+   * Enhanced token blacklist management
+   */
+  addToBlacklist(jti: string): void {
+    this.tokenBlacklist.add(jti);
+
+    // Audit log the blacklisting
+    auditLogger.logSecurityEvent("token_blacklisted", {
+      jti,
+      timestamp: Date.now(),
+      reason: "manual_revocation",
+    });
+
+    // Store in localStorage for cross-tab synchronization
+    try {
+      const blacklistArray = Array.from(this.tokenBlacklist);
+      localStorage.setItem("token_blacklist", JSON.stringify(blacklistArray));
+    } catch (error) {
+      console.warn("Failed to sync token blacklist:", error);
+    }
+  }
+
+  /**
+   * Check if token is blacklisted
+   */
+  isBlacklisted(jti: string): boolean {
+    return this.tokenBlacklist.has(jti);
+  }
+
+  /**
+   * Load blacklist from localStorage (for cross-tab sync)
+   */
+  private loadBlacklist(): void {
+    try {
+      const stored = localStorage.getItem("token_blacklist");
+      if (stored) {
+        const blacklistArray = JSON.parse(stored);
+        this.tokenBlacklist = new Set(blacklistArray);
+      }
+    } catch (error) {
+      console.warn("Failed to load token blacklist:", error);
+    }
+  }
+
+  /**
+   * Generate session ID for new login
+   */
+  generateNewSessionId(): string {
+    const newSessionId = this.generateSecureId();
+    this.sessionId = newSessionId;
+
+    auditLogger.logSecurityEvent("session_id_generated", {
+      sessionId: newSessionId,
+      timestamp: Date.now(),
+    });
+
+    return newSessionId;
+  }
+
+  /**
+   * Validate password against breach databases
+   */
+  async checkPasswordBreach(
+    password: string
+  ): Promise<{ breached: boolean; occurrences?: number }> {
+    if (!this.breachCheckEnabled || this.isDevelopmentMockAuth()) {
+      return { breached: false };
+    }
+
+    try {
+      // Hash password with SHA-1 for HaveIBeenPwned API
+      const encoder = new TextEncoder();
+      const data = encoder.encode(password);
+      const hashBuffer = await crypto.subtle.digest("SHA-1", data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("")
+        .toUpperCase();
+
+      // Send only first 5 characters to API (k-anonymity)
+      const prefix = hashHex.slice(0, 5);
+      const suffix = hashHex.slice(5);
+
+      const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`, {
+        method: "GET",
+        headers: {
+          "User-Agent": "Okaeri-Resort-Security-Check",
+        },
+      });
+
+      if (!response.ok) {
+        console.warn("Breach check service unavailable");
+        return { breached: false };
+      }
+
+      const text = await response.text();
+      const lines = text.split("\n");
+
+      for (const line of lines) {
+        const [hashSuffix, count] = line.split(":");
+        if (hashSuffix === suffix) {
+          return { breached: true, occurrences: parseInt(count, 10) };
+        }
+      }
+
+      return { breached: false };
+    } catch (error) {
+      console.warn("Password breach check failed:", error);
+      return { breached: false };
+    }
+  }
+
+  /**
+   * Enhanced suspicious activity handling
+   */
+  private handleSuspiciousActivity(type: string = "unknown"): void {
+    this.suspiciousActivityCount++;
+    this.lastSecurityEvent = Date.now();
+
+    auditLogger.logSecurityEvent("suspicious_activity", {
+      type,
+      count: this.suspiciousActivityCount,
+      timestamp: this.lastSecurityEvent,
+      sessionId: this.sessionId,
+      fingerprint: this.deviceFingerprint,
+    });
+
+    // Log security event
+    const event = new CustomEvent("securityAlert", {
+      detail: {
+        type: "suspicious_activity",
+        subtype: type,
+        timestamp: this.lastSecurityEvent,
+        count: this.suspiciousActivityCount,
+      },
+    });
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(event);
+    }
+
+    // Progressive response based on activity count
+    if (this.suspiciousActivityCount > 5) {
+      // Clear tokens and force re-authentication
+      this.clearTokens();
+
+      if (typeof window !== "undefined") {
+        window.location.href = `${ROUTES.login}?reason=security_check&type=${type}`;
+      }
+    } else if (this.suspiciousActivityCount > 3) {
+      // Reduce token lifetime
+      this.scheduleEarlyTokenRefresh();
+    }
+  }
+
+  /**
+   * Schedule early token refresh due to security concerns
+   */
+  private scheduleEarlyTokenRefresh(): void {
+    if (!this.accessToken) return;
+
+    // Refresh token in 1 minute instead of normal schedule
+    this.cancelTokenRefresh();
+    this.refreshTimer = setTimeout(async () => {
+      for (const callback of this.tokenRefreshCallbacks) {
+        try {
+          await callback();
+        } catch (error) {
+          console.error("Early token refresh callback failed:", error);
+        }
+      }
+    }, 60000); // 1 minute
   }
 
   /**
@@ -147,28 +589,6 @@ export class SecureTokenManager {
           }
         }, 1000);
       }
-    }
-  }
-
-  /**
-   * Handle suspicious activity detection
-   */
-  private handleSuspiciousActivity(): void {
-    // Log security event
-    const event = new CustomEvent("securityAlert", {
-      detail: {
-        type: "suspicious_activity",
-        timestamp: Date.now(),
-      },
-    });
-    window.dispatchEvent(event);
-
-    // Optionally: Reduce token lifetime or require re-authentication
-    if (this.tokenRotationCount > 10) {
-      this.clearTokens();
-      // Using ROUTES constants for single source of truth
-      // See: src/routes/paths.ts
-      window.location.href = `${ROUTES.login}?reason=security_check`;
     }
   }
 
@@ -301,7 +721,7 @@ export class SecureTokenManager {
   /**
    * Store tokens securely in memory only
    * WARNING: Only access tokens are stored client-side
-   * Refresh tokens MUST be managed server-side via httpOnly cookies in production
+   * Refresh tokens are transmitted via Authorization headers in production
    */
   storeTokens(accessToken: string, refreshToken?: string): void {
     // [PHASE 1-4 MOCK AUTH] Skip validation for mock tokens in development
@@ -333,7 +753,7 @@ export class SecureTokenManager {
     this.lastTokenRotation = Date.now();
 
     // WARNING: Refresh tokens are NOT stored client-side for security in production
-    // In Phase 5, refresh tokens will be managed server-side via httpOnly cookies
+    // Refresh tokens are stored in memory only and transmitted via headers
     if (refreshToken && import.meta.env.DEV && !this.isDevelopmentMockAuth()) {
       console.warn(
         "[PHASE 1 DEV] Refresh token provided but not stored - will use mock token for development"
@@ -375,7 +795,7 @@ export class SecureTokenManager {
 
   /**
    * Retrieve refresh token (Phase 1 development mock only)
-   * In production, refresh tokens are managed server-side via httpOnly cookies
+   * In production, refresh tokens are transmitted via Authorization headers
    *
    * SECURITY NOTE: This method returns a mock token in development only
    * Production environments will throw an error to prevent security vulnerabilities
@@ -389,16 +809,14 @@ export class SecureTokenManager {
       }
 
       console.warn(
-        "[PHASE 1 DEV] Returning mock refresh token - Production will use httpOnly cookies"
+        "[PHASE 1 DEV] Returning mock refresh token - Production uses Authorization headers only"
       );
       // Return a consistent mock token for development
       return "mock-refresh-token-phase1-dev";
     }
 
-    // Production - refresh tokens are managed server-side
-    throw new Error(
-      "Refresh tokens must be managed server-side via httpOnly cookies in production"
-    );
+    // Production - refresh tokens are transmitted via headers
+    throw new Error("Refresh tokens must be transmitted via Authorization headers in production");
   }
 
   /**
@@ -581,20 +999,139 @@ export class SecureTokenManager {
   }
 
   /**
-   * Get token security metrics
+   * Get comprehensive security metrics
    */
-  getSecurityMetrics(): {
-    rotationCount: number;
-    lastRotation: number;
-    isSecure: boolean;
-    fingerprint: string | null;
-  } {
+  getSecurityMetrics(): SecurityMetrics {
     return {
       rotationCount: this.tokenRotationCount,
       lastRotation: this.lastTokenRotation,
       isSecure: this.accessToken !== null && this.tokenFingerprint !== null,
-      fingerprint: this.tokenFingerprint,
+      fingerprint: this.deviceFingerprint,
+      sessionId: this.sessionId,
+      breachCheckEnabled: this.breachCheckEnabled,
+      tokenBlacklistEnabled: this.tokenBlacklist.size > 0,
     };
+  }
+
+  /**
+   * Get security status with enhanced metrics
+   */
+  getSecurityStatus(): {
+    authenticated: boolean;
+    sessionActive: boolean;
+    securityLevel: "low" | "medium" | "high";
+    riskFactors: string[];
+    lastActivity: number;
+    suspiciousActivityCount: number;
+  } {
+    const riskFactors: string[] = [];
+    let securityLevel: "low" | "medium" | "high" = "high";
+
+    // Check for risk factors
+    if (!this.deviceFingerprint) {
+      riskFactors.push("Device fingerprinting unavailable");
+      securityLevel = "medium";
+    }
+
+    if (!this.breachCheckEnabled) {
+      riskFactors.push("Password breach checking disabled");
+    }
+
+    if (this.suspiciousActivityCount > 0) {
+      riskFactors.push(`${this.suspiciousActivityCount} suspicious activities detected`);
+      securityLevel = this.suspiciousActivityCount > 3 ? "low" : "medium";
+    }
+
+    if (this.tokenRotationCount < 1 && this.accessToken) {
+      riskFactors.push("Token not yet rotated");
+    }
+
+    return {
+      authenticated: !!this.accessToken,
+      sessionActive: !!this.sessionId,
+      securityLevel,
+      riskFactors,
+      lastActivity: this.lastTokenRotation || Date.now(),
+      suspiciousActivityCount: this.suspiciousActivityCount,
+    };
+  }
+
+  /**
+   * Force token rotation for security purposes
+   */
+  forceTokenRotation(): void {
+    if (!this.accessToken) return;
+
+    auditLogger.logSecurityEvent("forced_token_rotation", {
+      reason: "security_policy",
+      sessionId: this.sessionId,
+      timestamp: Date.now(),
+    });
+
+    // Trigger immediate token refresh
+    this.tokenRefreshCallbacks.forEach((callback) => {
+      callback().catch((error) => {
+        console.error("Forced token rotation callback failed:", error);
+      });
+    });
+  }
+
+  /**
+   * Reset security state (for testing or after security incident)
+   */
+  resetSecurityState(): void {
+    this.suspiciousActivityCount = 0;
+    this.lastSecurityEvent = 0;
+    this.tokenBlacklist.clear();
+
+    // Clear localStorage blacklist
+    try {
+      localStorage.removeItem("token_blacklist");
+    } catch (error) {
+      console.warn("Failed to clear token blacklist from storage:", error);
+    }
+
+    auditLogger.logSecurityEvent("security_state_reset", {
+      sessionId: this.sessionId,
+      timestamp: Date.now(),
+    });
+  }
+
+  /**
+   * Get current session ID
+   */
+  getCurrentSessionId(): string | null {
+    return this.sessionId;
+  }
+
+  /**
+   * Validate current device fingerprint
+   */
+  validateCurrentFingerprint(): boolean {
+    if (!this.deviceFingerprint) return false;
+
+    const currentFingerprint = this.generateEnhancedFingerprint();
+    const similarity = this.calculateFingerprintSimilarity(
+      this.deviceFingerprint,
+      currentFingerprint
+    );
+
+    return similarity >= 0.8; // 80% similarity threshold
+  }
+
+  /**
+   * Calculate fingerprint similarity
+   */
+  private calculateFingerprintSimilarity(fp1: string, fp2: string): number {
+    if (fp1 === fp2) return 1.0;
+    if (fp1.length !== fp2.length) return 0.0;
+
+    let matches = 0;
+    for (let i = 0; i < fp1.length; i++) {
+      if (fp1[i] === fp2[i]) matches++;
+    }
+
+    return matches / fp1.length;
   }
 }
 

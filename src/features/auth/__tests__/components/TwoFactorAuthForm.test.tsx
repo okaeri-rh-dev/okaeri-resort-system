@@ -21,7 +21,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { screen, waitFor, fireEvent } from "@testing-library/react";
+// import { screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 // TODO: Import TwoFactorAuthForm once implemented
 // import { TwoFactorAuthForm } from "@/features/auth/components/TwoFactorAuthForm";
@@ -109,7 +109,7 @@ vi.mock("@tanstack/react-router", () => ({
   useSearch: () => ({}),
 
   // File-based routing
-  createFileRoute: vi.fn((path: string) => ({
+  createFileRoute: vi.fn((_path: string) => ({
     createRoute: vi.fn(),
     useRouteContext: vi.fn(() => ({})),
     useLoaderData: vi.fn(() => undefined),
@@ -177,8 +177,8 @@ Object.assign(navigator, {
 });
 
 describe("TwoFactorAuthForm Component", () => {
-  const user = userEvent.setup();
-  const mockProps = {
+  const _user = userEvent.setup();
+  const _mockProps = {
     email: "user@okaeriresort.ph",
     tempToken: "temp-token-123",
     onSuccess: vi.fn(),

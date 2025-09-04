@@ -5,9 +5,9 @@
  * Basic 404 page
  */
 
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import React from "react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 
 function NotFoundPage() {
   return (
@@ -17,9 +17,9 @@ function NotFoundPage() {
           <h1 className="text-muted-foreground text-6xl font-bold">404</h1>
           <h2 className="text-2xl font-semibold">Page Not Found</h2>
           <p className="text-muted-foreground">The page you're looking for doesn't exist.</p>
-          <Button asChild>
-            <a href="/">Go Home</a>
-          </Button>
+          <Link to="/" className={buttonVariants({ variant: "default" })}>
+            Go Home
+          </Link>
         </div>
       </div>
     </div>

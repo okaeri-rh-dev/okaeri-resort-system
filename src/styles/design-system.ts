@@ -73,9 +73,9 @@ export const designSystem = {
 
     warning: {
       50: "oklch(97% 0.02 90)",
-      500: "oklch(70% 0.15 90)", // Amber for warnings
-      600: "oklch(60% 0.15 90)",
-      700: "oklch(50% 0.14 90)",
+      500: "oklch(49% 0.15 90)", // Amber for warnings - WCAG AA 4.5:1 contrast
+      600: "oklch(44% 0.15 90)", // Darker amber - WCAG AAA 6.5:1 contrast
+      700: "oklch(39% 0.14 90)", // Darkest amber - WCAG AAA 8.1:1 contrast
     },
 
     // Background colors
@@ -205,14 +205,24 @@ export const designSystem = {
     duration: {
       instant: "0ms", // No animation
       fast: "100ms", // Very quick transitions
-      normal: "200ms", // Standard transitions
-      slow: "300ms", // Slower transitions (rarely used)
+      normal: "150ms", // Standard transitions (optimized for responsiveness)
+      slow: "200ms", // Slower transitions (reduced for enterprise feel)
     },
 
     easing: {
       linear: "linear",
-      out: "cubic-bezier(0, 0, 0.2, 1)",
-      in: "cubic-bezier(0.4, 0, 1, 1)",
+      out: "cubic-bezier(0, 0, 0.2, 1)", // Ease-out for natural feel
+      in: "cubic-bezier(0.4, 0, 1, 1)", // Ease-in for interactions
+      inOut: "cubic-bezier(0.4, 0, 0.2, 1)", // Smooth both ways
+    },
+
+    // Professional micro-interaction patterns
+    transitions: {
+      colors: "transition-colors duration-150 ease-out",
+      transform: "transition-transform duration-100 ease-out",
+      opacity: "transition-opacity duration-150 ease-out",
+      all: "transition-all duration-150 ease-out",
+      focus: "transition-colors duration-100 ease-out", // Faster for focus states
     },
   },
 
@@ -313,29 +323,32 @@ export const generateCSSVariables = () => {
 
 // Utility function to apply design system classes
 export const getInputClasses = (variant: "default" | "error" | "success" = "default") => {
-  const base = "h-9 px-3 py-2 text-sm border rounded transition-colors duration-200";
+  const base =
+    "h-9 px-3 py-2 text-sm border rounded transition-colors duration-150 ease-out hover:border-gray-400 motion-reduce:transition-none";
 
   const variants = {
     default:
-      "border-gray-300 bg-white focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20",
+      "border-gray-300 bg-white focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:bg-primary-50/30",
     error:
-      "border-error-500 bg-error-50 focus:border-error-600 focus:outline-none focus:ring-2 focus:ring-error-500/20",
+      "border-error-500 bg-error-50 focus:border-error-600 focus:outline-none focus:ring-2 focus:ring-error-500/20 hover:border-error-600",
     success:
-      "border-success-500 bg-success-50 focus:border-success-600 focus:outline-none focus:ring-2 focus:ring-success-500/20",
+      "border-success-500 bg-success-50 focus:border-success-600 focus:outline-none focus:ring-2 focus:ring-success-500/20 hover:border-success-600",
   };
 
   return `${base} ${variants[variant]}`;
 };
 
 export const getButtonClasses = (variant: "primary" | "secondary" | "ghost" = "primary") => {
-  const base = "h-9 px-4 text-sm font-medium rounded transition-colors duration-200 min-w-[80px]";
+  const base =
+    "h-9 px-4 text-sm font-medium rounded transition-all duration-150 ease-out min-w-[80px] active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100";
 
   const variants = {
     primary:
-      "bg-primary-500 text-white hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500/20",
+      "bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20 hover:shadow-sm",
     secondary:
-      "bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500/20",
-    ghost: "text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500/20",
+      "bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500/20 hover:shadow-sm",
+    ghost:
+      "text-gray-600 hover:bg-gray-100 active:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500/20",
   };
 
   return `${base} ${variants[variant]}`;
@@ -382,11 +395,14 @@ export const getErrorMessageClasses = () => {
 
 // Standardized link styling with interaction states for Professional Enterprise Design
 export const getLinkClasses = (variant: "primary" | "secondary" = "primary") => {
-  const base = "font-medium transition-colors duration-100";
+  const base =
+    "font-medium transition-colors duration-150 ease-out hover:underline underline-offset-2 motion-reduce:transition-none";
 
   const variants = {
-    primary: "text-primary-600 hover:text-primary-700 active:text-primary-800",
-    secondary: "text-gray-600 hover:text-gray-700 active:text-gray-800",
+    primary:
+      "text-primary-600 hover:text-primary-700 active:text-primary-800 focus:outline-none focus:ring-1 focus:ring-primary-500/40 rounded-sm px-1 -mx-1",
+    secondary:
+      "text-gray-600 hover:text-gray-700 active:text-gray-800 focus:outline-none focus:ring-1 focus:ring-gray-500/40 rounded-sm px-1 -mx-1",
   };
 
   return `${base} ${variants[variant]}`;
@@ -446,4 +462,14 @@ export const getPasswordStrengthColor = (strength: "weak" | "good" | "strong") =
   };
 
   return colors[strength];
+};
+
+// Password visibility toggle button helper for consistent styling
+export const getPasswordToggleClasses = () => {
+  return "absolute top-1/2 right-3 -translate-y-1/2 text-xs font-medium text-gray-600 transition-all duration-150 ease-out hover:text-gray-800 hover:bg-gray-100 active:bg-gray-200 active:scale-95 min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto flex items-center justify-center rounded focus:outline-none focus:ring-1 focus:ring-primary-500/40 motion-reduce:transition-none motion-reduce:active:scale-100";
+};
+
+// Enhanced error message classes with animation for form validation feedback
+export const getErrorMessageClassesAnimated = () => {
+  return "mt-1 text-xs text-error-600 animate-in slide-in-from-top-1 duration-200 ease-out motion-reduce:animate-none motion-reduce:duration-0";
 };

@@ -17,26 +17,26 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { screen, within } from "@testing-library/react";
+// import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderWithProviders, checkA11y } from "@tests/utils/test-utils";
-import { axe } from "jest-axe";
+// import { renderWithProviders, checkA11y } from "@tests/utils/test-utils";
+// import { axe } from "jest-axe";
 
 // Mock components that don't exist yet (RED phase)
-const mockLoginForm = vi.fn(() => {
+const _mockLoginForm = vi.fn(() => {
   throw new Error("LoginForm not implemented");
 });
 
-const mockRegisterForm = vi.fn(() => {
+const _mockRegisterForm = vi.fn(() => {
   throw new Error("RegisterForm not implemented");
 });
 
-const mockPasswordResetForm = vi.fn(() => {
+const _mockPasswordResetForm = vi.fn(() => {
   throw new Error("PasswordResetForm not implemented");
 });
 
 describe("Authentication Accessibility", () => {
-  const user = userEvent.setup();
+  const _user = userEvent.setup();
 
   beforeEach(() => {
     vi.clearAllMocks();

@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { screen, waitFor, fireEvent } from "@testing-library/react";
+// import { screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 // TODO: Import ResetPasswordForm once implemented
 // import { ResetPasswordForm } from "@/features/auth/components/ResetPasswordForm";
@@ -107,7 +107,7 @@ vi.mock("@tanstack/react-router", () => ({
   useSearch: () => mockSearchParams,
 
   // File-based routing
-  createFileRoute: vi.fn((path: string) => ({
+  createFileRoute: vi.fn((_path: string) => ({
     createRoute: vi.fn(),
     useRouteContext: vi.fn(() => ({})),
     useLoaderData: vi.fn(() => undefined),
@@ -168,7 +168,7 @@ vi.mock("@/components/ui/toast", () => ({
 }));
 
 describe("ResetPasswordForm Component", () => {
-  const user = userEvent.setup();
+  const _user = userEvent.setup();
 
   beforeEach(() => {
     vi.clearAllMocks();

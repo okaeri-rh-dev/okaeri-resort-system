@@ -7,7 +7,7 @@
 
 import { createFileRoute, Link } from "@tanstack/react-router";
 import React from "react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/routes/paths";
 
 function UnauthorizedPage() {
@@ -19,9 +19,9 @@ function UnauthorizedPage() {
           <p className="text-muted-foreground">
             You don't have permission to access this resource.
           </p>
-          <Button asChild>
-            <Link to={ROUTES.login}>Back to Login</Link>
-          </Button>
+          <Link to={ROUTES.login} className={buttonVariants({ variant: "default" })}>
+            Back to Login
+          </Link>
         </div>
       </div>
     </div>

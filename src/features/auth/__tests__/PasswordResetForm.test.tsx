@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+// import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 // GREEN PHASE: Import the implemented component
@@ -43,7 +43,7 @@ vi.mock("@tanstack/react-router", () => ({
   useSearch: () => ({}),
 
   // File-based routing
-  createFileRoute: vi.fn((path: string) => ({
+  createFileRoute: vi.fn((_path: string) => ({
     createRoute: vi.fn(),
     useRouteContext: vi.fn(() => ({})),
     useLoaderData: vi.fn(() => undefined),
@@ -127,7 +127,16 @@ vi.mock("@/styles/design-system", () => ({
   getTypographyClasses: vi.fn(() => "typography-classes"),
   getCheckboxClasses: vi.fn(() => "checkbox-classes"),
   getErrorMessageClasses: vi.fn(() => "error-message-classes"),
+  getErrorMessageClassesAnimated: vi.fn(() => "error-message-classes-animated"),
   getLinkClasses: vi.fn(() => "link-classes"),
+  getAlertStyles: vi.fn(() => ({
+    backgroundColor: "#fef2f2",
+    borderColor: "#ef4444",
+    color: "#b91c1c",
+  })),
+  getCheckboxStyles: vi.fn(() => ({ accentColor: "#1e40af" })),
+  getPasswordStrengthColor: vi.fn(() => "#22c55e"),
+  getPasswordToggleClasses: vi.fn(() => "password-toggle-classes"),
 }));
 
 // Mock routes
@@ -161,15 +170,15 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
 }
 
 describe("PasswordResetForm Component - GREEN Phase", () => {
-  const user = userEvent.setup();
+  const _user = userEvent.setup();
 
   // GREEN PHASE: Test data for implemented component
-  const validEmail = "user@okaeriresort.ph";
+  const _validEmail = "user@okaeriresort.ph";
   const validToken = "valid-reset-token-12345";
-  const expiredToken = "expired-reset-token-67890";
-  const invalidToken = "invalid-token";
-  const strongPassword = "NewStrongPassword123!";
-  const weakPassword = "weak";
+  const _expiredToken = "expired-reset-token-67890";
+  const _invalidToken = "invalid-token";
+  const _strongPassword = "NewStrongPassword123!";
+  const _weakPassword = "weak";
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -243,7 +252,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         securityNotice: "Should include security notice about unrequested resets",
       };
 
-      Object.values(helpTextRequirements).forEach((requirement) => {
+      Object.values(helpTextRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Help text not implemented
       });
     });
@@ -259,7 +268,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         timeEstimate: "Should show estimated delivery time (2-5 minutes)",
       };
 
-      Object.values(successRequirements).forEach((requirement) => {
+      Object.values(successRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Success handling not implemented
       });
     });
@@ -274,7 +283,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         ipTracking: "Should track IP addresses for abuse detection",
       };
 
-      Object.values(securityRequirements).forEach((requirement) => {
+      Object.values(securityRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Security handling not implemented
       });
     });
@@ -296,7 +305,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         "Security Notice",
       ];
 
-      expectedTokenFlowElements.forEach((element) => {
+      expectedTokenFlowElements.forEach((_element) => {
         expect(false).toBe(true); // Token flow UI not implemented
       });
     });
@@ -313,7 +322,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         rateLimit: "Should check rate limits for token usage attempts",
       };
 
-      Object.values(tokenValidationRequirements).forEach((requirement) => {
+      Object.values(tokenValidationRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Token validation not implemented
       });
     });
@@ -329,7 +338,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         preventReuse: "Should prevent expired token reuse attempts",
       };
 
-      Object.values(expiredTokenRequirements).forEach((requirement) => {
+      Object.values(expiredTokenRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Expired token handling not implemented
       });
     });
@@ -345,7 +354,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         preventEnumeration: "Should prevent token enumeration attacks",
       };
 
-      Object.values(invalidTokenRequirements).forEach((requirement) => {
+      Object.values(invalidTokenRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Invalid token handling not implemented
       });
     });
@@ -362,7 +371,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         geolocation: "Should optionally track geographic location",
       };
 
-      Object.values(auditRequirements).forEach((requirement) => {
+      Object.values(auditRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Token auditing not implemented
       });
     });
@@ -390,7 +399,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
       };
 
       // RED: Password validation will fail
-      Object.values(passwordRequirements).forEach((requirement) => {
+      Object.values(passwordRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Password validation not implemented
       });
     });
@@ -409,7 +418,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         accessibility: "Should announce strength changes to screen readers",
       };
 
-      Object.values(strengthIndicatorFeatures).forEach((feature) => {
+      Object.values(strengthIndicatorFeatures).forEach((_feature) => {
         expect(false).toBe(true); // Password strength indicator not implemented
       });
     });
@@ -425,7 +434,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         smartMatching: "Should handle paste operations intelligently",
       };
 
-      Object.values(confirmationRequirements).forEach((requirement) => {
+      Object.values(confirmationRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Password confirmation not implemented
       });
     });
@@ -441,7 +450,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         userNotification: "Should notify user why password was rejected",
       };
 
-      Object.values(historyRequirements).forEach((requirement) => {
+      Object.values(historyRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Password history checking not implemented
       });
     });
@@ -456,7 +465,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         culturalSensitivity: "Should avoid culturally insensitive password requirements",
       };
 
-      Object.values(filipinoPasswordPolicies).forEach((policy) => {
+      Object.values(filipinoPasswordPolicies).forEach((_policy) => {
         expect(false).toBe(true); // Philippine password policies not implemented
       });
     });
@@ -475,7 +484,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         gracefulDegradation: "Should gracefully handle rate limit exceeded scenarios",
       };
 
-      Object.values(rateLimitingRequirements).forEach((requirement) => {
+      Object.values(rateLimitingRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Rate limiting not implemented
       });
     });
@@ -492,7 +501,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         noBiasedGeneration: "Should avoid biased random number generation",
       };
 
-      Object.values(tokenSecurityRequirements).forEach((requirement) => {
+      Object.values(tokenSecurityRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Secure token generation not implemented
       });
     });
@@ -509,7 +518,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         concurrency: "Should handle concurrent token usage attempts",
       };
 
-      Object.values(lifecycleRequirements).forEach((requirement) => {
+      Object.values(lifecycleRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Token lifecycle management not implemented
       });
     });
@@ -528,7 +537,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         dataRetention: "Should implement log retention policies",
       };
 
-      Object.values(auditLoggingRequirements).forEach((requirement) => {
+      Object.values(auditLoggingRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Security audit logging not implemented
       });
     });
@@ -546,7 +555,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         alerting: "Should send alerts for security incidents",
       };
 
-      Object.values(attackMitigationRequirements).forEach((requirement) => {
+      Object.values(attackMitigationRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Attack detection not implemented
       });
     });
@@ -565,7 +574,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         spamPrevention: "Should implement SPF, DKIM, and DMARC records",
       };
 
-      Object.values(deliveryRequirements).forEach((requirement) => {
+      Object.values(deliveryRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Email delivery not implemented
       });
     });
@@ -583,7 +592,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         culturalSensitivity: "Should use culturally appropriate messaging",
       };
 
-      Object.values(brandingRequirements).forEach((requirement) => {
+      Object.values(brandingRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Email branding not implemented
       });
     });
@@ -601,7 +610,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         privacyNotice: "Should include privacy policy reference",
       };
 
-      Object.values(securityInformationRequirements).forEach((requirement) => {
+      Object.values(securityInformationRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Security information not implemented
       });
     });
@@ -619,7 +628,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         printFriendly: "Should be print-friendly if needed",
       };
 
-      Object.values(emailFormatRequirements).forEach((requirement) => {
+      Object.values(emailFormatRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Email format support not implemented
       });
     });
@@ -636,7 +645,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         abuseReporting: "Should handle abuse reports",
       };
 
-      Object.values(analyticsRequirements).forEach((requirement) => {
+      Object.values(analyticsRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Email analytics not implemented
       });
     });
@@ -655,7 +664,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         returnFocus: "Should return focus appropriately after form submission",
       };
 
-      Object.values(focusManagementRequirements).forEach((requirement) => {
+      Object.values(focusManagementRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Focus management not implemented
       });
     });
@@ -672,7 +681,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         optimisticUI: "Should show optimistic UI updates where appropriate",
       };
 
-      Object.values(loadingStateRequirements).forEach((requirement) => {
+      Object.values(loadingStateRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Loading states not implemented
       });
     });
@@ -689,7 +698,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         smartDefaults: "Should provide intelligent default values",
       };
 
-      Object.values(formStateRequirements).forEach((requirement) => {
+      Object.values(formStateRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Form state management not implemented
       });
     });
@@ -706,7 +715,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         alternativeMethods: "Should suggest alternative reset methods",
       };
 
-      Object.values(navigationRequirements).forEach((requirement) => {
+      Object.values(navigationRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Navigation and help not implemented
       });
     });
@@ -723,7 +732,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         errorPersonalization: "Should personalize error messages based on context",
       };
 
-      Object.values(errorUXRequirements).forEach((requirement) => {
+      Object.values(errorUXRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Advanced UX error handling not implemented
       });
     });
@@ -742,7 +751,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         carrierIntegration: "Should integrate with Philippine SMS gateways",
       };
 
-      Object.values(mobileNumberRequirements).forEach((requirement) => {
+      Object.values(mobileNumberRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Mobile number support not implemented
       });
     });
@@ -759,7 +768,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         dataUsageMinimization: "Should minimize data usage for mobile users",
       };
 
-      Object.values(networkOptimizationRequirements).forEach((requirement) => {
+      Object.values(networkOptimizationRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Network optimization not implemented
       });
     });
@@ -776,7 +785,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         carrierRouting: "Should route SMS through optimal carriers",
       };
 
-      Object.values(smsResetRequirements).forEach((requirement) => {
+      Object.values(smsResetRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // SMS reset not implemented
       });
     });
@@ -793,7 +802,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         spamPrevention: "Should avoid Philippine spam filters",
       };
 
-      Object.values(emailProviderRequirements).forEach((requirement) => {
+      Object.values(emailProviderRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Email provider optimization not implemented
       });
     });
@@ -810,7 +819,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         customerService: "Should provide customer service during Philippine hours",
       };
 
-      Object.values(culturalRequirements).forEach((requirement) => {
+      Object.values(culturalRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Cultural considerations not implemented
       });
     });
@@ -829,7 +838,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         progressAnnouncements: "Should announce progress through multi-step process",
       };
 
-      Object.values(screenReaderRequirements).forEach((requirement) => {
+      Object.values(screenReaderRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Screen reader support not implemented
       });
     });
@@ -846,7 +855,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         arrowKeyNavigation: "Should support arrow key navigation where appropriate",
       };
 
-      Object.values(keyboardRequirements).forEach((requirement) => {
+      Object.values(keyboardRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Keyboard navigation not implemented
       });
     });
@@ -863,7 +872,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         fontScaling: "Should work with user font scaling preferences",
       };
 
-      Object.values(visualAccessibilityRequirements).forEach((requirement) => {
+      Object.values(visualAccessibilityRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Visual accessibility not implemented
       });
     });
@@ -880,7 +889,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         alternativePointing: "Should work with alternative pointing devices",
       };
 
-      Object.values(assistiveTechRequirements).forEach((requirement) => {
+      Object.values(assistiveTechRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Assistive technology support not implemented
       });
     });
@@ -897,7 +906,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         reducedCognitive: "Should minimize cognitive load",
       };
 
-      Object.values(cognitiveAccessibilityRequirements).forEach((requirement) => {
+      Object.values(cognitiveAccessibilityRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Cognitive accessibility not implemented
       });
     });
@@ -916,7 +925,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         sslErrors: "Should handle SSL/TLS certificate errors",
       };
 
-      Object.values(networkErrorRequirements).forEach((requirement) => {
+      Object.values(networkErrorRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Network error handling not implemented
       });
     });
@@ -933,7 +942,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         unknownErrors: "Should handle unknown server errors gracefully",
       };
 
-      Object.values(serverErrorRequirements).forEach((requirement) => {
+      Object.values(serverErrorRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Server error handling not implemented
       });
     });
@@ -950,7 +959,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         retryFeedback: "Should provide feedback about retry attempts",
       };
 
-      Object.values(retryRequirements).forEach((requirement) => {
+      Object.values(retryRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Retry mechanisms not implemented
       });
     });
@@ -967,7 +976,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         privacyRespect: "Should respect privacy settings for data retention",
       };
 
-      Object.values(dataPreservationRequirements).forEach((requirement) => {
+      Object.values(dataPreservationRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Data preservation not implemented
       });
     });
@@ -984,7 +993,7 @@ describe("PasswordResetForm Component - GREEN Phase", () => {
         localized: "Should provide localized error messages",
       };
 
-      Object.values(errorMessagingRequirements).forEach((requirement) => {
+      Object.values(errorMessagingRequirements).forEach((_requirement) => {
         expect(false).toBe(true); // Error messaging not implemented
       });
     });

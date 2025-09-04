@@ -218,16 +218,13 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { accessToken, refreshToken, expiresIn } = generateTokenPair(tokenPayload);
 
-    // Set secure httpOnly cookie for refresh token
-    res.setHeader(
-      "Set-Cookie",
-      `refreshToken=${refreshToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`
-    );
+    // CRITICAL: NO COOKIES - JWT tokens returned in response body only
+    // Client must use Authorization headers for all requests
 
     // Send welcome email (stub for now)
     // await sendWelcomeEmail(result.user.email, result.user.name);
 
-    // Return success response
+    // Return success response with tokens in body
     return res.status(201).json(
       successResponse(
         {
@@ -246,6 +243,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
               }
             : null,
           accessToken,
+          refreshToken,
           expiresIn,
         },
         "Registration successful"

@@ -140,6 +140,79 @@ Object.defineProperty(navigator, "onLine", {
 // Mock fetch for tests that need it
 global.fetch = vi.fn();
 
+// Mock Canvas API for chart/visualization libraries
+class MockCanvasRenderingContext2D {
+  canvas = { width: 800, height: 600 };
+  fillStyle = "";
+  strokeStyle = "";
+  lineWidth = 1;
+  lineCap = "butt";
+  lineJoin = "miter";
+  font = "10px sans-serif";
+  textAlign = "start";
+  textBaseline = "alphabetic";
+
+  // Drawing methods
+  fillRect = vi.fn();
+  clearRect = vi.fn();
+  strokeRect = vi.fn();
+  fillText = vi.fn();
+  strokeText = vi.fn();
+  measureText = vi.fn(() => ({ width: 0 }));
+
+  // Path methods
+  beginPath = vi.fn();
+  closePath = vi.fn();
+  moveTo = vi.fn();
+  lineTo = vi.fn();
+  arc = vi.fn();
+  arcTo = vi.fn();
+  bezierCurveTo = vi.fn();
+  quadraticCurveTo = vi.fn();
+
+  // Transformation methods
+  rotate = vi.fn();
+  scale = vi.fn();
+  translate = vi.fn();
+  transform = vi.fn();
+  setTransform = vi.fn();
+
+  // Other methods
+  save = vi.fn();
+  restore = vi.fn();
+  clip = vi.fn();
+  stroke = vi.fn();
+  fill = vi.fn();
+  createLinearGradient = vi.fn(() => ({
+    addColorStop: vi.fn(),
+  }));
+  createRadialGradient = vi.fn(() => ({
+    addColorStop: vi.fn(),
+  }));
+  createPattern = vi.fn(() => ({}));
+  getImageData = vi.fn(() => ({
+    width: 100,
+    height: 100,
+    data: new Uint8ClampedArray(40000),
+  }));
+  putImageData = vi.fn();
+  drawImage = vi.fn();
+}
+
+// Mock HTMLCanvasElement.getContext
+HTMLCanvasElement.prototype.getContext = vi.fn(function (contextType) {
+  if (contextType === "2d") {
+    return new MockCanvasRenderingContext2D();
+  }
+  return null;
+});
+
+// Mock canvas.toDataURL
+HTMLCanvasElement.prototype.toDataURL = vi.fn(() => "data:image/png;base64,mock");
+HTMLCanvasElement.prototype.toBlob = vi.fn((callback) => {
+  callback(new Blob(["mock"], { type: "image/png" }));
+});
+
 // Function to reset any global state between tests
 function resetGlobalState() {
   // Reset location mock

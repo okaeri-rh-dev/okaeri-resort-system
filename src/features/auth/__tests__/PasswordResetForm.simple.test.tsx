@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+// import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PasswordResetForm } from "@/features/auth/components/PasswordResetForm";
 
@@ -82,7 +82,16 @@ vi.mock("@/styles/design-system", () => ({
   getTypographyClasses: vi.fn(() => "typography-classes"),
   getCheckboxClasses: vi.fn(() => "checkbox-classes"),
   getErrorMessageClasses: vi.fn(() => "error-message-classes"),
+  getErrorMessageClassesAnimated: vi.fn(() => "error-message-classes-animated"),
   getLinkClasses: vi.fn(() => "link-classes"),
+  getAlertStyles: vi.fn(() => ({
+    backgroundColor: "#fef2f2",
+    borderColor: "#ef4444",
+    color: "#b91c1c",
+  })),
+  getCheckboxStyles: vi.fn(() => ({ accentColor: "#1e40af" })),
+  getPasswordStrengthColor: vi.fn(() => "#22c55e"),
+  getPasswordToggleClasses: vi.fn(() => "password-toggle-classes"),
 }));
 
 vi.mock("@/routes/paths", () => ({
@@ -97,7 +106,7 @@ vi.mock("@/lib/validations/auth", () => ({
 }));
 
 describe("PasswordResetForm Component - Simplified GREEN Phase", () => {
-  const user = userEvent.setup();
+  const _user = userEvent.setup();
 
   beforeEach(() => {
     vi.clearAllMocks();

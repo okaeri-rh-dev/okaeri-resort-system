@@ -5,6 +5,200 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Okaeri Resort Management System</title>
+
+    <!-- Critical CSS inlined for fastest initial render -->
+    <style>
+      /* Essential CSS Custom Properties - Only critical colors */
+      :root {
+        /* Essential font */
+        --font-family-sans:
+          "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+        /* Critical colors only - Light theme */
+        --background: 100% 0 0;
+        --foreground: 20% 0 0;
+        --primary: 55% 0.2 220;
+        --primary-foreground: 98% 0.01 220;
+        --border: 85% 0.06 85;
+        --ring: 55% 0.2 220;
+        --muted: 95% 0.02 85;
+        --muted-foreground: 42% 0.04 85;
+      }
+
+      /* Dark theme critical colors */
+      .dark {
+        --background: 15% 0.02 220;
+        --foreground: 95% 0.02 85;
+        --primary: 75% 0.12 220;
+        --primary-foreground: 15% 0.02 220;
+        --border: 25% 0.02 220;
+        --ring: 75% 0.12 220;
+        --muted: 25% 0.02 220;
+        --muted-foreground: 70% 0.04 85;
+      }
+
+      /* Essential base styles */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        border: 0 solid oklch(var(--border));
+      }
+      html {
+        line-height: 1.5;
+        -webkit-text-size-adjust: 100%;
+        -moz-tab-size: 4;
+        tab-size: 4;
+        font-family: var(--font-family-sans);
+      }
+      body {
+        margin: 0;
+        line-height: inherit;
+        background: oklch(var(--background));
+        color: oklch(var(--foreground));
+      }
+
+      /* Critical loading spinner - Keep minimal */
+      .loading-spinner {
+        border: 2px solid oklch(var(--muted));
+        border-top: 2px solid oklch(var(--primary));
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Essential flexbox utilities for initial layout */
+      .flex {
+        display: flex;
+      }
+      .items-center {
+        align-items: center;
+      }
+      .justify-center {
+        justify-content: center;
+      }
+      .min-h-screen {
+        min-height: 100vh;
+      }
+
+      /* Critical text utilities */
+      .text-center {
+        text-align: center;
+      }
+      .text-sm {
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+      }
+      .font-semibold {
+        font-weight: 600;
+      }
+
+      /* Critical spacing utilities */
+      .p-4 {
+        padding: 1rem;
+      }
+      .p-6 {
+        padding: 1.5rem;
+      }
+      .mt-2 {
+        margin-top: 0.5rem;
+      }
+      .mt-4 {
+        margin-top: 1rem;
+      }
+      .mx-auto {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      /* Critical color utilities */
+      .bg-background {
+        background-color: oklch(var(--background));
+      }
+      .text-foreground {
+        color: oklch(var(--foreground));
+      }
+      .text-muted-foreground {
+        color: oklch(var(--muted-foreground));
+      }
+
+      /* Essential button styles for initial interaction */
+      .btn-primary {
+        background-color: oklch(var(--primary));
+        color: oklch(var(--primary-foreground));
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+      }
+      .btn-primary:hover {
+        opacity: 0.9;
+      }
+
+      /* Critical focus styles for accessibility */
+      *:focus-visible {
+        outline: 2px solid oklch(var(--ring));
+        outline-offset: 2px;
+      }
+
+      /* Mobile viewport optimization */
+      @media (max-width: 768px) {
+        html {
+          font-size: 16px;
+        }
+        .loading-spinner {
+          width: 24px;
+          height: 24px;
+        }
+      }
+
+      /* High contrast support */
+      @media (prefers-contrast: high) {
+        :root {
+          --border: 0% 0 0;
+          --ring: 0% 0 0;
+        }
+        .dark {
+          --border: 100% 0 0;
+          --ring: 100% 0 0;
+        }
+      }
+
+      /* Reduced motion support */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+
+    <!-- Preconnect to improve font loading performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/icons/icon-192x192.png" as="image" type="image/png" />
+
+    <!-- DNS prefetch for external resources -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+
+    <!-- Resource hints for performance -->
+    <link rel="prefetch" href="/src/lib/lazy-loading.tsx" />
   </head>
   <body>
     <div id="root"></div>

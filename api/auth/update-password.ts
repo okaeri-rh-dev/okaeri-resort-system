@@ -127,17 +127,15 @@ async function handler(req: AuthenticatedRequest, res: VercelResponse) {
       // console.log(`[UpdatePassword] Password changed for user ${req.user.userId}`);
     });
 
-    // Clear authentication cookies (force re-login)
-    res.setHeader("Set-Cookie", [
-      "token=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0",
-      "refreshToken=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0",
-    ]);
+    // CRITICAL: NO COOKIES - Client must clear tokens from SecureTokenManager
+    // After password change, client should redirect to login page
+    // No Set-Cookie headers are sent as per JWT-only architecture
 
     return res
       .status(200)
       .json(
         successResponse(
-          null,
+          { requiresReauthentication: true },
           "Password updated successfully. Please log in with your new password."
         )
       );

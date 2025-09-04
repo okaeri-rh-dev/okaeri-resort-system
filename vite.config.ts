@@ -184,6 +184,27 @@ export default defineConfig({
       "@/features": resolve(__dirname, "./src/features"),
       "@/pages": resolve(__dirname, "./src/pages"),
       "@/layouts": resolve(__dirname, "./src/layouts"),
+      // Fix for use-sync-external-store ESM compatibility with React 19
+      "use-sync-external-store/shim/with-selector": resolve(
+        __dirname,
+        "node_modules/use-sync-external-store/shim/with-selector.js"
+      ),
+      // TanStack also uses this import path with .js extension
+      "use-sync-external-store/shim/with-selector.js": resolve(
+        __dirname,
+        "node_modules/use-sync-external-store/shim/with-selector.js"
+      ),
+      // Prevent zustand/traditional from being loaded
+      "zustand/traditional": resolve(__dirname, "node_modules/zustand/esm/react.mjs"),
+      // Ensure correct module resolution for use-sync-external-store
+      "use-sync-external-store/shim": resolve(
+        __dirname,
+        "node_modules/use-sync-external-store/shim/index.js"
+      ),
+      "use-sync-external-store": resolve(
+        __dirname,
+        "node_modules/use-sync-external-store/index.js"
+      ),
     },
   },
 
@@ -233,8 +254,23 @@ export default defineConfig({
     // Minification
     minify: "esbuild",
 
-    // Strict chunk size warnings for mobile performance
-    chunkSizeWarningLimit: 500,
+    // Strict chunk size warnings for mobile performance - reduced for TBT optimization
+    chunkSizeWarningLimit: 300,
+
+    // Additional optimizations for TBT reduction
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ["console.log", "console.info", "console.warn"],
+      },
+      mangle: {
+        safari10: true,
+      },
+      format: {
+        comments: false,
+      },
+    },
 
     // Rollup options for code splitting
     rollupOptions: {
@@ -242,38 +278,62 @@ export default defineConfig({
         main: resolve(__dirname, "index.html"),
       },
       output: {
-        // Advanced chunk splitting strategy for mobile performance
+        // Optimized chunk splitting strategy to reduce TBT
         manualChunks: (id) => {
-          // Vendor chunks - critical for initial load
-          if (id.includes("react") || id.includes("react-dom")) {
+          // Core React - Keep small and separate for caching
+          if (id.includes("react/jsx-runtime") || id.includes("react-dom/client")) {
+            return "react-core";
+          }
+
+          if (id.includes("react") && !id.includes("react-hook-form")) {
             return "react-vendor";
           }
 
-          // Router chunk - loaded early
+          // Router - Critical but can be lazy loaded after initial render
           if (id.includes("@tanstack/react-router")) {
             return "router";
           }
 
-          // Query chunk - essential for data fetching
+          // Query - Essential for data fetching, keep separate
           if (id.includes("@tanstack/react-query")) {
             return "query";
           }
 
-          // UI components - split by usage frequency
+          // Authentication related - Can be lazy loaded
+          if (id.includes("/routes/_auth") || id.includes("/features/auth")) {
+            return "auth";
+          }
+
+          // Dashboard and protected routes - Lazy loaded
+          if (id.includes("/routes/_protected") || id.includes("/features/dashboard")) {
+            return "dashboard";
+          }
+
+          // Critical UI components needed for initial render
           if (
-            id.includes("@radix-ui/react-dialog") ||
-            id.includes("@radix-ui/react-toast") ||
-            id.includes("@radix-ui/react-dropdown-menu")
+            id.includes("@radix-ui/react-slot") ||
+            id.includes("class-variance-authority") ||
+            id.includes("clsx") ||
+            id.includes("tailwind-merge")
           ) {
             return "ui-critical";
           }
 
-          if (id.includes("@radix-ui")) {
-            return "ui-extended";
+          // Dialog and modal components - Lazy loaded
+          if (
+            id.includes("@radix-ui/react-dialog") ||
+            id.includes("@radix-ui/react-alert-dialog") ||
+            id.includes("@radix-ui/react-toast")
+          ) {
+            return "ui-modals";
           }
 
-          // Form handling - lazy loaded
+          // Form components - Lazy loaded with forms
           if (
+            id.includes("@radix-ui/react-label") ||
+            id.includes("@radix-ui/react-select") ||
+            id.includes("@radix-ui/react-checkbox") ||
+            id.includes("@radix-ui/react-radio-group") ||
             id.includes("react-hook-form") ||
             id.includes("@hookform/resolvers") ||
             id.includes("zod")
@@ -281,60 +341,92 @@ export default defineConfig({
             return "forms";
           }
 
-          // Utilities - small and frequently used
-          if (
-            id.includes("date-fns") ||
-            id.includes("clsx") ||
-            id.includes("tailwind-merge") ||
-            id.includes("class-variance-authority")
-          ) {
-            return "utils";
+          // Other Radix UI components - Lazy loaded
+          if (id.includes("@radix-ui")) {
+            return "ui-extended";
           }
 
-          // Icons - lazy loaded on demand
+          // Icons - Lazy loaded on demand (major size contributor)
           if (id.includes("lucide-react")) {
             return "icons";
           }
 
-          // Store management
+          // Date utilities - Can be lazy loaded
+          if (id.includes("date-fns")) {
+            return "date-utils";
+          }
+
+          // Store management - Keep small and separate
           if (id.includes("zustand") || id.includes("immer")) {
             return "state";
           }
 
-          // Route-specific chunks
+          // Security and crypto - Lazy loaded
+          if (
+            id.includes("bcryptjs") ||
+            id.includes("jsonwebtoken") ||
+            id.includes("isomorphic-dompurify")
+          ) {
+            return "security";
+          }
+
+          // Database and backend utilities
+          if (
+            id.includes("drizzle") ||
+            id.includes("@neondatabase") ||
+            id.includes("@vercel/node")
+          ) {
+            return "backend";
+          }
+
+          // Route-specific chunks with better granularity
           if (id.includes("/routes/")) {
             const routePath = id.split("/routes/")[1];
             if (routePath) {
-              const routeSegments = routePath.split("/");
-              if (routeSegments[0] === "_protected") {
-                // Group protected routes by feature
-                const feature = routeSegments[1]?.split(".")[0];
-                if (["dashboard", "bookings", "properties", "expenses"].includes(feature)) {
-                  return `route-${feature}`;
-                }
-                return "route-misc";
+              if (routePath.startsWith("_auth")) return "auth";
+              if (routePath.startsWith("_protected")) return "dashboard";
+              if (routePath.includes("offline") || routePath.includes("unauthorized")) {
+                return "utility-pages";
               }
-              return "route-public";
+              return "public-pages";
             }
           }
 
-          // Pages - split by feature
-          if (id.includes("/pages/")) {
-            const pageName = id.split("/pages/")[1]?.split(".")[0]?.toLowerCase();
-            if (pageName?.includes("dashboard")) return "page-dashboard";
-            if (pageName?.includes("booking")) return "page-bookings";
-            if (pageName?.includes("property") || pageName?.includes("properties"))
-              return "page-properties";
-            if (pageName?.includes("expense")) return "page-expenses";
-            return "page-misc";
+          // Features - Split by domain
+          if (id.includes("/features/")) {
+            const featurePath = id.split("/features/")[1];
+            if (featurePath) {
+              const feature = featurePath.split("/")[0];
+              return `feature-${feature}`;
+            }
+          }
+
+          // PWA and service worker related
+          if (id.includes("vite-plugin-pwa") || id.includes("workbox")) {
+            return "pwa";
+          }
+
+          // Testing utilities - Should not be in production bundle
+          if (id.includes("@testing-library") || id.includes("vitest")) {
+            return "test-utils";
+          }
+
+          // Large utility libraries that can be lazy loaded
+          if (id.includes("decimal.js") || id.includes("uuid") || id.includes("ws")) {
+            return "heavy-utils";
           }
 
           // Third-party node_modules not already handled
           if (id.includes("node_modules")) {
+            const packageName = id.split("node_modules/")[1]?.split("/")[0];
+            // Group small, related packages together
+            if (["pg", "@upstash/redis", "@upstash/ratelimit"].includes(packageName)) {
+              return "db-clients";
+            }
             return "vendor";
           }
 
-          // Default chunk for application code
+          // Application code - Keep minimal
           return "app";
         },
         // Optimize chunk naming for better caching
@@ -373,56 +465,99 @@ export default defineConfig({
     },
   },
 
-  // Enhanced dependency optimization for faster dev server
+  // Enhanced dependency optimization for faster dev server and reduced TBT
   optimizeDeps: {
     include: [
-      // Core React libraries
+      // Core React libraries - Essential for initial load
       "react",
       "react-dom",
       "react/jsx-runtime",
       "react-error-boundary",
 
-      // TanStack ecosystem
-      "@tanstack/react-query",
-      "@tanstack/react-router",
-
-      // State management
+      // State management - Keep small and fast
       "zustand",
       "zustand/middleware",
+      "zustand/middleware/immer",
+      "zustand/shallow",
+      "zustand/react",
+      "zustand/vanilla",
       "immer",
 
-      // Form handling
-      "react-hook-form",
-      "@hookform/resolvers",
-      "zod",
+      // Fix for use-sync-external-store ESM issue with React 19
+      "use-sync-external-store",
+      "use-sync-external-store/shim",
+      "use-sync-external-store/shim/with-selector",
 
-      // Utilities
-      "date-fns",
+      // TanStack Store uses the shim module
+      "@tanstack/react-store",
+
+      // Critical utilities only
       "clsx",
       "tailwind-merge",
       "class-variance-authority",
 
-      // Critical UI components
+      // Essential UI components for shell
+      "@radix-ui/react-slot",
+    ],
+    exclude: [
+      // Prevent traditional module from being pre-bundled
+      "zustand/traditional",
+
+      // Lazy load these heavy dependencies
+      "@tanstack/react-router", // Load after initial render
+      "@tanstack/react-query", // Load with data fetching
+
+      // Form handling - Load with forms
+      "react-hook-form",
+      "@hookform/resolvers",
+      "zod",
+
+      // Date utilities - Load when needed
+      "date-fns",
+
+      // Heavy UI components - Load on demand
       "@radix-ui/react-dialog",
       "@radix-ui/react-toast",
       "@radix-ui/react-dropdown-menu",
-    ],
-    exclude: [
-      // Exclude dev dependencies from optimization
+      "@radix-ui/react-select",
+      "@radix-ui/react-alert-dialog",
+
+      // Icons - Major size contributor, load on demand
+      "lucide-react",
+
+      // Security/crypto - Load with auth
+      "bcryptjs",
+      "jsonwebtoken",
+      "isomorphic-dompurify",
+
+      // Database - Server-side only
+      "drizzle-orm",
+      "@neondatabase/serverless",
+      "pg",
+
+      // Development tools
       "@testing-library/react",
       "@testing-library/jest-dom",
       "vitest",
       "@vitejs/plugin-react-swc",
       "rollup-plugin-visualizer",
-      // Exclude Playwright from browser bundle
       "playwright",
       "playwright-core",
       "@playwright/test",
       "chromium-bidi",
       "fsevents",
     ],
-    // Force re-optimization on dependency changes
+    // Force re-optimization in development for performance testing
     force: process.env.NODE_ENV === "development",
+
+    // ESBuild options for faster processing
+    esbuildOptions: {
+      target: "es2022",
+      supported: {
+        "dynamic-import": true,
+        "import-meta": true,
+      },
+    },
   },
 
   // CSS configuration

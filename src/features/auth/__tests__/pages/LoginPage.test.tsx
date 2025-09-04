@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { screen, waitFor, fireEvent } from "@testing-library/react";
+// import { screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 // TODO: Import LoginPage once implemented
 // import { LoginPage } from "@/features/auth/pages/LoginPage";
@@ -51,7 +51,7 @@ vi.mock("@tanstack/react-router", () => ({
   useSearch: () => ({ returnUrl: "/" }),
 
   // File-based routing
-  createFileRoute: vi.fn((path: string) => ({
+  createFileRoute: vi.fn((_path: string) => ({
     createRoute: vi.fn(),
     useRouteContext: vi.fn(() => ({
       auth: {
@@ -115,7 +115,7 @@ vi.mock("@/stores/projectStore", () => ({
 import { useAuthStore } from "@/stores/authStore";
 
 describe("LoginPage Component", () => {
-  const user = userEvent.setup();
+  const _user = userEvent.setup();
 
   beforeEach(() => {
     vi.clearAllMocks();

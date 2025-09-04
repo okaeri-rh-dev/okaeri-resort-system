@@ -362,7 +362,7 @@ Optional services:
 ## Security
 
 ### Best Practices
-- JWT tokens stored in httpOnly cookies
+- JWT tokens transmitted via Authorization headers
 - CORS configured for allowed origins
 - Input validation with Zod schemas
 - SQL injection prevention via parameterized queries

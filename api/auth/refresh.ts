@@ -126,17 +126,14 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         ]
       );
 
-      // Set secure cookies for new tokens
-      res.setHeader("Set-Cookie", [
-        `token=${newToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${15 * 60}`, // 15 minutes
-        `refreshToken=${newRefreshToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`, // 7 days
-      ]);
-
+      // CRITICAL: NO COOKIES - JWT tokens returned in response body only
+      // Client must use Authorization headers for all requests
       return res.status(200).json(
         successResponse(
           {
-            token: newToken,
+            accessToken: newToken,
             refreshToken: newRefreshToken,
+            expiresIn: 15 * 60, // 15 minutes in seconds
             currentProject,
           },
           "Token refreshed successfully"
