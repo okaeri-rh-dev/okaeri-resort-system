@@ -3,7 +3,7 @@
  * Comprehensive type definitions for all test infrastructure components
  */
 
-import { z } from "zod";
+import type { z } from "zod";
 import type { BookingInput, ExpenseInput, PaymentInput, UserInput } from "@/types/schemas";
 
 // ====================================
@@ -610,7 +610,7 @@ export type TestData<T> = T & {
 /**
  * Test suite configuration type
  */
-export type TestSuiteConfig<TInput, TOutput> = {
+export interface TestSuiteConfig<TInput, TOutput> {
   name: string;
   mockService: MockServiceBase<TOutput, TInput, Partial<TInput>>;
   testCases: ContractTestCase<TInput, TOutput>[];
@@ -618,4 +618,4 @@ export type TestSuiteConfig<TInput, TOutput> = {
     request?: z.ZodSchema<TInput>;
     response?: z.ZodSchema<TOutput>;
   };
-};
+}

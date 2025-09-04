@@ -64,7 +64,7 @@ test.describe("Navigation Verification", () => {
         const isProtected = currentUrl.includes("/login");
         const isAccessible = currentUrl.includes(route);
         console.log(
-          `   ${route}: ${isAccessible ? "✅ Accessible" : isProtected ? "❌ Redirects to login" : "⚠️ Unexpected: " + currentUrl}`
+          `   ${route}: ${isAccessible ? "✅ Accessible" : isProtected ? "❌ Redirects to login" : `⚠️ Unexpected: ${currentUrl}`}`
         );
 
         if (isAccessible) {

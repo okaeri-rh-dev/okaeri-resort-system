@@ -4,7 +4,7 @@
  * Validates that mock services behave identically to real API endpoints
  */
 
-import { z } from "zod";
+import type { z } from "zod";
 import type {
   BookingInput,
   CreateBookingInput,

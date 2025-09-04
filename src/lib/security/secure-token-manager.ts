@@ -161,7 +161,7 @@ export class SecureTokenManager {
       return crypto.randomUUID();
     }
     // Fallback for environments without crypto.randomUUID
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
       const r = (Math.random() * 16) | 0;
       const v = c === "x" ? r : (r & 0x3) | 0x8;
       return v.toString(16);
@@ -174,7 +174,7 @@ export class SecureTokenManager {
   private generateEnhancedFingerprint(): string {
     // Guard for non-browser environments
     if (typeof window === "undefined" || typeof navigator === "undefined") {
-      return "server-" + this.generateSecureId();
+      return `server-${this.generateSecureId()}`;
     }
 
     try {
@@ -220,7 +220,7 @@ export class SecureTokenManager {
       return this.simpleHash(fingerprintString);
     } catch (error) {
       console.warn("Enhanced fingerprinting failed, using fallback:", error);
-      return "fallback-" + this.generateSecureId();
+      return `fallback-${this.generateSecureId()}`;
     }
   }
 
@@ -297,7 +297,7 @@ export class SecureTokenManager {
 
       return canvas.toDataURL().slice(-50); // Last 50 chars for shorter fingerprint
     } catch {
-      return "no-canvas-" + Date.now().toString(36);
+      return `no-canvas-${Date.now().toString(36)}`;
     }
   }
 
@@ -354,7 +354,7 @@ export class SecureTokenManager {
    * Monitor for developer tools usage
    */
   private monitorDevTools(): void {
-    let devtools = { open: false, orientation: null };
+    const devtools = { open: false, orientation: null };
     const threshold = 160;
 
     setInterval(() => {
@@ -602,7 +602,7 @@ export class SecureTokenManager {
       typeof navigator === "undefined" ||
       typeof screen === "undefined"
     ) {
-      return "test-fingerprint-" + Math.random().toString(36).substr(2, 9);
+      return `test-fingerprint-${Math.random().toString(36).substr(2, 9)}`;
     }
 
     try {
@@ -639,7 +639,7 @@ export class SecureTokenManager {
     } catch (error) {
       // Canvas operations can fail in restricted environments (privacy browsers, headless, etc.)
       console.warn("Canvas fingerprinting failed, using fallback:", error);
-      return "fallback-" + Math.random().toString(36).substr(2, 9);
+      return `fallback-${Math.random().toString(36).substr(2, 9)}`;
     }
   }
 

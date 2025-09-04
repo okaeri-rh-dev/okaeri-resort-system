@@ -4,7 +4,7 @@
  * "NO COOKIES: JWT authentication does not use cookies - all auth via headers"
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll as _beforeAll, afterAll as _afterAll } from "vitest";
 import fetch from "node-fetch";
 
 const TEST_BASE_URL = process.env.TEST_API_URL || "http://localhost:3000/api";
@@ -44,8 +44,9 @@ describe("JWT Authentication Security Compliance", () => {
       expect(data.data.expiresIn).toBeDefined();
 
       // Store tokens for subsequent tests
-      accessToken = data.data.accessToken;
-      refreshToken = data.data.refreshToken;
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken } = data.data;
+      accessToken = newAccessToken;
+      refreshToken = newRefreshToken;
 
       console.log("✅ Registration: No cookies set, tokens returned in body");
     });
@@ -78,8 +79,9 @@ describe("JWT Authentication Security Compliance", () => {
       expect(data.data.expiresIn).toBeDefined();
 
       // Update tokens
-      accessToken = data.data.accessToken;
-      refreshToken = data.data.refreshToken;
+      const { accessToken: loginAccessToken, refreshToken: loginRefreshToken } = data.data;
+      accessToken = loginAccessToken;
+      refreshToken = loginRefreshToken;
 
       console.log("✅ Login: No cookies set, tokens returned in body");
     });
@@ -108,8 +110,9 @@ describe("JWT Authentication Security Compliance", () => {
       expect(data.data.expiresIn).toBeDefined();
 
       // Update tokens
-      accessToken = data.data.accessToken;
-      refreshToken = data.data.refreshToken;
+      const { accessToken: refreshedAccessToken, refreshToken: refreshedRefreshToken } = data.data;
+      accessToken = refreshedAccessToken;
+      refreshToken = refreshedRefreshToken;
 
       console.log("✅ Refresh: No cookies set, new tokens returned in body");
     });

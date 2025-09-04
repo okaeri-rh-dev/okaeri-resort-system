@@ -124,7 +124,7 @@ export function createPayment(overrides?: PaymentFactoryOptions): PaymentInput {
           gcashReferenceNumber: overrides?.gcashReferenceNumber || generateGCashReference(),
           gcashAccountName: overrides?.gcashAccountName || seededFaker.person.fullName(),
           gcashAccountNumber:
-            overrides?.gcashAccountNumber || "+63" + seededFaker.string.numeric(10),
+            overrides?.gcashAccountNumber || `+63${seededFaker.string.numeric(10)}`,
         }
       : {
           gcashReferenceNumber: null,

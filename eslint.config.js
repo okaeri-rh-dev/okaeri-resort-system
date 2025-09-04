@@ -10,6 +10,7 @@ export default tseslint.config([
     ignores: [
       "dist/**/*",
       "build/**/*",
+      "assets/**/*",
       "coverage/**/*",
       "node_modules/**/*",
       ".next/**/*",

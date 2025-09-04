@@ -7,7 +7,8 @@
  */
 
 import crypto from "crypto";
-import { dpaAuditLogger, PIType } from "./dpa-audit-logger";
+import type { PIType } from "./dpa-audit-logger";
+import { dpaAuditLogger } from "./dpa-audit-logger";
 
 // Encryption algorithms
 const ENCRYPTION_ALGORITHM = "aes-256-gcm";

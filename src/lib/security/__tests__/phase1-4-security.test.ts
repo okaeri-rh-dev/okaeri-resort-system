@@ -189,7 +189,7 @@ describe("Phase 1.4 Security Implementation", () => {
 
   describe("Basic Token Manager", () => {
     it("should store and retrieve tokens", () => {
-      const mockToken = "mock-token-" + Date.now();
+      const mockToken = `mock-token-${Date.now()}`;
 
       basicTokenManager.storeTokens(mockToken);
       const retrieved = basicTokenManager.getAccessToken();
@@ -290,7 +290,7 @@ describe("Phase 1.4 Security Implementation", () => {
     });
 
     it("should integrate token management with audit logging", () => {
-      const mockToken = "mock-integration-token-" + Date.now();
+      const mockToken = `mock-integration-token-${Date.now()}`;
 
       basicTokenManager.storeTokens(mockToken);
 

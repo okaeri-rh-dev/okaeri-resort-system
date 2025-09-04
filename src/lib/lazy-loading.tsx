@@ -2,7 +2,8 @@
  * Advanced lazy loading utilities for route components
  * Optimizes bundle size and improves Time to Interactive (TBI)
  */
-import React, { ComponentType, Suspense, lazy } from "react";
+import type { ComponentType } from "react";
+import React, { Suspense, lazy } from "react";
 
 // Loading fallback component with minimal DOM footprint
 const LoadingFallback: React.FC<{ feature?: string }> = ({ feature }) => (

@@ -155,8 +155,8 @@ export class BasicSecurityChecker {
 
     // Check that no auth tokens are in localStorage or sessionStorage
     try {
-      const localStorage = window.localStorage;
-      const sessionStorage = window.sessionStorage;
+      const { localStorage } = window;
+      const { sessionStorage } = window;
 
       // Check for common token storage keys
       const tokenKeys = ["token", "accessToken", "authToken", "jwt", "bearer"];

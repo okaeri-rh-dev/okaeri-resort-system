@@ -283,7 +283,7 @@ export class BasicTokenManager {
       return null;
     }
 
-    const payload = validation.payload;
+    const { payload } = validation;
     return {
       id: payload.sub,
       email: payload.email,

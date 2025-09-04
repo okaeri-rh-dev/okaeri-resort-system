@@ -193,7 +193,7 @@ export function createExpense(overrides?: ExpenseFactoryOptions): ExpenseInput {
     paymentStatus: "paid",
     paidAt: overrides?.paidAt || seededFaker.date.recent().toISOString(),
     vendorName: overrides?.vendorName || seededFaker.helpers.arrayElement(PHILIPPINE_VENDORS),
-    vendorContact: "+63" + seededFaker.string.numeric(10),
+    vendorContact: `+63${seededFaker.string.numeric(10)}`,
     invoiceNumber: `INV-${seededFaker.string.alphanumeric(8).toUpperCase()}`,
     invoiceDate:
       overrides?.invoiceDate || seededFaker.date.recent({ days: 30 }).toISOString().split("T")[0],

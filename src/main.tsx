@@ -255,7 +255,7 @@ async function initializePerformanceMonitoring() {
     if ("PerformanceObserver" in window) {
       try {
         const paintObserver = new PerformanceObserver((list) => {
-          let currentPath = window.location.pathname;
+          const currentPath = window.location.pathname;
           for (const entry of list.getEntries()) {
             if (entry.name === "first-contentful-paint") {
               console.log(`First Contentful Paint: ${entry.startTime}ms`);

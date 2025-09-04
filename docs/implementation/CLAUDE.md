@@ -19,7 +19,8 @@ operational costs for family business operations.
 - **Styling**: Tailwind CSS v4 with shadcn/ui components
 - **Backend**: Vercel Serverless Functions (Node.js 20.x), Neon PostgreSQL,
   Drizzle ORM
-- **Authentication**: JWT with HTTP-only cookies, refresh token rotation
+- **Authentication**: JWT with Authorization headers (Bearer tokens), refresh
+  token rotation
 - **Infrastructure**: Upstash Redis for rate limiting, Edge-optimized deployment
 
 ## Essential Commands

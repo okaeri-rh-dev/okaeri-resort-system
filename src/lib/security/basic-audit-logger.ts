@@ -429,7 +429,7 @@ export const auditUtils = {
     // Truncate long values
     Object.keys(sanitized).forEach((key) => {
       if (typeof sanitized[key] === "string" && sanitized[key].length > 200) {
-        sanitized[key] = sanitized[key].substring(0, 200) + "...";
+        sanitized[key] = `${sanitized[key].substring(0, 200)}...`;
       }
     });
 

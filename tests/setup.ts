@@ -200,7 +200,7 @@ class MockCanvasRenderingContext2D {
 }
 
 // Mock HTMLCanvasElement.getContext
-HTMLCanvasElement.prototype.getContext = vi.fn(function (contextType) {
+HTMLCanvasElement.prototype.getContext = vi.fn((contextType) => {
   if (contextType === "2d") {
     return new MockCanvasRenderingContext2D();
   }

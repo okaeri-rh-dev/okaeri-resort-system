@@ -178,7 +178,7 @@ describe("BookingStore - Comprehensive Tests", () => {
       const { result } = renderHook(() => useBookingStore());
 
       // Check optimistic update is added
-      const createPromise = act(async () => {
+      const createPromise = await act(async () => {
         const booking = await result.current.createBooking(bookingData);
         return booking;
       });
@@ -240,7 +240,7 @@ describe("BookingStore - Comprehensive Tests", () => {
 
       const { result } = renderHook(() => useBookingStore());
 
-      const createPromise = act(async () => {
+      const createPromise = await act(async () => {
         await result.current.createBooking(bookingData);
       });
 
@@ -1530,10 +1530,14 @@ describe("BookingStore - Comprehensive Tests", () => {
       const { result } = renderHook(() => useBookingStore());
 
       // Simulate concurrent booking attempts
-      const [result1, result2] = await Promise.allSettled([
-        act(async () => await result.current.createBooking(booking1)),
-        act(async () => await result.current.createBooking(booking2)),
-      ]);
+      const promises = [
+        result.current.createBooking(booking1),
+        result.current.createBooking(booking2),
+      ];
+
+      const [result1, result2] = await act(async () => {
+        return await Promise.allSettled(promises);
+      });
 
       expect(result1.status).toBe("fulfilled");
       expect(result2.status).toBe("rejected");
