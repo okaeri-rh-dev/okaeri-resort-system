@@ -211,6 +211,159 @@ export class DashboardMockGenerator {
     return this;
   }
 
+  // Additional fluent methods for Phase 2 tests
+  private checkInCount?: number;
+  private checkOutCount?: number;
+  private roomStatusOverride?: any;
+  private upcomingArrivalsOverride?: any[];
+  private trendOverride?: string;
+  private revenueOverride?: number;
+  private expensesData?: any;
+  private paymentMethodsData?: any;
+  private taxationData?: any;
+  private profitabilityData?: any;
+  private activityFeedData?: any[];
+
+  withCheckIns(count: number): this {
+    this.checkInCount = count;
+    return this;
+  }
+
+  withCheckOuts(count: number): this {
+    this.checkOutCount = count;
+    return this;
+  }
+
+  withRoomStatus(status: {
+    clean: number;
+    dirty: number;
+    maintenance: number;
+    outOfOrder: number;
+  }): this {
+    this.roomStatusOverride = status;
+    return this;
+  }
+
+  withUpcomingArrivals(arrivals: any[]): this {
+    this.upcomingArrivalsOverride = arrivals;
+    return this;
+  }
+
+  withTrend(trend: string): this {
+    this.trendOverride = trend;
+    return this;
+  }
+
+  withBookingSources(sources: any): this {
+    this.bookingSourcesOverride = sources;
+    return this;
+  }
+
+  withRevenue(amount: number): this {
+    this.revenueOverride = amount;
+    return this;
+  }
+
+  withWeekRevenue(amount: number): this {
+    this.weekRevenueOverride = amount;
+    return this;
+  }
+
+  withMonthRevenue(amount: number): this {
+    this.monthRevenueOverride = amount;
+    return this;
+  }
+
+  withRevenueTrend(direction: string, percentage: number): this {
+    this.revenueTrendOverride = { direction, percentage };
+    return this;
+  }
+
+  withPaymentMethods(methods: any): this {
+    this.paymentMethodsData = methods;
+    return this;
+  }
+
+  withExpenses(monthly: number, budget: number): this {
+    this.expensesData = { monthly, budget };
+    return this;
+  }
+
+  withExpenseCategories(categories: any[]): this {
+    this.expenseCategoriesOverride = categories;
+    return this;
+  }
+
+  withTaxation(taxation: any): this {
+    this.taxationData = taxation;
+    return this;
+  }
+
+  withProfitability(profitability: any): this {
+    this.profitabilityData = profitability;
+    return this;
+  }
+
+  // Activity feed builder methods
+  createActivityFeed(): this {
+    this.activityFeedData = [];
+    return this;
+  }
+
+  withBookingActivities(count: number): this {
+    if (!this.activityFeedData) this.activityFeedData = [];
+    for (let i = 0; i < count; i++) {
+      this.activityFeedData.push(this.createBookingActivity(new Date(Date.now() - i * 60000)));
+    }
+    return this;
+  }
+
+  withFinancialActivities(count: number): this {
+    if (!this.activityFeedData) this.activityFeedData = [];
+    for (let i = 0; i < count; i++) {
+      this.activityFeedData.push(this.createFinancialActivity(new Date(Date.now() - i * 60000)));
+    }
+    return this;
+  }
+
+  withOperationalActivities(count: number): this {
+    if (!this.activityFeedData) this.activityFeedData = [];
+    for (let i = 0; i < count; i++) {
+      this.activityFeedData.push(this.createOperationalActivity(new Date(Date.now() - i * 60000)));
+    }
+    return this;
+  }
+
+  withActivity(params: any): this {
+    if (!this.activityFeedData) this.activityFeedData = [];
+
+    const baseActivity = {
+      id: `activity-${Date.now()}-${Math.random()}`,
+      projectId: this.projectId,
+      timestamp: new Date(),
+      actorId: "test-actor",
+      actorName: "Test Actor",
+      actorType: "system",
+      category: params.category || "operational",
+      priority: params.priority || "medium",
+      status: "completed",
+      displayText: params.displayText || `Test activity: ${JSON.stringify(params)}`,
+      icon: "test-icon",
+      color: "blue",
+      ...params,
+    };
+
+    this.activityFeedData.push(baseActivity);
+    return this;
+  }
+
+  // Private override properties
+  private bookingSourcesOverride?: any;
+  private weekRevenueOverride?: number;
+  private monthRevenueOverride?: number;
+  private revenueTrendOverride?: any;
+  private expenseCategoriesOverride?: any[];
+
   /**
    * Generate booking metrics based on current configuration
    */
@@ -239,27 +392,29 @@ export class DashboardMockGenerator {
       source: "system",
       occupancy: {
         current: this.occupancyLevel,
-        trend: this.season === "peak" ? "up" : this.season === "typhoon" ? "down" : "stable",
+        trend:
+          this.trendOverride ||
+          (this.season === "peak" ? "up" : this.season === "typhoon" ? "down" : "stable"),
         thirtyDayAverage: this.occupancyLevel * 0.9,
         peakSeasonForecast: Math.min(95, this.occupancyLevel * 1.15),
         availableRooms,
         totalRooms,
       },
-      checkInsToday: arrivals.length,
-      checkOutsToday: departures.length,
-      arrivalsNext24Hours: arrivals,
+      checkInsToday: this.checkInCount !== undefined ? this.checkInCount : arrivals.length,
+      checkOutsToday: this.checkOutCount !== undefined ? this.checkOutCount : departures.length,
+      arrivalsNext24Hours: this.upcomingArrivalsOverride || arrivals,
       departuresNext24Hours: departures,
       pendingBookings: Math.floor(Math.random() * 15) + 5,
       confirmedBookings: occupiedRooms + Math.floor(Math.random() * 10),
       cancelledThisWeek: Math.floor(Math.random() * 8),
       noShowRate: this.season === "typhoon" ? 15 : 5,
-      roomStatus: {
+      roomStatus: this.roomStatusOverride || {
         clean: availableRooms - 2,
         dirty: Math.floor(Math.random() * 4) + 1,
         maintenance: Math.floor(Math.random() * 2),
         outOfOrder: this.alertLevel === "crisis" ? 3 : Math.floor(Math.random() * 2),
       },
-      bookingSources: {
+      bookingSources: this.bookingSourcesOverride || {
         direct: Math.floor(Math.random() * 30) + 20,
         booking_com: Math.floor(Math.random() * 25) + 15,
         agoda: Math.floor(Math.random() * 20) + 10,
@@ -362,12 +517,20 @@ export class DashboardMockGenerator {
   /**
    * Generate complete dashboard state
    */
-  build(): DashboardState {
+  build(): DashboardState | any {
+    // If we're building activity feed data, return just that
+    if (this.activityFeedData) {
+      return this.activityFeedData;
+    }
+
     const booking = this.generateBookingMetrics();
     const financial = this.generateFinancialMetrics();
     const performance = this.generatePerformanceKPIs();
 
     return {
+      booking,
+      financial,
+      performance,
       metrics: {
         booking,
         financial,

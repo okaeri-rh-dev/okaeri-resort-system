@@ -9,10 +9,10 @@ import { DashboardTestProvider } from "../../../../../tests/utils/dashboard-prov
 import { DashboardMockDataGenerator } from "../../../../../tests/utils/dashboard-mocks";
 
 // These components/hooks don't exist yet - RED phase of TDD
-import { DashboardWithOptimistic } from "../../../components/DashboardWithOptimistic";
-import { useOptimisticBooking } from "../../../hooks/useOptimisticBooking";
-import { useActionStateForm } from "../../../hooks/useActionStateForm";
-import { useDeferredMetrics } from "../../../hooks/useDeferredMetrics";
+import { DashboardWithOptimistic } from "../../components/DashboardWithOptimistic";
+import { useOptimisticBooking } from "../../hooks/useReact19Patterns";
+import { useActionStateForm } from "../../hooks/useReact19Patterns";
+import { useDeferredMetrics } from "../../hooks/useReact19Patterns";
 
 describe("React 19 Patterns - useOptimistic, useActionState, Concurrent Features", () => {
   const mockGenerator = new DashboardMockDataGenerator();

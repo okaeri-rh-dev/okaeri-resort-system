@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 
-// These imports will fail in RED phase - expected behavior
+// Import the implemented stores and types
 import { useDashboardStore, createDashboardStore } from "../../stores/dashboardStore";
 import type {
   DashboardStore,

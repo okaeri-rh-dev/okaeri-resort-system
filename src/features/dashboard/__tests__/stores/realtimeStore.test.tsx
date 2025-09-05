@@ -7,11 +7,11 @@ import { DashboardTestProvider } from "../../../../../tests/utils/dashboard-prov
 import { DashboardMockDataGenerator } from "../../../../../tests/utils/dashboard-mocks";
 import { WebSocketSimulator } from "../../../../../tests/utils/websocket-mocks";
 
-// These don't exist yet - RED phase of TDD
-import { useRealtimeStore } from "../../../stores/realtimeStore";
-import { useDashboardStore } from "../../../stores/dashboardStore";
-import { useOptimisticStore } from "../../../stores/optimisticStore";
-import type { RealtimeState, DashboardState } from "../../../types/dashboard";
+// Import the implemented stores and types
+import { useRealtimeStore } from "../../stores/realtimeStore";
+import { useDashboardStore } from "../../stores/dashboardStore";
+import { useOptimisticStore } from "../../stores/optimisticStore";
+import type { RealtimeState, DashboardState } from "../../types/dashboard";
 
 describe("Realtime Store - Zustand + TanStack Query Integration", () => {
   let queryClient: QueryClient;

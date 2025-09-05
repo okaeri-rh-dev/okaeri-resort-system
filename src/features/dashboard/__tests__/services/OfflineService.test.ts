@@ -6,12 +6,12 @@ import "fake-indexeddb/auto";
 import { DashboardTestProvider } from "../../../../../tests/utils/dashboard-providers";
 import { DashboardMockDataGenerator } from "../../../../../tests/utils/dashboard-mocks";
 
-// These don't exist yet - RED phase of TDD
-import { OfflineService } from "../../../services/OfflineService";
-import { useOfflineSync } from "../../../hooks/useOfflineSync";
-import { useOfflineQueue } from "../../../hooks/useOfflineQueue";
-import { IndexedDBAdapter } from "../../../services/IndexedDBAdapter";
-import type { OfflineAction, SyncStatus } from "../../../types/offline";
+// Import the implemented services and hooks
+import { OfflineService } from "../../services/OfflineService";
+import { useOfflineSync } from "../../hooks/useOfflineSync";
+import { useOfflineQueue } from "../../hooks/useOfflineQueue";
+import { IndexedDBAdapter } from "../../services/IndexedDBAdapter";
+import type { OfflineAction, SyncStatus } from "../../types/offline";
 
 describe("Offline-First Architecture Tests", () => {
   let offlineService: OfflineService;

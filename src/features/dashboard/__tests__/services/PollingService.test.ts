@@ -5,10 +5,10 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 import { DashboardTestProvider } from "../../../../../tests/utils/dashboard-providers";
 import { DashboardMockDataGenerator } from "../../../../../tests/utils/dashboard-mocks";
 
-// These don't exist yet - RED phase of TDD
-import { usePolling } from "../../../hooks/usePolling";
-import { PollingService } from "../../../services/PollingService";
-import type { PollingConfig, PollingState } from "../../../types/polling";
+// Import the implemented services and hooks
+import { usePolling } from "../../hooks/usePolling";
+import { PollingService } from "../../services/PollingService";
+import type { PollingConfig, PollingState } from "../../types/polling";
 
 describe("PollingService and usePolling Hook", () => {
   beforeEach(() => {

@@ -74,18 +74,36 @@ export const useDashboardTestContext = (): DashboardTestContextValue => {
 interface DashboardTestProviderProps {
   children: ReactNode;
 
-  // Initial data
+  // Initial data (legacy format)
   initialStats?: Partial<DashboardStats>;
   initialActivities?: ActivityLog[];
   authState?: Partial<AuthState>;
 
+  // Phase 2 Dashboard data
+  initialBookingMetrics?: any;
+  initialFinancialMetrics?: any;
+  initialActivitiesFeed?: any[];
+  loading?: boolean;
+  error?: string;
+
   // Feature flags
   enableRealTime?: boolean;
+  realtimeEnabled?: boolean;
+  realtimeUpdate?: boolean;
   enableOfflineMode?: boolean;
   simulateSlowNetwork?: boolean;
+  isMobile?: boolean;
+  pageSize?: number;
 
   // Error scenarios
   initialErrors?: Record<string, string>;
+
+  // Event handlers
+  onRefresh?: () => void;
+  onRetry?: () => void;
+  onActivityUpdate?: (activity: any) => void;
+  onActivityDismiss?: (data: any) => void;
+  onCalculate?: () => void;
 
   // Performance settings
   queryDelay?: number;
@@ -101,10 +119,24 @@ export const DashboardTestProvider: React.FC<DashboardTestProviderProps> = ({
   initialStats = {},
   initialActivities = [],
   authState = {},
+  initialBookingMetrics = null,
+  initialFinancialMetrics = null,
+  initialActivitiesFeed = [],
+  loading = false,
+  error = null,
   enableRealTime = false,
+  realtimeEnabled = false,
+  realtimeUpdate = false,
   enableOfflineMode = false,
   simulateSlowNetwork = false,
+  isMobile = false,
+  pageSize = 10,
   initialErrors = {},
+  onRefresh,
+  onRetry,
+  onActivityUpdate,
+  onActivityDismiss,
+  onCalculate,
   queryDelay = 0,
   mutationDelay = 0,
 }) => {
@@ -148,10 +180,33 @@ export const DashboardTestProvider: React.FC<DashboardTestProviderProps> = ({
     currentAuthState.user
   );
 
+  // Clone children with test props for Phase 2 components
+  const childrenWithProps = React.Children.map(children, (child) => {
+    if (React.isValidElement(child)) {
+      return React.cloneElement(child, {
+        metrics: initialBookingMetrics || initialFinancialMetrics,
+        activities: initialActivitiesFeed,
+        loading,
+        error,
+        isMobile,
+        realtimeEnabled,
+        realtimeUpdate,
+        pageSize,
+        onRefresh,
+        onRetry,
+        onActivityUpdate,
+        onActivityDismiss,
+        onCalculate,
+        ...child.props, // Preserve existing props
+      } as any);
+    }
+    return child;
+  });
+
   return (
     <DashboardTestContext.Provider value={testContextValue}>
       <QueryClientProvider client={queryClient}>
-        <div data-testid="dashboard-test-root">{children}</div>
+        <div data-testid="dashboard-test-root">{childrenWithProps}</div>
       </QueryClientProvider>
     </DashboardTestContext.Provider>
   );

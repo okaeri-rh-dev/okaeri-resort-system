@@ -18,6 +18,9 @@ import {
   generatePhilippineMobile,
 } from "./dashboard-mocks";
 
+// Export WebSocketSimulator for backward compatibility
+export { WebSocketSimulator } from "./WebSocketSimulator";
+
 // WebSocket connection states
 export type MockWebSocketState = "connecting" | "connected" | "disconnected" | "error";
 

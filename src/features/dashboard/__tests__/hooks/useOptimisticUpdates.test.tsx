@@ -7,9 +7,9 @@ import { DashboardTestProvider } from "../../../../../tests/utils/dashboard-prov
 import { DashboardMockDataGenerator } from "../../../../../tests/utils/dashboard-mocks";
 
 // These don't exist yet - RED phase of TDD
-import { useOptimisticUpdates } from "../../../hooks/useOptimisticUpdates";
-import { useOptimisticStore } from "../../../stores/optimisticStore";
-import type { OptimisticUpdate, ConflictResolution } from "../../../types/optimistic";
+import { useOptimisticUpdates } from "../../hooks/useOptimisticUpdates";
+import { useOptimisticStore } from "../../stores/optimisticStore";
+import type { OptimisticUpdate, ConflictResolution } from "../../types/optimistic";
 
 describe("useOptimisticUpdates Hook", () => {
   let queryClient: QueryClient;
