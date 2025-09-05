@@ -142,7 +142,7 @@ const calculateDaysUntilDue = (dueDate: Date): number => {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
-export const FinancialMetricsCard: React.FC<FinancialMetricsCardProps> = ({
+const FinancialMetricsCardComponent: React.FC<FinancialMetricsCardProps> = ({
   metrics,
   loading = false,
   error = null,
@@ -678,3 +678,21 @@ export const FinancialMetricsCard: React.FC<FinancialMetricsCardProps> = ({
     </Card>
   );
 };
+
+// Memoized component to prevent unnecessary re-renders during financial updates
+export const FinancialMetricsCard = React.memo(
+  FinancialMetricsCardComponent,
+  (prevProps, nextProps) => {
+    // Custom equality check for performance optimization
+    return (
+      prevProps.loading === nextProps.loading &&
+      prevProps.error === nextProps.error &&
+      prevProps.isMobile === nextProps.isMobile &&
+      prevProps.realtimeUpdate === nextProps.realtimeUpdate &&
+      prevProps.onRefresh === nextProps.onRefresh &&
+      prevProps.onCalculate === nextProps.onCalculate &&
+      // Deep comparison for metrics object
+      JSON.stringify(prevProps.metrics) === JSON.stringify(nextProps.metrics)
+    );
+  }
+);

@@ -113,7 +113,7 @@ const getOccupancyLevel = (occupancy: number): string => {
   return "critical";
 };
 
-export const BookingMetricsCard: React.FC<BookingMetricsCardProps> = ({
+const BookingMetricsCardComponent: React.FC<BookingMetricsCardProps> = ({
   metrics,
   loading = false,
   error = null,
@@ -478,12 +478,29 @@ export const BookingMetricsCard: React.FC<BookingMetricsCardProps> = ({
   );
 };
 
+// Memoized component to prevent unnecessary re-renders during dashboard updates
+export const BookingMetricsCard = React.memo(
+  BookingMetricsCardComponent,
+  (prevProps, nextProps) => {
+    // Custom equality check for performance optimization
+    return (
+      prevProps.loading === nextProps.loading &&
+      prevProps.error === nextProps.error &&
+      prevProps.isMobile === nextProps.isMobile &&
+      prevProps.realtimeUpdate === nextProps.realtimeUpdate &&
+      prevProps.onRefresh === nextProps.onRefresh &&
+      // Deep comparison for metrics object
+      JSON.stringify(prevProps.metrics) === JSON.stringify(nextProps.metrics)
+    );
+  }
+);
+
 interface GuestArrivalItemProps {
   arrival: GuestArrival;
   index: number;
 }
 
-const GuestArrivalItem: React.FC<GuestArrivalItemProps> = ({ arrival, index }) => {
+const GuestArrivalItemComponent: React.FC<GuestArrivalItemProps> = ({ arrival, index }) => {
   const formattedName = formatGuestName(arrival.guestName);
   const formattedPhone = formatPhilippineMobile(arrival.contactNumber);
 
@@ -525,3 +542,6 @@ const GuestArrivalItem: React.FC<GuestArrivalItemProps> = ({ arrival, index }) =
     </div>
   );
 };
+
+// Memoized guest item to prevent unnecessary re-renders in lists
+const GuestArrivalItem = React.memo(GuestArrivalItemComponent);

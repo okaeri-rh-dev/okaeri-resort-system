@@ -31,7 +31,7 @@ interface VirtualScrollProps {
   renderItem: (activity: DashboardActivity, index: number) => React.ReactNode;
 }
 
-const VirtualScroller: React.FC<VirtualScrollProps> = ({
+const VirtualScrollerComponent: React.FC<VirtualScrollProps> = ({
   items,
   itemHeight,
   containerHeight,
@@ -70,6 +70,9 @@ const VirtualScroller: React.FC<VirtualScrollProps> = ({
     </div>
   );
 };
+
+// Memoized virtual scroller to prevent re-renders on prop changes
+const VirtualScroller = React.memo(VirtualScrollerComponent);
 
 const formatActivityTime = (timestamp: Date): { formatted: string; ariaLabel: string } => {
   const now = new Date();
@@ -178,7 +181,12 @@ interface ActivityItemProps {
   onDismiss?: (activityId: string) => void;
 }
 
-const ActivityItem: React.FC<ActivityItemProps> = ({ activity, index, isMobile, onDismiss }) => {
+const ActivityItemComponent: React.FC<ActivityItemProps> = ({
+  activity,
+  index,
+  isMobile,
+  onDismiss,
+}) => {
   const timeInfo = formatActivityTime(activity.timestamp);
   const backgroundColor = getActivityBackgroundColor(activity);
   const iconLabel = getActivityIconLabel(activity.category);
@@ -374,7 +382,10 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ activity, index, isMobile, 
   );
 };
 
-export const ActivityFeed: React.FC<ActivityFeedProps> = ({
+// Memoized activity item to prevent re-renders in virtual lists
+const ActivityItem = React.memo(ActivityItemComponent);
+
+const ActivityFeedComponent: React.FC<ActivityFeedProps> = ({
   activities = [],
   loading = false,
   error = null,
@@ -661,3 +672,23 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
     </Card>
   );
 };
+
+// Memoized component to prevent unnecessary re-renders during activity updates
+export const ActivityFeed = React.memo(ActivityFeedComponent, (prevProps, nextProps) => {
+  // Custom equality check for performance optimization
+  return (
+    prevProps.loading === nextProps.loading &&
+    prevProps.error === nextProps.error &&
+    prevProps.isMobile === nextProps.isMobile &&
+    prevProps.realtimeEnabled === nextProps.realtimeEnabled &&
+    prevProps.pageSize === nextProps.pageSize &&
+    prevProps.onActivityUpdate === nextProps.onActivityUpdate &&
+    prevProps.onActivityDismiss === nextProps.onActivityDismiss &&
+    // Compare activities array length and first/last items for performance
+    prevProps.activities?.length === nextProps.activities?.length &&
+    (prevProps.activities?.length === 0 ||
+      (prevProps.activities?.[0]?.id === nextProps.activities?.[0]?.id &&
+        prevProps.activities?.[prevProps.activities.length - 1]?.id ===
+          nextProps.activities?.[nextProps.activities.length - 1]?.id))
+  );
+});

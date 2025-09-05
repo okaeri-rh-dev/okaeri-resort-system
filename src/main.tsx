@@ -30,13 +30,12 @@ const lazyImports = {
   appInitializer: () =>
     import("@/lib/app-initializer").then((m) => ({ initializeApp: m.initializeApp })),
   performance: () =>
-    import("@/lib/route-optimization").then((m) => ({
-      coreWebVitalsMonitor: m.coreWebVitalsMonitor,
-      performanceBudgetManager: m.performanceBudgetManager,
-      routeTransitionManager: m.routeTransitionManager,
+    import("@/lib/performance/core-web-vitals").then((m) => ({
+      initPerformanceMonitoring: m.initPerformanceMonitoring,
+      getPerformanceMonitor: m.getPerformanceMonitor,
     })),
-  imagePreloader: () =>
-    import("@/lib/image-optimization").then((m) => ({ imagePreloader: m.imagePreloader })),
+  // imagePreloader: () =>
+  //   import("@/lib/image-optimization").then((m) => ({ imagePreloader: m.imagePreloader })),
   queryClient: () => import("@/lib/query-client").then((m) => ({ queryClient: m.queryClient })),
   config: () => import("@/config").then((m) => ({ config: m.config })),
 };
@@ -151,29 +150,31 @@ async function initializePerformanceMonitoring() {
   if (typeof window === "undefined") return;
 
   try {
-    const { coreWebVitalsMonitor, performanceBudgetManager, routeTransitionManager } =
-      await lazyImports.performance();
-    const { imagePreloader } = await lazyImports.imagePreloader();
+    const { initPerformanceMonitoring: initCoreWebVitals } = await lazyImports.performance();
 
-    // Initialize Core Web Vitals monitoring
-    coreWebVitalsMonitor.initialize();
+    // Initialize Core Web Vitals monitoring with resort-specific config
+    initCoreWebVitals({
+      enableConsoleLog: config?.isDevelopment,
+      enableAnalytics: config?.app?.environment === "production",
+      samplingRate: 0.8, // 80% sampling for performance
+    });
 
-    // Track initial bundle size
+    // Track initial bundle size for performance monitoring
     const initialBundleSize = performance.getEntriesByType("navigation")[0]?.transferSize || 0;
-    if (initialBundleSize > 0) {
-      performanceBudgetManager.checkBudget(
-        "initialBundleSize",
-        initialBundleSize,
-        window.location.pathname
-      );
+    if (initialBundleSize > 0 && config?.isDevelopment) {
+      console.log(`📦 Initial bundle size: ${(initialBundleSize / 1024).toFixed(2)} KB`);
     }
 
-    // Preload critical images with requestIdleCallback
+    // Preload critical images (basic implementation)
     const criticalImages = ["/icons/icon-192x192.png", "/icons/icon-512x512.png"];
 
     const preloadImages = () => {
       criticalImages.forEach((src) => {
-        imagePreloader.preload(src, 10); // High priority for critical images
+        const link = document.createElement("link");
+        link.rel = "preload";
+        link.as = "image";
+        link.href = src;
+        document.head.appendChild(link);
       });
     };
 
@@ -258,8 +259,11 @@ async function initializePerformanceMonitoring() {
           const currentPath = window.location.pathname;
           for (const entry of list.getEntries()) {
             if (entry.name === "first-contentful-paint") {
-              console.log(`First Contentful Paint: ${entry.startTime}ms`);
-              performanceBudgetManager.checkBudget("renderTime", entry.startTime, currentPath);
+              console.log(`🎨 First Contentful Paint: ${entry.startTime.toFixed(2)}ms`);
+              // Custom performance tracking can be added here
+              if (entry.startTime > 2500) {
+                console.warn("⚠️ Slow FCP detected - consider optimizing critical path");
+              }
             }
           }
         });
