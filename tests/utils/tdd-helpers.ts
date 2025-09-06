@@ -330,15 +330,16 @@ export class BookingTestBuilder {
       guestEmail: faker.internet.email().toLowerCase(),
       guestPhone: PhilippineDataGenerator.mobileNumber(),
       guestAddress: PhilippineDataGenerator.address(),
-      checkInDate: faker.date.future({ days: 30 }).toISOString(),
-      checkOutDate: faker.date.future({ days: 35 }).toISOString(),
-      guestCount: faker.number.int({ min: 1, max: 8 }),
-      totalAmount: PhilippineDataGenerator.phpAmount(5000, 50000),
-      depositAmount: PhilippineDataGenerator.phpAmount(1000, 10000),
+      checkIn: faker.date.future({ days: 30 }).toISOString(),
+      checkOut: faker.date.future({ days: 35 }).toISOString(),
+      guests: faker.number.int({ min: 1, max: 8 }),
+      totalAmount: parseFloat(PhilippineDataGenerator.phpAmount(5000, 50000)),
+      depositAmount: parseFloat(PhilippineDataGenerator.phpAmount(1000, 10000)),
       status: BOOKING_STATUS.CONFIRMED,
       specialRequests: faker.lorem.sentence(),
       notes: faker.lorem.paragraph(),
       createdBy: faker.string.uuid(),
+      propertyId: faker.string.uuid(),
     };
     return this;
   }
@@ -359,20 +360,20 @@ export class BookingTestBuilder {
   }
 
   withDates(checkIn: string, checkOut: string): BookingTestBuilder {
-    this.booking.checkInDate = checkIn;
-    this.booking.checkOutDate = checkOut;
+    this.booking.checkIn = checkIn;
+    this.booking.checkOut = checkOut;
     return this;
   }
 
-  withGuestCount(count: number): BookingTestBuilder {
-    this.booking.guestCount = count;
+  withGuests(count: number): BookingTestBuilder {
+    this.booking.guests = count;
     return this;
   }
 
   withAmount(total: PhpAmount, deposit?: PhpAmount): BookingTestBuilder {
-    this.booking.totalAmount = total;
+    this.booking.totalAmount = parseFloat(total);
     if (deposit) {
-      this.booking.depositAmount = deposit;
+      this.booking.depositAmount = parseFloat(deposit);
     }
     return this;
   }
