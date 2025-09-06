@@ -44,6 +44,22 @@ export {
 // Export project schema creator and types
 export { createProjectSchema, type ProjectSchema } from "./project";
 
+// Export booking system schema tables and relations
+export {
+  rooms,
+  bookings,
+  roomsRelations,
+  bookingsRelations,
+  BOOKING_STATUSES,
+  PAYMENT_STATUSES,
+  type Room,
+  type NewRoom,
+  type Booking,
+  type NewBooking,
+  type BookingStatus,
+  type PaymentStatus,
+} from "./booking";
+
 // Re-export common types from global schema for convenience
 export type User = typeof import("./global").users.$inferSelect;
 export type NewUser = typeof import("./global").users.$inferInsert;

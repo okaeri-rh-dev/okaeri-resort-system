@@ -397,6 +397,23 @@ export interface DateRange {
   to: Date | string;
 }
 
+// Availability system types
+export interface DayAvailability {
+  date: string; // ISO date string (YYYY-MM-DD)
+  available: boolean; // Whether the property is available
+  price?: number; // Optional price for the day
+  bookingId?: string; // ID of booking that makes it unavailable
+  minimumStay?: number; // Minimum stay requirement
+  reason?: string; // Reason for unavailability
+}
+
+export interface CalendarAvailability {
+  year: number;
+  month: number;
+  properties: Map<string, DayAvailability[]>; // propertyId -> daily availability
+  totalDays: number;
+}
+
 // Dashboard types
 export interface DashboardStats {
   totalRevenue: number;
