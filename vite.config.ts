@@ -233,234 +233,390 @@ export default defineConfig({
     host: true,
   },
 
-  // Build configuration optimized for Vercel
+  // Build configuration optimized for Vercel - Enhanced for Week 3.2 & 3.3
   build: {
     // Target modern browsers for better optimization
     target: "es2022",
 
-    // Performance budget configuration
+    // Performance budget configuration - Enhanced monitoring
     reportCompressedSize: true,
 
-    // CSS code splitting
+    // CSS optimizations
     cssCodeSplit: true,
+    cssMinify: true,
 
-    // Output directory
+    // Output directory structure
     outDir: "dist",
     assetsDir: "assets",
 
-    // Enable source maps for debugging (hidden in production)
+    // Enhanced source maps for debugging
     sourcemap: process.env.NODE_ENV === "development" ? true : "hidden",
 
-    // Minification
+    // Advanced minification with esbuild for speed
     minify: "esbuild",
 
-    // Strict chunk size warnings for mobile performance - reduced for TBT optimization
-    chunkSizeWarningLimit: 300,
+    // Aggressive chunk size limit for 30% bundle reduction target
+    chunkSizeWarningLimit: 200, // Reduced from 300 for better mobile performance
 
-    // Additional optimizations for TBT reduction
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-        pure_funcs: ["console.log", "console.info", "console.warn"],
-      },
-      mangle: {
-        safari10: true,
-      },
-      format: {
-        comments: false,
-      },
+    // Enhanced esbuild options for better compression
+    esbuildOptions: {
+      // Tree shaking optimization
+      treeShaking: true,
+      // Drop console statements in production
+      drop: process.env.NODE_ENV === "production" ? ["console", "debugger"] : [],
+      // Mangle properties for smaller bundles
+      mangleProps: process.env.NODE_ENV === "production" ? /^_/ : undefined,
+      // Preserve names for better debugging in development
+      keepNames: process.env.NODE_ENV === "development",
+      // Legal comments handling
+      legalComments: "none",
     },
 
-    // Rollup options for code splitting
+    // Rollup options for aggressive code splitting - Enhanced for 195KB target
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
       },
+
+      // Treeshaking configuration
+      treeshake: {
+        moduleSideEffects: false,
+        propertyReadSideEffects: false,
+        unknownGlobalSideEffects: false,
+      },
+
       output: {
-        // Optimized chunk splitting strategy to reduce TBT
+        // Ultra-optimized chunk splitting strategy - 30% reduction target
         manualChunks: (id) => {
-          // Core React - Keep small and separate for caching
-          if (id.includes("react/jsx-runtime") || id.includes("react-dom/client")) {
+          // Critical app shell - Keep as small as possible (<20KB)
+          if (
+            id.includes("/src/main.tsx") ||
+            id.includes("/src/App.tsx") ||
+            id.includes("react/jsx-runtime")
+          ) {
+            return "app-shell";
+          }
+
+          // React core - Minimal essential React (<25KB)
+          if (id.includes("react-dom/client") && !id.includes("react-router")) {
             return "react-core";
           }
 
+          // React ecosystem - Non-critical React features
           if (id.includes("react") && !id.includes("react-hook-form")) {
-            return "react-vendor";
+            return "react-ecosystem";
           }
 
-          // Router - Critical but can be lazy loaded after initial render
-          if (id.includes("@tanstack/react-router")) {
-            return "router";
+          // State management - Critical but small (<15KB)
+          if (
+            id.includes("zustand") ||
+            id.includes("immer") ||
+            id.includes("use-sync-external-store")
+          ) {
+            return "state-management";
           }
 
-          // Query - Essential for data fetching, keep separate
-          if (id.includes("@tanstack/react-query")) {
-            return "query";
-          }
-
-          // Authentication related - Can be lazy loaded
-          if (id.includes("/routes/_auth") || id.includes("/features/auth")) {
-            return "auth";
-          }
-
-          // Dashboard and protected routes - Lazy loaded
-          if (id.includes("/routes/_protected") || id.includes("/features/dashboard")) {
-            return "dashboard";
-          }
-
-          // Critical UI components needed for initial render
+          // Essential UI primitives - Critical for shell (<20KB)
           if (
             id.includes("@radix-ui/react-slot") ||
             id.includes("class-variance-authority") ||
             id.includes("clsx") ||
-            id.includes("tailwind-merge")
+            id.includes("tailwind-merge") ||
+            (id.includes("/src/components/ui/") && !id.includes("dialog") && !id.includes("toast"))
           ) {
-            return "ui-critical";
+            return "ui-primitives";
           }
 
-          // Dialog and modal components - Lazy loaded
+          // Router - Load after initial render (<30KB)
+          if (id.includes("@tanstack/react-router")) {
+            return "router-engine";
+          }
+
+          // Query client - Load with data fetching (<25KB)
+          if (id.includes("@tanstack/react-query")) {
+            return "data-fetching";
+          }
+
+          // Authentication components - Lazy load (<20KB)
+          if (
+            id.includes("/routes/_auth") ||
+            id.includes("/features/auth") ||
+            id.includes("jsonwebtoken")
+          ) {
+            return "auth-features";
+          }
+
+          // Financial components - Domain-specific lazy load (<40KB)
+          if (
+            id.includes("/features/financial") ||
+            id.includes("/components/optimized") ||
+            id.includes("/lib/money") ||
+            id.includes("decimal.js")
+          ) {
+            return "financial-engine";
+          }
+
+          // Dashboard components - Lazy load after auth (<35KB)
+          if (
+            id.includes("/routes/_protected") ||
+            id.includes("/features/dashboard") ||
+            id.includes("/components/dashboard")
+          ) {
+            return "dashboard-core";
+          }
+
+          // Booking features - Domain-specific lazy load
+          if (id.includes("/features/booking")) {
+            return "booking-engine";
+          }
+
+          // Virtual scrolling and performance components
+          if (
+            id.includes("react-window") ||
+            id.includes("react-virtualized") ||
+            id.includes("/components/virtual")
+          ) {
+            return "virtualization";
+          }
+
+          // Form handling - Load with forms (<25KB)
+          if (
+            id.includes("react-hook-form") ||
+            id.includes("@hookform/resolvers") ||
+            id.includes("zod") ||
+            id.includes("@radix-ui/react-label") ||
+            id.includes("@radix-ui/react-select")
+          ) {
+            return "form-engine";
+          }
+
+          // Modal and overlay components - Lazy load on demand
           if (
             id.includes("@radix-ui/react-dialog") ||
             id.includes("@radix-ui/react-alert-dialog") ||
-            id.includes("@radix-ui/react-toast")
+            id.includes("@radix-ui/react-toast") ||
+            id.includes("@radix-ui/react-dropdown-menu")
           ) {
-            return "ui-modals";
+            return "overlay-components";
           }
 
-          // Form components - Lazy loaded with forms
-          if (
-            id.includes("@radix-ui/react-label") ||
-            id.includes("@radix-ui/react-select") ||
-            id.includes("@radix-ui/react-checkbox") ||
-            id.includes("@radix-ui/react-radio-group") ||
-            id.includes("react-hook-form") ||
-            id.includes("@hookform/resolvers") ||
-            id.includes("zod")
-          ) {
-            return "forms";
-          }
-
-          // Other Radix UI components - Lazy loaded
-          if (id.includes("@radix-ui")) {
+          // Extended UI components - Lazy load with specific features
+          if (id.includes("@radix-ui") && !id.includes("react-slot")) {
             return "ui-extended";
           }
 
-          // Icons - Lazy loaded on demand (major size contributor)
+          // Icons - Major size contributor, lazy load aggressively (<15KB per chunk)
           if (id.includes("lucide-react")) {
-            return "icons";
+            // Split icons into smaller chunks based on usage
+            if (id.includes("ChevronDown") || id.includes("Check") || id.includes("X")) {
+              return "icons-essential";
+            }
+            return "icons-extended";
           }
 
-          // Date utilities - Can be lazy loaded
+          // Date utilities - Lazy load with features that need them
           if (id.includes("date-fns")) {
-            return "date-utils";
+            return "date-utilities";
           }
 
-          // Store management - Keep small and separate
-          if (id.includes("zustand") || id.includes("immer")) {
-            return "state";
+          // BIR and compliance features - Specialized lazy load
+          if (id.includes("/lib/bir") || id.includes("/lib/compliance")) {
+            return "compliance-engine";
           }
 
-          // Security and crypto - Lazy loaded
-          if (
-            id.includes("bcryptjs") ||
-            id.includes("jsonwebtoken") ||
-            id.includes("isomorphic-dompurify")
-          ) {
-            return "security";
-          }
-
-          // Database and backend utilities
+          // Database and backend utilities - Server-side focused
           if (
             id.includes("drizzle") ||
             id.includes("@neondatabase") ||
-            id.includes("@vercel/node")
+            id.includes("@vercel/node") ||
+            id.includes("pg")
           ) {
-            return "backend";
+            return "database-layer";
           }
 
-          // Route-specific chunks with better granularity
+          // Cache and performance utilities
+          if (
+            id.includes("/lib/cache") ||
+            id.includes("/lib/performance") ||
+            id.includes("@upstash/redis")
+          ) {
+            return "performance-layer";
+          }
+
+          // Reporting and analytics - Feature-specific
+          if (
+            id.includes("/lib/services/report-engine") ||
+            id.includes("/lib/strategies") ||
+            id.includes("/lib/monitoring")
+          ) {
+            return "analytics-engine";
+          }
+
+          // Security utilities - Lazy load with auth
+          if (
+            id.includes("bcryptjs") ||
+            id.includes("isomorphic-dompurify") ||
+            id.includes("/lib/security")
+          ) {
+            return "security-layer";
+          }
+
+          // PWA and offline features - Progressive enhancement
+          if (id.includes("vite-plugin-pwa") || id.includes("workbox")) {
+            return "pwa-features";
+          }
+
+          // Route-based splitting with granular control
           if (id.includes("/routes/")) {
             const routePath = id.split("/routes/")[1];
             if (routePath) {
-              if (routePath.startsWith("_auth")) return "auth";
-              if (routePath.startsWith("_protected")) return "dashboard";
+              if (routePath.startsWith("_auth")) return "route-auth";
+              if (routePath.startsWith("_protected/dashboard")) return "route-dashboard";
+              if (routePath.startsWith("_protected/financial")) return "route-financial";
+              if (routePath.startsWith("_protected/booking")) return "route-booking";
               if (routePath.includes("offline") || routePath.includes("unauthorized")) {
-                return "utility-pages";
+                return "route-utility";
               }
-              return "public-pages";
+              return "route-public";
             }
           }
 
-          // Features - Split by domain
-          if (id.includes("/features/")) {
-            const featurePath = id.split("/features/")[1];
-            if (featurePath) {
-              const feature = featurePath.split("/")[0];
-              return `feature-${feature}`;
-            }
+          // Utility libraries - Group by size and usage
+          if (id.includes("uuid") || id.includes("ws") || id.includes("crypto")) {
+            return "utility-crypto";
           }
 
-          // PWA and service worker related
-          if (id.includes("vite-plugin-pwa") || id.includes("workbox")) {
-            return "pwa";
-          }
-
-          // Testing utilities - Should not be in production bundle
-          if (id.includes("@testing-library") || id.includes("vitest")) {
-            return "test-utils";
-          }
-
-          // Large utility libraries that can be lazy loaded
-          if (id.includes("decimal.js") || id.includes("uuid") || id.includes("ws")) {
-            return "heavy-utils";
-          }
-
-          // Third-party node_modules not already handled
+          // Third-party packages - More granular grouping
           if (id.includes("node_modules")) {
             const packageName = id.split("node_modules/")[1]?.split("/")[0];
-            // Group small, related packages together
-            if (["pg", "@upstash/redis", "@upstash/ratelimit"].includes(packageName)) {
-              return "db-clients";
+
+            // Critical third-party (keep small)
+            if (["scheduler", "react-reconciler"].includes(packageName)) {
+              return "vendor-critical";
             }
-            return "vendor";
+
+            // Database clients
+            if (["@upstash/redis", "@upstash/ratelimit", "ioredis"].includes(packageName)) {
+              return "vendor-database";
+            }
+
+            // Development tools (should not be in production)
+            if (["@testing-library", "vitest", "playwright"].includes(packageName)) {
+              return "vendor-dev";
+            }
+
+            // Large libraries that can be lazy loaded
+            if (
+              ["react-window", "react-virtualized-auto-sizer", "chart.js", "recharts"].includes(
+                packageName
+              )
+            ) {
+              return "vendor-heavy";
+            }
+
+            // Default vendor chunk
+            return "vendor-misc";
           }
 
-          // Application code - Keep minimal
-          return "app";
+          // Default application code - Keep minimal
+          return "app-core";
         },
-        // Optimize chunk naming for better caching
+
+        // Enhanced chunk naming for optimal caching and debugging
         chunkFileNames: (chunkInfo) => {
-          const facadeModuleId = chunkInfo.facadeModuleId;
-          if (facadeModuleId) {
-            return `assets/[name]-[hash].js`;
+          const name = chunkInfo.name;
+
+          // Critical chunks get consistent names for better caching
+          const criticalChunks = ["app-shell", "react-core", "ui-primitives", "state-management"];
+          if (criticalChunks.includes(name)) {
+            return `assets/critical/[name]-[hash:8].js`;
           }
-          return `assets/chunk-[hash].js`;
+
+          // Feature chunks grouped by domain
+          if (name.includes("engine") || name.includes("layer")) {
+            return `assets/features/[name]-[hash:8].js`;
+          }
+
+          // Route chunks
+          if (name.includes("route-")) {
+            return `assets/routes/[name]-[hash:8].js`;
+          }
+
+          // Vendor chunks
+          if (name.includes("vendor-")) {
+            return `assets/vendors/[name]-[hash:8].js`;
+          }
+
+          // Default chunk naming
+          return `assets/chunks/[name]-[hash:8].js`;
         },
+
+        // Enhanced asset naming with optimization
         assetFileNames: (assetInfo) => {
-          const info = assetInfo.name?.split(".") ?? [];
-          const ext = info[info.length - 1];
+          const name = assetInfo.name ?? "";
+          const ext = name.split(".").pop() ?? "";
 
-          if (/\.(png|jpe?g|gif|svg|webp|ico)$/i.test(assetInfo.name ?? "")) {
-            return `assets/images/[name]-[hash][extname]`;
+          // Images - Optimize by type and usage
+          if (/\.(png|jpe?g|gif|webp|avif)$/i.test(name)) {
+            if (name.includes("icon") || name.includes("logo")) {
+              return `assets/images/branding/[name]-[hash:8][extname]`;
+            }
+            return `assets/images/content/[name]-[hash:8][extname]`;
           }
 
-          if (/\.(woff2?|eot|ttf|otf)$/i.test(assetInfo.name ?? "")) {
-            return `assets/fonts/[name]-[hash][extname]`;
+          // SVGs - Separate handling for icons vs illustrations
+          if (/\.svg$/i.test(name)) {
+            return `assets/images/vectors/[name]-[hash:8][extname]`;
           }
 
+          // Fonts - Optimize for loading performance
+          if (/\.(woff2?|eot|ttf|otf)$/i.test(name)) {
+            return `assets/fonts/[name]-[hash:8][extname]`;
+          }
+
+          // CSS - Separate by purpose
           if (ext === "css") {
-            return `assets/styles/[name]-[hash][extname]`;
+            if (name.includes("critical") || name.includes("app-shell")) {
+              return `assets/styles/critical/[name]-[hash:8][extname]`;
+            }
+            return `assets/styles/chunks/[name]-[hash:8][extname]`;
           }
 
-          return `assets/[name]-[hash][extname]`;
+          // JSON and data files
+          if (ext === "json") {
+            return `assets/data/[name]-[hash:8][extname]`;
+          }
+
+          // Default asset naming
+          return `assets/misc/[name]-[hash:8][extname]`;
         },
+
+        // Improve ES module interop
+        interop: "auto",
+
+        // Advanced output options for better performance
+        generatedCode: {
+          constBindings: true,
+          objectShorthand: true,
+          arrowFunctions: true,
+        },
+
+        // Compact output for smaller bundles
+        compact: true,
       },
 
-      // Optimize external dependencies
+      // Optimize external dependencies - Enhanced for bundle size
       external: (id) => {
         // Don't bundle Node.js modules in the client
-        return id.startsWith("node:");
+        if (id.startsWith("node:")) return true;
+
+        // Server-only dependencies
+        const serverOnly = ["fs", "path", "os", "crypto", "stream", "util", "events"];
+        if (serverOnly.some((module) => id === module || id.startsWith(`${module}/`))) {
+          return true;
+        }
+
+        return false;
       },
     },
   },
