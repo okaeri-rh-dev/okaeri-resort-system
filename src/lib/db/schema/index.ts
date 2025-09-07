@@ -60,6 +60,65 @@ export {
   type PaymentStatus,
 } from "./booking";
 
+// Export expense management schema tables and types
+export {
+  expenses,
+  vendors,
+  expenseReceipts,
+  pettyCashFunds,
+  pettyCashTransactions,
+  expenseApprovalHistory,
+  withholdingTaxCertificates,
+  // Relations (will be uncommented in GREEN phase)
+  // expensesRelations,
+  // vendorsRelations,
+  // pettyCashFundsRelations,
+  // Type exports
+  type Expense,
+  type NewExpense,
+  type Vendor,
+  type NewVendor,
+  type ExpenseReceipt,
+  type NewExpenseReceipt,
+  type PettyCashFund,
+  type NewPettyCashFund,
+  type PettyCashTransaction,
+  type NewPettyCashTransaction,
+  type ExpenseApprovalHistory,
+  type NewExpenseApprovalHistory,
+  type WithholdingTaxCertificate,
+  type NewWithholdingTaxCertificate,
+} from "./expense.schema";
+
+// Export financial audit trail schema tables and types
+export {
+  financialAuditTrail,
+  cashReconciliationAudit,
+  taxComplianceAudit,
+  documentGenerationAudit,
+  type FinancialAuditTrail,
+  type NewFinancialAuditTrail,
+  type CashReconciliationAudit,
+  type NewCashReconciliationAudit,
+  type TaxComplianceAudit,
+  type NewTaxComplianceAudit,
+  type DocumentGenerationAudit,
+  type NewDocumentGenerationAudit,
+} from "./financial-audit.schema";
+
+// Export discount management schema tables and types
+export {
+  discountLogs,
+  seniorPwdRegistry,
+  promotionalDiscounts,
+  type DiscountLog,
+  type NewDiscountLog,
+  type SeniorPwdRegistry,
+  type NewSeniorPwdRegistry,
+  type PromotionalDiscount,
+  type NewPromotionalDiscount,
+} from "./discount.schema";
+
 // Re-export common types from global schema for convenience
 export type User = typeof import("./global").users.$inferSelect;
 export type NewUser = typeof import("./global").users.$inferInsert;

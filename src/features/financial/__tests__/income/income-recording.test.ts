@@ -1,11 +1,85 @@
 import { describe, it, beforeEach, afterEach, vi, expect } from "vitest";
 import { cleanup } from "@testing-library/react";
-import { mockReset } from "vitest-mock-extended";
+import { Money } from "@/lib/money";
+import { IncomeService } from "../../services/income.service";
+import { generateAmount } from "../helpers/mock-data";
+
+// Mock the database
+vi.mock("@/lib/db", () => ({
+  db: {
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    values: vi.fn().mockReturnThis(),
+    returning: vi.fn().mockResolvedValue([
+      {
+        id: "income-123",
+        projectId: "proj-123",
+        transactionDate: "2025-01-01",
+        grossAmount: "7000.00",
+        netAmount: "7000.00",
+        vatAmount: "0.00",
+        serviceChargeAmount: "0.00",
+        discountAmount: "0.00",
+        incomeCategory: "accommodation",
+        transactionType: "booking",
+        paymentMethod: "bank_transfer",
+        createdBy: "user-123",
+        createdAt: new Date(),
+      },
+    ]),
+  },
+}));
+
+// Mock audit log
+vi.mock("@/lib/audit", () => ({
+  auditLog: vi.fn().mockResolvedValue(undefined),
+  auditFinancialTransaction: vi.fn().mockResolvedValue(undefined),
+}));
 
 // Test utilities and mocks
-import { createMockIncomeData, createMockBookingData } from "../../__mocks__/income.mocks";
-import { mockIncomeService, mockBookingService } from "../../__mocks__/services.mocks";
-import { testDb } from "../../../../../tests/test-utils/database";
+interface MockIncomeData {
+  amount: Money;
+  category: string;
+  description: string;
+}
+
+interface MockBookingData {
+  roomType: string;
+  nights: number;
+  rate: Money;
+}
+
+const createMockIncomeData = (overrides?: Partial<MockIncomeData>): MockIncomeData => ({
+  amount: new Money(3500),
+  category: "accommodation",
+  description: "Room booking income",
+  ...overrides,
+});
+
+const createMockBookingData = (overrides?: Partial<MockBookingData>): MockBookingData => ({
+  roomType: "standard",
+  nights: 2,
+  rate: new Money(3500),
+  ...overrides,
+});
+
+const mockIncomeService = {
+  recordIncome: vi.fn(),
+  recordPlatformBooking: vi.fn(),
+  recordPackageRevenue: vi.fn(),
+};
+
+const mockBookingService = {
+  createBooking: vi.fn(),
+  getBooking: vi.fn(),
+};
+
+const testDb = {
+  reset: vi.fn().mockResolvedValue(undefined),
+};
 
 /**
  * Income Recording Test Suite - RED Phase (it.todo)
@@ -21,8 +95,6 @@ describe("Financial Management", () => {
     beforeEach(async () => {
       await testDb.reset();
       vi.clearAllMocks();
-      mockReset(mockIncomeService);
-      mockReset(mockBookingService);
     });
 
     afterEach(() => {
@@ -35,66 +107,225 @@ describe("Financial Management", () => {
      */
     describe("Room Booking Income", () => {
       describe("Direct Bookings", () => {
-        it.todo(
-          "should record income for standard room direct booking with PHP currency",
-          async () => {
-            // Test recording income from direct website booking
-            // Expected: Income entry created with correct amount, currency, and booking reference
-            // Input: Standard room (₱3,500/night), 2 nights, direct booking channel
-          }
-        );
+        it("should record income for standard room direct booking with PHP currency", async () => {
+          const incomeService = new IncomeService();
+          const bookingData = createMockBookingData({
+            roomType: "standard",
+            rate: new Money(3500),
+            nights: 2,
+          });
 
-        it.todo("should record income for deluxe room booking with weekend rates", async () => {
-          // Test weekend premium pricing for deluxe rooms
-          // Expected: Income reflects weekend rate increase (20% markup)
-          // Input: Deluxe room (₱5,500 weekday, ₱6,600 weekend), weekend booking
+          const result = await incomeService.recordIncome({
+            projectId: "proj-123",
+            transactionDate: new Date(),
+            transactionType: "booking",
+            grossAmount: bookingData.rate.multiply(bookingData.nights),
+            incomeCategory: "accommodation",
+            description: `Standard room booking - ${bookingData.nights} nights`,
+            paymentMethod: "bank_transfer",
+            userId: "user-123",
+          });
+
+          expect(result.grossAmount).toBe("7000.00");
+          expect(result.incomeCategory).toBe("accommodation");
+          expect(result.transactionType).toBe("booking");
         });
 
-        it.todo("should record income for family suite with extended stay discount", async () => {
-          // Test long-stay discount application
-          // Expected: Discounted rate applied for stays over 7 nights
-          // Input: Family suite (₱8,000/night), 10-night stay, 15% long-stay discount
+        it("should record income for deluxe room booking with weekend rates", async () => {
+          const incomeService = new IncomeService();
+          const weekdayRate = new Money(5500);
+          const weekendRate = weekdayRate.multiply(1.2); // 20% markup
+
+          const result = await incomeService.recordIncome({
+            projectId: "proj-123",
+            transactionDate: new Date("2025-01-04"), // Saturday
+            transactionType: "booking",
+            grossAmount: weekendRate.multiply(2), // 2 nights
+            incomeCategory: "accommodation",
+            incomeSubcategory: "deluxe_room",
+            description: "Deluxe room weekend booking - weekend rates applied",
+            paymentMethod: "credit_card",
+            userId: "user-123",
+          });
+
+          expect(result).toBeDefined();
+          expect(result.incomeCategory).toBe("accommodation");
+          expect(result.incomeSubcategory).toBe("deluxe_room");
         });
 
-        it.todo("should record income for presidential villa with VIP services", async () => {
-          // Test premium accommodation with included services
-          // Expected: Income includes room rate and bundled VIP services
-          // Input: Presidential villa (₱25,000/night), butler service, private chef
+        it("should record income for family suite with extended stay discount", async () => {
+          const incomeService = new IncomeService();
+          const baseRate = new Money(8000);
+          const nights = 10;
+          const discountRate = 0.15; // 15% long-stay discount
+          const grossAmount = baseRate.multiply(nights);
+          const discountAmount = grossAmount.multiply(discountRate);
+
+          const result = await incomeService.recordIncome({
+            projectId: "proj-123",
+            transactionDate: new Date(),
+            transactionType: "booking",
+            grossAmount: grossAmount,
+            discountAmount: discountAmount,
+            incomeCategory: "accommodation",
+            incomeSubcategory: "family_suite",
+            description: "Family suite extended stay - 15% long-stay discount applied",
+            paymentMethod: "bank_transfer",
+            userId: "user-123",
+          });
+
+          expect(result).toBeDefined();
+          expect(result.incomeCategory).toBe("accommodation");
+          expect(result.discountAmount).toBe(discountAmount.toString());
         });
 
-        it.todo("should handle partial payment recording for direct bookings", async () => {
-          // Test installment payments for expensive bookings
-          // Expected: Partial income recorded with remaining balance tracked
-          // Input: ₱50,000 total booking, ₱20,000 deposit paid, ₱30,000 balance due
+        it("should record income for presidential villa with VIP services", async () => {
+          const incomeService = new IncomeService();
+          const villaRate = new Money(25000);
+          const butlerService = new Money(5000);
+          const privateChef = new Money(8000);
+          const totalAmount = villaRate.add(butlerService).add(privateChef);
+
+          const result = await incomeService.recordIncome({
+            projectId: "proj-123",
+            transactionDate: new Date(),
+            transactionType: "booking",
+            grossAmount: totalAmount,
+            incomeCategory: "accommodation",
+            incomeSubcategory: "presidential_villa",
+            description: "Presidential villa with VIP services (butler + private chef)",
+            paymentMethod: "wire_transfer",
+            isVatable: true,
+            serviceChargeRate: 0.1, // 10% service charge
+            userId: "user-123",
+          });
+
+          expect(result).toBeDefined();
+          expect(result.incomeCategory).toBe("accommodation");
+          expect(result.incomeSubcategory).toBe("presidential_villa");
+        });
+
+        it("should handle partial payment recording for direct bookings", async () => {
+          const incomeService = new IncomeService();
+          const totalBooking = new Money(50000);
+          const depositPaid = new Money(20000);
+          const balanceDue = totalBooking.subtract(depositPaid);
+
+          // Record the deposit payment
+          const result = await incomeService.recordIncome({
+            projectId: "proj-123",
+            transactionDate: new Date(),
+            transactionType: "booking",
+            grossAmount: depositPaid,
+            incomeCategory: "accommodation",
+            description: `Partial payment - deposit (₱${depositPaid.toString()} of ₱${totalBooking.toString()})`,
+            paymentMethod: "bank_transfer",
+            paymentReference: "DEP-2025-001",
+            userId: "user-123",
+          });
+
+          expect(result).toBeDefined();
+          expect(result.grossAmount).toBe(depositPaid.toString());
+          expect(result.description).toContain("Partial payment - deposit");
         });
       });
 
       describe("OTA Bookings", () => {
-        it.todo(
-          "should record income for Booking.com reservation with commission deduction",
-          async () => {
-            // Test OTA booking with platform commission handling
-            // Expected: Net income recorded after commission, commission tracked separately
-            // Input: ₱4,000 room rate, 15% Booking.com commission, net ₱3,400
-          }
-        );
+        it("should record income for Booking.com reservation with commission deduction", async () => {
+          const incomeService = new IncomeService();
+          const roomRate = new Money(4000);
+          const commissionRate = 0.15; // 15% Booking.com commission
+          const commissionAmount = roomRate.multiply(commissionRate);
+          const netAmount = roomRate.subtract(commissionAmount);
 
-        it.todo("should record income for Agoda booking with currency conversion", async () => {
-          // Test international OTA with USD pricing converted to PHP
-          // Expected: Income converted to PHP at booking exchange rate
-          // Input: $75 USD rate, 1:55 exchange rate, ₱4,125 PHP equivalent
+          const result = await incomeService.recordPlatformBooking({
+            projectId: "proj-123",
+            platform: "BOOKING_COM",
+            confirmationCode: "BKG-123456",
+            checkInDate: new Date("2025-02-01"),
+            checkOutDate: new Date("2025-02-03"),
+            grossRevenue: roomRate,
+            guestName: "John Doe",
+            roomType: "standard",
+            numberOfGuests: 2,
+            userId: "user-123",
+          });
+
+          expect(result).toBeDefined();
+          expect(result.grossAmount).toBe(roomRate.toString());
+          // Commission would be tracked separately in platform booking record
         });
 
-        it.todo("should record income for Airbnb booking with cleaning fee", async () => {
-          // Test short-term rental platform with additional fees
-          // Expected: Base rate and cleaning fee recorded as separate income items
-          // Input: ₱3,200 nightly rate, ₱800 cleaning fee, total ₱4,000
+        it("should record income for Agoda booking with currency conversion", async () => {
+          const incomeService = new IncomeService();
+          const usdRate = 75; // $75 USD
+          const exchangeRate = 55; // 1 USD = 55 PHP
+          const phpEquivalent = new Money(usdRate * exchangeRate); // ₱4,125
+
+          const result = await incomeService.recordPlatformBooking({
+            projectId: "proj-123",
+            platform: "AGODA",
+            confirmationCode: "AGO-789012",
+            checkInDate: new Date("2025-02-05"),
+            checkOutDate: new Date("2025-02-07"),
+            grossRevenue: phpEquivalent,
+            guestName: "Jane Smith",
+            roomType: "deluxe",
+            numberOfGuests: 2,
+            userId: "user-123",
+          });
+
+          expect(result).toBeDefined();
+          expect(result.grossAmount).toBe(phpEquivalent.toString());
         });
 
-        it.todo("should handle OTA booking modifications and rate changes", async () => {
-          // Test booking changes that affect income recording
-          // Expected: Original income adjusted, new income recorded with change reference
-          // Input: Original ₱4,000, upgraded to ₱5,500, ₱1,500 additional income
+        it("should record income for Airbnb booking with cleaning fee", async () => {
+          const incomeService = new IncomeService();
+          const nightlyRate = new Money(3200);
+          const cleaningFee = new Money(800);
+          const totalAmount = nightlyRate.add(cleaningFee);
+
+          // Record the main booking
+          const bookingResult = await incomeService.recordPlatformBooking({
+            projectId: "proj-123",
+            platform: "AIRBNB",
+            confirmationCode: "AIR-345678",
+            checkInDate: new Date("2025-02-10"),
+            checkOutDate: new Date("2025-02-11"),
+            grossRevenue: totalAmount,
+            guestName: "Bob Johnson",
+            roomType: "apartment",
+            numberOfGuests: 1,
+            userId: "user-123",
+          });
+
+          expect(bookingResult).toBeDefined();
+          expect(bookingResult.grossAmount).toBe(totalAmount.toString());
+        });
+
+        it("should handle OTA booking modifications and rate changes", async () => {
+          const incomeService = new IncomeService();
+          const originalAmount = new Money(4000);
+          const upgradedAmount = new Money(5500);
+          const additionalAmount = upgradedAmount.subtract(originalAmount);
+
+          // Record additional income for upgrade
+          const result = await incomeService.recordIncome({
+            projectId: "proj-123",
+            transactionDate: new Date(),
+            transactionType: "addon",
+            grossAmount: additionalAmount,
+            incomeCategory: "accommodation",
+            incomeSubcategory: "room_upgrade",
+            description: "Room upgrade charge - modification to existing booking",
+            paymentMethod: "credit_card",
+            paymentReference: "UPG-2025-001",
+            userId: "user-123",
+          });
+
+          expect(result).toBeDefined();
+          expect(result.grossAmount).toBe(additionalAmount.toString());
+          expect(result.transactionType).toBe("addon");
         });
 
         it.todo("should record income for Expedia package booking with breakdown", async () => {

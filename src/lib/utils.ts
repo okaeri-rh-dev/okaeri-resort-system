@@ -47,6 +47,21 @@ export function formatDatePH(
 }
 
 /**
+ * Generate a unique code with prefix and sequence
+ * @param prefix - The prefix for the code
+ * @param sequence - The sequence number
+ * @param padLength - The length to pad the sequence number
+ * @returns Generated code string
+ *
+ * @example
+ * generateCode("INV", 1, 6) // "INV-000001"
+ * generateCode("EXP-2024", 123, 4) // "EXP-2024-0123"
+ */
+export function generateCode(prefix: string, sequence: number, padLength: number = 6): string {
+  return `${prefix}-${sequence.toString().padStart(padLength, "0")}`;
+}
+
+/**
  * Format date and time for Philippine locale
  * @param date - The date to format
  * @param options - Additional Intl.DateTimeFormat options
