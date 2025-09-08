@@ -121,8 +121,9 @@ export class Money {
   /**
    * Divide by a factor
    */
-  divide(factor: number | string | Decimal): Money {
-    return new Money(this.value.div(factor));
+  divide(factor: number | string | Decimal | Money): Money {
+    const divisor = factor instanceof Money ? factor.value : factor;
+    return new Money(this.value.div(divisor));
   }
 
   /**

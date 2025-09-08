@@ -1,0 +1,301 @@
+# PHASE 4.5 DAY 6: High-Volume Financial Processing Test
+# Target: 1000 transactions/hour financial processing
+# Validate: Money class precision maintained under load
+# Monitor: BIR form generation performance
+
+config:
+  target: "http://localhost:5173"
+  phases:
+    # Ramp up
+    - duration: 60
+      arrivalRate: 5
+      name: "Financial system warm-up"
+    # High volume processing (1000 tx/hour = ~17 tx/min)
+    - duration: 300
+      arrivalRate: 20
+      name: "High volume financial processing"
+    # Peak burst
+    - duration: 120
+      arrivalRate: 50
+      name: "Peak financial burst"
+    # Sustained processing
+    - duration: 300
+      arrivalRate: 15
+      name: "Sustained financial processing"
+
+  variables:
+    # Transaction types for variety
+    transaction_types:
+      - "booking"
+      - "addon"
+      - "package"
+      - "other"
+    # Income categories for BIR compliance
+    income_categories:
+      - "accommodation"
+      - "food_beverage"
+      - "amenities"
+      - "services"
+      - "merchandise"
+    # Payment methods for gateway testing
+    payment_methods:
+      - "gcash"
+      - "cash"
+      - "bank_transfer"
+      - "credit_card"
+    # Project IDs for multi-tenant testing
+    project_ids:
+      - "proj-001"
+      - "proj-002"
+      - "proj-003"
+    # Senior/PWD discount scenarios
+    discount_scenarios:
+      - { type: "none", rate: 0 }
+      - { type: "senior", rate: 0.20 }
+      - { type: "pwd", rate: 0.20 }
+
+  plugins:
+    metrics-by-endpoint: {}
+    expect: {}
+
+  ensure:
+    - http.response_time.p95: 1500 # Financial ops under 1.5s
+    - http.response_time.p99: 2500 # 99th percentile under 2.5s
+    - http.codes.201: 95 # 95% success rate for creates
+    - http.codes.200: 95 # 95% success rate for reads
+
+scenarios:
+  - name: "Income Recording with VAT Calculation"
+    weight: 40
+    flow:
+      # Authenticate as financial user
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "finance-{{ $randomInt(1, 3) }}@okaeri.com"
+            password: "Finance123!"
+          capture:
+            - json: "$.token"
+              as: "auth_token"
+            - json: "$.user.id"
+              as: "user_id"
+          expect:
+            - statusCode: 200
+
+      # Record income with complex VAT scenarios
+      - post:
+          url: "/api/financial/income"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          json:
+            project_id: "{{ $randomChoice(project_ids) }}"
+            transaction_type: "{{ $randomChoice(transaction_types) }}"
+            gross_amount: "{{ $randomInt(1000, 25000) }}.{{ $randomInt(10, 99) }}"
+            income_category: "{{ $randomChoice(income_categories) }}"
+            income_subcategory: "load-test-{{ $randomString() }}"
+            payment_method: "{{ $randomChoice(payment_methods) }}"
+            is_vatable: true
+            service_charge_rate: 0.10
+            description: "Load test transaction {{ $randomString() }}"
+          expect:
+            - statusCode: 201
+          capture:
+            - json: "$.id"
+              as: "income_id"
+            - json: "$.transaction_code"
+              as: "transaction_code"
+            - json: "$.net_amount"
+              as: "net_amount"
+
+      # Verify VAT calculation accuracy
+      - get:
+          url: "/api/financial/income/{{ income_id }}"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          expect:
+            - statusCode: 200
+            - json: "$.tax_amount"
+              # Verify VAT is exactly 12% of gross amount (VAT inclusive calculation)
+
+      # Generate BIR summary for compliance
+      - get:
+          url: "/api/financial/bir-summary"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          qs:
+            project_id: "{{ $randomChoice(project_ids) }}"
+            start_date: "2025-09-01"
+            end_date: "2025-09-30"
+          expect:
+            - statusCode: 200
+
+  - name: "Senior/PWD Discount Processing"
+    weight: 20
+    flow:
+      # Login
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "cashier-{{ $randomInt(1, 5) }}@okaeri.com"
+            password: "Cashier123!"
+          capture:
+            - json: "$.token"
+              as: "auth_token"
+          expect:
+            - statusCode: 200
+
+      # Process senior/PWD transactions (VAT exempt)
+      - post:
+          url: "/api/financial/income"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          json:
+            project_id: "{{ $randomChoice(project_ids) }}"
+            transaction_type: "booking"
+            gross_amount: "{{ $randomInt(2000, 15000) }}.00"
+            income_category: "accommodation"
+            payment_method: "cash"
+            senior_pwd_discount:
+              type: "{{ $randomChoice(['senior', 'pwd']) }}"
+              id_number: "{{ $randomInt(10000000, 99999999) }}"
+              customer_name: "Senior Test {{ $randomString() }}"
+            description: "Senior/PWD booking {{ $randomString() }}"
+          expect:
+            - statusCode: 201
+
+      # Verify discount log creation for BIR compliance
+      - get:
+          url: "/api/financial/discount-logs"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          qs:
+            project_id: "{{ $randomChoice(project_ids) }}"
+            limit: 1
+          expect:
+            - statusCode: 200
+
+  - name: "Multi-Currency Payment Processing"
+    weight: 15
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "intl-{{ $randomInt(1, 2) }}@okaeri.com"
+            password: "Intl123!"
+          capture:
+            - json: "$.token"
+              as: "auth_token"
+          expect:
+            - statusCode: 200
+
+      # Process foreign currency payments
+      - post:
+          url: "/api/payment/multi-currency"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          json:
+            project_id: "{{ $randomChoice(project_ids) }}"
+            original_currency: "{{ $randomChoice(['USD', 'EUR', 'JPY', 'SGD']) }}"
+            original_amount: "{{ $randomInt(100, 1000) }}.{{ $randomInt(10, 99) }}"
+            exchange_rate: "{{ $randomInt(45, 60) }}.{{ $randomInt(1000, 9999) }}"
+            payment_method: "credit_card"
+            transaction_type: "booking"
+          expect:
+            - statusCode: 201
+
+      # Verify PHP conversion accuracy
+      - get:
+          url: "/api/financial/forex-summary"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          qs:
+            project_id: "{{ $randomChoice(project_ids) }}"
+            period: "today"
+          expect:
+            - statusCode: 200
+
+  - name: "Package Revenue Allocation"
+    weight: 15
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "packages-{{ $randomInt(1, 2) }}@okaeri.com"
+            password: "Packages123!"
+          capture:
+            - json: "$.token"
+              as: "auth_token"
+          expect:
+            - statusCode: 200
+
+      # Create and allocate package revenue
+      - post:
+          url: "/api/financial/package-allocation"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          json:
+            project_id: "{{ $randomChoice(project_ids) }}"
+            package_name: "Load Test Package {{ $randomString() }}"
+            package_price: "{{ $randomInt(5000, 20000) }}.00"
+            components:
+              - category: "accommodation"
+                description: "Room accommodation"
+                allocation: 60
+              - category: "food_beverage"
+                description: "Meals included"
+                allocation: 25
+              - category: "amenities"
+                description: "Facility access"
+                allocation: 15
+          expect:
+            - statusCode: 201
+
+  - name: "Financial Reporting Under Load"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "reports-{{ $randomInt(1, 2) }}@okaeri.com"
+            password: "Reports123!"
+          capture:
+            - json: "$.token"
+              as: "auth_token"
+          expect:
+            - statusCode: 200
+
+      # Generate various financial reports simultaneously
+      - parallel:
+          - get:
+              url: "/api/financial/revenue-report"
+              headers:
+                Authorization: "Bearer {{ auth_token }}"
+              qs:
+                project_id: "{{ $randomChoice(project_ids) }}"
+                start_date: "2025-09-01"
+                end_date: "2025-09-30"
+                group_by: "day"
+              expect:
+                - statusCode: 200
+
+          - get:
+              url: "/api/financial/vat-report"
+              headers:
+                Authorization: "Bearer {{ auth_token }}"
+              qs:
+                project_id: "{{ $randomChoice(project_ids) }}"
+                start_date: "2025-09-01"
+                end_date: "2025-09-30"
+              expect:
+                - statusCode: 200
+
+          - get:
+              url: "/api/financial/platform-summary"
+              headers:
+                Authorization: "Bearer {{ auth_token }}"
+              qs:
+                project_id: "{{ $randomChoice(project_ids) }}"
+                start_date: "2025-09-01"
+                end_date: "2025-09-30"
+              expect:
+                - statusCode: 200

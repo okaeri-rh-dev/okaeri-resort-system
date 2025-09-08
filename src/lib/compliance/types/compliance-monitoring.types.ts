@@ -123,24 +123,55 @@ export interface ComplianceDeadlineAlert {
 }
 
 /**
+ * Receipt sequence for BIR compliance
+ */
+export interface ReceiptSequence {
+  projectId: string;
+  sequenceType: "OR" | "SI"; // Official Receipt or Sales Invoice
+  startNumber: number;
+  endNumber: number;
+  prefix: string;
+  currentNumber: number;
+  isActive: boolean;
+  approvedBy: string;
+  approvalDate: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Individual receipt record for sequence checking
+ */
+export interface ReceiptRecord {
+  sequenceNumber: number;
+  issuedDate: Date;
+  isVoided: boolean;
+  projectId: string;
+}
+
+/**
  * Receipt sequence integrity result
  */
 export interface SequenceIntegrityResult {
-  documentType: "OR" | "SI"; // Official Receipt or Sales Invoice
-  sequenceRange: {
+  documentType?: "OR" | "SI"; // Official Receipt or Sales Invoice
+  sequenceRange?: {
     start: number;
     end: number;
     current: number;
   };
-  totalIssued: number;
-  totalVoided: number;
-  gaps: SequenceGap[];
-  duplicates: SequenceDuplicate[];
-  outOfOrderIssues: OutOfOrderIssue[];
-  voidingIssues: VoidingIssue[];
-  complianceScore: number; // 0-100
-  lastChecked: Date;
-  nextSequenceNumber: number;
+  totalIssued?: number;
+  totalVoided?: number;
+  gaps?: SequenceGap[];
+  duplicates?: SequenceDuplicate[];
+  outOfOrderIssues?: OutOfOrderIssue[];
+  voidingIssues?: VoidingIssue[];
+  complianceScore?: number; // 0-100
+  lastChecked?: Date;
+  nextSequenceNumber?: number;
+  // Essential fields for BIR compliance test
+  hasGaps: boolean;
+  hasDuplicates: boolean;
+  isValid: boolean;
 }
 
 /**

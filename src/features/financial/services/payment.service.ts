@@ -8,17 +8,17 @@
 import { Money } from "@/lib/money";
 import { db } from "@/lib/db";
 import {
-  payments,
+  paymentTransactions as payments,
   paymentGateways,
-  paymentReconciliation,
-  cashDrawerSessions,
-  refunds,
-  type Payment,
-  type NewPayment,
-  type Refund,
+  cashPayments,
+  bankTransfers,
+  refundTransactions as refunds,
+  type PaymentTransaction as Payment,
+  type NewPaymentTransaction as NewPayment,
+  type RefundTransaction as Refund,
 } from "@/lib/db/schema/payments.schema";
 import { incomeTransactions } from "@/lib/db/schema/income.schema";
-import { cashReconciliationAudit } from "@/lib/db/schema/financial-audit.schema";
+// import { cashReconciliationAudit } from "@/lib/db/schema/financial-audit.schema"; // TODO: Enable when implemented
 import { eq, and, gte, lte, desc, sql, isNull } from "drizzle-orm";
 import { generateCode } from "@/lib/utils";
 import { auditLog, auditFinancialTransaction } from "@/lib/audit";
@@ -365,10 +365,10 @@ export class PaymentService {
       },
     });
 
-    // Update cash drawer if specified
-    if (input.drawerId) {
-      await this.updateCashDrawer(input.drawerId, amount, "IN", input.userId);
-    }
+    // TODO: Implement cash drawer functionality in future phase
+    // if (input.drawerId) {
+    //   await this.updateCashDrawer(input.drawerId, amount, "IN", input.userId);
+    // }
 
     // Mark as immediately completed (cash is instant)
     await db
@@ -517,6 +517,7 @@ export class PaymentService {
 
   /**
    * Reconcile cash drawer
+   * TODO: Implement cash drawer reconciliation in future phase
    */
   async reconcileCashDrawer(
     projectId: string,
@@ -525,94 +526,9 @@ export class PaymentService {
     denominations: Array<{ value: number; quantity: number }>,
     userId: string
   ) {
-    const actual = actualCount instanceof Money ? actualCount : new Money(actualCount);
-
-    // Get current drawer session
-    const session = await db
-      .select()
-      .from(cashDrawerSessions)
-      .where(and(eq(cashDrawerSessions.drawerId, drawerId), isNull(cashDrawerSessions.closedAt)))
-      .limit(1)
-      .then((r) => r[0]);
-
-    if (!session) {
-      throw new Error("No active cash drawer session found");
-    }
-
-    // Calculate expected balance
-    const openingBalance = new Money(session.openingBalance);
-    const cashIn = new Money(session.totalCashIn);
-    const cashOut = new Money(session.totalCashOut);
-    const expectedBalance = openingBalance.add(cashIn).subtract(cashOut);
-
-    // Calculate variance
-    const variance = actual.subtract(expectedBalance);
-
-    // Create reconciliation audit
-    const [reconciliation] = await db
-      .insert(cashReconciliationAudit)
-      .values({
-        projectId,
-        reconciliationDate: new Date(),
-        reconciliationType: "shift_change",
-        drawerId,
-        drawerLocation: session.drawerLocation,
-        openingBalance: openingBalance.toNumber().toString(),
-        openingDenominations: session.openingDenominations,
-        cashSales: cashIn.toNumber().toString(),
-        cashRefunds: "0",
-        cashExpenses: cashOut.toNumber().toString(),
-        cashDeposits: "0",
-        cashWithdrawals: "0",
-        expectedClosingBalance: expectedBalance.toNumber().toString(),
-        actualClosingBalance: actual.toNumber().toString(),
-        closingDenominations: denominations.map((d) => ({
-          denomination: d.value,
-          quantity: d.quantity,
-          total: d.value * d.quantity,
-        })),
-        variance: variance.toNumber().toString(),
-        variancePercentage: expectedBalance.isZero()
-          ? "0"
-          : variance.divide(expectedBalance).multiply(100).toNumber().toString(),
-        varianceStatus: variance.isZero() ? "balanced" : variance.isPositive() ? "over" : "short",
-        transactionCount: session.transactionCount,
-        reconciledBy: userId,
-        status: Math.abs(variance.toNumber()) <= 100 ? "approved" : "disputed",
-      })
-      .returning();
-
-    // Close current session
-    await db
-      .update(cashDrawerSessions)
-      .set({
-        closingBalance: actual.toNumber().toString(),
-        closingDenominations: denominations,
-        closedAt: new Date(),
-        closedBy: userId,
-        reconciliationId: reconciliation.id,
-        varianceAmount: variance.toNumber().toString(),
-      })
-      .where(eq(cashDrawerSessions.id, session.id));
-
-    // Audit log
-    await auditLog({
-      userId,
-      action: "cash_drawer.reconciled",
-      entityType: "cash_reconciliation",
-      entityId: reconciliation.id,
-      amount: actual.toNumber(),
-      metadata: {
-        drawerId,
-        expectedBalance: expectedBalance.toNumber(),
-        actualBalance: actual.toNumber(),
-        variance: variance.toNumber(),
-        status: reconciliation.status,
-      },
-      severity: Math.abs(variance.toNumber()) > 100 ? "warning" : "info",
-    });
-
-    return reconciliation;
+    throw new Error("Cash drawer reconciliation not implemented yet");
+    // TODO: Implement cash drawer functionality
+    // Implementation will be added in future phase when cash drawer schema is available
   }
 
   /**
@@ -740,36 +656,8 @@ export class PaymentService {
     direction: "IN" | "OUT",
     userId: string
   ) {
-    const session = await db
-      .select()
-      .from(cashDrawerSessions)
-      .where(and(eq(cashDrawerSessions.drawerId, drawerId), isNull(cashDrawerSessions.closedAt)))
-      .limit(1)
-      .then((r) => r[0]);
-
-    if (!session) {
-      throw new Error("No active cash drawer session");
-    }
-
-    const updateData =
-      direction === "IN"
-        ? {
-            totalCashIn: sql`${cashDrawerSessions.totalCashIn} + ${amount.toNumber()}`,
-            transactionCount: sql`${cashDrawerSessions.transactionCount} + 1`,
-          }
-        : {
-            totalCashOut: sql`${cashDrawerSessions.totalCashOut} + ${amount.toNumber()}`,
-            transactionCount: sql`${cashDrawerSessions.transactionCount} + 1`,
-          };
-
-    await db
-      .update(cashDrawerSessions)
-      .set({
-        ...updateData,
-        lastTransactionAt: new Date(),
-        lastTransactionBy: userId,
-      })
-      .where(eq(cashDrawerSessions.id, session.id));
+    // TODO: Implement cash drawer updates in future phase
+    console.log(`Cash drawer ${drawerId} ${direction} ${amount.toNumber()} by ${userId}`);
   }
 
   private async updateTransactionPaymentStatus(

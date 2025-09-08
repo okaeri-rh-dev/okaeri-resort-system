@@ -189,7 +189,11 @@ export class BIRIntegrationService {
 
     // Calculate VAT computations
     const outputVAT = salesData.vatableSales.multiply(0.12);
-    const inputVAT = purchaseData.totalInputVAT;
+    const inputVAT = purchaseData.domesticPurchases
+      .add(purchaseData.importations || new Money(0))
+      .add(purchaseData.transitionalInputTax || new Money(0))
+      .add(purchaseData.presumptiveInputTax || new Money(0))
+      .add(purchaseData.inputVATFromPreviousPeriod || new Money(0));
     const vatPayable = outputVAT.subtract(inputVAT);
 
     const form2550M: VATReturn = {
@@ -214,13 +218,21 @@ export class BIRIntegrationService {
         importations: purchaseData.importations || new Money(0),
         transitionalInputTax: purchaseData.transitionalInputTax || new Money(0),
         presumptiveInputTax: purchaseData.presumptiveInputTax || new Money(0),
-        totalInputVAT: inputVAT,
+        totalInputVAT: purchaseData.domesticPurchases
+          .add(purchaseData.importations || new Money(0))
+          .add(purchaseData.transitionalInputTax || new Money(0))
+          .add(purchaseData.presumptiveInputTax || new Money(0))
+          .add(purchaseData.inputVATFromPreviousPeriod || new Money(0)),
         inputVATFromPreviousPeriod: purchaseData.inputVATFromPreviousPeriod || new Money(0),
       },
 
       // Part III - Computation
       totalOutputVAT: outputVAT,
-      totalInputVAT: inputVAT,
+      totalInputVAT: purchaseData.domesticPurchases
+        .add(purchaseData.importations || new Money(0))
+        .add(purchaseData.transitionalInputTax || new Money(0))
+        .add(purchaseData.presumptiveInputTax || new Money(0))
+        .add(purchaseData.inputVATFromPreviousPeriod || new Money(0)),
       vatPayable: vatPayable.isPositive() ? vatPayable : new Money(0),
       vatRefundable: vatPayable.isNegative() ? vatPayable.abs() : new Money(0),
       excessCreditsFromPreviousPeriod: new Money(0),

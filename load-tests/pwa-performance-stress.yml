@@ -1,0 +1,406 @@
+# PHASE 4.5 DAY 6: PWA Performance Under Load
+# Target: Service worker caching effectiveness
+# Validate: Offline queue processing
+# Monitor: Core Web Vitals under stress
+
+config:
+  target: "http://localhost:5173"
+  phases:
+    # PWA warm-up and service worker registration
+    - duration: 30
+      arrivalRate: 2
+      name: "PWA service worker registration"
+    # Static asset caching test
+    - duration: 60
+      arrivalRate: 10
+      name: "Static asset caching stress"
+    # API response caching test
+    - duration: 120
+      arrivalRate: 20
+      name: "API response caching test"
+    # Offline functionality simulation
+    - duration: 90
+      arrivalRate: 15
+      name: "Offline functionality test"
+    # Mobile performance stress
+    - duration: 180
+      arrivalRate: 25
+      name: "Mobile performance under load"
+
+  variables:
+    # Different device types for PWA testing
+    devices:
+      - {
+          type: "mobile",
+          ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15",
+          viewport: "375x667",
+        }
+      - {
+          type: "tablet",
+          ua: "Mozilla/5.0 (iPad; CPU OS 14_0 like Mac OS X) AppleWebKit/605.1.15",
+          viewport: "768x1024",
+        }
+      - {
+          type: "desktop",
+          ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+          viewport: "1920x1080",
+        }
+
+    # Network conditions for PWA testing
+    networks:
+      - { name: "4g", rtt: 50, throughput: 1600 }
+      - { name: "3g", rtt: 300, throughput: 750 }
+      - { name: "slow_3g", rtt: 2000, throughput: 400 }
+      - { name: "wifi", rtt: 10, throughput: 5000 }
+
+    # Different pages for caching testing
+    pages:
+      - { path: "/", name: "Landing page", critical: true }
+      - { path: "/login", name: "Login page", critical: true }
+      - { path: "/dashboard", name: "Dashboard", critical: true }
+      - { path: "/booking", name: "Booking page", critical: false }
+      - { path: "/financial", name: "Financial page", critical: false }
+
+    # Static assets to test caching
+    static_assets:
+      - "/assets/css/main.css"
+      - "/assets/js/main.js"
+      - "/assets/images/logo.png"
+      - "/assets/fonts/inter.woff2"
+      - "/manifest.json"
+      - "/sw.js"
+
+  plugins:
+    web-vitals: {}
+    metrics-by-endpoint: {}
+    expect: {}
+
+  ensure:
+    # Core Web Vitals targets under load
+    - web-vitals.lcp: 2500 # Largest Contentful Paint under 2.5s
+    - web-vitals.inp: 200 # Interaction to Next Paint under 200ms
+    - web-vitals.cls: 0.1 # Cumulative Layout Shift under 0.1
+    - http.response_time.p95: 1500 # API responses under 1.5s
+    - http.codes.200: 90 # 90% success rate
+
+scenarios:
+  - name: "Service Worker Asset Caching"
+    weight: 25
+    flow:
+      # Simulate device and network conditions
+      - function: "setupDeviceConditions"
+
+      # Initial page load (cache miss)
+      - get:
+          url: "/"
+          headers:
+            User-Agent: "{{ device_ua }}"
+            Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+          capture:
+            - header: "sw-cache-status"
+              as: "cache_status_1"
+          expect:
+            - statusCode: 200
+
+      # Load critical static assets
+      - parallel:
+          - get:
+              url: "/assets/css/main.css"
+              headers:
+                User-Agent: "{{ device_ua }}"
+              expect:
+                - statusCode: 200
+
+          - get:
+              url: "/assets/js/main.js"
+              headers:
+                User-Agent: "{{ device_ua }}"
+              expect:
+                - statusCode: 200
+
+          - get:
+              url: "/manifest.json"
+              expect:
+                - statusCode: 200
+
+      # Wait for service worker to cache assets
+      - think: 2
+
+      # Repeat page load (should be cached)
+      - get:
+          url: "/"
+          headers:
+            User-Agent: "{{ device_ua }}"
+          capture:
+            - header: "sw-cache-status"
+              as: "cache_status_2"
+          expect:
+            - statusCode: 200
+
+      # Verify caching worked (response should be faster)
+      - get:
+          url: "/assets/css/main.css"
+          headers:
+            User-Agent: "{{ device_ua }}"
+          expect:
+            - statusCode: 200
+            # Should be served from cache (much faster)
+
+  - name: "API Response Caching Under Load"
+    weight: 25
+    flow:
+      - function: "setupDeviceConditions"
+
+      # Login to get auth context
+      - post:
+          url: "/api/auth/login"
+          headers:
+            User-Agent: "{{ device_ua }}"
+          json:
+            email: "pwa-test-{{ $randomString() }}@okaeri.com"
+            password: "PWA123!"
+          capture:
+            - json: "$.token"
+              as: "auth_token"
+          expect:
+            - statusCode: 200
+
+      # Load dashboard API (should be cached with TTL)
+      - get:
+          url: "/api/dashboard/metrics"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+            User-Agent: "{{ device_ua }}"
+          qs:
+            project_id: "proj-001"
+            period: "week"
+          capture:
+            - header: "cache-control"
+              as: "cache_control"
+          expect:
+            - statusCode: 200
+
+      # Rapid successive calls (should hit cache)
+      - loop:
+          - get:
+              url: "/api/dashboard/metrics"
+              headers:
+                Authorization: "Bearer {{ auth_token }}"
+                User-Agent: "{{ device_ua }}"
+              qs:
+                project_id: "proj-001"
+                period: "week"
+              expect:
+                - statusCode: 200
+        count: 3
+
+      # Load booking data (different cache TTL)
+      - get:
+          url: "/api/booking/recent"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+            User-Agent: "{{ device_ua }}"
+          qs:
+            project_id: "proj-001"
+            limit: 10
+          expect:
+            - statusCode: 200
+
+  - name: "Offline Queue Processing Simulation"
+    weight: 20
+    flow:
+      - function: "setupMobileDevice"
+
+      # Login while online
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "offline-test@okaeri.com"
+            password: "Offline123!"
+          capture:
+            - json: "$.token"
+              as: "auth_token"
+          expect:
+            - statusCode: 200
+
+      # Simulate going offline (use service worker offline endpoints)
+      - post:
+          url: "/sw/simulate-offline"
+          json:
+            offline: true
+
+      # Queue operations while "offline"
+      - post:
+          url: "/api/booking/create-offline"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          json:
+            project_id: "proj-001"
+            guest_name: "Offline Guest {{ $randomString() }}"
+            check_in: "2025-11-01"
+            check_out: "2025-11-03"
+            queue_for_sync: true
+          expect:
+            - statusCode: 202 # Accepted for processing
+
+      # Queue financial transaction
+      - post:
+          url: "/api/financial/income-offline"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          json:
+            project_id: "proj-001"
+            amount: "1500.00"
+            income_category: "amenities"
+            payment_method: "cash"
+            queue_for_sync: true
+          expect:
+            - statusCode: 202
+
+      # Simulate coming back online
+      - post:
+          url: "/sw/simulate-offline"
+          json:
+            offline: false
+
+      # Wait for background sync
+      - think: 5
+
+      # Verify queued operations were processed
+      - get:
+          url: "/api/sync/queue-status"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Mobile Performance Under Load"
+    weight: 20
+    flow:
+      - function: "setupMobileDevice"
+      - function: "simulateSlowNetwork"
+
+      # Critical resource loading on mobile
+      - get:
+          url: "/"
+          headers:
+            User-Agent: "{{ device_ua }}"
+            Connection: "slow-{{ network_name }}"
+          expect:
+            - statusCode: 200
+
+      # Login on mobile device
+      - post:
+          url: "/api/auth/login"
+          headers:
+            User-Agent: "{{ device_ua }}"
+          json:
+            email: "mobile-{{ $randomString() }}@okaeri.com"
+            password: "Mobile123!"
+          capture:
+            - json: "$.token"
+              as: "auth_token"
+          expect:
+            - statusCode: 200
+
+      # Load dashboard on mobile (heavy operation)
+      - get:
+          url: "/dashboard"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+            User-Agent: "{{ device_ua }}"
+          expect:
+            - statusCode: 200
+
+      # Mobile booking flow
+      - post:
+          url: "/api/booking/create"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+            User-Agent: "{{ device_ua }}"
+          json:
+            project_id: "proj-001"
+            guest_name: "Mobile User {{ $randomString() }}"
+            check_in: "2025-11-15"
+            check_out: "2025-11-17"
+            room_type: "standard"
+          expect:
+            - statusCode: 201
+
+  - name: "Progressive Loading and Image Optimization"
+    weight: 10
+    flow:
+      - function: "setupDeviceConditions"
+
+      # Load pages with progressive enhancement
+      - get:
+          url: "/gallery"
+          headers:
+            User-Agent: "{{ device_ua }}"
+            Accept: "text/html,application/xhtml+xml"
+          expect:
+            - statusCode: 200
+
+      # Load optimized images based on device
+      - parallel:
+          - get:
+              url: "/api/images/room-photos"
+              headers:
+                User-Agent: "{{ device_ua }}"
+              qs:
+                size: "{{ device_type === 'mobile' ? 'small' : 'large' }}"
+                format: "webp"
+                lazy: true
+              expect:
+                - statusCode: 200
+
+          - get:
+              url: "/api/images/amenities"
+              headers:
+                User-Agent: "{{ device_ua }}"
+              qs:
+                size: "thumbnail"
+                format: "avif,webp,jpg"
+              expect:
+                - statusCode: 200
+
+      # Test lazy loading behavior
+      - get:
+          url: "/rooms"
+          headers:
+            User-Agent: "{{ device_ua }}"
+          qs:
+            lazy_load: true
+            viewport_height: "{{ viewport_height }}"
+          expect:
+            - statusCode: 200
+
+# Artillery functions for PWA testing
+functions:
+  setupDeviceConditions: |
+    const device = context.vars.devices[Math.floor(Math.random() * context.vars.devices.length)];
+    const network = context.vars.networks[Math.floor(Math.random() * context.vars.networks.length)];
+
+    context.vars.device_type = device.type;
+    context.vars.device_ua = device.ua;
+    context.vars.viewport = device.viewport;
+    context.vars.viewport_height = device.viewport.split('x')[1];
+    context.vars.network_name = network.name;
+    context.vars.network_rtt = network.rtt;
+    context.vars.network_throughput = network.throughput;
+
+  setupMobileDevice: |
+    const mobileDevices = context.vars.devices.filter(d => d.type === 'mobile');
+    const device = mobileDevices[Math.floor(Math.random() * mobileDevices.length)];
+
+    context.vars.device_type = device.type;
+    context.vars.device_ua = device.ua;
+    context.vars.viewport = device.viewport;
+
+  simulateSlowNetwork: |
+    const slowNetworks = context.vars.networks.filter(n => n.name.includes('3g'));
+    const network = slowNetworks[Math.floor(Math.random() * slowNetworks.length)];
+
+    context.vars.network_name = network.name;
+    context.vars.network_rtt = network.rtt;
+    context.vars.network_throughput = network.throughput;

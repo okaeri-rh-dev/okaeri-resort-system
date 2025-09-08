@@ -1,0 +1,212 @@
+# PHASE 4.5 DAY 6: Concurrent Booking Stress Test
+# Target: 100 concurrent users booking simultaneously
+# Validation: Response times remain under 2s
+# Monitor: Memory usage, CPU, database connections
+
+config:
+  target: "http://localhost:5173"
+  phases:
+    # Warm-up phase
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm-up phase"
+    # Peak booking stress test
+    - duration: 120
+      arrivalRate: 50
+      name: "Peak concurrent booking"
+    # Sustained high load
+    - duration: 180
+      arrivalRate: 30
+      name: "Sustained high load"
+    # Cool down
+    - duration: 60
+      arrivalRate: 10
+      name: "Cool down"
+
+  variables:
+    # Test project IDs for multi-tenant testing
+    project_ids:
+      - "proj-001"
+      - "proj-002"
+      - "proj-003"
+    # Guest names for booking simulation
+    guest_names:
+      - "Juan Dela Cruz"
+      - "Maria Santos"
+      - "Jose Rizal"
+      - "Ana Garcia"
+    # Room types for booking variety
+    room_types:
+      - "standard"
+      - "deluxe"
+      - "suite"
+
+  payload:
+    path: "./load-tests/booking-data.csv"
+
+  plugins:
+    metrics-by-endpoint: {}
+    expect: {}
+
+  ensure:
+    - http.response_time.p95: 2000 # 95th percentile under 2s
+    - http.response_time.p99: 3000 # 99th percentile under 3s
+    - http.codes.200: 95 # 95% success rate minimum
+
+scenarios:
+  - name: "Concurrent Room Booking Simulation"
+    weight: 60
+    flow:
+      # Authentication flow
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "load-test-{{ $randomString() }}@okaeri.com"
+            password: "LoadTest123!"
+          capture:
+            - json: "$.token"
+              as: "auth_token"
+            - json: "$.user.id"
+              as: "user_id"
+          expect:
+            - statusCode: 200
+
+      # Check room availability
+      - get:
+          url: "/api/booking/availability"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          qs:
+            project_id: "{{ $randomChoice(project_ids) }}"
+            check_in: "2025-09-15"
+            check_out: "2025-09-17"
+            guests: "{{ $randomInt(1, 4) }}"
+          expect:
+            - statusCode: 200
+          capture:
+            - json: "$.rooms[0].id"
+              as: "available_room_id"
+            - json: "$.rooms[0].price"
+              as: "room_price"
+
+      # Create booking with financial processing
+      - post:
+          url: "/api/booking/create"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          json:
+            project_id: "{{ $randomChoice(project_ids) }}"
+            room_id: "{{ available_room_id }}"
+            guest_name: "{{ $randomChoice(guest_names) }}"
+            guest_email: "guest-{{ $randomString() }}@example.com"
+            guest_phone: "+639{{ $randomInt(100000000, 999999999) }}"
+            check_in: "2025-09-15"
+            check_out: "2025-09-17"
+            guests: "{{ $randomInt(1, 4) }}"
+            special_requests: "Load test booking {{ $randomString() }}"
+          expect:
+            - statusCode: 201
+          capture:
+            - json: "$.booking.id"
+              as: "booking_id"
+            - json: "$.booking.total_amount"
+              as: "total_amount"
+
+      # Process payment
+      - post:
+          url: "/api/payment/process"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          json:
+            booking_id: "{{ booking_id }}"
+            amount: "{{ total_amount }}"
+            payment_method: "gcash"
+            reference_number: "{{ $randomInt(1000000000000, 9999999999999) }}"
+            customer_name: "{{ $randomChoice(guest_names) }}"
+          expect:
+            - statusCode: 201
+
+      # Record income transaction
+      - post:
+          url: "/api/financial/income"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          json:
+            project_id: "{{ $randomChoice(project_ids) }}"
+            transaction_type: "booking"
+            gross_amount: "{{ total_amount }}"
+            income_category: "accommodation"
+            booking_id: "{{ booking_id }}"
+            payment_method: "gcash"
+            is_vatable: true
+          expect:
+            - statusCode: 201
+
+      # Think time between actions (simulate user behavior)
+      - think: "{{ $randomInt(1, 3) }}"
+
+  - name: "Multi-Project Dashboard Load"
+    weight: 25
+    flow:
+      # Login as different project managers
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "manager-{{ $randomInt(1, 5) }}@okaeri.com"
+            password: "Manager123!"
+          capture:
+            - json: "$.token"
+              as: "auth_token"
+          expect:
+            - statusCode: 200
+
+      # Load dashboard metrics for specific project
+      - get:
+          url: "/api/dashboard/metrics"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          qs:
+            project_id: "{{ $randomChoice(project_ids) }}"
+            period: "month"
+          expect:
+            - statusCode: 200
+
+      # Get recent bookings
+      - get:
+          url: "/api/booking/recent"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          qs:
+            project_id: "{{ $randomChoice(project_ids) }}"
+            limit: 10
+          expect:
+            - statusCode: 200
+
+      # Financial summary query
+      - get:
+          url: "/api/financial/summary"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          qs:
+            project_id: "{{ $randomChoice(project_ids) }}"
+            start_date: "2025-09-01"
+            end_date: "2025-09-30"
+          expect:
+            - statusCode: 200
+
+  - name: "Real-time Availability Check"
+    weight: 15
+    flow:
+      # Simulate users checking room availability frequently
+      - loop:
+          - get:
+              url: "/api/booking/availability"
+              qs:
+                project_id: "{{ $randomChoice(project_ids) }}"
+                check_in: "{{ $randomDate('2025-09-15', '2025-12-31') }}"
+                check_out: "{{ $randomDate('2025-09-16', '2026-01-31') }}"
+                guests: "{{ $randomInt(1, 6) }}"
+              expect:
+                - statusCode: 200
+          - think: "{{ $randomInt(2, 5) }}"
+        count: 5

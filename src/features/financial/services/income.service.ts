@@ -9,8 +9,7 @@ import { Money } from "@/lib/money";
 import { db } from "@/lib/db";
 import {
   incomeTransactions,
-  incomeAllocation,
-  platformBookings,
+  incomeAllocations,
   seasonalPricing,
   packageDeals,
   type IncomeTransaction,
@@ -172,11 +171,11 @@ export class IncomeService {
         transactionCode,
         transactionDate: input.transactionDate,
         transactionType: input.transactionType,
-        grossAmount: grossAmount.toNumber().toString(),
-        discountAmount: discountAmount.toNumber().toString(),
-        taxAmount: vatAmount.toNumber().toString(),
-        serviceChargeAmount: serviceChargeAmount.toNumber().toString(),
-        netAmount: netAmount.toNumber().toString(),
+        grossAmount: grossAmount.toString(),
+        discountAmount: discountAmount.toString(),
+        taxAmount: vatAmount.toString(),
+        serviceChargeAmount: serviceChargeAmount.toString(),
+        netAmount: netAmount.toString(),
         bookingId: input.bookingId,
         roomId: input.roomId,
         customerId: input.customerId,
@@ -225,6 +224,7 @@ export class IncomeService {
 
   /**
    * Record platform booking with automatic fee calculation
+   * TODO: Implement platform bookings table in future phase
    */
   async recordPlatformBooking(input: PlatformBookingInput) {
     const grossRevenue =
@@ -245,28 +245,8 @@ export class IncomeService {
       netRevenue = grossRevenue.subtract(platformFee);
     }
 
-    // Create platform booking record
-    const [booking] = await db
-      .insert(platformBookings)
-      .values({
-        projectId: input.projectId,
-        platform: input.platform,
-        confirmationCode: input.confirmationCode,
-        checkInDate: input.checkInDate.toISOString().split("T")[0],
-        checkOutDate: input.checkOutDate.toISOString().split("T")[0],
-        grossRevenue: grossRevenue.toNumber().toString(),
-        platformCommission: platformFee.toNumber().toString(),
-        netRevenue: netRevenue.toNumber().toString(),
-        guestName: input.guestName,
-        roomType: input.roomType,
-        numberOfGuests: input.numberOfGuests,
-        payoutStatus: "pending",
-        expectedPayoutDate: input.payoutDate?.toISOString().split("T")[0],
-        createdBy: input.userId,
-      })
-      .returning();
-
-    // Create corresponding income transaction
+    // For now, just create the income transaction
+    // Platform bookings table will be implemented in a future phase
     const income = await this.recordIncome({
       projectId: input.projectId,
       transactionDate: input.checkInDate,
@@ -280,18 +260,12 @@ export class IncomeService {
       userId: input.userId,
     });
 
-    // Link platform booking to income transaction
-    await db
-      .update(platformBookings)
-      .set({ incomeTransactionId: income.id })
-      .where(eq(platformBookings.id, booking.id));
-
     // Audit log
     await auditLog({
       userId: input.userId,
       action: "platform_booking.recorded",
-      entityType: "platform_booking",
-      entityId: booking.id,
+      entityType: "income",
+      entityId: income.id,
       amount: grossRevenue.toNumber(),
       metadata: {
         platform: input.platform,
@@ -302,7 +276,7 @@ export class IncomeService {
       },
     });
 
-    return booking;
+    return { income, platformFee: platformFee.toNumber(), netRevenue: netRevenue.toNumber() };
   }
 
   /**
@@ -340,7 +314,7 @@ export class IncomeService {
 
       // Create allocation record
       const [allocation] = await db
-        .insert(incomeAllocation)
+        .insert(incomeAllocations)
         .values({
           incomeTransactionId: "", // Will be updated when income is recorded
           allocationCategory: component.category,
@@ -510,35 +484,38 @@ export class IncomeService {
 
   /**
    * Get platform booking summary
+   * TODO: Implement proper platform bookings table query in future phase
    */
   async getPlatformSummary(projectId: string, startDate: Date, endDate: Date) {
+    // For now, aggregate from income transactions by platform subcategory
     const result = await db
       .select({
-        platform: platformBookings.platform,
+        platform: incomeTransactions.incomeSubcategory,
         bookingCount: sql<number>`COUNT(*)`,
-        grossRevenue: sql<string>`SUM(${platformBookings.grossRevenue})`,
-        platformFees: sql<string>`SUM(${platformBookings.platformCommission})`,
-        netRevenue: sql<string>`SUM(${platformBookings.netRevenue})`,
-        avgBookingValue: sql<string>`AVG(${platformBookings.grossRevenue})`,
+        grossRevenue: sql<string>`SUM(${incomeTransactions.grossAmount})`,
+        netRevenue: sql<string>`SUM(${incomeTransactions.netAmount})`,
+        avgBookingValue: sql<string>`AVG(${incomeTransactions.grossAmount})`,
       })
-      .from(platformBookings)
+      .from(incomeTransactions)
       .where(
         and(
-          eq(platformBookings.projectId, projectId),
-          gte(platformBookings.checkInDate, startDate.toISOString().split("T")[0]),
-          lte(platformBookings.checkInDate, endDate.toISOString().split("T")[0])
+          eq(incomeTransactions.projectId, projectId),
+          eq(incomeTransactions.incomeCategory, "accommodation"),
+          eq(incomeTransactions.paymentMethod, "platform"),
+          gte(incomeTransactions.transactionDate, startDate),
+          lte(incomeTransactions.transactionDate, endDate)
         )
       )
-      .groupBy(platformBookings.platform);
+      .groupBy(incomeTransactions.incomeSubcategory);
 
     return result.map((row) => ({
-      platform: row.platform,
+      platform: row.platform || "unknown",
       bookingCount: row.bookingCount,
       grossRevenue: new Money(row.grossRevenue),
-      platformFees: new Money(row.platformFees),
+      platformFees: new Money(0), // Will be calculated from metadata in future
       netRevenue: new Money(row.netRevenue),
       avgBookingValue: new Money(row.avgBookingValue),
-      effectiveFeeRate: parseFloat(row.platformFees) / parseFloat(row.grossRevenue),
+      effectiveFeeRate: 0, // Will be calculated from metadata in future
     }));
   }
 

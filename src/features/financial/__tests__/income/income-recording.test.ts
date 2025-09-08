@@ -5,33 +5,118 @@ import { IncomeService } from "../../services/income.service";
 import { generateAmount } from "../helpers/mock-data";
 
 // Mock the database
-vi.mock("@/lib/db", () => ({
-  db: {
-    select: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
-    from: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    values: vi.fn().mockReturnThis(),
-    returning: vi.fn().mockResolvedValue([
-      {
-        id: "income-123",
-        projectId: "proj-123",
-        transactionDate: "2025-01-01",
-        grossAmount: "7000.00",
-        netAmount: "7000.00",
-        vatAmount: "0.00",
-        serviceChargeAmount: "0.00",
-        discountAmount: "0.00",
-        incomeCategory: "accommodation",
-        transactionType: "booking",
-        paymentMethod: "bank_transfer",
-        createdBy: "user-123",
-        createdAt: new Date(),
-      },
-    ]),
-  },
-}));
+vi.mock("@/lib/db", () => {
+  // Simple global state to preserve booking across operations
+  let currentBooking: any = null;
+
+  const mockChain: any = {
+    select: vi.fn(() => mockChain),
+    insert: vi.fn((table: any) => {
+      mockChain._insertTable = table;
+      mockChain._isInsert = true;
+      return mockChain;
+    }),
+    update: vi.fn(() => {
+      mockChain._isInsert = false;
+      return mockChain;
+    }),
+    from: vi.fn(() => mockChain),
+    where: vi.fn(() => mockChain),
+    values: vi.fn((values: any) => {
+      // Simple approach: check if any of the value properties suggest it's a platform booking
+      const isPlatformBooking =
+        values.platform !== undefined ||
+        values.confirmationCode !== undefined ||
+        values.grossRevenue !== undefined ||
+        values.guestName !== undefined;
+
+      if (isPlatformBooking) {
+        currentBooking = {
+          id: "booking-123",
+          ...values,
+        };
+        mockChain._lastResult = [currentBooking];
+      } else {
+        const income = {
+          id: "income-123",
+          ...values,
+        };
+        mockChain._lastResult = [income];
+      }
+      return mockChain;
+    }),
+    set: vi.fn(() => mockChain),
+    orderBy: vi.fn(() => mockChain),
+    limit: vi.fn(() => mockChain),
+    returning: vi.fn(() => {
+      // Always prefer returning the current booking if it exists and this looks like a platform operation
+      const result =
+        currentBooking && mockChain._lastResult?.[0]?.platform
+          ? [currentBooking]
+          : mockChain._lastResult || [
+              {
+                id: "income-123",
+                projectId: "proj-123",
+                transactionCode: "INC-202501-00001",
+                transactionDate: "2025-01-01",
+                grossAmount: "7000.00",
+                netAmount: "7000.00",
+                taxAmount: "0.00",
+                serviceChargeAmount: "0.00",
+                discountAmount: "0.00",
+                incomeCategory: "accommodation",
+                transactionType: "booking",
+                paymentMethod: "bank_transfer",
+                createdBy: "user-123",
+                createdAt: new Date(),
+              },
+            ];
+
+      return Promise.resolve(result);
+    }),
+    execute: vi.fn(() => Promise.resolve([])),
+  };
+
+  // Make the chain itself awaitable and return appropriate mocks
+  mockChain.then = vi.fn((resolve) => {
+    // Check if this is a select operation (like transaction code generation)
+    if (mockChain.select.mock?.calls?.length > 0) {
+      return Promise.resolve([]).then(resolve);
+    }
+
+    // For update operations, just return success
+    if (!mockChain._isInsert) {
+      return Promise.resolve([]).then(resolve);
+    }
+
+    // For insert operations, prefer current booking for platform operations
+    const result =
+      currentBooking && mockChain._lastResult?.[0]?.platform
+        ? [currentBooking]
+        : mockChain._lastResult || [
+            {
+              id: "income-123",
+              projectId: "proj-123",
+              transactionCode: "INC-202501-00001",
+              transactionDate: new Date(),
+              grossAmount: "7000.00",
+              netAmount: "7000.00",
+              taxAmount: "0.00",
+              serviceChargeAmount: "0.00",
+              discountAmount: "0.00",
+              incomeCategory: "accommodation",
+              transactionType: "booking",
+              paymentMethod: "bank_transfer",
+              createdBy: "user-123",
+              createdAt: new Date(),
+            },
+          ];
+
+    return Promise.resolve(result).then(resolve);
+  });
+
+  return { db: mockChain };
+});
 
 // Mock audit log
 vi.mock("@/lib/audit", () => ({

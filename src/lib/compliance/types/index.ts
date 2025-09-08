@@ -6,6 +6,13 @@
 
 export * from "./compliance-monitoring.types";
 
+// Specific exports for common use
+export type {
+  ReceiptSequence,
+  SequenceIntegrityResult,
+  ReceiptRecord,
+} from "./compliance-monitoring.types";
+
 // Re-export commonly used types from financial compliance
 export type {
   ComplianceStatus,

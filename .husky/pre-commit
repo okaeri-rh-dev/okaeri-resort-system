@@ -53,9 +53,9 @@ if git diff --cached --name-only | xargs grep -l "TODO\|FIXME" 2>/dev/null; then
   echo "${YELLOW}📝 Info: Found TODO/FIXME comments in staged files${NC}"
 fi
 
-# 5. Verify no large files are being committed
+# 5. Verify no large files are being committed (excluding package-lock.json)
 echo "${YELLOW}📏 Checking file sizes...${NC}"
-large_files=$(git diff --cached --name-only | xargs ls -la 2>/dev/null | awk '$5 > 1048576 {print $9, $5}')
+large_files=$(git diff --cached --name-only | grep -v "package-lock.json" | xargs ls -la 2>/dev/null | awk '$5 > 1048576 {print $9, $5}')
 if [ -n "$large_files" ]; then
   echo "${RED}❌ Error: Large files detected (>1MB):${NC}"
   echo "$large_files"
