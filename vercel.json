@@ -12,18 +12,114 @@
   "nodeVersion": "20.x",
 
   "functions": {
-    "api/**/*.ts": {
+    "api/auth/**/*.ts": {
+      "runtime": "nodejs20.x",
+      "regions": ["cle1", "hnd1"],
+      "maxDuration": 10,
+      "memory": 512,
+      "environment": {
+        "NODE_ENV": "production",
+        "DATABASE_MAX_CONNECTIONS": "3",
+        "JWT_EXPIRES_IN": "15m",
+        "REFRESH_TOKEN_EXPIRES_IN": "7d",
+        "SESSION_TIMEOUT": "3600000",
+        "RATE_LIMIT_MAX": "30",
+        "RATE_LIMIT_WINDOW": "900000",
+        "BCRYPT_ROUNDS": "12",
+        "LOGIN_ATTEMPT_LIMIT": "5",
+        "LOGIN_ATTEMPT_WINDOW": "900000"
+      }
+    },
+    "api/bookings/**/*.ts": {
+      "runtime": "nodejs20.x",
+      "regions": ["cle1", "hnd1"],
+      "maxDuration": 20,
+      "memory": 768,
+      "environment": {
+        "NODE_ENV": "production",
+        "DATABASE_MAX_CONNECTIONS": "8",
+        "RATE_LIMIT_MAX": "60",
+        "RATE_LIMIT_WINDOW": "600000",
+        "BOOKING_HOLD_TIME": "600000",
+        "MAX_CONCURRENT_BOOKINGS": "5"
+      }
+    },
+    "api/rooms/**/*.ts": {
+      "runtime": "nodejs20.x",
+      "regions": ["cle1", "hnd1"],
+      "maxDuration": 15,
+      "memory": 512,
+      "environment": {
+        "NODE_ENV": "production",
+        "DATABASE_MAX_CONNECTIONS": "5",
+        "RATE_LIMIT_MAX": "120",
+        "RATE_LIMIT_WINDOW": "600000",
+        "CACHE_TTL": "300"
+      }
+    },
+    "api/reports/**/*.ts": {
+      "runtime": "nodejs20.x",
+      "regions": ["cle1"],
+      "maxDuration": 25,
+      "memory": 1024,
+      "environment": {
+        "NODE_ENV": "production",
+        "DATABASE_MAX_CONNECTIONS": "10",
+        "RATE_LIMIT_MAX": "20",
+        "RATE_LIMIT_WINDOW": "1800000",
+        "REPORT_TIMEOUT": "20000",
+        "MAX_REPORT_ROWS": "10000"
+      }
+    },
+    "api/upload/**/*.ts": {
       "runtime": "nodejs20.x",
       "regions": ["cle1", "hnd1"],
       "maxDuration": 25,
       "memory": 1024,
       "environment": {
         "NODE_ENV": "production",
+        "RATE_LIMIT_MAX": "10",
+        "RATE_LIMIT_WINDOW": "3600000",
+        "MAX_FILE_SIZE": "10485760",
+        "ALLOWED_MIME_TYPES": "image/jpeg,image/png,image/webp,application/pdf",
+        "UPLOAD_TIMEOUT": "20000"
+      }
+    },
+    "api/health-check.ts": {
+      "runtime": "nodejs20.x",
+      "regions": ["cle1", "hnd1"],
+      "maxDuration": 5,
+      "memory": 128,
+      "environment": {
+        "NODE_ENV": "production",
+        "DATABASE_MAX_CONNECTIONS": "1",
+        "HEALTH_CHECK_TIMEOUT": "3000"
+      }
+    },
+    "api/maintenance/**/*.ts": {
+      "runtime": "nodejs20.x",
+      "regions": ["cle1"],
+      "maxDuration": 25,
+      "memory": 1024,
+      "environment": {
+        "NODE_ENV": "production",
+        "DATABASE_MAX_CONNECTIONS": "15",
+        "RATE_LIMIT_MAX": "5",
+        "RATE_LIMIT_WINDOW": "3600000",
+        "MAINTENANCE_TIMEOUT": "20000"
+      }
+    },
+    "api/**/*.ts": {
+      "runtime": "nodejs20.x",
+      "regions": ["cle1", "hnd1"],
+      "maxDuration": 15,
+      "memory": 512,
+      "environment": {
+        "NODE_ENV": "production",
         "DATABASE_MAX_CONNECTIONS": "5",
-        "JWT_EXPIRES_IN": "1h",
-        "SESSION_TIMEOUT": "1800000",
         "RATE_LIMIT_MAX": "100",
-        "RATE_LIMIT_WINDOW": "900000"
+        "RATE_LIMIT_WINDOW": "600000",
+        "DEFAULT_TIMEOUT": "10000"
       }
     }
   },
@@ -59,6 +155,34 @@
         {
           "key": "Feature-Policy",
           "value": "camera 'none'; microphone 'none'; geolocation 'none'; payment 'none'"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "require-corp"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "X-Permitted-Cross-Domain-Policies",
+          "value": "none"
+        },
+        {
+          "key": "X-DNS-Prefetch-Control",
+          "value": "off"
+        },
+        {
+          "key": "X-Download-Options",
+          "value": "noopen"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow, nosnippet, noarchive, notranslate, noimageindex"
         }
       ]
     },
@@ -198,14 +322,24 @@
     "VITE_APP_VERSION": "@vercel-git-commit-sha",
     "VITE_BUILD_TIME": "@now-iso",
     "VITE_DEPLOYMENT_URL": "@vercel-url",
-    "VERCEL_ENV": "@vercel-env"
+    "VERCEL_ENV": "@vercel-env",
+    "DDOS_PROTECTION_ENABLED": "true",
+    "SECURITY_HEADERS_ENABLED": "true",
+    "WAF_MODE": "enabled",
+    "COST_MONITORING_ENABLED": "true",
+    "BANDWIDTH_LIMIT_GB": "95",
+    "EXECUTION_LIMIT_GB_HOURS": "95",
+    "SECURITY_SCAN_ENABLED": "true"
   },
 
   "build": {
     "env": {
       "NODE_OPTIONS": "--max-old-space-size=4096",
       "VITE_NODE_ENV": "production",
-      "CI": "true"
+      "CI": "true",
+      "SECURITY_BUILD_CHECKS": "true",
+      "DEPENDENCY_SECURITY_AUDIT": "true",
+      "BUILD_SECURITY_SCAN": "true"
     }
   },
 

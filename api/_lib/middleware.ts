@@ -30,6 +30,7 @@ import {
   type AppError,
 } from "../../src/lib/error-handler";
 import { env, corsOrigin } from "../../src/lib/env";
+import { checkDDoSProtection, recordRequestCompletion } from "./ddos-protection";
 
 // Initialize rate limiter (requires Upstash Redis)
 const redis =
@@ -307,6 +308,31 @@ export const withRateLimit =
     return async (req, res, context) => {
       const requestLogger = req.requestLogger || logger;
 
+      // Check DDoS protection first (cost-based monitoring)
+      try {
+        const ddosCheck = await checkDDoSProtection();
+        if (!ddosCheck.allowed) {
+          requestLogger.warn("DDoS protection triggered", {
+            reason: ddosCheck.reason,
+            limits: ddosCheck.currentLimits,
+            path: req.url,
+          });
+
+          return res.status(503).json({
+            error: "Service temporarily unavailable due to high load",
+            code: "DDOS_PROTECTION_ACTIVE",
+            reason: ddosCheck.reason,
+            retryAfter: "5m",
+            requestId: req.requestId,
+          });
+        }
+      } catch (ddosError) {
+        // If DDoS check fails, log but don't block (fail open)
+        requestLogger.warn("DDoS protection check failed", {
+          error: ddosError instanceof Error ? ddosError.message : "Unknown error",
+        });
+      }
+
       if (!ratelimit) {
         // If rate limiting is not configured, pass through
         requestLogger.debug("Rate limiting bypassed - not configured");
@@ -344,7 +370,20 @@ export const withRateLimit =
           remaining,
         });
 
-        return handler(req, res, context);
+        // Execute handler and record completion for DDoS monitoring
+        const handlerResponse = await handler(req, res, context);
+
+        // Record successful request completion
+        try {
+          await recordRequestCompletion();
+        } catch (recordError) {
+          // Log but don't affect response if recording fails
+          requestLogger.debug("Request completion recording failed", {
+            error: recordError instanceof Error ? recordError.message : "Unknown error",
+          });
+        }
+
+        return handlerResponse;
       } catch (error) {
         // If rate limiting fails, log but don't block the request
         requestLogger.error("Rate limiting error", error as Error);
