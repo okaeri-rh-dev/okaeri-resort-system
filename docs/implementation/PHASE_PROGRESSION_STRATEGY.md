@@ -40,7 +40,7 @@ gantt
 | **1** | Authentication & Security     | Week 1    | None           | All phases  | Staff access control, multi-tenant isolation |
 | **2** | Dashboard & Real-time Metrics | Week 2    | Phase 1        | Phases 3, 4 | Occupancy tracking, revenue overview         |
 | **3** | Booking & Reservations        | Weeks 3-4 | Phases 1, 2    | Phase 4     | Guest management, room allocation            |
-| **4** | Financial & Compliance        | Weeks 5-6 | Phases 1, 2, 3 | Phase 5     | BIR compliance, receipt generation           |
+| **4** | Internal Financial Tracking   | Weeks 5-6 | Phases 1, 2, 3 | Phase 5     | Internal expense tracking, financial reports |
 | **5** | PWA & Offline Sync            | Week 7    | All phases     | None        | Mobile access, offline capability            |
 
 ### Critical Path Analysis
@@ -65,8 +65,8 @@ const criticalPath = {
   },
   phase4: {
     blockers: ["authentication", "bookingData"],
-    provides: ["financialRecords", "taxCompliance", "receipts"],
-    critical: true, // Legal compliance
+    provides: ["financialRecords", "internalTracking", "receipts"],
+    critical: true, // Internal operations
   },
   phase5: {
     blockers: ["all"],
@@ -253,9 +253,9 @@ interface FinancialStore {
   pendingApprovals: Approval[];
   approvalQueue: QueuedApproval[];
 
-  // BIR compliance
-  taxCalculations: TaxCalculation[];
-  birReports: BIRReport[];
+  // Internal financial tracking
+  internalReports: InternalReport[];
+  statusSummaries: StatusSummary[];
 
   // Optimistic financial updates
   optimisticTransactions: OptimisticTransaction[];
@@ -263,7 +263,7 @@ interface FinancialStore {
 
   // Computed financial metrics
   getMonthlyProfit: (month: Date) => Money;
-  getTaxLiability: (period: TaxPeriod) => Money;
+  getInternalSummary: (period: ReportPeriod) => Summary;
   getReceiptSequence: () => number;
 }
 
@@ -405,7 +405,7 @@ const deploymentStore = create(
 
 - Multi-level staff hierarchy (Owner, Manager, Staff, Housekeeping)
 - Project-based access control (multiple properties)
-- Audit logging for compliance
+- Activity logging for operations
 - Session management for shared devices
 
 **Implementation Focus:**
@@ -506,52 +506,52 @@ interface PhilippinePaymentMethods {
 interface ResortBooking extends Booking {
   paymentMethod: PhilippinePaymentMethod;
   depositStatus: "pending" | "partial" | "full";
-  birRequired: boolean; // Bureau of Internal Revenue receipt
+  internalTracking: boolean; // Internal receipt tracking
   specialRequests: string[];
   localGuest: boolean; // La Union resident discount
 }
 ```
 
-### Phase 4: Financial Tracking with BIR Compliance
+### Phase 4: Internal Financial Tracking
 
 **Business Requirements:**
 
-- BIR-compliant receipt generation
-- VAT calculation and reporting
-- Expense categorization for tax
-- Multi-currency support (USD for foreign guests)
+- Internal expense tracking and categorization
+- Payment status monitoring (not processing)
+- Financial reporting for management
+- Multi-currency support for tracking (PHP/USD)
 - Approval workflows for large expenses
 
-**BIR Compliance Features:**
+**Internal Financial Features:**
 
 ```typescript
-interface BIRCompliance {
-  // Receipt generation
+interface InternalFinancialTracking {
+  // Internal expense tracking
   generateOfficialReceipt: (transaction: Transaction) => Receipt;
   receiptNumberSequence: ReceiptSequence;
 
-  // Tax calculations
-  calculateVAT: (amount: Money) => Money;
-  calculateWithholdingTax: (expense: Expense) => Money;
+  // Internal calculations
+  calculateTotal: (amount: Money) => Money;
+  calculateBalance: (expense: Expense) => Money;
 
   // Reporting
-  generateMonthlyBIRReport: (month: Date) => BIRReport;
-  exportBIRFormat: (report: BIRReport) => File;
+  generateMonthlyReport: (month: Date) => InternalReport;
+  exportInternalFormat: (report: InternalReport) => File;
 
   // Audit trail
   transactionLog: AuditLog[];
   approvalChain: ApprovalRecord[];
 }
 
-// Expense categories for Philippine tax
-enum PhilippineExpenseCategory {
+// Expense categories for internal tracking
+enum InternalExpenseCategory {
   UTILITIES = "utilities", // Electricity, water, internet
   SUPPLIES = "supplies", // Consumables, amenities
   MAINTENANCE = "maintenance", // Repairs, upkeep
   SALARIES = "salaries", // Staff compensation
   MARKETING = "marketing", // Advertising, promotions
   FOOD_BEVERAGE = "food_beverage", // Restaurant supplies
-  TAXES_LICENSES = "taxes_licenses", // Government fees
+  OPERATIONAL_FEES = "operational_fees", // Operational expenses
   PROFESSIONAL_FEES = "professional_fees", // Legal, accounting
 }
 ```
@@ -692,7 +692,7 @@ describe("Phase Integration Tests", () => {
 
       // Verify financial record (Phase 4)
       const receipt = await getReceipt(payment.receiptId);
-      expect(receipt.birCompliant).toBe(true);
+      expect(receipt.internallyTracked).toBe(true);
       expect(receipt.vatAmount).toBeGreaterThan(0);
     });
   });
@@ -856,10 +856,10 @@ describe("Phase 3: Booking System", () => {
 
 ```typescript
 describe("Phase 4: Financial System", () => {
-  describe("BIR Compliance Tests", () => {
-    test("VAT calculation accuracy", async () => {});
+  describe("Internal Tracking Tests", () => {
+    test("Balance calculation accuracy", async () => {});
     test("Receipt number sequencing", async () => {});
-    test("Tax report generation", async () => {});
+    test("Internal report generation", async () => {});
   });
 
   describe("Approval Workflow Tests", () => {
@@ -892,23 +892,23 @@ describe("Phase 5: PWA Deployment", () => {
 
 ### Per-Phase Performance Requirements
 
-| Phase       | Metric             | Target  | Critical |
-| ----------- | ------------------ | ------- | -------- |
-| **Phase 1** | Login Time         | < 2s    | Yes      |
-|             | Session Validation | < 100ms | Yes      |
-|             | Token Refresh      | < 500ms | Yes      |
-| **Phase 2** | Dashboard Load     | < 2s    | Yes      |
-|             | Metric Update      | < 1s    | No       |
-|             | Real-time Lag      | < 500ms | No       |
-| **Phase 3** | Booking Search     | < 1s    | Yes      |
-|             | Availability Check | < 500ms | Yes      |
-|             | Payment Processing | < 3s    | Yes      |
-| **Phase 4** | Report Generation  | < 5s    | No       |
-|             | Receipt Creation   | < 1s    | Yes      |
-|             | Tax Calculation    | < 200ms | Yes      |
-| **Phase 5** | Offline Sync       | < 10s   | No       |
-|             | PWA Install        | < 5s    | No       |
-|             | Cache Update       | < 2s    | No       |
+| Phase       | Metric              | Target  | Critical |
+| ----------- | ------------------- | ------- | -------- |
+| **Phase 1** | Login Time          | < 2s    | Yes      |
+|             | Session Validation  | < 100ms | Yes      |
+|             | Token Refresh       | < 500ms | Yes      |
+| **Phase 2** | Dashboard Load      | < 2s    | Yes      |
+|             | Metric Update       | < 1s    | No       |
+|             | Real-time Lag       | < 500ms | No       |
+| **Phase 3** | Booking Search      | < 1s    | Yes      |
+|             | Availability Check  | < 500ms | Yes      |
+|             | Payment Processing  | < 3s    | Yes      |
+| **Phase 4** | Report Generation   | < 5s    | No       |
+|             | Receipt Creation    | < 1s    | Yes      |
+|             | Balance Calculation | < 200ms | Yes      |
+| **Phase 5** | Offline Sync        | < 10s   | No       |
+|             | PWA Install         | < 5s    | No       |
+|             | Cache Update        | < 2s    | No       |
 
 ### Bundle Size Targets
 
@@ -1007,11 +1007,15 @@ const phaseMonitoring = {
   phase4: {
     metrics: [
       "receipt_generation_time",
-      "tax_calculation_accuracy",
+      "balance_calculation_accuracy",
       "approval_time",
     ],
-    alerts: ["receipt_sequence_gap", "tax_miscalculation", "approval_delay"],
-    dashboards: ["financial_overview", "compliance_status"],
+    alerts: [
+      "receipt_sequence_gap",
+      "balance_miscalculation",
+      "approval_delay",
+    ],
+    dashboards: ["financial_overview", "operational_status"],
   },
   phase5: {
     metrics: ["offline_queue_size", "sync_success_rate", "pwa_install_rate"],

@@ -1,5 +1,13 @@
 # SECURITY-HARDENED Base Service Pattern for Multi-Tenant Data Isolation
 
+> **⚠️ LEGACY COMPLIANCE WARNING**
+>
+> This document has been updated to reflect the current system scope as an
+> internal family business management tool. Previous government regulatory
+> compliance references have been transformed to reflect internal operational
+> requirements. The system handles only staff data and internal operations, not
+> customer personal data or regulatory compliance.
+
 ## CRITICAL SECURITY UPDATE
 
 This document defines a **BULLETPROOF** secure query wrapper system that
@@ -19,8 +27,8 @@ This pattern eliminates:
 - **SQL injection** via project_id manipulation
 - **Privilege escalation** through service factory abuse
 - **Financial data leakage** via runtime manipulation
-- **Guest privacy violations** through access control gaps
-- **Philippine compliance failures** through insufficient audit trails
+- **Staff privacy violations** through access control gaps
+- **Internal operational failures** through insufficient audit trails
 
 ## Architecture Overview
 
@@ -1062,7 +1070,7 @@ export function createSecureTable<T>(
 export const secureBookings = createSecureTable(bookings, "bookings");
 export const securePayments = createSecureTable(payments, "payments");
 export const secureExpenses = createSecureTable(expenses, "expenses");
-export const secureGuests = createSecureTable(guests, "guests");
+export const secureStaff = createSecureTable(staff, "staff");
 ```
 
 ## 2. 🔒 HARDENED Service Factory Pattern
@@ -1073,7 +1081,7 @@ export const secureGuests = createSecureTable(guests, "guests");
 import { BookingService } from "@/services/booking.service";
 import { PaymentService } from "@/services/payment.service";
 import { ExpenseService } from "@/services/expense.service";
-import { GuestService } from "@/services/guest.service";
+import { StaffService } from "@/services/staff.service";
 import { ReportService } from "@/services/report.service";
 import { getUserProjectAccess, validateSession } from "@/lib/auth";
 import { createHash, createHmac, randomBytes } from "crypto";
@@ -1385,7 +1393,7 @@ export class SecurityHardenedServiceFactory {
         booking: new BookingService(securityContext),
         payment: new PaymentService(securityContext),
         expense: new ExpenseService(securityContext),
-        guest: new GuestService(securityContext),
+        staff: new StaffService(securityContext),
         report: new ReportService(securityContext),
 
         // Immutable context metadata
@@ -1433,7 +1441,7 @@ export class SecurityHardenedServiceFactory {
       booking: new BookingService(projectId, systemUserId),
       payment: new PaymentService(projectId, systemUserId),
       expense: new ExpenseService(projectId, systemUserId),
-      guest: new GuestService(projectId, systemUserId),
+      staff: new StaffService(projectId, systemUserId),
       report: new ReportService(projectId, systemUserId),
 
       context: {
@@ -1455,7 +1463,7 @@ export class SecurityHardenedServiceFactory {
       "booking",
       "payment",
       "expense",
-      "guest",
+      "staff",
       "report",
     ];
 
@@ -1498,7 +1506,7 @@ export interface ProjectServices {
   booking: BookingService;
   payment: PaymentService;
   expense: ExpenseService;
-  guest: GuestService;
+  staff: StaffService;
   report: ReportService;
 
   context: ServiceContext;
@@ -1667,7 +1675,7 @@ export const paymentsTable = createSecureTable(payments);
 ```typescript
 /**
  * 🇵🇭 PHILIPPINE BUSINESS COMPLIANCE - Complete audit trail interface
- * Meets BIR requirements for 5+ year retention with tamper-proof logging
+ * Meets internal audit requirements for 5+ year retention with tamper-proof logging
  */
 interface ComplianceAuditEntry {
   // Core identification

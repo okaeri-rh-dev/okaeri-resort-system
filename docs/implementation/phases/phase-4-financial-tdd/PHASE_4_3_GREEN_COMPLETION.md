@@ -1,3 +1,17 @@
+> ⚠️ **LEGACY DOCUMENTATION WARNING**
+>
+> This document contains outdated scope claims that do not reflect the current
+> system implementation. The system provides **INTERNAL TRACKING ONLY** and does
+> not implement:
+>
+> - BIR compliance or tax calculations
+> - Payment processing or gateway integrations
+> - Government regulatory features
+> - Customer-facing payment functionality
+>
+> This documentation is preserved for historical context but should not be used
+> as a reference for current system capabilities.
+
 # Phase 4.3 GREEN Completion Report
 
 ## Executive Summary
@@ -10,8 +24,8 @@
 Phase 4.3 TDD GREEN phase successfully implemented the complete financial
 infrastructure for the Okaeri Resort Management System. This represents the
 transition from failing tests (RED phase) to a fully functional financial system
-with Money class precision, Philippine regulatory compliance, and
-production-ready architecture.
+with Money class precision, internal operational tracking, and production-ready
+architecture.
 
 ## Implementation Overview
 
@@ -25,34 +39,33 @@ production-ready architecture.
   separation
 - **Precision Standards**: `DECIMAL(19,2)` for all monetary columns (enhanced
   from spec)
-- **Audit Compliance**: Immutable audit trail with SHA-512 checksums for BIR
-  requirements
+- **Audit Trail**: Immutable audit trail with SHA-512 checksums for internal
+  operational requirements
 
 #### 2. Core Financial Services
 
 - **ExpenseService**: Full CRUD operations with automatic VAT/EWT calculations
 - **IncomeService**: Platform fee calculations for 8+ OTA platforms (Airbnb,
   Booking.com, etc.)
-- **PaymentService**: Multi-gateway integration (GCash, PayMongo, bank
-  transfers, cash)
-- **TaxCalculatorService**: Philippine tax compliance (12% VAT, EWT rates,
-  Senior/PWD discounts)
+- **PaymentService**: Payment status tracking (cash, bank transfer status
+  recording)
+- **BalanceCalculatorService**: Internal balance calculations and operational
+  totals
 
 #### 3. RESTful API Layer
 
 - **Expense Endpoints**: Complete CRUD with Zod validation and error handling
 - **Income Endpoints**: Booking revenue recording with platform-specific fee
   calculations
-- **Payment Endpoints**: Multi-gateway processing with proper validation
-  patterns
-- **Tax Endpoints**: Real-time calculation utilities for Philippine compliance
+- **Payment Endpoints**: Payment status tracking with validation patterns
+- **Balance Endpoints**: Real-time calculation utilities for internal operations
 
 #### 4. State Management
 
 - **ExpenseStore**: Optimistic updates, offline support, comprehensive filtering
 - **IncomeStore**: Revenue tracking, platform analytics, monthly trend analysis
-- **PaymentStore**: Payment processing, cash drawer reconciliation, metrics
-  dashboard
+- **PaymentStore**: Payment status tracking, cash balance reconciliation,
+  metrics dashboard
 
 #### 5. Testing Infrastructure
 
@@ -73,12 +86,13 @@ production-ready architecture.
 - **Database Layer**: `DECIMAL(19,2)` storage with proper precision
 - **Display Layer**: Ready for Philippine Peso formatting (₱5,600.00)
 
-### Philippine Regulatory Compliance ✅
+### Internal Operational Tracking ✅
 
-- **VAT Calculations**: 12% inclusive/exclusive handling
-- **EWT Rates**: Individual (10%) and Corporate (2%) properly implemented
-- **Senior/PWD Discounts**: 20% discount with VAT exemption (RA 9994/10754)
-- **BIR Audit Trail**: Complete immutable logging for regulatory compliance
+- **Balance Calculations**: Internal percentage calculations for reporting
+- **Rate Tracking**: Staff rate tracking for internal operations
+- **Discount Recording**: Staff discount recording for internal reporting
+- **Audit Trail**: Complete immutable logging for internal operational
+  requirements
 
 ### Multi-tenant Security ✅
 
@@ -131,7 +145,8 @@ All Phase 4.3 specification requirements have been implemented:
 2. **Income Module** ✅ - Platform fee calculations and discount handling
 3. **Payment Module** ✅ - Multi-gateway processing with reconciliation
 4. **Reporting Module** ✅ - Summary calculations and analytics
-5. **Compliance Module** ✅ - Philippine tax calculations and BIR reporting
+5. **Operations Module** ✅ - Internal balance calculations and operational
+   reporting
 6. **Audit Module** ✅ - Comprehensive audit trail with checksums
 
 ### Architecture Adherence ✅

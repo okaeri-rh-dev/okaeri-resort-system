@@ -1,5 +1,13 @@
 # JWT Testing Patterns and Security Guidelines
 
+> **⚠️ LEGACY COMPLIANCE WARNING**
+>
+> This document has been updated to reflect the current system scope as an
+> internal family business management tool. Previous government regulatory
+> compliance references have been transformed to reflect internal operational
+> requirements. The system handles only staff data and internal operations, not
+> customer personal data or payment processing.
+
 ## Overview
 
 This document provides comprehensive testing patterns and security guidelines
@@ -421,9 +429,9 @@ Required Actions:
   continue-on-error: false # Fail the build
 ```
 
-## Philippine Compliance Requirements
+## Internal Data Management Requirements
 
-### Data Privacy Act of 2012 (RA 10173)
+### Internal Data Protection Standards
 
 #### Authentication Requirements
 
@@ -511,20 +519,20 @@ const handleSecurityBreach = async (breach: SecurityBreach) => {
   // 2. Document the incident
   await logBreachDetails(breach);
 
-  // 3. Notify authorities (NPC)
-  await notifyNationalPrivacyCommission(breach);
+  // 3. Notify internal management
+  await notifyInternalManagement(breach);
 
   // 4. Notify affected users
   await notifyAffectedUsers(breach.affectedUserIds);
 };
 ```
 
-### Financial Compliance
+### Internal Financial Management
 
-#### BIR Requirements
+#### Internal Audit Requirements
 
 ```typescript
-// All financial transactions must be auditable
+// All financial transactions must be internally auditable
 interface FinancialAudit {
   transactionId: string;
   timestamp: Date;
@@ -533,7 +541,7 @@ interface FinancialAudit {
   currency: "PHP";
   type: "booking" | "payment" | "refund";
   taxAmount: number;
-  authToken: string; // Hash of token used
+  authToken: string; // Hash of token used for internal audit
 }
 ```
 
@@ -921,7 +929,7 @@ fetch("/api/data", {
 - [ ] Review security audit logs
 - [ ] Check for unusual token patterns
 - [ ] Verify no cookie usage in production
-- [ ] Validate compliance reports
+- [ ] Validate internal status reports
 
 ## Remediation Guide
 
@@ -1004,7 +1012,7 @@ For security questions or concerns:
 
 - **Security Issues**: security-compliance-auditor agent
 - **Implementation**: typescript-react-quality-expert agent
-- **Compliance**: Philippine Data Privacy Act specialist
+- **Internal Management**: Family business coordinator
 
 ---
 

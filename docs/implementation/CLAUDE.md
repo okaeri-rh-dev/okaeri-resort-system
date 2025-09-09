@@ -1,14 +1,30 @@
 # CLAUDE.md
 
+⚠️ **LEGACY WARNING - SCOPE CHANGE ALERT** ⚠️ This file contains OUTDATED
+project scope references. The system has been FUNDAMENTALLY LIMITED to internal
+staff operations only.
+
+**CRITICAL SCOPE LIMITATION:**
+
+- NO customer-facing features
+- NO payment processing capabilities
+- NO external integrations
+- INTERNAL staff operations ONLY
+
+**TRANSFORMATION APPLIED:** All capability references have been scoped down to
+internal tracking and staff operations. Any references to "comprehensive resort
+management" or "customer features" should be understood as INTERNAL STAFF TOOLS
+ONLY.
+
 This file provides guidance to Claude Code (claude.ai/code) when working with
 code in this repository.
 
 ## Project Overview
 
-Okaeri Resort System - A Progressive Web Application (PWA) for comprehensive
-resort management, designed for Okaeri Resort in La Union, Philippines. Built
-with a serverless-first, cost-optimized architecture targeting $1-3/month
-operational costs for family business operations.
+Okaeri Resort System - A Progressive Web Application (PWA) for INTERNAL STAFF
+operations at Okaeri Resort in La Union, Philippines. Built with a
+serverless-first, cost-optimized architecture targeting $1-3/month operational
+costs for basic internal tracking and staff management.
 
 ## Tech Stack
 
@@ -20,7 +36,7 @@ operational costs for family business operations.
 - **Backend**: Vercel Serverless Functions (Node.js 20.x), Neon PostgreSQL,
   Drizzle ORM
 - **Authentication**: JWT with Authorization headers (Bearer tokens), refresh
-  token rotation
+  token rotation (INTERNAL STAFF ACCESS ONLY)
 - **Infrastructure**: Upstash Redis for rate limiting, Edge-optimized deployment
 
 ## Essential Commands
@@ -86,11 +102,11 @@ npm run db:studio              # Open Drizzle Studio GUI
 ### State Management Strategy
 
 ```typescript
-// Zustand stores (src/stores/)
-authStore     // Authentication state, user session
-projectStore  // Multi-project context switching
-bookingStore  // Reservation management with optimistic updates
-expenseStore  // Financial tracking with offline support
+// Zustand stores (src/stores/) - INTERNAL STAFF USE ONLY
+authStore     // Staff authentication state, user session
+projectStore  // Multi-project context switching (INTERNAL)
+bookingStore  // INTERNAL booking status tracking with optimistic updates
+expenseStore  // INTERNAL expense tracking with offline support
 uiStore       // Theme, notifications, loading states
 
 // TanStack Query patterns
@@ -151,18 +167,24 @@ const form = useForm<z.infer<typeof schema>>({
 
 ## Security Compliance
 
-### Philippine Data Privacy Act (DPA)
+### Internal Requirements (STAFF ONLY)
 
-- Implement audit logging for all data access
+⚠️ **SCOPE LIMITED:** No customer-facing features or external compliance
+requirements.
+
+- Implement audit logging for staff data access (INTERNAL ONLY)
 - Ensure data retention policies (configurable per project)
-- Include privacy notices in user-facing features
-- Encrypt sensitive data at rest
+- Basic privacy protection for staff data
+- Encrypt sensitive internal data at rest
 
-### Financial Compliance
+### Internal Financial Tracking (NO COMPLIANCE)
 
-- BIR tax calculation requirements for Philippine operations
-- Receipt generation with proper formatting
-- Audit trail for all financial transactions
+⚠️ **NO LEGAL COMPLIANCE:** System does not handle balance calculations or
+compliance.
+
+- Internal balance calculations for staff reference
+- Basic receipt formatting for internal tracking
+- Audit trail for internal financial transactions (TRACKING ONLY)
 
 ## Performance Optimization
 

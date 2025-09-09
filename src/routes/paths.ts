@@ -11,9 +11,8 @@
  */
 
 export const ROUTES = {
-  // Auth routes (public)
+  // Auth routes (staff only - no customer registration)
   login: "/login",
-  register: "/register",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
 

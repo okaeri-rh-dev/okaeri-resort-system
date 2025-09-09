@@ -1,10 +1,16 @@
-# Phase 4.4 Week 1.1 - Report Engine Architecture Implementation
+# Phase 4.4 Week 1.1 - Report Engine Architecture Implementation - LEGACY DOCUMENT
+
+> ⚠️ **LEGACY DOCUMENT WARNING**: This document contains outdated references to
+> BIR compliance and tax calculations. The system has since been **redefined as
+> INTERNAL-ONLY staff management** per INTERNAL_USE_REQUIREMENTS.md. References
+> to BIR forms, tax calculations, and regulatory compliance are **no longer
+> applicable** to the actual system.
 
 ## Summary
 
 Successfully implemented the Report Engine Architecture for the Okaeri Resort
 System with comprehensive caching, strategy pattern implementation, and export
-capabilities optimized for Philippine resort operations.
+capabilities optimized for **internal resort staff operations**.
 
 ## Completed Deliverables
 

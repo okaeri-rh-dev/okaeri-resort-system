@@ -1,4 +1,16 @@
-# Phase 3: Booking System TDD Implementation
+# Phase 3: Staff Booking Management System TDD Implementation
+
+⚠️ **LEGACY WARNING - SCOPE CONFIRMATION** ⚠️
+This document correctly identifies INTERNAL USE ONLY scope but may contain 
+outdated references to capabilities that exceed internal tracking requirements.
+
+**CONFIRMED SCOPE LIMITATIONS:**
+- ✅ INTERNAL staff booking management only
+- ✅ NO customer-facing features  
+- ❌ NO payment processing (tracking status only)
+- ❌ NO compliance requirements (internal tracking only)
+
+> ⚠️ **INTERNAL USE ONLY** - All bookings are entered and managed by resort staff. No customer self-service.
 
 > **📊 Status**: ✅ Complete | **Components**: 3/3 | **Coverage**: 100%  
 > **📍 Source of Truth**: [Master Verification Index](../MASTER_VERIFICATION_INDEX.md#phase-3-booking-system)
@@ -26,7 +38,16 @@ IMPORTANT: Database Scope Clarification
 
 ## Overview
 
-Phase 3 has successfully implemented a comprehensive booking management system for the Okaeri Resort System. The implementation features a modern React 19 calendar with concurrent features (useTransition, useDeferredValue, Suspense) for adaptive performance, replacing artificial debouncing to provide optimal experiences across all device capabilities.
+Phase 3 has successfully implemented a comprehensive staff-operated booking management system for the Okaeri Resort System. The implementation features a modern React 19 calendar for staff to manage bookings manually entered from phone calls, walk-ins, and partner channels.
+
+**SCOPE CLARIFICATION**:
+- ✅ Staff booking entry interface
+- ✅ Manual booking management (create/edit/cancel)
+- ✅ Room availability tracking
+- ✅ Payment status tracking (NOT processing)
+- ❌ ~~Customer self-booking~~ (NOT APPLICABLE - Internal use only)
+- ❌ ~~Online booking portal~~ (NOT APPLICABLE - Internal use only)
+- ❌ ~~Payment processing~~ (NOT APPLICABLE - Track status only)
 
 ## Phase Objectives
 
@@ -42,7 +63,9 @@ Phase 3 has successfully implemented a comprehensive booking management system f
 - **Architecture**: Tenant isolation via project_id column filtering
 - **Testing**: Comprehensive test coverage (>90%) with mocked DB interactions
 - **Performance**: Sub-100ms query response times
-- **Compliance**: Philippine tax and receipt requirements
+- **~~Compliance~~**: ~~Philippine tax and receipt requirements~~ (NOT APPLICABLE - Internal tracking only)
+
+⚠️ **SCOPE LIMITATION:** All features described below are for INTERNAL staff operations only.
 
 ## Database Architecture
 
@@ -483,41 +506,45 @@ export class AvailabilityService {
 }
 ```
 
-## Philippine Business Requirements
+## Internal Tracking Requirements (NO COMPLIANCE)
 
-### Tax Compliance
+⚠️ **NO LEGAL COMPLIANCE:** System provides internal tracking only.
+
+### Internal Balance Calculations (REFERENCE ONLY)
 
 ```typescript
-interface PhilippineBookingCompliance {
-  // BIR-required fields
-  orNumber: string;        // Official Receipt number
-  tinNumber?: string;      // Tax Identification Number
-  vatAmount: Decimal;      // 12% VAT
-  vatExempt: boolean;
-  seniorPwdDiscount?: {
-    type: 'senior' | 'pwd';
-    idNumber: string;
+interface InternalBookingTracking {
+  // Internal tracking fields (NO LEGAL COMPLIANCE)
+  receiptNumber: string;   // Internal receipt number (NOT official)
+  internalId?: string;     // Internal tracking ID
+  balanceAmount: Decimal;  // Internal balance calculation (NOT tax calculation)
+  balanceExempt: boolean;  // Internal exemption flag
+  internalDiscount?: {
+    type: 'staff' | 'internal';
+    referenceId: string;
     discountAmount: Decimal;
   };
 }
 ```
 
-### Receipt Generation with Tenant Isolation
+### Internal Receipt Formatting with Tenant Isolation (NO COMPLIANCE)
+
+⚠️ **INTERNAL TRACKING ONLY:** Not for legal/official use.
 
 ```sql
--- Receipt tracking table with application-level tenant isolation
-CREATE TABLE booking_receipts (
+-- Internal receipt tracking table (NO LEGAL COMPLIANCE)
+CREATE TABLE internal_booking_receipts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID NOT NULL REFERENCES projects(id),
   booking_id UUID REFERENCES bookings(id),
-  or_number VARCHAR(50) NOT NULL,
+  internal_receipt_number VARCHAR(50) NOT NULL, -- NOT official receipt
   issued_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  vat_amount DECIMAL(12,2),
+  internal_balance_amount DECIMAL(12,2), -- NOT tax amount
   total_amount DECIMAL(12,2),
   payment_method VARCHAR(50),
   metadata JSONB,
   -- Composite unique constraint per project
-  CONSTRAINT unique_or_number_per_project UNIQUE(project_id, or_number)
+  CONSTRAINT unique_internal_receipt_per_project UNIQUE(project_id, internal_receipt_number)
 );
 
 -- Index for performance (project_id as leading column)
@@ -525,16 +552,16 @@ CREATE INDEX idx_booking_receipts_project ON booking_receipts(project_id, issued
 ```
 
 ```typescript
-// Receipt service with application-level project isolation
-export class ReceiptService {
-  async generateReceipt(
+// Internal receipt service (NO COMPLIANCE)
+export class InternalReceiptService {
+  async generateInternalReceipt(
     userId: string,
     projectId: string,
     bookingId: string,
-    receiptData: ReceiptData
-  ): Promise<Receipt> {
-    // Validate project access
-    await this.validateProjectAccess(userId, projectId);
+    receiptData: InternalReceiptData
+  ): Promise<InternalReceipt> {
+    // Validate staff project access
+    await this.validateStaffProjectAccess(userId, projectId);
     
     // Verify booking belongs to project
     const booking = await db
@@ -552,12 +579,12 @@ export class ReceiptService {
       throw new ForbiddenError('Booking not found in project');
     }
     
-    // Generate receipt with project_id
-    return await db.insert(bookingReceipts).values({
+    // Generate internal receipt with project_id (NO LEGAL VALUE)
+    return await db.insert(internalBookingReceipts).values({
       projectId, // CRITICAL: Always set project_id
       bookingId,
-      orNumber: await this.generateORNumber(projectId),
-      vatAmount: receiptData.vatAmount,
+      internalReceiptNumber: await this.generateInternalReceiptNumber(projectId),
+      internalBalanceAmount: receiptData.internalBalanceAmount, // NOT tax amount
       totalAmount: receiptData.totalAmount,
       paymentMethod: receiptData.paymentMethod,
       metadata: receiptData.metadata
@@ -748,7 +775,7 @@ export class AuditService {
 - **Scope creep**: Defer advanced optimizations (RLS, pooling) to post-MVP
 
 ### Business Risks
-- **Compliance violations**: Regular audit of tax calculations
+- **Compliance violations**: Regular audit of balance calculations
 - **Overbooking**: Implement pessimistic locking for critical sections
 - **Data loss**: Regular automated backups with point-in-time recovery
 

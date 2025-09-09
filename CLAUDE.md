@@ -157,11 +157,11 @@ const form = useForm<z.infer<typeof schema>>({
 - Include privacy notices in user-facing features
 - Encrypt sensitive data at rest
 
-### Financial Compliance
+### Internal Financial Tracking
 
-- BIR tax calculation requirements for Philippine operations
+- Internal balance calculation for staff operations
 - Receipt generation with proper formatting
-- Audit trail for all financial transactions
+- Activity logs for all financial transactions
 
 ## Performance Optimization
 

@@ -1,5 +1,11 @@
 # Phase 2.5 Known Issues for Phase 5 Resolution
 
+> **⚠️ LEGACY DOCUMENT WARNING**  
+> This is a legacy implementation document from early project phases. Some
+> capability claims may be outdated or inaccurate. This document is preserved
+> for historical context and should be validated against current system
+> capabilities before use.
+
 ## 🚨 Critical Security Issues (BLOCKS PRODUCTION)
 
 **Discovery Date**: September 6, 2025  
@@ -129,7 +135,7 @@ const handlers = this.subscriptions.get(message.type);
 - Proper JWT refresh token rotation ✅
 - Good multi-tenant architectural design ✅
 - Excellent accessibility implementation ✅
-- Proper BIR tax calculations ✅
+- Proper balance calculation widgets ✅
 
 ## 📊 Security Score Summary
 
@@ -177,7 +183,7 @@ const handlers = this.subscriptions.get(message.type);
 **Phase 4 (Financial Features) - Can Proceed**:
 
 - Financial data encryption will be addressed in Phase 5
-- BIR compliance already implemented correctly
+- Internal requirements already implemented correctly
 - Follow established audit logging patterns
 - Enhanced financial security in Phase 5
 

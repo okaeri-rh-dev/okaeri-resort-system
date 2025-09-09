@@ -1,5 +1,13 @@
 # Security Checklist - Okaeri Resort System
 
+> **⚠️ LEGACY COMPLIANCE WARNING**
+>
+> This document has been updated to reflect the current system scope as an
+> internal family business management tool. Previous references to government
+> regulatory compliance have been transformed to reflect internal operational
+> requirements. The system handles only staff data and internal operations, not
+> customer personal data or payment processing.
+
 ## Daily Security Tasks
 
 - [ ] Monitor application logs for authentication failures
@@ -46,7 +54,7 @@
 
 - [ ] Review data retention compliance
 - [ ] Verify privacy policy is current
-- [ ] Check guest data handling procedures
+- [ ] Check staff data handling procedures
 - [ ] Review financial audit trails
 - [ ] Update incident response plan
 
@@ -60,13 +68,13 @@
 - [ ] Disaster recovery drill
 - [ ] Review insurance coverage for cyber incidents
 
-### Philippine Compliance Audit
+### Internal Operational Requirements Audit
 
-- [ ] Data Privacy Act compliance review
-- [ ] BIR compliance for financial records
-- [ ] Review cross-border data transfers
-- [ ] Update privacy notices
-- [ ] Review consent management processes
+- [ ] Internal data management review
+- [ ] Internal audit requirements for financial records
+- [ ] Review data handling procedures
+- [ ] Update internal policies
+- [ ] Review staff data management processes
 
 ## Incident Response Checklist
 
@@ -229,8 +237,8 @@ HAVING COUNT(*) > 3;
 
 ### Emergency
 
-- **Philippine National Privacy Commission:** (02) 8234-2228
-- **NBI Cybercrime Division:** (02) 8525-4093
+- **Local IT Support:** Contact family tech coordinator
+- **Security Incident Response:** Internal escalation procedures
 
 ## Security Documentation
 

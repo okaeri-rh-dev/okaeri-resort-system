@@ -50,32 +50,8 @@ class MockAuthService {
     };
   }
 
-  async register(data: any): Promise<LoginResponse> {
-    console.warn("[MOCK AUTH] Mock registration - DO NOT USE IN PRODUCTION");
-    await simulateApiDelay(1000, 1500);
-
-    // Check if email already exists
-    if (Object.values(MOCK_USERS).some((u) => u.email === data.email)) {
-      throw new Error("User already exists");
-    }
-
-    // Create new mock user
-    const newUser: User = {
-      id: `dev-user-${Date.now()}`,
-      email: data.email,
-      name: data.name,
-      role: "MEMBER",
-      projects: ["okaeri-resort-001"],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    return {
-      user: newUser,
-      token: generateMockToken(newUser.id),
-      refreshToken: `${generateMockToken(newUser.id)}-refresh`,
-    };
-  }
+  // register() removed - staff accounts created by admin only
+  // Internal system has no self-registration
 
   async logout(): Promise<void> {
     console.warn("[MOCK AUTH] Mock logout");

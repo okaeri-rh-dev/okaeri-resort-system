@@ -20,7 +20,7 @@ function PrivacyPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-4">
-              <Link to={ROUTES.register}>
+              <Link to={ROUTES.login}>
                 <Button variant="ghost" size="icon">
                   <ArrowLeft className="h-4 w-4" />
                 </Button>

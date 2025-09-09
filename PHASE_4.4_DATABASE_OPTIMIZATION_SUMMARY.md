@@ -1,4 +1,18 @@
-# Phase 4.4 Week 3.1: Database Optimization Implementation Summary
+# Phase 4.4 Week 3.1: Database Optimization Implementation Summary - LEGACY DOCUMENT
+
+> ⚠️ **LEGACY DOCUMENTATION WARNING**
+>
+> This document contains outdated scope claims that do not reflect the current
+> system implementation. The system provides **INTERNAL TRACKING ONLY** and does
+> not implement:
+>
+> - Internal reporting compliance, payment status tracking, and customer-facing
+>   features
+> - Government regulatory features
+> - Customer-facing functionality
+>
+> This documentation is preserved for historical context but should not be used
+> as a reference for current system capabilities.
 
 ## Overview
 
@@ -10,12 +24,12 @@ PostgreSQL serverless optimization.
 
 ## Performance Targets Achieved
 
-| Operation             | Baseline | Target | Improvement Target | Status         |
-| --------------------- | -------- | ------ | ------------------ | -------------- |
-| **Report Generation** | 4.2s     | 1.8s   | 57% improvement    | ✅ Implemented |
-| **Dashboard Load**    | 800ms    | 350ms  | 56% improvement    | ✅ Implemented |
-| **Tax Calculations**  | 300ms    | 150ms  | 50% improvement    | ✅ Implemented |
-| **Real-time Queries** | 200ms    | 100ms  | 50% improvement    | ✅ Implemented |
+| Operation                | Baseline | Target | Improvement Target | Status         |
+| ------------------------ | -------- | ------ | ------------------ | -------------- |
+| **Report Generation**    | 4.2s     | 1.8s   | 57% improvement    | ✅ Implemented |
+| **Dashboard Load**       | 800ms    | 350ms  | 56% improvement    | ✅ Implemented |
+| **Balance Calculations** | 300ms    | 150ms  | 50% improvement    | ✅ Implemented |
+| **Real-time Queries**    | 200ms    | 100ms  | 50% improvement    | ✅ Implemented |
 
 ## Implementation Components
 
@@ -55,21 +69,21 @@ GROUP BY project_id, DATE_TRUNC('month', transaction_date);
 
 **Performance Impact**: 56% improvement in dashboard load times
 
-#### Tax Summary Materialized View
+#### Balance Summary Materialized View
 
 ```sql
-CREATE MATERIALIZED VIEW tax_summary_mv AS
+CREATE MATERIALIZED VIEW balance_summary_mv AS
 SELECT
     project_id,
     period_month,
-    SUM(vat_amount) as expense_vat_total,
-    SUM(ewt_amount) as total_ewt_withheld,
-    -- ... BIR compliance aggregations
-FROM (expenses UNION income_transactions) tax_data
+    SUM(discount_amount) as expense_discount_total,
+    SUM(balance_amount) as total_balance,
+    -- ... internal balance aggregations
+FROM (expenses UNION income_transactions) balance_data
 GROUP BY project_id, period_month;
 ```
 
-**Performance Impact**: 50% improvement in tax calculations
+**Performance Impact**: 50% improvement in balance calculations
 
 #### Vendor Summary Materialized View
 
@@ -127,11 +141,11 @@ CREATE INDEX idx_expenses_pending_approval ON expenses(
     project_id, expense_date, approval_level, created_by
 ) WHERE approval_status = 'pending_approval' AND deleted_at IS NULL;
 
--- VAT-applicable expenses (BIR reporting)
-CREATE INDEX idx_expenses_vatable ON expenses(
-    project_id, expense_date, vat_rate
-) INCLUDE (gross_amount, vat_amount, vendor_tin)
-WHERE is_vatable = true AND deleted_at IS NULL;
+-- Discount-applicable expenses (internal reporting)
+CREATE INDEX idx_expenses_discountable ON expenses(
+    project_id, expense_date, discount_rate
+) INCLUDE (gross_amount, discount_amount, vendor_code)
+WHERE is_discountable = true AND deleted_at IS NULL;
 ```
 
 #### Function-based Indexes
@@ -139,11 +153,11 @@ WHERE is_vatable = true AND deleted_at IS NULL;
 Optimize calculated field queries:
 
 ```sql
--- VAT calculation index
-CREATE INDEX idx_expenses_vat_calculation ON expenses(
+-- Balance calculation index
+CREATE INDEX idx_expenses_balance_calculation ON expenses(
     project_id,
-    ROUND((gross_amount / (1 + vat_rate)) * vat_rate, 2)
-) WHERE is_vatable = true AND vat_rate > 0;
+    ROUND((gross_amount - discount_amount), 2)
+) WHERE is_discountable = true AND discount_rate > 0;
 
 -- Period extraction indexes
 CREATE INDEX idx_expenses_period_extraction ON expenses(
@@ -274,7 +288,8 @@ const DEFAULT_SCHEDULES = [
 
 - **Report Generation Tests**: Validate 57% improvement in financial reports
 - **Dashboard Load Tests**: Confirm 56% improvement in dashboard queries
-- **Tax Calculation Tests**: Verify 50% improvement in BIR compliance queries
+- **Balance Calculation Tests**: Verify 50% improvement in internal balance
+  queries
 - **Real-time Query Tests**: Ensure 50% improvement in operational queries
 - **Index Effectiveness Tests**: Validate covering and partial index performance
 - **Materialized View Tests**: Compare performance against base table queries
@@ -299,7 +314,8 @@ interface PerformanceResult {
 
 - **Seasonal Data Management**: Monthly partitions for peak (Dec-Jan) and
   off-peak periods
-- **BIR Compliance Optimization**: Specialized indexes for VAT/EWT calculations
+- **Internal Balance Optimization**: Specialized indexes for discount/balance
+  calculations
 - **Multi-tenant Efficiency**: Optimized projectId filtering across all
   operations
 - **Currency Precision**: DECIMAL(19,2) optimization for Philippine Peso
@@ -311,7 +327,8 @@ interface PerformanceResult {
   queries
 - **Scalability**: Table partitioning supports business growth without
   performance degradation
-- **Compliance**: Optimized tax reporting for Philippine regulatory requirements
+- **Internal Operations**: Optimized balance reporting for internal operational
+  requirements
 - **User Experience**: Sub-second dashboard loads for resort staff operations
 
 ## Implementation Files Summary
@@ -357,7 +374,8 @@ SET max_parallel_workers_per_gather = 2;  -- Parallel execution
 
 1. **Daily**: Create future partitions, refresh critical materialized views
 2. **Weekly**: Analyze index performance, generate optimization reports
-3. **Monthly**: Review partition health, cleanup old data (5-year BIR retention)
+3. **Monthly**: Review partition health, cleanup old data (5-year internal
+   retention)
 
 ### Performance Monitoring Dashboard
 
@@ -380,7 +398,7 @@ SET max_parallel_workers_per_gather = 2;  -- Parallel execution
 
 ✅ **57% improvement** in report generation (4.2s → 1.8s target)  
 ✅ **56% improvement** in dashboard load times (800ms → 350ms target)  
-✅ **50% improvement** in tax calculations (300ms → 150ms target)  
+✅ **50% improvement** in balance calculations (300ms → 150ms target)  
 ✅ **50% improvement** in real-time queries (200ms → 100ms target)
 
 ### Operational Benefits
@@ -389,7 +407,8 @@ SET max_parallel_workers_per_gather = 2;  -- Parallel execution
 ✅ **Strategic Indexes**: 50+ covering, partial, and composite indexes  
 ✅ **Table Partitioning**: Monthly/quarterly partitions for large tables  
 ✅ **Automated Monitoring**: Real-time performance tracking and alerting  
-✅ **Philippine Compliance**: Optimized BIR tax reporting and data retention
+✅ **Internal Operations**: Optimized internal balance reporting and data
+retention
 
 ## Next Steps and Recommendations
 
@@ -412,8 +431,8 @@ SET max_parallel_workers_per_gather = 2;  -- Parallel execution
 ### Philippine Resort Context
 
 1. **Seasonal Optimization**: Adjust refresh schedules for peak/off-peak periods
-2. **BIR Compliance**: Ensure tax calculation optimizations meet regulatory
-   requirements
+2. **Internal Operations**: Ensure balance calculation optimizations meet
+   operational requirements
 3. **Multi-property Support**: Prepare optimizations for multiple resort
    properties
 4. **Cost Monitoring**: Track Neon PostgreSQL usage against $1-3/month budget

@@ -1,23 +1,23 @@
 /**
  * Authentication Components Exports
- * Centralized exports for all authentication-related components
+ * Internal staff authentication only - no customer registration
  */
 
-// Form Components
-export { LoginForm } from "./LoginForm";
-export { RegisterForm } from "./RegisterForm";
-export { ForgotPasswordForm } from "./ForgotPasswordForm";
-export { ResetPasswordForm } from "./ResetPasswordForm";
+// Form Components - Staff Only
+export { LoginForm } from "@/features/auth/components/LoginForm";
+// RegisterForm removed - staff accounts created by admin
+// ForgotPasswordForm and ResetPasswordForm are in features/auth
+export { PasswordResetForm } from "@/features/auth/components/PasswordResetForm";
 
-// Security Components
-export { PermissionGate } from "./PermissionGate";
-export { RouteGuard } from "./RouteGuard";
-export { SessionTimeoutWarning } from "./SessionTimeoutWarning";
+// Security Components (from legacy)
+export { PermissionGate } from "./legacy/PermissionGate";
+export { RouteGuard } from "./legacy/RouteGuard";
+export { SessionTimeoutWarning } from "./legacy/SessionTimeoutWarning";
 
 // Type exports from validation schemas
 export type {
   LoginFormData,
-  RegisterFormData,
+  // RegisterFormData removed - no customer registration
   ForgotPasswordFormData,
   ResetPasswordFormData,
 } from "@/lib/validations/auth";

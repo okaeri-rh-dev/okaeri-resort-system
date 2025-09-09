@@ -1,5 +1,11 @@
 # Phase 2.3 Completion Report: TDD GREEN Phase ✅
 
+> **⚠️ LEGACY DOCUMENT WARNING**  
+> This is a legacy implementation document from early project phases. Some
+> capability claims may be outdated or inaccurate. This document is preserved
+> for historical context and should be validated against current system
+> capabilities before use.
+
 ## 🎯 Executive Summary
 
 Phase 2.3 (TDD GREEN phase) has been **SUCCESSFULLY COMPLETED** on September
@@ -61,7 +67,7 @@ following strict TDD principles without scope creep.
 - Core dashboard metrics state management
 - Optimistic update tracking with rollback capability
 - Offline queue management (100 item limit)
-- Philippine business context (PHP formatting, BIR tax calculations)
+- Philippine business context (PHP formatting, balance calculation widgets)
 - Cross-tab synchronization via BroadcastChannel
 - Project switching with cache isolation
 
@@ -128,7 +134,7 @@ following strict TDD principles without scope creep.
 
 - Philippine peso currency formatting (₱)
 - Payment method breakdown (GCash, Maya, Cash, Bank)
-- BIR tax compliance display (12% VAT, withholding tax)
+- Internal reporting monitoring (12% VAT, withholding tax)
 - Revenue tracking with trend indicators
 - Expense categories with budget alerts
 - Monospace fonts for financial data
@@ -138,7 +144,8 @@ following strict TDD principles without scope creep.
 - Virtualized scrolling for 100+ items performance
 - Real-time activity updates via WebSocket
 - Activity filtering by category, priority, text
-- Philippine business context (BIR filings, DOH inspections)
+- Philippine business context (Internal requirements integration, DOH
+  inspections)
 - Mobile swipe gestures for dismissing
 - Infinite scroll with load more functionality
 
@@ -169,7 +176,7 @@ corrected:
 
 - Philippine peso formatting with ₱ symbol and comma separators
 - GCash/Maya payment method integration and tracking
-- BIR tax compliance with 12% VAT calculations
+- Balance calculation widgets with 12% internal calculations
 - 2% withholding tax and occupancy tax handling
 
 ### Cultural Context ✅
@@ -181,7 +188,7 @@ corrected:
 
 ### Business Operations ✅
 
-- BIR 2551Q quarterly report preparation
+- Internal quarterly report preparation
 - Official receipt generation with proper formatting
 - Holiday occupancy pattern adjustments
 - Multi-language support preparation (English/Filipino)

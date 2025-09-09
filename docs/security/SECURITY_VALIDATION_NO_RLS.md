@@ -1,5 +1,13 @@
 # Security Validation Report: Application-Level Filtering Without RLS
 
+> **⚠️ LEGACY COMPLIANCE WARNING**
+>
+> This document has been updated to reflect the current system scope as an
+> internal family business management tool. Previous government regulatory
+> compliance references have been transformed to reflect internal operational
+> requirements. The system handles only staff data and internal operations, not
+> customer personal data or regulatory compliance.
+
 ## Executive Summary
 
 **Assessment Date**: January 29, 2025  
@@ -54,7 +62,7 @@ const bookings = await db
 #### MEDIUM RISK: Audit Complexity
 
 - **Risk**: Difficult to prove data isolation for compliance
-- **Impact**: Philippine Data Privacy Act compliance challenges
+- **Impact**: Internal data management challenges
 - **Current Status**: Audit logging exists but lacks project_id validation
 
 ### 1.2 Security Analysis of Current Implementation
@@ -274,11 +282,11 @@ test("prevents SQL injection via project_id", async () => {
 
 ---
 
-## 4. Philippine Compliance Without RLS
+## 4. Internal Data Management Without RLS
 
-### 4.1 Data Privacy Act Compliance Assessment
+### 4.1 Internal Data Management Assessment
 
-**Requirement**: Personal data must be protected against unauthorized access
+**Requirement**: Staff data must be protected against unauthorized access
 
 **Current Status**: ⚠️ PARTIALLY COMPLIANT
 
@@ -323,9 +331,9 @@ class ComplianceMonitor {
 }
 ```
 
-### 4.2 BIR Compliance for Financial Records
+### 4.2 Internal Audit Requirements for Financial Records
 
-**Risk**: Financial data mixing between projects could violate tax reporting
+**Risk**: Financial data mixing between projects could violate internal audit
 requirements
 
 **Required Safeguards**:
@@ -339,9 +347,9 @@ class FinancialService {
       throw new Error("Financial records MUST have project_id");
     }
 
-    // Validate against BIR requirements
+    // Validate against internal audit requirements
     if (!payment.or_number || !payment.vat_amount) {
-      throw new Error("Missing required BIR fields");
+      throw new Error("Missing required audit fields");
     }
 
     // Create immutable audit record
@@ -349,7 +357,7 @@ class FinancialService {
       ...payment,
       audit_hash: this.calculateHash(payment),
       compliance_fields: {
-        bir_compliant: true,
+        audit_compliant: true,
         vat_inclusive: true,
         project_isolated: true,
       },
@@ -562,7 +570,7 @@ If proceeding without RLS, the organization must formally accept:
 - Higher operational burden for security
 - Increased risk of developer-induced data breaches
 - More complex compliance auditing
-- Potential liability under Philippine Data Privacy Act
+- Potential internal data management risks
 
 ---
 
@@ -577,7 +585,7 @@ Before production deployment, ensure:
 - [ ] SQL injection tests cover project_id parameter
 - [ ] Runtime monitoring detects cross-project violations
 - [ ] Audit logs capture all data access with project context
-- [ ] Compliance reports can prove data isolation
+- [ ] Internal status reports can prove data isolation
 - [ ] Incident response plan exists for data breaches
 - [ ] Security training completed for all developers
 

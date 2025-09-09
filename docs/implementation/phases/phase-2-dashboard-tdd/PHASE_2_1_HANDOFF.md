@@ -1,5 +1,11 @@
 # Phase 2.1 RED Phase Completion - Handoff Documentation
 
+> ⚠️ **LEGACY DOCUMENTATION WARNING**  
+> This is a legacy implementation document from early project phases. Some
+> capability claims may be outdated or inaccurate. This document is preserved
+> for historical context and should be validated against current system
+> capabilities before use.
+
 ## Executive Summary
 
 Phase 2.1 (Dashboard Test Metrics Display - RED Phase) has been successfully
@@ -33,7 +39,8 @@ RED phase before implementation begins.
 
 - ✅ **BookingMetricsCard**: Occupancy visualization, guest management,
   real-time updates
-- ✅ **FinancialMetricsCard**: PHP currency, BIR tax compliance, payment methods
+- ✅ **FinancialMetricsCard**: PHP currency, internal reporting monitoring,
+  payment status dashboard
 - ✅ **ActivityFeed**: Timeline display, filtering, WebSocket updates, mobile
   gestures
 
@@ -56,9 +63,11 @@ RED phase before implementation begins.
 All tests include comprehensive Philippine business requirements:
 
 - **Currency**: PHP formatting with proper thousand separators (₱1,234,567.89)
-- **Taxes**: BIR VAT (12%), withholding tax, local government taxes
+- **Taxes**: Balance calculation widgets (12%), withholding tax, local
+  government taxes
 - **Payments**: GCash, Maya, bank transfers, cash tracking
-- **Compliance**: BIR filing reminders, DOH inspections, DTI permits
+- **Compliance**: Internal requirements integration, DOH inspections, DTI
+  permits
 - **Seasonality**: Typhoon season impact, Philippine holidays, peak/off-peak
   patterns
 - **Guest Context**: Filipino names, international visitor distribution

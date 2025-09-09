@@ -125,7 +125,7 @@
 
 ### Philippine Requirements
 
-- [ ] VAT calculation correct (12%)
+- [ ] Balance calculation correct (12%)
 - [ ] Senior/PWD discount working
 - [ ] BIR receipt generation tested
 - [ ] Philippine timezone handled

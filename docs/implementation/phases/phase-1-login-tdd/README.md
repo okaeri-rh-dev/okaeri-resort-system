@@ -1,4 +1,6 @@
-# Phase 1: Login System TDD
+# Phase 1: Staff Authentication System TDD
+
+> ⚠️ **INTERNAL USE ONLY** - This system is for resort staff only. No customer authentication features.
 
 > **📊 Status**: 🟢 GREEN Phase Complete | **Tests**: 100% Pass Rate | **Coverage**: Exceeds 95% Target  
 > **📍 Source of Truth**: [Master Verification Index](../MASTER_VERIFICATION_INDEX.md#phase-1-login-system)  
@@ -9,15 +11,23 @@
 
 ## Phase Overview
 
-Phase 1 implements the complete authentication system using strict Test-Driven Development methodology. This includes login, registration, password reset, and session management with comprehensive testing at every step.
+Phase 1 implements the staff-only authentication system using strict Test-Driven Development methodology. This includes staff login, password reset, and session management with comprehensive testing at every step.
+
+**SCOPE CLARIFICATION**: 
+- ✅ Staff login and authentication
+- ✅ Password reset for staff accounts
+- ✅ Role-based access (Admin, Manager, Staff)
+- ❌ ~~Customer registration~~ (NOT APPLICABLE - Internal use only)
+- ❌ ~~Customer login~~ (NOT APPLICABLE - Internal use only)
+- ❌ ~~Public signup~~ (NOT APPLICABLE - Internal use only)
 
 ## Phase Objectives
 
-1. **Test Specification** - Write comprehensive tests for all auth scenarios
-2. **Form Implementation** - Build login/register forms with validation
+1. **Test Specification** - Write comprehensive tests for staff auth scenarios
+2. **Form Implementation** - Build staff login form with validation
 3. **Security Integration** - Connect to existing auth infrastructure
-4. **UI Polish** - Create responsive, accessible auth UI
-5. **Route Protection** - Implement auth guards and redirects
+4. **UI Polish** - Create professional, efficient staff UI
+5. **Route Protection** - Implement auth guards for staff areas
 
 ## Agent Assignments
 
@@ -100,11 +110,11 @@ src/features/auth/
 ├── __tests__/
 │   ├── components/
 │   │   ├── LoginForm.test.tsx
-│   │   ├── RegisterForm.test.tsx
+│   │   ├── ~~RegisterForm.test.tsx~~ (NOT APPLICABLE)
 │   │   └── TwoFactorAuth.test.tsx
 │   ├── pages/
 │   │   ├── LoginPage.test.tsx
-│   │   ├── RegisterPage.test.tsx
+│   │   ├── ~~RegisterPage.test.tsx~~ (NOT APPLICABLE)
 │   │   └── PasswordResetPage.test.tsx
 │   ├── integration/
 │   │   └── auth-flow.test.tsx
@@ -128,7 +138,7 @@ describe('LoginPage', () => {
     it('should render login form with email and password fields')
     it('should render submit button')
     it('should render forgot password link')
-    it('should render register link')
+    // No register link - staff accounts created by admin
     it('should show logo and branding')
   })
   
@@ -209,11 +219,11 @@ describe('Authentication Flow Integration', () => {
    - Connection to auth store
    - Error handling
 
-2. **RegisterPage.tsx**
-   - Registration form
-   - Password strength indicator
-   - Terms acceptance
-   - Email verification flow
+2. **~~RegisterPage.tsx~~** (NOT APPLICABLE)
+   - ~~Registration form~~ - Staff accounts created by admin only
+   - ~~Password strength indicator~~ - Not needed for internal use
+   - ~~Terms acceptance~~ - Staff onboarded internally
+   - ~~Email verification flow~~ - Not needed for internal use
 
 3. **ForgotPasswordPage.tsx**
    - Email input for reset
@@ -241,23 +251,8 @@ export const loginSchema = z.object({
   remember: z.boolean().optional()
 })
 
-export const registerSchema = z.object({
-  name: z.string()
-    .min(2, 'Name must be at least 2 characters'),
-  email: z.string()
-    .email('Invalid email address')
-    .toLowerCase(),
-  password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain uppercase letter')
-    .regex(/[0-9]/, 'Password must contain number'),
-  confirmPassword: z.string(),
-  terms: z.boolean()
-    .refine(val => val === true, 'You must accept terms')
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword']
-})
+// registerSchema NOT NEEDED - Staff accounts created by admin only
+// No self-registration for internal system
 ```
 
 ## UI/UX Requirements (REFACTOR Phase)

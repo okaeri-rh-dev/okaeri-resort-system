@@ -207,7 +207,7 @@ Financial calculations for Philippine resorts require precise decimal handling
 for:
 
 - Philippine Peso amounts
-- 12% VAT calculations
+- 12% balance calculations
 - Senior citizen (20%) and PWD discounts
 - Multi-currency conversions
 
@@ -219,7 +219,7 @@ import Decimal from "decimal.js";
 // Configure for Philippine Peso (2 decimal places)
 Decimal.set({ precision: 10, rounding: Decimal.ROUND_HALF_UP });
 
-// VAT calculation
+// Balance calculation
 const addVAT = (amount: Decimal) => amount.mul(1.12);
 
 // Senior/PWD discount

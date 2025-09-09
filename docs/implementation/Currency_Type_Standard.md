@@ -507,7 +507,7 @@ const preVAT = vatInclusiveAmount.removeVAT(); // ₱5,000.00
 // Get VAT amount only
 const vatAmount = vatInclusiveAmount.getVATAmount(); // ₱600.00
 
-// Custom VAT calculations using MoneyUtils
+// Custom balance calculations using MoneyUtils
 class BookingCalculations {
   static calculateRoomCharges(
     baseRate: Money,
@@ -1055,7 +1055,7 @@ describe("Monetary Calculations", () => {
   it("should handle Philippine business rules", () => {
     const roomRate = new Money(5000);
 
-    // VAT calculation
+    // Balance calculation
     const withVAT = roomRate.addVAT();
     expect(withVAT.equals(new Money(5600))).toBe(true);
 

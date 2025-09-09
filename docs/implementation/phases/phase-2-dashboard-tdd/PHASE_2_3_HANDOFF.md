@@ -1,5 +1,11 @@
 # Phase 2.3 Implementation Handoff: GREEN Phase
 
+> **⚠️ LEGACY DOCUMENT WARNING**  
+> This is a legacy implementation document from early project phases. Some
+> capability claims may be outdated or inaccurate. This document is preserved
+> for historical context and should be validated against current system
+> capabilities before use.
+
 ## 🎯 Executive Summary
 
 Phase 2.2 has successfully created **201 comprehensive test files** for the
@@ -143,7 +149,7 @@ phase implementation in Phase 2.3.
 
 - Typhoon mode activation
 - GCash payment tracking
-- BIR compliance data
+- Internal requirements data
 - La Union timezone handling
 
 #### Performance Optimization (15 tests)
@@ -333,9 +339,9 @@ export const useRealtimeStore = create<RealtimeStore>()(
 - Offline payment queue
 - Reconciliation on reconnect
 
-#### 3. BIR Compliance
+#### 3. Internal Requirements Integration
 
-- Real-time tax calculation updates
+- Real-time balance calculation updates
 - Audit log synchronization
 - Receipt generation queue
 - Compliance status monitoring
@@ -362,7 +368,7 @@ export const useRealtimeStore = create<RealtimeStore>()(
 
 - [ ] Add typhoon mode detection
 - [ ] Implement GCash status updates
-- [ ] Create BIR compliance monitors
+- [ ] Create internal requirements monitors
 - [ ] Fix all 201 failing tests
 - [ ] Verify performance benchmarks
 

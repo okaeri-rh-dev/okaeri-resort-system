@@ -339,9 +339,9 @@ export type ApiErrorResponse = z.infer<typeof ApiErrorResponseSchema>;
  * Schema registry for quick access to validation schemas by endpoint pattern
  */
 export const API_SCHEMAS = {
-  // Auth endpoints
+  // Auth endpoints - Staff only
   "POST /auth/login": LoginResponseSchema,
-  "POST /auth/register": LoginResponseSchema,
+  // "POST /auth/register" removed - staff accounts created by admin
   "POST /auth/refresh": RefreshTokenResponseSchema,
   "GET /auth/me": UserSchema,
   "PATCH /auth/profile": UserSchema,

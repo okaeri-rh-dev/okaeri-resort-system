@@ -169,9 +169,7 @@ export const LazyRoute = {
     preload: true,
   }),
   Login: createLazyComponent(() => import("../routes/_auth/login"), { feature: "Login" }),
-  Register: createLazyComponent(() => import("../routes/_auth/register"), {
-    feature: "Registration",
-  }),
+  // Register: Removed - internal-only system has no customer registration
   ForgotPassword: createLazyComponent(() => import("../routes/_auth/forgot-password"), {
     feature: "Password Reset",
   }),

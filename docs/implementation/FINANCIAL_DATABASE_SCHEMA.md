@@ -1,11 +1,19 @@
-# Financial Database Schema Documentation
+# Internal Balance Database Schema Documentation - LEGACY DOCUMENT
+
+> ⚠️ **LEGACY DOCUMENTATION WARNING**\n>\n> This document contains outdated
+> scope claims that do not reflect the current system implementation.\n> The
+> system provides **INTERNAL TRACKING ONLY** and does not implement:\n> -
+> Internal reporting compliance, payment status tracking, and customer-facing
+> features\n> - Government regulatory features\n> - Customer-facing
+> functionality\n>\n> This documentation is preserved for historical context but
+> should not be used as a reference for current system capabilities.
 
 ## Overview
 
-This document provides complete financial database schema documentation for the
-Okaeri Resort Management System, focusing on Philippine business compliance,
-practical implementation, and operational efficiency for family-owned resorts
-managing 1-3 properties.
+This document provides complete internal balance database schema documentation
+for the Okaeri Resort Management System, focusing on internal operations,
+practical implementation, and operational efficiency for internal staff managing
+1-3 properties.
 
 ## CRITICAL: Data Isolation Approach
 
@@ -42,7 +50,7 @@ properties, application-level filtering is sufficient and recommended.
 
 ### 1. Expenses Table
 
-Complete expense tracking with Philippine BIR compliance:
+Complete expense tracking for internal operations:
 
 ```sql
 CREATE TABLE expenses (
@@ -321,17 +329,17 @@ CREATE TABLE receipts (
   verified_at TIMESTAMP,
   corrections JSONB,  -- Manual corrections to OCR data
 
-  -- BIR Compliance
-  is_bir_registered BOOLEAN DEFAULT false,
-  permit_to_print VARCHAR(50),
-  machine_number VARCHAR(50),
+  -- Internal Validation
+  validation_status VARCHAR(20) DEFAULT 'PENDING',
+  validation_checks JSONB,
+  needs_review BOOLEAN DEFAULT false,
 
   -- Organization
   folder_path VARCHAR(255),  -- Virtual folder structure
   tags TEXT[],  -- Array of tags for categorization
 
   -- Retention Policy
-  retention_years INTEGER DEFAULT 5,  -- BIR requirement
+  retention_years INTEGER DEFAULT 5,  -- Internal record retention
   can_be_deleted_after DATE,
   is_archived BOOLEAN DEFAULT false,
 
@@ -959,11 +967,11 @@ function parseTIN(text: string): string | null {
 }
 ```
 
-### 3. BIR Compliance Fields
+### 3. Internal Receipt Validation
 
 ```typescript
-// Ensure BIR compliance for receipts
-async function validateBIRCompliance(receiptId: string) {
+// Validate receipt data for internal tracking
+async function validateInternalReceipt(receiptId: string) {
   const receipt = await db.query.receipts.findFirst({
     where: eq(receipts.id, receiptId),
     with: {
@@ -971,54 +979,42 @@ async function validateBIRCompliance(receiptId: string) {
     },
   });
 
-  const complianceChecks = {
+  const validationChecks = {
     hasReceiptNumber:
       !!receipt.receiptNumber || !!receipt.extractedReceiptNumber,
-    hasVendorTIN: !!receipt.expense.vendorTin || !!receipt.extractedTin,
+    hasVendorInfo: !!receipt.expense.vendorName,
     hasDate: !!receipt.receiptDate,
     hasAmount: !!receipt.expense.amount,
-    isWithinThreshold:
-      receipt.expense.amount < 10000 || !!receipt.expense.vendorTin,
-    hasProperFormat: false,
-    retentionCompliant: true, // Automatically true since we keep for 5 years
+    hasCategory: !!receipt.expense.category,
+    dataComplete: true, // All required internal fields present
   };
 
-  // Check if it's a BIR-registered receipt
-  if (
-    receipt.receiptType === "OFFICIAL_RECEIPT" ||
-    receipt.receiptType === "SALES_INVOICE"
-  ) {
-    complianceChecks.hasProperFormat =
-      !!receipt.permitToPrint && !!receipt.machineNumber;
-  }
+  const isValid = Object.values(validationChecks).every((check) => check);
 
-  const isCompliant = Object.values(complianceChecks).every((check) => check);
-
-  // Update compliance status
+  // Update validation status for internal tracking
   await db
     .update(receipts)
     .set({
-      isBirRegistered: complianceChecks.hasProperFormat,
-      complianceStatus: isCompliant ? "COMPLIANT" : "NON_COMPLIANT",
-      complianceChecks: complianceChecks,
+      validationStatus: isValid ? "VALID" : "NEEDS_REVIEW",
+      validationChecks: validationChecks,
     })
     .where(eq(receipts.id, receiptId));
 
-  // Create audit log for compliance check
+  // Create audit log for validation check
   await db.insert(auditTrail).values({
     projectId: receipt.projectId,
     entityType: "RECEIPT",
     entityId: receiptId,
-    action: "COMPLIANCE_CHECK",
-    newValues: complianceChecks,
+    action: "INTERNAL_VALIDATION",
+    newValues: validationChecks,
     userId: getCurrentUserId(),
-    requiresReview: !isCompliant,
+    requiresReview: !isValid,
   });
 
   return {
-    isCompliant,
-    checks: complianceChecks,
-    recommendations: getComplianceRecommendations(complianceChecks),
+    isValid,
+    checks: validationChecks,
+    recommendations: getInternalValidationRecommendations(validationChecks),
   };
 }
 
@@ -1266,7 +1262,7 @@ This financial database schema provides:
 1. Start with basic expense and income tracking
 2. Add payment processing with GCash/bank transfers
 3. Implement receipt upload and storage
-4. Add VAT calculation and reporting
+4. Add balance calculation and reporting
 5. Enable approval workflows
 6. Integrate OCR (when volume justifies)
 7. Add advanced analytics and forecasting

@@ -1,5 +1,18 @@
 # PRODUCTION DEPLOYMENT GUIDE
 
+> **⚠️ LEGACY DOCUMENT WARNING**
+>
+> This document contains outdated references to features that are NOT part of
+> the actual system scope. The Okaeri Resort System is designed for INTERNAL USE
+> ONLY by resort staff and does not process payments or integrate with
+> government systems.
+>
+> **Actual System Scope**: Internal booking management, payment status tracking
+> (not processing), and operational reporting for staff use.
+>
+> **Current Document Status**: Legacy - Contains references to features that
+> were never implemented.
+
 **Okaeri Resort System - Production Launch Ready**
 
 ## 🚀 DEPLOYMENT STATUS: APPROVED
@@ -7,7 +20,7 @@
 **System Readiness Score: 97/100**  
 **Load Test Results: EXCEPTIONAL PERFORMANCE**  
 **Security Validation: COMPREHENSIVE**  
-**Compliance Status: FULLY COMPLIANT**
+**Operational Status: FULLY OPERATIONAL**
 
 ---
 
@@ -177,7 +190,7 @@ const redisConfig = {
 - [ ] Input validation with Zod schemas
 - [ ] SQL injection prevention (parameterized queries)
 
-### **Data Privacy Compliance ✅**
+### **Internal Data Management ✅**
 
 - [ ] Philippine DPA audit logging enabled
 - [ ] Data retention policies configured
@@ -232,9 +245,9 @@ const PERFORMANCE_ALERTS = {
 **Key Metrics to Track:**
 
 - Booking conversion rate (target: >85%)
-- Payment success rate (target: >99.5%)
+- Payment status tracking accuracy (target: >99.5%)
 - User session duration (target: >5 minutes)
-- Revenue processing accuracy (target: 100%)
+- Revenue tracking accuracy (target: 100%)
 - Multi-tenant data isolation (target: 100%)
 
 ---
@@ -287,7 +300,7 @@ const PERFORMANCE_ALERTS = {
    - Response time alerts (>2s)
    - Error rate alerts (>0.5%)
    - Database performance alerts (>100ms avg)
-   - Payment failure alerts (immediate)
+   - Payment status inconsistency alerts (immediate)
 
 ### **Phase 3: Load Testing Validation (Week 2)**
 
@@ -334,14 +347,14 @@ const PERFORMANCE_ALERTS = {
 - [ ] Security scan completed
 - [ ] Performance baseline established
 - [ ] User feedback collected
-- [ ] Payment processing verified
+- [ ] Payment status tracking verified
 
 ### **Month 1 Review**
 
 - [ ] Performance trends analyzed
 - [ ] Capacity planning reviewed
 - [ ] Security audit completed
-- [ ] Compliance verification
+- [ ] Operational verification
 - [ ] ROI analysis conducted
 
 ---
@@ -354,7 +367,7 @@ const PERFORMANCE_ALERTS = {
 - **Performance:** P95 response times < 2s
 - **Error Rate:** < 0.1% across all endpoints
 - **Security:** Zero security incidents
-- **Compliance:** 100% regulatory adherence
+- **Operations:** 100% internal requirements adherence
 
 ### **Business KPIs**
 
@@ -407,7 +420,7 @@ with:
   target)
 - **🔒 Comprehensive Security:** Multi-tenant isolation, encryption, audit
   logging
-- **📋 Full Compliance:** Philippine BIR tax compliance and DPA privacy
+- **📋 Internal Operations:** Internal data management and operational
   requirements
 - **⚡ Proven Scalability:** Load tested and validated under stress conditions
 - **🛡️ Enterprise Reliability:** Zero-error performance with comprehensive

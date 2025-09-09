@@ -1,5 +1,18 @@
 # Phase 1.1 Completion Report: Authentication TDD (RED Phase)
 
+> ⚠️ **LEGACY DOCUMENTATION WARNING**
+>
+> This document contains outdated scope claims that do not reflect the current
+> system implementation. The system provides **INTERNAL TRACKING ONLY** and does
+> not implement:
+>
+> - Internal reporting or compliance features
+> - Government regulatory features
+> - Customer-facing functionality
+>
+> This documentation is preserved for historical context but should not be used
+> as a reference for current system capabilities.
+
 > **Status**: ✅ COMPLETED  
 > **Date**: January 1, 2025  
 > **Duration**: 1 day  
@@ -103,7 +116,7 @@ foundation for Phase 1.2 (GREEN phase) implementation.
 #### ✅ Philippine Context
 
 - Phone number formats (+63)
-- Business registration (DTI, SEC, BIR)
+- Business registration (DTI, SEC, internal reporting)
 - Local email providers
 - GCash/Maya integration readiness
 - Filipino name support
@@ -205,7 +218,7 @@ Coverage:    Structure ready for 95% target
    - Rate limiting implementation
    - Session management
    - Audit logging
-   - Philippine DPA compliance
+   - Internal data management compliance
 
 ### For resort-ui-designer:
 

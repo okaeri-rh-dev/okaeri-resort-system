@@ -279,13 +279,13 @@ src/
 │       │   │   ├── ExpenseForm.test.tsx
 │       │   │   ├── ExpenseList.test.tsx
 │       │   │   ├── RevenueReport.test.tsx
-│       │   │   ├── TaxCalculator.test.tsx
+│       │   │   ├── BalanceCalculator.test.tsx
 │       │   │   ├── ReceiptGenerator.test.tsx
 │       │   │   └── ApprovalChain.test.tsx
 │       │   ├── hooks/
 │       │   │   ├── useExpenseMutation.test.ts
 │       │   │   ├── useFinancialReports.test.ts
-│       │   │   ├── useTaxCalculation.test.ts
+│       │   │   ├── useBalanceCalculation.test.ts
 │       │   │   └── useApprovalWorkflow.test.ts
 │       │   ├── stores/
 │       │   │   ├── expenseStore.test.ts
@@ -294,19 +294,19 @@ src/
 │       │       ├── expenses.test.ts
 │       │       ├── revenue.test.ts
 │       │       ├── reports.test.ts
-│       │       ├── tax.test.ts
+│       │       ├── balance.test.ts
 │       │       └── approvals.test.ts
 │       ├── components/
 │       │   ├── ExpenseForm.tsx
 │       │   ├── ExpenseList.tsx
 │       │   ├── RevenueReport.tsx
-│       │   ├── TaxCalculator.tsx
+│       │   ├── BalanceCalculator.tsx
 │       │   ├── ReceiptGenerator.tsx
 │       │   └── ApprovalChain.tsx
 │       ├── hooks/
 │       │   ├── useExpenseMutation.ts
 │       │   ├── useFinancialReports.ts
-│       │   ├── useTaxCalculation.ts
+│       │   ├── useBalanceCalculation.ts
 │       │   └── useApprovalWorkflow.ts
 │       ├── stores/
 │       │   ├── expenseStore.ts
@@ -314,7 +314,7 @@ src/
 │       └── types/
 │           ├── expense.types.ts
 │           ├── revenue.types.ts
-│           └── tax.types.ts
+│           └── balance.types.ts
 ├── api/
 │   └── financial/
 │       ├── expenses/
@@ -327,7 +327,7 @@ src/
 │       ├── reports/
 │       │   ├── generate.ts
 │       │   └── export.ts
-│       └── tax/
+│       └── balance/
 │           └── calculate.ts
 └── routes/
     └── financial/
@@ -349,7 +349,7 @@ src/
 
 #### TDD Integration
 
-1. Tests for BIR tax compliance calculations
+1. Tests for internal balance calculations
 2. Receipt generation format tests
 3. Approval workflow state machine tests
 4. Financial report accuracy tests
@@ -448,7 +448,7 @@ npm run scaffold:phase5:deployment
 # Feature-specific scaffolding
 npm run scaffold:auth:mfa          # Multi-factor authentication
 npm run scaffold:booking:channels  # Channel manager integration
-npm run scaffold:financial:bir     # BIR compliance features
+npm run scaffold:financial:internal # Internal tracking features
 ```
 
 ### Custom Scaffold Creation

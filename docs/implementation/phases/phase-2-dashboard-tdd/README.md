@@ -1,4 +1,6 @@
-# Phase 2: Dashboard TDD Implementation
+# Phase 2: Staff Operations Dashboard TDD Implementation
+
+> ⚠️ **INTERNAL USE ONLY** - Dashboard designed for resort staff operational efficiency. No customer-facing metrics.
 
 > **📊 Status**: ⏳ Pending | **Tests**: 0/200 | **Coverage**: 0%  
 > **📍 Source of Truth**: [Master Verification Index](../MASTER_VERIFICATION_INDEX.md#phase-2-dashboard)  
@@ -6,7 +8,17 @@
 
 ## Overview
 
-Phase 2 focuses on implementing a comprehensive dashboard system using Test-Driven Development (TDD) methodology. The dashboard provides real-time metrics, financial insights, and quick actions for resort management staff. This implementation leverages React 19's latest features, Zustand for state management, and TanStack Query for efficient data fetching and caching.
+Phase 2 focuses on implementing a staff operations dashboard using Test-Driven Development (TDD) methodology. The dashboard provides real-time operational metrics, occupancy tracking, and quick actions for resort staff to manage daily operations efficiently.
+
+**SCOPE CLARIFICATION**:
+- ✅ Occupancy metrics and room status overview
+- ✅ Today's check-ins/check-outs
+- ✅ Payment status summary (tracking only)
+- ✅ Staff task assignments
+- ✅ Internal operational alerts
+- ❌ ~~Customer analytics~~ (NOT APPLICABLE - Internal use only)
+- ❌ ~~Marketing metrics~~ (NOT APPLICABLE - No customer features)
+- ❌ ~~Revenue processing~~ (NOT APPLICABLE - Tracking only)
 
 ## Phase Objectives
 

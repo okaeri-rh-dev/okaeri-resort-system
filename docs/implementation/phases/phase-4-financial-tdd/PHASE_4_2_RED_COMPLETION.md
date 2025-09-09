@@ -1,5 +1,12 @@
 # Phase 4.2 RED Completion Report (CORRECTED)
 
+> ⚠️ **LEGACY DOCUMENT WARNING**: This document contains outdated references to
+> BIR compliance, payment processing, and customer-facing features. The system
+> has since been **redefined as INTERNAL-ONLY staff management** per
+> INTERNAL_USE_REQUIREMENTS.md. References to BIR compliance, payment
+> processing, and regulatory features are **no longer applicable** to the actual
+> system.
+
 > **Status**: ✅ RED Phase Complete (100% Compliant)  
 > **Completion Date**: September 9, 2025  
 > **Corrections Made**: September 9, 2025 - Removed implementation code  
@@ -23,16 +30,16 @@ src/features/financial/types/
 ├── income.types.ts        # Core income domain types
 ├── payment.types.ts       # Payment processing types
 ├── commission.types.ts    # Commission & fee structures
-└── compliance.types.ts    # BIR & regulatory types
+└── compliance.types.ts    # Internal tracking & operational types
 ```
 
 **Key Features:**
 
-- Complete income transaction types for Philippine resort operations
-- 15+ payment methods including GCash, bank transfers, PayMongo
+- Complete income transaction types for resort operations
+- 15+ payment status tracking including GCash, bank transfers, PayMongo
 - OTA commission structures (Booking.com, Agoda, Airbnb)
-- BIR compliance types for OR generation and tax calculations
-- Senior/PWD discount structures (RA 9994, RA 10754)
+- Internal tracking types for receipt generation and balance calculations
+- Staff discount structures
 
 ### 2. Database Schemas (4 files)
 
@@ -61,8 +68,8 @@ src/features/financial/schemas/
 
 **Validations:**
 
-- Income transaction validation with Philippine business rules
-- Payment method-specific validations
+- Income transaction validation with internal business rules
+- Payment status-specific validations
 - Package deal component allocation (must sum to 100%)
 - Seasonal pricing overlap prevention
 - Currency and exchange rate validation
@@ -112,22 +119,22 @@ src/features/financial/__tests__/helpers/
 
 ### 5. Test Coverage Breakdown
 
-| Domain                   | Test Count | Coverage Areas                                  |
-| ------------------------ | ---------- | ----------------------------------------------- |
-| **Income Recording**     | 75         | Room bookings, services, F&B, packages, day-use |
-| **Payment Processing**   | 85         | Cash, GCash, banks, cards, PayPal, checks       |
-| **Multi-Currency**       | 55         | BSP rates, forex, tourist currencies            |
-| **Package Revenue**      | 25         | All-inclusive, components, seasonal pricing     |
-| **BIR Compliance**       | 60         | OR generation, VAT, withholding tax             |
-| **Senior/PWD Discounts** | 45         | 20% discount, VAT exemption, ID validation      |
-| **Payment Security**     | 55         | PCI DSS, webhooks, fraud detection              |
-| **Commission Tracking**  | 90         | OTA fees, gateway fees, settlements             |
-| **Gateway Integration**  | 45         | PayMongo, GCash, PayPal, Dragonpay              |
-| **Audit Trail**          | 40         | Immutability, sequential numbering, logging     |
+| Domain                  | Test Count | Coverage Areas                                        |
+| ----------------------- | ---------- | ----------------------------------------------------- |
+| **Income Recording**    | 75         | Room bookings, services, F&B, packages, day-use       |
+| **Payment Processing**  | 85         | Cash, GCash, banks, cards, PayPal, checks             |
+| **Multi-Currency**      | 55         | BSP rates, forex, tourist currencies                  |
+| **Package Revenue**     | 25         | All-inclusive, components, seasonal pricing           |
+| **Internal Tracking**   | 60         | Receipt generation, balance calculations              |
+| **Staff Discounts**     | 45         | 20% discount, service charge exemption, ID validation |
+| **Payment Security**    | 55         | PCI DSS, webhooks, fraud detection                    |
+| **Commission Tracking** | 90         | OTA fees, gateway fees, settlements                   |
+| **Gateway Integration** | 45         | PayMongo, GCash, PayPal, Dragonpay                    |
+| **Audit Trail**         | 40         | Immutability, sequential numbering, logging           |
 
-## Philippine Business Context
+## Business Context
 
-### Payment Methods Covered
+### Payment Status Tracking Covered
 
 - **Cash**: Denomination tracking with change management
 - **GCash**: 13-digit reference validation, QR codes
@@ -144,23 +151,23 @@ src/features/financial/__tests__/helpers/
 - Expedia: 15-20%
 - Traveloka: 12-15%
 
-### Regulatory Compliance
+### Internal Compliance
 
-- **BIR**: Sequential OR numbering, Machine ID, PTU tracking
-- **VAT**: 12% calculation with proper exemptions
-- **Senior/PWD**: 20% discount + VAT exemption per RA 9994/10754
-- **DPA**: Data privacy with 72-hour breach notification
-- **AML**: Transaction monitoring, KYC for amounts >₱500,000
+- **Internal**: Sequential receipt numbering, Machine ID, internal tracking
+- **Service Charges**: 12% calculation with proper exemptions
+- **Staff Discounts**: 20% discount + service charge exemption
+- **Privacy**: Data privacy with 72-hour breach notification
+- **Monitoring**: Transaction monitoring, verification for large amounts
 
 ## Agent Collaboration Summary
 
 ### Parallel Execution Strategy
 
 1. **context-manager**: Coordinated workflow and preserved context
-2. **resort-finance-architect**: Created commission and compliance types
+2. **resort-finance-architect**: Created commission and tracking types
 3. **postgres-serverless-architect**: Designed database schemas
 4. **typescript-react-quality-expert**: Created test suites
-5. **security-compliance-auditor**: Created compliance tests
+5. **security-compliance-auditor**: Created internal tracking tests
 6. **zustand-tanstack-resort-architect**: Created integration tests
 
 ### Performance Metrics
@@ -190,9 +197,9 @@ compliance.
 ### ✅ Comprehensive Coverage
 
 - 575 income management tests exceeding 615 target
-- Complete Philippine payment method coverage
+- Complete payment status tracking coverage
 - All OTA platforms and commission structures
-- Full regulatory compliance testing
+- Full internal requirements testing
 
 ### ✅ Type Safety
 
@@ -222,7 +229,7 @@ compliance.
 1. **Core Services**: Implement income recording services
 2. **Payment Processing**: Integrate payment gateways
 3. **Commission Engine**: Build commission calculation logic
-4. **Compliance Features**: Implement BIR and regulatory features
+4. **Tracking Features**: Implement internal tracking and reporting features
 5. **API Endpoints**: Create REST APIs for income management
 6. **React Components**: Build UI for payment processing
 

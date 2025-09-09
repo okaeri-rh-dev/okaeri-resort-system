@@ -1,4 +1,11 @@
-# Phase-Specific NPM Scripts Documentation
+# Phase-Specific NPM Scripts Documentation - LEGACY DOCUMENT
+
+> ⚠️ **LEGACY DOCUMENT WARNING**: This document contains outdated references to
+> BIR compliance testing and tax calculation verification. The system has since
+> been **redefined as INTERNAL-ONLY staff management** per
+> INTERNAL_USE_REQUIREMENTS.md. References to BIR compliance, tax calculations,
+> and payment processing scripts are **no longer applicable** to the actual
+> system.
 
 > **Purpose**: Complete documentation for TDD workflow scripts across all
 > implementation phases **Status**: Documentation-only (scripts to be added to
@@ -71,13 +78,13 @@ RED-GREEN-REFACTOR methodology systematically through each implementation phase.
 
 ## Phase Coverage Requirements
 
-| Phase       | Feature Area           | Minimum Coverage | Critical Components                                        |
-| ----------- | ---------------------- | ---------------- | ---------------------------------------------------------- |
-| **Phase 1** | Authentication & Login | 95%              | JWT handling, session management, form validation          |
-| **Phase 2** | Dashboard & Navigation | 90%              | Metrics display, real-time updates, role-based routing     |
-| **Phase 3** | Booking Management     | 95%              | Availability logic, conflict detection, payment processing |
-| **Phase 4** | Financial & Reporting  | 95%              | Tax calculations, receipt generation, BIR compliance       |
-| **Phase 5** | Deployment & E2E       | 90%              | User journeys, performance testing, security verification  |
+| Phase       | Feature Area           | Minimum Coverage | Critical Components                                         |
+| ----------- | ---------------------- | ---------------- | ----------------------------------------------------------- |
+| **Phase 1** | Authentication & Login | 95%              | JWT handling, session management, form validation           |
+| **Phase 2** | Dashboard & Navigation | 90%              | Metrics display, real-time updates, role-based routing      |
+| **Phase 3** | Booking Management     | 95%              | Availability logic, conflict detection, payment processing  |
+| **Phase 4** | Financial & Reporting  | 95%              | Balance calculations, receipt generation, internal tracking |
+| **Phase 5** | Deployment & E2E       | 90%              | User journeys, performance testing, security verification   |
 
 ## TDD Workflow by Phase
 
@@ -142,7 +149,7 @@ npm run test:phases:3-4           # Ensure booking-financial integration
 
 # Day 14: REFACTOR Phase - Calculation precision
 npm run test:phase4:coverage      # Ensure 95% coverage
-npm run test:tax:compliance       # BIR compliance verification
+npm run test:balance:tracking      # Internal balance tracking verification
 ```
 
 ### Phase 5: Deployment (Days 15-17)

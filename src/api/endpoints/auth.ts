@@ -1,5 +1,6 @@
 /**
- * Authentication API endpoints
+ * Staff Authentication API Endpoints
+ * Internal use only - no customer registration
  */
 
 import { apiClient } from "@/api/client";
@@ -16,12 +17,7 @@ export interface LoginResponse {
   refreshToken: string;
 }
 
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  name: string;
-  projectName?: string;
-}
+// RegisterRequest removed - staff accounts created by admin only
 
 export interface RefreshTokenRequest {
   refreshToken: string;
@@ -50,13 +46,7 @@ export const authApi = {
     return response.data;
   },
 
-  /**
-   * Register a new user account
-   */
-  register: async (data: RegisterRequest): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>("/auth/register", data);
-    return response.data;
-  },
+  // register() removed - staff accounts created by admin only
 
   /**
    * Logout the current user

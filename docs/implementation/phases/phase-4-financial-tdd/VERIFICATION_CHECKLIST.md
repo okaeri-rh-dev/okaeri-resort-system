@@ -1,4 +1,17 @@
-# Phase 4: Financial Features TDD - Verification Checklist
+# Phase 4: Internal Balance Features TDD - Verification Checklist - LEGACY DOCUMENT
+
+> ⚠️ **LEGACY DOCUMENTATION WARNING**
+>
+> This document contains outdated scope claims that do not reflect the current
+> system implementation. The system provides **INTERNAL TRACKING ONLY** and does
+> not implement:
+>
+> - Internal reporting, payment status tracking, and customer-facing features
+> - Government regulatory features
+> - Customer-facing functionality
+>
+> This documentation is preserved for historical context but should not be used
+> as a reference for current system capabilities.
 
 ## Phase Lead: `resort-finance-architect`
 
@@ -17,21 +30,21 @@
 
 - [ ] **Income Management Tests** (4.2)
   - [ ] Booking income tests written
-  - [ ] Payment processing tests written
+  - [ ] Payment status tracking tests written
   - [ ] Multi-currency tests written
   - [ ] Discount calculation tests written
   - [ ] Commission tracking tests written
   - [ ] Refund handling tests written
   - [ ] Reconciliation tests written
 
-### Philippine Compliance Tests
+### Internal Operations Tests
 
-- [ ] VAT calculation tests (12%)
-- [ ] Withholding tax tests (10%/15%)
-- [ ] Senior/PWD discount tests (20% + VAT exempt)
-- [ ] BIR OR/SI generation tests
-- [ ] Foreign currency conversion tests
-- [ ] Tax report generation tests
+- [ ] Balance calculation tests
+- [ ] Staff discount tests (configurable rates)
+- [ ] Internal pricing tests
+- [ ] Status report generation tests
+- [ ] Currency tracking tests
+- [ ] Internal report generation tests
 
 ### Test Quality Gates
 
@@ -70,7 +83,7 @@
 
 ### Calculation Accuracy
 
-- [ ] VAT calculations precise to centavos
+- [ ] Balance calculations precise to centavos
 - [ ] Discount calculations correct
 - [ ] Commission calculations accurate
 - [ ] Foreign exchange handled properly
@@ -88,7 +101,7 @@
 
 ### Compliance & Reporting
 
-- [ ] **BIR Compliance**
+- [ ] **Internal Tracking**
   - [ ] OR/SI numbering sequential
   - [ ] 2550M form generation working
   - [ ] 1601EQ form accurate
@@ -117,18 +130,18 @@
 
 - [ ] Full expense workflow tested
 - [ ] Income recording verified
-- [ ] Payment processing complete
-- [ ] Tax calculations validated
+- [ ] Payment status tracking complete
+- [ ] Balance calculations validated
 - [ ] Report accuracy confirmed
 - [ ] Audit trail verified
 
 ### Compliance Validation
 
-- [ ] **Philippine Tax Laws**
+- [ ] **Internal Balance Rules**
   - [ ] VAT compliance verified
   - [ ] Withholding tax correct
   - [ ] Senior/PWD discounts proper
-  - [ ] BIR forms accurate
+  - [ ] Internal forms accurate
   - [ ] Receipt formats compliant
 
 - [ ] **Financial Security**
@@ -160,14 +173,14 @@
 
 - [ ] **Documentation**
   - [ ] Financial formulas documented
-  - [ ] Compliance requirements listed
+  - [ ] Internal requirements listed
   - [ ] Report specifications complete
   - [ ] Integration points defined
 
 - [ ] **Financial System Deliverables**
   - [ ] All calculations verified
   - [ ] Reports tested and accurate
-  - [ ] Compliance features complete
+  - [ ] Internal features complete
   - [ ] Audit system functional
   - [ ] Security measures implemented
 
@@ -190,7 +203,7 @@
 
 ## Financial-Specific Checks
 
-### Payment Gateway Integration
+### Payment Status Integration
 
 - [ ] GCash integration tested
 - [ ] PayMaya integration verified

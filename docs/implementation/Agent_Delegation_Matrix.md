@@ -30,12 +30,12 @@ development lifecycle.
 
 ### Specialized Domain Agents
 
-| Agent                           | Expertise                                | Primary Tasks                                                                                 | Tools Access |
-| ------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------- | ------------ |
-| **resort-finance-architect**    | Financial systems, Philippine compliance | • Financial feature design<br>• Tax compliance<br>• Report generation<br>• Payment processing | All tools    |
-| **security-compliance-auditor** | Security, compliance, auditing           | • Security reviews<br>• Vulnerability assessment<br>• Compliance checking<br>• Audit logging  | All tools    |
-| **tanstack-router-expert**      | TanStack Router, routing patterns        | • Route configuration<br>• Guards implementation<br>• Data loading<br>• Navigation flows      | All tools    |
-| **tailwind-v4-design-expert**   | Tailwind CSS v4, design systems          | • Design token creation<br>• Theme configuration<br>• Responsive design<br>• CSS optimization | All tools    |
+| Agent                           | Expertise                           | Primary Tasks                                                                                                                     | Tools Access |
+| ------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| **resort-finance-architect**    | Internal financial tracking systems | • Internal financial feature design<br>• Financial status tracking<br>• Internal report generation<br>• Payment status management | All tools    |
+| **security-compliance-auditor** | Security, compliance, auditing      | • Security reviews<br>• Vulnerability assessment<br>• Compliance checking<br>• Audit logging                                      | All tools    |
+| **tanstack-router-expert**      | TanStack Router, routing patterns   | • Route configuration<br>• Guards implementation<br>• Data loading<br>• Navigation flows                                          | All tools    |
+| **tailwind-v4-design-expert**   | Tailwind CSS v4, design systems     | • Design token creation<br>• Theme configuration<br>• Responsive design<br>• CSS optimization                                     | All tools    |
 
 ## Phase-Specific Agent Assignments
 
@@ -91,13 +91,13 @@ development lifecycle.
 
 **Lead**: `resort-finance-architect`
 
-| Task               | Primary Agent                     | Support Agents             | Deliverables         |
-| ------------------ | --------------------------------- | -------------------------- | -------------------- |
-| Test specification | `typescript-react-quality-expert` | -                          | Financial test suite |
-| Feature design     | `resort-finance-architect`        | -                          | Financial modules    |
-| Database schema    | `postgres-serverless-architect`   | -                          | Financial tables     |
-| Compliance         | `security-compliance-auditor`     | `resort-finance-architect` | Compliance report    |
-| Reports UI         | `resort-ui-designer`              | -                          | Report components    |
+| Task               | Primary Agent                     | Support Agents       | Deliverables         |
+| ------------------ | --------------------------------- | -------------------- | -------------------- |
+| Test specification | `typescript-react-quality-expert` | -                    | Financial test suite |
+| Feature design     | `resort-finance-architect`        | -                    | Financial modules    |
+| Database schema    | `postgres-serverless-architect`   | -                    | Financial tables     |
+| Internal Reporting | `resort-finance-architect`        | `resort-ui-designer` | Internal reports     |
+| Reports UI         | `resort-ui-designer`              | -                    | Report components    |
 
 ### Phase 5: Production Deployment
 
@@ -122,7 +122,7 @@ development lifecycle.
 | `resort-ui-designer`                | `pwa-performance-optimizer`     | UI → Performance      | UI complete           |
 | `zustand-tanstack-resort-architect` | `vercel-resort-api-architect`   | State → API           | Store defined         |
 | `postgres-serverless-architect`     | `vercel-resort-api-architect`   | Database → API        | Schema ready          |
-| `resort-finance-architect`          | `security-compliance-auditor`   | Features → Compliance | Finance features done |
+| `resort-finance-architect`          | `resort-ui-designer`            | Features → UI         | Finance features done |
 | `security-compliance-auditor`       | `vercel-deployment-optimizer`   | Security → Deploy     | Security approved     |
 
 ### Communication Protocols

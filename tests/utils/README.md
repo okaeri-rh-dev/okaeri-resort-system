@@ -1,6 +1,6 @@
-# Philippine Resort Mock Data Generators
+# Philippine Resort Internal Operations Mock Data Generators
 
-Comprehensive mock data generators for Okaeri Resort dashboard testing with authentic Philippine business context.
+Comprehensive mock data generators for Okaeri Resort staff dashboard testing with authentic Philippine internal operations context.
 
 ## Overview
 
@@ -140,24 +140,22 @@ manager.cleanup();
 
 ## Philippine Business Context Helpers
 
-### Currency Calculations
+### Currency Tracking
 
 ```typescript
 import { 
   createPHPCurrency,
-  calculateVAT,
-  calculateWithholdingTax,
-  calculateLocalTax
+  trackPaymentStatus,
+  formatInternalAmount
 } from '@tests/utils';
 
 // Create formatted PHP currency
 const amount = createPHPCurrency(25000); 
 // { amount: 2500000, currency: 'PHP', formatted: '₱25,000.00' }
 
-// Philippine tax calculations
-const vat = calculateVAT(100000); // 12% VAT
-const withholding = calculateWithholdingTax(50000, 'professional_services'); // 10%
-const localTax = calculateLocalTax(500000, 'San Juan'); // 0.25%
+// Internal payment status tracking
+const paymentStatus = trackPaymentStatus('pending', 'gcash');
+const formattedAmount = formatInternalAmount(100000, 'PHP');
 ```
 
 ### Guest Name Generation
@@ -317,11 +315,11 @@ describe('Dashboard Performance', () => {
 
 The mock data generators include authentic Philippine resort business context:
 
-### Financial Context
-- **VAT**: 12% as per BIR regulations
-- **Withholding Tax**: 10% for professional services, 5% for rentals
-- **Local Government Tax**: Varies by municipality (San Juan: 0.25%)
-- **Payment Methods**: GCash, Maya, BPI, BDO popular in Philippines
+### Internal Financial Tracking Context
+- **Currency Display**: Proper PHP formatting for staff interfaces
+- **Payment Method Tracking**: GCash, Maya, Cash, Bank Transfer status tracking
+- **Internal Reporting**: Revenue summaries for management review
+- **Staff Financial Access**: Role-based visibility of financial data
 
 ### Seasonal Patterns  
 - **Peak Season**: March-May (summer vacation)
@@ -334,10 +332,10 @@ The mock data generators include authentic Philippine resort business context:
 - **30% International**: Weighted by actual visitor statistics
 - **Top Origins**: USA (25%), South Korea (20%), China (15%), Japan (12%)
 
-### Operational Realities
-- **Room Types**: Standard to Penthouse with realistic PHP pricing
-- **Staff Scheduling**: Philippine labor law compliance patterns
-- **Weather Impact**: Typhoon season operational adjustments
-- **Compliance**: BIR filing dates, DOH inspections, fire safety checks
+### Internal Operational Realities
+- **Room Types**: Standard to Penthouse with internal pricing references
+- **Staff Workflows**: Booking entry, payment tracking, room status updates
+- **Weather Impact**: Typhoon season operational adjustments for staff
+- **Staff Operations**: Daily reconciliation, basic reporting, status tracking
 
 This ensures your tests run with realistic data that matches actual Philippine resort operations.

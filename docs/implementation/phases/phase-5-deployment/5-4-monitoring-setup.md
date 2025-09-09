@@ -1,5 +1,18 @@
 # Sub-Phase 5.4: Monitoring Setup
 
+> ⚠️ **LEGACY DOCUMENTATION WARNING**
+>
+> This document contains outdated scope claims that do not reflect the current
+> system implementation. The system provides **INTERNAL TRACKING ONLY** and does
+> not implement:
+>
+> - Payment status tracking or gateway integrations
+> - Government regulatory features
+> - Customer-facing functionality
+>
+> This documentation is preserved for historical context but should not be used
+> as a reference for current system capabilities.
+
 ## Overview
 
 This sub-phase focuses on implementing comprehensive observability, error
@@ -331,7 +344,7 @@ export class PerformanceAnalytics {
       });
     });
 
-    // Track payment processing
+    // Track payment status tracking
     window.addEventListener("payment-processed", (event: any) => {
       this.track("payment_processed", {
         bookingId: event.detail.bookingId,

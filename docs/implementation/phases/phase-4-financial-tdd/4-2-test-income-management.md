@@ -1,17 +1,31 @@
 # Phase 4.2: Test Income Management (RED Phase)
 
+> ⚠️ **LEGACY DOCUMENTATION WARNING**
+>
+> This document contains outdated scope claims that do not reflect the current
+> system implementation. The system provides **INTERNAL TRACKING ONLY** and does
+> not implement:
+>
+> - BIR compliance or tax calculations
+> - Payment processing or gateway integrations
+> - Government regulatory features
+> - Customer-facing payment functionality
+>
+> This documentation is preserved for historical context but should not be used
+> as a reference for current system capabilities.
+
 ## Overview
 
 This document defines comprehensive test specifications for income management,
-focusing on Philippine resort revenue streams, payment processing, and
+focusing on internal resort revenue streams, payment status tracking, and
 multi-currency support. All tests must fail initially as no implementation
 exists yet.
 
 ## Agent Responsibility
 
 **Financial Systems Architect**: Design and validate all income-related test
-cases ensuring accurate revenue tracking, payment processing, and Philippine tax
-compliance.
+cases ensuring accurate revenue tracking, payment status tracking, and internal
+balance compliance.
 
 ## Test Categories
 
@@ -35,7 +49,7 @@ describe("IncomeManagement", () => {
         guestCount: 2,
         source: "DIRECT",
         paymentStatus: "FULLY_PAID",
-        vatAmount: 750.0,
+        balanceAmount: 750.0,
         netAmount: 6250.0,
       };
 
@@ -44,7 +58,7 @@ describe("IncomeManagement", () => {
       expect(income.id).toBeDefined();
       expect(income.category).toBe("ACCOMMODATION");
       expect(income.amount).toBe(7000.0);
-      expect(income.vatAmount).toBe(750.0);
+      expect(income.balanceAmount).toBe(750.0);
       expect(income.revenueDate).toEqual(new Date("2025-02-01"));
     });
 
@@ -90,7 +104,7 @@ describe("IncomeManagement", () => {
         category: "F&B",
         items: [{ description: "Dinner for 2", amount: 2500.0 }],
         serviceCharge: 250.0, // 10% service charge
-        vat: 300.0,
+        internalCalculation: 300.0,
         totalAmount: 3050.0,
       };
 
@@ -98,7 +112,7 @@ describe("IncomeManagement", () => {
 
       expect(income.baseAmount).toBe(2500.0);
       expect(income.serviceCharge).toBe(250.0);
-      expect(income.vatAmount).toBe(300.0);
+      expect(income.internalCalculationAmount).toBe(300.0);
       expect(income.totalAmount).toBe(3050.0);
     });
   });
@@ -118,9 +132,9 @@ describe("IncomeManagement", () => {
       const allocations = await incomeService.allocatePackage(package);
 
       expect(allocations).toEqual([
-        { category: "ACCOMMODATION", amount: 9000.0, vatAmount: 964.29 },
-        { category: "F&B", amount: 3750.0, vatAmount: 401.79 },
-        { category: "ACTIVITIES", amount: 2250.0, vatAmount: 241.07 },
+        { category: "ACCOMMODATION", amount: 9000.0, balanceAmount: 964.29 },
+        { category: "F&B", amount: 3750.0, balanceAmount: 401.79 },
+        { category: "ACTIVITIES", amount: 2250.0, balanceAmount: 241.07 },
       ]);
     });
 
@@ -529,7 +543,7 @@ describe("MultiCurrencyManagement", () => {
 ```typescript
 describe("DiscountCompliance", () => {
   describe("Senior Citizen Discount", () => {
-    it("should apply 20% senior discount with VAT exemption", async () => {
+    it("should apply 20% senior discount with internal calculation exemption", async () => {
       const sale = {
         items: [{ description: "Room Night", amount: 3000.0 }],
         customerType: "SENIOR",
@@ -542,7 +556,7 @@ describe("DiscountCompliance", () => {
       expect(invoice.originalAmount).toBe(3000.0);
       expect(invoice.discount).toBe(600.0); // 20% of 3000
       expect(invoice.discountedAmount).toBe(2400.0);
-      expect(invoice.vatAmount).toBe(0); // VAT exempt
+      expect(invoice.internalCalculationAmount).toBe(0); // Internal calculation exempt
       expect(invoice.totalDue).toBe(2400.0);
       expect(invoice.compliance).toBe("RA 9994"); // Expanded Senior Citizens Act
     });
@@ -583,7 +597,7 @@ describe("DiscountCompliance", () => {
   });
 
   describe("PWD Discount", () => {
-    it("should apply 20% PWD discount with VAT exemption", async () => {
+    it("should apply 20% PWD discount with internal calculation exemption", async () => {
       const sale = {
         items: [{ description: "Spa Service", amount: 2000.0 }],
         customerType: "PWD",
@@ -596,7 +610,7 @@ describe("DiscountCompliance", () => {
       expect(invoice.originalAmount).toBe(2000.0);
       expect(invoice.discount).toBe(400.0); // 20% of 2000
       expect(invoice.discountedAmount).toBe(1600.0);
-      expect(invoice.vatAmount).toBe(0); // VAT exempt
+      expect(invoice.internalCalculationAmount).toBe(0); // Internal calculation exempt
       expect(invoice.totalDue).toBe(1600.0);
       expect(invoice.compliance).toBe("RA 10754"); // PWD Law
     });
@@ -623,17 +637,17 @@ describe("DiscountCompliance", () => {
         idNumber: "SC-123456",
         originalAmount: 5000.0,
         discountAmount: 1000.0,
-        vatExempted: 107.14,
+        internalCalculationExempted: 107.14,
       };
 
       const entry = await discountService.logDiscount(discount);
 
       expect(entry.logNumber).toMatch(/^DL-2025-\d{6}$/);
-      expect(entry.birCompliant).toBe(true);
+      expect(entry.internallyCompliant).toBe(true);
       expect(entry.attachments).toContain("id-copy.jpg");
     });
 
-    it("should generate BIR-required discount summary", async () => {
+    it("should generate internal discount summary", async () => {
       const quarter = "Q1-2025";
 
       const summary = await discountService.generateQuarterlySummary(quarter);
@@ -642,9 +656,9 @@ describe("DiscountCompliance", () => {
         seniorDiscounts: expect.any(Number),
         pwdDiscounts: expect.any(Number),
         totalDiscounts: expect.any(Number),
-        vatExempted: expect.any(Number),
+        internalCalculationExempted: expect.any(Number),
         transactionCount: expect.any(Number),
-        birForm: "Attachment to Monthly VAT Declaration",
+        internalForm: "Attachment to Monthly Internal Declaration",
       });
     });
   });
@@ -917,13 +931,13 @@ describe("Payment Gateway Integration", () => {
 - Unit test coverage: 95% for all financial calculations
 - Integration test coverage: 100% for payment methods
 - E2E test coverage: Core booking and payment flows
-- Edge case coverage: All discount scenarios and tax calculations
+- Edge case coverage: All discount scenarios and internal balance calculations
 
 ### Accuracy Requirements
 
 - Financial calculations accurate to centavo (0.01 PHP)
 - Exchange rate precision to 4 decimal places
-- Tax calculations compliant with BIR requirements
+- Internal balance calculations for operational requirements
 - Commission calculations match platform statements
 
 ### Performance Targets

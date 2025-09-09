@@ -1,19 +1,46 @@
-# Okaeri Resort Management System
+# Okaeri Resort Management System - Internal Staff Application
 
-A modern, cost-optimized resort management system designed for Okaeri Resort in La Union, Philippines. Built with a serverless-first architecture to deliver enterprise-grade features at family business costs.
+> ⚠️ **LEGACY DOCUMENTATION WARNING**
+>
+> This document contains outdated scope claims that do not reflect the current system implementation.
+> The system provides **INTERNAL TRACKING ONLY** and does not implement:
+> - Tax calculations or compliance features
+> - Payment processing or gateway integrations
+> - Government regulatory features
+> - Customer-facing functionality
+>
+> This documentation is preserved for historical context but should not be used as a reference for current system capabilities.
+
+> ⚠️ **INTERNAL USE ONLY** - This application is designed exclusively for resort staff operations. No customer-facing features or payment status tracking.
+
+A modern, cost-optimized internal management system designed for Okaeri Resort in La Union, Philippines. Built with a serverless-first architecture to streamline staff operations and provide efficient booking and financial tracking tools.
 
 ## Overview
 
-The Okaeri Resort Management System is a Progressive Web Application (PWA) that provides comprehensive resort management capabilities including booking management, financial tracking, and multi-project support for business expansion. The system integrates with Airbnb for automated booking imports and Facebook Messenger for seamless communication with guests.
+The Okaeri Resort Management System is a Progressive Web Application (PWA) designed for internal staff use, providing operational tools for booking management, payment status tracking, and financial reporting. Staff can access the system on mobile devices throughout the resort property to manage daily operations efficiently.
+
+**What This System Does:**
+- Staff-operated booking entry and management
+- Payment status tracking (not processing)
+- Room availability and status management
+- Internal financial reporting
+- Operational task coordination
+
+**What This System Does NOT Do:**
+- No customer self-service features
+- No online payment status tracking
+- No internal compliance/balance filing
+- No customer-facing portal
 
 ### Key Features
 
-- **Booking Management**: Handle reservations from multiple channels (Airbnb, direct bookings, walk-ins)
-- **Financial Tracking**: Monitor income, expenses, and generate financial reports
-- **Multi-Project Support**: Manage multiple properties/projects with complete data isolation
-- **Offline Capability**: Full PWA support for reliable operation even with intermittent connectivity
-- **Mobile-First Design**: Optimized for mobile devices used by staff on-the-go
-- **Bilingual Support**: English and Filipino language options
+- **Staff Booking Management**: Manual entry of reservations from phone calls, walk-ins, and partner channels
+- **Payment Status Tracking**: Monitor which bookings have been paid (cash/GCash/bank transfer)
+- **Room Management**: Track room status (available, occupied, maintenance, cleaning)
+- **Internal Reports**: Generate financial summaries for management decisions
+- **Offline Capability**: Full PWA support for reliable operation even without internet
+- **Mobile-First Design**: Optimized for staff tablets and phones used throughout the resort
+- **Multi-Property Support**: Manage multiple resort properties with data isolation
 
 ## Technology Stack
 
@@ -182,7 +209,7 @@ The system implements application-level multi-tenancy with complete data isolati
 - Edge caching with Vercel's CDN
 
 ### Security Measures
-- JWT authentication with secure HTTP-only cookies
+- JWT authentication via Authorization headers (Bearer tokens)
 - Role-based access control (Owner, Manager, Staff)
 - Input validation with Zod schemas
 - XSS protection with Content Security Policy
@@ -360,7 +387,7 @@ The guide covers:
 - **React component testing** patterns with accessibility
 - **Zustand store testing** with multi-tenant considerations
 - **TanStack Query integration** testing
-- **Booking and payment processing** examples
+- **Booking and payment status tracking** examples
 - **Philippine market-specific** features and validations
 
 ### Team TDD Expectations
@@ -382,8 +409,8 @@ The guide covers:
 - **Financial accuracy** - Prevents booking calculation errors
 - **Seasonal reliability** - Handles peak season edge cases
 - **Multi-tenant safety** - Ensures data isolation between projects
-- **Regulatory compliance** - Validates Philippine tax calculations
-- **Customer confidence** - Reduces booking errors and disputes
+- **Operational reliability** - Validates internal financial tracking
+- **Staff confidence** - Reduces operational errors and data inconsistencies
 
 ## Contributing
 

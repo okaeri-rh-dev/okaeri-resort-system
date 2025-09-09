@@ -283,13 +283,7 @@ export function ForgotPasswordForm() {
               >
                 Account Recovery
               </Link>
-              <span className="text-gray-300 dark:text-gray-600">|</span>
-              <Link
-                to="/register"
-                className="hover:text-ocean-600 dark:hover:text-ocean-400 text-gray-600 dark:text-gray-400"
-              >
-                Create New Account
-              </Link>
+              {/* Register link removed - staff accounts created by admin only */}
             </div>
           </div>
         </div>

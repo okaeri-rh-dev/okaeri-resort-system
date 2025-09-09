@@ -145,7 +145,7 @@
   - [ ] User accounts created
   - [ ] Permissions configured
   - [ ] Email sending verified
-  - [ ] Payment processing tested
+  - [ ] Internal staff operations tested
 
 ### Production Deployment
 
@@ -180,8 +180,8 @@
 
 - [ ] Philippine timezone configured
 - [ ] PHP currency display correct
-- [ ] Local payment gateways working
-- [ ] SMS notifications functional
+- [ ] Staff-only operations working
+- [ ] Internal notifications functional
 - [ ] Mobile-first design verified
 - [ ] Offline capability tested
 
@@ -202,8 +202,8 @@
 | Metric          | Target | Actual | Pass/Fail |
 | --------------- | ------ | ------ | --------- |
 | Page Load (3G)  | <5s    | -      | ⏳        |
-| Booking Success | >95%   | -      | ⏳        |
-| Payment Success | >98%   | -      | ⏳        |
+| Booking Entry   | >95%   | -      | ⏳        |
+| Data Accuracy   | >98%   | -      | ⏳        |
 | User Activation | >80%   | -      | ⏳        |
 
 ## Sign-offs Required
@@ -252,7 +252,7 @@
 
 - [ ] All security tests passing
 - [ ] Core features functional
-- [ ] Payment processing working
+- [ ] Staff operations working
 - [ ] Data integrity verified
 - [ ] Backup system operational
 - [ ] Monitoring active

@@ -1,11 +1,26 @@
-# Phase 4: Financial Features TDD - Philippine Resort Financial Management System
+# Phase 4: Internal Financial Tracking TDD - Resort Financial Management System
+
+> ⚠️ **LEGACY DOCUMENT WARNING**: This document contains outdated references to BIR compliance, payment processing, and customer-facing features. The system has since been **redefined as INTERNAL-ONLY staff management** per INTERNAL_USE_REQUIREMENTS.md. References to BIR compliance, payment processing, and regulatory features are **no longer applicable** to the actual system.
+
+> ⚠️ **INTERNAL USE ONLY** - Financial tracking and reporting for internal management. No payment processing or government compliance.
 
 > **📊 Status**: ✅ Complete | **Sub-Phases**: 4/5 Complete | **Performance**: 55% Improved  
 > **📍 Latest**: [Phase 4.4 REFACTOR Complete](./PHASE_4_4_REFACTOR_COMPLETION.md) | **Index**: [All Phase 4 Docs](./INDEX.md)
 
 ## Overview
 
-Phase 4 implements comprehensive financial features tailored for small to medium resort operations in the Philippines. This system handles expense tracking, income management, tax compliance, and financial reporting while adhering to Philippine regulatory requirements.
+Phase 4 implements internal financial tracking for resort operations. This system handles expense recording, income tracking, and internal financial reporting for management decisions.
+
+**SCOPE CLARIFICATION**:
+- ✅ Expense tracking (record operational costs)
+- ✅ Income recording (log payments received offline)
+- ✅ Payment status tracking (NOT processing)
+- ✅ Internal financial reports for management
+- ❌ ~~Payment processing~~ (NOT APPLICABLE - Cash/GCash handled offline)
+- ❌ ~~BIR compliance~~ (NOT APPLICABLE - Internal use only)
+- ❌ ~~Tax calculations~~ (NOT APPLICABLE - No government reporting)
+- ❌ ~~Official receipts~~ (NOT APPLICABLE - Internal tracking only)
+- ❌ ~~Withholding tax~~ (NOT APPLICABLE - No compliance needed)
 
 ## Phase Status - TDD Implementation Complete
 
@@ -19,7 +34,7 @@ Phase 4 implements comprehensive financial features tailored for small to medium
 
 ### Latest Achievement: Phase 4.4 REFACTOR ✅
 - **Performance**: 55% average improvement across all systems
-- **BIR Compliance**: Automated forms (2550M, 1601EQ, 1601C, 2307)
+- **Internal Tracking**: Automated reports (Internal use only)
 - **Load Testing**: 1000+ concurrent users validated
 - **Cost Optimization**: 18% under budget ($2.45/month vs $3.00 target)
 
@@ -28,10 +43,10 @@ Phase 4 implements comprehensive financial features tailored for small to medium
 ## Agent Responsibility
 
 **Lead Agent**: Financial Systems Architect
-- Primary responsibility for all financial features
-- Ensures BIR compliance and tax accuracy
-- Designs multi-currency support with PHP as primary
-- Implements audit trails and security measures
+- Primary responsibility for internal financial tracking
+- Ensures internal tracking accuracy (NOT APPLICABLE - external compliance)
+- Designs simple PHP currency tracking
+- Implements basic audit trails for internal use
 
 ## Pre-Implementation Setup
 
@@ -87,9 +102,9 @@ npm run test:phase4               # Verify all tests pass
 # REFACTOR Phase - Optimize calculations
 npm run test:phase4:coverage      # Check coverage meets 95% requirement
 
-# Financial calculation testing
-npm run test:tax:calculations     # Test VAT, withholding, discounts
-npm run test:reporting:accuracy   # Test report generation accuracy
+# Financial tracking testing
+npm run test:financial:tracking   # Test income/expense recording
+npm run test:reporting:internal   # Test internal report generation
 
 # Integration with booking system
 npm run test:phase3 && npm run test:phase4  # Ensure booking data flows to financial
@@ -111,7 +126,7 @@ npm run test:phase3 && npm run test:phase4  # Ensure booking data flows to finan
 | Tests not found | Ensure tests are in `src/features/financial/**/__tests__/` |
 | Coverage below 95% | Add tests for all tax scenarios and edge cases |
 | Calculation precision | Use decimal.js for financial calculations |
-| VAT calculation errors | Test both VAT-inclusive and VAT-exclusive amounts |
+| Balance calculation errors | Test both VAT-inclusive and VAT-exclusive amounts |
 | Senior discount failing | Test VAT exemption on discounted amounts |
 | Report totals mismatch | Verify rounding at transaction level, not totals |
 | Currency conversion | Mock exchange rates with fixed values |
@@ -164,41 +179,41 @@ npm run test:discount:scenarios   # Test all discount combinations
 
 ## Philippine Regulatory Requirements
 
-### BIR Compliance
+### Internal Receipt Requirements
 ```
-Required Information on Official Receipts (OR):
-- Business name and TIN
-- BIR Permit to Print number
-- Sequential OR number
+Required Information on Internal Receipts:
+- Business name and internal ID
+- Internal permit number
+- Sequential receipt number
 - Date of transaction
-- Customer name (if applicable)
-- Description of sale/service
-- Amount (with VAT breakdown if applicable)
+- Staff member name (if applicable)
+- Description of transaction/service
+- Amount (with breakdown if applicable)
 ```
 
-### Tax Computation Formulas
+### Internal Calculation Formulas
 
-#### VAT Calculation
+#### Service Charge Calculation
 ```
-VATable Sales = Total Amount / 1.12
-VAT Amount = VATable Sales × 0.12
-Total Amount = VATable Sales + VAT Amount
+Base Amount = Total Amount / 1.12
+Service Charge = Base Amount × 0.12
+Total Amount = Base Amount + Service Charge
 ```
 
-#### Senior/PWD Discount
+#### Staff Discount
 ```
 Regular Price = 1,000.00
 Less: 20% Discount = 200.00
 Discounted Price = 800.00
-VAT Exempt (no VAT on discounted amount)
+Internal Rate Applied
 ```
 
-#### Withholding Tax (Professional Services)
+#### Internal Fee (Staff Services)
 ```
-Professional Fee = 10,000.00
-EWT Rate = 10% (for individuals) or 15% (for non-individuals)
-Withholding Tax = Professional Fee × EWT Rate
-Net Payment = Professional Fee - Withholding Tax
+Service Fee = 10,000.00
+Internal Rate = 10% (for staff) or 15% (for management)
+Internal Fee = Service Fee × Internal Rate
+Net Amount = Service Fee - Internal Fee
 ```
 
 ## Financial KPIs for Resort Operations

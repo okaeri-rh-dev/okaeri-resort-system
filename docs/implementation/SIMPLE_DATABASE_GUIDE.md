@@ -363,7 +363,7 @@ This document provides:
 - Complete table definitions with Philippine compliance fields
 - Practical Drizzle ORM query examples
 - Receipt management and OCR integration patterns
-- VAT calculations and BIR reporting queries
+- Balance calculations and internal reporting queries
 - Cash flow and occupancy rate calculations
 - Performance indexes for financial queries
 

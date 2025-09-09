@@ -1,22 +1,35 @@
-# Phase 4.4: Reporting & Compliance (REFACTOR Phase)
+# Phase 4.4: Reporting & Internal Operations (REFACTOR Phase) - LEGACY DOCUMENT
+
+> ⚠️ **LEGACY DOCUMENTATION WARNING**
+>
+> This document contains outdated scope claims that do not reflect the current
+> system implementation. The system provides **INTERNAL TRACKING ONLY** and does
+> not implement:
+>
+> - Internal reporting, payment status tracking, and customer-facing features
+> - Government regulatory features
+> - Customer-facing functionality
+>
+> This documentation is preserved for historical context but should not be used
+> as a reference for current system capabilities.
 
 ## Overview
 
-This document covers the refactoring phase focusing on advanced financial
-reporting, tax compliance features, performance optimization, and audit trail
-implementation for Philippine resort operations.
+This document covers the refactoring phase focusing on advanced internal
+reporting, operational features, performance optimization, and audit trail
+implementation for internal resort operations.
 
 ## Agent Responsibility
 
 **Financial Systems Architect**: Refactor and optimize the financial system to
-ensure scalability, maintainability, and full compliance with Philippine
-regulatory requirements.
+ensure scalability, maintainability, and full alignment with internal regulatory
+requirements.
 
 ## Refactoring Goals
 
 1. **Performance Optimization**: Sub-second report generation
 2. **Code Quality**: Clean architecture, SOLID principles
-3. **Compliance Enhancement**: Full BIR compliance automation
+3. **Operations Enhancement**: Full internal operations automation
 4. **User Experience**: Intuitive financial dashboards
 5. **Data Integrity**: Complete audit trails
 
@@ -89,7 +102,7 @@ export class ReportEngineService {
       BALANCE_SHEET: new BalanceSheetStrategy(this.prisma),
       OCCUPANCY: new OccupancyStrategy(this.prisma),
       REVENUE_ANALYSIS: new RevenueAnalysisStrategy(this.prisma),
-      TAX_SUMMARY: new TaxSummaryStrategy(this.prisma),
+      BALANCE_SUMMARY: new BalanceSummaryStrategy(this.prisma),
     };
 
     return strategies[type] || new DefaultStrategy(this.prisma);
@@ -364,46 +377,40 @@ const RealtimeMetrics: React.FC = () => {
 };
 ```
 
-## 2. Tax Compliance Automation
+## 2. Internal Operations Automation
 
-### BIR Integration Service
+### Internal Balance Service
 
 ```typescript
-// services/bir-integration.service.ts
+// services/internal-operations.service.ts
 @Injectable()
-export class BIRIntegrationService {
-  private readonly birApiUrl = process.env.BIR_API_URL;
-  private readonly taxConfig: TaxConfiguration;
+export class InternalOperationsService {
+  private readonly internalApiUrl = process.env.INTERNAL_API_URL;
+  private readonly operationsConfig: OperationsConfiguration;
 
-  async generateMonthlyReturns(month: string): Promise<TaxReturns> {
-    const returns = [];
+  async generateMonthlyReports(month: string): Promise<InternalReports> {
+    const reports = [];
 
-    // Generate VAT return (2550M/2550Q)
-    if (this.taxConfig.isVATRegistered) {
-      returns.push(await this.generateVATReturn(month));
+    // Generate balance report
+    if (this.operationsConfig.hasBalance) {
+      reports.push(await this.generateBalanceReport(month));
     } else {
-      // Generate percentage tax return (2551M)
-      returns.push(await this.generatePercentageTaxReturn(month));
+      // Generate operational report
+      reports.push(await this.generateOperationalReport(month));
     }
 
-    // Generate withholding tax return (1601EQ)
-    const withholding = await this.generateWithholdingReturn(month);
-    if (withholding.hasTransactions) {
-      returns.push(withholding);
-    }
-
-    // Generate expanded withholding tax (1601C)
-    const ewt = await this.generateEWTReturn(month);
-    if (ewt.hasTransactions) {
-      returns.push(ewt);
+    // Generate staff activity report
+    const staffActivity = await this.generateStaffActivityReport(month);
+    if (staffActivity.hasActivities) {
+      reports.push(staffActivity);
     }
 
     return {
       month,
-      returns,
-      summary: this.generateTaxSummary(returns),
-      deadlines: this.getFilingDeadlines(month),
-      totalTaxDue: this.calculateTotalTaxDue(returns),
+      reports,
+      summary: this.generateOperationsSummary(reports),
+      schedules: this.getOperationalSchedules(month),
+      totalBalance: this.calculateTotalBalance(reports),
     };
   }
 
@@ -423,7 +430,7 @@ export class BIRIntegrationService {
     const inputVAT = this.calculateInputVAT(purchases);
     const netVAT = outputVAT - inputVAT;
 
-    // Generate BIR form data
+    // Generate Internal form data
     const form2550M = {
       tin: this.taxConfig.tin,
       registeredName: this.taxConfig.businessName,
@@ -456,8 +463,8 @@ export class BIRIntegrationService {
       totalAmountDue: Math.max(0, netVAT) + this.calculatePenalties(netVAT),
     };
 
-    // Generate XML for eBIRForms
-    const xml = await this.generateBIRXML("2550M", form2550M);
+    // Generate XML for internal forms
+    const xml = await this.generateInternalXML("2550M", form2550M);
 
     return {
       formType: "2550M",
@@ -519,7 +526,7 @@ export class BIRIntegrationService {
       formType: "1601EQ",
       data: form1601EQ,
       alphalist,
-      xml: await this.generateBIRXML("1601EQ", form1601EQ),
+      xml: await this.generateInternalXML("1601EQ", form1601EQ),
       pdf: await this.generateFormPDF(form1601EQ),
       certificates: await this.generateWithholdingCertificates(transactions),
     };
@@ -585,18 +592,18 @@ export class BIRIntegrationService {
 }
 ```
 
-### Compliance Monitor
+### Operations Monitor
 
 ```typescript
-// services/compliance-monitor.service.ts
+// services/operations-monitor.service.ts
 @Injectable()
-export class ComplianceMonitorService {
+export class OperationsMonitorService {
   private readonly notifications: NotificationService;
   private readonly scheduler: SchedulerRegistry;
 
   async initializeMonitoring() {
     // Schedule regular compliance checks
-    this.scheduleComplianceChecks();
+    this.scheduleOperationsChecks();
 
     // Monitor filing deadlines
     this.monitorDeadlines();
@@ -885,7 +892,7 @@ CREATE MATERIALIZED VIEW financial_summary_mv AS
 
 CREATE UNIQUE INDEX ON financial_summary_mv(period);
 
--- Function-based index for tax calculations
+-- Function-based index for balance calculations
 CREATE INDEX idx_vat_amount ON income(
   ROUND((amount / 1.12) * 0.12, 2)
 ) WHERE is_vatable = true;
@@ -1235,7 +1242,7 @@ describe("Financial System Integration", () => {
     // Record income
     const income = await incomeService.recordBooking(booking);
     expect(income.amount).toBe(7000.0);
-    expect(income.vatAmount).toBe(750.0);
+    expect(income.balanceAmount).toBe(750.0);
 
     // Process payment
     const payment = await paymentService.processCash({
@@ -1262,13 +1269,13 @@ describe("Financial System Integration", () => {
     ];
 
     for (const test of testCases) {
-      const result = taxCalculator.calculateVAT(test.amount);
+      const result = taxCalculator.calculateInternalBalance(test.amount);
       expect(result.vatAmount).toBeCloseTo(test.expectedVAT, 2);
       expect(result.vatableSales).toBeCloseTo(test.expectedNet, 2);
     }
   });
 
-  it("should generate compliant BIR reports", async () => {
+  it("should generate internal balance reports", async () => {
     const month = "2025-01";
     const returns = await birService.generateMonthlyReturns(month);
 
@@ -1295,7 +1302,7 @@ describe("Financial System Integration", () => {
 
 ### Compliance Metrics
 
-- BIR form accuracy: 100%
+- Internal form accuracy: 100%
 - Tax calculation precision: 0.01 PHP
 - Audit trail completeness: 100%
 - Receipt sequence integrity: No gaps

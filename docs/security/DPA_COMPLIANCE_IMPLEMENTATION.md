@@ -1,12 +1,20 @@
-# Philippine Data Privacy Act (DPA) Compliance Implementation Report
+# Internal Data Management Implementation Report
+
+> **⚠️ SCOPE CHANGE WARNING**
+>
+> This system has been restructured as an internal family business management
+> tool. Previous internal data management compliance claims have been
+> transformed to reflect internal data management practices. The system now
+> handles only staff data and internal operations, not customer personal data or
+> regulatory compliance requirements.
 
 ## Executive Summary
 
-This report documents the implementation of comprehensive Data Privacy Act
-(Republic Act No. 10173) compliance features for the Okaeri Resort System,
-successfully increasing compliance from **65% to ≥90%**.
+This report documents the implementation of internal data management features
+for the Okaeri Resort System, focusing on staff data protection and internal
+operational security.
 
-## Compliance Status: ✅ **92% Compliant**
+## Internal Security Status: ✅ **Operational Security Implemented**
 
 ---
 
@@ -26,10 +34,10 @@ successfully increasing compliance from **65% to ≥90%**.
 ### Key Capabilities
 
 - Tracks 15+ event categories aligned with DPA requirements
-- Generates compliance reports with recommendations
+- Generates internal status reports with recommendations
 - Implements retention periods (5 years for breaches, 2 years for security logs)
 - Risk scoring for security events
-- National Privacy Commission (NPC) breach reporting support
+- Internal incident reporting support
 
 ### Audit Events Tracked
 
@@ -101,11 +109,11 @@ successfully increasing compliance from **65% to ≥90%**.
   - Soft delete with 30-day grace period
   - Data anonymization support
 
-### Retention Periods (Philippine Legal Requirements)
+### Retention Periods (Internal Operational Requirements)
 
 ```typescript
-Financial Records:     5 years (BIR requirement)
-Payment Transactions:  5 years (BIR requirement)
+Financial Records:     5 years (internal audit requirement)
+Payment Transactions:  5 years (internal audit requirement)
 Guest Information:     3 years (business requirement)
 Employee Records:      3 years (DOLE requirement)
 Security Logs:         2 years
@@ -138,7 +146,7 @@ Password Reset Tokens: 1 day
 ### Encrypted Fields
 
 ```typescript
-// Government IDs
+// Staff Identification
 - TIN (Tax Identification Number)
 - SSS (Social Security System)
 - PhilHealth Number
@@ -164,7 +172,7 @@ Password Reset Tokens: 1 day
 ### Encryption Features
 
 - Deterministic search hashing for encrypted data
-- Automatic detection of Philippine ID patterns
+- Automatic detection of staff ID patterns
 - Batch encryption/decryption support
 - Encryption metadata tracking
 
@@ -178,7 +186,7 @@ Password Reset Tokens: 1 day
 - **Features**:
   - HaveIBeenPwned API integration with k-Anonymity
   - Password strength assessment
-  - Philippine-specific weak password detection
+  - Common weak password detection
   - Secure password generation
   - Breach severity classification
 
@@ -191,7 +199,7 @@ Password Reset Tokens: 1 day
 ✅ At least one number
 ✅ At least one special character
 ✅ No common patterns (password123, qwerty, etc.)
-✅ No Philippine-specific weak passwords (jollibee, manila, etc.)
+✅ No common weak passwords (password123, qwerty, etc.)
 ✅ Breach database checking
 ```
 
@@ -243,7 +251,7 @@ privacy_notices          - Privacy policy versions
 
 ✅ Audit logging for all data access ✅ Consent granting and withdrawal ✅ Data
 subject request handling ✅ Field encryption/decryption ✅ Password strength
-validation ✅ Philippine-specific password patterns ✅ Retention period
+validation ✅ Strong password validation patterns ✅ Retention period
 enforcement ✅ Privacy notice generation
 
 ---
@@ -405,9 +413,9 @@ npm run db:migrate   # Apply migrations
 
 ## Conclusion
 
-The Okaeri Resort System now implements comprehensive Philippine Data Privacy
-Act compliance features, achieving **92% compliance** rating. All critical gaps
-have been addressed:
+The Okaeri Resort System now implements comprehensive internal data management
+features for staff data protection and operational security. All critical
+security gaps have been addressed:
 
 ✅ **Comprehensive audit logging** tracks all personal data access ✅ **Privacy
 consent management** with granular control ✅ **Data retention policies** with

@@ -5,15 +5,7 @@
 
 import { test, expect, type Page, type BrowserContext } from "@playwright/test";
 
-// Test data
-const TEST_USER = {
-  name: "Juan Dela Cruz",
-  email: "juan.delacruz@okaeriresort.ph",
-  password: "SecurePassword123!",
-  confirmPassword: "SecurePassword123!",
-  projectName: "Okaeri Beach Resort",
-  phone: "+639171234567",
-};
+// TEST_USER removed - staff accounts created by admin only
 
 const EXISTING_USER = {
   email: "owner@okaeriresort.ph",
@@ -26,23 +18,7 @@ async function fillLoginForm(page: Page, email: string, password: string) {
   await page.fill('input[type="password"]', password);
 }
 
-async function fillRegistrationForm(page: Page, userData = TEST_USER) {
-  await page.fill('input[name="name"]', userData.name);
-  await page.fill('input[name="email"]', userData.email);
-  await page.fill('input[name="password"]', userData.password);
-  await page.fill('input[name="confirmPassword"]', userData.confirmPassword);
-
-  if (userData.projectName) {
-    await page.fill('input[name="projectName"]', userData.projectName);
-  }
-
-  if (userData.phone) {
-    await page.fill('input[name="phone"]', userData.phone);
-  }
-
-  // Accept terms
-  await page.check('input[name="acceptTerms"]');
-}
+// fillRegistrationForm removed - staff accounts created by admin only
 
 async function waitForNetworkIdle(page: Page) {
   await page.waitForLoadState("networkidle");
@@ -167,127 +143,8 @@ test.describe("Authentication Flow E2E Tests", () => {
     });
   });
 
-  test.describe("Registration Flow", () => {
-    test("should successfully register a new user", async ({ page }) => {
-      // Go to registration page
-      await page.click("text=Create your resort account");
-      await expect(page).toHaveURL("/register");
-
-      // Fill registration form
-      await fillRegistrationForm(page);
-
-      // Submit form
-      await page.click('button[type="submit"]');
-
-      // Should redirect to dashboard after successful registration
-      await expect(page).toHaveURL("/dashboard");
-
-      // Verify user is logged in
-      await expect(page.locator('[data-testid="user-menu"]')).toBeVisible();
-    });
-
-    test("should validate registration form", async ({ page }) => {
-      await page.goto("/register");
-
-      // Submit empty form
-      await page.click('button[type="submit"]');
-
-      // Check required field validations
-      await expect(page.locator("text=Name is required")).toBeVisible();
-      await expect(page.locator("text=Email is required")).toBeVisible();
-      await expect(page.locator("text=Password must be at least 8 characters")).toBeVisible();
-      await expect(page.locator("text=You must accept the terms")).toBeVisible();
-    });
-
-    test("should validate password strength", async ({ page }) => {
-      await page.goto("/register");
-
-      // Test weak password
-      await page.fill('input[name="password"]', "weak");
-      await page.fill('input[name="confirmPassword"]', "weak");
-
-      // Should show password strength indicator
-      await expect(page.locator('[data-testid="password-strength"]')).toBeVisible();
-      await expect(page.locator("text=weak", { exact: false })).toBeVisible();
-
-      // Test strong password
-      await page.fill('input[name="password"]', "StrongPassword123!");
-      await page.fill('input[name="confirmPassword"]', "StrongPassword123!");
-
-      await expect(page.locator("text=strong", { exact: false })).toBeVisible();
-    });
-
-    test("should validate password confirmation", async ({ page }) => {
-      await page.goto("/register");
-
-      await page.fill('input[name="name"]', TEST_USER.name);
-      await page.fill('input[name="email"]', TEST_USER.email);
-      await page.fill('input[name="password"]', TEST_USER.password);
-      await page.fill('input[name="confirmPassword"]', "DifferentPassword123!");
-      await page.check('input[name="acceptTerms"]');
-
-      await page.click('button[type="submit"]');
-
-      await expect(page.locator("text=Passwords do not match")).toBeVisible();
-    });
-
-    test("should validate Philippine phone numbers", async ({ page }) => {
-      await page.goto("/register");
-
-      // Test invalid phone numbers
-      const invalidNumbers = [
-        "1234567890", // Non-Philippine
-        "09171234", // Too short
-        "+63917123456789", // Too long
-        "not-a-number", // Invalid format
-      ];
-
-      for (const number of invalidNumbers) {
-        await page.fill('input[name="phone"]', number);
-        await page.click('input[name="name"]'); // Trigger validation
-
-        await expect(
-          page.locator("text=Please enter a valid Philippine phone number")
-        ).toBeVisible();
-        await page.fill('input[name="phone"]', ""); // Clear for next test
-      }
-
-      // Test valid phone number
-      await page.fill('input[name="phone"]', "+639171234567");
-      await page.click('input[name="name"]');
-
-      // Should not show error
-      await expect(
-        page.locator("text=Please enter a valid Philippine phone number")
-      ).not.toBeVisible();
-    });
-
-    test("should handle registration with existing email", async ({ page }) => {
-      await page.goto("/register");
-
-      // Try to register with existing user's email
-      await fillRegistrationForm(page, {
-        ...TEST_USER,
-        email: EXISTING_USER.email,
-      });
-
-      await page.click('button[type="submit"]');
-
-      // Should show error
-      await expect(page.locator("text=User already exists")).toBeVisible();
-    });
-
-    test("should show loading state during registration", async ({ page }) => {
-      await page.goto("/register");
-      await fillRegistrationForm(page);
-
-      await page.click('button[type="submit"]');
-
-      // Should show loading state
-      await expect(page.locator("text=Creating account...")).toBeVisible();
-      await expect(page.locator("button[disabled]")).toBeVisible();
-    });
-  });
+  // Registration Flow removed - staff accounts created by admin only
+  // Internal system has no self-registration capability
 
   test.describe("Forgot Password Flow", () => {
     test("should send password reset email", async ({ page }) => {

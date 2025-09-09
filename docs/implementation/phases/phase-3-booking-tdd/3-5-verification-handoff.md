@@ -1,5 +1,11 @@
 # Sub-phase 3.5: Verification and Handoff
 
+> **⚠️ LEGACY DOCUMENT WARNING**  
+> This is a legacy implementation document from early project phases. Some
+> capability claims may be outdated or inaccurate. This document is preserved
+> for historical context and should be validated against current system
+> capabilities before use.
+
 ## Overview
 
 This final sub-phase ensures all components are properly tested, documented, and
@@ -305,8 +311,8 @@ export const securityAudit = {
     financialCompliance: {
       status: "PASSED",
       requirements: [
-        "BIR receipt format compliance",
-        "VAT calculation accuracy",
+        "Internal receipt format compliance",
+        "Balance calculation accuracy",
         "Senior/PWD discount implementation",
         "Audit trail for all transactions",
       ],
@@ -666,7 +672,7 @@ export const qaHandoff = {
     "Single room availability check",
     "Create and confirm booking",
     "Process GCash payment",
-    "Generate BIR-compliant receipt",
+    "Generate internal-compliant receipt",
     "Cancel booking with refund",
     "Multi-room group booking",
   ],

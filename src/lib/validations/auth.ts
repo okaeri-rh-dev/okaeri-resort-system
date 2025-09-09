@@ -1,6 +1,7 @@
 /**
- * Authentication form validation schemas using Zod
- * Designed for Philippine context with proper password requirements
+ * Staff Authentication Validation Schemas
+ * Internal use only - no customer registration
+ * Staff accounts created by admin directly in database
  */
 
 import { z } from "zod";
@@ -88,23 +89,8 @@ export const loginSchema = z.object({
   rememberMe: z.boolean().default(false),
 });
 
-// Registration form schema
-export const registerSchema = z
-  .object({
-    name: nameSchema,
-    email: emailSchema,
-    password: passwordSchema,
-    confirmPassword: z.string().min(1, "Please confirm your password"),
-    projectName: projectNameSchema,
-    phone: phoneSchema,
-    acceptTerms: z
-      .boolean()
-      .refine((val) => val === true, "You must accept the terms and conditions"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
+// Note: Registration schema removed - staff accounts created by admin only
+// No self-registration for internal system
 
 // Forgot password form schema
 export const forgotPasswordSchema = z.object({
@@ -149,7 +135,7 @@ export const profileUpdateSchema = z.object({
 
 // Type exports for TypeScript
 export type LoginFormData = z.infer<typeof loginSchema>;
-export type RegisterFormData = z.infer<typeof registerSchema>;
+// RegisterFormData removed - no customer registration
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 export type UpdatePasswordFormData = z.infer<typeof updatePasswordSchema>;

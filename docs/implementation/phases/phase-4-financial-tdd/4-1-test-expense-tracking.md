@@ -1,9 +1,23 @@
+> ⚠️ **LEGACY DOCUMENTATION WARNING**
+>
+> This document contains outdated scope claims that do not reflect the current
+> system implementation. The system provides **INTERNAL TRACKING ONLY** and does
+> not implement:
+>
+> - BIR compliance or tax calculations
+> - Payment processing or gateway integrations
+> - Government regulatory features
+> - Customer-facing payment functionality
+>
+> This documentation is preserved for historical context but should not be used
+> as a reference for current system capabilities.
+
 # Phase 4.1: Test Expense Tracking (RED Phase)
 
 ## Overview
 
 This document defines comprehensive test specifications for the expense tracking
-module, focusing on Philippine resort operational expenses and BIR compliance
+module, focusing on resort operational expenses and internal tracking
 requirements. All tests must fail initially as no implementation exists yet.
 
 ## Agent Responsibility
@@ -748,7 +762,7 @@ describe("Performance Tests", () => {
 ### Compliance Validation
 
 - All BIR requirements properly tested
-- VAT calculations accurate to centavo
+- Balance calculations accurate to centavo
 - Withholding tax scenarios covered
 - Receipt generation format validated
 

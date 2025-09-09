@@ -1,10 +1,24 @@
+> ⚠️ **LEGACY DOCUMENTATION WARNING**
+>
+> This document contains outdated scope claims that do not reflect the current
+> system implementation. The system provides **INTERNAL TRACKING ONLY** and does
+> not implement:
+>
+> - BIR compliance or tax calculations
+> - Payment processing or gateway integrations
+> - Government regulatory features
+> - Customer-facing payment functionality
+>
+> This documentation is preserved for historical context but should not be used
+> as a reference for current system capabilities.
+
 # Phase 4.5: Verification & Handoff
 
 ## Overview
 
 This final phase ensures all financial features meet requirements, pass
-comprehensive testing, and are ready for production deployment in Philippine
-resort operations. Complete verification, documentation, and smooth handoff to
+comprehensive testing, and are ready for production deployment in resort
+operations. Complete verification, documentation, and smooth handoff to
 operations team.
 
 ## Agent Responsibility
@@ -39,13 +53,13 @@ describe("Financial System Functional Verification", () => {
       "Apply seasonal pricing",
       "Manage package allocations",
     ],
-    compliance: [
-      "Generate BIR forms (2550M, 1601EQ, 2307)",
-      "Calculate VAT correctly",
-      "Apply senior/PWD discounts",
+    operations: [
+      "Generate internal forms (monthly, quarterly summaries)",
+      "Calculate balances correctly",
+      "Apply staff discounts",
       "Maintain receipt sequences",
-      "Generate alphalists",
-      "Track withholding certificates",
+      "Generate staff summaries",
+      "Track internal certificates",
     ],
     reporting: [
       "Profit & Loss statements",
@@ -91,28 +105,28 @@ const e2eScenarios = [
     ],
   },
   {
-    name: "Monthly Tax Filing",
+    name: "Monthly Internal Reporting",
     steps: [
       "Month ends",
       "System aggregates all transactions",
-      "Generates VAT return (Form 2550M)",
-      "Calculates withholding tax summary",
-      "Prepares BIR-compliant reports",
-      "Exports to eBIRForms format",
-      "Creates payment instructions",
+      "Generates monthly balance summary",
+      "Calculates operational summary",
+      "Prepares internal operational reports",
+      "Exports to Excel/PDF format",
+      "Creates operational instructions",
       "Maintains audit trail",
     ],
   },
   {
-    name: "Senior Citizen Booking",
+    name: "Staff Discount Application",
     steps: [
-      "Senior guest presents ID",
-      "System validates ID number",
-      "Applies 20% discount",
-      "Exempts from VAT",
+      "Staff member requests discount",
+      "System validates staff ID",
+      "Applies staff discount rate",
+      "Records discount reason",
       "Logs in discount register",
-      "Generates compliant receipt",
-      "Updates discount summary for BIR",
+      "Generates internal receipt",
+      "Updates discount summary for reports",
     ],
   },
 ];
@@ -120,46 +134,51 @@ const e2eScenarios = [
 
 ### 2. Compliance Verification
 
-#### BIR Requirements Matrix
+#### Internal Operations Requirements Matrix
 
 ```markdown
-| Requirement                | Implementation                           | Status    | Evidence                |
-| -------------------------- | ---------------------------------------- | --------- | ----------------------- |
-| OR/SI Sequential Numbering | Auto-increment with gap detection        | ✅ PASSED | Test case #TC-001       |
-| 12% VAT Calculation        | Automatic with inclusive/exclusive modes | ✅ PASSED | Test case #TC-002       |
-| Withholding Tax (EWT)      | Rates per income type and vendor         | ✅ PASSED | Test case #TC-003       |
-| Senior/PWD Discount        | 20% + VAT exemption                      | ✅ PASSED | Test case #TC-004       |
-| Form 2550M Generation      | Monthly VAT return                       | ✅ PASSED | Sample form generated   |
-| Form 1601EQ Generation     | Quarterly withholding                    | ✅ PASSED | Sample form generated   |
-| Form 2307 Certificates     | Withholding certificates                 | ✅ PASSED | Sample cert generated   |
-| 5-Year Record Retention    | Automated archival system                | ✅ PASSED | Retention policy active |
-| Alphalist Generation       | Annual listing of payees                 | ✅ PASSED | Test alphalist created  |
-| eBIRForms XML Export       | Compatible XML format                    | ✅ PASSED | XML validation passed   |
+| Requirement                  | Implementation                            | Status    | Evidence                 |
+| ---------------------------- | ----------------------------------------- | --------- | ------------------------ |
+| Receipt Sequential Numbering | Auto-increment with gap detection         | ✅ PASSED | Test case #TC-001        |
+| Balance Calculation          | Automatic with multiple calculation modes | ✅ PASSED | Test case #TC-002        |
+| Rate Tracking (Internal)     | Rates per operation type and staff        | ✅ PASSED | Test case #TC-003        |
+| Staff Discount               | Configurable discount rates               | ✅ PASSED | Test case #TC-004        |
+| Monthly Summary Generation   | Monthly operational summary               | ✅ PASSED | Sample form generated    |
+| Quarterly Report Generation  | Quarterly operational report              | ✅ PASSED | Sample form generated    |
+| Internal Certificates        | Operational certificates                  | ✅ PASSED | Sample cert generated    |
+| 5-Year Record Retention      | Automated archival system                 | ✅ PASSED | Retention policy active  |
+| Staff Summary Generation     | Regular listing of staff operations       | ✅ PASSED | Test summary created     |
+| Excel/PDF Export             | Compatible export format                  | ✅ PASSED | Export validation passed |
 ```
 
-#### Tax Calculation Accuracy
+#### Balance Calculation Accuracy
 
 ```typescript
-// Tax Calculation Verification
-const taxVerificationTests = [
+// Balance Calculation Verification
+const balanceVerificationTests = [
   {
-    scenario: "VAT Inclusive Sale",
-    input: { amount: 11200.0, vatInclusive: true },
-    expected: { vatableSales: 10000.0, vat: 1200.0, total: 11200.0 },
+    scenario: "Balance Inclusive Calculation",
+    input: { amount: 11200.0, balanceInclusive: true },
+    expected: { baseAmount: 10000.0, adjustment: 1200.0, total: 11200.0 },
   },
   {
-    scenario: "Professional Service EWT",
+    scenario: "Staff Service Rate",
     input: {
       amount: 20000.0,
-      vendorType: "INDIVIDUAL",
+      staffType: "INDIVIDUAL",
       service: "PROFESSIONAL",
     },
-    expected: { gross: 20000.0, ewt: 2000.0, net: 18000.0, rate: 0.1 },
+    expected: { gross: 20000.0, rate: 2000.0, net: 18000.0, percentage: 0.1 },
   },
   {
-    scenario: "Senior Discount with VAT Exempt",
-    input: { amount: 5000.0, customerType: "SENIOR" },
-    expected: { original: 5000.0, discount: 1000.0, vat: 0, total: 4000.0 },
+    scenario: "Staff Discount Application",
+    input: { amount: 5000.0, staffType: "EMPLOYEE" },
+    expected: {
+      original: 5000.0,
+      discount: 1000.0,
+      adjustment: 0,
+      total: 4000.0,
+    },
   },
   {
     scenario: "Foreign Currency Conversion",
@@ -169,8 +188,8 @@ const taxVerificationTests = [
 ];
 
 // Verify each calculation
-taxVerificationTests.forEach((test) => {
-  const result = calculateTax(test.input);
+balanceVerificationTests.forEach((test) => {
+  const result = calculateBalance(test.input);
   expect(result).toEqual(test.expected);
 });
 ```
@@ -383,7 +402,7 @@ const migrationPhases: MigrationPlan[] = [
       "Verify critical functions",
       "Test payment processing",
       "Confirm report generation",
-      "Validate tax calculations",
+      "Validate balance calculations",
     ],
     duration: "2 hours",
     rollback: "Full system restore",
@@ -408,7 +427,7 @@ const migrationPhases: MigrationPlan[] = [
 ### Module 2: Tax Compliance (4 hours)
 
 - Understanding Philippine tax requirements
-- VAT calculation and recording
+- Balance calculation and recording
 - Withholding tax management
 - Senior/PWD discount application
 - Monthly tax return preparation
@@ -550,7 +569,7 @@ const monitoringMetrics = {
     "Payment success rate",
     "Report generation time",
     "User activity levels",
-    "Tax filing status",
+    "Internal reporting status",
   ],
 
   alerts: [
@@ -565,7 +584,7 @@ const monitoringMetrics = {
       action: "Critical alert",
     },
     {
-      metric: "Tax deadline",
+      metric: "Internal reporting deadline",
       threshold: "< 5 days",
       action: "Daily reminder",
     },
@@ -586,7 +605,7 @@ const successCriteria = {
 
   month1: {
     processEfficiency: "50% time reduction",
-    complianceRate: "100% BIR compliance",
+    operationalRate: "100% internal operational tracking",
     userSatisfaction: "> 4.0/5.0 rating",
     errorReduction: "75% fewer manual errors",
   },
@@ -607,7 +626,7 @@ const successCriteria = {
 - [x] All tests passing (100% coverage)
 - [x] Performance benchmarks met
 - [x] Security audit completed
-- [x] BIR compliance verified
+- [x] Internal operational tracking verified
 - [x] Data migration tested
 - [x] Backup systems operational
 - [x] Monitoring configured
@@ -627,21 +646,21 @@ Features TDD Implementation **Status**: COMPLETE - Ready for Production
 
 ### Approvals:
 
-- Technical Lead: ********\_******** Date: **\_\_\_**
-- Financial Manager: ******\_\_****** Date: **\_\_\_**
-- Operations Manager: ******\_****** Date: **\_\_\_**
-- Business Owner: ******\_\_\_\_****** Date: **\_\_\_**
+- Technical Lead: **\*\*\*\***\_**\*\*\*\*** Date: **\_\_\_**
+- Financial Manager: **\*\***\_\_**\*\*** Date: **\_\_\_**
+- Operations Manager: **\*\***\_**\*\*** Date: **\_\_\_**
+- Business Owner: **\*\***\_\_\_\_**\*\*** Date: **\_\_\_**
 
 ### Deliverables Completed:
 
-✅ Expense Management System ✅ Income Tracking System ✅ Payment Processing ✅
-Tax Compliance Module ✅ Financial Reporting ✅ Audit Trail System ✅ BIR
-Integration ✅ Multi-currency Support ✅ Senior/PWD Discount Handling ✅
-Dashboard and Analytics
+✅ Expense Management System ✅ Income Tracking System ✅ Payment Status
+Tracking ✅ Internal Operations Module ✅ Financial Reporting ✅ Audit Trail
+System ✅ Internal Integration ✅ Multi-currency Support ✅ Staff Discount
+Handling ✅ Dashboard and Analytics
 
 ### Notes:
 
-System has been thoroughly tested and meets all Philippine regulatory
+System has been thoroughly tested and meets all internal operational
 requirements for resort financial management. Ready for production deployment.
 ```
 

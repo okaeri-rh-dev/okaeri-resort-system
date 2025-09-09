@@ -1,5 +1,18 @@
 # Sub-Phase 5.5: Go-Live Checklist
 
+> ⚠️ **LEGACY DOCUMENTATION WARNING**
+>
+> This document contains outdated scope claims that do not reflect the current
+> system implementation. The system provides **INTERNAL TRACKING ONLY** and does
+> not implement:
+>
+> - Payment status tracking or gateway integrations
+> - Government regulatory features
+> - Customer-facing functionality
+>
+> This documentation is preserved for historical context but should not be used
+> as a reference for current system capabilities.
+
 ## Overview
 
 This final sub-phase provides a comprehensive go-live checklist for deploying
@@ -208,7 +221,7 @@ npm run test:security:staging
 
 # 5. Business workflow testing
 # - Test complete booking flow
-# - Test payment processing
+# - Test payment status tracking
 # - Test user authentication
 # - Test data export/import
 ```

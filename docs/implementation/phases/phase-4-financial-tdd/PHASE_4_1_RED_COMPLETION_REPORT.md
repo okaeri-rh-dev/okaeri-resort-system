@@ -1,5 +1,12 @@
 # Phase 4.1 RED Completion Report: Expense Tracking Test Suite
 
+> ⚠️ **LEGACY DOCUMENT WARNING**: This document contains outdated references to
+> BIR compliance, payment processing, and customer-facing features. The system
+> has since been **redefined as INTERNAL-ONLY staff management** per
+> INTERNAL_USE_REQUIREMENTS.md. References to BIR compliance, payment
+> processing, and regulatory features are **no longer applicable** to the actual
+> system.
+
 > **Status**: ✅ RED Phase Complete  
 > **Completion Date**: September 9, 2025  
 > **Lead Agent**: resort-finance-architect  
@@ -10,7 +17,7 @@
 
 Phase 4.1 RED phase has been successfully completed through parallel execution
 by specialized agents. The comprehensive test suite for expense tracking with
-Philippine compliance is ready, providing a solid foundation for the GREEN phase
+internal requirements is ready, providing a solid foundation for the GREEN phase
 implementation.
 
 ## Achievements by Agent
@@ -19,12 +26,12 @@ implementation.
 
 **Deliverables Completed:**
 
-- Financial specifications document with Philippine BIR compliance
+- Financial specifications document with internal tracking requirements
 - 48 expense categories for resort operations
-- Tax calculation formulas (12% VAT, 10%/2% EWT)
+- Balance calculation formulas (12% service charges, various internal rates)
 - Approval workflow design (auto < ₱1K, manager < ₱10K, owner > ₱10K)
 - Petty cash management rules (₱10K fund, ₱2K max disbursement)
-- Vendor TIN validation specifications
+- Vendor ID validation specifications
 
 ### 2. typescript-react-quality-expert ✅
 
@@ -49,7 +56,7 @@ implementation.
 
 **Database Schema Designed:**
 
-- 9 comprehensive tables with Philippine compliance
+- 9 comprehensive tables with internal compliance
 - DECIMAL(12,2) for PHP amounts
 - Multi-tenant isolation with project_id
 - Audit trail with 5-year retention
@@ -60,12 +67,12 @@ implementation.
 
 **Form Components Created:**
 
-- ExpenseForm with VAT calculation
-- VendorForm with TIN validation
+- ExpenseForm with service charge calculation
+- VendorForm with ID validation
 - PettyCashForm with disbursement limits
 - ApprovalForm with role-based limits
 - FileUpload with receipt handling
-- Custom validation hooks for Philippine rules
+- Custom validation hooks for internal rules
 
 ### 5. security-compliance-auditor ✅
 
@@ -73,8 +80,8 @@ implementation.
 
 - 3 critical vulnerabilities identified
 - 3 high-priority issues documented
-- Data Privacy Act compliance assessment
-- BIR compliance verification
+- Data Privacy requirements assessment
+- Internal tracking verification
 - Security implementation guide provided
 - Risk assessment matrix delivered
 
@@ -99,19 +106,19 @@ Type Errors: no errors
 Duration: 620ms
 ```
 
-## Philippine Compliance Features Tested
+## Internal Tracking Features Tested
 
-### Tax Calculations ✅
+### Balance Calculations ✅
 
-- 12% VAT (inclusive/exclusive/exempt/zero-rated)
-- Withholding tax rates (1%, 2%, 5%, 10%, 15%)
-- Senior/PWD discounts with VAT exemption
-- BIR Form 2307 and 2550M generation
+- 12% service charges (inclusive/exclusive/exempt/zero-rated)
+- Internal fee rates (1%, 2%, 5%, 10%, 15%)
+- Staff discounts with service charge exemption
+- Internal report generation
 
 ### Business Rules ✅
 
-- TIN format validation (Individual vs Corporation)
-- OR number format (YYYY-SSSS-NNNNNNNN)
+- ID format validation (Individual vs Corporate)
+- Receipt number format (YYYY-SSSS-NNNNNNNN)
 - 5-year document retention
 - Approval workflows by amount
 - Petty cash limits and reconciliation
@@ -156,7 +163,7 @@ docs/database/
 
 ### Must Fix Before Production:
 
-1. **TIN Encryption**: Implement field-level encryption
+1. **ID Encryption**: Implement field-level encryption
 2. **Decimal Precision**: Replace JavaScript numbers with Decimal.js
 3. **SQL Injection**: Fix multi-tenant query vulnerabilities
 

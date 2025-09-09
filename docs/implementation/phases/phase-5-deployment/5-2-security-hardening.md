@@ -1,4 +1,18 @@
-# Sub-Phase 5.2: Security Hardening
+# Sub-Phase 5.2: Security Hardening - LEGACY DOCUMENT
+
+> ⚠️ **LEGACY DOCUMENTATION WARNING**
+>
+> This document contains outdated scope claims that do not reflect the current
+> system implementation. The system provides **INTERNAL TRACKING ONLY** and does
+> not implement:
+>
+> - Staff data protection, payment gateway security, and internal data
+>   management compliance references
+> - Government regulatory features
+> - Customer-facing functionality
+>
+> This documentation is preserved for historical context but should not be used
+> as a reference for current system capabilities.
 
 ## Overview
 

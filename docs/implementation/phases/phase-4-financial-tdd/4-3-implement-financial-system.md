@@ -1,16 +1,30 @@
-# Phase 4.3: Implement Financial System (GREEN Phase)
+# Phase 4.3: Implement Internal Balance System (GREEN Phase) - LEGACY DOCUMENT
+
+> ⚠️ **LEGACY DOCUMENTATION WARNING**
+>
+> This document contains outdated scope claims that do not reflect the current
+> system implementation. The system provides **INTERNAL TRACKING ONLY** and does
+> not implement:
+>
+> - BIR compliance or tax calculations
+> - Payment processing or gateway integrations
+> - Government regulatory features
+> - Customer-facing payment functionality
+>
+> This documentation is preserved for historical context but should not be used
+> as a reference for current system capabilities.
 
 ## Overview
 
-This document guides the minimal implementation necessary to make all financial
-tests pass. Focus on correctness and Philippine compliance requirements before
-optimization.
+This document guides the minimal implementation necessary to make all internal
+balance tests pass. Focus on correctness and internal operational requirements
+before optimization.
 
 ## Agent Responsibility
 
-**Financial Systems Architect**: Implement core financial features with emphasis
-on accuracy, compliance, and security. All implementations must pass the tests
-defined in phases 4.1 and 4.2.
+**Internal Systems Architect**: Implement core internal balance features with
+emphasis on accuracy, operational requirements, and security. All
+implementations must pass the tests defined in phases 4.1 and 4.2.
 
 ## Implementation Architecture
 
@@ -18,12 +32,12 @@ defined in phases 4.1 and 4.2.
 
 ```typescript
 // Core financial system architecture
-interface FinancialSystem {
+interface InternalBalanceSystem {
   expenses: ExpenseModule;
   income: IncomeModule;
-  payments: PaymentModule;
+  balances: BalanceModule;
   reporting: ReportingModule;
-  compliance: ComplianceModule;
+  operations: OperationsModule;
   audit: AuditModule;
 }
 
@@ -104,9 +118,9 @@ export class ExpenseService {
       throw new ValidationError("Expense date cannot be in the future");
     }
 
-    // Calculate VAT if applicable
-    const vatAmount = expenseData.isVatable
-      ? this.calculateVAT(expenseData.amount)
+    // Calculate internal balance if applicable
+    const balanceAmount = expenseData.hasInternalCalculation
+      ? this.calculateInternalBalance(expenseData.amount)
       : 0;
 
     // Create expense with audit trail
@@ -114,8 +128,8 @@ export class ExpenseService {
       const created = await tx.expense.create({
         data: {
           ...expenseData,
-          vatAmount,
-          netAmount: expenseData.amount - vatAmount,
+          balanceAmount,
+          netAmount: expenseData.amount - balanceAmount,
           status: "PENDING_APPROVAL",
           createdBy: expenseData.userId,
         },
@@ -136,11 +150,11 @@ export class ExpenseService {
     return expense;
   }
 
-  private calculateVAT(amount: number): number {
-    // Philippine VAT calculation (12%)
-    const vatableSales = amount / 1.12;
-    const vatAmount = vatableSales * 0.12;
-    return Math.round(vatAmount * 100) / 100; // Round to 2 decimal places for precision
+  private calculateInternalBalance(amount: number): number {
+    // Internal balance calculation (12%)
+    const baseAmount = amount / 1.12;
+    const calculationAmount = baseAmount * 0.12;
+    return Math.round(calculationAmount * 100) / 100; // Round to 2 decimal places for precision
   }
 
   async getCategories(): Promise<ExpenseCategory[]> {
@@ -389,7 +403,7 @@ export class VendorService {
   async calculateWithholding(
     expense: WithholdingExpense
   ): Promise<WithholdingTax> {
-    // Determine withholding tax rate based on vendor type and service
+    // Determine internal fee rate based on vendor type and service
     let rate = 0;
     let form = "";
 
@@ -399,7 +413,7 @@ export class VendorService {
       } else if (expense.vendorType === "CORPORATION") {
         rate = 0.15; // 15% for corporate professional services
       }
-      form = "2307"; // BIR Form 2307 for EWT
+      form = "2307"; // Internal Form 2307 for EWT
     }
 
     const withholdingAmount = expense.amount * rate;
@@ -463,8 +477,10 @@ export class IncomeService {
         ? parseFloat(booking.totalAmount)
         : booking.totalAmount;
 
-    // Calculate VAT
-    const vatAmount = booking.isVatable ? this.calculateVAT(amount) : 0;
+    // Calculate internal balance
+    const balanceAmount = booking.hasInternalCalculation
+      ? this.calculateInternalBalance(amount)
+      : 0;
 
     const income = await this.prisma.$transaction(async (tx) => {
       // Create income record
@@ -474,8 +490,8 @@ export class IncomeService {
           category: "ACCOMMODATION",
           description: `${booking.roomType} - ${booking.numberOfNights} nights`,
           amount, // Use parsed number
-          vatAmount,
-          netAmount: amount - vatAmount,
+          balanceAmount,
+          netAmount: amount - balanceAmount,
           revenueDate: booking.checkInDate,
           recognitionMethod: "CHECK_IN_DATE",
           guestName: booking.guestName,
@@ -982,15 +998,18 @@ export class CurrencyService {
 }
 ```
 
-## 3. Compliance and Tax Implementation
+## 3. Internal Requirements and Balance Implementation
 
-### Tax Calculator
+### Balance Calculator
 
 ```typescript
 // services/tax-calculator.service.ts
 @Injectable()
-export class TaxCalculatorService {
-  calculateVAT(amount: number, isInclusive: boolean = true): VATCalculation {
+export class BalanceCalculatorService {
+  calculateInternalBalance(
+    amount: number,
+    isInclusive: boolean = true
+  ): BalanceCalculation {
     const vatRate = 0.12; // 12% Philippine VAT
 
     if (isInclusive) {
@@ -1111,7 +1130,7 @@ export class DiscountService {
     // Senior citizens are VAT exempt on discounted amount
     const vatAmount = 0;
 
-    // Log discount for BIR compliance
+    // Log discount for Internal tracking
     await this.logDiscount({
       type: "SENIOR",
       customerName: sale.customerName,
@@ -1146,7 +1165,7 @@ export class DiscountService {
     // PWDs are VAT exempt on discounted amount
     const vatAmount = 0;
 
-    // Log discount for BIR compliance
+    // Log discount for Internal tracking
     await this.logDiscount({
       type: "PWD",
       customerName: sale.customerName,
@@ -1179,7 +1198,7 @@ export class DiscountService {
         originalAmount: discount.originalAmount,
         discountAmount: discount.discountAmount,
         vatExempted: discount.vatExempted,
-        birCompliant: true,
+        internallyCompliant: true,
         attachments: ["id-copy.jpg"],
       },
     });
@@ -1360,23 +1379,25 @@ export class ReportGeneratorService {
     };
   }
 
-  async generateBIRCompliantReport(
+  async generateInternalReport(
     type: string,
     period: string
-  ): Promise<BIRReport> {
+  ): Promise<InternalReport> {
     switch (type) {
-      case "MONTHLY_VAT":
-        return this.generateMonthlyVATReturn(period);
-      case "QUARTERLY_VAT":
-        return this.generateQuarterlyVATReturn(period);
-      case "ANNUAL_ITR":
-        return this.generateAnnualITR(period);
+      case "MONTHLY_BALANCE":
+        return this.generateMonthlyBalanceReport(period);
+      case "QUARTERLY_BALANCE":
+        return this.generateQuarterlyBalanceReport(period);
+      case "ANNUAL_SUMMARY":
+        return this.generateAnnualSummary(period);
       default:
         throw new Error(`Unknown report type: ${type}`);
     }
   }
 
-  private async generateMonthlyVATReturn(month: string): Promise<VATReturn> {
+  private async generateMonthlyBalanceReport(
+    month: string
+  ): Promise<BalanceReport> {
     const startDate = new Date(`${month}-01`);
     const endDate = new Date(
       startDate.getFullYear(),
@@ -1384,57 +1405,60 @@ export class ReportGeneratorService {
       0
     );
 
-    // Calculate VAT on sales
+    // Calculate balance on sales
     const sales = await this.prisma.income.aggregate({
       where: {
         revenueDate: {
           gte: startDate,
           lte: endDate,
         },
-        isVatable: true,
+        hasInternalCalculation: true,
       },
       _sum: {
         amount: true,
-        vatAmount: true,
+        balanceAmount: true,
       },
     });
 
-    // Calculate input VAT (from expenses)
+    // Calculate balance from expenses
     const purchases = await this.prisma.expense.aggregate({
       where: {
         date: {
           gte: startDate,
           lte: endDate,
         },
-        isVatable: true,
+        hasInternalCalculation: true,
       },
       _sum: {
-        vatAmount: true,
+        balanceAmount: true,
       },
     });
 
-    const outputVAT = sales._sum.vatAmount || 0;
-    const inputVAT = purchases._sum.vatAmount || 0;
-    const netVAT = outputVAT - inputVAT;
+    const outputBalance = sales._sum.balanceAmount || 0;
+    const inputBalance = purchases._sum.balanceAmount || 0;
+    const netBalance = outputBalance - inputBalance;
 
     return {
-      form: "2550M", // BIR Form 2550M (Monthly VAT)
+      form: "INTERNAL-BALANCE", // Internal Balance Report
       period: month,
-      taxableBase: (sales._sum.amount || 0) - (sales._sum.vatAmount || 0),
-      outputVAT,
-      inputVAT,
-      netVATPayable: Math.max(0, netVAT),
-      excessInputVAT: Math.max(0, -netVAT),
-      dueDate: this.getVATDueDate(endDate),
+      calculationBase:
+        (sales._sum.amount || 0) - (sales._sum.balanceAmount || 0),
+      outputBalance,
+      inputBalance,
+      netBalanceAmount: Math.max(0, netBalance),
+      excessInputBalance: Math.max(0, -netBalance),
+      reportDate: this.getBalanceReportDate(endDate),
     };
   }
 
-  private getVATDueDate(periodEnd: Date): Date {
-    // VAT due on 20th of following month
-    const dueDate = new Date(periodEnd);
-    dueDate.setMonth(dueDate.getMonth() + 1);
-    dueDate.setDate(20);
-    return dueDate;
+  private getBalanceReportDate(periodEnd: Date): Date {
+    // Balance report date on last day of following month
+    const reportDate = new Date(periodEnd);
+    reportDate.setMonth(reportDate.getMonth() + 1);
+    reportDate.setDate(
+      new Date(reportDate.getFullYear(), reportDate.getMonth() + 1, 0).getDate()
+    );
+    return reportDate;
   }
 }
 ```
@@ -1453,7 +1477,7 @@ CREATE TABLE expenses (
   vendor_tin VARCHAR(20),
   description TEXT,
   amount DECIMAL(12, 2) NOT NULL,        -- Stored as precise decimal
-  vat_amount DECIMAL(12, 2) DEFAULT 0,   -- Stored as precise decimal
+  balance_amount DECIMAL(12, 2) DEFAULT 0,   -- Stored as precise decimal
   net_amount DECIMAL(12, 2) NOT NULL,    -- Stored as precise decimal
   payment_method VARCHAR(50),
   reference_number VARCHAR(100),
@@ -1471,7 +1495,7 @@ CREATE TABLE income (
   category VARCHAR(50) NOT NULL,
   description TEXT,
   amount DECIMAL(12, 2) NOT NULL,
-  vat_amount DECIMAL(12, 2) DEFAULT 0,
+  balance_amount DECIMAL(12, 2) DEFAULT 0,
   net_amount DECIMAL(12, 2) NOT NULL,
   revenue_date DATE NOT NULL,
   recognition_method VARCHAR(50),

@@ -25,10 +25,9 @@ import { config } from "@/config";
 import { mockAuthService } from "@/mocks/auth-service";
 
 interface AuthActions {
-  // Auth actions
+  // Auth actions - Staff only
   login: (email: string, password: string, options?: { rememberMe?: boolean }) => Promise<void>;
   logout: () => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
   refreshTokens: () => Promise<void>; // PHASE 1 TEMPORARY: Renamed to avoid collision
   refreshSession: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -51,13 +50,6 @@ interface AuthActions {
   hasPermission: (resource: string, action: string) => boolean;
   hasRole: (role: string) => boolean;
   initializeAuth: () => Promise<void>;
-}
-
-interface RegisterData {
-  email: string;
-  password: string;
-  name: string;
-  projectName?: string;
 }
 
 interface LoginResponse {
@@ -291,127 +283,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         }
       },
 
-      register: async (data: RegisterData) => {
-        // [PHASE 1-4 MOCK AUTH - Remove this block in Phase 5.2]
-        if (import.meta.env.DEV && config.development.mockAuth) {
-          set((state) => {
-            state.isLoading = true;
-            state.error = null;
-          });
-
-          try {
-            const response = await mockAuthService.register(data);
-            const { user, token, refreshToken } = response;
-
-            tokenManager.storeTokens(token, refreshToken);
-            // Token is managed by TokenManager, not directly by apiClient
-
-            sessionMonitor.start({
-              timeout: TOKEN_EXPIRY.SESSION_TIMEOUT,
-              warningTime: TOKEN_EXPIRY.SESSION_WARNING,
-              onTimeout: () => {
-                get().logout();
-              },
-            });
-
-            set((state) => {
-              state.user = user;
-              state.token = token;
-              state.refreshToken = refreshToken;
-              state.sessionExpiry = Date.now() + TOKEN_EXPIRY.ACCESS_TOKEN;
-              state.isAuthenticated = true;
-              state.isLoading = false;
-            });
-            return;
-          } catch (error: any) {
-            set((state) => {
-              state.isLoading = false;
-              state.error = error.message || "Registration failed";
-            });
-            throw error;
-          }
-        }
-        // [END PHASE 1-4 MOCK AUTH]
-
-        // Check rate limit for registration
-        const rateLimit = rateLimiter.check("register", {
-          max: 3,
-          window: 60 * 60 * 1000, // 1 hour
-          identifier: data.email,
-        });
-
-        if (!rateLimit.allowed) {
-          const error = `Too many registration attempts. Please try again later.`;
-          set((state) => {
-            state.error = error;
-          });
-          throw new Error(error);
-        }
-
-        set((state) => {
-          state.isLoading = true;
-          state.error = null;
-        });
-
-        try {
-          const response = await apiClient.post<LoginResponse>("/auth/register", data);
-          const { user, accessToken, refreshToken } = response.data; // Use accessToken
-
-          // Validate token structure
-          const validation = tokenManager.validateTokenStructure(accessToken);
-          if (!validation.valid) {
-            throw new Error(validation.error || "Invalid token received");
-          }
-
-          // Store tokens securely
-          console.log("[DEBUG] Storing tokens:", {
-            token: `${accessToken.substring(0, 20)}...`,
-            refreshToken,
-          });
-          tokenManager.storeTokens(accessToken, refreshToken);
-          console.log("[DEBUG] Tokens stored, checking retrieval...");
-          const storedToken = tokenManager.getAccessToken();
-          console.log(
-            "[DEBUG] Retrieved token:",
-            storedToken ? `${storedToken.substring(0, 20)}...` : null
-          );
-
-          // Set auth token in API client
-          // Token is managed by TokenManager, not directly by apiClient
-
-          // Start session monitoring
-          sessionMonitor.start({
-            timeout: TOKEN_EXPIRY.SESSION_TIMEOUT,
-            warningTime: TOKEN_EXPIRY.SESSION_WARNING,
-            onTimeout: () => {
-              get().logout();
-            },
-          });
-
-          set((state) => {
-            state.user = user;
-            state.token = accessToken; // Use accessToken from response
-            state.refreshToken = refreshToken;
-            state.sessionExpiry = Date.now() + TOKEN_EXPIRY.ACCESS_TOKEN;
-            state.isAuthenticated = true;
-            state.isLoading = false;
-          });
-
-          // Log registration
-          auditLogger.log(AUDIT_EVENTS.DATA_CREATE, {
-            userId: user.id,
-            userEmail: user.email,
-            resource: "user",
-            result: "success",
-          });
-        } catch (error: any) {
-          set((state) => {
-            state.isLoading = false;
-            state.error = error.message || "Registration failed";
-          });
-          throw error;
-        }
-      },
+      // Note: Staff registration removed - admin creates accounts directly in database
 
       refreshTokens: async () => {
         // PHASE 1 TEMPORARY: Renamed to avoid collision with state property

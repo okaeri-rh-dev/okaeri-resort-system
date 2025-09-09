@@ -1,11 +1,18 @@
 # Phase 4: Financial Features TDD - Documentation Index
 
+> ⚠️ **LEGACY DOCUMENT WARNING**: This document contains outdated references to
+> BIR compliance, payment processing, and customer-facing features. The system
+> has since been **redefined as INTERNAL-ONLY staff management** per
+> INTERNAL_USE_REQUIREMENTS.md. References to BIR compliance, payment
+> processing, and regulatory features are **no longer applicable** to the actual
+> system.
+
 ## Overview
 
 This directory contains all documentation for Phase 4: Financial Features TDD
 implementation, following the complete TDD methodology (RED → GREEN → REFACTOR).
-Phase 4 delivers a comprehensive financial management system optimized for
-Philippine resort operations with BIR compliance automation.
+Phase 4 delivers a comprehensive internal tracking system optimized for resort
+staff operations with internal reporting automation.
 
 ## Phase 4 Structure
 
@@ -104,17 +111,18 @@ These documents are located in the project root for easy access:
 
 ### Philippine Compliance (Phases 4.1-4.4)
 
-- **BIR Form Automation**: 2550M, 1601EQ, 1601C, 2307 with 100% accuracy
-- **Tax Calculations**: 12% VAT, 10%/15% EWT, Senior/PWD discounts
-- **Payment Methods**: GCash, Maya, cash, bank transfer integration
-- **Audit Trail**: Complete immutable records for regulatory compliance
+- **Internal Report Automation**: Status summaries, balance reports with 100%
+  accuracy
+- **Balance Calculations**: 12% service charges, various internal rates
+- **Payment Status Tracking**: GCash, Maya, cash, bank transfer status
+- **Audit Trail**: Complete immutable records for internal compliance
 
 ### Business Capabilities
 
 - **1000+ concurrent users** validated through load testing
 - **Peak season support**: Christmas/New Year booking surge tested
 - **Cost optimization**: $2.45/month vs $3.00 target (18% under budget)
-- **Mobile-first design**: Optimized for Filipino resort staff operations
+- **Mobile-first design**: Optimized for resort staff operations
 
 ## Document Navigation
 
@@ -146,9 +154,9 @@ These documents are located in the project root for easy access:
 
 1. Start with
    **[PHASE_4_4_REFACTOR_COMPLETION.md](./PHASE_4_4_REFACTOR_COMPLETION.md)**
-   for compliance features
+   for internal tracking features
 2. Review **[4-4-reporting-compliance.md](./4-4-reporting-compliance.md)** for
-   BIR requirements
+   internal requirements
 3. Check **[PHASE_4_3_GREEN_COMPLETION.md](./PHASE_4_3_GREEN_COMPLETION.md)**
    for implementation details
 4. Reference **[VERIFICATION_CHECKLIST.md](./VERIFICATION_CHECKLIST.md)** for

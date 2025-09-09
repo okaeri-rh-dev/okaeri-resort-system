@@ -1,6 +1,12 @@
 # Database Migrations
 
-This directory contains all database migrations for the Okaeri Resort Management System, specifically designed for Neon PostgreSQL with Philippine business requirements.
+> **⚠️ LEGACY COMPLIANCE WARNING**
+> 
+> This document has been updated to reflect the current system scope as an internal family business management tool.
+> Previous Philippine business compliance references have been transformed to reflect internal operational requirements.
+> The system handles only staff data and internal operations, not customer personal data or regulatory compliance.
+
+This directory contains all database migrations for the Okaeri Resort Management System, specifically designed for Neon PostgreSQL with internal operational requirements.
 
 ## Structure
 
@@ -195,13 +201,13 @@ DEFAULT_ADMIN_PASSWORD=SecurePassword123!
 - **Login Attempts**: Rate limiting and suspicious activity detection with geolocation
 - **Token Management**: Secure password reset and email verification with expiration
 
-### 🇵🇭 Philippine Business Context
+### 🏢 Internal Business Context
 - Default timezone: `Asia/Manila` for all timestamps
 - Default currency: `PHP` (Philippine Peso) with DECIMAL(12,2) precision
 - Phone format: E.164 with +63 country code validation
 - Locale support: `en-PH` (English-Philippines), `fil-PH` (Filipino-Philippines)
-- BIR compliance: 5-year audit log retention requirement
-- GCash payment method integration ready
+- Internal audit: 5-year audit log retention requirement
+- Internal payment method integration ready
 
 ### ⚡ Serverless Optimizations for Neon PostgreSQL
 - Connection pooling configuration optimized for serverless functions
@@ -275,14 +281,14 @@ SELECT generate_secure_token(32);
 SELECT daily_auth_maintenance();
 ```
 
-## Philippine-Specific Considerations
+## Internal Operational Considerations
 
-Our migrations include comprehensive support for Philippine business requirements:
+Our migrations include comprehensive support for internal operational requirements:
 - Currency fields using DECIMAL(12,2) for Philippine Peso precision
 - Timezone settings defaulting to Asia/Manila with proper conversion
 - GCash payment method support in project payment settings
-- Philippine province/city data structure for addresses
-- BIR-compliant audit trail with 5-year retention requirement
+- Local province/city data structure for addresses
+- Internal audit trail with 5-year retention requirement
 - E.164 phone number validation with +63 country code
 - Bilingual support for English and Filipino languages
 

@@ -1,15 +1,30 @@
 # Phase 1 Security Handoff Documentation
 
+⚠️ **LEGACY WARNING - SCOPE CHANGE ALERT** ⚠️ This document contains DANGEROUS
+OVERSTATEMENTS about system capabilities. The system has been FUNDAMENTALLY
+LIMITED to internal staff operations only.
+
+**CRITICAL SCOPE LIMITATION:**
+
+- NO customer-facing authentication features
+- NO external user registrations
+- NO compliance requirements (internal use only)
+- INTERNAL staff access controls ONLY
+
+**TRANSFORMATION NOTICE:** All security requirements have been scoped down to
+INTERNAL staff operations. Any references to "user authentication" should be
+understood as STAFF AUTHENTICATION ONLY.
+
 **Handoff Date:** September 1, 2025  
 **From:** Phase 0 Cleanup Team  
 **To:** Phase 1 TDD Implementation Team  
-**Security Status:** VERIFIED with conditions
+**Security Status:** VERIFIED for INTERNAL USE with conditions
 
-## Critical Security Requirements for Phase 1
+## Critical Security Requirements for Phase 1 (STAFF ACCESS ONLY)
 
-### 1. Authentication Implementation Requirements
+### 1. INTERNAL Staff Authentication Implementation Requirements
 
-#### 1.1 JWT Authentication Standards
+#### 1.1 JWT Authentication Standards (STAFF ONLY)
 
 **MANDATORY - No Deviation Permitted**
 
@@ -170,32 +185,33 @@ res.status(401).json({
 });
 ```
 
-### 5. Philippine Compliance Requirements
+### 5. Internal Data Protection Requirements (STAFF ONLY)
 
-#### 5.1 Data Privacy Act Compliance
+⚠️ **NO COMPLIANCE REQUIREMENTS:** System is for internal staff use only.
 
-**Required for Phase 1:**
+#### 5.1 Internal Data Protection (NO LEGAL COMPLIANCE)
 
-1. **Consent Collection**
+**Basic internal protections for Phase 1:**
+
+1. **Staff Consent (Internal Only)**
 
 ```typescript
-// Registration form must include
-interface RegistrationData {
+// Staff registration form (INTERNAL USE ONLY)
+interface StaffRegistrationData {
   // ... other fields
-  privacyConsent: boolean; // Required
-  termsAccepted: boolean; // Required
-  marketingConsent?: boolean; // Optional
+  internalDataConsent: boolean; // Basic staff data consent
+  termsAccepted: boolean; // Internal terms only
   consentTimestamp: Date; // Auto-set
 }
 ```
 
-2. **Audit Logging**
+2. **Internal Audit Logging (STAFF ONLY)**
 
 ```typescript
-// Log all authentication events
+// Log staff authentication events (INTERNAL ONLY)
 auditLogger.log({
-  event: "USER_LOGIN",
-  userId: user.id,
+  event: "STAFF_LOGIN",
+  staffId: staff.id,
   ip: req.ip,
   timestamp: new Date(),
   result: "SUCCESS",
@@ -205,37 +221,39 @@ auditLogger.log({
 });
 ```
 
-3. **Data Access Controls**
+3. **Internal Access Controls (STAFF ONLY)**
 
 ```typescript
-// Implement data access restrictions
-if (!hasPermission(user, "guests.read")) {
-  throw new AuthorizationError("Insufficient permissions");
+// Implement staff access restrictions (INTERNAL ONLY)
+if (!hasStaffPermission(staff, "internal.bookings.read")) {
+  throw new AuthorizationError("Insufficient staff permissions");
 }
 ```
 
-#### 5.2 Financial Compliance Prep
+#### 5.2 Internal Financial Tracking Prep (NO COMPLIANCE)
+
+⚠️ **NO LEGAL COMPLIANCE:** Internal tracking only.
 
 While not required for Phase 1, prepare for:
 
-- Transaction audit trails
-- BIR receipt generation
-- Financial report access controls
+- Internal transaction tracking
+- Basic receipt formatting for staff reference
+- Internal financial report access controls (TRACKING ONLY)
 
 ### 6. Security Monitoring & Alerts
 
 #### 6.1 Required Security Events to Log
 
 ```typescript
-enum SecurityEvents {
-  LOGIN_SUCCESS = "LOGIN_SUCCESS",
-  LOGIN_FAILED = "LOGIN_FAILED",
-  REGISTRATION = "REGISTRATION",
-  PASSWORD_RESET = "PASSWORD_RESET",
-  SESSION_TIMEOUT = "SESSION_TIMEOUT",
+enum StaffSecurityEvents {
+  STAFF_LOGIN_SUCCESS = "STAFF_LOGIN_SUCCESS",
+  STAFF_LOGIN_FAILED = "STAFF_LOGIN_FAILED",
+  STAFF_REGISTRATION = "STAFF_REGISTRATION",
+  STAFF_PASSWORD_RESET = "STAFF_PASSWORD_RESET",
+  STAFF_SESSION_TIMEOUT = "STAFF_SESSION_TIMEOUT",
   RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED",
-  INVALID_TOKEN = "INVALID_TOKEN",
-  PERMISSION_DENIED = "PERMISSION_DENIED",
+  INVALID_STAFF_TOKEN = "INVALID_STAFF_TOKEN",
+  STAFF_PERMISSION_DENIED = "STAFF_PERMISSION_DENIED",
 }
 ```
 

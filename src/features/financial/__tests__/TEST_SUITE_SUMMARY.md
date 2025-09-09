@@ -50,7 +50,7 @@ implementation exists yet.
 
 ### 1. Financial Calculations
 
-- ✅ Philippine 12% VAT calculations (exclusive and inclusive)
+- ✅ Philippine 12% balance calculations (exclusive and inclusive)
 - ✅ Expanded Withholding Tax (10% individual, 2% corporate)
 - ✅ Decimal.js precision for all monetary operations
 - ✅ Proper rounding rules (half-up for money, down for taxes)

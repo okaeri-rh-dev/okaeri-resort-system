@@ -1,5 +1,18 @@
 # PRODUCTION DEPLOYMENT GUIDE
 
+> **⚠️ LEGACY DOCUMENT WARNING**
+>
+> This document contains outdated claims about BIR compliance and payment
+> processing that exceed the actual system scope. The Okaeri Resort System is
+> designed for INTERNAL USE ONLY by resort staff and does not process payments
+> or integrate with BIR systems.
+>
+> **Actual System Scope**: Internal booking management, payment status tracking
+> (not processing), and operational reporting for staff use.
+>
+> **Current Document Status**: Legacy - Contains false compliance claims that
+> are being corrected.
+
 ## COMPREHENSIVE PERFORMANCE MONITORING & REPORTING FRAMEWORK
 
 **PHASE 4.5 DAY 7 - FINAL DEPLOYMENT CONFIGURATION**
@@ -164,7 +177,8 @@ curl -f https://[your-domain]/api/monitoring/health
 
 - **Frontend Performance**: Response times, throughput, success rates
 - **Database Performance**: Query times, connection health, cache efficiency
-- **Business Metrics**: Financial accuracy, BIR compliance, payment success
+- **Business Metrics**: Financial accuracy, internal reporting, payment status
+  tracking
 - **Cost Tracking**: Service usage, budget utilization, optimization scores
 
 ### **ALERT THRESHOLDS (CONSERVATIVE - 10x+ PERFORMANCE BUFFER)**
@@ -191,9 +205,9 @@ curl -f https://[your-domain]/api/monitoring/health
 
 #### **Business Metrics Monitoring (5-minute intervals)**
 
-- Financial calculation accuracy (99.5% BIR compliance)
-- BIR form generation success (100% current)
-- Payment processing success (99.8% current)
+- Financial calculation accuracy (99.5% internal tracking)
+- Internal report generation success (100% current)
+- Payment status tracking success (99.8% current)
 - Multi-tenant data isolation validation (100% security)
 
 #### **Cost Optimization Monitoring (1-hour intervals)**
@@ -242,11 +256,11 @@ curl -f https://[your-domain]/api/monitoring/health
 - **Response**: Immediate escalation to all channels
 - **Recovery**: Automatic validation and recalculation
 
-#### **Payment Processing (P1 - <1 minute)**
+#### **Payment Status Updates (P1 - <1 minute)**
 
-- **Condition**: Success rate <99.0%
-- **Response**: Immediate investigation and failover
-- **Recovery**: Transaction validation and retry mechanisms
+- **Condition**: Status tracking accuracy <99.0%
+- **Response**: Immediate investigation and data validation
+- **Recovery**: Status validation and correction mechanisms
 
 ---
 
@@ -309,7 +323,7 @@ const serviceLimits = {
 
 #### **Monthly (Manual Review Required)**
 
-- SLA compliance assessment
+- SLA performance assessment
 - Budget analysis and projection
 - Performance baseline review
 - Technology update planning
@@ -455,7 +469,7 @@ node -e "import('./monitoring').then(m => console.log(m.getMonitoringFrameworkSt
 
 - [ ] Daily performance reports generated
 - [ ] Weekly cost analysis available
-- [ ] Monthly SLA compliance assessment
+- [ ] Monthly SLA performance assessment
 - [ ] Quarterly performance baseline review
 
 ---
@@ -467,7 +481,7 @@ node -e "import('./monitoring').then(m => console.log(m.getMonitoringFrameworkSt
 ✅ **Response Time Performance**: Maintaining sub-10ms P95 response times  
 ✅ **System Reliability**: Zero HTTP errors and 100% success rate  
 ✅ **Cost Efficiency**: Operational costs within $0-3/month budget  
-✅ **Business Compliance**: 99.5%+ financial accuracy and BIR compliance  
+✅ **Internal Operations**: 99.5%+ financial accuracy and internal reporting  
 ✅ **Monitoring Coverage**: Complete observability across all system components
 
 ### **ONGOING SUCCESS METRICS**
@@ -475,7 +489,8 @@ node -e "import('./monitoring').then(m => console.log(m.getMonitoringFrameworkSt
 - **Performance**: Maintain 285x-357x better than SLA targets
 - **Reliability**: >99.95% availability with sub-minute recovery times
 - **Cost**: <$3/month operational expense with growth scalability
-- **Compliance**: 100% Philippine DPA and BIR regulatory compliance
+- **Internal Management**: 100% internal data management and operational
+  requirements
 - **User Satisfaction**: <3s response times for all user interactions
 
 ---
@@ -484,7 +499,7 @@ node -e "import('./monitoring').then(m => console.log(m.getMonitoringFrameworkSt
 
 This monitoring framework protects exceptional performance levels that exceed
 industry standards by **285x-357x** while maintaining **$0-3/month operational
-costs** and **100% Philippine regulatory compliance**.
+costs** and **100% internal operational requirements**.
 
 **Document Version**: 1.0  
 **Deployment Date**: September 8, 2025  
