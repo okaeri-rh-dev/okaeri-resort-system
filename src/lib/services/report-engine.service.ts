@@ -401,34 +401,8 @@ abstract class BaseReportStrategy implements ReportStrategy {
   }
 }
 
-// Placeholder Strategy Implementations (will be implemented in separate files)
-class ProfitLossStrategy extends BaseReportStrategy {
-  async generateReport(config: ReportConfig, services: FinancialServices): Promise<ReportData> {
-    // TODO: Implement P&L report generation
-    throw new Error("ProfitLossStrategy not yet implemented");
-  }
-}
-
-class CashFlowStrategy extends BaseReportStrategy {
-  async generateReport(config: ReportConfig, services: FinancialServices): Promise<ReportData> {
-    // TODO: Implement Cash Flow report generation
-    throw new Error("CashFlowStrategy not yet implemented");
-  }
-}
-
-class OccupancyStrategy extends BaseReportStrategy {
-  async generateReport(config: ReportConfig, services: FinancialServices): Promise<ReportData> {
-    // TODO: Implement Occupancy report generation
-    throw new Error("OccupancyStrategy not yet implemented");
-  }
-}
-
-class TaxSummaryStrategy extends BaseReportStrategy {
-  async generateReport(config: ReportConfig, services: FinancialServices): Promise<ReportData> {
-    // TODO: Implement Tax Summary report generation
-    throw new Error("TaxSummaryStrategy not yet implemented");
-  }
-}
+// Strategy implementations are imported from separate files
+// No placeholder classes needed as they're already imported at the top
 
 // Export singleton instance
 export const reportEngine = new ReportEngineService();

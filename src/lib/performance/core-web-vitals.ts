@@ -6,7 +6,7 @@
  * with special considerations for mobile devices and intermittent connectivity
  */
 
-import { getCLS, getFCP, getFID, getLCP, getTTFB } from "web-vitals";
+import { onCLS, onFCP, onINP, onLCP, onTTFB } from "web-vitals";
 
 interface PerformanceMetric {
   name: string;
@@ -49,19 +49,19 @@ class ResortPerformanceMonitor {
     if (Math.random() > this.config.samplingRate) return;
 
     // Largest Contentful Paint - Critical for dashboard load
-    getLCP(this.handleMetric.bind(this));
+    onLCP(this.handleMetric.bind(this));
 
-    // First Input Delay - Important for mobile touch interactions
-    getFID(this.handleMetric.bind(this));
+    // Interaction to Next Paint (INP) - Replaced FID in v5, measures responsiveness
+    onINP(this.handleMetric.bind(this));
 
     // Cumulative Layout Shift - Critical for form interactions
-    getCLS(this.handleMetric.bind(this));
+    onCLS(this.handleMetric.bind(this));
 
     // First Contentful Paint - Important for perceived performance
-    getFCP(this.handleMetric.bind(this));
+    onFCP(this.handleMetric.bind(this));
 
     // Time to First Byte - Network performance indicator
-    getTTFB(this.handleMetric.bind(this));
+    onTTFB(this.handleMetric.bind(this));
 
     // Custom metrics for resort system
     this.initCustomMetrics();
@@ -308,9 +308,9 @@ class ResortPerformanceMonitor {
       );
     }
 
-    if (summary.FID?.some((m) => m.rating === "poor")) {
+    if (summary.INP?.some((m) => m.rating === "poor")) {
       recommendations.push(
-        "Input delay is high - consider code splitting and reducing main thread work"
+        "Interaction responsiveness is poor - consider code splitting and reducing main thread work"
       );
     }
 

@@ -14,9 +14,9 @@
   "functions": {
     "api/auth/**/*.ts": {
       "runtime": "nodejs20.x",
-      "regions": ["cle1", "hnd1"],
+      "regions": ["sin1", "hnd1"],
       "maxDuration": 10,
-      "memory": 512,
+      "memory": 256,
       "environment": {
         "NODE_ENV": "production",
         "DATABASE_MAX_CONNECTIONS": "3",
@@ -32,7 +32,7 @@
     },
     "api/bookings/**/*.ts": {
       "runtime": "nodejs20.x",
-      "regions": ["cle1", "hnd1"],
+      "regions": ["sin1", "hnd1"],
       "maxDuration": 20,
       "memory": 768,
       "environment": {
@@ -46,7 +46,7 @@
     },
     "api/rooms/**/*.ts": {
       "runtime": "nodejs20.x",
-      "regions": ["cle1", "hnd1"],
+      "regions": ["sin1", "hnd1"],
       "maxDuration": 15,
       "memory": 512,
       "environment": {
@@ -59,7 +59,7 @@
     },
     "api/reports/**/*.ts": {
       "runtime": "nodejs20.x",
-      "regions": ["cle1"],
+      "regions": ["sin1"],
       "maxDuration": 25,
       "memory": 1024,
       "environment": {
@@ -73,7 +73,7 @@
     },
     "api/upload/**/*.ts": {
       "runtime": "nodejs20.x",
-      "regions": ["cle1", "hnd1"],
+      "regions": ["sin1", "hnd1"],
       "maxDuration": 25,
       "memory": 1024,
       "environment": {
@@ -87,7 +87,7 @@
     },
     "api/health-check.ts": {
       "runtime": "nodejs20.x",
-      "regions": ["cle1", "hnd1"],
+      "regions": ["sin1", "hnd1"],
       "maxDuration": 5,
       "memory": 128,
       "environment": {
@@ -98,7 +98,7 @@
     },
     "api/maintenance/**/*.ts": {
       "runtime": "nodejs20.x",
-      "regions": ["cle1"],
+      "regions": ["sin1"],
       "maxDuration": 25,
       "memory": 1024,
       "environment": {
@@ -111,7 +111,7 @@
     },
     "api/**/*.ts": {
       "runtime": "nodejs20.x",
-      "regions": ["cle1", "hnd1"],
+      "regions": ["sin1", "hnd1"],
       "maxDuration": 15,
       "memory": 512,
       "environment": {
@@ -315,7 +315,7 @@
     }
   ],
 
-  "regions": ["cle1", "hnd1"],
+  "regions": ["sin1", "hnd1"],
 
   "env": {
     "NODE_ENV": "production",
