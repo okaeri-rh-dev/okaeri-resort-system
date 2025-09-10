@@ -331,9 +331,15 @@ async function scanDirectory(dir: string, routes: string[]): Promise<void> {
       const fullPath = path.join(dir, entry.name);
 
       if (entry.isDirectory()) {
-        await scanDirectory(fullPath, routes);
+        // Skip __tests__ directories
+        if (entry.name !== "__tests__") {
+          await scanDirectory(fullPath, routes);
+        }
       } else if (entry.isFile() && /\.(js|ts)$/.test(entry.name)) {
-        routes.push(fullPath);
+        // Skip test files and non-API files
+        if (!entry.name.includes(".test.") && !entry.name.includes(".spec.")) {
+          routes.push(fullPath);
+        }
       }
     }
   } catch (error) {

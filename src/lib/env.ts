@@ -397,10 +397,11 @@ class EnvironmentValidator {
     }
 
     if (this.env.VERCEL_URL) {
-      return [`https://${this.env.VERCEL_URL}`, "https://*.vercel.app"];
+      // For production, only allow the specific Vercel URL (no wildcard)
+      return [`https://${this.env.VERCEL_URL}`];
     }
 
-    // Default production origins
+    // Default production origins - specific domain only
     return ["https://okaeri-resort.vercel.app"];
   }
 
