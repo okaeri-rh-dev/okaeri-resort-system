@@ -35,7 +35,7 @@ rapid incident response for the resort management system.
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Monitoring & Observability                  │
 ├─────────────────┬─────────────────┬─────────────────────────────┤
-│   Application   │   Infrastructure│   Business Intelligence     │
+│   Application   │   Infrastructure│   Internal Operations       │
 │   Monitoring    │   Monitoring    │   & Analytics               │
 ├─────────────────┼─────────────────┼─────────────────────────────┤
 │ • Error Tracking│ • Uptime Checks │ • Booking Metrics           │
@@ -340,16 +340,16 @@ export class PerformanceAnalytics {
         checkOutDate: event.detail.checkOut,
         guestCount: event.detail.guestCount,
         totalAmount: event.detail.totalAmount,
-        paymentMethod: event.detail.paymentMethod,
+        balanceType: event.detail.balanceType,
       });
     });
 
-    // Track payment status tracking
-    window.addEventListener("payment-processed", (event: any) => {
-      this.track("payment_processed", {
+    // Track internal balance calculation
+    window.addEventListener("balance-calculated", (event: any) => {
+      this.track("internal_balance_calculated", {
         bookingId: event.detail.bookingId,
         amount: event.detail.amount,
-        method: event.detail.method,
+        calculationType: event.detail.type,
         success: event.detail.success,
         processingTime: event.detail.duration,
       });
@@ -402,7 +402,7 @@ export class PerformanceAnalytics {
   private static isCriticalEvent(event: string): boolean {
     return [
       "booking_created",
-      "payment_processed",
+      "internal_balance_calculated",
       "system_error",
       "security_incident",
     ].includes(event);
@@ -708,9 +708,9 @@ interface MonitoringMetrics {
     uptime: number;
   };
   business: {
-    activeBookings: number;
-    revenueToday: number;
-    newRegistrations: number;
+    internalBookingCount: number;
+    internalBalanceTotal: number;
+    staffActivityCount: number;
     systemUtilization: number;
   };
   infrastructure: {
@@ -733,7 +733,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
   try {
-    const url = new URL(request.url);
+    const url = new URL(req.url || "");
     const timeRange = url.searchParams.get("range") || "1h";
 
     // Get current health status
@@ -843,9 +843,9 @@ async function getPerformanceMetrics(timeRange: string) {
 async function getBusinessMetrics(timeRange: string) {
   // These would integrate with your actual business data
   return {
-    activeBookings: 42,
-    revenueToday: 15750.0,
-    newRegistrations: 8,
+    internalBookingCount: 42,
+    internalBalanceTotal: 15750.0,
+    staffActivityCount: 8,
     systemUtilization: 73.5,
   };
 }
@@ -1028,15 +1028,15 @@ export class AlertManager {
         cooldownPeriod: 600, // 10 minutes
       },
       {
-        id: "payment_processing_errors",
-        name: "Payment Processing Errors",
-        condition: "payment_errors > threshold",
+        id: "internal_balance_calculation_errors",
+        name: "Internal Balance Calculation Errors",
+        condition: "balance_calculation_errors > threshold",
         threshold: 1,
         timeWindow: 60, // 1 minute
-        severity: 5,
+        severity: 4,
         enabled: true,
-        channels: ["email", "sms"],
-        recipients: ["finance@okaeri-resort.com"],
+        channels: ["email", "slack"],
+        recipients: ["operations@okaeri-resort.local"],
         cooldownPeriod: 60, // 1 minute
       },
     ];
@@ -1088,8 +1088,8 @@ export class AlertManager {
       case "memory_usage_high":
         return metrics.infrastructure?.memoryUsage > rule.threshold;
 
-      case "payment_processing_errors":
-        // Would check payment-specific error metrics
+      case "internal_balance_calculation_errors":
+        // Would check internal balance calculation error metrics
         return false; // Placeholder
 
       default:
@@ -1302,40 +1302,40 @@ export class AlertManager {
 }
 ```
 
-## 4. Business Intelligence and KPI Tracking
+## 4. Internal Operations Intelligence and KPI Tracking
 
-### Hospitality-Specific Analytics
+### Internal Operations Analytics
 
 ```typescript
-// api/analytics/hospitality-metrics.ts
+// api/analytics/internal-operations-metrics.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { secureDb } from "../../src/lib/db/secure-connection";
 import { bookings, guests, expenses } from "../../src/lib/db/schema";
 import { sql } from "drizzle-orm";
 
-interface HospitalityMetrics {
+interface InternalOperationsMetrics {
   occupancy: {
     current: number;
     forecast: number[];
     seasonal: Array<{ month: string; rate: number }>;
   };
-  revenue: {
+  internalBalances: {
     today: number;
     thisMonth: number;
     growth: number;
-    avgDailyRate: number;
-    revPAR: number; // Revenue Per Available Room
+    avgCalculationTime: number;
+    operationsCount: number;
   };
-  guest: {
-    satisfaction: number;
-    repeatGuests: number;
-    avgLengthOfStay: number;
-    nationality: Array<{ country: string; percentage: number }>;
+  staffActivity: {
+    loginCount: number;
+    activeUsers: number;
+    avgSessionTime: number;
+    activityDistribution: Array<{ role: string; percentage: number }>;
   };
   operations: {
-    checkInEfficiency: number;
-    housekeepingTurnaround: number;
-    maintenanceRequests: number;
+    taskEfficiency: number;
+    systemResponseTime: number;
+    operationalRequests: number;
     staffUtilization: number;
   };
 }
@@ -1345,38 +1345,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
   try {
-    const url = new URL(request.url);
+    const url = new URL(req.url || "");
     const period = url.searchParams.get("period") || "30d";
     const projectId = url.searchParams.get("projectId") || "default";
 
     // Calculate metrics
     const occupancyMetrics = await calculateOccupancyMetrics(projectId, period);
-    const revenueMetrics = await calculateRevenueMetrics(projectId, period);
-    const guestMetrics = await calculateGuestMetrics(projectId, period);
+    const internalBalanceMetrics = await calculateInternalBalanceMetrics(
+      projectId,
+      period
+    );
+    const staffActivityMetrics = await calculateStaffActivityMetrics(
+      projectId,
+      period
+    );
     const operationsMetrics = await calculateOperationsMetrics(
       projectId,
       period
     );
 
-    const metrics: HospitalityMetrics = {
+    const metrics: InternalOperationsMetrics = {
       occupancy: occupancyMetrics,
-      revenue: revenueMetrics,
-      guest: guestMetrics,
+      internalBalances: internalBalanceMetrics,
+      staffActivity: staffActivityMetrics,
       operations: operationsMetrics,
     };
 
-    return NextResponse.json(metrics, {
-      headers: {
-        "Cache-Control": "public, max-age=300", // Cache for 5 minutes
-        "X-Analytics-Generated": new Date().toISOString(),
-      },
-    });
+    res.setHeader("Cache-Control", "public, max-age=300");
+    res.setHeader("X-Analytics-Generated", new Date().toISOString());
+    return res.status(200).json(metrics);
   } catch (error) {
-    console.error("Hospitality metrics error:", error);
-    return NextResponse.json(
-      { error: "Failed to load hospitality metrics" },
-      { status: 500 }
-    );
+    console.error("Internal operations metrics error:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to load internal operations metrics" });
   }
 }
 
@@ -1421,106 +1423,108 @@ async function calculateOccupancyMetrics(projectId: string, period: string) {
   };
 }
 
-async function calculateRevenueMetrics(projectId: string, period: string) {
-  // Today's revenue
-  const todayRevenue = await secureDb
-    .select({ total: sql<number>`COALESCE(SUM(total_amount), 0)` })
+async function calculateInternalBalanceMetrics(
+  projectId: string,
+  period: string
+) {
+  // Today's internal balance calculations
+  const todayBalance = await secureDb
+    .select({ total: sql<number>`COALESCE(SUM(internal_balance), 0)` })
     .from(bookings)
     .where(sql`DATE(created_at) = CURRENT_DATE AND status != 'cancelled'`);
 
-  // This month's revenue
-  const monthRevenue = await secureDb
-    .select({ total: sql<number>`COALESCE(SUM(total_amount), 0)` })
+  // This month's internal balance total
+  const monthBalance = await secureDb
+    .select({ total: sql<number>`COALESCE(SUM(internal_balance), 0)` })
     .from(bookings)
     .where(
       sql`EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE) AND status != 'cancelled'`
     );
 
   // Previous month for growth calculation
-  const prevMonthRevenue = await secureDb
-    .select({ total: sql<number>`COALESCE(SUM(total_amount), 0)` })
+  const prevMonthBalance = await secureDb
+    .select({ total: sql<number>`COALESCE(SUM(internal_balance), 0)` })
     .from(bookings)
     .where(
       sql`EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE - INTERVAL '1 month') AND status != 'cancelled'`
     );
 
   const growth =
-    prevMonthRevenue[0]?.total > 0
-      ? ((monthRevenue[0]?.total - prevMonthRevenue[0]?.total) /
-          prevMonthRevenue[0]?.total) *
+    prevMonthBalance[0]?.total > 0
+      ? ((monthBalance[0]?.total - prevMonthBalance[0]?.total) /
+          prevMonthBalance[0]?.total) *
         100
       : 0;
 
-  // Average Daily Rate
-  const avgBookingValue = await secureDb
-    .select({ avg: sql<number>`COALESCE(AVG(total_amount), 0)` })
+  // Average calculation time
+  const avgCalculationTime = await secureDb
+    .select({ avg: sql<number>`COALESCE(AVG(processing_time_ms), 0)` })
     .from(bookings)
     .where(
       sql`status != 'cancelled' AND created_at >= CURRENT_DATE - INTERVAL '30 days'`
     );
 
   return {
-    today: todayRevenue[0]?.total || 0,
-    thisMonth: monthRevenue[0]?.total || 0,
+    today: todayBalance[0]?.total || 0,
+    thisMonth: monthBalance[0]?.total || 0,
     growth: Math.round(growth * 10) / 10,
-    avgDailyRate: Math.round((avgBookingValue[0]?.avg || 0) * 10) / 10,
-    revPAR: Math.round(((monthRevenue[0]?.total || 0) / 30 / 24) * 10) / 10, // Simplified RevPAR
+    avgCalculationTime: Math.round((avgCalculationTime[0]?.avg || 0) * 10) / 10,
+    operationsCount: Math.round(((monthBalance[0]?.total || 0) / 30) * 10) / 10,
   };
 }
 
-async function calculateGuestMetrics(projectId: string, period: string) {
-  // Guest satisfaction (would come from survey data)
-  const satisfaction = 4.2; // Example rating out of 5
+async function calculateStaffActivityMetrics(
+  projectId: string,
+  period: string
+) {
+  // Staff login activity
+  const loginCount = 25; // Example staff login count
 
-  // Repeat guests
-  const repeatGuests = await secureDb
+  // Active staff users
+  const activeStaff = await secureDb
     .select({
       total: sql<number>`count(*)`,
-      repeat: sql<number>`count(*) FILTER (WHERE guest_previous_stays > 0)`,
+      active: sql<number>`count(*) FILTER (WHERE last_login >= CURRENT_DATE - INTERVAL '7 days')`,
     })
     .from(bookings)
-    .where(
-      sql`created_at >= CURRENT_DATE - INTERVAL '30 days' AND status != 'cancelled'`
-    );
+    .where(sql`created_at >= CURRENT_DATE - INTERVAL '30 days'`);
 
-  const repeatPercentage =
-    repeatGuests[0]?.total > 0
-      ? ((repeatGuests[0]?.repeat || 0) / repeatGuests[0]?.total) * 100
+  const activePercentage =
+    activeStaff[0]?.total > 0
+      ? ((activeStaff[0]?.active || 0) / activeStaff[0]?.total) * 100
       : 0;
 
-  // Average length of stay
-  const avgStay = await secureDb
+  // Average session time
+  const avgSession = await secureDb
     .select({
-      avg: sql<number>`COALESCE(AVG(check_out_date - check_in_date), 0)`,
+      avg: sql<number>`COALESCE(AVG(session_duration_minutes), 0)`,
     })
     .from(bookings)
-    .where(
-      sql`status != 'cancelled' AND created_at >= CURRENT_DATE - INTERVAL '30 days'`
-    );
+    .where(sql`created_at >= CURRENT_DATE - INTERVAL '30 days'`);
 
-  // Guest nationality distribution (example data)
-  const nationality = [
-    { country: "Philippines", percentage: 65 },
-    { country: "United States", percentage: 15 },
-    { country: "Australia", percentage: 8 },
-    { country: "Japan", percentage: 5 },
-    { country: "Others", percentage: 7 },
+  // Staff activity distribution by role
+  const activityDistribution = [
+    { role: "Manager", percentage: 35 },
+    { role: "Front Desk", percentage: 30 },
+    { role: "Housekeeping", percentage: 20 },
+    { role: "Maintenance", percentage: 10 },
+    { role: "Others", percentage: 5 },
   ];
 
   return {
-    satisfaction: Math.round(satisfaction * 10) / 10,
-    repeatGuests: Math.round(repeatPercentage * 10) / 10,
-    avgLengthOfStay: Math.round((avgStay[0]?.avg || 0) * 10) / 10,
-    nationality,
+    loginCount: Math.round(loginCount * 10) / 10,
+    activeUsers: Math.round(activePercentage * 10) / 10,
+    avgSessionTime: Math.round((avgSession[0]?.avg || 0) * 10) / 10,
+    activityDistribution,
   };
 }
 
 async function calculateOperationsMetrics(projectId: string, period: string) {
-  // These would come from operational tracking systems
+  // These would come from internal operational tracking systems
   return {
-    checkInEfficiency: 3.2, // minutes average check-in time
-    housekeepingTurnaround: 28, // minutes average room cleaning
-    maintenanceRequests: 5, // open requests
+    taskEfficiency: 3.2, // minutes average task completion time
+    systemResponseTime: 28, // milliseconds average API response
+    operationalRequests: 5, // open internal requests
     staffUtilization: 78.5, // percentage
   };
 }
@@ -1652,12 +1656,12 @@ export function withMonitoring(handler: Function) {
 - [ ] Set up notification integrations (Slack, email, SMS)
 - [ ] Test alert escalation procedures
 
-### Day 4: Business Intelligence
+### Day 4: Internal Operations Intelligence
 
-- [ ] Deploy hospitality-specific analytics
-- [ ] Create KPI tracking dashboard
-- [ ] Set up revenue and occupancy monitoring
-- [ ] Validate business metrics accuracy
+- [ ] Deploy internal operations analytics
+- [ ] Create KPI tracking dashboard for staff operations
+- [ ] Set up internal balance and occupancy monitoring
+- [ ] Validate internal metrics accuracy
 
 ## Success Metrics
 
@@ -1666,7 +1670,7 @@ export function withMonitoring(handler: Function) {
 - ✅ 100% API endpoint monitoring
 - ✅ Real-time error tracking and alerting
 - ✅ Core Web Vitals monitoring
-- ✅ Business KPI tracking
+- ✅ Internal operations KPI tracking
 
 ### Response Times
 
@@ -1684,5 +1688,4 @@ export function withMonitoring(handler: Function) {
 
 This comprehensive monitoring setup ensures the Okaeri Resort Management System
 operates with maximum reliability and provides actionable insights for both
-technical operations and business performance in the Philippine hospitality
-market.
+technical operations and internal staff performance tracking.

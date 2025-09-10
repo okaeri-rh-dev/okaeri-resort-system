@@ -145,19 +145,32 @@ async function loadDependencies() {
   }
 }
 
-// Lazy-load performance monitoring to not block initial render
-async function initializePerformanceMonitoring() {
+// Initialize comprehensive monitoring system (Phase 5.4)
+async function initializeMonitoringSystem() {
   if (typeof window === "undefined") return;
 
   try {
-    const { initPerformanceMonitoring: initCoreWebVitals } = await lazyImports.performance();
+    // Initialize monitoring system with error tracking and performance monitoring
+    const [{ ResortMonitoringSystem }, { initPerformanceMonitoring: initCoreWebVitals }] =
+      await Promise.all([import("@/lib/monitoring/init"), lazyImports.performance()]);
 
-    // Initialize Core Web Vitals monitoring with resort-specific config
-    initCoreWebVitals({
-      enableConsoleLog: config?.isDevelopment,
-      enableAnalytics: config?.app?.environment === "production",
-      samplingRate: 0.8, // 80% sampling for performance
+    // Initialize comprehensive monitoring system
+    ResortMonitoringSystem.init({
+      sentry: {
+        dsn: import.meta.env.VITE_SENTRY_DSN,
+        environment: config?.app?.environment,
+        sampleRate: config?.app?.environment === "production" ? 0.1 : 1.0,
+        replaySampleRate: 1.0,
+      },
+      performance: {
+        enableConsoleLog: config?.isDevelopment,
+        enableAnalytics: config?.app?.environment === "production",
+        samplingRate: 0.8, // 80% sampling for performance
+        endpoint: "/api/monitoring/performance",
+      },
     });
+
+    console.log("✅ Comprehensive monitoring system initialized");
 
     // Track initial bundle size for performance monitoring
     const initialBundleSize = performance.getEntriesByType("navigation")[0]?.transferSize || 0;
@@ -333,8 +346,8 @@ async function startApp() {
       </StrictMode>
     );
 
-    // Initialize performance monitoring in the background
-    initializePerformanceMonitoring();
+    // Initialize comprehensive monitoring system in the background
+    initializeMonitoringSystem();
 
     // Load non-critical CSS after initial render
     if (window.requestIdleCallback) {

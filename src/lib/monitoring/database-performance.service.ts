@@ -343,7 +343,7 @@ export class DatabasePerformanceService {
         AND (
           tablename LIKE 'expenses_____%%'
           OR tablename LIKE 'income_____%%' 
-          OR tablename LIKE 'payments_____%%'
+          OR tablename LIKE 'internal_finances_____%%'
           OR tablename LIKE 'audit_____%%'
         )
         ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
@@ -558,7 +558,7 @@ export class DatabasePerformanceService {
       // Task 1: Update table statistics
       const analyzeStart = Date.now();
       await db.execute(sql`
-        ANALYZE expenses, income_transactions, payment_transactions, vendors;
+        ANALYZE expenses, income_transactions, internal_balance_logs, vendors;
       `);
       results.push({
         task: "Update table statistics",

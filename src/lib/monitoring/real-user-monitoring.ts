@@ -8,7 +8,7 @@
  *
  * Key Features:
  * - Core Web Vitals monitoring with 95+ Lighthouse score target
- * - Business journey performance tracking (booking, payment, reporting)
+ * - Business journey performance tracking (booking, internal reporting)
  * - Mobile-first metrics for resort staff operations
  * - Network condition adaptation for Philippine connectivity
  * - Cost-aware monitoring (serverless budget optimization)
@@ -56,12 +56,12 @@ export interface BusinessJourneyMetrics {
   // Financial operations
   expenseEntryTime: number | null;
   reportGenerationTime: number | null;
-  paymentProcessingTime: number | null;
+  internalBalanceCalculationTime: number | null;
 
-  // BIR compliance
-  taxCalculationTime: number | null;
-  complianceReportTime: number | null;
-  birFormGenerationTime: number | null;
+  // Internal tracking only
+  expenseCalculationTime: number | null;
+  internalReportTime: number | null;
+  auditLogGenerationTime: number | null;
 }
 
 export interface UserContext {
@@ -127,7 +127,7 @@ export interface PerformanceBudget {
   // Custom budgets
   dashboardLoad: { target: number; threshold: number };
   reportGeneration: { target: number; threshold: number };
-  transactionList: { target: number; threshold: number };
+  internalBalanceList: { target: number; threshold: number };
 
   // Bundle size budgets
   initialBundleSize: { target: number; threshold: number };
@@ -135,7 +135,7 @@ export interface PerformanceBudget {
 
   // Business journey budgets
   bookingFlow: { target: number; threshold: number };
-  paymentFlow: { target: number; threshold: number };
+  internalBalanceFlow: { target: number; threshold: number };
   loginFlow: { target: number; threshold: number };
 }
 
@@ -149,7 +149,7 @@ export const DEFAULT_PERFORMANCE_BUDGET: PerformanceBudget = {
   // Application-specific budgets
   dashboardLoad: { target: 1500, threshold: 3000 }, // 1.5s target for dashboard
   reportGeneration: { target: 2000, threshold: 5000 }, // 2s target for reports
-  transactionList: { target: 1000, threshold: 2000 }, // 1s for transaction list
+  internalBalanceList: { target: 1000, threshold: 2000 }, // 1s for internal balance list
 
   // Bundle size budgets (mobile-first)
   initialBundleSize: { target: 150 * 1024, threshold: 250 * 1024 }, // 150KB target, 250KB threshold
@@ -157,7 +157,7 @@ export const DEFAULT_PERFORMANCE_BUDGET: PerformanceBudget = {
 
   // Business journey budgets (end-to-end)
   bookingFlow: { target: 5000, threshold: 10000 }, // 5s for complete booking
-  paymentFlow: { target: 3000, threshold: 6000 }, // 3s for payment processing
+  internalBalanceFlow: { target: 3000, threshold: 6000 }, // 3s for internal balance calculation
   loginFlow: { target: 2000, threshold: 4000 }, // 2s for login process
 };
 
@@ -307,7 +307,7 @@ export class RealUserMonitoring {
       "room-selected",
       "guest-details-entered",
       "booking-confirmed",
-      "payment-completed",
+      "internal-balance-updated",
     ]);
 
     // Report generation journey
@@ -319,13 +319,13 @@ export class RealUserMonitoring {
       "export-completed",
     ]);
 
-    // Payment journey
-    this.trackBusinessJourney("payment", [
-      "payment-initiated",
-      "payment-method-selected",
-      "payment-details-entered",
-      "payment-submitted",
-      "payment-confirmed",
+    // Internal balance tracking journey
+    this.trackBusinessJourney("internal-balance", [
+      "balance-calculation-started",
+      "expenses-loaded",
+      "income-calculated",
+      "balance-computed",
+      "balance-display-updated",
     ]);
   }
 
@@ -736,9 +736,9 @@ export class RealUserMonitoring {
     // Define completion criteria for each journey
     const completionCriteria: Record<string, string[]> = {
       login: ["login-submitted", "authentication-completed"],
-      booking: ["booking-confirmed", "payment-completed"],
+      booking: ["booking-confirmed", "internal-balance-updated"],
       "report-generation": ["report-rendered"],
-      payment: ["payment-confirmed"],
+      "internal-balance": ["balance-display-updated"],
     };
 
     const requiredSteps = completionCriteria[journeyName];
