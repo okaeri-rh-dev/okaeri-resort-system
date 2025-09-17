@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isDevelopment } from "./env-client";
 import type {
   User,
   Project,
@@ -372,7 +373,7 @@ export function safeValidateWithSchema<T>(
  * Runtime type checking for development
  */
 export function devAssert<T>(condition: T, message?: string): asserts condition {
-  if (process.env.NODE_ENV === "development" && !condition) {
+  if (isDevelopment() && !condition) {
     throw new Error(message || "Development assertion failed");
   }
 }

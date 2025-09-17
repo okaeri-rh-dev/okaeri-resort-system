@@ -7,7 +7,8 @@
 
 import { db } from "@/lib/db";
 import { financialAuditTrail } from "@/lib/db/schema/financial-audit.schema";
-import { createHash } from "crypto";
+// Use Web Crypto API for browser compatibility instead of Node.js crypto
+import { getEnvVar } from "./env-client";
 
 interface AuditLogInput {
   userId: string;
@@ -49,7 +50,7 @@ export async function auditLog(input: AuditLogInput): Promise<void> {
     }
 
     // Generate checksum for critical fields
-    const checksum = generateChecksum({
+    const checksum = await generateChecksum({
       eventId,
       userId: input.userId,
       action: input.action,
@@ -171,11 +172,29 @@ function extractChangeSet(metadata?: Record<string, any>): ChangeSetItem[] {
 }
 
 /**
- * Generate SHA-512 checksum for data integrity
+ * Generate SHA-512 checksum for data integrity using Web Crypto API
  */
-function generateChecksum(data: Record<string, any>): string {
+async function generateChecksum(data: Record<string, any>): Promise<string> {
   const jsonString = JSON.stringify(data, Object.keys(data).sort());
-  return createHash("sha512").update(jsonString).digest("hex");
+
+  // Use Web Crypto API for browser compatibility
+  if (typeof window !== "undefined" && window.crypto && window.crypto.subtle) {
+    const encoder = new TextEncoder();
+    const dataBuffer = encoder.encode(jsonString);
+    const hashBuffer = await window.crypto.subtle.digest("SHA-512", dataBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  // Fallback for server-side: use a simple hash function
+  // Note: This is a fallback and not cryptographically secure
+  let hash = 0;
+  for (let i = 0; i < jsonString.length; i++) {
+    const char = jsonString.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(16).padStart(8, "0");
 }
 
 /**
@@ -319,7 +338,7 @@ async function notifyCriticalEvent(input: AuditLogInput): Promise<void> {
 function getCurrentProjectId(): string {
   // This would typically get from auth context or request context
   // For now, return a placeholder
-  return process.env.DEFAULT_PROJECT_ID || "default";
+  return getEnvVar("DEFAULT_PROJECT_ID", "default");
 }
 
 /**

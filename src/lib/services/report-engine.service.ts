@@ -404,7 +404,7 @@ abstract class BaseReportStrategy implements ReportStrategy {
 // Strategy implementations are imported from separate files
 // No placeholder classes needed as they're already imported at the top
 
-// Export singleton instance
-export const reportEngine = new ReportEngineService();
+// Do not export singleton - this service should only be instantiated server-side
+// Client code should use API calls instead
 
 export default ReportEngineService;

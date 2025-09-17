@@ -6,7 +6,7 @@
  * as required by Republic Act No. 10173 Section 20-26 (Security Measures)
  */
 
-import crypto from "crypto";
+import crypto from "uncrypto";
 import type { PIType } from "./dpa-audit-logger";
 import { dpaAuditLogger } from "./dpa-audit-logger";
 

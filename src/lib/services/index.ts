@@ -5,7 +5,8 @@
  * and compliance monitoring services.
  */
 
-export { ReportEngineService, reportEngine } from "./report-engine.service";
+// Services are server-side only - do not export instances for client use
+export { ReportEngineService } from "./report-engine.service";
 export { ExportService, exportService } from "./export.service";
 export { ComplianceMonitorService, complianceMonitor } from "./compliance-monitor.service";
 export { BIRIntegrationService } from "./bir-integration.service";
@@ -34,10 +35,11 @@ export type {
   AuditReadinessScore,
 } from "../compliance/types";
 
-// Factory function for creating services
+// Factory function for creating services - server-side only
+// These should only be instantiated in API routes, not in client code
 export function createReportServices() {
   return {
-    reportEngine: reportEngine,
+    reportEngine: new ReportEngineService(),
     exportService: exportService,
   };
 }

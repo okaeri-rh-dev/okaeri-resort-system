@@ -13,6 +13,7 @@
 import { z } from "zod";
 import { logger } from "./logger";
 import { getRedisClient } from "./cache/redis";
+import { isServer, getEnvVar, getEnvMode } from "./env-client";
 
 // Define the schema for all environment variables
 const envSchema = z.object({
@@ -287,7 +288,18 @@ class EnvironmentValidator {
 
     try {
       // Parse and validate environment variables
-      this._env = envSchema.parse(process.env);
+      // In browser, create a limited env object with only VITE_ prefixed vars
+      const envObject = isServer
+        ? process.env
+        : Object.keys(import.meta.env).reduce(
+            (acc, key) => {
+              acc[key] = import.meta.env[key];
+              return acc;
+            },
+            {} as Record<string, any>
+          );
+
+      this._env = envSchema.parse(envObject);
       this._isValidated = true;
 
       // Log successful validation in development
@@ -316,7 +328,7 @@ class EnvironmentValidator {
         });
 
         // In development, provide helpful guidance
-        if (process.env.NODE_ENV === "development") {
+        if (getEnvMode() === "development") {
           logger.info("💡 Environment Setup Guide:", {
             message: "Create a .env.local file with the following required variables:",
             required: [
@@ -796,7 +808,7 @@ export const {
 export { envValidator };
 
 // Validate environment on module load in non-test environments
-if (process.env.NODE_ENV !== "test") {
+if (getEnvMode() !== "test") {
   try {
     envValidator.validate();
 
@@ -806,7 +818,7 @@ if (process.env.NODE_ENV !== "test") {
     });
   } catch (error) {
     // In production, fail fast
-    if (process.env.NODE_ENV === "production") {
+    if (getEnvMode() === "production") {
       logger.error("Environment validation failed in production. Exiting...", error as Error);
       process.exit(1);
     } else {

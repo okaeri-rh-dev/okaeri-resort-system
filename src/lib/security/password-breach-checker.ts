@@ -6,7 +6,7 @@
  * Required for Philippine Data Privacy Act compliance
  */
 
-import crypto from "crypto";
+import crypto from "uncrypto";
 import { dpaAuditLogger, DPAEventCategory } from "./dpa-audit-logger";
 
 // HaveIBeenPwned API configuration

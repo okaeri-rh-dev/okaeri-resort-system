@@ -3,6 +3,8 @@
  * Optimized for serverless environments with proper error handling
  */
 
+import { isDevelopment } from "./env-client";
+
 type LogLevel = "debug" | "info" | "warn" | "error";
 
 interface LogContext {
@@ -26,7 +28,7 @@ class Logger {
   private minLevel: LogLevel;
 
   constructor() {
-    this.isDevelopment = process.env.NODE_ENV === "development";
+    this.isDevelopment = isDevelopment();
     this.minLevel = this.isDevelopment ? "debug" : "info";
   }
 

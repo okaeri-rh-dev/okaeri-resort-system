@@ -58,6 +58,7 @@ import { performanceMonitor } from "@/lib/performance-monitor";
 import { Money } from "@/lib/money";
 import type { ReportPeriod } from "@/lib/services/report-engine.service";
 import { formatBusinessDate } from "@/utils/dashboard-formatters";
+import { isDevelopment } from "@/lib/env-client";
 
 // Lazy load heavy components for better initial loading
 const LazyReportExporter = React.lazy(() =>
@@ -587,7 +588,7 @@ export const OptimizedFinancialDashboard = memo<OptimizedFinancialDashboardProps
           )}
 
           {/* Performance debugging info (development only) */}
-          {process.env.NODE_ENV === "development" && (
+          {isDevelopment() && (
             <Card className="border-slate-200 bg-slate-50">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 text-sm text-slate-600">

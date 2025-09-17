@@ -22,7 +22,7 @@ import {
   BIRExportResult,
 } from "@/lib/bir/types";
 import { Money } from "@/lib/money";
-import * as crypto from "crypto";
+import * as crypto from "uncrypto";
 
 /**
  * XML export configuration specific to BIR requirements

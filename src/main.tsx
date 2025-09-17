@@ -3,6 +3,14 @@
 import { enableMapSet } from "immer";
 enableMapSet();
 
+// Install mock API handler in development to provide mock data
+// for endpoints that don't have server implementations yet
+if (import.meta.env.DEV) {
+  import("@/lib/mock-api-handler").then(({ MockApiHandler }) => {
+    MockApiHandler.interceptFetch();
+  });
+}
+
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 

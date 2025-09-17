@@ -5,6 +5,7 @@ import { api } from "@/lib/api-client";
 import { useProjectStore } from "@/stores/projectStore";
 import { useAuthStore } from "@/stores/authStore";
 import { ROUTES } from "@/routes/paths";
+import { isDevelopment } from "./env-client";
 import type { Booking, Property, Expense, DashboardStats, PaginatedResponse } from "@/types/common";
 
 // Import all route parameter types from the centralized location
@@ -407,7 +408,7 @@ export function RouteErrorBoundary({
                 : "An unexpected error occurred while loading this page."}
           </p>
 
-          {process.env.NODE_ENV === "development" && (
+          {isDevelopment() && (
             <details className="mt-4 text-left">
               <summary className="cursor-pointer text-xs text-red-600 dark:text-red-400">
                 Error Details (Development)

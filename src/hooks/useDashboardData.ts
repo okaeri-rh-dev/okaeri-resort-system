@@ -11,15 +11,10 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQuery, useQueryClient, UseMutationResult } from "@tanstack/react-query";
-import {
-  reportEngine,
-  type ReportConfig,
-  type ReportData,
-  type ReportPeriod,
-} from "@/lib/services/report-engine.service";
+import type { ReportConfig, ReportData, ReportPeriod } from "@/lib/services/report-engine.service";
+import { reportsApi } from "@/api/endpoints/reports";
 import { useExpenseStore } from "@/stores/expense.store";
 import { useIncomeStore } from "@/stores/income.store";
-import { usePaymentStore } from "@/stores/payment.store";
 import { Money } from "@/lib/money";
 
 interface DashboardDataOptions {
@@ -60,12 +55,7 @@ interface DashboardMetrics {
     previousAmount?: Money;
     color?: string;
   }>;
-  paymentMethods: Array<{
-    method: string;
-    amount: Money;
-    count: number;
-    previousAmount?: Money;
-  }>;
+  // Payment methods removed - internal admin dashboard only
   cashFlow: Array<{
     type: "opening" | "inflow" | "outflow" | "closing";
     label: string;
@@ -126,7 +116,6 @@ export function useDashboardData(options: DashboardDataOptions): DashboardDataRe
   // Store integration
   const { expenses } = useExpenseStore();
   const { income } = useIncomeStore();
-  const { payments } = usePaymentStore();
 
   // Generate report configuration
   const reportConfig = useMemo((): ReportConfig => {
@@ -186,7 +175,17 @@ export function useDashboardData(options: DashboardDataOptions): DashboardDataRe
   } = useQuery({
     queryKey: ["dashboard-data", reportConfig],
     queryFn: async () => {
-      const data = await reportEngine.generateReport(reportConfig, "dashboard-user");
+      // Use API endpoint instead of direct service access
+      const data = await reportsApi.generateReport({
+        projectId: reportConfig.projectId,
+        reportType: reportConfig.reportType,
+        period: reportConfig.period,
+        startDate: reportConfig.startDate,
+        endDate: reportConfig.endDate,
+        currency: reportConfig.currency,
+        includeComparisons: reportConfig.includeComparisons,
+        includeCharts: reportConfig.includeCharts,
+      });
       setLastUpdated(new Date());
       return data;
     },
@@ -217,14 +216,13 @@ export function useDashboardData(options: DashboardDataOptions): DashboardDataRe
     // Generate mock chart data (in production, this would come from report details)
     const revenueTrend = generateMockRevenueTrend(baseMetrics.totalRevenue, period);
     const expenseBreakdown = generateMockExpenseBreakdown(baseMetrics.totalExpenses);
-    const paymentMethods = generateMockPaymentMethods(baseMetrics.totalRevenue);
+    // Payment methods removed - internal admin dashboard only
     const cashFlow = generateMockCashFlow(baseMetrics.totalRevenue, baseMetrics.totalExpenses);
 
     return {
       ...baseMetrics,
       revenueTrend,
       expenseBreakdown,
-      paymentMethods,
       cashFlow,
     };
   }, [reportData, period]);
@@ -382,21 +380,7 @@ function generateMockExpenseBreakdown(totalExpenses: Money) {
   }));
 }
 
-function generateMockPaymentMethods(totalRevenue: Money) {
-  const methods = [
-    { method: "cash", percentage: 0.45, count: 120 },
-    { method: "gcash", percentage: 0.3, count: 85 },
-    { method: "maya", percentage: 0.15, count: 45 },
-    { method: "bank_transfer", percentage: 0.1, count: 25 },
-  ];
-
-  return methods.map((method) => ({
-    method: method.method,
-    amount: new Money(totalRevenue.toNumber() * method.percentage),
-    count: method.count,
-    previousAmount: new Money(totalRevenue.toNumber() * method.percentage * 0.9),
-  }));
-}
+// Payment methods generation removed - internal admin dashboard only
 
 function generateMockCashFlow(totalRevenue: Money, totalExpenses: Money) {
   const openingBalance = new Money(totalRevenue.toNumber() * 0.3); // Assume 30% starting balance

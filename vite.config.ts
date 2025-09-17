@@ -25,7 +25,8 @@ export default defineConfig({
     // Tailwind CSS v4 Vite plugin
     tailwindcss(),
     // PWA configuration with offline support (disabled in development)
-    process.env.NODE_ENV === "production" &&
+    typeof process !== "undefined" &&
+      process.env?.NODE_ENV === "production" &&
       VitePWA({
         registerType: "autoUpdate",
         workbox: {
@@ -160,7 +161,8 @@ export default defineConfig({
         },
       }),
     // Bundle analyzer for production builds
-    process.env.ANALYZE &&
+    typeof process !== "undefined" &&
+      process.env?.ANALYZE &&
       visualizer({
         filename: "dist/bundle-analysis.html",
         open: true,
@@ -250,7 +252,8 @@ export default defineConfig({
     assetsDir: "assets",
 
     // Enhanced source maps for debugging
-    sourcemap: process.env.NODE_ENV === "development" ? true : "hidden",
+    sourcemap:
+      typeof process !== "undefined" && process.env?.NODE_ENV === "development" ? true : "hidden",
 
     // Advanced minification with esbuild for speed
     minify: "esbuild",
@@ -263,11 +266,15 @@ export default defineConfig({
       // Tree shaking optimization
       treeShaking: true,
       // Drop console statements in production
-      drop: process.env.NODE_ENV === "production" ? ["console", "debugger"] : [],
+      drop:
+        typeof process !== "undefined" && process.env?.NODE_ENV === "production"
+          ? ["console", "debugger"]
+          : [],
       // Mangle properties for smaller bundles
-      mangleProps: process.env.NODE_ENV === "production" ? /^_/ : undefined,
+      mangleProps:
+        typeof process !== "undefined" && process.env?.NODE_ENV === "production" ? /^_/ : undefined,
       // Preserve names for better debugging in development
-      keepNames: process.env.NODE_ENV === "development",
+      keepNames: typeof process !== "undefined" && process.env?.NODE_ENV === "development",
       // Legal comments handling
       legalComments: "none",
     },
@@ -704,7 +711,7 @@ export default defineConfig({
       "fsevents",
     ],
     // Force re-optimization in development for performance testing
-    force: process.env.NODE_ENV === "development",
+    force: typeof process !== "undefined" && process.env?.NODE_ENV === "development",
 
     // ESBuild options for faster processing
     esbuildOptions: {
@@ -724,7 +731,7 @@ export default defineConfig({
     },
   },
 
-  // Environment variables
+  // Environment variables and polyfills
   define: {
     // Enable proper tree shaking for production builds
     __DEV__: JSON.stringify(process.env.NODE_ENV === "development"),

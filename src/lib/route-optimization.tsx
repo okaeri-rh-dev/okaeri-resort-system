@@ -8,6 +8,7 @@ import type { ComponentType } from "react";
 import { lazy, ReactNode } from "react";
 import { QueryClient } from "@tanstack/react-query";
 import { RouteApi } from "@tanstack/react-router";
+import { isDevelopment, isProduction } from "./env-client";
 
 // Performance monitoring
 interface PerformanceMetrics {
@@ -267,14 +268,14 @@ export class PerformanceBudgetManager {
       });
 
       // Log violation in development
-      if (process.env.NODE_ENV === "development") {
+      if (isDevelopment()) {
         console.warn(
           `Performance budget violation: ${metric} (${value}) exceeded budget (${budget}) for route ${route}`
         );
       }
 
       // Send to analytics in production
-      if (process.env.NODE_ENV === "production") {
+      if (isProduction()) {
         this.reportViolation(metric, value, budget, route);
       }
     }

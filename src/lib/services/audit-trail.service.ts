@@ -10,7 +10,7 @@ import { db } from "@/lib/db";
 import { financialAuditTrail } from "@/lib/db/schema/financial-audit.schema";
 import { Money } from "@/lib/money";
 import { auditLog } from "@/lib/audit";
-import { createHash } from "crypto";
+import { createHash } from "uncrypto";
 import { eq, and, gte, lte, desc, asc, count, sql } from "drizzle-orm";
 
 // =============================================

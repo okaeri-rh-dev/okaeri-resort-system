@@ -22,7 +22,7 @@ import { incomeTransactions } from "@/lib/db/schema/income.schema";
 import { eq, and, gte, lte, desc, sql, isNull } from "drizzle-orm";
 import { generateCode } from "@/lib/utils";
 import { auditLog, auditFinancialTransaction } from "@/lib/audit";
-import { createHash, randomBytes } from "crypto";
+import { createHash, randomBytes } from "node:crypto";
 
 // Payment gateway configuration
 const GATEWAY_CONFIG = {

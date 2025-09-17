@@ -10,7 +10,7 @@ import { db } from "@/lib/db";
 import { financialAuditTrail, taxComplianceAudit } from "@/lib/db/schema/financial-audit.schema";
 import { Money } from "@/lib/money";
 import { eq, and, gte, lte, desc, count, sql, sum } from "drizzle-orm";
-import { createHash } from "crypto";
+import { createHash } from "uncrypto";
 
 // =============================================
 // Core Types and Interfaces

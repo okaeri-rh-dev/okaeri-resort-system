@@ -2,7 +2,7 @@
  * Cash Flow Report Strategy
  *
  * Generates cash flow statements for Philippine resort operations
- * with payment method analysis and working capital management.
+ * with working capital management for internal tracking.
  */
 
 import { Money } from "@/lib/money";
@@ -13,7 +13,6 @@ import type {
   ReportStrategy,
 } from "@/lib/services/report-engine.service";
 import type { FinancialServices } from "@/features/financial/services";
-import { PaymentMethod } from "@/features/financial/types/financial.types";
 
 // Cash Flow Specific Data Structure
 export interface CashFlowDetails {
@@ -52,19 +51,7 @@ export interface CashFlowDetails {
   netCashChange: Money;
   cashAtBeginning: Money;
   cashAtEnd: Money;
-  paymentMethodAnalysis: {
-    cashPayments: Money;
-    gcashPayments: Money;
-    bankTransferPayments: Money;
-    cardPayments: Money;
-    totalPayments: Money;
-    paymentMethodBreakdown: Array<{
-      method: PaymentMethod;
-      amount: Money;
-      percentage: number;
-      transactionCount: number;
-    }>;
-  };
+  // Payment analysis removed - internal admin dashboard only
   receivablesAnalysis: {
     totalReceivables: Money;
     currentReceivables: Money;
@@ -89,8 +76,7 @@ export class CashFlowStrategy implements ReportStrategy {
 
     try {
       // Get cash flow data for the period
-      const [payments, receipts, investments, financing] = await Promise.all([
-        this.getPaymentData(config, services),
+      const [receipts, investments, financing] = await Promise.all([
         this.getReceiptData(config, services),
         this.getInvestmentData(config, services),
         this.getFinancingData(config, services),
@@ -99,7 +85,6 @@ export class CashFlowStrategy implements ReportStrategy {
       // Calculate cash flow details
       const details = await this.calculateCashFlow(
         config,
-        payments,
         receipts,
         investments,
         financing,
@@ -118,7 +103,7 @@ export class CashFlowStrategy implements ReportStrategy {
         performance: {
           generationTime: Date.now() - startTime,
           cacheHit: false,
-          dataPoints: payments.length + receipts.length + investments.length + financing.length,
+          dataPoints: receipts.length + investments.length + financing.length,
         },
       };
     } catch (error: any) {
@@ -139,28 +124,8 @@ export class CashFlowStrategy implements ReportStrategy {
   }
 
   getCacheTTL(config: ReportConfig): number {
-    // Cash flow reports cached for shorter periods due to payment volatility
-    return 30 * 60; // 30 minutes
-  }
-
-  /**
-   * Get payment transaction data
-   */
-  private async getPaymentData(config: ReportConfig, services: FinancialServices): Promise<any[]> {
-    try {
-      // Would integrate with PaymentService
-      const filter = {
-        projectId: config.projectId,
-        dateFrom: config.startDate,
-        dateTo: config.endDate,
-      };
-
-      // return await services.payment.getPayments(filter);
-      return [];
-    } catch (error) {
-      console.warn("Error fetching payment data:", error);
-      return [];
-    }
+    // Cash flow reports cached for reasonable periods
+    return 60 * 60; // 1 hour
   }
 
   /**
@@ -227,7 +192,6 @@ export class CashFlowStrategy implements ReportStrategy {
    */
   private async calculateCashFlow(
     config: ReportConfig,
-    payments: any[],
     receipts: any[],
     investments: any[],
     financing: any[],
@@ -350,8 +314,7 @@ export class CashFlowStrategy implements ReportStrategy {
     const cashAtBeginning = new Money(0); // Would be calculated from opening balance
     const cashAtEnd = cashAtBeginning.add(netCashChange);
 
-    // Calculate payment method analysis
-    const paymentMethodAnalysis = this.analyzePaymentMethods(payments);
+    // Payment method analysis removed - internal admin only
 
     // Calculate receivables analysis
     const receivablesAnalysis = this.analyzeReceivables(receipts, config);
@@ -370,59 +333,8 @@ export class CashFlowStrategy implements ReportStrategy {
       netCashChange,
       cashAtBeginning,
       cashAtEnd,
-      paymentMethodAnalysis,
       receivablesAnalysis,
       liquidityMetrics,
-    };
-  }
-
-  /**
-   * Analyze payment methods for Philippine resort operations
-   */
-  private analyzePaymentMethods(payments: any[]): CashFlowDetails["paymentMethodAnalysis"] {
-    const methodTotals = new Map<PaymentMethod, { amount: Money; count: number }>();
-
-    // Initialize payment method tracking
-    Object.values(PaymentMethod).forEach((method) => {
-      methodTotals.set(method as PaymentMethod, { amount: new Money(0), count: 0 });
-    });
-
-    // Process payments
-    payments.forEach((payment) => {
-      const method = payment.paymentMethod as PaymentMethod;
-      const amount = new Money(payment.amount);
-
-      const current = methodTotals.get(method) || { amount: new Money(0), count: 0 };
-      current.amount = current.amount.add(amount);
-      current.count += 1;
-      methodTotals.set(method, current);
-    });
-
-    // Calculate totals
-    const totalPayments = Array.from(methodTotals.values()).reduce(
-      (sum, { amount }) => sum.add(amount),
-      new Money(0)
-    );
-
-    // Build breakdown
-    const paymentMethodBreakdown = Array.from(methodTotals.entries()).map(([method, data]) => ({
-      method,
-      amount: data.amount,
-      percentage: totalPayments.isZero()
-        ? 0
-        : data.amount.divide(totalPayments).multiply(100).toNumber(),
-      transactionCount: data.count,
-    }));
-
-    return {
-      cashPayments: methodTotals.get(PaymentMethod.CASH)?.amount || new Money(0),
-      gcashPayments: methodTotals.get(PaymentMethod.GCASH)?.amount || new Money(0),
-      bankTransferPayments: methodTotals.get(PaymentMethod.BANK_TRANSFER)?.amount || new Money(0),
-      cardPayments: (methodTotals.get(PaymentMethod.CREDIT_CARD)?.amount || new Money(0)).add(
-        methodTotals.get(PaymentMethod.DEBIT_CARD)?.amount || new Money(0)
-      ),
-      totalPayments,
-      paymentMethodBreakdown,
     };
   }
 
@@ -473,7 +385,7 @@ export class CashFlowStrategy implements ReportStrategy {
    */
   private calculateMetrics(details: CashFlowDetails): ReportMetrics {
     return {
-      totalRevenue: details.paymentMethodAnalysis.totalPayments,
+      totalRevenue: details.operatingActivities.netCashFromOperations,
       totalExpenses: new Money(0), // Would calculate from expense outflows
       netIncome: details.netCashChange,
       grossMargin: 0,

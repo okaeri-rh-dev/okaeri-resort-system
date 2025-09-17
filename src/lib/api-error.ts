@@ -4,6 +4,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { isDevelopment } from "./env-client";
 
 export class ApiError {
   static badRequest(message: string, errors?: any) {
@@ -131,7 +132,7 @@ export class ApiError {
       }
 
       // Return generic error with message in development
-      if (process.env.NODE_ENV === "development") {
+      if (isDevelopment()) {
         return this.internal(error.message);
       }
     }

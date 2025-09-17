@@ -1,6 +1,7 @@
 import { useAuthStore } from "@/stores/authStore";
 import { z } from "zod";
 import type { User } from "@/types/common";
+import { isDevelopment } from "./env-client";
 
 // Dependency injection interfaces
 export interface AuthProvider {
@@ -291,7 +292,7 @@ class ApiClient {
         if (error instanceof z.ZodError) {
           console.warn("API response validation failed:", error.errors);
           // In development, throw validation errors
-          if (process.env.NODE_ENV === "development") {
+          if (isDevelopment()) {
             throw new Error(
               `API response validation failed: ${error.errors
                 .map((e) => `${e.path.join(".")}: ${e.message}`)

@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { isDevelopment, isProduction } from "@/lib/env-client";
 import {
   initPerformanceMonitoring,
   getPerformanceMonitor,
@@ -46,8 +47,8 @@ export function usePerformanceMonitoring(options: UsePerformanceMonitoringOption
       initRef.current = true;
 
       initPerformanceMonitoring({
-        enableConsoleLog: options.enableInDevelopment ?? process.env.NODE_ENV === "development",
-        enableAnalytics: process.env.NODE_ENV === "production",
+        enableConsoleLog: options.enableInDevelopment ?? isDevelopment(),
+        enableAnalytics: isProduction(),
         samplingRate: options.samplingRate ?? 1.0,
         endpoint: options.endpoint,
       });

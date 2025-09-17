@@ -8,6 +8,7 @@ import {
   BookingSource,
   PaymentMethod,
 } from "./common";
+import { isDevelopment } from "@/lib/env-client";
 import { ROUTES } from "@/routes/paths";
 
 /**
@@ -219,7 +220,7 @@ export function validateSearchParams<T extends z.ZodType>(
   }
 
   // Log validation errors in development
-  if (process.env.NODE_ENV === "development") {
+  if (isDevelopment()) {
     console.warn("Invalid search parameters:", result.error.errors);
   }
 

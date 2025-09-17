@@ -18,6 +18,7 @@ import { Pool, PoolClient } from "@neondatabase/serverless";
 import ws from "ws";
 import { sql } from "drizzle-orm";
 import { logger } from "@/lib/logger";
+import { getEnvVar, isDevelopment, isServer } from "../env-client";
 
 // Configure WebSocket for Neon serverless
 if (typeof WebSocket === "undefined") {
@@ -700,14 +701,14 @@ export class ConnectionOptimizer {
 
 // Default configuration for Philippine resort workload
 export const RESORT_CONNECTION_CONFIG: ConnectionConfig = {
-  connectionString: process.env.DATABASE_URL!,
+  connectionString: getEnvVar("DATABASE_URL", ""),
   maxConnections: 10, // Conservative for serverless
   idleTimeoutMs: 30 * 1000, // 30 seconds
   connectionTimeoutMs: 10 * 1000, // 10 seconds
   enablePreparedStatements: true,
   maxPreparedStatements: 20,
   preparedStatementTTL: 60 * 60 * 1000, // 1 hour
-  enableQueryLogging: process.env.NODE_ENV === "development",
+  enableQueryLogging: isDevelopment(),
   slowQueryThreshold: 1000, // 1 second
   enableConnectionWarmup: true,
   warmupQueries: [

@@ -6,8 +6,21 @@
  * connection efficiency for Neon PostgreSQL serverless optimization.
  */
 
-import { db } from "../db/connection";
+import { isServer } from "../env-client";
 import { sql } from "drizzle-orm";
+
+// Lazy load database connection only when needed
+let dbInstance: any = null;
+async function getDb() {
+  if (!isServer) {
+    throw new Error("Database operations are only available on the server");
+  }
+  if (!dbInstance) {
+    const mod = await import("../db/connection");
+    dbInstance = mod.drizzleDb; // Now it's a Proxy, not a function
+  }
+  return dbInstance;
+}
 
 // =============================================
 // Types and Interfaces
@@ -108,6 +121,7 @@ export class DatabasePerformanceService {
    */
   async getDatabaseMetrics(): Promise<DatabaseMetrics> {
     try {
+      const db = await getDb();
       const [connectionResult, queryResult, cacheResult, lockResult, sizeResult] =
         await Promise.all([
           // Connection count
@@ -678,5 +692,22 @@ export class DatabasePerformanceService {
   }
 }
 
-// Export singleton instance
-export const databasePerformanceService = new DatabasePerformanceService();
+// Export singleton instance with lazy initialization
+export const databasePerformanceService = (() => {
+  let instance: DatabasePerformanceService | null = null;
+
+  // Return a proxy that creates the instance only when accessed on server
+  return new Proxy({} as DatabasePerformanceService, {
+    get(target, prop, receiver) {
+      if (!isServer) {
+        throw new Error("DatabasePerformanceService is only available on the server");
+      }
+
+      if (!instance) {
+        instance = new DatabasePerformanceService();
+      }
+
+      return Reflect.get(instance, prop, receiver);
+    },
+  });
+})();
