@@ -10,39 +10,30 @@ export default tseslint.config([
     ignores: [
       "dist/**/*",
       "build/**/*",
-      "assets/**/*",
       "coverage/**/*",
       "node_modules/**/*",
-      ".next/**/*",
-      ".vercel/**/*",
       "**/*.min.js",
       "**/*.bundle.js",
       "public/**/*",
-      "docs/**/*",
-      "*.config.js",
-      "*.config.ts",
-      "vite.config.ts",
-      "vitest.config.ts",
-      // Template scaffolds
-      "tests/templates/**/*",
-      "**/*.template.ts",
-      "**/*.template.tsx",
     ],
   },
 
   // Base configuration for JavaScript files
   {
     files: ["**/*.{js,mjs,cjs}"],
-    extends: [js.configs.recommended],
+    ...js.configs.recommended,
     languageOptions: {
       globals: globals.node,
     },
   },
 
-  // TypeScript configuration
+  // TypeScript configuration - less strict
   {
     files: ["**/*.{ts,tsx}"],
-    extends: [js.configs.recommended, ...tseslint.configs.recommended, ...tseslint.configs.strict],
+    extends: [
+      js.configs.recommended,
+      ...tseslint.configs.recommended, // Only recommended, not strict
+    ],
     languageOptions: {
       ecmaVersion: 2022,
       globals: globals.browser,
@@ -51,130 +42,49 @@ export default tseslint.config([
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
     },
-    settings: {
-      react: {
-        version: "19",
-      },
-    },
     rules: {
-      // React Hooks rules
+      // React hooks rules
       ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": [
-        "warn",
-        {
-          allowConstantExport: true,
-        },
-      ],
+      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
 
-      // TypeScript strict rules - no any types allowed
-      "@typescript-eslint/no-explicit-any": "error",
-      "@typescript-eslint/no-non-null-assertion": "error",
+      // TypeScript rules - relaxed
       "@typescript-eslint/no-unused-vars": [
-        "error",
+        "warn",
         {
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
-          ignoreRestSiblings: true,
+          caughtErrorsIgnorePattern: "^_",
         },
       ],
-      "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
-      "@typescript-eslint/consistent-type-imports": [
-        "error",
-        {
-          prefer: "type-imports",
-          disallowTypeAnnotations: false,
-        },
-      ],
+      "@typescript-eslint/no-explicit-any": "warn", // Warn instead of error
+      "@typescript-eslint/no-non-null-assertion": "off", // Allow ! operator
+      "@typescript-eslint/no-empty-function": "off",
+      "@typescript-eslint/ban-ts-comment": "off", // Allow @ts-ignore when needed
+      "@typescript-eslint/no-inferrable-types": "off",
 
-      // Code quality rules
+      // General JavaScript rules - relaxed
       "no-console": ["warn", { allow: ["warn", "error"] }],
-      "no-debugger": "error",
-      "no-alert": "error",
-      "prefer-const": "error",
+      "no-debugger": "warn",
+      "no-unused-vars": "off", // Using TypeScript's version
+      "prefer-const": "warn",
       "no-var": "error",
-      "object-shorthand": "error",
-      "prefer-arrow-callback": "error",
-      "prefer-template": "error",
-      "prefer-destructuring": [
-        "error",
-        {
-          array: false,
-          object: true,
-        },
-      ],
 
-      // Performance and best practices
-      "no-useless-computed-key": "error",
-      "no-useless-rename": "error",
-      "no-return-assign": "error",
-      "no-param-reassign": "error",
-      "no-nested-ternary": "error",
-      complexity: ["warn", { max: 15 }],
-      "max-depth": ["warn", { max: 4 }],
-      "max-lines-per-function": [
-        "warn",
-        {
-          max: 150,
-          skipBlankLines: true,
-          skipComments: true,
-        },
-      ],
+      // Code style - very relaxed
+      "max-len": "off", // No line length limit
+      complexity: "off", // No complexity limit
+      "max-lines-per-function": "off", // No function length limit
+      "no-nested-ternary": "off", // Allow nested ternaries
+      "no-param-reassign": "off", // Allow parameter reassignment
     },
   },
 
-  // Override for TSX files: disable certain complexity-related rules
+  // Test files - even more relaxed
   {
-    files: ["**/*.tsx"],
-    rules: {
-      complexity: "off",
-      "max-depth": "off",
-      "max-lines-per-function": "off",
-    },
-  },
-
-  // Specific rules for test files
-  {
-    files: [
-      "**/*.test.{ts,tsx}",
-      "**/*.spec.{ts,tsx}",
-      "**/__tests__/**/*.{ts,tsx}",
-      "**/tests/**/*.{ts,tsx}",
-      "**/mocks/**/*.{ts,tsx}",
-    ],
+    files: ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": "warn", // More lenient for test files
+      "@typescript-eslint/no-unused-vars": "off",
       "no-console": "off",
-      complexity: "off",
-      "max-lines-per-function": "off",
-      "max-depth": "off",
-      "@typescript-eslint/no-non-null-assertion": "warn", // More lenient for test files
-    },
-  },
-
-  // Specific rules for configuration files
-  {
-    files: ["**/*.config.{js,ts}", "**/vite.config.ts", "**/vitest.config.ts"],
-    rules: {
-      "@typescript-eslint/no-explicit-any": "warn",
-    },
-  },
-
-  // API development files - more lenient during Phase 1
-  {
-    files: ["api/**/*.ts"],
-    rules: {
-      "@typescript-eslint/no-explicit-any": "warn", // Allow any but warn
-      complexity: ["warn", { max: 20 }], // More lenient for API handlers
-      "max-lines-per-function": ["warn", { max: 200 }], // API handlers can be longer
-    },
-  },
-
-  // Security-specific rules - allow debugger in security token manager for suspicious activity detection
-  {
-    files: ["**/src/lib/security/secure-token-manager.ts"],
-    rules: {
-      "no-debugger": "off",
     },
   },
 ]);

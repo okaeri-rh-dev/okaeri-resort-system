@@ -1,276 +1,79 @@
 @import "tailwindcss";
-@import "./styles/route-transitions.css";
 
-/* CSS Custom Properties for Tailwind CSS v4 */
+/* Tailwind v4 uses @theme directive for design tokens */
 @theme {
-  /* Base font family */
-  --font-family-sans:
-    "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+  /* Colors - using HSL values for shadcn/ui compatibility */
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(222.2 84% 4.9%);
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(222.2 84% 4.9%);
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(222.2 84% 4.9%);
+  --color-primary: hsl(222.2 47.4% 11.2%);
+  --color-primary-foreground: hsl(210 40% 98%);
+  --color-secondary: hsl(210 40% 96.1%);
+  --color-secondary-foreground: hsl(222.2 47.4% 11.2%);
+  --color-muted: hsl(210 40% 96.1%);
+  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
+  --color-accent: hsl(210 40% 96.1%);
+  --color-accent-foreground: hsl(222.2 47.4% 11.2%);
+  --color-destructive: hsl(0 84.2% 60.2%);
+  --color-destructive-foreground: hsl(210 40% 98%);
+  --color-border: hsl(214.3 31.8% 91.4%);
+  --color-input: hsl(214.3 31.8% 91.4%);
+  --color-ring: hsl(222.2 84% 4.9%);
 
-  /* Border radius */
-  --radius: 0.5rem;
-
-  /* Professional Enterprise Color Palette - Using oklch() color space */
-
-  /* Corporate Blue - Professional enterprise primary */
-  --color-corporate-25: oklch(98% 0.01 220);
-  --color-corporate-50: oklch(95% 0.02 220);
-  --color-corporate-100: oklch(90% 0.04 220);
-  --color-corporate-200: oklch(82% 0.08 220);
-  --color-corporate-300: oklch(75% 0.12 220);
-  --color-corporate-400: oklch(65% 0.16 220);
-  --color-corporate-500: oklch(55% 0.2 220);
-  --color-corporate-600: oklch(48% 0.22 220);
-  --color-corporate-700: oklch(42% 0.2 220);
-  --color-corporate-800: oklch(35% 0.16 220);
-  --color-corporate-900: oklch(25% 0.1 220);
-  --color-corporate-950: oklch(15% 0.06 220);
-
-  /* Neutral Gray - Professional secondary */
-  --color-neutral-25: oklch(98% 0.01 85);
-  --color-neutral-50: oklch(95% 0.02 85);
-  --color-neutral-100: oklch(90% 0.04 85);
-  --color-neutral-200: oklch(85% 0.06 85);
-  --color-neutral-300: oklch(78% 0.08 85);
-  --color-neutral-400: oklch(70% 0.1 85);
-  --color-neutral-500: oklch(62% 0.12 85);
-  --color-neutral-600: oklch(55% 0.1 85);
-  --color-neutral-700: oklch(48% 0.08 85);
-  --color-neutral-800: oklch(40% 0.06 85);
-  --color-neutral-900: oklch(32% 0.04 85);
-
-  /* Accent Blue - Highlights and actions */
-  --color-accent-25: oklch(97% 0.02 25);
-  --color-accent-50: oklch(94% 0.04 25);
-  --color-accent-100: oklch(88% 0.08 25);
-  --color-accent-200: oklch(82% 0.12 25);
-  --color-accent-300: oklch(76% 0.16 25);
-  --color-accent-400: oklch(70% 0.18 25);
-  --color-accent-500: oklch(64% 0.2 25);
-  --color-accent-600: oklch(58% 0.18 25);
-  --color-accent-700: oklch(52% 0.16 25);
-  --color-accent-800: oklch(45% 0.12 25);
-  --color-accent-900: oklch(38% 0.1 25);
-
-  /* Success Green - Status and confirmation */
-  --color-success-25: oklch(98% 0.01 140);
-  --color-success-50: oklch(95% 0.02 140);
-  --color-success-100: oklch(90% 0.04 140);
-  --color-success-200: oklch(84% 0.08 140);
-  --color-success-300: oklch(78% 0.12 140);
-  --color-success-400: oklch(72% 0.16 140);
-  --color-success-500: oklch(65% 0.18 140);
-  --color-success-600: oklch(58% 0.16 140);
-  --color-success-700: oklch(52% 0.14 140);
-  --color-success-800: oklch(45% 0.12 140);
-  --color-success-900: oklch(38% 0.08 140);
-
-  /* Warning Orange - Alerts and attention */
-  --color-warning-25: oklch(97% 0.02 90);
-  --color-warning-50: oklch(94% 0.04 90);
-  --color-warning-100: oklch(88% 0.08 90);
-  --color-warning-200: oklch(82% 0.12 90);
-  --color-warning-300: oklch(76% 0.16 90);
-  --color-warning-400: oklch(70% 0.18 90);
-  --color-warning-500: oklch(49% 0.15 90); /* WCAG AA 4.5:1 contrast */
-  --color-warning-600: oklch(44% 0.15 90); /* WCAG AAA 6.5:1 contrast */
-  --color-warning-700: oklch(39% 0.14 90); /* WCAG AAA 8.1:1 contrast */
-  --color-warning-800: oklch(40% 0.12 90);
-  --color-warning-900: oklch(30% 0.08 90);
-
-  /* Design System Color Mapping - Corporate Blue Primary Palette */
-  --color-primary-50: oklch(97% 0.02 240);
-  --color-primary-100: oklch(94% 0.04 240);
-  --color-primary-200: oklch(88% 0.08 240);
-  --color-primary-300: oklch(78% 0.1 240);
-  --color-primary-400: oklch(65% 0.11 240);
-  --color-primary-500: oklch(52% 0.12 240);
-  --color-primary-600: oklch(45% 0.12 240);
-  --color-primary-700: oklch(38% 0.11 240);
-  --color-primary-800: oklch(30% 0.1 240);
-  --color-primary-900: oklch(22% 0.08 240);
-
-  /* Design System Color Mapping - Professional Gray Scale */
-  --color-gray-50: oklch(98% 0 0); /* Very light gray */
-  --color-gray-100: oklch(96% 0 0); /* Light gray */
-  --color-gray-200: oklch(91% 0 0); /* Light border gray */
-  --color-gray-300: oklch(83% 0 0); /* Medium border gray */
-  --color-gray-400: oklch(65% 0 0); /* Input border gray */
-  --color-gray-500: oklch(55% 0 0); /* Text gray */
-  --color-gray-600: oklch(45% 0 0); /* Dark text gray */
-  --color-gray-700: oklch(35% 0 0); /* Very dark text */
-  --color-gray-800: oklch(25% 0 0); /* Near black */
-  --color-gray-900: oklch(15% 0 0); /* Almost black */
-
-  /* Design System Color Mapping - Error Colors (Red Spectrum) */
-  --color-error-50: oklch(97% 0.02 29);
-  --color-error-100: oklch(94% 0.04 29);
-  --color-error-200: oklch(88% 0.08 29);
-  --color-error-300: oklch(78% 0.12 29);
-  --color-error-400: oklch(68% 0.16 29);
-  --color-error-500: oklch(60% 0.18 29);
-  --color-error-600: oklch(50% 0.18 29);
-  --color-error-700: oklch(40% 0.16 29);
-  --color-error-800: oklch(30% 0.12 29);
-  --color-error-900: oklch(22% 0.08 29);
-
-  /* Design System Color Mapping - Success Colors (Green Spectrum) */
-  --color-success-50: oklch(97% 0.02 142);
-  --color-success-100: oklch(94% 0.04 142);
-  --color-success-200: oklch(88% 0.08 142);
-  --color-success-300: oklch(78% 0.12 142);
-  --color-success-400: oklch(68% 0.14 142);
-  --color-success-500: oklch(60% 0.15 142);
-  --color-success-600: oklch(50% 0.15 142);
-  --color-success-700: oklch(40% 0.14 142);
-  --color-success-800: oklch(30% 0.12 142);
-  --color-success-900: oklch(22% 0.08 142);
-
-  /* Design System Color Mapping - Warning Colors (Amber Spectrum) - WCAG AA Compliant */
-  --color-warning-50: oklch(97% 0.02 90);
-  --color-warning-100: oklch(94% 0.04 90);
-  --color-warning-200: oklch(88% 0.08 90);
-  --color-warning-300: oklch(78% 0.12 90);
-  --color-warning-400: oklch(72% 0.14 90);
-  --color-warning-500: oklch(49% 0.15 90); /* WCAG AA compliant - 4.5:1 contrast */
-  --color-warning-600: oklch(44% 0.15 90); /* WCAG AAA enhanced - 6.5:1 contrast */
-  --color-warning-700: oklch(39% 0.14 90); /* WCAG AAA superior - 8.1:1 contrast */
-  --color-warning-800: oklch(40% 0.12 90);
-  --color-warning-900: oklch(30% 0.08 90);
-
-  /* Theme color mappings for shadcn/ui compatibility */
-  --color-border: oklch(var(--border));
-  --color-input: oklch(var(--input));
-  --color-ring: oklch(var(--ring));
-  --color-background: oklch(var(--background));
-  --color-foreground: oklch(var(--foreground));
-  --color-primary: oklch(var(--primary));
-  --color-primary-foreground: oklch(var(--primary-foreground));
-  --color-secondary: oklch(var(--secondary));
-  --color-secondary-foreground: oklch(var(--secondary-foreground));
-  --color-destructive: oklch(var(--destructive));
-  --color-destructive-foreground: oklch(var(--destructive-foreground));
-  --color-muted: oklch(var(--muted));
-  --color-muted-foreground: oklch(var(--muted-foreground));
-  --color-accent: oklch(var(--accent));
-  --color-accent-foreground: oklch(var(--accent-foreground));
-  --color-popover: oklch(var(--popover));
-  --color-popover-foreground: oklch(var(--popover-foreground));
-  --color-card: oklch(var(--card));
-  --color-card-foreground: oklch(var(--card-foreground));
-
-  /* Breakpoints */
-  --breakpoint-sm: 640px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 1024px;
-  --breakpoint-xl: 1280px;
-  --breakpoint-2xl: 1400px;
-
-  /* Animation keyframes */
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
-
-  @keyframes accordion-down {
-    from {
-      height: 0;
-    }
-    to {
-      height: var(--radix-accordion-content-height);
-    }
-  }
-
-  @keyframes accordion-up {
-    from {
-      height: var(--radix-accordion-content-height);
-    }
-    to {
-      height: 0;
-    }
-  }
+  /* Border Radius */
+  --radius-lg: 0.5rem;
+  --radius-md: calc(0.5rem - 2px);
+  --radius-sm: calc(0.5rem - 4px);
 }
 
-/* Container utility customization for Tailwind v4 */
-@utility container {
-  margin-inline: auto;
-  padding-inline: 2rem;
-  max-width: 1400px;
-}
-
-/* CSS Variables for theming */
+/* Keep the CSS variables for shadcn/ui components compatibility */
 @layer base {
   :root {
-    /* Light theme colors using oklch color space */
-    --background: 100% 0 0;
-    --foreground: 20% 0 0;
-
-    --card: 100% 0 0;
-    --card-foreground: 20% 0 0;
-
-    --popover: 100% 0 0;
-    --popover-foreground: 20% 0 0;
-
-    /* Primary: Corporate Blue - Professional enterprise primary */
-    --primary: 55% 0.2 220;
-    --primary-foreground: 98% 0.01 220;
-
-    /* Secondary: Neutral Gray - Professional secondary */
-    --secondary: 90% 0.04 85;
-    --secondary-foreground: 32% 0.02 85;
-
-    /* Muted: Subtle Gray - Muted backgrounds */
-    --muted: 95% 0.02 85;
-    --muted-foreground: 42% 0.04 85;
-
-    /* Accent: Accent Blue - Highlights and actions */
-    --accent: 88% 0.08 25;
-    --accent-foreground: 26% 0.08 25;
-
-    /* Destructive: Professional red for errors */
-    --destructive: 64% 0.2 25;
-    --destructive-foreground: 97% 0.02 25;
-
-    /* Borders and inputs */
-    --border: 85% 0.06 85;
-    --input: 85% 0.06 85;
-    --ring: 55% 0.2 220;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
   }
 
   .dark {
-    /* Dark theme colors */
-    --background: 15% 0.02 220;
-    --foreground: 95% 0.02 85;
-
-    --card: 18% 0.02 220;
-    --card-foreground: 95% 0.02 85;
-
-    --popover: 18% 0.02 220;
-    --popover-foreground: 95% 0.02 85;
-
-    /* Primary: Lighter corporate blue for dark theme */
-    --primary: 75% 0.12 220;
-    --primary-foreground: 15% 0.02 220;
-
-    /* Secondary: Darker neutral gray */
-    --secondary: 25% 0.02 85;
-    --secondary-foreground: 95% 0.02 85;
-
-    /* Muted: Dark corporate background */
-    --muted: 25% 0.02 220;
-    --muted-foreground: 70% 0.04 85;
-
-    /* Accent: Vibrant accent blue for dark theme */
-    --accent: 80% 0.12 25;
-    --accent-foreground: 15% 0.02 220;
-
-    /* Destructive: Bright professional red for dark theme */
-    --destructive: 72% 0.16 25;
-    --destructive-foreground: 97% 0.02 25;
-
-    /* Borders and inputs for dark theme */
-    --border: 25% 0.02 220;
-    --input: 25% 0.02 220;
-    --ring: 75% 0.12 220;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
   }
 }
 
@@ -278,224 +81,7 @@
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-background text-foreground font-sans;
-    font-feature-settings:
-      "rlig" 1,
-      "calt" 1;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-  }
-
-  /* Ensure proper mobile viewport handling */
-  html {
-    @apply scroll-smooth;
-    -webkit-text-size-adjust: 100%;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* Focus styles for accessibility */
-  *:focus-visible {
-    @apply outline-ring outline-2 outline-offset-2;
-  }
-
-  /* Remove focus outline for non-keyboard interactions */
-  *:focus:not(:focus-visible) {
-    @apply outline-none;
-  }
-
-  /* Typography improvements */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-semibold tracking-tight;
-  }
-
-  h1 {
-    @apply text-4xl lg:text-5xl;
-  }
-
-  h2 {
-    @apply text-3xl lg:text-4xl;
-  }
-
-  h3 {
-    @apply text-2xl lg:text-3xl;
-  }
-
-  h4 {
-    @apply text-xl lg:text-2xl;
-  }
-
-  h5 {
-    @apply text-lg lg:text-xl;
-  }
-
-  h6 {
-    @apply text-base lg:text-lg;
-  }
-
-  /* Improved button styles */
-  button {
-    @apply touch-manipulation select-none;
-  }
-
-  /* Form improvements for mobile */
-  input,
-  textarea,
-  select {
-    @apply touch-manipulation;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-  }
-
-  /* Improved link styles */
-  a {
-    @apply touch-manipulation;
-  }
-
-  /* Better scrollbar styling */
-  ::-webkit-scrollbar {
-    @apply h-2 w-2;
-  }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-muted rounded-full;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-border hover:bg-muted-foreground/20 rounded-full;
-  }
-
-  /* Selection styles */
-  ::selection {
-    @apply bg-primary/20 text-primary-foreground;
-  }
-
-  /* Glass morphism effect for resort UI */
-  .glass {
-    @apply border border-white/20 bg-white/10 backdrop-blur-md;
-  }
-
-  .glass-dark {
-    @apply border border-white/10 bg-black/10 backdrop-blur-md;
-  }
-
-  /* Philippine Peso currency formatting */
-  .currency-php::before {
-    content: "₱";
-    @apply mr-1;
-  }
-
-  /* Custom animations */
-  @keyframes loading-bar {
-    0% {
-      width: 0%;
-    }
-    50% {
-      width: 70%;
-    }
-    100% {
-      width: 100%;
-    }
-  }
-
-  @keyframes float {
-    0%,
-    100% {
-      transform: translateY(0px) rotate(0deg);
-    }
-    33% {
-      transform: translateY(-10px) rotate(1deg);
-    }
-    66% {
-      transform: translateY(5px) rotate(-1deg);
-    }
-  }
-
-  @keyframes float-delayed {
-    0%,
-    100% {
-      transform: translateY(0px) rotate(0deg);
-    }
-    33% {
-      transform: translateY(5px) rotate(-1deg);
-    }
-    66% {
-      transform: translateY(-8px) rotate(1deg);
-    }
-  }
-
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  .animate-float-delayed {
-    animation: float-delayed 8s ease-in-out infinite;
-  }
-
-  /* Animation utilities with reduced motion support */
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
-
-    .animate-float,
-    .animate-float-delayed {
-      animation: none !important;
-    }
-  }
-
-  /* High contrast mode support */
-  @media (prefers-contrast: high) {
-    :root {
-      --border: 0% 0 0;
-      --ring: 0% 0 0;
-    }
-
-    .dark {
-      --border: 100% 0 0;
-      --ring: 100% 0 0;
-    }
-  }
-
-  /* Mobile-specific optimizations */
-  @media (max-width: 768px) {
-    body {
-      @apply text-base;
-    }
-
-    /* Ensure touch targets are at least 44px */
-    button,
-    a,
-    input,
-    select,
-    textarea,
-    [role="button"],
-    [role="link"] {
-      @apply min-h-[44px];
-    }
-  }
-
-  /* Print styles */
-  @media print {
-    .no-print {
-      display: none !important;
-    }
-
-    * {
-      @apply bg-white text-black;
-    }
+    @apply bg-background text-foreground;
   }
 }
