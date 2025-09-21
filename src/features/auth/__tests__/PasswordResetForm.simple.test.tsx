@@ -94,7 +94,7 @@ vi.mock("@/styles/design-system", () => ({
   getPasswordToggleClasses: vi.fn(() => "password-toggle-classes"),
 }));
 
-vi.mock("@/routes/paths", () => ({
+vi.mock("@/constants/routes", () => ({
   ROUTES: {
     login: "/auth/login",
   },

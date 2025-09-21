@@ -8,7 +8,7 @@ import { queryClient, queryKeys } from "@/lib/query-client";
 import { useAuthStore } from "@/stores/authStore";
 import { useProjectStore } from "@/stores/projectStore";
 import { useUIStore } from "@/stores/uiStore";
-import { ROUTES } from "@/routes/paths";
+import { ROUTES } from "@/constants/routes";
 import {
   useNavigationStore,
   cacheSyncManager,

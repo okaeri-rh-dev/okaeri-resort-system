@@ -13,7 +13,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useProjectStore } from "@/stores/projectStore";
 import { useUIStore } from "@/stores/uiStore";
 import { apiClient as api } from "@/lib/api-client";
-import { ROUTES } from "@/routes/paths";
+import { ROUTES } from "@/constants/routes";
 import type { QueryKey, InfiniteData } from "@tanstack/react-query";
 import type { Project, Property, Booking, Expense, PaginatedResponse } from "@/types/common";
 

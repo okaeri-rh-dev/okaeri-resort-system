@@ -8,7 +8,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useProjectStore } from "@/stores/projectStore";
 import { secureTokenManager as tokenManager, auditLogger, sessionMonitor } from "@/lib/security";
 import type { User } from "@/types/common";
-import { ROUTES } from "@/routes/paths";
+import { ROUTES } from "@/constants/routes";
 // [PHASE 1-4 MOCK AUTH - Remove in Phase 5.2]
 import { config } from "@/config";
 

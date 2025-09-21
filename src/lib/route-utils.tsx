@@ -4,7 +4,7 @@ import type { z } from "zod";
 import { api } from "@/lib/api-client";
 import { useProjectStore } from "@/stores/projectStore";
 import { useAuthStore } from "@/stores/authStore";
-import { ROUTES } from "@/routes/paths";
+import { ROUTES } from "@/constants/routes";
 import { isDevelopment } from "./env-client";
 import type { Booking, Property, Expense, DashboardStats, PaginatedResponse } from "@/types/common";
 

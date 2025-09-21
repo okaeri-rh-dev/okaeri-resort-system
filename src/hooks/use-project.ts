@@ -9,7 +9,7 @@ import { useProjectStore } from "@/stores/projectStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useUIStore } from "@/stores/uiStore";
 import { queryClient, queryKeys, invalidateQueries } from "@/lib/query-client";
-import { ROUTES } from "@/routes/paths";
+import { ROUTES } from "@/constants/routes";
 import type { Project, Property } from "@/types/common";
 
 export function useProject() {

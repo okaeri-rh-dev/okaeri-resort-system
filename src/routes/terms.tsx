@@ -7,7 +7,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { ROUTES } from "./paths";
+import { ROUTES } from "@/constants/routes";
 
 export const Route = createFileRoute("/terms")({
   component: TermsPage,

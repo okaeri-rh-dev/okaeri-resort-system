@@ -9,7 +9,7 @@ import React, { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { LoginForm } from "@/features/auth/components/LoginForm";
 import { useAuthStore } from "@/stores/authStore";
-import { ROUTES } from "@/routes/paths";
+import { ROUTES } from "@/constants/routes";
 import { designSystem, getTypographyClasses } from "@/styles/design-system";
 
 export function LoginPage() {

@@ -24,7 +24,7 @@ import { useUIStore } from "@/stores/uiStore";
 import { queryClient } from "@/lib/query-client";
 import { apiClient } from "@/lib/api-client";
 import { MOCK_USERS, MOCK_AUTH_STATES } from "@tests/utils/test-utils";
-import { ROUTES } from "@/routes/paths";
+import { ROUTES } from "@/constants/routes";
 
 // Mock stores
 vi.mock("@/stores/authStore", () => ({

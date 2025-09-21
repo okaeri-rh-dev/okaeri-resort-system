@@ -140,7 +140,7 @@ vi.mock("@/styles/design-system", () => ({
 }));
 
 // Mock routes
-vi.mock("@/routes/paths", () => ({
+vi.mock("@/constants/routes", () => ({
   ROUTES: {
     login: "/auth/login",
     register: "/auth/register",

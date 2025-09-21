@@ -9,7 +9,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import { useUIStore } from "@/stores/uiStore";
 import { queryClient } from "@/lib/query-client";
-import { ROUTES } from "@/routes/paths";
+import { ROUTES } from "@/constants/routes";
 import {
   tokenManager,
   sessionMonitor,

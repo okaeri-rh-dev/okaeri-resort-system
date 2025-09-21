@@ -8,7 +8,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import React from "react";
 import { buttonVariants } from "@/components/ui/button";
-import { ROUTES } from "@/routes/paths";
+import { ROUTES } from "@/constants/routes";
 
 function UnauthorizedPage() {
   return (

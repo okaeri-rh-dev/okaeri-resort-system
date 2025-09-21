@@ -9,7 +9,7 @@ import {
   PaymentMethod,
 } from "./common";
 import { isDevelopment } from "@/lib/env-client";
-import { ROUTES } from "@/routes/paths";
+import { ROUTES } from "@/constants/routes";
 
 /**
  * Route parameter validation schemas and types

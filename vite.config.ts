@@ -217,15 +217,18 @@ export default defineConfig({
     strictPort: true,
     // Enable CORS for development
     cors: true,
-    // Proxy API routes to avoid CORS issues during development
-    proxy: {
-      "/api": {
-        target: "http://localhost:3001",
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, ""),
-      },
-    },
+    // Conditionally proxy API routes - disable when using mock API
+    proxy:
+      typeof process !== "undefined" && process.env?.VITE_USE_MOCK_API === "true"
+        ? {} // No proxy when mock API is enabled
+        : {
+            "/api": {
+              target: "http://localhost:3001",
+              changeOrigin: true,
+              secure: false,
+              rewrite: (path) => path.replace(/^\/api/, ""),
+            },
+          },
   },
 
   // Preview server configuration

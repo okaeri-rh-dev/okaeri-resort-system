@@ -3,9 +3,19 @@
 import { enableMapSet } from "immer";
 enableMapSet();
 
-// Install mock API handler in development to provide mock data
-// for endpoints that don't have server implementations yet
-if (import.meta.env.DEV) {
+// Initialize Mock API with persistent IndexedDB backend
+// Activated via VITE_USE_MOCK_API environment variable
+if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK_API === "true") {
+  import("@/mocks/browser").then(({ initializeMockAPI }) => {
+    initializeMockAPI({
+      verbose: true,
+      forceSeed: import.meta.env.VITE_MOCK_FORCE_SEED === "true",
+    }).catch(console.error);
+  });
+}
+
+// Fallback: Install mock API handler for endpoints not in persistent mock
+if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK_API !== "true") {
   import("@/lib/mock-api-handler").then(({ MockApiHandler }) => {
     MockApiHandler.interceptFetch();
   });

@@ -19,7 +19,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useProjectStore } from "@/stores/projectStore";
 import { tokenManager, auditLogger, sessionMonitor } from "@/lib/security";
 import { MOCK_USERS, MOCK_AUTH_STATES } from "@tests/utils/test-utils";
-import { ROUTES } from "@/routes/paths";
+import { ROUTES } from "@/constants/routes";
 
 // Mock stores
 vi.mock("@/stores/authStore", () => ({

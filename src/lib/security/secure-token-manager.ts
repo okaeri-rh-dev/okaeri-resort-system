@@ -7,7 +7,7 @@
 import type { User } from "@/types/common";
 import { SECURITY_ERROR_CODES, TOKEN_EXPIRY } from "./constants";
 import { SECURITY_EVENTS } from "./events";
-import { ROUTES } from "@/routes/paths";
+import { ROUTES } from "@/constants/routes";
 import { auditLogger } from "./audit-logger";
 // Use Web Crypto API for browser compatibility instead of Node.js crypto
 // import crypto from "crypto";
