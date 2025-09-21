@@ -1,6 +1,6 @@
 import * as React from "react";
 import { ChevronRight, Home, MoreHorizontal } from "lucide-react";
-import { Link, useLocation } from "@tanstack/react-router";
+// import { Link, useLocation } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 
@@ -45,7 +45,7 @@ BreadcrumbItem.displayName = "BreadcrumbItem";
 
 const BreadcrumbLink = React.forwardRef<
   HTMLAnchorElement,
-  React.ComponentPropsWithoutRef<typeof Link> & {
+  React.ComponentPropsWithoutRef<"a"> & {
     className?: string;
     asChild?: boolean;
   }
@@ -64,7 +64,7 @@ const BreadcrumbLink = React.forwardRef<
   }
 
   return (
-    <Link
+    <a
       ref={ref}
       className={cn(
         "hover:text-ocean-600 dark:hover:text-ocean-400 focus-visible:ring-ocean-500 -mx-1 -my-0.5 rounded-sm px-1 py-0.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
@@ -133,7 +133,7 @@ BreadcrumbEllipsis.displayName = "BreadcrumbEllipsis";
 
 // Auto-generating breadcrumb component for resort pages
 const ResortBreadcrumb = () => {
-  const location = useLocation();
+  const location = { pathname: window.location.pathname };
   const pathSegments = location.pathname.split("/").filter(Boolean);
 
   const getPageTitle = (segment: string, index: number, segments: string[]) => {
@@ -170,7 +170,7 @@ const ResortBreadcrumb = () => {
     <Breadcrumb className="mb-6">
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink to={ROUTES.dashboard} className="flex items-center gap-1">
+          <BreadcrumbLink href={ROUTES.dashboard} className="flex items-center gap-1">
             <Home className="h-4 w-4" />
             <span className="sr-only sm:not-sr-only">Dashboard</span>
           </BreadcrumbLink>
@@ -187,7 +187,7 @@ const ResortBreadcrumb = () => {
 
         {pathSegments
           .slice(pathSegments.length > 3 ? -2 : 0)
-          .map((segment, index, visibleSegments) => {
+          .map((segment: any, index: number, visibleSegments: any[]) => {
             const actualIndex = pathSegments.length > 3 ? pathSegments.length - 2 + index : index;
             const isLast = index === visibleSegments.length - 1;
             const path = getBreadcrumbPath(actualIndex);
@@ -200,7 +200,7 @@ const ResortBreadcrumb = () => {
                   {isLast ? (
                     <BreadcrumbPage>{title}</BreadcrumbPage>
                   ) : (
-                    <BreadcrumbLink to={path}>{title}</BreadcrumbLink>
+                    <BreadcrumbLink href={path}>{title}</BreadcrumbLink>
                   )}
                 </BreadcrumbItem>
               </React.Fragment>

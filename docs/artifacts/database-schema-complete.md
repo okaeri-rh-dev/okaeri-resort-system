@@ -251,8 +251,8 @@ scheduled_date + interval based on task_type | DATE | Next recurring date |
 | updated_at            | TIMESTAMP     | NOT NULL, DEFAULT NOW() | Last calculation timestamp      |
 
 **Computed Fields**: | Field Name | Formula | Return Type | Description |
-|------------|---------|-------------|-------------| | occupancy_rate |
-(total_nights_booked / (num_units _ days_in_month)) _ 100 | DECIMAL | Overall
+|------------|---------|-------------|-------------| | occupancy*rate |
+(total_nights_booked / (num_units * days*in_month)) * 100 | DECIMAL | Overall
 occupancy percentage | | adr | gross_revenue / NULLIF(total_nights_booked, 0) |
 DECIMAL | Average Daily Rate | | revpar | gross_revenue / (num_units \*
 days_in_month) | DECIMAL | Revenue Per Available Room | | avg_booking_value |

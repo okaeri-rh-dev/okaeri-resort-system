@@ -32,7 +32,7 @@
 <!-- Confirm tests were written before implementation -->
 
 - [ ] **Yes** - Tests were written first (check commit history)
-- [ ] **No** - Please explain why: ******\_\_\_******
+- [ ] **No** - Please explain why: **\*\***\_\_\_**\*\***
 - [ ] **N/A** - Documentation or configuration change only
 
 ## Coverage Report
@@ -138,9 +138,9 @@ Coverage:    ___% (minimum 90% required, 95% for critical paths)
 
 ### Handoff Details
 
-- **From Agent**: ******\_******
-- **To Agent**: ******\_******
-- **Phase Transition**: ******\_******
+- **From Agent**: **\*\***\_**\*\***
+- **To Agent**: **\*\***\_**\*\***
+- **Phase Transition**: **\*\***\_**\*\***
 - **Handoff Report**: [Link to report or N/A]
 
 ### Handoff Checklist

@@ -1,0 +1,364 @@
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase, db, handleSupabaseError } from "@/lib/supabase";
+import type { Unit, UnitFilters, UnitStatus, AvailabilityCheck } from "@/types";
+
+// ============================================
+// ZUSTAND STORE
+// ============================================
+interface UnitStore {
+  // Local state
+  selectedUnit: Unit | null;
+  filters: UnitFilters;
+  viewMode: "grid" | "list";
+
+  // Actions
+  setSelectedUnit: (unit: Unit | null) => void;
+  setFilters: (filters: UnitFilters) => void;
+  resetFilters: () => void;
+  setViewMode: (mode: "grid" | "list") => void;
+
+  // Optimistic updates
+  optimisticUnits: Map<string, Unit>;
+  addOptimisticUnit: (unit: Unit) => void;
+  removeOptimisticUnit: (unitId: string) => void;
+  clearOptimisticUnits: () => void;
+}
+
+export const useUnitStore = create<UnitStore>()(
+  devtools(
+    persist(
+      (set) => ({
+        // Initial state
+        selectedUnit: null,
+        filters: {},
+        viewMode: "grid",
+        optimisticUnits: new Map(),
+
+        // Actions
+        setSelectedUnit: (unit) => set({ selectedUnit: unit }),
+
+        setFilters: (filters) => set({ filters }),
+
+        resetFilters: () => set({ filters: {} }),
+
+        setViewMode: (mode) => set({ viewMode: mode }),
+
+        addOptimisticUnit: (unit) =>
+          set((state) => {
+            const newMap = new Map(state.optimisticUnits);
+            newMap.set(unit.unit_id, unit);
+            return { optimisticUnits: newMap };
+          }),
+
+        removeOptimisticUnit: (unitId) =>
+          set((state) => {
+            const newMap = new Map(state.optimisticUnits);
+            newMap.delete(unitId);
+            return { optimisticUnits: newMap };
+          }),
+
+        clearOptimisticUnits: () => set({ optimisticUnits: new Map() }),
+      }),
+      {
+        name: "unit-storage",
+        storage: {
+          getItem: (name) => {
+            const value = sessionStorage.getItem(name);
+            return value ? JSON.parse(value) : null;
+          },
+          setItem: (name, value) => {
+            sessionStorage.setItem(name, JSON.stringify(value));
+          },
+          removeItem: (name) => {
+            sessionStorage.removeItem(name);
+          },
+        },
+        partialize: (state) =>
+          ({
+            viewMode: state.viewMode,
+            filters: state.filters,
+          }) as UnitStore,
+      }
+    ),
+    {
+      name: "UnitStore",
+    }
+  )
+);
+
+// ============================================
+// TANSTACK QUERY HOOKS
+// ============================================
+
+// Fetch all units with filters
+export const useUnits = () => {
+  const filters = useUnitStore((state) => state.filters);
+  const optimisticUnits = useUnitStore((state) => state.optimisticUnits);
+
+  return useQuery({
+    queryKey: ["units", filters],
+    queryFn: async () => {
+      let query = supabase.from("units").select("*");
+
+      // Apply filters
+      if (filters.status) {
+        query = query.eq("unit_status", filters.status);
+      }
+      if (filters.type) {
+        query = query.eq("unit_type", filters.type);
+      }
+      if (filters.min_rate !== undefined) {
+        query = query.gte("base_rate", filters.min_rate);
+      }
+      if (filters.max_rate !== undefined) {
+        query = query.lte("base_rate", filters.max_rate);
+      }
+      if (filters.min_occupancy !== undefined) {
+        query = query.gte("max_occupancy", filters.min_occupancy);
+      }
+
+      const { data, error } = await query.order("unit_code", { ascending: true });
+
+      if (error) throw new Error(handleSupabaseError(error));
+
+      // Merge with optimistic updates
+      const mergedData =
+        (data as Unit[])?.map((unit) =>
+          optimisticUnits.has(unit.unit_id) ? optimisticUnits.get(unit.unit_id)! : unit
+        ) || [];
+
+      return mergedData;
+    },
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    refetchInterval: 60000, // Refetch every minute
+  });
+};
+
+// Fetch single unit
+export const useUnit = (unitId: string | undefined) => {
+  return useQuery({
+    queryKey: ["units", unitId],
+    queryFn: async () => {
+      if (!unitId) throw new Error("Unit ID is required");
+
+      const { data, error } = await db.units.byId(unitId);
+      if (error) throw new Error(handleSupabaseError(error));
+      return data;
+    },
+    enabled: !!unitId,
+    staleTime: 30000,
+  });
+};
+
+// Create unit mutation
+export const useCreateUnit = () => {
+  const queryClient = useQueryClient();
+  const addOptimistic = useUnitStore((state) => state.addOptimisticUnit);
+  const removeOptimistic = useUnitStore((state) => state.removeOptimisticUnit);
+
+  return useMutation({
+    mutationFn: async (unitData: Omit<Unit, "unit_id" | "created_at" | "updated_at">) => {
+      const { data, error } = await db.units.create(unitData);
+      if (error) throw new Error(handleSupabaseError(error));
+      return data;
+    },
+    onMutate: async (newUnit) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["units"] });
+
+      // Create optimistic unit
+      const optimisticUnit: Unit = {
+        ...newUnit,
+        unit_id: `temp-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      addOptimistic(optimisticUnit);
+
+      return { optimisticUnit };
+    },
+    onError: (_err, _newUnit, context) => {
+      // Remove optimistic unit on error
+      if (context?.optimisticUnit) {
+        removeOptimistic(context.optimisticUnit.unit_id);
+      }
+    },
+    onSuccess: (_data, _variables, context) => {
+      // Remove optimistic unit after success
+      if (context?.optimisticUnit) {
+        removeOptimistic(context.optimisticUnit.unit_id);
+      }
+    },
+    onSettled: () => {
+      // Refetch units after mutation
+      queryClient.invalidateQueries({ queryKey: ["units"] });
+    },
+  });
+};
+
+// Update unit mutation
+export const useUpdateUnit = () => {
+  const queryClient = useQueryClient();
+  const addOptimistic = useUnitStore((state) => state.addOptimisticUnit);
+  const removeOptimistic = useUnitStore((state) => state.removeOptimisticUnit);
+
+  return useMutation({
+    mutationFn: async ({
+      unitId,
+      updates,
+    }: {
+      unitId: string;
+      updates: Partial<Omit<Unit, "unit_id" | "created_at" | "updated_at">>;
+    }) => {
+      const { data, error } = await db.units.update(unitId, updates);
+      if (error) throw new Error(handleSupabaseError(error));
+      return data;
+    },
+    onMutate: async ({ unitId, updates }) => {
+      await queryClient.cancelQueries({ queryKey: ["units"] });
+
+      // Get current unit data
+      const previousUnit = queryClient.getQueryData<Unit>(["units", unitId]);
+
+      if (previousUnit) {
+        const optimisticUnit: Unit = {
+          ...previousUnit,
+          ...updates,
+          updated_at: new Date().toISOString(),
+        };
+
+        addOptimistic(optimisticUnit);
+
+        // Update cache
+        queryClient.setQueryData(["units", unitId], optimisticUnit);
+
+        return { previousUnit, optimisticUnit };
+      }
+    },
+    onError: (_, variables, context) => {
+      // Revert optimistic update on error
+      if (context?.previousUnit) {
+        removeOptimistic(variables.unitId);
+        queryClient.setQueryData(["units", variables.unitId], context.previousUnit);
+      }
+    },
+    onSuccess: (_data2, _variables2, context) => {
+      if (context?.optimisticUnit) {
+        removeOptimistic(context.optimisticUnit.unit_id);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["units"] });
+    },
+  });
+};
+
+// Delete unit mutation
+export const useDeleteUnit = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (unitId: string) => {
+      const { error } = await db.units.delete(unitId);
+      if (error) throw new Error(handleSupabaseError(error));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["units"] });
+    },
+  });
+};
+
+// Check availability
+export const useCheckAvailability = () => {
+  return useMutation({
+    mutationFn: async ({ unit_id, check_in, check_out }: AvailabilityCheck) => {
+      const { data, error } = await supabase.rpc("check_unit_availability", {
+        p_unit_id: unit_id,
+        p_check_in: check_in,
+        p_check_out: check_out,
+      });
+
+      if (error) throw new Error(handleSupabaseError(error));
+      return data;
+    },
+  });
+};
+
+// Calculate rate based on dates
+export const calculateRate = (unit: Unit, checkIn: Date, checkOut: Date): number => {
+  const oneDay = 24 * 60 * 60 * 1000;
+  const totalDays = Math.round(Math.abs((checkOut.getTime() - checkIn.getTime()) / oneDay));
+
+  let totalRate = 0;
+  const currentDate = new Date(checkIn);
+
+  for (let i = 0; i < totalDays; i++) {
+    const dayOfWeek = currentDate.getDay();
+    // Weekend: Friday (5) to Sunday (0)
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 5 || dayOfWeek === 6;
+
+    totalRate += isWeekend ? unit.weekend_rate : unit.base_rate;
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return totalRate;
+};
+
+// Real-time subscription for unit updates
+// NOTE: Disabled for Phase 1 - Real-time features scheduled for Phase 2
+// export const useUnitsSubscription = () => {
+//   const queryClient = useQueryClient();
+
+//   useQuery({
+//     queryKey: ["units-subscription"],
+//     queryFn: async () => {
+//       const channel = supabase
+//         .channel("units-changes")
+//         .on(
+//           "postgres_changes",
+//           {
+//             event: "*",
+//             schema: "public",
+//             table: "units",
+//           },
+//           (payload) => {
+//             // Invalidate and refetch units on any change
+//             queryClient.invalidateQueries({ queryKey: ["units"] });
+
+//             if (payload.eventType === "UPDATE" && payload.new) {
+//               // Update specific unit cache
+//               queryClient.setQueryData(["units", (payload.new as Unit).unit_id], payload.new);
+//             }
+//           }
+//         )
+//         .subscribe();
+
+//       return () => {
+//         channel.unsubscribe();
+//       };
+//     },
+//     staleTime: Infinity, // Subscription should never be considered stale
+//   });
+// };
+
+// Batch update units status
+export const useBatchUpdateUnitsStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ unitIds, status }: { unitIds: string[]; status: UnitStatus }) => {
+      const { error } = await supabase
+        .from("units")
+        .update({ unit_status: status, updated_at: new Date().toISOString() })
+        .in("unit_id", unitIds);
+
+      if (error) throw new Error(handleSupabaseError(error));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["units"] });
+    },
+  });
+};

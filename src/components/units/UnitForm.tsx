@@ -1,0 +1,542 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Building2,
+  Users,
+  DollarSign,
+  X,
+  Wifi,
+  Car,
+  Wind,
+  Tv,
+  Coffee,
+  Utensils,
+  Bath,
+  Bed,
+} from "lucide-react";
+import { toast } from "sonner";
+
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
+
+import {
+  unitFormWithRateValidationSchema,
+  formatCurrency,
+  type UnitFormData,
+} from "@/lib/validations";
+
+import { useCreateUnit, useUpdateUnit } from "@/stores/useUnitStore";
+import { cn } from "@/lib/utils";
+import type { Unit, UnitType } from "@/types";
+
+interface UnitFormProps {
+  unit?: Unit; // For editing existing unit
+  onSuccess?: (unit: any) => void;
+  onCancel?: () => void;
+  className?: string;
+}
+
+// Common amenities with icons
+const AMENITIES_OPTIONS = [
+  { id: "wifi", label: "Free WiFi", icon: Wifi },
+  { id: "parking", label: "Free Parking", icon: Car },
+  { id: "aircon", label: "Air Conditioning", icon: Wind },
+  { id: "tv", label: "Smart TV", icon: Tv },
+  { id: "kitchen", label: "Kitchenette", icon: Utensils },
+  { id: "coffee", label: "Coffee Maker", icon: Coffee },
+  { id: "bathroom", label: "Private Bathroom", icon: Bath },
+  { id: "balcony", label: "Private Balcony", icon: Building2 },
+  { id: "pool_access", label: "Pool Access", icon: Bath },
+  { id: "beach_access", label: "Beach Access", icon: Bath },
+  { id: "extra_bed", label: "Extra Bed Available", icon: Bed },
+  { id: "breakfast", label: "Complimentary Breakfast", icon: Coffee },
+];
+
+const UNIT_TYPES: { value: UnitType; label: string; description: string }[] = [
+  {
+    value: "Studio",
+    label: "Studio",
+    description: "Compact unit perfect for couples",
+  },
+  {
+    value: "One Bedroom",
+    label: "One Bedroom",
+    description: "Spacious unit with separate bedroom",
+  },
+  {
+    value: "Two Bedroom",
+    label: "Two Bedroom",
+    description: "Family-friendly unit with multiple rooms",
+  },
+  {
+    value: "Villa",
+    label: "Villa",
+    description: "Luxury standalone accommodation",
+  },
+];
+
+export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps) {
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>(unit?.amenities || []);
+
+  const createUnitMutation = useCreateUnit();
+  const updateUnitMutation = useUpdateUnit();
+
+  const isEditing = !!unit;
+
+  const form = useForm<UnitFormData>({
+    resolver: zodResolver(unitFormWithRateValidationSchema),
+    defaultValues: {
+      unit_name: unit?.unit_name || "",
+      unit_code: unit?.unit_code || "",
+      unit_type: unit?.unit_type || undefined,
+      max_occupancy: unit?.max_occupancy || 2,
+      base_rate: unit?.base_rate || 0,
+      weekend_rate: unit?.weekend_rate || 0,
+      amenities: unit?.amenities || [],
+    },
+    mode: "onChange",
+  });
+
+  const watchedBaseRate = form.watch("base_rate");
+  const watchedWeekendRate = form.watch("weekend_rate");
+  const watchedUnitType = form.watch("unit_type");
+
+  const handleAmenityToggle = (amenityId: string) => {
+    const newAmenities = selectedAmenities.includes(amenityId)
+      ? selectedAmenities.filter((id) => id !== amenityId)
+      : [...selectedAmenities, amenityId];
+
+    setSelectedAmenities(newAmenities);
+    form.setValue("amenities", newAmenities, { shouldValidate: true });
+  };
+
+  const onSubmit = async (data: UnitFormData) => {
+    try {
+      const unitData = {
+        ...data,
+        amenities: selectedAmenities,
+      };
+
+      if (isEditing && unit) {
+        await updateUnitMutation.mutateAsync({
+          unitId: unit.unit_id,
+          updates: unitData,
+        });
+        toast.success("Unit updated successfully!");
+      } else {
+        await createUnitMutation.mutateAsync({
+          ...unitData,
+          unit_status: "Available" as const,
+        });
+        toast.success("Unit created successfully!");
+      }
+
+      onSuccess?.(unitData);
+    } catch (error) {
+      toast.error(
+        isEditing
+          ? "Failed to update unit. Please try again."
+          : "Failed to create unit. Please try again."
+      );
+      console.error("Unit form error:", error);
+    }
+  };
+
+  const getMaxOccupancyForType = (unitType: UnitType): number => {
+    switch (unitType) {
+      case "Studio":
+        return 2;
+      case "One Bedroom":
+        return 4;
+      case "Two Bedroom":
+        return 6;
+      case "Villa":
+        return 10;
+      default:
+        return 2;
+    }
+  };
+
+  const getSuggestedRates = (unitType: UnitType) => {
+    switch (unitType) {
+      case "Studio":
+        return { base: 2500, weekend: 3000 };
+      case "One Bedroom":
+        return { base: 3500, weekend: 4000 };
+      case "Two Bedroom":
+        return { base: 5000, weekend: 6000 };
+      case "Villa":
+        return { base: 8000, weekend: 10000 };
+      default:
+        return { base: 2500, weekend: 3000 };
+    }
+  };
+
+  const applySuggestedRates = () => {
+    if (watchedUnitType) {
+      const rates = getSuggestedRates(watchedUnitType);
+      form.setValue("base_rate", rates.base, { shouldValidate: true });
+      form.setValue("weekend_rate", rates.weekend, { shouldValidate: true });
+    }
+  };
+
+  return (
+    <Card className={cn("mx-auto w-full max-w-3xl", className)}>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Building2 className="h-5 w-5" />
+          {isEditing ? "Edit Unit" : "Create New Unit"}
+        </CardTitle>
+      </CardHeader>
+
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Basic Information</h3>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="unit_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Unit Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Ocean View Studio A" {...field} />
+                      </FormControl>
+                      <FormDescription>Descriptive name for the unit</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="unit_code"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Unit Code</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., A101"
+                          className="uppercase"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Unique alphanumeric code (letters and numbers only)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="unit_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Unit Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select unit type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {UNIT_TYPES.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{type.label}</span>
+                              <span className="text-muted-foreground text-xs">
+                                {type.description}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="max_occupancy"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Maximum Occupancy</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Users className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
+                        <Input
+                          type="number"
+                          min="1"
+                          max={watchedUnitType ? getMaxOccupancyForType(watchedUnitType) : 20}
+                          className="pl-10"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      Maximum number of guests allowed
+                      {watchedUnitType && (
+                        <span className="ml-2 text-xs">
+                          (Recommended max for {watchedUnitType}:{" "}
+                          {getMaxOccupancyForType(watchedUnitType)})
+                        </span>
+                      )}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Pricing */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Pricing</h3>
+                {watchedUnitType && (
+                  <Button type="button" variant="outline" size="sm" onClick={applySuggestedRates}>
+                    Use Suggested Rates
+                  </Button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="base_rate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Base Rate (Weekdays)</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <DollarSign className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="100"
+                            max="1000000"
+                            className="pl-10"
+                            placeholder="2500.00"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        Rate per night (Sunday - Thursday)
+                        {watchedBaseRate > 0 && (
+                          <span className="mt-1 block text-xs">
+                            {formatCurrency(watchedBaseRate)} per night
+                          </span>
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="weekend_rate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Weekend Rate</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <DollarSign className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="100"
+                            max="1000000"
+                            className="pl-10"
+                            placeholder="3000.00"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        Rate per night (Friday - Saturday)
+                        {watchedWeekendRate > 0 && (
+                          <span className="mt-1 block text-xs">
+                            {formatCurrency(watchedWeekendRate)} per night
+                          </span>
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Rate Comparison */}
+              {watchedBaseRate > 0 && watchedWeekendRate > 0 && (
+                <div className="bg-muted rounded-lg p-4">
+                  <h4 className="mb-2 font-medium">Rate Summary</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Weekday:</span>
+                      <p className="font-medium">{formatCurrency(watchedBaseRate)}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Weekend:</span>
+                      <p className="font-medium">{formatCurrency(watchedWeekendRate)}</p>
+                    </div>
+                  </div>
+                  {watchedWeekendRate < watchedBaseRate && (
+                    <p className="mt-2 text-xs text-yellow-600">
+                      ⚠️ Weekend rate is lower than base rate
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Amenities */}
+            <div className="space-y-4">
+              <FormField
+                control={form.control}
+                name="amenities"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>Amenities</FormLabel>
+                    <FormDescription>Select all amenities available in this unit</FormDescription>
+                    <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">
+                      {AMENITIES_OPTIONS.map((amenity) => {
+                        const Icon = amenity.icon;
+                        const isSelected = selectedAmenities.includes(amenity.id);
+
+                        return (
+                          <div
+                            key={amenity.id}
+                            className={cn(
+                              "flex cursor-pointer items-center space-x-2 rounded-lg border p-3 transition-colors",
+                              isSelected
+                                ? "border-primary bg-primary/5"
+                                : "border-muted hover:border-muted-foreground/50"
+                            )}
+                            onClick={() => handleAmenityToggle(amenity.id)}
+                          >
+                            <Checkbox
+                              checked={isSelected}
+                              onChange={() => handleAmenityToggle(amenity.id)}
+                            />
+                            <Icon className="h-4 w-4" />
+                            <span className="text-sm font-medium">{amenity.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {selectedAmenities.length === 0 && (
+                      <p className="text-destructive mt-2 text-sm">
+                        Please select at least one amenity
+                      </p>
+                    )}
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Selected Amenities Summary */}
+            {selectedAmenities.length > 0 && (
+              <Card className="bg-muted/50">
+                <CardContent className="pt-4">
+                  <h4 className="mb-3 font-medium">Selected Amenities</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedAmenities.map((amenityId) => {
+                      const amenity = AMENITIES_OPTIONS.find((a) => a.id === amenityId);
+                      if (!amenity) return null;
+
+                      const Icon = amenity.icon;
+                      return (
+                        <Badge key={amenityId} variant="secondary" className="gap-1">
+                          <Icon className="h-3 w-3" />
+                          {amenity.label}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="ml-1 h-auto p-0"
+                            onClick={() => handleAmenityToggle(amenityId)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex justify-between pt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                disabled={createUnitMutation.isPending || updateUnitMutation.isPending}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                type="submit"
+                disabled={
+                  createUnitMutation.isPending ||
+                  updateUnitMutation.isPending ||
+                  selectedAmenities.length === 0
+                }
+                className="min-w-[120px]"
+              >
+                {createUnitMutation.isPending || updateUnitMutation.isPending
+                  ? isEditing
+                    ? "Updating..."
+                    : "Creating..."
+                  : isEditing
+                    ? "Update Unit"
+                    : "Create Unit"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
+}
