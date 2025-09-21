@@ -287,5 +287,6 @@
       "bold": false,
       "italic": false
     }
-  ]
+  ],
+  "prettier.useEditorConfig": false
 }

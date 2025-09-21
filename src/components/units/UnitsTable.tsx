@@ -203,7 +203,7 @@ const UnitCard: React.FC<UnitCardProps> = ({
             />
           }
         />
-        <MobileCardRow label="Amenities" value={`${unit.amenities.length} items`} />
+        <MobileCardRow label="Amenities" value={`${unit.amenities?.length ?? 0} items`} />
       </div>
 
       <div className="flex space-x-2 border-t border-neutral-100 pt-2">
@@ -298,7 +298,7 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
       base_rate: unit.base_rate,
       weekend_rate: unit.weekend_rate,
       status: unit.unit_status,
-      amenities: unit.amenities.join("; "),
+      amenities: (unit.amenities ?? []).join("; "),
     }));
 
     exportToCSV(exportData, "units", [
@@ -413,7 +413,7 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
       columnHelper.accessor("amenities", {
         header: "Amenities",
         cell: ({ getValue }) => (
-          <div className="text-sm text-neutral-600">{getValue().length} items</div>
+          <div className="text-sm text-neutral-600">{(getValue() ?? []).length} items</div>
         ),
         size: 100,
       }),

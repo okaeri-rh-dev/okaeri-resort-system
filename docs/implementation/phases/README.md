@@ -2,9 +2,13 @@
 
 ## 🎯 Overview
 
-This implementation guide provides a structured, phase-based approach to building the Okaeri Resort Management System. The system is designed for Filipino family-owned resorts with a focus on cost-effectiveness, mobile accessibility, and ease of use.
+This implementation guide provides a structured, phase-based approach to
+building the Okaeri Resort Management System. The system is designed for
+Filipino family-owned resorts with a focus on cost-effectiveness, mobile
+accessibility, and ease of use.
 
 ### Architecture Highlights
+
 - **Frontend**: React + Vite + TypeScript + Tailwind CSS
 - **Backend**: Express.js API server (local development)
 - **Database**: PostgreSQL (Neon for production)
@@ -13,6 +17,7 @@ This implementation guide provides a structured, phase-based approach to buildin
 - **Target Cost**: < $3/month operational expenses
 
 ### Development Approach
+
 - Local backend server for better development experience
 - Incremental feature delivery
 - Mobile-first responsive design
@@ -23,10 +28,12 @@ This implementation guide provides a structured, phase-based approach to buildin
 ## 📚 Phase Documentation
 
 ### [Phase 1: Foundation](./phase-1-foundation.md)
-**Timeline**: Weeks 1-2 (10-14 days)
-**Goal**: Establish core infrastructure and basic CRUD operations
+
+**Timeline**: Weeks 1-2 (10-14 days) **Goal**: Establish core infrastructure and
+basic CRUD operations
 
 Key Deliverables:
+
 - Local development environment setup
 - Express.js backend server
 - PostgreSQL database schema (3 core tables)
@@ -37,10 +44,12 @@ Key Deliverables:
 ---
 
 ### [Phase 2: Core Features](./phase-2-core-features.md)
-**Timeline**: Weeks 3-4 (14 days)
-**Goal**: Implement business-critical functionality
+
+**Timeline**: Weeks 3-4 (14 days) **Goal**: Implement business-critical
+functionality
 
 Key Deliverables:
+
 - Cloudflare R2 integration for file uploads
 - Payment proof management system
 - Form validation (React Hook Form + Zod)
@@ -51,10 +60,12 @@ Key Deliverables:
 ---
 
 ### [Phase 3: Production Ready](./phase-3-production-ready.md)
-**Timeline**: Weeks 5-6 (14 days)
-**Goal**: Prepare for deployment and optimize performance
+
+**Timeline**: Weeks 5-6 (14 days) **Goal**: Prepare for deployment and optimize
+performance
 
 Key Deliverables:
+
 - Production deployment setup
 - Environment configuration
 - Database migrations system
@@ -65,10 +76,12 @@ Key Deliverables:
 ---
 
 ### [Phase 4: Advanced Features](./phase-4-advanced-features.md)
-**Timeline**: Weeks 7+ (Ongoing)
-**Goal**: Add value-added features and analytics
+
+**Timeline**: Weeks 7+ (Ongoing) **Goal**: Add value-added features and
+analytics
 
 Key Deliverables:
+
 - Analytics dashboard
 - Financial reporting
 - Maintenance tracking module
@@ -79,10 +92,11 @@ Key Deliverables:
 ---
 
 ### [Phase 5: Go Live](./phase-5-go-live.md)
-**Timeline**: Final Week
-**Goal**: Launch preparation and handover
+
+**Timeline**: Final Week **Goal**: Launch preparation and handover
 
 Key Deliverables:
+
 - Deployment checklist
 - Monitoring setup
 - User documentation
@@ -95,6 +109,7 @@ Key Deliverables:
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 ```bash
 # Required tools
 node >= 18.0.0
@@ -104,6 +119,7 @@ git
 ```
 
 ### Initial Setup
+
 ```bash
 # Clone repository
 git clone [repository-url]
@@ -120,6 +136,7 @@ npm run dev
 ```
 
 ### Development Commands
+
 ```bash
 npm run dev          # Start frontend + backend
 npm run dev:client   # Start frontend only
@@ -134,6 +151,7 @@ npm run type-check   # TypeScript checking
 ## 📊 Success Metrics
 
 ### Technical Targets
+
 - **Page Load**: < 3 seconds on 3G
 - **API Response**: < 200ms average
 - **Bundle Size**: < 200KB gzipped
@@ -141,6 +159,7 @@ npm run type-check   # TypeScript checking
 - **Uptime**: 99.9% availability
 
 ### Business Targets
+
 - **Cost**: < $3/month total
 - **Users**: Support 5 concurrent
 - **Bookings**: Handle 100/month
@@ -152,13 +171,16 @@ npm run type-check   # TypeScript checking
 ## 🔄 Migration Path
 
 ### From Current State to Phase 1
+
 1. Set up local PostgreSQL
 2. Initialize database schema
 3. Create Express.js server
 4. Configure Vite proxy
 
 ### From Phase to Phase
+
 Each phase builds upon the previous:
+
 - Phase 1 → Phase 2: Add file storage
 - Phase 2 → Phase 3: Production setup
 - Phase 3 → Phase 4: Feature expansion
@@ -193,41 +215,36 @@ okaeri-resort-system/
 
 ## ❓ Common Questions
 
-**Q: Should I use Supabase or Express?**
-A: Start with Supabase. It's faster and includes everything. Only use Express if you have specific requirements.
+**Q: Should I use Supabase or Express?** A: Start with Supabase. It's faster and
+includes everything. Only use Express if you have specific requirements.
 
-**Q: What about authentication?**
-A: Supabase includes auth. For Express, add it in Phase 3 if needed. Many resort systems just use a single admin account.
+**Q: What about authentication?** A: Supabase includes auth. For Express, add it
+in Phase 3 if needed. Many resort systems just use a single admin account.
 
-**Q: Do I need all the tables from Phase 1?**
-A: Yes, create them all. Empty tables don't hurt, and you avoid migrations later.
+**Q: Do I need all the tables from Phase 1?** A: Yes, create them all. Empty
+tables don't hurt, and you avoid migrations later.
 
-**Q: Can I add features from Future Enhancements?**
-A: Yes, but only after the 3-week MVP is working and stable.
+**Q: Can I add features from Future Enhancements?** A: Yes, but only after the
+3-week MVP is working and stable.
 
 ---
 
 ## 🎯 Your Path to Success
 
 ### Week 1: Foundation
-☑️ Set up database with ALL tables
-☑️ Create Zustand stores
-☑️ Build basic CRUD pages
-☑️ Test everything works
+
+☑️ Set up database with ALL tables ☑️ Create Zustand stores ☑️ Build basic CRUD
+pages ☑️ Test everything works
 
 ### Week 2: Core Features
-☑️ Add availability checking
-☑️ Implement booking workflow
-☑️ Add payment uploads
-☑️ Create reports
+
+☑️ Add availability checking ☑️ Implement booking workflow ☑️ Add payment
+uploads ☑️ Create reports
 
 ### Week 3: Deploy
-☑️ Deploy to Vercel
-☑️ Test on mobile
-☑️ Fix any issues
-☑️ **You're done!** 🎉
+
+☑️ Deploy to Vercel ☑️ Test on mobile ☑️ Fix any issues ☑️ **You're done!** 🎉
 
 ---
 
-*Last Updated: September 21, 2025*
-*Version: 2.0.0 - Simplified CRUD Edition*
+_Last Updated: September 21, 2025_ _Version: 2.0.0 - Simplified CRUD Edition_

@@ -326,8 +326,8 @@ export const useMergeGuests = () => {
       if (primaryGuest && duplicateGuest) {
         // Update primary guest with combined totals
         const { error: updateError } = await db.guests.update(primaryGuestId, {
-          total_bookings: primaryGuest.total_bookings + duplicateGuest.total_bookings,
-          total_spent: primaryGuest.total_spent + duplicateGuest.total_spent,
+          total_bookings: (primaryGuest.total_bookings ?? 0) + (duplicateGuest.total_bookings ?? 0),
+          total_spent: (primaryGuest.total_spent ?? 0) + (duplicateGuest.total_spent ?? 0),
         });
 
         if (updateError) throw new Error(handleSupabaseError(updateError));
@@ -387,15 +387,15 @@ export const useGuestStatistics = () => {
       // Calculate statistics
       const totalGuests = allGuests?.length || 0;
       const newGuestsThisMonth = newGuests?.length || 0;
-      const repeatGuests = allGuests?.filter((g) => g.total_bookings > 1).length || 0;
+      const repeatGuests = allGuests?.filter((g) => (g.total_bookings ?? 0) > 1).length || 0;
 
-      const totalBookings = allGuests?.reduce((sum, g) => sum + g.total_bookings, 0) || 0;
+      const totalBookings = allGuests?.reduce((sum, g) => sum + (g.total_bookings ?? 0), 0) || 0;
       const averageBookingsPerGuest = totalGuests > 0 ? totalBookings / totalGuests : 0;
 
       const topGuests = (allGuests || []).slice(0, 10).map((guest) => ({
         guest,
-        totalSpent: guest.total_spent,
-        totalBookings: guest.total_bookings,
+        totalSpent: guest.total_spent ?? 0,
+        totalBookings: guest.total_bookings ?? 0,
       }));
 
       return {
@@ -463,8 +463,8 @@ export const useExportGuests = () => {
           guest.guest_name,
           guest.email,
           guest.phone_number,
-          guest.total_bookings.toString(),
-          guest.total_spent.toString(),
+          (guest.total_bookings ?? 0).toString(),
+          (guest.total_spent ?? 0).toString(),
           new Date(guest.created_at).toLocaleDateString(),
         ]) || [];
 

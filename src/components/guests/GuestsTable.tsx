@@ -153,9 +153,9 @@ const GuestCard: React.FC<GuestCardProps> = ({ guest, onView, onEdit, onEmail, o
         </div>
         <div className="space-y-1 text-right">
           <div className="font-mono font-semibold text-neutral-900">
-            {formatCurrency(guest.total_spent)}
+            {formatCurrency(guest.total_spent ?? 0)}
           </div>
-          <div className="text-xs text-neutral-600">{guest.total_bookings} bookings</div>
+          <div className="text-xs text-neutral-600">{guest.total_bookings ?? 0} bookings</div>
         </div>
       </div>
 
@@ -321,12 +321,14 @@ export const GuestsTable: React.FC<GuestsTableProps> = ({
         ),
         cell: ({ getValue, row }) => {
           const avgPerBooking =
-            row.original.total_bookings > 0 ? getValue() / row.original.total_bookings : 0;
+            (row.original.total_bookings ?? 0) > 0
+              ? (getValue() ?? 0) / (row.original.total_bookings ?? 0)
+              : 0;
 
           return (
             <div className="space-y-1 text-right">
               <div className="font-mono font-semibold text-neutral-900">
-                {formatCurrency(getValue())}
+                {formatCurrency(getValue() ?? 0)}
               </div>
               <div className="text-xs text-neutral-600">{formatCurrency(avgPerBooking)} avg</div>
             </div>
@@ -340,8 +342,8 @@ export const GuestsTable: React.FC<GuestsTableProps> = ({
         header: "Type",
         cell: ({ row }) => {
           const guest = row.original;
-          const isVIP = guest.total_spent > 50000; // ₱50k+
-          const isRepeat = guest.total_bookings > 1;
+          const isVIP = (guest.total_spent ?? 0) > 50000; // ₱50k+
+          const isRepeat = (guest.total_bookings ?? 0) > 1;
 
           return (
             <div className="space-y-1">
@@ -425,10 +427,10 @@ export const GuestsTable: React.FC<GuestsTableProps> = ({
   // Stats calculation
   const stats = useMemo(() => {
     const totalGuests = guests.length;
-    const totalRevenue = guests.reduce((sum, guest) => sum + guest.total_spent, 0);
-    const totalBookings = guests.reduce((sum, guest) => sum + guest.total_bookings, 0);
+    const totalRevenue = guests.reduce((sum, guest) => sum + (guest.total_spent ?? 0), 0);
+    const totalBookings = guests.reduce((sum, guest) => sum + (guest.total_bookings ?? 0), 0);
     const avgRevenuePerGuest = totalGuests > 0 ? totalRevenue / totalGuests : 0;
-    const repeatCustomers = guests.filter((guest) => guest.total_bookings > 1).length;
+    const repeatCustomers = guests.filter((guest) => (guest.total_bookings ?? 0) > 1).length;
 
     return {
       totalGuests,

@@ -118,7 +118,7 @@ export const unitFormSchema = z.object({
 
   unit_code: unitCodeSchema,
 
-  unit_type: z.enum(["Studio", "One Bedroom", "Two Bedroom", "Villa"] as const, {
+  unit_type: z.enum(["Standard", "Deluxe", "Suite", "Villa"] as const, {
     required_error: "Please select a unit type",
   }),
 
@@ -158,7 +158,7 @@ export const bookingFormBaseSchema = z.object({
 
   special_requests: z.string().max(500, messages.maxLength(500)).optional(),
 
-  payment_method: z.enum(["GCash", "Bank Transfer", "Cash", "Card"] as const).optional(),
+  payment_method: z.enum(["GCash", "BankTransfer", "Cash", "Card"] as const).optional(),
 });
 
 // Booking form with date validation
@@ -198,7 +198,7 @@ export const bookingStep2Schema = guestSchema;
 
 export const bookingStep3Schema = z.object({
   special_requests: z.string().max(500, messages.maxLength(500)).optional(),
-  payment_method: z.enum(["GCash", "Bank Transfer", "Cash", "Card"] as const),
+  payment_method: z.enum(["GCash", "BankTransfer", "Cash", "Card"] as const),
 });
 
 // Complete booking form schema (all steps combined)
@@ -227,7 +227,7 @@ export const paymentUploadSchema = z.object({
 
   payment_amount: z.number().min(100, messages.minAmount).max(1000000, messages.maxAmount),
 
-  payment_method: z.enum(["GCash", "Bank Transfer", "Cash", "Card"] as const, {
+  payment_method: z.enum(["GCash", "BankTransfer", "Cash", "Card"] as const, {
     required_error: "Please select a payment method",
   }),
 
@@ -250,7 +250,7 @@ export const bookingFiltersSchema = z.object({
   status: z
     .enum(["Pending", "Confirmed", "CheckedIn", "CheckedOut", "Cancelled"] as const)
     .optional(),
-  payment_status: z.enum(["Unpaid", "Partial", "Paid", "Refunded"] as const).optional(),
+  payment_status: z.enum(["Pending", "Partial", "Completed", "Refunded"] as const).optional(),
   unit_id: z.string().optional(),
   guest_id: z.string().optional(),
   date_from: z.string().optional(),
@@ -276,8 +276,8 @@ export const updateBookingStatusSchema = z.object({
 });
 
 export const updatePaymentStatusSchema = z.object({
-  payment_status: z.enum(["Unpaid", "Partial", "Paid", "Refunded"] as const),
-  payment_method: z.enum(["GCash", "Bank Transfer", "Cash", "Card"] as const).optional(),
+  payment_status: z.enum(["Pending", "Partial", "Completed", "Refunded"] as const),
+  payment_method: z.enum(["Cash", "GCash", "BankTransfer", "Card", "Other"] as const).optional(),
   payment_proof_url: z.string().url().optional(),
 });
 

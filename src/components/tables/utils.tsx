@@ -1,20 +1,18 @@
-import React from "react";
-import { Table as TanStackTable, Header } from "@tanstack/react-table";
+import { Header, Table as TanStackTable } from "@tanstack/react-table";
+import { format } from "date-fns";
 import {
-  ChevronUp,
   ChevronDown,
   ChevronsUpDown,
-  MoreHorizontal,
+  ChevronUp,
   Download,
   Filter,
+  MoreHorizontal,
   X,
 } from "lucide-react";
-import { format } from "date-fns";
+import React from "react";
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -22,7 +20,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 // ============================================
 // FORMATTING UTILITIES
@@ -205,13 +205,27 @@ export const TableSearch: React.FC<TableSearchProps> = ({
   placeholder = "Search...",
   className,
 }) => {
+  // Security: Sanitize search input to prevent regex injection
+  const handleSearchChange = (newValue: string) => {
+    // Remove potentially dangerous regex characters
+    // Allow only alphanumeric, spaces, and basic punctuation
+    const sanitizedValue = newValue.replace(/[^\w\s@.,-]/g, "");
+
+    // Limit length to prevent DoS attacks
+    const maxLength = 100;
+    const truncatedValue = sanitizedValue.slice(0, maxLength);
+
+    onChange(truncatedValue);
+  };
+
   return (
     <div className={cn("relative", className)}>
       <Input
         placeholder={placeholder}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => handleSearchChange(e.target.value)}
         className="enterprise-form h-9 w-full max-w-sm"
+        maxLength={100}
       />
       {value && (
         <Button

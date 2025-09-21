@@ -1,122 +1,122 @@
 {
   "recommendations": [
     // Essential Extensions
-    "dbaeumer.vscode-eslint",              // ESLint integration
-    "esbenp.prettier-vscode",               // Prettier code formatter
-    "ms-vscode.vscode-typescript-next",     // Latest TypeScript features
-    
+    "dbaeumer.vscode-eslint", // ESLint integration
+    "esbenp.prettier-vscode", // Prettier code formatter
+    "ms-vscode.vscode-typescript-next", // Latest TypeScript features
+
     // React Development
-    "dsznajder.es7-react-js-snippets",     // React snippets
-    "burkeholland.simple-react-snippets",   // Simple React snippets
+    "dsznajder.es7-react-js-snippets", // React snippets
+    "burkeholland.simple-react-snippets", // Simple React snippets
     "rodrigovallades.es7-react-js-snippets", // ES7+ React/Redux snippets
-    
+
     // Tailwind CSS
-    "bradlc.vscode-tailwindcss",           // Tailwind CSS IntelliSense
-    "austenc.tailwind-docs",               // Tailwind CSS documentation
-    
+    "bradlc.vscode-tailwindcss", // Tailwind CSS IntelliSense
+    "austenc.tailwind-docs", // Tailwind CSS documentation
+
     // Productivity
-    "formulahendry.auto-rename-tag",       // Auto rename paired HTML/JSX tags
-    "formulahendry.auto-close-tag",        // Auto close HTML/JSX tags
-    "christian-kohler.path-intellisense",   // Path autocomplete
-    "christian-kohler.npm-intellisense",    // NPM module autocomplete
-    "wix.vscode-import-cost",              // Display import package size
+    "formulahendry.auto-rename-tag", // Auto rename paired HTML/JSX tags
+    "formulahendry.auto-close-tag", // Auto close HTML/JSX tags
+    "christian-kohler.path-intellisense", // Path autocomplete
+    "christian-kohler.npm-intellisense", // NPM module autocomplete
+    "wix.vscode-import-cost", // Display import package size
     "streetsidesoftware.code-spell-checker", // Spell checker
-    
+
     // Git & Version Control
-    "eamodio.gitlens",                     // Git supercharged
-    "mhutchie.git-graph",                   // Git graph visualization
-    "donjayamanne.githistory",              // Git history viewer
-    
+    "eamodio.gitlens", // Git supercharged
+    "mhutchie.git-graph", // Git graph visualization
+    "donjayamanne.githistory", // Git history viewer
+
     // Testing
-    "vitest.explorer",                      // Vitest test explorer
-    "firsttris.vscode-jest-runner",        // Jest test runner
-    
+    "vitest.explorer", // Vitest test explorer
+    "firsttris.vscode-jest-runner", // Jest test runner
+
     // Code Quality
-    "sonarsource.sonarlint-vscode",        // SonarLint code quality
-    "usernamehw.errorlens",                // Inline error display
-    "aaron-bond.better-comments",          // Colored comments
-    
+    "sonarsource.sonarlint-vscode", // SonarLint code quality
+    "usernamehw.errorlens", // Inline error display
+    "aaron-bond.better-comments", // Colored comments
+
     // Documentation
-    "yzhang.markdown-all-in-one",          // Markdown tools
+    "yzhang.markdown-all-in-one", // Markdown tools
     "bierner.markdown-preview-github-styles", // GitHub-style markdown preview
-    "davidanson.vscode-markdownlint",      // Markdown linting
-    
+    "davidanson.vscode-markdownlint", // Markdown linting
+
     // Environment
-    "mikestead.dotenv",                     // .env file support
-    "redhat.vscode-yaml",                   // YAML support
-    
+    "mikestead.dotenv", // .env file support
+    "redhat.vscode-yaml", // YAML support
+
     // Debugging
-    "ms-vscode.js-debug-nightly",          // JavaScript debugger
-    "msjsdiag.vscode-react-native",        // React debugging tools
-    
+    "ms-vscode.js-debug-nightly", // JavaScript debugger
+    "msjsdiag.vscode-react-native", // React debugging tools
+
     // Database (for future backend work)
-    "ckolkman.vscode-postgres",            // PostgreSQL support
-    "mtxr.sqltools",                        // SQL tools
-    "mtxr.sqltools-driver-pg",             // PostgreSQL driver
-    
+    "ckolkman.vscode-postgres", // PostgreSQL support
+    "mtxr.sqltools", // SQL tools
+    "mtxr.sqltools-driver-pg", // PostgreSQL driver
+
     // API Development
-    "rangav.vscode-thunder-client",        // REST API client
-    "42crunch.vscode-openapi",             // OpenAPI support
-    
+    "rangav.vscode-thunder-client", // REST API client
+    "42crunch.vscode-openapi", // OpenAPI support
+
     // Themes & Icons
-    "pkief.material-icon-theme",           // Material icon theme
-    "zhuangtongfa.material-theme",         // One Dark Pro theme
-    
+    "pkief.material-icon-theme", // Material icon theme
+    "zhuangtongfa.material-theme", // One Dark Pro theme
+
     // Project Management
-    "johnpapa.vscode-peacock",             // Colorize workspace
-    "gruntfuggly.todo-tree",               // TODO highlighting
-    "alefragnani.bookmarks",               // Code bookmarks
-    
+    "johnpapa.vscode-peacock", // Colorize workspace
+    "gruntfuggly.todo-tree", // TODO highlighting
+    "alefragnani.bookmarks", // Code bookmarks
+
     // AI Assistance (Optional)
-    "github.copilot",                      // GitHub Copilot
-    "tabnine.tabnine-vscode",              // TabNine AI
-    
+    "github.copilot", // GitHub Copilot
+    "tabnine.tabnine-vscode", // TabNine AI
+
     // Performance
     "kisstkondoros.vscode-gutter-preview", // Image preview in gutter
-    "naumovs.color-highlight",             // Color highlighting
-    "vincaslt.highlight-matching-tag",     // Highlight matching tags
-    
+    "naumovs.color-highlight", // Color highlighting
+    "vincaslt.highlight-matching-tag", // Highlight matching tags
+
     // Utilities
-    "ritwickdey.liveserver",               // Live server for static files
-    "tyriar.sort-lines",                   // Sort lines utility
-    "quicktype.quicktype",                 // Generate types from JSON
+    "ritwickdey.liveserver", // Live server for static files
+    "tyriar.sort-lines", // Sort lines utility
+    "quicktype.quicktype", // Generate types from JSON
     "meganrogge.template-string-converter", // Convert to template strings
-    "prisma.prisma",                       // Prisma support (future)
-    
+    "prisma.prisma", // Prisma support (future)
+
     // Code Navigation
-    "sleistner.vscode-fileutils",          // File utilities
-    "bodil.file-browser",                  // File browser
-    
+    "sleistner.vscode-fileutils", // File utilities
+    "bodil.file-browser", // File browser
+
     // CSS
-    "csstools.postcss",                    // PostCSS language support
-    "stylelint.vscode-stylelint",          // CSS linting
-    
+    "csstools.postcss", // PostCSS language support
+    "stylelint.vscode-stylelint", // CSS linting
+
     // JSON
-    "zainchen.json",                       // JSON tools
-    
+    "zainchen.json", // JSON tools
+
     // Security
     "firefox-devtools.vscode-firefox-debug", // Firefox debugging
-    
+
     // Formatting
-    "editorconfig.editorconfig",           // EditorConfig support
-    
+    "editorconfig.editorconfig", // EditorConfig support
+
     // TypeScript Specific
-    "pmndrs.pmndrs",                       // TypeScript utilities
+    "pmndrs.pmndrs", // TypeScript utilities
     "jpoissonnier.vscode-styled-components", // Styled components support
-    
+
     // Bundle Analysis
-    "wix.vscode-import-cost",              // Import cost display
-    
+    "wix.vscode-import-cost", // Import cost display
+
     // Docker (for future containerization)
-    "ms-azuretools.vscode-docker",         // Docker support
-    "ms-vscode-remote.remote-containers"   // Dev containers
+    "ms-azuretools.vscode-docker", // Docker support
+    "ms-vscode-remote.remote-containers" // Dev containers
   ],
-  
+
   "unwantedRecommendations": [
     "ms-vscode.vscode-typescript-tslint-plugin", // Deprecated TSLint
-    "eg2.tslint",                                 // Deprecated TSLint
-    "hookyqr.beautify",                           // Use Prettier instead
-    "dbaeumer.jshint",                            // Use ESLint instead
-    "ms-vscode.vscode-react-native"               // Not needed for web development
+    "eg2.tslint", // Deprecated TSLint
+    "hookyqr.beautify", // Use Prettier instead
+    "dbaeumer.jshint", // Use ESLint instead
+    "ms-vscode.vscode-react-native" // Not needed for web development
   ]
 }

@@ -3,7 +3,7 @@
 // ============================================
 // UNIT TYPES
 // ============================================
-export type UnitType = "Studio" | "One Bedroom" | "Two Bedroom" | "Villa";
+export type UnitType = "Standard" | "Deluxe" | "Suite" | "Villa";
 export type UnitStatus = "Available" | "Occupied" | "Maintenance" | "Reserved";
 
 export interface Unit {
@@ -15,7 +15,11 @@ export interface Unit {
   base_rate: number;
   weekend_rate: number;
   unit_status: UnitStatus;
-  amenities: string[];
+  amenities: string[] | null;
+  cleaning_fee?: number | null;
+  description?: string | null;
+  images?: string[] | null;
+  policies?: string[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -28,8 +32,8 @@ export interface Guest {
   guest_name: string;
   email: string;
   phone_number: string;
-  total_bookings: number;
-  total_spent: number;
+  total_bookings: number | null;
+  total_spent: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -38,8 +42,8 @@ export interface Guest {
 // BOOKING TYPES
 // ============================================
 export type BookingStatus = "Pending" | "Confirmed" | "CheckedIn" | "CheckedOut" | "Cancelled";
-export type PaymentStatus = "Unpaid" | "Partial" | "Paid" | "Refunded";
-export type PaymentMethod = "GCash" | "Bank Transfer" | "Cash" | "Card";
+export type PaymentStatus = "Pending" | "Partial" | "Completed" | "Refunded";
+export type PaymentMethod = "Cash" | "GCash" | "BankTransfer" | "Card" | "Other";
 
 export interface Booking {
   booking_id: string;
@@ -63,7 +67,7 @@ export interface Booking {
   updated_at: string;
   // Relations
   unit?: Unit;
-  guest?: Guest;
+  guest?: Guest | null;
 }
 
 // ============================================

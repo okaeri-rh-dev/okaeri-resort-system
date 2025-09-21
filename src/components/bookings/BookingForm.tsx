@@ -461,6 +461,24 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
           </FormItem>
         )}
       />
+
+      {/* Privacy Consent - Phase 2 Security Requirement */}
+      <div className="flex items-start space-x-3 rounded-md border p-4">
+        <input type="checkbox" id="privacy-consent" className="mt-1" required />
+        <div className="space-y-1 leading-none">
+          <label
+            htmlFor="privacy-consent"
+            className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            Privacy Consent *
+          </label>
+          <p className="text-muted-foreground text-sm">
+            I consent to the collection and processing of my personal information for booking
+            purposes. The resort will handle my data in accordance with the Philippine Data Privacy
+            Act of 2012.
+          </p>
+        </div>
+      </div>
     </div>
   );
 
@@ -485,7 +503,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
                     GCash
                   </div>
                 </SelectItem>
-                <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
                 <SelectItem value="Cash">Cash</SelectItem>
                 <SelectItem value="Card">Credit/Debit Card</SelectItem>
               </SelectContent>

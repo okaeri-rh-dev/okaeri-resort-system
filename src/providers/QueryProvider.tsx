@@ -136,7 +136,7 @@ export const prefetchQueries = {
         const [unitsResult, bookingsResult, revenueResult] = await Promise.all([
           supabase.from("units").select("unit_status").eq("unit_status", "Available"),
           supabase.from("bookings").select("booking_status").eq("booking_status", "Confirmed"),
-          supabase.from("bookings").select("total_amount").eq("payment_status", "Paid"),
+          supabase.from("bookings").select("total_amount").eq("payment_status", "Completed"),
         ]);
 
         return {

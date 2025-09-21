@@ -75,19 +75,19 @@ const AMENITIES_OPTIONS = [
 
 const UNIT_TYPES: { value: UnitType; label: string; description: string }[] = [
   {
-    value: "Studio",
-    label: "Studio",
+    value: "Standard",
+    label: "Standard",
     description: "Compact unit perfect for couples",
   },
   {
-    value: "One Bedroom",
-    label: "One Bedroom",
-    description: "Spacious unit with separate bedroom",
+    value: "Deluxe",
+    label: "Deluxe",
+    description: "Spacious unit with enhanced amenities",
   },
   {
-    value: "Two Bedroom",
-    label: "Two Bedroom",
-    description: "Family-friendly unit with multiple rooms",
+    value: "Suite",
+    label: "Suite",
+    description: "Premium unit with separate living area",
   },
   {
     value: "Villa",
@@ -97,7 +97,7 @@ const UNIT_TYPES: { value: UnitType; label: string; description: string }[] = [
 ];
 
 export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps) {
-  const [selectedAmenities, setSelectedAmenities] = useState<string[]>(unit?.amenities || []);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>(unit?.amenities ?? []);
 
   const createUnitMutation = useCreateUnit();
   const updateUnitMutation = useUpdateUnit();
@@ -165,11 +165,11 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
 
   const getMaxOccupancyForType = (unitType: UnitType): number => {
     switch (unitType) {
-      case "Studio":
+      case "Standard":
         return 2;
-      case "One Bedroom":
+      case "Deluxe":
         return 4;
-      case "Two Bedroom":
+      case "Suite":
         return 6;
       case "Villa":
         return 10;
@@ -180,11 +180,11 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
 
   const getSuggestedRates = (unitType: UnitType) => {
     switch (unitType) {
-      case "Studio":
+      case "Standard":
         return { base: 2500, weekend: 3000 };
-      case "One Bedroom":
+      case "Deluxe":
         return { base: 3500, weekend: 4000 };
-      case "Two Bedroom":
+      case "Suite":
         return { base: 5000, weekend: 6000 };
       case "Villa":
         return { base: 8000, weekend: 10000 };
@@ -225,7 +225,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                     <FormItem>
                       <FormLabel>Unit Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Ocean View Studio A" {...field} />
+                        <Input placeholder="e.g., Ocean View Standard A" {...field} />
                       </FormControl>
                       <FormDescription>Descriptive name for the unit</FormDescription>
                       <FormMessage />

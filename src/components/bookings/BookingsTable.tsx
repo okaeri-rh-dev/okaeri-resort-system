@@ -117,7 +117,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
           <Edit className="mr-1 h-3 w-3" />
           Edit
         </Button>
-        {booking.payment_status !== "Paid" && (
+        {booking.payment_status !== "Completed" && (
           <Button variant="outline" size="sm" onClick={onUploadPayment} className="flex-1">
             <Upload className="mr-1 h-3 w-3" />
             Payment
@@ -283,7 +283,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
               label: "Edit Booking",
               onClick: () => onEditBooking?.(booking),
             },
-            ...(booking.payment_status !== "Paid"
+            ...(booking.payment_status !== "Completed"
               ? [
                   {
                     label: "Upload Payment",
@@ -460,9 +460,9 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Payments</SelectItem>
-                <SelectItem value="Unpaid">Unpaid</SelectItem>
+                <SelectItem value="Pending">Pending</SelectItem>
                 <SelectItem value="Partial">Partial</SelectItem>
-                <SelectItem value="Paid">Paid</SelectItem>
+                <SelectItem value="Completed">Completed</SelectItem>
                 <SelectItem value="Refunded">Refunded</SelectItem>
               </SelectContent>
             </Select>
@@ -580,9 +580,9 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Payments</SelectItem>
-                    <SelectItem value="Unpaid">Unpaid</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
                     <SelectItem value="Partial">Partial</SelectItem>
-                    <SelectItem value="Paid">Paid</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
                     <SelectItem value="Refunded">Refunded</SelectItem>
                   </SelectContent>
                 </Select>

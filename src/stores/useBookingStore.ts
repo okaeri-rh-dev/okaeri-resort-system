@@ -10,6 +10,7 @@ import type {
   BookingFormData,
   TableState,
 } from "@/types";
+// import { useWorkflowStore } from "./useWorkflowStore"; // Phase 3-4
 
 // ============================================
 // ZUSTAND STORE
@@ -268,7 +269,7 @@ export const useCreateBooking = () => {
             : bookingData.check_out.toISOString(),
         total_amount: bookingData.total_amount,
         booking_status: "Pending" as BookingStatus,
-        payment_status: "Unpaid" as PaymentStatus,
+        payment_status: "Pending" as PaymentStatus,
         payment_method: bookingData.payment_method || null,
         special_requests: bookingData.special_requests || null,
       };
@@ -300,7 +301,7 @@ export const useCreateBooking = () => {
             : newBooking.check_out.toISOString(),
         total_amount: newBooking.total_amount,
         booking_status: "Pending",
-        payment_status: "Unpaid",
+        payment_status: "Pending",
         payment_method: newBooking.payment_method || null,
         payment_proof_url: null,
         special_requests: newBooking.special_requests || null,
@@ -331,12 +332,37 @@ export const useCreateBooking = () => {
 };
 
 // Update booking status with optimistic update
+// Phase 2: Simple status transition validation
+const VALID_STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
+  Pending: ["Confirmed", "Cancelled"],
+  Confirmed: ["CheckedIn", "Cancelled"],
+  CheckedIn: ["CheckedOut"],
+  CheckedOut: [],
+  Cancelled: [],
+};
+
+export const canTransitionStatus = (
+  currentStatus: BookingStatus,
+  newStatus: BookingStatus
+): boolean => {
+  return VALID_STATUS_TRANSITIONS[currentStatus]?.includes(newStatus) || false;
+};
+
 export const useUpdateBookingStatus = () => {
   const queryClient = useQueryClient();
   const updateOptimistic = useBookingStore((state) => state.updateOptimisticBooking);
 
   return useMutation({
     mutationFn: async ({ bookingId, status }: { bookingId: string; status: BookingStatus }) => {
+      // Phase 2: Simple validation before updating
+      const { data: currentBooking } = await db.bookings.byId(bookingId);
+      if (
+        currentBooking &&
+        !canTransitionStatus(currentBooking.booking_status as BookingStatus, status)
+      ) {
+        throw new Error(`Cannot transition from ${currentBooking.booking_status} to ${status}`);
+      }
+
       const { data, error } = await db.bookings.update(bookingId, {
         booking_status: status,
       });
@@ -425,10 +451,28 @@ export const useUploadPaymentProof = () => {
       const fileName = `payment-proofs/${bookingId}/${Date.now()}-${file.name}`;
       const { url } = await storage.upload("payment-proofs", fileName, file);
 
-      // Update booking with proof URL
+      // Get booking details for payment creation
+      const { data: booking } = await supabase
+        .from("bookings")
+        .select("total_amount")
+        .eq("booking_id", bookingId)
+        .single();
+
+      // Create payment record with proof
+      const { error: paymentError } = await supabase.from("payments").insert({
+        booking_id: bookingId,
+        amount: booking?.total_amount ?? 0,
+        payment_method: "Other", // Default since we don't have method info
+        payment_status: "Completed",
+        receipt_url: url,
+        transaction_date: new Date().toISOString(),
+      });
+
+      if (paymentError) throw new Error(handleSupabaseError(paymentError));
+
+      // Update booking payment status
       const { data, error } = await db.bookings.update(bookingId, {
-        payment_proof_url: url,
-        payment_status: "Paid",
+        payment_status: "Completed",
       });
 
       if (error) throw new Error(handleSupabaseError(error));
@@ -438,7 +482,7 @@ export const useUploadPaymentProof = () => {
       await queryClient.cancelQueries({ queryKey: ["bookings"] });
 
       updateOptimistic(bookingId, {
-        payment_status: "Paid",
+        payment_status: "Completed",
         updated_at: new Date().toISOString(),
       });
     },
@@ -470,8 +514,273 @@ export const useCancelBooking = () => {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["units"] }); // Update unit availability
+      queryClient.invalidateQueries({ queryKey: ["unit-availability"] }); // Update optimized availability cache
+      queryClient.invalidateQueries({ queryKey: ["available-units"] });
+      queryClient.invalidateQueries({ queryKey: ["availability-calendar"] });
     },
   });
+};
+
+// ============================================
+// OPTIMIZED AVAILABILITY CHECKING HOOKS
+// ============================================
+
+/**
+ * Fast unit availability check using optimized database function
+ * Replaces the basic availability check with sub-100ms performance
+ */
+export const useUnitAvailabilityFast = (
+  unitId: string,
+  checkIn: string,
+  checkOut: string,
+  excludeBookingId?: string,
+  options: { enabled?: boolean } = {}
+) => {
+  const { enabled = true } = options;
+
+  return useQuery({
+    queryKey: ["unit-availability-fast", unitId, checkIn, checkOut, excludeBookingId],
+    queryFn: async () => {
+      if (!unitId || !checkIn || !checkOut) return null;
+
+      const { data, error } = await db.bookings.checkAvailabilityFast(
+        unitId,
+        checkIn,
+        checkOut,
+        excludeBookingId
+      );
+
+      if (error) throw new Error(handleSupabaseError(error));
+
+      const result = data?.[0];
+      return {
+        isAvailable: result?.is_available || false,
+        conflictingBookings: result?.conflicting_bookings || 0,
+        blackoutPeriods: result?.blackout_periods || 0,
+        unitStatus: result?.unit_status || "Unknown",
+      };
+    },
+    enabled: enabled && !!unitId && !!checkIn && !!checkOut,
+    staleTime: 60000, // 1 minute
+    refetchInterval: 30000, // 30 seconds for real-time updates
+    retry: 2,
+  });
+};
+
+/**
+ * Multi-unit availability search with advanced filtering
+ */
+export const useMultiUnitAvailability = (
+  checkIn: string,
+  checkOut: string,
+  filters: {
+    unitTypes?: string[];
+    minOccupancy?: number;
+    maxRate?: number;
+    limit?: number;
+  } = {},
+  options: { enabled?: boolean } = {}
+) => {
+  const { enabled = true } = options;
+
+  return useQuery({
+    queryKey: ["multi-unit-availability", checkIn, checkOut, filters],
+    queryFn: async () => {
+      if (!checkIn || !checkOut) return [];
+
+      const { data, error } = await db.bookings.checkMultiUnitAvailability(
+        checkIn,
+        checkOut,
+        filters
+      );
+
+      if (error) throw new Error(handleSupabaseError(error));
+
+      return (data || []).map((unit: any) => ({
+        unit_id: unit.unit_id,
+        unit_name: unit.unit_name,
+        unit_code: unit.unit_code,
+        unit_type: unit.unit_type,
+        max_occupancy: unit.max_occupancy,
+        base_rate: unit.base_rate,
+        weekend_rate: unit.weekend_rate,
+        unit_status: "Available",
+        amenities: [],
+        created_at: "",
+        updated_at: "",
+        isAvailable: unit.is_available,
+        nextAvailableDate: unit.next_available_date,
+      }));
+    },
+    enabled: enabled && !!checkIn && !!checkOut,
+    staleTime: 60000, // 1 minute
+    retry: 2,
+  });
+};
+
+/**
+ * Unit availability calendar for calendar UI components
+ */
+export const useAvailabilityCalendar = (
+  unitId: string,
+  startDate: string,
+  endDate: string,
+  options: { enabled?: boolean } = {}
+) => {
+  const { enabled = true } = options;
+
+  return useQuery({
+    queryKey: ["availability-calendar", unitId, startDate, endDate],
+    queryFn: async () => {
+      if (!unitId || !startDate || !endDate) return [];
+
+      const { data, error } = await db.bookings.getAvailabilityCalendar(unitId, startDate, endDate);
+
+      if (error) throw new Error(handleSupabaseError(error));
+
+      return (data || []).map((day: any) => ({
+        date: day.calendar_date,
+        status: day.status,
+        bookingId: day.booking_id,
+        guestName: day.guest_name,
+        bookingReference: day.booking_reference,
+      }));
+    },
+    enabled: enabled && !!unitId && !!startDate && !!endDate,
+    staleTime: 300000, // 5 minutes
+    retry: 1,
+  });
+};
+
+/**
+ * Blackout period management
+ */
+export const useUnitBlackouts = (
+  unitId: string,
+  startDate?: string,
+  endDate?: string,
+  options: { enabled?: boolean } = {}
+) => {
+  const { enabled = true } = options;
+
+  return useQuery({
+    queryKey: ["unit-blackouts", unitId, startDate, endDate],
+    queryFn: async () => {
+      if (!unitId) return [];
+
+      const query = db.blackouts.byUnit(unitId);
+
+      if (startDate && endDate) {
+        const { data, error } = await db.blackouts.inDateRange(startDate, endDate);
+        if (error) throw new Error(handleSupabaseError(error));
+        return data?.filter((blackout: any) => blackout.unit_id === unitId) || [];
+      }
+
+      const { data, error } = await query;
+      if (error) throw new Error(handleSupabaseError(error));
+      return data || [];
+    },
+    enabled: enabled && !!unitId,
+    staleTime: 300000, // 5 minutes
+    retry: 1,
+  });
+};
+
+/**
+ * Create blackout period with cache invalidation
+ */
+export const useCreateBlackout = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      unitId,
+      blackoutType,
+      startDate,
+      endDate,
+      reason,
+      createdBy,
+    }: {
+      unitId: string;
+      blackoutType: "Maintenance" | "Renovation" | "Seasonal" | "Manual";
+      startDate: string;
+      endDate: string;
+      reason?: string;
+      createdBy?: string;
+    }) => {
+      const { data, error } = await db.blackouts.create({
+        unit_id: unitId,
+        blackout_type: blackoutType,
+        start_date: startDate,
+        end_date: endDate,
+        reason,
+        created_by: createdBy,
+      });
+
+      if (error) throw new Error(handleSupabaseError(error));
+      return data;
+    },
+    onSuccess: (data) => {
+      // Invalidate all availability-related queries for the unit
+      queryClient.invalidateQueries({ queryKey: ["unit-blackouts", data.unit_id] });
+      queryClient.invalidateQueries({ queryKey: ["unit-availability-fast", data.unit_id] });
+      queryClient.invalidateQueries({ queryKey: ["multi-unit-availability"] });
+      queryClient.invalidateQueries({ queryKey: ["availability-calendar", data.unit_id] });
+      queryClient.invalidateQueries({ queryKey: ["units"] });
+    },
+    onError: (error) => {
+      console.error("Failed to create blackout period:", error);
+    },
+  });
+};
+
+/**
+ * Cache management and performance optimization
+ */
+export const useAvailabilityCache = () => {
+  const queryClient = useQueryClient();
+
+  const refreshCache = useMutation({
+    mutationFn: async ({
+      unitId,
+      daysAhead = 90,
+    }: {
+      unitId?: string;
+      daysAhead?: number;
+    } = {}) => {
+      const { data, error } = await db.cache.refresh(unitId, daysAhead);
+      if (error) throw new Error(handleSupabaseError(error));
+      return data;
+    },
+    onSuccess: (_cacheCount, variables) => {
+      // Invalidate queries based on cache refresh scope
+      if (variables.unitId) {
+        queryClient.invalidateQueries({ queryKey: ["unit-availability-fast", variables.unitId] });
+        queryClient.invalidateQueries({ queryKey: ["availability-calendar", variables.unitId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["unit-availability-fast"] });
+        queryClient.invalidateQueries({ queryKey: ["multi-unit-availability"] });
+        queryClient.invalidateQueries({ queryKey: ["availability-calendar"] });
+      }
+    },
+  });
+
+  const getCacheMetrics = useQuery({
+    queryKey: ["cache-metrics"],
+    queryFn: async () => {
+      const { data, error } = await db.cache.metrics();
+      if (error) throw new Error(handleSupabaseError(error));
+      return data;
+    },
+    staleTime: 30000, // 30 seconds
+    refetchInterval: 60000, // 1 minute
+    retry: 1,
+  });
+
+  return {
+    refreshCache,
+    getCacheMetrics,
+  };
 };
 
 // Real-time subscription for booking updates
@@ -571,5 +880,355 @@ export const useUpcomingCheckOuts = (days = 7) => {
       return data;
     },
     staleTime: 60000,
+  });
+};
+
+// ============================================
+// PHASE 3-4: WORKFLOW-ENHANCED BOOKING OPERATIONS
+// Commented out for Phase 2 - simple status updates only
+// ============================================
+
+/* TODO: Phase 3-4 - Re-enable workflow integration
+
+export const useUpdateBookingStatusWithWorkflow = () => {
+  const queryClient = useQueryClient();
+  const updateOptimistic = useBookingStore((state) => state.updateOptimisticBooking);
+
+  return useMutation({
+    mutationFn: async ({
+      bookingId,
+      status,
+      resortId = 'resort-okaeri',
+      triggeredBy = 'user',
+      metadata = {}
+    }: {
+      bookingId: string;
+      status: BookingStatus;
+      resortId?: string;
+      triggeredBy?: 'user' | 'system' | 'automation';
+      metadata?: Record<string, any>;
+    }) => {
+      // Get current booking to determine fromStatus
+      const { data: currentBooking } = await db.bookings.byId(bookingId);
+      if (!currentBooking) {
+        throw new Error('Booking not found');
+      }
+
+      // Execute workflow transition via API
+      const response = await fetch('/api/workflows/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId,
+          fromStatus: currentBooking.booking_status,
+          toStatus: status,
+          resortId,
+          triggeredBy,
+          metadata,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Workflow execution failed: ${response.statusText}`);
+      }
+
+      const workflowResult = await response.json();
+
+      if (!workflowResult.success) {
+        throw new Error(
+          workflowResult.workflowResult.errors
+            .map((e: any) => e.message)
+            .join(', ')
+        );
+      }
+
+      return workflowResult.workflowResult.updatedBooking;
+    },
+    onMutate: async ({ bookingId, status }) => {
+      await queryClient.cancelQueries({ queryKey: ["bookings"] });
+
+      const previousBooking = queryClient.getQueryData<Booking>(["bookings", bookingId]);
+
+      updateOptimistic(bookingId, {
+        booking_status: status,
+        updated_at: new Date().toISOString(),
+      });
+
+      return { previousBooking };
+    },
+    onError: (_, { bookingId }, context) => {
+      if (context?.previousBooking) {
+        updateOptimistic(bookingId, context.previousBooking);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["workflow-status"] });
+      queryClient.invalidateQueries({ queryKey: ["workflow-summary"] });
+    },
+  });
+};
+
+/**
+ * Get booking with workflow state
+ */
+export const useBookingWithWorkflow = (
+  bookingId: string | undefined,
+  resortId = "resort-okaeri"
+) => {
+  const bookingQuery = useBooking(bookingId);
+
+  const workflowQuery = useQuery({
+    queryKey: ["workflow-status", bookingId, resortId],
+    queryFn: async () => {
+      if (!bookingId) return null;
+
+      const response = await fetch(
+        `/api/workflows/status?bookingId=${bookingId}&resortId=${resortId}&includePredictions=true&includeCostEstimate=true`
+      );
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null; // Booking not found in workflow system
+        }
+        throw new Error(`Failed to fetch workflow state: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.workflowState;
+    },
+    enabled: !!bookingId && !!bookingQuery.data,
+    staleTime: 30000,
+  });
+
+  return {
+    booking: bookingQuery.data,
+    workflowState: workflowQuery.data,
+    isLoading: bookingQuery.isLoading || workflowQuery.isLoading,
+    error: bookingQuery.error || workflowQuery.error,
+    refetch: () => {
+      bookingQuery.refetch();
+      workflowQuery.refetch();
+    },
+  };
+};
+
+/**
+ * Automated check-in for eligible bookings
+ */
+export const useAutomatedCheckIn = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (bookingId: string) => {
+      const response = await fetch("/api/workflows/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId,
+          fromStatus: "Confirmed",
+          toStatus: "CheckedIn",
+          resortId: "resort-okaeri",
+          triggeredBy: "automation",
+          metadata: {
+            automatedCheckIn: true,
+            timestamp: new Date().toISOString(),
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Automated check-in failed: ${response.statusText}`);
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["upcoming-checkins"] });
+      queryClient.invalidateQueries({ queryKey: ["workflow-summary"] });
+    },
+  });
+};
+
+/**
+ * Automated check-out for eligible bookings
+ */
+export const useAutomatedCheckOut = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (bookingId: string) => {
+      const response = await fetch("/api/workflows/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId,
+          fromStatus: "CheckedIn",
+          toStatus: "CheckedOut",
+          resortId: "resort-okaeri",
+          triggeredBy: "automation",
+          metadata: {
+            automatedCheckOut: true,
+            timestamp: new Date().toISOString(),
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Automated check-out failed: ${response.statusText}`);
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["upcoming-checkouts"] });
+      queryClient.invalidateQueries({ queryKey: ["workflow-summary"] });
+    },
+  });
+};
+
+/**
+ * Get bookings that need attention (workflow alerts)
+ */
+export const useBookingsNeedingAttention = (resortId = "resort-okaeri") => {
+  return useQuery({
+    queryKey: ["bookings-needing-attention", resortId],
+    queryFn: async () => {
+      // Get all active bookings
+      const { data: bookings, error } = await supabase
+        .from("bookings")
+        .select(
+          `
+          *,
+          unit:units(*),
+          guest:guests(*)
+        `
+        )
+        .in("booking_status", ["Pending", "Confirmed", "CheckedIn"])
+        .order("check_in", { ascending: true });
+
+      if (error) throw new Error(handleSupabaseError(error));
+
+      // Filter bookings that need attention based on workflow rules
+      const now = new Date();
+      const needingAttention =
+        bookings?.filter((booking) => {
+          const checkInDate = new Date(booking.check_in);
+          const checkOutDate = new Date(booking.check_out);
+
+          // Payment overdue for confirmed bookings
+          if (
+            booking.booking_status === "Confirmed" &&
+            booking.payment_status === "Pending" &&
+            checkInDate <= now
+          ) {
+            return true;
+          }
+
+          // Overdue check-ins
+          if (
+            booking.booking_status === "Confirmed" &&
+            checkInDate < now &&
+            booking.payment_status === "Completed"
+          ) {
+            return true;
+          }
+
+          // Overdue check-outs
+          if (booking.booking_status === "CheckedIn" && checkOutDate < now) {
+            return true;
+          }
+
+          // Pending bookings close to check-in date
+          if (
+            booking.booking_status === "Pending" &&
+            checkInDate <= new Date(Date.now() + 24 * 60 * 60 * 1000)
+          ) {
+            return true;
+          }
+
+          return false;
+        }) || [];
+
+      return needingAttention;
+    },
+    staleTime: 30000, // 30 seconds
+    refetchInterval: 60000, // 1 minute
+  });
+};
+
+/**
+ * Get workflow metrics for dashboard
+ */
+export const useBookingWorkflowMetrics = (resortId = "resort-okaeri") => {
+  return useQuery({
+    queryKey: ["booking-workflow-metrics", resortId],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/workflows/status?resortId=${resortId}&includeCostEstimate=true`
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch workflow metrics: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      return {
+        totalBookings: data.summary?.totalBookings || 0,
+        activeAutomatedTriggers: data.summary?.activeAutomatedTriggers || 0,
+        pendingActions: data.summary?.pendingActions || 0,
+        estimatedMonthlyCost: data.summary?.estimatedMonthlyCost || 0,
+      };
+    },
+    staleTime: 60000, // 1 minute
+    refetchInterval: 120000, // 2 minutes
+  });
+};
+
+/**
+ * Process workflow actions in batch
+ */
+export const useProcessWorkflowBatch = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      resortId = "resort-okaeri",
+      triggerTypes = ["date", "payment"],
+      batchSize = 10,
+      dryRun = false,
+    }: {
+      resortId?: string;
+      triggerTypes?: string[];
+      batchSize?: number;
+      dryRun?: boolean;
+    }) => {
+      const response = await fetch("/api/workflows/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resortId,
+          triggerTypes,
+          batchSize,
+          dryRun,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Batch processing failed: ${response.statusText}`);
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["workflow-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings-needing-attention"] });
+      queryClient.invalidateQueries({ queryKey: ["upcoming-checkins"] });
+      queryClient.invalidateQueries({ queryKey: ["upcoming-checkouts"] });
+    },
   });
 };

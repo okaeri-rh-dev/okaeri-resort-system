@@ -1,17 +1,21 @@
-import React, { useState, useRef } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  AlertCircle,
+  CheckCircle,
+  CreditCard,
+  FileText,
+  Image as ImageIcon,
   Upload,
   X,
-  Image as ImageIcon,
-  FileText,
-  CheckCircle,
-  AlertCircle,
-  CreditCard,
 } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -21,11 +25,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   Select,
@@ -34,12 +34,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 
-import { paymentUploadSchema, formatCurrency, type PaymentUploadData } from "@/lib/validations";
+import { formatCurrency, paymentUploadSchema, type PaymentUploadData } from "@/lib/validations";
 
-import { useUploadPaymentProof } from "@/stores/useBookingStore";
 import { cn } from "@/lib/utils";
+import { useUploadPaymentProof } from "@/stores/useBookingStore";
 
 interface PaymentUploadFormProps {
   bookingId: string;
@@ -269,7 +269,7 @@ export function PaymentUploadForm({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="GCash">GCash</SelectItem>
-                      <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
                       <SelectItem value="Cash">Cash</SelectItem>
                       <SelectItem value="Card">Credit/Debit Card</SelectItem>
                     </SelectContent>
@@ -307,7 +307,7 @@ export function PaymentUploadForm({
             <FormField
               control={form.control}
               name="payment_proof"
-              render={({}) => (
+              render={() => (
                 <FormItem>
                   <FormLabel>Payment Proof</FormLabel>
                   <FormControl>

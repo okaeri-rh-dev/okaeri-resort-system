@@ -195,7 +195,7 @@ export function GuestQuickForm({
                 </div>
                 <div className="text-muted-foreground flex items-center gap-2 text-sm">
                   <Clock className="h-4 w-4" />
-                  Total spent: ₱{existingGuest.guest.total_spent.toLocaleString()}
+                  Total spent: ₱{(existingGuest.guest.total_spent ?? 0).toLocaleString()}
                 </div>
                 {existingGuest.lastBookingDate && (
                   <div className="text-muted-foreground text-sm">

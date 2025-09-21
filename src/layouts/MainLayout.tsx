@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { Home, Calendar, Users, Building2, Receipt, Menu, X, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { Building2, Calendar, ChevronRight, Home, Menu, Receipt, Users, X } from "lucide-react";
+import { useState } from "react";
 
 interface NavItem {
   label: string;
@@ -54,7 +54,7 @@ export function MainLayout({ children, currentPath = "/" }: MainLayoutProps) {
   };
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-background min-h-screen md:flex">
       {/* Desktop Sidebar */}
       <aside className="bg-card hidden w-64 border-r md:flex">
         <div className="flex w-full flex-col">
@@ -111,7 +111,7 @@ export function MainLayout({ children, currentPath = "/" }: MainLayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="md:ml-64">
+      <main>
         <div className="container mx-auto p-4 md:p-6">{children}</div>
       </main>
     </div>

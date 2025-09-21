@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { Unit, Guest, Booking, Payment, Expense, MaintenanceLog } from "@/types";
+import type { Database } from "../../database.types";
 
 // Environment variables validation
 const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
@@ -9,60 +9,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Missing Supabase environment variables. Please check your .env.local file.");
 }
 
-// Database type definitions for Supabase
-export interface Database {
-  public: {
-    Tables: {
-      units: {
-        Row: Unit;
-        Insert: Omit<Unit, "unit_id" | "created_at" | "updated_at">;
-        Update: Partial<Omit<Unit, "unit_id" | "created_at" | "updated_at">>;
-      };
-      guests: {
-        Row: Guest;
-        Insert: Omit<
-          Guest,
-          "guest_id" | "created_at" | "updated_at" | "total_bookings" | "total_spent"
-        >;
-        Update: Partial<Omit<Guest, "guest_id" | "created_at" | "updated_at">>;
-      };
-      bookings: {
-        Row: Booking;
-        Insert: Omit<Booking, "booking_id" | "created_at" | "updated_at">;
-        Update: Partial<Omit<Booking, "booking_id" | "created_at" | "updated_at">>;
-      };
-      payments: {
-        Row: Payment;
-        Insert: Omit<Payment, "payment_id" | "created_at">;
-        Update: Partial<Omit<Payment, "payment_id" | "created_at">>;
-      };
-      expenses: {
-        Row: Expense;
-        Insert: Omit<Expense, "expense_id" | "created_at" | "updated_at">;
-        Update: Partial<Omit<Expense, "expense_id" | "created_at" | "updated_at">>;
-      };
-      maintenance_logs: {
-        Row: MaintenanceLog;
-        Insert: Omit<MaintenanceLog, "log_id" | "created_at" | "updated_at">;
-        Update: Partial<Omit<MaintenanceLog, "log_id" | "created_at" | "updated_at">>;
-      };
-    };
-    Functions: {
-      generate_booking_reference: {
-        Args: Record<string, never>;
-        Returns: string;
-      };
-      check_unit_availability: {
-        Args: {
-          p_unit_id: string;
-          p_check_in: string;
-          p_check_out: string;
-        };
-        Returns: boolean;
-      };
-    };
-  };
-}
+// Re-export Database type for backwards compatibility
+export type { Database } from "../../database.types";
 
 // Create Supabase client with proper typing
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
@@ -149,6 +97,46 @@ export const db = {
         .eq("unit_id", unitId)
         .not("booking_status", "eq", "Cancelled")
         .or(`check_in.lte.${checkOut},check_out.gte.${checkIn}`),
+
+    // Enhanced availability methods using optimized functions
+    checkAvailabilityFast: (
+      unitId: string,
+      checkIn: string,
+      checkOut: string,
+      excludeBookingId?: string
+    ) =>
+      supabase.rpc("check_unit_availability_fast", {
+        p_unit_id: unitId,
+        p_check_in: checkIn,
+        p_check_out: checkOut,
+        p_exclude_booking_id: excludeBookingId || null,
+      }),
+
+    checkMultiUnitAvailability: (
+      checkIn: string,
+      checkOut: string,
+      options: {
+        unitTypes?: string[];
+        minOccupancy?: number;
+        maxRate?: number;
+        limit?: number;
+      } = {}
+    ) =>
+      supabase.rpc("check_multi_unit_availability", {
+        p_check_in: checkIn,
+        p_check_out: checkOut,
+        p_unit_types: options.unitTypes || null,
+        p_min_occupancy: options.minOccupancy || null,
+        p_max_rate: options.maxRate || null,
+        p_limit: options.limit || 50,
+      }),
+
+    getAvailabilityCalendar: (unitId: string, startDate: string, endDate: string) =>
+      supabase.rpc("get_unit_availability_calendar", {
+        p_unit_id: unitId,
+        p_start_date: startDate,
+        p_end_date: endDate,
+      }),
   },
 
   guests: {
@@ -182,6 +170,41 @@ export const db = {
       supabase.from("payments").select("*").eq("booking_id", bookingId),
     create: (data: Database["public"]["Tables"]["payments"]["Insert"]) =>
       supabase.from("payments").insert(data).select().single(),
+  },
+
+  // Blackout period management
+  blackouts: {
+    all: () => supabase.from("availability_blackouts").select("*"),
+    byUnit: (unitId: string) =>
+      supabase.from("availability_blackouts").select("*").eq("unit_id", unitId),
+    create: (data: Database["public"]["Tables"]["availability_blackouts"]["Insert"]) =>
+      supabase.from("availability_blackouts").insert(data).select().single(),
+    update: (id: string, data: Database["public"]["Tables"]["availability_blackouts"]["Update"]) =>
+      supabase.from("availability_blackouts").update(data).eq("blackout_id", id).select().single(),
+    delete: (id: string) => supabase.from("availability_blackouts").delete().eq("blackout_id", id),
+    inDateRange: (startDate: string, endDate: string) =>
+      supabase
+        .from("availability_blackouts")
+        .select("*")
+        .gte("end_date", startDate)
+        .lte("start_date", endDate),
+  },
+
+  // Cache management
+  cache: {
+    refresh: (unitId?: string, daysAhead?: number) =>
+      supabase.rpc("refresh_availability_cache", {
+        p_unit_id: unitId || null,
+        p_days_ahead: daysAhead || 90,
+      }),
+    metrics: () => supabase.from("cache_performance_metrics").select("*").single(),
+    clear: (unitId?: string) =>
+      unitId
+        ? supabase.from("availability_cache").delete().eq("unit_id", unitId)
+        : supabase
+            .from("availability_cache")
+            .delete()
+            .lt("cache_expires_at", new Date().toISOString()),
   },
 };
 

@@ -95,13 +95,13 @@ export const useDashboardStats = () => {
           .in("booking_status", ["Confirmed", "CheckedIn"]),
 
         // Total revenue (all paid bookings)
-        supabase.from("bookings").select("total_amount").eq("payment_status", "Paid"),
+        supabase.from("bookings").select("total_amount").eq("payment_status", "Completed"),
 
         // Monthly revenue
         supabase
           .from("bookings")
           .select("total_amount")
-          .eq("payment_status", "Paid")
+          .eq("payment_status", "Completed")
           .gte("created_at", startOfMonth.toISOString())
           .lte("created_at", endOfMonth.toISOString()),
 
