@@ -29,6 +29,7 @@ import {
 import {
   useUnits,
   useUpdateUnit,
+  useDeleteUnit,
   useBatchUpdateUnitsStatus,
   useUnitStore,
 } from "../../stores/useUnitStore";
@@ -43,13 +44,13 @@ import {
   FilterPopover,
   TablePagination,
   ActionMenu,
-  TableSkeleton,
   TableEmptyState,
   ResponsiveTable,
   MobileCard,
   MobileCardRow,
   exportToCSV,
 } from "../tables/utils";
+import { UnitsTableSkeleton } from "@/components/skeletons";
 
 const columnHelper = createColumnHelper<Unit>();
 
@@ -234,6 +235,9 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
   // Store state
   const { filters, setFilters, resetFilters, viewMode, setViewMode } = useUnitStore();
 
+  // Mutations
+  const deleteUnit = useDeleteUnit();
+
   // Local state
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -288,29 +292,69 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
     }
   };
 
-  // Export data
-  const handleExport = () => {
-    const exportData = filteredUnits.map((unit) => ({
-      code: unit.unit_code,
-      name: unit.unit_name,
-      type: unit.unit_type,
-      capacity: unit.max_occupancy,
-      base_rate: unit.base_rate,
-      weekend_rate: unit.weekend_rate,
-      status: unit.unit_status,
-      amenities: (unit.amenities ?? []).join("; "),
-    }));
+  // Export data with Philippine business compliance
+  const handleExport = async () => {
+    try {
+      // Import the enhanced export function for Philippine compliance
+      const { exportToCSV: exportEnhanced } = await import("@/utils/reports");
 
-    exportToCSV(exportData, "units", [
-      "Code",
-      "Name",
-      "Type",
-      "Capacity",
-      "Base Rate",
-      "Weekend Rate",
-      "Status",
-      "Amenities",
-    ]);
+      const exportData = filteredUnits.map((unit) => ({
+        unit_code: unit.unit_code,
+        unit_name: unit.unit_name,
+        unit_type: unit.unit_type,
+        max_occupancy: unit.max_occupancy,
+        base_rate: unit.base_rate, // Will be formatted as currency
+        weekend_rate: unit.weekend_rate, // Will be formatted as currency
+        unit_status: unit.unit_status,
+        amenities: (unit.amenities ?? []).join("; "),
+        created_date: unit.created_at,
+        updated_date: unit.updated_at,
+      }));
+
+      await exportEnhanced(
+        exportData,
+        "units",
+        [
+          "Unit Code",
+          "Unit Name",
+          "Unit Type",
+          "Max Occupancy",
+          "Base Rate",
+          "Weekend Rate",
+          "Unit Status",
+          "Amenities",
+          "Created Date",
+          "Updated Date",
+        ],
+        {
+          philippineFormat: true,
+          includeTimestamp: true,
+          onSuccess: (filename) => {
+            console.log(`Successfully exported units to ${filename}`);
+          },
+          onError: (error) => {
+            console.error("Export failed:", error);
+            alert(`Export failed: ${error}`);
+          },
+        }
+      );
+    } catch (error) {
+      // Fallback to basic export if enhanced version fails
+      console.error("Enhanced export failed, using fallback:", error);
+      exportToCSV(
+        filteredUnits.map((unit) => ({
+          code: unit.unit_code,
+          name: unit.unit_name,
+          type: unit.unit_type,
+          capacity: unit.max_occupancy,
+          base_rate: unit.base_rate,
+          weekend_rate: unit.weekend_rate,
+          status: unit.unit_status,
+          amenities: (unit.amenities ?? []).join("; "),
+        })),
+        "units"
+      );
+    }
   };
 
   // Define columns
@@ -447,6 +491,19 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
                 }),
               disabled: unit.unit_status === "Maintenance",
             },
+            {
+              label: "Delete Unit",
+              onClick: () => {
+                if (
+                  confirm(
+                    `Are you sure you want to delete unit "${unit.unit_name}"? This action cannot be undone.`
+                  )
+                ) {
+                  deleteUnit.mutate(unit.unit_id);
+                }
+              },
+              className: "text-red-600 hover:text-red-700",
+            },
           ];
 
           return <ActionMenu actions={actions} />;
@@ -454,7 +511,7 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
         size: 80,
       }),
     ],
-    [onViewUnit, onEditUnit, updateUnit]
+    [onViewUnit, onEditUnit, updateUnit, deleteUnit]
   );
 
   // Create table instance
@@ -484,7 +541,7 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
 
   // Loading state
   if (isLoading) {
-    return <TableSkeleton rows={6} columns={8} />;
+    return <UnitsTableSkeleton isMobile={isMobile} viewMode={viewMode} rows={6} />;
   }
 
   // Error state
@@ -762,7 +819,7 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
                 key={row.id}
                 className={cn(
                   "h-10 border-b border-neutral-100 hover:bg-neutral-50",
-                  index % 2 === 0 && "bg-neutral-25",
+                  index % 2 === 0 && "bg-neutral-50/30",
                   row.getIsSelected() && "bg-blue-50"
                 )}
               >

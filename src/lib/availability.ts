@@ -74,7 +74,7 @@ export async function checkUnitAvailability(
       p_unit_id: unitId,
       p_check_in: checkIn,
       p_check_out: checkOut,
-      p_exclude_booking_id: excludeBookingId || null,
+      p_exclude_booking_id: excludeBookingId ?? undefined,
     });
 
     if (error) throw error;
@@ -106,9 +106,9 @@ export async function checkMultiUnitAvailability(
     const { data, error } = await supabase.rpc("check_multi_unit_availability", {
       p_check_in: checkIn,
       p_check_out: checkOut,
-      p_unit_types: filters.unitTypes || null,
-      p_min_occupancy: filters.minOccupancy || null,
-      p_max_rate: filters.maxRate || null,
+      p_unit_types: filters.unitTypes ?? undefined,
+      p_min_occupancy: filters.minOccupancy ?? undefined,
+      p_max_rate: filters.maxRate ?? undefined,
       p_limit: limit,
     });
 
@@ -264,7 +264,7 @@ export async function createBlackoutPeriod(
       blackoutType: data.blackout_type,
       startDate: data.start_date,
       endDate: data.end_date,
-      reason: data.reason,
+      reason: data.reason ?? undefined,
     };
   } catch (error) {
     console.error("Error creating blackout period:", error);
@@ -319,13 +319,13 @@ export async function refreshAvailabilityCache(
 ): Promise<number> {
   try {
     const { data, error } = await supabase.rpc("refresh_availability_cache", {
-      p_unit_id: unitId || null,
+      p_unit_id: unitId ?? undefined,
       p_days_ahead: daysAhead,
     });
 
     if (error) throw error;
 
-    return data || 0;
+    return Array.isArray(data) ? data.length : data || 0;
   } catch (error) {
     console.error("Error refreshing availability cache:", error);
     throw new Error("Failed to refresh availability cache");
@@ -342,14 +342,20 @@ export async function getCachePerformanceMetrics(): Promise<{
   cacheHitRatio: number;
 }> {
   try {
-    const { data, error } = await supabase.from("cache_performance_metrics").select("*").single();
+    // Use the existing availability_cache table to calculate metrics
+    const { data, error } = await supabase.from("availability_cache").select("*");
 
     if (error) throw error;
 
+    const totalEntries = data?.length || 0;
+    const validEntries =
+      data?.filter((entry) => new Date(entry.cache_expires_at) > new Date()).length || 0;
+    const hitRatio = totalEntries > 0 ? (validEntries / totalEntries) * 100 : 0;
+
     return {
-      totalCacheEntries: data.total_cache_entries || 0,
-      validCacheEntries: data.valid_cache_entries || 0,
-      cacheHitRatio: data.cache_hit_ratio_percent || 0,
+      totalCacheEntries: totalEntries,
+      validCacheEntries: validEntries,
+      cacheHitRatio: Math.round(hitRatio * 100) / 100,
     };
   } catch (error) {
     console.error("Error getting cache metrics:", error);

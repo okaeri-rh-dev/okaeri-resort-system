@@ -1,22 +1,25 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Building2,
-  Users,
-  DollarSign,
-  X,
-  Wifi,
-  Car,
-  Wind,
-  Tv,
-  Coffee,
-  Utensils,
   Bath,
   Bed,
+  Building2,
+  Car,
+  Coffee,
+  DollarSign,
+  Tv,
+  Users,
+  Utensils,
+  Wifi,
+  Wind,
+  X,
 } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -26,10 +29,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -37,17 +37,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 
 import {
-  unitFormWithRateValidationSchema,
   formatCurrency,
+  unitFormWithRateValidationSchema,
   type UnitFormData,
 } from "@/lib/validations";
 
-import { useCreateUnit, useUpdateUnit } from "@/stores/useUnitStore";
 import { cn } from "@/lib/utils";
+import { useCreateUnit, useUpdateUnit } from "@/stores/useUnitStore";
 import type { Unit, UnitType } from "@/types";
 
 interface UnitFormProps {
@@ -97,8 +96,6 @@ const UNIT_TYPES: { value: UnitType; label: string; description: string }[] = [
 ];
 
 export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps) {
-  const [selectedAmenities, setSelectedAmenities] = useState<string[]>(unit?.amenities ?? []);
-
   const createUnitMutation = useCreateUnit();
   const updateUnitMutation = useUpdateUnit();
 
@@ -121,13 +118,14 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
   const watchedBaseRate = form.watch("base_rate");
   const watchedWeekendRate = form.watch("weekend_rate");
   const watchedUnitType = form.watch("unit_type");
+  const selectedAmenities = form.watch("amenities") || [];
 
   const handleAmenityToggle = (amenityId: string) => {
-    const newAmenities = selectedAmenities.includes(amenityId)
-      ? selectedAmenities.filter((id) => id !== amenityId)
-      : [...selectedAmenities, amenityId];
+    const current = form.getValues("amenities") || [];
+    const newAmenities = current.includes(amenityId)
+      ? current.filter((id) => id !== amenityId)
+      : [...current, amenityId];
 
-    setSelectedAmenities(newAmenities);
     form.setValue("amenities", newAmenities, { shouldValidate: true });
   };
 
@@ -135,7 +133,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
     try {
       const unitData = {
         ...data,
-        amenities: selectedAmenities,
+        amenities: data.amenities || [],
       };
 
       if (isEditing && unit) {
@@ -160,21 +158,6 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
           : "Failed to create unit. Please try again."
       );
       console.error("Unit form error:", error);
-    }
-  };
-
-  const getMaxOccupancyForType = (unitType: UnitType): number => {
-    switch (unitType) {
-      case "Standard":
-        return 2;
-      case "Deluxe":
-        return 4;
-      case "Suite":
-        return 6;
-      case "Villa":
-        return 10;
-      default:
-        return 2;
     }
   };
 
@@ -298,22 +281,14 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                         <Input
                           type="number"
                           min="1"
-                          max={watchedUnitType ? getMaxOccupancyForType(watchedUnitType) : 20}
+                          max={20}
                           className="pl-10"
                           {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                          onBlur={(e) => field.onChange(parseInt(e.target.value, 10) || 1)}
                         />
                       </div>
                     </FormControl>
-                    <FormDescription>
-                      Maximum number of guests allowed
-                      {watchedUnitType && (
-                        <span className="ml-2 text-xs">
-                          (Recommended max for {watchedUnitType}:{" "}
-                          {getMaxOccupancyForType(watchedUnitType)})
-                        </span>
-                      )}
-                    </FormDescription>
+                    <FormDescription>Maximum number of guests allowed</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -351,7 +326,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                             className="pl-10"
                             placeholder="2500.00"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            onBlur={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                           />
                         </div>
                       </FormControl>
@@ -385,7 +360,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                             className="pl-10"
                             placeholder="3000.00"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            onBlur={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                           />
                         </div>
                       </FormControl>
@@ -443,23 +418,24 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                         const isSelected = selectedAmenities.includes(amenity.id);
 
                         return (
-                          <div
+                          <label
                             key={amenity.id}
+                            htmlFor={`amenity-${amenity.id}`}
                             className={cn(
                               "flex cursor-pointer items-center space-x-2 rounded-lg border p-3 transition-colors",
                               isSelected
                                 ? "border-primary bg-primary/5"
                                 : "border-muted hover:border-muted-foreground/50"
                             )}
-                            onClick={() => handleAmenityToggle(amenity.id)}
                           >
                             <Checkbox
+                              id={`amenity-${amenity.id}`}
                               checked={isSelected}
-                              onChange={() => handleAmenityToggle(amenity.id)}
+                              onCheckedChange={() => handleAmenityToggle(amenity.id)}
                             />
                             <Icon className="h-4 w-4" />
                             <span className="text-sm font-medium">{amenity.label}</span>
-                          </div>
+                          </label>
                         );
                       })}
                     </div>

@@ -24,7 +24,7 @@ Your core competencies include:
 **Documentation Access**: Always use Context7 to get the latest documentation:
 
 - `@tanstack/react-router` - for routing patterns, loaders, and configuration
-- `@tanstack/router-devtools` - for development and debugging tools
+- `@tanstack/react-router-devtools` - for development and debugging tools
 - Use Context7 before implementing any routing patterns to ensure you have the
   most current APIs and best practices
 

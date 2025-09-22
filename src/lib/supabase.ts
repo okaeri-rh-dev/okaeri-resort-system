@@ -2,8 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../../database.types";
 
 // Environment variables validation
-const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
-const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Missing Supabase environment variables. Please check your .env.local file.");
@@ -109,7 +109,7 @@ export const db = {
         p_unit_id: unitId,
         p_check_in: checkIn,
         p_check_out: checkOut,
-        p_exclude_booking_id: excludeBookingId || null,
+        p_exclude_booking_id: excludeBookingId ?? undefined,
       }),
 
     checkMultiUnitAvailability: (
@@ -125,9 +125,9 @@ export const db = {
       supabase.rpc("check_multi_unit_availability", {
         p_check_in: checkIn,
         p_check_out: checkOut,
-        p_unit_types: options.unitTypes || null,
-        p_min_occupancy: options.minOccupancy || null,
-        p_max_rate: options.maxRate || null,
+        p_unit_types: options.unitTypes ?? undefined,
+        p_min_occupancy: options.minOccupancy ?? undefined,
+        p_max_rate: options.maxRate ?? undefined,
         p_limit: options.limit || 50,
       }),
 
@@ -194,10 +194,28 @@ export const db = {
   cache: {
     refresh: (unitId?: string, daysAhead?: number) =>
       supabase.rpc("refresh_availability_cache", {
-        p_unit_id: unitId || null,
+        p_unit_id: unitId ?? undefined,
         p_days_ahead: daysAhead || 90,
       }),
-    metrics: () => supabase.from("cache_performance_metrics").select("*").single(),
+    metrics: async () => {
+      // Calculate metrics from existing availability_cache table
+      const { data, error } = await supabase.from("availability_cache").select("*");
+      if (error) throw error;
+
+      const totalEntries = data?.length || 0;
+      const validEntries =
+        data?.filter((entry) => new Date(entry.cache_expires_at) > new Date()).length || 0;
+      const hitRatio = totalEntries > 0 ? (validEntries / totalEntries) * 100 : 0;
+
+      return {
+        data: {
+          total_cache_entries: totalEntries,
+          valid_cache_entries: validEntries,
+          cache_hit_ratio_percent: Math.round(hitRatio * 100) / 100,
+        },
+        error: null,
+      };
+    },
     clear: (unitId?: string) =>
       unitId
         ? supabase.from("availability_cache").delete().eq("unit_id", unitId)

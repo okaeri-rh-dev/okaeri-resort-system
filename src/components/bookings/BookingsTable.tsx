@@ -30,6 +30,7 @@ import {
   useUpdateBookingStatus,
   useUploadPaymentProof,
   useCancelBooking,
+  useDeleteBooking,
   useBookingStore,
 } from "../../stores/useBookingStore";
 
@@ -46,13 +47,13 @@ import {
   FilterPopover,
   TablePagination,
   ActionMenu,
-  TableSkeleton,
   TableEmptyState,
   ResponsiveTable,
   MobileCard,
   MobileCardRow,
   exportToCSV,
 } from "../tables/utils";
+import { BookingsTableSkeleton } from "@/components/skeletons";
 
 const columnHelper = createColumnHelper<Booking>();
 
@@ -179,6 +180,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
   const updateBookingStatus = useUpdateBookingStatus();
   const uploadPaymentProof = useUploadPaymentProof();
   const cancelBooking = useCancelBooking();
+  const deleteBooking = useDeleteBooking();
 
   // Data
   const { data: bookings = [], isLoading, error } = useBookings();
@@ -312,6 +314,19 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
                   },
                 ]
               : []),
+            {
+              label: "Delete",
+              onClick: () => {
+                if (
+                  confirm(
+                    `Are you sure you want to permanently delete booking "${booking.booking_reference}"? This action cannot be undone.`
+                  )
+                ) {
+                  deleteBooking.mutate(booking.booking_id);
+                }
+              },
+              className: "text-red-600 hover:text-red-700",
+            },
           ];
 
           return <ActionMenu actions={actions} />;
@@ -319,7 +334,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
         size: 80,
       }),
     ],
-    [onViewBooking, onEditBooking, updateBookingStatus, cancelBooking]
+    [onViewBooking, onEditBooking, updateBookingStatus, cancelBooking, deleteBooking]
   );
 
   // Handle payment upload
@@ -339,35 +354,80 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
     input.click();
   };
 
-  // Export data
-  const handleExport = () => {
-    const exportData = bookings.map((booking) => ({
-      reference: booking.booking_reference,
-      guest_name: booking.guest_name,
-      unit: booking.unit?.unit_name || "N/A",
-      check_in: formatFullDate(booking.check_in),
-      check_out: formatFullDate(booking.check_out),
-      guests: booking.num_guests,
-      amount: booking.total_amount,
-      booking_status: booking.booking_status,
-      payment_status: booking.payment_status,
-      contact: booking.contact_number,
-      email: booking.email,
-    }));
+  // Export data with Philippine business compliance
+  const handleExport = async () => {
+    try {
+      // Import the enhanced export function for Philippine compliance
+      const { exportToCSV: exportEnhanced } = await import("@/utils/reports");
 
-    exportToCSV(exportData, "bookings", [
-      "Reference",
-      "Guest Name",
-      "Unit",
-      "Check In",
-      "Check Out",
-      "Guests",
-      "Amount",
-      "Booking Status",
-      "Payment Status",
-      "Contact",
-      "Email",
-    ]);
+      const exportData = bookings.map((booking) => ({
+        booking_reference: booking.booking_reference,
+        guest_name: booking.guest_name,
+        unit_name: booking.unit?.unit_name || "N/A",
+        check_in: booking.check_in, // Let the export function handle date formatting
+        check_out: booking.check_out,
+        number_of_guests: booking.num_guests,
+        total_amount: booking.total_amount, // Let the export function handle currency formatting
+        booking_status: booking.booking_status,
+        payment_status: booking.payment_status,
+        payment_method: booking.payment_method || "N/A",
+        contact_number: booking.contact_number, // Let the export function handle phone formatting
+        email: booking.email,
+        special_requests: booking.special_requests || "",
+        created_date: booking.created_at,
+      }));
+
+      await exportEnhanced(
+        exportData,
+        "bookings",
+        [
+          "Booking Reference",
+          "Guest Name",
+          "Unit Name",
+          "Check In",
+          "Check Out",
+          "Number of Guests",
+          "Total Amount",
+          "Booking Status",
+          "Payment Status",
+          "Payment Method",
+          "Contact Number",
+          "Email",
+          "Special Requests",
+          "Created Date",
+        ],
+        {
+          philippineFormat: true,
+          includeTimestamp: true,
+          onSuccess: (filename) => {
+            console.log(`Successfully exported bookings to ${filename}`);
+          },
+          onError: (error) => {
+            console.error("Export failed:", error);
+            alert(`Export failed: ${error}`);
+          },
+        }
+      );
+    } catch (error) {
+      // Fallback to basic export if enhanced version fails
+      console.error("Enhanced export failed, using fallback:", error);
+      exportToCSV(
+        bookings.map((booking) => ({
+          reference: booking.booking_reference,
+          guest_name: booking.guest_name,
+          unit: booking.unit?.unit_name || "N/A",
+          check_in: formatFullDate(booking.check_in),
+          check_out: formatFullDate(booking.check_out),
+          guests: booking.num_guests,
+          amount: booking.total_amount,
+          booking_status: booking.booking_status,
+          payment_status: booking.payment_status,
+          contact: booking.contact_number,
+          email: booking.email,
+        })),
+        "bookings"
+      );
+    }
   };
 
   // Create table instance
@@ -398,7 +458,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
 
   // Loading state
   if (isLoading) {
-    return <TableSkeleton rows={8} columns={8} />;
+    return <BookingsTableSkeleton isMobile={isMobile} rows={8} />;
   }
 
   // Error state
@@ -521,12 +581,13 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
   return (
     <div className={cn("space-y-4", className)}>
       {/* Desktop filters */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center space-x-3 flex-1 min-w-0">
           <TableSearch
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Search bookings..."
+            className="min-w-[200px]"
           />
 
           <FilterPopover
@@ -657,7 +718,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
                 key={row.id}
                 className={cn(
                   "h-10 border-b border-neutral-100 hover:bg-neutral-50",
-                  index % 2 === 0 && "bg-neutral-25"
+                  index % 2 === 0 && "bg-neutral-50/30"
                 )}
               >
                 {row.getVisibleCells().map((cell) => (

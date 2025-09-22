@@ -355,26 +355,70 @@ export const TablePagination: React.FC<TablePaginationProps> = ({ table, totalIt
 // EXPORT UTILITIES
 // ============================================
 
-export const exportToCSV = (data: any[], filename: string, headers: string[]) => {
+/**
+ * Legacy export function - Use the enhanced version from @/utils/reports instead
+ * This is kept for backward compatibility but should be replaced
+ * @deprecated Use exportToCSV from '@/utils/reports' for production
+ */
+export const exportToCSV = (data: any[], filename: string, headers?: string[]) => {
+  // Import the secure, Philippine-compliant version
+  import("@/utils/reports")
+    .then(({ exportToCSV: secureExport }) => {
+      secureExport(data, filename, headers, {
+        philippineFormat: true,
+        includeTimestamp: true,
+        onError: (error) => {
+          console.error("CSV Export Error:", error);
+          // Fallback to basic export if enhanced version fails
+          basicCSVExport(data, filename, headers);
+        },
+      });
+    })
+    .catch(() => {
+      // Fallback to basic export if import fails
+      basicCSVExport(data, filename, headers);
+    });
+};
+
+/**
+ * Basic CSV export fallback - NOT SECURE FOR PRODUCTION
+ * Only use as emergency fallback
+ */
+const basicCSVExport = (data: any[], filename: string, headers?: string[]) => {
+  const actualHeaders = headers || (data.length > 0 ? Object.keys(data[0]) : []);
+
+  // Security warning for formula injection
+  const sanitizeForCSV = (value: any): string => {
+    if (value == null) return "";
+    let str = String(value);
+
+    // SECURITY: Prevent formula injection
+    if (/^[=+\-@\t\r]/.test(str)) {
+      str = "'" + str;
+    }
+
+    // Escape quotes and wrap in quotes if contains special characters
+    if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
   const csvContent = [
-    headers.join(","),
+    actualHeaders.map(sanitizeForCSV).join(","),
     ...data.map((row) =>
-      headers
+      actualHeaders
         .map((header) => {
-          const key = header.toLowerCase().replace(/\s+/g, "_");
-          const value = row[key] || "";
-          // Escape quotes and wrap in quotes if contains comma
-          const escapedValue =
-            typeof value === "string" ? value.replace(/"/g, '""') : String(value);
-          return value.toString().includes(",") || value.toString().includes('"')
-            ? `"${escapedValue}"`
-            : escapedValue;
+          const key = headers ? header.toLowerCase().replace(/\s+/g, "_") : header;
+          return sanitizeForCSV(row[key]);
         })
         .join(",")
     ),
   ].join("\n");
 
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  // Add BOM for Excel UTF-8 compatibility
+  const BOM = "\uFEFF";
+  const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   const url = URL.createObjectURL(blob);
   link.setAttribute("href", url);
@@ -383,6 +427,7 @@ export const exportToCSV = (data: any[], filename: string, headers: string[]) =>
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 // ============================================
@@ -452,23 +497,32 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({ actions, className }) =>
 };
 
 // ============================================
-// TABLE LOADING STATE
+// TABLE LOADING STATE (LEGACY - USE NEW SKELETON COMPONENTS)
 // ============================================
 
+// Legacy component - use TableSkeleton from @/components/ui/skeleton instead
 interface TableSkeletonProps {
   rows?: number;
   columns?: number;
 }
 
 export const TableSkeleton: React.FC<TableSkeletonProps> = ({ rows = 5, columns = 4 }) => {
+  const columnWidths = Array.from({ length: columns }, (_, i) =>
+    i === 0 ? 120 : i === 1 ? 200 : i === columns - 1 ? 80 : 100
+  );
+
   return (
     <div className="enterprise-table">
       <div className="rounded-md border border-neutral-200">
         {/* Header skeleton */}
         <div className="border-b border-neutral-200 bg-neutral-50">
           <div className="flex h-10 items-center space-x-4 px-4">
-            {Array.from({ length: columns }).map((_, i) => (
-              <div key={i} className="h-4 flex-1 animate-pulse rounded bg-neutral-200" />
+            {columnWidths.map((width, i) => (
+              <div
+                key={i}
+                className="h-4 animate-pulse rounded bg-neutral-200"
+                style={{ width: `${width}px` }}
+              />
             ))}
           </div>
         </div>
@@ -479,14 +533,17 @@ export const TableSkeleton: React.FC<TableSkeletonProps> = ({ rows = 5, columns 
             key={rowIndex}
             className={cn(
               "flex h-10 items-center space-x-4 border-b border-neutral-100 px-4",
-              rowIndex % 2 === 0 && "bg-neutral-50"
+              rowIndex % 2 === 0 && "bg-neutral-50/30"
             )}
           >
-            {Array.from({ length: columns }).map((_, colIndex) => (
+            {columnWidths.map((width, colIndex) => (
               <div
                 key={colIndex}
-                className="h-3 flex-1 animate-pulse rounded bg-neutral-200"
-                style={{ animationDelay: `${(rowIndex * columns + colIndex) * 50}ms` }}
+                className="h-3 animate-pulse rounded bg-neutral-200"
+                style={{
+                  width: `${width}px`,
+                  animationDelay: `${(rowIndex * columns + colIndex) * 50}ms`,
+                }}
               />
             ))}
           </div>
@@ -577,7 +634,7 @@ export const ResponsiveTable: React.FC<ResponsiveTableProps> = ({ children, clas
  * }
  *
  * .enterprise-table tbody tr:nth-child(even) {
- *   @apply bg-neutral-25;
+ *   @apply bg-neutral-50/30;
  * }
  *
  * .enterprise-table tbody td {

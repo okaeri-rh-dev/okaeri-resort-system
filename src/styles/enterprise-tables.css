@@ -31,7 +31,7 @@
 }
 
 .enterprise-table tbody tr:nth-child(even) {
-  @apply bg-neutral-25;
+  @apply bg-neutral-50/30;
 }
 
 .enterprise-table tbody td {
@@ -117,11 +117,11 @@
 
 /* Inline editing styles */
 .inline-edit-trigger {
-  @apply group flex cursor-pointer items-center space-x-1 rounded px-1 py-1 transition-colors hover:bg-neutral-100;
+  @apply flex cursor-pointer items-center space-x-1 rounded px-1 py-1 transition-colors hover:bg-neutral-100;
 }
 
 .inline-edit-trigger .edit-icon {
-  @apply h-3 w-3 opacity-0 transition-opacity group-hover:opacity-50;
+  @apply h-3 w-3 opacity-0 transition-opacity;
 }
 
 /* Mobile responsive cards */

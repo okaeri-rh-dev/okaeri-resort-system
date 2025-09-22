@@ -31,6 +31,7 @@
     "node_modules",
     "**/*.phase3-4.*",
     "api/workflows.phase3-4/**",
-    "api/cron/*.phase3-4.*"
+    "api/cron/*.phase3-4.*",
+    "src/tests/**/*"
   ]
 }

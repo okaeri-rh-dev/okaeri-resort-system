@@ -1,0 +1,561 @@
+import React, { useState, useMemo } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  createColumnHelper,
+  flexRender,
+  type SortingState,
+  type ColumnFiltersState,
+  type VisibilityState,
+} from "@tanstack/react-table";
+import { Download, Eye, Edit, CheckCircle, Trash2, Upload } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import {
+  usePayments,
+  useDeletePayment,
+  useVerifyPayment,
+  usePaymentStore,
+  useExportPayments,
+} from "@/stores/usePaymentStore";
+
+import type { Payment } from "@/types";
+
+import {
+  formatCurrency,
+  formatTableDate,
+  StatusBadge,
+  SortableHeader,
+  TableSearch,
+  FilterPopover,
+  TablePagination,
+  ActionMenu,
+  TableEmptyState,
+  ResponsiveTable,
+  MobileCard,
+  MobileCardRow,
+} from "../tables/utils";
+
+const columnHelper = createColumnHelper<Payment>();
+
+interface PaymentsTableProps {
+  onViewPayment?: (payment: Payment) => void;
+  onEditPayment?: (payment: Payment) => void;
+  bookingId?: string; // Optional: Show only payments for specific booking
+  className?: string;
+}
+
+export const PaymentsTable: React.FC<PaymentsTableProps> = ({
+  onViewPayment,
+  onEditPayment,
+  bookingId,
+  className,
+}) => {
+  // Store state
+  const { filters, setFilters, resetFilters, searchQuery, setSearchQuery } = usePaymentStore();
+
+  // Local state
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Mutations
+  const deletePayment = useDeletePayment();
+  const verifyPayment = useVerifyPayment();
+  const exportPayments = useExportPayments();
+
+  // Data
+  const { data: payments = [], isLoading, error } = usePayments();
+
+  // Filter by booking if provided
+  const filteredPayments = bookingId
+    ? payments.filter((p) => p.booking_id === bookingId)
+    : payments;
+
+  // Handle window resize
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const handleDelete = async (payment: Payment) => {
+    if (
+      !confirm(`Are you sure you want to delete this payment of ${formatCurrency(payment.amount)}?`)
+    ) {
+      return;
+    }
+
+    try {
+      await deletePayment.mutateAsync(payment.payment_id);
+    } catch (error) {
+      console.error("Failed to delete payment:", error);
+    }
+  };
+
+  const handleVerify = async (payment: Payment) => {
+    try {
+      await verifyPayment.mutateAsync(payment.payment_id);
+    } catch (error) {
+      console.error("Failed to verify payment:", error);
+    }
+  };
+
+  const handleExport = () => {
+    exportPayments.mutate();
+  };
+
+  // Define columns
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor("payment_date", {
+        id: "payment_date",
+        header: ({ column }) => <SortableHeader column={column} title="Date" />,
+        cell: ({ getValue }) => formatTableDate(getValue()),
+        size: 100,
+      }),
+
+      columnHelper.accessor((row) => row.booking?.booking_reference, {
+        id: "booking_reference",
+        header: "Booking",
+        cell: ({ row }) => {
+          const booking = row.original.booking;
+          if (!booking) return "-";
+
+          return (
+            <div className="space-y-1">
+              <div className="font-medium text-neutral-900">{booking.booking_reference}</div>
+              <div className="text-xs text-neutral-500">{booking.guest_name}</div>
+            </div>
+          );
+        },
+        size: 150,
+      }),
+
+      columnHelper.accessor("amount", {
+        id: "amount",
+        header: ({ column }) => <SortableHeader column={column} title="Amount" />,
+        cell: ({ getValue }) => (
+          <span className="font-mono font-semibold text-neutral-900">
+            {formatCurrency(getValue())}
+          </span>
+        ),
+        size: 100,
+      }),
+
+      columnHelper.accessor("payment_method", {
+        id: "payment_method",
+        header: "Method",
+        cell: ({ getValue }) => {
+          const method = getValue();
+          if (!method) return "-";
+
+          const colors = {
+            Cash: "bg-green-100 text-green-800",
+            GCash: "bg-blue-100 text-blue-800",
+            BankTransfer: "bg-purple-100 text-purple-800",
+            Card: "bg-gray-100 text-gray-800",
+            Other: "bg-neutral-100 text-neutral-800",
+          };
+
+          return (
+            <Badge className={cn("text-xs", colors[method as keyof typeof colors])}>{method}</Badge>
+          );
+        },
+        size: 100,
+      }),
+
+      columnHelper.accessor("payment_status", {
+        id: "payment_status",
+        header: "Status",
+        cell: ({ getValue }) => {
+          const status = getValue() as string | undefined;
+          if (!status) return "-";
+
+          return (
+            <StatusBadge
+              status={status}
+              variant={
+                status === "Completed"
+                  ? "success"
+                  : status === "Partial"
+                    ? "warning"
+                    : status === "Refunded"
+                      ? "error"
+                      : "default"
+              }
+            />
+          );
+        },
+        size: 100,
+      }),
+
+      columnHelper.accessor("reference_number", {
+        id: "reference_number",
+        header: "Reference",
+        cell: ({ getValue }) => {
+          const ref = getValue();
+          return ref ? (
+            <span className="font-mono text-sm text-neutral-600">{ref}</span>
+          ) : (
+            <span className="text-neutral-400">-</span>
+          );
+        },
+        size: 120,
+      }),
+
+      columnHelper.accessor("proof_url", {
+        id: "receipt",
+        header: "Receipt",
+        cell: ({ getValue }) => {
+          const url = getValue();
+          return url ? (
+            <Button variant="ghost" size="sm" onClick={() => window.open(url, "_blank")}>
+              <Download className="h-4 w-4" />
+            </Button>
+          ) : (
+            <span className="text-neutral-400 text-xs">No receipt</span>
+          );
+        },
+        size: 80,
+      }),
+
+      columnHelper.display({
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const payment = row.original;
+
+          const actions = [
+            {
+              label: "View Details",
+              onClick: () => onViewPayment?.(payment),
+            },
+            {
+              label: "Edit Payment",
+              onClick: () => onEditPayment?.(payment),
+            },
+            ...(payment.payment_status !== "Completed"
+              ? [
+                  {
+                    label: "Verify Payment",
+                    onClick: () => handleVerify(payment),
+                  },
+                ]
+              : []),
+            {
+              label: "Download Receipt",
+              onClick: () => payment.proof_url && window.open(payment.proof_url, "_blank"),
+              disabled: !payment.proof_url,
+            },
+            {
+              label: "Delete",
+              onClick: () => handleDelete(payment),
+              className: "text-red-600 hover:text-red-700",
+            },
+          ];
+
+          return <ActionMenu actions={actions} />;
+        },
+        size: 80,
+      }),
+    ],
+    [onViewPayment, onEditPayment, deletePayment, verifyPayment]
+  );
+
+  // Create table instance
+  const table = useReactTable({
+    data: filteredPayments,
+    columns,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+    },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  });
+
+  // Calculate statistics
+  const stats = useMemo(() => {
+    const total = filteredPayments.reduce((sum, p) => sum + p.amount, 0);
+    const verified = filteredPayments.filter((p) => p.payment_status === "Completed").length;
+    const pending = filteredPayments.filter((p) => p.payment_status === "Pending").length;
+
+    return { total, verified, pending, count: filteredPayments.length };
+  }, [filteredPayments]);
+
+  if (isLoading) {
+    return (
+      <Card className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-neutral-200 rounded w-1/4"></div>
+          <div className="h-10 bg-neutral-200 rounded"></div>
+          <div className="h-10 bg-neutral-200 rounded"></div>
+          <div className="h-10 bg-neutral-200 rounded"></div>
+        </div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="p-6">
+        <div className="text-center text-red-600">Error loading payments: {error.message}</div>
+      </Card>
+    );
+  }
+
+  // Mobile view
+  if (isMobile) {
+    return (
+      <div className={cn("space-y-4", className)}>
+        {/* Mobile stats */}
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="p-3">
+            <div className="text-xs text-neutral-500">Total Amount</div>
+            <div className="font-mono font-bold text-lg">{formatCurrency(stats.total)}</div>
+          </Card>
+          <Card className="p-3">
+            <div className="text-xs text-neutral-500">Payments</div>
+            <div className="font-bold text-lg">
+              {stats.verified}/{stats.count} Verified
+            </div>
+          </Card>
+        </div>
+
+        {/* Mobile search */}
+        <Card className="p-3">
+          <TableSearch
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search payments..."
+          />
+        </Card>
+
+        {/* Mobile cards */}
+        <div className="space-y-3">
+          {filteredPayments.map((payment) => (
+            <MobileCard key={payment.payment_id}>
+              <div className="space-y-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-mono font-semibold text-lg">
+                      {formatCurrency(payment.amount)}
+                    </div>
+                    <div className="text-xs text-neutral-500">
+                      {formatTableDate(payment.payment_date)}
+                    </div>
+                  </div>
+                  <StatusBadge
+                    status={payment.payment_status || "Pending"}
+                    variant={
+                      payment.payment_status === "Completed"
+                        ? "success"
+                        : payment.payment_status === "Partial"
+                          ? "warning"
+                          : "default"
+                    }
+                  />
+                </div>
+
+                {payment.booking && (
+                  <MobileCardRow label="Booking" value={payment.booking.booking_reference} />
+                )}
+
+                {payment.payment_method && (
+                  <MobileCardRow label="Method" value={payment.payment_method} />
+                )}
+
+                {payment.reference_number && (
+                  <MobileCardRow
+                    label="Reference"
+                    value={payment.reference_number}
+                    className="font-mono text-xs"
+                  />
+                )}
+
+                <div className="flex gap-2 pt-2">
+                  {payment.proof_url && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(payment.proof_url!, "_blank")}
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Receipt
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" onClick={() => onEditPayment?.(payment)}>
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                </div>
+              </div>
+            </MobileCard>
+          ))}
+        </div>
+
+        {filteredPayments.length === 0 && (
+          <Card className="p-8 text-center">
+            <div className="text-neutral-500">No payments found</div>
+          </Card>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop view
+  return (
+    <div className={cn("space-y-4", className)}>
+      {/* Desktop stats */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <Card className="p-4">
+          <div className="text-sm text-neutral-500">Total Collected</div>
+          <div className="font-mono font-bold text-xl">{formatCurrency(stats.total)}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-sm text-neutral-500">Total Payments</div>
+          <div className="font-bold text-xl">{stats.count}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-sm text-neutral-500">Verified</div>
+          <div className="font-bold text-xl">{stats.verified}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-sm text-neutral-500">Pending</div>
+          <div className="font-bold text-xl">{stats.pending}</div>
+        </Card>
+      </div>
+
+      {/* Toolbar */}
+      <Card className="p-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex-1 max-w-md">
+            <TableSearch
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search payments..."
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Select
+              value={filters.status || "all"}
+              onValueChange={(value) =>
+                setFilters({ ...filters, status: value === "all" ? undefined : (value as any) })
+              }
+            >
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Partial">Partial</SelectItem>
+                <SelectItem value="Completed">Completed</SelectItem>
+                <SelectItem value="Refunded">Refunded</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={filters.method || "all"}
+              onValueChange={(value) =>
+                setFilters({ ...filters, method: value === "all" ? undefined : (value as any) })
+              }
+            >
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="All Methods" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Methods</SelectItem>
+                <SelectItem value="Cash">Cash</SelectItem>
+                <SelectItem value="GCash">GCash</SelectItem>
+                <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
+                <SelectItem value="Card">Card</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button variant="outline" onClick={handleExport}>
+              <Download className="h-4 w-4 mr-1" />
+              Export
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Table */}
+      <ResponsiveTable>
+        {table.getHeaderGroups().map((headerGroup) => (
+          <div key={headerGroup.id} className="flex">
+            {headerGroup.headers.map((header) => (
+              <div key={header.id} className="flex-1" style={{ width: header.getSize() }}>
+                {header.isPlaceholder
+                  ? null
+                  : flexRender(header.column.columnDef.header, header.getContext())}
+              </div>
+            ))}
+          </div>
+        ))}
+
+        {table.getRowModel().rows.map((row) => (
+          <div key={row.id} className="flex">
+            {row.getVisibleCells().map((cell) => (
+              <div key={cell.id} className="flex-1" style={{ width: cell.column.getSize() }}>
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </div>
+            ))}
+          </div>
+        ))}
+
+        {filteredPayments.length === 0 && (
+          <div className="p-8">
+            <TableEmptyState
+              title="No payments found"
+              description={
+                searchQuery
+                  ? "Try adjusting your search or filters"
+                  : bookingId
+                    ? "No payments recorded for this booking"
+                    : "No payments in the system yet"
+              }
+              action={
+                searchQuery
+                  ? {
+                      label: "Clear Search",
+                      onClick: () => setSearchQuery(""),
+                    }
+                  : undefined
+              }
+            />
+          </div>
+        )}
+      </ResponsiveTable>
+
+      {/* Pagination */}
+      <TablePagination table={table} totalItems={filteredPayments.length} />
+    </div>
+  );
+};

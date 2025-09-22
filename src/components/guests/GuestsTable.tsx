@@ -35,10 +35,12 @@ import {
   useGuests,
   useGuestBookings,
   useGuestStore,
+  useDeleteGuest,
   useExportGuests,
 } from "../../stores/useGuestStore";
 
 import type { Guest } from "@/types";
+import { GuestEditDialog } from "./GuestEditDialog";
 
 import {
   formatCurrency,
@@ -49,11 +51,11 @@ import {
   TableSearch,
   TablePagination,
   ActionMenu,
-  TableSkeleton,
   TableEmptyState,
   ResponsiveTable,
   MobileCard,
 } from "../tables/utils";
+import { GuestsTableSkeleton } from "@/components/skeletons";
 
 const columnHelper = createColumnHelper<Guest>();
 
@@ -221,9 +223,11 @@ export const GuestsTable: React.FC<GuestsTableProps> = ({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
 
   // Mutations
   const exportGuests = useExportGuests();
+  const deleteGuest = useDeleteGuest();
 
   // Data
   const { data: guests = [], isLoading, error } = useGuests();
@@ -242,6 +246,24 @@ export const GuestsTable: React.FC<GuestsTableProps> = ({
 
   const handleCall = (guest: Guest) => {
     window.open(`tel:${guest.phone_number}`, "_blank");
+  };
+
+  const handleDelete = async (guest: Guest) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete guest "${guest.guest_name}"? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await deleteGuest.mutateAsync(guest.guest_id);
+      // Using toast from the component would require importing it
+      console.log("Guest deleted successfully");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to delete guest");
+    }
   };
 
   // Export action
@@ -381,7 +403,7 @@ export const GuestsTable: React.FC<GuestsTableProps> = ({
             },
             {
               label: "Edit Guest",
-              onClick: () => onEditGuest?.(guest),
+              onClick: () => setEditingGuest(guest),
             },
             {
               label: "Send Email",
@@ -390,6 +412,11 @@ export const GuestsTable: React.FC<GuestsTableProps> = ({
             {
               label: "Call Guest",
               onClick: () => handleCall(guest),
+            },
+            {
+              label: "Delete Guest",
+              onClick: () => handleDelete(guest),
+              className: "text-red-600 hover:text-red-700",
             },
           ];
 
@@ -444,7 +471,7 @@ export const GuestsTable: React.FC<GuestsTableProps> = ({
 
   // Loading state
   if (isLoading) {
-    return <TableSkeleton rows={8} columns={6} />;
+    return <GuestsTableSkeleton isMobile={isMobile} rows={6} />;
   }
 
   // Error state
@@ -661,7 +688,7 @@ export const GuestsTable: React.FC<GuestsTableProps> = ({
                 <tr
                   className={cn(
                     "h-12 border-b border-neutral-100 hover:bg-neutral-50",
-                    index % 2 === 0 && "bg-neutral-25"
+                    index % 2 === 0 && "bg-neutral-50/30"
                   )}
                 >
                   {row.getVisibleCells().map((cell) => (
@@ -708,6 +735,16 @@ export const GuestsTable: React.FC<GuestsTableProps> = ({
 
       {/* Desktop pagination */}
       <TablePagination table={table} totalItems={guests.length} />
+
+      {/* Edit Guest Dialog */}
+      {editingGuest && (
+        <GuestEditDialog
+          guest={editingGuest}
+          open={!!editingGuest}
+          onClose={() => setEditingGuest(null)}
+          onSuccess={() => setEditingGuest(null)}
+        />
+      )}
     </div>
   );
 };

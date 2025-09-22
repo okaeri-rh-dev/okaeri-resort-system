@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Import enterprise mobile styles */
+@import "./styles/enterprise-tables.css";
+@import "./styles/mobile-enterprise.css";
+
 /* Tailwind v4 uses @theme directive for design tokens */
 @theme {
   /* Colors - using HSL values for shadcn/ui compatibility */

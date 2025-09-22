@@ -126,9 +126,35 @@ CREATE POLICY "Authenticated users can delete maintenance_logs"
   USING (auth.role() = 'authenticated');
 
 -- ============================================
--- STORAGE BUCKET POLICIES
+-- STORAGE BUCKET CONFIGURATION
 -- ============================================
--- Create storage buckets if they don't exist
+-- Storage buckets and policies CANNOT be configured via SQL
+-- You must configure them through the Supabase Dashboard
+--
+-- INSTRUCTIONS FOR STORAGE SETUP:
+--
+-- 1. Go to Supabase Dashboard > Storage
+-- 2. Create buckets:
+--    a. Click "New bucket"
+--    b. Name: "payment-proofs"
+--    c. Public bucket: OFF (keep it private)
+--    d. Click "Create bucket"
+--    e. Repeat for "receipts" bucket
+--
+-- 3. Configure bucket policies:
+--    a. Click on the bucket name
+--    b. Click "Policies" tab
+--    c. Click "New policy"
+--    d. Use "For authenticated users only" template
+--    e. Enable all operations (SELECT, INSERT, UPDATE, DELETE)
+--    f. Save policy
+--
+-- 4. The buckets will automatically have RLS enabled
+--
+-- Note: Storage policies through the Dashboard are more secure
+-- than SQL policies as they're managed by Supabase's system.
+
+-- Create storage buckets (this part still works via SQL)
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('payment-proofs', 'payment-proofs', false)
 ON CONFLICT DO NOTHING;
@@ -136,53 +162,6 @@ ON CONFLICT DO NOTHING;
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('receipts', 'receipts', false)
 ON CONFLICT DO NOTHING;
-
--- Enable RLS on storage
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
-
--- Storage policies for payment proofs
-CREATE POLICY "Authenticated users can upload payment proofs"
-  ON storage.objects FOR INSERT
-  WITH CHECK (
-    bucket_id = 'payment-proofs' AND
-    auth.role() = 'authenticated'
-  );
-
-CREATE POLICY "Authenticated users can view payment proofs"
-  ON storage.objects FOR SELECT
-  USING (
-    bucket_id = 'payment-proofs' AND
-    auth.role() = 'authenticated'
-  );
-
-CREATE POLICY "Authenticated users can delete payment proofs"
-  ON storage.objects FOR DELETE
-  USING (
-    bucket_id = 'payment-proofs' AND
-    auth.role() = 'authenticated'
-  );
-
--- Storage policies for receipts
-CREATE POLICY "Authenticated users can upload receipts"
-  ON storage.objects FOR INSERT
-  WITH CHECK (
-    bucket_id = 'receipts' AND
-    auth.role() = 'authenticated'
-  );
-
-CREATE POLICY "Authenticated users can view receipts"
-  ON storage.objects FOR SELECT
-  USING (
-    bucket_id = 'receipts' AND
-    auth.role() = 'authenticated'
-  );
-
-CREATE POLICY "Authenticated users can delete receipts"
-  ON storage.objects FOR DELETE
-  USING (
-    bucket_id = 'receipts' AND
-    auth.role() = 'authenticated'
-  );
 
 -- ============================================
 -- VERIFICATION QUERIES

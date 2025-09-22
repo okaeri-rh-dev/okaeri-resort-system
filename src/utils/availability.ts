@@ -422,10 +422,11 @@ export const filterAvailableUnits = (
 
       // Filter by amenities
       if (amenities && amenities.length > 0) {
-        const hasAllAmenities = amenities.every((amenity) =>
-          unit.amenities.some((unitAmenity) =>
-            unitAmenity.toLowerCase().includes(amenity.toLowerCase())
-          )
+        const hasAllAmenities = amenities.every(
+          (amenity) =>
+            unit.amenities?.some((unitAmenity) =>
+              unitAmenity.toLowerCase().includes(amenity.toLowerCase())
+            ) || false
         );
         if (!hasAllAmenities) {
           return false;

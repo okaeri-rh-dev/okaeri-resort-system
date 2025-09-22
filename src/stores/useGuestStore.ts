@@ -299,6 +299,44 @@ export const useUpdateGuest = () => {
   });
 };
 
+// Delete guest mutation
+export const useDeleteGuest = () => {
+  const queryClient = useQueryClient();
+  const removeOptimistic = useGuestStore((state) => state.removeOptimisticGuest);
+
+  return useMutation({
+    mutationFn: async (guestId: string) => {
+      // Check for active bookings first
+      const { data: bookings } = await supabase
+        .from("bookings")
+        .select("booking_id")
+        .eq("guest_id", guestId)
+        .in("booking_status", ["confirmed", "checked_in"])
+        .limit(1);
+
+      if (bookings?.length) {
+        throw new Error("Cannot delete guest with active bookings");
+      }
+
+      const { error } = await supabase.from("guests").delete().eq("guest_id", guestId);
+
+      if (error) throw new Error(handleSupabaseError(error));
+    },
+    onMutate: async (guestId) => {
+      await queryClient.cancelQueries({ queryKey: ["guests"] });
+      removeOptimistic(guestId);
+      return { guestId };
+    },
+    onError: (_, guestId) => {
+      // Re-fetch to restore state
+      queryClient.invalidateQueries({ queryKey: ["guests"] });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["guests"] });
+    },
+  });
+};
+
 // Merge duplicate guests
 export const useMergeGuests = () => {
   const queryClient = useQueryClient();
@@ -445,7 +483,7 @@ export const useGuestStatistics = () => {
 //   });
 // };
 
-// Export guest data to CSV
+// Export guest data to CSV with Philippine business compliance
 export const useExportGuests = () => {
   return useMutation({
     mutationFn: async () => {
@@ -456,33 +494,56 @@ export const useExportGuests = () => {
 
       if (error) throw new Error(handleSupabaseError(error));
 
-      // Convert to CSV
-      const headers = ["Name", "Email", "Phone", "Total Bookings", "Total Spent", "Created Date"];
-      const rows =
-        data?.map((guest) => [
-          guest.guest_name,
-          guest.email,
-          guest.phone_number,
-          (guest.total_bookings ?? 0).toString(),
-          (guest.total_spent ?? 0).toString(),
-          new Date(guest.created_at).toLocaleDateString(),
-        ]) || [];
+      // Import the secure export function
+      const { exportToCSV } = await import("@/utils/reports");
 
-      const csv = [
-        headers.join(","),
-        ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
-      ].join("\n");
+      // Prepare data with all fields for Philippine compliance
+      const exportData =
+        data?.map((guest) => ({
+          guest_name: guest.guest_name,
+          email: guest.email,
+          phone_number: guest.phone_number, // Will be formatted to +63 format
+          total_bookings: guest.total_bookings ?? 0,
+          total_spent: guest.total_spent ?? 0, // Will be formatted as PHP currency
+          loyalty_status: guest.loyalty_status || "Regular",
+          preferred_payment: guest.preferred_payment_method || "N/A",
+          address: guest.address || "N/A",
+          city: guest.city || "N/A",
+          country: guest.country || "Philippines",
+          created_date: guest.created_at,
+          last_booking: guest.last_booking_date || "N/A",
+        })) || [];
 
-      // Download CSV
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `guests-${new Date().toISOString().split("T")[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      // Export with Philippine formatting and security
+      await exportToCSV(
+        exportData,
+        "guests",
+        [
+          "Guest Name",
+          "Email",
+          "Phone Number",
+          "Total Bookings",
+          "Total Spent",
+          "Loyalty Status",
+          "Preferred Payment",
+          "Address",
+          "City",
+          "Country",
+          "Created Date",
+          "Last Booking",
+        ],
+        {
+          philippineFormat: true,
+          includeTimestamp: true,
+          onSuccess: (filename) => {
+            console.log(`Successfully exported ${data?.length || 0} guests to ${filename}`);
+          },
+          onError: (error) => {
+            console.error("Guest export failed:", error);
+            throw new Error(error);
+          },
+        }
+      );
 
       return data;
     },

@@ -45,6 +45,33 @@ export {
   useExportGuests,
 } from "./useGuestStore";
 
+// Payment Store
+export {
+  usePaymentStore,
+  usePayments,
+  usePayment,
+  useBookingPayments,
+  useCreatePayment,
+  useUpdatePayment,
+  useDeletePayment,
+  useVerifyPayment,
+  useExportPayments,
+} from "./usePaymentStore";
+
+// Expense Store
+export {
+  useExpenseStore,
+  useExpenses,
+  useExpense,
+  useExpenseStats,
+  useCreateExpense,
+  useUpdateExpense,
+  useDeleteExpense,
+  useExportExpenses,
+  EXPENSE_CATEGORIES,
+  type ExpenseCategory,
+} from "./useExpenseStore";
+
 // UI Store
 export {
   useUIStore,

@@ -6,7 +6,7 @@
  * before Phase 2 deployment.
  */
 
-import { describe, test, expect, beforeAll } from "vitest";
+import { describe, test, expect } from "vitest";
 import { supabase } from "@/lib/supabase";
 import { auth } from "@/lib/auth";
 import { fileValidation, storage } from "@/lib/storage-security";
@@ -30,7 +30,10 @@ describe("Phase 2 Security Validation Suite", () => {
 
         for (const table of criticalTables) {
           // Attempt to query without authentication
-          const { data, error } = await supabase.from(table).select("*").limit(1);
+          const { data: _data, error } = await supabase
+            .from(table as any)
+            .select("*")
+            .limit(1);
 
           // Should fail if RLS is properly configured
           expect(error).toBeTruthy();
@@ -67,7 +70,7 @@ describe("Phase 2 Security Validation Suite", () => {
 
       for (const bucket of buckets) {
         // Attempt to list files without authentication
-        const { data, error } = await supabase.storage.from(bucket).list();
+        const { data: _data, error } = await supabase.storage.from(bucket).list();
 
         // Should fail if RLS is properly configured
         expect(error).toBeTruthy();
@@ -84,7 +87,6 @@ describe("Phase 2 Security Validation Suite", () => {
 
     test("Session should refresh before expiry", () => {
       // Verify session refresh is configured
-      const refreshInterval = 50 * 60 * 1000; // 50 minutes
       expect(auth.startSessionRefresh).toBeDefined();
 
       // Mock timer test would go here

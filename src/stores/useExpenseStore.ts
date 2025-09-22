@@ -1,0 +1,462 @@
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase, handleSupabaseError } from "@/lib/supabase";
+import { uploadReceipt } from "@/lib/storage-security";
+import type { Expense } from "@/types";
+
+// ============================================
+// EXPENSE CATEGORIES
+// ============================================
+export const EXPENSE_CATEGORIES = [
+  "Utilities",
+  "Maintenance & Repairs",
+  "Supplies & Inventory",
+  "Staff & Payroll",
+  "Marketing & Advertising",
+  "Food & Beverage",
+  "Cleaning & Laundry",
+  "Insurance & Permits",
+  "Professional Services",
+  "Other",
+] as const;
+
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
+
+// ============================================
+// ZUSTAND STORE
+// ============================================
+interface ExpenseFilters {
+  category?: ExpenseCategory;
+  dateFrom?: string;
+  dateTo?: string;
+  minAmount?: number;
+  maxAmount?: number;
+}
+
+interface ExpenseStore {
+  // Local state
+  selectedExpense: Expense | null;
+  filters: ExpenseFilters;
+  searchQuery: string;
+  sortBy: "date" | "amount" | "category" | "description";
+  sortOrder: "asc" | "desc";
+
+  // Actions
+  setSelectedExpense: (expense: Expense | null) => void;
+  setFilters: (filters: ExpenseFilters) => void;
+  resetFilters: () => void;
+  setSearchQuery: (query: string) => void;
+  setSortBy: (sortBy: "date" | "amount" | "category" | "description") => void;
+  setSortOrder: (order: "asc" | "desc") => void;
+
+  // Optimistic updates
+  optimisticExpenses: Map<string, Expense>;
+  addOptimisticExpense: (expense: Expense) => void;
+  updateOptimisticExpense: (expenseId: string, updates: Partial<Expense>) => void;
+  removeOptimisticExpense: (expenseId: string) => void;
+  clearOptimisticExpenses: () => void;
+}
+
+export const useExpenseStore = create<ExpenseStore>()(
+  devtools(
+    persist(
+      (set) => ({
+        // Initial state
+        selectedExpense: null,
+        filters: {},
+        searchQuery: "",
+        sortBy: "date",
+        sortOrder: "desc",
+        optimisticExpenses: new Map(),
+
+        // Actions
+        setSelectedExpense: (expense) => set({ selectedExpense: expense }),
+
+        setFilters: (filters) => set({ filters }),
+
+        resetFilters: () => set({ filters: {} }),
+
+        setSearchQuery: (query) => set({ searchQuery: query }),
+
+        setSortBy: (sortBy) => set({ sortBy }),
+
+        setSortOrder: (order) => set({ sortOrder: order }),
+
+        addOptimisticExpense: (expense) =>
+          set((state) => {
+            const newMap = new Map(state.optimisticExpenses);
+            newMap.set(expense.expense_id, expense);
+            return { optimisticExpenses: newMap };
+          }),
+
+        updateOptimisticExpense: (expenseId, updates) =>
+          set((state) => {
+            const newMap = new Map(state.optimisticExpenses);
+            const existing = newMap.get(expenseId);
+            if (existing) {
+              newMap.set(expenseId, { ...existing, ...updates });
+            }
+            return { optimisticExpenses: newMap };
+          }),
+
+        removeOptimisticExpense: (expenseId) =>
+          set((state) => {
+            const newMap = new Map(state.optimisticExpenses);
+            newMap.delete(expenseId);
+            return { optimisticExpenses: newMap };
+          }),
+
+        clearOptimisticExpenses: () => set({ optimisticExpenses: new Map() }),
+      }),
+      {
+        name: "expense-store",
+        partialize: (state) => ({
+          filters: state.filters,
+          sortBy: state.sortBy,
+          sortOrder: state.sortOrder,
+        }),
+      }
+    )
+  )
+);
+
+// ============================================
+// TANSTACK QUERY HOOKS
+// ============================================
+
+// Fetch all expenses
+export const useExpenses = () => {
+  const { filters, searchQuery, sortBy, sortOrder } = useExpenseStore();
+
+  return useQuery({
+    queryKey: ["expenses", filters, searchQuery, sortBy, sortOrder],
+    queryFn: async () => {
+      let query = supabase.from("expenses").select("*");
+
+      // Apply filters
+      if (filters.category) {
+        query = query.eq("category", filters.category);
+      }
+      if (filters.dateFrom) {
+        query = query.gte("date", filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        query = query.lte("date", filters.dateTo);
+      }
+      if (filters.minAmount) {
+        query = query.gte("amount", filters.minAmount);
+      }
+      if (filters.maxAmount) {
+        query = query.lte("amount", filters.maxAmount);
+      }
+
+      // Apply search
+      if (searchQuery) {
+        query = query.or(`
+          description.ilike.%${searchQuery}%,
+          category.ilike.%${searchQuery}%,
+          notes.ilike.%${searchQuery}%
+        `);
+      }
+
+      // Apply sorting
+      const column = {
+        date: "date",
+        amount: "amount",
+        category: "category",
+        description: "description",
+      }[sortBy];
+
+      query = query.order(column, { ascending: sortOrder === "asc" });
+
+      const { data, error } = await query;
+      if (error) throw new Error(handleSupabaseError(error));
+
+      return data || [];
+    },
+    staleTime: 60000, // 1 minute
+    refetchOnWindowFocus: true,
+  });
+};
+
+// Fetch single expense
+export const useExpense = (expenseId: string) => {
+  return useQuery({
+    queryKey: ["expenses", expenseId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("expenses")
+        .select("*")
+        .eq("expense_id", expenseId)
+        .single();
+
+      if (error) throw new Error(handleSupabaseError(error));
+      return data;
+    },
+    enabled: !!expenseId,
+    staleTime: 60000,
+  });
+};
+
+// Fetch expense statistics
+export const useExpenseStats = (dateRange?: { from: Date; to: Date }) => {
+  return useQuery({
+    queryKey: ["expenses", "stats", dateRange],
+    queryFn: async () => {
+      let query = supabase.from("expenses").select("amount, category, date");
+
+      if (dateRange) {
+        query = query
+          .gte("date", dateRange.from.toISOString().split("T")[0])
+          .lte("date", dateRange.to.toISOString().split("T")[0]);
+      }
+
+      const { data, error } = await query;
+      if (error) throw new Error(handleSupabaseError(error));
+
+      const expenses = data || [];
+
+      // Calculate statistics
+      const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+      const totalCount = expenses.length;
+
+      // Group by category
+      const byCategory = expenses.reduce(
+        (acc, expense) => {
+          acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
+
+      // Calculate monthly trends if date range is provided
+      const monthlyTrends = dateRange
+        ? expenses.reduce(
+            (acc, expense) => {
+              const month = expense.date.substring(0, 7); // YYYY-MM
+              acc[month] = (acc[month] || 0) + expense.amount;
+              return acc;
+            },
+            {} as Record<string, number>
+          )
+        : {};
+
+      return {
+        totalAmount,
+        totalCount,
+        averageAmount: totalCount > 0 ? totalAmount / totalCount : 0,
+        byCategory,
+        monthlyTrends,
+      };
+    },
+    staleTime: 300000, // 5 minutes
+  });
+};
+
+// Create expense
+export const useCreateExpense = () => {
+  const queryClient = useQueryClient();
+  const addOptimistic = useExpenseStore((state) => state.addOptimisticExpense);
+
+  return useMutation({
+    mutationFn: async ({
+      data,
+      receiptFile,
+    }: {
+      data: Omit<Expense, "expense_id" | "created_at" | "updated_at">;
+      receiptFile?: File;
+    }) => {
+      let receipt_url = data.receipt_url;
+
+      // Upload receipt if provided
+      if (receiptFile) {
+        const uploadResult = await uploadReceipt(receiptFile, "expense-receipts");
+        receipt_url = uploadResult.url;
+      }
+
+      const { data: newExpense, error } = await supabase
+        .from("expenses")
+        .insert({
+          ...data,
+          receipt_url,
+        })
+        .select()
+        .single();
+
+      if (error) throw new Error(handleSupabaseError(error));
+      return newExpense;
+    },
+    onMutate: async ({ data }) => {
+      await queryClient.cancelQueries({ queryKey: ["expenses"] });
+
+      const optimisticExpense: Expense = {
+        ...data,
+        expense_id: `temp-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      addOptimistic(optimisticExpense);
+
+      return { optimisticExpense };
+    },
+    onError: (_, __, context) => {
+      if (context?.optimisticExpense) {
+        useExpenseStore.getState().removeOptimisticExpense(context.optimisticExpense.expense_id);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+    },
+  });
+};
+
+// Update expense
+export const useUpdateExpense = () => {
+  const queryClient = useQueryClient();
+  const updateOptimistic = useExpenseStore((state) => state.updateOptimisticExpense);
+
+  return useMutation({
+    mutationFn: async ({
+      expenseId,
+      updates,
+      receiptFile,
+    }: {
+      expenseId: string;
+      updates: Partial<Omit<Expense, "expense_id" | "created_at" | "updated_at">>;
+      receiptFile?: File;
+    }) => {
+      let receipt_url = updates.receipt_url;
+
+      // Upload new receipt if provided
+      if (receiptFile) {
+        const uploadResult = await uploadReceipt(receiptFile, "expense-receipts");
+        receipt_url = uploadResult.url;
+      }
+
+      const { data, error } = await supabase
+        .from("expenses")
+        .update({
+          ...updates,
+          receipt_url,
+        })
+        .eq("expense_id", expenseId)
+        .select()
+        .single();
+
+      if (error) throw new Error(handleSupabaseError(error));
+      return data;
+    },
+    onMutate: async ({ expenseId, updates }) => {
+      await queryClient.cancelQueries({ queryKey: ["expenses"] });
+
+      const previousExpense = queryClient.getQueryData<Expense>(["expenses", expenseId]);
+
+      updateOptimistic(expenseId, updates);
+
+      return { previousExpense };
+    },
+    onError: (_, { expenseId }, context) => {
+      if (context?.previousExpense) {
+        updateOptimistic(expenseId, context.previousExpense);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+    },
+  });
+};
+
+// Delete expense
+export const useDeleteExpense = () => {
+  const queryClient = useQueryClient();
+  const removeOptimistic = useExpenseStore((state) => state.removeOptimisticExpense);
+
+  return useMutation({
+    mutationFn: async (expenseId: string) => {
+      const { error } = await supabase.from("expenses").delete().eq("expense_id", expenseId);
+
+      if (error) throw new Error(handleSupabaseError(error));
+    },
+    onMutate: async (expenseId) => {
+      await queryClient.cancelQueries({ queryKey: ["expenses"] });
+      removeOptimistic(expenseId);
+      return { expenseId };
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+    },
+  });
+};
+
+// Export expenses
+export const useExportExpenses = () => {
+  return useMutation({
+    mutationFn: async (dateRange?: { from: Date; to: Date }) => {
+      let query = supabase.from("expenses").select("*");
+
+      if (dateRange) {
+        query = query
+          .gte("date", dateRange.from.toISOString().split("T")[0])
+          .lte("date", dateRange.to.toISOString().split("T")[0]);
+      }
+
+      const { data, error } = await query.order("date", { ascending: false });
+
+      if (error) throw new Error(handleSupabaseError(error));
+
+      // Convert to CSV
+      const csv = convertToCSV(data || []);
+      downloadCSV(csv, `expenses-${new Date().toISOString().split("T")[0]}.csv`);
+    },
+  });
+};
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+function convertToCSV(data: Expense[]): string {
+  if (data.length === 0) return "";
+
+  const headers = [
+    "Expense Date",
+    "Category",
+    "Description",
+    "Amount (PHP)",
+    "Receipt URL",
+    "Vendor",
+    "Created At",
+  ];
+
+  const rows = data.map((expense) => [
+    expense.date,
+    expense.category,
+    expense.description || "",
+    expense.amount.toFixed(2),
+    expense.receipt_url || "",
+    expense.vendor || "",
+    expense.created_at,
+  ]);
+
+  return [
+    headers.join(","),
+    ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")),
+  ].join("\n");
+}
+
+function downloadCSV(csv: string, filename: string) {
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", filename);
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}

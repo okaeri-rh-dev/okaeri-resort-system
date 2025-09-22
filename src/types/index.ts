@@ -77,10 +77,13 @@ export interface Payment {
   payment_id: string;
   booking_id: string;
   amount: number;
-  payment_method?: string;
+  payment_method?: PaymentMethod;
+  payment_status?: PaymentStatus;
   payment_date: string;
   proof_url?: string | null;
+  reference_number?: string | null;
   notes?: string | null;
+  verified_at?: string | null;
   created_at: string;
   // Relations
   booking?: Booking;
@@ -92,11 +95,11 @@ export interface Payment {
 export interface Expense {
   expense_id: string;
   category: string;
-  description: string;
+  description: string | null;
   amount: number;
-  expense_date: string;
+  date: string; // This maps to expense_date in our schema
   receipt_url?: string | null;
-  notes?: string | null;
+  vendor?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -1,0 +1,568 @@
+/**
+ * Mobile-First Enterprise Design System
+ * Okaeri Resort Management System
+ * Optimized for Philippine mobile usage patterns
+ */
+
+/* ===========================================
+   MOBILE-FIRST FOUNDATION
+   =========================================== */
+
+/* Base touch targets - 44px minimum for mobile */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Enterprise mobile button sizing */
+.btn-mobile {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 12px 16px;
+  font-size: 16px;
+  line-height: 1.2;
+  border-radius: 8px;
+}
+
+@media (min-width: 640px) {
+  .btn-mobile {
+    min-height: 36px;
+    min-width: 36px;
+    padding: 8px 12px;
+    font-size: 14px;
+    border-radius: 6px;
+  }
+}
+
+/* ===========================================
+   MOBILE NAVIGATION PATTERNS
+   =========================================== */
+
+/* Mobile header sticky positioning */
+.mobile-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: white;
+  border-bottom: 1px solid rgb(229 231 235);
+  backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+/* Mobile navigation menu */
+.mobile-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  min-height: 44px;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+  touch-action: manipulation;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.mobile-nav-item:hover,
+.mobile-nav-item:focus {
+  background-color: rgb(243 244 246);
+  outline: none;
+}
+
+.mobile-nav-item.active {
+  background-color: rgb(239 246 255);
+  color: rgb(37 99 235);
+  font-weight: 600;
+}
+
+@media (min-width: 768px) {
+  .mobile-nav-item {
+    padding: 8px 12px;
+    min-height: 36px;
+    font-size: 14px;
+    gap: 8px;
+  }
+}
+
+/* ===========================================
+   MOBILE DATA TABLES
+   =========================================== */
+
+/* Mobile card view for tables */
+.mobile-table-card {
+  border: 1px solid rgb(229 231 235);
+  border-radius: 8px;
+  padding: 16px;
+  background-color: white;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  margin-bottom: 16px;
+}
+
+.mobile-table-card:last-child {
+  margin-bottom: 0;
+}
+
+/* Mobile card header */
+.mobile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+/* Mobile card data grid */
+.mobile-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mobile-card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobile-card-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgb(107 114 128);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.mobile-card-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(17 24 39);
+  line-height: 1.3;
+}
+
+/* Mobile card actions */
+.mobile-card-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgb(243 244 246);
+}
+
+/* ===========================================
+   MOBILE FORMS
+   =========================================== */
+
+/* Mobile form containers */
+.mobile-form-container {
+  padding: 16px;
+  max-width: 100%;
+}
+
+@media (min-width: 640px) {
+  .mobile-form-container {
+    padding: 24px;
+  }
+}
+
+/* Mobile form fields */
+.mobile-form-field {
+  margin-bottom: 20px;
+}
+
+.mobile-form-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  color: rgb(17 24 39);
+  margin-bottom: 8px;
+}
+
+@media (min-width: 640px) {
+  .mobile-form-label {
+    font-size: 14px;
+  }
+}
+
+.mobile-form-input {
+  width: 100%;
+  height: 48px;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 1px solid rgb(209 213 219);
+  border-radius: 8px;
+  background-color: white;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.mobile-form-input:focus {
+  outline: none;
+  border-color: rgb(37 99 235);
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+}
+
+@media (min-width: 640px) {
+  .mobile-form-input {
+    height: 40px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+}
+
+/* Mobile textarea */
+.mobile-form-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 1px solid rgb(209 213 219);
+  border-radius: 8px;
+  background-color: white;
+  resize: none;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.mobile-form-textarea:focus {
+  outline: none;
+  border-color: rgb(37 99 235);
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+}
+
+@media (min-width: 640px) {
+  .mobile-form-textarea {
+    min-height: 100px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+}
+
+/* ===========================================
+   MOBILE KPI CARDS
+   =========================================== */
+
+.kpi-card {
+  border: 1px solid rgb(229 231 235);
+  border-radius: 8px;
+  padding: 16px;
+  background-color: white;
+  transition: box-shadow 0.15s ease;
+}
+
+.kpi-card:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.kpi-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.kpi-card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(107 114 128);
+  line-height: 1.3;
+}
+
+.kpi-card-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: rgb(17 24 39);
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  margin-bottom: 4px;
+}
+
+@media (min-width: 1024px) {
+  .kpi-card-value {
+    font-size: 30px;
+  }
+}
+
+.kpi-card-description {
+  font-size: 12px;
+  color: rgb(107 114 128);
+  line-height: 1.3;
+}
+
+/* ===========================================
+   MOBILE SEARCH AND FILTERS
+   =========================================== */
+
+.mobile-search {
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 10;
+  padding-bottom: 16px;
+}
+
+.mobile-search-input {
+  width: 100%;
+  height: 44px;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 1px solid rgb(209 213 219);
+  border-radius: 8px;
+  background-color: white;
+}
+
+.mobile-search-input:focus {
+  outline: none;
+  border-color: rgb(37 99 235);
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+}
+
+/* Mobile filter chips */
+.mobile-filters {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin: 0 -16px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.mobile-filter-chip {
+  flex-shrink: 0;
+  min-width: 140px;
+}
+
+/* ===========================================
+   MOBILE PAGINATION
+   =========================================== */
+
+.mobile-pagination {
+  position: sticky;
+  bottom: 0;
+  background-color: white;
+  padding-top: 16px;
+  border-top: 1px solid rgb(243 244 246);
+  z-index: 10;
+}
+
+/* ===========================================
+   ENTERPRISE STATUS BADGES
+   =========================================== */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  text-transform: capitalize;
+}
+
+/* Booking status colors */
+.status-badge.pending {
+  background-color: rgb(254 243 199);
+  color: rgb(146 64 14);
+}
+
+.status-badge.confirmed {
+  background-color: rgb(219 234 254);
+  color: rgb(30 64 175);
+}
+
+.status-badge.checked-in {
+  background-color: rgb(220 252 231);
+  color: rgb(22 101 52);
+}
+
+.status-badge.checked-out {
+  background-color: rgb(243 244 246);
+  color: rgb(55 65 81);
+}
+
+.status-badge.cancelled {
+  background-color: rgb(254 226 226);
+  color: rgb(153 27 27);
+}
+
+/* Payment status colors */
+.status-badge.payment-pending {
+  background-color: rgb(254 243 199);
+  color: rgb(146 64 14);
+}
+
+.status-badge.payment-partial {
+  background-color: rgb(255 237 213);
+  color: rgb(154 52 18);
+}
+
+.status-badge.payment-completed {
+  background-color: rgb(220 252 231);
+  color: rgb(22 101 52);
+}
+
+.status-badge.payment-refunded {
+  background-color: rgb(243 244 246);
+  color: rgb(55 65 81);
+}
+
+/* ===========================================
+   ACCESSIBILITY ENHANCEMENTS
+   =========================================== */
+
+/* Focus indicators for touch interfaces */
+.focus-visible:focus {
+  outline: 2px solid rgb(37 99 235);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .mobile-table-card,
+  .kpi-card {
+    border-width: 2px;
+  }
+
+  .mobile-form-input,
+  .mobile-form-textarea {
+    border-width: 2px;
+  }
+
+  .status-badge {
+    border: 1px solid currentColor;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===========================================
+   MOBILE LOADING STATES
+   =========================================== */
+
+.mobile-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgb(243 244 246) 25%,
+    rgb(229 231 235) 50%,
+    rgb(243 244 246) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ===========================================
+   PHILIPPINE CURRENCY FORMATTING
+   =========================================== */
+
+.currency-display {
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-weight: 600;
+  color: rgb(17 24 39);
+  text-align: right;
+}
+
+.currency-large {
+  font-size: 18px;
+}
+
+.currency-small {
+  font-size: 14px;
+}
+
+/* ===========================================
+   MOBILE UTILITY CLASSES
+   =========================================== */
+
+.mobile-scroll-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.mobile-scroll-container::-webkit-scrollbar {
+  height: 4px;
+}
+
+.mobile-scroll-container::-webkit-scrollbar-track {
+  background-color: rgb(243 244 246);
+}
+
+.mobile-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgb(156 163 175);
+  border-radius: 2px;
+}
+
+/* Safe area insets for mobile devices */
+.mobile-safe-area {
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ===========================================
+   ENTERPRISE RESPONSIVE BREAKPOINTS
+   =========================================== */
+
+/* Mobile first: 0-639px */
+/* Small tablets: 640px-767px */
+/* Tablets: 768px-1023px */
+/* Desktop: 1024px+ */
+
+@media (min-width: 640px) {
+  .mobile-table-card {
+    padding: 20px;
+  }
+
+  .mobile-card-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .mobile-form-container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-filters {
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .mobile-card-actions {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-table-card {
+    display: none; /* Hide on desktop, show actual table */
+  }
+
+  .kpi-card {
+    padding: 20px;
+  }
+}
