@@ -181,7 +181,10 @@ const UnitCard: React.FC<UnitCardProps> = ({
 
       <div className="space-y-2">
         <MobileCardRow label="Type" value={unit.unit_type} />
-        <MobileCardRow label="Capacity" value={`${unit.max_occupancy} guests`} />
+        <MobileCardRow
+          label="Capacity"
+          value={`${unit.base_occupancy}/${unit.max_occupancy} guests`}
+        />
         <MobileCardRow
           label="Base Rate"
           value={
@@ -302,9 +305,11 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
         unit_code: unit.unit_code,
         unit_name: unit.unit_name,
         unit_type: unit.unit_type,
+        base_occupancy: unit.base_occupancy,
         max_occupancy: unit.max_occupancy,
         base_rate: unit.base_rate, // Will be formatted as currency
         weekend_rate: unit.weekend_rate, // Will be formatted as currency
+        extra_person_rate: unit.extra_person_rate, // Will be formatted as currency
         unit_status: unit.unit_status,
         amenities: (unit.amenities ?? []).join("; "),
         created_date: unit.created_at,
@@ -318,9 +323,11 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
           "Unit Code",
           "Unit Name",
           "Unit Type",
+          "Base Occupancy",
           "Max Occupancy",
           "Base Rate",
           "Weekend Rate",
+          "Extra Person Rate",
           "Unit Status",
           "Amenities",
           "Created Date",
@@ -400,10 +407,12 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
 
       columnHelper.accessor("max_occupancy", {
         header: "Capacity",
-        cell: ({ getValue }) => (
-          <div className="text-center font-mono text-sm">{getValue()} guests</div>
+        cell: ({ row }) => (
+          <div className="text-center font-mono text-sm">
+            {row.original.base_occupancy}/{row.original.max_occupancy} guests
+          </div>
         ),
-        size: 100,
+        size: 120,
       }),
 
       columnHelper.accessor("base_rate", {
@@ -446,6 +455,20 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
           </div>
         ),
         size: 120,
+      }),
+
+      columnHelper.accessor("extra_person_rate", {
+        header: ({ header }) => (
+          <SortableHeader header={header} className="text-right">
+            Extra Person
+          </SortableHeader>
+        ),
+        cell: ({ getValue }) => (
+          <div className="text-right font-mono text-sm">
+            +{formatCurrency(getValue() as number)}
+          </div>
+        ),
+        size: 100,
       }),
 
       columnHelper.accessor("unit_status", {

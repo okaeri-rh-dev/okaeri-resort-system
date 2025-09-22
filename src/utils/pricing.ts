@@ -88,6 +88,8 @@ export interface PricingBreakdown {
   discountedRate: number;
   nightlyRates: NightlyRate[];
   subtotal: number;
+  extraPersonCharge: number; // Total extra person charges
+  extraPersonsCount: number; // Number of extra persons
   discounts: AppliedDiscount[];
   taxes: TaxBreakdown;
   totalAmount: number;
@@ -277,21 +279,24 @@ export const calculatePricing = (
   // Calculate base subtotal
   const subtotal = nightlyRates.reduce((sum, rate) => sum + rate.finalRate, 0);
 
-  // Apply occupancy adjustments
-  const occupancyMultiplier = calculateOccupancyMultiplier(guestCount, unit.max_occupancy, config);
-  const occupancyAdjustedSubtotal = subtotal * occupancyMultiplier;
+  // Calculate extra person charges
+  const extraPersonsCount = Math.max(0, guestCount - unit.base_occupancy);
+  const extraPersonCharge = extraPersonsCount * unit.extra_person_rate * nightlyRates.length;
+
+  // Add extra person charges to subtotal
+  const subtotalWithExtraPersons = subtotal + extraPersonCharge;
 
   // Apply discounts
   const discounts = calculateApplicableDiscounts(
     unit,
     options,
-    occupancyAdjustedSubtotal,
+    subtotalWithExtraPersons,
     nightlyRates.length,
     config
   );
 
   const totalDiscountAmount = discounts.reduce((sum, discount) => sum + discount.amount, 0);
-  const discountedSubtotal = occupancyAdjustedSubtotal - totalDiscountAmount;
+  const discountedSubtotal = subtotalWithExtraPersons - totalDiscountAmount;
 
   // Calculate taxes
   const taxes = calculateTaxes(discountedSubtotal, guestType, config.taxRates);
@@ -304,7 +309,9 @@ export const calculatePricing = (
     seasonalRate: Math.max(...nightlyRates.map((r) => r.finalRate)),
     discountedRate: discountedSubtotal / nightlyRates.length,
     nightlyRates,
-    subtotal: occupancyAdjustedSubtotal,
+    subtotal: subtotalWithExtraPersons,
+    extraPersonCharge,
+    extraPersonsCount,
     discounts,
     taxes,
     totalAmount,
@@ -700,19 +707,35 @@ export const formatPricingBreakdown = (
   breakdown: PricingBreakdown,
   currency: string = "₱"
 ): Record<string, string> => {
-  return {
-    subtotal: `${currency}${breakdown.subtotal.toLocaleString()}`,
-    discounts:
-      breakdown.discounts.length > 0
-        ? breakdown.discounts
-            .map((d) => `${d.name}: -${currency}${d.amount.toLocaleString()}`)
-            .join(", ")
-        : "None",
-    taxes: `${currency}${breakdown.taxes.totalTaxAmount.toLocaleString()}`,
-    total: `${currency}${breakdown.totalAmount.toLocaleString()}`,
-    averageNightly: `${currency}${breakdown.averageNightlyRate.toLocaleString()}`,
+  const result: Record<string, string> = {
+    subtotal: `${currency}${(breakdown.subtotal - breakdown.extraPersonCharge).toLocaleString()}`,
     totalNights: `${breakdown.totalNights} ${breakdown.totalNights === 1 ? "night" : "nights"}`,
   };
+
+  // Add extra person charges if applicable
+  if (breakdown.extraPersonsCount > 0) {
+    result.extraPersons = `${breakdown.extraPersonsCount} extra ${breakdown.extraPersonsCount === 1 ? "person" : "persons"}: ${currency}${breakdown.extraPersonCharge.toLocaleString()}`;
+  }
+
+  // Add subtotal with extras
+  if (breakdown.extraPersonCharge > 0) {
+    result.subtotalWithExtras = `${currency}${breakdown.subtotal.toLocaleString()}`;
+  }
+
+  // Add discounts
+  result.discounts =
+    breakdown.discounts.length > 0
+      ? breakdown.discounts
+          .map((d) => `${d.name}: -${currency}${d.amount.toLocaleString()}`)
+          .join(", ")
+      : "None";
+
+  // Add taxes and totals
+  result.taxes = `${currency}${breakdown.taxes.totalTaxAmount.toLocaleString()}`;
+  result.total = `${currency}${breakdown.totalAmount.toLocaleString()}`;
+  result.averageNightly = `${currency}${breakdown.averageNightlyRate.toLocaleString()}`;
+
+  return result;
 };
 
 /**

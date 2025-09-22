@@ -122,23 +122,35 @@ export const unitFormSchema = z.object({
     required_error: "Please select a unit type",
   }),
 
+  base_occupancy: z
+    .number()
+    .min(1, "Base occupancy must be at least 1")
+    .max(20, "Base occupancy cannot exceed 20"),
+
   max_occupancy: z.number().min(1, messages.minGuests).max(20, messages.maxOccupancy),
 
   base_rate: z.number().min(100, messages.minAmount).max(1000000, messages.maxAmount),
 
   weekend_rate: z.number().min(100, messages.minAmount).max(1000000, messages.maxAmount),
 
+  extra_person_rate: z
+    .number()
+    .min(0, "Extra person rate cannot be negative")
+    .max(50000, "Extra person rate cannot exceed ₱50,000"),
+
   amenities: z.array(z.string()).min(1, "Please select at least one amenity"),
 });
 
-// Validation to ensure weekend rate is higher than base rate
-export const unitFormWithRateValidationSchema = unitFormSchema.refine(
-  (data) => data.weekend_rate >= data.base_rate,
-  {
+// Validation to ensure weekend rate is higher than base rate and occupancy constraints
+export const unitFormWithRateValidationSchema = unitFormSchema
+  .refine((data) => data.weekend_rate >= data.base_rate, {
     message: "Weekend rate should be equal to or higher than base rate",
     path: ["weekend_rate"],
-  }
-);
+  })
+  .refine((data) => data.base_occupancy <= data.max_occupancy, {
+    message: "Base occupancy cannot exceed maximum occupancy",
+    path: ["base_occupancy"],
+  });
 
 // ============================================
 // BOOKING VALIDATION SCHEMAS
@@ -204,8 +216,10 @@ export const bookingStep3Schema = z.object({
 // Complete booking form schema (all steps combined)
 export const completeBookingSchema = bookingStep1BaseSchema
   .merge(
-    bookingStep2Schema.extend({
-      contact_number: phoneSchema, // Add contact_number field
+    z.object({
+      guest_name: nameSchema,
+      email: emailSchema,
+      contact_number: phoneSchema, // Use contact_number instead of phone_number
     })
   )
   .merge(bookingStep3Schema)

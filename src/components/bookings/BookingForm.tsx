@@ -124,12 +124,22 @@ export function BookingForm({
           }
         }
 
-        const total =
+        // Calculate base total
+        const baseTotal =
           weekdayNights * selectedUnit.base_rate + weekendNights * selectedUnit.weekend_rate;
+
+        // Calculate extra person charges
+        const extraPersons = Math.max(
+          0,
+          (watchedValues.num_guests || 0) - selectedUnit.base_occupancy
+        );
+        const extraPersonCharge = extraPersons * selectedUnit.extra_person_rate * nights;
+
+        const total = baseTotal + extraPersonCharge;
         setCalculatedTotal(total);
       }
     }
-  }, [selectedUnit, watchedValues.check_in, watchedValues.check_out]);
+  }, [selectedUnit, watchedValues.check_in, watchedValues.check_out, watchedValues.num_guests]);
 
   const validateStep = async (step: FormStep): Promise<boolean> => {
     const values = form.getValues();
@@ -149,7 +159,7 @@ export function BookingForm({
           await bookingStep2Schema.parseAsync({
             guest_name: values.guest_name,
             email: values.email,
-            contact_number: values.contact_number,
+            phone_number: values.contact_number,
           });
           return true;
 
@@ -278,7 +288,8 @@ export function BookingForm({
                   <SelectItem key={unit.unit_id} value={unit.unit_id}>
                     <div className="flex w-full items-center justify-between">
                       <span>
-                        {unit.unit_name} ({unit.unit_type})
+                        {unit.unit_name} ({unit.unit_type}) • {unit.base_occupancy}/
+                        {unit.max_occupancy} guests
                       </span>
                       <Badge variant="outline" className="ml-2">
                         {formatCurrency(unit.base_rate)}/night
@@ -390,7 +401,14 @@ export function BookingForm({
             </FormControl>
             {selectedUnit && (
               <FormDescription>
-                Maximum occupancy: {selectedUnit.max_occupancy} guests
+                Base occupancy: {selectedUnit.base_occupancy} guests (included) • Max:{" "}
+                {selectedUnit.max_occupancy} guests
+                {selectedUnit.max_occupancy > selectedUnit.base_occupancy && (
+                  <span className="block text-xs mt-1">
+                    Extra person rate: {formatCurrency(selectedUnit.extra_person_rate)} per person
+                    per night
+                  </span>
+                )}
               </FormDescription>
             )}
             <FormMessage />
@@ -500,24 +518,6 @@ export function BookingForm({
           </FormItem>
         )}
       />
-
-      {/* Privacy Consent - Phase 2 Security Requirement */}
-      <div className="flex items-start space-x-3 rounded-md border p-4">
-        <input type="checkbox" id="privacy-consent" className="mt-1" required />
-        <div className="space-y-1 leading-none">
-          <label
-            htmlFor="privacy-consent"
-            className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            Privacy Consent *
-          </label>
-          <p className="text-muted-foreground text-sm">
-            I consent to the collection and processing of my personal information for booking
-            purposes. The resort will handle my data in accordance with the Philippine Data Privacy
-            Act of 2012.
-          </p>
-        </div>
-      </div>
     </div>
   );
 
@@ -634,6 +634,70 @@ export function BookingForm({
 
           <Separator />
 
+          <div className="space-y-2">
+            <h4 className="font-medium">Pricing Breakdown</h4>
+            {selectedUnit && watchedValues.check_in && watchedValues.check_out && (
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    Room rate (
+                    {Math.ceil(
+                      (watchedValues.check_out.getTime() - watchedValues.check_in.getTime()) /
+                        (1000 * 60 * 60 * 24)
+                    )}{" "}
+                    nights)
+                  </span>
+                  <span>
+                    {formatCurrency(
+                      (() => {
+                        const nights = Math.ceil(
+                          (watchedValues.check_out.getTime() - watchedValues.check_in.getTime()) /
+                            (1000 * 60 * 60 * 24)
+                        );
+                        let weekdayNights = 0;
+                        let weekendNights = 0;
+                        for (let i = 0; i < nights; i++) {
+                          const currentDate = new Date(watchedValues.check_in);
+                          currentDate.setDate(currentDate.getDate() + i);
+                          const dayOfWeek = currentDate.getDay();
+                          if (dayOfWeek === 5 || dayOfWeek === 6) {
+                            weekendNights++;
+                          } else {
+                            weekdayNights++;
+                          }
+                        }
+                        return (
+                          weekdayNights * selectedUnit.base_rate +
+                          weekendNights * selectedUnit.weekend_rate
+                        );
+                      })()
+                    )}
+                  </span>
+                </div>
+                {watchedValues.num_guests > selectedUnit.base_occupancy && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      Extra person ({watchedValues.num_guests - selectedUnit.base_occupancy} ×{" "}
+                      {formatCurrency(selectedUnit.extra_person_rate)})
+                    </span>
+                    <span>
+                      {formatCurrency(
+                        (watchedValues.num_guests - selectedUnit.base_occupancy) *
+                          selectedUnit.extra_person_rate *
+                          Math.ceil(
+                            (watchedValues.check_out.getTime() - watchedValues.check_in.getTime()) /
+                              (1000 * 60 * 60 * 24)
+                          )
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
           <div className="flex items-center justify-between text-lg font-semibold">
             <span>Total Amount:</span>
             <span>{formatCurrency(calculatedTotal)}</span>
@@ -694,6 +758,7 @@ export function BookingForm({
 
               {currentStep < 4 ? (
                 <Button
+                  key="next-button"
                   type="button"
                   onClick={handleNextStep}
                   className="h-12 sm:h-10 px-6 text-base sm:text-sm touch-manipulation flex-1 max-w-[140px]"
@@ -702,6 +767,7 @@ export function BookingForm({
                 </Button>
               ) : (
                 <Button
+                  key="submit-button"
                   type="submit"
                   disabled={createBookingMutation.isPending || updateBookingMutation.isPending}
                   className="h-12 sm:h-10 px-6 text-base sm:text-sm touch-manipulation flex-1 max-w-[200px]"

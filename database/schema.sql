@@ -13,9 +13,11 @@ CREATE TABLE IF NOT EXISTS units (
     unit_name VARCHAR(100) NOT NULL UNIQUE,
     unit_code VARCHAR(10) NOT NULL UNIQUE,
     unit_type VARCHAR(20) NOT NULL CHECK (unit_type IN ('Studio', 'One Bedroom', 'Two Bedroom', 'Villa')),
-    max_occupancy INTEGER NOT NULL CHECK (max_occupancy > 0),
+    base_occupancy INTEGER NOT NULL CHECK (base_occupancy > 0),
+    max_occupancy INTEGER NOT NULL CHECK (max_occupancy > 0 AND max_occupancy >= base_occupancy),
     base_rate DECIMAL(10,2) NOT NULL CHECK (base_rate >= 0),
     weekend_rate DECIMAL(10,2) NOT NULL CHECK (weekend_rate >= 0),
+    extra_person_rate DECIMAL(10,2) NOT NULL CHECK (extra_person_rate >= 0),
     unit_status VARCHAR(20) DEFAULT 'Available' CHECK (unit_status IN ('Available', 'Occupied', 'Maintenance', 'Reserved')),
     amenities JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -169,10 +171,10 @@ $$ LANGUAGE plpgsql;
 -- ============================================
 -- SEED DATA FOR INITIAL UNITS
 -- ============================================
-INSERT INTO units (unit_name, unit_code, unit_type, max_occupancy, base_rate, weekend_rate, amenities) VALUES
-('Unit 1 - Ocean View', 'U1', 'Studio', 2, 2500, 3000, '["WiFi", "Air Conditioning", "Mini Fridge", "Cable TV"]'),
-('Unit 2 - Garden View', 'U2', 'One Bedroom', 4, 3500, 4000, '["WiFi", "Air Conditioning", "Kitchen", "Cable TV", "Sofa Bed"]'),
-('Unit 3 - Poolside', 'U3', 'Two Bedroom', 6, 5000, 6000, '["WiFi", "Air Conditioning", "Full Kitchen", "Cable TV", "Living Room", "Balcony"]')
+INSERT INTO units (unit_name, unit_code, unit_type, base_occupancy, max_occupancy, base_rate, weekend_rate, extra_person_rate, amenities) VALUES
+('Unit 1 - Ocean View', 'U1', 'Studio', 2, 2, 2500, 3000, 500, '["WiFi", "Air Conditioning", "Mini Fridge", "Cable TV"]'),
+('Unit 2 - Garden View', 'U2', 'One Bedroom', 2, 4, 3500, 4000, 750, '["WiFi", "Air Conditioning", "Kitchen", "Cable TV", "Sofa Bed"]'),
+('Unit 3 - Poolside', 'U3', 'Two Bedroom', 4, 6, 5000, 6000, 1000, '["WiFi", "Air Conditioning", "Full Kitchen", "Cable TV", "Living Room", "Balcony"]')
 ON CONFLICT (unit_code) DO NOTHING;
 
 -- ============================================

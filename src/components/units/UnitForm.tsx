@@ -107,9 +107,11 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
       unit_name: unit?.unit_name || "",
       unit_code: unit?.unit_code || "",
       unit_type: unit?.unit_type || undefined,
+      base_occupancy: unit?.base_occupancy || 2,
       max_occupancy: unit?.max_occupancy || 2,
       base_rate: unit?.base_rate || 0,
       weekend_rate: unit?.weekend_rate || 0,
+      extra_person_rate: unit?.extra_person_rate || 0,
       amenities: unit?.amenities || [],
     },
     mode: "onChange",
@@ -117,6 +119,9 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
 
   const watchedBaseRate = form.watch("base_rate");
   const watchedWeekendRate = form.watch("weekend_rate");
+  const watchedExtraPersonRate = form.watch("extra_person_rate");
+  const watchedBaseOccupancy = form.watch("base_occupancy");
+  const watchedMaxOccupancy = form.watch("max_occupancy");
   const watchedUnitType = form.watch("unit_type");
   const selectedAmenities = form.watch("amenities") || [];
 
@@ -164,15 +169,15 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
   const getSuggestedRates = (unitType: UnitType) => {
     switch (unitType) {
       case "Standard":
-        return { base: 2500, weekend: 3000 };
+        return { base: 2500, weekend: 3000, extraPerson: 500, baseOccupancy: 2, maxOccupancy: 2 };
       case "Deluxe":
-        return { base: 3500, weekend: 4000 };
+        return { base: 3500, weekend: 4000, extraPerson: 750, baseOccupancy: 2, maxOccupancy: 4 };
       case "Suite":
-        return { base: 5000, weekend: 6000 };
+        return { base: 5000, weekend: 6000, extraPerson: 1000, baseOccupancy: 2, maxOccupancy: 4 };
       case "Villa":
-        return { base: 8000, weekend: 10000 };
+        return { base: 8000, weekend: 10000, extraPerson: 1500, baseOccupancy: 4, maxOccupancy: 6 };
       default:
-        return { base: 2500, weekend: 3000 };
+        return { base: 2500, weekend: 3000, extraPerson: 500, baseOccupancy: 2, maxOccupancy: 2 };
     }
   };
 
@@ -181,6 +186,9 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
       const rates = getSuggestedRates(watchedUnitType);
       form.setValue("base_rate", rates.base, { shouldValidate: true });
       form.setValue("weekend_rate", rates.weekend, { shouldValidate: true });
+      form.setValue("extra_person_rate", rates.extraPerson, { shouldValidate: true });
+      form.setValue("base_occupancy", rates.baseOccupancy, { shouldValidate: true });
+      form.setValue("max_occupancy", rates.maxOccupancy, { shouldValidate: true });
     }
   };
 
@@ -269,30 +277,57 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="max_occupancy"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Maximum Occupancy</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Users className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
-                        <Input
-                          type="number"
-                          min="1"
-                          max={20}
-                          className="pl-10"
-                          {...field}
-                          onBlur={(e) => field.onChange(parseInt(e.target.value, 10) || 1)}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormDescription>Maximum number of guests allowed</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="base_occupancy"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Base Occupancy</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Users className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
+                          <Input
+                            type="number"
+                            min="1"
+                            max={20}
+                            className="pl-10"
+                            {...field}
+                            onBlur={(e) => field.onChange(parseInt(e.target.value, 10) || 1)}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription>Number of guests included in base rate</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="max_occupancy"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Maximum Occupancy</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Users className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
+                          <Input
+                            type="number"
+                            min="1"
+                            max={20}
+                            className="pl-10"
+                            {...field}
+                            onBlur={(e) => field.onChange(parseInt(e.target.value, 10) || 1)}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription>Maximum number of guests allowed</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             <Separator />
@@ -378,6 +413,44 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                 />
               </div>
 
+              {/* Extra Person Rate */}
+              <FormField
+                control={form.control}
+                name="extra_person_rate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Extra Person Rate</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <DollarSign className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="50000"
+                          className="pl-10"
+                          placeholder="500.00"
+                          {...field}
+                          onBlur={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      Additional charge per person exceeding base occupancy
+                      {watchedExtraPersonRate > 0 &&
+                        watchedBaseOccupancy > 0 &&
+                        watchedMaxOccupancy > watchedBaseOccupancy && (
+                          <span className="mt-1 block text-xs">
+                            {formatCurrency(watchedExtraPersonRate)} per extra person per night (up
+                            to {watchedMaxOccupancy - watchedBaseOccupancy} extra guests)
+                          </span>
+                        )}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Rate Comparison */}
               {watchedBaseRate > 0 && watchedWeekendRate > 0 && (
                 <div className="bg-muted rounded-lg p-4">
@@ -392,9 +465,35 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                       <p className="font-medium">{formatCurrency(watchedWeekendRate)}</p>
                     </div>
                   </div>
+                  {watchedBaseOccupancy > 0 && watchedMaxOccupancy > 0 && (
+                    <div className="mt-3 border-t pt-3">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Capacity:</span>
+                          <p className="font-medium">
+                            {watchedBaseOccupancy}/{watchedMaxOccupancy} guests
+                          </p>
+                        </div>
+                        {watchedExtraPersonRate > 0 &&
+                          watchedMaxOccupancy > watchedBaseOccupancy && (
+                            <div>
+                              <span className="text-muted-foreground">Extra Person:</span>
+                              <p className="font-medium">
+                                +{formatCurrency(watchedExtraPersonRate)}/night
+                              </p>
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  )}
                   {watchedWeekendRate < watchedBaseRate && (
                     <p className="mt-2 text-xs text-yellow-600">
                       ⚠️ Weekend rate is lower than base rate
+                    </p>
+                  )}
+                  {watchedBaseOccupancy > watchedMaxOccupancy && (
+                    <p className="mt-2 text-xs text-red-600">
+                      ⚠️ Base occupancy cannot exceed maximum occupancy
                     </p>
                   )}
                 </div>

@@ -11,9 +11,11 @@ export interface Unit {
   unit_name: string;
   unit_code: string;
   unit_type: UnitType;
+  base_occupancy: number;
   max_occupancy: number;
   base_rate: number;
   weekend_rate: number;
+  extra_person_rate: number;
   unit_status: UnitStatus;
   amenities: string[] | null;
   cleaning_fee?: number | null;
@@ -145,9 +147,11 @@ export interface UnitFormData {
   unit_name: string;
   unit_code: string;
   unit_type: UnitType;
+  base_occupancy: number;
   max_occupancy: number;
   base_rate: number;
   weekend_rate: number;
+  extra_person_rate: number;
   amenities: string[];
 }
 
