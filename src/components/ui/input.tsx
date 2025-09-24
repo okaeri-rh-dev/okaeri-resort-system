@@ -221,4 +221,136 @@ const PhoneInput = React.forwardRef<HTMLInputElement, InputProps>(
 );
 PhoneInput.displayName = "PhoneInput";
 
-export { Input, CurrencyInput, SearchInput, PhoneInput, inputVariants };
+// Number Input Component with validation on blur
+export interface NumberInputProps
+  extends Omit<InputProps, "type" | "onChange" | "onBlur" | "value" | "defaultValue"> {
+  min?: number;
+  max?: number;
+  step?: number;
+  allowDecimals?: boolean;
+  enforceMinMax?: boolean;
+  onChange?: (value: number | null) => void;
+  onBlur?: (value: number | null) => void;
+  value?: number | null;
+  defaultValue?: number | null;
+}
+
+const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
+  (
+    {
+      className,
+      min,
+      max,
+      step = 1,
+      allowDecimals = false,
+      enforceMinMax = true,
+      onChange,
+      onBlur,
+      value,
+      defaultValue,
+      ...props
+    },
+    ref
+  ) => {
+    const [internalValue, setInternalValue] = React.useState<string>("");
+    const [isValid, setIsValid] = React.useState(true);
+    const inputRef = React.useRef<HTMLInputElement>(null);
+
+    // Sync external value with internal state
+    React.useEffect(() => {
+      if (value !== undefined) {
+        setInternalValue(value === null ? "" : value.toString());
+      } else if (defaultValue !== undefined && internalValue === "") {
+        setInternalValue(defaultValue === null ? "" : defaultValue.toString());
+      }
+    }, [value, defaultValue, internalValue]);
+
+    const parseValue = (val: string): number | null => {
+      if (val === "" || val === "-" || val === ".") return null;
+      const parsed = allowDecimals ? parseFloat(val) : parseInt(val, 10);
+      return isNaN(parsed) ? null : parsed;
+    };
+
+    const isValueValid = (val: number | null): boolean => {
+      if (val === null) return true; // Allow empty during typing
+      if (min !== undefined && val < min) return false;
+      if (max !== undefined && val > max) return false;
+      return true;
+    };
+
+    const clampValue = (val: number | null): number | null => {
+      if (val === null) return null;
+      if (min !== undefined && val < min) return min;
+      if (max !== undefined && val > max) return max;
+      return val;
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = e.target.value;
+
+      // Allow empty string and negative sign for negative numbers
+      if (newValue === "" || newValue === "-") {
+        setInternalValue(newValue);
+        setIsValid(true);
+        onChange?.(null);
+        return;
+      }
+
+      // Validate decimal places if decimals are not allowed
+      if (!allowDecimals && newValue.includes(".")) {
+        return; // Prevent decimal input
+      }
+
+      // Basic number validation
+      const numberRegex = allowDecimals ? /^-?\d*\.?\d*$/ : /^-?\d*$/;
+
+      if (!numberRegex.test(newValue)) {
+        return; // Invalid character input
+      }
+
+      setInternalValue(newValue);
+      const parsed = parseValue(newValue);
+      const valid = isValueValid(parsed);
+      setIsValid(valid);
+      onChange?.(parsed);
+    };
+
+    const handleInputBlur = () => {
+      const parsed = parseValue(internalValue);
+      let finalValue = parsed;
+
+      if (enforceMinMax && parsed !== null) {
+        finalValue = clampValue(parsed);
+        if (finalValue !== parsed) {
+          setInternalValue(finalValue?.toString() || "");
+        }
+      }
+
+      setIsValid(true);
+      onBlur?.(finalValue);
+    };
+
+    // Merge refs properly
+    React.useImperativeHandle(ref, () => inputRef.current!);
+
+    return (
+      <Input
+        {...props}
+        ref={inputRef}
+        type="text" // Use text to avoid browser validation
+        inputMode="numeric" // Mobile numeric keyboard
+        value={internalValue}
+        onChange={handleInputChange}
+        onBlur={handleInputBlur}
+        variant={!isValid ? "error" : props.variant}
+        className={className}
+        min={undefined} // Remove HTML validation
+        max={undefined} // Remove HTML validation
+        step={undefined} // Remove HTML validation
+      />
+    );
+  }
+);
+NumberInput.displayName = "NumberInput";
+
+export { Input, CurrencyInput, SearchInput, PhoneInput, NumberInput, inputVariants };

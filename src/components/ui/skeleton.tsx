@@ -267,9 +267,6 @@ const TableSkeleton: React.FC<TableSkeletonProps> = ({
               index % 2 === 0 && "bg-neutral-50/30",
               index === rows - 1 && "border-none"
             )}
-            style={{
-              animationDelay: `${index * 100}ms`,
-            }}
           />
         ))}
       </div>

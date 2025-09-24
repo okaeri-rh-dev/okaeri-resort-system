@@ -52,7 +52,6 @@ export interface MultiUnitSearchOptions {
   maxOccupancy?: number;
   minRate?: number;
   maxRate?: number;
-  amenities?: string[];
   sortBy?: "price" | "occupancy" | "type" | "availability";
   sortOrder?: "asc" | "desc";
   limit?: number;
@@ -382,7 +381,6 @@ export const filterAvailableUnits = (
     maxOccupancy,
     minRate,
     maxRate,
-    amenities,
     sortBy = "availability",
     sortOrder = "desc",
     limit = 50,
@@ -418,19 +416,6 @@ export const filterAvailableUnits = (
       }
       if (maxRate && unit.base_rate > maxRate) {
         return false;
-      }
-
-      // Filter by amenities
-      if (amenities && amenities.length > 0) {
-        const hasAllAmenities = amenities.every(
-          (amenity) =>
-            unit.amenities?.some((unitAmenity) =>
-              unitAmenity.toLowerCase().includes(amenity.toLowerCase())
-            ) || false
-        );
-        if (!hasAllAmenities) {
-          return false;
-        }
       }
 
       return true;

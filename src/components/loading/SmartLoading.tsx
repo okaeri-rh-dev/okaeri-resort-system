@@ -126,12 +126,7 @@ const DefaultSkeleton: React.FC<DefaultSkeletonProps> = ({ type, reducedAnimatio
       return (
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, index) => (
-            <MobileCardSkeleton
-              key={index}
-              hasActions={true}
-              {...animationProp}
-              style={{ animationDelay: `${index * 100}ms` }}
-            />
+            <MobileCardSkeleton key={index} hasActions={true} {...animationProp} />
           ))}
         </div>
       );
@@ -380,11 +375,7 @@ export const DashboardLoading: React.FC<DashboardLoadingProps> = ({
           {/* KPI Cards skeleton */}
           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
-              <KPICardSkeleton
-                key={index}
-                hasIcon={true}
-                style={{ animationDelay: `${index * 150}ms` }}
-              />
+              <KPICardSkeleton key={index} hasIcon={true} />
             ))}
           </div>
 

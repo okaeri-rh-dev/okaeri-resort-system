@@ -535,11 +535,11 @@ export const useUpdateBooking = () => {
       updates: Partial<Omit<Booking, "booking_id" | "created_at" | "updated_at">>;
     }) => {
       // Update guest information if email changed
-      if (updates.guest_email) {
+      if (updates.email) {
         const { data: existingGuest } = await supabase
           .from("guests")
           .select("guest_id")
-          .eq("email", updates.guest_email)
+          .eq("email", updates.email)
           .single();
 
         if (!existingGuest && updates.guest_name) {
@@ -547,8 +547,8 @@ export const useUpdateBooking = () => {
             .from("guests")
             .insert({
               guest_name: updates.guest_name,
-              email: updates.guest_email,
-              phone_number: updates.guest_phone || null,
+              email: updates.email,
+              phone_number: updates.contact_number || null,
             })
             .select()
             .single();
@@ -701,7 +701,6 @@ export const useMultiUnitAvailability = (
         base_rate: unit.base_rate,
         weekend_rate: unit.weekend_rate,
         unit_status: "Available",
-        amenities: [],
         created_at: "",
         updated_at: "",
         isAvailable: unit.is_available,

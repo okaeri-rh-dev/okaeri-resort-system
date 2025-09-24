@@ -180,7 +180,6 @@ const UnitCard: React.FC<UnitCardProps> = ({
       </div>
 
       <div className="space-y-2">
-        <MobileCardRow label="Type" value={unit.unit_type} />
         <MobileCardRow
           label="Capacity"
           value={`${unit.base_occupancy}/${unit.max_occupancy} guests`}
@@ -207,7 +206,6 @@ const UnitCard: React.FC<UnitCardProps> = ({
             />
           }
         />
-        <MobileCardRow label="Amenities" value={`${unit.amenities?.length ?? 0} items`} />
       </div>
 
       <div className="flex space-x-2 border-t border-neutral-100 pt-2">
@@ -269,9 +267,7 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
     const query = searchQuery.toLowerCase();
     return units.filter(
       (unit) =>
-        unit.unit_name.toLowerCase().includes(query) ||
-        unit.unit_code.toLowerCase().includes(query) ||
-        unit.unit_type.toLowerCase().includes(query)
+        unit.unit_name.toLowerCase().includes(query) || unit.unit_code.toLowerCase().includes(query)
     );
   }, [units, searchQuery]);
 
@@ -304,14 +300,12 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
       const exportData = filteredUnits.map((unit) => ({
         unit_code: unit.unit_code,
         unit_name: unit.unit_name,
-        unit_type: unit.unit_type,
         base_occupancy: unit.base_occupancy,
         max_occupancy: unit.max_occupancy,
         base_rate: unit.base_rate, // Will be formatted as currency
         weekend_rate: unit.weekend_rate, // Will be formatted as currency
         extra_person_rate: unit.extra_person_rate, // Will be formatted as currency
         unit_status: unit.unit_status,
-        amenities: (unit.amenities ?? []).join("; "),
         created_date: unit.created_at,
         updated_date: unit.updated_at,
       }));
@@ -329,7 +323,6 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
           "Weekend Rate",
           "Extra Person Rate",
           "Unit Status",
-          "Amenities",
           "Created Date",
           "Updated Date",
         ],
@@ -352,12 +345,10 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
         filteredUnits.map((unit) => ({
           code: unit.unit_code,
           name: unit.unit_name,
-          type: unit.unit_type,
           capacity: unit.max_occupancy,
           base_rate: unit.base_rate,
           weekend_rate: unit.weekend_rate,
           status: unit.unit_status,
-          amenities: (unit.amenities ?? []).join("; "),
         })),
         "units"
       );
@@ -396,12 +387,7 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
 
       columnHelper.accessor("unit_name", {
         header: ({ header }) => <SortableHeader header={header}>Name</SortableHeader>,
-        cell: ({ getValue, row }) => (
-          <div className="space-y-1">
-            <div className="font-medium text-neutral-900">{getValue()}</div>
-            <div className="text-xs text-neutral-600">{row.original.unit_type}</div>
-          </div>
-        ),
+        cell: ({ getValue }) => <div className="font-medium text-neutral-900">{getValue()}</div>,
         size: 200,
       }),
 
@@ -474,14 +460,6 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
       columnHelper.accessor("unit_status", {
         header: "Status",
         cell: ({ getValue }) => <StatusBadge status={getValue()} />,
-        size: 100,
-      }),
-
-      columnHelper.accessor("amenities", {
-        header: "Amenities",
-        cell: ({ getValue }) => (
-          <div className="text-sm text-neutral-600">{(getValue() ?? []).length} items</div>
-        ),
         size: 100,
       }),
 

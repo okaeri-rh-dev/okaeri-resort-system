@@ -174,6 +174,14 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
     from: undefined,
     to: undefined,
   });
+  const [tempDateRange, setTempDateRange] = useState<{
+    from: Date | undefined;
+    to?: Date | undefined;
+  }>({
+    from: undefined,
+    to: undefined,
+  });
+  const [dateFilterOpen, setDateFilterOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Mutations
@@ -195,14 +203,6 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
   // Define columns
   const columns = useMemo(
     () => [
-      columnHelper.accessor("booking_reference", {
-        header: ({ header }) => <SortableHeader header={header}>Reference</SortableHeader>,
-        cell: ({ getValue }) => (
-          <div className="font-mono text-sm font-medium text-blue-600">{getValue()}</div>
-        ),
-        size: 120,
-      }),
-
       columnHelper.accessor("guest_name", {
         header: ({ header }) => <SortableHeader header={header}>Guest</SortableHeader>,
         cell: ({ row }) => (
@@ -268,6 +268,14 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
         header: "Payment",
         cell: ({ getValue }) => <StatusBadge status={getValue()} />,
         size: 100,
+      }),
+
+      columnHelper.accessor("booking_reference", {
+        header: ({ header }) => <SortableHeader header={header}>Reference</SortableHeader>,
+        cell: ({ getValue }) => (
+          <div className="font-mono text-sm font-medium text-blue-600">{getValue()}</div>
+        ),
+        size: 120,
       }),
 
       columnHelper.display({
@@ -430,9 +438,21 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
     }
   };
 
-  // Create table instance
+  // Create table instance with properly typed data
+  // Note: API response may not include all Unit properties, adding defaults
+  const typedBookings = bookings.map((booking) => ({
+    ...booking,
+    unit: booking.unit
+      ? {
+          ...booking.unit,
+          base_occupancy: booking.unit.base_occupancy || 1,
+          extra_person_rate: booking.unit.extra_person_rate || 0,
+        }
+      : undefined,
+  }));
+
   const table = useReactTable({
-    data: bookings,
+    data: typedBookings,
     columns,
     state: {
       sorting,
@@ -655,22 +675,37 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
 
           <FilterPopover
             isActive={!!(filters.date_from || filters.date_to)}
+            open={dateFilterOpen}
+            onOpenChange={(open) => {
+              setDateFilterOpen(open);
+              if (open) {
+                // Initialize temp state with applied filters when opening
+                setTempDateRange(dateRange);
+              }
+            }}
+            showActions={true}
+            onApply={() => {
+              // Apply the temporary selection to the actual filters
+              setDateRange(tempDateRange);
+              setFilters({
+                ...filters,
+                date_from: tempDateRange?.from?.toISOString(),
+                date_to: tempDateRange?.to?.toISOString(),
+              });
+            }}
+            onClear={() => {
+              // Clear the temporary selection
+              setTempDateRange({ from: undefined, to: undefined });
+            }}
             content={
               <div className="space-y-3">
                 <div className="text-sm font-medium">Date Range</div>
                 <Calendar
                   mode="range"
-                  selected={dateRange}
-                  onSelect={(range) => {
-                    const newRange = range || { from: undefined, to: undefined };
-                    setDateRange(newRange);
-                    setFilters({
-                      ...filters,
-                      date_from: newRange?.from?.toISOString(),
-                      date_to: newRange?.to?.toISOString(),
-                    });
-                  }}
+                  selected={tempDateRange}
+                  onSelect={setTempDateRange}
                   className="rounded-md border"
+                  required={false}
                 />
               </div>
             }

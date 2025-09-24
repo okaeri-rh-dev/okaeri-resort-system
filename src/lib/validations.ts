@@ -137,8 +137,6 @@ export const unitFormSchema = z.object({
     .number()
     .min(0, "Extra person rate cannot be negative")
     .max(50000, "Extra person rate cannot exceed ₱50,000"),
-
-  amenities: z.array(z.string()).min(1, "Please select at least one amenity"),
 });
 
 // Validation to ensure weekend rate is higher than base rate and occupancy constraints

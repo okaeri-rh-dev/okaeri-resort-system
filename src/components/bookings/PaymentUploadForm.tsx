@@ -25,7 +25,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
   Select,
@@ -78,7 +78,8 @@ export function PaymentUploadForm({
       payment_method: "GCash",
       notes: "",
     },
-    mode: "onChange",
+    mode: "onBlur",
+    reValidateMode: "onBlur",
   });
 
   const validateFile = (file: File): string | null => {
@@ -287,14 +288,18 @@ export function PaymentUploadForm({
                 <FormItem>
                   <FormLabel>Payment Amount</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="100"
-                      max="1000000"
+                    <NumberInput
+                      min={100}
+                      max={1000000}
+                      allowDecimals={true}
                       placeholder="0.00"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      startIcon={<span className="text-sm font-medium">₱</span>}
+                      value={field.value}
+                      onChange={(value) => field.onChange(value)}
+                      onBlur={(value) => {
+                        field.onChange(value || 100); // Set minimum on blur
+                        field.onBlur();
+                      }}
                     />
                   </FormControl>
                   <FormDescription>Amount in Philippine Pesos (₱)</FormDescription>

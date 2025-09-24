@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { z } from "zod";
-import type { Booking } from "@/types";
+import type { Booking, PaymentMethod } from "@/types";
 
 const bookingsSearchSchema = z.object({
   status: z.string().optional(),
@@ -56,7 +56,10 @@ function BookingsPage() {
               <DialogTitle>Create New Booking</DialogTitle>
             </DialogHeader>
             <ErrorBoundary level="component">
-              <BookingForm onSuccess={() => setShowBookingForm(false)} />
+              <BookingForm
+                onSuccess={() => setShowBookingForm(false)}
+                onCancel={() => setShowBookingForm(false)}
+              />
             </ErrorBoundary>
           </DialogContent>
         </Dialog>
@@ -73,16 +76,20 @@ function BookingsPage() {
                   bookingId={editingBooking.booking_id}
                   initialData={{
                     guest_name: editingBooking.guest_name,
-                    guest_email: editingBooking.guest_email,
-                    contact_number: editingBooking.guest_phone || "",
-                    check_in: editingBooking.check_in_date,
-                    check_out: editingBooking.check_out_date,
+                    email: editingBooking.email,
+                    contact_number: editingBooking.contact_number || "",
+                    check_in: new Date(editingBooking.check_in),
+                    check_out: new Date(editingBooking.check_out),
                     unit_id: editingBooking.unit_id,
-                    number_of_guests: editingBooking.number_of_guests,
-                    payment_method: editingBooking.payment_method,
+                    num_guests: editingBooking.num_guests,
+                    payment_method: (editingBooking.payment_method as PaymentMethod) || undefined,
                     special_requests: editingBooking.special_requests || "",
                   }}
                   onSuccess={() => {
+                    setShowEditDialog(false);
+                    setEditingBooking(null);
+                  }}
+                  onCancel={() => {
                     setShowEditDialog(false);
                     setEditingBooking(null);
                   }}

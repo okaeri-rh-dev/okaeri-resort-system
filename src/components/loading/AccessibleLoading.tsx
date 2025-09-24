@@ -111,11 +111,7 @@ interface LoadingAnnouncerProps {
   duration?: number;
 }
 
-export const LoadingAnnouncer: React.FC<LoadingAnnouncerProps> = ({
-  message,
-  type = "loading",
-  duration = 3000,
-}) => {
+export const LoadingAnnouncer: React.FC<LoadingAnnouncerProps> = ({ message, duration = 3000 }) => {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {

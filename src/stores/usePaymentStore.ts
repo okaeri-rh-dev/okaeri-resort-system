@@ -119,7 +119,7 @@ export const usePayments = () => {
           booking_id,
           booking_reference,
           guest_name,
-          guest_email,
+          email,
           unit_id,
           total_amount,
           units(unit_name)
@@ -224,19 +224,20 @@ export const useCreatePayment = () => {
       data: Omit<Payment, "payment_id" | "created_at">;
       receiptFile?: File;
     }) => {
-      let proof_url = data.proof_url;
+      let receipt_url = data.proof_url || null;
 
       // Upload receipt if provided
       if (receiptFile) {
         const uploadedUrl = await uploadReceipt(receiptFile);
-        proof_url = uploadedUrl;
+        receipt_url = uploadedUrl;
       }
 
       const { data: newPayment, error } = await supabase
         .from("payments")
         .insert({
           ...data,
-          proof_url,
+          transaction_date: data.payment_date,
+          receipt_url,
         })
         .select()
         .single();
@@ -313,19 +314,19 @@ export const useUpdatePayment = () => {
       updates: Partial<Omit<Payment, "payment_id" | "created_at">>;
       receiptFile?: File;
     }) => {
-      let proof_url = updates.proof_url;
+      let receipt_url = updates.proof_url || null;
 
       // Upload new receipt if provided
       if (receiptFile) {
         const uploadedUrl = await uploadReceipt(receiptFile);
-        proof_url = uploadedUrl;
+        receipt_url = uploadedUrl;
       }
 
       const { data, error } = await supabase
         .from("payments")
         .update({
           ...updates,
-          proof_url,
+          receipt_url,
         })
         .eq("payment_id", paymentId)
         .select()

@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input, NumberInput } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -59,6 +59,8 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
 
   const form = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseFormSchema),
+    mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       category: expense?.category || "",
       description: expense?.description || "",
@@ -202,13 +204,17 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
               <FormItem>
                 <FormLabel>Amount (PHP) *</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
+                  <NumberInput
+                    min={0.01}
+                    allowDecimals={true}
                     placeholder="0.00"
-                    {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    startIcon={<span className="text-sm font-medium">₱</span>}
+                    value={field.value}
+                    onChange={(value) => field.onChange(value)}
+                    onBlur={(value) => {
+                      field.onChange(value || 0.01); // Set minimum on blur
+                      field.onBlur();
+                    }}
                   />
                 </FormControl>
                 <FormDescription>Enter the amount in Philippine Peso</FormDescription>
@@ -239,7 +245,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-[340px] p-0" align="start">
                     <Calendar
                       mode="single"
                       selected={field.value}

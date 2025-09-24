@@ -410,23 +410,14 @@ interface UseUnitAvailabilitySearchOptions {
   unitType?: string;
   minOccupancy?: number;
   maxRate?: number;
-  amenities?: string[];
   enabled?: boolean;
 }
 
 export function useUnitAvailabilitySearch(options: UseUnitAvailabilitySearchOptions = {}) {
-  const { checkIn, checkOut, unitType, minOccupancy, maxRate, amenities, enabled = true } = options;
+  const { checkIn, checkOut, unitType, minOccupancy, maxRate, enabled = true } = options;
 
   return useQuery({
-    queryKey: [
-      "unit-availability-search",
-      checkIn,
-      checkOut,
-      unitType,
-      minOccupancy,
-      maxRate,
-      amenities,
-    ],
+    queryKey: ["unit-availability-search", checkIn, checkOut, unitType, minOccupancy, maxRate],
     queryFn: async () => {
       if (!checkIn || !checkOut) {
         // If no dates, just return all units matching criteria
@@ -452,13 +443,6 @@ export function useUnitAvailabilitySearch(options: UseUnitAvailabilitySearchOpti
       if (error) throw new Error(handleSupabaseError(error));
 
       let units = data || [];
-
-      // Filter by amenities if specified
-      if (amenities?.length) {
-        units = units.filter((unit: any) =>
-          amenities.every((amenity) => unit.amenities?.includes(amenity))
-        );
-      }
 
       return units;
     },

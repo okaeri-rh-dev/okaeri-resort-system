@@ -17,7 +17,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { auth } from "@/lib/auth";
 
 interface NavItem {
@@ -38,11 +38,11 @@ const navItems: NavItem[] = [
 
 interface MainLayoutProps {
   children: React.ReactNode;
-  currentPath?: string;
 }
 
-export function MainLayout({ children, currentPath = "/" }: MainLayoutProps) {
+export function MainLayout({ children }: MainLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   const handleSignOut = async () => {
     try {
@@ -56,8 +56,9 @@ export function MainLayout({ children, currentPath = "/" }: MainLayoutProps) {
 
   const NavLink = ({ item, onClick }: { item: NavItem; onClick?: () => void }) => {
     const isActive =
-      currentPath === item.href ||
-      (item.href === "/dashboard" && (currentPath === "/dashboard" || currentPath === "/"));
+      location.pathname === item.href ||
+      (item.href === "/dashboard" &&
+        (location.pathname === "/dashboard" || location.pathname === "/"));
     const Icon = item.icon;
 
     return (

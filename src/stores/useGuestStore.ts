@@ -311,7 +311,7 @@ export const useDeleteGuest = () => {
         .from("bookings")
         .select("booking_id")
         .eq("guest_id", guestId)
-        .in("booking_status", ["confirmed", "checked_in"])
+        .in("booking_status", ["Confirmed", "CheckedIn"])
         .limit(1);
 
       if (bookings?.length) {
@@ -327,7 +327,7 @@ export const useDeleteGuest = () => {
       removeOptimistic(guestId);
       return { guestId };
     },
-    onError: (_, guestId) => {
+    onError: () => {
       // Re-fetch to restore state
       queryClient.invalidateQueries({ queryKey: ["guests"] });
     },
@@ -505,13 +505,13 @@ export const useExportGuests = () => {
           phone_number: guest.phone_number, // Will be formatted to +63 format
           total_bookings: guest.total_bookings ?? 0,
           total_spent: guest.total_spent ?? 0, // Will be formatted as PHP currency
-          loyalty_status: guest.loyalty_status || "Regular",
-          preferred_payment: guest.preferred_payment_method || "N/A",
-          address: guest.address || "N/A",
-          city: guest.city || "N/A",
-          country: guest.country || "Philippines",
+          loyalty_status: "Regular", // Default since property doesn't exist in Guest type
+          preferred_payment: "N/A", // Default since property doesn't exist in Guest type
+          address: "N/A", // Default since property doesn't exist in Guest type
+          city: "N/A", // Default since property doesn't exist in Guest type
+          country: "Philippines", // Default since property doesn't exist in Guest type
           created_date: guest.created_at,
-          last_booking: guest.last_booking_date || "N/A",
+          last_booking: "N/A", // Default since property doesn't exist in Guest type
         })) || [];
 
       // Export with Philippine formatting and security

@@ -54,7 +54,7 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
     // Listen to router events if available
     // Note: This depends on TanStack Router's event system
     // Adjust based on actual router implementation
-    const unsubscribe = router.subscribe?.((event: any) => {
+    const unsubscribe = router.subscribe?.("navigationStart", (event: any) => {
       if (event.type === "navigationStart") {
         handleNavigationStart();
       } else if (event.type === "navigationEnd") {
@@ -128,12 +128,14 @@ interface LoadingLinkProps extends LinkProps {
   children: React.ReactNode;
   showLoading?: boolean;
   loadingDelay?: number;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export const LoadingLink: React.FC<LoadingLinkProps> = ({
   children,
   showLoading = true,
   loadingDelay = 150,
+  onClick,
   ...props
 }) => {
   const { setGlobalLoading } = useLoading();
@@ -147,11 +149,11 @@ export const LoadingLink: React.FC<LoadingLinkProps> = ({
     }
 
     // Call original onClick if provided
-    props.onClick?.(e);
+    onClick?.(e);
   };
 
   return (
-    <RouterLink {...props} onClick={handleClick}>
+    <RouterLink {...props} onMouseDown={handleClick}>
       {children}
     </RouterLink>
   );

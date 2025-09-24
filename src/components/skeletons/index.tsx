@@ -50,12 +50,7 @@ export const BookingsTableSkeleton: React.FC<BookingsTableSkeletonProps> = ({
         {/* Mobile cards skeleton */}
         <div className="space-y-3">
           {Array.from({ length: rows }).map((_, index) => (
-            <MobileCardSkeleton
-              key={index}
-              hasActions={true}
-              rowCount={5}
-              style={{ animationDelay: `${index * 100}ms` }}
-            />
+            <MobileCardSkeleton key={index} hasActions={true} rowCount={5} />
           ))}
         </div>
 
@@ -346,7 +341,6 @@ export const DashboardStatsSkeleton: React.FC<DashboardStatsSkeletonProps> = ({
           key={index}
           hasIcon={true}
           className="kpi-card border border-neutral-200 shadow-sm"
-          style={{ animationDelay: `${index * 150}ms` }}
         />
       ))}
     </div>

@@ -152,7 +152,6 @@ export interface UnitFormData {
   base_rate: number;
   weekend_rate: number;
   extra_person_rate: number;
-  amenities: string[];
 }
 
 // ============================================

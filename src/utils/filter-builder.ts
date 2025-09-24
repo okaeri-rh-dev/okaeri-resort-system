@@ -458,7 +458,6 @@ export class UnitFilterBuilder extends BaseFilterBuilder<Booking> {
     private unitFilter: {
       unitIds?: string[];
       types?: string[];
-      amenities?: string[];
       minOccupancy?: number;
       maxRate?: number;
       availableOnly?: boolean;
@@ -499,12 +498,6 @@ export class UnitFilterBuilder extends BaseFilterBuilder<Booking> {
   static availableOnly(): UnitFilterBuilder {
     return new UnitFilterBuilder({
       availableOnly: true,
-    });
-  }
-
-  static withAmenities(...amenities: string[]): UnitFilterBuilder {
-    return new UnitFilterBuilder({
-      amenities,
     });
   }
 }

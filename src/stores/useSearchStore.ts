@@ -124,7 +124,6 @@ export interface SearchState {
   };
   unitFilter?: {
     types?: string[];
-    amenities?: string[];
     minOccupancy?: number;
     maxRate?: number;
     availableOnly: boolean;

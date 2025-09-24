@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
 
 // ============================================
 // MOBILE-OPTIMIZED LOADING HOOKS

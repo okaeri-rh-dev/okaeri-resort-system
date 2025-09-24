@@ -11,11 +11,10 @@ import {
   type ColumnFiltersState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { Download, Eye, Edit, CheckCircle, Trash2, Upload } from "lucide-react";
+import { Download, Edit } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -42,7 +41,6 @@ import {
   StatusBadge,
   SortableHeader,
   TableSearch,
-  FilterPopover,
   TablePagination,
   ActionMenu,
   TableEmptyState,
@@ -67,7 +65,7 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
   className,
 }) => {
   // Store state
-  const { filters, setFilters, resetFilters, searchQuery, setSearchQuery } = usePaymentStore();
+  const { filters, setFilters, searchQuery, setSearchQuery } = usePaymentStore();
 
   // Local state
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -124,8 +122,8 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
   // Define columns
   const columns = useMemo(
     () => [
-      columnHelper.accessor("payment_date", {
-        id: "payment_date",
+      columnHelper.accessor("transaction_date", {
+        id: "transaction_date",
         header: ({ column }) => <SortableHeader column={column} title="Date" />,
         cell: ({ getValue }) => formatTableDate(getValue()),
         size: 100,
@@ -193,11 +191,11 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
               status={status}
               variant={
                 status === "Completed"
-                  ? "success"
+                  ? "default"
                   : status === "Partial"
                     ? "warning"
                     : status === "Refunded"
-                      ? "error"
+                      ? "destructive"
                       : "default"
               }
             />
@@ -220,7 +218,7 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
         size: 120,
       }),
 
-      columnHelper.accessor("proof_url", {
+      columnHelper.accessor("receipt_url", {
         id: "receipt",
         header: "Receipt",
         cell: ({ getValue }) => {
@@ -261,8 +259,8 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
               : []),
             {
               label: "Download Receipt",
-              onClick: () => payment.proof_url && window.open(payment.proof_url, "_blank"),
-              disabled: !payment.proof_url,
+              onClick: () => payment.receipt_url && window.open(payment.receipt_url, "_blank"),
+              disabled: !payment.receipt_url,
             },
             {
               label: "Delete",
@@ -279,9 +277,15 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
     [onViewPayment, onEditPayment, deletePayment, verifyPayment]
   );
 
+  // Transform payments data to match Payment interface
+  const typedPayments = filteredPayments.map((payment) => ({
+    ...payment,
+    payment_date: payment.transaction_date, // Map transaction_date to payment_date for compatibility
+  }));
+
   // Create table instance
   const table = useReactTable({
-    data: filteredPayments,
+    data: typedPayments,
     columns,
     state: {
       sorting,
@@ -365,14 +369,14 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
                       {formatCurrency(payment.amount)}
                     </div>
                     <div className="text-xs text-neutral-500">
-                      {formatTableDate(payment.payment_date)}
+                      {formatTableDate(payment.transaction_date)}
                     </div>
                   </div>
                   <StatusBadge
                     status={payment.payment_status || "Pending"}
                     variant={
                       payment.payment_status === "Completed"
-                        ? "success"
+                        ? "default"
                         : payment.payment_status === "Partial"
                           ? "warning"
                           : "default"
@@ -397,11 +401,11 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
                 )}
 
                 <div className="flex gap-2 pt-2">
-                  {payment.proof_url && (
+                  {payment.receipt_url && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(payment.proof_url!, "_blank")}
+                      onClick={() => window.open(payment.receipt_url!, "_blank")}
                     >
                       <Download className="h-4 w-4 mr-1" />
                       Receipt

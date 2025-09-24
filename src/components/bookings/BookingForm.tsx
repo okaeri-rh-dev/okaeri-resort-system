@@ -15,7 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input, NumberInput } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -93,7 +93,8 @@ export function BookingForm({
       payment_method: undefined,
       ...initialData,
     },
-    mode: "onChange",
+    mode: "onBlur",
+    reValidateMode: "onBlur",
   });
 
   const watchedValues = form.watch();
@@ -217,6 +218,8 @@ export function BookingForm({
     try {
       const bookingData = {
         ...data,
+        check_in: data.check_in.toISOString(),
+        check_out: data.check_out.toISOString(),
         total_amount: calculatedTotal,
         contact_number: formatPhoneNumber(data.contact_number),
       };
@@ -326,7 +329,7 @@ export function BookingForm({
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-[340px] p-0" align="start">
                   <Calendar
                     mode="single"
                     selected={field.value}
@@ -363,7 +366,7 @@ export function BookingForm({
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-[340px] p-0" align="start">
                   <Calendar
                     mode="single"
                     selected={field.value}
@@ -387,17 +390,19 @@ export function BookingForm({
           <FormItem>
             <FormLabel className="text-base sm:text-sm font-medium">Number of Guests</FormLabel>
             <FormControl>
-              <div className="relative">
-                <Users className="text-muted-foreground absolute top-1/2 left-4 h-5 w-5 sm:h-4 sm:w-4 -translate-y-1/2 transform" />
-                <Input
-                  type="number"
-                  min="1"
-                  max={selectedUnit?.max_occupancy || 20}
-                  className="pl-12 sm:pl-10 h-12 sm:h-10 text-base sm:text-sm touch-manipulation"
-                  {...field}
-                  onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                />
-              </div>
+              <NumberInput
+                min={1}
+                max={selectedUnit?.max_occupancy || 20}
+                allowDecimals={false}
+                className="h-12 sm:h-10 text-base sm:text-sm touch-manipulation"
+                startIcon={<Users className="h-5 w-5 sm:h-4 sm:w-4" />}
+                value={field.value}
+                onChange={(value) => field.onChange(value)}
+                onBlur={(value) => {
+                  field.onChange(value || 1); // Set minimum on blur
+                  field.onBlur();
+                }}
+              />
             </FormControl>
             {selectedUnit && (
               <FormDescription>
@@ -715,7 +720,9 @@ export function BookingForm({
       <Card className={cn("mx-auto w-full max-w-2xl", className)}>
         <CardHeader className="px-4 sm:px-6">
           <div className="text-center">
-            <CardTitle className="text-xl sm:text-lg font-semibold">Create New Booking</CardTitle>
+            <CardTitle className="text-xl sm:text-lg font-semibold">
+              {bookingId ? "Edit Booking" : "Create New Booking"}
+            </CardTitle>
           </div>
         </CardHeader>
         <CardContent className="px-4 sm:px-6">
@@ -729,7 +736,9 @@ export function BookingForm({
     <Card className={cn("mx-auto w-full max-w-2xl", className)}>
       <CardHeader className="px-4 sm:px-6">
         <div className="text-center">
-          <CardTitle className="text-xl sm:text-2xl">Create New Booking</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl">
+            {bookingId ? "Edit Booking" : "Create New Booking"}
+          </CardTitle>
           <p className="text-muted-foreground mt-2 text-sm sm:text-base">
             {STEP_DESCRIPTIONS[currentStep]}
           </p>

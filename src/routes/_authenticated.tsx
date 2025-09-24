@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
   errorComponent: ({ reset }) => (
     <ErrorBoundary level="app">
-      <MainLayout currentPath="/">
+      <MainLayout>
         <div className="flex items-center justify-center min-h-96">
           <div className="text-center">
             <h2 className="text-xl font-semibold text-red-600 mb-4">Authentication Error</h2>
@@ -49,12 +49,9 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
-  const router = useRouter();
-  const currentPath = router.state.location.pathname;
-
   return (
     <ErrorBoundary level="page">
-      <MainLayout currentPath={currentPath}>
+      <MainLayout>
         <Outlet />
       </MainLayout>
     </ErrorBoundary>

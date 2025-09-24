@@ -245,15 +245,45 @@ interface FilterPopoverProps {
   children: React.ReactNode;
   content: React.ReactNode;
   isActive?: boolean;
+  onApply?: () => void;
+  onClear?: () => void;
+  showActions?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const FilterPopover: React.FC<FilterPopoverProps> = ({
   children,
   content,
   isActive = false,
+  onApply,
+  onClear,
+  showActions = false,
+  open,
+  onOpenChange,
 }) => {
+  // Check if content contains a Calendar component recursively
+  const containsCalendar = (element: React.ReactNode): boolean => {
+    if (!React.isValidElement(element)) return false;
+
+    // Direct Calendar component
+    if (element.type?.toString().includes("Calendar") || (element.props as any)?.mode) {
+      return true;
+    }
+
+    // Check children recursively
+    if ((element.props as any)?.children) {
+      const children = React.Children.toArray((element.props as any).children);
+      return children.some((child) => containsCalendar(child));
+    }
+
+    return false;
+  };
+
+  const isCalendarContent = containsCalendar(content);
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -264,8 +294,43 @@ export const FilterPopover: React.FC<FilterPopoverProps> = ({
           {children}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-3" align="start">
-        {content}
+      <PopoverContent
+        className={cn("w-56", isCalendarContent ? "p-0 w-[340px]" : "p-3")}
+        align="start"
+      >
+        <div>
+          {content}
+          {showActions && (
+            <div
+              className={cn(
+                "flex justify-between gap-2 pt-3",
+                isCalendarContent ? "px-3 pb-3" : ""
+              )}
+            >
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  onClear?.();
+                  // Don't close the popover, just clear the selection
+                }}
+                className="flex-1"
+              >
+                Clear
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  onApply?.();
+                  onOpenChange?.(false);
+                }}
+                className="flex-1"
+              >
+                Apply
+              </Button>
+            </div>
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );
