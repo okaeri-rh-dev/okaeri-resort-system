@@ -47,6 +47,7 @@ import {
   ResponsiveTable,
   MobileCard,
   MobileCardRow,
+  FilterPopover,
 } from "../tables/utils";
 
 const columnHelper = createColumnHelper<Payment>();
@@ -124,7 +125,7 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
     () => [
       columnHelper.accessor("transaction_date", {
         id: "transaction_date",
-        header: ({ column }) => <SortableHeader column={column} title="Date" />,
+        header: ({ header }) => <SortableHeader header={header}>Date</SortableHeader>,
         cell: ({ getValue }) => formatTableDate(getValue()),
         size: 100,
       }),
@@ -148,7 +149,7 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
 
       columnHelper.accessor("amount", {
         id: "amount",
-        header: ({ column }) => <SortableHeader column={column} title="Amount" />,
+        header: ({ header }) => <SortableHeader header={header}>Amount</SortableHeader>,
         cell: ({ getValue }) => (
           <span className="font-mono font-semibold text-neutral-900">
             {formatCurrency(getValue())}
@@ -433,8 +434,8 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
   // Desktop view
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Desktop stats */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      {/* Desktop stats - commented out to match other tables */}
+      {/* <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Card className="p-4">
           <div className="text-sm text-neutral-500">Total Collected</div>
           <div className="font-mono font-bold text-xl">{formatCurrency(stats.total)}</div>
@@ -451,88 +452,125 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
           <div className="text-sm text-neutral-500">Pending</div>
           <div className="font-bold text-xl">{stats.pending}</div>
         </Card>
-      </div>
+      </div> */}
 
       {/* Toolbar */}
-      <Card className="p-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex-1 max-w-md">
-            <TableSearch
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Search payments..."
-            />
-          </div>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center space-x-3 flex-1 min-w-0">
+          <TableSearch
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search payments..."
+            className="min-w-[200px]"
+          />
 
-          <div className="flex gap-2">
-            <Select
-              value={filters.status || "all"}
-              onValueChange={(value) =>
-                setFilters({ ...filters, status: value === "all" ? undefined : (value as any) })
-              }
-            >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="Partial">Partial</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
-                <SelectItem value="Refunded">Refunded</SelectItem>
-              </SelectContent>
-            </Select>
+          <FilterPopover
+            isActive={!!filters.status}
+            content={
+              <div className="space-y-2">
+                <div className="text-sm font-medium">Payment Status</div>
+                <Select
+                  value={filters.status || "all"}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, status: value === "all" ? undefined : (value as any) })
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Partial">Partial</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Refunded">Refunded</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            }
+          >
+            Status
+          </FilterPopover>
 
-            <Select
-              value={filters.method || "all"}
-              onValueChange={(value) =>
-                setFilters({ ...filters, method: value === "all" ? undefined : (value as any) })
-              }
-            >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="All Methods" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Methods</SelectItem>
-                <SelectItem value="Cash">Cash</SelectItem>
-                <SelectItem value="GCash">GCash</SelectItem>
-                <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
-                <SelectItem value="Card">Card</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button variant="outline" onClick={handleExport}>
-              <Download className="h-4 w-4 mr-1" />
-              Export
-            </Button>
-          </div>
+          <FilterPopover
+            isActive={!!filters.method}
+            content={
+              <div className="space-y-2">
+                <div className="text-sm font-medium">Payment Method</div>
+                <Select
+                  value={filters.method || "all"}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, method: value === "all" ? undefined : (value as any) })
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Methods</SelectItem>
+                    <SelectItem value="Cash">Cash</SelectItem>
+                    <SelectItem value="GCash">GCash</SelectItem>
+                    <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
+                    <SelectItem value="Card">Card</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            }
+          >
+            Method
+          </FilterPopover>
         </div>
-      </Card>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExport}
+          disabled={exportPayments.isPending}
+        >
+          <Download className="mr-1 h-3 w-3" />
+          Export CSV
+        </Button>
+      </div>
 
       {/* Table */}
       <ResponsiveTable>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <div key={headerGroup.id} className="flex">
-            {headerGroup.headers.map((header) => (
-              <div key={header.id} className="flex-1" style={{ width: header.getSize() }}>
-                {header.isPlaceholder
-                  ? null
-                  : flexRender(header.column.columnDef.header, header.getContext())}
-              </div>
+        <table className="w-full">
+          <thead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    style={{ width: header.getSize() }}
+                    className="px-4 py-3 text-left text-xs font-medium tracking-wide text-neutral-700 uppercase"
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </th>
+                ))}
+              </tr>
             ))}
-          </div>
-        ))}
-
-        {table.getRowModel().rows.map((row) => (
-          <div key={row.id} className="flex">
-            {row.getVisibleCells().map((cell) => (
-              <div key={cell.id} className="flex-1" style={{ width: cell.column.getSize() }}>
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </div>
+          </thead>
+          <tbody>
+            {table.getRowModel().rows.map((row, index) => (
+              <tr
+                key={row.id}
+                className={cn(
+                  "h-10 border-b border-neutral-100 hover:bg-neutral-50",
+                  index % 2 === 0 && "bg-neutral-50/30"
+                )}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <td key={cell.id} className="px-4 text-sm text-neutral-900">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
             ))}
-          </div>
-        ))}
+          </tbody>
+        </table>
 
         {filteredPayments.length === 0 && (
           <div className="p-8">
@@ -558,7 +596,7 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
         )}
       </ResponsiveTable>
 
-      {/* Pagination */}
+      {/* Desktop pagination */}
       <TablePagination table={table} totalItems={filteredPayments.length} />
     </div>
   );

@@ -159,7 +159,8 @@ interface SortableHeaderProps {
 }
 
 export const SortableHeader: React.FC<SortableHeaderProps> = ({ header, children, className }) => {
-  if (!header.column.getCanSort()) {
+  // Safety check for header and column existence
+  if (!header || !header.column || !header.column.getCanSort()) {
     return <div className={cn("font-medium text-neutral-700", className)}>{children}</div>;
   }
 
