@@ -11,6 +11,7 @@ import {
   type ColumnFiltersState,
   type VisibilityState,
 } from "@tanstack/react-table";
+import { useResponsiveView } from "@/hooks";
 import { Edit2, Check, X, Settings, Eye, Download, Wrench } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -245,7 +246,9 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Use ultra-performant MediaQuery API for responsive detection
+  const { isMobile } = useResponsiveView();
 
   // Mutations
   const updateUnit = useUpdateUnit();
@@ -253,13 +256,6 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
 
   // Data
   const { data: units = [], isLoading, error } = useUnits();
-
-  // Handle window resize
-  React.useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   // Filter units based on search query
   const filteredUnits = useMemo(() => {

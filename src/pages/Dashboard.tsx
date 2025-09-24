@@ -1,4 +1,6 @@
+import { useMemo } from "react";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import { DashboardCalendar } from "@/components/dashboard/DashboardCalendar";
 import { BookingsTable } from "@/components/bookings/BookingsTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,29 +10,37 @@ import { format, addDays } from "date-fns";
 export function Dashboard() {
   const { data: bookings, isLoading } = useBookings();
 
-  // Get upcoming check-ins and check-outs
+  // Get upcoming check-ins and check-outs with memoization
   const today = new Date();
   const tomorrow = addDays(today, 1);
 
-  const upcomingCheckIns =
-    bookings?.filter((b) => {
+  const upcomingCheckIns = useMemo(() => {
+    if (!bookings) return [];
+
+    const tomorrowFormatted = format(tomorrow, "yyyy-MM-dd");
+    return bookings.filter((b) => {
       const checkIn = new Date(b.check_in);
       return (
-        format(checkIn, "yyyy-MM-dd") === format(tomorrow, "yyyy-MM-dd") &&
-        b.booking_status === "Confirmed"
+        format(checkIn, "yyyy-MM-dd") === tomorrowFormatted && b.booking_status === "Confirmed"
       );
-    }) || [];
+    });
+  }, [bookings, tomorrow]);
 
-  const upcomingCheckOuts =
-    bookings?.filter((b) => {
+  const upcomingCheckOuts = useMemo(() => {
+    if (!bookings) return [];
+
+    const tomorrowFormatted = format(tomorrow, "yyyy-MM-dd");
+    return bookings.filter((b) => {
       const checkOut = new Date(b.check_out);
       return (
-        format(checkOut, "yyyy-MM-dd") === format(tomorrow, "yyyy-MM-dd") &&
-        b.booking_status === "CheckedIn"
+        format(checkOut, "yyyy-MM-dd") === tomorrowFormatted && b.booking_status === "CheckedIn"
       );
-    }) || [];
+    });
+  }, [bookings, tomorrow]);
 
-  const recentBookings = bookings?.slice(0, 5) || [];
+  const recentBookings = useMemo(() => {
+    return bookings?.slice(0, 5) || [];
+  }, [bookings]);
 
   return (
     <div className="space-y-6">
@@ -42,6 +52,9 @@ export function Dashboard() {
 
       {/* Stats Cards */}
       <DashboardStats />
+
+      {/* Booking Calendar */}
+      <DashboardCalendar bookings={bookings} isLoading={isLoading} />
 
       {/* Main Content */}
       <div className="grid gap-6 lg:grid-cols-2">

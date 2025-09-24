@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { BookingsTable } from "@/components/bookings/BookingsTable";
 import { BookingForm } from "@/components/bookings/BookingForm";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,23 @@ function BookingsPage() {
     // Future: Could open a read-only view dialog
     console.log("View booking:", booking);
   };
+
+  // Memoize initial data for edit form to prevent re-initialization
+  const editFormInitialData = useMemo(() => {
+    if (!editingBooking) return null;
+
+    return {
+      guest_name: editingBooking.guest_name,
+      email: editingBooking.email,
+      contact_number: editingBooking.contact_number || "",
+      check_in: new Date(editingBooking.check_in),
+      check_out: new Date(editingBooking.check_out),
+      unit_id: editingBooking.unit_id,
+      num_guests: editingBooking.num_guests,
+      payment_method: (editingBooking.payment_method as PaymentMethod) || undefined,
+      special_requests: editingBooking.special_requests || "",
+    };
+  }, [editingBooking]);
 
   return (
     <ErrorBoundary level="page">
@@ -71,20 +88,10 @@ function BookingsPage() {
               <DialogTitle>Edit Booking</DialogTitle>
             </DialogHeader>
             <ErrorBoundary level="component">
-              {editingBooking && (
+              {editingBooking && editFormInitialData && (
                 <BookingForm
                   bookingId={editingBooking.booking_id}
-                  initialData={{
-                    guest_name: editingBooking.guest_name,
-                    email: editingBooking.email,
-                    contact_number: editingBooking.contact_number || "",
-                    check_in: new Date(editingBooking.check_in),
-                    check_out: new Date(editingBooking.check_out),
-                    unit_id: editingBooking.unit_id,
-                    num_guests: editingBooking.num_guests,
-                    payment_method: (editingBooking.payment_method as PaymentMethod) || undefined,
-                    special_requests: editingBooking.special_requests || "",
-                  }}
+                  initialData={editFormInitialData}
                   onSuccess={() => {
                     setShowEditDialog(false);
                     setEditingBooking(null);

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -11,6 +11,7 @@ import {
   type ColumnFiltersState,
   type VisibilityState,
 } from "@tanstack/react-table";
+import { useResponsiveView } from "@/hooks";
 import { CalendarDays, Upload, Eye, Edit, X, Download } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -182,7 +183,9 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
     to: undefined,
   });
   const [dateFilterOpen, setDateFilterOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Use ultra-performant responsive detection with MediaQuery API
+  const { isMobile } = useResponsiveView();
 
   // Mutations
   const updateBookingStatus = useUpdateBookingStatus();
@@ -193,12 +196,25 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
   // Data
   const { data: bookings = [], isLoading, error } = useBookings();
 
-  // Handle window resize
-  React.useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  // Memoize payment upload handler to prevent columns re-creation
+  const handleUploadPayment = useCallback(
+    (booking: Booking) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*,.pdf";
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          uploadPaymentProof.mutate({
+            bookingId: booking.booking_id,
+            file,
+          });
+        }
+      };
+      input.click();
+    },
+    [uploadPaymentProof]
+  );
 
   // Define columns
   const columns = useMemo(
@@ -342,25 +358,15 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
         size: 80,
       }),
     ],
-    [onViewBooking, onEditBooking, updateBookingStatus, cancelBooking, deleteBooking]
+    [
+      onViewBooking,
+      onEditBooking,
+      updateBookingStatus,
+      cancelBooking,
+      deleteBooking,
+      handleUploadPayment,
+    ]
   );
-
-  // Handle payment upload
-  const handleUploadPayment = (booking: Booking) => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*,.pdf";
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        uploadPaymentProof.mutate({
-          bookingId: booking.booking_id,
-          file,
-        });
-      }
-    };
-    input.click();
-  };
 
   // Export data with Philippine business compliance
   const handleExport = async () => {
@@ -438,18 +444,22 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
     }
   };
 
-  // Create table instance with properly typed data
+  // Memoize data transformation to prevent table re-initialization
   // Note: API response may not include all Unit properties, adding defaults
-  const typedBookings = bookings.map((booking) => ({
-    ...booking,
-    unit: booking.unit
-      ? {
-          ...booking.unit,
-          base_occupancy: booking.unit.base_occupancy || 1,
-          extra_person_rate: booking.unit.extra_person_rate || 0,
-        }
-      : undefined,
-  }));
+  const typedBookings = useMemo(
+    () =>
+      bookings.map((booking) => ({
+        ...booking,
+        unit: booking.unit
+          ? {
+              ...booking.unit,
+              base_occupancy: booking.unit.base_occupancy || 1,
+              extra_person_rate: booking.unit.extra_person_rate || 0,
+            }
+          : undefined,
+      })),
+    [bookings] // Only recalculate when bookings data changes
+  );
 
   const table = useReactTable({
     data: typedBookings,

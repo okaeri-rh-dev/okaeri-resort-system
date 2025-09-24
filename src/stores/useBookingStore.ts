@@ -200,8 +200,8 @@ export const useBookings = () => {
 
       return mergedData;
     },
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 300000, // 5 minutes - increased from 30s
+    // Removed refetchInterval - manual refresh preferred for dashboard
   });
 };
 
@@ -657,8 +657,8 @@ export const useUnitAvailabilityFast = (
       };
     },
     enabled: enabled && !!unitId && !!checkIn && !!checkOut,
-    staleTime: 60000, // 1 minute
-    refetchInterval: 30000, // 30 seconds for real-time updates
+    staleTime: 300000, // 5 minutes - availability doesn't change frequently
+    // Removed 30s refetch - users can manually check when needed
     retry: 2,
   });
 };
@@ -867,8 +867,8 @@ export const useAvailabilityCache = () => {
       if (error) throw new Error(handleSupabaseError(error));
       return data;
     },
-    staleTime: 30000, // 30 seconds
-    refetchInterval: 60000, // 1 minute
+    staleTime: 300000, // 5 minutes
+    // Removed auto-refetch to improve performance
     retry: 1,
   });
 
@@ -1249,8 +1249,8 @@ export const useBookingsNeedingAttention = (resortId = "resort-okaeri") => {
 
       return needingAttention;
     },
-    staleTime: 30000, // 30 seconds
-    refetchInterval: 60000, // 1 minute
+    staleTime: 300000, // 5 minutes
+    // Removed auto-refetch for better performance
   });
 };
 
@@ -1278,8 +1278,8 @@ export const useBookingWorkflowMetrics = (resortId = "resort-okaeri") => {
         estimatedMonthlyCost: data.summary?.estimatedMonthlyCost || 0,
       };
     },
-    staleTime: 60000, // 1 minute
-    refetchInterval: 120000, // 2 minutes
+    staleTime: 300000, // 5 minutes
+    // Removed refetch - summary data is relatively static
   });
 };
 

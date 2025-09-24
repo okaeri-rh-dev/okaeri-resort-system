@@ -13,6 +13,7 @@ import {
   type VisibilityState,
   type ExpandedState,
 } from "@tanstack/react-table";
+import { useResponsiveView } from "@/hooks";
 import {
   ChevronDown,
   ChevronRight,
@@ -222,8 +223,10 @@ export const GuestsTable: React.FC<GuestsTableProps> = ({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [expanded, setExpanded] = useState<ExpandedState>({});
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
+
+  // Use ultra-performant MediaQuery API for responsive detection
+  const { isMobile } = useResponsiveView();
 
   // Mutations
   const exportGuests = useExportGuests();
@@ -231,13 +234,6 @@ export const GuestsTable: React.FC<GuestsTableProps> = ({
 
   // Data
   const { data: guests = [], isLoading, error } = useGuests();
-
-  // Handle window resize
-  React.useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   // Contact actions
   const handleEmail = (guest: Guest) => {

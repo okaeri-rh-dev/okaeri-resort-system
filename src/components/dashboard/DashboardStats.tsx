@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBookings, useGuests, useUnits } from "@/stores";
 import { Building2, Calendar, TrendingUp, Users } from "lucide-react";
@@ -17,8 +18,10 @@ export function DashboardStats() {
 
   const isLoading = unitsLoading || bookingsLoading || guestsLoading;
 
-  // Calculate basic Phase 1 statistics
-  const calculateStats = (): StatCard[] => {
+  // Calculate basic Phase 1 statistics with memoization
+  const stats = useMemo((): StatCard[] => {
+    if (isLoading) return [];
+
     // Available units (basic count)
     const availableUnits = units?.filter((u) => u.unit_status === "Available").length || 0;
     const totalUnits = units?.length || 0;
@@ -58,9 +61,7 @@ export function DashboardStats() {
         icon: Users,
       },
     ];
-  };
-
-  const stats = isLoading ? [] : calculateStats();
+  }, [units, bookings, guests, isLoading]);
 
   if (isLoading) {
     return <DashboardStatsSkeleton cardCount={4} />;

@@ -11,6 +11,7 @@ import {
   type ColumnFiltersState,
   type VisibilityState,
 } from "@tanstack/react-table";
+import { useResponsiveView } from "@/hooks";
 import { Download, Eye, Edit, Receipt } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -70,7 +71,9 @@ export const ExpensesTable: React.FC<ExpensesTableProps> = ({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Use ultra-performant MediaQuery API for responsive detection
+  const { isMobile } = useResponsiveView();
 
   // Mutations
   const deleteExpense = useDeleteExpense();
@@ -78,13 +81,6 @@ export const ExpensesTable: React.FC<ExpensesTableProps> = ({
 
   // Data
   const { data: expenses = [], error } = useExpenses();
-
-  // Handle window resize
-  React.useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   const handleDelete = async (expense: Expense) => {
     if (!confirm(`Are you sure you want to delete this expense: ${expense.description}?`)) {

@@ -11,6 +11,7 @@ import {
   type ColumnFiltersState,
   type VisibilityState,
 } from "@tanstack/react-table";
+import { useResponsiveView } from "@/hooks";
 import { Download, Edit } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -72,7 +73,9 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Use ultra-performant MediaQuery API for responsive detection
+  const { isMobile } = useResponsiveView();
 
   // Mutations
   const deletePayment = useDeletePayment();
@@ -86,13 +89,6 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
   const filteredPayments = bookingId
     ? payments.filter((p) => p.booking_id === bookingId)
     : payments;
-
-  // Handle window resize
-  React.useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   const handleDelete = async (payment: Payment) => {
     if (

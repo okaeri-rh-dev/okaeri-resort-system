@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, Users, CreditCard, CheckCircle } from "lucide-react";
-import { format } from "date-fns";
+import { format, differenceInDays, eachDayOfInterval } from "date-fns";
 import { toast } from "sonner";
 
 import {
@@ -97,50 +97,58 @@ export function BookingForm({
     reValidateMode: "onBlur",
   });
 
-  const watchedValues = form.watch();
-  const selectedUnit = units?.find((unit) => unit.unit_id === watchedValues.unit_id);
+  // Watch only specific fields to prevent excessive re-renders
+  const unitId = form.watch("unit_id");
+  const checkIn = form.watch("check_in");
+  const checkOut = form.watch("check_out");
+  const numGuests = form.watch("num_guests");
+  const guestName = form.watch("guest_name");
+  const email = form.watch("email");
+  const contactNumber = form.watch("contact_number");
+  const paymentMethod = form.watch("payment_method");
+  const specialRequests = form.watch("special_requests");
 
-  // Calculate total amount when unit or dates change
+  const selectedUnit = units?.find((unit) => unit.unit_id === unitId);
+
+  // Memoize expensive total calculation
+  const calculatedTotalMemoized = useMemo(() => {
+    if (!selectedUnit || !checkIn || !checkOut) return 0;
+
+    // Use date-fns for efficient date calculations
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    const nights = differenceInDays(checkOutDate, checkInDate);
+
+    if (nights <= 0) return 0;
+
+    // Efficiently calculate weekend nights using date-fns
+    const allDates = eachDayOfInterval({
+      start: checkInDate,
+      end: new Date(checkOutDate.getTime() - 24 * 60 * 60 * 1000), // Exclude checkout day
+    });
+
+    const weekendNights = allDates.filter((date) => {
+      const day = date.getDay();
+      return day === 5 || day === 6; // Friday or Saturday
+    }).length;
+
+    const weekdayNights = nights - weekendNights;
+
+    // Calculate base total
+    const baseTotal =
+      weekdayNights * selectedUnit.base_rate + weekendNights * selectedUnit.weekend_rate;
+
+    // Calculate extra person charges
+    const extraPersons = Math.max(0, (numGuests || 0) - selectedUnit.base_occupancy);
+    const extraPersonCharge = extraPersons * selectedUnit.extra_person_rate * nights;
+
+    return baseTotal + extraPersonCharge;
+  }, [selectedUnit, checkIn, checkOut, numGuests]);
+
+  // Update state only when memoized value changes
   useEffect(() => {
-    if (selectedUnit && watchedValues.check_in && watchedValues.check_out) {
-      const checkIn = new Date(watchedValues.check_in);
-      const checkOut = new Date(watchedValues.check_out);
-      const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-
-      if (nights > 0) {
-        // Calculate weekend and weekday nights
-        let weekendNights = 0;
-        let weekdayNights = 0;
-
-        for (let i = 0; i < nights; i++) {
-          const currentDate = new Date(checkIn);
-          currentDate.setDate(currentDate.getDate() + i);
-          const dayOfWeek = currentDate.getDay();
-
-          if (dayOfWeek === 5 || dayOfWeek === 6) {
-            // Friday or Saturday
-            weekendNights++;
-          } else {
-            weekdayNights++;
-          }
-        }
-
-        // Calculate base total
-        const baseTotal =
-          weekdayNights * selectedUnit.base_rate + weekendNights * selectedUnit.weekend_rate;
-
-        // Calculate extra person charges
-        const extraPersons = Math.max(
-          0,
-          (watchedValues.num_guests || 0) - selectedUnit.base_occupancy
-        );
-        const extraPersonCharge = extraPersons * selectedUnit.extra_person_rate * nights;
-
-        const total = baseTotal + extraPersonCharge;
-        setCalculatedTotal(total);
-      }
-    }
-  }, [selectedUnit, watchedValues.check_in, watchedValues.check_out, watchedValues.num_guests]);
+    setCalculatedTotal(calculatedTotalMemoized);
+  }, [calculatedTotalMemoized]);
 
   const validateStep = async (step: FormStep): Promise<boolean> => {
     const values = form.getValues();
@@ -200,7 +208,7 @@ export function BookingForm({
   };
 
   const checkAvailability = async () => {
-    if (!selectedUnit || !watchedValues.check_in || !watchedValues.check_out) return;
+    if (!selectedUnit || !checkIn || !checkOut) return;
 
     setIsCheckingAvailability(true);
     try {
@@ -371,7 +379,7 @@ export function BookingForm({
                     mode="single"
                     selected={field.value}
                     onSelect={field.onChange}
-                    disabled={(date) => date <= watchedValues.check_in}
+                    disabled={(date) => date <= checkIn}
                     initialFocus
                     className="touch-manipulation"
                   />
@@ -433,8 +441,7 @@ export function BookingForm({
                 <span>Nights:</span>
                 <span>
                   {Math.ceil(
-                    (new Date(watchedValues.check_out).getTime() -
-                      new Date(watchedValues.check_in).getTime()) /
+                    (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
                       (1000 * 60 * 60 * 24)
                   )}
                 </span>
@@ -600,19 +607,19 @@ export function BookingForm({
             </div>
             <div>
               <h4 className="font-medium">Check-in</h4>
-              <p className="text-muted-foreground">{format(watchedValues.check_in, "PPP")}</p>
+              <p className="text-muted-foreground">{format(checkIn, "PPP")}</p>
             </div>
             <div>
               <h4 className="font-medium">Check-out</h4>
-              <p className="text-muted-foreground">{format(watchedValues.check_out, "PPP")}</p>
+              <p className="text-muted-foreground">{format(checkOut, "PPP")}</p>
             </div>
             <div>
               <h4 className="font-medium">Guests</h4>
-              <p className="text-muted-foreground">{watchedValues.num_guests}</p>
+              <p className="text-muted-foreground">{numGuests}</p>
             </div>
             <div>
               <h4 className="font-medium">Payment</h4>
-              <p className="text-muted-foreground">{watchedValues.payment_method}</p>
+              <p className="text-muted-foreground">{paymentMethod}</p>
             </div>
           </div>
 
@@ -621,18 +628,18 @@ export function BookingForm({
           <div>
             <h4 className="font-medium">Guest Information</h4>
             <div className="mt-2 space-y-1">
-              <p className="text-muted-foreground">{watchedValues.guest_name}</p>
-              <p className="text-muted-foreground">{watchedValues.email}</p>
-              <p className="text-muted-foreground">{watchedValues.contact_number}</p>
+              <p className="text-muted-foreground">{guestName}</p>
+              <p className="text-muted-foreground">{email}</p>
+              <p className="text-muted-foreground">{contactNumber}</p>
             </div>
           </div>
 
-          {watchedValues.special_requests && (
+          {specialRequests && (
             <>
               <Separator />
               <div>
                 <h4 className="font-medium">Special Requests</h4>
-                <p className="text-muted-foreground mt-2">{watchedValues.special_requests}</p>
+                <p className="text-muted-foreground mt-2">{specialRequests}</p>
               </div>
             </>
           )}
@@ -641,28 +648,24 @@ export function BookingForm({
 
           <div className="space-y-2">
             <h4 className="font-medium">Pricing Breakdown</h4>
-            {selectedUnit && watchedValues.check_in && watchedValues.check_out && (
+            {selectedUnit && checkIn && checkOut && (
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
                     Room rate (
-                    {Math.ceil(
-                      (watchedValues.check_out.getTime() - watchedValues.check_in.getTime()) /
-                        (1000 * 60 * 60 * 24)
-                    )}{" "}
+                    {Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))}{" "}
                     nights)
                   </span>
                   <span>
                     {formatCurrency(
                       (() => {
                         const nights = Math.ceil(
-                          (watchedValues.check_out.getTime() - watchedValues.check_in.getTime()) /
-                            (1000 * 60 * 60 * 24)
+                          (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
                         );
                         let weekdayNights = 0;
                         let weekendNights = 0;
                         for (let i = 0; i < nights; i++) {
-                          const currentDate = new Date(watchedValues.check_in);
+                          const currentDate = new Date(checkIn);
                           currentDate.setDate(currentDate.getDate() + i);
                           const dayOfWeek = currentDate.getDay();
                           if (dayOfWeek === 5 || dayOfWeek === 6) {
@@ -679,19 +682,18 @@ export function BookingForm({
                     )}
                   </span>
                 </div>
-                {watchedValues.num_guests > selectedUnit.base_occupancy && (
+                {numGuests > selectedUnit.base_occupancy && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
-                      Extra person ({watchedValues.num_guests - selectedUnit.base_occupancy} ×{" "}
+                      Extra person ({numGuests - selectedUnit.base_occupancy} ×{" "}
                       {formatCurrency(selectedUnit.extra_person_rate)})
                     </span>
                     <span>
                       {formatCurrency(
-                        (watchedValues.num_guests - selectedUnit.base_occupancy) *
+                        (numGuests - selectedUnit.base_occupancy) *
                           selectedUnit.extra_person_rate *
                           Math.ceil(
-                            (watchedValues.check_out.getTime() - watchedValues.check_in.getTime()) /
-                              (1000 * 60 * 60 * 24)
+                            (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
                           )
                       )}
                     </span>
