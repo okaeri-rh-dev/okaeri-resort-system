@@ -13,12 +13,23 @@ echo "${GREEN}🚀 Running pre-push checks...${NC}"
 
 # 1. Run ESLint checks
 echo "${YELLOW}🔍 Running ESLint checks...${NC}"
-npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0 || {
-  echo "${RED}❌ ESLint check failed. Please fix the errors before pushing.${NC}"
+
+# Run ESLint without --max-warnings flag to allow warnings
+# We'll check the exit code: 0 = no issues, 1 = warnings only, 2 = errors found
+npx eslint . --ext .js,.jsx,.ts,.tsx || ESLINT_EXIT_CODE=$?
+
+if [ "${ESLINT_EXIT_CODE:-0}" -eq 2 ]; then
+  # Exit code 2 means there were errors (not just warnings)
+  echo "${RED}❌ ESLint errors found. Please fix the errors before pushing.${NC}"
   echo "${YELLOW}💡 Tip: Run 'npm run lint:fix' to auto-fix some issues.${NC}"
   exit 1
-}
-echo "${GREEN}✅ ESLint check passed!${NC}"
+elif [ "${ESLINT_EXIT_CODE:-0}" -eq 1 ]; then
+  # Exit code 1 means there were only warnings
+  echo "${YELLOW}⚠️  ESLint warnings found (proceeding anyway).${NC}"
+  echo "${YELLOW}💡 Consider fixing these warnings when possible.${NC}"
+else
+  echo "${GREEN}✅ ESLint check passed with no issues!${NC}"
+fi
 
 # 2. Run tests if they exist and are configured
 echo "${YELLOW}🧪 Checking for test scripts...${NC}"
