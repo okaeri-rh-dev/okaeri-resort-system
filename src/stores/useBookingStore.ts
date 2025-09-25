@@ -13,6 +13,21 @@ import type {
 // import { useWorkflowStore } from "./useWorkflowStore"; // Phase 3-4
 
 // ============================================
+// TYPES & INTERFACES
+// ============================================
+interface OptimisticEntry {
+  booking: Booking;
+  timestamp: number;
+}
+
+// ============================================
+// CONSTANTS
+// ============================================
+const OPTIMISTIC_TTL = 5 * 60 * 1000; // 5 minutes
+const MAX_OPTIMISTIC_ENTRIES = 100;
+const CLEANUP_INTERVAL = 60 * 1000; // 1 minute
+
+// ============================================
 // ZUSTAND STORE
 // ============================================
 interface BookingStore {
@@ -31,12 +46,18 @@ interface BookingStore {
   setSortOrder: (order: "asc" | "desc") => void;
   setSearchQuery: (query: string) => void;
 
-  // Optimistic updates
-  optimisticBookings: Map<string, Booking>;
+  // Optimistic updates with TTL
+  optimisticBookings: Map<string, OptimisticEntry>;
   addOptimisticBooking: (booking: Booking) => void;
   updateOptimisticBooking: (bookingId: string, updates: Partial<Booking>) => void;
   removeOptimisticBooking: (bookingId: string) => void;
   clearOptimisticBookings: () => void;
+
+  // Memory management
+  cleanupInterval: NodeJS.Timeout | null;
+  startCleanupTimer: () => void;
+  stopCleanupTimer: () => void;
+  cleanupExpiredEntries: () => void;
 
   // Table state (for TanStack Table)
   tableState: Partial<TableState>;
@@ -46,7 +67,7 @@ interface BookingStore {
 export const useBookingStore = create<BookingStore>()(
   devtools(
     persist(
-      (set) => ({
+      (set, get) => ({
         // Initial state
         selectedBooking: null,
         filters: {},
@@ -54,6 +75,7 @@ export const useBookingStore = create<BookingStore>()(
         sortOrder: "desc",
         searchQuery: "",
         optimisticBookings: new Map(),
+        cleanupInterval: null,
         tableState: {
           pagination: { pageIndex: 0, pageSize: 10 },
         },
@@ -74,7 +96,24 @@ export const useBookingStore = create<BookingStore>()(
         addOptimisticBooking: (booking) =>
           set((state) => {
             const newMap = new Map(state.optimisticBookings);
-            newMap.set(booking.booking_id, booking);
+
+            // Add with timestamp
+            newMap.set(booking.booking_id, {
+              booking,
+              timestamp: Date.now(),
+            });
+
+            // Enforce size limit - remove oldest if exceeded
+            if (newMap.size > MAX_OPTIMISTIC_ENTRIES) {
+              const sortedEntries = Array.from(newMap.entries()).sort(
+                (a, b) => a[1].timestamp - b[1].timestamp
+              );
+
+              // Remove oldest entries
+              const entriesToRemove = sortedEntries.slice(0, newMap.size - MAX_OPTIMISTIC_ENTRIES);
+              entriesToRemove.forEach(([id]) => newMap.delete(id));
+            }
+
             return { optimisticBookings: newMap };
           }),
 
@@ -83,7 +122,10 @@ export const useBookingStore = create<BookingStore>()(
             const newMap = new Map(state.optimisticBookings);
             const existing = newMap.get(bookingId);
             if (existing) {
-              newMap.set(bookingId, { ...existing, ...updates });
+              newMap.set(bookingId, {
+                booking: { ...existing.booking, ...updates },
+                timestamp: Date.now(), // Update timestamp on modification
+              });
             }
             return { optimisticBookings: newMap };
           }),
@@ -96,6 +138,45 @@ export const useBookingStore = create<BookingStore>()(
           }),
 
         clearOptimisticBookings: () => set({ optimisticBookings: new Map() }),
+
+        // Memory management methods
+        startCleanupTimer: () => {
+          const interval = setInterval(() => {
+            const state = get();
+            state.cleanupExpiredEntries();
+          }, CLEANUP_INTERVAL);
+
+          set({ cleanupInterval: interval });
+        },
+
+        stopCleanupTimer: () => {
+          const state = get();
+          if (state.cleanupInterval) {
+            clearInterval(state.cleanupInterval);
+            set({ cleanupInterval: null });
+          }
+        },
+
+        cleanupExpiredEntries: () => {
+          set((state) => {
+            const now = Date.now();
+            const newMap = new Map<string, OptimisticEntry>();
+
+            // Keep only entries within TTL
+            state.optimisticBookings.forEach((entry, id) => {
+              if (now - entry.timestamp < OPTIMISTIC_TTL) {
+                newMap.set(id, entry);
+              }
+            });
+
+            // Only update if entries were removed
+            if (newMap.size !== state.optimisticBookings.size) {
+              return { optimisticBookings: newMap };
+            }
+
+            return state;
+          });
+        },
 
         setTableState: (state) =>
           set((prevState) => ({
@@ -192,11 +273,10 @@ export const useBookings = () => {
 
       // Merge with optimistic updates
       const mergedData =
-        data?.map((booking) =>
-          optimisticBookings.has(booking.booking_id)
-            ? { ...booking, ...optimisticBookings.get(booking.booking_id) }
-            : booking
-        ) || [];
+        data?.map((booking) => {
+          const optimisticEntry = optimisticBookings.get(booking.booking_id);
+          return optimisticEntry ? { ...booking, ...optimisticEntry.booking } : booking;
+        }) || [];
 
       return mergedData;
     },
@@ -407,8 +487,10 @@ export const useUpdatePaymentStatus = () => {
       paymentStatus: PaymentStatus;
       paymentMethod?: string;
     }) => {
-      const updates: any = { payment_status: paymentStatus };
-      if (paymentMethod) updates.payment_method = paymentMethod;
+      const updates: Partial<Booking> = { payment_status: paymentStatus };
+      if (paymentMethod) {
+        updates.payment_method = paymentMethod;
+      }
 
       const { data, error } = await db.bookings.update(bookingId, updates);
       if (error) throw new Error(handleSupabaseError(error));
@@ -423,7 +505,9 @@ export const useUpdatePaymentStatus = () => {
         payment_status: paymentStatus,
         updated_at: new Date().toISOString(),
       };
-      if (paymentMethod) updates.payment_method = paymentMethod as any;
+      if (paymentMethod) {
+        updates.payment_method = paymentMethod;
+      }
 
       updateOptimistic(bookingId, updates);
 

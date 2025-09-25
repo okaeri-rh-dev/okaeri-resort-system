@@ -83,6 +83,7 @@ export interface Payment {
   payment_status?: PaymentStatus;
   payment_date: string;
   proof_url?: string | null;
+  receipt_url?: string | null;
   reference_number?: string | null;
   notes?: string | null;
   verified_at?: string | null;

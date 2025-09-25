@@ -20,20 +20,31 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+// Type for PostgrestError from Supabase
+interface PostgrestError {
+  message: string;
+  details?: string;
+  hint?: string;
+  code?: string;
+}
+
 // Helper function to handle Supabase errors
-export const handleSupabaseError = (error: any): string => {
-  if (error?.message) {
+export const handleSupabaseError = (error: PostgrestError | Error | unknown): string => {
+  // Type guard for PostgrestError
+  if (error && typeof error === "object" && "message" in error) {
+    const postgrestError = error as PostgrestError;
+
     // Handle specific Supabase error codes
-    if (error.code === "23505") {
+    if (postgrestError.code === "23505") {
       return "This record already exists. Please check for duplicates.";
     }
-    if (error.code === "23503") {
+    if (postgrestError.code === "23503") {
       return "Cannot perform this operation due to related records.";
     }
-    if (error.code === "23514") {
+    if (postgrestError.code === "23514") {
       return "Invalid data provided. Please check your input.";
     }
-    return error.message;
+    return postgrestError.message;
   }
   return "An unexpected error occurred. Please try again.";
 };

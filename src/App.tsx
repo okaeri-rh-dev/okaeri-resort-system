@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { QueryProvider } from "@/providers/QueryProvider";
-import { initializeTheme } from "@/stores";
+import { initializeTheme, useBookingStore } from "@/stores";
 import { auth } from "@/lib/auth";
 import { routeTree } from "@/routeTree.gen";
 import type { RouterContext } from "@/routes/__root";
@@ -64,6 +64,10 @@ function App() {
 
     checkAuth();
 
+    // Initialize optimistic bookings cleanup timer
+    const { startCleanupTimer, stopCleanupTimer } = useBookingStore.getState();
+    startCleanupTimer();
+
     // Listen for auth state changes
     const handleAuthChange = (event: CustomEvent) => {
       const newAuthState = event.detail.isAuthenticated;
@@ -83,6 +87,8 @@ function App() {
 
     return () => {
       window.removeEventListener("authStateChange" as any, handleAuthChange);
+      // Cleanup the optimistic bookings timer
+      stopCleanupTimer();
     };
   }, []);
 

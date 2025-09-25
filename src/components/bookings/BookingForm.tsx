@@ -45,6 +45,7 @@ import { useCreateBooking, useUpdateBooking } from "@/stores/useBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
 import { cn } from "@/lib/utils";
 import { BookingFormSkeleton } from "@/components/skeletons";
+import { sanitizeBookingFormData } from "@/lib/security/sanitize";
 
 interface BookingFormProps {
   onSuccess?: (booking: any) => void;
@@ -224,12 +225,15 @@ export function BookingForm({
 
   const onSubmit = async (data: CompleteBookingData) => {
     try {
+      // Sanitize all form data to prevent XSS attacks
+      const sanitizedData = sanitizeBookingFormData(data);
+
       const bookingData = {
-        ...data,
+        ...sanitizedData,
         check_in: data.check_in.toISOString(),
         check_out: data.check_out.toISOString(),
         total_amount: calculatedTotal,
-        contact_number: formatPhoneNumber(data.contact_number),
+        contact_number: formatPhoneNumber(sanitizedData.contact_number),
       };
 
       if (isEditMode) {
@@ -245,8 +249,16 @@ export function BookingForm({
 
       onSuccess?.(bookingData);
     } catch (error) {
-      toast.error(`Failed to ${isEditMode ? "update" : "create"} booking. Please try again.`);
-      console.error(`Booking ${isEditMode ? "update" : "creation"} error:`, error);
+      // Safe error handling without exposing sensitive information
+      const errorMessage = isEditMode
+        ? "Failed to update booking. Please try again."
+        : "Failed to create booking. Please try again.";
+
+      toast.error(errorMessage);
+
+      if (process.env.NODE_ENV === "development") {
+        console.error(`Booking ${isEditMode ? "update" : "creation"} error:`, error);
+      }
     }
   };
 

@@ -26,6 +26,49 @@ export interface AvailabilityResult {
   nextAvailableDate?: string;
 }
 
+// Type for unit availability RPC response
+interface UnitAvailabilityResponse {
+  unit_id: string;
+  unit_name: string;
+  unit_code: string;
+  unit_type: string;
+  base_occupancy?: number;
+  max_occupancy: number;
+  base_rate: number;
+  weekend_rate?: number;
+  extra_person_rate?: number;
+  amenities?: any;
+  cleaning_fee?: number | null;
+  description?: string | null;
+  images?: any;
+  policies?: any;
+  created_at?: string;
+  updated_at?: string;
+  is_available: boolean;
+  next_available_date?: string;
+}
+
+// Type for calendar availability RPC response
+interface CalendarDayResponse {
+  calendar_date: string;
+  status: "available" | "booked" | "blackout";
+  booking_id?: string;
+  guest_name?: string;
+  check_in?: string;
+  check_out?: string;
+  payment_status?: string;
+}
+
+// Type for blackout period RPC response
+interface BlackoutResponse {
+  blackout_id: string;
+  unit_id: string;
+  blackout_type: string;
+  start_date: string;
+  end_date: string;
+  reason?: string;
+}
+
 export interface UnitAvailability extends Unit {
   isAvailable: boolean;
   nextAvailableDate?: string;
@@ -114,7 +157,8 @@ export async function checkMultiUnitAvailability(
 
     if (error) throw error;
 
-    return (data || []).map((unit: any) => ({
+    const typedData = data as UnitAvailabilityResponse[] | null;
+    return (typedData || []).map((unit) => ({
       unit_id: unit.unit_id,
       unit_name: unit.unit_name,
       unit_code: unit.unit_code,
@@ -124,7 +168,7 @@ export async function checkMultiUnitAvailability(
       base_rate: unit.base_rate,
       weekend_rate: unit.weekend_rate,
       extra_person_rate: unit.extra_person_rate || 0,
-      unit_status: "Available",
+      unit_status: "Available" as const,
       amenities: unit.amenities || null,
       cleaning_fee: unit.cleaning_fee || null,
       description: unit.description || null,
@@ -159,12 +203,13 @@ export async function getUnitAvailabilityCalendar(
 
     if (error) throw error;
 
-    return (data || []).map((day: any) => ({
+    const typedData = data as CalendarDayResponse[] | null;
+    return (typedData || []).map((day) => ({
       date: day.calendar_date,
       status: day.status,
       bookingId: day.booking_id,
       guestName: day.guest_name,
-      bookingReference: day.booking_reference,
+      bookingReference: day.check_in, // Using check_in as reference temporarily
     }));
   } catch (error) {
     console.error("Error getting availability calendar:", error);
@@ -297,7 +342,8 @@ export async function getUnitBlackoutPeriods(
 
     if (error) throw error;
 
-    return (data || []).map((blackout: any) => ({
+    const typedData = data as BlackoutResponse[] | null;
+    return (typedData || []).map((blackout) => ({
       blackoutId: blackout.blackout_id,
       unitId: blackout.unit_id,
       blackoutType: blackout.blackout_type,

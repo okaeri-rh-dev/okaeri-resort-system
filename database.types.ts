@@ -281,34 +281,46 @@ export type Database = {
           amount: number;
           booking_id: string;
           created_at: string;
+          notes?: string | null;
+          payment_date: string;
           payment_id: string;
           payment_method: Database["public"]["Enums"]["payment_method"];
           payment_status: Database["public"]["Enums"]["payment_status"];
+          proof_url?: string | null;
           receipt_url: string | null;
           reference_number: string | null;
           transaction_date: string;
+          verified_at?: string | null;
         };
         Insert: {
           amount: number;
           booking_id: string;
           created_at?: string;
+          notes?: string | null;
+          payment_date?: string;
           payment_id?: string;
           payment_method: Database["public"]["Enums"]["payment_method"];
           payment_status: Database["public"]["Enums"]["payment_status"];
+          proof_url?: string | null;
           receipt_url?: string | null;
           reference_number?: string | null;
           transaction_date: string;
+          verified_at?: string | null;
         };
         Update: {
           amount?: number;
           booking_id?: string;
           created_at?: string;
+          notes?: string | null;
+          payment_date?: string;
           payment_id?: string;
           payment_method?: Database["public"]["Enums"]["payment_method"];
           payment_status?: Database["public"]["Enums"]["payment_status"];
+          proof_url?: string | null;
           receipt_url?: string | null;
           reference_number?: string | null;
           transaction_date?: string;
+          verified_at?: string | null;
         };
         Relationships: [
           {
@@ -323,10 +335,12 @@ export type Database = {
       units: {
         Row: {
           amenities: string[] | null;
+          base_occupancy: number;
           base_rate: number;
           cleaning_fee: number | null;
           created_at: string;
           description: string | null;
+          extra_person_rate: number;
           images: string[] | null;
           max_occupancy: number;
           policies: string[] | null;
@@ -340,10 +354,12 @@ export type Database = {
         };
         Insert: {
           amenities?: string[] | null;
+          base_occupancy?: number;
           base_rate: number;
           cleaning_fee?: number | null;
           created_at?: string;
           description?: string | null;
+          extra_person_rate?: number;
           images?: string[] | null;
           max_occupancy: number;
           policies?: string[] | null;
@@ -357,10 +373,12 @@ export type Database = {
         };
         Update: {
           amenities?: string[] | null;
+          base_occupancy?: number;
           base_rate?: number;
           cleaning_fee?: number | null;
           created_at?: string;
           description?: string | null;
+          extra_person_rate?: number;
           images?: string[] | null;
           max_occupancy?: number;
           policies?: string[] | null;

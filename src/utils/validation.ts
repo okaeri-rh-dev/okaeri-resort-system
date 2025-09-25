@@ -4,11 +4,20 @@
  * Comprehensive validation system for guest information, booking constraints,
  * payment validation, and Philippine business compliance requirements.
  *
+ * Enhanced with XSS prevention through DOMPurify integration.
+ *
  * @module BusinessValidation
  */
 
 import type { Guest, Booking, BookingFormData, Unit, PaymentStatus } from "@/types";
 import { getPhilippineTime, analyzeBookingPeriod } from "./date-helpers";
+import {
+  sanitizeText,
+  sanitizeEmail as secureSanitizeEmail,
+  sanitizePhoneNumber,
+  sanitizeName,
+  sanitizeFormData as secureSanitizeFormData,
+} from "@/lib/security/sanitize";
 
 // ============================================
 // TYPE DEFINITIONS
@@ -333,6 +342,7 @@ export const isCommonEmailDomain = (email: string): boolean => {
 
 /**
  * Sanitizes guest data by removing potentially harmful content
+ * Enhanced with DOMPurify for XSS prevention
  *
  * @param guestData - Guest data to sanitize
  * @returns Sanitized guest data
@@ -340,19 +350,28 @@ export const isCommonEmailDomain = (email: string): boolean => {
 export const sanitizeGuestData = (guestData: Partial<Guest>): Guest => {
   const sanitized = { ...guestData };
 
-  // Trim and clean text fields
+  // Use secure sanitization for text fields
   if (sanitized.guest_name) {
-    sanitized.guest_name = sanitized.guest_name.trim();
+    sanitized.guest_name = sanitizeName(sanitized.guest_name);
   }
 
   if (sanitized.email) {
-    sanitized.email = sanitized.email.trim().toLowerCase();
+    sanitized.email = secureSanitizeEmail(sanitized.email);
   }
 
   if (sanitized.phone_number) {
-    // Normalize phone number format
-    sanitized.phone_number = normalizePhilippinePhoneNumber(sanitized.phone_number);
+    // First sanitize, then normalize format
+    const cleaned = sanitizePhoneNumber(sanitized.phone_number);
+    sanitized.phone_number = normalizePhilippinePhoneNumber(cleaned);
   }
+
+  // Sanitize any additional text fields
+  const textFields = ["notes", "address", "company"] as const;
+  textFields.forEach((field) => {
+    if (field in sanitized && typeof sanitized[field as keyof Guest] === "string") {
+      (sanitized as any)[field] = sanitizeText((sanitized as any)[field]);
+    }
+  });
 
   return sanitized as Guest;
 };
