@@ -210,3 +210,5 @@ jest-coverage/
 src/routeTree.gen.ts
 
 docs/sample-ui
+
+bundle-stats.html

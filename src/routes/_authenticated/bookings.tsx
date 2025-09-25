@@ -1,7 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
-import { BookingsTable } from "@/components/bookings/BookingsTable";
-import { BookingForm } from "@/components/bookings/BookingForm";
+import { useState, useMemo, lazy, Suspense } from "react";
+
+// Lazy load heavy components
+const BookingsTable = lazy(() =>
+  import("@/components/bookings/BookingsTable").then((m) => ({ default: m.BookingsTable }))
+);
+const BookingForm = lazy(() =>
+  import("@/components/bookings/BookingForm").then((m) => ({ default: m.BookingForm }))
+);
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -63,7 +69,15 @@ function BookingsPage() {
         </div>
 
         <ErrorBoundary level="component">
-          <BookingsTable onViewBooking={handleViewBooking} onEditBooking={handleEditBooking} />
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+              </div>
+            }
+          >
+            <BookingsTable onViewBooking={handleViewBooking} onEditBooking={handleEditBooking} />
+          </Suspense>
         </ErrorBoundary>
 
         {/* New Booking Dialog */}
@@ -73,10 +87,18 @@ function BookingsPage() {
               <DialogTitle>Create New Booking</DialogTitle>
             </DialogHeader>
             <ErrorBoundary level="component">
-              <BookingForm
-                onSuccess={() => setShowBookingForm(false)}
-                onCancel={() => setShowBookingForm(false)}
-              />
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                  </div>
+                }
+              >
+                <BookingForm
+                  onSuccess={() => setShowBookingForm(false)}
+                  onCancel={() => setShowBookingForm(false)}
+                />
+              </Suspense>
             </ErrorBoundary>
           </DialogContent>
         </Dialog>

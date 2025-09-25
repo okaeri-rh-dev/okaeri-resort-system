@@ -113,14 +113,14 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
   };
 
   const handleExport = () => {
-    exportPayments.mutate();
+    exportPayments.mutate(undefined);
   };
 
   // Define columns
   const columns = useMemo(
     () => [
-      columnHelper.accessor("transaction_date", {
-        id: "transaction_date",
+      columnHelper.accessor("payment_date", {
+        id: "payment_date",
         header: ({ header }) => <SortableHeader header={header}>Date</SortableHeader>,
         cell: ({ getValue }) => formatTableDate(getValue()),
         size: 100,
@@ -190,7 +190,7 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
                 status === "Completed"
                   ? "default"
                   : status === "Partial"
-                    ? "warning"
+                    ? "secondary"
                     : status === "Refunded"
                       ? "destructive"
                       : "default"
@@ -275,10 +275,8 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
   );
 
   // Transform payments data to match Payment interface
-  const typedPayments = filteredPayments.map((payment) => ({
-    ...payment,
-    payment_date: payment.transaction_date, // Map transaction_date to payment_date for compatibility
-  }));
+  // Cast to Payment type as the booking relation has partial data only
+  const typedPayments = filteredPayments as Payment[];
 
   // Create table instance
   const table = useReactTable({
@@ -375,7 +373,7 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
                       payment.payment_status === "Completed"
                         ? "default"
                         : payment.payment_status === "Partial"
-                          ? "warning"
+                          ? "secondary"
                           : "default"
                     }
                   />

@@ -1,5 +1,5 @@
 import React from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, type QueryKey } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 // ============================================
@@ -177,11 +177,14 @@ export const invalidateQueries = {
   },
 };
 
+// Type for items with an identifiable field
+type IdentifiableItem = Record<string, unknown>;
+
 // Optimistic update utilities
 export const optimisticUpdates = {
   // Update a specific item in a list query
-  updateListItem: <T extends { [key: string]: any }>(
-    queryKey: any[],
+  updateListItem: <T extends IdentifiableItem>(
+    queryKey: QueryKey,
     itemId: string,
     idField: string,
     updates: Partial<T>
@@ -194,7 +197,7 @@ export const optimisticUpdates = {
   },
 
   // Add item to a list query
-  addListItem: <T,>(queryKey: any[], newItem: T, prepend = true) => {
+  addListItem: <T,>(queryKey: QueryKey, newItem: T, prepend = true) => {
     queryClient.setQueryData(queryKey, (oldData: T[] | undefined) => {
       if (!oldData) return [newItem];
       return prepend ? [newItem, ...oldData] : [...oldData, newItem];
@@ -202,8 +205,8 @@ export const optimisticUpdates = {
   },
 
   // Remove item from a list query
-  removeListItem: <T extends { [key: string]: any }>(
-    queryKey: any[],
+  removeListItem: <T extends IdentifiableItem>(
+    queryKey: QueryKey,
     itemId: string,
     idField: string
   ) => {
@@ -233,7 +236,7 @@ export const offlineSupport = {
   },
 
   // Queue mutations for when the app comes back online
-  queueMutation: async (mutation: () => Promise<any>) => {
+  queueMutation: async <T,>(mutation: () => Promise<T>): Promise<T> => {
     if (!navigator.onLine) {
       // Store mutation in localStorage or IndexedDB
       const queue = JSON.parse(localStorage.getItem("mutationQueue") || "[]");

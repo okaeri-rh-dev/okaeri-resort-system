@@ -9,6 +9,7 @@
 
 import DOMPurify from "dompurify";
 import { useCallback, useState } from "react";
+import type { BookingFormData, Guest } from "@/types";
 
 // ============================================
 // CONFIGURATION
@@ -344,7 +345,7 @@ export function containsSuspiciousContent(input: string): boolean {
  * @param formData - Raw booking form data
  * @returns Sanitized booking form data
  */
-export function sanitizeBookingFormData(formData: any) {
+export function sanitizeBookingFormData(formData: Partial<BookingFormData>) {
   return sanitizeFormData(formData, {
     richTextFields: ["special_requests", "notes"],
     emailFields: ["email", "guest_email"],
@@ -362,7 +363,7 @@ export function sanitizeBookingFormData(formData: any) {
  * Validates and sanitizes guest information
  * Extends existing validation with XSS protection
  */
-export function sanitizeGuestData(guestData: any) {
+export function sanitizeGuestData(guestData: Partial<Guest>) {
   return sanitizeFormData(guestData, {
     emailFields: ["email"],
     phoneFields: ["phone_number"],

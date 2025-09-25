@@ -149,7 +149,7 @@ export interface CSVExportResult {
  * Provides comprehensive security, error handling, and mobile-friendly UX
  */
 export async function exportToCSV(
-  data: any[],
+  data: Record<string, unknown>[],
   filename: string,
   customHeaders?: string[],
   options: CSVExportOptions = {}
@@ -230,7 +230,7 @@ export async function exportToCSV(
 /**
  * Format individual CSV cell with Philippine business standards
  */
-function formatCSVCell(value: any, philippineFormat: boolean = true): string {
+function formatCSVCell(value: unknown, philippineFormat: boolean = true): string {
   // Handle null/undefined
   if (value === null || value === undefined) {
     return "";
@@ -365,7 +365,7 @@ async function downloadCSVFile(csvContent: string, filename: string): Promise<vo
 /**
  * Legacy export function for backward compatibility
  */
-export function exportToCSVLegacy(data: any[], filename: string): void {
+export function exportToCSVLegacy(data: Record<string, unknown>[], filename: string): void {
   exportToCSV(data, filename, undefined, {
     philippineFormat: true,
     includeTimestamp: true,
@@ -384,7 +384,10 @@ export function exportToCSVLegacy(data: any[], filename: string): void {
  * Format booking data for CSV export
  * Includes all relevant booking information
  */
-export function formatBookingsForExport(bookings: Booking[], units: Unit[]): any[] {
+export function formatBookingsForExport(
+  bookings: Booking[],
+  units: Unit[]
+): Record<string, unknown>[] {
   const unitMap = new Map(units.map((u) => [u.unit_id, u]));
 
   return bookings.map((booking) => ({
@@ -408,7 +411,7 @@ export function formatBookingsForExport(bookings: Booking[], units: Unit[]): any
 /**
  * Format occupancy report for CSV export
  */
-export function formatOccupancyForExport(report: OccupancyReport[]): any[] {
+export function formatOccupancyForExport(report: OccupancyReport[]): Record<string, unknown>[] {
   return report.map((day) => ({
     Date: day.date,
     "Total Units": day.totalUnits,

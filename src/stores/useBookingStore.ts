@@ -10,6 +10,12 @@ import type {
   BookingFormData,
   TableState,
 } from "@/types";
+import type {
+  UnitAvailabilityResponse,
+  CalendarDayResponse,
+  BlackoutResponse,
+  PaymentStatusUpdate,
+} from "@/types/supabase";
 // import { useWorkflowStore } from "./useWorkflowStore"; // Phase 3-4
 
 // ============================================
@@ -776,7 +782,7 @@ export const useMultiUnitAvailability = (
 
       if (error) throw new Error(handleSupabaseError(error));
 
-      return (data || []).map((unit: any) => ({
+      return (data || []).map((unit: UnitAvailabilityResponse) => ({
         unit_id: unit.unit_id,
         unit_name: unit.unit_name,
         unit_code: unit.unit_code,
@@ -817,7 +823,7 @@ export const useAvailabilityCalendar = (
 
       if (error) throw new Error(handleSupabaseError(error));
 
-      return (data || []).map((day: any) => ({
+      return (data || []).map((day: CalendarDayResponse) => ({
         date: day.calendar_date,
         status: day.status,
         bookingId: day.booking_id,
@@ -852,7 +858,7 @@ export const useUnitBlackouts = (
       if (startDate && endDate) {
         const { data, error } = await db.blackouts.inDateRange(startDate, endDate);
         if (error) throw new Error(handleSupabaseError(error));
-        return data?.filter((blackout: any) => blackout.unit_id === unitId) || [];
+        return data?.filter((blackout: BlackoutResponse) => blackout.unit_id === unitId) || [];
       }
 
       const { data, error } = await query;
@@ -1116,7 +1122,7 @@ export const useUpdateBookingStatusWithWorkflow = () => {
       if (!workflowResult.success) {
         throw new Error(
           workflowResult.workflowResult.errors
-            .map((e: any) => e.message)
+            .map((e: { message: string }) => e.message)
             .join(', ')
         );
       }

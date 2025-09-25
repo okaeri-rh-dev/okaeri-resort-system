@@ -12,7 +12,13 @@
  */
 
 import { supabase } from "./supabase";
-import type { Unit } from "@/types";
+import type { Unit, UnitType } from "@/types";
+import { toUnitType, toBlackoutType } from "@/types/supabase";
+import type {
+  UnitAvailabilityResponse as SupabaseUnitResponse,
+  CalendarDayResponse,
+  BlackoutResponse,
+} from "@/types/supabase";
 
 // ============================================
 // TYPE DEFINITIONS
@@ -26,48 +32,8 @@ export interface AvailabilityResult {
   nextAvailableDate?: string;
 }
 
-// Type for unit availability RPC response
-interface UnitAvailabilityResponse {
-  unit_id: string;
-  unit_name: string;
-  unit_code: string;
-  unit_type: string;
-  base_occupancy?: number;
-  max_occupancy: number;
-  base_rate: number;
-  weekend_rate?: number;
-  extra_person_rate?: number;
-  amenities?: any;
-  cleaning_fee?: number | null;
-  description?: string | null;
-  images?: any;
-  policies?: any;
-  created_at?: string;
-  updated_at?: string;
-  is_available: boolean;
-  next_available_date?: string;
-}
-
-// Type for calendar availability RPC response
-interface CalendarDayResponse {
-  calendar_date: string;
-  status: "available" | "booked" | "blackout";
-  booking_id?: string;
-  guest_name?: string;
-  check_in?: string;
-  check_out?: string;
-  payment_status?: string;
-}
-
-// Type for blackout period RPC response
-interface BlackoutResponse {
-  blackout_id: string;
-  unit_id: string;
-  blackout_type: string;
-  start_date: string;
-  end_date: string;
-  reason?: string;
-}
+// Use the centralized types from supabase.ts
+type UnitAvailabilityResponse = SupabaseUnitResponse;
 
 export interface UnitAvailability extends Unit {
   isAvailable: boolean;
@@ -96,6 +62,26 @@ export interface BlackoutPeriod {
   startDate: string;
   endDate: string;
   reason?: string;
+}
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+// Helper function to convert API status to internal status
+function convertCalendarStatus(
+  apiStatus: "available" | "booked" | "blackout"
+): AvailabilityCalendarDay["status"] {
+  switch (apiStatus) {
+    case "available":
+      return "Available";
+    case "booked":
+      return "Occupied";
+    case "blackout":
+      return "Maintenance";
+    default:
+      return "Available";
+  }
 }
 
 // ============================================
@@ -162,7 +148,7 @@ export async function checkMultiUnitAvailability(
       unit_id: unit.unit_id,
       unit_name: unit.unit_name,
       unit_code: unit.unit_code,
-      unit_type: unit.unit_type,
+      unit_type: toUnitType(unit.unit_type) as UnitType,
       base_occupancy: unit.base_occupancy || 1,
       max_occupancy: unit.max_occupancy,
       base_rate: unit.base_rate,
@@ -206,10 +192,10 @@ export async function getUnitAvailabilityCalendar(
     const typedData = data as CalendarDayResponse[] | null;
     return (typedData || []).map((day) => ({
       date: day.calendar_date,
-      status: day.status,
+      status: convertCalendarStatus(day.status),
       bookingId: day.booking_id,
       guestName: day.guest_name,
-      bookingReference: day.check_in, // Using check_in as reference temporarily
+      bookingReference: day.booking_reference,
     }));
   } catch (error) {
     console.error("Error getting availability calendar:", error);
@@ -312,7 +298,7 @@ export async function createBlackoutPeriod(
     return {
       blackoutId: data.blackout_id,
       unitId: data.unit_id,
-      blackoutType: data.blackout_type,
+      blackoutType: toBlackoutType(data.blackout_type) as BlackoutPeriod["blackoutType"],
       startDate: data.start_date,
       endDate: data.end_date,
       reason: data.reason ?? undefined,
@@ -346,7 +332,7 @@ export async function getUnitBlackoutPeriods(
     return (typedData || []).map((blackout) => ({
       blackoutId: blackout.blackout_id,
       unitId: blackout.unit_id,
-      blackoutType: blackout.blackout_type,
+      blackoutType: toBlackoutType(blackout.blackout_type) as BlackoutPeriod["blackoutType"],
       startDate: blackout.start_date,
       endDate: blackout.end_date,
       reason: blackout.reason,

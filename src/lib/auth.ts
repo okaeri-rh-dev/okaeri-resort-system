@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import type { AuthSession, AuthChangeEvent } from "@/types/supabase";
 
 /**
  * Authentication module for Phase 1
@@ -195,7 +196,7 @@ class AuthService {
   /**
    * Listen to auth state changes
    */
-  onAuthStateChange(callback: (event: string, session: any) => void) {
+  onAuthStateChange(callback: (event: AuthChangeEvent, session: AuthSession | null) => void) {
     return supabase.auth.onAuthStateChange(callback);
   }
 

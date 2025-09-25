@@ -1,7 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { PaymentsTable } from "@/components/payments/PaymentsTable";
-import { PaymentForm } from "@/components/payments/PaymentForm";
+import { useState, lazy, Suspense } from "react";
+
+// Lazy load heavy components
+const PaymentsTable = lazy(() =>
+  import("@/components/payments/PaymentsTable").then((m) => ({ default: m.PaymentsTable }))
+);
+const PaymentForm = lazy(() =>
+  import("@/components/payments/PaymentForm").then((m) => ({ default: m.PaymentForm }))
+);
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -46,7 +52,15 @@ function PaymentsPage() {
         </div>
 
         <ErrorBoundary level="component">
-          <PaymentsTable onViewPayment={handleViewPayment} onEditPayment={handleEditPayment} />
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+              </div>
+            }
+          >
+            <PaymentsTable onViewPayment={handleViewPayment} onEditPayment={handleEditPayment} />
+          </Suspense>
         </ErrorBoundary>
 
         {/* New Payment Dialog */}
@@ -56,10 +70,18 @@ function PaymentsPage() {
               <DialogTitle>Record New Payment</DialogTitle>
             </DialogHeader>
             <ErrorBoundary level="component">
-              <PaymentForm
-                onSuccess={() => setShowPaymentForm(false)}
-                onCancel={() => setShowPaymentForm(false)}
-              />
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                  </div>
+                }
+              >
+                <PaymentForm
+                  onSuccess={() => setShowPaymentForm(false)}
+                  onCancel={() => setShowPaymentForm(false)}
+                />
+              </Suspense>
             </ErrorBoundary>
           </DialogContent>
         </Dialog>
@@ -72,17 +94,25 @@ function PaymentsPage() {
             </DialogHeader>
             <ErrorBoundary level="component">
               {editingPayment && (
-                <PaymentForm
-                  payment={editingPayment}
-                  onSuccess={() => {
-                    setShowEditDialog(false);
-                    setEditingPayment(null);
-                  }}
-                  onCancel={() => {
-                    setShowEditDialog(false);
-                    setEditingPayment(null);
-                  }}
-                />
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                    </div>
+                  }
+                >
+                  <PaymentForm
+                    payment={editingPayment}
+                    onSuccess={() => {
+                      setShowEditDialog(false);
+                      setEditingPayment(null);
+                    }}
+                    onCancel={() => {
+                      setShowEditDialog(false);
+                      setEditingPayment(null);
+                    }}
+                  />
+                </Suspense>
               )}
             </ErrorBoundary>
           </DialogContent>

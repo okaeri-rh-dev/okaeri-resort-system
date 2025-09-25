@@ -1,7 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { UnitsTable } from "@/components/units/UnitsTable";
-import { UnitForm } from "@/components/units/UnitForm";
+import { useState, lazy, Suspense } from "react";
+
+// Lazy load components for better performance
+const UnitsTable = lazy(() =>
+  import("@/components/units/UnitsTable").then((m) => ({ default: m.UnitsTable }))
+);
+const UnitForm = lazy(() =>
+  import("@/components/units/UnitForm").then((m) => ({ default: m.UnitForm }))
+);
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -55,7 +61,15 @@ function UnitsPage() {
         </div>
 
         <ErrorBoundary level="component">
-          <UnitsTable onViewUnit={handleViewUnit} onEditUnit={handleEditUnit} />
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+              </div>
+            }
+          >
+            <UnitsTable onViewUnit={handleViewUnit} onEditUnit={handleEditUnit} />
+          </Suspense>
         </ErrorBoundary>
 
         {/* Create Unit Dialog */}
@@ -65,7 +79,15 @@ function UnitsPage() {
               <DialogTitle>Create New Unit</DialogTitle>
             </DialogHeader>
             <ErrorBoundary level="component">
-              <UnitForm onSuccess={handleCreateSuccess} />
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                  </div>
+                }
+              >
+                <UnitForm onSuccess={handleCreateSuccess} />
+              </Suspense>
             </ErrorBoundary>
           </DialogContent>
         </Dialog>
@@ -77,7 +99,15 @@ function UnitsPage() {
               <DialogTitle>Edit Unit</DialogTitle>
             </DialogHeader>
             <ErrorBoundary level="component">
-              {selectedUnit && <UnitForm unit={selectedUnit} onSuccess={handleEditSuccess} />}
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                  </div>
+                }
+              >
+                {selectedUnit && <UnitForm unit={selectedUnit} onSuccess={handleEditSuccess} />}
+              </Suspense>
             </ErrorBoundary>
           </DialogContent>
         </Dialog>

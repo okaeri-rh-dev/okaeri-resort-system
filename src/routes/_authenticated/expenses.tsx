@@ -1,7 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { ExpensesTable } from "@/components/expenses/ExpensesTable";
-import { ExpenseForm } from "@/components/expenses/ExpenseForm";
+import { useState, lazy, Suspense } from "react";
+
+// Lazy load components for better performance
+const ExpensesTable = lazy(() =>
+  import("@/components/expenses/ExpensesTable").then((m) => ({ default: m.ExpensesTable }))
+);
+const ExpenseForm = lazy(() =>
+  import("@/components/expenses/ExpenseForm").then((m) => ({ default: m.ExpenseForm }))
+);
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -46,7 +52,15 @@ function ExpensesPage() {
         </div>
 
         <ErrorBoundary level="component">
-          <ExpensesTable onViewExpense={handleViewExpense} onEditExpense={handleEditExpense} />
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+              </div>
+            }
+          >
+            <ExpensesTable onViewExpense={handleViewExpense} onEditExpense={handleEditExpense} />
+          </Suspense>
         </ErrorBoundary>
 
         {/* New Expense Dialog */}
@@ -56,10 +70,18 @@ function ExpensesPage() {
               <DialogTitle>Add New Expense</DialogTitle>
             </DialogHeader>
             <ErrorBoundary level="component">
-              <ExpenseForm
-                onSuccess={() => setShowExpenseForm(false)}
-                onCancel={() => setShowExpenseForm(false)}
-              />
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                  </div>
+                }
+              >
+                <ExpenseForm
+                  onSuccess={() => setShowExpenseForm(false)}
+                  onCancel={() => setShowExpenseForm(false)}
+                />
+              </Suspense>
             </ErrorBoundary>
           </DialogContent>
         </Dialog>
@@ -71,19 +93,27 @@ function ExpensesPage() {
               <DialogTitle>Edit Expense</DialogTitle>
             </DialogHeader>
             <ErrorBoundary level="component">
-              {editingExpense && (
-                <ExpenseForm
-                  expense={editingExpense}
-                  onSuccess={() => {
-                    setShowEditDialog(false);
-                    setEditingExpense(null);
-                  }}
-                  onCancel={() => {
-                    setShowEditDialog(false);
-                    setEditingExpense(null);
-                  }}
-                />
-              )}
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                  </div>
+                }
+              >
+                {editingExpense && (
+                  <ExpenseForm
+                    expense={editingExpense}
+                    onSuccess={() => {
+                      setShowEditDialog(false);
+                      setEditingExpense(null);
+                    }}
+                    onCancel={() => {
+                      setShowEditDialog(false);
+                      setEditingExpense(null);
+                    }}
+                  />
+                )}
+              </Suspense>
             </ErrorBoundary>
           </DialogContent>
         </Dialog>
