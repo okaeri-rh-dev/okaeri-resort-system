@@ -1,0 +1,95 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 2 * * *" # Daily at 2 AM UTC
+
+jobs:
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate || true
+
+      - name: Run security tests
+        run: npm run test:security
+        continue-on-error: true
+
+      - name: Check for sensitive data
+        run: |
+          # Check for potential secrets in code
+          grep -r -E "(api[_-]?key|secret|password|token)" --include="*.ts" --include="*.tsx" --exclude-dir=node_modules --exclude-dir=dist . || true
+
+      - name: Upload security report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: test-results/
+
+  dependency-check:
+    name: Dependency Security Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH"
+
+      - name: Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
+
+  xss-prevention:
+    name: XSS Prevention Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run XSS prevention tests
+        run: npm run test:run -- --grep "XSS"
+
+      - name: Check DOMPurify usage
+        run: |
+          echo "Checking for proper DOMPurify usage..."
+          grep -r "dangerouslySetInnerHTML" --include="*.tsx" --exclude-dir=node_modules . || echo "✅ No dangerouslySetInnerHTML found"
+          grep -r "DOMPurify.sanitize" --include="*.ts" --include="*.tsx" --exclude-dir=node_modules . | wc -l

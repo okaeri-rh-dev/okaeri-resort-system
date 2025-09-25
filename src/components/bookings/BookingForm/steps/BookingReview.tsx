@@ -1,4 +1,3 @@
-import React from "react";
 import { format, differenceInDays } from "date-fns";
 import { CheckCircle } from "lucide-react";
 
@@ -16,7 +15,7 @@ interface BookingReviewProps extends StepProps {
 
 export function BookingReview({ form, calculatedTotal = 0, units = [] }: BookingReviewProps) {
   const values = form.getValues();
-  const selectedUnit = units.find((u) => u.id === values.unit_id);
+  const selectedUnit = units.find((u) => u.unit_id === values.unit_id);
   const nights = differenceInDays(new Date(values.check_out), new Date(values.check_in));
 
   if (!selectedUnit) {

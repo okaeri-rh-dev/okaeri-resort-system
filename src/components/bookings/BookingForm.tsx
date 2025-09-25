@@ -229,11 +229,16 @@ export function BookingForm({
       const sanitizedData = sanitizeBookingFormData(data);
 
       const bookingData = {
-        ...sanitizedData,
+        unit_id: data.unit_id,
+        guest_name: sanitizedData.guest_name || data.guest_name,
+        email: sanitizedData.email || data.email,
+        contact_number: formatPhoneNumber(sanitizedData.contact_number || data.contact_number),
+        num_guests: data.num_guests,
         check_in: data.check_in.toISOString(),
         check_out: data.check_out.toISOString(),
         total_amount: calculatedTotal,
-        contact_number: formatPhoneNumber(sanitizedData.contact_number),
+        special_requests: sanitizedData.special_requests || data.special_requests,
+        payment_method: data.payment_method,
       };
 
       if (isEditMode) {

@@ -93,7 +93,7 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
     async (status: UnitStatus) => {
       const selectedIds = Object.keys(rowSelection)
         .filter((key) => rowSelection[key])
-        .map((index) => filteredUnits[parseInt(index)]?.id)
+        .map((index) => filteredUnits[parseInt(index)]?.unit_id)
         .filter(Boolean);
 
       if (selectedIds.length === 0) return;

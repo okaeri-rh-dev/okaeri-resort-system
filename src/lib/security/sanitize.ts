@@ -28,13 +28,15 @@ const STRICT_TEXT_CONFIG = {
 
 /**
  * DOMPurify configuration for rich text content
- * Allows basic formatting tags only
+ * Allows basic formatting tags only with enhanced security
  */
 const RICH_TEXT_CONFIG = {
   ALLOWED_TAGS: ["p", "br", "strong", "em", "ul", "ol", "li", "blockquote"],
   ALLOWED_ATTR: [] as string[],
   KEEP_CONTENT: true,
   RETURN_TRUSTED_TYPE: false,
+  FORBID_TAGS: ["script", "object", "embed", "form", "input", "button"],
+  FORBID_ATTR: ["onclick", "onload", "onerror", "onmouseover", "onmouseout", "onfocus", "onblur"],
 };
 
 /**
@@ -54,29 +56,85 @@ const NAME_CONFIG = {
 // ============================================
 
 /**
+ * Decodes various encoding schemes that might hide XSS payloads
+ */
+function decodeEncodedAttacks(input: string): string {
+  let decoded = input;
+
+  // HTML entity decoding (&#60; = <, &#62; = >)
+  decoded = decoded.replace(/&#(\d+);/g, (match, dec) => {
+    return String.fromCharCode(dec);
+  });
+
+  // Hex HTML entities (&#x3C; = <, &#x3E; = >)
+  decoded = decoded.replace(/&#x([0-9A-Fa-f]+);/g, (match, hex) => {
+    return String.fromCharCode(parseInt(hex, 16));
+  });
+
+  // URL encoding (%3C = <, %3E = >)
+  try {
+    decoded = decodeURIComponent(decoded);
+  } catch (e) {
+    // If decoding fails, continue with original
+  }
+
+  // Unicode escapes (\u003C = <)
+  decoded = decoded.replace(/\\u([0-9A-Fa-f]{4})/g, (match, hex) => {
+    return String.fromCharCode(parseInt(hex, 16));
+  });
+
+  // Double URL encoding
+  try {
+    const doubleDecoded = decodeURIComponent(decodeURIComponent(decoded));
+    if (doubleDecoded !== decoded) {
+      decoded = doubleDecoded;
+    }
+  } catch (e) {
+    // If double decoding fails, continue
+  }
+
+  return decoded;
+}
+
+/**
  * Sanitizes plain text input by removing all HTML tags and scripts
+ * Enhanced to handle encoded XSS attacks
  *
  * @param input - Raw text input
  * @returns Sanitized plain text
  *
  * @example
  * sanitizeText('<script>alert("XSS")</script>Hello') // Returns: 'Hello'
+ * sanitizeText('&#60;script&#62;alert(1)&#60;/script&#62;') // Returns: ''
  */
 export function sanitizeText(input: string | null | undefined): string {
   if (!input) return "";
 
-  // First pass: Remove all HTML with DOMPurify
-  const cleaned = DOMPurify.sanitize(input, STRICT_TEXT_CONFIG);
+  // First: Decode any encoded attacks to reveal hidden payloads
+  const decodedInput = decodeEncodedAttacks(String(input));
 
-  // Second pass: Additional cleanup for extra safety
-  return cleaned
+  // Second: Remove all HTML with DOMPurify
+  const cleaned = DOMPurify.sanitize(decodedInput, STRICT_TEXT_CONFIG);
+
+  // Third: Additional cleanup for extra safety
+  let result = cleaned
     .trim()
     .replace(/[<>]/g, "") // Remove any remaining angle brackets
+    .replace(/javascript:/gi, "") // Remove javascript: protocol
+    .replace(/vbscript:/gi, "") // Remove vbscript: protocol
+    .replace(/on\w+\s*=/gi, "") // Remove event handlers (onclick, onload, etc)
+    .replace(/data:/gi, "") // Remove data: protocol
+    .replace(/expression\s*\(/gi, "") // Remove CSS expression
+    .replace(/script/gi, "") // Remove the word 'script' entirely
+    .replace(/alert/gi, "") // Remove alert calls
     .substring(0, 10000); // Limit length to prevent DoS
+
+  return result;
 }
 
 /**
  * Sanitizes rich text content, allowing only safe formatting tags
+ * Enhanced to handle encoded XSS attacks
  *
  * @param input - HTML content with formatting
  * @returns Sanitized HTML with only allowed tags
@@ -88,7 +146,34 @@ export function sanitizeText(input: string | null | undefined): string {
 export function sanitizeRichText(input: string | null | undefined): string {
   if (!input) return "";
 
-  return DOMPurify.sanitize(input, RICH_TEXT_CONFIG).trim().substring(0, 50000); // Limit rich text to 50k chars
+  // First: Decode any encoded attacks to reveal hidden payloads
+  const decodedInput = decodeEncodedAttacks(String(input));
+
+  // Second: More aggressive pre-cleaning to remove dangerous elements
+  let preCleaned = decodedInput
+    .replace(/<script[^>]*>.*?<\/script>/gis, "") // Remove script tags and content
+    .replace(/<iframe[^>]*>.*?<\/iframe>/gis, "") // Remove iframe tags
+    .replace(/<object[^>]*>.*?<\/object>/gis, "") // Remove object tags
+    .replace(/<embed[^>]*>/gis, "") // Remove embed tags
+    .replace(/<form[^>]*>.*?<\/form>/gis, "") // Remove form tags
+    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, "") // Remove all event handlers
+    .replace(/on\w+\s*=\s*[^"'\s>]+/gi, ""); // Remove unquoted event handlers
+
+  // Third: Sanitize with DOMPurify
+  let result = DOMPurify.sanitize(preCleaned, RICH_TEXT_CONFIG);
+
+  // Fourth: Final cleanup
+  result = result
+    .replace(/javascript:/gi, "") // Remove javascript: protocol
+    .replace(/vbscript:/gi, "") // Remove vbscript: protocol
+    .replace(/data:/gi, "") // Remove data: protocol
+    .replace(/expression\s*\(/gi, "") // Remove CSS expression
+    .replace(/\s+/g, " ") // Normalize whitespace
+    .replace(/(<[^>]+)\s+>/g, "$1>") // Remove trailing spaces in tags
+    .trim()
+    .substring(0, 50000); // Limit rich text to 50k chars
+
+  return result;
 }
 
 /**

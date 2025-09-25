@@ -1,4 +1,3 @@
-import React from "react";
 import { CalendarDays, Users } from "lucide-react";
 import { format } from "date-fns";
 
@@ -11,7 +10,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Input, NumberInput } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -63,7 +62,7 @@ export function UnitSelection({
               </FormControl>
               <SelectContent>
                 {units.map((unit) => (
-                  <SelectItem key={unit.id} value={unit.id}>
+                  <SelectItem key={unit.unit_id} value={unit.unit_id}>
                     <div className="flex flex-col">
                       <span className="font-medium">{unit.unit_name}</span>
                       <span className="text-xs text-muted-foreground">

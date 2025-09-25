@@ -16,14 +16,15 @@ export default defineConfig(({ mode }) => ({
       generatedRouteTree: "./src/routeTree.gen.ts",
       quoteStyle: "double",
     }),
-    // Bundle analyzer - only in build mode
-    mode === "production" &&
+    // Bundle analyzer - in production or analyze mode
+    (mode === "production" || mode === "analyze") &&
       visualizer({
-        open: false,
-        filename: "bundle-stats.html",
+        open: mode === "analyze", // Auto-open in analyze mode
+        filename: "dist/bundle-stats.html",
         gzipSize: true,
         brotliSize: true,
         template: "treemap",
+        title: "Okaeri Resort System Bundle Analysis",
       }),
   ].filter(Boolean),
   build: {

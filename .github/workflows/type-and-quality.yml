@@ -1,0 +1,152 @@
+name: Type Safety & Code Quality
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  type-check:
+    name: TypeScript Type Checking
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type check
+        run: npm run type-check:phase2
+
+      - name: Check for any types
+        run: |
+          echo "Checking for 'any' types in source code..."
+          ANY_COUNT=$(grep -r "any" --include="*.ts" --include="*.tsx" --exclude-dir=node_modules --exclude-dir=dist --exclude="*.d.ts" . | grep -E ":\s*any|<any>|as any" | wc -l)
+          echo "Found $ANY_COUNT uses of 'any' type"
+          if [ "$ANY_COUNT" -gt 50 ]; then
+            echo "❌ Too many 'any' types found (limit: 50)"
+            exit 1
+          else
+            echo "✅ 'any' type usage within acceptable limits"
+          fi
+
+      - name: Type coverage report
+        run: npm run type-coverage || true
+
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npx prettier --check .
+
+      - name: Check component sizes
+        run: |
+          echo "Checking for large components..."
+          for file in $(find src/components -name "*.tsx" -type f); do
+            LINES=$(wc -l < "$file")
+            if [ "$LINES" -gt 300 ]; then
+              echo "⚠️  Large component: $file ($LINES lines)"
+            fi
+          done
+
+      - name: Check for console.log statements
+        run: |
+          echo "Checking for console.log statements..."
+          if grep -r "console.log" --include="*.ts" --include="*.tsx" --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=scripts .; then
+            echo "❌ Found console.log statements in production code"
+            exit 1
+          else
+            echo "✅ No console.log statements found"
+          fi
+
+      - name: Check for TODO comments
+        run: |
+          echo "Checking for TODO comments..."
+          grep -r "TODO\|FIXME\|HACK" --include="*.ts" --include="*.tsx" --exclude-dir=node_modules . || echo "✅ No TODO comments found"
+
+  bundle-analysis:
+    name: Bundle Size Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and analyze bundle
+        run: |
+          npm run build:phase2
+          npm run bundle:size
+
+      - name: Generate bundle report
+        run: npm run bundle:analyze
+
+      - name: Upload bundle analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-analysis
+          path: dist/bundle-stats.html
+
+      - name: Comment PR with bundle size
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            // Read bundle sizes
+            const distPath = './dist/assets';
+            let totalSize = 0;
+
+            if (fs.existsSync(distPath)) {
+              const files = fs.readdirSync(distPath);
+              files.forEach(file => {
+                if (file.endsWith('.js') || file.endsWith('.css')) {
+                  const stats = fs.statSync(path.join(distPath, file));
+                  totalSize += stats.size;
+                }
+              });
+            }
+
+            const sizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body: `## 📦 Bundle Size Report\n\nTotal bundle size: **${sizeMB} MB**\n\nRun \`npm run bundle:analyze\` locally for detailed analysis.`
+            });

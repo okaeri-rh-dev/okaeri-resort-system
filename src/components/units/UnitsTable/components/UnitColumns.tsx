@@ -56,7 +56,9 @@ export function useUnitColumns({ onUpdateUnit, isEditMode }: UseUnitColumnsProps
             return (
               <InlineEdit
                 value={getValue()}
-                onSave={(value) => onUpdateUnit(row.original.id, { unit_name: value as string })}
+                onSave={(value) =>
+                  onUpdateUnit(row.original.unit_id, { unit_name: value as string })
+                }
                 type="text"
                 placeholder="Enter unit name"
               />
@@ -86,7 +88,9 @@ export function useUnitColumns({ onUpdateUnit, isEditMode }: UseUnitColumnsProps
             return (
               <InlineEdit
                 value={getValue()}
-                onSave={(value) => onUpdateUnit(row.original.id, { base_rate: value as number })}
+                onSave={(value) =>
+                  onUpdateUnit(row.original.unit_id, { base_rate: value as number })
+                }
                 type="number"
                 placeholder="0.00"
                 className="text-right"
@@ -111,7 +115,9 @@ export function useUnitColumns({ onUpdateUnit, isEditMode }: UseUnitColumnsProps
             return (
               <InlineEdit
                 value={value}
-                onSave={(value) => onUpdateUnit(row.original.id, { weekend_rate: value as number })}
+                onSave={(value) =>
+                  onUpdateUnit(row.original.unit_id, { weekend_rate: value as number })
+                }
                 type="number"
                 placeholder="0.00"
                 className="text-right"
@@ -137,7 +143,7 @@ export function useUnitColumns({ onUpdateUnit, isEditMode }: UseUnitColumnsProps
               <InlineEdit
                 value={value}
                 onSave={(value) =>
-                  onUpdateUnit(row.original.id, { extra_person_rate: value as number })
+                  onUpdateUnit(row.original.unit_id, { extra_person_rate: value as number })
                 }
                 type="number"
                 placeholder="0.00"
@@ -171,7 +177,7 @@ export function useUnitColumns({ onUpdateUnit, isEditMode }: UseUnitColumnsProps
               <InlineSelect
                 value={getValue()}
                 options={unitTypes}
-                onSave={(value) => onUpdateUnit(row.original.id, { unit_type: value })}
+                onSave={(value) => onUpdateUnit(row.original.unit_id, { unit_type: value })}
               />
             );
           }
@@ -202,7 +208,7 @@ export function useUnitColumns({ onUpdateUnit, isEditMode }: UseUnitColumnsProps
               <InlineSelect
                 value={getValue()}
                 options={statusOptions}
-                onSave={(value) => onUpdateUnit(row.original.id, { unit_status: value })}
+                onSave={(value) => onUpdateUnit(row.original.unit_id, { unit_status: value })}
               />
             );
           }

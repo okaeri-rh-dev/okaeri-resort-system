@@ -1,4 +1,3 @@
-import React from "react";
 import { CalendarDays, Users, CreditCard, CheckCircle } from "lucide-react";
 
 import { Form } from "@/components/ui/form";

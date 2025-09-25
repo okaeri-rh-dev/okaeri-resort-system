@@ -28,6 +28,13 @@ const VALID_ROUTES = [
 const MIN_REFRESH_INTERVAL = 45 * 60 * 1000; // 45 minutes
 const MAX_REFRESH_INTERVAL = 55 * 60 * 1000; // 55 minutes
 
+// Rate limiting configuration
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_DURATION = 30 * 60 * 1000; // 30 minutes
+
+// Session warning timing
+const SESSION_WARNING_TIME = 5 * 60 * 1000; // 5 minutes before expiry
+
 // ============================================
 // TYPE DEFINITIONS
 // ============================================
@@ -43,6 +50,23 @@ export interface AuthSession {
   access_token: string;
   refresh_token: string;
 }
+
+// Rate limiting types
+interface FailedAttempt {
+  count: number;
+  lastAttempt: number;
+  lockedUntil?: number;
+}
+
+// CSRF protection
+interface CSRFConfig {
+  token?: string;
+  expiresAt?: number;
+}
+
+// Session callback types
+type SessionExpiredCallback = () => void;
+type SessionWarningCallback = (minutesLeft: number) => void;
 
 // ============================================
 // UTILITY FUNCTIONS
@@ -83,12 +107,46 @@ function secureCleanup(): void {
   });
 }
 
+/**
+ * Generates a cryptographically secure random token
+ */
+function generateSecureToken(): string {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Sanitizes authentication errors to prevent information leakage
+ */
+function sanitizeAuthError(error: any): string {
+  // Always return a generic error message
+  return "Authentication failed. Please check your credentials.";
+}
+
+/**
+ * Safe redirect that validates the destination
+ */
+function safeRedirect(url: string): void {
+  if (isValidRoute(url)) {
+    window.location.replace(url);
+  } else {
+    // Redirect to login for invalid routes
+    window.location.replace("/login");
+  }
+}
+
 // ============================================
 // AUTH SERVICE CLASS
 // ============================================
 
 class AuthService {
   private refreshTimeout: NodeJS.Timeout | null = null;
+  private warningTimeout: NodeJS.Timeout | null = null;
+  private failedAttempts = new Map<string, FailedAttempt>();
+  private csrfConfig: CSRFConfig = {};
+  private sessionExpiredCallbacks: SessionExpiredCallback[] = [];
+  private sessionWarningCallbacks: SessionWarningCallback[] = [];
   /**
    * Sign in with email and password
    */
@@ -247,21 +305,251 @@ class AuthService {
   }
 
   /**
-   * Stop session refresh timer
-   */
-  private stopSessionRefresh() {
-    if (this.refreshTimeout) {
-      clearTimeout(this.refreshTimeout);
-      this.refreshTimeout = null;
-    }
-  }
-
-  /**
    * Start session refresh (public method for backward compatibility)
    */
   startSessionRefresh() {
     this.scheduleSessionRefresh();
     return () => this.stopSessionRefresh();
+  }
+
+  /**
+   * Stop session refresh timer (public method for testing)
+   */
+  stopSessionRefresh() {
+    if (this.refreshTimeout) {
+      clearTimeout(this.refreshTimeout);
+      this.refreshTimeout = null;
+    }
+    if (this.warningTimeout) {
+      clearTimeout(this.warningTimeout);
+      this.warningTimeout = null;
+    }
+  }
+
+  /**
+   * Refresh current session
+   */
+  async refreshSession() {
+    try {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.refreshSession();
+
+      if (error || !session) {
+        throw new Error("Session refresh failed");
+      }
+
+      return session;
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Session refresh failed:", error);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Validate if a route is safe for redirect
+   */
+  isValidRoute(route: string): boolean {
+    return isValidRoute(route);
+  }
+
+  /**
+   * Handle redirect safely
+   */
+  handleRedirect(url: string): void {
+    safeRedirect(url);
+  }
+
+  /**
+   * Prevent back button access after logout
+   */
+  preventBackButtonAccess(): void {
+    // Clear history and replace current state
+    window.history.pushState(null, "", window.location.href);
+    window.history.replaceState(null, "", window.location.href);
+
+    // Handle popstate events
+    window.addEventListener("popstate", () => {
+      window.history.pushState(null, "", window.location.href);
+      window.location.replace("/login");
+    });
+  }
+
+  /**
+   * Clear sensitive data from clipboard
+   */
+  async clearSensitiveClipboard(): Promise<void> {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText("");
+    }
+  }
+
+  /**
+   * Sanitize authentication errors
+   */
+  sanitizeAuthError(error: any): string {
+    return sanitizeAuthError(error);
+  }
+
+  /**
+   * Log authentication errors (development only)
+   */
+  logAuthError(error: Error): void {
+    if (process.env.NODE_ENV === "development") {
+      console.log("Auth Error:", error);
+    }
+  }
+
+  /**
+   * Register session expired callback
+   */
+  onSessionExpired(callback: SessionExpiredCallback): void {
+    this.sessionExpiredCallbacks.push(callback);
+  }
+
+  /**
+   * Register session warning callback
+   */
+  onSessionWarning(callback: SessionWarningCallback): void {
+    this.sessionWarningCallbacks.push(callback);
+  }
+
+  /**
+   * Check session expiry and trigger callbacks
+   */
+  async checkSessionExpiry(): Promise<void> {
+    const session = await this.getSession();
+
+    if (!session) {
+      // Session expired
+      this.sessionExpiredCallbacks.forEach((callback) => callback());
+      this.handleSessionExpired();
+      return;
+    }
+
+    if (session.expires_at) {
+      const expiresAt = session.expires_at * 1000; // Convert to milliseconds
+      const now = Date.now();
+      const timeUntilExpiry = expiresAt - now;
+
+      if (timeUntilExpiry <= 0) {
+        // Session expired
+        this.sessionExpiredCallbacks.forEach((callback) => callback());
+        this.handleSessionExpired();
+      } else if (timeUntilExpiry <= SESSION_WARNING_TIME) {
+        // Session expiring soon
+        const minutesLeft = Math.ceil(timeUntilExpiry / (60 * 1000));
+        this.sessionWarningCallbacks.forEach((callback) => callback(minutesLeft));
+      }
+    }
+  }
+
+  /**
+   * Generate CSRF token
+   */
+  generateCSRFToken(): string {
+    const token = generateSecureToken();
+    const expiresAt = Date.now() + 60 * 60 * 1000; // 1 hour
+
+    this.csrfConfig = { token, expiresAt };
+    sessionStorage.setItem("csrf_token", token);
+
+    return token;
+  }
+
+  /**
+   * Validate CSRF token
+   */
+  validateCSRFToken(token: string): boolean {
+    const storedToken = sessionStorage.getItem("csrf_token");
+    const isValid =
+      storedToken === token &&
+      this.csrfConfig.token === token &&
+      (this.csrfConfig.expiresAt || 0) > Date.now();
+
+    return isValid;
+  }
+
+  /**
+   * Get secure headers for API requests
+   */
+  getSecureHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (this.csrfConfig.token) {
+      headers["X-CSRF-Token"] = this.csrfConfig.token;
+    }
+
+    return headers;
+  }
+
+  /**
+   * Validate request with CSRF protection
+   */
+  validateRequest(request: { headers: Record<string, string> }): boolean {
+    const csrfToken = request.headers["X-CSRF-Token"];
+    return csrfToken ? this.validateCSRFToken(csrfToken) : false;
+  }
+
+  /**
+   * Record failed login attempt
+   */
+  recordFailedAttempt(email: string): void {
+    const now = Date.now();
+    const attempt = this.failedAttempts.get(email) || { count: 0, lastAttempt: 0 };
+
+    attempt.count += 1;
+    attempt.lastAttempt = now;
+
+    if (attempt.count >= MAX_FAILED_ATTEMPTS) {
+      attempt.lockedUntil = now + LOCKOUT_DURATION;
+    }
+
+    this.failedAttempts.set(email, attempt);
+  }
+
+  /**
+   * Get failed login attempts count
+   */
+  getFailedAttempts(email: string): number {
+    const attempt = this.failedAttempts.get(email);
+    if (!attempt) return 0;
+
+    // Check if lockout has expired
+    if (attempt.lockedUntil && attempt.lockedUntil <= Date.now()) {
+      this.failedAttempts.delete(email);
+      return 0;
+    }
+
+    return attempt.count;
+  }
+
+  /**
+   * Check if account is locked
+   */
+  isAccountLocked(email: string): boolean {
+    const attempt = this.failedAttempts.get(email);
+    if (!attempt || !attempt.lockedUntil) return false;
+
+    if (attempt.lockedUntil <= Date.now()) {
+      // Lockout expired
+      this.failedAttempts.delete(email);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Reset failed login attempts
+   */
+  resetFailedAttempts(email: string): void {
+    this.failedAttempts.delete(email);
   }
 
   /**
