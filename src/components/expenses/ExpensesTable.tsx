@@ -11,6 +11,7 @@ import {
   type ColumnFiltersState,
   type VisibilityState,
 } from "@tanstack/react-table";
+import { withErrorBoundary } from "@/components/ErrorBoundary";
 import { useResponsiveView } from "@/hooks";
 import { Download, Eye, Edit, Receipt } from "lucide-react";
 
@@ -59,7 +60,7 @@ interface ExpensesTableProps {
   className?: string;
 }
 
-export const ExpensesTable: React.FC<ExpensesTableProps> = ({
+const ExpensesTableComponent: React.FC<ExpensesTableProps> = ({
   onViewExpense,
   onEditExpense,
   className,
@@ -470,3 +471,8 @@ export const ExpensesTable: React.FC<ExpensesTableProps> = ({
     </div>
   );
 };
+
+// Export with error boundary
+export const ExpensesTable = withErrorBoundary(ExpensesTableComponent, {
+  level: "component",
+});

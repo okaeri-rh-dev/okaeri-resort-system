@@ -1,0 +1,177 @@
+import { useState, useCallback, useMemo } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  type SortingState,
+  type ColumnFiltersState,
+  type VisibilityState,
+} from "@tanstack/react-table";
+import { useResponsiveView } from "@/hooks";
+import {
+  useBookings,
+  useUpdateBookingStatus,
+  useUploadPaymentProof,
+  useCancelBooking,
+  useDeleteBooking,
+  useBookingStore,
+} from "@/stores/useBookingStore";
+import { useBookingColumns } from "../components/BookingColumns";
+import { exportBookings } from "../utils/export";
+import type { Booking } from "@/types";
+
+interface UseBookingsTableProps {
+  onViewBooking?: (booking: Booking) => void;
+  onEditBooking?: (booking: Booking) => void;
+}
+
+export const useBookingsTable = ({ onViewBooking, onEditBooking }: UseBookingsTableProps) => {
+  // Store state
+  const {
+    filters,
+    setFilters,
+    resetFilters,
+    searchQuery,
+    setSearchQuery,
+    tableState,
+    setTableState,
+  } = useBookingStore();
+
+  // Local state
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+
+  // Responsive view detection
+  const { isMobile } = useResponsiveView();
+
+  // Mutations
+  const updateBookingStatus = useUpdateBookingStatus();
+  const uploadPaymentProof = useUploadPaymentProof();
+  const cancelBooking = useCancelBooking();
+  const deleteBooking = useDeleteBooking();
+
+  // Data
+  const { data: bookings = [], isLoading, error } = useBookings();
+
+  // Payment upload handler
+  const handleUploadPayment = useCallback(
+    (booking: Booking) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*,.pdf";
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          uploadPaymentProof.mutate({
+            bookingId: booking.booking_id,
+            file,
+          });
+        }
+      };
+      input.click();
+    },
+    [uploadPaymentProof]
+  );
+
+  // Get columns
+  const columns = useBookingColumns({
+    onViewBooking,
+    onEditBooking,
+    handleUploadPayment,
+    updateBookingStatus,
+    cancelBooking,
+    deleteBooking,
+  });
+
+  // Export handler
+  const handleExport = useCallback(async () => {
+    await exportBookings(bookings);
+  }, [bookings]);
+
+  // Apply filters
+  const filteredBookings = useMemo(() => {
+    let filtered = [...bookings];
+
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (booking) =>
+          booking.guest_name?.toLowerCase().includes(query) ||
+          booking.email?.toLowerCase().includes(query) ||
+          booking.booking_reference?.toLowerCase().includes(query) ||
+          booking.contact_number?.includes(query)
+      );
+    }
+
+    // Apply status filter
+    if (filters.status) {
+      filtered = filtered.filter((b) => b.booking_status === filters.status);
+    }
+
+    // Apply payment status filter
+    if (filters.payment_status) {
+      filtered = filtered.filter((b) => b.payment_status === filters.payment_status);
+    }
+
+    // Apply date range filter
+    if (filters.date_from || filters.date_to) {
+      filtered = filtered.filter((booking) => {
+        const checkIn = new Date(booking.check_in);
+        const dateFrom = filters.date_from ? new Date(filters.date_from) : null;
+        const dateTo = filters.date_to ? new Date(filters.date_to) : null;
+
+        if (dateFrom && checkIn < dateFrom) return false;
+        if (dateTo && checkIn > dateTo) return false;
+        return true;
+      });
+    }
+
+    return filtered;
+  }, [bookings, searchQuery, filters]);
+
+  // Create table instance
+  const table = useReactTable({
+    data: filteredBookings,
+    columns,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      pagination: tableState.pagination || { pageIndex: 0, pageSize: 10 },
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: (updater) => {
+      const newPagination =
+        typeof updater === "function"
+          ? updater(tableState.pagination || { pageIndex: 0, pageSize: 10 })
+          : updater;
+      setTableState({ pagination: newPagination });
+    },
+  });
+
+  return {
+    table,
+    bookings: filteredBookings,
+    isLoading,
+    error,
+    isMobile,
+    filters,
+    setFilters,
+    searchQuery,
+    setSearchQuery,
+    resetFilters,
+    handleExport,
+    handleUploadPayment,
+    cancelBooking,
+  };
+};

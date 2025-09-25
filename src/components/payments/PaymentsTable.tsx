@@ -11,6 +11,7 @@ import {
   type ColumnFiltersState,
   type VisibilityState,
 } from "@tanstack/react-table";
+import { withErrorBoundary } from "@/components/ErrorBoundary";
 import { useResponsiveView } from "@/hooks";
 import { Download, Edit } from "lucide-react";
 
@@ -60,7 +61,7 @@ interface PaymentsTableProps {
   className?: string;
 }
 
-export const PaymentsTable: React.FC<PaymentsTableProps> = ({
+const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
   onViewPayment,
   onEditPayment,
   bookingId,
@@ -595,3 +596,8 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
     </div>
   );
 };
+
+// Export with error boundary
+export const PaymentsTable = withErrorBoundary(PaymentsTableComponent, {
+  level: "component",
+});

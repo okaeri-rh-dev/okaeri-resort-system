@@ -13,6 +13,7 @@ import {
   type VisibilityState,
   type ExpandedState,
 } from "@tanstack/react-table";
+import { withErrorBoundary } from "@/components/ErrorBoundary";
 import { useResponsiveView } from "@/hooks";
 import {
   ChevronDown,
@@ -210,7 +211,7 @@ interface GuestsTableProps {
   className?: string;
 }
 
-export const GuestsTable: React.FC<GuestsTableProps> = ({
+const GuestsTableComponent: React.FC<GuestsTableProps> = ({
   onViewGuest,
   onEditGuest,
   className,
@@ -744,3 +745,8 @@ export const GuestsTable: React.FC<GuestsTableProps> = ({
     </div>
   );
 };
+
+// Export with error boundary
+export const GuestsTable = withErrorBoundary(GuestsTableComponent, {
+  level: "component",
+});
