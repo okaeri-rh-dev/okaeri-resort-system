@@ -1,14 +1,14 @@
-import { useMemo } from "react";
-import { createColumnHelper } from "@tanstack/react-table";
-import type { Booking, BookingStatus } from "@/types";
 import {
-  formatCurrency,
-  formatTableDate,
-  formatPhoneNumber,
-  StatusBadge,
-  SortableHeader,
   ActionMenu,
+  formatCurrency,
+  formatPhoneNumber,
+  formatTableDate,
+  SortableHeader,
+  StatusBadge,
 } from "@/components/tables/utils";
+import type { Booking, BookingStatus } from "@/types";
+import { createColumnHelper } from "@tanstack/react-table";
+import { useMemo } from "react";
 
 const columnHelper = createColumnHelper<Booking>();
 
@@ -55,7 +55,7 @@ export const useBookingColumns = ({
         cell: ({ getValue, row }) => (
           <div className="space-y-0.5">
             <div className="text-sm font-medium">{formatTableDate(getValue())}</div>
-            <div className="text-xs text-neutral-600">
+            <div className="text-xs text-neutral-500">
               {formatTableDate(row.original.check_out)}
             </div>
           </div>

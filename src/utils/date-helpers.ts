@@ -1,12 +1,15 @@
 /**
  * Comprehensive Date Utilities for Okaeri Resort System
  *
- * Handles Philippine timezone operations, business day calculations,
+ * Handles resort timezone operations, business day calculations,
  * date range validations, booking period utilities, and calendar
  * integration helpers with sub-second performance.
  *
  * @module DateHelpers
  */
+
+import { toZonedTime, fromZonedTime, formatInTimeZone } from "date-fns-tz";
+import { RESORT_TIMEZONE, RESORT_OPERATION_HOURS } from "@/config/settings";
 
 // ============================================
 // TYPE DEFINITIONS
@@ -83,12 +86,13 @@ export interface DateFormatOptions {
 // ============================================
 
 /**
- * Philippine timezone identifier
+ * Philippine timezone identifier (kept for backward compatibility)
+ * @deprecated Use RESORT_TIMEZONE from config/settings instead
  */
-export const PHILIPPINE_TIMEZONE = "Asia/Manila";
+export const PHILIPPINE_TIMEZONE = RESORT_TIMEZONE;
 
 /**
- * Standard business hours in Philippine timezone
+ * Standard business hours in resort timezone
  */
 export const DEFAULT_BUSINESS_HOURS = {
   start: "08:00",
@@ -97,10 +101,11 @@ export const DEFAULT_BUSINESS_HOURS = {
 
 /**
  * Check-in and check-out times for resort operations
+ * @deprecated Use RESORT_OPERATION_HOURS from config/settings instead
  */
 export const RESORT_SCHEDULE = {
-  checkInTime: "15:00",
-  checkOutTime: "11:00",
+  checkInTime: RESORT_OPERATION_HOURS.checkInTime,
+  checkOutTime: RESORT_OPERATION_HOURS.checkOutTime,
   gracePeriodMinutes: 60,
   earlyCheckInFee: 500, // PHP
   lateCheckOutFee: 500, // PHP
@@ -855,4 +860,103 @@ export const getPhilippineTimezoneOffset = (): number => {
   const philippineTime = new Date(utc.toLocaleString("en-US", { timeZone: PHILIPPINE_TIMEZONE }));
 
   return Math.round((philippineTime.getTime() - utc.getTime()) / 60000);
+};
+
+// ============================================
+// TIMEZONE-AWARE BOOKING DATE HANDLING
+// ============================================
+
+/**
+ * Converts a form date input to UTC for storage
+ * Interprets the selected date as being in the resort's timezone
+ *
+ * Example: User selects Oct 1 -> Treated as Oct 1 in resort timezone -> Stored as UTC
+ *
+ * @param date - Date selected by user (in their browser's timezone)
+ * @param timeString - Time in HH:mm format (default: "00:00")
+ * @returns UTC ISO string for database storage
+ */
+export const formDateToUTC = (date: Date, timeString: string = "00:00"): string => {
+  const [hours, minutes] = timeString.split(":").map(Number);
+
+  // Create date using the selected day/month/year but interpret as resort timezone
+  const resortDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    hours,
+    minutes,
+    0,
+    0
+  );
+
+  // Convert from resort timezone to UTC
+  return fromZonedTime(resortDate, RESORT_TIMEZONE).toISOString();
+};
+
+/**
+ * Converts UTC string from database to resort timezone Date
+ *
+ * @param utcString - UTC ISO string from database
+ * @returns Date object in resort timezone
+ */
+export const utcToResortTime = (utcString: string): Date => {
+  return toZonedTime(new Date(utcString), RESORT_TIMEZONE);
+};
+
+/**
+ * Formats a UTC date string for display in resort timezone
+ *
+ * @param utcString - UTC ISO string from database
+ * @param formatStr - date-fns format string
+ * @returns Formatted date string in resort timezone
+ */
+export const formatInResortTimezone = (utcString: string, formatStr: string): string => {
+  return formatInTimeZone(new Date(utcString), RESORT_TIMEZONE, formatStr);
+};
+
+/**
+ * Gets calendar date key from UTC string in resort timezone
+ *
+ * @param utcString - UTC ISO string from database
+ * @returns Date key (YYYY-MM-DD) in resort timezone
+ */
+export const getResortCalendarKey = (utcString: string): string => {
+  return formatInResortTimezone(utcString, "yyyy-MM-dd");
+};
+
+/**
+ * Formats booking date for display (backward compatibility)
+ *
+ * @param dateString - Date string from database
+ * @param includeTime - Whether to include time
+ * @returns Formatted date string
+ */
+export const formatBookingDate = (dateString: string, includeTime: boolean = false): string => {
+  const formatStr = includeTime ? "MMM d, yyyy h:mm a" : "MMM d, yyyy";
+  return formatInResortTimezone(dateString, formatStr);
+};
+
+/**
+ * Parse booking date (backward compatibility)
+ * Converts UTC to resort timezone
+ *
+ * @param dateString - UTC date string
+ * @returns Date in resort timezone
+ */
+export const parseBookingDate = (dateString: string): Date => {
+  return utcToResortTime(dateString);
+};
+
+/**
+ * Gets calendar date key from a Date object
+ *
+ * @param date - Date object
+ * @returns Date key (YYYY-MM-DD)
+ */
+export const getCalendarDateKey = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 };

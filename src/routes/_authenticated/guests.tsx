@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
+import type { Guest } from "@/types";
 
-// Lazy load component for better performance
+// Lazy load components for better performance
 const GuestsTable = lazy(() =>
   import("@/components/guests/GuestsTable").then((m) => ({ default: m.GuestsTable }))
+);
+const GuestDetailModal = lazy(() =>
+  import("@/components/guests/GuestDetailModal").then((m) => ({ default: m.GuestDetailModal }))
 );
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { z } from "zod";
@@ -19,6 +23,19 @@ export const Route = createFileRoute("/_authenticated/guests")({
 });
 
 function GuestsPage() {
+  const [viewingGuest, setViewingGuest] = useState<Guest | null>(null);
+  const [showViewDialog, setShowViewDialog] = useState(false);
+
+  const handleViewGuest = (guest: Guest) => {
+    setViewingGuest(guest);
+    setShowViewDialog(true);
+  };
+
+  const handleEditGuest = (guest: Guest) => {
+    // Future: Implement edit functionality
+    console.log("Edit guest:", guest);
+  };
+
   return (
     <ErrorBoundary level="page">
       <div className="space-y-6">
@@ -35,9 +52,21 @@ function GuestsPage() {
               </div>
             }
           >
-            <GuestsTable />
+            <GuestsTable onViewGuest={handleViewGuest} onEditGuest={handleEditGuest} />
           </Suspense>
         </ErrorBoundary>
+
+        {/* View Guest Detail Dialog */}
+        <Suspense fallback={null}>
+          <GuestDetailModal
+            guest={viewingGuest}
+            open={showViewDialog}
+            onOpenChange={(open) => {
+              setShowViewDialog(open);
+              if (!open) setViewingGuest(null);
+            }}
+          />
+        </Suspense>
       </div>
     </ErrorBoundary>
   );

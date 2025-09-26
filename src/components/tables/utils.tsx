@@ -9,6 +9,7 @@ import {
   MoreHorizontal,
   X,
 } from "lucide-react";
+import { utcToResortTime } from "@/utils/date-helpers";
 import React from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +53,7 @@ export const formatPercentage = (value: number): string => {
  */
 export const formatTableDate = (dateString: string): string => {
   try {
-    const date = new Date(dateString);
+    const date = utcToResortTime(dateString);
     return format(date, "MMM dd");
   } catch {
     return "Invalid Date";

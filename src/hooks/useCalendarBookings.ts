@@ -10,6 +10,7 @@ import {
   max,
 } from "date-fns";
 import type { Booking } from "@/types";
+import { utcToResortTime, getCalendarDateKey } from "@/utils/date-helpers";
 
 interface BookingsByDate {
   [date: string]: Booking[];
@@ -52,8 +53,9 @@ export function useCalendarBookings(
     const countedBookings = new Set<string>();
 
     bookings.forEach((booking) => {
-      const checkInDate = new Date(booking.check_in);
-      const checkOutDate = new Date(booking.check_out);
+      // Convert UTC dates to resort timezone
+      const checkInDate = utcToResortTime(booking.check_in);
+      const checkOutDate = utcToResortTime(booking.check_out);
 
       // Early exit if booking is completely outside our buffer range
       if (checkOutDate < bufferStart || checkInDate > bufferEnd) {
@@ -72,7 +74,7 @@ export function useCalendarBookings(
 
       // Process each day efficiently
       bookingDays.forEach((currentDate) => {
-        const dateKey = format(currentDate, "yyyy-MM-dd");
+        const dateKey = getCalendarDateKey(currentDate);
 
         if (!bookingsByDate[dateKey]) {
           bookingsByDate[dateKey] = [];

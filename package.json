@@ -4,11 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -b --force && vite build",
-    "build:phase2": "vite build",
-    "build:production": "npm run type-check && vite build",
-    "bundle:analyze": "vite build --mode analyze",
-    "bundle:size": "node scripts/bundle-size.js",
+    "build": "npm run type-check && vite build",
+    "build:analyze": "vite build --mode analyze",
+    "build:dev": "tsc -b && vite build",
+    "build:size": "node scripts/bundle-size.js",
+    "clean": "rm -rf dist node_modules/.vite",
     "dev": "vite",
     "format": "prettier --write .",
     "lint": "eslint .",
@@ -25,8 +25,8 @@
     "test:ui": "vitest --ui",
     "test:watch": "vitest watch",
     "type-check": "tsc --noEmit",
-    "type-check:phase2": "tsc --noEmit --skipLibCheck",
-    "type-coverage": "node scripts/type-coverage.js"
+    "verify": "npm run type-check && npm run lint && npm run test:run",
+    "verify:fix": "npm run lint:fix && npm run format"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -56,6 +56,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "dompurify": "^3.2.7",
     "lucide-react": "^0.469.0",
     "next-themes": "^0.4.6",

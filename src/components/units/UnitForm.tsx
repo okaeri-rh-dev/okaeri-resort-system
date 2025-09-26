@@ -49,7 +49,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
       base_occupancy: unit?.base_occupancy || 2,
       max_occupancy: unit?.max_occupancy || 2,
       base_rate: unit?.base_rate || 0,
-      weekend_rate: unit?.weekend_rate || 0,
+      weekend_rate: unit?.weekend_rate || unit?.base_rate || 0,
       extra_person_rate: unit?.extra_person_rate || 0,
     },
     mode: "onBlur",
@@ -57,7 +57,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
   });
 
   const watchedBaseRate = form.watch("base_rate");
-  const watchedWeekendRate = form.watch("weekend_rate");
+  // Weekend rate removed from UI, will use base_rate
   const watchedExtraPersonRate = form.watch("extra_person_rate");
   const watchedBaseOccupancy = form.watch("base_occupancy");
   const watchedMaxOccupancy = form.watch("max_occupancy");
@@ -66,6 +66,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
     try {
       const unitData = {
         ...data,
+        weekend_rate: data.base_rate, // Automatically set weekend_rate to base_rate
         unit_type: "Standard" as const,
       };
 
@@ -74,22 +75,22 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
           unitId: unit.unit_id,
           updates: unitData,
         });
-        toast.success("Unit updated successfully!");
+        toast.success("Cabin updated successfully!");
       } else {
         await createUnitMutation.mutateAsync({
           ...unitData,
           unit_status: "Available" as const,
           amenities: null,
         });
-        toast.success("Unit created successfully!");
+        toast.success("Cabin created successfully!");
       }
 
       onSuccess?.(unitData);
     } catch (error) {
       toast.error(
         isEditing
-          ? "Failed to update unit. Please try again."
-          : "Failed to create unit. Please try again."
+          ? "Failed to update cabin. Please try again."
+          : "Failed to create cabin. Please try again."
       );
       console.error("Unit form error:", error);
     }
@@ -100,7 +101,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Building2 className="h-5 w-5" />
-          {isEditing ? "Edit Unit" : "Create New Unit"}
+          {isEditing ? "Edit Cabin" : "Create New Cabin"}
         </CardTitle>
       </CardHeader>
 
@@ -117,11 +118,11 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                   name="unit_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Unit Name</FormLabel>
+                      <FormLabel>Cabin Name</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., Ocean View Standard A" {...field} />
                       </FormControl>
-                      <FormDescription>Descriptive name for the unit</FormDescription>
+                      <FormDescription>Descriptive name for the cabin</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -132,7 +133,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                   name="unit_code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Unit Code</FormLabel>
+                      <FormLabel>Cabin Code</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="e.g., A101"
@@ -250,41 +251,6 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="weekend_rate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Weekend Rate</FormLabel>
-                      <FormControl>
-                        <NumberInput
-                          min={100}
-                          max={1000000}
-                          allowDecimals={true}
-                          className="pl-10"
-                          placeholder="3000.00"
-                          startIcon={<span className="text-sm font-medium">₱</span>}
-                          value={field.value}
-                          onChange={(value) => field.onChange(value)}
-                          onBlur={(value) => {
-                            field.onChange(value || 100); // Set minimum on blur
-                            field.onBlur();
-                          }}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Rate per night (Friday - Saturday)
-                        {watchedWeekendRate > 0 && (
-                          <span className="mt-1 block text-xs">
-                            {formatCurrency(watchedWeekendRate)} per night
-                          </span>
-                        )}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
 
               {/* Extra Person Rate */}
@@ -326,18 +292,14 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                 )}
               />
 
-              {/* Rate Comparison */}
-              {watchedBaseRate > 0 && watchedWeekendRate > 0 && (
+              {/* Rate Summary */}
+              {watchedBaseRate > 0 && (
                 <div className="bg-muted rounded-lg p-4">
                   <h4 className="mb-2 font-medium">Rate Summary</h4>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="text-sm">
                     <div>
-                      <span className="text-muted-foreground">Weekday:</span>
-                      <p className="font-medium">{formatCurrency(watchedBaseRate)}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Weekend:</span>
-                      <p className="font-medium">{formatCurrency(watchedWeekendRate)}</p>
+                      <span className="text-muted-foreground">Nightly Rate:</span>
+                      <p className="font-medium text-lg">{formatCurrency(watchedBaseRate)}</p>
                     </div>
                   </div>
                   {watchedBaseOccupancy > 0 && watchedMaxOccupancy > 0 && (
@@ -360,11 +322,6 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                           )}
                       </div>
                     </div>
-                  )}
-                  {watchedWeekendRate < watchedBaseRate && (
-                    <p className="mt-2 text-xs text-yellow-600">
-                      ⚠️ Weekend rate is lower than base rate
-                    </p>
                   )}
                   {watchedBaseOccupancy > watchedMaxOccupancy && (
                     <p className="mt-2 text-xs text-red-600">
@@ -396,8 +353,8 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                     ? "Updating..."
                     : "Creating..."
                   : isEditing
-                    ? "Update Unit"
-                    : "Create Unit"}
+                    ? "Update Cabin"
+                    : "Create Cabin"}
               </Button>
             </div>
           </form>

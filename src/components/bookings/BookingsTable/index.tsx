@@ -1,8 +1,8 @@
-import { flexRender } from "@tanstack/react-table";
-import { cn } from "@/lib/utils";
 import { withErrorBoundary } from "@/components/ErrorBoundary";
-import { ResponsiveTable, TableEmptyState, TablePagination } from "@/components/tables/utils";
 import { BookingsTableSkeleton } from "@/components/skeletons";
+import { ResponsiveTable, TableEmptyState, TablePagination } from "@/components/tables/utils";
+import { cn } from "@/lib/utils";
+import { flexRender } from "@tanstack/react-table";
 
 import { BookingCard } from "./components/BookingCard";
 import { BookingFilters } from "./components/BookingFilters";
@@ -102,7 +102,7 @@ function BookingsTableComponent({ onViewBooking, onEditBooking, className }: Boo
                   <tr
                     key={row.id}
                     className={cn(
-                      "h-10 border-b border-neutral-100 hover:bg-neutral-50",
+                      "h-14 border-b border-neutral-100 hover:bg-neutral-50 py-2",
                       index % 2 === 0 && "bg-neutral-50/30"
                     )}
                   >

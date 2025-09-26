@@ -117,10 +117,13 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
           showActions={true}
           onApply={() => {
             setDateRange(tempDateRange);
+            // If only "from" date is selected, use it for both from and to
+            const fromDate = tempDateRange?.from;
+            const toDate = tempDateRange?.to || fromDate;
             setFilters({
               ...filters,
-              date_from: tempDateRange?.from?.toISOString(),
-              date_to: tempDateRange?.to?.toISOString(),
+              date_from: fromDate?.toISOString(),
+              date_to: toDate?.toISOString(),
             });
           }}
           onClear={() => {

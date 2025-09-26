@@ -156,7 +156,7 @@ interface UnitCardProps {
   onSelect: (checked: boolean) => void;
   onView: () => void;
   onEdit: () => void;
-  onUpdateRate: (field: "base_rate" | "weekend_rate", value: number) => void;
+  onUpdateRate: (field: "base_rate", value: number) => void;
 }
 
 const UnitCard: React.FC<UnitCardProps> = ({
@@ -191,17 +191,6 @@ const UnitCard: React.FC<UnitCardProps> = ({
             <InlineEdit
               value={unit.base_rate}
               onSave={(value) => onUpdateRate("base_rate", value as number)}
-              type="number"
-              className="w-20"
-            />
-          }
-        />
-        <MobileCardRow
-          label="Weekend Rate"
-          value={
-            <InlineEdit
-              value={unit.weekend_rate}
-              onSave={(value) => onUpdateRate("weekend_rate", value as number)}
               type="number"
               className="w-20"
             />
@@ -268,7 +257,7 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
   }, [units, searchQuery]);
 
   // Handle inline rate updates
-  const handleRateUpdate = (unitId: string, field: "base_rate" | "weekend_rate", value: number) => {
+  const handleRateUpdate = (unitId: string, field: "base_rate", value: number) => {
     updateUnit.mutate({
       unitId,
       updates: { [field]: value },
@@ -299,7 +288,6 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
         base_occupancy: unit.base_occupancy,
         max_occupancy: unit.max_occupancy,
         base_rate: unit.base_rate, // Will be formatted as currency
-        weekend_rate: unit.weekend_rate, // Will be formatted as currency
         extra_person_rate: unit.extra_person_rate, // Will be formatted as currency
         unit_status: unit.unit_status,
         created_date: unit.created_at,
@@ -316,7 +304,6 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
           "Base Occupancy",
           "Max Occupancy",
           "Base Rate",
-          "Weekend Rate",
           "Extra Person Rate",
           "Unit Status",
           "Created Date",
@@ -343,7 +330,6 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
           name: unit.unit_name,
           capacity: unit.max_occupancy,
           base_rate: unit.base_rate,
-          weekend_rate: unit.weekend_rate,
           status: unit.unit_status,
         })),
         "units"
@@ -409,27 +395,6 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({ onViewUnit, onEditUnit, 
               value={getValue()}
               onSave={(value) =>
                 handleRateUpdate(row.original.unit_id, "base_rate", value as number)
-              }
-              type="number"
-              className="w-24"
-            />
-          </div>
-        ),
-        size: 120,
-      }),
-
-      columnHelper.accessor("weekend_rate", {
-        header: ({ header }) => (
-          <SortableHeader header={header} className="text-right">
-            Weekend Rate
-          </SortableHeader>
-        ),
-        cell: ({ getValue, row }) => (
-          <div className="text-right">
-            <InlineEdit
-              value={getValue()}
-              onSave={(value) =>
-                handleRateUpdate(row.original.unit_id, "weekend_rate", value as number)
               }
               type="number"
               className="w-24"

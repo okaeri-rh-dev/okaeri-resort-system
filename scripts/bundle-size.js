@@ -39,7 +39,7 @@ class BundleSizeValidator {
     // Build the project first
     console.log("📦 Building production bundle...");
     try {
-      execSync("npm run build:phase2", { stdio: "inherit" });
+      execSync("npm run build", { stdio: "inherit" });
     } catch (error) {
       console.error("❌ Build failed:", error.message);
       process.exit(1);
@@ -209,13 +209,13 @@ class BundleSizeValidator {
       console.log("   2. Use dynamic imports for non-critical routes");
       console.log("   3. Consider lighter alternatives for large libraries");
       console.log("   4. Remove unused code and dependencies");
-      console.log("   5. Run: npm run bundle:analyze to see detailed breakdown");
+      console.log("   5. Run: npm run build:analyze to see detailed breakdown");
     } else {
       console.log("\n✅ All bundle size checks passed!");
     }
 
     console.log("\n─".repeat(60));
-    console.log("\nRun `npm run bundle:analyze` for detailed visualization");
+    console.log("\nRun `npm run build:analyze` for detailed visualization");
   }
 
   formatSize(bytes) {

@@ -46,6 +46,8 @@ import { useUnits } from "@/stores/useUnitStore";
 import { cn } from "@/lib/utils";
 import { BookingFormSkeleton } from "@/components/skeletons";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
+import { formDateToUTC } from "@/utils/date-helpers";
+import { RESORT_OPERATION_HOURS } from "@/config/settings";
 
 interface BookingFormProps {
   onSuccess?: (booking: any) => void;
@@ -234,8 +236,8 @@ export function BookingForm({
         email: sanitizedData.email || data.email,
         contact_number: formatPhoneNumber(sanitizedData.contact_number || data.contact_number),
         num_guests: data.num_guests,
-        check_in: data.check_in.toISOString(),
-        check_out: data.check_out.toISOString(),
+        check_in: formDateToUTC(data.check_in, RESORT_OPERATION_HOURS.checkInTime),
+        check_out: formDateToUTC(data.check_out, RESORT_OPERATION_HOURS.checkOutTime),
         total_amount: calculatedTotal,
         special_requests: sanitizedData.special_requests || data.special_requests,
         payment_method: data.payment_method,

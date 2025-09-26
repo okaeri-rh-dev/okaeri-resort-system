@@ -8,6 +8,9 @@ const UnitsTable = lazy(() =>
 const UnitForm = lazy(() =>
   import("@/components/units/UnitForm").then((m) => ({ default: m.UnitForm }))
 );
+const UnitDetailModal = lazy(() =>
+  import("@/components/units/UnitDetailModal").then((m) => ({ default: m.UnitDetailModal }))
+);
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -29,10 +32,12 @@ function UnitsPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [viewingUnit, setViewingUnit] = useState<Unit | null>(null);
+  const [showViewDialog, setShowViewDialog] = useState(false);
 
   const handleViewUnit = (unit: Unit) => {
-    // Future: Could open a read-only view dialog
-    console.log("View unit:", unit);
+    setViewingUnit(unit);
+    setShowViewDialog(true);
   };
 
   const handleEditUnit = (unit: Unit) => {
@@ -54,10 +59,10 @@ function UnitsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Units</h1>
-            <p className="text-muted-foreground">Manage resort units and availability</p>
+            <h1 className="text-3xl font-bold tracking-tight">Cabins</h1>
+            <p className="text-muted-foreground">Manage resort cabins and availability</p>
           </div>
-          <Button onClick={() => setShowCreateDialog(true)}>Add Unit</Button>
+          <Button onClick={() => setShowCreateDialog(true)}>Add Cabin</Button>
         </div>
 
         <ErrorBoundary level="component">
@@ -76,7 +81,7 @@ function UnitsPage() {
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Create New Unit</DialogTitle>
+              <DialogTitle>Create New Cabin</DialogTitle>
             </DialogHeader>
             <ErrorBoundary level="component">
               <Suspense
@@ -96,7 +101,7 @@ function UnitsPage() {
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Edit Unit</DialogTitle>
+              <DialogTitle>Edit Cabin</DialogTitle>
             </DialogHeader>
             <ErrorBoundary level="component">
               <Suspense
@@ -111,6 +116,18 @@ function UnitsPage() {
             </ErrorBoundary>
           </DialogContent>
         </Dialog>
+
+        {/* View Unit Detail Dialog */}
+        <Suspense fallback={null}>
+          <UnitDetailModal
+            unit={viewingUnit}
+            open={showViewDialog}
+            onOpenChange={(open) => {
+              setShowViewDialog(open);
+              if (!open) setViewingUnit(null);
+            }}
+          />
+        </Suspense>
       </div>
     </ErrorBoundary>
   );

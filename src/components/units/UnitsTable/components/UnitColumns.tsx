@@ -106,33 +106,6 @@ export function useUnitColumns({ onUpdateUnit, isEditMode }: UseUnitColumnsProps
         size: 120,
       }),
 
-      // Weekend rate column with inline editing
-      columnHelper.accessor("weekend_rate", {
-        header: ({ header }) => <SortableHeader header={header}>Weekend Rate</SortableHeader>,
-        cell: ({ getValue, row }) => {
-          const value = getValue() || 0;
-          if (isEditMode) {
-            return (
-              <InlineEdit
-                value={value}
-                onSave={(value) =>
-                  onUpdateUnit(row.original.unit_id, { weekend_rate: value as number })
-                }
-                type="number"
-                placeholder="0.00"
-                className="text-right"
-              />
-            );
-          }
-          return (
-            <div className="text-right font-mono text-sm text-blue-600">
-              {formatCurrency(value)}
-            </div>
-          );
-        },
-        size: 130,
-      }),
-
       // Extra person rate column with inline editing
       columnHelper.accessor("extra_person_rate", {
         header: "Extra Person",

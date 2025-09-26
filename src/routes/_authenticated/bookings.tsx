@@ -8,6 +8,11 @@ const BookingsTable = lazy(() =>
 const BookingForm = lazy(() =>
   import("@/components/bookings/BookingForm").then((m) => ({ default: m.BookingForm }))
 );
+const BookingDetailModal = lazy(() =>
+  import("@/components/bookings/BookingDetailModal").then((m) => ({
+    default: m.BookingDetailModal,
+  }))
+);
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -29,6 +34,8 @@ function BookingsPage() {
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
+  const [showViewDialog, setShowViewDialog] = useState(false);
 
   const handleEditBooking = (booking: Booking) => {
     setEditingBooking(booking);
@@ -36,8 +43,8 @@ function BookingsPage() {
   };
 
   const handleViewBooking = (booking: Booking) => {
-    // Future: Could open a read-only view dialog
-    console.log("View booking:", booking);
+    setViewingBooking(booking);
+    setShowViewDialog(true);
   };
 
   // Memoize initial data for edit form to prevent re-initialization
@@ -127,6 +134,18 @@ function BookingsPage() {
             </ErrorBoundary>
           </DialogContent>
         </Dialog>
+
+        {/* View Booking Detail Dialog */}
+        <Suspense fallback={null}>
+          <BookingDetailModal
+            booking={viewingBooking}
+            open={showViewDialog}
+            onOpenChange={(open) => {
+              setShowViewDialog(open);
+              if (!open) setViewingBooking(null);
+            }}
+          />
+        </Suspense>
       </div>
     </ErrorBoundary>
   );

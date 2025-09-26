@@ -50,7 +50,7 @@ export function UnitSelection({
         name="unit_id"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base sm:text-sm font-medium">Select Unit</FormLabel>
+            <FormLabel className="text-base sm:text-sm font-medium">Select Cabin</FormLabel>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
                 <SelectTrigger

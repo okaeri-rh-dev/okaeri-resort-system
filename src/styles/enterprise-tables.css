@@ -27,7 +27,7 @@
 
 /* Body styling - dense rows for information density */
 .enterprise-table tbody tr {
-  @apply h-10 border-b border-neutral-100 transition-colors hover:bg-neutral-50;
+  @apply h-14 border-b border-neutral-100 transition-colors hover:bg-neutral-50 py-2;
 }
 
 .enterprise-table tbody tr:nth-child(even) {
