@@ -126,10 +126,7 @@ export const connectDB = async () => {
   try {
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl:
-        process.env.NODE_ENV === "production"
-          ? { rejectUnauthorized: false }
-          : false,
+      ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
       max: 20,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 2000,
@@ -311,16 +308,12 @@ const runMigrations = async () => {
     `);
 
     // Check if migration already ran
-    const result = await query("SELECT * FROM migrations WHERE name = $1", [
-      "001_initial_schema",
-    ]);
+    const result = await query("SELECT * FROM migrations WHERE name = $1", ["001_initial_schema"]);
 
     if (result.rows.length === 0) {
       console.log("Running migration: 001_initial_schema");
       await query(initialSchema.up);
-      await query("INSERT INTO migrations (name) VALUES ($1)", [
-        "001_initial_schema",
-      ]);
+      await query("INSERT INTO migrations (name) VALUES ($1)", ["001_initial_schema"]);
       console.log("✅ Migration completed successfully");
     } else {
       console.log("Migration already executed");
@@ -402,15 +395,8 @@ router.get("/:id", async (req, res, next) => {
 // POST create unit
 router.post("/", async (req, res, next) => {
   try {
-    const {
-      unit_name,
-      unit_code,
-      unit_type,
-      max_occupancy,
-      base_rate,
-      weekend_rate,
-      amenities,
-    } = req.body;
+    const { unit_name, unit_code, unit_type, max_occupancy, base_rate, weekend_rate, amenities } =
+      req.body;
 
     const result = await query(
       `INSERT INTO units (
@@ -418,15 +404,7 @@ router.post("/", async (req, res, next) => {
         base_rate, weekend_rate, amenities
       ) VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *`,
-      [
-        unit_name,
-        unit_code,
-        unit_type,
-        max_occupancy,
-        base_rate,
-        weekend_rate,
-        amenities || [],
-      ]
+      [unit_name, unit_code, unit_type, max_occupancy, base_rate, weekend_rate, amenities || []]
     );
 
     res.status(201).json({
@@ -585,10 +563,7 @@ router.post("/", async (req, res, next) => {
 
     // Check or create guest
     let guest_id = null;
-    const guestCheck = await query(
-      "SELECT guest_id FROM guests WHERE email = $1",
-      [email]
-    );
+    const guestCheck = await query("SELECT guest_id FROM guests WHERE email = $1", [email]);
 
     if (guestCheck.rows.length > 0) {
       guest_id = guestCheck.rows[0].guest_id;
@@ -726,9 +701,7 @@ export const useUnitStore = create<UnitStore>((set) => ({
 
   updateUnit: (id, updates) =>
     set((state) => ({
-      units: state.units.map((u) =>
-        u.unit_id === id ? { ...u, ...updates } : u
-      ),
+      units: state.units.map((u) => (u.unit_id === id ? { ...u, ...updates } : u)),
     })),
 
   deleteUnit: (id) =>
@@ -888,12 +861,7 @@ export interface Booking {
   check_in: string;
   check_out: string;
   total_amount: number;
-  booking_status:
-    | "Pending"
-    | "Confirmed"
-    | "CheckedIn"
-    | "CheckedOut"
-    | "Cancelled";
+  booking_status: "Pending" | "Confirmed" | "CheckedIn" | "CheckedOut" | "Cancelled";
   payment_status: "Unpaid" | "Partial" | "Paid" | "Refunded";
   payment_method?: string;
   payment_proof_url?: string;
@@ -952,11 +920,7 @@ export function UnitsDisplay() {
         <Card key={unit.unit_id}>
           <CardHeader>
             <CardTitle>{unit.unit_name}</CardTitle>
-            <Badge
-              variant={
-                unit.unit_status === "Available" ? "success" : "secondary"
-              }
-            >
+            <Badge variant={unit.unit_status === "Available" ? "success" : "secondary"}>
               {unit.unit_status}
             </Badge>
           </CardHeader>
@@ -1031,63 +995,46 @@ export function BookingForm() {
               </option>
             ))}
         </select>
-        {errors.unit_id && (
-          <p className="text-sm text-red-500">{errors.unit_id.message}</p>
-        )}
+        {errors.unit_id && <p className="text-sm text-red-500">{errors.unit_id.message}</p>}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <Label htmlFor="guest_name">Guest Name</Label>
           <Input {...register("guest_name")} />
-          {errors.guest_name && (
-            <p className="text-sm text-red-500">{errors.guest_name.message}</p>
-          )}
+          {errors.guest_name && <p className="text-sm text-red-500">{errors.guest_name.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="email">Email</Label>
           <Input type="email" {...register("email")} />
-          {errors.email && (
-            <p className="text-sm text-red-500">{errors.email.message}</p>
-          )}
+          {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="contact_number">Contact Number</Label>
           <Input {...register("contact_number")} placeholder="09XXXXXXXXX" />
           {errors.contact_number && (
-            <p className="text-sm text-red-500">
-              {errors.contact_number.message}
-            </p>
+            <p className="text-sm text-red-500">{errors.contact_number.message}</p>
           )}
         </div>
 
         <div>
           <Label htmlFor="num_guests">Number of Guests</Label>
-          <Input
-            type="number"
-            {...register("num_guests", { valueAsNumber: true })}
-          />
-          {errors.num_guests && (
-            <p className="text-sm text-red-500">{errors.num_guests.message}</p>
-          )}
+          <Input type="number" {...register("num_guests", { valueAsNumber: true })} />
+          {errors.num_guests && <p className="text-sm text-red-500">{errors.num_guests.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="check_in">Check-in Date</Label>
           <Input type="date" {...register("check_in")} />
-          {errors.check_in && (
-            <p className="text-sm text-red-500">{errors.check_in.message}</p>
-          )}
+          {errors.check_in && <p className="text-sm text-red-500">{errors.check_in.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="check_out">Check-out Date</Label>
           <Input type="date" {...register("check_out")} />
-          {errors.check_out && (
-            <p className="text-sm text-red-500">{errors.check_out.message}</p>
-          )}
+          {errors.check_out && <p className="text-sm text-red-500">{errors.check_out.message}</p>}
         </div>
       </div>
 

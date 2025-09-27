@@ -310,9 +310,7 @@ export class BookingService {
     const unit = await sql`SELECT * FROM units WHERE unit_id = ${unitId}`;
     if (!unit.length) throw new Error("Unit not found");
 
-    const nights = Math.ceil(
-      (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
-    );
+    const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
     let totalAmount = 0;
 
     // Simple pricing logic for Phase 1
@@ -413,25 +411,12 @@ export const UNIT_STATUSES = {
 } as const;
 
 export class StatusManager {
-  async updateBookingStatus(
-    bookingId: string,
-    newStatus: string,
-    userId?: string
-  ) {
+  async updateBookingStatus(bookingId: string, newStatus: string, userId?: string) {
     // Validate status transition
     const allowedTransitions = {
-      [BOOKING_STATUSES.INQUIRY]: [
-        BOOKING_STATUSES.PENDING_PAYMENT,
-        BOOKING_STATUSES.CANCELLED,
-      ],
-      [BOOKING_STATUSES.PENDING_PAYMENT]: [
-        BOOKING_STATUSES.CONFIRMED,
-        BOOKING_STATUSES.CANCELLED,
-      ],
-      [BOOKING_STATUSES.CONFIRMED]: [
-        BOOKING_STATUSES.IN_PROGRESS,
-        BOOKING_STATUSES.CANCELLED,
-      ],
+      [BOOKING_STATUSES.INQUIRY]: [BOOKING_STATUSES.PENDING_PAYMENT, BOOKING_STATUSES.CANCELLED],
+      [BOOKING_STATUSES.PENDING_PAYMENT]: [BOOKING_STATUSES.CONFIRMED, BOOKING_STATUSES.CANCELLED],
+      [BOOKING_STATUSES.CONFIRMED]: [BOOKING_STATUSES.IN_PROGRESS, BOOKING_STATUSES.CANCELLED],
       [BOOKING_STATUSES.IN_PROGRESS]: [BOOKING_STATUSES.COMPLETED],
       // Completed and Cancelled are terminal states
     };
@@ -448,9 +433,7 @@ export class StatusManager {
     const allowed = allowedTransitions[currentStatus] || [];
 
     if (!allowed.includes(newStatus)) {
-      throw new Error(
-        `Cannot transition from ${currentStatus} to ${newStatus}`
-      );
+      throw new Error(`Cannot transition from ${currentStatus} to ${newStatus}`);
     }
 
     // Update status
@@ -720,10 +703,7 @@ const metrics = {
 
 ```typescript
 // src/lib/analytics.ts
-export function trackBusinessEvent(
-  event: string,
-  properties: Record<string, any>
-) {
+export function trackBusinessEvent(event: string, properties: Record<string, any>) {
   // Simple analytics for family business
   const eventData = {
     event,

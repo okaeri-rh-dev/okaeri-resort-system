@@ -103,9 +103,7 @@ export function getAvailableUnits(
   checkIn: Date,
   checkOut: Date
 ): Unit[] {
-  return units.filter((unit) =>
-    checkUnitAvailability(unit, bookings, checkIn, checkOut)
-  );
+  return units.filter((unit) => checkUnitAvailability(unit, bookings, checkIn, checkOut));
 }
 
 export function calculateNights(checkIn: Date, checkOut: Date): number {
@@ -113,11 +111,7 @@ export function calculateNights(checkIn: Date, checkOut: Date): number {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
-export function calculateTotalAmount(
-  unit: Unit,
-  checkIn: Date,
-  checkOut: Date
-): number {
+export function calculateTotalAmount(unit: Unit, checkIn: Date, checkOut: Date): number {
   const nights = calculateNights(checkIn, checkOut);
   const isWeekend = (date: Date) => {
     const day = date.getDay();
@@ -142,12 +136,7 @@ export function calculateTotalAmount(
 // src/utils/bookingWorkflow.ts
 import { Booking } from "@/types";
 
-export type BookingStatus =
-  | "Pending"
-  | "Confirmed"
-  | "CheckedIn"
-  | "CheckedOut"
-  | "Cancelled";
+export type BookingStatus = "Pending" | "Confirmed" | "CheckedIn" | "CheckedOut" | "Cancelled";
 
 export type PaymentStatus = "Unpaid" | "Partial" | "Paid" | "Refunded";
 
@@ -160,10 +149,7 @@ const statusTransitions: Record<BookingStatus, BookingStatus[]> = {
   Cancelled: [], // Final state
 };
 
-export function canTransitionTo(
-  currentStatus: BookingStatus,
-  newStatus: BookingStatus
-): boolean {
+export function canTransitionTo(currentStatus: BookingStatus, newStatus: BookingStatus): boolean {
   return statusTransitions[currentStatus]?.includes(newStatus) || false;
 }
 
@@ -171,14 +157,9 @@ export function getNextStatuses(currentStatus: BookingStatus): BookingStatus[] {
   return statusTransitions[currentStatus] || [];
 }
 
-export function updateBookingStatus(
-  booking: Booking,
-  newStatus: BookingStatus
-): Booking | null {
+export function updateBookingStatus(booking: Booking, newStatus: BookingStatus): Booking | null {
   if (!canTransitionTo(booking.booking_status as BookingStatus, newStatus)) {
-    console.error(
-      `Cannot transition from ${booking.booking_status} to ${newStatus}`
-    );
+    console.error(`Cannot transition from ${booking.booking_status} to ${newStatus}`);
     return null;
   }
 
@@ -228,10 +209,7 @@ export interface BookingFilters {
   paymentStatus?: string;
 }
 
-export function filterBookings(
-  bookings: Booking[],
-  filters: BookingFilters
-): Booking[] {
+export function filterBookings(bookings: Booking[], filters: BookingFilters): Booking[] {
   let filtered = [...bookings];
 
   // Status filter
@@ -269,9 +247,7 @@ export function filterBookings(
 
   // Payment status filter
   if (filters.paymentStatus && filters.paymentStatus !== "all") {
-    filtered = filtered.filter(
-      (b) => b.payment_status === filters.paymentStatus
-    );
+    filtered = filtered.filter((b) => b.payment_status === filters.paymentStatus);
   }
 
   return filtered;
@@ -299,8 +275,7 @@ export function sortBookings(
 
     switch (sortBy) {
       case "date":
-        comparison =
-          new Date(a.check_in).getTime() - new Date(b.check_in).getTime();
+        comparison = new Date(a.check_in).getTime() - new Date(b.check_in).getTime();
         break;
       case "amount":
         comparison = a.total_amount - b.total_amount;
@@ -334,11 +309,7 @@ export function BookingSearch() {
   const [filters, setFilters] = useState<BookingFilters>({});
   const [sortBy, setSortBy] = useState<"date" | "amount" | "status">("date");
 
-  const filteredBookings = sortBookings(
-    filterBookings(bookings, filters),
-    sortBy,
-    "desc"
-  );
+  const filteredBookings = sortBookings(filterBookings(bookings, filters), sortBy, "desc");
 
   return (
     <div className="space-y-4">
@@ -347,9 +318,7 @@ export function BookingSearch() {
         <Input
           placeholder="Search by name, email, phone, or reference..."
           value={filters.searchTerm || ""}
-          onChange={(e) =>
-            setFilters({ ...filters, searchTerm: e.target.value })
-          }
+          onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
           className="flex-1"
         />
 
@@ -367,9 +336,7 @@ export function BookingSearch() {
 
         <Select
           value={filters.paymentStatus || "all"}
-          onValueChange={(value) =>
-            setFilters({ ...filters, paymentStatus: value })
-          }
+          onValueChange={(value) => setFilters({ ...filters, paymentStatus: value })}
         >
           <option value="all">All Payments</option>
           <option value="Unpaid">Unpaid</option>
@@ -414,9 +381,7 @@ export function BookingSearch() {
       </div>
 
       {/* Results Count */}
-      <div className="text-sm text-gray-600">
-        Found {filteredBookings.length} bookings
-      </div>
+      <div className="text-sm text-gray-600">Found {filteredBookings.length} bookings</div>
 
       {/* Results Table would go here */}
     </div>
@@ -431,13 +396,7 @@ export function BookingSearch() {
 ```typescript
 // src/utils/reports.ts
 import { Booking, Unit } from "@/types";
-import {
-  format,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  isWithinInterval,
-} from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval } from "date-fns";
 
 export interface OccupancyReport {
   date: string;
@@ -483,9 +442,7 @@ export function generateOccupancyReport(
       if (isWithinInterval(day, { start: checkIn, end: checkOut })) {
         occupiedUnits.add(booking.unit_id);
         // Calculate daily revenue (simplified)
-        const nights = Math.ceil(
-          (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
-        );
+        const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
         dayRevenue += booking.total_amount / nights;
       }
     });
@@ -519,26 +476,16 @@ export function generateRevenueReport(
     );
   });
 
-  const totalRevenue = monthBookings.reduce(
-    (sum, b) => sum + b.total_amount,
-    0
-  );
-  const occupancyReport = generateOccupancyReport(
-    units,
-    bookings,
-    startDate,
-    endDate
-  );
+  const totalRevenue = monthBookings.reduce((sum, b) => sum + b.total_amount, 0);
+  const occupancyReport = generateOccupancyReport(units, bookings, startDate, endDate);
   const avgOccupancy =
-    occupancyReport.reduce((sum, r) => sum + r.occupancyRate, 0) /
-    occupancyReport.length;
+    occupancyReport.reduce((sum, r) => sum + r.occupancyRate, 0) / occupancyReport.length;
 
   return {
     period: format(startDate, "MMMM yyyy"),
     bookings: monthBookings.length,
     totalRevenue,
-    averageBookingValue:
-      monthBookings.length > 0 ? totalRevenue / monthBookings.length : 0,
+    averageBookingValue: monthBookings.length > 0 ? totalRevenue / monthBookings.length : 0,
     occupancyRate: avgOccupancy,
   };
 }
@@ -555,10 +502,7 @@ export function exportToCSV(data: any[], filename: string) {
         .map((header) => {
           const value = row[header];
           // Escape commas and quotes in values
-          if (
-            typeof value === "string" &&
-            (value.includes(",") || value.includes('"'))
-          ) {
+          if (typeof value === "string" && (value.includes(",") || value.includes('"'))) {
             return `"${value.replace(/"/g, '""')}"`;
           }
           return value;
@@ -589,11 +533,7 @@ import { useBookingStore } from "@/stores/bookingStore";
 import { useUnitStore } from "@/stores/unitStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  generateOccupancyReport,
-  generateRevenueReport,
-  exportToCSV,
-} from "@/utils/reports";
+import { generateOccupancyReport, generateRevenueReport, exportToCSV } from "@/utils/reports";
 import { startOfMonth, endOfMonth } from "date-fns";
 
 export function ReportDashboard() {
@@ -636,10 +576,7 @@ export function ReportDashboard() {
   };
 
   const handleExportOccupancy = () => {
-    exportToCSV(
-      occupancyData,
-      `occupancy_${format(selectedMonth, "yyyy-MM")}.csv`
-    );
+    exportToCSV(occupancyData, `occupancy_${format(selectedMonth, "yyyy-MM")}.csv`);
   };
 
   return (
@@ -657,9 +594,7 @@ export function ReportDashboard() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Revenue
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -679,9 +614,7 @@ export function ReportDashboard() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                Avg Booking Value
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">Avg Booking Value</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -692,14 +625,10 @@ export function ReportDashboard() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                Occupancy Rate
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">Occupancy Rate</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {revenueReport.occupancyRate.toFixed(1)}%
-              </div>
+              <div className="text-2xl font-bold">{revenueReport.occupancyRate.toFixed(1)}%</div>
             </CardContent>
           </Card>
         </div>

@@ -775,4 +775,4 @@ fi
 **Phase Owner:** QA Manager
 **Review Required By:** CTO, Security Team, DevOps
 **Estimated Completion:** 2 days from start
-**Go-Live Date:** ******\_******
+**Go-Live Date:** **\*\***\_**\*\***

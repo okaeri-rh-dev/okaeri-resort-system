@@ -357,10 +357,7 @@ export function generateBookingReference(): string {
 
 ```typescript
 // PUT /api/units/:id
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   const body = await request.json();
   const { unit_status } = body;
 
@@ -478,9 +475,7 @@ export function middleware(request: NextRequest) {
   const maxRequests = 100;
 
   const userRequests = rateLimit.get(ip) || [];
-  const recentRequests = userRequests.filter(
-    (time: number) => now - time < windowMs
-  );
+  const recentRequests = userRequests.filter((time: number) => now - time < windowMs);
 
   if (recentRequests.length >= maxRequests) {
     return NextResponse.json(

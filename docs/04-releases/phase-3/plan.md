@@ -220,9 +220,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="p-8 text-center">
             <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
             <h1 className="mb-2 text-2xl font-bold">Something went wrong</h1>
-            <p className="mb-4 text-gray-600">
-              Please refresh the page and try again.
-            </p>
+            <p className="mb-4 text-gray-600">Please refresh the page and try again.</p>
             <button
               onClick={() => window.location.reload()}
               className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"

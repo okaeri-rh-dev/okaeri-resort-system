@@ -184,9 +184,9 @@ If critical issues occur:
 - [ ] RLS verified as enabled
 - [ ] Backup plan understood
 
-**Deployed By**: ********\_********
-**Date**: ********\_********
-**Time**: ********\_********
+**Deployed By**: **\*\*\*\***\_**\*\*\*\***
+**Date**: **\*\*\*\***\_**\*\*\*\***
+**Time**: **\*\*\*\***\_**\*\*\*\***
 
 ---
 
