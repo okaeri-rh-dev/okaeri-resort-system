@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, handleSupabaseError } from "@/lib/supabase";
-import { uploadReceipt } from "@/lib/storage-security";
+import { uploadPaymentProof } from "@/lib/storage-security";
 import type { Payment, PaymentMethod, PaymentStatus } from "@/types";
 
 // ============================================
@@ -119,17 +119,23 @@ export const usePayments = () => {
           booking_id,
           booking_reference,
           guest_name,
+          contact_number,
           email,
+          num_guests,
+          check_in,
+          check_out,
           unit_id,
           total_amount,
+          payment_status,
+          booking_status,
+          created_at,
+          updated_at,
           units(unit_name)
         )
       `);
 
       // Apply filters
-      if (filters.status) {
-        query = query.eq("payment_status", filters.status);
-      }
+      // Note: payment_status is not a column in payments table
       if (filters.method) {
         query = query.eq("payment_method", filters.method);
       }
@@ -227,17 +233,20 @@ export const useCreatePayment = () => {
       let receipt_url = data.proof_url || null;
 
       // Upload receipt if provided
-      if (receiptFile) {
-        const uploadedUrl = await uploadReceipt(receiptFile);
-        receipt_url = uploadedUrl;
+      if (receiptFile && data.booking_id) {
+        const uploadedUrl = await uploadPaymentProof(receiptFile, data.booking_id);
+        receipt_url = uploadedUrl.url;
       }
 
       const { data: newPayment, error } = await supabase
         .from("payments")
         .insert({
-          ...data,
-          transaction_date: data.payment_date,
-          receipt_url,
+          booking_id: data.booking_id,
+          amount: data.amount,
+          payment_method: data.payment_method || "Cash",
+          payment_date: data.payment_date,
+          proof_url: receipt_url,
+          notes: data.notes || null,
         })
         .select()
         .single();
@@ -245,18 +254,26 @@ export const useCreatePayment = () => {
       if (error) throw new Error(handleSupabaseError(error));
 
       // Update booking payment status if needed
-      const { data: bookingPayments } = await supabase
-        .from("payments")
-        .select("amount")
-        .eq("booking_id", data.booking_id);
+      let bookingPayments = null;
+      if (data.booking_id) {
+        const { data: payments } = await supabase
+          .from("payments")
+          .select("amount")
+          .eq("booking_id", data.booking_id);
+        bookingPayments = payments;
+      }
 
       const totalPaid = bookingPayments?.reduce((sum, p) => sum + p.amount, 0) || 0;
 
-      const { data: booking } = await supabase
-        .from("bookings")
-        .select("total_amount")
-        .eq("booking_id", data.booking_id)
-        .single();
+      let booking = null;
+      if (data.booking_id) {
+        const { data: bookingData } = await supabase
+          .from("bookings")
+          .select("total_amount")
+          .eq("booking_id", data.booking_id)
+          .single();
+        booking = bookingData;
+      }
 
       if (booking) {
         let paymentStatus: PaymentStatus = "Pending";
@@ -266,10 +283,12 @@ export const useCreatePayment = () => {
           paymentStatus = "Partial";
         }
 
-        await supabase
-          .from("bookings")
-          .update({ payment_status: paymentStatus })
-          .eq("booking_id", data.booking_id);
+        if (data.booking_id) {
+          await supabase
+            .from("bookings")
+            .update({ payment_status: paymentStatus })
+            .eq("booking_id", data.booking_id);
+        }
       }
 
       return newPayment;
@@ -314,19 +333,28 @@ export const useUpdatePayment = () => {
       updates: Partial<Omit<Payment, "payment_id" | "created_at">>;
       receiptFile?: File;
     }) => {
-      let receipt_url = updates.proof_url || null;
+      let proof_url = updates.proof_url || null;
 
       // Upload new receipt if provided
       if (receiptFile) {
-        const uploadedUrl = await uploadReceipt(receiptFile);
-        receipt_url = uploadedUrl;
+        // Get booking_id for the payment to use in upload path
+        const { data: payment } = await supabase
+          .from("payments")
+          .select("booking_id")
+          .eq("payment_id", paymentId)
+          .single();
+
+        if (payment && payment.booking_id) {
+          const uploadedUrl = await uploadPaymentProof(receiptFile, payment.booking_id);
+          proof_url = uploadedUrl.url;
+        }
       }
 
       const { data, error } = await supabase
         .from("payments")
         .update({
           ...updates,
-          receipt_url,
+          proof_url,
         })
         .eq("payment_id", paymentId)
         .select()
@@ -392,8 +420,7 @@ export const useVerifyPayment = () => {
       const { data, error } = await supabase
         .from("payments")
         .update({
-          verified_at: new Date().toISOString(),
-          payment_status: "Completed",
+          notes: `Verified on ${new Date().toISOString()}`,
         })
         .eq("payment_id", paymentId)
         .select()
@@ -406,8 +433,7 @@ export const useVerifyPayment = () => {
       await queryClient.cancelQueries({ queryKey: ["payments"] });
 
       updateOptimistic(paymentId, {
-        verified_at: new Date().toISOString(),
-        payment_status: "Completed",
+        notes: `Verified on ${new Date().toISOString()}`,
       });
 
       return { paymentId };

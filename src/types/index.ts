@@ -77,17 +77,13 @@ export interface Booking {
 // ============================================
 export interface Payment {
   payment_id: string;
-  booking_id: string;
+  booking_id: string | null;
   amount: number;
-  payment_method?: PaymentMethod;
-  payment_status?: PaymentStatus;
-  payment_date: string;
+  payment_method?: string | null;
+  payment_date: string | null;
   proof_url?: string | null;
-  receipt_url?: string | null;
-  reference_number?: string | null;
   notes?: string | null;
-  verified_at?: string | null;
-  created_at: string;
+  created_at: string | null;
   // Relations
   booking?: Booking;
 }

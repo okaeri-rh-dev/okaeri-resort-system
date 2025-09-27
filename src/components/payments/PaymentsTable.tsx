@@ -123,7 +123,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
       columnHelper.accessor("payment_date", {
         id: "payment_date",
         header: ({ header }) => <SortableHeader header={header}>Date</SortableHeader>,
-        cell: ({ getValue }) => formatTableDate(getValue()),
+        cell: ({ getValue }) => formatTableDate(getValue() || ""),
         size: 100,
       }),
 
@@ -177,9 +177,9 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
         size: 100,
       }),
 
-      columnHelper.accessor("payment_status", {
+      columnHelper.accessor((row) => row.booking?.payment_status, {
         id: "payment_status",
-        header: "Status",
+        header: "Booking Payment Status",
         cell: ({ getValue }) => {
           const status = getValue() as string | undefined;
           if (!status) return "-";
@@ -199,25 +199,11 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
             />
           );
         },
-        size: 100,
-      }),
-
-      columnHelper.accessor("reference_number", {
-        id: "reference_number",
-        header: "Reference",
-        cell: ({ getValue }) => {
-          const ref = getValue();
-          return ref ? (
-            <span className="font-mono text-sm text-neutral-600">{ref}</span>
-          ) : (
-            <span className="text-neutral-400">-</span>
-          );
-        },
         size: 120,
       }),
 
-      columnHelper.accessor("receipt_url", {
-        id: "receipt",
+      columnHelper.accessor("proof_url", {
+        id: "proof",
         header: "Receipt",
         cell: ({ getValue }) => {
           const url = getValue();
@@ -247,7 +233,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
               label: "Edit Payment",
               onClick: () => onEditPayment?.(payment),
             },
-            ...(payment.payment_status !== "Completed"
+            ...(payment.booking?.payment_status !== "Completed"
               ? [
                   {
                     label: "Verify Payment",
@@ -257,8 +243,8 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
               : []),
             {
               label: "Download Receipt",
-              onClick: () => payment.receipt_url && window.open(payment.receipt_url, "_blank"),
-              disabled: !payment.receipt_url,
+              onClick: () => payment.proof_url && window.open(payment.proof_url, "_blank"),
+              disabled: !payment.proof_url,
             },
             {
               label: "Delete",
@@ -300,8 +286,10 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
   // Calculate statistics
   const stats = useMemo(() => {
     const total = filteredPayments.reduce((sum, p) => sum + p.amount, 0);
-    const verified = filteredPayments.filter((p) => p.payment_status === "Completed").length;
-    const pending = filteredPayments.filter((p) => p.payment_status === "Pending").length;
+    const verified = filteredPayments.filter(
+      (p) => p.booking?.payment_status === "Completed"
+    ).length;
+    const pending = filteredPayments.filter((p) => p.booking?.payment_status === "Pending").length;
 
     return { total, verified, pending, count: filteredPayments.length };
   }, [filteredPayments]);
@@ -365,15 +353,15 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
                       {formatCurrency(payment.amount)}
                     </div>
                     <div className="text-xs text-neutral-500">
-                      {formatTableDate(payment.transaction_date)}
+                      {formatTableDate(payment.payment_date || "")}
                     </div>
                   </div>
                   <StatusBadge
-                    status={payment.payment_status || "Pending"}
+                    status={payment.booking?.payment_status || "Pending"}
                     variant={
-                      payment.payment_status === "Completed"
+                      payment.booking?.payment_status === "Completed"
                         ? "default"
-                        : payment.payment_status === "Partial"
+                        : payment.booking?.payment_status === "Partial"
                           ? "secondary"
                           : "default"
                     }
@@ -388,20 +376,12 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
                   <MobileCardRow label="Method" value={payment.payment_method} />
                 )}
 
-                {payment.reference_number && (
-                  <MobileCardRow
-                    label="Reference"
-                    value={payment.reference_number}
-                    className="font-mono text-xs"
-                  />
-                )}
-
                 <div className="flex gap-2 pt-2">
-                  {payment.receipt_url && (
+                  {payment.proof_url && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(payment.receipt_url!, "_blank")}
+                      onClick={() => window.open(payment.proof_url!, "_blank")}
                     >
                       <Download className="h-4 w-4 mr-1" />
                       Receipt

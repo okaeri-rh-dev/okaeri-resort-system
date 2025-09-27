@@ -41,7 +41,6 @@ const paymentFormSchema = z.object({
   amount: z.number().min(0.01, "Amount must be greater than 0"),
   payment_method: z.enum(["Cash", "GCash", "BankTransfer", "Card", "Other"]),
   payment_date: z.date(),
-  reference_number: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -76,9 +75,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     defaultValues: {
       booking_id: payment?.booking_id || bookingId || "",
       amount: payment?.amount || 0,
-      payment_method: payment?.payment_method || "Cash",
-      payment_date: payment ? new Date(payment.payment_date) : new Date(),
-      reference_number: payment?.reference_number || "",
+      payment_method:
+        (payment?.payment_method as "Cash" | "GCash" | "BankTransfer" | "Card" | "Other") || "Cash",
+      payment_date: payment?.payment_date ? new Date(payment.payment_date) : new Date(),
       notes: payment?.notes || "",
     },
   });
@@ -112,7 +111,6 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       const paymentData = {
         ...data,
         payment_date: data.payment_date.toISOString(),
-        payment_status: "Pending" as const,
       };
 
       if (isEditMode) {
@@ -223,29 +221,6 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             </FormItem>
           )}
         />
-
-        {/* Reference Number */}
-        {(form.watch("payment_method") === "GCash" ||
-          form.watch("payment_method") === "BankTransfer") && (
-          <FormField
-            control={form.control}
-            name="reference_number"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Reference Number</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter transaction reference number" {...field} />
-                </FormControl>
-                <FormDescription>
-                  {form.watch("payment_method") === "GCash"
-                    ? "GCash transaction reference"
-                    : "Bank transaction reference"}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
 
         {/* Payment Date */}
         <FormField
