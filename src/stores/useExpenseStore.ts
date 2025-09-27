@@ -139,10 +139,10 @@ export const useExpenses = () => {
         query = query.eq("category", filters.category);
       }
       if (filters.dateFrom) {
-        query = query.gte("date", filters.dateFrom);
+        query = query.gte("expense_date", filters.dateFrom);
       }
       if (filters.dateTo) {
-        query = query.lte("date", filters.dateTo);
+        query = query.lte("expense_date", filters.dateTo);
       }
       if (filters.minAmount) {
         query = query.gte("amount", filters.minAmount);
@@ -162,7 +162,7 @@ export const useExpenses = () => {
 
       // Apply sorting
       const column = {
-        date: "date",
+        date: "expense_date",
         amount: "amount",
         category: "category",
         description: "description",
@@ -173,7 +173,11 @@ export const useExpenses = () => {
       const { data, error } = await query;
       if (error) throw new Error(handleSupabaseError(error));
 
-      return data || [];
+      // Map expense_date to date for compatibility with the Expense interface
+      return (data || []).map((expense) => ({
+        ...expense,
+        date: expense.expense_date,
+      }));
     },
     staleTime: 60000, // 1 minute
     refetchOnWindowFocus: true,
@@ -192,7 +196,8 @@ export const useExpense = (expenseId: string) => {
         .single();
 
       if (error) throw new Error(handleSupabaseError(error));
-      return data;
+      // Map expense_date to date for consistency
+      return { ...data, date: data.expense_date };
     },
     enabled: !!expenseId,
     staleTime: 60000,
@@ -204,7 +209,7 @@ export const useExpenseStats = (dateRange?: { from: Date; to: Date }) => {
   return useQuery({
     queryKey: ["expenses", "stats", dateRange],
     queryFn: async () => {
-      let query = supabase.from("expenses").select("amount, category, date");
+      let query = supabase.from("expenses").select("amount, category, expense_date");
 
       if (dateRange) {
         query = query
@@ -215,7 +220,11 @@ export const useExpenseStats = (dateRange?: { from: Date; to: Date }) => {
       const { data, error } = await query;
       if (error) throw new Error(handleSupabaseError(error));
 
-      const expenses = data || [];
+      // Map expense_date to date for consistency
+      const expenses = (data || []).map((expense) => ({
+        ...expense,
+        date: expense.expense_date,
+      }));
 
       // Calculate statistics
       const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -275,17 +284,21 @@ export const useCreateExpense = () => {
         receipt_url = uploadResult.url;
       }
 
+      // Map date to expense_date for database insertion
+      const { date, ...restData } = data;
       const { data: newExpense, error } = await supabase
         .from("expenses")
         .insert({
-          ...data,
+          ...restData,
+          expense_date: date,
           receipt_url,
         })
         .select()
         .single();
 
       if (error) throw new Error(handleSupabaseError(error));
-      return newExpense;
+      // Map expense_date back to date for consistency
+      return { ...newExpense, date: newExpense.expense_date };
     },
     onMutate: async ({ data }) => {
       await queryClient.cancelQueries({ queryKey: ["expenses"] });
@@ -335,18 +348,26 @@ export const useUpdateExpense = () => {
         receipt_url = uploadResult.url;
       }
 
+      // Map date to expense_date if it exists in updates
+      const { date, ...restUpdates } = updates;
+      const dbUpdates: any = {
+        ...restUpdates,
+        receipt_url,
+      };
+      if (date !== undefined) {
+        dbUpdates.expense_date = date;
+      }
+
       const { data, error } = await supabase
         .from("expenses")
-        .update({
-          ...updates,
-          receipt_url,
-        })
+        .update(dbUpdates)
         .eq("expense_id", expenseId)
         .select()
         .single();
 
       if (error) throw new Error(handleSupabaseError(error));
-      return data;
+      // Map expense_date back to date for consistency
+      return { ...data, date: data.expense_date };
     },
     onMutate: async ({ expenseId, updates }) => {
       await queryClient.cancelQueries({ queryKey: ["expenses"] });
