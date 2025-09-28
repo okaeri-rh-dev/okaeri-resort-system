@@ -26,7 +26,7 @@ export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
 // ============================================
 // ZUSTAND STORE
 // ============================================
-interface ExpenseFilters {
+export interface ExpenseFilters {
   category?: ExpenseCategory;
   dateFrom?: string;
   dateTo?: string;
@@ -175,9 +175,17 @@ export const useExpenses = () => {
 
       // Map expense_date to date for compatibility with the Expense interface
       return (data || []).map((expense) => ({
-        ...expense,
+        expense_id: expense.expense_id,
+        category: expense.category,
+        description: expense.description,
+        amount: expense.amount,
         date: expense.expense_date,
-      }));
+        receipt_url: expense.receipt_url || null,
+        vendor: expense.vendor || null,
+        notes: expense.notes || null,
+        created_at: expense.created_at || "",
+        updated_at: expense.updated_at || "",
+      })) as Expense[];
     },
     staleTime: 60000, // 1 minute
     refetchOnWindowFocus: true,

@@ -99,6 +99,7 @@ export interface Expense {
   date: string; // This maps to expense_date in our schema
   receipt_url?: string | null;
   vendor?: string | null;
+  notes?: string | null;
   created_at: string;
   updated_at: string;
 }

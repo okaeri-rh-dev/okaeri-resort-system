@@ -8,6 +8,11 @@ const ExpensesTable = lazy(() =>
 const ExpenseForm = lazy(() =>
   import("@/components/expenses/ExpenseForm").then((m) => ({ default: m.ExpenseForm }))
 );
+const ExpenseDetailModal = lazy(() =>
+  import("@/components/expenses/ExpenseDetailModal").then((m) => ({
+    default: m.ExpenseDetailModal,
+  }))
+);
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -29,6 +34,8 @@ function ExpensesPage() {
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [viewingExpense, setViewingExpense] = useState<Expense | null>(null);
+  const [showViewDialog, setShowViewDialog] = useState(false);
 
   const handleEditExpense = (expense: Expense) => {
     setEditingExpense(expense);
@@ -36,8 +43,8 @@ function ExpensesPage() {
   };
 
   const handleViewExpense = (expense: Expense) => {
-    // Future: Could open a detailed view dialog
-    console.log("View expense:", expense);
+    setViewingExpense(expense);
+    setShowViewDialog(true);
   };
 
   return (
@@ -117,6 +124,18 @@ function ExpensesPage() {
             </ErrorBoundary>
           </DialogContent>
         </Dialog>
+
+        {/* View Expense Detail Dialog */}
+        <Suspense fallback={null}>
+          <ExpenseDetailModal
+            expense={viewingExpense}
+            open={showViewDialog}
+            onOpenChange={(open) => {
+              setShowViewDialog(open);
+              if (!open) setViewingExpense(null);
+            }}
+          />
+        </Suspense>
       </div>
     </ErrorBoundary>
   );

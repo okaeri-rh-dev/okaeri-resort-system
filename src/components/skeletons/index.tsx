@@ -541,6 +541,112 @@ export const PageTransitionSkeleton: React.FC<{ className?: string }> = ({ class
 };
 
 // ============================================
+// EXPENSES TABLE SKELETONS
+// ============================================
+
+interface ExpensesTableSkeletonProps {
+  isMobile?: boolean;
+  rows?: number;
+  className?: string;
+}
+
+export const ExpensesTableSkeleton: React.FC<ExpensesTableSkeletonProps> = ({
+  isMobile = false,
+  rows = 8,
+  className,
+}) => {
+  if (isMobile) {
+    return (
+      <div className={cn("space-y-4", className)}>
+        {/* Mobile filters skeleton */}
+        <div className="rounded-lg border border-neutral-200 bg-white p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-4" />
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-3 w-20" />
+            </div>
+            <div className="flex items-center gap-2">
+              <ButtonSkeleton size="sm" className="w-16" />
+              <ButtonSkeleton size="sm" className="w-24" />
+            </div>
+          </div>
+          <Skeleton className="h-9 w-full" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full" />
+          </div>
+        </div>
+
+        {/* Mobile cards skeleton */}
+        <div className="space-y-3">
+          {Array.from({ length: rows }).map((_, index) => (
+            <MobileCardSkeleton key={index} hasActions={true} rowCount={4} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("space-y-4", className)}>
+      {/* Desktop filters skeleton - nested card structure */}
+      <div className="rounded-lg border border-neutral-200 bg-white p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-4 w-4" />
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+          <div className="flex items-center gap-2">
+            <ButtonSkeleton size="sm" className="w-16 h-8" />
+            <ButtonSkeleton size="sm" className="w-24 h-8" />
+          </div>
+        </div>
+        <Skeleton className="h-9 w-full" />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-9 w-full" />
+        </div>
+      </div>
+
+      {/* Desktop table skeleton - nested card structure */}
+      <div className="rounded-lg border border-neutral-200 bg-white overflow-hidden">
+        <TableSkeleton
+          rows={rows}
+          columns={[120, 180, 300, 120, 80, 80]}
+          hasHeader={true}
+          showActions={true}
+          className="border-0"
+        />
+
+        {/* Pagination skeleton */}
+        <div className="border-t border-neutral-200 bg-neutral-50/30 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-4 w-32" />
+            <div className="flex items-center space-x-2">
+              <ButtonSkeleton size="sm" className="w-8 h-8" />
+              <div className="flex space-x-1">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <ButtonSkeleton key={i} size="sm" className="w-8 h-8" />
+                ))}
+              </div>
+              <ButtonSkeleton size="sm" className="w-8 h-8" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================
 // COMPONENT-SPECIFIC EXPORTS
 // ============================================
 
