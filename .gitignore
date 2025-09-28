@@ -100,6 +100,10 @@ dist/
 dist-ssr/
 build/
 .vercel/
+
+# Cloudflare
+.wrangler/
+.cloudflare/
 assets/
 
 # Local environment
