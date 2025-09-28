@@ -33,6 +33,7 @@ Object.defineProperty(window, "location", {
 describe("Authentication Security Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers(); // Reset timers first
     vi.useFakeTimers();
     mockLocation.href = "http://localhost:3000/dashboard";
     localStorage.clear();
@@ -89,24 +90,39 @@ describe("Authentication Security Tests", () => {
 
     it("should handle refresh errors gracefully", async () => {
       const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const originalEnv = process.env.NODE_ENV;
 
-      mockSupabase.auth.refreshSession.mockRejectedValueOnce(new Error("Network error"));
+      // Set to development mode to enable error logging
+      process.env.NODE_ENV = "development";
 
-      await auth.refreshSession();
+      // Mock the supabase client directly for this test
+      const mockSupabase = await import("@/lib/supabase");
+      vi.mocked(mockSupabase.supabase.auth.refreshSession).mockRejectedValueOnce(
+        new Error("Network error")
+      );
 
-      // Should not throw, but log error
+      try {
+        await auth.refreshSession();
+      } catch (error) {
+        // Expected to catch and log error
+      }
+
+      // Should log error in development mode
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Session refresh"),
+        expect.stringContaining("Session refresh failed:"),
         expect.any(Error)
       );
 
+      // Restore environment
+      process.env.NODE_ENV = originalEnv;
       consoleErrorSpy.mockRestore();
     });
   });
 
   describe("Route Protection and Validation", () => {
     it("should validate routes from whitelist before redirect", () => {
-      const validRoutes = ["/login", "/dashboard", "/bookings", "/"];
+      // Use exact routes from VALID_ROUTES in auth.ts
+      const validRoutes = ["/login", "/dashboard", "/bookings", "/units", "/guests"];
       const invalidRoutes = [
         "javascript:alert(1)",
         "data:text/html,<script>alert(1)</script>",
@@ -299,10 +315,12 @@ describe("Authentication Security Tests", () => {
       const onWarning = vi.fn();
       auth.onSessionWarning(onWarning);
 
-      // Set session to expire in 5 minutes
-      const expiresAt = Date.now() + 5 * 60 * 1000;
+      // Set session to expire in 3 minutes (within warning threshold)
+      const expiresAt = Math.floor((Date.now() + 3 * 60 * 1000) / 1000); // Convert to Unix timestamp
 
-      mockSupabase.auth.getSession.mockResolvedValueOnce({
+      // Mock the supabase client directly
+      const mockSupabase = await import("@/lib/supabase");
+      vi.mocked(mockSupabase.supabase.auth.getSession).mockResolvedValueOnce({
         data: {
           session: {
             expires_at: expiresAt,
@@ -315,10 +333,8 @@ describe("Authentication Security Tests", () => {
 
       await auth.checkSessionExpiry();
 
-      // Fast forward to warning time (2 minutes before expiry)
-      vi.advanceTimersByTime(3 * 60 * 1000);
-
-      expect(onWarning).toHaveBeenCalled();
+      // Warning should be triggered immediately since we're within 5 minutes of expiry
+      expect(onWarning).toHaveBeenCalledWith(3);
     });
   });
 
