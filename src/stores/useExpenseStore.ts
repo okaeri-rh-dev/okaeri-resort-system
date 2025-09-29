@@ -181,7 +181,6 @@ export const useExpenses = () => {
         amount: expense.amount,
         date: expense.expense_date,
         receipt_url: expense.receipt_url || null,
-        vendor: expense.vendor || null,
         notes: expense.notes || null,
         created_at: expense.created_at || "",
         updated_at: expense.updated_at || "",
@@ -458,7 +457,7 @@ function convertToCSV(data: Expense[]): string {
     "Description",
     "Amount (PHP)",
     "Receipt URL",
-    "Vendor",
+    "Notes",
     "Created At",
   ];
 
@@ -468,7 +467,7 @@ function convertToCSV(data: Expense[]): string {
     expense.description || "",
     expense.amount.toFixed(2),
     expense.receipt_url || "",
-    expense.vendor || "",
+    expense.notes || "",
     expense.created_at,
   ]);
 

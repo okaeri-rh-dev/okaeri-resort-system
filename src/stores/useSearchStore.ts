@@ -782,24 +782,30 @@ export const useSearchStore = create<SearchState & SearchActions>()(
             return parsed;
           },
           setItem: (name, value) => {
+            // Create a deep copy to avoid mutating frozen objects
+            const toStore = JSON.parse(JSON.stringify(value));
+
             // Custom serialization for Maps
-            const toStore = { ...value };
             if (toStore.state) {
-              if (toStore.state.activeFilters instanceof Map) {
-                toStore.state.activeFilters = Array.from(toStore.state.activeFilters.entries());
+              if (value.state.activeFilters instanceof Map) {
+                toStore.state.activeFilters = Array.from(value.state.activeFilters.entries());
               }
-              if (toStore.state.searchPresets instanceof Map) {
-                toStore.state.searchPresets = Array.from(toStore.state.searchPresets.entries());
+              if (value.state.searchPresets instanceof Map) {
+                toStore.state.searchPresets = Array.from(value.state.searchPresets.entries());
               }
-              if (toStore.state.savedSearches instanceof Map) {
-                toStore.state.savedSearches = Array.from(toStore.state.savedSearches.entries());
+              if (value.state.savedSearches instanceof Map) {
+                toStore.state.savedSearches = Array.from(value.state.savedSearches.entries());
               }
-              if (toStore.state.searchCache instanceof Map) {
-                toStore.state.searchCache = Array.from(toStore.state.searchCache.entries());
+              if (value.state.searchCache instanceof Map) {
+                toStore.state.searchCache = Array.from(value.state.searchCache.entries());
               }
-              if (toStore.state.searchMetrics?.popularSearches instanceof Map) {
+              if (value.state.searchMetrics?.popularSearches instanceof Map) {
+                // Ensure searchMetrics is a new object
+                if (!toStore.state.searchMetrics) {
+                  toStore.state.searchMetrics = {};
+                }
                 toStore.state.searchMetrics.popularSearches = Array.from(
-                  toStore.state.searchMetrics.popularSearches.entries()
+                  value.state.searchMetrics.popularSearches.entries()
                 );
               }
             }

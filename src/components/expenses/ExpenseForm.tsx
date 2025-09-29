@@ -117,7 +117,6 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
         description: sanitizedData.description?.trim() || "",
         amount: sanitizedData.amount,
         date: data.expense_date.toISOString().split("T")[0], // YYYY-MM-DD format
-        vendor: null, // Optional field for future use
         receipt_url: null, // Will be set by upload function
       };
 
