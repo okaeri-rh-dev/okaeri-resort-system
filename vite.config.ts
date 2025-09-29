@@ -37,41 +37,26 @@ export default defineConfig(({ mode }) => ({
         warn(warning);
       },
       output: {
-        manualChunks: (id) => {
-          // Core vendor libraries
-          if (id.includes("node_modules/react") || id.includes("node_modules/react-dom")) {
-            return "vendor-react";
-          }
-
-          // UI component libraries
-          if (id.includes("@radix-ui") || id.includes("@headlessui")) {
-            return "vendor-ui";
-          }
-
-          // Data fetching and state management
-          if (id.includes("@tanstack") || id.includes("zustand")) {
-            return "vendor-data";
-          }
-
-          // Supabase and database
-          if (id.includes("@supabase")) {
-            return "vendor-supabase";
-          }
-
-          // Utilities and helpers
-          if (id.includes("date-fns") || id.includes("zod") || id.includes("clsx")) {
-            return "vendor-utils";
-          }
-
-          // Forms and validation
-          if (id.includes("react-hook-form") || id.includes("dompurify")) {
-            return "vendor-forms";
-          }
-
-          // Icons and assets
-          if (id.includes("lucide-react")) {
-            return "vendor-icons";
-          }
+        manualChunks: {
+          // React core must be loaded first - combine with essential React hooks
+          "vendor-react": [
+            "react",
+            "react-dom",
+            "react/jsx-runtime",
+            "scheduler",
+            "use-sync-external-store",
+          ],
+          // TanStack and state management in second chunk
+          "vendor-state": [
+            "@tanstack/react-query",
+            "@tanstack/react-router",
+            "@tanstack/react-store",
+            "@tanstack/react-table",
+            "zustand",
+            "immer",
+          ],
+          // UI libraries
+          "vendor-ui": ["react-day-picker", "sonner", "lucide-react", "next-themes"],
         },
       },
     },

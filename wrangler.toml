@@ -1,17 +1,15 @@
 name = "okaeri-resort-system"
 compatibility_date = "2025-09-29"
+pages_build_output_dir = "dist"
 
+# Build configuration for Cloudflare Pages
 [build]
 command = "npm run build"
 
-[build.upload]
-format = "service-worker"
-directory = "dist"
+# Production environment variables
+[env.production.vars]
+ENVIRONMENT = "production"
 
-# Production deployment configuration
-[env.production]
-vars = { ENVIRONMENT = "production" }
-
-# Preview/staging deployment configuration
-[env.preview]
-vars = { ENVIRONMENT = "preview" }
+# Preview environment variables
+[env.preview.vars]
+ENVIRONMENT = "preview"
