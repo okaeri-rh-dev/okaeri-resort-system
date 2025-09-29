@@ -13,7 +13,7 @@ import {
 import { TablePagination, TableEmptyState } from "@/components/tables/utils";
 import { UnitsTableSkeleton } from "@/components/skeletons";
 import { useResponsiveView } from "@/hooks";
-import { TableHeader } from "./components/TableHeader";
+import { TableHeader as TableHeaderControls } from "./components/TableHeader";
 import { useUnitsTable } from "./hooks/useUnitsTable";
 import { exportUnitsToCSV } from "./utils/export";
 import { cn } from "@/lib/utils";
@@ -79,7 +79,7 @@ function UnitsTableComponent({ onAddUnit, pageSize = 10, className }: UnitsTable
   return (
     <div className={cn("space-y-4", className)}>
       {/* Table Header with filters and actions */}
-      <TableHeader
+      <TableHeaderControls
         table={table}
         globalFilter={globalFilter}
         onGlobalFilterChange={setGlobalFilter}
