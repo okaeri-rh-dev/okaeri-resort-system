@@ -772,9 +772,11 @@ export const useSearchStore = create<SearchState & SearchActions>()(
                 parsed.state.searchCache = new Map(parsed.state.searchCache);
               }
               if (parsed.state.searchMetrics?.popularSearches) {
-                parsed.state.searchMetrics.popularSearches = new Map(
-                  parsed.state.searchMetrics.popularSearches
-                );
+                // Create a new searchMetrics object to avoid mutating frozen object
+                parsed.state.searchMetrics = {
+                  ...parsed.state.searchMetrics,
+                  popularSearches: new Map(parsed.state.searchMetrics.popularSearches),
+                };
               }
             }
             return parsed;
