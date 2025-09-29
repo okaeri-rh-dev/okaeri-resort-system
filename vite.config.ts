@@ -1,10 +1,10 @@
 import tailwindcss from "@tailwindcss/vite";
+import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
-import { visualizer } from "rollup-plugin-visualizer";
 
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -75,10 +75,10 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
-    // Optimize for Vercel free tier
+    // Optimize for Cloudflare Pages
     chunkSizeWarningLimit: 1000,
     minify: "esbuild",
-    target: "es2020",
+    target: "es2024",
   },
   resolve: {
     alias: {

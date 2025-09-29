@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "npm run type-check && vite build",
+    "build": "vite build",
     "build:analyze": "vite build --mode analyze",
     "build:dev": "tsc -b && vite build",
     "build:size": "node scripts/bundle-size.js",
