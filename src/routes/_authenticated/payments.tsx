@@ -8,6 +8,11 @@ const PaymentsTable = lazy(() =>
 const PaymentForm = lazy(() =>
   import("@/components/payments/PaymentForm").then((m) => ({ default: m.PaymentForm }))
 );
+const PaymentDetailModal = lazy(() =>
+  import("@/components/payments/PaymentDetailModal").then((m) => ({
+    default: m.PaymentDetailModal,
+  }))
+);
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -29,6 +34,8 @@ function PaymentsPage() {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [viewingPayment, setViewingPayment] = useState<Payment | null>(null);
+  const [showViewDialog, setShowViewDialog] = useState(false);
 
   const handleEditPayment = (payment: Payment) => {
     setEditingPayment(payment);
@@ -36,8 +43,8 @@ function PaymentsPage() {
   };
 
   const handleViewPayment = (payment: Payment) => {
-    // Future: Could open a detailed view dialog
-    console.log("View payment:", payment);
+    setViewingPayment(payment);
+    setShowViewDialog(true);
   };
 
   return (
@@ -117,6 +124,18 @@ function PaymentsPage() {
             </ErrorBoundary>
           </DialogContent>
         </Dialog>
+
+        {/* View Payment Detail Dialog */}
+        <Suspense fallback={null}>
+          <PaymentDetailModal
+            payment={viewingPayment}
+            open={showViewDialog}
+            onOpenChange={(open) => {
+              setShowViewDialog(open);
+              if (!open) setViewingPayment(null);
+            }}
+          />
+        </Suspense>
       </div>
     </ErrorBoundary>
   );

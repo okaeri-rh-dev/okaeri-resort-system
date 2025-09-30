@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -45,6 +45,9 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
   const [globalFilter, setGlobalFilter] = useState("");
   const [isEditMode, setIsEditMode] = useState(false);
 
+  // Track previous unit IDs to detect deletions
+  const previousUnitIdsRef = useRef<Set<string>>(new Set());
+
   // Custom filters
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -64,48 +67,64 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
     return filtered;
   }, [units, typeFilter, statusFilter]);
 
+  // Stabilize the update handler with a ref to avoid recreating columns
+  const updateMutationRef = useRef(updateUnitMutation);
+  updateMutationRef.current = updateUnitMutation;
+
   // Handle unit updates
   const handleUpdateUnit = useCallback(
     async (unitId: string, updates: Partial<Unit>) => {
       try {
-        await updateUnitMutation.mutateAsync({ id: unitId, updates });
+        await updateMutationRef.current.mutateAsync({ id: unitId, updates });
       } catch (error) {
         console.error("Failed to update unit:", error);
       }
     },
-    [updateUnitMutation]
+    [] // No dependencies - uses ref for mutation
   );
+
+  // Stabilize the delete handler with a ref
+  const deleteMutationRef = useRef(deleteUnitMutation);
+  deleteMutationRef.current = deleteUnitMutation;
 
   // Handle unit deletion
   const handleDeleteUnit = useCallback(
     async (unitId: string) => {
       try {
-        await deleteUnitMutation.mutateAsync(unitId);
+        await deleteMutationRef.current.mutateAsync(unitId);
+        // Remove deleted unit from selection
+        setRowSelection((prev) => {
+          const newSelection = { ...prev };
+          delete newSelection[unitId];
+          return newSelection;
+        });
       } catch (error) {
         console.error("Failed to delete unit:", error);
       }
     },
-    [deleteUnitMutation]
+    [] // No dependencies - uses ref for mutation
   );
+
+  // Stabilize the batch mutation with a ref
+  const batchMutationRef = useRef(batchUpdateMutation);
+  batchMutationRef.current = batchUpdateMutation;
 
   // Handle batch status update
   const handleBatchStatusUpdate = useCallback(
     async (status: UnitStatus) => {
-      const selectedIds = Object.keys(rowSelection)
-        .filter((key) => rowSelection[key])
-        .map((index) => filteredUnits[parseInt(index)]?.unit_id)
-        .filter(Boolean);
+      // With ID-based selection, keys are unit IDs
+      const selectedIds = Object.keys(rowSelection).filter((unitId) => rowSelection[unitId]);
 
       if (selectedIds.length === 0) return;
 
       try {
-        await batchUpdateMutation.mutateAsync({ unitIds: selectedIds, status });
-        setRowSelection({});
+        await batchMutationRef.current.mutateAsync({ unitIds: selectedIds, status });
+        setRowSelection({}); // Clear selection after batch update
       } catch (error) {
         console.error("Failed to update units status:", error);
       }
     },
-    [rowSelection, filteredUnits, batchUpdateMutation]
+    [rowSelection]
   );
 
   // Get columns configuration
@@ -114,7 +133,7 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
     isEditMode,
   });
 
-  // Create table instance
+  // Create table instance with stable row IDs
   const table = useReactTable({
     data: filteredUnits,
     columns,
@@ -134,6 +153,7 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getRowId: (row) => row.unit_id, // Use unit_id as row ID for stable selection
     initialState: {
       pagination: {
         pageSize,
@@ -145,9 +165,26 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
   // Calculate selected count
   const selectedCount = Object.keys(rowSelection).filter((key) => rowSelection[key]).length;
 
-  // Reset selection when data changes
+  // Clean up selection only for deleted units
   useEffect(() => {
-    setRowSelection({});
+    const currentUnitIds = new Set<string>(units.map((unit) => unit.unit_id));
+    const previousIds = previousUnitIdsRef.current;
+
+    // Only clean up selection if units were actually deleted
+    if (previousIds.size > 0) {
+      const deletedIds = Array.from(previousIds).filter((id) => !currentUnitIds.has(id));
+
+      if (deletedIds.length > 0) {
+        setRowSelection((prev) => {
+          const newSelection = { ...prev };
+          deletedIds.forEach((id) => delete newSelection[id]);
+          return newSelection;
+        });
+      }
+    }
+
+    // Update the ref for next comparison
+    previousUnitIdsRef.current = currentUnitIds;
   }, [units]);
 
   return {

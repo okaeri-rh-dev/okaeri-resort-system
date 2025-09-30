@@ -1,0 +1,256 @@
+import {
+  Calendar,
+  DollarSign,
+  CreditCard,
+  FileText,
+  Receipt,
+  Clock,
+  User,
+  Hash,
+} from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { formatCurrency, formatTableDate } from "@/components/tables/utils";
+import type { Payment } from "@/types";
+
+interface PaymentDetailModalProps {
+  payment: Payment | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function PaymentDetailModal({ payment, open, onOpenChange }: PaymentDetailModalProps) {
+  if (!payment) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-semibold text-neutral-900">
+            Payment Details
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Header Section */}
+          <div className="rounded-lg border border-neutral-200 bg-neutral-50/50 p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                  Payment ID
+                </p>
+                <p className="font-mono text-sm font-medium text-neutral-900">
+                  {payment.payment_id}
+                </p>
+              </div>
+              {payment.payment_method && (
+                <Badge
+                  variant="outline"
+                  className="border-neutral-200 bg-white text-sm font-medium text-neutral-700"
+                >
+                  <CreditCard className="mr-1.5 h-3.5 w-3.5" />
+                  {payment.payment_method}
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Main Details Grid */}
+          <div className="grid gap-6 sm:grid-cols-2">
+            {/* Date */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-neutral-600">
+                <Calendar className="h-4 w-4" />
+                <span className="text-xs font-medium uppercase tracking-wide">Payment Date</span>
+              </div>
+              <p className="text-sm font-medium text-neutral-900">
+                {formatTableDate(payment.payment_date || "")}
+              </p>
+            </div>
+
+            {/* Amount */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-neutral-600">
+                <DollarSign className="h-4 w-4" />
+                <span className="text-xs font-medium uppercase tracking-wide">Amount</span>
+              </div>
+              <p className="font-mono text-lg font-semibold text-neutral-900">
+                {formatCurrency(payment.amount)}
+              </p>
+            </div>
+          </div>
+
+          {/* Booking Information */}
+          {payment.booking && (
+            <>
+              <Separator className="bg-neutral-200" />
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-neutral-600">
+                  <User className="h-4 w-4" />
+                  <span className="text-xs font-medium uppercase tracking-wide">
+                    Booking Information
+                  </span>
+                </div>
+                <div className="rounded-md border border-neutral-200 bg-white p-4 space-y-3">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs text-neutral-500 mb-1">Booking Reference</p>
+                      <p className="font-mono text-sm font-medium text-neutral-900">
+                        {payment.booking.booking_reference}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-neutral-500 mb-1">Guest Name</p>
+                      <p className="text-sm font-medium text-neutral-900">
+                        {payment.booking.guest_name}
+                      </p>
+                    </div>
+                  </div>
+                  {payment.booking.payment_status && (
+                    <div>
+                      <p className="text-xs text-neutral-500 mb-2">Booking Payment Status</p>
+                      <Badge
+                        variant={
+                          payment.booking.payment_status === "Completed"
+                            ? "default"
+                            : payment.booking.payment_status === "Partial"
+                              ? "secondary"
+                              : payment.booking.payment_status === "Refunded"
+                                ? "destructive"
+                                : "outline"
+                        }
+                      >
+                        {payment.booking.payment_status}
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Reference Number Section (if present) */}
+          {payment.reference_number && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-neutral-600">
+                <Hash className="h-4 w-4" />
+                <span className="text-xs font-medium uppercase tracking-wide">
+                  Reference Number
+                </span>
+              </div>
+              <div className="rounded-md border border-neutral-200 bg-white p-3">
+                <p className="font-mono text-sm font-medium text-neutral-900">
+                  {payment.reference_number}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Notes Section (if present) */}
+          {payment.notes && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-neutral-600">
+                <FileText className="h-4 w-4" />
+                <span className="text-xs font-medium uppercase tracking-wide">Notes</span>
+              </div>
+              <div className="rounded-md border border-neutral-200 bg-white p-3">
+                <p className="text-sm text-neutral-700">{payment.notes}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Receipt/Proof Section */}
+          {(payment.proof_url || payment.receipt_url) && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-neutral-600">
+                <Receipt className="h-4 w-4" />
+                <span className="text-xs font-medium uppercase tracking-wide">Documents</span>
+              </div>
+              <div className="flex gap-2">
+                {payment.proof_url && (
+                  <Button
+                    variant="outline"
+                    onClick={() => window.open(payment.proof_url!, "_blank")}
+                    className="flex-1 justify-start border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+                  >
+                    <Receipt className="mr-2 h-4 w-4" />
+                    View Payment Proof
+                  </Button>
+                )}
+                {payment.receipt_url && (
+                  <Button
+                    variant="outline"
+                    onClick={() => window.open(payment.receipt_url!, "_blank")}
+                    className="flex-1 justify-start border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+                  >
+                    <Receipt className="mr-2 h-4 w-4" />
+                    View Receipt
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Verification Information (if verified) */}
+          {payment.verified_at && (
+            <div className="rounded-lg border border-green-200 bg-green-50/50 p-4">
+              <div className="flex items-center gap-2 text-green-700 mb-3">
+                <User className="h-4 w-4" />
+                <span className="text-xs font-medium uppercase tracking-wide">
+                  Verification Details
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs text-green-600 mb-1">Verified At</p>
+                  <p className="text-sm font-medium text-green-800">
+                    {new Date(payment.verified_at).toLocaleString()}
+                  </p>
+                </div>
+                {payment.verified_by && (
+                  <div>
+                    <p className="text-xs text-green-600 mb-1">Verified By</p>
+                    <p className="text-sm font-medium text-green-800">{payment.verified_by}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Metadata Footer */}
+          <div className="rounded-lg border border-neutral-200 bg-neutral-50/30 p-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {/* Created At */}
+              {payment.created_at && (
+                <div className="flex items-start gap-2">
+                  <Clock className="mt-0.5 h-3.5 w-3.5 text-neutral-500" />
+                  <div>
+                    <p className="text-xs font-medium text-neutral-600">Created</p>
+                    <p className="text-xs text-neutral-500">
+                      {new Date(payment.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Updated At */}
+              {payment.updated_at && (
+                <div className="flex items-start gap-2">
+                  <Clock className="mt-0.5 h-3.5 w-3.5 text-neutral-500" />
+                  <div>
+                    <p className="text-xs font-medium text-neutral-600">Last Updated</p>
+                    <p className="text-xs text-neutral-500">
+                      {new Date(payment.updated_at).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
