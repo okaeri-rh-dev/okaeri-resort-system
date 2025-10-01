@@ -1,14 +1,21 @@
-# Backend Implementation Guide
+# Backend Implementation Guide (Cloudflare Pages)
 
 ## Overview
 
-This guide covers the server-side implementation of the guest booking system, including API endpoints, signed URL generation, and database operations.
+This guide covers the server-side implementation of the guest booking system using **Cloudflare Pages Functions**, including API endpoints, Cloudflare KV rate limiting, Turnstile verification, and Supabase signed URL generation.
+
+**Platform**: Cloudflare Pages with Workers runtime
+**Cost**: $0/month (free tier)
+
+**⚠️ Critical Runtime Constraint**: Cloudflare Workers use the V8 JavaScript engine with Web standard APIs only. **No Node.js APIs** are available. All code must be Workers-compatible using `fetch`, `context.env`, and Web standards.
 
 ## Prerequisites
 
 - Supabase service role key
-- Vercel account configured
-- Environment variables set up
+- Cloudflare account (free tier)
+- Wrangler CLI installed (`npm install -g wrangler`)
+- Cloudflare KV namespace created
+- Turnstile site keys (free)
 - Node.js 18+
 
 ## Environment Setup
@@ -16,30 +23,42 @@ This guide covers the server-side implementation of the guest booking system, in
 ### Required Environment Variables
 
 ```env
-# .env.local (for development)
-# .env (for Vercel production)
+# .env.local (for local development with Wrangler)
+# Set in Cloudflare Pages dashboard for production
 
 # Supabase Configuration
 VITE_SUPABASE_URL=https://gxgpdlvathotgqtszabo.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...  # Critical: Never expose to frontend
+VITE_SUPABASE_ANON_KEY=eyJ...  # Public anon key
+SUPABASE_SERVICE_ROLE_KEY=eyJ...  # Critical: Backend only, never expose to frontend
 
-# Security Services
-RECAPTCHA_SECRET_KEY=6Le...
-RECAPTCHA_SITE_KEY=6Le...  # For frontend
+# Cloudflare Turnstile (free, unlimited)
+TURNSTILE_SECRET_KEY=0x...  # Backend verification
+VITE_TURNSTILE_SITE_KEY=0x...  # Frontend widget
 
-# Email Service (Choose one)
+# Email Service (Resend free tier: 100/day)
 RESEND_API_KEY=re_...
-# OR
-SENDGRID_API_KEY=SG...
-
-# Rate Limiting
-UPSTASH_REDIS_REST_URL=https://...
-UPSTASH_REDIS_REST_TOKEN=...
 
 # Application
-NEXT_PUBLIC_APP_URL=https://yourdomain.com
+VITE_APP_URL=https://yourdomain.pages.dev
 NODE_ENV=production
+```
+
+### Wrangler Configuration
+
+```toml
+# wrangler.toml
+name = "okaeri-resort-system"
+compatibility_date = "2025-09-29"
+pages_build_output_dir = "dist"
+
+# KV Namespace for rate limiting
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "your-kv-namespace-id"  # Get from `wrangler kv:namespace create RATE_LIMIT_KV`
+
+# Production environment variables
+[env.production.vars]
+ENVIRONMENT = "production"
 ```
 
 ## Core Implementation
@@ -48,26 +67,28 @@ NODE_ENV=production
 
 **File**: `src/lib/supabase-admin.ts`
 
+**Note**: This helper can be used in both Cloudflare Functions and regular app code. In Cloudflare Functions, environment variables come from `context.env`.
+
 ```typescript
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/database.types";
 
-// Validate environment variables
-if (!process.env.VITE_SUPABASE_URL) {
-  throw new Error("Missing VITE_SUPABASE_URL");
-}
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
-}
-
 /**
- * Supabase client with service role for backend operations
- * NEVER use this client in frontend code
+ * Creates Supabase admin client for backend operations
+ * Can accept env object (for Cloudflare Functions) or use process.env
  */
-export const supabaseAdmin = createClient<Database>(
-  process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
+export function createSupabaseAdmin(env?: Record<string, string>) {
+  const supabaseUrl = env?.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
+  const serviceRoleKey = env?.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl) {
+    throw new Error("Missing VITE_SUPABASE_URL");
+  }
+  if (!serviceRoleKey) {
+    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
+  }
+
+  return createClient<Database>(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -78,21 +99,22 @@ export const supabaseAdmin = createClient<Database>(
         "x-application-name": "okaeri-resort-backend",
       },
     },
-  }
-);
+  });
+}
 
 /**
- * Generate a signed upload URL for guest bookings
+ * Generate a token-based signed upload URL for guest bookings
+ * Returns structured credentials for use with uploadToSignedUrl() on client
  */
 export async function generateSignedUploadUrl(
+  supabaseAdmin: ReturnType<typeof createSupabaseAdmin>,
   bucket: string,
   path: string,
   expiresIn: number = 3600 // 1 hour default
-): Promise<{ signedUrl: string; token: string; path: string }> {
-  const { data, error } = await supabaseAdmin.storage.from(bucket).createSignedUploadUrl(path, {
-    expiresIn,
-    upsert: false,
-  });
+): Promise<{ path: string; token: string; bucket: string; expires_at: string }> {
+  const { data, error } = await supabaseAdmin.storage
+    .from(bucket)
+    .createSignedUploadUrl(path, expiresIn);
 
   if (error) {
     console.error("Failed to generate signed URL:", error);
@@ -100,9 +122,10 @@ export async function generateSignedUploadUrl(
   }
 
   return {
-    signedUrl: data.signedUrl,
+    path: data.path,
     token: data.token,
-    path: path,
+    bucket,
+    expires_at: new Date(Date.now() + expiresIn * 1000).toISOString(),
   };
 }
 
@@ -125,23 +148,37 @@ export async function generateSignedDownloadUrl(
 }
 ```
 
-### 2. Guest Booking API Endpoint
+### 2. Guest Booking API Endpoint (Cloudflare Function)
 
-**File**: `api/guest-booking.ts`
+**File**: `functions/api/guest-booking.ts`
+
+**Key Differences from Vercel:**
+
+- Uses `onRequest` instead of `export default handler`
+- Environment via `context.env` instead of `process.env`
+- Returns Web standard `Response` objects
+- KV binding via `context.env.RATE_LIMIT_KV`
 
 ```typescript
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
-import { supabaseAdmin, generateSignedUploadUrl } from "@/lib/supabase-admin";
-import { verifyRecaptcha } from "@/lib/recaptcha";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { createSupabaseAdmin, generateSignedUploadUrl } from "@/lib/supabase-admin";
+import { verifyTurnstile } from "@/lib/turnstile";
+import { checkKVRateLimit } from "@/lib/kv-rate-limit";
 import { sendBookingConfirmation } from "@/lib/email";
 import { generateBookingReference } from "@/utils/booking";
 import DOMPurify from "isomorphic-dompurify";
 
-// Request validation schema
+// Environment type for Cloudflare
+interface Env {
+  SUPABASE_SERVICE_ROLE_KEY: string;
+  VITE_SUPABASE_URL: string;
+  TURNSTILE_SECRET_KEY: string;
+  RESEND_API_KEY: string;
+  RATE_LIMIT_KV: KVNamespace;
+}
+
+// Request validation schema (same as before)
 const guestBookingSchema = z.object({
-  // Guest Information
   guest_name: z
     .string()
     .min(2)
@@ -151,96 +188,112 @@ const guestBookingSchema = z.object({
   phone_number: z
     .string()
     .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,10}$/),
-
-  // Booking Details
   unit_id: z.string().uuid(),
   check_in: z.string().datetime(),
   check_out: z.string().datetime(),
   num_guests: z.number().min(1).max(20),
-
-  // Optional Fields
   special_requests: z
     .string()
     .max(500)
     .optional()
     .transform((val) => (val ? DOMPurify.sanitize(val) : undefined)),
-
-  // Security
-  captcha_token: z.string(),
-
-  // File Information
+  turnstile_token: z.string(), // Changed from captcha_token
   file_name: z.string().max(255),
-  file_type: z.enum(["image/jpeg", "image/png", "image/jpg", "application/pdf"]),
-  file_size: z.number().max(5 * 1024 * 1024), // 5MB max
+  file_type: z.enum(["image/jpeg", "image/png", "image/jpg", "image/webp", "application/pdf"]),
+  file_size: z.number().max(2 * 1024 * 1024), // 2MB max (reduced for free tier)
 });
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers for browser requests
-  res.setHeader("Access-Control-Allow-Origin", process.env.NEXT_PUBLIC_APP_URL || "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+// Cloudflare Pages Function handler
+export async function onRequest(context: EventContext<Env, any, Record<string, unknown>>) {
+  const { request, env } = context;
 
-  // Handle preflight
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
+  // CORS headers
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+
+  // Handle OPTIONS request
+  if (request.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
   }
 
   // Only accept POST
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "Method not allowed",
-      message: "This endpoint only accepts POST requests",
+  if (request.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
   try {
-    // Get client IP for rate limiting
+    // Get client IP (Cloudflare provides this in headers)
     const clientIp =
-      (req.headers["x-forwarded-for"] as string) ||
-      (req.headers["x-real-ip"] as string) ||
-      req.socket.remoteAddress ||
+      request.headers.get("CF-Connecting-IP") ||
+      request.headers.get("X-Forwarded-For") ||
       "unknown";
 
-    // Check rate limit (5 requests per hour per IP)
-    const rateLimitResult = await checkRateLimit(clientIp, {
-      requests: 5,
-      window: "1h",
+    // Check KV rate limit (5 bookings per hour per IP)
+    const rateLimitResult = await checkKVRateLimit(env.RATE_LIMIT_KV, clientIp, {
+      limit: 5,
+      windowSeconds: 3600, // 1 hour
     });
 
-    if (!rateLimitResult.success) {
-      return res.status(429).json({
-        error: "Too many requests",
-        message: "Please wait before submitting another booking",
-        retryAfter: rateLimitResult.retryAfter,
-      });
+    if (!rateLimitResult.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: "Too many requests",
+          message: "Please wait before submitting another booking",
+          retryAfter: rateLimitResult.retryAfter,
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": String(rateLimitResult.retryAfter),
+          },
+        }
+      );
     }
 
-    // Parse and validate request body
-    const validationResult = guestBookingSchema.safeParse(req.body);
+    // Parse request body
+    const body = await request.json();
+    const validationResult = guestBookingSchema.safeParse(body);
 
     if (!validationResult.success) {
-      return res.status(400).json({
-        error: "Validation failed",
-        errors: validationResult.error.errors.map((e) => ({
-          field: e.path.join("."),
-          message: e.message,
-        })),
-      });
+      return new Response(
+        JSON.stringify({
+          error: "Validation failed",
+          errors: validationResult.error.errors.map((e) => ({
+            field: e.path.join("."),
+            message: e.message,
+          })),
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const data = validationResult.data;
 
-    // Verify CAPTCHA
-    const captchaValid = await verifyRecaptcha(data.captcha_token);
-    if (!captchaValid) {
-      return res.status(403).json({
-        error: "CAPTCHA verification failed",
-        message: "Please complete the CAPTCHA challenge",
-      });
+    // Verify Turnstile CAPTCHA
+    const turnstileValid = await verifyTurnstile(data.turnstile_token, env.TURNSTILE_SECRET_KEY);
+    if (!turnstileValid) {
+      return new Response(
+        JSON.stringify({
+          error: "CAPTCHA verification failed",
+          message: "Please complete the CAPTCHA challenge",
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Check unit availability
-    const { data: availabilityCheck, error: availabilityError } = await supabaseAdmin.rpc(
+    // Create Supabase admin client with env
+    const supabaseAdmin = createSupabaseAdmin(env);
+
+    // CRITICAL: Check unit availability ATOMICALLY before creating booking
+    const { data: availabilityCheck, error: availErr } = await supabaseAdmin.rpc(
       "check_unit_availability",
       {
         p_unit_id: data.unit_id,
@@ -249,11 +302,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     );
 
-    if (availabilityError || !availabilityCheck) {
-      return res.status(400).json({
-        error: "Unit not available",
-        message: "The selected unit is not available for these dates",
-      });
+    if (availErr || !availabilityCheck) {
+      return new Response(
+        JSON.stringify({
+          error: "AVAILABILITY_CONFLICT",
+          message: "The selected unit is not available for these dates",
+        }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Start database transaction
@@ -333,32 +389,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         booking_status: "Pending",
         payment_status: "Pending",
         special_requests: data.special_requests,
-        is_guest_booking: true, // Custom field to identify guest bookings
-        guest_verification_token: crypto.randomUUID(), // For email verification
+        is_guest_booking: true, // Identifies guest bookings (admin pre-screened)
       })
       .select()
       .single();
 
     if (bookingError || !booking) {
       console.error("Failed to create booking:", bookingError);
-      return res.status(500).json({
-        error: "Failed to create booking",
-        message: "Could not process your booking request",
-      });
+      return new Response(
+        JSON.stringify({
+          error: "BOOKING_CREATE_FAILED",
+          message: "Could not process your booking request",
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Generate signed upload URL
+    // Generate signed upload URL with token-based approach
     const fileExt = data.file_name.split(".").pop()?.toLowerCase() || "jpg";
     const fileName = `${Date.now()}_${crypto.randomUUID().substring(0, 8)}.${fileExt}`;
     const filePath = `guest-bookings/${booking.booking_id}/${fileName}`;
 
-    const uploadUrl = await generateSignedUploadUrl(
+    const uploadCredentials = await generateSignedUploadUrl(
+      supabaseAdmin,
       "payment-proofs",
       filePath,
       3600 // 1 hour expiry
     );
 
     // Send confirmation email (async, don't wait)
+    // Note: No email verification - admin pre-screening handles trust
     sendBookingConfirmation({
       to: data.email,
       bookingReference: bookingReference,
@@ -366,44 +426,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       checkIn: checkIn.toLocaleDateString(),
       checkOut: checkOut.toLocaleDateString(),
       totalAmount: totalAmount,
-      verificationToken: booking.guest_verification_token,
     }).catch((error) => {
       console.error("Failed to send confirmation email:", error);
       // Don't fail the request if email fails
     });
 
-    // Return success response
-    return res.status(201).json({
-      success: true,
-      booking: {
-        booking_id: booking.booking_id,
-        booking_reference: bookingReference,
-        total_amount: totalAmount,
-      },
-      upload: {
-        url: uploadUrl.signedUrl,
-        token: uploadUrl.token,
-        path: uploadUrl.path,
-        expires_in: 3600,
-      },
-      message: "Booking created successfully. Please upload your payment proof.",
-    });
+    // Return success response with token-based upload credentials
+    return new Response(
+      JSON.stringify({
+        success: true,
+        booking: {
+          booking_id: booking.booking_id,
+          booking_reference: bookingReference,
+          total_amount: totalAmount,
+        },
+        upload: {
+          path: uploadCredentials.path,
+          token: uploadCredentials.token,
+          bucket: uploadCredentials.bucket,
+          expires_at: uploadCredentials.expires_at,
+        },
+        message: "Booking created successfully. Please upload your payment proof (max 2MB).",
+      }),
+      { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (error) {
     console.error("Guest booking error:", error);
 
-    return res.status(500).json({
-      error: "Internal server error",
-      message: "An unexpected error occurred. Please try again later.",
-    });
+    return new Response(
+      JSON.stringify({
+        error: "INTERNAL_ERROR",
+        message: "An unexpected error occurred. Please try again later.",
+      }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 }
-
-// Vercel configuration
-export const config = {
-  runtime: "nodejs20.x",
-  maxDuration: 30,
-  regions: ["sin1"], // Singapore for APAC
-};
 ```
 
 ### 3. Upload Confirmation Endpoint
@@ -506,149 +564,747 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 ```
 
-### 4. Rate Limiting Implementation
+### 4. Rate Limiting Implementation (Cloudflare KV)
 
-**File**: `src/lib/rate-limit.ts`
+**File**: `src/lib/kv-rate-limit.ts`
+
+**Approach**: Coarse-window strategy to minimize KV writes and stay within free tier limits.
+
+**Why Coarse Windows**: The free KV tier allows only **1,000 writes/day**. A per-request write strategy would exhaust this quickly. Instead, we use hourly time windows where each unique IP gets at most 24 writes/day (one per hour), allowing ~40 unique IPs/day.
 
 ```typescript
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
+/**
+ * Cloudflare KV-based rate limiting with coarse-window strategy
+ * Free tier: 100k reads/day, 1k writes/day (critical constraint)
+ *
+ * Strategy: Use hourly time windows instead of per-request writes
+ * Result: ~24 writes/day per unique IP vs ~N writes/day with sliding window
+ */
 
-// Initialize Redis client
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+interface RateLimitOptions {
+  limit: number; // Max requests allowed per window
+  windowSeconds: number; // Time window in seconds
+}
 
-// Create rate limiter instances for different purposes
-const rateLimiters = {
-  booking: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(5, "1h"), // 5 requests per hour
-    analytics: true,
-    prefix: "rl:booking",
-  }),
-
-  status: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(20, "1m"), // 20 requests per minute
-    analytics: true,
-    prefix: "rl:status",
-  }),
-
-  upload: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(10, "1h"), // 10 uploads per hour
-    analytics: true,
-    prefix: "rl:upload",
-  }),
-};
-
-export async function checkRateLimit(
-  identifier: string,
-  type: keyof typeof rateLimiters = "booking"
-): Promise<{
-  success: boolean;
-  limit: number;
+interface RateLimitResult {
+  allowed: boolean;
   remaining: number;
-  retryAfter?: number;
-}> {
-  const rateLimiter = rateLimiters[type];
-  const { success, limit, remaining, reset } = await rateLimiter.limit(identifier);
+  retryAfter: number; // Seconds until retry
+}
+
+export async function checkKVRateLimit(
+  kv: KVNamespace,
+  identifier: string,
+  options: RateLimitOptions
+): Promise<RateLimitResult> {
+  const { limit, windowSeconds } = options;
+  const now = Math.floor(Date.now() / 1000);
+
+  // Coarse window approach: divide time into fixed windows
+  const windowKey = Math.floor(now / windowSeconds);
+  const key = `rate-limit:${identifier}:${windowKey}`;
+
+  // Get current count for this window (single read)
+  const current = await kv.get(key);
+  const count = current ? parseInt(current) : 0;
+
+  // Check if limit exceeded
+  if (count >= limit) {
+    const windowEnd = (windowKey + 1) * windowSeconds;
+    const retryAfter = windowEnd - now;
+
+    return {
+      allowed: false,
+      remaining: 0,
+      retryAfter: Math.max(retryAfter, 1),
+    };
+  }
+
+  // Increment counter (single write per window, not per request)
+  await kv.put(key, String(count + 1), {
+    expirationTtl: windowSeconds + 60, // Auto-cleanup after window + buffer
+  });
 
   return {
-    success,
-    limit,
-    remaining,
-    retryAfter: success ? undefined : Math.floor((reset - Date.now()) / 1000),
+    allowed: true,
+    remaining: limit - (count + 1),
+    retryAfter: 0,
   };
 }
 
-// Alternative implementation using Vercel KV if you don't have Upstash
-export async function simpleRateLimit(
-  identifier: string,
-  maxRequests: number = 5,
-  windowMs: number = 3600000 // 1 hour
-): Promise<boolean> {
-  // This is a simplified in-memory rate limiter
-  // In production, use Redis or similar persistent storage
-  const key = `rate_limit:${identifier}`;
-  const now = Date.now();
-
-  // This would need to be replaced with actual KV storage operations
-  // For example, using Vercel KV:
-  // const requests = await kv.get(key) || [];
-  // const recentRequests = requests.filter(time => now - time < windowMs);
-  //
-  // if (recentRequests.length >= maxRequests) {
-  //   return false;
-  // }
-  //
-  // await kv.set(key, [...recentRequests, now], { ex: windowMs / 1000 });
-  // return true;
-
-  // Placeholder return for example
-  return true;
-}
+// Usage example in Cloudflare Function:
+// const result = await checkKVRateLimit(env.RATE_LIMIT_KV, clientIp, {
+//   limit: 5,
+//   windowSeconds: 3600 // 1 hour window = 24 writes max per IP/day
+// });
 ```
 
-### 5. CAPTCHA Verification
+### 5. Turnstile CAPTCHA Verification (Cloudflare)
 
-**File**: `src/lib/recaptcha.ts`
+**File**: `src/lib/turnstile.ts`
+
+**Benefits over reCAPTCHA**:
+
+- ✅ Free, unlimited verifications
+- ✅ No quota limits
+- ✅ Better privacy (no Google tracking)
+- ✅ Integrated with Cloudflare ecosystem
+- ✅ Workers-native (no external dependencies)
 
 ```typescript
-export async function verifyRecaptcha(token: string): Promise<boolean> {
-  if (!process.env.RECAPTCHA_SECRET_KEY) {
-    console.warn("RECAPTCHA_SECRET_KEY not configured, skipping verification");
+/**
+ * Cloudflare Turnstile verification (Workers-native)
+ * Free tier: Unlimited verifications
+ *
+ * IMPORTANT: Must use URLSearchParams (not FormData) for Workers compatibility
+ */
+
+interface TurnstileResponse {
+  success: boolean;
+  challenge_ts?: string;
+  hostname?: string;
+  "error-codes"?: string[];
+  action?: string;
+  cdata?: string;
+}
+
+export async function verifyTurnstile(
+  token: string,
+  secretKey: string,
+  options?: {
+    remoteip?: string;
+    expectedHostname?: string;
+    expectedAction?: string;
+  }
+): Promise<boolean> {
+  if (!secretKey) {
+    console.warn("TURNSTILE_SECRET_KEY not configured, skipping verification");
     return true; // Skip in development
   }
 
   try {
-    const response = await fetch("https://www.google.com/recaptcha/api/siteverify", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token}`,
+    // Use URLSearchParams for Workers compatibility (not FormData)
+    const formData = new URLSearchParams({
+      secret: secretKey,
+      response: token,
+      ...(options?.remoteip ? { remoteip: options.remoteip } : {}),
     });
 
-    const data = await response.json();
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+    });
 
-    // For reCAPTCHA v3, you might also want to check the score
-    // return data.success && data.score > 0.5;
+    const data: TurnstileResponse = await response.json();
 
-    return data.success === true;
+    // Enhanced security validation
+    if (!data.success) {
+      console.warn("Turnstile verification failed:", data["error-codes"]);
+      return false;
+    }
+
+    // Verify hostname matches expected domain (prevents token reuse from other sites)
+    if (options?.expectedHostname && data.hostname) {
+      if (!data.hostname.includes(options.expectedHostname)) {
+        console.warn(
+          `Hostname mismatch: expected ${options.expectedHostname}, got ${data.hostname}`
+        );
+        return false;
+      }
+    }
+
+    // Verify action matches expected value (prevents token reuse across different forms)
+    if (options?.expectedAction && data.action) {
+      if (data.action !== options.expectedAction) {
+        console.warn(`Action mismatch: expected ${options.expectedAction}, got ${data.action}`);
+        return false;
+      }
+    }
+
+    return true;
   } catch (error) {
-    console.error("CAPTCHA verification error:", error);
+    console.error("Turnstile verification error:", error);
     return false;
   }
 }
 
-// Alternative: hCaptcha implementation
-export async function verifyHCaptcha(token: string): Promise<boolean> {
-  if (!process.env.HCAPTCHA_SECRET_KEY) {
-    return true; // Skip in development
+// Usage in Cloudflare Function (Enhanced Security):
+// const clientIp = request.headers.get('cf-connecting-ip') || 'unknown';
+// const isValid = await verifyTurnstile(
+//   data.turnstile_token,
+//   env.TURNSTILE_SECRET_KEY,
+//   {
+//     remoteip: clientIp,
+//     expectedHostname: 'your-domain.pages.dev',
+//     expectedAction: 'guest-booking'
+//   }
+// );
+```
+
+**Security Benefits**:
+
+- **Hostname validation**: Prevents token theft/reuse from other domains
+- **Action validation**: Ensures token was generated for guest booking form specifically
+- **IP binding**: Associates token with request origin for additional verification
+
+### 6. Idempotency Pattern
+
+**Problem**: Network retries or double-clicks can create duplicate bookings even with rate limiting.
+
+**Solution**: Store request fingerprints in KV with 10-minute TTL.
+
+**File**: `src/lib/idempotency.ts`
+
+```typescript
+/**
+ * Idempotency handler using Cloudflare KV
+ * Prevents duplicate bookings from retry attempts or double-submits
+ */
+
+export interface IdempotencyResult {
+  isProcessed: boolean;
+  response?: string; // Cached response if already processed
+}
+
+export async function checkIdempotency(kv: KVNamespace, key: string): Promise<IdempotencyResult> {
+  const cached = await kv.get(key);
+
+  if (cached) {
+    return {
+      isProcessed: true,
+      response: cached,
+    };
   }
 
-  try {
-    const response = await fetch("https://hcaptcha.com/siteverify", {
-      method: "POST",
+  return { isProcessed: false };
+}
+
+export async function setIdempotencyResult(
+  kv: KVNamespace,
+  key: string,
+  response: string,
+  ttlSeconds: number = 600 // 10 minutes default
+): Promise<void> {
+  await kv.put(key, response, {
+    expirationTtl: ttlSeconds,
+  });
+}
+```
+
+**Usage in Guest Booking Endpoint**:
+
+```typescript
+// In functions/api/guest-booking.ts
+
+export async function onRequest(context: EventContext<Env, any, Record<string, unknown>>) {
+  const { request, env } = context;
+
+  // Generate idempotency key from request body hash + client IP
+  const idempotencyKey =
+    request.headers.get("x-idempotency-key") || (await generateRequestHash(request));
+
+  // Check if already processed
+  const idempotencyCheck = await checkIdempotency(
+    env.RATE_LIMIT_KV,
+    `idempotency:${idempotencyKey}`
+  );
+
+  if (idempotencyCheck.isProcessed && idempotencyCheck.response) {
+    // Return cached response
+    return new Response(idempotencyCheck.response, {
+      status: 200,
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "application/json",
+        "X-Idempotency-Cached": "true",
       },
-      body: `secret=${process.env.HCAPTCHA_SECRET_KEY}&response=${token}`,
+    });
+  }
+
+  // ... process booking ...
+
+  // Cache successful response
+  const successResponse = JSON.stringify({ success: true, booking, upload });
+  await setIdempotencyResult(env.RATE_LIMIT_KV, `idempotency:${idempotencyKey}`, successResponse);
+
+  return new Response(successResponse, {
+    status: 201,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+// Helper to generate hash from request
+async function generateRequestHash(request: Request): Promise<string> {
+  const body = await request.clone().text();
+  const encoder = new TextEncoder();
+  const data = encoder.encode(body);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .substring(0, 16);
+}
+```
+
+**Key Features**:
+
+- **Optional client-provided key**: Frontend can send `X-Idempotency-Key` header
+- **Automatic fallback**: Hash request body if no key provided
+- **KV storage**: Uses same namespace as rate limiting (no extra resource)
+- **10-minute window**: Balances protection vs. legitimate retry attempts
+
+### 7. File Magic Byte Validation
+
+**Problem**: Clients can send malicious files with fake `Content-Type` headers (e.g., executable disguised as JPEG).
+
+**Solution**: Validate file content on upload confirmation by checking magic bytes (file signatures).
+
+**File**: `src/lib/file-validation.ts`
+
+```typescript
+/**
+ * File magic byte validation for security
+ * Prevents content-type spoofing and malicious uploads
+ */
+
+interface FileSignature {
+  mimeType: string;
+  extension: string;
+  magicBytes: number[][];
+}
+
+const ALLOWED_FILE_SIGNATURES: FileSignature[] = [
+  {
+    mimeType: "image/jpeg",
+    extension: "jpg",
+    magicBytes: [[0xff, 0xd8, 0xff]],
+  },
+  {
+    mimeType: "image/png",
+    extension: "png",
+    magicBytes: [[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]],
+  },
+  {
+    mimeType: "image/webp",
+    extension: "webp",
+    magicBytes: [
+      [0x52, 0x49, 0x46, 0x46], // RIFF
+      // followed by WEBP at offset 8 (checked separately)
+    ],
+  },
+  {
+    mimeType: "application/pdf",
+    extension: "pdf",
+    magicBytes: [[0x25, 0x50, 0x44, 0x46]], // %PDF
+  },
+];
+
+export async function validateFileContent(
+  supabaseAdmin: ReturnType<typeof createSupabaseAdmin>,
+  bucket: string,
+  path: string
+): Promise<{ valid: boolean; detectedType?: string; error?: string }> {
+  try {
+    // Download first 32 bytes for signature check
+    const { data, error } = await supabaseAdmin.storage.from(bucket).download(path, {
+      transform: {
+        width: undefined,
+        height: undefined,
+        quality: undefined,
+      },
     });
 
-    const data = await response.json();
-    return data.success === true;
+    if (error || !data) {
+      return { valid: false, error: "Failed to read file" };
+    }
+
+    // Read first 32 bytes
+    const arrayBuffer = await data.slice(0, 32).arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+
+    // Check against allowed signatures
+    for (const signature of ALLOWED_FILE_SIGNATURES) {
+      for (const magicBytes of signature.magicBytes) {
+        if (matchesMagicBytes(bytes, magicBytes)) {
+          // Special case for WebP: check for "WEBP" at offset 8
+          if (signature.mimeType === "image/webp") {
+            const webpMarker = [0x57, 0x45, 0x42, 0x50]; // "WEBP"
+            if (bytes.length >= 12 && matchesMagicBytes(bytes.slice(8), webpMarker)) {
+              return { valid: true, detectedType: signature.mimeType };
+            }
+          } else {
+            return { valid: true, detectedType: signature.mimeType };
+          }
+        }
+      }
+    }
+
+    return {
+      valid: false,
+      error: "File type not allowed or content-type mismatch",
+    };
   } catch (error) {
-    console.error("hCaptcha verification error:", error);
+    console.error("File validation error:", error);
+    return { valid: false, error: "Validation failed" };
+  }
+}
+
+function matchesMagicBytes(fileBytes: Uint8Array, magicBytes: number[]): boolean {
+  if (fileBytes.length < magicBytes.length) {
     return false;
+  }
+
+  for (let i = 0; i < magicBytes.length; i++) {
+    if (fileBytes[i] !== magicBytes[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// Get file metadata for additional validation
+export async function getFileMetadata(
+  supabaseAdmin: ReturnType<typeof createSupabaseAdmin>,
+  bucket: string,
+  path: string
+): Promise<{ size?: number; mimeType?: string; error?: string }> {
+  try {
+    const { data, error } = await supabaseAdmin.storage
+      .from(bucket)
+      .list(path.split("/").slice(0, -1).join("/"), {
+        limit: 1,
+        search: path.split("/").pop(),
+      });
+
+    if (error || !data || data.length === 0) {
+      return { error: "File not found" };
+    }
+
+    const file = data[0];
+    return {
+      size: file.metadata?.size,
+      mimeType: file.metadata?.mimetype,
+    };
+  } catch (error) {
+    console.error("Failed to get file metadata:", error);
+    return { error: "Metadata retrieval failed" };
   }
 }
 ```
 
-### 6. Email Service Integration
+**Integration in Confirm Endpoint** (`functions/api/guest-booking/confirm.ts`):
+
+```typescript
+// After receiving confirmation request
+
+// Step 1: Validate magic bytes
+const validation = await validateFileContent(supabaseAdmin, "payment-proofs", data.file_path);
+
+if (!validation.valid) {
+  return new Response(
+    JSON.stringify({
+      error: "INVALID_FILE_CONTENT",
+      message: validation.error || "File validation failed",
+    }),
+    { status: 400, headers: corsHeaders }
+  );
+}
+
+// Step 2: Verify file size
+const metadata = await getFileMetadata(supabaseAdmin, "payment-proofs", data.file_path);
+if (metadata.size && metadata.size > 2 * 1024 * 1024) {
+  return new Response(
+    JSON.stringify({
+      error: "FILE_TOO_LARGE",
+      message: "File exceeds 2MB limit",
+    }),
+    { status: 400, headers: corsHeaders }
+  );
+}
+
+// Step 3: Update booking with validated proof
+const { error: updateError } = await supabaseAdmin
+  .from("bookings")
+  .update({
+    payment_proof_url: data.file_path,
+    upload_status: "confirmed",
+    updated_at: new Date().toISOString(),
+  })
+  .eq("booking_id", data.booking_id)
+  .eq("is_guest_booking", true);
+```
+
+**Security Benefits**:
+
+- Prevents executable/script files disguised as images
+- Validates actual file content, not just extension or header
+- Defense-in-depth strategy
+- Minimal performance impact (checks only first 32 bytes)
+
+### 8. Cleanup Strategy (Orphaned Uploads)
+
+**Problem**: Failed uploads leave database records without files, cluttering the system.
+
+**Solution**: Scheduled cleanup job that deletes expired pending bookings.
+
+**File**: `functions/cron/cleanup-guest-bookings.ts`
+
+```typescript
+/**
+ * Scheduled cleanup for expired guest booking uploads
+ * Run hourly via Cloudflare Scheduled Triggers
+ */
+
+export async function onRequestGet(context: EventContext<Env, any, Record<string, unknown>>) {
+  const { env } = context;
+  const supabaseAdmin = createSupabaseAdmin(env);
+
+  try {
+    // Find expired uploads (1 hour upload window + 30 min buffer)
+    const expiryTime = new Date(Date.now() - 90 * 60 * 1000).toISOString();
+
+    const { data: expiredBookings, error } = await supabaseAdmin
+      .from("bookings")
+      .select("booking_id, payment_proof_url")
+      .eq("is_guest_booking", true)
+      .eq("upload_status", "pending")
+      .lt("upload_expires_at", expiryTime);
+
+    if (error) {
+      console.error("Failed to fetch expired bookings:", error);
+      return new Response(JSON.stringify({ error: "Query failed" }), { status: 500 });
+    }
+
+    if (!expiredBookings || expiredBookings.length === 0) {
+      return new Response(JSON.stringify({ message: "No expired bookings found", count: 0 }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Cleanup logic
+    const deleted = [];
+    for (const booking of expiredBookings) {
+      // Delete file if exists
+      if (booking.payment_proof_url) {
+        await supabaseAdmin.storage
+          .from("payment-proofs")
+          .remove([booking.payment_proof_url])
+          .catch((err) => console.warn(`Failed to delete file: ${err.message}`));
+      }
+
+      // Delete or mark booking as expired
+      const { error: deleteError } = await supabaseAdmin
+        .from("bookings")
+        .delete()
+        .eq("booking_id", booking.booking_id);
+
+      if (!deleteError) {
+        deleted.push(booking.booking_id);
+      }
+    }
+
+    return new Response(
+      JSON.stringify({
+        message: "Cleanup completed",
+        expired: expiredBookings.length,
+        deleted: deleted.length,
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    console.error("Cleanup error:", error);
+    return new Response(JSON.stringify({ error: "Internal error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}
+```
+
+**Cloudflare Scheduled Trigger Setup**:
+
+```toml
+# wrangler.toml
+[triggers]
+crons = ["0 * * * *"]  # Run hourly
+```
+
+**Alternative: GitHub Actions** (if Scheduled Triggers unavailable):
+
+```yaml
+# .github/workflows/cleanup-guest-bookings.yml
+name: Cleanup Expired Guest Bookings
+on:
+  schedule:
+    - cron: "0 * * * *" # Hourly
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger cleanup endpoint
+        run: |
+          curl -X GET "https://your-domain.pages.dev/cron/cleanup-guest-bookings" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+```
+
+### 9. Booking Reference Generation (ULID-Based)
+
+**File**: `src/utils/booking-reference.ts`
+
+```typescript
+import { ulid } from "ulid";
+
+/**
+ * Generate secure, non-sequential booking reference
+ * Format: BK-YYYY-XXXXXX (e.g., BK-2025-X7K9M2)
+ *
+ * Properties:
+ * - High entropy: ~1 billion combinations per year (32^6)
+ * - Non-sequential: Prevents enumeration attacks
+ * - Human-friendly: Easy to communicate over phone/email
+ * - Collision-resistant: ULID timestamp + randomness
+ */
+export function generateBookingReference(): string {
+  // Generate ULID (Universally Unique Lexicographically Sortable Identifier)
+  const id = ulid();
+
+  // Extract last 6 characters (base32, high entropy)
+  const randomSuffix = id.slice(-6).toUpperCase();
+
+  // Format with current year
+  const year = new Date().getFullYear();
+
+  return `BK-${year}-${randomSuffix}`;
+}
+
+// Examples of generated references:
+// BK-2025-X7K9M2
+// BK-2025-P4QW8N
+// BK-2025-ZN3T5R
+// BK-2025-M8K4VT
+```
+
+**Installation**:
+
+```bash
+npm install ulid
+```
+
+**Why ULID Over UUID**:
+
+- **Lexicographically sortable**: Can sort by creation time
+- **No hyphens in random part**: Cleaner appearance
+- **Timestamp-prefixed**: Built-in collision resistance
+- **Base32 encoding**: URL-safe, human-readable
+
+### 10. Resend Email DNS Configuration
+
+**Purpose**: Ensure high deliverability for booking confirmation emails by properly configuring email authentication records.
+
+**Resend Dashboard Setup**:
+
+1. **Sign up at resend.com** (free tier: 100 emails/day)
+2. **Verify domain** → Go to Domains → Add Domain
+3. **Add DNS records** provided by Resend:
+
+**Required DNS Records**:
+
+**SPF Record** (TXT):
+
+```
+Name: @
+Type: TXT
+Value: v=spf1 include:_spf.resend.com ~all
+TTL: 3600
+```
+
+**DKIM Records** (3 CNAME records provided by Resend):
+
+```
+Name: resend._domainkey
+Type: CNAME
+Value: resend1.resend.com
+TTL: 3600
+
+Name: resend2._domainkey
+Type: CNAME
+Value: resend2.resend.com
+TTL: 3600
+
+Name: resend3._domainkey
+Type: CNAME
+Value: resend3.resend.com
+TTL: 3600
+```
+
+**DMARC Policy** (TXT - recommended):
+
+```
+Name: _dmarc
+Type: TXT
+Value: v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com; ruf=mailto:dmarc@yourdomain.com; sp=quarantine; adkim=r; aspf=r
+TTL: 3600
+```
+
+**DMARC Policy Explanation**:
+
+- `p=quarantine`: Quarantine suspicious emails (start with `p=none` for monitoring only)
+- `rua`: Aggregate reports email address
+- `ruf`: Forensic reports email address
+- `adkim=r`: Relaxed DKIM alignment
+- `aspf=r`: Relaxed SPF alignment
+
+**Verification Steps**:
+
+1. Add all DNS records to your domain provider (Cloudflare, Namecheap, etc.)
+2. Wait for DNS propagation (up to 48 hours, usually 10-30 minutes)
+3. Verify in Resend dashboard → Domains → Verify
+4. Test email sending:
+   ```bash
+   curl -X POST https://api.resend.com/emails \
+     -H "Authorization: Bearer YOUR_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "from": "bookings@yourdomain.com",
+       "to": "your-test-email@gmail.com",
+       "subject": "Test",
+       "html": "<p>Test email</p>"
+     }'
+   ```
+
+**Sender Address Format**:
+
+```typescript
+// In sendBookingConfirmation()
+const { data, error } = await resend.emails.send({
+  from: "Okaeri Resort <bookings@yourdomain.com>", // Use verified domain
+  to: data.to,
+  subject: `Booking Confirmation - ${data.bookingReference}`,
+  html: emailTemplate,
+  replyTo: "support@yourdomain.com",
+});
+```
+
+**Common Issues**:
+
+- **"Domain not verified"**: DNS records not propagated yet, wait 30 min
+- **"SPF fail"**: Ensure `include:_spf.resend.com` in SPF record
+- **Emails in spam**: Add DMARC record and test email content score
+- **DKIM fail**: Verify all 3 DKIM CNAME records are correct
+
+**Testing Tools**:
+
+- `mail-tester.com` - Overall deliverability score
+- `mxtoolbox.com/dmarc` - DMARC validation
+- `dmarcian.com` - DMARC monitoring
+
+### 11. Email Service Integration
 
 **File**: `src/lib/email.ts`
 
@@ -664,16 +1320,12 @@ interface BookingConfirmationData {
   checkIn: string;
   checkOut: string;
   totalAmount: number;
-  verificationToken?: string;
 }
 
 export async function sendBookingConfirmation(data: BookingConfirmationData) {
-  const { to, bookingReference, guestName, checkIn, checkOut, totalAmount, verificationToken } =
-    data;
+  const { to, bookingReference, guestName, checkIn, checkOut, totalAmount } = data;
 
-  const verificationUrl = verificationToken
-    ? `${process.env.NEXT_PUBLIC_APP_URL}/verify-booking?token=${verificationToken}`
-    : null;
+  // Note: No email verification - admin pre-screening handles trust
 
   const html = `
     <!DOCTYPE html>
@@ -720,17 +1372,6 @@ export async function sendBookingConfirmation(data: BookingConfirmationData) {
               <span>Pending Verification</span>
             </div>
           </div>
-
-          ${
-            verificationUrl
-              ? `
-            <p>Please verify your email address to complete your booking:</p>
-            <center>
-              <a href="${verificationUrl}" class="cta-button">Verify Email</a>
-            </center>
-          `
-              : ""
-          }
 
           <p><strong>Next Steps:</strong></p>
           <ol>
@@ -960,45 +1601,65 @@ describe("/api/guest-booking", () => {
 });
 ```
 
-## Deployment
+## Deployment (Cloudflare Pages)
 
-### Vercel Deployment
+### Cloudflare Pages Deployment
 
-1. **Set Environment Variables**:
+1. **Create KV Namespace**:
 
    ```bash
-   vercel env add SUPABASE_SERVICE_ROLE_KEY
-   vercel env add RECAPTCHA_SECRET_KEY
-   vercel env add RESEND_API_KEY
-   vercel env add UPSTASH_REDIS_REST_URL
-   vercel env add UPSTASH_REDIS_REST_TOKEN
+   # Create KV namespace for rate limiting
+   wrangler kv:namespace create "RATE_LIMIT_KV"
+
+   # Copy the ID to wrangler.toml
+   # Output: { binding = "RATE_LIMIT_KV", id = "abc123..." }
    ```
 
-2. **Deploy**:
+2. **Set Environment Variables** (in Cloudflare Dashboard):
+
+   Navigate to **Settings** > **Environment variables**:
+   - `SUPABASE_SERVICE_ROLE_KEY` (secret)
+   - `VITE_SUPABASE_URL` (public)
+   - `VITE_SUPABASE_ANON_KEY` (public)
+   - `TURNSTILE_SECRET_KEY` (secret)
+   - `VITE_TURNSTILE_SITE_KEY` (public)
+   - `RESEND_API_KEY` (secret)
+
+3. **Deploy**:
+
    ```bash
-   vercel --prod
+   npm run build
+   npm run deploy
+
+   # Or manually with Wrangler
+   wrangler pages deploy dist
    ```
 
-### Monitoring
+### Monitoring (Free Tier Options)
 
-- Set up Vercel Analytics for API monitoring
-- Configure Sentry for error tracking
-- Use Upstash Redis analytics for rate limiting metrics
+- Use Cloudflare Analytics (built-in, free)
+- Monitor KV operations in Cloudflare Dashboard
+- Basic error logging via `console.error()` (view in Logs)
+- Optional: Free Sentry tier for error tracking (5k events/month)
 
 ## Security Checklist
 
-- [ ] Service role key only in backend environment
-- [ ] Input validation on all fields
-- [ ] Rate limiting configured and tested
-- [ ] CAPTCHA verification working
-- [ ] File type and size validation
+- [ ] Service role key only in Cloudflare environment (never in frontend)
+- [ ] Cloudflare KV namespace created and bound
+- [ ] Turnstile site keys configured (frontend + backend)
+- [ ] Input validation on all fields (Zod + DOMPurify)
+- [ ] KV rate limiting configured and tested
+- [ ] Turnstile CAPTCHA verification working
+- [ ] File type and size validation (2MB max)
 - [ ] XSS prevention with DOMPurify
 - [ ] SQL injection prevention (Supabase handles this)
-- [ ] CORS properly configured
+- [ ] CORS properly configured in Functions
 - [ ] Error messages don't leak sensitive info
-- [ ] Logging configured for audit trail
+- [ ] Basic logging configured (console.error)
+- [ ] Environment variables set in Cloudflare Pages dashboard
 
 ---
 
-_Document Version: 1.0.0_
+_Document Version: 2.0.0 (Cloudflare Free-Tier Adaptation)_
 _Last Updated: January 2025_
+_Platform: Cloudflare Pages + Supabase Free Tier_

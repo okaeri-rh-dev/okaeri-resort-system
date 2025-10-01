@@ -1,8 +1,13 @@
-# Security Implementation Guide
+# Security Implementation Guide (Cloudflare Free Tier)
 
 ## Overview
 
-This document provides comprehensive security measures for the guest booking system with signed URLs. It covers rate limiting, CAPTCHA integration, input validation, and monitoring strategies to protect against common vulnerabilities.
+This document provides comprehensive security measures for the guest booking system with signed URLs optimized for **Cloudflare free tier**. It covers KV-based rate limiting, Turnstile CAPTCHA integration, input validation, CORS configuration, and basic monitoring strategies to protect against common vulnerabilities.
+
+**Platform**: Cloudflare Pages + Cloudflare KV + Turnstile
+**Cost**: $0/month
+
+**⚠️ Critical**: All code examples in this document are **Cloudflare Workers-compatible** using Web standard APIs only. No Node.js, Next.js, or Upstash dependencies.
 
 ## Security Architecture
 
@@ -48,91 +53,80 @@ graph TB
 
 ## Rate Limiting Implementation
 
-### Redis-Based Rate Limiting
+### KV-Based Rate Limiting (Workers-Native)
+
+**Strategy**: Coarse-window approach to minimize KV writes (free tier: 1,000 writes/day).
 
 ```typescript
-// lib/rate-limit.ts
-import { Redis } from "@upstash/redis";
-import { Ratelimit } from "@upstash/ratelimit";
-import { headers } from "next/headers";
+// lib/kv-rate-limit.ts
+/**
+ * Cloudflare Workers KV rate limiting
+ * Free tier: 100k reads/day, 1k writes/day
+ *
+ * Uses hourly windows: ~24 writes/day per IP instead of N writes/day
+ */
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
-
-// Create rate limiters with different configurations
-export const rateLimiters = {
-  // Guest booking: 5 requests per hour
-  guestBooking: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(5, "1 h"),
-    analytics: true,
-    prefix: "guest-booking",
-  }),
-
-  // File upload: 10 uploads per hour
-  fileUpload: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(10, "1 h"),
-    analytics: true,
-    prefix: "file-upload",
-  }),
-
-  // Status check: 20 requests per hour
-  statusCheck: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(20, "1 h"),
-    analytics: true,
-    prefix: "status-check",
-  }),
-
-  // Email verification: 3 requests per hour
-  emailVerification: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(3, "1 h"),
-    analytics: true,
-    prefix: "email-verify",
-  }),
-};
-
-// Get identifier from request
-export async function getIdentifier(): Promise<string> {
-  const headersList = headers();
-
-  // Try to get real IP from various headers
-  const forwardedFor = headersList.get("x-forwarded-for");
-  const realIp = headersList.get("x-real-ip");
-  const cfConnectingIp = headersList.get("cf-connecting-ip");
-
-  // Priority: CF > X-Real-IP > X-Forwarded-For > fallback
-  const ip = cfConnectingIp || realIp || forwardedFor?.split(",")[0] || "anonymous";
-
-  return ip;
+interface RateLimitOptions {
+  limit: number;
+  windowSeconds: number;
 }
 
-// Rate limit middleware
-export async function checkRateLimit(
-  limiter: keyof typeof rateLimiters,
-  identifier?: string
-): Promise<{ success: boolean; limit: number; remaining: number; reset: Date }> {
-  const id = identifier || (await getIdentifier());
-  const { success, limit, remaining, reset } = await rateLimiters[limiter].limit(id);
+interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  retryAfter: number;
+}
+
+export async function checkKVRateLimit(
+  kv: KVNamespace,
+  identifier: string,
+  options: RateLimitOptions
+): Promise<RateLimitResult> {
+  const { limit, windowSeconds } = options;
+  const now = Math.floor(Date.now() / 1000);
+  const windowKey = Math.floor(now / windowSeconds);
+  const key = `rate-limit:${identifier}:${windowKey}`;
+
+  const current = await kv.get(key);
+  const count = current ? parseInt(current) : 0;
+
+  if (count >= limit) {
+    const windowEnd = (windowKey + 1) * windowSeconds;
+    const retryAfter = windowEnd - now;
+
+    return {
+      allowed: false,
+      remaining: 0,
+      retryAfter: Math.max(retryAfter, 1),
+    };
+  }
+
+  await kv.put(key, String(count + 1), {
+    expirationTtl: windowSeconds + 60,
+  });
 
   return {
-    success,
-    limit,
-    remaining,
-    reset: new Date(reset),
+    allowed: true,
+    remaining: limit - (count + 1),
+    retryAfter: 0,
   };
 }
 
-// Advanced fingerprinting for better identification
-export async function getAdvancedFingerprint(req: Request): Promise<string> {
-  const headers = req.headers;
-  const ip = await getIdentifier();
+// Get IP from Workers request
+export function getClientIp(request: Request): string {
+  // Cloudflare provides the real client IP in this header
+  return (
+    request.headers.get("cf-connecting-ip") ||
+    request.headers.get("x-forwarded-for")?.split(",")[0] ||
+    "unknown"
+  );
+}
 
-  // Combine multiple factors for fingerprinting
+// Advanced fingerprinting (Workers-compatible)
+export async function getFingerprint(request: Request): Promise<string> {
+  const ip = getClientIp(request);
+  const headers = request.headers;
+
   const factors = [
     ip,
     headers.get("user-agent") || "",
@@ -140,45 +134,51 @@ export async function getAdvancedFingerprint(req: Request): Promise<string> {
     headers.get("accept-encoding") || "",
   ];
 
-  // Create a hash of the factors
   const encoder = new TextEncoder();
   const data = encoder.encode(factors.join("|"));
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-
-  return hashHex;
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 ```
 
-### API Endpoint Protection
+### API Endpoint Protection (Workers Pattern)
 
 ```typescript
-// app/api/guest-booking/route.ts (partial)
-import { checkRateLimit } from "@/lib/rate-limit";
+// functions/api/guest-booking.ts (Cloudflare Function)
+import { checkKVRateLimit, getClientIp } from "@/lib/kv-rate-limit";
 
-export async function POST(req: Request) {
+interface Env {
+  RATE_LIMIT_KV: KVNamespace;
+  // ... other bindings
+}
+
+export async function onRequest(context: EventContext<Env, any, Record<string, unknown>>) {
+  const { request, env } = context;
+
   try {
-    // Check rate limit
-    const rateLimitResult = await checkRateLimit("guestBooking");
+    const clientIp = getClientIp(request);
 
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        {
-          error: "Too many requests",
-          retryAfter: rateLimitResult.reset,
-          limit: rateLimitResult.limit,
-          remaining: 0,
-        },
+    // Check rate limit (5 bookings per hour per IP)
+    const rateLimitResult = await checkKVRateLimit(env.RATE_LIMIT_KV, clientIp, {
+      limit: 5,
+      windowSeconds: 3600, // 1 hour
+    });
+
+    if (!rateLimitResult.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: "RATE_LIMITED",
+          message: "Too many requests. Please try again later.",
+          retryAfter: rateLimitResult.retryAfter,
+        }),
         {
           status: 429,
           headers: {
-            "X-RateLimit-Limit": rateLimitResult.limit.toString(),
+            "Content-Type": "application/json",
+            "X-RateLimit-Limit": "5",
             "X-RateLimit-Remaining": "0",
-            "X-RateLimit-Reset": rateLimitResult.reset.toISOString(),
-            "Retry-After": Math.ceil(
-              (rateLimitResult.reset.getTime() - Date.now()) / 1000
-            ).toString(),
+            "Retry-After": String(rateLimitResult.retryAfter),
           },
         }
       );
@@ -187,135 +187,104 @@ export async function POST(req: Request) {
     // Continue with request processing...
   } catch (error) {
     console.error("Rate limit error:", error);
-    // Continue without rate limiting if Redis is down
+    // Continue without rate limiting if KV is unavailable
   }
 }
 ```
 
 ## CAPTCHA Integration
 
-### Google reCAPTCHA v3 Setup
+### Cloudflare Turnstile Setup (Workers-Native)
+
+**Why Turnstile over reCAPTCHA**:
+
+- ✅ Free, unlimited verifications (vs reCAPTCHA's 1M/month limit)
+- ✅ No quota tracking needed
+- ✅ Better privacy (no Google tracking)
+- ✅ Native Cloudflare integration
+- ✅ Workers-compatible verification
 
 ```typescript
-// lib/captcha.ts
-export interface CaptchaVerificationResult {
+// lib/turnstile.ts (Workers-compatible)
+export interface TurnstileResponse {
   success: boolean;
-  score?: number;
-  action?: string;
   challenge_ts?: string;
   hostname?: string;
   "error-codes"?: string[];
+  action?: string;
+  cdata?: string;
 }
 
-export async function verifyCaptcha(
+export async function verifyTurnstile(
   token: string,
-  action: string = "guest_booking"
-): Promise<CaptchaVerificationResult> {
-  const secret = process.env.RECAPTCHA_SECRET_KEY;
-
-  if (!secret) {
-    console.error("RECAPTCHA_SECRET_KEY not configured");
-    return { success: false, "error-codes": ["missing-secret"] };
+  secretKey: string,
+  remoteip?: string
+): Promise<boolean> {
+  if (!secretKey) {
+    console.warn("TURNSTILE_SECRET_KEY not configured");
+    return true; // Skip in development
   }
 
   try {
-    const response = await fetch("https://www.google.com/recaptcha/api/siteverify", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        secret,
-        response: token,
-      }),
+    // CRITICAL: Use URLSearchParams (not FormData) for Workers
+    const formData = new URLSearchParams({
+      secret: secretKey,
+      response: token,
+      ...(remoteip ? { remoteip } : {}),
     });
 
-    const data: CaptchaVerificationResult = await response.json();
-
-    // For reCAPTCHA v3, check score threshold
-    if (data.success && data.score !== undefined) {
-      // Adjust threshold based on your needs (0.5 is moderate)
-      const threshold = parseFloat(process.env.RECAPTCHA_SCORE_THRESHOLD || "0.5");
-      data.success = data.score >= threshold;
-    }
-
-    // Verify action matches
-    if (data.success && data.action !== action) {
-      data.success = false;
-      data["error-codes"] = ["action-mismatch"];
-    }
-
-    return data;
-  } catch (error) {
-    console.error("CAPTCHA verification error:", error);
-    return {
-      success: false,
-      "error-codes": ["network-error"],
-    };
-  }
-}
-
-// Alternative: hCaptcha implementation
-export async function verifyHCaptcha(token: string): Promise<boolean> {
-  const secret = process.env.HCAPTCHA_SECRET_KEY;
-
-  if (!secret) {
-    console.error("HCAPTCHA_SECRET_KEY not configured");
-    return false;
-  }
-
-  try {
-    const response = await fetch("https://hcaptcha.com/siteverify", {
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
       method: "POST",
+      body: formData,
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        "content-type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({
-        secret,
-        response: token,
-      }),
     });
 
-    const data = await response.json();
+    const data: TurnstileResponse = await response.json();
+
+    // Optional: Verify hostname matches your domain
+    if (data.hostname && !data.hostname.includes("your-domain.pages.dev")) {
+      console.warn("Hostname mismatch:", data.hostname);
+      return false;
+    }
+
     return data.success === true;
   } catch (error) {
-    console.error("hCaptcha verification error:", error);
+    console.error("Turnstile verification error:", error);
     return false;
   }
 }
 ```
 
-### Frontend CAPTCHA Integration
+### Frontend Turnstile Integration
 
 ```tsx
-// components/guest-booking/CaptchaProtectedForm.tsx
-import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
+// components/guest-booking/TurnstileProtectedForm.tsx
+import { Turnstile } from "@marsidev/react-turnstile";
+import { useState } from "react";
 
-export function CaptchaProtectedForm({ children, onSubmit }: Props) {
-  const { executeRecaptcha } = useGoogleReCaptcha();
+export function TurnstileProtectedForm({ children, onSubmit }: Props) {
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
   const [isVerifying, setIsVerifying] = useState(false);
 
   const handleSubmit = async (data: any) => {
-    if (!executeRecaptcha) {
-      console.error("reCAPTCHA not loaded");
+    if (!turnstileToken) {
+      alert("Please complete the security check");
       return;
     }
 
     setIsVerifying(true);
 
     try {
-      // Get CAPTCHA token
-      const captchaToken = await executeRecaptcha("guest_booking");
-
-      // Include token with form submission
       const submitData = {
         ...data,
-        captchaToken,
+        turnstile_token: turnstileToken,
       };
 
       await onSubmit(submitData);
     } catch (error) {
-      console.error("CAPTCHA error:", error);
+      console.error("Submission error:", error);
     } finally {
       setIsVerifying(false);
     }
@@ -324,9 +293,15 @@ export function CaptchaProtectedForm({ children, onSubmit }: Props) {
   return (
     <form onSubmit={handleSubmit}>
       {children}
-      {isVerifying && (
-        <div className="text-sm text-muted-foreground">Verifying security check...</div>
-      )}
+
+      <Turnstile
+        siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+        onSuccess={setTurnstileToken}
+        onError={() => setTurnstileToken("")}
+        onExpire={() => setTurnstileToken("")}
+      />
+
+      {isVerifying && <div className="text-sm text-muted-foreground">Processing...</div>}
     </form>
   );
 }
@@ -498,6 +473,513 @@ export async function searchBookings(
   return { data, error };
 }
 ```
+
+## CORS Configuration (Cross-Origin Resource Sharing)
+
+### 1. Supabase Storage CORS Configuration
+
+**Critical**: Direct browser uploads to Supabase Storage require proper CORS configuration for the token-based `uploadToSignedUrl()` method.
+
+**Navigate to**: Supabase Dashboard → Storage → `payment-proofs` bucket → Configuration → CORS
+
+**Production Configuration** (strict):
+
+```json
+[
+  {
+    "allowedOrigins": ["https://your-domain.pages.dev", "https://www.your-domain.com"],
+    "allowedMethods": ["GET", "PUT", "POST"],
+    "allowedHeaders": ["authorization", "content-type", "x-client-info", "apikey"],
+    "exposedHeaders": ["ETag"],
+    "maxAge": 3600
+  }
+]
+```
+
+**Development Configuration** (includes localhost):
+
+```json
+[
+  {
+    "allowedOrigins": [
+      "https://your-domain.pages.dev",
+      "https://*.pages.dev",
+      "http://localhost:8788",
+      "http://localhost:5173",
+      "http://127.0.0.1:5173"
+    ],
+    "allowedMethods": ["GET", "PUT", "POST", "DELETE"],
+    "allowedHeaders": ["*"],
+    "exposedHeaders": ["ETag", "X-Supabase-Api-Version"],
+    "maxAge": 3600
+  }
+]
+```
+
+**Configuration Explanation**:
+
+- **`allowedOrigins`**:
+  - Production: Explicit domain list (no wildcards for security)
+  - Development: Includes `localhost` and `*.pages.dev` preview deployments
+- **`allowedMethods`**:
+  - `PUT`: Required for `uploadToSignedUrl()` file uploads
+  - `POST`: Fallback upload method
+  - `GET`: Download signed URLs for admin review
+- **`allowedHeaders`**:
+  - Production: Explicit list prevents header injection
+  - Development: `*` for easier testing
+- **`exposedHeaders`**:
+  - `ETag`: Required for upload verification
+- **`maxAge`**: 3600 seconds (1 hour) - caches preflight requests
+
+**⚠️ Security Warning**: Never use `"allowedOrigins": ["*"]` in production - this exposes your storage to any website.
+
+### 2. Cloudflare Functions CORS Headers
+
+**File**: `functions/_middleware.ts` (applies to all `/api/*` routes)
+
+```typescript
+/**
+ * Global middleware for Cloudflare Functions
+ * Handles CORS, security headers, and rate limiting
+ */
+
+interface Env {
+  RATE_LIMIT_KV: KVNamespace;
+  ENVIRONMENT: "production" | "development";
+}
+
+export const onRequest: PagesFunction<Env> = async (context) => {
+  const { request, env, next } = context;
+
+  // Environment-specific CORS configuration
+  const allowedOrigins =
+    env.ENVIRONMENT === "production"
+      ? ["https://your-domain.pages.dev", "https://www.your-domain.com"]
+      : [
+          "https://your-domain.pages.dev",
+          "https://*.pages.dev",
+          "http://localhost:8788",
+          "http://localhost:5173",
+          "http://127.0.0.1:5173",
+        ];
+
+  const origin = request.headers.get("Origin");
+  const isAllowedOrigin = allowedOrigins.some((allowed) => {
+    if (allowed.includes("*")) {
+      const pattern = new RegExp(allowed.replace("*", ".*"));
+      return pattern.test(origin || "");
+    }
+    return allowed === origin;
+  });
+
+  // Handle preflight requests
+  if (request.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": isAllowedOrigin ? origin! : allowedOrigins[0],
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Idempotency-Key",
+        "Access-Control-Max-Age": "86400", // 24 hours
+        "Access-Control-Allow-Credentials": "false",
+      },
+    });
+  }
+
+  // Process request
+  const response = await next();
+
+  // Add CORS headers to response
+  if (isAllowedOrigin) {
+    response.headers.set("Access-Control-Allow-Origin", origin!);
+    response.headers.set("Access-Control-Allow-Credentials", "false");
+    response.headers.set("Vary", "Origin");
+  }
+
+  return response;
+};
+```
+
+**Key Security Features**:
+
+- **Dynamic origin validation**: Checks against allowlist, not blanket `*`
+- **Environment-aware**: Strict in production, flexible in development
+- **Preflight caching**: 24-hour cache reduces preflight overhead
+- **No credentials**: `Access-Control-Allow-Credentials: false` prevents cookie attacks
+- **Vary header**: Ensures proper caching by CDN
+
+### Verifying CORS Configuration
+
+```typescript
+// Test CORS from browser console on your domain
+const testCORS = async () => {
+  try {
+    const response = await fetch(
+      "https://your-project.supabase.co/storage/v1/object/payment-proofs/test.txt",
+      {
+        method: "OPTIONS",
+        headers: {
+          "Access-Control-Request-Method": "PUT",
+          "Access-Control-Request-Headers": "content-type",
+          Origin: window.location.origin,
+        },
+      }
+    );
+    console.log("CORS Status:", response.status);
+    console.log("CORS Headers:", Object.fromEntries(response.headers));
+  } catch (error) {
+    console.error("CORS Test Failed:", error);
+  }
+};
+```
+
+## Security Headers (Comprehensive Protection)
+
+### HTTP Security Headers Implementation
+
+**File**: `functions/_middleware.ts` (add to existing middleware)
+
+```typescript
+/**
+ * Comprehensive security headers for all API responses
+ * Protects against XSS, clickjacking, MIME sniffing, and other attacks
+ */
+
+function getSecurityHeaders(env: Env): HeadersInit {
+  const isProd = env.ENVIRONMENT === "production";
+
+  return {
+    // XSS Protection
+    "X-XSS-Protection": "1; mode=block",
+
+    // Prevent MIME type sniffing
+    "X-Content-Type-Options": "nosniff",
+
+    // Clickjacking protection
+    "X-Frame-Options": "DENY",
+
+    // Content Security Policy (strict)
+    "Content-Security-Policy": [
+      "default-src 'self'",
+      "script-src 'self' challenges.cloudflare.com", // Turnstile widget
+      "style-src 'self' 'unsafe-inline'", // Allow inline styles for UI libraries
+      "img-src 'self' data: https:", // Allow images from any HTTPS source
+      "connect-src 'self' https://*.supabase.co https://challenges.cloudflare.com",
+      "font-src 'self'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'", // Equivalent to X-Frame-Options: DENY
+      "upgrade-insecure-requests", // Upgrade HTTP to HTTPS
+    ].join("; "),
+
+    // Referrer Policy (privacy-friendly)
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+
+    // Permissions Policy (disable unnecessary browser features)
+    "Permissions-Policy": [
+      "camera=()",
+      "microphone=()",
+      "geolocation=()",
+      "payment=()",
+      "usb=()",
+      "magnetometer=()",
+      "gyroscope=()",
+      "accelerometer=()",
+    ].join(", "),
+
+    // HSTS (HTTPS enforcement) - only in production
+    ...(isProd
+      ? {
+          "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        }
+      : {}),
+
+    // Additional security headers
+    "X-Permitted-Cross-Domain-Policies": "none",
+    "X-Download-Options": "noopen",
+  };
+}
+
+export const onRequest: PagesFunction<Env> = async (context) => {
+  const { request, env, next } = context;
+
+  // ... existing CORS logic ...
+
+  // Process request
+  const response = await next();
+
+  // Add security headers
+  const securityHeaders = getSecurityHeaders(env);
+  Object.entries(securityHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+
+  // ... existing CORS response headers ...
+
+  return response;
+};
+```
+
+**Security Headers Explanation**:
+
+| Header                      | Value                             | Protection                                           |
+| --------------------------- | --------------------------------- | ---------------------------------------------------- |
+| `Content-Security-Policy`   | Strict directives                 | Prevents XSS by controlling resource loading sources |
+| `X-Frame-Options`           | `DENY`                            | Prevents clickjacking attacks                        |
+| `X-Content-Type-Options`    | `nosniff`                         | Prevents MIME type sniffing attacks                  |
+| `Referrer-Policy`           | `strict-origin-when-cross-origin` | Limits referrer info leakage                         |
+| `Permissions-Policy`        | Disabled features                 | Blocks camera, microphone, geolocation access        |
+| `Strict-Transport-Security` | 1 year max-age                    | Forces HTTPS, prevents downgrade attacks             |
+| `X-XSS-Protection`          | `1; mode=block`                   | Legacy XSS filter (defense-in-depth)                 |
+
+**Testing Security Headers**:
+
+```bash
+# Test with curl
+curl -I https://your-domain.pages.dev/api/guest-booking
+
+# Test with SecurityHeaders.com
+open https://securityheaders.com/?q=https://your-domain.pages.dev
+
+# Expected Security Grade: A+
+```
+
+**CSP Violation Reporting** (optional):
+
+```typescript
+// Add to CSP directive in production
+("report-uri https://your-domain.pages.dev/api/csp-report", "report-to csp-endpoint");
+
+// Create reporting endpoint
+// functions/api/csp-report.ts
+export async function onRequest(context: EventContext<Env, any, Record<string, unknown>>) {
+  const { request } = context;
+  const report = await request.json();
+
+  console.warn("CSP Violation:", JSON.stringify(report, null, 2));
+
+  // Optionally send to monitoring service
+  // await sendToSentry(report);
+
+  return new Response("Reported", { status: 204 });
+}
+```
+
+## Status Check Security (Dual-Factor Authentication + Rate Limiting)
+
+**Security Risks**:
+
+1. **Enumeration attacks**: Guessing booking references to discover bookings
+2. **Brute force**: Automated scraping of booking data
+3. **DDoS**: Overwhelming status endpoint with requests
+
+**Mitigations**:
+
+1. **Dual-factor auth**: Require BOTH `booking_reference` AND `email`
+2. **Rate limiting**: 20 requests/hour per IP
+3. **Optional Turnstile**: CAPTCHA for suspicious patterns
+4. **Generic errors**: Don't reveal which parameter was wrong
+
+### Secure Status Check Implementation
+
+```typescript
+// functions/api/guest-booking/status.ts
+import { checkKVRateLimit, getClientIp } from "@/lib/kv-rate-limit";
+import { createSupabaseAdmin } from "@/lib/supabase-admin";
+
+interface Env {
+  RATE_LIMIT_KV: KVNamespace;
+  SUPABASE_SERVICE_ROLE_KEY: string;
+  VITE_SUPABASE_URL: string;
+}
+
+export async function onRequest(context: EventContext<Env, any, Record<string, unknown>>) {
+  const { request, env } = context;
+
+  // Only allow GET requests
+  if (request.method !== "GET") {
+    return new Response("Method not allowed", { status: 405 });
+  }
+
+  const url = new URL(request.url);
+  const reference = url.searchParams.get("reference");
+  const email = url.searchParams.get("email");
+
+  // BOTH parameters required
+  if (!reference || !email) {
+    return new Response(
+      JSON.stringify({
+        error: "MISSING_PARAMETERS",
+        message: "Both booking reference and email are required",
+      }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // Enhanced rate limiting with fingerprinting
+  const clientIp = getClientIp(request);
+  const fingerprint = await getFingerprint(request); // IP + UA + headers
+
+  const rateLimitResult = await checkKVRateLimit(
+    env.RATE_LIMIT_KV,
+    `status:${fingerprint.substring(0, 16)}`, // Use fingerprint instead of just IP
+    {
+      limit: 20,
+      windowSeconds: 3600,
+    }
+  );
+
+  if (!rateLimitResult.allowed) {
+    // Check if we should require Turnstile CAPTCHA
+    const requiresCaptcha = rateLimitResult.remaining === 0 && env.ENVIRONMENT === "production";
+
+    return new Response(
+      JSON.stringify({
+        error: "RATE_LIMITED",
+        message: "Too many status checks. Please try again later.",
+        retryAfter: rateLimitResult.retryAfter,
+        requiresCaptcha, // Signal to frontend to show Turnstile
+      }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": String(rateLimitResult.retryAfter),
+          "X-RateLimit-Remaining": "0",
+        },
+      }
+    );
+  }
+
+  // Optional: Verify Turnstile if provided (for high-volume users)
+  const turnstileToken = url.searchParams.get("turnstile_token");
+  if (turnstileToken && env.TURNSTILE_SECRET_KEY) {
+    const { verifyTurnstile } = await import("@/lib/turnstile");
+    const isValid = await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET_KEY, {
+      remoteip: clientIp,
+      expectedHostname: new URL(request.url).hostname,
+      expectedAction: "status-check",
+    });
+
+    if (!isValid) {
+      return new Response(
+        JSON.stringify({
+          error: "CAPTCHA_FAILED",
+          message: "CAPTCHA verification failed. Please try again.",
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Reset rate limit on successful CAPTCHA (give them more attempts)
+    await env.RATE_LIMIT_KV.delete(`status:${fingerprint.substring(0, 16)}`);
+  }
+
+  // Query booking with BOTH conditions
+  const supabaseAdmin = createSupabaseAdmin(env);
+  const { data, error } = await supabaseAdmin
+    .from("bookings")
+    .select("booking_reference, booking_status, check_in, check_out, total_amount, payment_status")
+    .eq("booking_reference", reference)
+    .eq("email", email.toLowerCase())
+    .eq("is_guest_booking", true)
+    .single();
+
+  if (error || !data) {
+    // GENERIC response - don't reveal which parameter was wrong
+    return new Response(
+      JSON.stringify({
+        error: "NOT_FOUND",
+        message: "No booking found with the provided information",
+      }),
+      { status: 404, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      data: {
+        reference: data.booking_reference,
+        status: data.booking_status,
+        checkIn: data.check_in,
+        checkOut: data.check_out,
+        totalAmount: data.total_amount,
+        paymentStatus: data.payment_status,
+      },
+    }),
+    { status: 200, headers: { "Content-Type": "application/json" } }
+  );
+}
+```
+
+**Security Benefits**:
+
+- ✅ **Dual-factor authentication**: Requires BOTH reference AND email
+- ✅ **Fingerprinting**: Uses IP + User-Agent + headers for better tracking
+- ✅ **Progressive rate limiting**: 20 checks/hour, then optional CAPTCHA
+- ✅ **CAPTCHA bypass**: Successful Turnstile resets rate limit
+- ✅ **Generic errors**: Don't reveal which parameter was incorrect
+- ✅ **Enumeration prevention**: Impossible to discover bookings without both factors
+
+**Rate Limit Strategy**:
+
+```
+Attempt 1-20:  Normal access
+Attempt 21+:   Rate limited (429 response with requiresCaptcha: true)
+With CAPTCHA:  Rate limit reset, access restored
+```
+
+**Frontend Integration** (showing Turnstile on rate limit):
+
+```typescript
+// src/components/BookingStatusCheck.tsx
+const [showCaptcha, setShowCaptcha] = useState(false);
+const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+const checkStatus = async () => {
+  const params = new URLSearchParams({
+    reference: bookingRef,
+    email: email,
+    ...(turnstileToken ? { turnstile_token: turnstileToken } : {})
+  });
+
+  const response = await fetch(`/api/guest-booking/status?${params}`);
+
+  if (response.status === 429) {
+    const error = await response.json();
+    if (error.requiresCaptcha) {
+      setShowCaptcha(true); // Show Turnstile widget
+      toast.error('Too many attempts. Please complete the CAPTCHA.');
+    }
+    return;
+  }
+
+  // ... handle success
+};
+
+return (
+  <div>
+    {/* ... form fields ... */}
+
+    {showCaptcha && (
+      <Turnstile
+        siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+        action="status-check"
+        onSuccess={setTurnstileToken}
+      />
+    )}
+
+    <Button onClick={checkStatus} disabled={showCaptcha && !turnstileToken}>
+      Check Status
+    </Button>
+  </div>
+);
+```
+
+- ✅ Only returns minimal, safe data
 
 ## File Upload Security
 

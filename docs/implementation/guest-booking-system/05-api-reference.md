@@ -1,19 +1,19 @@
-# API Reference Documentation
+# API Reference Documentation (Cloudflare Pages)
 
 ## Base URL
 
 ```
-Production: https://your-domain.com/api
-Development: http://localhost:3000/api
+Production: https://your-domain.pages.dev/api (Cloudflare Pages)
+Development: http://localhost:8788/api (Wrangler dev server)
 ```
 
 ## Authentication
 
 Guest booking endpoints do not require authentication. However, they are protected by:
 
-- Rate limiting
-- CAPTCHA verification
-- Input validation
+- **Cloudflare KV rate limiting** (5 bookings/hour per IP)
+- **Turnstile CAPTCHA verification** (free, unlimited)
+- Input validation (Zod + DOMPurify)
 
 ## Endpoints
 
@@ -27,9 +27,22 @@ Creates a new booking request from an unauthenticated guest and returns a signed
 
 ```http
 Content-Type: application/json
+X-Idempotency-Key: <optional-unique-key>
 ```
 
+**Header Details**:
+
+- `Content-Type`: Must be `application/json`
+- `X-Idempotency-Key` (optional): Prevents duplicate bookings from retries
+  - Format: UUID or any unique string (recommended: UUIDv4)
+  - TTL: 10 minutes (cached response returned within this window)
+  - Example: `550e8400-e29b-41d4-a716-446655440000`
+  - If omitted: Request body hash used as fallback key
+  - Successful responses cached and returned for duplicate requests
+
 **Request Body:**
+
+**Note**: All dates are in ISO 8601 format and will be interpreted as Asia/Manila timezone, then stored as UTC.
 
 ```json
 {
@@ -48,23 +61,30 @@ Content-Type: application/json
     "payment_amount": 15000,
     "payment_method": "gcash"
   },
-  "captchaToken": "03AGdBq26...",
+  "turnstile_token": "0x4AAAAAAA_turnstile_token_here",
   "termsAccepted": true
 }
 ```
 
 **Response (Success):** `201 Created`
 
+**Note**: Response now uses token-based upload format for better CORS compatibility.
+
 ```json
 {
   "success": true,
-  "data": {
+  "booking": {
     "booking_id": "550e8400-e29b-41d4-a716-446655440000",
     "booking_reference": "BK-2025-001234",
-    "upload_url": "https://your-bucket.supabase.co/storage/v1/upload/signed/...",
-    "upload_expires_at": "2025-01-27T15:30:00Z",
-    "confirmation_email_sent": true
-  }
+    "total_amount": 15000
+  },
+  "upload": {
+    "path": "guest-bookings/550e8400.../file.jpg",
+    "token": "eyJhbGc...",
+    "bucket": "payment-proofs",
+    "expires_at": "2025-01-27T15:30:00Z"
+  },
+  "message": "Booking created successfully. Please upload your payment proof (max 2MB)."
 }
 ```
 
@@ -132,7 +152,7 @@ curl -X POST https://your-domain.com/api/guest-booking \
       "payment_amount": 15000,
       "payment_method": "gcash"
     },
-    "captchaToken": "03AGdBq26...",
+    "turnstile_token": "0x4AAAAAAA_turnstile_token_here",
     "termsAccepted": true
   }'
 ```
@@ -209,13 +229,25 @@ curl -X POST https://your-domain.com/api/guest-booking/confirm \
 
 Allows guests to check the status of their booking using reference number and email.
 
+**Security**: Requires BOTH `reference` AND `email` to prevent enumeration attacks.
+
 **Endpoint:** `GET /api/guest-booking/status`
+
+**Rate Limiting**: 20 requests per hour per IP (fingerprint-based)
 
 **Query Parameters:**
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| reference | string | Yes | Booking reference number (e.g., BK-2025-001234) |
-| email | string | Yes | Email address used for booking |
+| reference | string | **Yes** | Booking reference number (e.g., BK-2025-X7K9M2) |
+| email | string | **Yes** | Email address used for booking |
+| turnstile_token | string | No | Optional Turnstile token (required after rate limit) |
+
+**Security Notes**:
+
+- **Dual-factor authentication**: Both `reference` AND `email` required
+- **Fingerprint tracking**: Uses IP + User-Agent + headers for rate limiting
+- **Progressive CAPTCHA**: After 20 attempts, requires Turnstile token
+- **CAPTCHA reset**: Successful Turnstile verification resets rate limit
 
 **Response (Success):** `200 OK`
 
@@ -241,9 +273,12 @@ Allows guests to check the status of their booking using reference number and em
 
 **Response (Not Found):** `404 Not Found`
 
+**Note**: Generic error message prevents revealing which parameter (reference or email) was incorrect.
+
 ```json
 {
-  "error": "No booking found with the provided reference and email"
+  "error": "NOT_FOUND",
+  "message": "No booking found with the provided information"
 }
 ```
 
@@ -251,8 +286,38 @@ Allows guests to check the status of their booking using reference number and em
 
 ```json
 {
-  "error": "Too many status checks. Please try again later.",
-  "retryAfter": "2025-01-27T16:00:00Z"
+  "error": "RATE_LIMITED",
+  "message": "Too many status checks. Please try again later.",
+  "retryAfter": 3600,
+  "requiresCaptcha": true
+}
+```
+
+**Response Headers**:
+
+```http
+Retry-After: 3600
+X-RateLimit-Remaining: 0
+Content-Type: application/json
+```
+
+**Handling Rate Limits**:
+
+```typescript
+// Frontend handling
+const response = await fetch(`/api/guest-booking/status?${params}`);
+
+if (response.status === 429) {
+  const error = await response.json();
+
+  if (error.requiresCaptcha) {
+    // Show Turnstile widget to user
+    setShowCaptcha(true);
+  }
+
+  // Retry after specified seconds
+  const retryAfter = error.retryAfter; // seconds
+  setTimeout(() => checkStatus(), retryAfter * 1000);
 }
 ```
 
@@ -290,16 +355,19 @@ Authorization: Bearer {service_role_key}
 }
 ```
 
+**Note**: This endpoint is now deprecated. Token-based upload URL is returned directly from `/api/guest-booking`.
+
 **Response (Success):** `200 OK`
 
 ```json
 {
   "success": true,
   "data": {
-    "upload_url": "https://your-bucket.supabase.co/storage/v1/upload/signed/...",
-    "file_path": "payment-proofs/guest-bookings/550e8400.../1706366400_abc123.jpg",
+    "path": "guest-bookings/550e8400.../file.jpg",
+    "token": "eyJhbGc...",
+    "bucket": "payment-proofs",
     "expires_at": "2025-01-27T15:30:00Z",
-    "max_file_size": 5242880
+    "max_file_size": 2097152
   }
 }
 ```
@@ -311,7 +379,7 @@ Authorization: Bearer {service_role_key}
   "error": "Invalid file type or size",
   "details": {
     "allowed_types": ["image/jpeg", "image/png", "image/webp", "application/pdf"],
-    "max_size": 5242880
+    "max_size": 2097152
   }
 }
 ```
@@ -336,7 +404,7 @@ Content-Type: application/json
 {
   "booking_reference": "BK-2025-001234",
   "email": "juan@example.com",
-  "captchaToken": "03AGdBq26..."
+  "turnstile_token": "0x4AAAAAAA_turnstile_token_here"
 }
 ```
 
@@ -382,18 +450,34 @@ Content-Type: application/json
 
 ### Application Error Codes
 
-| Code                   | Description                         | Resolution                        |
-| ---------------------- | ----------------------------------- | --------------------------------- |
-| `INVALID_GUEST_DATA`   | Guest information validation failed | Check required fields and formats |
-| `INVALID_BOOKING_DATA` | Booking details validation failed   | Verify dates, unit availability   |
-| `CAPTCHA_FAILED`       | CAPTCHA verification failed         | Refresh and try again             |
-| `RATE_LIMIT_EXCEEDED`  | Too many requests from IP           | Wait for reset time               |
-| `FILE_TOO_LARGE`       | Upload file exceeds 5MB             | Reduce file size                  |
-| `INVALID_FILE_TYPE`    | File type not allowed               | Use JPG, PNG, or PDF              |
-| `BOOKING_NOT_FOUND`    | No matching booking found           | Check reference and email         |
-| `UNIT_NOT_AVAILABLE`   | Selected unit is not available      | Choose different dates or unit    |
-| `DUPLICATE_BOOKING`    | Similar booking already exists      | Check existing bookings           |
-| `EMAIL_SEND_FAILED`    | Failed to send confirmation email   | Contact support                   |
+| Code                    | HTTP Status | Description                           | Resolution                         |
+| ----------------------- | ----------- | ------------------------------------- | ---------------------------------- |
+| `VALIDATION_ERROR`      | 400         | Request validation failed             | Check required fields and formats  |
+| `MISSING_PARAMETERS`    | 400         | Required parameters missing           | Include all required fields        |
+| `CAPTCHA_FAILED`        | 403         | Turnstile CAPTCHA verification failed | Refresh page and try again         |
+| `RATE_LIMITED`          | 429         | Too many requests from IP             | Wait for retry-after time          |
+| `FILE_TOO_LARGE`        | 400         | Upload file exceeds 2MB (free tier)   | Compress or use smaller file       |
+| `INVALID_FILE_TYPE`     | 400         | File type not allowed                 | Use JPG, PNG, WebP, or PDF         |
+| `NOT_FOUND`             | 404         | Booking not found (generic)           | Check both reference and email     |
+| `AVAILABILITY_CONFLICT` | 409         | Selected unit not available for dates | Choose different dates or unit     |
+| `BOOKING_CREATE_FAILED` | 500         | Failed to create booking              | Try again or contact support       |
+| `UPLOAD_EXPIRED`        | 400         | Signed upload URL expired (1 hour)    | Create new booking                 |
+| `INTERNAL_ERROR`        | 500         | Unexpected server error               | Try again later or contact support |
+
+**Error Response Format:**
+
+All errors follow a consistent JSON structure:
+
+```json
+{
+  "error": "ERROR_CODE",
+  "message": "Human-readable error message",
+  "details": {
+    "field": "Additional context (optional)"
+  },
+  "retryAfter": 1800
+}
+```
 
 ## Rate Limits
 
@@ -415,37 +499,44 @@ Content-Type: application/json
 
 ### File Constraints
 
-- **Maximum size:** 5MB (5,242,880 bytes)
+- **Maximum size:** 2MB (2,097,152 bytes) - optimized for free tier bandwidth
 - **Minimum dimensions (images):** 100x100 pixels
 - **Maximum dimensions (images):** 10,000x10,000 pixels
 - **Maximum PDF pages:** 10 pages
 - **File name:** Automatically generated for security
+- **Compression:** Client-side compression automatically applied before upload
 
 ### Upload Process
 
 1. Submit booking details to `/api/guest-booking`
-2. Receive signed upload URL in response
-3. Upload file directly to signed URL using PUT request
-4. Confirm upload completion via `/api/guest-booking/confirm`
+2. Receive token-based upload info in response (`path`, `token`, `bucket`)
+3. Compress file on client-side if needed (automatic)
+4. Upload file using Supabase SDK `uploadToSignedUrl()` method
+5. Confirm upload completion via `/api/guest-booking/confirm`
 
 ### Direct Upload Example
 
 ```javascript
-// Using the signed URL from booking response
-const uploadFile = async (signedUrl, file) => {
-  const response = await fetch(signedUrl, {
-    method: "PUT",
-    body: file,
-    headers: {
-      "Content-Type": file.type,
-    },
-  });
+import { createClient } from "@supabase/supabase-js";
 
-  if (!response.ok) {
-    throw new Error("Upload failed");
+// Using the token-based upload from booking response
+const uploadFile = async (uploadInfo, file) => {
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const { data, error } = await supabase.storage
+    .from(uploadInfo.bucket)
+    .uploadToSignedUrl(uploadInfo.path, uploadInfo.token, file, {
+      contentType: file.type,
+      onUploadProgress: (progress) => {
+        console.log(`Upload progress: ${(progress.loaded / progress.total) * 100}%`);
+      },
+    });
+
+  if (error) {
+    throw new Error(`Upload failed: ${error.message}`);
   }
 
-  return response;
+  return data;
 };
 ```
 
@@ -558,7 +649,7 @@ const booking = await api.createBooking({
   booking: {
     /* ... */
   },
-  captchaToken: "token",
+  turnstile_token: "0x4AAAAAAA_turnstile_token_here",
   termsAccepted: true,
 });
 ```
@@ -597,7 +688,7 @@ api = GuestBookingAPI()
 booking = api.create_booking({
     "guest": {...},
     "booking": {...},
-    "captchaToken": "token",
+    "turnstile_token": "0x4AAAAAAA_turnstile_token_here",
     "termsAccepted": True
 })
 ```
@@ -657,7 +748,7 @@ $api = new GuestBookingAPI();
 $booking = $api->createBooking([
     'guest' => [...],
     'booking' => [...],
-    'captchaToken' => 'token',
+    'turnstile_token' => '0x4AAAAAAA_turnstile_token_here',
     'termsAccepted' => true
 ]);
 ?>
@@ -672,16 +763,16 @@ If migrating from an authenticated-only system:
 1. **Database Changes**
 
 ```sql
--- Add guest booking columns
+-- Add guest booking column (single column approach)
 ALTER TABLE bookings
-ADD COLUMN is_guest_booking BOOLEAN DEFAULT false,
-ADD COLUMN guest_verification_token VARCHAR(255),
-ADD COLUMN email_verified_at TIMESTAMP;
+ADD COLUMN IF NOT EXISTS is_guest_booking BOOLEAN DEFAULT false;
 
 -- Create index for guest lookups
-CREATE INDEX idx_guest_bookings
+CREATE INDEX IF NOT EXISTS idx_bookings_guest_email
 ON bookings(email, is_guest_booking)
 WHERE is_guest_booking = true;
+
+-- Note: Email verification fields not needed - admin pre-screens guests
 ```
 
 2. **Update RLS Policies**
@@ -712,23 +803,25 @@ USING (
 
 ### Common Issues
 
-**Issue: "CAPTCHA verification failed"**
+**Issue: "Turnstile verification failed"**
 
-- Ensure CAPTCHA token is fresh (< 2 minutes old)
-- Verify site key matches environment
-- Check if user score is above threshold
+- Ensure Turnstile token is fresh (< 5 minutes old)
+- Verify site key matches environment (visible vs. invisible mode)
+- Check Cloudflare dashboard for verification logs
 
 **Issue: "File upload fails with CORS error"**
 
-- Signed URLs must be used from same domain
-- Check CORS configuration in Supabase
-- Ensure correct Content-Type header
+- Verify CORS configuration in Supabase Storage settings
+- Ensure your domain is whitelisted (including localhost for development)
+- Use token-based `uploadToSignedUrl()` method (better CORS compatibility)
+- Check browser console for specific CORS error details
 
 **Issue: "Rate limit exceeded immediately"**
 
-- Check if behind proxy/CDN
-- Verify IP extraction logic
-- Consider implementing fingerprinting
+- Verify `cf-connecting-ip` header is correctly extracted
+- Check Cloudflare KV namespace has sufficient quota
+- Review coarse-window rate limiting configuration (hourly windows)
+- Consider device fingerprinting for shared IPs (e.g., corporate networks)
 
 ### Contact
 

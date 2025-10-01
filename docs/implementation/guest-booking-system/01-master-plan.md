@@ -4,39 +4,43 @@
 
 This document outlines the architecture and implementation strategy for enabling unauthenticated guests to submit booking requests with payment proofs using Supabase's signed URL functionality. The system maintains security while providing a frictionless booking experience.
 
+**🎯 Free-Tier Optimized**: This implementation leverages Cloudflare Pages (free), Cloudflare KV (free), Cloudflare Turnstile (free), and Supabase (free tier) for a complete **$0/month infrastructure cost**.
+
 ## System Architecture
 
 ### High-Level Overview
 
 ```mermaid
 graph TB
-    subgraph "Frontend - Public"
+    subgraph "Frontend - Cloudflare Pages"
         A[Guest Booking Form]
         B[File Upload Component]
         C[Status Check Portal]
+        T[Turnstile Widget]
     end
 
-    subgraph "API Layer - Vercel"
+    subgraph "API Layer - Cloudflare Functions"
         D[Guest Booking API]
         E[Signed URL Generator]
         F[Upload Confirmation]
         G[Status Check API]
-        H[Rate Limiter]
-        I[CAPTCHA Validator]
+        H[KV Rate Limiter]
+        I[Turnstile Validator]
     end
 
     subgraph "Backend Services"
-        J[Supabase Auth/Admin]
-        K[Email Service]
-        L[Redis/KV Store]
+        J[Supabase Admin Client]
+        K[Resend Email]
+        L[Cloudflare KV]
     end
 
     subgraph "Storage - Supabase"
-        M[(Database)]
+        M[(PostgreSQL Database)]
         N[Private Storage Bucket]
     end
 
-    A --> D
+    A --> T
+    T --> D
     D --> H
     D --> I
     D --> J
@@ -55,41 +59,54 @@ graph TB
 sequenceDiagram
     participant Guest
     participant Frontend
-    participant API
+    participant Turnstile
+    participant CFFunction as Cloudflare Function
+    participant KV as Cloudflare KV
     participant Supabase
     participant Storage
-    participant Email
+    participant Resend
 
-    Guest->>Frontend: Fill booking form
-    Frontend->>API: Submit booking data
-    API->>API: Validate CAPTCHA
-    API->>API: Check rate limit
-    API->>Supabase: Create guest record
-    API->>Supabase: Create booking
-    API->>Supabase: Generate signed URL
-    Supabase->>API: Return signed URL
-    API->>Frontend: Return booking ID + upload URL
-    Frontend->>Storage: Upload file directly
+    Note over Guest,CFFunction: Pre-booking: Admin communication happens first
+    Guest->>Frontend: Fill booking form (Asia/Manila dates)
+    Frontend->>Turnstile: Request CAPTCHA token
+    Turnstile->>Frontend: Return token
+    Frontend->>CFFunction: Submit booking + token
+    CFFunction->>Turnstile: Verify token
+    CFFunction->>KV: Check rate limit (coarse window)
+    KV->>CFFunction: Rate limit OK
+    CFFunction->>Supabase: Check availability (atomic)
+    Supabase->>CFFunction: Available
+    CFFunction->>Supabase: Create/find guest record
+    CFFunction->>Supabase: Create booking (is_guest_booking=true, UTC dates)
+    CFFunction->>Supabase: Generate signed upload URL
+    Supabase->>CFFunction: Return { path, token, bucket }
+    CFFunction->>Frontend: Return booking + upload credentials
+    Frontend->>Storage: Upload file directly (2MB max)
     Storage->>Frontend: Confirm upload
-    Frontend->>API: Confirm completion
-    API->>Email: Send confirmation
-    Email->>Guest: Booking confirmation
+    Frontend->>CFFunction: Confirm completion
+    CFFunction->>Resend: Send confirmation email
+    Resend->>Guest: Booking confirmation
 ```
 
 ## Core Components
 
-### 1. Guest Booking API
+### 1. Guest Booking API (Cloudflare Function)
 
 **Purpose**: Handle guest booking submissions without authentication
 
 **Key Features**:
 
 - Guest validation and deduplication
-- Booking creation with pending status
-- Signed URL generation for file uploads
-- Integration with rate limiting and CAPTCHA
+- **Atomic availability checking** before booking creation
+- Booking creation with pending status (`is_guest_booking: true`)
+- Signed URL generation for file uploads (Supabase token-based)
+- Integration with Cloudflare KV rate limiting
+- Turnstile CAPTCHA verification
+- Timezone conversion (Asia/Manila → UTC storage)
 
-### 2. Signed URL System
+**Runtime**: Cloudflare Workers runtime (Web standard APIs only - no Node.js)
+
+### 2. Signed URL System (Supabase Storage)
 
 **Purpose**: Enable secure, temporary file uploads without authentication
 
@@ -98,7 +115,8 @@ sequenceDiagram
 - Time-limited URLs (1-hour expiry)
 - Path-specific permissions
 - No exposure of storage credentials
-- Direct browser-to-storage uploads
+- Direct browser-to-Supabase uploads
+- Compatible with Cloudflare Functions
 
 ### 3. Storage Architecture
 
@@ -115,125 +133,420 @@ payment-proofs/
 └── receipts/              # Other receipts
 ```
 
-### 4. Security Layers
+### 4. Security Layers (Cloudflare-Optimized)
 
 ```mermaid
 graph LR
-    A[Request] --> B{Rate Limit}
-    B -->|Pass| C{CAPTCHA}
+    A[Request] --> B{KV Rate Limit}
+    B -->|Pass| C{Turnstile CAPTCHA}
     C -->|Valid| D{Input Validation}
     D -->|Valid| E{File Validation}
     E -->|Valid| F[Process Request]
-    B -->|Fail| G[429 Error]
+    B -->|Fail| G[429 Error + KV TTL]
     C -->|Invalid| H[403 Error]
     D -->|Invalid| I[400 Error]
-    E -->|Invalid| J[422 Error]
+    E -->|Invalid| J[422 Error - 2MB Max]
 ```
 
 ## Implementation Phases
 
-### Phase 1: Backend Infrastructure (Day 1)
+### Phase 1: Backend Infrastructure (Day 1-2)
 
 **Objectives**:
 
-- Set up service role authentication
+- Set up Cloudflare Functions directory structure
+- Configure Cloudflare KV namespace for rate limiting
 - Create guest booking API endpoint
-- Implement signed URL generation
-- Configure database operations
+- Implement signed URL generation (Supabase)
+- Configure Wrangler environment variables
 
 **Deliverables**:
 
-- `/api/guest-booking` endpoint
-- `/api/storage/generate-upload-url` endpoint
-- Database helper functions
-- Environment configuration
+- `functions/api/guest-booking.ts` endpoint
+- `functions/api/guest-booking/confirm.ts` endpoint
+- `functions/api/guest-booking/status.ts` endpoint
+- Cloudflare KV rate limiting implementation
+- Database helper functions (Supabase)
+- `wrangler.toml` configuration
 
-### Phase 2: Frontend Development (Day 2)
+### Phase 2: Frontend Development (Day 2-3)
 
 **Objectives**:
 
-- Build guest booking form
-- Implement file upload with preview
+- Build guest booking form with Turnstile widget
+- Implement file upload with preview (2MB max)
 - Create upload progress tracking
 - Design success/error states
+- Integrate @marsidev/react-turnstile
 
 **Deliverables**:
 
-- `GuestBookingForm` component
-- File upload functionality
-- Guest booking route
+- `GuestBookingForm` component with Turnstile
+- File upload functionality with compression
+- Guest booking route (TanStack Router)
 - Mobile-responsive design
+- Turnstile widget configuration
 
-### Phase 3: Security Implementation (Day 3)
+### Phase 3: Security Implementation (Day 3-4)
 
 **Objectives**:
 
-- Integrate rate limiting
-- Add CAPTCHA protection
-- Implement comprehensive validation
-- Set up monitoring and logging
+- Implement Cloudflare KV rate limiting
+- Add Turnstile CAPTCHA protection
+- Implement comprehensive validation (Zod + DOMPurify)
+- Set up basic monitoring
+- Configure security headers
 
 **Deliverables**:
 
-- Rate limiting middleware
-- CAPTCHA integration
-- Input sanitization
-- Audit logging
+- KV-based rate limiting with TTL
+- Turnstile verification in API functions
+- Input sanitization (DOMPurify)
+- Basic audit logging (Supabase table)
+- Cloudflare Workers security headers
 
-### Phase 4: Polish & Testing (Day 4)
+### Phase 4: Polish & Testing (Day 4-5)
 
 **Objectives**:
 
 - End-to-end testing
-- Email template design
+- Email template design (Resend)
 - Guest portal development
+- Cloudflare Pages deployment
 - Documentation completion
 
 **Deliverables**:
 
-- Test suite
-- Email templates
+- Test suite (Vitest + Playwright)
+- Resend email templates
 - Status check portal
+- Wrangler deployment configuration
 - User documentation
 
 ## Technical Specifications
 
 ### API Endpoints
 
-| Endpoint                           | Method | Purpose                         |
-| ---------------------------------- | ------ | ------------------------------- |
-| `/api/guest-booking`               | POST   | Create booking & get upload URL |
-| `/api/guest-booking/confirm`       | POST   | Confirm upload completion       |
-| `/api/guest-booking/status`        | GET    | Check booking status            |
-| `/api/storage/generate-upload-url` | POST   | Generate signed upload URL      |
+| Endpoint                     | Method | Purpose                         | Runtime             |
+| ---------------------------- | ------ | ------------------------------- | ------------------- |
+| `/api/guest-booking`         | POST   | Create booking & get upload URL | Cloudflare Function |
+| `/api/guest-booking/confirm` | POST   | Confirm upload completion       | Cloudflare Function |
+| `/api/guest-booking/status`  | GET    | Check booking status            | Cloudflare Function |
 
 ### Environment Variables
 
 ```env
-# Required for implementation
-SUPABASE_SERVICE_ROLE_KEY=     # Backend only - never expose
-RECAPTCHA_SECRET_KEY=           # Google reCAPTCHA
-RESEND_API_KEY=                 # Email service
-REDIS_URL=                      # Rate limiting store
+# Cloudflare Pages environment variables (via Wrangler)
+SUPABASE_SERVICE_ROLE_KEY=     # Supabase admin key - never expose to frontend
+VITE_SUPABASE_URL=             # Public Supabase URL
+VITE_SUPABASE_ANON_KEY=        # Public anon key
+TURNSTILE_SECRET_KEY=          # Cloudflare Turnstile secret (backend only)
+VITE_TURNSTILE_SITE_KEY=       # Cloudflare Turnstile site key (frontend)
+RESEND_API_KEY=                # Resend email API key (100/day free)
+```
+
+### Cloudflare KV Namespaces
+
+```toml
+# wrangler.toml
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "your-kv-namespace-id"
 ```
 
 ### Database Schema Extensions
 
+**Recommended Approach**: Extend existing `bookings` table
+
+**Rationale**:
+
+- Simpler architecture with single source of truth for all bookings
+- Easier reporting without cross-table joins
+- Consistent business logic - existing availability checks work without modification
+- Unified status tracking using existing `booking_status` and `payment_status` enums
+- Less complexity - no data synchronization needed
+
+**Migration SQL**:
+
 ```sql
--- Add guest booking fields
+-- Step 1: Enable btree_gist extension for range exclusion constraints
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+-- Step 2: Add guest booking identification field
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS
     is_guest_booking BOOLEAN DEFAULT false;
 
+-- Step 3: Add upload tracking fields (cleanup strategy)
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS
-    guest_verification_token VARCHAR(255);
-
+    upload_expires_at TIMESTAMPTZ;
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS
-    email_verified_at TIMESTAMP;
+    upload_status TEXT DEFAULT 'pending';
 
--- Index for guest lookups
+-- Step 4: Add atomic availability constraint with status-based exclusion
+-- This prevents double-booking while allowing flexible dates for pending guest bookings
+ALTER TABLE bookings
+ADD CONSTRAINT no_overlapping_bookings
+EXCLUDE USING gist (
+  unit_id WITH =,
+  tsrange(check_in_date, check_out_date, '[)') WITH &&
+) WHERE (
+  is_guest_booking = false OR
+  (is_guest_booking = true AND booking_status IN ('Confirmed', 'CheckedIn', 'CheckedOut'))
+);
+
+-- Step 5: Index for efficient guest booking queries
 CREATE INDEX IF NOT EXISTS idx_bookings_guest_email
 ON bookings(email, is_guest_booking)
 WHERE is_guest_booking = true;
+
+-- Step 6: Index for cleanup queries (expired uploads)
+CREATE INDEX IF NOT EXISTS idx_bookings_upload_expiry
+ON bookings(upload_expires_at, upload_status)
+WHERE is_guest_booking = true AND upload_status = 'pending';
+```
+
+**Constraint Explanation**:
+
+- `tsrange(check_in_date, check_out_date, '[)')`: Creates a half-open interval (check-in inclusive, check-out exclusive)
+- `WITH &&`: Range overlap operator - prevents any two bookings from having overlapping date ranges for the same unit
+- `WHERE` clause: Constraint only applies to:
+  - All authenticated bookings (`is_guest_booking = false`)
+  - Guest bookings that are confirmed or later in workflow
+  - **Excludes pending guest bookings**, allowing admin to adjust dates before confirmation
+- `EXCLUDE USING gist`: Database-level atomic protection - prevents race conditions even under high concurrency
+
+**Guest Booking Workflow** (Two-Phase Approach):
+
+**Phase 1: Tentative Booking** (Flexible, No Constraints)
+
+1. Admin pre-screens guest via communication channels (phone, social media, etc.)
+2. Guest submits booking form with tentative dates
+3. System creates booking: `booking_status: 'Pending'`, `is_guest_booking: true`, `upload_status: 'pending'`
+4. **Exclusion constraint does NOT apply** - admin can freely adjust dates if needed
+5. Guest uploads payment proof within 1 hour
+6. Admin reviews:
+   - Payment amount and proof validity
+   - Date availability and adjustments if needed
+   - Guest information accuracy
+
+**Phase 2: Confirmed Booking** (Constraints Enforced) 7. Admin confirms booking → changes `booking_status` to `'Confirmed'` 8. **Exclusion constraint NOW applies** - prevents overlaps with other confirmed bookings 9. Standard check-in/check-out workflow continues using existing booking state machine
+
+**Key Benefits of This Approach**:
+
+- Admin has flexibility to adjust dates during verification without constraint errors
+- Once confirmed, atomic database-level protection prevents double-booking
+- Single `bookings` table maintains simplicity
+- Leverages existing booking status workflow
+
+**Note**: Admin communication with guest happens before form submission. No email verification needed in the booking flow.
+
+**Timezone Handling**: All dates are selected in Asia/Manila timezone (application's `RESORT_TIMEZONE`), converted and stored in UTC, then displayed in Asia/Manila. This follows the existing application pattern in `src/config/settings.ts` and `src/utils/date-helpers.ts`.
+
+### Booking Reference Generation (Security)
+
+**Challenge**: Sequential booking references (e.g., `BK-2025-001234`, `BK-2025-001235`) are easily guessable, enabling:
+
+- Enumeration attacks on status check endpoint
+- Unauthorized booking information disclosure
+- Data scraping attempts
+
+**Solution**: ULID-Based References with Random Suffix
+
+**Implementation**:
+
+```typescript
+import { ulid } from "ulid";
+
+function generateBookingReference(): string {
+  // Generate ULID (Universally Unique Lexicographically Sortable Identifier)
+  const id = ulid(); // e.g., "01HN4GZ7YQVZK8EJMR6F9KTZV8"
+
+  // Extract random suffix (last 6 characters, base32)
+  const randomSuffix = id.slice(-6).toUpperCase(); // e.g., "KTZV8"
+
+  // Format: BK-YYYY-SUFFIX
+  const year = new Date().getFullYear();
+  return `BK-${year}-${randomSuffix}`;
+}
+
+// Examples: BK-2025-X7K9M2, BK-2025-P4QW8N, BK-2025-ZN3T5R
+```
+
+**Properties**:
+
+- **Human-friendly**: Short format (`BK-2025-X7K9M2`) easy to communicate over phone/email
+- **Non-sequential**: Random appearance prevents enumeration
+- **High entropy**: ~1 billion possible values per year (32^6 combinations)
+- **Collision-resistant**: ULID timestamp + randomness makes duplicates extremely unlikely
+- **Sortable**: Can still sort by year for admin convenience
+
+**Additional Security Layer**: Dual-factor status check requires BOTH `booking_reference` + `email`, making enumeration impractical even with guessable references.
+
+### Admin UX Integration Points
+
+**Purpose**: Ensure back-office staff can efficiently manage guest bookings alongside authenticated user bookings.
+
+**Required Admin Interface Updates**:
+
+#### 1. Booking List Enhancements
+
+```typescript
+// Filter Options
+const filters = {
+  bookingType: 'all' | 'authenticated' | 'guest', // New filter
+  status: 'all' | 'Pending' | 'Confirmed' | ...,
+  // existing filters
+};
+
+// Visual Indicators
+<Badge variant="secondary">Guest Booking</Badge> // Show when is_guest_booking = true
+```
+
+**Implementation Details**:
+
+- Add "Booking Type" filter dropdown
+- Display `is_guest_booking` badge in booking list rows
+- Separate queue view for "Guest Bookings - Pending Review"
+- Quick action: "View Payment Proof" button (opens modal with image)
+
+#### 2. Booking Detail Page Additions
+
+```typescript
+// New Section: Upload Information
+{
+  label: 'Upload Status',
+  value: upload_status, // 'pending', 'uploaded', 'confirmed', 'expired'
+  badge: <StatusBadge status={upload_status} />
+},
+{
+  label: 'Upload Expires At',
+  value: upload_expires_at,
+  visible: upload_status === 'pending'
+},
+{
+  label: 'Payment Proof',
+  value: <ImagePreview path={payment_proof_path} />, // Inline display
+  actions: [
+    <Button onClick={downloadProof}>Download</Button>,
+    <Button onClick={openFullSize}>View Full Size</Button>
+  ]
+}
+```
+
+#### 3. Status Timeline Widget (New Component)
+
+```typescript
+// Visual Timeline for Guest Bookings
+<Timeline>
+  <TimelineItem
+    timestamp={created_at}
+    status="completed"
+    title="Booking Submitted"
+    description={`By ${guest_name} (${email})`}
+  />
+  <TimelineItem
+    timestamp={upload_confirmed_at}
+    status={upload_status === 'confirmed' ? 'completed' : 'pending'}
+    title="Payment Proof Uploaded"
+    description={upload_status === 'confirmed' ? 'File verified' : 'Awaiting upload'}
+  />
+  <TimelineItem
+    timestamp={confirmed_at}
+    status={booking_status === 'Confirmed' ? 'completed' : 'pending'}
+    title="Booking Confirmed"
+    description={booking_status === 'Confirmed' ? 'Admin verified' : 'Awaiting admin review'}
+  />
+  <TimelineItem
+    timestamp={check_in_date}
+    status="pending"
+    title="Check-in"
+  />
+</Timeline>
+```
+
+#### 4. Quick Actions Panel
+
+```typescript
+// Admin Quick Actions (Guest Bookings Only)
+<QuickActions>
+  <ActionButton
+    icon={<CheckIcon />}
+    label="Confirm Booking"
+    onClick={confirmGuestBooking}
+    disabled={booking_status !== 'Pending'}
+  />
+  <ActionButton
+    icon={<EditIcon />}
+    label="Adjust Dates"
+    onClick={openDateAdjustment}
+    disabled={booking_status !== 'Pending'}
+    tooltip="Can only adjust before confirming"
+  />
+  <ActionButton
+    icon={<ImageIcon />}
+    label="View Receipt"
+    onClick={viewPaymentProof}
+  />
+  <ActionButton
+    icon={<EmailIcon />}
+    label="Resend Confirmation"
+    onClick={resendEmail}
+  />
+</QuickActions>
+```
+
+#### 5. Dashboard Widgets
+
+```typescript
+// Admin Dashboard - Guest Booking KPIs
+<DashboardCard title="Guest Bookings - Pending Review">
+  <Stat
+    label="Awaiting Verification"
+    value={pendingGuestBookings.length}
+    trend={+2} // vs. yesterday
+  />
+  <List>
+    {pendingGuestBookings.slice(0, 5).map(booking => (
+      <ListItem key={booking.id}>
+        <Link to={`/bookings/${booking.id}`}>
+          {booking.booking_reference} - {booking.guest_name}
+        </Link>
+        <TimeSince timestamp={booking.created_at} />
+      </ListItem>
+    ))}
+  </List>
+  <Button onClick={viewAllPending}>View All ({pendingGuestBookings.length})</Button>
+</DashboardCard>
+```
+
+**Database Query for Pending Queue**:
+
+```sql
+-- Efficient query for admin dashboard
+SELECT
+  id,
+  booking_reference,
+  email,
+  check_in_date,
+  check_out_date,
+  total_amount,
+  upload_status,
+  created_at,
+  EXTRACT(EPOCH FROM (NOW() - created_at)) / 3600 AS hours_since_submission
+FROM bookings
+WHERE
+  is_guest_booking = true
+  AND booking_status = 'Pending'
+  AND upload_status IN ('uploaded', 'confirmed')
+ORDER BY created_at ASC; -- FIFO queue
+```
+
+**Performance Consideration**: The `idx_bookings_guest_email` index enables fast filtering by `is_guest_booking`. Consider additional composite index if admin dashboard becomes slow:
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_bookings_admin_pending_queue
+ON bookings(booking_status, is_guest_booking, created_at)
+WHERE is_guest_booking = true AND booking_status = 'Pending';
 ```
 
 ## Success Metrics
@@ -272,12 +585,13 @@ WHERE is_guest_booking = true;
 
 ### Business Risks
 
-| Risk                   | Impact | Mitigation                                 |
-| ---------------------- | ------ | ------------------------------------------ |
-| Spam bookings          | High   | CAPTCHA, rate limiting, email verification |
-| Invalid payment proofs | Medium | Manual review process, validation          |
-| Storage costs          | Low    | Retention policies, compression            |
-| Support burden         | Medium | Clear documentation, status portal         |
+| Risk                   | Impact | Mitigation                                     |
+| ---------------------- | ------ | ---------------------------------------------- |
+| Spam bookings          | High   | CAPTCHA, KV rate limiting, admin pre-screening |
+| Invalid payment proofs | Medium | Manual review process, validation              |
+| Double-booking         | High   | Atomic availability checks before creation     |
+| Storage costs          | Low    | 2MB limit, retention policies, compression     |
+| Support burden         | Medium | Clear documentation, status portal             |
 
 ## Migration Strategy
 
@@ -291,6 +605,14 @@ WHERE is_guest_booking = true;
 
 ### Future Enhancements
 
+#### Planned Enhancements
+
+- **Audit Logging System**: Full audit trail for all guest booking events (planned as part of whole-application audit system)
+- **Email Receipt Display**: Send payment receipts directly in email body (not as downloadable links) for improved user experience
+- **Advanced Payment Reconciliation**: Structured GCash/Maya reference ID validation with automatic reconciliation
+
+#### Additional Potential Features
+
 - **Payment Gateway Integration**: Direct payment processing
 - **Multi-file Uploads**: Multiple receipts per booking
 - **SMS Notifications**: Text message confirmations
@@ -302,20 +624,49 @@ WHERE is_guest_booking = true;
 
 ### Development Costs
 
-- Initial implementation: 4 developer days
+- Initial implementation: 5-8 developer days (Cloudflare adaptation)
 - Testing and QA: 2 days
 - Documentation: 1 day
-- **Total**: 7 days
+- **Total**: 8-11 days
 
-### Operational Costs
+### Operational Costs (Free Tier)
 
-| Service       | Monthly Cost | Notes                |
-| ------------- | ------------ | -------------------- |
-| Storage       | $5-25        | Based on volume      |
-| API Calls     | $0-10        | Serverless functions |
-| Email         | $10-50       | Based on volume      |
-| Rate Limiting | $5-10        | Redis/KV store       |
-| **Total**     | **$30-95**   | Scales with usage    |
+| Service              | Monthly Cost | Free Tier Limits                     | Notes                        |
+| -------------------- | ------------ | ------------------------------------ | ---------------------------- |
+| Cloudflare Pages     | **$0**       | Unlimited requests, 500 builds/month | Frontend hosting             |
+| Cloudflare Functions | **$0**       | 100,000 requests/day                 | API endpoints                |
+| Cloudflare KV        | **$0**       | 100k reads/day, 1k writes/day        | Rate limiting storage        |
+| Cloudflare Turnstile | **$0**       | Unlimited verifications              | CAPTCHA replacement          |
+| Supabase Database    | **$0**       | 500 MB storage, 2 GB bandwidth/month | PostgreSQL database          |
+| Supabase Storage     | **$0**       | 1 GB storage, 2 GB bandwidth/month   | File uploads                 |
+| Resend Email         | **$0**       | 100 emails/day, 3,000/month          | Booking confirmations        |
+| **Total**            | **$0**       | -                                    | **Complete free-tier stack** |
+
+### Free Tier Constraints
+
+**Critical Limits to Monitor:**
+
+- **Supabase Bandwidth**: 2 GB/month (file uploads + database queries)
+- **Email Sending**: 100/day, 3,000/month (Resend)
+- **KV Writes**: 1,000/day (sufficient for rate limiting ~200 unique IPs/day)
+- **File Upload Size**: Limited to 2MB (vs 5MB) to conserve bandwidth
+
+**Estimated Capacity:**
+
+- ~500-1,000 bookings/month (assuming 1-2MB uploads + email confirmations)
+- ~100 guest bookings/day (email limit)
+- ~5,000+ status checks/day (KV read limit)
+
+### Upgrade Path (Optional)
+
+If exceeding free tier limits:
+
+| Upgrade            | Cost/Month | Benefit                        |
+| ------------------ | ---------- | ------------------------------ |
+| Supabase Pro       | $25        | 8 GB database, 50 GB bandwidth |
+| Resend Pro         | $20        | 50,000 emails/month            |
+| Cloudflare Workers | $5         | Additional compute if needed   |
+| **Minimum Paid**   | **$50**    | Handles ~10x more traffic      |
 
 ## Compliance Considerations
 
@@ -364,12 +715,20 @@ The implementation will be considered successful when:
 
 ## Conclusion
 
-This signed URL approach provides a secure, scalable, and user-friendly solution for guest bookings. It leverages Supabase's native capabilities while maintaining security through temporary access tokens and comprehensive validation layers.
+This Cloudflare-optimized signed URL approach provides a secure, scalable, and user-friendly solution for guest bookings at **$0/month infrastructure cost**. It leverages:
 
-The system can be implemented incrementally, tested thoroughly, and scaled based on demand. The architecture supports future enhancements while maintaining backward compatibility with existing systems.
+- **Cloudflare Pages Functions** for serverless API endpoints
+- **Cloudflare KV** for efficient rate limiting
+- **Cloudflare Turnstile** for unlimited CAPTCHA protection
+- **Supabase** for database and secure file storage with signed URLs
+
+The system can be implemented incrementally, tested thoroughly, and scaled based on demand within free tier limits. The architecture supports future enhancements (see [Paid Features Roadmap](./06-paid-features-roadmap.md)) while maintaining backward compatibility with existing systems.
+
+**Free Tier Sustainability**: This stack can handle 500-1,000 bookings/month comfortably before needing to consider paid upgrades, making it ideal for small to medium resort operations.
 
 ---
 
-_Document Version: 1.0.0_
+_Document Version: 2.0.0 (Cloudflare Free-Tier Adaptation)_
 _Last Updated: January 2025_
 _Next Review: April 2025_
+_Platform: Cloudflare Pages + Supabase Free Tier_
