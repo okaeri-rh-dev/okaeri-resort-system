@@ -53,24 +53,27 @@ interface Context {
   env: Env;
 }
 
+// CORS headers shared across all handlers
+// NOTE: In production, restrict Access-Control-Allow-Origin to your domain
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*", // TODO: Restrict to your domain in production
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+/**
+ * Handle OPTIONS requests for CORS preflight
+ * This must be a separate export for Cloudflare Pages Functions routing
+ */
+export async function onRequestOptions(): Promise<Response> {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}
+
 /**
  * Handle POST requests to log audit events with IP capture
  */
 export async function onRequestPost(context: Context): Promise<Response> {
   const { request, env } = context;
-
-  // CORS headers for browser requests
-  // NOTE: In production, restrict Access-Control-Allow-Origin to your domain
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*", // TODO: Restrict to your domain in production
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  };
-
-  // Handle CORS preflight
-  if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
-  }
 
   try {
     // Parse request body
