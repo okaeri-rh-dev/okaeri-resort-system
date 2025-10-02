@@ -53,19 +53,42 @@ interface Context {
   env: Env;
 }
 
-// CORS headers shared across all handlers
-// NOTE: In production, restrict Access-Control-Allow-Origin to your domain
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*", // TODO: Restrict to your domain in production
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
+/**
+ * Validate and get CORS headers for the request origin
+ *
+ * Allows requests from:
+ * - Production: okaeri-resort-system.pages.dev
+ * - Preview branches: *.okaeri-resort-system.pages.dev
+ *
+ * Security: Prevents unauthorized cross-origin requests
+ */
+function getCorsHeaders(request: Request): Record<string, string> {
+  const origin = request.headers.get("Origin");
+  const allowedOrigins = [
+    "https://okaeri-resort-system.pages.dev", // Production
+    /^https:\/\/[a-z0-9-]+\.okaeri-resort-system\.pages\.dev$/, // Preview branches
+  ];
+
+  // Check if origin matches allowed patterns
+  const isAllowed =
+    origin &&
+    allowedOrigins.some((allowed) =>
+      typeof allowed === "string" ? allowed === origin : allowed.test(origin)
+    );
+
+  return {
+    "Access-Control-Allow-Origin": isAllowed ? origin : "https://okaeri-resort-system.pages.dev",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
+}
 
 /**
  * Handle OPTIONS requests for CORS preflight
  * This must be a separate export for Cloudflare Pages Functions routing
  */
-export async function onRequestOptions(): Promise<Response> {
+export async function onRequestOptions(context: Context): Promise<Response> {
+  const corsHeaders = getCorsHeaders(context.request);
   return new Response(null, { status: 204, headers: corsHeaders });
 }
 
@@ -74,6 +97,9 @@ export async function onRequestOptions(): Promise<Response> {
  */
 export async function onRequestPost(context: Context): Promise<Response> {
   const { request, env } = context;
+
+  // Get CORS headers for this request's origin
+  const corsHeaders = getCorsHeaders(request);
 
   try {
     // Parse request body
