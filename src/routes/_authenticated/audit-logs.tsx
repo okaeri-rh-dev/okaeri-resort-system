@@ -1,0 +1,141 @@
+// src/routes/_authenticated/audit-logs.tsx
+
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Shield } from "lucide-react";
+import { AuditStatsPanel } from "@/components/audit/AuditStatsPanel";
+import { useAuditStore } from "@/stores/useAuditStore";
+import { useAuditStats } from "@/lib/audit-hooks";
+import { isCurrentUserOwner } from "@/lib/audit-logger";
+import { useEffect, useState } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+
+// ============================================
+// ROUTE DEFINITION
+// ============================================
+
+export const Route = createFileRoute("/_authenticated/audit-logs")({
+  component: AuditLogsPage,
+
+  // Route loader - check access before rendering
+  beforeLoad: async () => {
+    // Check if user is owner/manager
+    const isOwner = await isCurrentUserOwner();
+
+    if (!isOwner) {
+      // Redirect to dashboard if not authorized
+      throw redirect({
+        to: "/dashboard",
+        search: {
+          error: "unauthorized",
+          message: "You do not have permission to access audit logs",
+        },
+      });
+    }
+  },
+});
+
+// ============================================
+// PAGE COMPONENT
+// ============================================
+
+function AuditLogsPage() {
+  const filters = useAuditStore((state) => state.filters);
+  const showFilters = useAuditStore((state) => state.showFilters);
+  const toggleFilters = useAuditStore((state) => state.toggleFilters);
+
+  const { data: stats, isLoading: statsLoading } = useAuditStats(filters);
+
+  const [isOwner, setIsOwner] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  useEffect(() => {
+    // Verify access on mount (double-check for security)
+    isCurrentUserOwner()
+      .then(setIsOwner)
+      .finally(() => setIsChecking(false));
+  }, []);
+
+  // Loading state while checking permissions
+  if (isChecking) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        </div>
+      </div>
+    );
+  }
+
+  // Access denied fallback (should not reach here due to beforeLoad)
+  if (!isOwner) {
+    return (
+      <div className="container mx-auto py-8">
+        <Alert variant="destructive">
+          <Shield className="h-4 w-4" />
+          <AlertDescription>
+            You do not have permission to access audit logs. This area is restricted to owners and
+            managers.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  return (
+    <ErrorBoundary level="page">
+      <div className="container mx-auto py-8 space-y-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Audit Trail</h1>
+            <p className="text-muted-foreground">View system changes and user activity logs</p>
+          </div>
+
+          <button
+            onClick={toggleFilters}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {showFilters ? "Hide" : "Show"} Filters
+          </button>
+        </div>
+
+        {/* Statistics Panel */}
+        <AuditStatsPanel stats={stats} isLoading={statsLoading} />
+
+        {/* Filters Section - Placeholder for Phase 3C */}
+        {showFilters && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Filters</CardTitle>
+              <CardDescription>Filter audit logs by date, user, table, or action</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground italic">
+                Filter component will be implemented in Phase 3C
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Audit Log Table - Placeholder for Phase 3B */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Audit Logs</CardTitle>
+            <CardDescription>
+              {filters.tableName
+                ? `Showing logs for ${filters.tableName}`
+                : "Showing all system logs"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-muted-foreground italic">
+              Audit log table component will be implemented in Phase 3B
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </ErrorBoundary>
+  );
+}

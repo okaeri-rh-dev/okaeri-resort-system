@@ -15,10 +15,13 @@ import {
   Search,
   Bell,
   Settings,
+  Shield,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { auth } from "@/lib/auth";
+import { isCurrentUserOwner } from "@/lib/audit-logger";
+import { supabase } from "@/lib/supabase";
 
 interface NavItem {
   label: string;
@@ -42,7 +45,27 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showAuditLink, setShowAuditLink] = useState(false);
   const location = useLocation();
+
+  // Check if user can access audit logs
+  useEffect(() => {
+    const checkAuditAccess = async () => {
+      const canAccess = await isCurrentUserOwner();
+      setShowAuditLink(canAccess);
+    };
+
+    checkAuditAccess();
+
+    // Listen for auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      checkAuditAccess();
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -101,6 +124,20 @@ export function MainLayout({ children }: MainLayoutProps) {
             {navItems.map((item) => (
               <NavLink key={item.href} item={item} />
             ))}
+
+            {/* Audit Trail Link - Owner/Manager Only */}
+            {showAuditLink && (
+              <>
+                <div className="border-t my-2 pt-2" />
+                <NavLink
+                  item={{
+                    label: "Audit Trail",
+                    icon: Shield,
+                    href: "/audit-logs",
+                  }}
+                />
+              </>
+            )}
           </nav>
 
           {/* Footer */}
@@ -167,6 +204,21 @@ export function MainLayout({ children }: MainLayoutProps) {
                         onClick={() => setMobileMenuOpen(false)}
                       />
                     ))}
+
+                    {/* Audit Trail Link - Owner/Manager Only */}
+                    {showAuditLink && (
+                      <>
+                        <div className="border-t my-2 pt-2" />
+                        <NavLink
+                          item={{
+                            label: "Audit Trail",
+                            icon: Shield,
+                            href: "/audit-logs",
+                          }}
+                          onClick={() => setMobileMenuOpen(false)}
+                        />
+                      </>
+                    )}
                   </nav>
 
                   {/* Mobile Menu Footer */}
