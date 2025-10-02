@@ -782,6 +782,85 @@ COMMENT ON FUNCTION has_role(VARCHAR(20)) IS
 -- SELECT has_role('owner');    -- Returns TRUE only if user is owner or admin
 ```
 
+### Get Current Audit Role (Recommended for UI Guards)
+
+```sql
+-- ============================================
+-- HELPER: Get current user's audit role or 'none'
+-- ============================================
+-- Purpose: Single source of truth for UI route guards and access control
+-- Returns 'admin', 'owner', 'manager', 'staff', or 'none' (never NULL)
+
+CREATE OR REPLACE FUNCTION get_current_audit_role()
+RETURNS TEXT AS $$
+DECLARE
+    user_role TEXT;
+BEGIN
+    SELECT role INTO user_role
+    FROM app_roles
+    WHERE user_id = auth.uid()
+      AND is_active = true
+    LIMIT 1;
+
+    -- Return 'none' instead of NULL for easier client-side checks
+    RETURN COALESCE(user_role, 'none');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
+COMMENT ON FUNCTION get_current_audit_role() IS
+    'Returns current user audit role: admin|owner|manager|staff|none. Preferred for UI route guards.';
+
+-- Usage in SQL:
+-- SELECT get_current_audit_role();  -- Returns 'admin', 'owner', 'manager', 'staff', or 'none'
+
+-- Usage in TypeScript:
+-- const { data: role } = await supabase.rpc('get_current_audit_role');
+-- if (role !== 'admin' && role !== 'owner') {
+--   throw redirect({ to: '/' });
+-- }
+```
+
+**★ Insight ─────────────────────────────────────**
+`get_current_audit_role()` is the recommended function for UI guards because it returns 'none' instead of NULL, making client-side checks cleaner and avoiding null pointer issues. Use this instead of `get_user_role()` for route protection.
+**─────────────────────────────────────────────────**
+
+**When to Use Which Helper**:
+
+| Function                   | Returns           | Use Case                               |
+| -------------------------- | ----------------- | -------------------------------------- |
+| `get_current_audit_role()` | TEXT (never NULL) | ✅ UI route guards, client-side checks |
+| `get_user_role()`          | VARCHAR or NULL   | SQL queries, conditional logic         |
+| `has_role('manager')`      | BOOLEAN           | Permission checks (hierarchy-aware)    |
+
+**Example UI Route Guard**:
+
+```typescript
+// src/routes/audit/_layout.tsx
+import { createFileRoute } from "@tanstack/react-router";
+import { supabase } from "@/lib/supabase";
+
+export const Route = createFileRoute("/audit/_layout")({
+  beforeLoad: async () => {
+    // Get effective audit role from single source of truth
+    const { data: role, error } = await supabase.rpc("get_current_audit_role");
+
+    if (error) {
+      throw new Error("Failed to check audit permissions");
+    }
+
+    // Only admins, owners, and managers can access audit UI
+    if (role === "staff" || role === "none") {
+      throw redirect({
+        to: "/",
+        search: { error: "insufficient_permissions" },
+      });
+    }
+
+    return { auditRole: role };
+  },
+});
+```
+
 ---
 
 ## Migration from GUC Approach

@@ -47,6 +47,7 @@ import { redactSensitiveData, isAuditedTable, AUDIT_DEBUG, auditDebugLog } from 
  * @returns Promise resolving to created audit log (or null if failed)
  *
  * @example
+ * // Basic usage without correlation
  * await logAuditEvent({
  *   tableName: 'bookings',
  *   recordId: booking.booking_id,
@@ -54,6 +55,25 @@ import { redactSensitiveData, isAuditedTable, AUDIT_DEBUG, auditDebugLog } from 
  *   category: AuditCategory.BOOKING,
  *   severity: AuditSeverity.WARNING,
  *   metadata: { action: 'cancelled', cancellationReason: 'Personal emergency' }
+ * });
+ *
+ * @example
+ * // With correlation ID to link trigger log and app log
+ * import { v4 as uuidv4 } from 'uuid';
+ *
+ * const correlationId = uuidv4();
+ *
+ * // 1. Perform database mutation (triggers fire)
+ * const { data: booking } = await db.bookings.update(bookingId, { status: 'cancelled' });
+ *
+ * // 2. Log business context with same correlation_id
+ * await logAuditEvent({
+ *   tableName: 'bookings',
+ *   recordId: bookingId,
+ *   correlationId,  // ← Links this app log to the trigger log
+ *   description: 'Booking cancelled by guest request',
+ *   category: AuditCategory.BOOKING,
+ *   severity: AuditSeverity.WARNING,
  * });
  */
 export async function logAuditEvent(
@@ -109,6 +129,7 @@ export async function logAuditEvent(
     const { data, error } = await db.auditLogs.create({
       tableName: context.tableName,
       recordId: context.recordId,
+      correlationId: context.correlationId, // Optional: links to related trigger logs
       description: context.description, // Stored raw, sanitized at UI layer
       category: context.category,
       severity: context.severity || AuditSeverity.INFO,

@@ -196,7 +196,12 @@ function DiffComparison({ oldData, newData, changedFields, action }: DiffCompari
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <DataDisplay data={oldData} highlightFields={changedFields} variant="before" />
+            <DataDisplay
+              data={oldData}
+              highlightFields={changedFields}
+              variant="before"
+              comparisonData={newData}
+            />
           </CardContent>
         </Card>
 
@@ -210,7 +215,12 @@ function DiffComparison({ oldData, newData, changedFields, action }: DiffCompari
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <DataDisplay data={newData} highlightFields={changedFields} variant="after" />
+            <DataDisplay
+              data={newData}
+              highlightFields={changedFields}
+              variant="after"
+              comparisonData={oldData}
+            />
           </CardContent>
         </Card>
       </div>
@@ -228,9 +238,10 @@ interface DataDisplayProps {
   data: Record<string, unknown>;
   highlightFields: string[];
   variant: "before" | "after" | "created" | "deleted";
+  comparisonData?: Record<string, unknown>; // For detecting redacted diffs
 }
 
-function DataDisplay({ data, highlightFields, variant }: DataDisplayProps) {
+function DataDisplay({ data, highlightFields, variant, comparisonData }: DataDisplayProps) {
   const entries = Object.entries(data);
 
   // Sort: changed fields first, then alphabetically
@@ -255,6 +266,12 @@ function DataDisplay({ data, highlightFields, variant }: DataDisplayProps) {
             : ""
           : "";
 
+        // Check if both old and new are redacted (confusing diff)
+        const isRedactedDiff =
+          comparisonData &&
+          value === "[REDACTED]" &&
+          comparisonData[key] === "[REDACTED]";
+
         return (
           <div key={key} className={`py-2 ${highlightClass}`}>
             <div className="text-xs font-medium text-muted-foreground mb-1">
@@ -266,7 +283,13 @@ function DataDisplay({ data, highlightFields, variant }: DataDisplayProps) {
               )}
             </div>
             <div className="text-sm">
-              <ValueDisplay value={value} />
+              {isRedactedDiff ? (
+                <span className="text-muted-foreground italic">
+                  Sensitive field changed (value redacted)
+                </span>
+              ) : (
+                <ValueDisplay value={value} />
+              )}
             </div>
           </div>
         );

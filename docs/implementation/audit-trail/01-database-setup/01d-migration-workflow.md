@@ -92,11 +92,23 @@ SELECT 'Migration 001 complete' AS status;
 -- Attach triggers to all 6 tables
 -- [Insert all CREATE TRIGGER statements from 01b]
 
+-- ============================================
+-- IDENTITY ENFORCEMENT (Security Layer)
+-- ============================================
+-- Create identity enforcement function
+-- [Insert enforce_app_audit_identity() function from 01b Identity Enforcement section]
+
+-- Attach identity enforcement trigger
+-- [Insert CREATE TRIGGER enforce_app_audit_identity_trigger from 01b Identity Enforcement section]
+
 -- Verification
 SELECT 'Migration 002 complete' AS status,
        COUNT(*) AS trigger_count
 FROM information_schema.triggers
-WHERE trigger_name LIKE 'audit_%';
+WHERE trigger_name LIKE 'audit_%'
+   OR trigger_name = 'enforce_app_audit_identity_trigger';
+
+-- Expected: 7 triggers total (6 table triggers + 1 identity enforcement trigger)
 ```
 
 ### 003-audit-indexes.sql
@@ -280,6 +292,31 @@ VALUES (
 )
 ON CONFLICT (user_id) DO NOTHING;
 
+-- ============================================
+-- CREATE ROLE HELPER FUNCTIONS
+-- ============================================
+
+-- Helper function for UI route guards
+-- Returns TEXT (never NULL) for cleaner client-side checks
+CREATE OR REPLACE FUNCTION get_current_audit_role()
+RETURNS TEXT AS $$
+DECLARE
+    user_role TEXT;
+BEGIN
+    SELECT role INTO user_role
+    FROM app_roles
+    WHERE user_id = auth.uid()
+      AND is_active = true
+    LIMIT 1;
+
+    -- Return 'none' instead of NULL for easier client-side checks
+    RETURN COALESCE(user_role, 'none');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
+COMMENT ON FUNCTION get_current_audit_role() IS
+    'Returns current user audit role: admin|owner|manager|staff|none. Preferred for UI route guards.';
+
 -- Verification
 SELECT
     'Migration 005 complete' AS status,
@@ -428,6 +465,189 @@ This migration performs critical security checks:
 4. **app_roles Populated**: Warns if no active roles exist (needs bootstrap)
 
 **If verification fails**, the migration will error with specific details about what's missing.
+
+### 007-add-correlation-id.sql
+
+```sql
+-- ============================================
+-- MIGRATION: 007 - Add Correlation ID Column
+-- ============================================
+-- Purpose: Add correlation_id column to link related log entries
+-- Allows correlating trigger logs (Layer 1) with app logs (Layer 2)
+\set ON_ERROR_STOP on
+
+-- Add correlation_id column with default UUID
+ALTER TABLE audit_logs
+ADD COLUMN IF NOT EXISTS correlation_id UUID DEFAULT gen_random_uuid();
+
+-- Add column comment
+COMMENT ON COLUMN audit_logs.correlation_id IS
+    'UUID for linking related log entries across layers. Defaults to random UUID. App can pass explicit value to correlate trigger logs with business context logs.';
+
+-- Add index for efficient correlation queries
+CREATE INDEX IF NOT EXISTS idx_audit_logs_correlation
+    ON audit_logs (correlation_id);
+
+COMMENT ON INDEX idx_audit_logs_correlation IS
+    'Optimizes queries that find all logs for a specific correlation_id.';
+
+-- Update statistics
+ANALYZE audit_logs;
+
+-- Verification
+SELECT
+    'Migration 007 complete' AS status,
+    column_name,
+    data_type,
+    column_default
+FROM information_schema.columns
+WHERE table_name = 'audit_logs'
+  AND column_name = 'correlation_id';
+
+-- Instructions
+DO $$
+BEGIN
+    RAISE NOTICE '';
+    RAISE NOTICE '========================================';
+    RAISE NOTICE 'Correlation ID Column Added';
+    RAISE NOTICE '========================================';
+    RAISE NOTICE '';
+    RAISE NOTICE 'Usage:';
+    RAISE NOTICE '1. Existing logs: Automatically populated with unique UUIDs';
+    RAISE NOTICE '2. New logs: Get unique UUID by default';
+    RAISE NOTICE '3. Correlated logs: Pass same UUID to db.auditLogs.create()';
+    RAISE NOTICE '';
+    RAISE NOTICE 'Example:';
+    RAISE NOTICE '  const correlationId = uuidv4();';
+    RAISE NOTICE '  await db.bookings.update(...);  // Trigger fires';
+    RAISE NOTICE '  await logAuditEvent({ correlationId, ... });';
+    RAISE NOTICE '';
+    RAISE NOTICE 'Query correlated logs:';
+    RAISE NOTICE '  SELECT * FROM audit_logs WHERE correlation_id = ''uuid-here'';';
+    RAISE NOTICE '';
+END $$;
+```
+
+**Migration Details**:
+
+- **Column**: `correlation_id UUID DEFAULT gen_random_uuid()`
+- **Index**: `idx_audit_logs_correlation` for fast correlation queries
+- **Backward Compatible**: Existing logs get auto-generated UUIDs
+- **Forward Compatible**: New logs can optionally pass explicit correlation_id
+
+**Use Cases**:
+
+1. **Basic Logging**: No correlation needed, each log gets unique UUID (default behavior)
+2. **Correlated Logging**: Generate UUID client-side, pass to both DB mutation and `logAuditEvent()`
+3. **Debugging**: Query all logs for a correlation_id to see complete operation story
+
+### 008-archive-table-and-function.sql
+
+```sql
+-- ============================================
+-- MIGRATION: 008 - Archive Table and Function
+-- ============================================
+-- Purpose: Create archive table and move-to-archive function
+-- Implements tamper-evident archive-move pattern instead of direct deletes
+\set ON_ERROR_STOP on
+
+-- ============================================
+-- CREATE ARCHIVE TABLE
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS audit_logs_archive (
+    LIKE audit_logs INCLUDING ALL
+);
+
+COMMENT ON TABLE audit_logs_archive IS
+    'Archive storage for audit logs. Populated by archive_audit_logs() function. Logs are moved (not copied) from audit_logs to reduce active table size while maintaining audit trail.';
+
+-- Indexes (same as main table for consistent query performance)
+CREATE INDEX IF NOT EXISTS idx_audit_logs_archive_user_context
+    ON audit_logs_archive (user_email, user_id);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_archive_table_name
+    ON audit_logs_archive (table_name);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_archive_timestamp
+    ON audit_logs_archive (created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_archive_record
+    ON audit_logs_archive (table_name, record_id);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_archive_correlation
+    ON audit_logs_archive (correlation_id);
+
+-- ============================================
+-- CREATE ARCHIVE FUNCTION
+-- ============================================
+
+CREATE OR REPLACE FUNCTION archive_audit_logs(cutoff_date TIMESTAMPTZ)
+RETURNS BIGINT AS $$
+DECLARE
+    archived_count BIGINT;
+BEGIN
+    -- Move logs to archive table (INSERT + DELETE = MOVE)
+    WITH moved AS (
+        INSERT INTO audit_logs_archive
+        SELECT * FROM audit_logs
+        WHERE created_at < cutoff_date
+        RETURNING audit_id
+    )
+    SELECT COUNT(*) INTO archived_count FROM moved;
+
+    -- Delete archived logs from active table
+    DELETE FROM audit_logs WHERE created_at < cutoff_date;
+
+    -- Return count of archived logs
+    RETURN archived_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+COMMENT ON FUNCTION archive_audit_logs(TIMESTAMPTZ) IS
+    'Moves audit logs older than cutoff_date to audit_logs_archive table. Returns count of archived logs. Tamper-evident archive-move pattern instead of direct delete.';
+
+-- Verification
+SELECT
+    'Migration 008 complete' AS status,
+    (SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'audit_logs_archive') AS archive_table_exists,
+    (SELECT COUNT(*) FROM information_schema.routines WHERE routine_name = 'archive_audit_logs') AS archive_function_exists;
+
+-- Instructions
+DO $$
+BEGIN
+    RAISE NOTICE '';
+    RAISE NOTICE '========================================';
+    RAISE NOTICE 'Archive System Created';
+    RAISE NOTICE '========================================';
+    RAISE NOTICE '';
+    RAISE NOTICE 'Usage:';
+    RAISE NOTICE '  -- Archive logs older than 2 years';
+    RAISE NOTICE '  SELECT archive_audit_logs(NOW() - INTERVAL ''2 years'');';
+    RAISE NOTICE '';
+    RAISE NOTICE '  -- TypeScript helper:';
+    RAISE NOTICE '  const twoYearsAgo = new Date();';
+    RAISE NOTICE '  twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);';
+    RAISE NOTICE '  const result = await db.auditLogs.archiveOld(twoYearsAgo.toISOString());';
+    RAISE NOTICE '';
+    RAISE NOTICE 'Restore from archive:';
+    RAISE NOTICE '  INSERT INTO audit_logs SELECT * FROM audit_logs_archive WHERE created_at BETWEEN ... ;';
+    RAISE NOTICE '';
+END $$;
+```
+
+**Migration Details**:
+
+- **Archive Table**: Identical structure to `audit_logs` including all indexes
+- **Archive Function**: Atomic move operation (INSERT + DELETE in single transaction)
+- **Returns**: Count of archived logs for confirmation
+- **Reversible**: Can restore logs from archive if needed
+
+**Security**:
+
+- `SECURITY DEFINER`: Function runs with creator's privileges (necessary for DELETE)
+- RLS still applies to archive table (same policies as `audit_logs`)
+- Only admins/owners can call via `archiveOld()` helper (enforced by app logic)
 
 ## Main Migration Script
 

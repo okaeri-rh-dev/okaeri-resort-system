@@ -683,6 +683,220 @@ LIMIT 1;
 SELECT * FROM pg_stat_activity WHERE state = 'active';
 ```
 
+## Identity Enforcement for App-Sourced Logs
+
+### Security Context
+
+**Problem**: Application layer logs (`source='app'`) trust client-submitted identity fields (`user_id`, `user_email`, `user_role`). A malicious client could forge these values to appear as a different user in audit logs.
+
+**Solution**: A BEFORE INSERT trigger that overwrites identity fields from the authenticated session context, making it impossible to forge identity regardless of what the client submits.
+
+### Identity Enforcement Trigger Function
+
+```sql
+-- ============================================
+-- IDENTITY ENFORCEMENT TRIGGER FUNCTION
+-- ============================================
+-- Description: Ensures app-sourced logs use authenticated identity
+-- Usage: Runs BEFORE INSERT on audit_logs
+-- Security: Prevents identity spoofing in Layer 2 (app) logs
+
+CREATE OR REPLACE FUNCTION enforce_app_audit_identity()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Only enforce for app-sourced logs (triggers use source='db')
+    IF NEW.source = 'app' THEN
+        -- Overwrite user_id with authenticated session user
+        NEW.user_id := auth.uid();
+
+        -- Overwrite user_email from JWT claims
+        NEW.user_email := NULLIF(
+            current_setting('request.jwt.claims', TRUE)::json->>'email',
+            ''
+        );
+
+        -- Overwrite user_role from JWT claims (if present)
+        NEW.user_role := NULLIF(
+            current_setting('request.jwt.claims', TRUE)::json->>'role',
+            ''
+        );
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Set function ownership
+ALTER FUNCTION enforce_app_audit_identity() OWNER TO postgres;
+
+-- Add function comment
+COMMENT ON FUNCTION enforce_app_audit_identity() IS
+    'Enforces authenticated identity for app-sourced audit logs. Overwrites user_id, user_email, and user_role from JWT session, preventing identity forgery.';
+```
+
+### Attach Identity Enforcement Trigger
+
+```sql
+-- ============================================
+-- CREATE IDENTITY ENFORCEMENT TRIGGER
+-- ============================================
+
+DROP TRIGGER IF EXISTS enforce_app_audit_identity_trigger ON audit_logs;
+
+CREATE TRIGGER enforce_app_audit_identity_trigger
+    BEFORE INSERT ON audit_logs
+    FOR EACH ROW
+    EXECUTE FUNCTION enforce_app_audit_identity();
+
+COMMENT ON TRIGGER enforce_app_audit_identity_trigger ON audit_logs IS
+    'Ensures app-sourced logs cannot forge user identity. Runs before audit_trigger_func.';
+```
+
+### Why This Works
+
+**★ Insight ─────────────────────────────────────**
+BEFORE INSERT triggers run before the data enters the table, allowing us to rewrite fields based on server-side auth context. Even if a malicious client sends `{ userId: 'admin-uuid', userEmail: 'owner@resort.com' }`, the trigger overwrites these with the actual authenticated session values from Supabase Auth.
+**─────────────────────────────────────────────────**
+
+**Security Model**:
+
+1. **Client submits**: `db.auditLogs.create({ userId: 'fake-admin-id', userEmail: 'fake@admin.com', source: 'app', ... })`
+2. **RLS INSERT policy**: Checks `auth.uid() IS NOT NULL` (ensures authenticated)
+3. **BEFORE INSERT trigger**: Overwrites `user_id := auth.uid()`, `user_email := JWT email`
+4. **Final record**: Contains real authenticated identity, not client-submitted values
+
+**Trigger Order**:
+
+- `enforce_app_audit_identity_trigger` (BEFORE INSERT) - Enforces identity first
+- Application INSERT executes
+- `audit_trigger_func` triggers (AFTER INSERT on other tables) - Logs changes
+
+### Testing Identity Enforcement
+
+#### Test 1: Verify Trigger Exists
+
+```sql
+-- Check trigger is installed
+SELECT trigger_name, event_manipulation, action_timing, action_statement
+FROM information_schema.triggers
+WHERE trigger_name = 'enforce_app_audit_identity_trigger';
+
+-- Expected: 1 row showing BEFORE INSERT trigger
+```
+
+#### Test 2: Attempt Identity Forgery
+
+```sql
+BEGIN;
+
+-- Simulate malicious client trying to forge owner identity
+-- (Assuming current user is staff@resort.com with UUID '123...')
+INSERT INTO audit_logs (
+    table_name,
+    record_id,
+    action,
+    user_id,  -- Malicious: trying to appear as admin
+    user_email,  -- Malicious: trying to appear as owner
+    user_role,
+    source,
+    description
+) VALUES (
+    'system',
+    'test',
+    'INSERT',
+    '00000000-0000-0000-0000-000000000000'::UUID,  -- Fake admin UUID
+    'owner@resort.com',  -- Fake owner email
+    'admin',  -- Fake admin role
+    'app',  -- App-sourced log
+    'Attempting identity forgery'
+);
+
+-- Verify trigger overwrote identity with real authenticated user
+SELECT
+    audit_id,
+    user_id,  -- Should be current auth.uid(), NOT the fake UUID
+    user_email,  -- Should be current JWT email, NOT 'owner@resort.com'
+    user_role,  -- Should be current JWT role, NOT 'admin'
+    description
+FROM audit_logs
+WHERE description = 'Attempting identity forgery';
+
+ROLLBACK;  -- Clean up test
+```
+
+**Expected Result**:
+
+- `user_id` = Current authenticated user's UUID (from `auth.uid()`)
+- `user_email` = Current authenticated user's email (from JWT)
+- `user_role` = Current authenticated user's role (from JWT)
+- NOT the fake values submitted by the client
+
+#### Test 3: Verify Database Logs Unaffected
+
+```sql
+BEGIN;
+
+-- Create a test unit (will trigger audit_trigger_func)
+INSERT INTO units (
+    unit_name,
+    unit_code,
+    unit_type,
+    base_occupancy,
+    max_occupancy,
+    base_rate,
+    weekend_rate,
+    extra_person_rate
+) VALUES (
+    'Test Unit',
+    'TEST-IDENTITY',
+    'Studio',
+    2, 2, 1000, 1200, 300
+);
+
+-- Verify database-triggered log still uses source='db'
+SELECT
+    source,  -- Should be 'db' (not 'app')
+    user_id,  -- Should be auth.uid() from trigger context
+    user_email,
+    table_name,
+    action
+FROM audit_logs
+WHERE table_name = 'units'
+ORDER BY created_at DESC
+LIMIT 1;
+
+ROLLBACK;
+```
+
+**Expected Result**:
+
+- `source` = `'db'` (trigger-generated)
+- Identity enforcement trigger does NOT affect database triggers (only `source='app'`)
+
+### Migration Integration
+
+Add to migration `002-audit-triggers.sql`:
+
+```sql
+-- After creating audit_trigger_func and attaching to tables...
+
+-- ============================================
+-- IDENTITY ENFORCEMENT (Security Layer)
+-- ============================================
+
+-- Create identity enforcement function
+-- [Insert enforce_app_audit_identity() function from above]
+
+-- Attach identity enforcement trigger
+-- [Insert CREATE TRIGGER statement from above]
+
+-- Verify both security components exist
+SELECT 'Identity enforcement installed' AS status,
+       COUNT(*) AS trigger_count
+FROM information_schema.triggers
+WHERE trigger_name IN ('enforce_app_audit_identity_trigger');
+```
+
 ---
 
 **Next**: [01c: Indexes & Performance](./01c-indexes-and-performance.md) - Optimize audit log queries

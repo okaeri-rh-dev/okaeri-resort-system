@@ -260,6 +260,7 @@ export const db = {
         // Core fields
         table_name: context.tableName,
         record_id: context.recordId || null,
+        correlation_id: context.correlationId || null, // Optional: links to related trigger logs
         action: "INSERT", // Layer 2 convention: always INSERT
         event_type: context.eventType || null, // Business event type (e.g., 'login', 'cancel_booking')
         source: "app", // Mark as Layer 2 (application logging)
@@ -344,19 +345,34 @@ export const db = {
     },
 
     /**
-     * Delete old audit logs (manual archival)
-     * @param beforeDate - ISO date string, delete logs before this date
-     * @returns Promise with number of deleted logs
+     * Archive old audit logs using archive-move pattern
+     * Moves logs to audit_logs_archive table instead of deleting
+     * Maintains complete audit trail while reducing active table size
+     *
+     * @param beforeDate - ISO date string, archive logs before this date
+     * @returns Promise with archive result (count of moved logs)
+     *
+     * @example
+     * // Archive logs older than 2 years
+     * const twoYearsAgo = new Date();
+     * twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+     * const result = await db.auditLogs.archiveOld(twoYearsAgo.toISOString());
+     * console.log(`Archived ${result.count} logs`);
      */
-    archiveOld: async (beforeDate: string): Promise<number> => {
-      const { data, error } = await supabase
-        .from("audit_logs")
-        .delete()
-        .lt("created_at", beforeDate)
-        .select();
+    archiveOld: async (beforeDate: string): Promise<{ count: number; error?: string }> => {
+      try {
+        // Call the archive_audit_logs function (created in migration 008)
+        const { data, error } = await supabase.rpc("archive_audit_logs", {
+          cutoff_date: beforeDate,
+        });
 
-      if (error) throw error;
-      return data?.length || 0;
+        if (error) throw error;
+
+        return { count: data || 0 };
+      } catch (error) {
+        console.error("[Audit] Archive failed:", error);
+        return { count: 0, error: String(error) };
+      }
     },
 
     /**

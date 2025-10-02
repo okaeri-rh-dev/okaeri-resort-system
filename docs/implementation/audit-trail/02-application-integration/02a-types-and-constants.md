@@ -123,6 +123,7 @@ export const EVENT_TYPE_DISPLAY_NAMES: Record<string, string> = {
  */
 export interface AuditLog {
   audit_id: string; // UUID primary key
+  correlation_id: string; // UUID for linking related log entries across layers
   table_name: string; // Table affected (bookings, units, system, authentication, etc)
   record_id: string | null; // TEXT type identifier (supports UUID and non-UUID PKs)
   record_pk: Record<string, unknown> | null; // Composite primary key as JSON
@@ -167,6 +168,7 @@ export interface AuditLogFilters {
   userId?: string; // Filter by Supabase Auth ID
   tableName?: string; // Filter by table (bookings, units, etc)
   recordId?: string; // Filter by specific record UUID
+  correlationId?: string; // Filter by correlation ID (find all related logs)
   action?: AuditAction; // Filter by operation type
   source?: "db" | "app"; // Filter by source (database triggers vs app logging)
 
@@ -218,6 +220,7 @@ export interface AuditEventContext {
   tableName: string;
   recordId?: string;
   recordPk?: Record<string, unknown>; // Composite primary key support (for future use)
+  correlationId?: string; // UUID to link this log with related trigger logs
   eventType?: AuditEventType; // Optional: semantic business event type (e.g., AuditEventType.CANCEL_BOOKING)
   description: string; // Human-readable description (e.g., "Booking cancelled by guest")
   category: AuditCategory;

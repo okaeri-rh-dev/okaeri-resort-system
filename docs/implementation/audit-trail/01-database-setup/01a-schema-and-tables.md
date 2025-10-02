@@ -35,6 +35,13 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     -- ============================================
     audit_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
+    -- Correlation ID for linking related log entries
+    -- Allows connecting trigger logs with corresponding app logs for the same business operation
+    -- Example: booking update triggers audit_trigger_func (correlation_id=X)
+    --          AND app logs business context (same correlation_id=X)
+    -- Defaults to random UUID; app can pass explicit value to correlate events
+    correlation_id UUID DEFAULT gen_random_uuid(),
+
     -- ============================================
     -- WHAT CHANGED (Layer 1: Database Triggers)
     -- ============================================
@@ -240,6 +247,85 @@ COMMENT ON COLUMN app_roles.notes IS
 
 - **source**: Always `'app'`
 - **record_id**: Nullable (may be NULL for system-wide events)
+- **correlation_id**: Can be explicitly set to match corresponding trigger log
+
+**Transactional Boundaries**:
+
+Layer 2 (app) logs are **best-effort** and not transactionally coupled with Layer 1 (trigger) logs. This means:
+
+- **Layer 1 triggers** fire synchronously within the database transaction (guaranteed)
+- **Layer 2 app logs** are separate network calls to `db.auditLogs.create()` (may fail independently)
+- **Trade-off**: Eventual consistency vs operational simplicity
+
+**For critical operations** requiring guaranteed correlation (e.g., financial refunds, compliance events), consider:
+
+1. **Server-side RPC function** that performs mutation + app logging in single transaction
+2. **Edge Function** that bundles both operations atomically
+3. **Accept eventual consistency** - Layer 1 triggers are source of truth; Layer 2 adds business context
+
+**Recommendation for 3-room resort**: Accept eventual consistency. Layer 1 provides complete change history. Layer 2 failures are rare and non-blocking. Add atomic wrappers only if production audit gaps occur.
+
+### Correlation ID Usage
+
+**Purpose**: Link related log entries from Layer 1 (triggers) and Layer 2 (app) for the same business operation.
+
+**Use Cases**:
+
+1. **Debugging**: Find all logs related to a specific booking update
+2. **Audit Trail**: Show complete story of "user X updated booking Y" with both DB changes and business context
+3. **Support**: Trace issues by following correlation chain
+
+**Implementation Pattern**:
+
+```typescript
+// When performing a business operation that you want to correlate:
+import { v4 as uuidv4 } from "uuid";
+
+const correlationId = uuidv4();
+
+// 1. Perform database mutation (triggers fire with auto-generated correlation_id)
+const { data: booking } = await db.bookings.update(bookingId, updates);
+
+// 2. Log business context with SAME correlation_id
+await logAuditEvent({
+  tableName: "bookings",
+  recordId: bookingId,
+  eventType: "status_change",
+  description: `Changed booking status to ${newStatus}`,
+  category: "booking",
+  severity: "INFO",
+  correlationId, // ← Explicit correlation
+  metadata: {
+    previousStatus: oldStatus,
+    newStatus,
+  },
+});
+```
+
+**Querying Correlated Logs**:
+
+```sql
+-- Find all logs for a correlation_id
+SELECT
+  audit_id,
+  source,
+  table_name,
+  action,
+  event_type,
+  description,
+  created_at
+FROM audit_logs
+WHERE correlation_id = 'your-correlation-uuid'
+ORDER BY created_at ASC;
+
+-- Expected result: 1 trigger log (source='db') + 1 app log (source='app')
+```
+
+**Default Behavior**:
+
+- If no correlation_id provided, each log entry gets unique UUID
+- Trigger logs and app logs will have different correlation_ids
+- Still traceable via `table_name + record_id + created_at` proximity
 - **action**: Always `'INSERT'` by convention (avoids constraint conflicts)
 - **changed_fields**: NULL (app events don't track field-level changes)
 - **description/category/severity**: Required (provides business context)
@@ -625,6 +711,77 @@ Annual: 2.35MB × 12 = 28.2MB/year
 
 **Supabase Free Tier**: 500MB database
 **Verdict**: Safe for 17+ years without archival ✅
+
+## Archive Table Schema
+
+For long-term storage and regulatory compliance, create an archive table with identical structure to `audit_logs`:
+
+```sql
+-- ============================================
+-- AUDIT LOGS ARCHIVE TABLE
+-- ============================================
+-- Purpose: Long-term storage for archived audit logs
+-- Populated by: Manual archival via archive_audit_logs() function
+-- Retention: Permanent or per compliance requirements
+
+CREATE TABLE IF NOT EXISTS audit_logs_archive (
+    LIKE audit_logs INCLUDING ALL
+);
+
+-- Add table comment
+COMMENT ON TABLE audit_logs_archive IS
+    'Archive storage for audit logs. Populated by archive_audit_logs() function. Logs are moved (not copied) from audit_logs to reduce active table size while maintaining audit trail.';
+
+-- Indexes (same as main table for consistent query performance)
+CREATE INDEX IF NOT EXISTS idx_audit_logs_archive_user_context
+    ON audit_logs_archive (user_email, user_id);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_archive_table_name
+    ON audit_logs_archive (table_name);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_archive_timestamp
+    ON audit_logs_archive (created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_archive_record
+    ON audit_logs_archive (table_name, record_id);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_archive_correlation
+    ON audit_logs_archive (correlation_id);
+```
+
+### Archive vs Delete Decision
+
+**Archive-Move Pattern (Recommended)**:
+
+- **Pros**: Reversible, tamper-evident, maintains complete history
+- **Cons**: Requires archive table storage (minimal for 3-room resort)
+- **Use when**: Compliance requires retention beyond operational needs
+
+**Direct Delete Pattern**:
+
+- **Pros**: Simpler, reclaims storage immediately
+- **Cons**: Irreversible, no audit trail of what was deleted
+- **Use when**: Certain logs are truly disposable (e.g., debug events)
+
+**Recommendation for Resort**: Use archive-move for all logs. At ~450MB/year, archival costs are negligible but audit integrity is valuable.
+
+### Restore from Archive
+
+```sql
+-- Restore specific logs back to active table
+INSERT INTO audit_logs
+SELECT * FROM audit_logs_archive
+WHERE correlation_id = 'uuid-here';
+
+-- Or restore by date range
+INSERT INTO audit_logs
+SELECT * FROM audit_logs_archive
+WHERE created_at BETWEEN '2024-01-01' AND '2024-12-31';
+
+-- Remove from archive after restore
+DELETE FROM audit_logs_archive
+WHERE correlation_id = 'uuid-here';
+```
 
 ## Migration File
 
