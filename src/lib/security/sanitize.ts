@@ -113,20 +113,39 @@ export function sanitizeText(input: string | null | undefined): string {
   // First: Decode any encoded attacks to reveal hidden payloads
   const decodedInput = decodeEncodedAttacks(String(input));
 
-  // Second: Remove all HTML with DOMPurify
-  const cleaned = DOMPurify.sanitize(decodedInput, STRICT_TEXT_CONFIG);
+  // Second: Check if input is plain text (no angle brackets = no HTML)
+  // Skip DOMPurify for plain text to preserve newlines and special chars
+  const hasHtml = /<|>/.test(decodedInput);
+  let cleaned: string;
 
-  // Third: Additional cleanup for extra safety
-  let result = cleaned
-    .trim()
-    .replace(/[<>]/g, "") // Remove any remaining angle brackets
+  if (hasHtml) {
+    // Has HTML - use DOMPurify to strip tags
+    cleaned = DOMPurify.sanitize(decodedInput, STRICT_TEXT_CONFIG);
+  } else {
+    // Plain text - no HTML to sanitize
+    cleaned = decodedInput;
+  }
+
+  // Third: Decode HTML entities that DOMPurify may have created
+  // DOMPurify converts <script> to &lt;script&gt; to prevent execution
+  // We want plain text, so manually decode common entities
+  // (More reliable than innerHTML + textContent across environments)
+  const decoded = cleaned
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&amp;/g, "&"); // Must be last to avoid double-decoding
+
+  // Fourth: Additional cleanup for extra safety
+  // Remove any remaining HTML tags and dangerous protocols
+  let result = decoded
+    .replace(/<[^>]*>/g, "") // Remove any remaining HTML tags
     .replace(/javascript:/gi, "") // Remove javascript: protocol
     .replace(/vbscript:/gi, "") // Remove vbscript: protocol
-    .replace(/on\w+\s*=/gi, "") // Remove event handlers (onclick, onload, etc)
-    .replace(/data:/gi, "") // Remove data: protocol
-    .replace(/expression\s*\(/gi, "") // Remove CSS expression
-    .replace(/script/gi, "") // Remove the word 'script' entirely
-    .replace(/alert/gi, "") // Remove alert calls
+    .replace(/data:text\/html/gi, "") // Remove data:text/html protocol
+    .trim() // Remove leading/trailing whitespace
     .substring(0, 10000); // Limit length to prevent DoS
 
   return result;
