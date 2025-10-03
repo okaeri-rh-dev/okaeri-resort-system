@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield } from "lucide-react";
 import { AuditStatsPanel } from "@/components/audit/AuditStatsPanel";
+import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
 import { useAuditStore } from "@/stores/useAuditStore";
 import { useAuditStats } from "@/lib/audit-hooks";
 import { isCurrentUserOwner } from "@/lib/audit-logger";
@@ -119,7 +120,7 @@ function AuditLogsPage() {
           </Card>
         )}
 
-        {/* Audit Log Table - Placeholder for Phase 3B */}
+        {/* Audit Log Table */}
         <Card>
           <CardHeader>
             <CardTitle>Audit Logs</CardTitle>
@@ -130,9 +131,7 @@ function AuditLogsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-sm text-muted-foreground italic">
-              Audit log table component will be implemented in Phase 3B
-            </div>
+            <AuditLogViewer />
           </CardContent>
         </Card>
       </div>
