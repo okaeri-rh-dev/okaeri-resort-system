@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "../../database.types";
+import type { Database, AuditLogFilters, AuditEventContext } from "../../database.types";
 
 // Environment variables validation
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -234,6 +234,422 @@ export const db = {
             .from("availability_cache")
             .delete()
             .lt("cache_expires_at", new Date().toISOString()),
+  },
+
+  // Audit Logs - Query and manage audit trail data
+  auditLogs: {
+    /**
+     * Get all audit logs (with optional filters)
+     * @param filters - Optional filter criteria
+     * @returns Promise with audit logs and metadata
+     */
+    all: async (filters?: AuditLogFilters) => {
+      let query = supabase.from("audit_logs").select("*", { count: "exact" });
+
+      // Apply filters
+      if (filters) {
+        if (filters.startDate) {
+          query = query.gte("created_at", filters.startDate);
+        }
+        if (filters.endDate) {
+          query = query.lte("created_at", filters.endDate);
+        }
+        if (filters.userEmail) {
+          query = query.eq("user_email", filters.userEmail);
+        }
+        if (filters.userId) {
+          query = query.eq("user_id", filters.userId);
+        }
+        if (filters.tableName) {
+          query = query.eq("table_name", filters.tableName);
+        }
+        if (filters.recordId) {
+          query = query.eq("record_id", filters.recordId);
+        }
+        if (filters.correlationId) {
+          query = query.eq("correlation_id", filters.correlationId);
+        }
+        if (filters.action) {
+          query = query.eq("action", filters.action);
+        }
+        if (filters.source) {
+          query = query.eq("source", filters.source);
+        }
+        if (filters.eventType) {
+          query = query.eq("event_type", filters.eventType);
+        }
+        if (filters.category) {
+          query = query.eq("category", filters.category);
+        }
+        if (filters.severity) {
+          query = query.eq("severity", filters.severity);
+        }
+
+        // Pagination
+        const limit = filters.limit || 50;
+        const offset = filters.offset || 0;
+        query = query.range(offset, offset + limit - 1);
+      }
+
+      // Always order by created_at DESC (most recent first)
+      query = query.order("created_at", { ascending: false });
+
+      const { data, error, count } = await query;
+
+      if (error) throw error;
+
+      const totalCount = count || 0;
+      const limit = filters?.limit || 50;
+      const offset = filters?.offset || 0;
+      const currentPage = Math.floor(offset / limit) + 1;
+      const totalPages = Math.ceil(totalCount / limit);
+
+      return {
+        data: data || [],
+        totalCount,
+        hasMore: offset + limit < totalCount,
+        currentPage,
+        totalPages,
+      };
+    },
+
+    /**
+     * Get audit log by ID
+     * @param auditId - UUID of audit log
+     * @returns Promise with single audit log
+     */
+    byId: (auditId: string) =>
+      supabase.from("audit_logs").select("*").eq("audit_id", auditId).single(),
+
+    /**
+     * Get audit trail for a specific record
+     * @param tableName - Table name (bookings, units, etc)
+     * @param recordId - UUID of record
+     * @returns Promise with audit logs for this record
+     */
+    byRecord: async (tableName: string, recordId: string) => {
+      const { data, error } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .eq("table_name", tableName)
+        .eq("record_id", recordId)
+        .order("created_at", { ascending: true }); // Chronological order for history
+
+      if (error) throw error;
+      return data || [];
+    },
+
+    /**
+     * Get audit logs by user
+     * @param userEmail - User email to filter by
+     * @param limit - Maximum logs to return (default 100)
+     * @returns Promise with user's audit logs
+     */
+    byUser: async (userEmail: string, limit = 100) => {
+      const { data, error } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .eq("user_email", userEmail)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data || [];
+    },
+
+    /**
+     * Get recent audit logs (last N logs)
+     * @param limit - Number of logs to return (default 50)
+     * @returns Promise with recent audit logs
+     */
+    recent: async (limit = 50) => {
+      const { data, error } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data || [];
+    },
+
+    /**
+     * Get audit statistics
+     * @param filters - Optional filters for stats calculation
+     * @returns Promise with aggregated statistics
+     */
+    stats: async (filters?: { startDate?: string; endDate?: string }) => {
+      // Build base query
+      let baseQuery = supabase.from("audit_logs").select("*");
+
+      // Apply date filters if provided
+      if (filters?.startDate) {
+        baseQuery = baseQuery.gte("created_at", filters.startDate);
+      }
+      if (filters?.endDate) {
+        baseQuery = baseQuery.lte("created_at", filters.endDate);
+      }
+
+      const { data, error } = await baseQuery;
+      if (error) throw error;
+
+      const logs = data || [];
+
+      // Calculate statistics
+      const byTable: Record<string, number> = {};
+      const byAction: Record<string, number> = { INSERT: 0, UPDATE: 0, DELETE: 0 };
+      const userCounts: Record<string, number> = {};
+      const dailyCounts: Record<string, number> = {};
+
+      logs.forEach((log) => {
+        // By table
+        byTable[log.table_name] = (byTable[log.table_name] || 0) + 1;
+
+        // By action
+        byAction[log.action] = (byAction[log.action] || 0) + 1;
+
+        // By user
+        const email = log.user_email || "system";
+        userCounts[email] = (userCounts[email] || 0) + 1;
+
+        // By date (for recent activity)
+        const date = new Date(log.created_at).toISOString().split("T")[0];
+        dailyCounts[date] = (dailyCounts[date] || 0) + 1;
+      });
+
+      // Top users (sorted by count)
+      const byUser = Object.entries(userCounts)
+        .map(([email, count]) => ({ email, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      // Recent activity (last 7 days)
+      const recentActivity = Object.entries(dailyCounts)
+        .map(([date, count]) => ({ date, count }))
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, 7);
+
+      return {
+        totalLogs: logs.length,
+        byTable,
+        byAction,
+        byUser,
+        recentActivity,
+      };
+    },
+
+    /**
+     * Create manual audit log entry (Layer 2 logging)
+     * Used for application-level context enrichment
+     *
+     * @param context - Audit event context
+     * @returns Promise with created audit log
+     */
+    create: async (context: AuditEventContext) => {
+      // Get current user from Supabase Auth
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      // Build audit log entry
+      // IMPORTANT: Layer 2 always uses action='INSERT' and source='app'
+      const auditLog: Database["public"]["Tables"]["audit_logs"]["Insert"] = {
+        // Core fields
+        table_name: context.tableName,
+        record_id: context.recordId || null,
+        record_pk: (context.recordPk as Json) || null,
+        correlation_id: context.correlationId || null,
+        action: "INSERT" as const, // Layer 2 convention: always INSERT
+        event_type: context.eventType || null,
+        source: "app" as const, // Mark as Layer 2 (application logging)
+
+        // User context
+        user_id: user?.id || null,
+        user_email: user?.email || null,
+        user_role: (user?.user_metadata?.role as string) || null,
+
+        // Data capture (optional for app events)
+        old_data: (context.oldData as Json) || null,
+        new_data: (context.newData as Json) || null,
+        changed_fields: null, // Layer 2 logs don't track field-level changes
+
+        // Business context (POPULATED IN DEDICATED COLUMNS, not metadata)
+        description: context.description,
+        category: context.category,
+        severity: context.severity || "INFO",
+
+        // Additional context (use metadata for extra fields only)
+        metadata: (context.metadata as Json) || null,
+
+        // Client context
+        ip_address: null, // Client-side can't reliably get IP
+        user_agent:
+          typeof navigator !== "undefined" && navigator.userAgent ? navigator.userAgent : null,
+      };
+
+      return supabase.from("audit_logs").insert(auditLog).select().single();
+    },
+
+    /**
+     * Search audit logs by text (searches in description and metadata)
+     * @param searchTerm - Text to search for
+     * @param filters - Optional additional filters
+     * @returns Promise with matching audit logs
+     */
+    search: async (
+      searchTerm: string,
+      filters?: { startDate?: string; endDate?: string; tableName?: string; limit?: number }
+    ) => {
+      let query = supabase.from("audit_logs").select("*");
+
+      // Apply additional filters
+      if (filters?.startDate) {
+        query = query.gte("created_at", filters.startDate);
+      }
+      if (filters?.endDate) {
+        query = query.lte("created_at", filters.endDate);
+      }
+      if (filters?.tableName) {
+        query = query.eq("table_name", filters.tableName);
+      }
+
+      // Fetch data and filter client-side (Supabase JSONB search is complex)
+      const { data, error } = await query
+        .order("created_at", { ascending: false })
+        .limit(filters?.limit || 100);
+
+      if (error) throw error;
+
+      const logs = data || [];
+      const searchLower = searchTerm.toLowerCase();
+
+      // Client-side filtering for flexible search
+      return logs.filter((log) => {
+        // Search in user email
+        if (log.user_email?.toLowerCase().includes(searchLower)) return true;
+
+        // Search in table name
+        if (log.table_name.toLowerCase().includes(searchLower)) return true;
+
+        // Search in description column (Layer 2 logs)
+        if (log.description?.toLowerCase().includes(searchLower)) return true;
+
+        // Search in changed fields
+        if (log.changed_fields?.some((field) => field.toLowerCase().includes(searchLower)))
+          return true;
+
+        // Search in metadata (for additional context)
+        if (log.metadata && JSON.stringify(log.metadata).toLowerCase().includes(searchLower))
+          return true;
+
+        return false;
+      });
+    },
+
+    /**
+     * Archive old audit logs using archive-move pattern
+     * @param beforeDate - ISO date string, archive logs before this date
+     * @returns Promise with archive result (count of moved logs)
+     */
+    archiveOld: async (beforeDate: string): Promise<{ count: number; error?: string }> => {
+      try {
+        // Call the archive_audit_logs function (created in migration 008)
+        const { data, error } = await supabase.rpc("archive_audit_logs", {
+          cutoff_date: beforeDate,
+        });
+
+        if (error) throw error;
+
+        return { count: data || 0 };
+      } catch (error) {
+        console.error("[Audit] Archive failed:", error);
+        return { count: 0, error: String(error) };
+      }
+    },
+
+    /**
+     * Keyset pagination (cursor-based) - Efficient for large datasets
+     * @param cursor - Cursor object from previous page
+     * @param limit - Number of logs per page
+     * @param filters - Optional additional filters
+     * @returns Promise with page data and next cursor
+     */
+    keysetPage: async (
+      cursor?: { created_at: string; audit_id: string } | null,
+      limit = 50,
+      filters?: { tableName?: string; userEmail?: string; action?: string }
+    ) => {
+      let query = supabase.from("audit_logs").select("*");
+
+      // Apply filters
+      if (filters) {
+        if (filters.tableName) query = query.eq("table_name", filters.tableName);
+        if (filters.userEmail) query = query.eq("user_email", filters.userEmail);
+        if (filters.action) query = query.eq("action", filters.action);
+      }
+
+      // Apply cursor (keyset pagination)
+      if (cursor) {
+        // Use composite key comparison
+        query = query.or(
+          `created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},audit_id.lt.${cursor.audit_id})`
+        );
+      }
+
+      // Order by created_at DESC, audit_id DESC
+      query = query
+        .order("created_at", { ascending: false })
+        .order("audit_id", { ascending: false })
+        .limit(limit);
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const logs = data || [];
+      const hasMore = logs.length === limit;
+
+      // Generate next cursor from last row
+      const nextCursor =
+        hasMore && logs.length > 0
+          ? {
+              created_at: logs[logs.length - 1].created_at,
+              audit_id: logs[logs.length - 1].audit_id,
+            }
+          : null;
+
+      return {
+        data: logs,
+        nextCursor,
+        hasMore,
+      };
+    },
+
+    /**
+     * Get audit trail for a specific record using composite primary key
+     * Supports tables with composite keys where record_id is not sufficient
+     *
+     * @param tableName - Table name (bookings, units, etc)
+     * @param recordPk - Composite primary key as JSON object
+     * @returns Promise with audit logs for this record
+     *
+     * @example
+     * // For a composite key like { booking_date: '2024-01-15', room_id: '3' }
+     * const logs = await db.auditLogs.byRecordPk('room_availability', {
+     *   booking_date: '2024-01-15',
+     *   room_id: '3'
+     * });
+     */
+    byRecordPk: async (tableName: string, recordPk: Record<string, unknown>) => {
+      const { data, error } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .eq("table_name", tableName)
+        .contains("record_pk", recordPk)
+        .order("created_at", { ascending: true }); // Chronological order for history
+
+      if (error) throw error;
+      return data || [];
+    },
   },
 };
 

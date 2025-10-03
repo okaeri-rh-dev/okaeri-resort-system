@@ -86,6 +86,15 @@ export {
   type ConfirmDialogState,
 } from "./useUIStore";
 
+// Audit Store
+export {
+  useAuditStore,
+  useAuditFilters,
+  useSelectedAuditLog,
+  useAuditTableState,
+  QuickFilterPreset,
+} from "./useAuditStore";
+
 // ============================================
 // COMBINED HOOKS
 // ============================================

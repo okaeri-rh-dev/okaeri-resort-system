@@ -147,6 +147,10 @@ Thumbs.db
 *.bak
 *.backup
 
+# Database migration backups (contains sensitive production data)
+database/migrations/backups/
+*.sql.backup
+
 # Test artifacts and results
 test-results/
 test-results.json

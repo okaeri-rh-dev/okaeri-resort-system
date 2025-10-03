@@ -5,7 +5,11 @@ pages_build_output_dir = "dist"
 # Production environment variables
 [env.production.vars]
 ENVIRONMENT = "production"
+# SUPABASE_URL and SUPABASE_ANON_KEY should be set as secrets via:
+# npx wrangler secret put SUPABASE_URL
+# npx wrangler secret put SUPABASE_ANON_KEY
 
 # Preview environment variables
 [env.preview.vars]
 ENVIRONMENT = "preview"
+# SUPABASE_URL and SUPABASE_ANON_KEY should be set as secrets for preview too

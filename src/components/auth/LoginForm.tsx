@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { auth } from "@/lib/auth";
+import { signInWithAudit } from "@/lib/auth-audit";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -19,7 +19,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     setLoading(true);
 
     try {
-      await auth.signIn(email, password);
+      await signInWithAudit(email, password);
       toast.success("Logged in successfully!");
       onSuccess();
     } catch (error) {
