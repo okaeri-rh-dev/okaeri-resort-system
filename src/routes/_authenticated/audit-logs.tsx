@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield } from "lucide-react";
 import { AuditStatsPanel } from "@/components/audit/AuditStatsPanel";
 import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
+import { AuditFilters } from "@/components/audit/AuditFilters";
 import { useAuditStore } from "@/stores/useAuditStore";
 import { useAuditStats } from "@/lib/audit-hooks";
 import { isCurrentUserOwner } from "@/lib/audit-logger";
@@ -105,7 +106,7 @@ function AuditLogsPage() {
         {/* Statistics Panel */}
         <AuditStatsPanel stats={stats} isLoading={statsLoading} />
 
-        {/* Filters Section - Placeholder for Phase 3C */}
+        {/* Filters Section */}
         {showFilters && (
           <Card>
             <CardHeader>
@@ -113,9 +114,7 @@ function AuditLogsPage() {
               <CardDescription>Filter audit logs by date, user, table, or action</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-sm text-muted-foreground italic">
-                Filter component will be implemented in Phase 3C
-              </div>
+              <AuditFilters />
             </CardContent>
           </Card>
         )}
