@@ -24,7 +24,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+
+    /* Cloudflare Workers types */
+    "types": ["@cloudflare/workers-types"]
   },
   "include": ["src", "database.types.ts"],
   "exclude": [

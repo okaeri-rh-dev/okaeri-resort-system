@@ -46,6 +46,7 @@ export type Database = {
           guest_id: string | null;
           guest_name: string;
           internal_notes: string | null;
+          is_guest_booking: boolean;
           num_guests: number;
           payment_method: string | null;
           payment_proof_url: string | null;
@@ -54,6 +55,8 @@ export type Database = {
           total_amount: number;
           unit_id: string;
           updated_at: string | null;
+          upload_expires_at: string | null;
+          upload_status: "pending" | "uploaded" | "verified" | "rejected" | null;
         };
         Insert: {
           booking_id?: string;
@@ -67,6 +70,7 @@ export type Database = {
           guest_id?: string | null;
           guest_name: string;
           internal_notes?: string | null;
+          is_guest_booking?: boolean;
           num_guests: number;
           payment_method?: string | null;
           payment_proof_url?: string | null;
@@ -75,6 +79,8 @@ export type Database = {
           total_amount: number;
           unit_id: string;
           updated_at?: string | null;
+          upload_expires_at?: string | null;
+          upload_status?: "pending" | "uploaded" | "verified" | "rejected" | null;
         };
         Update: {
           booking_id?: string;
@@ -88,6 +94,7 @@ export type Database = {
           guest_id?: string | null;
           guest_name?: string;
           internal_notes?: string | null;
+          is_guest_booking?: boolean;
           num_guests?: number;
           payment_method?: string | null;
           payment_proof_url?: string | null;
@@ -96,6 +103,8 @@ export type Database = {
           total_amount?: number;
           unit_id?: string;
           updated_at?: string | null;
+          upload_expires_at?: string | null;
+          upload_status?: "pending" | "uploaded" | "verified" | "rejected" | null;
         };
         Relationships: [
           {
