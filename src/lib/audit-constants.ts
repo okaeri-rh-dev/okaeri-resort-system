@@ -258,24 +258,10 @@ export const AUDIT_CACHE_CONFIG = {
 // ============================================
 
 /**
- * Get list of owner emails from environment
+ * @deprecated Use getUserAuditRole() from audit-roles.ts instead
+ * Owner emails are now managed in the app_roles table, not environment variables.
+ * This section has been removed as part of Phase 4 migration.
  */
-export function getOwnerEmails(): string[] {
-  const ownerEmailsEnv = import.meta.env.VITE_OWNER_EMAILS;
-  if (!ownerEmailsEnv) {
-    console.warn("VITE_OWNER_EMAILS not configured. Audit logs will have no owners.");
-    return [];
-  }
-  return ownerEmailsEnv.split(",").map((email) => email.trim());
-}
-
-/**
- * Check if an email is an owner
- */
-export function isOwnerEmail(email: string): boolean {
-  const owners = getOwnerEmails();
-  return owners.includes(email);
-}
 
 /**
  * Debug flag for audit system

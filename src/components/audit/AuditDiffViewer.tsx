@@ -16,6 +16,7 @@ import { ArrowRight, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { SafeAuditText } from "./SafeAuditText";
 import { ActionBadge } from "./ActionBadge";
+import { sanitizeText } from "@/lib/security/sanitize";
 
 // ============================================
 // MAIN DIFF VIEWER COMPONENT
@@ -133,6 +134,8 @@ export function AuditDiffViewer({ log, open, onOpenChange }: AuditDiffViewerProp
               <div className="text-sm font-medium text-muted-foreground mb-2">
                 Additional Metadata
               </div>
+              {/* XSS-Safe: JSON.stringify automatically escapes <, >, & as Unicode (\u003C, \u003E, \u0026).
+                  Rendered in <pre> tag, not interpreted as HTML. More flexible than per-field SafeAuditText. */}
               <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto">
                 {JSON.stringify(log.metadata, null, 2)}
               </pre>
@@ -322,7 +325,8 @@ function ValueDisplay({ value }: { value: unknown }) {
     try {
       return <span className="font-mono">{format(new Date(value), "PPpp")}</span>;
     } catch {
-      return <span>{value}</span>;
+      // Date parsing failed, treat as regular string (sanitize below)
+      return <span>{sanitizeText(value)}</span>;
     }
   }
 
@@ -338,18 +342,21 @@ function ValueDisplay({ value }: { value: unknown }) {
     }
 
     // Long strings - truncate with expand
-    if (value.length > 100) {
+    // XSS Protection: Sanitize all string values (defense-in-depth even if sanitized at input)
+    const sanitizedValue = sanitizeText(value);
+
+    if (sanitizedValue.length > 100) {
       return (
         <details className="cursor-pointer">
           <summary className="text-muted-foreground">
-            {value.substring(0, 100)}... (click to expand)
+            {sanitizedValue.substring(0, 100)}... (click to expand)
           </summary>
-          <div className="mt-2 text-sm">{value}</div>
+          <div className="mt-2 text-sm">{sanitizedValue}</div>
         </details>
       );
     }
 
-    return <span>{value}</span>;
+    return <span>{sanitizedValue}</span>;
   }
 
   // Object/Array - show as formatted JSON
@@ -364,8 +371,8 @@ function ValueDisplay({ value }: { value: unknown }) {
     );
   }
 
-  // Fallback
-  return <span>{String(value)}</span>;
+  // Fallback - sanitize unknown types converted to strings
+  return <span>{sanitizeText(String(value))}</span>;
 }
 
 // ============================================

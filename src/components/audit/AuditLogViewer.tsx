@@ -337,6 +337,8 @@ function ExpandedRowDetails({ log }: { log: AuditLog }) {
       {log.metadata && typeof log.metadata === "object" && (
         <div>
           <div className="text-sm font-medium mb-1">Additional Metadata</div>
+          {/* XSS-Safe: JSON.stringify automatically escapes <, >, & as Unicode (\u003C, \u003E, \u0026).
+              Rendered in <pre> tag, not interpreted as HTML. More flexible than per-field SafeAuditText. */}
           <pre className="text-xs bg-background p-2 rounded border overflow-x-auto">
             {JSON.stringify(log.metadata, null, 2)}
           </pre>

@@ -236,6 +236,107 @@ export const db = {
             .lt("cache_expires_at", new Date().toISOString()),
   },
 
+  // App Roles - User role management for audit trail access control
+  appRoles: {
+    /**
+     * Get all app roles
+     * @returns Promise with all app roles
+     */
+    all: () => supabase.from("app_roles").select("*"),
+
+    /**
+     * Get a specific user's role
+     * @param userId - UUID of user
+     * @returns Promise with user's role or null
+     */
+    byUserId: (userId: string) =>
+      supabase.from("app_roles").select("*").eq("user_id", userId).eq("is_active", true).single(),
+
+    /**
+     * Get all users with a specific role
+     * @param role - Role to filter by
+     * @returns Promise with users having the specified role
+     */
+    byRole: (role: "admin" | "owner" | "manager" | "staff") =>
+      supabase.from("app_roles").select("*").eq("role", role).eq("is_active", true),
+
+    /**
+     * Get all active roles
+     * @returns Promise with all active roles
+     */
+    active: () => supabase.from("app_roles").select("*").eq("is_active", true),
+
+    /**
+     * Grant a role to a user
+     * @param data - Role assignment data
+     * @returns Promise with created role assignment
+     */
+    create: (data: Database["public"]["Tables"]["app_roles"]["Insert"]) =>
+      supabase.from("app_roles").insert(data).select().single(),
+
+    /**
+     * Update a user's role
+     * @param userId - UUID of user whose role to update
+     * @param data - Updated role data
+     * @returns Promise with updated role
+     */
+    update: (userId: string, data: Database["public"]["Tables"]["app_roles"]["Update"]) =>
+      supabase.from("app_roles").update(data).eq("user_id", userId).select().single(),
+
+    /**
+     * Revoke a user's role (hard delete)
+     * @param userId - UUID of user whose role to revoke
+     * @returns Promise with deletion result
+     */
+    delete: (userId: string) => supabase.from("app_roles").delete().eq("user_id", userId),
+
+    /**
+     * Deactivate a user's role (soft delete)
+     * @param userId - UUID of user whose role to deactivate
+     * @returns Promise with updated role
+     */
+    deactivate: (userId: string) =>
+      supabase
+        .from("app_roles")
+        .update({ is_active: false })
+        .eq("user_id", userId)
+        .select()
+        .single(),
+
+    /**
+     * Reactivate a user's role
+     * @param userId - UUID of user whose role to reactivate
+     * @returns Promise with updated role
+     */
+    reactivate: (userId: string) =>
+      supabase
+        .from("app_roles")
+        .update({ is_active: true })
+        .eq("user_id", userId)
+        .select()
+        .single(),
+
+    /**
+     * Count users by role
+     * @returns Promise with role counts
+     */
+    countByRole: async () => {
+      const { data, error } = await supabase.from("app_roles").select("role").eq("is_active", true);
+
+      if (error) return { data: null, error };
+
+      const counts = data?.reduce(
+        (acc, { role }) => {
+          acc[role] = (acc[role] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
+
+      return { data: counts, error: null };
+    },
+  },
+
   // Audit Logs - Query and manage audit trail data
   auditLogs: {
     /**

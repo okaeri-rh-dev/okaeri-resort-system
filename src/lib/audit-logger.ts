@@ -8,6 +8,7 @@ import {
   type AuditEventContext,
 } from "../../database.types";
 import { redactSensitiveData, isValidAuditTable, auditDebugLog } from "./audit-constants";
+import { getUserAuditRole as getUserRole, canAccessAuditTrail as canAccess } from "./audit-roles";
 
 // ============================================
 // MAIN AUDIT LOGGING FUNCTION
@@ -417,15 +418,30 @@ export async function getCurrentUserContext(): Promise<{
 
 /**
  * Check if current user is an owner (full audit access)
- * @returns true if user is owner
+ * Now uses app_roles table instead of environment variables
+ * @returns true if user is owner or admin
+ * @deprecated Use getUserAuditRole() or canAccessAuditTrail() instead
  */
 export async function isCurrentUserOwner(): Promise<boolean> {
-  const context = await getCurrentUserContext();
-  if (!context || !context.email) return false;
-
-  const ownerEmails = import.meta.env.VITE_OWNER_EMAILS?.split(",").map((e) => e.trim()) || [];
-  return ownerEmails.includes(context.email);
+  const role = await getUserRole();
+  return role === "owner" || role === "admin";
 }
+
+/**
+ * Get current user's audit role
+ * Re-exported from audit-roles module for convenience
+ *
+ * @returns User's audit role (admin, owner, manager, staff) or null
+ */
+export const getUserAuditRole = getUserRole;
+
+/**
+ * Check if user can access audit trail
+ * Re-exported from audit-roles module for convenience
+ *
+ * @returns true if user has any audit role
+ */
+export const canAccessAuditTrail = canAccess;
 
 // ============================================
 // WORKERS IP CAPTURE (Phase 2E)
