@@ -53,6 +53,7 @@ jspm_packages/
 .env.test.local
 .env.production.local
 .env.*
+!.env.example
 
 # Parcel-bundler cache
 .cache/

@@ -252,6 +252,8 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
         payment_status: "Pending",
         special_requests: data.special_requests,
         is_guest_booking: true, // Identifies guest bookings
+        upload_status: "pending", // Set initial upload status
+        upload_expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour from now
       })
       .select()
       .single();
