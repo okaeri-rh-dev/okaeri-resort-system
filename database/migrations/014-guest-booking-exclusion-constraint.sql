@@ -21,14 +21,14 @@ EXCLUDE USING gist (
   -- Apply constraint to:
   -- 1. All authenticated user bookings (is_guest_booking = false)
   -- 2. Guest bookings that are confirmed/active
-  (is_guest_booking = false AND booking_status NOT IN ('Cancelled', 'NoShow')) OR
+  (is_guest_booking = false AND booking_status != 'Cancelled') OR
   (is_guest_booking = true AND booking_status IN ('Confirmed', 'CheckedIn', 'CheckedOut'))
 );
 
 -- Create index to improve constraint performance
 CREATE INDEX IF NOT EXISTS idx_bookings_exclusion_helper
 ON bookings (unit_id, check_in, check_out)
-WHERE booking_status NOT IN ('Cancelled', 'NoShow');
+WHERE booking_status != 'Cancelled';
 
 -- Add comment explaining the constraint
 COMMENT ON CONSTRAINT no_overlapping_bookings ON bookings IS
@@ -49,10 +49,10 @@ BEGIN
     AND b1.check_out > b2.check_in
   WHERE
     -- Check for violations based on constraint conditions
-    ((b1.is_guest_booking = false AND b1.booking_status NOT IN ('Cancelled', 'NoShow')) OR
+    ((b1.is_guest_booking = false AND b1.booking_status != 'Cancelled') OR
      (b1.is_guest_booking = true AND b1.booking_status IN ('Confirmed', 'CheckedIn', 'CheckedOut')))
     AND
-    ((b2.is_guest_booking = false AND b2.booking_status NOT IN ('Cancelled', 'NoShow')) OR
+    ((b2.is_guest_booking = false AND b2.booking_status != 'Cancelled') OR
      (b2.is_guest_booking = true AND b2.booking_status IN ('Confirmed', 'CheckedIn', 'CheckedOut')));
 
   IF violation_count > 0 THEN

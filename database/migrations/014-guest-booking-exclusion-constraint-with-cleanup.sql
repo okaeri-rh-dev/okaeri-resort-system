@@ -21,9 +21,9 @@ WHERE EXISTS (
     AND b2.booking_id != b.booking_id
     AND b.check_in < b2.check_out
     AND b.check_out > b2.check_in
-    AND ((b.is_guest_booking = false AND b.booking_status NOT IN ('Cancelled', 'NoShow')) OR
+    AND ((b.is_guest_booking = false AND b.booking_status != 'Cancelled') OR
          (b.is_guest_booking = true AND b.booking_status IN ('Confirmed', 'CheckedIn', 'CheckedOut')))
-    AND ((b2.is_guest_booking = false AND b2.booking_status NOT IN ('Cancelled', 'NoShow')) OR
+    AND ((b2.is_guest_booking = false AND b2.booking_status != 'Cancelled') OR
          (b2.is_guest_booking = true AND b2.booking_status IN ('Confirmed', 'CheckedIn', 'CheckedOut')))
 )
 ON CONFLICT DO NOTHING; -- Ignore if already backed up
@@ -32,7 +32,7 @@ ON CONFLICT DO NOTHING; -- Ignore if already backed up
 UPDATE bookings
 SET
   booking_status = 'Cancelled',
-  notes = COALESCE(notes, '') || ' [AUTO-CANCELLED: Duplicate booking conflict resolved on ' || NOW()::date || ']',
+  internal_notes = COALESCE(internal_notes, '') || ' [AUTO-CANCELLED: Duplicate booking conflict resolved on ' || NOW()::date || ']',
   updated_at = NOW()
 WHERE booking_id IN (
   SELECT b2.booking_id
@@ -43,10 +43,10 @@ WHERE booking_id IN (
     AND b1.check_out > b2.check_in
     AND b1.created_at < b2.created_at -- Keep older booking, cancel newer
   WHERE
-    ((b1.is_guest_booking = false AND b1.booking_status NOT IN ('Cancelled', 'NoShow')) OR
+    ((b1.is_guest_booking = false AND b1.booking_status != 'Cancelled') OR
      (b1.is_guest_booking = true AND b1.booking_status IN ('Confirmed', 'CheckedIn', 'CheckedOut')))
     AND
-    ((b2.is_guest_booking = false AND b2.booking_status NOT IN ('Cancelled', 'NoShow')) OR
+    ((b2.is_guest_booking = false AND b2.booking_status != 'Cancelled') OR
      (b2.is_guest_booking = true AND b2.booking_status IN ('Confirmed', 'CheckedIn', 'CheckedOut')))
 );
 
@@ -65,14 +65,14 @@ EXCLUDE USING gist (
   -- Apply constraint to:
   -- 1. All authenticated user bookings (is_guest_booking = false)
   -- 2. Guest bookings that are confirmed/active
-  (is_guest_booking = false AND booking_status NOT IN ('Cancelled', 'NoShow')) OR
+  (is_guest_booking = false AND booking_status != 'Cancelled') OR
   (is_guest_booking = true AND booking_status IN ('Confirmed', 'CheckedIn', 'CheckedOut'))
 );
 
 -- Step 6: Create index to improve constraint performance
 CREATE INDEX IF NOT EXISTS idx_bookings_exclusion_helper
 ON bookings (unit_id, check_in, check_out)
-WHERE booking_status NOT IN ('Cancelled', 'NoShow');
+WHERE booking_status != 'Cancelled';
 
 -- Step 7: Add comment explaining the constraint
 COMMENT ON CONSTRAINT no_overlapping_bookings ON bookings IS
@@ -88,7 +88,7 @@ BEGIN
   -- Count how many bookings were cancelled to resolve conflicts
   SELECT COUNT(*) INTO cancelled_count
   FROM bookings
-  WHERE notes LIKE '%AUTO-CANCELLED: Duplicate booking conflict%';
+  WHERE internal_notes LIKE '%AUTO-CANCELLED: Duplicate booking conflict%';
 
   IF cancelled_count > 0 THEN
     RAISE NOTICE 'Resolved % conflicting bookings by cancelling duplicates.', cancelled_count;
@@ -102,10 +102,10 @@ BEGIN
     AND b1.check_in < b2.check_out
     AND b1.check_out > b2.check_in
   WHERE
-    ((b1.is_guest_booking = false AND b1.booking_status NOT IN ('Cancelled', 'NoShow')) OR
+    ((b1.is_guest_booking = false AND b1.booking_status != 'Cancelled') OR
      (b1.is_guest_booking = true AND b1.booking_status IN ('Confirmed', 'CheckedIn', 'CheckedOut')))
     AND
-    ((b2.is_guest_booking = false AND b2.booking_status NOT IN ('Cancelled', 'NoShow')) OR
+    ((b2.is_guest_booking = false AND b2.booking_status != 'Cancelled') OR
      (b2.is_guest_booking = true AND b2.booking_status IN ('Confirmed', 'CheckedIn', 'CheckedOut')));
 
   IF violation_count > 0 THEN
