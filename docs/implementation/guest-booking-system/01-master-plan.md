@@ -646,6 +646,7 @@ All guest booking database operations are **automatically captured** by existing
 - **Payment Records**: Payment proof metadata captured in audit trail
 
 **Key Benefits**:
+
 - Zero additional code required - triggers already active
 - Atomic capture - never miss a database change
 - Tamper-proof - database-level logging can't be bypassed
@@ -671,23 +672,23 @@ await logAuditEvent({
     ip_address: request.ip,
     user_agent: request.headers.get("user-agent"),
     turnstile_verified: true,
-    source: "guest_portal"
-  }
+    source: "guest_portal",
+  },
 });
 ```
 
 #### Guest Booking Audit Events
 
-| Event Type | Layer | Trigger | Data Captured |
-|------------|-------|---------|---------------|
-| `guest_submission` | App | API call | IP, email, unit, dates, Turnstile status |
-| `booking_created` | DB | INSERT | Full booking record with `is_guest_booking` |
-| `upload_initiated` | App | Signed URL request | File metadata, expiry time |
-| `upload_completed` | App | Confirmation API | File size, upload duration |
-| `admin_review_started` | App | Admin opens booking | Admin email, review timestamp |
-| `dates_adjusted` | DB | UPDATE | Old dates, new dates, admin ID |
-| `booking_confirmed` | Both | Status change | Status transition, admin approval |
-| `email_sent` | App | Email service | Recipient, template, send status |
+| Event Type             | Layer | Trigger             | Data Captured                               |
+| ---------------------- | ----- | ------------------- | ------------------------------------------- |
+| `guest_submission`     | App   | API call            | IP, email, unit, dates, Turnstile status    |
+| `booking_created`      | DB    | INSERT              | Full booking record with `is_guest_booking` |
+| `upload_initiated`     | App   | Signed URL request  | File metadata, expiry time                  |
+| `upload_completed`     | App   | Confirmation API    | File size, upload duration                  |
+| `admin_review_started` | App   | Admin opens booking | Admin email, review timestamp               |
+| `dates_adjusted`       | DB    | UPDATE              | Old dates, new dates, admin ID              |
+| `booking_confirmed`    | Both  | Status change       | Status transition, admin approval           |
+| `email_sent`           | App   | Email service       | Recipient, template, send status            |
 
 #### Admin Benefits
 
@@ -860,6 +861,6 @@ The system can be implemented incrementally, tested thoroughly, and scaled based
 ---
 
 _Document Version: 2.0.0 (Cloudflare Free-Tier Adaptation)_
-_Last Updated: January 2025_
-_Next Review: April 2025_
+_Last Updated: October 2025_
+_Next Review: January 2026_
 _Platform: Cloudflare Pages + Supabase Free Tier_

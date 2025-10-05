@@ -1,19 +1,22 @@
 import { z } from "zod";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
-import { checkKVRateLimit } from "@/lib/kv-rate-limit";
-import { getClientIp } from "@/lib/turnstile";
+import { checkKVRateLimit, createAdvancedFingerprint } from "@/lib/kv-rate-limit";
+import { getClientIp, verifyTurnstile } from "@/lib/turnstile";
 
 // Environment type
 interface Env {
   SUPABASE_SERVICE_ROLE_KEY: string;
   VITE_SUPABASE_URL: string;
   RATE_LIMIT_KV: KVNamespace;
+  TURNSTILE_SECRET_KEY?: string;
+  ENVIRONMENT: "production" | "development";
 }
 
 // Request validation schema
 const statusCheckSchema = z.object({
   booking_reference: z.string().regex(/^BK-\d{4}-[A-Z0-9]{6}$/),
   email: z.string().email().toLowerCase(),
+  turnstile_token: z.string().optional(), // Optional, required after rate limiting
 });
 
 // CORS headers helper
@@ -48,19 +51,27 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
   const corsHeaders = getCorsHeaders(request.headers.get("Origin"));
 
   try {
-    // Rate limiting (20 status checks per hour per IP)
+    // Enhanced rate limiting with fingerprinting
     const clientIp = getClientIp(request);
-    const rateLimitResult = await checkKVRateLimit(env.RATE_LIMIT_KV, clientIp, {
+    const fingerprint = await createAdvancedFingerprint(request);
+
+    // Use fingerprint for more accurate rate limiting
+    const rateLimitKey = `status:${fingerprint}`;
+    const rateLimitResult = await checkKVRateLimit(env.RATE_LIMIT_KV, rateLimitKey, {
       limit: 20,
       windowSeconds: 3600,
     });
 
+    // Check if CAPTCHA is required (after 20 attempts)
+    const requiresCaptcha = !rateLimitResult.allowed && env.ENVIRONMENT === "production";
+
     if (!rateLimitResult.allowed) {
       return new Response(
         JSON.stringify({
-          error: "Too many requests",
-          message: "Please wait before checking status again",
+          error: "RATE_LIMITED",
+          message: "Too many status checks. Please complete the security check below.",
           retryAfter: rateLimitResult.retryAfter,
+          requiresCaptcha, // Signal frontend to show Turnstile
         }),
         {
           status: 429,
@@ -68,6 +79,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
             ...corsHeaders,
             "Content-Type": "application/json",
             "Retry-After": String(rateLimitResult.retryAfter),
+            "X-RateLimit-Remaining": "0",
           },
         }
       );
@@ -90,7 +102,32 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       );
     }
 
-    const { booking_reference, email } = validationResult.data;
+    const { booking_reference, email, turnstile_token } = validationResult.data;
+
+    // Optional Turnstile verification for high-volume users
+    if (turnstile_token && env.TURNSTILE_SECRET_KEY) {
+      const isValid = await verifyTurnstile(turnstile_token, env.TURNSTILE_SECRET_KEY, {
+        remoteip: clientIp,
+        expectedHostname: new URL(request.url).hostname,
+        expectedAction: "status-check",
+      });
+
+      if (!isValid) {
+        return new Response(
+          JSON.stringify({
+            error: "CAPTCHA_FAILED",
+            message: "Security verification failed. Please try again.",
+          }),
+          {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      // Reset rate limit on successful CAPTCHA (give them more attempts)
+      await env.RATE_LIMIT_KV.delete(rateLimitKey);
+    }
 
     // Create Supabase admin client
     const supabaseAdmin = createSupabaseAdmin(env);

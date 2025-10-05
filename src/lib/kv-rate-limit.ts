@@ -73,6 +73,56 @@ export function createClientFingerprint(ip: string, userAgent?: string, headers?
   return components.join("|").substring(0, 64);
 }
 
+/**
+ * Advanced fingerprinting with SHA-256 hash
+ * Creates a more unique identifier using multiple browser characteristics
+ */
+export async function createAdvancedFingerprint(request: Request): Promise<string> {
+  const headers = request.headers;
+
+  // Extract client IP from Cloudflare headers
+  const ip =
+    headers.get("CF-Connecting-IP") || headers.get("X-Forwarded-For")?.split(",")[0] || "unknown";
+
+  // Collect fingerprinting factors
+  const factors = [
+    ip,
+    headers.get("User-Agent") || "",
+    headers.get("Accept-Language") || "",
+    headers.get("Accept-Encoding") || "",
+    headers.get("Accept") || "",
+    headers.get("Sec-CH-UA") || "", // Client hints
+    headers.get("Sec-CH-UA-Platform") || "",
+    headers.get("Sec-CH-UA-Mobile") || "",
+    headers.get("DNT") || "",
+    headers.get("Connection") || "",
+    // Add CF-specific headers for better accuracy
+    headers.get("CF-IPCountry") || "",
+    headers.get("CF-Ray") || "",
+  ].filter(Boolean); // Remove empty values
+
+  // Create SHA-256 hash for consistent length and uniqueness
+  const encoder = new TextEncoder();
+  const data = encoder.encode(factors.join("|"));
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+
+  // Return first 16 characters for efficiency
+  return hashHex.substring(0, 16);
+}
+
+/**
+ * Get client IP from Cloudflare headers
+ */
+export function getClientIp(request: Request): string {
+  return (
+    request.headers.get("CF-Connecting-IP") ||
+    request.headers.get("X-Forwarded-For")?.split(",")[0] ||
+    "unknown"
+  );
+}
+
 // Usage example in Cloudflare Function:
 // const result = await checkKVRateLimit(env.RATE_LIMIT_KV, clientIp, {
 //   limit: 5,
