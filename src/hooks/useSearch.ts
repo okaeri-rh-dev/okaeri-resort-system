@@ -442,7 +442,7 @@ export function useUnitAvailabilitySearch(options: UseUnitAvailabilitySearchOpti
 
       if (error) throw new Error(handleSupabaseError(error));
 
-      let units = data || [];
+      const units = data || [];
 
       return units;
     },

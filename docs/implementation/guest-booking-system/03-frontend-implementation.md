@@ -1683,6 +1683,291 @@ xhr.addEventListener("timeout", () => {
 });
 ```
 
+## Audit Trail Integration
+
+The frontend components trigger audit events through the backend API, and administrators can view the complete audit trail for guest bookings.
+
+### 1. Audit Event Triggers
+
+The guest booking form automatically triggers audit events at key points:
+
+```typescript
+// In GuestBookingForm component
+const handleSubmit = async (data: GuestBookingFormData) => {
+  try {
+    // This API call triggers audit events in the backend:
+    // - guest_booking_attempt (on submission)
+    // - guest_booking_created (on success)
+    // - guest_booking_failed (on error)
+    const response = await fetch('/api/guest-booking', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...data,
+        // Backend will capture IP and user agent for audit
+      })
+    });
+
+    if (response.ok) {
+      // Upload triggers payment_proof_uploaded event
+      await uploadFile(file, uploadCredentials);
+
+      // Confirmation triggers upload confirmation audit
+      await confirmUpload(booking.booking_id);
+    }
+  } catch (error) {
+    // Failures are automatically logged in backend audit
+    console.error('Booking failed:', error);
+  }
+};
+```
+
+### 2. Admin Audit Viewer
+
+Administrators can view guest booking audit trails using the audit system UI:
+
+```typescript
+import { AuditLogViewer } from '@/components/audit/AuditLogViewer';
+import { useAuditStore } from '@/stores/useAuditStore';
+
+export function GuestBookingAuditView({ bookingId }: { bookingId: string }) {
+  const { setFilters } = useAuditStore();
+
+  // Filter audit logs for specific guest booking
+  useEffect(() => {
+    setFilters({
+      table: 'bookings',
+      metadata: {
+        booking_id: bookingId,
+        is_guest_booking: true
+      }
+    });
+  }, [bookingId]);
+
+  return (
+    <div className="space-y-4">
+      <h3>Guest Booking Audit Trail</h3>
+      <AuditLogViewer />
+    </div>
+  );
+}
+```
+
+### 3. Booking Detail Audit Tab
+
+Add an audit tab to the booking detail page:
+
+```typescript
+export function BookingDetail({ bookingId }: { bookingId: string }) {
+  const { data: booking } = useBooking(bookingId);
+  const [activeTab, setActiveTab] = useState('details');
+
+  return (
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <TabsList>
+        <TabsTrigger value="details">Details</TabsTrigger>
+        <TabsTrigger value="payments">Payments</TabsTrigger>
+        <TabsTrigger value="audit">Audit Trail</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="audit">
+        <GuestBookingTimeline bookingId={bookingId} />
+      </TabsContent>
+    </Tabs>
+  );
+}
+```
+
+### 4. Guest Booking Timeline Component
+
+Display audit events in a visual timeline:
+
+```typescript
+import { useAuditLogs } from '@/lib/audit-hooks';
+import { Timeline, TimelineItem } from '@/components/ui/timeline';
+
+export function GuestBookingTimeline({ bookingId }: { bookingId: string }) {
+  const { data: auditLogs } = useAuditLogs({
+    filters: {
+      table: 'bookings',
+      recordId: bookingId
+    }
+  });
+
+  // Group events by phase
+  const phases = {
+    submission: auditLogs?.filter(log =>
+      log.action?.includes('guest_booking_attempt') ||
+      log.action?.includes('guest_booking_created')
+    ),
+    upload: auditLogs?.filter(log =>
+      log.action?.includes('payment_proof')
+    ),
+    review: auditLogs?.filter(log =>
+      log.action?.includes('admin_review') ||
+      log.action?.includes('booking_dates_adjusted')
+    ),
+    confirmation: auditLogs?.filter(log =>
+      log.action?.includes('booking_confirmed') ||
+      log.action?.includes('booking_cancelled')
+    )
+  };
+
+  return (
+    <Timeline>
+      <TimelineSection title="Submission" events={phases.submission} />
+      <TimelineSection title="Payment Upload" events={phases.upload} />
+      <TimelineSection title="Admin Review" events={phases.review} />
+      <TimelineSection title="Final Status" events={phases.confirmation} />
+    </Timeline>
+  );
+}
+```
+
+### 5. Real-time Audit Updates
+
+Use Supabase realtime to show live audit updates:
+
+```typescript
+import { useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { queryClient } from '@/lib/query-client';
+
+export function useRealtimeAudit(bookingId: string) {
+  useEffect(() => {
+    const subscription = supabase
+      .channel(`audit-${bookingId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'audit_logs',
+        filter: `record_id=eq.${bookingId}`
+      }, (payload) => {
+        // Invalidate audit log queries to refresh UI
+        queryClient.invalidateQueries(['audit-logs', bookingId]);
+
+        // Optional: Show toast notification
+        toast.info(`New audit event: ${payload.new.description}`);
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [bookingId]);
+}
+```
+
+### 6. Admin Quick Filters
+
+Provide quick filters for guest booking audit events:
+
+```typescript
+import { AuditFilters } from '@/components/audit/AuditFilters';
+import { QuickFilterPreset } from '@/stores/useAuditStore';
+
+export function GuestBookingAuditFilters() {
+  const applyQuickFilter = useAuditStore(state => state.applyQuickFilter);
+
+  const guestBookingPresets = [
+    {
+      label: "Today's Guest Submissions",
+      onClick: () => applyQuickFilter({
+        table: 'bookings',
+        dateFrom: new Date().toISOString().split('T')[0],
+        metadata: { source: 'guest_portal' }
+      })
+    },
+    {
+      label: "Pending Guest Reviews",
+      onClick: () => applyQuickFilter({
+        table: 'bookings',
+        metadata: {
+          is_guest_booking: true,
+          booking_status: 'Pending'
+        }
+      })
+    },
+    {
+      label: "Failed Guest Bookings",
+      onClick: () => applyQuickFilter({
+        action: 'guest_booking_failed',
+        severity: 'WARNING'
+      })
+    }
+  ];
+
+  return (
+    <div className="flex gap-2">
+      {guestBookingPresets.map(preset => (
+        <Button
+          key={preset.label}
+          variant="outline"
+          size="sm"
+          onClick={preset.onClick}
+        >
+          {preset.label}
+        </Button>
+      ))}
+    </div>
+  );
+}
+```
+
+### 7. Security Considerations
+
+When displaying audit data in the frontend:
+
+```typescript
+import { SafeAuditText } from '@/components/audit/SafeAuditText';
+
+// Always use SafeAuditText for user-provided data in audit logs
+export function AuditEventDisplay({ event }: { event: AuditLog }) {
+  return (
+    <div className="audit-event">
+      <SafeAuditText text={event.description} />
+      {event.metadata && (
+        <div className="text-sm text-muted-foreground">
+          {/* Sensitive data is already redacted by backend */}
+          {event.metadata.guest_email === '[REDACTED]' && (
+            <span>Guest email hidden for privacy</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+### 8. Performance Optimization
+
+Optimize audit log queries for guest bookings:
+
+```typescript
+// Use React Query with proper caching
+export function useGuestBookingAudit(bookingId: string) {
+  return useQuery({
+    queryKey: ['guest-booking-audit', bookingId],
+    queryFn: () => fetchGuestBookingAudit(bookingId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 30 * 60 * 1000, // 30 minutes
+    // Only fetch if booking is guest booking
+    enabled: booking?.is_guest_booking === true
+  });
+}
+
+// Paginate large audit trails
+export function usePagedAudit(bookingId: string) {
+  const [page, setPage] = useState(0);
+
+  return useInfiniteQuery({
+    queryKey: ['audit-pages', bookingId],
+    queryFn: ({ pageParam = 0 }) =>
+      fetchAuditPage(bookingId, pageParam),
+    getNextPageParam: (lastPage) => lastPage.nextCursor
+  });
+}
+```
+
 ## Testing
 
 ### Component Testing

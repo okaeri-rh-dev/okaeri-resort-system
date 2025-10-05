@@ -128,31 +128,30 @@ CREATE POLICY "Authenticated users can delete maintenance_logs"
 -- ============================================
 -- STORAGE BUCKET CONFIGURATION
 -- ============================================
--- Storage buckets and policies CANNOT be configured via SQL
--- You must configure them through the Supabase Dashboard
+-- Storage policies are now defined in a separate file for better organization
 --
--- INSTRUCTIONS FOR STORAGE SETUP:
+-- IMPORTANT: Storage RLS policies must be configured separately!
+-- See: /database/storage-policies.sql
 --
--- 1. Go to Supabase Dashboard > Storage
--- 2. Create buckets:
---    a. Click "New bucket"
---    b. Name: "payment-proofs"
---    c. Public bucket: OFF (keep it private)
---    d. Click "Create bucket"
---    e. Repeat for "receipts" bucket
+-- COMPLETE STORAGE SETUP INSTRUCTIONS:
 --
--- 3. Configure bucket policies:
---    a. Click on the bucket name
---    b. Click "Policies" tab
---    c. Click "New policy"
---    d. Use "For authenticated users only" template
---    e. Enable all operations (SELECT, INSERT, UPDATE, DELETE)
---    f. Save policy
+-- 1. Create buckets (run the SQL below or use Dashboard)
+-- 2. Apply storage policies:
+--    Option A: Run /database/storage-policies.sql in SQL Editor (RECOMMENDED)
+--    Option B: Configure via Dashboard > Storage > Policies
 --
--- 4. The buckets will automatically have RLS enabled
+-- 3. For detailed setup instructions and troubleshooting:
+--    See: /docs/storage-configuration.md
 --
--- Note: Storage policies through the Dashboard are more secure
--- than SQL policies as they're managed by Supabase's system.
+-- NOTE ON CORS:
+-- - CORS is automatically handled by Supabase Storage
+-- - No additional CORS configuration is needed
+-- - All origins are allowed by default for signed URLs
+--
+-- NOTE ON SECURITY:
+-- - payment-proofs: Allows uploads via signed URLs (no auth required)
+-- - receipts: Requires authentication for all operations
+-- - Both buckets are private (files need auth or signed URLs to access)
 
 -- Create storage buckets (this part still works via SQL)
 INSERT INTO storage.buckets (id, name, public)

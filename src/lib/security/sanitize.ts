@@ -148,7 +148,7 @@ export function sanitizeText(input: string | null | undefined): string {
 
   // Fifth: Additional cleanup for extra safety
   // Remove any remaining HTML tags and dangerous protocols
-  let result = decoded
+  const result = decoded
     .replace(/<[^>]*>/g, "") // Remove any remaining HTML tags
     .replace(/javascript:/gi, "") // Remove javascript: protocol
     .replace(/vbscript:/gi, "") // Remove vbscript: protocol
@@ -177,7 +177,7 @@ export function sanitizeRichText(input: string | null | undefined): string {
   const decodedInput = decodeEncodedAttacks(String(input));
 
   // Second: More aggressive pre-cleaning to remove dangerous elements
-  let preCleaned = decodedInput
+  const preCleaned = decodedInput
     .replace(/<script[^>]*>.*?<\/script>/gis, "") // Remove script tags and content
     .replace(/<iframe[^>]*>.*?<\/iframe>/gis, "") // Remove iframe tags
     .replace(/<object[^>]*>.*?<\/object>/gis, "") // Remove object tags

@@ -799,6 +799,173 @@ USING (
 - Add status check page
 - Update navigation
 
+## Audit Events
+
+Each API endpoint automatically generates audit logs for security, compliance, and debugging purposes. The audit trail consists of two layers:
+
+### Layer 1: Database Triggers (Automatic)
+
+All database operations are automatically logged by PostgreSQL triggers:
+
+| Table | Operations | Captured Data |
+|-------|------------|---------------|
+| `guests` | INSERT, UPDATE, DELETE | Full record with PII redacted |
+| `bookings` | INSERT, UPDATE, DELETE | Booking details, `is_guest_booking` flag |
+| `payments` | INSERT, UPDATE | Payment records (sensitive fields redacted) |
+
+### Layer 2: Application Events (Enriched)
+
+API endpoints log additional context and business events:
+
+#### Guest Booking Events (`POST /api/guest-booking`)
+
+| Event | Trigger | Severity | Metadata |
+|-------|---------|----------|----------|
+| `guest_booking_attempt` | Request received | INFO | IP, user agent, unit_id, dates |
+| `turnstile_verification` | CAPTCHA check | INFO | Success/failure, token status |
+| `rate_limit_check` | Rate limit evaluation | INFO | IP, remaining quota |
+| `rate_limit_exceeded` | Limit hit | WARNING | IP, retry_after |
+| `availability_check` | Unit availability query | INFO | Unit, dates, result |
+| `guest_booking_created` | Success | INFO | Booking ID, reference, amount |
+| `guest_booking_failed` | Any failure | WARNING | Error type, reason |
+| `signed_url_generated` | Upload URL created | INFO | Expiry, bucket |
+
+#### Upload Confirmation Events (`POST /api/guest-booking/confirm`)
+
+| Event | Trigger | Severity | Metadata |
+|-------|---------|----------|----------|
+| `upload_initiated` | Confirmation request | INFO | Booking ID, file size |
+| `file_validation` | Magic byte check | INFO | Detected type, validation result |
+| `payment_proof_uploaded` | Success | INFO | Booking ID, file metadata |
+| `upload_failed` | Validation failure | WARNING | Reason, file info |
+| `booking_status_updated` | Status change | INFO | Old status, new status |
+
+#### Status Check Events (`GET /api/guest-booking/status`)
+
+| Event | Trigger | Severity | Metadata |
+|-------|---------|----------|----------|
+| `status_check_request` | Query received | INFO | Reference, email provided |
+| `status_check_success` | Found booking | INFO | Booking ID, status |
+| `status_check_failed` | Not found | INFO | Reference attempted |
+| `suspicious_enumeration` | Multiple failures | WARNING | IP, pattern detected |
+
+### Audit Log Schema
+
+All audit logs follow this structure:
+
+```typescript
+interface AuditLog {
+  // Identity
+  audit_id: string;           // UUID
+
+  // What changed
+  table_name?: string;        // For database operations
+  record_id?: string;         // Related record UUID
+  action: string;             // Event type
+
+  // Who made the change
+  user_id?: string;           // Null for guest operations
+  user_email?: string;        // Admin email if applicable
+  ip_address?: string;        // Client IP
+  user_agent?: string;        // Browser info
+
+  // Change details
+  old_data?: Record<string, any>;  // Previous values (UPDATE)
+  new_data?: Record<string, any>;  // New values
+  changed_fields?: string[];       // Modified fields
+
+  // Context
+  description?: string;       // Human-readable description
+  category?: string;          // BOOKING, PAYMENT, SYSTEM
+  severity?: string;          // INFO, WARNING, CRITICAL
+  metadata?: Record<string, any>;  // Additional context
+
+  // Timing
+  created_at: string;         // ISO timestamp
+}
+```
+
+### Querying Audit Logs
+
+Administrators can query audit logs using the audit UI or direct database queries:
+
+#### Find all events for a guest booking:
+
+```sql
+SELECT * FROM audit_logs
+WHERE (
+  -- Database triggers
+  (table_name = 'bookings' AND record_id = '<booking_id>') OR
+  -- Application events
+  (metadata->>'booking_id' = '<booking_id>')
+)
+ORDER BY created_at DESC;
+```
+
+#### Track guest by email (redacted):
+
+```sql
+SELECT * FROM audit_logs
+WHERE
+  metadata->>'guest_email' = '[REDACTED]' AND
+  metadata->>'source' = 'guest_portal'
+ORDER BY created_at DESC;
+```
+
+#### Security events by IP:
+
+```sql
+SELECT * FROM audit_logs
+WHERE
+  ip_address = '<ip_address>' AND
+  severity IN ('WARNING', 'CRITICAL')
+  AND created_at > NOW() - INTERVAL '24 hours'
+ORDER BY created_at DESC;
+```
+
+### Audit Data Retention
+
+- **Retention Period**: 90 days for standard logs, 1 year for security events
+- **PII Redaction**: Automatic via `SENSITIVE_FIELDS` configuration
+- **Archive Policy**: Old logs moved to cold storage after 90 days
+- **Compliance**: GDPR-compliant with right to erasure support
+
+### Using Audit Logs for Debugging
+
+When troubleshooting guest booking issues:
+
+1. **Find the booking reference** in user complaint
+2. **Query audit logs** for that booking_id or reference
+3. **Review timeline** of events from submission to current state
+4. **Check for errors** in WARNING/CRITICAL severity logs
+5. **Verify integrations** by checking external service events
+
+Example debug query:
+
+```sql
+-- Complete timeline for a booking
+SELECT
+  created_at,
+  action,
+  severity,
+  description,
+  metadata
+FROM audit_logs
+WHERE
+  metadata->>'booking_reference' = 'BK-2025-ABC123' OR
+  (table_name = 'bookings' AND new_data->>'booking_reference' = 'BK-2025-ABC123')
+ORDER BY created_at ASC;
+```
+
+### Security Monitoring
+
+The audit system enables proactive security monitoring:
+
+- **Anomaly Detection**: Patterns of failed attempts trigger alerts
+- **IP Blocking**: Automatic blocking based on threat scores
+- **Fraud Prevention**: Track suspicious booking patterns
+- **Compliance Reporting**: Export audit trails for auditors
+
 ## Support
 
 ### Common Issues

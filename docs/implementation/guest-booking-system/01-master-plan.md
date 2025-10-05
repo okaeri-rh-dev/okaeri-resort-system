@@ -603,22 +603,154 @@ WHERE is_guest_booking = true AND booking_status = 'Pending';
 4. **Data Migration**: Import existing guest bookings
 5. **Rollback Plan**: Maintain backward compatibility
 
+### Audit Trail Integration
+
+The guest booking system integrates seamlessly with the implemented **Audit Trail System** (Phases 1-3C completed), providing comprehensive tracking of all guest booking events with both automatic database-level logging and enriched application-level context.
+
+#### Integration Architecture
+
+```mermaid
+graph TD
+    subgraph "Guest Booking Flow"
+        A[Guest Submission] --> B[Database Trigger]
+        A --> C[Application Logger]
+        D[File Upload] --> E[Upload Event]
+        F[Admin Review] --> G[Review Event]
+        H[Confirmation] --> I[Status Change]
+    end
+
+    subgraph "Audit Trail System"
+        B --> J[Layer 1: DB Audit]
+        C --> K[Layer 2: App Audit]
+        E --> K
+        G --> K
+        I --> J
+        J --> L[(audit_logs table)]
+        K --> L
+    end
+
+    subgraph "Admin Tools"
+        L --> M[Audit Log Viewer]
+        L --> N[Filter by Guest Bookings]
+        L --> O[Export Audit Trail]
+    end
+```
+
+#### Automatic Database-Level Auditing (Layer 1)
+
+All guest booking database operations are **automatically captured** by existing audit triggers:
+
+- **Guest Creation**: New entries in `guests` table logged with full record
+- **Booking Creation**: `bookings` table inserts captured with `is_guest_booking = true` flag
+- **Status Updates**: All booking status transitions automatically logged
+- **Payment Records**: Payment proof metadata captured in audit trail
+
+**Key Benefits**:
+
+- Zero additional code required - triggers already active
+- Atomic capture - never miss a database change
+- Tamper-proof - database-level logging can't be bypassed
+
+#### Application-Level Enrichment (Layer 2)
+
+Guest booking API endpoints provide **rich contextual logging** using the audit system:
+
+```typescript
+// Example: Guest booking submission with audit context
+import { logAuditEvent, AuditCategory, AuditSeverity } from "@/lib/audit-logger";
+
+// In guest booking API endpoint
+await logAuditEvent({
+  action: "guest_booking_submitted",
+  category: AuditCategory.BOOKING,
+  severity: AuditSeverity.INFO,
+  description: `Guest booking submitted for ${unitName} (${checkIn} - ${checkOut})`,
+  metadata: {
+    booking_reference: bookingRef,
+    unit_id: unitId,
+    guest_email: email, // Will be redacted in logs
+    ip_address: request.ip,
+    user_agent: request.headers.get("user-agent"),
+    turnstile_verified: true,
+    source: "guest_portal",
+  },
+});
+```
+
+#### Guest Booking Audit Events
+
+| Event Type             | Layer | Trigger             | Data Captured                               |
+| ---------------------- | ----- | ------------------- | ------------------------------------------- |
+| `guest_submission`     | App   | API call            | IP, email, unit, dates, Turnstile status    |
+| `booking_created`      | DB    | INSERT              | Full booking record with `is_guest_booking` |
+| `upload_initiated`     | App   | Signed URL request  | File metadata, expiry time                  |
+| `upload_completed`     | App   | Confirmation API    | File size, upload duration                  |
+| `admin_review_started` | App   | Admin opens booking | Admin email, review timestamp               |
+| `dates_adjusted`       | DB    | UPDATE              | Old dates, new dates, admin ID              |
+| `booking_confirmed`    | Both  | Status change       | Status transition, admin approval           |
+| `email_sent`           | App   | Email service       | Recipient, template, send status            |
+
+#### Admin Benefits
+
+Administrators can leverage the audit trail for guest bookings:
+
+1. **Lifecycle Tracking**: Complete visibility from submission to check-out
+2. **Accountability**: See which admin reviewed/approved each booking
+3. **Pattern Detection**: Identify suspicious submission patterns
+4. **Compliance**: Export audit trails for regulatory requirements
+5. **Troubleshooting**: Debug issues with detailed event history
+
+**Admin Query Examples**:
+
+```sql
+-- View all guest bookings pending review
+SELECT * FROM audit_logs
+WHERE table_name = 'bookings'
+  AND new_data->>'is_guest_booking' = 'true'
+  AND new_data->>'booking_status' = 'Pending'
+ORDER BY created_at DESC;
+
+-- Track admin actions on guest bookings
+SELECT * FROM audit_logs
+WHERE metadata->>'category' = 'booking'
+  AND metadata->>'source' = 'guest_portal'
+  AND user_email IS NOT NULL  -- Admin action
+ORDER BY created_at DESC;
+```
+
+#### Security & Privacy
+
+The audit system handles sensitive guest data appropriately:
+
+- **Automatic Redaction**: Guest PII (phone, email, address) replaced with `[REDACTED]`
+- **Configurable Fields**: `SENSITIVE_FIELDS` in `audit-constants.ts` controls redaction
+- **Role-Based Access**: Only owners/managers can view audit logs
+- **Retention Policies**: Old audit logs archived/purged per compliance needs
+
+#### Integration with Audit UI
+
+Guest booking audit logs integrate with the Phase 3 UI components:
+
+- **Filtering**: Use "Bookings" table filter + custom metadata filters
+- **Quick Filters**: "Today's Guest Bookings" preset available
+- **Diff Viewer**: See before/after for date adjustments
+- **Export**: Include guest booking audit trail in CSV exports
+
 ### Future Enhancements
 
-#### Planned Enhancements
+#### Short-term Enhancements (Leveraging Audit System)
 
-- **Audit Logging System**: Full audit trail for all guest booking events (planned as part of whole-application audit system)
-- **Email Receipt Display**: Send payment receipts directly in email body (not as downloadable links) for improved user experience
-- **Advanced Payment Reconciliation**: Structured GCash/Maya reference ID validation with automatic reconciliation
+- **Audit-Based Analytics**: Guest booking conversion funnel from audit data
+- **Automated Alerts**: Trigger on suspicious patterns in audit logs
+- **Guest Portal**: Show guests their booking history from audit trail
 
-#### Additional Potential Features
+#### Long-term Potential Features
 
-- **Payment Gateway Integration**: Direct payment processing
-- **Multi-file Uploads**: Multiple receipts per booking
-- **SMS Notifications**: Text message confirmations
-- **QR Code Upload**: Mobile-friendly upload via QR
-- **AI Validation**: Automatic receipt verification
-- **Webhook Notifications**: Real-time staff alerts
+- **Payment Gateway Integration**: Direct payment processing with full audit trail
+- **Multi-file Uploads**: Multiple receipts per booking, each audit-logged
+- **SMS Notifications**: Text message confirmations with delivery audit
+- **AI Validation**: Automatic receipt verification with ML audit events
+- **Webhook Notifications**: Real-time staff alerts based on audit events
 
 ## Cost Analysis
 
@@ -729,6 +861,6 @@ The system can be implemented incrementally, tested thoroughly, and scaled based
 ---
 
 _Document Version: 2.0.0 (Cloudflare Free-Tier Adaptation)_
-_Last Updated: January 2025_
-_Next Review: April 2025_
+_Last Updated: October 2025_
+_Next Review: January 2026_
 _Platform: Cloudflare Pages + Supabase Free Tier_

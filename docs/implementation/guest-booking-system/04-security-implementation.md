@@ -1148,101 +1148,310 @@ export async function scanFileForVirus(file: File): Promise<{ safe: boolean; thr
 
 ## Monitoring & Logging
 
-### Audit Logging System
+### Comprehensive Audit Trail System
+
+The guest booking system leverages the **implemented audit trail system** (Phases 1-3C) providing enterprise-grade security monitoring with dual-layer logging (database triggers + application events).
+
+#### Security Benefits of Integrated Audit Trail
+
+1. **Tamper-Proof Logging**: Database triggers (Layer 1) ensure all operations are logged even if application layer is compromised
+2. **Automatic PII Redaction**: Sensitive guest data automatically redacted using `SENSITIVE_FIELDS` configuration
+3. **Real-time Threat Detection**: Query audit logs to detect suspicious patterns
+4. **Forensic Analysis**: Complete event history for security investigations
+5. **Compliance Ready**: Audit trail meets regulatory requirements (GDPR, data protection laws)
+
+#### Guest Booking Security Events
 
 ```typescript
-// lib/audit-log.ts
-import { createClient } from "@supabase/supabase-js";
+// Using the implemented audit system from Phase 2
+import { logAuditEventWithIp } from "@/lib/audit-logger-workers";
+import { AuditCategory, AuditSeverity, EventType } from "@/database.types";
 
-export enum AuditAction {
-  GUEST_BOOKING_CREATED = "guest_booking_created",
-  FILE_UPLOADED = "file_uploaded",
-  RATE_LIMIT_EXCEEDED = "rate_limit_exceeded",
-  CAPTCHA_FAILED = "captcha_failed",
-  VALIDATION_FAILED = "validation_failed",
-  SUSPICIOUS_ACTIVITY = "suspicious_activity",
-}
-
-export interface AuditLogEntry {
-  action: AuditAction;
-  actor_type: "guest" | "user" | "system";
-  actor_id?: string;
-  actor_ip: string;
-  resource_type?: string;
-  resource_id?: string;
-  metadata?: Record<string, any>;
-  user_agent?: string;
-  severity: "info" | "warning" | "error" | "critical";
-}
-
-export async function logAuditEvent(
-  supabase: ReturnType<typeof createClient>,
-  entry: AuditLogEntry
-): Promise<void> {
-  try {
-    const { error } = await supabase.from("audit_logs").insert({
-      ...entry,
-      created_at: new Date().toISOString(),
-    });
-
-    if (error) {
-      console.error("Failed to write audit log:", error);
-    }
-
-    // For critical events, also send to external monitoring
-    if (entry.severity === "critical") {
-      await sendToMonitoring(entry);
-    }
-  } catch (error) {
-    console.error("Audit logging error:", error);
+// Security-focused audit events for guest bookings
+export async function logSecurityEvent(
+  event: {
+    type: 'rate_limit_exceeded' | 'captcha_failed' | 'suspicious_pattern' | 'file_validation_failed';
+    ip: string;
+    userAgent: string;
+    metadata?: Record<string, any>;
   }
+) {
+  await logAuditEventWithIp(
+    {
+      action: `security_${event.type}` as EventType,
+      category: AuditCategory.SYSTEM,
+      severity: event.type === 'suspicious_pattern' ? AuditSeverity.CRITICAL : AuditSeverity.WARNING,
+      description: `Security event: ${event.type.replace(/_/g, ' ')}`,
+      metadata: {
+        ...event.metadata,
+        threat_level: calculateThreatLevel(event.type),
+        blocked: true,
+        timestamp: new Date().toISOString()
+      }
+    },
+    event.ip,
+    event.userAgent
+  );
 }
+```
 
-// Integration with monitoring service
-async function sendToMonitoring(entry: AuditLogEntry): Promise<void> {
-  // Send to Sentry, DataDog, or other monitoring service
-  if (process.env.SENTRY_DSN) {
-    const Sentry = await import("@sentry/node");
-    Sentry.captureMessage(`Critical audit event: ${entry.action}`, {
-      level: "error",
-      extra: entry,
-    });
-  }
-}
+#### Anomaly Detection Using Audit Logs
 
-// Anomaly detection
-export async function checkForAnomalies(
-  supabase: ReturnType<typeof createClient>,
-  ip: string
-): Promise<boolean> {
-  // Check for suspicious patterns
-  const recentLogs = await supabase
+```typescript
+import { supabase } from "@/lib/supabase";
+
+export async function detectAnomalies(ip: string): Promise<{
+  isAnomaly: boolean;
+  patterns: string[];
+  threatScore: number;
+}> {
+  // Query audit logs for suspicious patterns
+  const { data: recentLogs } = await supabase
     .from("audit_logs")
     .select("*")
-    .eq("actor_ip", ip)
+    .or(`ip_address.eq.${ip},metadata->ip_address.eq.${ip}`)
     .gte("created_at", new Date(Date.now() - 3600000).toISOString()) // Last hour
     .order("created_at", { ascending: false });
 
-  if (!recentLogs.data) return false;
+  if (!recentLogs || recentLogs.length === 0) {
+    return { isAnomaly: false, patterns: [], threatScore: 0 };
+  }
 
-  // Detection rules
-  const suspiciousPatterns = [
-    // Multiple failed attempts
-    recentLogs.data.filter(
-      (log) =>
-        log.action === AuditAction.CAPTCHA_FAILED || log.action === AuditAction.VALIDATION_FAILED
-    ).length > 5,
+  const patterns: string[] = [];
+  let threatScore = 0;
 
-    // Rapid requests
-    recentLogs.data.length > 50,
+  // Pattern 1: Multiple failed booking attempts
+  const failedBookings = recentLogs.filter(log =>
+    log.action?.includes('guest_booking_failed') ||
+    log.metadata?.action === 'guest_booking_failed'
+  );
+  if (failedBookings.length > 3) {
+    patterns.push('multiple_failed_bookings');
+    threatScore += 30;
+  }
 
-    // Multiple different emails from same IP
-    new Set(recentLogs.data.filter((log) => log.metadata?.email).map((log) => log.metadata.email))
-      .size > 3,
-  ];
+  // Pattern 2: Rate limit violations
+  const rateLimitHits = recentLogs.filter(log =>
+    log.action?.includes('rate_limit') ||
+    log.metadata?.ip_blocked === true
+  );
+  if (rateLimitHits.length > 0) {
+    patterns.push('rate_limit_violation');
+    threatScore += 40;
+  }
 
-  return suspiciousPatterns.some((pattern) => pattern === true);
+  // Pattern 3: CAPTCHA failures
+  const captchaFailures = recentLogs.filter(log =>
+    log.action?.includes('captcha_failed') ||
+    log.metadata?.turnstile_verified === false
+  );
+  if (captchaFailures.length > 2) {
+    patterns.push('captcha_failures');
+    threatScore += 25;
+  }
+
+  // Pattern 4: Multiple different emails from same IP
+  const uniqueEmails = new Set(
+    recentLogs
+      .filter(log => log.metadata?.guest_email)
+      .map(log => log.metadata.guest_email)
+  );
+  if (uniqueEmails.size > 3) {
+    patterns.push('email_enumeration');
+    threatScore += 35;
+  }
+
+  // Pattern 5: Rapid-fire requests
+  if (recentLogs.length > 50) {
+    patterns.push('rapid_requests');
+    threatScore += 20;
+  }
+
+  // Pattern 6: File upload anomalies
+  const uploadFailures = recentLogs.filter(log =>
+    log.action?.includes('file_validation_failed') ||
+    log.metadata?.file_validation === false
+  );
+  if (uploadFailures.length > 0) {
+    patterns.push('suspicious_uploads');
+    threatScore += 45;
+  }
+
+  return {
+    isAnomaly: threatScore >= 50,
+    patterns,
+    threatScore: Math.min(threatScore, 100)
+  };
 }
+```
+
+#### Real-time Security Monitoring Dashboard
+
+```typescript
+// Admin dashboard component for security monitoring
+import { useAuditLogs } from "@/lib/audit-hooks";
+import { AuditFilters } from "@/components/audit/AuditFilters";
+
+export function SecurityMonitoringDashboard() {
+  // Real-time security events
+  const { data: securityLogs } = useAuditLogs({
+    filters: {
+      severity: ['WARNING', 'CRITICAL'],
+      dateFrom: new Date(Date.now() - 86400000).toISOString(), // Last 24 hours
+      source: 'app'
+    },
+    refreshInterval: 30000 // Refresh every 30 seconds
+  });
+
+  // Group by threat type
+  const threatGroups = useMemo(() => {
+    return securityLogs?.reduce((acc, log) => {
+      const threatType = log.metadata?.threat_type || 'unknown';
+      if (!acc[threatType]) acc[threatType] = [];
+      acc[threatType].push(log);
+      return acc;
+    }, {} as Record<string, AuditLog[]>);
+  }, [securityLogs]);
+
+  return (
+    <div className="grid gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Security Threats (Last 24 Hours)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {Object.entries(threatGroups || {}).map(([type, logs]) => (
+              <Alert key={type} variant={logs.length > 10 ? "destructive" : "warning"}>
+                <AlertTitle>{type.replace(/_/g, ' ').toUpperCase()}</AlertTitle>
+                <AlertDescription>
+                  {logs.length} incidents detected
+                  <Button
+                    size="sm"
+                    variant="link"
+                    onClick={() => viewDetails(logs)}
+                  >
+                    View Details
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* IP-based threat analysis */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Top Threat Sources</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ThreatSourceTable logs={securityLogs} />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+```
+
+#### Automated Security Responses
+
+```typescript
+// Automatic blocking based on audit trail patterns
+export async function autoBlockThreats(ip: string): Promise<boolean> {
+  const { isAnomaly, threatScore, patterns } = await detectAnomalies(ip);
+
+  if (threatScore >= 75) {
+    // Log the automatic blocking
+    await logAuditEventWithIp(
+      {
+        action: EventType.security_auto_blocked,
+        category: AuditCategory.SYSTEM,
+        severity: AuditSeverity.CRITICAL,
+        description: `Auto-blocked IP due to threat score: ${threatScore}`,
+        metadata: {
+          threat_score: threatScore,
+          patterns: patterns,
+          block_duration: '24h',
+          auto_blocked: true
+        }
+      },
+      ip,
+      'System'
+    );
+
+    // Add to Cloudflare KV blocklist
+    await blockInKV(ip, 86400); // 24 hour block
+
+    return true;
+  }
+
+  return false;
+}
+```
+
+#### Security Audit Queries
+
+Common security queries using the audit trail:
+
+```sql
+-- Find all security events in last hour
+SELECT * FROM audit_logs
+WHERE severity IN ('WARNING', 'CRITICAL')
+  AND created_at > NOW() - INTERVAL '1 hour'
+  AND (
+    action LIKE 'security_%' OR
+    action LIKE '%_failed' OR
+    metadata->>'threat_level' IS NOT NULL
+  )
+ORDER BY created_at DESC;
+
+-- Identify potential attackers
+SELECT
+  ip_address,
+  COUNT(*) as event_count,
+  ARRAY_AGG(DISTINCT action) as actions,
+  MAX(severity) as max_severity,
+  MIN(created_at) as first_seen,
+  MAX(created_at) as last_seen
+FROM audit_logs
+WHERE created_at > NOW() - INTERVAL '24 hours'
+  AND severity IN ('WARNING', 'CRITICAL')
+GROUP BY ip_address
+HAVING COUNT(*) > 5
+ORDER BY event_count DESC;
+
+-- Track guest booking fraud attempts
+SELECT
+  metadata->>'guest_email' as email,
+  COUNT(*) as attempts,
+  COUNT(DISTINCT ip_address) as unique_ips,
+  ARRAY_AGG(DISTINCT metadata->>'error_type') as errors
+FROM audit_logs
+WHERE table_name = 'bookings'
+  AND action = 'guest_booking_failed'
+  AND created_at > NOW() - INTERVAL '7 days'
+GROUP BY metadata->>'guest_email'
+HAVING COUNT(*) > 3
+ORDER BY attempts DESC;
+```
+
+#### Compliance & Forensics Benefits
+
+1. **Data Protection Compliance**
+   - Automatic PII redaction in logs
+   - Configurable retention policies
+   - Right to audit access logs
+
+2. **Forensic Investigation**
+   - Complete timeline reconstruction
+   - IP and user agent tracking
+   - Correlated event analysis
+
+3. **Security Incident Response**
+   - Real-time threat detection
+   - Automated blocking capabilities
+   - Evidence preservation
 ```
 
 ## Security Headers
