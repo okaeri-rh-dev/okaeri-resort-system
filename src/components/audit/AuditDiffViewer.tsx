@@ -55,7 +55,7 @@ export function AuditDiffViewer({ log, open, onOpenChange }: AuditDiffViewerProp
             {TABLE_DISPLAY_NAMES[log.table_name as keyof typeof TABLE_DISPLAY_NAMES] ||
               log.table_name}{" "}
             • {ACTION_DISPLAY_NAMES[log.action as keyof typeof ACTION_DISPLAY_NAMES] || log.action}{" "}
-            • {format(new Date(log.created_at), "PPpp")}
+            • {log.created_at ? format(new Date(log.created_at), "PPpp") : "Unknown time"}
           </DialogDescription>
         </DialogHeader>
 
@@ -76,10 +76,10 @@ export function AuditDiffViewer({ log, open, onOpenChange }: AuditDiffViewerProp
                 <div className="text-xs font-mono truncate">{log.record_id}</div>
               </div>
             )}
-            {log.ip_address && (
+            {log.ip_address !== null && log.ip_address !== undefined && (
               <div>
                 <div className="text-sm font-medium text-muted-foreground">IP Address</div>
-                <div className="text-sm font-mono">{log.ip_address}</div>
+                <div className="text-sm font-mono">{String(log.ip_address)}</div>
               </div>
             )}
           </div>

@@ -741,6 +741,162 @@ export type CompositeTypes<
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never;
 
+// ============================================
+// AUDIT TRAIL TYPE EXPORTS
+// ============================================
+
+// Type aliases for audit trail system
+export type AuditLog = Database["public"]["Tables"]["audit_logs"]["Row"];
+export type AuditLogInsert = Database["public"]["Tables"]["audit_logs"]["Insert"];
+export type AuditLogUpdate = Database["public"]["Tables"]["audit_logs"]["Update"];
+
+// Audit action type - based on database CHECK constraint
+export type AuditAction = "INSERT" | "UPDATE" | "DELETE";
+
+// Audit categories enum
+export enum AuditCategory {
+  AUTHENTICATION = "authentication",
+  BOOKING = "booking",
+  PAYMENT = "payment",
+  GUEST = "guest",
+  UNIT = "unit",
+  EXPENSE = "expense",
+  MAINTENANCE = "maintenance",
+  SYSTEM = "system",
+}
+
+// Audit severity levels
+export enum AuditSeverity {
+  INFO = "INFO",
+  WARNING = "WARNING",
+  CRITICAL = "CRITICAL",
+  DEBUG = "DEBUG",
+}
+
+// Audit event types for application-level logging
+export enum AuditEventType {
+  // Authentication events
+  LOGIN = "login",
+  LOGOUT = "logout",
+  LOGIN_FAILED = "login_failed",
+  PASSWORD_RESET = "password_reset",
+
+  // Booking events
+  BOOKING_CREATED = "booking_created",
+  BOOKING_UPDATED = "booking_updated",
+  BOOKING_CANCELLED = "booking_cancelled",
+  CANCEL_BOOKING = "cancel_booking", // Alias for BOOKING_CANCELLED
+  CHECK_IN = "check_in",
+  CHECK_OUT = "check_out",
+  BOOKING_CHECKED_IN = "booking_checked_in", // Alias for CHECK_IN
+  BOOKING_CHECKED_OUT = "booking_checked_out", // Alias for CHECK_OUT
+  BOOKING_STATUS_OVERRIDE = "booking_status_override",
+
+  // Payment events
+  PAYMENT_RECORDED = "payment_recorded",
+  PAYMENT_VERIFIED = "payment_verified",
+  PAYMENT_REFUNDED = "payment_refunded",
+  REFUND_PAYMENT = "refund_payment", // Alias for PAYMENT_REFUNDED
+  PAYMENT_FAILED = "payment_failed",
+
+  // Expense events
+  EXPENSE_CREATED = "expense_created",
+  EXPENSE_UPDATED = "expense_updated",
+  EXPENSE_DELETED = "expense_deleted",
+  EXPENSE_CATEGORY_CHANGED = "expense_category_changed",
+
+  // System events
+  MIGRATION_RUN = "migration_run",
+  SYSTEM_MIGRATION = "system_migration", // Alias for MIGRATION_RUN
+  BACKUP_CREATED = "backup_created",
+  SYSTEM_BACKUP = "system_backup", // Alias for BACKUP_CREATED
+  SYSTEM_CONFIG_CHANGE = "system_config_change",
+  ROLE_ASSIGNED = "role_assigned",
+  ROLE_REVOKED = "role_revoked",
+}
+
+// Display names for event types
+export const EVENT_TYPE_DISPLAY_NAMES: Record<AuditEventType, string> = {
+  [AuditEventType.LOGIN]: "User Login",
+  [AuditEventType.LOGOUT]: "User Logout",
+  [AuditEventType.LOGIN_FAILED]: "Failed Login",
+  [AuditEventType.PASSWORD_RESET]: "Password Reset",
+  [AuditEventType.BOOKING_CREATED]: "Booking Created",
+  [AuditEventType.BOOKING_UPDATED]: "Booking Updated",
+  [AuditEventType.BOOKING_CANCELLED]: "Booking Cancelled",
+  [AuditEventType.CANCEL_BOOKING]: "Cancel Booking",
+  [AuditEventType.CHECK_IN]: "Guest Check-in",
+  [AuditEventType.CHECK_OUT]: "Guest Check-out",
+  [AuditEventType.BOOKING_CHECKED_IN]: "Booking Checked In",
+  [AuditEventType.BOOKING_CHECKED_OUT]: "Booking Checked Out",
+  [AuditEventType.BOOKING_STATUS_OVERRIDE]: "Booking Status Override",
+  [AuditEventType.PAYMENT_RECORDED]: "Payment Recorded",
+  [AuditEventType.PAYMENT_VERIFIED]: "Payment Verified",
+  [AuditEventType.PAYMENT_REFUNDED]: "Payment Refunded",
+  [AuditEventType.REFUND_PAYMENT]: "Refund Payment",
+  [AuditEventType.PAYMENT_FAILED]: "Payment Failed",
+  [AuditEventType.EXPENSE_CREATED]: "Expense Created",
+  [AuditEventType.EXPENSE_UPDATED]: "Expense Updated",
+  [AuditEventType.EXPENSE_DELETED]: "Expense Deleted",
+  [AuditEventType.EXPENSE_CATEGORY_CHANGED]: "Expense Category Changed",
+  [AuditEventType.MIGRATION_RUN]: "Database Migration",
+  [AuditEventType.SYSTEM_MIGRATION]: "System Migration",
+  [AuditEventType.BACKUP_CREATED]: "Backup Created",
+  [AuditEventType.SYSTEM_BACKUP]: "System Backup",
+  [AuditEventType.SYSTEM_CONFIG_CHANGE]: "System Configuration Change",
+  [AuditEventType.ROLE_ASSIGNED]: "Role Assigned",
+  [AuditEventType.ROLE_REVOKED]: "Role Revoked",
+};
+
+// Filter types for audit queries
+export interface AuditLogFilters {
+  startDate?: string;
+  endDate?: string;
+  userEmail?: string;
+  userId?: string;
+  tableName?: string;
+  recordId?: string;
+  action?: AuditAction;
+  category?: AuditCategory;
+  severity?: AuditSeverity;
+  eventType?: AuditEventType;
+  source?: "db" | "app"; // Layer 1 (db) or Layer 2 (app) logs
+  limit?: number;
+  offset?: number;
+}
+
+// Query result types
+export interface AuditLogQueryResult {
+  data: AuditLog[];
+  totalCount: number;
+  hasMore: boolean;
+  currentPage: number;
+  totalPages: number;
+}
+
+// Statistics types
+export interface AuditLogStats {
+  totalLogs: number;
+  byTable: Record<string, number>;
+  byAction: Record<AuditAction, number>;
+  byUser: Array<{ email: string; count: number }>;
+  recentActivity: Array<{ date: string; count: number }>;
+}
+
+// Event context for creating audit logs
+export interface AuditEventContext {
+  tableName: string;
+  recordId?: string;
+  action?: AuditAction;
+  eventType?: AuditEventType;
+  description?: string;
+  category?: AuditCategory;
+  severity?: AuditSeverity;
+  metadata?: Record<string, unknown>;
+  oldData?: Record<string, unknown>;
+  newData?: Record<string, unknown>;
+}
+
 export const Constants = {
   graphql_public: {
     Enums: {},
