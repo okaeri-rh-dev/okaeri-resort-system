@@ -113,20 +113,28 @@ export function sanitizeText(input: string | null | undefined): string {
   // First: Decode any encoded attacks to reveal hidden payloads
   const decodedInput = decodeEncodedAttacks(String(input));
 
-  // Second: Check if input is plain text (no angle brackets = no HTML)
-  // Skip DOMPurify for plain text to preserve newlines and special chars
-  const hasHtml = /<|>/.test(decodedInput);
+  // Second: Remove dangerous content INCLUDING text inside script/style tags
+  // This is more aggressive than DOMPurify's KEEP_CONTENT approach
+  let preCleaned = decodedInput
+    .replace(/<script[^>]*>.*?<\/script>/gis, "") // Remove script tags AND content
+    .replace(/<style[^>]*>.*?<\/style>/gis, "") // Remove style tags AND content
+    .replace(/<iframe[^>]*>.*?<\/iframe>/gis, "") // Remove iframe tags AND content
+    .replace(/<object[^>]*>.*?<\/object>/gis, "") // Remove object tags AND content
+    .replace(/<embed[^>]*>.*?<\/embed>/gis, ""); // Remove embed tags AND content
+
+  // Third: Check if remaining input has HTML
+  const hasHtml = /<|>/.test(preCleaned);
   let cleaned: string;
 
   if (hasHtml) {
-    // Has HTML - use DOMPurify to strip tags
-    cleaned = DOMPurify.sanitize(decodedInput, STRICT_TEXT_CONFIG);
+    // Has HTML - use DOMPurify to strip remaining tags
+    cleaned = DOMPurify.sanitize(preCleaned, STRICT_TEXT_CONFIG);
   } else {
     // Plain text - no HTML to sanitize
-    cleaned = decodedInput;
+    cleaned = preCleaned;
   }
 
-  // Third: Decode HTML entities that DOMPurify may have created
+  // Fourth: Decode HTML entities that DOMPurify may have created
   // DOMPurify converts <script> to &lt;script&gt; to prevent execution
   // We want plain text, so manually decode common entities
   // (More reliable than innerHTML + textContent across environments)
@@ -138,7 +146,7 @@ export function sanitizeText(input: string | null | undefined): string {
     .replace(/&#x27;/g, "'")
     .replace(/&amp;/g, "&"); // Must be last to avoid double-decoding
 
-  // Fourth: Additional cleanup for extra safety
+  // Fifth: Additional cleanup for extra safety
   // Remove any remaining HTML tags and dangerous protocols
   let result = decoded
     .replace(/<[^>]*>/g, "") // Remove any remaining HTML tags

@@ -24,13 +24,11 @@ import {
 import { useAuditLogs } from "@/lib/audit-hooks";
 import { useAuditStore } from "@/stores/useAuditStore";
 import type { AuditLog } from "../../../database.types";
-import {
-  TABLE_DISPLAY_NAMES,
-  ACTION_DISPLAY_NAMES,
-  PAGINATION_DEFAULTS,
-} from "@/lib/audit-constants";
+import { TABLE_DISPLAY_NAMES, PAGINATION_DEFAULTS } from "@/lib/audit-constants";
 import { formatDistanceToNow } from "date-fns";
 import { SafeAuditText } from "./SafeAuditText";
+import { AuditDiffViewer } from "./AuditDiffViewer";
+import { ActionBadge } from "./ActionBadge";
 
 // ============================================
 // MAIN TABLE COMPONENT
@@ -173,18 +171,12 @@ export function AuditLogViewer() {
         </div>
       </div>
 
-      {/* Diff Viewer Dialog - Placeholder for Phase 3D */}
-      {selectedLogForDiff && diffDialogOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-2xl w-full">
-            <h2 className="text-lg font-semibold mb-4">Audit Log Details</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              Diff viewer will be implemented in Phase 3D
-            </p>
-            <Button onClick={() => setDiffDialogOpen(false)}>Close</Button>
-          </div>
-        </div>
-      )}
+      {/* Diff Viewer Dialog */}
+      <AuditDiffViewer
+        log={selectedLogForDiff}
+        open={diffDialogOpen}
+        onOpenChange={setDiffDialogOpen}
+      />
     </div>
   );
 }
@@ -345,6 +337,8 @@ function ExpandedRowDetails({ log }: { log: AuditLog }) {
       {log.metadata && typeof log.metadata === "object" && (
         <div>
           <div className="text-sm font-medium mb-1">Additional Metadata</div>
+          {/* XSS-Safe: JSON.stringify automatically escapes <, >, & as Unicode (\u003C, \u003E, \u0026).
+              Rendered in <pre> tag, not interpreted as HTML. More flexible than per-field SafeAuditText. */}
           <pre className="text-xs bg-background p-2 rounded border overflow-x-auto">
             {JSON.stringify(log.metadata, null, 2)}
           </pre>
@@ -355,22 +349,8 @@ function ExpandedRowDetails({ log }: { log: AuditLog }) {
 }
 
 // ============================================
-// BADGE COMPONENTS
+// BADGE COMPONENTS (moved to shared ActionBadge.tsx)
 // ============================================
-
-function ActionBadge({ action }: { action: string }) {
-  const variants: Record<string, "default" | "secondary" | "destructive"> = {
-    INSERT: "default",
-    UPDATE: "secondary",
-    DELETE: "destructive",
-  };
-
-  return (
-    <Badge variant={variants[action] || "outline"}>
-      {ACTION_DISPLAY_NAMES[action as keyof typeof ACTION_DISPLAY_NAMES] || action}
-    </Badge>
-  );
-}
 
 function SourceBadge({ source }: { source: "db" | "app" }) {
   const isDbSource = source === "db";

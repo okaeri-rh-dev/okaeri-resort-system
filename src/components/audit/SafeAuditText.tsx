@@ -11,6 +11,15 @@
  * - Maintains data integrity (raw text stored in database)
  * - Prevents XSS attacks by stripping ALL HTML tags
  * - Leverages existing DOMPurify infrastructure from src/lib/security/sanitize.ts
+ *
+ * Implementation Details:
+ * - Uses centralized `sanitizeText()` from @/lib/security/sanitize
+ * - Aggressive sanitization: decodes encoded attacks, strips all HTML, removes dangerous protocols
+ * - Double empty-state check: before and after sanitization
+ * - Preserves newlines and special characters for plain text without HTML
+ *
+ * @see src/lib/security/sanitize.ts for sanitization implementation
+ * @see Phase 3E documentation: docs/implementation/audit-trail/03-audit-viewer-ui/03e-safe-components.md
  */
 
 import { sanitizeText } from "@/lib/security/sanitize";
