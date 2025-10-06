@@ -248,9 +248,14 @@ COMMENT ON FUNCTION restore_logs_from_archive(TIMESTAMPTZ, TIMESTAMPTZ) IS
     'Restores logs from archive table back to active audit_logs table for specified date range.';
 
 -- ============================================
--- ARCHIVE STATISTICS VIEW
+-- ARCHIVE STATISTICS VIEW (Admin-Only Diagnostic)
 -- ============================================
 -- Monitor archive table size and log distribution
+--
+-- ADMIN-ONLY DIAGNOSTIC VIEW
+-- Note: This view uses SECURITY DEFINER to access system catalogs (pg_total_relation_size)
+-- Supabase linter warning: Expected - this is an admin diagnostic tool, not exposed to app users
+-- Security: Read-only view, no sensitive data, used for manual archive monitoring
 
 CREATE OR REPLACE VIEW audit_archive_stats AS
 SELECT

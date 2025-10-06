@@ -204,9 +204,14 @@ BEGIN
 END $$;
 
 -- ============================================
--- SYSTEM OVERVIEW QUERY
+-- SYSTEM OVERVIEW QUERY (Admin-Only Diagnostic)
 -- ============================================
 -- Provides a complete overview of the audit system configuration
+--
+-- ADMIN-ONLY DIAGNOSTIC VIEW
+-- Note: This view uses SECURITY DEFINER to access system catalogs (information_schema, pg_policies)
+-- Supabase linter warning: Expected - this is an admin diagnostic tool, not exposed to app users
+-- Security: Read-only view, reveals database structure but no user data, used for system verification
 
 CREATE OR REPLACE VIEW audit_system_status AS
 SELECT

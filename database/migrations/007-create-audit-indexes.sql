@@ -129,9 +129,14 @@ COMMENT ON INDEX idx_audit_logs_correlation IS
 ANALYZE audit_logs;
 
 -- ============================================
--- INDEX STATISTICS VIEW
+-- INDEX STATISTICS VIEW (Admin-Only Diagnostic)
 -- ============================================
 -- Create view for monitoring index usage and size
+--
+-- ADMIN-ONLY DIAGNOSTIC VIEW
+-- Note: This view uses SECURITY DEFINER to access system catalogs (pg_stat_user_indexes)
+-- Supabase linter warning: Expected - this is an admin diagnostic tool, not exposed to app users
+-- Security: Read-only view, no sensitive data, used for manual DBA performance monitoring
 CREATE OR REPLACE VIEW audit_index_stats AS
 SELECT
     schemaname,
