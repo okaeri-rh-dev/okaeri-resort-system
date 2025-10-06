@@ -85,13 +85,13 @@ export const useBookingColumns = ({
 
       columnHelper.accessor("booking_status", {
         header: "Status",
-        cell: ({ getValue }) => <StatusBadge status={getValue()} />,
+        cell: ({ getValue }) => <StatusBadge status={getValue() ?? "Pending"} />,
         size: 100,
       }),
 
       columnHelper.accessor("payment_status", {
         header: "Payment",
-        cell: ({ getValue }) => <StatusBadge status={getValue()} />,
+        cell: ({ getValue }) => <StatusBadge status={getValue() ?? "Pending"} />,
         size: 100,
       }),
 

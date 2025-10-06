@@ -130,6 +130,7 @@ export const BOOKING_BUSINESS_RULES: BusinessRule[] = [
     violationMessage: "Booking must be confirmed before check-in",
     validationFunction: (booking: Booking) => {
       if (booking.booking_status === "CheckedIn") {
+        if (!booking.updated_at || !booking.created_at) return true;
         return new Date(booking.updated_at) > new Date(booking.created_at);
       }
       return true;
@@ -156,7 +157,9 @@ export const BOOKING_BUSINESS_RULES: BusinessRule[] = [
     isEnforced: true,
     violationMessage: "Cannot modify booking after check-in",
     validationFunction: (booking: Booking) => {
-      return !["CheckedIn", "CheckedOut"].includes(booking.booking_status);
+      return (
+        !booking.booking_status || !["CheckedIn", "CheckedOut"].includes(booking.booking_status)
+      );
     },
   },
   {
@@ -188,7 +191,9 @@ export const BOOKING_BUSINESS_RULES: BusinessRule[] = [
  * @returns Complete workflow state with transitions and actions
  */
 export const getBookingWorkflowState = (booking: Booking): BookingWorkflowState => {
-  const allowedTransitions = BOOKING_STATUS_TRANSITIONS[booking.booking_status] || [];
+  const allowedTransitions = booking.booking_status
+    ? BOOKING_STATUS_TRANSITIONS[booking.booking_status as BookingStatus] || []
+    : [];
   const nextActions = generateNextActions(booking);
   const automatedTriggers = generateAutomatedTriggers(booking);
   const businessRules = BOOKING_BUSINESS_RULES.filter((rule) => rule.isEnforced);
@@ -213,7 +218,9 @@ export const validateStatusTransition = (
   booking: Booking,
   toStatus: BookingStatus
 ): WorkflowTransition => {
-  const allowedTransitions = BOOKING_STATUS_TRANSITIONS[booking.booking_status] || [];
+  const allowedTransitions = booking.booking_status
+    ? BOOKING_STATUS_TRANSITIONS[booking.booking_status as BookingStatus] || []
+    : [];
   const isValidTransition = allowedTransitions.includes(toStatus);
 
   const requirements = generateTransitionRequirements(booking, toStatus);
@@ -228,7 +235,7 @@ export const validateStatusTransition = (
     businessRulesViolated.length === 0;
 
   return {
-    fromStatus: booking.booking_status,
+    fromStatus: (booking.booking_status as BookingStatus) || "Pending",
     toStatus,
     isValid: isValidTransition,
     requirements,
@@ -245,10 +252,12 @@ export const validateStatusTransition = (
  */
 export const generateNextActions = (booking: Booking): WorkflowAction[] => {
   const actions: WorkflowAction[] = [];
-  const allowedTransitions = BOOKING_STATUS_TRANSITIONS[booking.booking_status] || [];
+  const allowedTransitions = booking.booking_status
+    ? BOOKING_STATUS_TRANSITIONS[booking.booking_status as BookingStatus] || []
+    : [];
 
   // Generate actions for each allowed transition
-  allowedTransitions.forEach((targetStatus) => {
+  allowedTransitions.forEach((targetStatus: BookingStatus) => {
     const action = createActionForTransition(booking, targetStatus);
     if (action) {
       actions.push(action);
@@ -413,7 +422,8 @@ const createActionForTransition = (
           {
             type: "custom",
             condition: "cancellation_allowed",
-            isMet: ["Pending", "Confirmed"].includes(booking.booking_status),
+            isMet:
+              !!booking.booking_status && ["Pending", "Confirmed"].includes(booking.booking_status),
             errorMessage: "Booking cannot be cancelled in current status",
           },
         ],
@@ -667,7 +677,7 @@ export const executeStatusTransition = (
   const workflowEvent = createWorkflowEvent(
     booking,
     "status_change",
-    booking.booking_status,
+    (booking.booking_status as BookingStatus) || "Pending",
     toStatus,
     triggeredBy,
     metadata
@@ -710,7 +720,9 @@ export const getWorkflowSummary = (bookings: Booking[]) => {
 
   bookings.forEach((booking) => {
     // Count by status
-    summary.byStatus[booking.booking_status]++;
+    if (booking.booking_status) {
+      summary.byStatus[booking.booking_status as BookingStatus]++;
+    }
 
     // Count pending actions
     const actions = generateNextActions(booking);

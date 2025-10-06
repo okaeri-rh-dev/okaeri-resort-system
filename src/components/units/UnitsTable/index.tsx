@@ -1,6 +1,6 @@
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import { flexRender } from "@tanstack/react-table";
-import { ErrorBoundary, withErrorBoundary } from "@/components/ErrorBoundary";
+import { withErrorBoundary } from "@/components/ErrorBoundary";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -50,7 +50,7 @@ function UnitsTableComponent({ onAddUnit, pageSize = 10, className }: UnitsTable
     handleBatchStatusUpdate,
   } = useUnitsTable({ pageSize, onAddUnit });
 
-  const { isMobile } = useResponsiveView();
+  useResponsiveView(); // Used for responsive table rendering
 
   const handleExport = useCallback(() => {
     exportUnitsToCSV(units);
@@ -134,7 +134,10 @@ function UnitsTableComponent({ onAddUnit, pageSize = 10, className }: UnitsTable
               ) : (
                 <TableRow>
                   <TableCell colSpan={table.getAllColumns().length} className="h-24">
-                    <TableEmptyState message="No units found" />
+                    <TableEmptyState
+                      title="No units found"
+                      description="Add your first unit to get started"
+                    />
                   </TableCell>
                 </TableRow>
               )}
@@ -144,12 +147,7 @@ function UnitsTableComponent({ onAddUnit, pageSize = 10, className }: UnitsTable
 
         {/* Pagination */}
         <div className="border-t px-4 py-3">
-          <TablePagination
-            table={table}
-            totalItems={units.length}
-            currentPage={table.getState().pagination.pageIndex + 1}
-            pageSize={table.getState().pagination.pageSize}
-          />
+          <TablePagination table={table} totalItems={units.length} />
         </div>
       </Card>
     </div>

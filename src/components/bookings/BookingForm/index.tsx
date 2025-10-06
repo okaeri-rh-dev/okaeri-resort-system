@@ -14,7 +14,7 @@ import { GuestInformation } from "./steps/GuestInformation";
 import { PaymentDetails } from "./steps/PaymentDetails";
 import { BookingReview } from "./steps/BookingReview";
 
-import type { BookingFormProps, FormStep } from "./types";
+import type { BookingFormProps } from "./types";
 import { STEP_DESCRIPTIONS } from "./types";
 
 const STEP_ICONS = {

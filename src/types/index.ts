@@ -10,20 +10,20 @@ export interface Unit {
   unit_id: string;
   unit_name: string;
   unit_code: string;
-  unit_type: UnitType;
+  unit_type: string; // Database returns string, use UnitType for validation
   base_occupancy: number;
   max_occupancy: number;
   base_rate: number;
   weekend_rate: number;
   extra_person_rate: number;
-  unit_status: UnitStatus;
+  unit_status: string | null; // Database returns nullable string
   amenities: string[] | null;
   cleaning_fee?: number | null;
   description?: string | null;
   images?: string[] | null;
   policies?: string[] | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | null; // Database can return null
+  updated_at: string | null; // Database can return null
 }
 
 // ============================================
@@ -36,8 +36,8 @@ export interface Guest {
   phone_number: string;
   total_bookings: number | null;
   total_spent: number | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | null; // Database can return null
+  updated_at: string | null; // Database can return null
 }
 
 // ============================================
@@ -59,14 +59,14 @@ export interface Booking {
   check_in: string; // Date as ISO string
   check_out: string; // Date as ISO string
   total_amount: number;
-  booking_status: BookingStatus;
-  payment_status: PaymentStatus;
-  payment_method?: PaymentMethod | null;
+  booking_status: string | null; // Database uses nullable strings, not enums
+  payment_status: string | null; // Database uses nullable strings, not enums
+  payment_method?: string | null;
   payment_proof_url?: string | null;
   special_requests?: string | null;
   internal_notes?: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | null;
+  updated_at: string | null;
   // Relations
   unit?: Unit;
   guest?: Guest | null;

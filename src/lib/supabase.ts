@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { Database, AuditLogFilters, AuditEventContext } from "../../database.types";
+import type { Database, AuditLogFilters, AuditEventContext, Json } from "../../database.types";
 
 // Environment variables validation
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -514,8 +514,10 @@ export const db = {
         userCounts[email] = (userCounts[email] || 0) + 1;
 
         // By date (for recent activity)
-        const date = new Date(log.created_at).toISOString().split("T")[0];
-        dailyCounts[date] = (dailyCounts[date] || 0) + 1;
+        if (log.created_at) {
+          const date = new Date(log.created_at).toISOString().split("T")[0];
+          dailyCounts[date] = (dailyCounts[date] || 0) + 1;
+        }
       });
 
       // Top users (sorted by count)
@@ -556,12 +558,12 @@ export const db = {
       // IMPORTANT: Layer 2 always uses action='INSERT' and source='app'
       const auditLog: Database["public"]["Tables"]["audit_logs"]["Insert"] = {
         // Core fields
-        table_name: context.tableName,
+        table_name: context.tableName || "unknown",
         record_id: context.recordId || null,
         record_pk: (context.recordPk as Json) || null,
-        correlation_id: context.correlationId || null,
+        correlation_id: context.correlation_id || null,
         action: "INSERT" as const, // Layer 2 convention: always INSERT
-        event_type: context.eventType || null,
+        event_type: context.event_type || null,
         source: "app" as const, // Mark as Layer 2 (application logging)
 
         // User context
@@ -661,7 +663,12 @@ export const db = {
 
         if (error) throw error;
 
-        return { count: data || 0 };
+        // RPC returns an array of results, sum the archived_count
+        const totalCount = Array.isArray(data)
+          ? data.reduce((sum, item) => sum + (item.archived_count || 0), 0)
+          : 0;
+
+        return { count: totalCount };
       } catch (error) {
         console.error("[Audit] Archive failed:", error);
         return { count: 0, error: String(error) };

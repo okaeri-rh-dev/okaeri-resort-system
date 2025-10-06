@@ -6,31 +6,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5";
   };
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
   public: {
     Tables: {
       app_roles: {
@@ -207,6 +182,88 @@ export type Database = {
         };
         Relationships: [];
       };
+      availability_blackouts: {
+        Row: {
+          blackout_id: string;
+          blackout_type: string;
+          created_at: string | null;
+          created_by: string | null;
+          end_date: string;
+          reason: string | null;
+          start_date: string;
+          unit_id: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          blackout_id?: string;
+          blackout_type: string;
+          created_at?: string | null;
+          created_by?: string | null;
+          end_date: string;
+          reason?: string | null;
+          start_date: string;
+          unit_id: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          blackout_id?: string;
+          blackout_type?: string;
+          created_at?: string | null;
+          created_by?: string | null;
+          end_date?: string;
+          reason?: string | null;
+          start_date?: string;
+          unit_id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "availability_blackouts_unit_id_fkey";
+            columns: ["unit_id"];
+            isOneToOne: false;
+            referencedRelation: "units";
+            referencedColumns: ["unit_id"];
+          },
+        ];
+      };
+      availability_cache: {
+        Row: {
+          available_dates: string[];
+          cache_expires_at: string;
+          cache_id: string;
+          created_at: string | null;
+          date_range_end: string;
+          date_range_start: string;
+          unit_id: string;
+        };
+        Insert: {
+          available_dates: string[];
+          cache_expires_at: string;
+          cache_id?: string;
+          created_at?: string | null;
+          date_range_end: string;
+          date_range_start: string;
+          unit_id: string;
+        };
+        Update: {
+          available_dates?: string[];
+          cache_expires_at?: string;
+          cache_id?: string;
+          created_at?: string | null;
+          date_range_end?: string;
+          date_range_start?: string;
+          unit_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "availability_cache_unit_id_fkey";
+            columns: ["unit_id"];
+            isOneToOne: false;
+            referencedRelation: "units";
+            referencedColumns: ["unit_id"];
+          },
+        ];
+      };
       bookings: {
         Row: {
           booking_id: string;
@@ -220,7 +277,7 @@ export type Database = {
           guest_id: string | null;
           guest_name: string;
           internal_notes: string | null;
-          is_guest_booking: boolean;
+          is_guest_booking: boolean | null;
           num_guests: number;
           payment_method: string | null;
           payment_proof_url: string | null;
@@ -230,7 +287,7 @@ export type Database = {
           unit_id: string;
           updated_at: string | null;
           upload_expires_at: string | null;
-          upload_status: "pending" | "uploaded" | "verified" | "rejected" | null;
+          upload_status: string | null;
         };
         Insert: {
           booking_id?: string;
@@ -244,7 +301,7 @@ export type Database = {
           guest_id?: string | null;
           guest_name: string;
           internal_notes?: string | null;
-          is_guest_booking?: boolean;
+          is_guest_booking?: boolean | null;
           num_guests: number;
           payment_method?: string | null;
           payment_proof_url?: string | null;
@@ -254,7 +311,7 @@ export type Database = {
           unit_id: string;
           updated_at?: string | null;
           upload_expires_at?: string | null;
-          upload_status?: "pending" | "uploaded" | "verified" | "rejected" | null;
+          upload_status?: string | null;
         };
         Update: {
           booking_id?: string;
@@ -268,7 +325,7 @@ export type Database = {
           guest_id?: string | null;
           guest_name?: string;
           internal_notes?: string | null;
-          is_guest_booking?: boolean;
+          is_guest_booking?: boolean | null;
           num_guests?: number;
           payment_method?: string | null;
           payment_proof_url?: string | null;
@@ -278,7 +335,7 @@ export type Database = {
           unit_id?: string;
           updated_at?: string | null;
           upload_expires_at?: string | null;
-          upload_status?: "pending" | "uploaded" | "verified" | "rejected" | null;
+          upload_status?: string | null;
         };
         Relationships: [
           {
@@ -296,6 +353,81 @@ export type Database = {
             referencedColumns: ["unit_id"];
           },
         ];
+      };
+      bookings_conflict_backup: {
+        Row: {
+          booking_id: string | null;
+          booking_reference: string | null;
+          booking_status: string | null;
+          check_in: string | null;
+          check_out: string | null;
+          contact_number: string | null;
+          created_at: string | null;
+          email: string | null;
+          guest_id: string | null;
+          guest_name: string | null;
+          internal_notes: string | null;
+          is_guest_booking: boolean | null;
+          num_guests: number | null;
+          payment_method: string | null;
+          payment_proof_url: string | null;
+          payment_status: string | null;
+          special_requests: string | null;
+          total_amount: number | null;
+          unit_id: string | null;
+          updated_at: string | null;
+          upload_expires_at: string | null;
+          upload_status: string | null;
+        };
+        Insert: {
+          booking_id?: string | null;
+          booking_reference?: string | null;
+          booking_status?: string | null;
+          check_in?: string | null;
+          check_out?: string | null;
+          contact_number?: string | null;
+          created_at?: string | null;
+          email?: string | null;
+          guest_id?: string | null;
+          guest_name?: string | null;
+          internal_notes?: string | null;
+          is_guest_booking?: boolean | null;
+          num_guests?: number | null;
+          payment_method?: string | null;
+          payment_proof_url?: string | null;
+          payment_status?: string | null;
+          special_requests?: string | null;
+          total_amount?: number | null;
+          unit_id?: string | null;
+          updated_at?: string | null;
+          upload_expires_at?: string | null;
+          upload_status?: string | null;
+        };
+        Update: {
+          booking_id?: string | null;
+          booking_reference?: string | null;
+          booking_status?: string | null;
+          check_in?: string | null;
+          check_out?: string | null;
+          contact_number?: string | null;
+          created_at?: string | null;
+          email?: string | null;
+          guest_id?: string | null;
+          guest_name?: string | null;
+          internal_notes?: string | null;
+          is_guest_booking?: boolean | null;
+          num_guests?: number | null;
+          payment_method?: string | null;
+          payment_proof_url?: string | null;
+          payment_status?: string | null;
+          special_requests?: string | null;
+          total_amount?: number | null;
+          unit_id?: string | null;
+          updated_at?: string | null;
+          upload_expires_at?: string | null;
+          upload_status?: string | null;
+        };
+        Relationships: [];
       };
       expenses: {
         Row: {
@@ -565,9 +697,293 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
       };
+      check_unit_availability: {
+        Args: { p_check_in: string; p_check_out: string; p_unit_id: string };
+        Returns: boolean;
+      };
+      check_unit_availability_fast: {
+        Args: {
+          p_unit_id: string;
+          p_check_in: string;
+          p_check_out: string;
+          p_exclude_booking_id?: string;
+        };
+        Returns: {
+          is_available: boolean;
+          conflicting_bookings: number;
+          blackout_periods: number;
+          unit_status: string;
+        }[];
+      };
+      check_multi_unit_availability: {
+        Args: {
+          p_check_in: string;
+          p_check_out: string;
+          p_unit_types?: string[];
+          p_min_occupancy?: number;
+          p_max_rate?: number;
+          p_limit?: number;
+        };
+        Returns: {
+          unit_id: string;
+          unit_name: string;
+          unit_code: string;
+          unit_type: string;
+          max_occupancy: number;
+          base_rate: number;
+          weekend_rate: number;
+          is_available: boolean;
+          next_available_date: string | null;
+        }[];
+      };
+      get_unit_availability_calendar: {
+        Args: {
+          p_unit_id: string;
+          p_start_date: string;
+          p_end_date: string;
+        };
+        Returns: {
+          calendar_date: string;
+          status: string;
+          booking_id: string | null;
+          guest_name: string | null;
+          booking_reference: string | null;
+        }[];
+      };
+      refresh_availability_cache: {
+        Args: {
+          p_unit_id?: string;
+          p_days_ahead?: number;
+        };
+        Returns: number;
+      };
       detach_audit_trigger: {
         Args: { target_table: string };
         Returns: undefined;
+      };
+      gbt_bit_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_bool_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_bool_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_bpchar_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_bytea_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_cash_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_cash_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_date_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_date_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_decompress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_enum_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_enum_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_float4_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_float4_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_float8_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_float8_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_inet_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_int2_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_int2_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_int4_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_int4_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_int8_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_int8_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_intv_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_intv_decompress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_intv_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_macad_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_macad_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_macad8_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_macad8_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_numeric_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_oid_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_oid_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_text_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_time_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_time_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_timetz_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_ts_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_ts_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_tstz_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_uuid_compress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_uuid_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_var_decompress: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbt_var_fetch: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbtreekey_var_in: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbtreekey_var_out: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbtreekey16_in: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbtreekey16_out: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbtreekey2_in: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbtreekey2_out: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbtreekey32_in: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbtreekey32_out: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbtreekey4_in: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbtreekey4_out: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbtreekey8_in: {
+        Args: { "": unknown };
+        Returns: unknown;
+      };
+      gbtreekey8_out: {
+        Args: { "": unknown };
+        Returns: unknown;
       };
       generate_booking_reference: {
         Args: Record<PropertyKey, never>;
@@ -750,31 +1166,46 @@ export type CompositeTypes<
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never;
 
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const;
+
 // ============================================
-// AUDIT TRAIL TYPE EXPORTS
+// AUDIT SYSTEM APPLICATION TYPES
 // ============================================
+// These types extend the database schema with application-level audit types
 
-// Type aliases for audit trail system
-export type AuditLog = Database["public"]["Tables"]["audit_logs"]["Row"];
-export type AuditLogInsert = Database["public"]["Tables"]["audit_logs"]["Insert"];
-export type AuditLogUpdate = Database["public"]["Tables"]["audit_logs"]["Update"];
-
-// Audit action type - based on database CHECK constraint
-export type AuditAction = "INSERT" | "UPDATE" | "DELETE";
-
-// Audit categories enum
-export enum AuditCategory {
-  AUTHENTICATION = "authentication",
-  BOOKING = "booking",
-  PAYMENT = "payment",
-  GUEST = "guest",
-  UNIT = "unit",
-  EXPENSE = "expense",
-  MAINTENANCE = "maintenance",
-  SYSTEM = "system",
+/**
+ * AuditAction - Database audit action types
+ * Matches the action column in audit_logs table
+ */
+export enum AuditAction {
+  INSERT = "INSERT",
+  UPDATE = "UPDATE",
+  DELETE = "DELETE",
 }
 
-// Audit severity levels
+/**
+ * AuditCategory - Application-level category for audit events
+ * Matches the category column in audit_logs table
+ */
+export enum AuditCategory {
+  AUTHENTICATION = "AUTHENTICATION",
+  BOOKING = "BOOKING",
+  PAYMENT = "PAYMENT",
+  GUEST = "GUEST",
+  UNIT = "UNIT",
+  EXPENSE = "EXPENSE",
+  MAINTENANCE = "MAINTENANCE",
+  SYSTEM = "SYSTEM",
+}
+
+/**
+ * AuditSeverity - Severity level for audit events
+ * Matches the severity column in audit_logs table
+ */
 export enum AuditSeverity {
   INFO = "INFO",
   WARNING = "WARNING",
@@ -782,135 +1213,170 @@ export enum AuditSeverity {
   DEBUG = "DEBUG",
 }
 
-// Audit event types for application-level logging
-export enum AuditEventType {
+/**
+ * AuditEventType - Event type classification
+ * Matches the event_type column in audit_logs table
+ * Using const object instead of enum for runtime access
+ */
+export const AuditEventType = {
   // Authentication events
-  LOGIN = "login",
-  LOGOUT = "logout",
-  LOGIN_FAILED = "login_failed",
-  PASSWORD_RESET = "password_reset",
+  LOGIN: "login",
+  LOGOUT: "logout",
+  LOGIN_FAILED: "login_failed",
+  PASSWORD_RESET: "password_reset",
 
   // Booking events
-  BOOKING_CREATED = "booking_created",
-  BOOKING_UPDATED = "booking_updated",
-  BOOKING_CANCELLED = "booking_cancelled",
-  CANCEL_BOOKING = "cancel_booking", // Alias for BOOKING_CANCELLED
-  CHECK_IN = "check_in",
-  CHECK_OUT = "check_out",
-  BOOKING_CHECKED_IN = "booking_checked_in", // Alias for CHECK_IN
-  BOOKING_CHECKED_OUT = "booking_checked_out", // Alias for CHECK_OUT
-  BOOKING_STATUS_OVERRIDE = "booking_status_override",
+  BOOKING_CREATED: "booking_created",
+  BOOKING_UPDATED: "booking_updated",
+  CANCEL_BOOKING: "booking_cancelled",
+  BOOKING_CHECKED_IN: "booking_checked_in",
+  BOOKING_CHECKED_OUT: "booking_checked_out",
+  BOOKING_STATUS_OVERRIDE: "booking_status_override",
 
   // Payment events
-  PAYMENT_RECORDED = "payment_recorded",
-  PAYMENT_VERIFIED = "payment_verified",
-  PAYMENT_REFUNDED = "payment_refunded",
-  REFUND_PAYMENT = "refund_payment", // Alias for PAYMENT_REFUNDED
-  PAYMENT_FAILED = "payment_failed",
+  PAYMENT_RECEIVED: "payment_received",
+  REFUND_PAYMENT: "payment_refunded",
+  PAYMENT_FAILED: "payment_failed",
+  PAYMENT_VERIFIED: "payment_verified",
+
+  // Guest events
+  GUEST_CREATED: "guest_created",
+  GUEST_UPDATED: "guest_updated",
+
+  // Unit events
+  UNIT_UPDATED: "unit_updated",
+  UNIT_CREATED: "unit_created",
 
   // Expense events
-  EXPENSE_CREATED = "expense_created",
-  EXPENSE_UPDATED = "expense_updated",
-  EXPENSE_DELETED = "expense_deleted",
-  EXPENSE_CATEGORY_CHANGED = "expense_category_changed",
+  EXPENSE_RECORDED: "expense_recorded",
+  EXPENSE_UPDATED: "expense_updated",
+  EXPENSE_DELETED: "expense_deleted",
+  EXPENSE_CATEGORY_CHANGED: "expense_category_changed",
+
+  // Maintenance events
+  MAINTENANCE_SCHEDULED: "maintenance_scheduled",
+  MAINTENANCE_COMPLETED: "maintenance_completed",
 
   // System events
-  MIGRATION_RUN = "migration_run",
-  SYSTEM_MIGRATION = "system_migration", // Alias for MIGRATION_RUN
-  BACKUP_CREATED = "backup_created",
-  SYSTEM_BACKUP = "system_backup", // Alias for BACKUP_CREATED
-  SYSTEM_CONFIG_CHANGE = "system_config_change",
-  ROLE_ASSIGNED = "role_assigned",
-  ROLE_REVOKED = "role_revoked",
-}
+  SYSTEM_CONFIG_CHANGED: "system_config_changed",
+  SYSTEM_MIGRATION: "system_migration",
+  SYSTEM_BACKUP: "system_backup",
+} as const;
 
-// Display names for event types
-export const EVENT_TYPE_DISPLAY_NAMES: Record<AuditEventType, string> = {
-  [AuditEventType.LOGIN]: "User Login",
-  [AuditEventType.LOGOUT]: "User Logout",
-  [AuditEventType.LOGIN_FAILED]: "Failed Login",
-  [AuditEventType.PASSWORD_RESET]: "Password Reset",
-  [AuditEventType.BOOKING_CREATED]: "Booking Created",
-  [AuditEventType.BOOKING_UPDATED]: "Booking Updated",
-  [AuditEventType.BOOKING_CANCELLED]: "Booking Cancelled",
-  [AuditEventType.CANCEL_BOOKING]: "Cancel Booking",
-  [AuditEventType.CHECK_IN]: "Guest Check-in",
-  [AuditEventType.CHECK_OUT]: "Guest Check-out",
-  [AuditEventType.BOOKING_CHECKED_IN]: "Booking Checked In",
-  [AuditEventType.BOOKING_CHECKED_OUT]: "Booking Checked Out",
-  [AuditEventType.BOOKING_STATUS_OVERRIDE]: "Booking Status Override",
-  [AuditEventType.PAYMENT_RECORDED]: "Payment Recorded",
-  [AuditEventType.PAYMENT_VERIFIED]: "Payment Verified",
-  [AuditEventType.PAYMENT_REFUNDED]: "Payment Refunded",
-  [AuditEventType.REFUND_PAYMENT]: "Refund Payment",
-  [AuditEventType.PAYMENT_FAILED]: "Payment Failed",
-  [AuditEventType.EXPENSE_CREATED]: "Expense Created",
-  [AuditEventType.EXPENSE_UPDATED]: "Expense Updated",
-  [AuditEventType.EXPENSE_DELETED]: "Expense Deleted",
-  [AuditEventType.EXPENSE_CATEGORY_CHANGED]: "Expense Category Changed",
-  [AuditEventType.MIGRATION_RUN]: "Database Migration",
-  [AuditEventType.SYSTEM_MIGRATION]: "System Migration",
-  [AuditEventType.BACKUP_CREATED]: "Backup Created",
-  [AuditEventType.SYSTEM_BACKUP]: "System Backup",
-  [AuditEventType.SYSTEM_CONFIG_CHANGE]: "System Configuration Change",
-  [AuditEventType.ROLE_ASSIGNED]: "Role Assigned",
-  [AuditEventType.ROLE_REVOKED]: "Role Revoked",
-};
+export type AuditEventTypeValue = (typeof AuditEventType)[keyof typeof AuditEventType];
 
-// Filter types for audit queries
+/**
+ * EventType - Alias for AuditEventTypeValue for backwards compatibility
+ */
+export type EventType = AuditEventTypeValue;
+
+/**
+ * AuditLog - Extended audit log type with all fields
+ */
+export type AuditLog = Database["public"]["Tables"]["audit_logs"]["Row"];
+
+/**
+ * AuditLogInsert - Insert type for audit logs
+ */
+export type AuditLogInsert = Database["public"]["Tables"]["audit_logs"]["Insert"];
+
+/**
+ * AuditLogFilters - Filters for querying audit logs
+ * Uses camelCase for frontend compatibility
+ */
 export interface AuditLogFilters {
-  startDate?: string;
-  endDate?: string;
+  tableName?: string;
+  action?: AuditAction | string;
+  category?: AuditCategory | string;
+  severity?: AuditSeverity | string;
+  eventType?: AuditEventTypeValue | string;
   userEmail?: string;
   userId?: string;
-  tableName?: string;
+  userRole?: string;
+  source?: string;
+  startDate?: string;
+  endDate?: string;
   recordId?: string;
-  action?: AuditAction;
-  category?: AuditCategory;
-  severity?: AuditSeverity;
-  eventType?: AuditEventType;
-  source?: "db" | "app"; // Layer 1 (db) or Layer 2 (app) logs
-  limit?: number;
+  correlationId?: string;
+  search?: string;
   offset?: number;
+  limit?: number;
 }
 
-// Query result types
+/**
+ * AuditLogQueryResult - Result of audit log query with pagination
+ */
 export interface AuditLogQueryResult {
   data: AuditLog[];
   totalCount: number;
-  hasMore: boolean;
   currentPage: number;
+  pageSize: number;
   totalPages: number;
+  hasMore: boolean;
 }
 
-// Statistics types
+/**
+ * AuditLogStats - Statistics for audit logs
+ * Uses camelCase for frontend compatibility
+ */
 export interface AuditLogStats {
   totalLogs: number;
   byTable: Record<string, number>;
-  byAction: Record<AuditAction, number>;
-  byUser: Array<{ email: string; count: number }>;
-  recentActivity: Array<{ date: string; count: number }>;
+  byAction: Record<string, number>;
+  byUser: Array<{
+    email: string;
+    count: number;
+  }>;
+  recentActivity: Array<{
+    date: string;
+    count: number;
+  }>;
 }
 
-// Event context for creating audit logs
+/**
+ * AuditEventContext - Context information for logging audit events
+ */
 export interface AuditEventContext {
-  tableName: string;
-  recordId?: string;
-  action?: AuditAction;
-  eventType?: AuditEventType;
-  description?: string;
   category?: AuditCategory;
   severity?: AuditSeverity;
+  event_type?: AuditEventTypeValue;
+  description?: string;
   metadata?: Record<string, unknown>;
-  oldData?: Record<string, unknown>;
-  newData?: Record<string, unknown>;
+  correlation_id?: string;
+  tableName?: string;
+  recordId?: string;
+  recordPk?: Json;
+  oldData?: unknown;
+  newData?: unknown;
 }
 
-export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
-  public: {
-    Enums: {},
-  },
-} as const;
+/**
+ * LogAuditEvent - Function signature for logging audit events
+ */
+export interface LogAuditEvent {
+  action: AuditAction;
+  table_name: string;
+  record_id?: string;
+  old_data?: unknown;
+  new_data?: unknown;
+  context?: AuditEventContext;
+}
+
+/**
+ * EVENT_TYPE_DISPLAY_NAMES - Human-readable names for event types
+ */
+export const EVENT_TYPE_DISPLAY_NAMES: Record<string, string> = {
+  login: "User Login",
+  logout: "User Logout",
+  login_failed: "Failed Login Attempt",
+  password_reset: "Password Reset",
+  booking_created: "Booking Created",
+  booking_updated: "Booking Updated",
+  booking_cancelled: "Booking Cancelled",
+  payment_received: "Payment Received",
+  guest_created: "Guest Created",
+  unit_updated: "Unit Updated",
+  expense_recorded: "Expense Recorded",
+  maintenance_scheduled: "Maintenance Scheduled",
+  system_config_changed: "System Configuration Changed",
+};

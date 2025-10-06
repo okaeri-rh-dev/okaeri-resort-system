@@ -55,19 +55,18 @@ export function TableHeader({
 }: TableHeaderProps) {
   const unitTypes: Array<{ value: string; label: string }> = [
     { value: "all", label: "All Types" },
-    { value: "studio", label: "Studio" },
-    { value: "1br", label: "1 Bedroom" },
-    { value: "2br", label: "2 Bedrooms" },
-    { value: "suite", label: "Suite" },
-    { value: "villa", label: "Villa" },
+    { value: "Standard", label: "Standard" },
+    { value: "Deluxe", label: "Deluxe" },
+    { value: "Suite", label: "Suite" },
+    { value: "Villa", label: "Villa" },
   ];
 
   const unitStatuses: Array<{ value: string; label: string }> = [
     { value: "all", label: "All Statuses" },
-    { value: "available", label: "Available" },
-    { value: "occupied", label: "Occupied" },
-    { value: "maintenance", label: "Maintenance" },
-    { value: "reserved", label: "Reserved" },
+    { value: "Available", label: "Available" },
+    { value: "Occupied", label: "Occupied" },
+    { value: "Maintenance", label: "Maintenance" },
+    { value: "Reserved", label: "Reserved" },
   ];
 
   return (
@@ -182,7 +181,7 @@ export function TableHeader({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onBatchStatusUpdate("available")}
+                  onClick={() => onBatchStatusUpdate("Available")}
                   className="text-green-600 border-green-600 hover:bg-green-50"
                 >
                   Mark Available
@@ -190,7 +189,7 @@ export function TableHeader({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onBatchStatusUpdate("maintenance")}
+                  onClick={() => onBatchStatusUpdate("Maintenance")}
                   className="text-orange-600 border-orange-600 hover:bg-orange-50"
                 >
                   Mark Maintenance
@@ -198,7 +197,7 @@ export function TableHeader({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onBatchStatusUpdate("reserved")}
+                  onClick={() => onBatchStatusUpdate("Reserved")}
                   className="text-blue-600 border-blue-600 hover:bg-blue-50"
                 >
                   Mark Reserved

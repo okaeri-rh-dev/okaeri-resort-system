@@ -177,11 +177,11 @@ describe("XSS Prevention Tests", () => {
       const maliciousFormData = {
         guest_name: 'John<script>alert("XSS")</script>Doe',
         email: "test<img src=x>@example.com",
-        phone_number: "123<iframe>456</iframe>7890",
+        contact_number: "123<iframe>456</iframe>7890",
         special_requests: '<p onclick="alert(1)">Special request</p>',
         check_in: "2025-10-01", // Should not be sanitized
-        total_amount: 5000, // Should not be sanitized
         unit_id: "unit-123", // Should not be sanitized
+        num_guests: 2, // Should not be sanitized
       };
 
       const sanitized = sanitizeBookingFormData(maliciousFormData);
@@ -189,30 +189,27 @@ describe("XSS Prevention Tests", () => {
       // Check sanitized fields
       expect(sanitized.guest_name).not.toContain("<script>");
       expect(sanitized.email).not.toContain("<img");
-      expect(sanitized.phone_number).not.toContain("<iframe>");
+      expect(sanitized.contact_number).not.toContain("<iframe>");
       expect(sanitized.special_requests).toContain("<p>"); // Rich text allows <p>
       expect(sanitized.special_requests).not.toContain("onclick");
 
       // Check preserved fields
       expect(sanitized.check_in).toBe("2025-10-01");
-      expect(sanitized.total_amount).toBe(5000);
+      expect(sanitized.num_guests).toBe(2);
       expect(sanitized.unit_id).toBe("unit-123");
     });
 
-    it("should handle nested objects in form data", () => {
-      const nestedData = {
-        guest: {
-          name: "Test<script>alert(1)</script>",
-          contact: {
-            email: "test@example.com",
-            phone: "123-456-7890",
-          },
-        },
+    it("should handle partial booking form data", () => {
+      const partialData = {
+        guest_name: "Test<script>alert(1)</script>",
+        email: "test@example.com",
+        contact_number: "123-456-7890",
       };
 
-      const sanitized = sanitizeBookingFormData(nestedData);
-      expect(sanitized.guest.name).not.toContain("<script>");
-      expect(sanitized.guest.contact.email).toBe("test@example.com");
+      const sanitized = sanitizeBookingFormData(partialData);
+      expect(sanitized.guest_name).not.toContain("<script>");
+      expect(sanitized.email).toBe("test@example.com");
+      expect(sanitized.contact_number).toBe("123-456-7890");
     });
   });
 

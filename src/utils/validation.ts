@@ -16,7 +16,8 @@ import {
   sanitizeEmail as secureSanitizeEmail,
   sanitizePhoneNumber,
   sanitizeName,
-  sanitizeFormData as secureSanitizeFormData,
+  // sanitizeFormData is available if needed in the future
+  // sanitizeFormData as secureSanitizeFormData,
 } from "@/lib/security/sanitize";
 
 // ============================================

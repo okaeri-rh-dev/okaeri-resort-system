@@ -6,8 +6,8 @@
  */
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { logAuditEvent } from "../audit-logger-workers";
-import { AuditCategory, AuditSeverity, EventType } from "@/database.types";
+import { logAuditEvent } from "../audit-logger";
+import { AuditCategory, AuditSeverity } from "../../../database.types";
 
 interface BandwidthUsage {
   bytesUsed: number;
@@ -205,7 +205,7 @@ export class BandwidthMonitor {
 
       // Log monthly reset
       await logAuditEvent({
-        action: "bandwidth_reset" as EventType,
+        tableName: "system",
         category: AuditCategory.SYSTEM,
         severity: AuditSeverity.INFO,
         description: "Monthly bandwidth tracking reset",
@@ -237,10 +237,10 @@ export class BandwidthMonitor {
           : AuditSeverity.INFO;
 
     await logAuditEvent({
-      action: "bandwidth_alert" as EventType,
+      tableName: "system",
       category: AuditCategory.SYSTEM,
       severity,
-      description: alert.message,
+      description: `Bandwidth alert: ${alert.message}`,
       metadata: {
         threshold: alert.threshold,
         currentUsage: alert.currentUsage,

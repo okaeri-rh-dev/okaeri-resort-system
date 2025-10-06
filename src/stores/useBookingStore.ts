@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, db, handleSupabaseError, storage } from "@/lib/supabase";
+import { adaptBookingFromDB } from "@/lib/database-adapters";
 import type {
   Booking,
   BookingFilters,
@@ -14,7 +15,6 @@ import type {
   UnitAvailabilityResponse,
   CalendarDayResponse,
   BlackoutResponse,
-  PaymentStatusUpdate,
 } from "@/types/supabase";
 // import { useWorkflowStore } from "./useWorkflowStore"; // Phase 3-4
 
@@ -277,10 +277,11 @@ export const useBookings = () => {
 
       if (error) throw new Error(handleSupabaseError(error));
 
-      // Merge with optimistic updates
+      // Convert database types to application types and merge with optimistic updates
       const mergedData =
-        data?.map((booking) => {
-          const optimisticEntry = optimisticBookings.get(booking.booking_id);
+        data?.map((dbBooking) => {
+          const optimisticEntry = optimisticBookings.get(dbBooking.booking_id);
+          const booking = adaptBookingFromDB(dbBooking as any); // Type cast needed for DB -> App conversion
           return optimisticEntry ? { ...booking, ...optimisticEntry.booking } : booking;
         }) || [];
 
@@ -738,7 +739,15 @@ export const useUnitAvailabilityFast = (
 
       if (error) throw new Error(handleSupabaseError(error));
 
-      const result = data?.[0];
+      // RPC result type: check_unit_availability_fast returns array with availability data
+      const result = (
+        data as unknown as Array<{
+          is_available: boolean;
+          conflicting_bookings: number;
+          blackout_periods: number;
+          unit_status: string;
+        }>
+      )?.[0];
       return {
         isAvailable: result?.is_available || false,
         conflictingBookings: result?.conflicting_bookings || 0,
@@ -782,7 +791,8 @@ export const useMultiUnitAvailability = (
 
       if (error) throw new Error(handleSupabaseError(error));
 
-      return (data || []).map((unit: UnitAvailabilityResponse) => ({
+      // RPC result type: find_available_units returns UnitAvailabilityResponse[]
+      return ((data as unknown as UnitAvailabilityResponse[]) || []).map((unit) => ({
         unit_id: unit.unit_id,
         unit_name: unit.unit_name,
         unit_code: unit.unit_code,
@@ -823,7 +833,8 @@ export const useAvailabilityCalendar = (
 
       if (error) throw new Error(handleSupabaseError(error));
 
-      return (data || []).map((day: CalendarDayResponse) => ({
+      // RPC result type: get_availability_calendar returns CalendarDayResponse[]
+      return ((data as unknown as CalendarDayResponse[]) || []).map((day) => ({
         date: day.calendar_date,
         status: day.status,
         bookingId: day.booking_id,
@@ -858,7 +869,9 @@ export const useUnitBlackouts = (
       if (startDate && endDate) {
         const { data, error } = await db.blackouts.inDateRange(startDate, endDate);
         if (error) throw new Error(handleSupabaseError(error));
-        return data?.filter((blackout: BlackoutResponse) => blackout.unit_id === unitId) || [];
+        return ((data as unknown as BlackoutResponse[]) || []).filter(
+          (blackout) => blackout.unit_id === unitId
+        );
       }
 
       const { data, error } = await query;
@@ -907,10 +920,11 @@ export const useCreateBlackout = () => {
     },
     onSuccess: (data) => {
       // Invalidate all availability-related queries for the unit
-      queryClient.invalidateQueries({ queryKey: ["unit-blackouts", data.unit_id] });
-      queryClient.invalidateQueries({ queryKey: ["unit-availability-fast", data.unit_id] });
+      const blackout = data as unknown as BlackoutResponse;
+      queryClient.invalidateQueries({ queryKey: ["unit-blackouts", blackout.unit_id] });
+      queryClient.invalidateQueries({ queryKey: ["unit-availability-fast", blackout.unit_id] });
       queryClient.invalidateQueries({ queryKey: ["multi-unit-availability"] });
-      queryClient.invalidateQueries({ queryKey: ["availability-calendar", data.unit_id] });
+      queryClient.invalidateQueries({ queryKey: ["availability-calendar", blackout.unit_id] });
       queryClient.invalidateQueries({ queryKey: ["units"] });
     },
     onError: (error) => {
@@ -1179,7 +1193,7 @@ export const useBookingWithWorkflow = (
         throw new Error(`Failed to fetch workflow state: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as unknown as { workflowState: any };
       return data.workflowState;
     },
     enabled: !!bookingId && !!bookingQuery.data,
@@ -1359,7 +1373,14 @@ export const useBookingWorkflowMetrics = (resortId = "resort-okaeri") => {
         throw new Error(`Failed to fetch workflow metrics: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as unknown as {
+        summary?: {
+          totalBookings?: number;
+          activeAutomatedTriggers?: number;
+          pendingActions?: number;
+          estimatedMonthlyCost?: number;
+        };
+      };
 
       return {
         totalBookings: data.summary?.totalBookings || 0,

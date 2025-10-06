@@ -75,7 +75,7 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
   const handleUpdateUnit = useCallback(
     async (unitId: string, updates: Partial<Unit>) => {
       try {
-        await updateMutationRef.current.mutateAsync({ id: unitId, updates });
+        await updateMutationRef.current.mutateAsync({ unitId, updates });
       } catch (error) {
         console.error("Failed to update unit:", error);
       }

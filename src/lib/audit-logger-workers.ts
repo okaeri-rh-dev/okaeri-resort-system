@@ -77,13 +77,21 @@ export async function logAuditEventWithIP(
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData: unknown = await response.json();
+      const errorMsg =
+        typeof errorData === "object" && errorData !== null && "error" in errorData
+          ? String((errorData as { error?: unknown }).error)
+          : "Unknown error";
       console.error("[Audit Workers] Failed:", errorData);
-      return { success: false, error: errorData.error };
+      return { success: false, error: errorMsg };
     }
 
-    const result = await response.json();
-    console.log("[Audit Workers] Logged with IP:", result.audit_id);
+    const result: unknown = await response.json();
+    const auditId =
+      typeof result === "object" && result !== null && "audit_id" in result
+        ? (result as { audit_id?: unknown }).audit_id
+        : undefined;
+    console.log("[Audit Workers] Logged with IP:", auditId);
     return { success: true };
   } catch (error) {
     console.error("[Audit Workers] Exception:", error);

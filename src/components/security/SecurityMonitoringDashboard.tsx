@@ -3,7 +3,7 @@
  * Real-time security event monitoring and threat analysis
  */
 
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
@@ -13,8 +13,6 @@ import {
   Ban,
   RefreshCw,
   Search,
-  Filter,
-  TrendingUp,
   UserX,
   Globe,
 } from "lucide-react";
@@ -39,12 +37,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { supabase } from "@/lib/supabase";
-import { getTopThreatSources, detectAnomalies } from "@/lib/security-monitoring";
+import { getTopThreatSources } from "@/lib/security-monitoring";
 import { cn } from "@/lib/utils";
 
 type AuditLog = {
@@ -57,12 +55,7 @@ type AuditLog = {
   created_at: string;
 };
 
-type ThreatSource = {
-  ip: string;
-  eventCount: number;
-  threatScore: number;
-  patterns: string[];
-};
+// ThreatSource type is inferred from getTopThreatSources return type
 
 /**
  * Main Security Monitoring Dashboard Component
@@ -75,7 +68,7 @@ export function SecurityMonitoringDashboard() {
   const [autoRefresh, setAutoRefresh] = useState(true);
 
   // Fetch security events
-  const { data: securityLogs = [], isLoading: logsLoading } = useQuery({
+  const { data: securityLogs = [] } = useQuery({
     queryKey: ["security-logs", selectedTimeRange, severityFilter],
     queryFn: async () => {
       const hoursBack =
@@ -111,7 +104,7 @@ export function SecurityMonitoringDashboard() {
   });
 
   // Fetch top threat sources
-  const { data: threatSources = [], isLoading: threatsLoading } = useQuery({
+  const { data: threatSources = [] } = useQuery({
     queryKey: ["threat-sources", selectedTimeRange],
     queryFn: async () => {
       const hoursBack =
@@ -163,8 +156,8 @@ export function SecurityMonitoringDashboard() {
 
   // Manual refresh
   const handleRefresh = () => {
-    queryClient.invalidateQueries(["security-logs"]);
-    queryClient.invalidateQueries(["threat-sources"]);
+    queryClient.invalidateQueries({ queryKey: ["security-logs"] });
+    queryClient.invalidateQueries({ queryKey: ["threat-sources"] });
   };
 
   return (
@@ -430,13 +423,6 @@ function SeverityBadge({ severity }: { severity: string }) {
     ERROR: "destructive",
     WARNING: "secondary",
     INFO: "default",
-  };
-
-  const colors: Record<string, string> = {
-    CRITICAL: "bg-red-500",
-    ERROR: "bg-orange-500",
-    WARNING: "bg-yellow-500",
-    INFO: "bg-blue-500",
   };
 
   return <Badge variant={variants[severity] || "default"}>{severity}</Badge>;

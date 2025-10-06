@@ -56,4 +56,14 @@ export interface UnitsTableProps {
    * Callback when a unit is deleted
    */
   onUnitDelete?: (unitId: string) => void;
+
+  /**
+   * Callback when viewing unit details
+   */
+  onViewUnit?: (unit: any) => void;
+
+  /**
+   * Callback when editing a unit
+   */
+  onEditUnit?: (unit: any) => void;
 }

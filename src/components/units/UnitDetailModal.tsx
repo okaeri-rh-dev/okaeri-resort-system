@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/validations";
-import { Home, Users, DollarSign, Info, Calendar } from "lucide-react";
+import { Users, DollarSign, Info, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import type { Unit } from "@/types";
 
@@ -32,7 +32,9 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, on
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Cabin Details</span>
-            <Badge className={getStatusColor(unit.unit_status)}>{unit.unit_status}</Badge>
+            <Badge className={getStatusColor(unit.unit_status ?? undefined)}>
+              {unit.unit_status ?? "Unknown"}
+            </Badge>
           </DialogTitle>
         </DialogHeader>
 
@@ -112,7 +114,7 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, on
                   Features & Amenities
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {unit.features.map((feature, index) => (
+                  {(unit?.amenities ?? []).map((feature, index) => (
                     <Badge key={index} variant="secondary">
                       {feature}
                     </Badge>
@@ -129,19 +131,21 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, on
               <div>
                 <h3 className="font-semibold mb-3">Description</h3>
                 <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
-                  {unit.description}
+                  {unit?.description ?? "No description available"}
                 </p>
               </div>
             </>
           )}
 
-          {/* Maintenance Information */}
+          {/* Maintenance Information - field not in current schema */}
           {false && (
             <>
               <Separator />
               <div>
                 <h3 className="font-semibold mb-3 text-yellow-600">Maintenance Notes</h3>
-                <p className="text-sm bg-yellow-50 p-3 rounded-md">{unit.maintenance_notes}</p>
+                <p className="text-sm bg-yellow-50 p-3 rounded-md">
+                  {/* maintenance_notes field not in schema */}
+                </p>
               </div>
             </>
           )}
@@ -149,10 +153,12 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, on
           {/* Metadata */}
           <Separator />
           <div className="text-xs text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-3 w-3" />
-              <span>Created: {format(new Date(unit.created_at), "PPpp")}</span>
-            </div>
+            {unit.created_at && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-3 w-3" />
+                <span>Created: {format(new Date(unit.created_at), "PPpp")}</span>
+              </div>
+            )}
             {unit.updated_at && (
               <div className="flex items-center gap-2 mt-1">
                 <Calendar className="h-3 w-3" />

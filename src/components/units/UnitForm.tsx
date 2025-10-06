@@ -25,7 +25,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { useCreateUnit, useUpdateUnit } from "@/stores/useUnitStore";
-import type { Unit } from "@/types";
+import type { Unit, UnitType } from "@/types";
 
 interface UnitFormProps {
   unit?: Unit; // For editing existing unit
@@ -45,7 +45,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
     defaultValues: {
       unit_name: unit?.unit_name || "",
       unit_code: unit?.unit_code || "",
-      unit_type: unit?.unit_type || "Standard",
+      unit_type: (unit?.unit_type as unknown as UnitType) || "Standard",
       base_occupancy: unit?.base_occupancy || 2,
       max_occupancy: unit?.max_occupancy || 2,
       base_rate: unit?.base_rate || 0,

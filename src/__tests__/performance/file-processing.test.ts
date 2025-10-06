@@ -58,17 +58,13 @@ describe("File Processing Performance Tests", () => {
         const file = new File([new ArrayBuffer(testCase.size)], "test.jpg", { type: "image/jpeg" });
 
         const startTime = performance.now();
-        const compressed = await compressImage(file, {
-          maxSizeMB: 2,
-          maxWidthOrHeight: 1920,
-          useWebWorker: true,
-        });
+        const compressed = await compressImage(file);
         const endTime = performance.now();
 
         const compressionTime = endTime - startTime;
 
         expect(compressionTime).toBeLessThan(testCase.expectedTime);
-        expect(compressed).toBeInstanceOf(Blob);
+        expect(compressed).toBeInstanceOf(File);
         console.log(`${testCase.name}: ${compressionTime.toFixed(2)}ms`);
       }
     });
@@ -84,10 +80,7 @@ describe("File Processing Performance Tests", () => {
         uiBlocked = false;
       }, 10);
 
-      const compressionPromise = compressImage(file, {
-        maxSizeMB: 1,
-        useWebWorker: true,
-      });
+      const compressionPromise = compressImage(file);
 
       // Simulate UI operations during compression
       let uiOperations = 0;
@@ -116,10 +109,7 @@ describe("File Processing Performance Tests", () => {
           type: "image/jpeg",
         });
 
-        const compressed = await compressImage(file, {
-          maxSizeMB: test.targetSize / (1024 * 1024),
-          quality: 0.8,
-        });
+        const compressed = await compressImage(file);
 
         const compressionRatio = compressed.size / test.originalSize;
         expect(compressionRatio).toBeLessThanOrEqual(0.5); // At least 50% compression
@@ -135,12 +125,7 @@ describe("File Processing Performance Tests", () => {
       const startTime = performance.now();
 
       // Process all files concurrently
-      const compressionPromises = files.map((file) =>
-        compressImage(file, {
-          maxSizeMB: 0.5,
-          useWebWorker: true,
-        })
-      );
+      const compressionPromises = files.map((file) => compressImage(file));
 
       const results = await Promise.all(compressionPromises);
       const endTime = performance.now();
@@ -152,7 +137,7 @@ describe("File Processing Performance Tests", () => {
       expect(totalTime).toBeLessThan(500);
       expect(results).toHaveLength(5);
       results.forEach((result: any) => {
-        expect(result).toBeInstanceOf(Blob);
+        expect(result).toBeInstanceOf(File);
       });
     });
   });
@@ -174,13 +159,13 @@ describe("File Processing Performance Tests", () => {
       // Process non-HEIC file - should not load library
       const jpegFile = new File([new ArrayBuffer(1024)], "test.jpg", { type: "image/jpeg" });
 
-      await compressImage(jpegFile, { maxSizeMB: 1 });
+      await compressImage(jpegFile);
       expect(heicLibraryLoaded).toBe(false);
 
       // Process HEIC file - should load library
       const heicFile = new File([new ArrayBuffer(1024)], "test.heic", { type: "image/heic" });
 
-      await compressImage(heicFile, { maxSizeMB: 1 });
+      await compressImage(heicFile);
       // In real scenario, this would be true after HEIC processing
     });
 
@@ -202,10 +187,6 @@ describe("File Processing Performance Tests", () => {
 
   describe("File Upload Performance", () => {
     it("should upload files with progress tracking", async () => {
-      const _file = new File([new ArrayBuffer(2 * 1024 * 1024)], "upload.jpg", {
-        type: "image/jpeg",
-      });
-
       const progressEvents: number[] = [];
 
       // Mock XMLHttpRequest for upload progress
@@ -352,7 +333,7 @@ describe("File Processing Performance Tests", () => {
         trackMemory(file.size);
 
         // Process file
-        await compressImage(file, { maxSizeMB: 0.25 });
+        await compressImage(file);
 
         // Clean up
         releaseMemory(file.size);
@@ -399,7 +380,7 @@ describe("File Processing Performance Tests", () => {
       // Process file
       const file = new File([new ArrayBuffer(1024 * 1024)], "test.jpg", { type: "image/jpeg" });
 
-      await compressImage(file, { useWebWorker: true });
+      await compressImage(file);
 
       // Verify cleanup
       expect(cleanupTracker.urls).toHaveLength(0); // All URLs revoked
@@ -422,7 +403,7 @@ describe("File Processing Performance Tests", () => {
         }
 
         processCount++;
-        const processed = await compressImage(file, { maxSizeMB: 1 });
+        const processed = await compressImage(file);
         cache.set(cacheKey, processed);
         return processed;
       };

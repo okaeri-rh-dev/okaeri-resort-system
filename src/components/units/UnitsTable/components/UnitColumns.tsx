@@ -138,11 +138,10 @@ export function useUnitColumns({ onUpdateUnit, isEditMode }: UseUnitColumnsProps
         header: "Type",
         cell: ({ getValue, row }) => {
           const unitTypes: Array<{ value: UnitType; label: string }> = [
-            { value: "studio", label: "Studio" },
-            { value: "1br", label: "1 Bedroom" },
-            { value: "2br", label: "2 Bedrooms" },
-            { value: "suite", label: "Suite" },
-            { value: "villa", label: "Villa" },
+            { value: "Standard", label: "Standard" },
+            { value: "Deluxe", label: "Deluxe" },
+            { value: "Suite", label: "Suite" },
+            { value: "Villa", label: "Villa" },
           ];
 
           if (isEditMode) {
@@ -170,22 +169,22 @@ export function useUnitColumns({ onUpdateUnit, isEditMode }: UseUnitColumnsProps
         header: ({ header }) => <SortableHeader header={header}>Status</SortableHeader>,
         cell: ({ getValue, row }) => {
           const statusOptions: Array<{ value: UnitStatus; label: string }> = [
-            { value: "available", label: "Available" },
-            { value: "occupied", label: "Occupied" },
-            { value: "maintenance", label: "Maintenance" },
-            { value: "reserved", label: "Reserved" },
+            { value: "Available", label: "Available" },
+            { value: "Occupied", label: "Occupied" },
+            { value: "Maintenance", label: "Maintenance" },
+            { value: "Reserved", label: "Reserved" },
           ];
 
           if (isEditMode) {
             return (
               <InlineSelect
-                value={getValue()}
+                value={getValue() ?? "Available"}
                 options={statusOptions}
                 onSave={(value) => onUpdateUnit(row.original.unit_id, { unit_status: value })}
               />
             );
           }
-          return <StatusBadge status={getValue()} />;
+          return <StatusBadge status={getValue() ?? "Available"} />;
         },
         size: 120,
       }),

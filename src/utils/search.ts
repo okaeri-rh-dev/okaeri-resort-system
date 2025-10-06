@@ -128,7 +128,7 @@ export function sortBookings(
         comparison = a.total_amount - b.total_amount;
         break;
       case "status":
-        comparison = a.booking_status.localeCompare(b.booking_status);
+        comparison = (a.booking_status || "").localeCompare(b.booking_status || "");
         break;
       case "guest":
         comparison = a.guest_name.localeCompare(b.guest_name);

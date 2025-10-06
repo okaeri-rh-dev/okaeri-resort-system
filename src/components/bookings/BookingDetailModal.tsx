@@ -58,13 +58,16 @@ export const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
         <div className="space-y-6">
           {/* Status Badges */}
           <div className="flex gap-2">
-            <Badge className={getStatusColor(booking.booking_status || booking.status)}>
-              {(booking.booking_status || booking.status || "").replace(/([A-Z])/g, " $1").trim()}
-            </Badge>
-            <Badge className={getPaymentStatusColor(booking.payment_status)}>
-              Payment: {booking.payment_status}
-            </Badge>
-            {booking.source && <Badge variant="outline">Source: {booking.source}</Badge>}
+            {booking.booking_status && (
+              <Badge className={getStatusColor(booking.booking_status)}>
+                {booking.booking_status.replace(/([A-Z])/g, " $1").trim()}
+              </Badge>
+            )}
+            {booking.payment_status && (
+              <Badge className={getPaymentStatusColor(booking.payment_status)}>
+                Payment: {booking.payment_status}
+              </Badge>
+            )}
           </div>
 
           {/* Guest Information */}
@@ -200,7 +203,7 @@ export const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
           {/* Metadata */}
           <Separator />
           <div className="text-xs text-muted-foreground">
-            <p>Created: {format(new Date(booking.created_at), "PPpp")}</p>
+            {booking.created_at && <p>Created: {format(new Date(booking.created_at), "PPpp")}</p>}
             {booking.updated_at && (
               <p>Last Updated: {format(new Date(booking.updated_at), "PPpp")}</p>
             )}

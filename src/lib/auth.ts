@@ -45,11 +45,9 @@ export interface AuthUser {
   role?: string;
 }
 
-export interface AuthSession {
-  user: AuthUser;
-  access_token: string;
-  refresh_token: string;
-}
+// AuthSession type imported from @/types/supabase
+// Keep AuthUser as local type for auth service
+export type { AuthSession } from "@/types/supabase";
 
 // Rate limiting types
 interface FailedAttempt {
@@ -119,7 +117,7 @@ function generateSecureToken(): string {
 /**
  * Sanitizes authentication errors to prevent information leakage
  */
-function sanitizeAuthError(error: any): string {
+function sanitizeAuthError(): string {
   // Always return a generic error message
   return "Authentication failed. Please check your credentials.";
 }

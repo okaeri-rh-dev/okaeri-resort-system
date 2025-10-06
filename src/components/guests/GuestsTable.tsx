@@ -107,7 +107,7 @@ const GuestBookingHistory: React.FC<GuestBookingHistoryProps> = ({ guestId, clas
                 <div className="font-mono text-xs font-medium text-blue-600">
                   {booking.booking_reference}
                 </div>
-                <StatusBadge status={booking.booking_status} />
+                <StatusBadge status={booking.booking_status ?? "Pending"} />
               </div>
               <div className="text-sm text-neutral-600">
                 {booking.unit?.unit_name} • {formatTableDate(booking.check_in)} -{" "}
@@ -297,7 +297,8 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
           <div className="space-y-1">
             <div className="font-medium text-neutral-900">{getValue()}</div>
             <div className="text-xs text-neutral-600">
-              Member since {formatTableDate(row.original.created_at)}
+              Member since{" "}
+              {row.original.created_at ? formatTableDate(row.original.created_at) : "N/A"}
             </div>
           </div>
         ),

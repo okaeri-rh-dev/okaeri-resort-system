@@ -6,8 +6,8 @@
  */
 
 import { getAlertSystem, Alert } from "./alert-system";
-import { logAuditEvent } from "../audit-logger-workers";
-import { AuditCategory, AuditSeverity, EventType } from "@/database.types";
+import { logAuditEvent } from "../audit-logger";
+import { AuditCategory, AuditSeverity } from "../../../database.types";
 
 interface KVUsageStats {
   writesCount: number;
@@ -100,7 +100,7 @@ export class KVQuotaMonitor {
     if (alert) {
       // Log to audit trail
       await logAuditEvent({
-        action: "kv_quota_alert" as EventType,
+        tableName: "system",
         category: AuditCategory.SYSTEM,
         severity: alert.level === "critical" ? AuditSeverity.CRITICAL : AuditSeverity.WARNING,
         description: `KV write quota at ${usage.percentage.toFixed(1)}%`,
@@ -195,7 +195,7 @@ export class KVQuotaMonitor {
       });
 
       await logAuditEvent({
-        action: "kv_throttle_enabled" as EventType,
+        tableName: "system",
         category: AuditCategory.SYSTEM,
         severity: AuditSeverity.WARNING,
         description: "KV write throttling enabled due to quota limits",
@@ -234,7 +234,7 @@ export class KVQuotaMonitor {
 
     // Log reset
     await logAuditEvent({
-      action: "kv_quota_reset" as EventType,
+      tableName: "system",
       category: AuditCategory.SYSTEM,
       severity: AuditSeverity.INFO,
       description: "Daily KV quota tracking reset",

@@ -5,12 +5,11 @@ import type { Unit } from "@/types";
  */
 export async function exportUnitsToCSV(units: Unit[]) {
   try {
-    // Try to use enhanced export if available
-    const { exportEnhanced } = await import("@/components/tables/utils").catch(() => ({
-      exportEnhanced: null,
-    }));
+    // Try to use enhanced export if available (currently not implemented)
+    const utilsModule = await import("@/components/tables/utils").catch(() => null);
+    const exportEnhanced = utilsModule ? (utilsModule as any).exportEnhanced : null;
 
-    if (exportEnhanced) {
+    if (exportEnhanced && typeof exportEnhanced === "function") {
       const exportData = units.map((unit) => ({
         unit_code: unit.unit_code,
         unit_name: unit.unit_name,
@@ -42,10 +41,10 @@ export async function exportUnitsToCSV(units: Unit[]) {
         {
           philippineFormat: true,
           includeTimestamp: true,
-          onSuccess: (filename) => {
+          onSuccess: (filename: string) => {
             console.log(`Successfully exported units to ${filename}`);
           },
-          onError: (error) => {
+          onError: (error: Error) => {
             console.error("Export failed:", error);
             throw error;
           },
@@ -155,8 +154,9 @@ export function getExportStats(units: Unit[]) {
     // Count by type
     stats.byType[unit.unit_type] = (stats.byType[unit.unit_type] || 0) + 1;
 
-    // Count by status
-    stats.byStatus[unit.unit_status] = (stats.byStatus[unit.unit_status] || 0) + 1;
+    // Count by status (null-safe)
+    const status = unit.unit_status ?? "Unknown";
+    stats.byStatus[status] = (stats.byStatus[status] || 0) + 1;
 
     // Sum rates and capacity
     totalRate += unit.base_rate;

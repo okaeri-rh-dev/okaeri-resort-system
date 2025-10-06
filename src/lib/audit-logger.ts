@@ -6,6 +6,7 @@ import {
   AuditSeverity,
   AuditEventType,
   type AuditEventContext,
+  type AuditEventTypeValue,
 } from "../../database.types";
 import { redactSensitiveData, isValidAuditTable, auditDebugLog } from "./audit-constants";
 import { getUserAuditRole as getUserRole, canAccessAuditTrail as canAccess } from "./audit-roles";
@@ -61,8 +62,10 @@ export async function logAuditEvent(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // Validate table name (includes both physical and pseudo tables)
-    if (!isValidAuditTable(context.tableName)) {
-      console.warn(`[Audit] Table "${context.tableName}" is not a valid audit table`);
+    if (!context.tableName || !isValidAuditTable(context.tableName)) {
+      console.warn(
+        `[Audit] Table "${context.tableName ?? "undefined"}" is not a valid audit table`
+      );
       return { success: false, error: "Invalid table name" };
     }
 
@@ -88,10 +91,28 @@ export async function logAuditEvent(
 
     // Redact sensitive data
     const redactedOldData = context.oldData
-      ? redactSensitiveData(context.tableName, context.oldData)
+      ? redactSensitiveData(
+          context.tableName,
+          context.oldData as
+            | string
+            | number
+            | boolean
+            | null
+            | { [key: string]: unknown }
+            | unknown[]
+        )
       : null;
     const redactedNewData = context.newData
-      ? redactSensitiveData(context.tableName, context.newData)
+      ? redactSensitiveData(
+          context.tableName,
+          context.newData as
+            | string
+            | number
+            | boolean
+            | null
+            | { [key: string]: unknown }
+            | unknown[]
+        )
       : null;
 
     // Build audit log metadata (only for extra context, NOT for dedicated columns)
@@ -110,8 +131,8 @@ export async function logAuditEvent(
     const { data, error } = await db.auditLogs.create({
       tableName: context.tableName,
       recordId: context.recordId,
-      correlationId: context.correlationId, // Optional: links to related trigger logs
-      eventType: context.eventType, // Optional: semantic event type (e.g., AuditEventType.CANCEL_BOOKING)
+      correlation_id: context.correlation_id, // Optional: links to related trigger logs
+      event_type: context.event_type, // Optional: semantic event type (e.g., AuditEventType.CANCEL_BOOKING)
       description: context.description, // Stored raw, sanitized at UI layer
       category: context.category,
       severity: context.severity || AuditSeverity.INFO,
@@ -152,8 +173,8 @@ export async function logAuthEvent(
     metadata?: Record<string, unknown>;
   }
 ): Promise<void> {
-  // Map event to AuditEventType
-  const eventTypeMap: Record<typeof event, AuditEventType> = {
+  // Map event to AuditEventTypeValue
+  const eventTypeMap: Record<typeof event, AuditEventTypeValue> = {
     login: AuditEventType.LOGIN,
     logout: AuditEventType.LOGOUT,
     login_failed: AuditEventType.LOGIN_FAILED,
@@ -170,7 +191,7 @@ export async function logAuthEvent(
   await logAuditEvent({
     tableName: "authentication", // Virtual table for auth events (Layer 2)
     recordId: undefined, // No specific record for auth events
-    eventType: eventTypeMap[event], // Map to semantic event type
+    event_type: eventTypeMap[event], // Map to semantic event type
     description: `User ${event.replace("_", " ")}: ${details?.email || "unknown"}`,
     category: AuditCategory.AUTHENTICATION,
     severity,
@@ -198,8 +219,8 @@ export async function logBookingEvent(
     metadata?: Record<string, unknown>;
   }
 ): Promise<void> {
-  // Map action to AuditEventType (only for specific business events)
-  const eventTypeMap: Partial<Record<typeof action, AuditEventType>> = {
+  // Map action to AuditEventTypeValue (only for specific business events)
+  const eventTypeMap: Partial<Record<typeof action, AuditEventTypeValue>> = {
     cancelled: AuditEventType.CANCEL_BOOKING,
     checked_in: AuditEventType.BOOKING_CHECKED_IN,
     checked_out: AuditEventType.BOOKING_CHECKED_OUT,
@@ -216,7 +237,7 @@ export async function logBookingEvent(
   await logAuditEvent({
     tableName: "bookings",
     recordId: bookingId,
-    eventType: eventTypeMap[action], // Map to semantic event type (optional)
+    event_type: eventTypeMap[action], // Map to semantic event type (optional)
     description: `Booking ${action}${details.reason ? `: ${details.reason}` : ""}`,
     category: AuditCategory.BOOKING,
     severity,
@@ -248,8 +269,8 @@ export async function logPaymentEvent(
     metadata?: Record<string, unknown>;
   }
 ): Promise<void> {
-  // Map action to AuditEventType
-  const eventTypeMap: Partial<Record<typeof action, AuditEventType>> = {
+  // Map action to AuditEventTypeValue
+  const eventTypeMap: Partial<Record<typeof action, AuditEventTypeValue>> = {
     refunded: AuditEventType.REFUND_PAYMENT,
     failed: AuditEventType.PAYMENT_FAILED,
     verified: AuditEventType.PAYMENT_VERIFIED,
@@ -266,7 +287,7 @@ export async function logPaymentEvent(
   await logAuditEvent({
     tableName: "payments",
     recordId: paymentId,
-    eventType: eventTypeMap[action], // Map to semantic event type (optional)
+    event_type: eventTypeMap[action], // Map to semantic event type (optional)
     description: `Payment ${action}: ₱${details.amount.toFixed(2)} via ${details.paymentMethod}${details.reason ? ` - ${details.reason}` : ""}`,
     category: AuditCategory.PAYMENT,
     severity,
@@ -298,8 +319,8 @@ export async function logExpenseEvent(
     metadata?: Record<string, unknown>;
   }
 ): Promise<void> {
-  // Map action to AuditEventType
-  const eventTypeMap: Partial<Record<typeof action, AuditEventType>> = {
+  // Map action to AuditEventTypeValue
+  const eventTypeMap: Partial<Record<typeof action, AuditEventTypeValue>> = {
     deleted: AuditEventType.EXPENSE_DELETED,
     category_changed: AuditEventType.EXPENSE_CATEGORY_CHANGED,
     // Note: 'created' and 'updated' don't have specific event types
@@ -310,7 +331,7 @@ export async function logExpenseEvent(
   await logAuditEvent({
     tableName: "expenses",
     recordId: expenseId,
-    eventType: eventTypeMap[action], // Map to semantic event type (optional)
+    event_type: eventTypeMap[action], // Map to semantic event type (optional)
     description: `Expense ${action}: ${details.description} - ₱${details.amount.toFixed(2)}`,
     category: AuditCategory.EXPENSE,
     severity,
@@ -338,10 +359,10 @@ export async function logSystemEvent(
     metadata?: Record<string, unknown>;
   }
 ): Promise<void> {
-  // Map operation to AuditEventType
-  const eventTypeMap: Record<typeof operation, AuditEventType | undefined> = {
+  // Map operation to AuditEventTypeValue
+  const eventTypeMap: Record<typeof operation, AuditEventTypeValue | undefined> = {
     migration: AuditEventType.SYSTEM_MIGRATION,
-    config_change: AuditEventType.SYSTEM_CONFIG_CHANGE,
+    config_change: AuditEventType.SYSTEM_CONFIG_CHANGED,
     backup: AuditEventType.SYSTEM_BACKUP,
     other: undefined, // No specific event type for generic operations
   };
@@ -349,7 +370,7 @@ export async function logSystemEvent(
   await logAuditEvent({
     tableName: "system", // Virtual table for system events (Layer 2)
     recordId: undefined, // No specific record for system events
-    eventType: eventTypeMap[operation], // Map to semantic event type (optional)
+    event_type: eventTypeMap[operation], // Map to semantic event type (optional)
     description: `System: ${details.description}`,
     category: AuditCategory.SYSTEM,
     severity: details.severity || AuditSeverity.INFO,

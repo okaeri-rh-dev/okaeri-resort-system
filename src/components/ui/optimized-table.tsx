@@ -10,7 +10,7 @@ import type { ReactNode } from "react";
 // MEMOIZED TABLE ROW COMPONENT
 // ============================================
 
-interface TableRowProps<T> {
+interface TableRowProps<T = unknown> {
   item: T;
   columns: Array<{
     key: string;
@@ -83,7 +83,7 @@ MemoizedTableRow.displayName = "MemoizedTableRow";
 // MEMOIZED TABLE COMPONENT
 // ============================================
 
-interface OptimizedTableProps<T> {
+interface OptimizedTableProps<T = unknown> {
   data: T[];
   columns: Array<{
     key: string;
@@ -172,9 +172,15 @@ export const OptimizedTable = memo(
               <MemoizedTableRow
                 key={getRowKey(item)}
                 item={item}
-                columns={columns}
-                onRowClick={onRowClick}
-                getRowKey={getRowKey}
+                columns={
+                  columns as Array<{
+                    key: string;
+                    header: string;
+                    accessor: (item: unknown) => ReactNode;
+                  }>
+                }
+                onRowClick={onRowClick as ((item: unknown) => void) | undefined}
+                getRowKey={getRowKey as (item: unknown) => string}
               />
             ))}
           </tbody>
@@ -237,7 +243,7 @@ export const VirtualizedTable = memo(
         onScroll={handleScroll}
       >
         <div style={{ paddingTop: topPadding, paddingBottom: bottomPadding }}>
-          <OptimizedTable {...props} data={visibleData} />
+          <OptimizedTable {...(props as OptimizedTableProps)} data={visibleData} />
         </div>
       </div>
     );

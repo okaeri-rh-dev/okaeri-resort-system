@@ -25,7 +25,8 @@ export const BookingTooltip = React.memo(function BookingTooltip({
   // Sort bookings by status priority
   const sortedBookings = [...bookings].sort(
     (a, b) =>
-      getBookingStatusPriority(a.booking_status) - getBookingStatusPriority(b.booking_status)
+      getBookingStatusPriority(a.booking_status ?? "Pending") -
+      getBookingStatusPriority(b.booking_status ?? "Pending")
   );
 
   const visibleBookings = sortedBookings.slice(0, maxVisible);

@@ -324,8 +324,18 @@ describe("Authentication Security Tests", () => {
         data: {
           session: {
             expires_at: expiresAt,
+            expires_in: 3600,
+            token_type: "bearer" as const,
             access_token: "token",
             refresh_token: "refresh",
+            user: {
+              id: "test-user",
+              email: "test@example.com",
+              app_metadata: {},
+              user_metadata: {},
+              aud: "authenticated",
+              created_at: new Date().toISOString(),
+            },
           },
         },
         error: null,

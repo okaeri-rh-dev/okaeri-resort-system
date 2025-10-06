@@ -5,16 +5,8 @@ import {
   getUserAuditRole,
   hasAuditRole,
   canAccessAuditTrail,
-  isAdmin,
-  isAdminOrOwner,
   grantRole,
   revokeRole,
-  updateRole,
-  deactivateRole,
-  listAllRoles,
-  listActiveRoles,
-  getUserRoleInfo,
-  countUsersByRole,
   getRoleDisplayName,
   getRoleBadgeColor,
   isRoleChangeValid,
@@ -76,9 +68,9 @@ describe("Audit Roles", () => {
 
     it("should return null when not authenticated", async () => {
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
-        data: { user: null },
+        data: { user: null } as any,
         error: null,
-      });
+      } as any);
 
       const role = await getUserAuditRole();
       expect(role).toBeNull();

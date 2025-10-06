@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { useAuditLogs } from "@/lib/audit-hooks";
 import { useAuditStore } from "@/stores/useAuditStore";
-import type { AuditLog } from "../../../database.types";
+import type { AuditLog, AuditLogQueryResult } from "../../../database.types";
 import { TABLE_DISPLAY_NAMES, PAGINATION_DEFAULTS } from "@/lib/audit-constants";
 import { formatDistanceToNow } from "date-fns";
 import { SafeAuditText } from "./SafeAuditText";
@@ -65,7 +65,7 @@ export function AuditLogViewer() {
   };
 
   const handleNextPage = () => {
-    if (data && data.hasMore) {
+    if (data && (data as unknown as AuditLogQueryResult).hasMore) {
       handlePageChange(currentPage + 1);
     }
   };
@@ -106,7 +106,7 @@ export function AuditLogViewer() {
   }
 
   // Empty state
-  if (!data || data.data.length === 0) {
+  if (!data || (data as unknown as AuditLogQueryResult).data.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <p className="text-lg font-medium">No audit logs found</p>
@@ -114,6 +114,9 @@ export function AuditLogViewer() {
       </div>
     );
   }
+
+  // Type-safe data access - TypeScript needs help narrowing the type
+  const queryResult = data as unknown as AuditLogQueryResult;
 
   return (
     <div className="space-y-4">
@@ -134,7 +137,7 @@ export function AuditLogViewer() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.data.map((log) => (
+            {queryResult.data.map((log) => (
               <AuditLogRow
                 key={log.audit_id}
                 log={log}
@@ -150,8 +153,9 @@ export function AuditLogViewer() {
       {/* Pagination */}
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          Showing {data.data.length} of {data.totalCount} logs
-          {data.currentPage > 1 && ` (Page ${data.currentPage} of ${data.totalPages})`}
+          Showing {queryResult.data.length} of {queryResult.totalCount} logs
+          {queryResult.currentPage > 1 &&
+            ` (Page ${queryResult.currentPage} of ${queryResult.totalPages})`}
         </div>
 
         <div className="flex items-center gap-2">
@@ -161,10 +165,15 @@ export function AuditLogViewer() {
           </Button>
 
           <span className="text-sm text-muted-foreground">
-            Page {currentPage} of {data.totalPages}
+            Page {currentPage} of {queryResult.totalPages}
           </span>
 
-          <Button variant="outline" size="sm" onClick={handleNextPage} disabled={!data.hasMore}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNextPage}
+            disabled={!queryResult.hasMore}
+          >
             Next
             <Next className="h-4 w-4 ml-1" />
           </Button>
@@ -212,9 +221,9 @@ function AuditLogRow({ log, isExpanded, onToggle, onViewDiff }: AuditLogRowProps
 
         {/* Timestamp */}
         <TableCell className="font-mono text-sm">
-          <div>{new Date(log.created_at).toLocaleString()}</div>
+          <div>{log.created_at && new Date(log.created_at).toLocaleString()}</div>
           <div className="text-xs text-muted-foreground">
-            {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
+            {log.created_at && formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
           </div>
         </TableCell>
 
@@ -309,27 +318,29 @@ function ExpandedRowDetails({ log }: { log: AuditLog }) {
 
       {/* Category & Severity - Read from dedicated columns */}
       {(log.category || log.severity) && (
-        <div className="flex gap-4">
-          {log.category && (
-            <div>
-              <div className="text-sm font-medium mb-1">Category</div>
-              <Badge>{log.category}</Badge>
-            </div>
-          )}
-          {log.severity && (
-            <div>
-              <div className="text-sm font-medium mb-1">Severity</div>
-              <SeverityBadge severity={log.severity} />
-            </div>
-          )}
-        </div>
+        <>
+          <div className="flex gap-4">
+            {log.category && (
+              <div>
+                <div className="text-sm font-medium mb-1">Category</div>
+                <Badge>{log.category}</Badge>
+              </div>
+            )}
+            {log.severity && (
+              <div>
+                <div className="text-sm font-medium mb-1">Severity</div>
+                <SeverityBadge severity={log.severity} />
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* IP Address */}
       {log.ip_address && (
         <div>
           <div className="text-sm font-medium mb-1">IP Address</div>
-          <div className="text-sm font-mono text-muted-foreground">{log.ip_address}</div>
+          <div className="text-sm font-mono text-muted-foreground">{String(log.ip_address)}</div>
         </div>
       )}
 
@@ -352,7 +363,7 @@ function ExpandedRowDetails({ log }: { log: AuditLog }) {
 // BADGE COMPONENTS (moved to shared ActionBadge.tsx)
 // ============================================
 
-function SourceBadge({ source }: { source: "db" | "app" }) {
+function SourceBadge({ source }: { source: string }) {
   const isDbSource = source === "db";
 
   return (

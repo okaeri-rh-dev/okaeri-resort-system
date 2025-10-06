@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { Upload, Calendar, Users, Mail, Phone, CreditCard, MapPin } from "lucide-react";
+import { Upload, Calendar, Users, Mail, Phone, CreditCard } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import DOMPurify from "dompurify";
 
@@ -32,12 +33,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 
 import { FileUploadField } from "./FileUploadField";
-import { useUnitStore } from "@/stores/useUnitStore";
 import { formatCurrency } from "@/lib/validations";
 import { compressAndValidateFile } from "@/utils/file-compression";
 import { transformToAPIFormat, validateAPIResponse } from "@/lib/schema-transform";
 import { supabase } from "@/lib/supabase";
 import { calculatePricing } from "@/utils/pricing";
+import { adaptUnitFromDB } from "@/lib/database-adapters";
 
 // Form validation schema
 const guestBookingSchema = z
@@ -97,11 +98,15 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
   const [bookingReference, setBookingReference] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
-  const { units, fetchUnits } = useUnitStore();
-
-  useEffect(() => {
-    fetchUnits();
-  }, [fetchUnits]);
+  // Fetch units using TanStack Query
+  const { data: units = [] } = useQuery({
+    queryKey: ["units"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("units").select("*").order("unit_name");
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const form = useForm<GuestBookingFormData>({
     resolver: zodResolver(guestBookingSchema),
@@ -129,13 +134,11 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
 
     if (!checkIn || !checkOut) return 0;
 
-    const pricing = calculatePricing({
-      checkInDate: checkIn.toISOString(),
-      checkOutDate: checkOut.toISOString(),
-      baseRate: selectedUnit.base_rate,
-      weekendRate: selectedUnit.weekend_rate || selectedUnit.base_rate,
-      extraPersonRate: selectedUnit.extra_person_rate || 0,
-      baseOccupancy: selectedUnit.base_occupancy,
+    // Adapt database unit type before pricing calculation
+    const adaptedUnit = adaptUnitFromDB(selectedUnit);
+    const pricing = calculatePricing(adaptedUnit, {
+      checkIn,
+      checkOut,
       guestCount: numGuests,
     });
 
@@ -174,8 +177,12 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to create booking");
+        const error: unknown = await response.json();
+        const errorMsg =
+          typeof error === "object" && error !== null && "message" in error
+            ? String((error as { message?: unknown }).message)
+            : "Failed to create booking";
+        throw new Error(errorMsg);
       }
 
       const result = await response.json();
@@ -186,7 +193,7 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
 
       // Step 4: Upload file using token-based signed URL (Supabase SDK method)
       setUploadProgress(40);
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { data: _uploadData, error: uploadError } = await supabase.storage
         .from(validatedResult.upload.bucket)
         .uploadToSignedUrl(
           validatedResult.upload.path,

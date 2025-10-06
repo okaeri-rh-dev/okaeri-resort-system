@@ -152,7 +152,7 @@ export async function checkMultiUnitAvailability(
       base_occupancy: unit.base_occupancy || 1,
       max_occupancy: unit.max_occupancy,
       base_rate: unit.base_rate,
-      weekend_rate: unit.weekend_rate,
+      weekend_rate: unit.weekend_rate ?? unit.base_rate,
       extra_person_rate: unit.extra_person_rate || 0,
       unit_status: "Available" as const,
       amenities: unit.amenities || null,
@@ -294,14 +294,26 @@ export async function createBlackoutPeriod(
       .single();
 
     if (error) throw error;
+    if (!data) throw new Error("No data returned");
+
+    // Type assertion to expected structure (availability_blackouts table not yet in generated types)
+    // TODO: Regenerate database.types.ts after adding availability_blackouts table to schema
+    const blackoutData = data as {
+      blackout_id: string;
+      unit_id: string;
+      blackout_type: string;
+      start_date: string;
+      end_date: string;
+      reason: string | null;
+    };
 
     return {
-      blackoutId: data.blackout_id,
-      unitId: data.unit_id,
-      blackoutType: toBlackoutType(data.blackout_type) as BlackoutPeriod["blackoutType"],
-      startDate: data.start_date,
-      endDate: data.end_date,
-      reason: data.reason ?? undefined,
+      blackoutId: blackoutData.blackout_id,
+      unitId: blackoutData.unit_id,
+      blackoutType: toBlackoutType(blackoutData.blackout_type) as BlackoutPeriod["blackoutType"],
+      startDate: blackoutData.start_date,
+      endDate: blackoutData.end_date,
+      reason: blackoutData.reason ?? undefined,
     };
   } catch (error) {
     console.error("Error creating blackout period:", error);

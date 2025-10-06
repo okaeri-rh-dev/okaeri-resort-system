@@ -3,6 +3,21 @@
 // to ensure type safety and eliminate the use of 'any' types throughout the application
 
 import type { Database } from "../../database.types";
+import type { UnitType, UnitStatus, BookingStatus, PaymentStatus, PaymentMethod } from "./index";
+
+// Additional enum types not in index.ts
+export type BlackoutType = "Maintenance" | "Renovation" | "Seasonal" | "Manual";
+export type ExpenseCategory =
+  | "Utilities"
+  | "Maintenance & Repairs"
+  | "Supplies & Inventory"
+  | "Staff & Payroll"
+  | "Marketing & Advertising"
+  | "Food & Beverage"
+  | "Cleaning & Laundry"
+  | "Insurance & Permits"
+  | "Professional Services"
+  | "Other";
 
 // ============================================
 // ERROR TYPES
@@ -74,13 +89,13 @@ export interface UnitAvailabilityResponse {
   unit_id: string;
   unit_name: string;
   unit_code: string;
-  unit_type: Database["public"]["Enums"]["unit_type"];
+  unit_type: UnitType;
   base_occupancy: number;
   max_occupancy: number;
   base_rate: number;
   weekend_rate?: number;
   extra_person_rate: number;
-  unit_status: Database["public"]["Enums"]["unit_status"];
+  unit_status: UnitStatus;
   amenities?: string[] | null;
   cleaning_fee?: number | null;
   description?: string | null;
@@ -110,7 +125,7 @@ export interface CalendarDayResponse {
 export interface BlackoutResponse {
   blackout_id: string;
   unit_id: string;
-  blackout_type: Database["public"]["Enums"]["blackout_type"];
+  blackout_type: BlackoutType;
   start_date: string;
   end_date: string;
   reason?: string;
@@ -134,9 +149,9 @@ export interface BookingResponse {
   check_in: string;
   check_out: string;
   total_amount: number;
-  booking_status: Database["public"]["Enums"]["booking_status"];
-  payment_status: Database["public"]["Enums"]["payment_status"];
-  payment_method?: Database["public"]["Enums"]["payment_method"] | null;
+  booking_status: BookingStatus;
+  payment_status: PaymentStatus;
+  payment_method?: PaymentMethod | null;
   special_requests?: string | null;
   internal_notes?: string | null;
   created_at: string;
@@ -154,8 +169,8 @@ export interface PaymentResponse {
   payment_id: string;
   booking_id: string;
   amount: number;
-  payment_method: Database["public"]["Enums"]["payment_method"];
-  payment_status: Database["public"]["Enums"]["payment_status"];
+  payment_method: PaymentMethod;
+  payment_status: PaymentStatus;
   payment_date: string;
   proof_url?: string | null;
   receipt_url?: string | null;
@@ -169,8 +184,8 @@ export interface PaymentResponse {
 }
 
 export interface PaymentStatusUpdate {
-  payment_status: Database["public"]["Enums"]["payment_status"];
-  payment_method?: Database["public"]["Enums"]["payment_method"];
+  payment_status: PaymentStatus;
+  payment_method?: PaymentMethod;
   updated_at?: string;
 }
 
@@ -200,7 +215,7 @@ export interface GuestResponse {
 export interface ExpenseResponse {
   // Extends Database["public"]["Tables"]["expenses"]["Row"]
   expense_id: string;
-  expense_category: Database["public"]["Enums"]["expense_category"];
+  expense_category: ExpenseCategory;
   expense_name: string;
   amount: number;
   expense_date: string;
@@ -266,9 +281,9 @@ export interface BookingCreateInput {
   check_in: string;
   check_out: string;
   total_amount: number;
-  booking_status?: Database["public"]["Enums"]["booking_status"];
-  payment_status?: Database["public"]["Enums"]["payment_status"];
-  payment_method?: Database["public"]["Enums"]["payment_method"];
+  booking_status?: BookingStatus;
+  payment_status?: PaymentStatus;
+  payment_method?: PaymentMethod;
   special_requests?: string;
   internal_notes?: string;
 }
@@ -300,63 +315,33 @@ export function isAuthUser(user: unknown): user is AuthUser {
 // ============================================
 // ENUM CONVERTERS
 // ============================================
-export function toUnitType(value: string): Database["public"]["Enums"]["unit_type"] {
-  const validTypes: Database["public"]["Enums"]["unit_type"][] = [
-    "Standard",
-    "Deluxe",
-    "Suite",
-    "Villa",
-  ];
-  return validTypes.includes(value as any)
-    ? (value as Database["public"]["Enums"]["unit_type"])
-    : "Standard";
+export function toUnitType(value: string): UnitType {
+  const validTypes: UnitType[] = ["Standard", "Deluxe", "Suite", "Villa"];
+  return validTypes.includes(value as any) ? (value as UnitType) : "Standard";
 }
 
-export function toBookingStatus(value: string): Database["public"]["Enums"]["booking_status"] {
-  const validStatuses: Database["public"]["Enums"]["booking_status"][] = [
+export function toBookingStatus(value: string): BookingStatus {
+  const validStatuses: BookingStatus[] = [
     "Pending",
     "Confirmed",
     "CheckedIn",
     "CheckedOut",
     "Cancelled",
   ];
-  return validStatuses.includes(value as any)
-    ? (value as Database["public"]["Enums"]["booking_status"])
-    : "Pending";
+  return validStatuses.includes(value as any) ? (value as BookingStatus) : "Pending";
 }
 
-export function toPaymentStatus(value: string): Database["public"]["Enums"]["payment_status"] {
-  const validStatuses: Database["public"]["Enums"]["payment_status"][] = [
-    "Pending",
-    "Partial",
-    "Completed",
-    "Refunded",
-  ];
-  return validStatuses.includes(value as any)
-    ? (value as Database["public"]["Enums"]["payment_status"])
-    : "Pending";
+export function toPaymentStatus(value: string): PaymentStatus {
+  const validStatuses: PaymentStatus[] = ["Pending", "Partial", "Completed", "Refunded"];
+  return validStatuses.includes(value as any) ? (value as PaymentStatus) : "Pending";
 }
 
-export function toPaymentMethod(value: string): Database["public"]["Enums"]["payment_method"] {
-  const validMethods: Database["public"]["Enums"]["payment_method"][] = [
-    "Cash",
-    "GCash",
-    "BankTransfer",
-    "Card",
-  ];
-  return validMethods.includes(value as any)
-    ? (value as Database["public"]["Enums"]["payment_method"])
-    : "Cash";
+export function toPaymentMethod(value: string): PaymentMethod {
+  const validMethods: PaymentMethod[] = ["Cash", "GCash", "BankTransfer", "Card"];
+  return validMethods.includes(value as any) ? (value as PaymentMethod) : "Cash";
 }
 
-export function toBlackoutType(value: string): Database["public"]["Enums"]["blackout_type"] {
-  const validTypes: Database["public"]["Enums"]["blackout_type"][] = [
-    "Maintenance",
-    "Renovation",
-    "Seasonal",
-    "Manual",
-  ];
-  return validTypes.includes(value as any)
-    ? (value as Database["public"]["Enums"]["blackout_type"])
-    : "Manual";
+export function toBlackoutType(value: string): BlackoutType {
+  const validTypes: BlackoutType[] = ["Maintenance", "Renovation", "Seasonal", "Manual"];
+  return validTypes.includes(value as any) ? (value as BlackoutType) : "Manual";
 }

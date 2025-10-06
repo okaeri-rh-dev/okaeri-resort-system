@@ -431,7 +431,11 @@ export const useGuestStatistics = () => {
       const averageBookingsPerGuest = totalGuests > 0 ? totalBookings / totalGuests : 0;
 
       const topGuests = (allGuests || []).slice(0, 10).map((guest) => ({
-        guest,
+        guest: {
+          ...guest,
+          created_at: guest.created_at || new Date().toISOString(),
+          updated_at: guest.updated_at || new Date().toISOString(),
+        },
         totalSpent: guest.total_spent ?? 0,
         totalBookings: guest.total_bookings ?? 0,
       }));

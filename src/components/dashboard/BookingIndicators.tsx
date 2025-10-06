@@ -24,7 +24,8 @@ export const BookingIndicators = React.memo(function BookingIndicators({
   // Sort bookings by priority
   const sortedBookings = uniqueBookings.sort(
     (a, b) =>
-      getBookingStatusPriority(a.booking_status) - getBookingStatusPriority(b.booking_status)
+      getBookingStatusPriority(a.booking_status ?? "Pending") -
+      getBookingStatusPriority(b.booking_status ?? "Pending")
   );
 
   const visibleBookings = sortedBookings.slice(0, maxVisible);
@@ -38,7 +39,7 @@ export const BookingIndicators = React.memo(function BookingIndicators({
           className={cn(
             "inline-flex items-center px-1 py-0.5 text-[9px] sm:text-[10px] font-semibold rounded-sm border",
             "font-mono tracking-tight truncate max-w-full",
-            getBookingStatusColor(booking.booking_status)
+            getBookingStatusColor(booking.booking_status ?? "Pending")
           )}
         >
           {booking.unit?.unit_code || booking.unit?.unit_name?.slice(0, 3) || "—"}

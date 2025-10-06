@@ -252,7 +252,7 @@ describe("SQL Injection Prevention Tests", () => {
       const result = await supabase
         .from("bookings")
         .select("*")
-        .and(`guest_name.eq.${complexPayload},email.eq.test@example.com`)
+        .or(`guest_name.eq.${complexPayload},email.eq.test@example.com`)
         .or(`status.eq.confirmed,status.eq.pending`);
 
       expect(result.error).toBeNull();
@@ -337,7 +337,7 @@ describe("SQL Injection Prevention Tests", () => {
       expect(result.error).toBeTruthy();
 
       // In production, error should be generic
-      if (process.env.NODE_ENV === "production") {
+      if (process.env.NODE_ENV === "production" && result.error) {
         const sanitizedError = "Database operation failed. Please try again.";
         expect(result.error.message).toBe(sanitizedError);
       }

@@ -7,8 +7,8 @@
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { getAlertSystem } from "./alert-system";
-import { logAuditEvent } from "../audit-logger-workers";
-import { AuditCategory, AuditSeverity, EventType } from "@/database.types";
+import { logAuditEvent } from "../audit-logger";
+import { AuditCategory, AuditSeverity } from "../../../database.types";
 
 interface CleanupStats {
   orphanedFiles: number;
@@ -210,10 +210,10 @@ export class CleanupMonitor {
 
       // Log to audit trail
       await logAuditEvent({
-        action: "cleanup_executed" as EventType,
+        tableName: "system",
         category: AuditCategory.SYSTEM,
         severity: run.success ? AuditSeverity.INFO : AuditSeverity.WARNING,
-        description: `Cleanup ${type}: ${filesDeleted} files, ${bookingsCleaned} bookings`,
+        description: `Cleanup executed for ${type}: ${filesDeleted} files, ${bookingsCleaned} bookings`,
         metadata: {
           runId,
           filesDeleted,
@@ -252,9 +252,9 @@ export class CleanupMonitor {
       };
 
       await logAuditEvent({
-        action: "cleanup_failed" as EventType,
+        tableName: "system",
         category: AuditCategory.SYSTEM,
-        severity: AuditSeverity.ERROR,
+        severity: AuditSeverity.CRITICAL,
         description: `Cleanup operation failed: ${String(error)}`,
         metadata: { runId, error: String(error) },
       });
@@ -351,7 +351,11 @@ export class CleanupMonitor {
       );
     }
 
-    if (oldestFile && Date.now() - oldestFile.getTime() > 7 * 24 * 60 * 60 * 1000) {
+    if (
+      oldestFile &&
+      oldestFile instanceof Date &&
+      Date.now() - oldestFile.getTime() > 7 * 24 * 60 * 60 * 1000
+    ) {
       recommendations.push("Orphaned files older than 7 days detected. Review cleanup schedule.");
     }
 

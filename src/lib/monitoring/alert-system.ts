@@ -5,8 +5,8 @@
  * unified notification and escalation mechanisms.
  */
 
-import { logAuditEvent } from "../audit-logger-workers";
-import { AuditCategory, AuditSeverity, EventType } from "@/database.types";
+import { logAuditEvent } from "../audit-logger";
+import { AuditCategory, AuditSeverity } from "../../../database.types";
 
 export type AlertLevel = "info" | "warning" | "critical" | "resolved";
 
@@ -331,10 +331,10 @@ export class AlertSystem {
             : AuditSeverity.INFO;
 
     await logAuditEvent({
-      action: "monitoring_alert" as EventType,
+      tableName: "system",
       category: AuditCategory.SYSTEM,
       severity,
-      description: alert.message,
+      description: `Monitoring alert: ${alert.message}`,
       metadata: {
         alertId: alert.id,
         source: alert.source,
@@ -344,7 +344,7 @@ export class AlertSystem {
     });
   }
 
-  private async sendEmail(alert: Alert, config?: Record<string, any>): Promise<void> {
+  private async sendEmail(alert: Alert, _config?: Record<string, any>): Promise<void> {
     // Email implementation would go here
     // This would use Resend or another email service
     console.log("Email alert not implemented:", alert.message);

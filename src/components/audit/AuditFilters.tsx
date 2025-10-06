@@ -273,7 +273,7 @@ export function AuditFilters() {
                       <SelectItem value={AuditEventType.SYSTEM_MIGRATION}>
                         System Migration
                       </SelectItem>
-                      <SelectItem value={AuditEventType.SYSTEM_CONFIG_CHANGE}>
+                      <SelectItem value={AuditEventType.SYSTEM_CONFIG_CHANGED}>
                         Configuration Change
                       </SelectItem>
                       <SelectItem value={AuditEventType.SYSTEM_BACKUP}>System Backup</SelectItem>
@@ -394,7 +394,7 @@ export function AuditFilters() {
           )}
           {filters.action && (
             <Badge variant="secondary" className="gap-1">
-              Action: {ACTION_DISPLAY_NAMES[filters.action]}
+              Action: {ACTION_DISPLAY_NAMES[filters.action as AuditAction]}
               <X
                 className="h-3 w-3 cursor-pointer hover:text-destructive"
                 onClick={() => updateFilter("action", undefined)}

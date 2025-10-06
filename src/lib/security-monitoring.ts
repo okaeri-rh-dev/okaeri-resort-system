@@ -62,12 +62,14 @@ export async function detectAnomalies(
     metadata.totalEvents = recentLogs.length;
 
     // Pattern 1: Multiple failed booking attempts
-    const failedBookings = recentLogs.filter(
-      (log) =>
+    const failedBookings = recentLogs.filter((log) => {
+      const metadata = log.metadata as Record<string, unknown> | null;
+      return (
         log.action?.includes("guest_booking_failed") ||
-        log.metadata?.action === "guest_booking_failed" ||
+        metadata?.action === "guest_booking_failed" ||
         log.severity === "ERROR"
-    );
+      );
+    });
 
     if (failedBookings.length > 3) {
       patterns.push({
@@ -80,12 +82,14 @@ export async function detectAnomalies(
     }
 
     // Pattern 2: Rate limit violations
-    const rateLimitHits = recentLogs.filter(
-      (log) =>
+    const rateLimitHits = recentLogs.filter((log) => {
+      const metadata = log.metadata as Record<string, unknown> | null;
+      return (
         log.action?.includes("rate_limit") ||
-        log.metadata?.ip_blocked === true ||
-        log.metadata?.rate_limited === true
-    );
+        metadata?.ip_blocked === true ||
+        metadata?.rate_limited === true
+      );
+    });
 
     if (rateLimitHits.length > 0) {
       patterns.push({
@@ -98,12 +102,14 @@ export async function detectAnomalies(
     }
 
     // Pattern 3: CAPTCHA failures
-    const captchaFailures = recentLogs.filter(
-      (log) =>
+    const captchaFailures = recentLogs.filter((log) => {
+      const metadata = log.metadata as Record<string, unknown> | null;
+      return (
         log.action?.includes("captcha_failed") ||
-        log.metadata?.turnstile_verified === false ||
-        log.metadata?.captcha_failed === true
-    );
+        metadata?.turnstile_verified === false ||
+        metadata?.captcha_failed === true
+      );
+    });
 
     if (captchaFailures.length > 2) {
       patterns.push({
@@ -118,8 +124,14 @@ export async function detectAnomalies(
     // Pattern 4: Email enumeration
     const uniqueEmails = new Set(
       recentLogs
-        .filter((log) => log.metadata?.guest_email || log.metadata?.email)
-        .map((log) => log.metadata?.guest_email || log.metadata?.email)
+        .filter((log) => {
+          const metadata = log.metadata as Record<string, unknown> | null;
+          return metadata?.guest_email || metadata?.email;
+        })
+        .map((log) => {
+          const metadata = log.metadata as Record<string, unknown> | null;
+          return (metadata?.guest_email || metadata?.email) as string;
+        })
     );
 
     if (uniqueEmails.size > 3) {
@@ -145,12 +157,14 @@ export async function detectAnomalies(
     }
 
     // Pattern 6: File validation failures
-    const uploadFailures = recentLogs.filter(
-      (log) =>
+    const uploadFailures = recentLogs.filter((log) => {
+      const metadata = log.metadata as Record<string, unknown> | null;
+      return (
         log.action?.includes("file_validation_failed") ||
-        log.metadata?.file_validation === false ||
-        log.metadata?.upload_failed === true
-    );
+        metadata?.file_validation === false ||
+        metadata?.upload_failed === true
+      );
+    });
 
     if (uploadFailures.length > 0) {
       patterns.push({
@@ -186,7 +200,15 @@ export async function detectAnomalies(
 
     // Pattern 8: Different user agents (browser spoofing)
     const userAgents = new Set(
-      recentLogs.filter((log) => log.metadata?.user_agent).map((log) => log.metadata.user_agent)
+      recentLogs
+        .filter((log) => {
+          const metadata = log.metadata as Record<string, unknown> | null;
+          return metadata?.user_agent;
+        })
+        .map((log) => {
+          const metadata = log.metadata as Record<string, unknown> | null;
+          return metadata?.user_agent as string;
+        })
     );
 
     if (userAgents.size > 3) {
@@ -200,12 +222,14 @@ export async function detectAnomalies(
     }
 
     // Pattern 9: Access to restricted resources
-    const unauthorizedAccess = recentLogs.filter(
-      (log) =>
+    const unauthorizedAccess = recentLogs.filter((log) => {
+      const metadata = log.metadata as Record<string, unknown> | null;
+      return (
         log.severity === "CRITICAL" ||
         log.action?.includes("unauthorized") ||
-        log.metadata?.unauthorized === true
-    );
+        metadata?.unauthorized === true
+      );
+    });
 
     if (unauthorizedAccess.length > 0) {
       patterns.push({
@@ -279,7 +303,8 @@ export async function getTopThreatSources(
     // Group by IP
     const ipMap = new Map<string, number>();
     logs.forEach((log) => {
-      const ip = log.ip_address || log.metadata?.ip_address || "unknown";
+      const metadata = log.metadata as Record<string, unknown> | null;
+      const ip = log.ip_address || (metadata?.ip_address as string) || "unknown";
       ipMap.set(ip, (ipMap.get(ip) || 0) + 1);
     });
 
@@ -346,7 +371,7 @@ export async function shouldAutoBlock(ip: string): Promise<{
   reason?: string;
   threatScore?: number;
 }> {
-  const { isAnomaly, threatScore, patterns } = await detectAnomalies(ip);
+  const { threatScore, patterns } = await detectAnomalies(ip);
 
   if (threatScore >= 75) {
     return {

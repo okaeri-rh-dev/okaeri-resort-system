@@ -11,7 +11,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 // Mock Cloudflare KV namespace - simpler implementation
-class MockKVNamespace implements KVNamespace {
+class MockKVNamespace {
   private store = new Map<string, string>();
 
   async get(key: string, typeOrOptions?: any): Promise<any> {
@@ -51,6 +51,7 @@ class MockKVNamespace implements KVNamespace {
     return {
       value: value as any,
       metadata: null as any,
+      cacheStatus: null,
     };
   }
 
@@ -58,24 +59,6 @@ class MockKVNamespace implements KVNamespace {
     this.store.clear();
   }
 }
-
-// Mock Supabase client (some tests may use this indirectly)
-const _mockSupabase = {
-  from: vi.fn(() => ({
-    select: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn(),
-  })),
-  storage: {
-    from: vi.fn(() => ({
-      createSignedUploadUrl: vi.fn(),
-      upload: vi.fn(),
-      getPublicUrl: vi.fn(),
-    })),
-  },
-};
 
 // Mock fetch for API calls
 global.fetch = vi.fn();
@@ -316,12 +299,6 @@ describe("Guest Booking Flow E2E Tests", () => {
 
       const uploadUrl = "https://supabase.co/storage/v1/upload/signed";
       const uploadToken = "upload-token-123";
-
-      // Mock successful upload
-      const _mockUploadResponse = {
-        data: { path: "payment-proofs/booking-123/receipt.jpg" },
-        error: null,
-      };
 
       // Since this is testing the actual upload process,
       // we simulate a successful upload response

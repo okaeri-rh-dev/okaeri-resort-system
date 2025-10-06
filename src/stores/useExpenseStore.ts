@@ -297,6 +297,7 @@ export const useCreateExpense = () => {
         .from("expenses")
         .insert({
           ...restData,
+          description: restData.description || "",
           expense_date: date,
           receipt_url,
         })
@@ -433,12 +434,23 @@ export const useExportExpenses = () => {
           .lte("date", dateRange.to.toISOString().split("T")[0]);
       }
 
-      const { data, error } = await query.order("date", { ascending: false });
+      const { data, error } = await query.order("expense_date", { ascending: false });
 
       if (error) throw new Error(handleSupabaseError(error));
 
-      // Convert to CSV
-      const csv = convertToCSV(data || []);
+      // Map database rows to Expense format and convert to CSV
+      const expenses: Expense[] = (data || []).map((row) => ({
+        expense_id: row.expense_id,
+        category: row.category,
+        description: row.description,
+        amount: row.amount,
+        date: row.expense_date,
+        receipt_url: row.receipt_url || null,
+        notes: row.notes || null,
+        created_at: row.created_at || "",
+        updated_at: row.updated_at || "",
+      }));
+      const csv = convertToCSV(expenses);
       downloadCSV(csv, `expenses-${new Date().toISOString().split("T")[0]}.csv`);
     },
   });

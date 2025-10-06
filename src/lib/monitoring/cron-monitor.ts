@@ -6,8 +6,8 @@
  */
 
 import { getAlertSystem } from "./alert-system";
-import { logAuditEvent } from "../audit-logger-workers";
-import { AuditCategory, AuditSeverity, EventType } from "@/database.types";
+import { logAuditEvent } from "../audit-logger";
+import { AuditCategory, AuditSeverity } from "../../../database.types";
 
 interface CronJobExecution {
   id: string;
@@ -170,7 +170,7 @@ export class CronMonitor {
     // Log to audit trail
     const definition = this.definitions.get(execution.jobName);
     await logAuditEvent({
-      action: `cron_${success ? "success" : "failed"}` as EventType,
+      tableName: "system",
       category: AuditCategory.SYSTEM,
       severity: success
         ? AuditSeverity.INFO
@@ -377,7 +377,7 @@ export class CronMonitor {
 
   private async handleFailure(
     execution: CronJobExecution,
-    definition?: CronJobDefinition
+    _definition?: CronJobDefinition
   ): Promise<void> {
     // Check for repeated failures
     const history = this.executions.get(execution.jobName) || [];
@@ -425,7 +425,7 @@ export class CronMonitor {
     return true;
   }
 
-  private calculateNextRun(schedule: string, lastRun?: Date): Date {
+  private calculateNextRun(schedule: string, _lastRun?: Date): Date {
     // Simple cron parser for common patterns
     const now = new Date();
     const parts = schedule.split(" ");
@@ -434,7 +434,7 @@ export class CronMonitor {
       return new Date(now.getTime() + 60 * 60 * 1000); // Default to 1 hour
     }
 
-    const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+    const [minute, hour, dayOfMonth, _month, _dayOfWeek] = parts;
 
     // Handle hourly (0 * * * *)
     if (hour === "*" && minute !== "*") {

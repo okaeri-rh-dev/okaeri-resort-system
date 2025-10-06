@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/validations";
-import { User, Mail, Phone, Calendar, Home, Hash } from "lucide-react";
+import { User, Mail, Phone, Calendar, Hash } from "lucide-react";
 import { format } from "date-fns";
 import type { Guest } from "@/types";
 
@@ -48,12 +48,7 @@ export const GuestDetailModal: React.FC<GuestDetailModalProps> = ({
                 <p className="text-muted-foreground">Full Name</p>
                 <p className="font-medium text-lg">{guest.guest_name}</p>
               </div>
-              {false && (
-                <div>
-                  <p className="text-muted-foreground">Nationality</p>
-                  <p className="font-medium">{guest.nationality}</p>
-                </div>
-              )}
+              {/* Nationality field not in current schema */}
             </div>
           </div>
 
@@ -72,24 +67,16 @@ export const GuestDetailModal: React.FC<GuestDetailModalProps> = ({
                   </div>
                 </div>
               )}
-              {guest.contact_number && (
+              {guest.phone_number && (
                 <div className="flex items-center gap-3">
                   <Phone className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-muted-foreground text-xs">Phone</p>
-                    <p className="font-medium">{guest.contact_number}</p>
+                    <p className="font-medium">{guest.phone_number}</p>
                   </div>
                 </div>
               )}
-              {false && (
-                <div className="flex items-center gap-3">
-                  <Home className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-muted-foreground text-xs">Address</p>
-                    <p className="font-medium">{guest.address}</p>
-                  </div>
-                </div>
-              )}
+              {/* Address field not in current schema */}
             </div>
           </div>
 
@@ -110,18 +97,7 @@ export const GuestDetailModal: React.FC<GuestDetailModalProps> = ({
                 <p className="text-muted-foreground">Total Spent</p>
                 <p className="font-medium text-xl">{formatCurrency(guest.total_spent || 0)}</p>
               </div>
-              {false && (
-                <div>
-                  <p className="text-muted-foreground">First Visit</p>
-                  <p className="font-medium">{format(new Date(guest.first_booking_date), "PP")}</p>
-                </div>
-              )}
-              {false && (
-                <div>
-                  <p className="text-muted-foreground">Last Visit</p>
-                  <p className="font-medium">{format(new Date(guest.last_booking_date), "PP")}</p>
-                </div>
-              )}
+              {/* First/Last visit dates not in current schema */}
             </div>
 
             {/* Average metrics */}
@@ -135,38 +111,16 @@ export const GuestDetailModal: React.FC<GuestDetailModalProps> = ({
             )}
           </div>
 
-          {/* Preferences & Notes */}
-          {false && (
-            <>
-              <Separator />
-              <div>
-                <h3 className="font-semibold mb-3">Additional Information</h3>
-                <div className="space-y-3 text-sm">
-                  {guest.preferences && (
-                    <div>
-                      <p className="text-muted-foreground mb-1">Preferences</p>
-                      <p className="bg-muted p-3 rounded-md">{guest.preferences}</p>
-                    </div>
-                  )}
-                  {guest.notes && (
-                    <div>
-                      <p className="text-muted-foreground mb-1">Internal Notes</p>
-                      <p className="bg-muted p-3 rounded-md">{guest.notes}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
+          {/* Preferences & Notes fields not in current schema */}
 
-          {/* Recent Bookings */}
+          {/* Recent Bookings - not in current schema */}
           {false && (
             <>
               <Separator />
               <div>
                 <h3 className="font-semibold mb-3">Recent Bookings</h3>
                 <div className="space-y-2">
-                  {guest.recent_bookings.slice(0, 3).map((booking, index) => (
+                  {[].slice(0, 3).map((booking: any, index: number) => (
                     <div key={index} className="p-3 border rounded-md">
                       <div className="flex justify-between items-start text-sm">
                         <div>
@@ -199,7 +153,7 @@ export const GuestDetailModal: React.FC<GuestDetailModalProps> = ({
           <Separator />
           <div className="text-xs text-muted-foreground">
             <p>Guest ID: {guest.guest_id}</p>
-            <p>Created: {format(new Date(guest.created_at), "PPpp")}</p>
+            {guest.created_at && <p>Created: {format(new Date(guest.created_at), "PPpp")}</p>}
             {guest.updated_at && <p>Last Updated: {format(new Date(guest.updated_at), "PPpp")}</p>}
           </div>
         </div>

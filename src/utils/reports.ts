@@ -131,6 +131,8 @@ export interface CSVExportOptions {
   includeTimestamp?: boolean;
   customHeaders?: string[];
   philippineFormat?: boolean;
+  businessName?: string;
+  includeMetadata?: boolean;
   maxRows?: number;
   onStart?: () => void;
   onSuccess?: (filename: string) => void;
@@ -400,11 +402,13 @@ export function formatBookingsForExport(
     "Check Out": format(new Date(booking.check_out), "yyyy-MM-dd"),
     "Number of Guests": booking.num_guests,
     "Total Amount": booking.total_amount,
-    "Booking Status": booking.booking_status,
-    "Payment Status": booking.payment_status,
+    "Booking Status": booking.booking_status || "N/A",
+    "Payment Status": booking.payment_status || "N/A",
     "Payment Method": booking.payment_method || "N/A",
     "Special Requests": booking.special_requests || "",
-    "Created Date": format(new Date(booking.created_at), "yyyy-MM-dd HH:mm"),
+    "Created Date": booking.created_at
+      ? format(new Date(booking.created_at), "yyyy-MM-dd HH:mm")
+      : "N/A",
   }));
 }
 

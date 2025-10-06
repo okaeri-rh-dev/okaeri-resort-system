@@ -52,9 +52,19 @@ describe("logAuditEventWithIP", () => {
   it("should construct valid request with proper headers and body", async () => {
     // Mock getSession to return valid session
     const mockSession = {
+      expires_at: Date.now() + 3600000,
+      expires_in: 3600,
+      token_type: "bearer" as const,
       access_token: "test-token-123",
       refresh_token: "refresh-token-456",
-      user: { id: "user-1", email: "test@okaeri.com" },
+      user: {
+        id: "user-1",
+        email: "test@okaeri.com",
+        app_metadata: {},
+        user_metadata: {},
+        aud: "authenticated",
+        created_at: new Date().toISOString(),
+      },
     };
 
     const { supabase } = await import("../supabase");
@@ -111,9 +121,19 @@ describe("logAuditEventWithIP", () => {
   it("should return error if Worker endpoint returns non-ok response", async () => {
     // Mock getSession to return valid session
     const mockSession = {
+      expires_at: Date.now() + 3600000,
+      expires_in: 3600,
+      token_type: "bearer" as const,
       access_token: "test-token-123",
       refresh_token: "refresh-token-456",
-      user: { id: "user-1", email: "test@okaeri.com" },
+      user: {
+        id: "user-1",
+        email: "test@okaeri.com",
+        app_metadata: {},
+        user_metadata: {},
+        aud: "authenticated",
+        created_at: new Date().toISOString(),
+      },
     };
 
     const { supabase } = await import("../supabase");
@@ -141,9 +161,19 @@ describe("logAuditEventWithIP", () => {
   it("should handle network errors gracefully", async () => {
     // Mock getSession to return valid session
     const mockSession = {
+      expires_at: Date.now() + 3600000,
+      expires_in: 3600,
+      token_type: "bearer" as const,
       access_token: "test-token-123",
       refresh_token: "refresh-token-456",
-      user: { id: "user-1", email: "test@okaeri.com" },
+      user: {
+        id: "user-1",
+        email: "test@okaeri.com",
+        app_metadata: {},
+        user_metadata: {},
+        aud: "authenticated",
+        created_at: new Date().toISOString(),
+      },
     };
 
     const { supabase } = await import("../supabase");
@@ -168,9 +198,19 @@ describe("logAuditEventWithIP", () => {
   it("should return success when Worker endpoint succeeds", async () => {
     // Mock getSession to return valid session
     const mockSession = {
+      expires_at: Date.now() + 3600000,
+      expires_in: 3600,
+      token_type: "bearer" as const,
       access_token: "test-token-123",
       refresh_token: "refresh-token-456",
-      user: { id: "user-1", email: "test@okaeri.com" },
+      user: {
+        id: "user-1",
+        email: "test@okaeri.com",
+        app_metadata: {},
+        user_metadata: {},
+        aud: "authenticated",
+        created_at: new Date().toISOString(),
+      },
     };
 
     const { supabase } = await import("../supabase");

@@ -27,8 +27,8 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           <div className="font-medium text-neutral-900">{booking.guest_name}</div>
         </div>
         <div className="flex space-x-1">
-          <StatusBadge status={booking.booking_status} />
-          <StatusBadge status={booking.payment_status} />
+          <StatusBadge status={booking.booking_status ?? "Pending"} />
+          <StatusBadge status={booking.payment_status ?? "Pending"} />
         </div>
       </div>
 

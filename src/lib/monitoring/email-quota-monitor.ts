@@ -6,8 +6,8 @@
  */
 
 import { getAlertSystem, Alert } from "./alert-system";
-import { logAuditEvent } from "../audit-logger-workers";
-import { AuditCategory, AuditSeverity, EventType } from "@/database.types";
+import { logAuditEvent } from "../audit-logger";
+import { AuditCategory, AuditSeverity } from "../../../database.types";
 
 interface EmailUsageStats {
   sentCount: number;
@@ -129,7 +129,7 @@ export class EmailQuotaMonitor {
 
     if (alert) {
       await logAuditEvent({
-        action: "email_quota_alert" as EventType,
+        tableName: "system",
         category: AuditCategory.SYSTEM,
         severity: alert.level === "critical" ? AuditSeverity.CRITICAL : AuditSeverity.WARNING,
         description: `Email quota at ${usage.percentage.toFixed(1)}%`,
@@ -165,8 +165,8 @@ export class EmailQuotaMonitor {
     }
 
     // Check if quota protection is enabled
-    const protected = await this.isQuotaProtected();
-    if (protected) {
+    const isProtected = await this.isQuotaProtected();
+    if (isProtected) {
       return {
         allowed: false,
         reason: "Email quota protection enabled",
@@ -333,7 +333,7 @@ export class EmailQuotaMonitor {
 
   private async handleFailedEmail(event: EmailEvent): Promise<void> {
     await logAuditEvent({
-      action: "email_failed" as EventType,
+      tableName: "system",
       category: AuditCategory.SYSTEM,
       severity: AuditSeverity.WARNING,
       description: `Email failed: ${event.error || "Unknown error"}`,
@@ -359,7 +359,7 @@ export class EmailQuotaMonitor {
 
   private async handleComplaint(event: EmailEvent): Promise<void> {
     await logAuditEvent({
-      action: "email_complaint" as EventType,
+      tableName: "system",
       category: AuditCategory.SYSTEM,
       severity: AuditSeverity.CRITICAL,
       description: `Email complaint received from ${event.recipient}`,
@@ -381,7 +381,7 @@ export class EmailQuotaMonitor {
     });
 
     await logAuditEvent({
-      action: "email_blacklisted" as EventType,
+      tableName: "system",
       category: AuditCategory.SYSTEM,
       severity: AuditSeverity.WARNING,
       description: `Email blacklisted: ${email}`,

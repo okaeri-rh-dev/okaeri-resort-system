@@ -28,7 +28,7 @@ export interface ConflictingBooking {
   guestName: string;
   checkIn: Date;
   checkOut: Date;
-  status: BookingStatus;
+  status: string | null;
 }
 
 export interface BlackoutPeriod {

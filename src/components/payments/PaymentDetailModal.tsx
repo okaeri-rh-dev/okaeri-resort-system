@@ -1,13 +1,4 @@
-import {
-  Calendar,
-  DollarSign,
-  CreditCard,
-  FileText,
-  Receipt,
-  Clock,
-  User,
-  Hash,
-} from "lucide-react";
+import { Calendar, DollarSign, CreditCard, FileText, Receipt, Clock, User } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -131,22 +122,7 @@ export function PaymentDetailModal({ payment, open, onOpenChange }: PaymentDetai
             </>
           )}
 
-          {/* Reference Number Section (if present) */}
-          {payment.reference_number && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-neutral-600">
-                <Hash className="h-4 w-4" />
-                <span className="text-xs font-medium uppercase tracking-wide">
-                  Reference Number
-                </span>
-              </div>
-              <div className="rounded-md border border-neutral-200 bg-white p-3">
-                <p className="font-mono text-sm font-medium text-neutral-900">
-                  {payment.reference_number}
-                </p>
-              </div>
-            </div>
-          )}
+          {/* Reference Number field not in current schema */}
 
           {/* Notes Section (if present) */}
           {payment.notes && (
@@ -161,93 +137,41 @@ export function PaymentDetailModal({ payment, open, onOpenChange }: PaymentDetai
             </div>
           )}
 
-          {/* Receipt/Proof Section */}
-          {(payment.proof_url || payment.receipt_url) && (
+          {/* Payment Proof Section */}
+          {payment.proof_url && (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-neutral-600">
                 <Receipt className="h-4 w-4" />
                 <span className="text-xs font-medium uppercase tracking-wide">Documents</span>
               </div>
-              <div className="flex gap-2">
-                {payment.proof_url && (
-                  <Button
-                    variant="outline"
-                    onClick={() => window.open(payment.proof_url!, "_blank")}
-                    className="flex-1 justify-start border-neutral-200 text-neutral-700 hover:bg-neutral-50"
-                  >
-                    <Receipt className="mr-2 h-4 w-4" />
-                    View Payment Proof
-                  </Button>
-                )}
-                {payment.receipt_url && (
-                  <Button
-                    variant="outline"
-                    onClick={() => window.open(payment.receipt_url!, "_blank")}
-                    className="flex-1 justify-start border-neutral-200 text-neutral-700 hover:bg-neutral-50"
-                  >
-                    <Receipt className="mr-2 h-4 w-4" />
-                    View Receipt
-                  </Button>
-                )}
-              </div>
+              <Button
+                variant="outline"
+                onClick={() => window.open(payment.proof_url!, "_blank")}
+                className="w-full justify-start border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+              >
+                <Receipt className="mr-2 h-4 w-4" />
+                View Payment Proof
+              </Button>
             </div>
           )}
 
-          {/* Verification Information (if verified) */}
-          {payment.verified_at && (
-            <div className="rounded-lg border border-green-200 bg-green-50/50 p-4">
-              <div className="flex items-center gap-2 text-green-700 mb-3">
-                <User className="h-4 w-4" />
-                <span className="text-xs font-medium uppercase tracking-wide">
-                  Verification Details
-                </span>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <p className="text-xs text-green-600 mb-1">Verified At</p>
-                  <p className="text-sm font-medium text-green-800">
-                    {new Date(payment.verified_at).toLocaleString()}
-                  </p>
-                </div>
-                {payment.verified_by && (
-                  <div>
-                    <p className="text-xs text-green-600 mb-1">Verified By</p>
-                    <p className="text-sm font-medium text-green-800">{payment.verified_by}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Verification fields not in current schema */}
 
           {/* Metadata Footer */}
           <div className="rounded-lg border border-neutral-200 bg-neutral-50/30 p-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              {/* Created At */}
-              {payment.created_at && (
-                <div className="flex items-start gap-2">
-                  <Clock className="mt-0.5 h-3.5 w-3.5 text-neutral-500" />
-                  <div>
-                    <p className="text-xs font-medium text-neutral-600">Created</p>
-                    <p className="text-xs text-neutral-500">
-                      {new Date(payment.created_at).toLocaleString()}
-                    </p>
-                  </div>
+            {/* Created At */}
+            {payment.created_at && (
+              <div className="flex items-start gap-2">
+                <Clock className="mt-0.5 h-3.5 w-3.5 text-neutral-500" />
+                <div>
+                  <p className="text-xs font-medium text-neutral-600">Created</p>
+                  <p className="text-xs text-neutral-500">
+                    {new Date(payment.created_at).toLocaleString()}
+                  </p>
                 </div>
-              )}
-
-              {/* Updated At */}
-              {payment.updated_at && (
-                <div className="flex items-start gap-2">
-                  <Clock className="mt-0.5 h-3.5 w-3.5 text-neutral-500" />
-                  <div>
-                    <p className="text-xs font-medium text-neutral-600">Last Updated</p>
-                    <p className="text-xs text-neutral-500">
-                      {new Date(payment.updated_at).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
+            {/* Updated At field not in current schema */}
           </div>
         </div>
       </DialogContent>
