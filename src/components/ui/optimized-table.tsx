@@ -10,9 +10,9 @@ import type { ReactNode } from "react";
 // MEMOIZED TABLE ROW COMPONENT
 // ============================================
 
-interface TableRowProps<T = unknown> {
+interface TableRowProps<T> {
   item: T;
-  columns: Array<{
+  columns: ReadonlyArray<{
     key: string;
     header: string;
     accessor: (item: T) => ReactNode;
@@ -27,13 +27,7 @@ interface TableRowProps<T = unknown> {
  * Prevents unnecessary re-renders when parent state changes
  */
 export const MemoizedTableRow = memo(
-  <T extends Record<string, unknown>>({
-    item,
-    columns,
-    onRowClick,
-    rowClassName = "",
-    getRowKey,
-  }: TableRowProps<T>) => {
+  <T,>({ item, columns, onRowClick, rowClassName = "", getRowKey }: TableRowProps<T>) => {
     const handleClick = useCallback(() => {
       if (onRowClick) {
         onRowClick(item);
@@ -83,9 +77,9 @@ MemoizedTableRow.displayName = "MemoizedTableRow";
 // MEMOIZED TABLE COMPONENT
 // ============================================
 
-interface OptimizedTableProps<T = unknown> {
-  data: T[];
-  columns: Array<{
+interface OptimizedTableProps<T> {
+  data: ReadonlyArray<T>;
+  columns: ReadonlyArray<{
     key: string;
     header: string;
     accessor: (item: T) => ReactNode;
@@ -106,7 +100,7 @@ interface OptimizedTableProps<T = unknown> {
  * Memoizes data processing and prevents unnecessary re-renders
  */
 export const OptimizedTable = memo(
-  <T extends Record<string, unknown>>({
+  <T,>({
     data,
     columns,
     onRowClick,
@@ -118,6 +112,7 @@ export const OptimizedTable = memo(
     sortColumn,
     sortDirection,
   }: OptimizedTableProps<T>) => {
+    // Note: onRowClick and getRowKey used in MemoizedTableRow below
     // Memoize processed data
     const processedData = useMemo(() => {
       return data || [];
@@ -171,16 +166,16 @@ export const OptimizedTable = memo(
             {processedData.map((item) => (
               <MemoizedTableRow
                 key={getRowKey(item)}
-                item={item}
+                item={item as unknown}
                 columns={
-                  columns as Array<{
+                  columns as unknown as ReadonlyArray<{
                     key: string;
                     header: string;
                     accessor: (item: unknown) => ReactNode;
                   }>
                 }
-                onRowClick={onRowClick as ((item: unknown) => void) | undefined}
-                getRowKey={getRowKey as (item: unknown) => string}
+                onRowClick={onRowClick as unknown as ((item: unknown) => void) | undefined}
+                getRowKey={getRowKey as unknown as (item: unknown) => string}
               />
             ))}
           </tbody>
@@ -206,12 +201,7 @@ interface VirtualizedTableProps<T> extends OptimizedTableProps<T> {
  * Only renders visible rows for maximum performance
  */
 export const VirtualizedTable = memo(
-  <T extends Record<string, unknown>>({
-    data,
-    rowHeight = 48,
-    visibleRows = 20,
-    ...props
-  }: VirtualizedTableProps<T>) => {
+  <T,>({ data, rowHeight = 48, visibleRows = 20, ...props }: VirtualizedTableProps<T>) => {
     const [scrollTop, setScrollTop] = React.useState(0);
     const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -243,7 +233,10 @@ export const VirtualizedTable = memo(
         onScroll={handleScroll}
       >
         <div style={{ paddingTop: topPadding, paddingBottom: bottomPadding }}>
-          <OptimizedTable {...(props as OptimizedTableProps)} data={visibleData} />
+          <OptimizedTable
+            {...(props as unknown as OptimizedTableProps<unknown>)}
+            data={visibleData}
+          />
         </div>
       </div>
     );

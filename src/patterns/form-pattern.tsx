@@ -1,11 +1,11 @@
 import { ReactNode } from "react";
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn, FieldValues } from "react-hook-form";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { sanitizeFormData } from "@/lib/security/sanitize";
 
-interface FormWrapperProps<T> {
+interface FormWrapperProps<T extends FieldValues> {
   form: UseFormReturn<T>;
   onSubmit: (data: T) => Promise<void>;
   children: ReactNode;
@@ -18,7 +18,7 @@ interface FormWrapperProps<T> {
  * Reusable form wrapper with error boundary and security features
  * Automatically handles form submission, sanitization, and error boundaries
  */
-export function FormWrapper<T extends Record<string, any>>({
+export function FormWrapper<T extends FieldValues>({
   form,
   onSubmit,
   children,
@@ -51,7 +51,7 @@ export function FormWrapper<T extends Record<string, any>>({
   );
 }
 
-interface StepFormWrapperProps<T> {
+interface StepFormWrapperProps<T extends FieldValues> {
   form: UseFormReturn<T>;
   currentStep: number;
   totalSteps: number;
@@ -67,7 +67,7 @@ interface StepFormWrapperProps<T> {
  * Multi-step form wrapper with progress indicator
  * Handles step navigation and validation
  */
-export function StepFormWrapper<T extends Record<string, any>>({
+export function StepFormWrapper<T extends FieldValues>({
   form,
   currentStep,
   totalSteps,

@@ -32,7 +32,8 @@ interface LoadingProviderProps {
 }
 
 export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) => {
-  const [isNavigating, setIsNavigating] = useState(false);
+  // TODO: Replace with actual router state when implementing global navigation
+  const isNavigating = false; // Placeholder - will integrate with router.state.isLoading
   const [isGlobalLoading, setIsGlobalLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState<string>();
 
@@ -40,31 +41,13 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
 
   // Handle route navigation loading
   useEffect(() => {
-    const handleNavigationStart = () => {
-      setIsNavigating(true);
-    };
+    // TanStack Router v1 uses router.state.isLoading for navigation state
+    // For now, navigation loading is handled by LoadingLink component
+    // TODO: Integrate with router.state.isLoading or useRouterState hook
+    // when implementing global navigation indicators
 
-    const handleNavigationEnd = () => {
-      // Add a small delay to prevent flashing
-      setTimeout(() => {
-        setIsNavigating(false);
-      }, 100);
-    };
-
-    // Listen to router events if available
-    // Note: This depends on TanStack Router's event system
-    // Adjust based on actual router implementation
-    const unsubscribe = router.subscribe?.("navigationStart", (event: any) => {
-      if (event.type === "navigationStart") {
-        handleNavigationStart();
-      } else if (event.type === "navigationEnd") {
-        handleNavigationEnd();
-      }
-    });
-
-    return () => {
-      unsubscribe?.();
-    };
+    // Cleanup function (no subscriptions needed)
+    return () => {};
   }, [router]);
 
   const setGlobalLoadingState = (loading: boolean, message?: string) => {

@@ -36,7 +36,7 @@ export function ModalWrapper({
   children,
   footer,
   size = "md",
-  closeOnOutsideClick = true,
+  closeOnOutsideClick: _closeOnOutsideClick = true,
   closeOnEscape = true,
   className,
 }: ModalWrapperProps) {

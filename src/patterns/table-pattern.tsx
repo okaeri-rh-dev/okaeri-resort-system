@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, memo, useCallback, useState } from "react";
+import { ReactNode, memo, useCallback, useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DataFetchingWrapper } from "./data-fetching-pattern";
 import {
@@ -126,10 +126,10 @@ export function TableWrapper<T>({
                 {items.map((item, index) => (
                   <MemoizedTableRow
                     key={keyExtractor(item, index)}
-                    item={item}
-                    columns={columns}
+                    item={item as unknown}
+                    columns={columns as unknown as Column<unknown>[]}
                     onClick={() => onRowClick?.(item)}
-                    actions={actions}
+                    actions={actions as unknown as ((item: unknown) => ReactNode) | undefined}
                     clickable={!!onRowClick}
                   />
                 ))}
@@ -259,7 +259,13 @@ export function VirtualizedTable<T>({
     >
       <div style={{ height: data.length * itemHeight }}>
         <div style={{ transform: `translateY(${offsetY}px)` }}>
-          <TableWrapper {...props} data={visibleData} isLoading={false} isError={false} />
+          <TableWrapper
+            {...props}
+            data={visibleData}
+            columns={columns}
+            isLoading={false}
+            isError={false}
+          />
         </div>
       </div>
     </div>

@@ -69,16 +69,18 @@ function CheckBookingPage() {
       }
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to fetch booking details");
+        const errorData: any = await response.json();
+        throw new Error(errorData.message || "Failed to fetch booking details");
       }
 
       const bookingData = await response.json();
       const validatedData = validateStatusResponse(bookingData);
       setBooking(validatedData);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Search error:", error);
-      toast.error("Failed to retrieve booking. Please try again.");
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to retrieve booking. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsSearching(false);
     }

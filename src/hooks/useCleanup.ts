@@ -155,7 +155,7 @@ export function useEventListener<K extends keyof WindowEventMap>(
  */
 export function useResizeObserver<T extends HTMLElement>(
   callback: (entry: ResizeObserverEntry) => void
-): React.RefObject<T> {
+): React.RefObject<T | null> {
   const ref = useRef<T>(null);
   const savedCallback = useRef(callback);
 
@@ -189,7 +189,7 @@ export function useResizeObserver<T extends HTMLElement>(
 export function useIntersectionObserver<T extends HTMLElement>(
   callback: (entry: IntersectionObserverEntry) => void,
   options?: IntersectionObserverInit
-): React.RefObject<T> {
+): React.RefObject<T | null> {
   const ref = useRef<T>(null);
   const savedCallback = useRef(callback);
 

@@ -84,7 +84,7 @@ const createChainableMock = (defaultResponse = { data: [], error: null }) => {
 // Mock Supabase client with comprehensive API coverage
 vi.mock("@/lib/supabase", () => ({
   supabase: {
-    from: vi.fn((table: string) => createChainableMock()),
+    from: vi.fn((_table: string) => createChainableMock()),
     auth: {
       getSession: vi.fn(() =>
         Promise.resolve({
@@ -119,7 +119,7 @@ vi.mock("@/lib/supabase", () => ({
         error: null,
       })),
     },
-    rpc: vi.fn((functionName: string, params?: any) => {
+    rpc: vi.fn((functionName: string, _params?: any) => {
       // Return appropriate mock based on function name
       const mockResults: Record<string, any> = {
         check_unit_availability: { data: true, error: null },
@@ -135,7 +135,7 @@ vi.mock("@/lib/supabase", () => ({
       return Promise.resolve(mockResults[functionName] || { data: null, error: null });
     }),
     storage: {
-      from: vi.fn((bucket: string) => ({
+      from: vi.fn((_bucket: string) => ({
         list: vi.fn(() => Promise.resolve({ data: [], error: null })),
         upload: vi.fn(() => Promise.resolve({ data: {}, error: null })),
         download: vi.fn(() => Promise.resolve({ data: new Blob(), error: null })),
@@ -160,7 +160,18 @@ process.env.VITE_SUPABASE_ANON_KEY = "test-anon-key";
 // Performance monitoring mock
 global.performance.mark = vi.fn();
 global.performance.measure = vi.fn();
-global.performance.getEntriesByName = vi.fn(() => [{ duration: 100 }]);
+global.performance.getEntriesByName = vi.fn(
+  () =>
+    [
+      {
+        duration: 100,
+        entryType: "measure",
+        name: "test",
+        startTime: 0,
+        toJSON: () => ({}),
+      },
+    ] as PerformanceEntryList
+);
 
 // Console error suppression for expected errors in tests
 const originalError = console.error;

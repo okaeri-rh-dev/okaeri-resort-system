@@ -307,31 +307,37 @@ function AuditLogRow({ log, isExpanded, onToggle, onViewDiff }: AuditLogRowProps
 // EXPANDED ROW DETAILS
 // ============================================
 
+// Separate component to avoid TypeScript JSX inference issues
+function CategoryAndSeverity({
+  category,
+  severity,
+}: {
+  category: string | null;
+  severity: string | null;
+}) {
+  if (!category && !severity) return null;
+
+  return (
+    <div className="flex gap-4">
+      {category && (
+        <div>
+          <div className="text-sm font-medium mb-1">Category</div>
+          <Badge>{category}</Badge>
+        </div>
+      )}
+      {severity && (
+        <div>
+          <div className="text-sm font-medium mb-1">Severity</div>
+          <SeverityBadge severity={severity} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ExpandedRowDetails({ log }: { log: AuditLog }): React.ReactElement {
   const category = log.category ? String(log.category) : null;
   const severity = log.severity ? String(log.severity) : null;
-
-  // Helper to render category/severity section - extracted to avoid TypeScript JSX inference issue
-  const renderCategoryAndSeverity = (): React.ReactNode => {
-    if (!category && !severity) return null;
-
-    return (
-      <div className="flex gap-4">
-        {category && (
-          <div>
-            <div className="text-sm font-medium mb-1">Category</div>
-            <Badge>{category}</Badge>
-          </div>
-        )}
-        {severity && (
-          <div>
-            <div className="text-sm font-medium mb-1">Severity</div>
-            <SeverityBadge severity={severity} />
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-3 p-4">
@@ -341,7 +347,7 @@ function ExpandedRowDetails({ log }: { log: AuditLog }): React.ReactElement {
         <SafeAuditText text={log.description} className="text-sm text-muted-foreground" />
       </div>
 
-      {renderCategoryAndSeverity() as React.ReactNode}
+      <CategoryAndSeverity category={category} severity={severity} />
 
       {/* IP Address */}
       {log.ip_address && (

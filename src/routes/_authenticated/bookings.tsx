@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { z } from "zod";
-import type { Booking, PaymentMethod } from "@/types";
+import type { Booking } from "@/types";
 
 const bookingsSearchSchema = z.object({
   status: z.string().optional(),
@@ -59,7 +59,9 @@ function BookingsPage() {
       check_out: new Date(editingBooking.check_out),
       unit_id: editingBooking.unit_id,
       num_guests: editingBooking.num_guests,
-      payment_method: (editingBooking.payment_method as PaymentMethod) || undefined,
+      payment_method: (editingBooking.payment_method === "Other"
+        ? undefined
+        : editingBooking.payment_method) as "Cash" | "GCash" | "BankTransfer" | "Card" | undefined,
       special_requests: editingBooking.special_requests || "",
     };
   }, [editingBooking]);

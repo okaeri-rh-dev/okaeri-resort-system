@@ -154,7 +154,7 @@ function UnitsTableComponent({ onAddUnit, pageSize = 10, className }: UnitsTable
   );
 }
 
-// Export with error boundary
+// Export with error boundary - explicitly typed to preserve props
 export const UnitsTable = withErrorBoundary(UnitsTableComponent, {
   level: "component",
   fallback: (
@@ -168,7 +168,7 @@ export const UnitsTable = withErrorBoundary(UnitsTableComponent, {
       </button>
     </Card>
   ),
-});
+}) as React.ComponentType<UnitsTableProps>;
 
 // Re-export types and utilities
 export type { UnitsTableProps } from "./types";

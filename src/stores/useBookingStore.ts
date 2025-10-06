@@ -639,7 +639,7 @@ export const useUpdateBooking = () => {
             .insert({
               guest_name: updates.guest_name,
               email: updates.email,
-              phone_number: updates.contact_number || null,
+              phone_number: updates.contact_number || "",
             })
             .select()
             .single();

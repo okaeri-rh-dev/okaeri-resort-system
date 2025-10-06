@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, Outlet, useRouter } from "@tanstack/react-router";
+import { createFileRoute, redirect, Outlet } from "@tanstack/react-router";
 import { MainLayout } from "@/layouts/MainLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { auth } from "@/lib/auth";

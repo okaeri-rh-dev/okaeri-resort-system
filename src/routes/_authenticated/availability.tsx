@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, lazy, Suspense } from "react";
+import { useBookings } from "@/stores/useBookingStore";
 
 // Lazy load heavy components
 const UnitsTable = lazy(() =>
@@ -9,7 +10,6 @@ const DashboardCalendar = lazy(() =>
   import("@/components/dashboard/DashboardCalendar").then((m) => ({ default: m.DashboardCalendar }))
 );
 
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { z } from "zod";
@@ -27,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/availability")({
 
 function AvailabilityPage() {
   const [activeTab, setActiveTab] = useState("calendar");
+  const { data: bookings, isLoading: isLoadingBookings } = useBookings();
 
   return (
     <ErrorBoundary level="page">
@@ -55,7 +56,7 @@ function AvailabilityPage() {
                   </div>
                 }
               >
-                <DashboardCalendar />
+                <DashboardCalendar bookings={bookings} isLoading={isLoadingBookings} />
               </Suspense>
             </ErrorBoundary>
           </TabsContent>

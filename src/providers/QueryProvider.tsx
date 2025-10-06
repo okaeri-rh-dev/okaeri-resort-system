@@ -242,7 +242,7 @@ export const offlineSupport = {
       const queue = JSON.parse(localStorage.getItem("mutationQueue") || "[]");
       queue.push({ timestamp: Date.now(), mutation: mutation.toString() });
       localStorage.setItem("mutationQueue", JSON.stringify(queue));
-      return { queued: true };
+      return { queued: true } as T;
     }
 
     return mutation();
