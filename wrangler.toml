@@ -32,7 +32,3 @@ id = "98171af1c3bd4f718ff86c1f966c64a5"
 [env.preview.vars]
 ENVIRONMENT = "preview"
 # SUPABASE_URL and SUPABASE_ANON_KEY should be set as secrets for preview too
-
-# Scheduled triggers for cleanup cron job
-[triggers]
-crons = ["0 * * * *"]  # Run hourly
