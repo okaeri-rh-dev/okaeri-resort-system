@@ -46,6 +46,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               <Input
                 id="email"
                 type="email"
+                name="email-login"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@resort.com"
@@ -60,6 +61,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               <Input
                 id="password"
                 type="password"
+                name="password-login"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
