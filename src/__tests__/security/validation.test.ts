@@ -285,6 +285,7 @@ describe("Input Validation Security", () => {
         file_name: "receipt.jpg",
         file_type: "image/jpeg",
         file_size: 100000,
+        terms_accepted: true, // Required to pass initial validation and reach duration check
       });
 
       expect(result.success).toBe(false);

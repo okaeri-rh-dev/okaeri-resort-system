@@ -1,17 +1,19 @@
-import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/validations";
-import { Users, DollarSign, Info, Calendar } from "lucide-react";
-import { format } from "date-fns";
 import type { Unit } from "@/types";
+import { format } from "date-fns";
+import { Calendar, DollarSign, Info, Users } from "lucide-react";
+import React from "react";
 
 interface UnitDetailModalProps {
   unit: Unit | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const showComponent = false;
 
 export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, onOpenChange }) => {
   if (!unit) return null;
@@ -105,7 +107,7 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, on
           </div>
 
           {/* Features & Amenities */}
-          {false && (
+          {showComponent && (
             <>
               <Separator />
               <div>
@@ -125,7 +127,7 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, on
           )}
 
           {/* Description */}
-          {false && (
+          {showComponent && (
             <>
               <Separator />
               <div>
@@ -138,7 +140,7 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, on
           )}
 
           {/* Maintenance Information - field not in current schema */}
-          {false && (
+          {showComponent && (
             <>
               <Separator />
               <div>

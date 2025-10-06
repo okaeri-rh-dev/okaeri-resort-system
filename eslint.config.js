@@ -12,6 +12,7 @@ export default tseslint.config([
       "build/**/*",
       "coverage/**/*",
       "node_modules/**/*",
+      "test-results/**/*",
       "**/*.min.js",
       "**/*.bundle.js",
       "public/**/*",

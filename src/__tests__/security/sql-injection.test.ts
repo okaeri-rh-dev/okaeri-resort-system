@@ -235,8 +235,10 @@ describe("SQL Injection Prevention Tests", () => {
       const complexPayload = "1' OR '1'='1' UNION SELECT password FROM users--";
 
       const orMock = vi.fn().mockReturnValue({
-        data: [],
-        error: null,
+        or: vi.fn().mockReturnValue({
+          data: [],
+          error: null,
+        }),
       });
 
       const andMock = vi.fn().mockReturnValue({
@@ -245,6 +247,7 @@ describe("SQL Injection Prevention Tests", () => {
 
       supabase.from = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
+          or: orMock, // Add .or() to select return value
           and: andMock,
         }),
       });

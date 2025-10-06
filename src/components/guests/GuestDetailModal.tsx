@@ -1,17 +1,19 @@
-import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/validations";
-import { User, Mail, Phone, Calendar, Hash } from "lucide-react";
-import { format } from "date-fns";
 import type { Guest } from "@/types";
+import { format } from "date-fns";
+import { Calendar, Hash, Mail, Phone, User } from "lucide-react";
+import React from "react";
 
 interface GuestDetailModalProps {
   guest: Guest | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const showComponent = false;
 
 export const GuestDetailModal: React.FC<GuestDetailModalProps> = ({
   guest,
@@ -114,7 +116,7 @@ export const GuestDetailModal: React.FC<GuestDetailModalProps> = ({
           {/* Preferences & Notes fields not in current schema */}
 
           {/* Recent Bookings - not in current schema */}
-          {false && (
+          {showComponent && (
             <>
               <Separator />
               <div>

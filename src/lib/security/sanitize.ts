@@ -7,9 +7,9 @@
  * @module SecuritySanitization
  */
 
+import type { BookingFormData, Guest } from "@/types";
 import DOMPurify from "dompurify";
 import { useCallback, useState } from "react";
-import type { BookingFormData, Guest } from "@/types";
 
 // ============================================
 // CONFIGURATION
@@ -115,7 +115,7 @@ export function sanitizeText(input: string | null | undefined): string {
 
   // Second: Remove dangerous content INCLUDING text inside script/style tags
   // This is more aggressive than DOMPurify's KEEP_CONTENT approach
-  let preCleaned = decodedInput
+  const preCleaned = decodedInput
     .replace(/<script[^>]*>.*?<\/script>/gis, "") // Remove script tags AND content
     .replace(/<style[^>]*>.*?<\/style>/gis, "") // Remove style tags AND content
     .replace(/<iframe[^>]*>.*?<\/iframe>/gis, "") // Remove iframe tags AND content
@@ -304,7 +304,7 @@ export function sanitizeName(name: string | null | undefined): string {
   const cleaned = String(DOMPurify.sanitize(name, NAME_CONFIG)).trim();
 
   // Remove any remaining suspicious patterns
-  return cleaned.replace(/[<>\"]/g, "").substring(0, 100); // Reasonable name length limit
+  return cleaned.replace(/[<>"]/g, "").substring(0, 100); // Reasonable name length limit
 }
 
 // ============================================

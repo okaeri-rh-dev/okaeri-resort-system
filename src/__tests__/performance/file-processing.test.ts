@@ -8,6 +8,17 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { compressImage } from "../../utils/file-compression";
 
+// Mock browser-image-compression library
+vi.mock("browser-image-compression", () => ({
+  default: vi.fn(async (file: File) => {
+    // Add small delay to simulate async compression and allow UI intervals to run
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    // Return a smaller mock file to simulate compression
+    const compressedSize = Math.floor(file.size * 0.3); // 70% compression
+    return new File([new ArrayBuffer(compressedSize)], file.name, { type: file.type });
+  }),
+}));
+
 // Mock Web Worker for compression
 class MockWorker {
   onmessage: ((event: MessageEvent) => void) | null = null;
@@ -223,7 +234,8 @@ describe("File Processing Performance Tests", () => {
 
       await uploadPromise;
 
-      expect(progressEvents).toContain(25); // ~25%
+      // Use approximate matching for floating-point precision
+      expect(progressEvents.some((p) => Math.abs(p - 25) < 1)).toBe(true); // ~25%
       expect(progressEvents).toContain(50); // 50%
       expect(progressEvents).toContain(100); // 100%
     });
