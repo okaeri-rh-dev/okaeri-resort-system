@@ -67,14 +67,32 @@ npm run build:dev        # Development build with TypeScript checking
 src/
 ├── components/         # React components organized by feature
 │   ├── ui/            # Reusable shadcn/ui components
-│   ├── bookings/      # Booking management components
+│   ├── audit/         # Audit trail viewer components (AuditLogViewer, AuditFilters)
+│   ├── bookings/      # Booking management (forms, tables with sub-directories)
+│   │   ├── BookingForm/      # Multi-step booking form with hooks & steps
+│   │   └── BookingsTable/    # Advanced table with filters & components
+│   ├── dashboard/     # Analytics and metrics dashboard
+│   ├── expenses/      # Expense tracking with ExpensesTable
+│   │   └── ExpensesTable/    # Expense table components
+│   ├── guest-booking/ # Public booking portal (unauthenticated)
 │   ├── guests/        # Guest management components
 │   ├── payments/      # Payment processing components
-│   └── units/         # Unit management components
+│   ├── security/      # Security monitoring dashboard
+│   ├── tables/        # Reusable table patterns (ResponsiveTableWrapper)
+│   └── units/         # Unit management with UnitsTable
+│       └── UnitsTable/       # Unit table components
+├── lib/               # Core utilities and configurations
+│   ├── monitoring/    # Quota & performance monitoring (7 modules)
+│   ├── security/      # Security utilities (sanitize, validate)
+│   ├── validation/    # Form validation schemas
+│   ├── audit-logger.ts       # Audit trail logging
+│   ├── audit-logger-workers.ts # Background audit processing
+│   ├── availability.ts       # Availability engine
+│   ├── auth.ts              # Authentication utilities
+│   └── supabase.ts          # Database client and typed helpers
 ├── stores/            # Zustand state stores
 ├── routes/            # TanStack Router route definitions
-├── lib/               # Core utilities and configurations
-│   └── supabase.ts    # Database client and typed helpers
+├── __tests__/         # Test suites (E2E, performance, security)
 ├── types/             # TypeScript type definitions
 ├── hooks/             # Custom React hooks
 └── utils/             # Utility functions
@@ -294,29 +312,71 @@ VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-## Vercel API Functions
+## Serverless Functions Architecture
 
-The `/api` directory contains serverless functions:
+The `/functions` directory contains Cloudflare Workers and serverless API endpoints:
 
 ```
-api/
-├── health.ts           # Health check endpoint
-├── cron/              # Scheduled tasks (not deployed in Phase 2)
-└── workflows.phase3-4/ # Advanced workflow APIs (future phases)
+functions/
+├── _middleware.ts           # Global middleware for auth, CORS, rate limiting
+├── api/
+│   ├── audit/              # Audit logging endpoints
+│   │   └── log-with-ip.ts  # IP-aware audit logging
+│   ├── guest-booking/      # Public booking endpoints
+│   │   └── guest-booking.ts # Unauthenticated booking creation
+│   ├── monitoring/         # Health and quota monitoring
+│   │   └── check-quotas.ts # KV/Email/Bandwidth quota checks
+│   ├── guest-booking.ts    # Main guest booking handler
+│   └── health.ts           # Health check endpoint
+└── cron/                   # Scheduled tasks
+    └── (cron jobs)         # Automated cleanup, monitoring tasks
 ```
 
 ### Creating New API Endpoints
 
 ```typescript
-// api/example.ts
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+// functions/api/example.ts
+import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers if needed
-  res.setHeader("Access-Control-Allow-Origin", "*");
+export async function onRequest(context: {
+  request: CloudflareRequest;
+  env: Env;
+  params: Record<string, string>;
+}) {
+  const { request, env } = context;
+
+  // CORS headers
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
   // API logic
-  return res.status(200).json({ success: true });
+  const data = await processRequest(request, env);
+
+  return new Response(JSON.stringify(data), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+```
+
+### Middleware Pattern
+
+```typescript
+// functions/_middleware.ts
+export async function onRequest(context) {
+  const { request, next } = context;
+
+  // Global middleware logic (auth, rate limiting, logging)
+  const response = await next();
+
+  // Post-processing
+  return response;
 }
 ```
 
@@ -358,6 +418,96 @@ npx vitest run --coverage src/stores/
 npx vitest --ui --inspect
 ```
 
+## Advanced Architectural Patterns
+
+### Audit Trail System
+
+All data mutations should be logged for compliance and debugging:
+
+```typescript
+import { logAuditEvent } from "@/lib/audit-logger";
+
+// Log significant actions
+await logAuditEvent({
+  action: "booking.created",
+  entity_type: "booking",
+  entity_id: booking.id,
+  changes: {
+    before: null,
+    after: sanitizeForAudit(booking),
+  },
+  user_id: session.user.id,
+  metadata: {
+    ip_address: request.headers.get("cf-connecting-ip"),
+    user_agent: request.headers.get("user-agent"),
+  },
+});
+```
+
+### Monitoring & Quota Management
+
+Monitor resource usage to stay within free tier limits:
+
+```typescript
+import { monitorQuota, alertOnThreshold } from "@/lib/monitoring";
+
+// Check quotas before expensive operations
+const { kv, email, bandwidth } = await monitorQuota();
+
+if (kv.usage > kv.limit * 0.8) {
+  await alertOnThreshold("kv", kv.usage, kv.limit);
+}
+
+// Use monitoring endpoints
+// GET /api/monitoring/check-quotas - Check all quota statuses
+```
+
+### Security Hardening Patterns
+
+```typescript
+import { sanitizeHTML, sanitizeInput } from "@/lib/security/sanitize";
+import { validateInput } from "@/lib/validation";
+
+// Always sanitize user inputs
+const safeData = {
+  name: sanitizeInput(formData.name),
+  description: sanitizeHTML(formData.description, {
+    ALLOWED_TAGS: ["b", "i", "em", "strong"],
+  }),
+  notes: sanitizeInput(formData.notes),
+};
+
+// Validate before database operations
+const validated = validateInput(safeData, bookingSchema);
+if (!validated.success) {
+  return { error: validated.error };
+}
+```
+
+### Guest Booking (Public) Pattern
+
+Unauthenticated booking flow with enhanced security:
+
+```typescript
+// Public booking endpoint with rate limiting
+// POST /api/guest-booking
+
+// 1. Validate Cloudflare Turnstile token
+await validateTurnstile(turnstileToken);
+
+// 2. Sanitize all inputs
+const sanitized = sanitizeGuestBookingInput(data);
+
+// 3. Check availability
+const available = await checkAvailability(unit_id, dates);
+
+// 4. Create booking with audit trail
+const booking = await createGuestBooking(sanitized);
+
+// 5. Send confirmation email
+await sendBookingConfirmation(booking);
+```
+
 ## Important Notes
 
 - Always run `npm run verify` before committing changes
@@ -365,6 +515,9 @@ npx vitest --ui --inspect
 - Follow the existing component patterns and file organization
 - Maintain backwards compatibility when refactoring stores or types
 - Phase 3-4 components may have different patterns - check file suffixes
-- Build warnings for TypeScript are expected during Phase 2 development
-- Always sanitize user input with DOMPurify for XSS prevention
+- **Always sanitize user input** with DOMPurify for XSS prevention
+- **Log all data mutations** to the audit trail for compliance
+- **Monitor quota usage** to prevent exceeding free tier limits
 - Use optimistic updates for better perceived performance
+- Check IP addresses and user agents for security monitoring
+- Implement rate limiting on public endpoints

@@ -47,10 +47,14 @@ Your core competencies include:
 resort booking and financial systems:
 
 - Multi-tenant data isolation for different properties/projects
-- Real-time availability and pricing updates across channels
+- Real-time availability and pricing updates across booking channels
 - Complex financial workflows with receipts and approval chains
 - Role-based access control with granular permissions
-- Peak season performance requirements
+- Peak season performance requirements with high concurrent bookings
+- Offline-first architecture for unreliable internet connectivity
+- Real-time booking synchronization preventing double-bookings
+- Optimistic updates with automatic rollback on conflicts
+- Queue-based mutations for offline operation persistence
 
 When designing solutions, you will:
 
@@ -77,9 +81,7 @@ When designing solutions, you will:
    }));
 
    const useCreateExpense = () => {
-     const addOptimistic = useExpenseStore(
-       (state) => state.addOptimisticExpense
-     );
+     const addOptimistic = useExpenseStore((state) => state.addOptimisticExpense);
      return useMutation({
        mutationFn: createExpenseAPI,
        onMutate: addOptimistic,
@@ -88,11 +90,55 @@ When designing solutions, you will:
    };
    ```
 
-4. **Handle Offline Scenarios**: Design offline-first architectures with:
-   - Zustand persistence middleware for local state
-   - TanStack Query background sync strategies
-   - Queue mechanisms for offline mutations using Zustand stores
-   - Conflict resolution for concurrent edits
+4. **Handle Offline Scenarios with Queue Management**: Design robust offline-first
+   architectures:
+
+   ```typescript
+   // Offline mutation queue using Zustand
+   const useMutationQueue = create<MutationQueue>()(
+     persist(
+       (set, get) => ({
+         queue: [],
+         addToQueue: (mutation) =>
+           set((state) => ({
+             queue: [...state.queue, { ...mutation, timestamp: Date.now(), status: "pending" }],
+           })),
+         processQueue: async () => {
+           const { queue } = get();
+           for (const mutation of queue) {
+             try {
+               await executeMutation(mutation);
+               set((state) => ({
+                 queue: state.queue.filter((m) => m.id !== mutation.id),
+               }));
+             } catch (error) {
+               // Mark as failed, retry later
+               set((state) => ({
+                 queue: state.queue.map((m) =>
+                   m.id === mutation.id ? { ...m, status: "failed", error } : m
+                 ),
+               }));
+             }
+           }
+         },
+       }),
+       { name: "mutation-queue" }
+     )
+   );
+   ```
+
+   **Conflict Resolution Decision Framework:**
+   - **Last-Write-Wins**: For user preferences, UI state (low-risk data)
+   - **Server-Wins**: For availability, pricing (source-of-truth data)
+   - **User-Prompt**: For bookings, financial data (critical operations requiring user decision)
+   - **Merge-Strategy**: For non-conflicting field updates (different fields updated)
+
+   **Offline Sync Behaviors:**
+   - Detect online/offline status with `navigator.onLine` and heartbeat pings
+   - Queue all mutations when offline, execute sequentially when online
+   - Show offline indicator and queued mutation count to user
+   - Implement exponential backoff for failed sync attempts (1s, 2s, 4s, 8s, max 30s)
+   - Clear queue only after server confirmation, not on client success
 
 5. **Optimize Performance**: Implement:
    - Selective Zustand subscriptions to minimize re-renders

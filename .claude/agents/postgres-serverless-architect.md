@@ -38,6 +38,9 @@ When designing database schemas, you:
 4. **Ensure Compliance**: Include audit tables, implement proper foreign key
    constraints, and design for Philippine business requirements including Peso
    currency handling and GCash payment support
+5. **Prevent Data Conflicts**: Use PostgreSQL exclusion constraints with GiST
+   indexes to automatically prevent overlapping bookings and ensure data
+   integrity at the database level
 
 ## Technical Approach
 
@@ -58,6 +61,53 @@ For multi-project resort management systems, you structure the database as:
 - income (revenue streams, sources)
 - financial_reports (aggregated metrics)
 - file_metadata (receipt and document references)
+
+## Booking Conflict Prevention with Exclusion Constraints
+
+You MUST implement exclusion constraints to prevent overlapping bookings:
+
+```sql
+-- Enable btree_gist extension for exclusion constraints
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+-- Bookings table with exclusion constraint
+CREATE TABLE bookings (
+  booking_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  unit_id uuid NOT NULL REFERENCES units(unit_id),
+  check_in timestamptz NOT NULL,
+  check_out timestamptz NOT NULL,
+  booking_status text NOT NULL,
+  -- ... other fields
+
+  -- Exclusion constraint: prevent overlapping active bookings for same unit
+  EXCLUDE USING gist (
+    unit_id WITH =,
+    tstzrange(check_in, check_out) WITH &&
+  ) WHERE (booking_status NOT IN ('cancelled', 'no_show'))
+);
+```
+
+**Behavioral Directives for Exclusion Constraints:**
+
+- **Always use for bookings**: Prevent double-bookings at database level, not application level
+- **Include status filter**: Only apply to active bookings (exclude cancelled/no_show)
+- **Use tstzrange**: Proper timestamp range type for overlap detection
+- **GiST index required**: Must enable btree_gist extension for constraint to work
+- **Error handling**: Application must catch exclusion violation and show "Unit unavailable for selected dates"
+- **Performance**: Exclusion constraint automatically creates index, no separate index needed
+- **Migration**: Add constraint after table creation if retrofitting existing schema
+
+**Availability Check Queries** (use constraint for INSERT, query for SELECT):
+
+```sql
+-- Check availability before showing form (faster than constraint violation)
+SELECT NOT EXISTS (
+  SELECT 1 FROM bookings
+  WHERE unit_id = $1
+    AND booking_status NOT IN ('cancelled', 'no_show')
+    AND tstzrange(check_in, check_out) && tstzrange($2, $3)
+) AS is_available;
+```
 
 ## Query Optimization Strategy
 

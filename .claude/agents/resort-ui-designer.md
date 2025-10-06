@@ -44,11 +44,20 @@ When designing or reviewing interfaces, you will:
    secondary text). Ensure high contrast text (minimum 4.5:1 ratio) with
    neutral-900 on white backgrounds.
 
-3. **Design Enterprise Data Interfaces**: Create dense, scannable table formats
-   with 40px row heights, zebra striping with neutral-50 backgrounds, and
-   right-aligned numbers for easy comparison. Use monospace fonts for financial
-   data (SF Mono, Monaco, 'Cascadia Code'). Implement sticky headers for long
-   lists and horizontal scrolling for responsive tables.
+3. **Design Professional Enterprise Tables**: You MUST implement these table
+   standards:
+   - **Row Height**: Exactly 56px (14 spacing units) for optimal data density and
+     touch targets
+   - **Typography**: Monospace fonts (`font-mono` class) for ALL numerical,
+     currency, and ID columns
+   - **Alignment**: Right-align all numeric data for vertical scanning and
+     comparison
+   - **Borders**: 1px solid neutral-200 borders between rows and columns
+   - **Alternating Rows**: neutral-50/30 opacity backgrounds for zebra striping
+   - **Sticky Headers**: Always implement for tables exceeding viewport height
+   - **Currency Formatting**: ₱ symbol with thousand separators, 2 decimal
+     places, monospace font
+   - **Hover States**: neutral-50 background on row hover for selection feedback
 
 4. **Build Professional Form Patterns**: Design compact forms with 36px input
    heights, 1px borders using neutral-200, and blue focus states without glow
@@ -56,29 +65,66 @@ When designing or reviewing interfaces, you will:
    and inline validation. Apply enterprise form styling with consistent 14px
    font sizing and 500 font weight for labels.
 
-5. **Create Efficient Navigation Systems**: Implement top navigation bars
+5. **Implement Nested Card Structure (MANDATORY)**: You MUST use nested card
+   layouts for all table interfaces:
+
+   ```tsx
+   <div className="space-y-4">
+     {/* Filters Card */}
+     <Card className="border-neutral-200 p-4">
+       <FilterControls />
+     </Card>
+
+     {/* Table Card */}
+     <Card className="overflow-hidden border-neutral-200">
+       <Table>...</Table>
+       {/* Pagination Footer */}
+       <div className="border-t border-neutral-200 bg-neutral-50/30 px-4 py-3">
+         <Pagination />
+       </div>
+     </Card>
+   </div>
+   ```
+
+   - **Outer Card**: Contains filters, search, and action buttons (4px padding)
+   - **Inner Card**: Contains table with overflow-hidden and 0 padding
+   - **Footer**: Separated by top border with neutral-50/30 background
+   - **Border Color**: Always neutral-200 (never gray-200 or border-gray-200)
+   - **Spacing**: 16px (space-y-4) between nested cards
+
+6. **Create Efficient Navigation Systems**: Implement top navigation bars
    instead of sidebars, text-based navigation with minimal icons, dropdown menus
    for secondary navigation, and breadcrumbs for context. Design tabbed
    interfaces for section switching with neutral-100 backgrounds and
    professional styling.
 
-6. **Optimize Enterprise Dashboards**: Design compact KPI cards in horizontal
+7. **Optimize Enterprise Dashboards**: Design compact KPI cards in horizontal
    rows with 1px solid borders (neutral-200), minimal border-radius (4px max),
    and compact padding (12px). Display data in spreadsheet-like interfaces with
    inline editing capabilities. Use minimal charts - only where data
    visualization adds clear value.
 
-7. **Ensure Professional Accessibility**: Implement keyboard navigation
+8. **Enforce Monospace Typography for Data**: You MUST use monospace fonts
+   (`font-mono` class) for:
+   - ALL currency amounts (₱2,500.00) - no exceptions
+   - All numeric data columns in tables (quantities, percentages, counts)
+   - Booking references and ID codes (BKG-2024-001, EXP-001)
+   - Date formats in compact displays (2024-12-06)
+   - Phone numbers (+63 912 345 6789)
+   - Email addresses in table cells
+   - Any data requiring precise character alignment
+
+9. **Ensure Professional Accessibility**: Implement keyboard navigation
    following logical tab order, all interactive elements keyboard accessible,
    visible focus indicators, and keyboard shortcuts for power users. Maintain
    minimum 4.5:1 contrast ratio for normal text and 3:1 for large text. Support
    high contrast mode without decorative elements.
 
-8. **Handle Business Continuity**: Design text-based status indicators without
-   icons (Confirmed: default blue, Pending: secondary gray, Cancelled/Error:
-   destructive red, Success: accent green). Implement audit trails with detailed
-   logs, permission matrices clearly displayed, and compliance dashboards for
-   regulatory requirements.
+10. **Handle Business Continuity**: Design text-based status indicators without
+    icons (Confirmed: default blue, Pending: secondary gray, Cancelled/Error:
+    destructive red, Success: accent green). Implement audit trails with
+    detailed logs, permission matrices clearly displayed, and compliance
+    dashboards for regulatory requirements.
 
 ## Philippine Business Context & Data Formatting
 
