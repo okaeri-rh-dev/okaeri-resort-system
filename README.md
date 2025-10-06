@@ -304,13 +304,25 @@ See [Deployment Guide](./docs/deployment/PRODUCTION.md) for detailed instruction
 
 Comprehensive documentation is available in the `/docs` directory:
 
-- [Architecture Overview](./docs/architecture/SYSTEM_DESIGN.md)
-- [API Documentation](./api/README.md)
-- [Component Library](./src/components/ui/README.md)
-- [State Management](./src/stores/README.md)
-- [Database Schema](./database/SCHEMA.md)
-- [Deployment Guide](./docs/deployment/PRODUCTION.md)
-- [Troubleshooting](./docs/TROUBLESHOOTING.md)
+### Core Documentation
+- [Architecture Overview](./docs/initial/01-architecture/README.md) - System design and database architecture
+- [Development Guide](./docs/initial/02-development/README.md) - Getting started, testing, and implementation guides
+- [Component Library](./src/components/ui/README.md) - UI component reference
+- [State Management](./src/stores/README.md) - Zustand + TanStack Query patterns
+
+### Implementation Guides
+- [Audit Trail System](./docs/implementation/audit-trail/README.md) - Complete audit logging implementation
+- [Guest Booking System](./docs/implementation/guest-booking-system/README.md) - Unauthenticated booking flow
+
+### Deployment & Operations
+- [Deployment Guide](./docs/deployment/README.md) - Cloudflare deployment instructions
+- [Storage Configuration](./docs/storage-configuration.md) - File upload and storage setup
+- [API Documentation](./api/README.md) - Serverless function reference
+
+### Release & Verification
+- [Phase Releases](./docs/releases/) - Completion handoffs and phase summaries
+- [Verification Reports](./docs/verification/) - Feature verification and testing reports
+- [Security Audits](./docs/security/) - Security assessments and verifications
 
 ## 🤝 Contributing
 

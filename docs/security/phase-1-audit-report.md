@@ -161,13 +161,11 @@ export const secureFileUpload = async (file: File, bucket: string) => {
   const filePath = `payments/${new Date().getFullYear()}/${fileName}`;
 
   // Upload with restricted access
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .upload(filePath, file, {
-      cacheControl: "3600",
-      upsert: false,
-      contentType: file.type,
-    });
+  const { data, error } = await supabase.storage.from(bucket).upload(filePath, file, {
+    cacheControl: "3600",
+    upsert: false,
+    contentType: file.type,
+  });
 
   if (error) throw error;
   return data;
