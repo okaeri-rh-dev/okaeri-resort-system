@@ -3,7 +3,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { AuditDiffViewer } from "../AuditDiffViewer";
-import type { AuditLog } from "../../../../database.types";
+import type { AuditLog } from "@/types/database.types";
 
 // Mock SafeAuditText to avoid DOMPurify issues in tests
 vi.mock("../SafeAuditText", () => ({

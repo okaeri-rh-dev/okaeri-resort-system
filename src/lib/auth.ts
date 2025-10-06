@@ -388,8 +388,8 @@ class AuthService {
   /**
    * Sanitize authentication errors
    */
-  sanitizeAuthError(error: any): string {
-    return sanitizeAuthError(error);
+  sanitizeAuthError(_error: any): string {
+    return sanitizeAuthError();
   }
 
   /**

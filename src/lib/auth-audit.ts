@@ -2,7 +2,7 @@
 
 import { auth } from "./auth";
 import { logAuditEventWithIP } from "./audit-logger-workers";
-import { AuditCategory, AuditSeverity } from "../../database.types";
+import { AuditCategory, AuditSeverity } from "@/types/database.types";
 
 /**
  * Authentication wrapper module with IP-captured audit logging

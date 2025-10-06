@@ -8,7 +8,7 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { getAlertSystem } from "./alert-system";
 import { logAuditEvent } from "../audit-logger";
-import { AuditCategory, AuditSeverity } from "../../../database.types";
+import { AuditCategory, AuditSeverity } from "@/types/database.types";
 
 interface CleanupStats {
   orphanedFiles: number;
@@ -326,7 +326,7 @@ export class CleanupMonitor {
 
     orphaned.forEach((file) => {
       byReason[file.reason]++;
-      if (!oldestFile || file.uploadedAt < oldestFile) {
+      if (oldestFile === null || file.uploadedAt.getTime() < oldestFile.getTime()) {
         oldestFile = file.uploadedAt;
       }
     });
@@ -351,12 +351,12 @@ export class CleanupMonitor {
       );
     }
 
-    if (
-      oldestFile &&
-      oldestFile instanceof Date &&
-      Date.now() - oldestFile.getTime() > 7 * 24 * 60 * 60 * 1000
-    ) {
-      recommendations.push("Orphaned files older than 7 days detected. Review cleanup schedule.");
+    if (oldestFile) {
+      const oldestDate: Date = oldestFile; // Explicit type assertion
+      const age = Date.now() - oldestDate.getTime();
+      if (age > 7 * 24 * 60 * 60 * 1000) {
+        recommendations.push("Orphaned files older than 7 days detected. Review cleanup schedule.");
+      }
     }
 
     return {

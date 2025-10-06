@@ -10,7 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import type { AuditLog } from "../../../database.types";
+import type { AuditLog } from "@/types/database.types";
 import { TABLE_DISPLAY_NAMES, ACTION_DISPLAY_NAMES } from "@/lib/audit-constants";
 import { ArrowRight, AlertCircle } from "lucide-react";
 import { format } from "date-fns";

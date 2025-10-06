@@ -7,7 +7,7 @@
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { logAuditEvent } from "../audit-logger";
-import { AuditCategory, AuditSeverity } from "../../../database.types";
+import { AuditCategory, AuditSeverity } from "@/types/database.types";
 
 interface BandwidthUsage {
   bytesUsed: number;

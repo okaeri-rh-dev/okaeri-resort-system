@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { Database, AuditLogFilters, AuditEventContext, Json } from "../../database.types";
+import type { Database, AuditLogFilters, AuditEventContext, Json } from "@/types/database.types";
 
 // Environment variables validation
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -10,7 +10,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Re-export Database type for backwards compatibility
-export type { Database } from "../../database.types";
+export type { Database } from "@/types/database.types";
 
 // Create Supabase client with proper typing
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
@@ -410,6 +410,7 @@ export const db = {
         totalCount,
         hasMore: offset + limit < totalCount,
         currentPage,
+        pageSize: limit,
         totalPages,
       };
     },

@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { useAuditLogs } from "@/lib/audit-hooks";
 import { useAuditStore } from "@/stores/useAuditStore";
-import type { AuditLog, AuditLogQueryResult } from "../../../database.types";
+import type { AuditLog, AuditLogQueryResult } from "@/types/database.types";
 import { TABLE_DISPLAY_NAMES, PAGINATION_DEFAULTS } from "@/lib/audit-constants";
 import { formatDistanceToNow } from "date-fns";
 import { SafeAuditText } from "./SafeAuditText";
@@ -307,7 +307,32 @@ function AuditLogRow({ log, isExpanded, onToggle, onViewDiff }: AuditLogRowProps
 // EXPANDED ROW DETAILS
 // ============================================
 
-function ExpandedRowDetails({ log }: { log: AuditLog }) {
+function ExpandedRowDetails({ log }: { log: AuditLog }): React.ReactElement {
+  const category = log.category ? String(log.category) : null;
+  const severity = log.severity ? String(log.severity) : null;
+
+  // Helper to render category/severity section - extracted to avoid TypeScript JSX inference issue
+  const renderCategoryAndSeverity = (): React.ReactNode => {
+    if (!category && !severity) return null;
+
+    return (
+      <div className="flex gap-4">
+        {category && (
+          <div>
+            <div className="text-sm font-medium mb-1">Category</div>
+            <Badge>{category}</Badge>
+          </div>
+        )}
+        {severity && (
+          <div>
+            <div className="text-sm font-medium mb-1">Severity</div>
+            <SeverityBadge severity={severity} />
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-3 p-4">
       {/* Description (from Layer 2 logs) - XSS protected via SafeAuditText */}
@@ -316,25 +341,7 @@ function ExpandedRowDetails({ log }: { log: AuditLog }) {
         <SafeAuditText text={log.description} className="text-sm text-muted-foreground" />
       </div>
 
-      {/* Category & Severity - Read from dedicated columns */}
-      {(log.category || log.severity) && (
-        <>
-          <div className="flex gap-4">
-            {log.category && (
-              <div>
-                <div className="text-sm font-medium mb-1">Category</div>
-                <Badge>{log.category}</Badge>
-              </div>
-            )}
-            {log.severity && (
-              <div>
-                <div className="text-sm font-medium mb-1">Severity</div>
-                <SeverityBadge severity={log.severity} />
-              </div>
-            )}
-          </div>
-        </>
-      )}
+      {renderCategoryAndSeverity() as React.ReactNode}
 
       {/* IP Address */}
       {log.ip_address && (

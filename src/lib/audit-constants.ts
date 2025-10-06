@@ -10,7 +10,7 @@
  * - Pagination and cache configuration
  */
 
-import { AuditCategory, AuditSeverity, type AuditAction } from "../../database.types";
+import { AuditCategory, AuditSeverity, type AuditAction } from "@/types/database.types";
 
 // ============================================
 // SENSITIVE FIELDS CONFIGURATION

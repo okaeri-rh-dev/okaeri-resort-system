@@ -2,7 +2,7 @@
 // This file provides comprehensive type definitions for all Supabase API responses
 // to ensure type safety and eliminate the use of 'any' types throughout the application
 
-import type { Database } from "../../database.types";
+import type { Database } from "@/types/database.types";
 import type { UnitType, UnitStatus, BookingStatus, PaymentStatus, PaymentMethod } from "./index";
 
 // Additional enum types not in index.ts

@@ -62,12 +62,12 @@ function decodeEncodedAttacks(input: string): string {
   let decoded = input;
 
   // HTML entity decoding (&#60; = <, &#62; = >)
-  decoded = decoded.replace(/&#(\d+);/g, (match, dec) => {
+  decoded = decoded.replace(/&#(\d+);/g, (_match, dec) => {
     return String.fromCharCode(dec);
   });
 
   // Hex HTML entities (&#x3C; = <, &#x3E; = >)
-  decoded = decoded.replace(/&#x([0-9A-Fa-f]+);/g, (match, hex) => {
+  decoded = decoded.replace(/&#x([0-9A-Fa-f]+);/g, (_match, hex) => {
     return String.fromCharCode(parseInt(hex, 16));
   });
 
@@ -79,7 +79,7 @@ function decodeEncodedAttacks(input: string): string {
   }
 
   // Unicode escapes (\u003C = <)
-  decoded = decoded.replace(/\\u([0-9A-Fa-f]{4})/g, (match, hex) => {
+  decoded = decoded.replace(/\\u([0-9A-Fa-f]{4})/g, (_match, hex) => {
     return String.fromCharCode(parseInt(hex, 16));
   });
 

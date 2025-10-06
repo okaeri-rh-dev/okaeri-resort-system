@@ -1,7 +1,7 @@
 // src/lib/audit-roles.ts
 
 import { supabase } from "./supabase";
-import type { Database } from "../../database.types";
+import type { Database } from "@/types/database.types";
 
 // ============================================
 // TYPE DEFINITIONS

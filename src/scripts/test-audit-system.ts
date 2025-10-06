@@ -13,7 +13,7 @@
  */
 
 import { logAuditEvent, logBookingEvent, logPaymentEvent, logAuthEvent } from "@/lib/audit-logger";
-import { AuditCategory, AuditSeverity } from "../../database.types";
+import { AuditCategory, AuditSeverity } from "@/types/database.types";
 import { db } from "@/lib/supabase";
 
 export async function testAuditSystem() {

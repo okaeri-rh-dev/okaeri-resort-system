@@ -304,7 +304,10 @@ export async function getTopThreatSources(
     const ipMap = new Map<string, number>();
     logs.forEach((log) => {
       const metadata = log.metadata as Record<string, unknown> | null;
-      const ip = log.ip_address || (metadata?.ip_address as string) || "unknown";
+      // Type-safe IP extraction with proper type narrowing
+      const ipFromLog = typeof log.ip_address === "string" ? log.ip_address : null;
+      const ipFromMetadata = typeof metadata?.ip_address === "string" ? metadata.ip_address : null;
+      const ip = ipFromLog || ipFromMetadata || "unknown";
       ipMap.set(ip, (ipMap.get(ip) || 0) + 1);
     });
 
@@ -341,21 +344,22 @@ export async function logSecurityEvent(event: {
   metadata?: Record<string, any>;
 }): Promise<void> {
   try {
-    // Calculate threat level
+    // Calculate threat level - align with database enum values
     const threatLevel = event.type === "suspicious_pattern" ? "CRITICAL" : "WARNING";
 
-    // Log to audit system
+    // Log to audit system with proper type-safe insert
     await supabase.from("audit_logs").insert({
       action: `security_${event.type}`,
-      severity: threatLevel,
-      ip_address: event.ip,
+      table_name: "security_events", // Required field
+      severity: threatLevel as "WARNING" | "CRITICAL",
+      ip_address: event.ip as unknown, // Database uses unknown type for ip_address
       description: `Security event: ${event.type.replace(/_/g, " ")}`,
       metadata: {
         ...event.metadata,
         user_agent: event.userAgent,
         threat_type: event.type,
         timestamp: new Date().toISOString(),
-      },
+      } as any,
       source: "app",
     });
   } catch (error) {

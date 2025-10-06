@@ -1,7 +1,7 @@
 // Database type adapters - Converting between Supabase types and application types
 // Handles the mismatch between DB Json types and typed arrays, nullable enums, etc.
 
-import type { Tables } from "../../database.types";
+import type { Tables } from "@/types/database.types";
 import type { Booking, Unit, Guest, Payment } from "@/types";
 
 // ============================================

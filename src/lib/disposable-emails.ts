@@ -138,7 +138,7 @@ export async function isDisposableEmailAsync(email: string, apiKey?: string): Pr
       );
 
       if (response.ok) {
-        const data = await response.json();
+        const data: any = await response.json();
         const isDisposable = data.disposable === true;
 
         // Cache the result
