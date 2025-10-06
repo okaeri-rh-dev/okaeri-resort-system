@@ -16,8 +16,8 @@ import { TableSearch, FilterPopover } from "@/components/tables/utils";
 import { useAuditStore, QuickFilterPreset } from "@/stores/useAuditStore";
 import { useExportAuditLogs } from "@/lib/audit-hooks";
 import { ALL_AUDIT_TABLES, TABLE_DISPLAY_NAMES, ACTION_DISPLAY_NAMES } from "@/lib/audit-constants";
-import type { AuditAction, AuditLogFilters } from "@/types/database.types";
-import { EVENT_TYPE_DISPLAY_NAMES, AuditEventType } from "@/types/database.types";
+import type { AuditAction, AuditLogFilters } from "@/types/audit.types";
+import { EVENT_TYPE_DISPLAY_NAMES, AuditEventType } from "@/types/audit.types";
 import { format } from "date-fns";
 
 // ============================================

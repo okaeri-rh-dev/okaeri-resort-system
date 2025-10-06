@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import type { AuditLog, AuditLogFilters } from "@/types/database.types";
+import type { AuditLog, AuditLogFilters } from "@/types/audit.types";
 
 // ============================================
 // TYPES & INTERFACES

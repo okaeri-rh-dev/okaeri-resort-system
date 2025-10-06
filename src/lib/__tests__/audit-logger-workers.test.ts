@@ -2,7 +2,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { logAuditEventWithIP } from "../audit-logger-workers";
-import { AuditCategory, AuditSeverity } from "@/types/database.types";
+import { AuditCategory, AuditSeverity } from "@/types/audit.types";
 
 // Mock Supabase module
 vi.mock("../supabase", () => ({

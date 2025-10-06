@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { AuditLogStats } from "@/types/database.types";
+import type { AuditLogStats } from "@/types/audit.types";
 import { TABLE_DISPLAY_NAMES, ACTION_DISPLAY_NAMES } from "@/lib/audit-constants";
 import { Activity, Database, FileText, Users } from "lucide-react";
 

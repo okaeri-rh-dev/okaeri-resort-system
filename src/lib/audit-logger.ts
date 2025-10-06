@@ -7,7 +7,7 @@ import {
   AuditEventType,
   type AuditEventContext,
   type AuditEventTypeValue,
-} from "@/types/database.types";
+} from "@/types/audit.types";
 import { redactSensitiveData, isValidAuditTable, auditDebugLog } from "./audit-constants";
 import { getUserAuditRole as getUserRole, canAccessAuditTrail as canAccess } from "./audit-roles";
 

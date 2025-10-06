@@ -7,7 +7,7 @@
 
 import { getAlertSystem } from "./alert-system";
 import { logAuditEvent } from "../audit-logger";
-import { AuditCategory, AuditSeverity } from "@/types/database.types";
+import { AuditCategory, AuditSeverity } from "@/types/audit.types";
 
 interface CronJobExecution {
   id: string;

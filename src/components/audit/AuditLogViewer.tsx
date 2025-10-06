@@ -1,6 +1,6 @@
 // src/components/audit/AuditLogViewer.tsx
 
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { useAuditLogs } from "@/lib/audit-hooks";
 import { useAuditStore } from "@/stores/useAuditStore";
-import type { AuditLog, AuditLogQueryResult } from "@/types/database.types";
+import type { AuditLog, AuditLogQueryResult } from "@/types/audit.types";
 import { TABLE_DISPLAY_NAMES, PAGINATION_DEFAULTS } from "@/lib/audit-constants";
 import { formatDistanceToNow } from "date-fns";
 import { SafeAuditText } from "./SafeAuditText";
@@ -307,34 +307,6 @@ function AuditLogRow({ log, isExpanded, onToggle, onViewDiff }: AuditLogRowProps
 // EXPANDED ROW DETAILS
 // ============================================
 
-// Separate component to avoid TypeScript JSX inference issues
-function CategoryAndSeverity({
-  category,
-  severity,
-}: {
-  category: string | null;
-  severity: string | null;
-}) {
-  if (!category && !severity) return null;
-
-  return (
-    <div className="flex gap-4">
-      {category && (
-        <div>
-          <div className="text-sm font-medium mb-1">Category</div>
-          <Badge>{category}</Badge>
-        </div>
-      )}
-      {severity && (
-        <div>
-          <div className="text-sm font-medium mb-1">Severity</div>
-          <SeverityBadge severity={severity} />
-        </div>
-      )}
-    </div>
-  );
-}
-
 function ExpandedRowDetails({ log }: { log: AuditLog }): React.ReactElement {
   const category = log.category ? String(log.category) : null;
   const severity = log.severity ? String(log.severity) : null;
@@ -347,10 +319,23 @@ function ExpandedRowDetails({ log }: { log: AuditLog }): React.ReactElement {
         <SafeAuditText text={log.description} className="text-sm text-muted-foreground" />
       </div>
 
-      <CategoryAndSeverity category={category} severity={severity} />
+      <div className="flex gap-4">
+        {category && (
+          <div>
+            <div className="text-sm font-medium mb-1">Category</div>
+            <Badge>{category}</Badge>
+          </div>
+        )}
+        {severity && (
+          <div>
+            <div className="text-sm font-medium mb-1">Severity</div>
+            <SeverityBadge severity={severity} />
+          </div>
+        )}
+      </div>
 
       {/* IP Address */}
-      {log.ip_address && (
+      {log.ip_address != null && (
         <div>
           <div className="text-sm font-medium mb-1">IP Address</div>
           <div className="text-sm font-mono text-muted-foreground">{String(log.ip_address)}</div>
@@ -386,7 +371,7 @@ function SourceBadge({ source }: { source: string }) {
   );
 }
 
-function SeverityBadge({ severity }: { severity: string }) {
+function SeverityBadge({ severity }: { severity: string }): React.ReactElement {
   const colors: Record<string, string> = {
     info: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
     warning: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",

@@ -8,7 +8,7 @@ import type {
   AuditLogQueryResult,
   AuditLogStats,
   AuditEventContext,
-} from "@/types/database.types";
+} from "@/types/audit.types";
 import { AUDIT_CACHE_CONFIG } from "./audit-constants";
 
 // ============================================

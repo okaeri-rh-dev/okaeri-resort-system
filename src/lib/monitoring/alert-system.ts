@@ -6,7 +6,7 @@
  */
 
 import { logAuditEvent } from "../audit-logger";
-import { AuditCategory, AuditSeverity } from "@/types/database.types";
+import { AuditCategory, AuditSeverity } from "@/types/audit.types";
 
 export type AlertLevel = "info" | "warning" | "critical" | "resolved";
 
