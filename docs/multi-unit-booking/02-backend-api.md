@@ -318,7 +318,7 @@ async function calculateMultiUnitPricing(
 **Usage Pattern:**
 
 ```typescript
-// Client: Get pricing estimate
+// Client: Get pricing estimate for display
 const pricing = await fetch("/api/pricing/quote", {
   method: "POST",
   body: JSON.stringify({
@@ -331,10 +331,76 @@ const pricing = await fetch("/api/pricing/quote", {
   }),
 }).then((r) => r.json());
 
-// Server: Use same function for booking creation
+// Server: ALWAYS recalculates pricing on booking submission (no quote_id caching)
+// If price changed between quote and submit, return error with updated pricing
 const finalPricing = await calculateMultiUnitPricing(bookingData, env);
+if (finalPricing.total_amount !== submittedAmount) {
+  return error("PRICE_CHANGED", { updated_pricing: finalPricing });
+}
 await createBookingWithPricing(bookingData, finalPricing);
 ```
+
+**Note:** No quote_id or expiration mechanism. Server is the single source of truth and recalculates pricing at booking creation time.
+
+---
+
+## Idempotency Key Support
+
+**Purpose:** Prevent duplicate bookings from double-submission or network retries
+
+**Implementation:**
+
+```typescript
+// Client: Generate idempotency key ONCE per form submission
+const idempotencyKey = crypto.randomUUID(); // Generate when form is rendered
+
+const response = await fetch("/api/bookings/multi-unit", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Idempotency-Key": idempotencyKey, // Same key for retries
+  },
+  body: JSON.stringify(bookingData),
+});
+
+// Server: Check Cloudflare KV cache before processing
+export async function onRequestPost(context: { request: CloudflareRequest; env: Env }) {
+  const idempotencyKey = request.headers.get("Idempotency-Key");
+
+  if (idempotencyKey) {
+    // Check if we've already processed this request
+    const cached = await env.KV.get(`idempotency:${idempotencyKey}`);
+    if (cached) {
+      // Return the cached result immediately (status 200, not 201)
+      return new Response(cached, {
+        status: 200,
+        headers: { "Content-Type": "application/json", "X-Idempotency-Replay": "true" },
+      });
+    }
+  }
+
+  // Process the booking...
+  const result = await createMultiUnitBooking(data);
+
+  // Cache the result for 24 hours if idempotency key provided
+  if (idempotencyKey) {
+    await env.KV.put(
+      `idempotency:${idempotencyKey}`,
+      JSON.stringify(result),
+      { expirationTtl: 86400 } // 24 hours
+    );
+  }
+
+  return new Response(JSON.stringify(result), { status: 201 });
+}
+```
+
+**Key Points:**
+
+- Client generates key ONCE per form (not per request)
+- Server returns cached result with 200 status (not 201) on replay
+- Keys expire after 24 hours
+- Optional but strongly recommended for production
 
 ---
 
@@ -1249,6 +1315,46 @@ export async function onRequestPost(context: {
 
 ---
 
+## Payment Status Lifecycle
+
+**State Machine for `payment_status` field:**
+
+```
+Unpaid (Initial State)
+  │
+  ├─── [capture full payment] ──────► Paid
+  │                                     │
+  │                                     ├─── [refund full] ───────► Refunded
+  │                                     │
+  │                                     └─── [refund partial] ────► PartialRefund
+  │
+  ├─── [capture partial payment] ────► Partial
+  │                                     │
+  │                                     └─── [capture remaining] ──► Paid
+  │
+  └─── [booking cancelled] ──────────► (remains Unpaid)
+```
+
+**State Definitions:**
+
+| Status          | Meaning                  | Allowed Transitions            |
+| --------------- | ------------------------ | ------------------------------ |
+| `Unpaid`        | No payment captured      | → Paid, Partial                |
+| `Paid`          | Full payment captured    | → Refunded, PartialRefund      |
+| `Partial`       | Partial payment captured | → Paid, PartialRefund          |
+| `Refunded`      | Full refund processed    | (terminal state)               |
+| `PartialRefund` | Partial refund processed | → Refunded (additional refund) |
+
+**Transition Triggers:**
+
+- **Unpaid → Paid**: `/api/bookings/:id/payments/capture` with full amount
+- **Unpaid → Partial**: `/api/bookings/:id/payments/capture` with partial amount
+- **Partial → Paid**: Capture remaining balance
+- **Paid → Refunded**: `/api/bookings/:id/payments/refund` with full amount
+- **Paid → PartialRefund**: `/api/bookings/:id/payments/refund` with partial amount
+
+---
+
 ### 8. Adjust Payment (Automatic - Gap Resolution #5)
 
 **Purpose:** Automatically triggered when units are added/removed post-payment
@@ -1313,43 +1419,6 @@ async function adjustPaymentForUnitChange(
       })
       .eq("payment_id", payment.payment_id);
   }
-}
-```
-
----
-
-## Compatibility Layer
-
-### Adapter Pattern
-
-**Purpose:** Maintain backwards compatibility with existing API consumers
-
-**Implementation:**
-
-```typescript
-// functions/api/bookings/index.ts (existing endpoint)
-
-// Wrap response to include both formats
-function adaptBookingResponse(booking: any) {
-  return {
-    ...booking,
-    // Legacy field for single-unit bookings
-    unit_id: booking.is_multi_unit ? null : booking.booking_units[0]?.unit_id,
-
-    // Always include booking_units array
-    booking_units:
-      booking.booking_units ||
-      (booking.unit_id
-        ? [
-            {
-              unit_id: booking.unit_id,
-              unit_price: booking.total_amount,
-              subtotal: booking.total_amount,
-              assigned_guests: booking.num_guests,
-            },
-          ]
-        : []),
-  };
 }
 ```
 
@@ -1580,24 +1649,15 @@ components:
 
 ### API Rollback Strategy
 
-1. **Feature Flag Disable**
-
-   ```typescript
-   // Disable multi-unit endpoints
-   if (!env.FEATURE_MULTI_UNIT_ENABLED) {
-     return new Response(JSON.stringify({ error: "Feature temporarily disabled" }), {
-       status: 503,
-     });
-   }
-   ```
-
-2. **Cloudflare Workers Rollback**
-   - Revert to previous version in Cloudflare dashboard
+1. **Cloudflare Workers Rollback**
+   - Revert to previous deployment in Cloudflare dashboard
    - Estimated rollback time: <5 minutes
+   - Note: Requires corresponding database rollback (restore from backup)
 
-3. **API Version Fallback**
-   - Keep v1 (single-unit) endpoints active
-   - Route traffic back to v1
+2. **Database Restoration**
+   - Restore from pre-migration backup
+   - Redeploy previous application version
+   - Estimated recovery time: <15 minutes total
 
 ---
 

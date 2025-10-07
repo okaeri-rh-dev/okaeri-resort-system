@@ -195,14 +195,14 @@ Week 7: Migration & Rollout (cloudflare-deployment-optimizer)
 
 ### Phase Breakdown
 
-| Phase                              | Dates                | Lead Agent                          | Key Deliverables                     |
-| ---------------------------------- | -------------------- | ----------------------------------- | ------------------------------------ |
-| **Phase 1: Database Foundation**   | Oct 7-11, 2025       | `postgres-serverless-architect`     | Schema DDL, migrations, RLS policies |
-| **Phase 2: Backend API**           | Oct 14-18, 2025      | `cloudflare-resort-api-architect`   | API endpoints, serverless functions  |
-| **Phase 3: State Management**      | Oct 21-25, 2025      | `zustand-tanstack-resort-architect` | Zustand stores, TanStack Query hooks |
-| **Phase 4: UI Components**         | Oct 28 - Nov 8, 2025 | `resort-ui-designer`                | React components, forms, UX flows    |
-| **Phase 5: Integration & Testing** | Nov 11-15, 2025      | `code-quality-reviewer`             | E2E tests, performance benchmarks    |
-| **Phase 6: Migration & Rollout**   | Nov 18-22, 2025      | `cloudflare-deployment-optimizer`   | Feature flags, deployment            |
+| Phase                              | Dates                | Lead Agent                          | Key Deliverables                       |
+| ---------------------------------- | -------------------- | ----------------------------------- | -------------------------------------- |
+| **Phase 1: Database Foundation**   | Oct 7-11, 2025       | `postgres-serverless-architect`     | Schema DDL, migrations, RLS policies   |
+| **Phase 2: Backend API**           | Oct 14-18, 2025      | `cloudflare-resort-api-architect`   | API endpoints, serverless functions    |
+| **Phase 3: State Management**      | Oct 21-25, 2025      | `zustand-tanstack-resort-architect` | Zustand stores, TanStack Query hooks   |
+| **Phase 4: UI Components**         | Oct 28 - Nov 8, 2025 | `resort-ui-designer`                | React components, forms, UX flows      |
+| **Phase 5: Integration & Testing** | Nov 11-15, 2025      | `code-quality-reviewer`             | E2E tests, performance benchmarks      |
+| **Phase 6: Migration & Rollout**   | Nov 18-22, 2025      | `cloudflare-deployment-optimizer`   | Direct deployment, rollback procedures |
 
 ### Critical Path Dependencies
 
@@ -230,7 +230,7 @@ gantt
     Integration Tests       :2025-11-11, 3d
     Performance Tests       :2025-11-13, 2d
     section Rollout
-    Feature Flags           :2025-11-18, 2d
+    Backup Procedures       :2025-11-18, 2d
     Deployment              :2025-11-20, 2d
     Monitoring              :2025-11-21, 2d
 ```
@@ -277,9 +277,9 @@ gantt
 
 **Contingency:**
 
-- Feature flag to disable multi-unit if performance issues
-- Revert to single-unit only while optimizing
-- Estimated fix time: 2-3 days
+- Immediate rollback via database restore if critical performance issues
+- Revert Cloudflare Workers to previous version
+- Estimated rollback time: <15 minutes
 
 #### 3. Data Inconsistency
 
@@ -301,27 +301,7 @@ gantt
 - Database consistency repair scripts
 - Audit log analysis for root cause
 
-#### 4. Backwards Compatibility Broken
-
-**Risk Level:** 🟡 MEDIUM
-**Impact:** Existing bookings fail
-**Probability:** Low
-
-**Mitigation:**
-
-- ✅ Maintain `bookings.unit_id` for single-unit bookings
-- ✅ Compatibility wrapper functions
-- ✅ Comprehensive regression testing
-- ✅ Gradual rollout with feature flags
-- ✅ Monitoring for errors on existing flows
-
-**Contingency:**
-
-- Feature flag to revert to old flow
-- Quick hotfix deployment capability
-- Customer support escalation process
-
-#### 5. Poor User Experience
+#### 4. Poor User Experience
 
 **Risk Level:** 🟢 LOW
 **Impact:** User confusion, abandoned bookings
@@ -388,10 +368,11 @@ CREATE TABLE booking_unit_availability (
     check_in TIMESTAMPTZ NOT NULL,
     check_out TIMESTAMPTZ NOT NULL,
     booking_status VARCHAR(20) NOT NULL,
+    -- Aggressive blocking: Only Confirmed and CheckedIn bookings block availability
     EXCLUDE USING gist (
         unit_id WITH =,
         tstzrange(check_in, check_out, '[)') WITH &&
-    ) WHERE (booking_status NOT IN ('Cancelled', 'NoShow'))
+    ) WHERE (booking_status IN ('Confirmed', 'CheckedIn'))
 );
 ```
 
@@ -604,7 +585,7 @@ Each phase must meet these criteria before proceeding:
 
 **Phase 6 (Rollout):**
 
-- [ ] Feature flags working
+- [ ] Rollback procedures tested
 - [ ] Monitoring in place
 - [ ] Rollback tested
 - [ ] Zero-downtime deployment
@@ -707,7 +688,7 @@ Each phase must meet these criteria before proceeding:
 - Analyze usage patterns
 - Identify UX improvements
 - Optimize based on real data
-- Expand feature flags to 100%
+- Monitor system stability
 
 **Month 2-3 Post-Launch:**
 
@@ -730,7 +711,7 @@ Each phase must meet these criteria before proceeding:
 
 - btree_gist extension: Required for exclusion constraints
 - Database migration tool: Existing
-- Feature flag system: To be implemented
+- Backup/restore procedures: To be documented
 
 ### Team Allocation
 

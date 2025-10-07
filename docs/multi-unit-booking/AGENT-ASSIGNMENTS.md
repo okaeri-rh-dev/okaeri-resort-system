@@ -20,7 +20,7 @@ This document defines clear responsibilities for each specialized AI agent in th
 | `code-quality-reviewer`             | Code review, quality assurance                | Phase 5    | Review reports, refactoring recommendations |
 | `pwa-performance-optimizer`         | Performance testing, optimization             | Phase 5    | Performance benchmarks, optimization plan   |
 | `security-compliance-auditor`       | Security review, compliance checks            | All Phases | Security audit reports                      |
-| `cloudflare-deployment-optimizer`   | Deployment strategy, feature flags            | Phase 6    | Deployment plans, rollback procedures       |
+| `cloudflare-deployment-optimizer`   | Deployment strategy, rollback procedures      | Phase 6    | Deployment plans, backup/restore procedures |
 
 ---
 
@@ -53,10 +53,11 @@ This document defines clear responsibilities for each specialized AI agent in th
 **Success Criteria:**
 
 - ✅ Migration runs successfully on staging without errors
-- ✅ All existing bookings migrated to new structure
+- ✅ Aggressive availability blocking (Confirmed + CheckedIn only) implemented
 - ✅ Performance tests show <100ms query time for availability checks
 - ✅ RLS policies prevent unauthorized access
 - ✅ Rollback script verified working
+- ✅ next_available_date returns per-unit, same-length stays
 
 **Estimated Duration:** Week 1 (5 days)
 
@@ -83,10 +84,14 @@ This document defines clear responsibilities for each specialized AI agent in th
 
 **Deliverables:**
 
-- [ ] `functions/api/bookings/multi-unit.ts`
+- [ ] `functions/api/bookings/multi-unit.ts` (with idempotency support)
 - [ ] `functions/api/bookings/add-unit.ts`
 - [ ] `functions/api/bookings/remove-unit.ts`
 - [ ] `functions/api/availability/multi-unit.ts`
+- [ ] `functions/api/pricing/quote.ts` (centralized pricing)
+- [ ] `functions/api/bookings/[id]/payments/capture.ts` (unified payment)
+- [ ] `functions/api/bookings/[id]/payments/refund.ts`
+- [ ] Payment status state machine implementation
 - [ ] API documentation (OpenAPI spec)
 - [ ] API integration tests
 
@@ -94,9 +99,10 @@ This document defines clear responsibilities for each specialized AI agent in th
 
 - ✅ All endpoints return <200ms response time
 - ✅ Atomic transactions for multi-unit creation
+- ✅ Idempotency keys prevent duplicate bookings
+- ✅ Payment state machine enforces valid transitions
 - ✅ Comprehensive error handling implemented
-- ✅ API tests achieve 100% coverage
-- ✅ Backwards compatibility maintained
+- ✅ API tests achieve 95% coverage
 
 **Estimated Duration:** Week 2 (5 days)
 
@@ -229,10 +235,9 @@ This document defines clear responsibilities for each specialized AI agent in th
 
 **Primary Responsibilities:**
 
-- Design feature flag strategy
-- Create deployment plan with rollback
+- Create direct deployment plan with rollback procedures
 - Monitor performance metrics
-- Coordinate gradual rollout
+- Coordinate greenfield deployment (wipe → migrate → deploy)
 - Create runbooks for incidents
 - Train stakeholders
 
@@ -244,9 +249,9 @@ This document defines clear responsibilities for each specialized AI agent in th
 
 **Deliverables:**
 
-- [ ] Feature flag configuration
-- [ ] Deployment runbook
-- [ ] Rollback procedures
+- [ ] Direct deployment runbook
+- [ ] Backup/restore procedures
+- [ ] Rollback validation
 - [ ] Monitoring dashboard setup
 - [ ] User documentation
 - [ ] Training materials
@@ -254,11 +259,10 @@ This document defines clear responsibilities for each specialized AI agent in th
 
 **Success Criteria:**
 
-- ✅ Zero-downtime deployment achieved
-- ✅ Feature flags working correctly
+- ✅ Clean deployment achieved (no downtime acceptable for greenfield)
 - ✅ Monitoring alerts configured
-- ✅ Rollback tested and ready
-- ✅ User satisfaction maintained
+- ✅ Rollback tested and ready (backup restore <15 min)
+- ✅ All smoke tests passing
 
 **Estimated Duration:** Week 7 (5 days)
 

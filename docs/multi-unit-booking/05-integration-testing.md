@@ -3,7 +3,7 @@
 **Timeline**: Week 6 (Nov 10-14, 2025)
 **Lead Agent**: `code-quality-reviewer`
 **Supporting Agents**: `security-compliance-auditor`, `pwa-performance-optimizer`
-**Dependencies**: Phases 1-4 complete, feature flags implemented
+**Dependencies**: Phases 1-4 complete (database, API, state management, UI)
 **Deliverables**: Complete test suite, performance benchmarks, security audit report
 
 ---
@@ -373,15 +373,12 @@ test.describe("Multi-Unit Availability Search", () => {
 // e2e/backwards-compatibility.spec.ts
 import { test, expect } from "@playwright/test";
 
-test.describe("Backwards Compatibility: Single-Unit Bookings", () => {
-  test("should create legacy single-unit booking correctly", async ({ page }) => {
+test.describe("Single-Unit Bookings", () => {
+  test("should create single-unit booking correctly", async ({ page }) => {
     await page.goto("/bookings/new");
 
-    // Toggle to single-unit mode (if feature flag allows)
-    const multiUnitToggle = page.locator('[data-testid="multi-unit-toggle"]');
-    if (await multiUnitToggle.isVisible()) {
-      await multiUnitToggle.uncheck();
-    }
+    // Single-unit bookings: Select only 1 unit
+    // (System supports both single and multi-unit via same interface)
 
     // Fill guest info
     await page.fill('[name="guest_name"]', "Legacy User");
@@ -1431,7 +1428,7 @@ jobs:
 2. ✅ Performance benchmarks meeting targets
 3. ✅ Security audit cleared
 4. ✅ Accessibility compliance verified
-5. ✅ Feature flag implementation ready
+5. ✅ Rollback procedures documented and tested
 6. ✅ Monitoring infrastructure prepared
 7. ✅ Rollback procedures documented
 

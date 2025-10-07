@@ -15,10 +15,14 @@
 ## Core Principles
 
 1. **No Legacy Compatibility:** Clean slate implementation (no existing users)
-2. **Any Junction = Multi-Unit:** If `booking_units` table has rows → `is_multi_unit = TRUE`
-3. **UTC Storage, Manila Display:** All timestamps stored as UTC, displayed as Asia/Manila
-4. **Server-Side Pricing:** Single source of truth in `/api/pricing/quote`
-5. **Guest Record Always Created:** Both authenticated and anonymous bookings create guest records
+2. **No Feature Flags:** Direct deployment (wipe → migrate → deploy)
+3. **No API Versioning:** Single API namespace, no v1/v2 endpoints
+4. **Aggressive Availability Blocking:** Only Confirmed + CheckedIn bookings block units
+5. **Any Junction = Multi-Unit:** If `booking_units` table has rows → `is_multi_unit = TRUE`
+6. **UTC Storage, Manila Display:** All timestamps stored as UTC, displayed as Asia/Manila
+7. **Server-Side Pricing:** Single source of truth in `/api/pricing/quote`, no quote_id caching
+8. **Guest Record Always Created:** Both authenticated and anonymous bookings create guest records
+9. **Manual Payment Tracking:** No payment provider integration (cash, GCash, bank transfer tracked manually)
 
 ---
 
@@ -111,16 +115,16 @@ UNIQUE(booking_id, unit_id)  -- Prevent duplicate unit assignments
 | `booking_status`  | VARCHAR(20) | NOT NULL                                  | Current booking status        |
 | `created_at`      | TIMESTAMPTZ | DEFAULT NOW()                             | Record creation               |
 
-**Exclusion Constraint:**
+**Exclusion Constraint (AGGRESSIVE BLOCKING):**
 
 ```sql
 EXCLUDE USING gist (
     unit_id WITH =,
     tstzrange(check_in, check_out, '[)') WITH &&
-) WHERE (booking_status NOT IN ('Cancelled', 'NoShow'))
+) WHERE (booking_status IN ('Confirmed', 'CheckedIn'))
 ```
 
-This prevents overlapping bookings for the same unit.
+**Rationale:** Only Confirmed and CheckedIn bookings block availability. Pending bookings do NOT block (better UX, acceptable race condition risk at low volume).
 
 ---
 
@@ -408,9 +412,9 @@ CREATE INDEX idx_bookings_dates ON bookings(check_in, check_out);
 CREATE INDEX idx_booking_units_booking_id ON booking_units(booking_id);
 CREATE INDEX idx_booking_units_unit_id ON booking_units(unit_id);
 
--- booking_unit_availability
+-- booking_unit_availability (matches exclusion constraint)
 CREATE INDEX idx_availability_lookup ON booking_unit_availability(unit_id, check_in, check_out)
-  WHERE booking_status NOT IN ('Cancelled', 'NoShow');
+  WHERE booking_status IN ('Confirmed', 'CheckedIn');
 CREATE INDEX idx_availability_booking_id ON booking_unit_availability(booking_id);
 
 -- guests
@@ -425,6 +429,286 @@ CREATE INDEX idx_guests_user_id ON guests(user_id) WHERE user_id IS NOT NULL;
 | Version | Date        | Changes                     |
 | ------- | ----------- | --------------------------- |
 | 1.0     | Oct 7, 2025 | Initial canonical reference |
+
+---
+
+## Architectural Decisions
+
+### 1. Deployment Strategy: Greenfield
+
+**Decision:** Direct deployment with no feature flags or API versioning
+
+**Implementation:**
+
+```typescript
+// NO feature flags
+// NO API versioning (v1, v2)
+// NO compatibility wrappers
+
+// Deployment: Wipe → Migrate → Deploy
+// Rollback: Restore database backup + revert Workers (<15 min)
+```
+
+**Rationale:** System has no live users. Complexity of feature flags/versioning provides zero value.
+
+---
+
+### 2. Availability Blocking: Aggressive Strategy
+
+**Decision:** Only `Confirmed` and `CheckedIn` bookings block availability
+
+**Blocking Statuses:**
+
+```typescript
+const BLOCKING_STATUSES = ["Confirmed", "CheckedIn"];
+
+// NOT BLOCKING:
+// - Pending (better UX, race conditions acceptable at low volume)
+// - Cancelled
+// - NoShow
+// - CheckedOut
+```
+
+**Trade-off:** Risk of race conditions (two users book same Pending unit) vs. better UX (more units shown as available)
+
+---
+
+### 3. Pricing Quote: No Caching
+
+**Decision:** Server recalculates pricing on every booking submission
+
+**Behavior:**
+
+```typescript
+// Client: GET quote for display
+const quote = await fetch("/api/pricing/quote", {
+  method: "POST",
+  body: JSON.stringify({ units, check_in, check_out }),
+});
+
+// Server: ALWAYS recalculates on booking creation
+const finalPricing = await calculateMultiUnitPricing(bookingData);
+if (finalPricing.total_amount !== submittedAmount) {
+  return error("PRICE_CHANGED", { updated_pricing: finalPricing });
+}
+```
+
+**No quote_id, no expiration, no caching**
+
+**Rationale:** Simplest implementation. Server is authoritative.
+
+---
+
+### 4. Idempotency Keys
+
+**Decision:** Use Cloudflare KV cache to prevent duplicate bookings
+
+**Implementation:**
+
+```typescript
+// Client: Generate key ONCE per form render
+const idempotencyKey = crypto.randomUUID(); // When form loads
+
+const response = await fetch("/api/bookings/multi-unit", {
+  headers: {
+    "Idempotency-Key": idempotencyKey,
+  },
+  body: JSON.stringify(bookingData),
+});
+
+// Server: Check cache before processing
+const cached = await env.KV.get(`idempotency:${key}`);
+if (cached) {
+  return Response.json(cached, { status: 200 }); // Return cached (200, not 201)
+}
+
+// Process booking...
+await env.KV.put(`idempotency:${key}`, result, { expirationTtl: 86400 }); // 24h
+```
+
+**Key Expiration:** 24 hours
+
+---
+
+### 5. Payment Status Lifecycle
+
+**State Machine:**
+
+```
+Unpaid (Initial)
+  │
+  ├─── [capture full] ────────────► Paid
+  │                                   │
+  │                                   ├─── [refund full] ────────► Refunded
+  │                                   │
+  │                                   └─── [refund partial] ─────► PartialRefund
+  │
+  ├─── [capture partial] ───────────► Partial
+  │                                   │
+  │                                   └─── [capture remaining] ───► Paid
+  │
+  └─── [cancel booking] ─────────────► (remains Unpaid)
+```
+
+**Valid Transitions:**
+| From | To | Trigger | Validation |
+|------|----|---------|-----------|
+| Unpaid | Paid | POST /capture | amount === total_amount |
+| Unpaid | Partial | POST /capture | amount < total_amount |
+| Paid | Refunded | POST /refund | refund === payment |
+| Paid | PartialRefund | POST /refund | refund < payment |
+| Partial | Paid | POST /capture | remaining balance |
+
+---
+
+### 6. Next Available Date Logic
+
+**Semantics:**
+
+- A booking has **ONE date range** (e.g., March 15-18)
+- User selects **multiple units** for the SAME date range
+- If a unit is unavailable, `next_available_date` shows when that unit becomes free for an **equivalent-length stay**
+
+**Example:**
+
+```
+User searches: March 15-18 (3 nights)
+Unit A: Booked March 14-19
+Result: next_available_date = "2025-03-20" (March 20-23 is next free 3-night window)
+```
+
+**Calculated per-unit** (each unit may have different next available dates)
+
+---
+
+### 7. Guest Assignment: TEXT[] Array (MVP)
+
+**Decision:** Use `guest_names TEXT[]` for MVP
+
+**Schema:**
+
+```sql
+CREATE TABLE booking_units (
+    guest_names TEXT[], -- Array of guest names
+    assigned_guests INTEGER, -- Count
+    ...
+);
+```
+
+**Rationale:** Simple, sufficient for MVP. No per-guest metadata needed yet.
+
+**Future:** Normalize to `booking_unit_guests` junction table if per-guest data required (age, dietary restrictions, ID)
+
+---
+
+### 8. Payment Processing: Manual Tracking
+
+**Decision:** Payments NOT processed by application
+
+**Flow:**
+
+1. Guest pays externally (GCash, bank transfer, cash)
+2. Manager manually records payment via admin interface
+3. Application tracks payment status and adjustments
+4. **No webhooks or provider integrations**
+
+**Supported Methods:**
+
+- Cash
+- GCash (manual verification)
+- Bank Transfer (manual verification)
+- Credit Card (manual terminal, not integrated)
+
+---
+
+## Testing Requirements
+
+### Coverage Targets
+
+| Test Type         | Target | Scope                        |
+| ----------------- | ------ | ---------------------------- |
+| Unit Tests        | ≥95%   | Functions, utilities, stores |
+| Integration Tests | ≥90%   | API endpoints, database      |
+| E2E Tests         | 100%   | Critical user paths          |
+
+### Critical Test Scenarios
+
+1. ✅ **Create multi-unit booking** (2-10 units, atomic transaction)
+2. ✅ **Aggressive availability** (Pending bookings don't block)
+3. ✅ **Add/remove units** from existing booking
+4. ✅ **Payment state transitions** (all valid paths)
+5. ✅ **Idempotency** (duplicate submission returns cached result with 200)
+6. ✅ **Pricing recalculation** (detect price changes between quote and submit)
+7. ✅ **Race conditions** (two users book same Pending unit - acceptable failure)
+8. ✅ **next_available_date** (per-unit, equivalent-length stays)
+
+---
+
+## API Endpoints Reference
+
+### Public Endpoints (No Auth)
+
+| Method | Path                           | Purpose              |
+| ------ | ------------------------------ | -------------------- |
+| POST   | `/api/pricing/quote`           | Get pricing estimate |
+| GET    | `/api/availability/multi-unit` | Check availability   |
+| GET    | `/api/units`                   | List units           |
+
+### Protected Endpoints (Auth Required)
+
+| Method | Path                                 | Purpose         | Role Required |
+| ------ | ------------------------------------ | --------------- | ------------- |
+| POST   | `/api/bookings/multi-unit`           | Create booking  | Authenticated |
+| POST   | `/api/bookings/:id/units`            | Add unit        | Authenticated |
+| DELETE | `/api/bookings/:id/units/:unit_id`   | Remove unit     | Authenticated |
+| POST   | `/api/bookings/:id/payments/capture` | Capture payment | Staff         |
+| POST   | `/api/bookings/:id/payments/refund`  | Refund payment  | Manager       |
+
+---
+
+## Conflict Resolution Policy
+
+**If documentation conflicts:**
+
+1. **SCHEMA-REFERENCE.md (this document) = SOURCE OF TRUTH**
+2. Phase-specific docs (01-06) must align with this document
+3. If contradiction found, **THIS DOCUMENT WINS**
+
+**Update Process:**
+
+1. Update THIS document first
+2. Then propagate to phase-specific documents
+3. Verify all references aligned
+
+---
+
+## Quick Reference Card for Agents
+
+| Question                   | Answer                                                      |
+| -------------------------- | ----------------------------------------------------------- |
+| **Feature flags?**         | NO — Greenfield deployment                                  |
+| **API versioning?**        | NO — Single namespace                                       |
+| **Legacy compatibility?**  | NO — Clean implementation                                   |
+| **Availability blocking?** | Aggressive (Confirmed + CheckedIn only)                     |
+| **Pricing quote?**         | Server recalculates on submit (no caching)                  |
+| **Payment processing?**    | Manual tracking (no provider integration)                   |
+| **Idempotency?**           | YES — Cloudflare KV, 24h expiry                             |
+| **Payment lifecycle?**     | Unpaid → Paid/Partial → Refunded/PartialRefund              |
+| **Guest assignment?**      | TEXT[] array (normalize later if needed)                    |
+| **next_available_date?**   | Per-unit, equivalent-length stays                           |
+| **Rollback strategy?**     | Database restore + Cloudflare revert (<15 min)              |
+| **Test coverage?**         | 95% unit, 90% integration, 100% E2E critical                |
+| **Blocking statuses?**     | `booking_status IN ('Confirmed', 'CheckedIn')`              |
+| **Column names?**          | `check_in`, `check_out`, `booking_status`, `payment_status` |
+
+---
+
+## Version History
+
+| Version | Date        | Changes                                            |
+| ------- | ----------- | -------------------------------------------------- |
+| 1.1     | Oct 7, 2025 | Added architectural decisions, deployment strategy |
+| 1.0     | Oct 7, 2025 | Initial canonical reference                        |
 
 ---
 

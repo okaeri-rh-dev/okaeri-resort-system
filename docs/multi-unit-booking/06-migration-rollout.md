@@ -39,7 +39,7 @@
 | **Data Integrity**          | 100% (no data loss)   | Post-migration validation   |
 | **Error Rate**              | <1% in first 48h      | Sentry error monitoring     |
 | **Performance**             | <200ms API, <100ms DB | Performance monitoring      |
-| **Rollback Capability**     | <10 minutes           | Backup restore test         |
+| **Rollback Capability**     | <15 minutes           | Backup restore test         |
 
 ---
 
@@ -51,17 +51,16 @@
 
 - Configure Cloudflare Pages deployment for frontend
 - Set up Cloudflare Workers for API endpoints
-- Implement feature flag infrastructure
 - Configure edge caching and CDN
 - Monitor deployment metrics
-- Execute rollout phases
+- Execute direct deployment (wipe → migrate → deploy)
 - Coordinate rollback if needed
 
 **Deliverables**:
 
 - Cloudflare deployment configuration
-- Feature flag management dashboard
-- Deployment runbook
+- Direct deployment runbook
+- Backup/restore procedures
 - Post-deployment report
 
 ### Supporting Agent: `postgres-serverless-architect`
@@ -113,22 +112,23 @@
 
 ---
 
-## 1. Direct Deployment Steps (Simplified - No Feature Flags)
+## Direct Deployment Strategy (Greenfield - No Feature Flags)
 
 ### Pre-Deployment Checklist
 
-**Date:** November 18, 2025  
-**Duration:** 2 hours  
+**Date:** November 18, 2025
+**Duration:** 2-3 hours
 **Team:** DevOps Lead, Database Admin, 1 Developer
 
 **Prerequisites:**
 
 - [ ] All Phase 5 tests passing (unit, integration, E2E)
-- [ ] Staging environment validated
-- [ ] Database backup plan ready
+- [ ] Staging environment validated with production data clone
+- [ ] Database backup created and verified
 - [ ] Rollback procedure documented and tested
 - [ ] Monitoring dashboards configured
 - [ ] Team available for 48h monitoring window
+- [ ] No active users (confirmed greenfield deployment)
 
 ---
 
@@ -354,27 +354,31 @@ WHERE created_at > NOW() - INTERVAL '1 hour';
 **Hour 1:**
 
 - [ ] No critical errors in Sentry
-- [ ] API endpoints responding
-- [ ] Database queries performing well
-- [ ] Test booking created successfully
+- [ ] API endpoints responding correctly
+- [ ] Database queries performing well (<100ms)
+- [ ] Test multi-unit booking created successfully
+- [ ] Smoke tests passing
 
 **Hour 6:**
 
 - [ ] Performance metrics stable
 - [ ] No data integrity issues
 - [ ] Monitoring dashboards green
+- [ ] No availability conflicts detected
 
 **Hour 24:**
 
-- [ ] Review error logs
-- [ ] Check performance trends
-- [ ] Validate data consistency
+- [ ] Review error logs and trends
+- [ ] Check performance metrics (no degradation)
+- [ ] Validate data consistency across tables
+- [ ] Review audit logs for anomalies
 
 **Hour 48:**
 
-- [ ] Final health check
-- [ ] Document any issues
+- [ ] Final comprehensive health check
+- [ ] Document any issues encountered
 - [ ] Mark deployment as stable
+- [ ] Update stakeholders with status report
 
 ---
 
@@ -409,8 +413,8 @@ BEGIN
     FROM bookings b1
     JOIN bookings b2 ON b1.unit_id = b2.unit_id
       AND b1.booking_id != b2.booking_id
-      AND b1.status NOT IN ('Cancelled', 'NoShow')
-      AND b2.status NOT IN ('Cancelled', 'NoShow')
+      AND b1.status IN ('Confirmed', 'CheckedIn')
+      AND b2.status IN ('Confirmed', 'CheckedIn')
       AND tstzrange(b1.check_in_date, b1.check_out_date, '[)') &&
           tstzrange(b2.check_in_date, b2.check_out_date, '[)')
   ) THEN
@@ -470,10 +474,11 @@ CREATE TABLE IF NOT EXISTS booking_unit_availability (
   check_out TIMESTAMPTZ NOT NULL,
   booking_status VARCHAR(20) NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
+  -- Aggressive blocking: Only Confirmed and CheckedIn bookings block availability
   EXCLUDE USING gist (
     unit_id WITH =,
     tstzrange(check_in, check_out, '[)') WITH &&
-  ) WHERE (booking_status NOT IN ('Cancelled', 'NoShow'))
+  ) WHERE (booking_status IN ('Confirmed', 'CheckedIn'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_booking_unit_availability_unit_dates
@@ -727,7 +732,7 @@ export function trackMultiUnitError(error: Error, context: Record<string, any>) 
         [
           {
             "id": 1,
-            "title": "Feature Flag Rollout %",
+            "title": "Deployment Progress %",
             "type": "graph",
             "targets":
               [
@@ -907,32 +912,18 @@ set -e
 echo "⏪ EMERGENCY ROLLBACK: Multi-Unit Booking"
 echo "=========================================="
 
-# Step 1: Activate kill switch (immediate)
-echo "🚨 Step 1: Activating feature flag kill switch..."
-curl -X PUT \
-  "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${KV_NAMESPACE_ID}/values/MULTI_UNIT_FORCE_DISABLE" \
-  -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-  -H "Content-Type: text/plain" \
-  --data "true"
+# Step 1: Revert Cloudflare Workers (immediate - stop new requests)
+echo "🚨 Step 1: Reverting Cloudflare Workers deployment..."
+wrangler rollback --name okaeri-resort-api
 
-echo "✅ Kill switch activated. Multi-unit disabled for all users."
+echo "✅ Workers reverted to previous version."
 
-# Step 2: Verify no new multi-unit bookings
-echo "🔍 Step 2: Verifying no new multi-unit bookings..."
-sleep 30 # Wait 30 seconds
+# Step 2: Verify no new bookings being processed
+echo "🔍 Step 2: Verifying API is using previous version..."
+sleep 10 # Wait for edge propagation
 
-NEW_BOOKINGS=$(psql $DATABASE_URL -t -c "
-  SELECT COUNT(*)
-  FROM bookings
-  WHERE is_multi_unit = true
-    AND created_at > NOW() - INTERVAL '1 minute'
-")
-
-if [ "$NEW_BOOKINGS" -gt 0 ]; then
-  echo "⚠️  Warning: $NEW_BOOKINGS new multi-unit bookings created in last minute"
-else
-  echo "✅ No new multi-unit bookings detected"
-fi
+HEALTH_CHECK=$(curl -s https://api.okaeri-resort.com/health | jq -r '.version')
+echo "Current API version: $HEALTH_CHECK"
 
 # Step 3: Database rollback (optional - only if data corruption)
 read -p "Execute database rollback? (yes/no): " db_rollback
@@ -1058,15 +1049,15 @@ async function validateProduction() {
   }
   console.log("✅ All database functions exist\n");
 
-  // Check 3: Feature flags accessible
-  console.log("🚩 Checking feature flags...");
-  const flagsResponse = await fetch(`${process.env.CLOUDFLARE_API}/feature-flags`);
-  if (!flagsResponse.ok) {
-    console.error("❌ Feature flags API not accessible");
+  // Check 3: API health check
+  console.log("🚩 Checking API health...");
+  const healthResponse = await fetch(`${process.env.CLOUDFLARE_API}/health`);
+  if (!healthResponse.ok) {
+    console.error("❌ API health check failed");
     allChecksPassed = false;
   } else {
-    const flags = await flagsResponse.json();
-    console.log(`✅ Feature flags: ${JSON.stringify(flags)}\n`);
+    const health = await healthResponse.json();
+    console.log(`✅ API health: ${JSON.stringify(health)}\n`);
   }
 
   // Check 4: Create test multi-unit booking
@@ -1196,7 +1187,7 @@ Thank you for being part of our resort community! 🏖️
   - [ ] All Phase 5 tests passing
   - [ ] Database migration script tested on staging
   - [ ] Backup created and verified
-  - [ ] Feature flags infrastructure deployed
+  - [ ] Backup procedures validated
   - [ ] Monitoring dashboards configured
   - [ ] Alert rules active
   - [ ] Rollback procedures documented and tested
@@ -1205,7 +1196,7 @@ Thank you for being part of our resort community! 🏖️
   - [ ] Database migration executed successfully
   - [ ] Zero downtime during migration
   - [ ] Post-migration validation passed
-  - [ ] Feature flags deployed and functional
+  - [ ] API endpoints deployed and functional
   - [ ] Frontend deployed to Cloudflare Pages
   - [ ] API endpoints deployed to Cloudflare Workers
 
@@ -1259,14 +1250,14 @@ Track these metrics to evaluate rollout success:
 
 ## Risk Register
 
-| Risk                                | Probability | Impact   | Mitigation                                 | Owner                           |
-| ----------------------------------- | ----------- | -------- | ------------------------------------------ | ------------------------------- |
-| Database migration failure          | Low         | Critical | Thorough testing on staging, backup ready  | postgres-serverless-architect   |
-| Feature flag infrastructure failure | Low         | High     | Fallback to full disable, manual KV access | cloudflare-deployment-optimizer |
-| Performance degradation             | Medium      | High     | Load testing in Phase 5, auto-scaling      | pwa-performance-optimizer       |
-| Data corruption                     | Low         | Critical | Extensive validation, backup every stage   | postgres-serverless-architect   |
-| User confusion (UX)                 | Medium      | Medium   | Beta testing, support training, clear docs | resort-ui-designer              |
-| Payment processing issues           | Low         | Critical | Payment gateway testing, fallback methods  | Backend team                    |
+| Risk                       | Probability | Impact   | Mitigation                                 | Owner                           |
+| -------------------------- | ----------- | -------- | ------------------------------------------ | ------------------------------- |
+| Database migration failure | Low         | Critical | Thorough testing on staging, backup ready  | postgres-serverless-architect   |
+| API deployment failure     | Low         | High     | Rollback Workers, restore database backup  | cloudflare-deployment-optimizer |
+| Performance degradation    | Medium      | High     | Load testing in Phase 5, auto-scaling      | pwa-performance-optimizer       |
+| Data corruption            | Low         | Critical | Extensive validation, backup every stage   | postgres-serverless-architect   |
+| User confusion (UX)        | Medium      | Medium   | Beta testing, support training, clear docs | resort-ui-designer              |
+| Payment processing issues  | Low         | Critical | Payment gateway testing, fallback methods  | Backend team                    |
 
 ---
 

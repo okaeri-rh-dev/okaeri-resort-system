@@ -40,7 +40,7 @@ docs/multi-unit-booking/
 ├── 03-state-management.md             # Phase 3: Zustand stores & TanStack Query
 ├── 04-ui-components.md                # Phase 4: React components & UX
 ├── 05-integration-testing.md          # Phase 5: E2E testing & validation
-├── 06-migration-rollout.md            # Phase 6: Feature flags & deployment
+├── 06-migration-rollout.md            # Phase 6: Deployment & rollback procedures
 ├── AGENT-ASSIGNMENTS.md               # Agent responsibilities matrix
 ├── architecture/
 │   ├── database-schema.md             # Detailed database design
@@ -92,25 +92,25 @@ docs/multi-unit-booking/
 
 ## Critical Success Factors
 
-1. ✅ **Backwards Compatibility**: Existing single-unit bookings MUST continue to work
-2. ✅ **Data Integrity**: No booking/payment corruption during migration
-3. ✅ **Performance**: No degradation vs. current single-unit performance
-4. ✅ **User Experience**: Intuitive multi-unit selection interface
-5. ✅ **Testing Coverage**: Comprehensive E2E and unit tests before rollout
+1. ✅ **Data Integrity**: No booking/payment corruption during migration
+2. ✅ **Performance**: No degradation vs. current single-unit performance
+3. ✅ **User Experience**: Intuitive multi-unit selection interface
+4. ✅ **Testing Coverage**: Comprehensive E2E and unit tests before rollout
+5. ✅ **Clean Migration**: Greenfield deployment with test data wipe
 
 ## Architecture Principles
 
 ### Database Layer
-- **Junction Table Pattern**: `booking_units` bridges bookings ↔ units
+- **Junction Table Pattern**: `booking_units` bridges bookings ↔ units (single source of truth)
 - **Denormalization**: `booking_unit_availability` for fast queries
-- **Backwards Compatibility**: Maintain `bookings.unit_id` for legacy support
+- **Greenfield Implementation**: No legacy compatibility (clean schema design)
 - **Data Integrity**: Exclusion constraints, triggers, transactions
 
 ### API Layer
 - **Batch Operations**: Minimize database round-trips
 - **Atomic Transactions**: All-or-nothing multi-unit creation
-- **Versioning**: New endpoints with v2 prefix where needed
-- **Compatibility Layer**: Adapters for old API consumers
+- **Idempotency**: Prevent duplicate bookings with idempotency keys
+- **Direct Endpoints**: Single API namespace (no versioning needed)
 
 ### State Management
 - **Optimistic Updates**: Immediate UI feedback

@@ -227,17 +227,18 @@ bookings (1) ←→ (N) booking_units (N) ←→ (1) units
 **Solution:** `booking_unit_availability` denormalized table with EXCLUDE constraint
 
 ```sql
--- Fast availability lookups without JOINs
+-- Fast availability lookups without JOINs (Aggressive Blocking Strategy)
 SELECT * FROM booking_unit_availability
 WHERE unit_id = $1
   AND tstzrange(check_in, check_out) && tstzrange($2, $3)
-  AND booking_status NOT IN ('Cancelled', 'NoShow');
+  AND booking_status IN ('Confirmed', 'CheckedIn');
 
 -- Exclusion constraint prevents double-booking at database level
+-- Only Confirmed and CheckedIn bookings block availability
 EXCLUDE USING gist (
   unit_id WITH =,
   tstzrange(check_in, check_out, '[)') WITH &&
-) WHERE (booking_status NOT IN ('Cancelled', 'NoShow'))
+) WHERE (booking_status IN ('Confirmed', 'CheckedIn'))
 ```
 
 **Trade-off:** Data duplication vs. query performance (worth it for availability checks)
@@ -273,56 +274,38 @@ await mutation.mutateAsync(data);
 - Handles offline scenarios
 - Automatic rollback on errors
 
-### 4. Compatibility Wrapper Pattern
+### 4. Direct Deployment Pattern (Greenfield)
 
-**Problem:** Need to support both legacy single-unit and new multi-unit bookings
+**Problem:** Need to deploy safely without disrupting non-existent users
 
-**Solution:** Adapter functions for backwards compatibility
+**Solution:** Clean deployment with backup/restore safety net
 
 ```typescript
-// Adapter: Always return units as array
-function getBookingUnits(booking: Booking): BookingUnit[] {
-  if (booking.is_multi_unit) {
-    return booking.booking_units || [];
-  }
-  // Convert legacy single-unit to array
-  return booking.unit_id ? [legacyToBookingUnit(booking)] : [];
+// Deployment Strategy: Wipe → Migrate → Deploy
+// 1. Wipe test data from database
+// 2. Run migration script (018-multi-unit-schema.sql)
+// 3. Deploy API + Frontend simultaneously
+// 4. Run smoke tests
+// 5. Monitor for 48 hours
+
+// Rollback: Restore from backup
+async function rollback() {
+  // 1. Restore database from pre-migration backup
+  await restoreDatabaseBackup("pre-multi-unit-migration");
+
+  // 2. Revert Cloudflare Workers to previous version
+  await revertCloudflareDeployment();
+
+  // Estimated total time: <15 minutes
 }
-
-// Database function handles both
-CREATE FUNCTION get_booking_units(p_booking_id UUID) ...
 ```
 
 **Benefits:**
 
-- Zero breaking changes
-- Gradual migration path
-- Same API works for both types
-
-### 5. Feature Flag Pattern
-
-**Problem:** Need to roll out gradually and rollback quickly if issues
-
-**Solution:** Environment-based feature flags
-
-```typescript
-const isMultiUnitEnabled = (userId: string): boolean => {
-  if (!env.VITE_MULTI_UNIT_ENABLED) return false;
-
-  // Beta users
-  if (betaUsers.includes(userId)) return true;
-
-  // Gradual rollout
-  const rolloutPercentage = parseInt(env.VITE_MULTI_UNIT_ROLLOUT);
-  return hashUserId(userId) % 100 < rolloutPercentage;
-};
-```
-
-**Benefits:**
-
-- Instant enable/disable
-- Gradual rollout (10% → 25% → 50% → 100%)
-- A/B testing capability
+- Simplest possible deployment
+- No feature flag infrastructure overhead
+- Fast rollback via database restore
+- No dual-mode code complexity
 
 ---
 
@@ -419,10 +402,10 @@ CREATE POLICY "booking_units_select_staff"
 CREATE INDEX idx_booking_units_composite
   ON booking_units(booking_id, unit_id);
 
--- Covering index for availability checks
+-- Covering index for availability checks (matches exclusion constraint)
 CREATE INDEX idx_availability_lookup
   ON booking_unit_availability(unit_id, check_in, check_out)
-  WHERE booking_status NOT IN ('Cancelled', 'NoShow');
+  WHERE booking_status IN ('Confirmed', 'CheckedIn');
 
 -- GIN index for full-text search
 CREATE INDEX idx_booking_units_guest_names
@@ -720,7 +703,7 @@ GitHub Actions
     ↓
 3. Communicate (Post in #incidents)
     ↓
-4. Mitigate (Feature flag disable, rollback)
+4. Mitigate (Immediate rollback via database restore)
     ↓
 5. Resolve (Fix issue, deploy)
     ↓
@@ -738,7 +721,7 @@ This architecture provides:
 ✅ **Security**: Defense in depth, RLS, input validation
 ✅ **Reliability**: Redundancy, monitoring, rollback procedures
 ✅ **Maintainability**: Clear separation of concerns, documentation
-✅ **Backwards Compatibility**: Supports both single and multi-unit bookings
+✅ **Simplicity**: Greenfield deployment with no legacy complexity
 
 ---
 

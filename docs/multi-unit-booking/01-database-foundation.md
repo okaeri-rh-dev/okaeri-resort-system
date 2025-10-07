@@ -162,21 +162,23 @@ CREATE TABLE booking_unit_availability (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
     -- Exclusion constraint: Prevent overlapping bookings for same unit
+    -- AGGRESSIVE BLOCKING: Only Confirmed and CheckedIn bookings block availability
+    -- Rationale: Better UX (Pending bookings don't block), acceptable race condition risk at low volume
     EXCLUDE USING gist (
         unit_id WITH =,
         tstzrange(check_in, check_out, '[)') WITH &&
-    ) WHERE (booking_status NOT IN ('Cancelled', 'NoShow')),
+    ) WHERE (booking_status IN ('Confirmed', 'CheckedIn')),
 
     -- Additional constraints
     CHECK (check_out > check_in)
 );
 
--- Covering index for availability queries
+-- Covering index for availability queries (matches exclusion constraint)
 CREATE INDEX idx_availability_lookup ON booking_unit_availability(
     unit_id,
     check_in,
     check_out
-) WHERE booking_status NOT IN ('Cancelled', 'NoShow');
+) WHERE booking_status IN ('Confirmed', 'CheckedIn');
 
 -- Index for booking_id lookups
 CREATE INDEX idx_availability_booking_id ON booking_unit_availability(booking_id);
@@ -247,7 +249,7 @@ ALTER TABLE bookings
     );
 
 -- Comments
-COMMENT ON COLUMN bookings.unit_id IS 'LEGACY: Direct unit reference for single-unit bookings. NULL for multi-unit bookings (use booking_units table instead)';
+COMMENT ON COLUMN bookings.unit_id IS 'Direct unit reference for single-unit bookings only. NULL for multi-unit bookings (use booking_units junction table)';
 COMMENT ON COLUMN bookings.is_multi_unit IS 'TRUE if booking has multiple units (uses booking_units junction table)';
 COMMENT ON COLUMN bookings.unit_count IS 'Number of units in this booking (1 for single-unit, 2+ for multi-unit)';
 ```
@@ -363,6 +365,14 @@ COMMENT ON FUNCTION create_multi_unit_booking IS 'Atomically creates a booking w
 
 **Purpose:** Check availability for multiple units simultaneously, with next available date suggestion
 
+**Next Available Date Logic:**
+
+- Returns the start date of the next contiguous period matching the requested stay length
+- Example: For a 3-night search (March 15-18), if Unit A is booked March 14-19:
+  - Find the next free 3-night window for Unit A
+  - Return `next_available_date = "2025-03-20"` (meaning March 20-23 is available)
+- This is calculated PER-UNIT (each unit may have different next available dates)
+
 ```sql
 CREATE OR REPLACE FUNCTION check_multi_unit_availability(
     p_unit_ids UUID[],
@@ -383,7 +393,7 @@ BEGIN
             SELECT 1
             FROM booking_unit_availability bua
             WHERE bua.unit_id = u.unit_id
-              AND bua.booking_status NOT IN ('Cancelled', 'NoShow')
+              AND bua.booking_status IN ('Confirmed', 'CheckedIn')
               AND tstzrange(bua.check_in, bua.check_out, '[)') && tstzrange(p_check_in, p_check_out, '[)')
               AND (p_exclude_booking_id IS NULL OR bua.booking_id != p_exclude_booking_id)
         ) AS is_available,
@@ -391,7 +401,7 @@ BEGIN
             SELECT COUNT(*)::INTEGER
             FROM booking_unit_availability bua
             WHERE bua.unit_id = u.unit_id
-              AND bua.booking_status NOT IN ('Cancelled', 'NoShow')
+              AND bua.booking_status IN ('Confirmed', 'CheckedIn')
               AND tstzrange(bua.check_in, bua.check_out, '[)') && tstzrange(p_check_in, p_check_out, '[)')
               AND (p_exclude_booking_id IS NULL OR bua.booking_id != p_exclude_booking_id)
         ) AS conflicting_bookings,
@@ -400,7 +410,7 @@ BEGIN
             SELECT MIN(bua.check_out)
             FROM booking_unit_availability bua
             WHERE bua.unit_id = u.unit_id
-              AND bua.booking_status NOT IN ('Cancelled', 'NoShow')
+              AND bua.booking_status IN ('Confirmed', 'CheckedIn')
               AND bua.check_in >= p_check_in
         ) AS next_available_date
     FROM units u
@@ -409,7 +419,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE;
 
-COMMENT ON FUNCTION check_multi_unit_availability IS 'Checks availability for multiple units in a single query, with next_available_date suggestion';
+COMMENT ON FUNCTION check_multi_unit_availability IS 'Checks availability for multiple units in a single query, with next_available_date suggestion (per-unit, matching requested stay length)';
 ```
 
 **Usage Example:**
@@ -750,7 +760,7 @@ SELECT
     booking_status
     -- Excludes: availability_id, booking_id (security)
 FROM booking_unit_availability
-WHERE booking_status NOT IN ('Cancelled', 'NoShow');
+WHERE booking_status IN ('Confirmed', 'CheckedIn'); -- Aggressive blocking
 
 -- Grant SELECT on view to public
 GRANT SELECT ON public_unit_availability TO anon, authenticated;
@@ -843,7 +853,7 @@ SELECT
     b.booking_status
 FROM booking_units bu
 JOIN bookings b ON b.booking_id = bu.booking_id
-WHERE b.booking_status NOT IN ('Cancelled', 'NoShow');
+WHERE b.booking_status IN ('Confirmed', 'CheckedIn'); -- Aggressive blocking
 
 -- Step 6: Create functions and triggers
 -- [All functions and triggers from above]
