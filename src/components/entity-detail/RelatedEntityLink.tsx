@@ -1,0 +1,95 @@
+// src/components/entity-detail/RelatedEntityLink.tsx
+
+import { Link } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
+import { FileText, Home, User, CreditCard, Receipt } from "lucide-react";
+import type { EntityType } from "@/types/entity-detail.types";
+
+/**
+ * Props for RelatedEntityLink component
+ */
+export interface RelatedEntityLinkProps {
+  type: EntityType;
+  id: string;
+  label: string;
+  badge?: string; // Optional secondary info (e.g., unit code)
+  className?: string;
+}
+
+/**
+ * Entity type to icon mapping
+ */
+const entityIcons = {
+  booking: FileText,
+  unit: Home,
+  guest: User,
+  payment: CreditCard,
+  expense: Receipt,
+};
+
+/**
+ * Entity type to route mapping
+ */
+const entityRoutes = {
+  booking: "/bookings/$bookingId",
+  unit: "/units/$unitId",
+  guest: "/guests/$guestId",
+  payment: "/payments/$paymentId",
+  expense: "/expenses/$expenseId",
+} as const;
+
+/**
+ * Type-safe clickable links to related entities with consistent styling
+ *
+ * Automatically maps entity types to:
+ * - Correct route pattern
+ * - Appropriate icon
+ * - Consistent hover states
+ *
+ * @example
+ * ```typescript
+ * // Link to guest
+ * <RelatedEntityLink
+ *   type="guest"
+ *   id={booking.guest_id}
+ *   label={booking.guest_name}
+ * />
+ *
+ * // Link to unit with code badge
+ * <RelatedEntityLink
+ *   type="unit"
+ *   id={booking.unit_id}
+ *   label={unit.unit_name}
+ *   badge={unit.unit_code}
+ * />
+ *
+ * // Link to booking reference
+ * <RelatedEntityLink
+ *   type="booking"
+ *   id={payment.booking_id}
+ *   label={payment.booking_reference}
+ * />
+ * ```
+ */
+export function RelatedEntityLink({ type, id, label, badge, className }: RelatedEntityLinkProps) {
+  const Icon = entityIcons[type];
+  const routeTo = entityRoutes[type];
+
+  // Map entity type to param name
+  const paramKey = `${type}Id` as const;
+
+  return (
+    <Link
+      to={routeTo as any}
+      params={{ [paramKey]: id } as any}
+      className={cn(
+        "inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 hover:underline font-medium transition-colors",
+        className
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      <span>{label}</span>
+      {badge && <span className="text-xs font-mono text-neutral-500">({badge})</span>}
+    </Link>
+  );
+}

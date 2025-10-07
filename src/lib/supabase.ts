@@ -178,10 +178,23 @@ export const db = {
 
   payments: {
     all: () => supabase.from("payments").select("*"),
+    byId: (id: string) => supabase.from("payments").select("*").eq("payment_id", id).single(),
     byBooking: (bookingId: string) =>
       supabase.from("payments").select("*").eq("booking_id", bookingId),
     create: (data: Database["public"]["Tables"]["payments"]["Insert"]) =>
       supabase.from("payments").insert(data).select().single(),
+    update: (id: string, data: Database["public"]["Tables"]["payments"]["Update"]) =>
+      supabase.from("payments").update(data).eq("payment_id", id).select().single(),
+  },
+
+  expenses: {
+    all: () => supabase.from("expenses").select("*"),
+    byId: (id: string) => supabase.from("expenses").select("*").eq("expense_id", id).single(),
+    create: (data: Database["public"]["Tables"]["expenses"]["Insert"]) =>
+      supabase.from("expenses").insert(data).select().single(),
+    update: (id: string, data: Database["public"]["Tables"]["expenses"]["Update"]) =>
+      supabase.from("expenses").update(data).eq("expense_id", id).select().single(),
+    delete: (id: string) => supabase.from("expenses").delete().eq("expense_id", id),
   },
 
   // Blackout period management
