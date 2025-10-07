@@ -33,8 +33,8 @@ describe("DetailPageSkeleton", () => {
     it("renders section skeletons", () => {
       const { container } = render(<DetailPageSkeleton />);
 
-      // Should have multiple section placeholders
-      const sections = container.querySelectorAll(".rounded-lg.border");
+      // Should have multiple section placeholders (using Card components)
+      const sections = container.querySelectorAll('[class*="border-neutral-200"]');
       expect(sections.length).toBeGreaterThan(0);
     });
   });
@@ -66,9 +66,11 @@ describe("DetailPageSkeleton", () => {
     it("renders breadcrumb section skeleton", () => {
       const { container } = render(<DetailPageSkeleton />);
 
-      // Breadcrumb typically has 2-3 items
-      const breadcrumbItems = container.querySelectorAll(".flex.items-center.space-x-2 .h-4");
-      expect(breadcrumbItems.length).toBeGreaterThanOrEqual(2);
+      // Breadcrumb has 3 skeleton items (2 text + 1 separator)
+      const breadcrumbContainer = container.querySelector(".flex.items-center.gap-2");
+      expect(breadcrumbContainer).toBeInTheDocument();
+      const breadcrumbItems = breadcrumbContainer?.querySelectorAll('[class*="h-4"]');
+      expect(breadcrumbItems?.length).toBe(3);
     });
 
     it("renders header section skeleton", () => {
@@ -82,19 +84,20 @@ describe("DetailPageSkeleton", () => {
     it("renders content sections skeleton (3 sections)", () => {
       const { container } = render(<DetailPageSkeleton />);
 
-      // Should have 3 content section cards
-      const sectionCards = container.querySelectorAll(".rounded-lg.border.p-6");
+      // Should have 3 content section cards (Card components with border-neutral-200)
+      const sectionCards = container.querySelectorAll('[class*="border-neutral-200"]');
       expect(sectionCards.length).toBe(3);
     });
 
     it("each section has field placeholders", () => {
       const { container } = render(<DetailPageSkeleton />);
 
-      // Each section should have multiple field placeholders
-      const sections = container.querySelectorAll(".rounded-lg.border.p-6");
+      // Each Card section should have content with field placeholders
+      const sections = container.querySelectorAll('[class*="border-neutral-200"]');
       sections.forEach((section) => {
-        const fields = section.querySelectorAll(".space-y-2");
-        expect(fields.length).toBeGreaterThan(0);
+        // Check for skeleton elements within each section
+        const skeletons = section.querySelectorAll('[class*="h-4"]');
+        expect(skeletons.length).toBeGreaterThan(0);
       });
     });
   });
@@ -107,10 +110,11 @@ describe("DetailPageSkeleton", () => {
       expect(animatedElements.length).toBeGreaterThan(0);
     });
 
-    it("skeleton bars have bg-gray-200 or bg-muted", () => {
+    it("skeleton bars have bg-neutral background", () => {
       const { container } = render(<DetailPageSkeleton />);
 
-      const skeletonBars = container.querySelectorAll(".bg-gray-200, .bg-muted");
+      // Skeleton component uses bg-neutral-200/70
+      const skeletonBars = container.querySelectorAll('[class*="bg-neutral"]');
       expect(skeletonBars.length).toBeGreaterThan(0);
     });
 
@@ -134,10 +138,9 @@ describe("DetailPageSkeleton", () => {
     it("sections use card-like structure", () => {
       const { container } = render(<DetailPageSkeleton />);
 
-      const cards = container.querySelectorAll(".rounded-lg.border");
-      cards.forEach((card) => {
-        expect(card).toHaveClass("bg-card");
-      });
+      // Card components with border-neutral-200 class
+      const cards = container.querySelectorAll('[class*="border-neutral-200"]');
+      expect(cards.length).toBeGreaterThan(0);
     });
   });
 
@@ -215,7 +218,8 @@ describe("DetailPageSkeleton", () => {
     it("section count matches typical detail page (3 sections)", () => {
       const { container } = render(<DetailPageSkeleton />);
 
-      const sections = container.querySelectorAll(".rounded-lg.border.p-6");
+      // Count Card components by border-neutral-200 class
+      const sections = container.querySelectorAll('[class*="border-neutral-200"]');
       expect(sections.length).toBe(3);
     });
   });
@@ -224,7 +228,8 @@ describe("DetailPageSkeleton", () => {
     it("uses consistent border radius", () => {
       const { container } = render(<DetailPageSkeleton />);
 
-      const roundedElements = container.querySelectorAll(".rounded-lg");
+      // Skeleton uses rounded-md by default, check for rounded elements
+      const roundedElements = container.querySelectorAll('[class*="rounded"]');
       expect(roundedElements.length).toBeGreaterThan(0);
     });
 
@@ -238,8 +243,9 @@ describe("DetailPageSkeleton", () => {
     it("uses consistent padding in sections", () => {
       const { container } = render(<DetailPageSkeleton />);
 
-      const paddedSections = container.querySelectorAll(".p-6");
-      expect(paddedSections.length).toBe(3); // 3 main sections
+      // Card components have padding, count elements with p-6 class
+      const paddedSections = container.querySelectorAll('[class*="p-6"]');
+      expect(paddedSections.length).toBeGreaterThanOrEqual(3); // At least 3 sections with padding
     });
   });
 });

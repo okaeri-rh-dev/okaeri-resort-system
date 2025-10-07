@@ -20,7 +20,7 @@ vi.mock("@tanstack/react-router", () => ({
 describe("RelatedEntityLink", () => {
   describe("Basic rendering", () => {
     it("renders link to booking entity", () => {
-      render(<RelatedEntityLink entityType="booking" entityId="booking-123" label="BK-2024-001" />);
+      render(<RelatedEntityLink type="booking" id="booking-123" label="BK-2024-001" />);
 
       const link = screen.getByTestId("router-link");
       expect(link).toHaveTextContent("BK-2024-001");
@@ -28,7 +28,7 @@ describe("RelatedEntityLink", () => {
     });
 
     it("renders link to unit entity", () => {
-      render(<RelatedEntityLink entityType="unit" entityId="unit-456" label="Deluxe Villa 1" />);
+      render(<RelatedEntityLink type="unit" id="unit-456" label="Deluxe Villa 1" />);
 
       const link = screen.getByTestId("router-link");
       expect(link).toHaveTextContent("Deluxe Villa 1");
@@ -36,7 +36,7 @@ describe("RelatedEntityLink", () => {
     });
 
     it("renders link to guest entity", () => {
-      render(<RelatedEntityLink entityType="guest" entityId="guest-789" label="John Doe" />);
+      render(<RelatedEntityLink type="guest" id="guest-789" label="John Doe" />);
 
       const link = screen.getByTestId("router-link");
       expect(link).toHaveTextContent("John Doe");
@@ -44,9 +44,7 @@ describe("RelatedEntityLink", () => {
     });
 
     it("renders link to payment entity", () => {
-      render(
-        <RelatedEntityLink entityType="payment" entityId="payment-101" label="Payment #12345" />
-      );
+      render(<RelatedEntityLink type="payment" id="payment-101" label="Payment #12345" />);
 
       const link = screen.getByTestId("router-link");
       expect(link).toHaveTextContent("Payment #12345");
@@ -54,9 +52,7 @@ describe("RelatedEntityLink", () => {
     });
 
     it("renders link to expense entity", () => {
-      render(
-        <RelatedEntityLink entityType="expense" entityId="expense-202" label="Pool Maintenance" />
-      );
+      render(<RelatedEntityLink type="expense" id="expense-202" label="Pool Maintenance" />);
 
       const link = screen.getByTestId("router-link");
       expect(link).toHaveTextContent("Pool Maintenance");
@@ -66,48 +62,34 @@ describe("RelatedEntityLink", () => {
 
   describe("Badge support", () => {
     it("renders badge when provided", () => {
-      render(
-        <RelatedEntityLink
-          entityType="unit"
-          entityId="unit-123"
-          label="Deluxe Villa 1"
-          badge="DV-001"
-        />
-      );
+      render(<RelatedEntityLink type="unit" id="unit-123" label="Deluxe Villa 1" badge="DV-001" />);
 
-      expect(screen.getByText("DV-001")).toBeInTheDocument();
+      expect(screen.getByText(/DV-001/)).toBeInTheDocument();
     });
 
     it("positions badge after label", () => {
       render(
-        <RelatedEntityLink
-          entityType="booking"
-          entityId="booking-123"
-          label="Booking"
-          badge="Confirmed"
-        />
+        <RelatedEntityLink type="booking" id="booking-123" label="Booking" badge="Confirmed" />
       );
 
       const label = screen.getByText("Booking");
-      const badge = screen.getByText("Confirmed");
+      const badge = screen.getByText(/Confirmed/);
 
       expect(label.compareDocumentPosition(badge)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     });
 
     it("styles badge appropriately", () => {
-      render(
-        <RelatedEntityLink entityType="unit" entityId="unit-123" label="Villa" badge="DV-001" />
-      );
+      render(<RelatedEntityLink type="unit" id="unit-123" label="Villa" badge="DV-001" />);
 
-      const badge = screen.getByText("DV-001");
-      expect(badge).toHaveClass("text-xs", "text-muted-foreground");
+      const badge = screen.getByText(/DV-001/);
+      expect(badge).toHaveClass("text-xs", "font-mono", "text-neutral-500");
     });
   });
 
   describe("Icon display", () => {
     it("shows appropriate icon for booking entity", () => {
       const { container } = render(
-        <RelatedEntityLink entityType="booking" entityId="booking-123" label="Booking" />
+        <RelatedEntityLink type="booking" id="booking-123" label="Booking" />
       );
 
       // Should have an icon (SVG) for booking
@@ -116,18 +98,14 @@ describe("RelatedEntityLink", () => {
     });
 
     it("shows appropriate icon for unit entity", () => {
-      const { container } = render(
-        <RelatedEntityLink entityType="unit" entityId="unit-123" label="Unit" />
-      );
+      const { container } = render(<RelatedEntityLink type="unit" id="unit-123" label="Unit" />);
 
       const svg = container.querySelector("svg");
       expect(svg).toBeInTheDocument();
     });
 
     it("shows appropriate icon for guest entity", () => {
-      const { container } = render(
-        <RelatedEntityLink entityType="guest" entityId="guest-123" label="Guest" />
-      );
+      const { container } = render(<RelatedEntityLink type="guest" id="guest-123" label="Guest" />);
 
       const svg = container.querySelector("svg");
       expect(svg).toBeInTheDocument();
@@ -135,7 +113,7 @@ describe("RelatedEntityLink", () => {
 
     it("shows appropriate icon for payment entity", () => {
       const { container } = render(
-        <RelatedEntityLink entityType="payment" entityId="payment-123" label="Payment" />
+        <RelatedEntityLink type="payment" id="payment-123" label="Payment" />
       );
 
       const svg = container.querySelector("svg");
@@ -144,7 +122,7 @@ describe("RelatedEntityLink", () => {
 
     it("shows appropriate icon for expense entity", () => {
       const { container } = render(
-        <RelatedEntityLink entityType="expense" entityId="expense-123" label="Expense" />
+        <RelatedEntityLink type="expense" id="expense-123" label="Expense" />
       );
 
       const svg = container.querySelector("svg");
@@ -155,7 +133,7 @@ describe("RelatedEntityLink", () => {
   describe("Link styling", () => {
     it("applies proper text color for links", () => {
       const { container } = render(
-        <RelatedEntityLink entityType="booking" entityId="booking-123" label="Booking" />
+        <RelatedEntityLink type="booking" id="booking-123" label="Booking" />
       );
 
       const link = screen.getByTestId("router-link");
@@ -164,7 +142,7 @@ describe("RelatedEntityLink", () => {
 
     it("applies hover styles", () => {
       const { container } = render(
-        <RelatedEntityLink entityType="booking" entityId="booking-123" label="Booking" />
+        <RelatedEntityLink type="booking" id="booking-123" label="Booking" />
       );
 
       const link = screen.getByTestId("router-link");
@@ -173,7 +151,7 @@ describe("RelatedEntityLink", () => {
 
     it("applies font weight", () => {
       const { container } = render(
-        <RelatedEntityLink entityType="booking" entityId="booking-123" label="Booking" />
+        <RelatedEntityLink type="booking" id="booking-123" label="Booking" />
       );
 
       const link = screen.getByTestId("router-link");
@@ -183,35 +161,35 @@ describe("RelatedEntityLink", () => {
 
   describe("Route generation", () => {
     it("generates correct route for booking", () => {
-      render(<RelatedEntityLink entityType="booking" entityId="booking-123" label="Booking" />);
+      render(<RelatedEntityLink type="booking" id="booking-123" label="Booking" />);
 
       const link = screen.getByTestId("router-link");
       expect(link).toHaveAttribute("href", expect.stringContaining("bookingId=booking-123"));
     });
 
     it("generates correct route for unit", () => {
-      render(<RelatedEntityLink entityType="unit" entityId="unit-456" label="Unit" />);
+      render(<RelatedEntityLink type="unit" id="unit-456" label="Unit" />);
 
       const link = screen.getByTestId("router-link");
       expect(link).toHaveAttribute("href", expect.stringContaining("unitId=unit-456"));
     });
 
     it("generates correct route for guest", () => {
-      render(<RelatedEntityLink entityType="guest" entityId="guest-789" label="Guest" />);
+      render(<RelatedEntityLink type="guest" id="guest-789" label="Guest" />);
 
       const link = screen.getByTestId("router-link");
       expect(link).toHaveAttribute("href", expect.stringContaining("guestId=guest-789"));
     });
 
     it("generates correct route for payment", () => {
-      render(<RelatedEntityLink entityType="payment" entityId="payment-101" label="Payment" />);
+      render(<RelatedEntityLink type="payment" id="payment-101" label="Payment" />);
 
       const link = screen.getByTestId("router-link");
       expect(link).toHaveAttribute("href", expect.stringContaining("paymentId=payment-101"));
     });
 
     it("generates correct route for expense", () => {
-      render(<RelatedEntityLink entityType="expense" entityId="expense-202" label="Expense" />);
+      render(<RelatedEntityLink type="expense" id="expense-202" label="Expense" />);
 
       const link = screen.getByTestId("router-link");
       expect(link).toHaveAttribute("href", expect.stringContaining("expenseId=expense-202"));
@@ -222,8 +200,8 @@ describe("RelatedEntityLink", () => {
     it("applies custom className when provided", () => {
       render(
         <RelatedEntityLink
-          entityType="booking"
-          entityId="booking-123"
+          type="booking"
+          id="booking-123"
           label="Booking"
           className="custom-class"
         />
@@ -236,8 +214,8 @@ describe("RelatedEntityLink", () => {
     it("merges custom className with default classes", () => {
       render(
         <RelatedEntityLink
-          entityType="booking"
-          entityId="booking-123"
+          type="booking"
+          id="booking-123"
           label="Booking"
           className="custom-class"
         />
@@ -250,16 +228,14 @@ describe("RelatedEntityLink", () => {
 
   describe("Accessibility", () => {
     it("renders as a proper link element", () => {
-      render(
-        <RelatedEntityLink entityType="booking" entityId="booking-123" label="View Booking" />
-      );
+      render(<RelatedEntityLink type="booking" id="booking-123" label="View Booking" />);
 
       const link = screen.getByTestId("router-link");
       expect(link.tagName).toBe("A");
     });
 
     it("has descriptive text content", () => {
-      render(<RelatedEntityLink entityType="guest" entityId="guest-123" label="John Doe" />);
+      render(<RelatedEntityLink type="guest" id="guest-123" label="John Doe" />);
 
       expect(screen.getByText("John Doe")).toBeInTheDocument();
     });
@@ -268,34 +244,22 @@ describe("RelatedEntityLink", () => {
   describe("Real-world usage", () => {
     it("renders booking reference with status badge", () => {
       render(
-        <RelatedEntityLink
-          entityType="booking"
-          entityId="booking-123"
-          label="BK-2024-001"
-          badge="Confirmed"
-        />
+        <RelatedEntityLink type="booking" id="booking-123" label="BK-2024-001" badge="Confirmed" />
       );
 
       expect(screen.getByText("BK-2024-001")).toBeInTheDocument();
-      expect(screen.getByText("Confirmed")).toBeInTheDocument();
+      expect(screen.getByText(/Confirmed/)).toBeInTheDocument();
     });
 
     it("renders unit with code badge", () => {
-      render(
-        <RelatedEntityLink
-          entityType="unit"
-          entityId="unit-123"
-          label="Deluxe Villa 1"
-          badge="DV-001"
-        />
-      );
+      render(<RelatedEntityLink type="unit" id="unit-123" label="Deluxe Villa 1" badge="DV-001" />);
 
       expect(screen.getByText("Deluxe Villa 1")).toBeInTheDocument();
-      expect(screen.getByText("DV-001")).toBeInTheDocument();
+      expect(screen.getByText(/DV-001/)).toBeInTheDocument();
     });
 
     it("renders guest name without badge", () => {
-      render(<RelatedEntityLink entityType="guest" entityId="guest-123" label="John Doe" />);
+      render(<RelatedEntityLink type="guest" id="guest-123" label="John Doe" />);
 
       expect(screen.getByText("John Doe")).toBeInTheDocument();
     });

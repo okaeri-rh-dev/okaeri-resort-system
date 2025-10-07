@@ -4,11 +4,24 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { DetailPageLayout } from "../DetailPageLayout";
 
+// Mock TanStack Router Link
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ to, params, children, className }: any) => (
+    <a
+      href={`${to}?${new URLSearchParams(params || {}).toString()}`}
+      className={className}
+      data-testid="router-link"
+    >
+      {children}
+    </a>
+  ),
+}));
+
 describe("DetailPageLayout", () => {
   describe("Basic rendering", () => {
     it("renders title and children", () => {
       render(
-        <DetailPageLayout title="Test Entity">
+        <DetailPageLayout title="Test Entity" breadcrumbs={[]}>
           <div data-testid="child-content">Child Content</div>
         </DetailPageLayout>
       );
@@ -19,7 +32,7 @@ describe("DetailPageLayout", () => {
 
     it("renders subtitle when provided", () => {
       render(
-        <DetailPageLayout title="Test Entity" subtitle="Test Subtitle">
+        <DetailPageLayout title="Test Entity" subtitle="Test Subtitle" breadcrumbs={[]}>
           <div>Content</div>
         </DetailPageLayout>
       );
@@ -29,21 +42,21 @@ describe("DetailPageLayout", () => {
 
     it("does not render subtitle section when not provided", () => {
       const { container } = render(
-        <DetailPageLayout title="Test Entity">
+        <DetailPageLayout title="Test Entity" breadcrumbs={[]}>
           <div>Content</div>
         </DetailPageLayout>
       );
 
       // Subtitle should not be in the document
-      expect(container.querySelector("p.text-sm.text-muted-foreground")).not.toBeInTheDocument();
+      expect(container.querySelector("p.text-sm.text-neutral-500")).not.toBeInTheDocument();
     });
   });
 
   describe("Breadcrumbs", () => {
     it("renders breadcrumb navigation", () => {
       const breadcrumbs = [
-        { label: "Home", href: "/" },
-        { label: "Bookings", href: "/bookings" },
+        { label: "Home", to: "/" },
+        { label: "Bookings", to: "/bookings" },
         { label: "BK-001" },
       ];
 
@@ -58,10 +71,10 @@ describe("DetailPageLayout", () => {
       expect(screen.getByText("BK-001")).toBeInTheDocument();
     });
 
-    it("handles breadcrumbs without href (current page)", () => {
+    it("handles breadcrumbs without to (current page)", () => {
       const breadcrumbs = [
-        { label: "Bookings", href: "/bookings" },
-        { label: "Current Page" }, // No href - current page
+        { label: "Bookings", to: "/bookings" },
+        { label: "Current Page" }, // No to - current page
       ];
 
       render(
@@ -70,20 +83,22 @@ describe("DetailPageLayout", () => {
         </DetailPageLayout>
       );
 
-      // Current page should not be a link
+      // Current page should not be a link (should be a span)
       const currentPage = screen.getByText("Current Page");
-      expect(currentPage.tagName).not.toBe("A");
+      expect(currentPage.tagName).toBe("SPAN");
     });
 
-    it("does not render breadcrumbs when not provided", () => {
+    it("renders empty breadcrumbs array", () => {
       const { container } = render(
-        <DetailPageLayout title="Test Entity">
+        <DetailPageLayout title="Test Entity" breadcrumbs={[]}>
           <div>Content</div>
         </DetailPageLayout>
       );
 
-      // Breadcrumb nav should not exist
-      expect(container.querySelector("nav[aria-label='breadcrumb']")).not.toBeInTheDocument();
+      // Breadcrumb nav should still exist but be empty
+      const nav = container.querySelector("nav[aria-label='Breadcrumb']");
+      expect(nav).toBeInTheDocument();
+      expect(nav?.children.length).toBe(0);
     });
   });
 
@@ -92,7 +107,8 @@ describe("DetailPageLayout", () => {
       render(
         <DetailPageLayout
           title="Test Entity"
-          statusBadge={<span data-testid="status-badge">Active</span>}
+          breadcrumbs={[]}
+          status={<span data-testid="status-badge">Active</span>}
         >
           <div>Content</div>
         </DetailPageLayout>
@@ -104,7 +120,7 @@ describe("DetailPageLayout", () => {
 
     it("does not render status badge section when not provided", () => {
       const { container } = render(
-        <DetailPageLayout title="Test Entity">
+        <DetailPageLayout title="Test Entity" breadcrumbs={[]}>
           <div>Content</div>
         </DetailPageLayout>
       );
@@ -118,6 +134,7 @@ describe("DetailPageLayout", () => {
       render(
         <DetailPageLayout
           title="Test Entity"
+          breadcrumbs={[]}
           actions={<button data-testid="edit-button">Edit</button>}
         >
           <div>Content</div>
@@ -129,7 +146,7 @@ describe("DetailPageLayout", () => {
 
     it("does not render actions section when not provided", () => {
       const { container } = render(
-        <DetailPageLayout title="Test Entity">
+        <DetailPageLayout title="Test Entity" breadcrumbs={[]}>
           <div>Content</div>
         </DetailPageLayout>
       );
@@ -141,19 +158,19 @@ describe("DetailPageLayout", () => {
   describe("Layout structure", () => {
     it("applies container max width", () => {
       const { container } = render(
-        <DetailPageLayout title="Test">
+        <DetailPageLayout title="Test" breadcrumbs={[]}>
           <div>Content</div>
         </DetailPageLayout>
       );
 
       const mainContainer = container.querySelector(".container");
       expect(mainContainer).toBeInTheDocument();
-      expect(mainContainer).toHaveClass("max-w-7xl");
+      expect(mainContainer).toHaveClass("max-w-[1400px]");
     });
 
     it("applies responsive padding", () => {
       const { container } = render(
-        <DetailPageLayout title="Test">
+        <DetailPageLayout title="Test" breadcrumbs={[]}>
           <div>Content</div>
         </DetailPageLayout>
       );
@@ -164,7 +181,7 @@ describe("DetailPageLayout", () => {
 
     it("renders children in main content area", () => {
       render(
-        <DetailPageLayout title="Test">
+        <DetailPageLayout title="Test" breadcrumbs={[]}>
           <div data-testid="main-content">
             <p>Main content goes here</p>
           </div>
@@ -178,7 +195,7 @@ describe("DetailPageLayout", () => {
   describe("Accessibility", () => {
     it("renders semantic HTML structure", () => {
       const { container } = render(
-        <DetailPageLayout title="Test Entity">
+        <DetailPageLayout title="Test Entity" breadcrumbs={[]}>
           <div>Content</div>
         </DetailPageLayout>
       );
@@ -190,7 +207,7 @@ describe("DetailPageLayout", () => {
     });
 
     it("breadcrumb nav has proper aria-label", () => {
-      const breadcrumbs = [{ label: "Home", href: "/" }, { label: "Current" }];
+      const breadcrumbs = [{ label: "Home", to: "/" }, { label: "Current" }];
 
       const { container } = render(
         <DetailPageLayout title="Test" breadcrumbs={breadcrumbs}>
@@ -199,20 +216,20 @@ describe("DetailPageLayout", () => {
       );
 
       const nav = container.querySelector("nav");
-      expect(nav).toHaveAttribute("aria-label", "breadcrumb");
+      expect(nav).toHaveAttribute("aria-label", "Breadcrumb");
     });
   });
 
   describe("Complex layouts", () => {
     it("handles all props together", () => {
-      const breadcrumbs = [{ label: "Bookings", href: "/bookings" }, { label: "BK-001" }];
+      const breadcrumbs = [{ label: "Bookings", to: "/bookings" }, { label: "BK-001" }];
 
       render(
         <DetailPageLayout
           title="Booking Detail"
           subtitle="Created 2024-01-01"
           breadcrumbs={breadcrumbs}
-          statusBadge={<span data-testid="badge">Confirmed</span>}
+          status={<span data-testid="badge">Confirmed</span>}
           actions={<button data-testid="edit-btn">Edit</button>}
         >
           <div data-testid="content">Complex content</div>
