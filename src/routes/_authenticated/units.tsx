@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Outlet, useParams } from "@tanstack/react-router";
 import { useState, lazy, Suspense } from "react";
 
 // Lazy load components for better performance
@@ -7,9 +7,6 @@ const UnitsTable = lazy(() =>
 );
 const UnitForm = lazy(() =>
   import("@/components/units/UnitForm").then((m) => ({ default: m.UnitForm }))
-);
-const UnitDetailModal = lazy(() =>
-  import("@/components/units/UnitDetailModal").then((m) => ({ default: m.UnitDetailModal }))
 );
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -29,30 +26,34 @@ export const Route = createFileRoute("/_authenticated/units")({
 });
 
 function UnitsPage() {
+  const navigate = useNavigate();
+  const params = useParams({ strict: false });
+  const isDetailView = !!(params as any).unitId;
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [viewingUnit, setViewingUnit] = useState<Unit | null>(null);
-  const [showViewDialog, setShowViewDialog] = useState(false);
 
+  // Navigate to dedicated detail and edit routes instead of using modals
   const handleViewUnit = (unit: Unit) => {
-    setViewingUnit(unit);
-    setShowViewDialog(true);
+    navigate({ to: "/units/$unitId", params: { unitId: unit.unit_id } });
   };
 
   const handleEditUnit = (unit: Unit) => {
-    setSelectedUnit(unit);
-    setShowEditDialog(true);
+    navigate({ to: "/units/$unitId/edit", params: { unitId: unit.unit_id } });
   };
 
   const handleCreateSuccess = () => {
     setShowCreateDialog(false);
   };
 
-  const handleEditSuccess = () => {
-    setShowEditDialog(false);
-    setSelectedUnit(null);
-  };
+  // If we're viewing a specific unit detail, render the child route
+  if (isDetailView) {
+    return (
+      <ErrorBoundary level="page">
+        <Outlet />
+      </ErrorBoundary>
+    );
+  }
+
+  // Otherwise, render the units table page
 
   return (
     <ErrorBoundary level="page">
@@ -96,38 +97,6 @@ function UnitsPage() {
             </ErrorBoundary>
           </DialogContent>
         </Dialog>
-
-        {/* Edit Unit Dialog */}
-        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit Cabin</DialogTitle>
-            </DialogHeader>
-            <ErrorBoundary level="component">
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-                  </div>
-                }
-              >
-                {selectedUnit && <UnitForm unit={selectedUnit} onSuccess={handleEditSuccess} />}
-              </Suspense>
-            </ErrorBoundary>
-          </DialogContent>
-        </Dialog>
-
-        {/* View Unit Detail Dialog */}
-        <Suspense fallback={null}>
-          <UnitDetailModal
-            unit={viewingUnit}
-            open={showViewDialog}
-            onOpenChange={(open) => {
-              setShowViewDialog(open);
-              if (!open) setViewingUnit(null);
-            }}
-          />
-        </Suspense>
       </div>
     </ErrorBoundary>
   );

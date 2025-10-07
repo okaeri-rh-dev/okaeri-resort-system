@@ -32,7 +32,13 @@ import type { UnitsTableProps } from "./types";
  *
  * Total lines: ~150 (down from 854)
  */
-function UnitsTableComponent({ onAddUnit, pageSize = 10, className }: UnitsTableProps = {}) {
+function UnitsTableComponent({
+  onAddUnit,
+  onViewUnit,
+  onEditUnit,
+  pageSize = 10,
+  className,
+}: UnitsTableProps = {}) {
   const {
     table,
     units,
@@ -48,7 +54,7 @@ function UnitsTableComponent({ onAddUnit, pageSize = 10, className }: UnitsTable
     setIsEditMode,
     selectedCount,
     handleBatchStatusUpdate,
-  } = useUnitsTable({ pageSize, onAddUnit });
+  } = useUnitsTable({ pageSize, onAddUnit, onViewUnit, onEditUnit });
 
   useResponsiveView(); // Used for responsive table rendering
 

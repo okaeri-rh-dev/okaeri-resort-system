@@ -1,13 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense, useState } from "react";
+import { createFileRoute, useNavigate, Outlet, useParams } from "@tanstack/react-router";
+import { lazy, Suspense } from "react";
 import type { Guest } from "@/types";
 
 // Lazy load components for better performance
 const GuestsTable = lazy(() =>
   import("@/components/guests/GuestsTable").then((m) => ({ default: m.GuestsTable }))
-);
-const GuestDetailModal = lazy(() =>
-  import("@/components/guests/GuestDetailModal").then((m) => ({ default: m.GuestDetailModal }))
 );
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { z } from "zod";
@@ -23,19 +20,29 @@ export const Route = createFileRoute("/_authenticated/guests")({
 });
 
 function GuestsPage() {
-  const [viewingGuest, setViewingGuest] = useState<Guest | null>(null);
-  const [showViewDialog, setShowViewDialog] = useState(false);
+  const navigate = useNavigate();
+  const params = useParams({ strict: false });
+  const isDetailView = !!(params as any).guestId;
 
+  // Navigate to dedicated detail and edit routes instead of using modals
   const handleViewGuest = (guest: Guest) => {
-    setViewingGuest(guest);
-    setShowViewDialog(true);
+    navigate({ to: "/guests/$guestId", params: { guestId: guest.guest_id } });
   };
 
   const handleEditGuest = (guest: Guest) => {
-    // Future: Implement edit functionality
-    console.log("Edit guest:", guest);
+    navigate({ to: "/guests/$guestId/edit", params: { guestId: guest.guest_id } });
   };
 
+  // If we're viewing a specific guest detail, render the child route
+  if (isDetailView) {
+    return (
+      <ErrorBoundary level="page">
+        <Outlet />
+      </ErrorBoundary>
+    );
+  }
+
+  // Otherwise, render the guests table page
   return (
     <ErrorBoundary level="page">
       <div className="space-y-6">
@@ -55,18 +62,6 @@ function GuestsPage() {
             <GuestsTable onViewGuest={handleViewGuest} onEditGuest={handleEditGuest} />
           </Suspense>
         </ErrorBoundary>
-
-        {/* View Guest Detail Dialog */}
-        <Suspense fallback={null}>
-          <GuestDetailModal
-            guest={viewingGuest}
-            open={showViewDialog}
-            onOpenChange={(open) => {
-              setShowViewDialog(open);
-              if (!open) setViewingGuest(null);
-            }}
-          />
-        </Suspense>
       </div>
     </ErrorBoundary>
   );

@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Link } from "@tanstack/react-router";
 import type { Expense } from "@/types";
 import { formatCurrency, formatTableDate, SortableHeader } from "@/components/tables/utils";
 
@@ -74,13 +75,22 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
           Description
         </SortableHeader>
       ),
-      cell: ({ getValue }) => (
-        <div className="max-w-[300px]">
-          <span className="truncate text-sm text-neutral-900" title={getValue() || ""}>
-            {getValue() || "No description"}
-          </span>
-        </div>
-      ),
+      cell: ({ getValue, row }) => {
+        const description = getValue() || "No description";
+        const truncated = description.length > 50 ? description.slice(0, 50) + "..." : description;
+
+        return (
+          <Link
+            to="/expenses/$expenseId"
+            params={{ expenseId: row.original.expense_id }}
+            className="text-blue-600 hover:underline transition-colors"
+            title={description}
+            preload="intent"
+          >
+            {truncated}
+          </Link>
+        );
+      },
       size: 300,
     }),
 

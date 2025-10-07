@@ -1,8 +1,9 @@
-import { formatCurrency, SortableHeader, StatusBadge } from "@/components/tables/utils";
+import { formatCurrency, SortableHeader, StatusBadge, ActionMenu } from "@/components/tables/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Unit, UnitStatus } from "@/types";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
+import { Link } from "@tanstack/react-router";
 import { InlineEdit, InlineSelect } from "./InlineEdit";
 
 const columnHelper = createColumnHelper<Unit>();
@@ -10,13 +11,22 @@ const columnHelper = createColumnHelper<Unit>();
 interface UseUnitColumnsProps {
   onUpdateUnit: (unitId: string, updates: Partial<Unit>) => void;
   isEditMode: boolean;
+  onViewUnit?: (unit: Unit) => void;
+  onEditUnit?: (unit: Unit) => void;
+  onDeleteUnit?: (unit: Unit) => void;
 }
 
 /**
  * Custom hook for unit table column definitions
  * Handles column configuration and inline editing
  */
-export function useUnitColumns({ onUpdateUnit, isEditMode }: UseUnitColumnsProps) {
+export function useUnitColumns({
+  onUpdateUnit,
+  isEditMode,
+  onViewUnit,
+  onEditUnit,
+  onDeleteUnit,
+}: UseUnitColumnsProps) {
   return useMemo(
     () => [
       // Selection column
@@ -64,7 +74,16 @@ export function useUnitColumns({ onUpdateUnit, isEditMode }: UseUnitColumnsProps
               />
             );
           }
-          return <div className="font-medium text-neutral-900">{getValue()}</div>;
+          return (
+            <Link
+              to="/units/$unitId"
+              params={{ unitId: row.original.unit_id }}
+              className="text-blue-600 hover:underline font-medium transition-colors"
+              preload="intent"
+            >
+              {getValue()}
+            </Link>
+          );
         },
         size: 200,
       }),
@@ -188,7 +207,35 @@ export function useUnitColumns({ onUpdateUnit, isEditMode }: UseUnitColumnsProps
         },
         size: 120,
       }),
+
+      // Actions column
+      columnHelper.display({
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const unit = row.original;
+
+          const actions = [
+            {
+              label: "View Details",
+              onClick: () => onViewUnit?.(unit),
+            },
+            {
+              label: "Edit Unit",
+              onClick: () => onEditUnit?.(unit),
+            },
+            {
+              label: "Delete",
+              onClick: () => onDeleteUnit?.(unit),
+              className: "text-red-600 hover:text-red-700",
+            },
+          ];
+
+          return <ActionMenu actions={actions} />;
+        },
+        size: 80,
+      }),
     ],
-    [isEditMode, onUpdateUnit]
+    [isEditMode, onUpdateUnit, onViewUnit, onEditUnit, onDeleteUnit]
   );
 }

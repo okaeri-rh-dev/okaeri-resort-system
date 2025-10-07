@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Link } from "@tanstack/react-router";
 
 import {
   useGuests,
@@ -295,7 +296,14 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
         header: ({ header }) => <SortableHeader header={header}>Guest Name</SortableHeader>,
         cell: ({ getValue, row }) => (
           <div className="space-y-1">
-            <div className="font-medium text-neutral-900">{getValue()}</div>
+            <Link
+              to="/guests/$guestId"
+              params={{ guestId: row.original.guest_id }}
+              className="text-blue-600 hover:underline font-medium transition-colors"
+              preload="intent"
+            >
+              {getValue()}
+            </Link>
             <div className="text-xs text-neutral-600">
               Member since{" "}
               {row.original.created_at ? formatTableDate(row.original.created_at) : "N/A"}

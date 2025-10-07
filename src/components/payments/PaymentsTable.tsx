@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Link } from "@tanstack/react-router";
 
 import {
   usePayments,
@@ -132,11 +133,20 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
         header: "Booking",
         cell: ({ row }) => {
           const booking = row.original.booking;
-          if (!booking) return "-";
+          const bookingId = row.original.booking_id;
+
+          if (!booking || !bookingId) return "-";
 
           return (
             <div className="space-y-1">
-              <div className="font-medium text-neutral-900">{booking.booking_reference}</div>
+              <Link
+                to="/bookings/$bookingId"
+                params={{ bookingId }}
+                className="font-mono text-blue-600 hover:underline transition-colors"
+                preload="intent"
+              >
+                {booking.booking_reference}
+              </Link>
               <div className="text-xs text-neutral-500">{booking.guest_name}</div>
             </div>
           );

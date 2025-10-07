@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Outlet, useParams } from "@tanstack/react-router";
 import { useState, lazy, Suspense } from "react";
 
 // Lazy load components for better performance
@@ -7,11 +7,6 @@ const ExpensesTable = lazy(() =>
 );
 const ExpenseForm = lazy(() =>
   import("@/components/expenses/ExpenseForm").then((m) => ({ default: m.ExpenseForm }))
-);
-const ExpenseDetailModal = lazy(() =>
-  import("@/components/expenses/ExpenseDetailModal").then((m) => ({
-    default: m.ExpenseDetailModal,
-  }))
 );
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -31,22 +26,30 @@ export const Route = createFileRoute("/_authenticated/expenses")({
 });
 
 function ExpensesPage() {
+  const navigate = useNavigate();
+  const params = useParams({ strict: false });
+  const isDetailView = !!(params as any).expenseId;
   const [showExpenseForm, setShowExpenseForm] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [viewingExpense, setViewingExpense] = useState<Expense | null>(null);
-  const [showViewDialog, setShowViewDialog] = useState(false);
 
+  // Navigate to dedicated detail and edit routes instead of using modals
   const handleEditExpense = (expense: Expense) => {
-    setEditingExpense(expense);
-    setShowEditDialog(true);
+    navigate({ to: "/expenses/$expenseId/edit", params: { expenseId: expense.expense_id } });
   };
 
   const handleViewExpense = (expense: Expense) => {
-    setViewingExpense(expense);
-    setShowViewDialog(true);
+    navigate({ to: "/expenses/$expenseId", params: { expenseId: expense.expense_id } });
   };
 
+  // If we're viewing a specific expense detail, render the child route
+  if (isDetailView) {
+    return (
+      <ErrorBoundary level="page">
+        <Outlet />
+      </ErrorBoundary>
+    );
+  }
+
+  // Otherwise, render the expenses table page
   return (
     <ErrorBoundary level="page">
       <div className="space-y-6">
@@ -92,50 +95,6 @@ function ExpensesPage() {
             </ErrorBoundary>
           </DialogContent>
         </Dialog>
-
-        {/* Edit Expense Dialog */}
-        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit Expense</DialogTitle>
-            </DialogHeader>
-            <ErrorBoundary level="component">
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-                  </div>
-                }
-              >
-                {editingExpense && (
-                  <ExpenseForm
-                    expense={editingExpense}
-                    onSuccess={() => {
-                      setShowEditDialog(false);
-                      setEditingExpense(null);
-                    }}
-                    onCancel={() => {
-                      setShowEditDialog(false);
-                      setEditingExpense(null);
-                    }}
-                  />
-                )}
-              </Suspense>
-            </ErrorBoundary>
-          </DialogContent>
-        </Dialog>
-
-        {/* View Expense Detail Dialog */}
-        <Suspense fallback={null}>
-          <ExpenseDetailModal
-            expense={viewingExpense}
-            open={showViewDialog}
-            onOpenChange={(open) => {
-              setShowViewDialog(open);
-              if (!open) setViewingExpense(null);
-            }}
-          />
-        </Suspense>
       </div>
     </ErrorBoundary>
   );

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Outlet, useParams } from "@tanstack/react-router";
 import { useState, lazy, Suspense } from "react";
 
 // Lazy load heavy components
@@ -7,11 +7,6 @@ const PaymentsTable = lazy(() =>
 );
 const PaymentForm = lazy(() =>
   import("@/components/payments/PaymentForm").then((m) => ({ default: m.PaymentForm }))
-);
-const PaymentDetailModal = lazy(() =>
-  import("@/components/payments/PaymentDetailModal").then((m) => ({
-    default: m.PaymentDetailModal,
-  }))
 );
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -31,22 +26,30 @@ export const Route = createFileRoute("/_authenticated/payments")({
 });
 
 function PaymentsPage() {
+  const navigate = useNavigate();
+  const params = useParams({ strict: false });
+  const isDetailView = !!(params as any).paymentId;
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [viewingPayment, setViewingPayment] = useState<Payment | null>(null);
-  const [showViewDialog, setShowViewDialog] = useState(false);
 
+  // Navigate to dedicated detail and edit routes instead of using modals
   const handleEditPayment = (payment: Payment) => {
-    setEditingPayment(payment);
-    setShowEditDialog(true);
+    navigate({ to: "/payments/$paymentId/edit", params: { paymentId: payment.payment_id } });
   };
 
   const handleViewPayment = (payment: Payment) => {
-    setViewingPayment(payment);
-    setShowViewDialog(true);
+    navigate({ to: "/payments/$paymentId", params: { paymentId: payment.payment_id } });
   };
 
+  // If we're viewing a specific payment detail, render the child route
+  if (isDetailView) {
+    return (
+      <ErrorBoundary level="page">
+        <Outlet />
+      </ErrorBoundary>
+    );
+  }
+
+  // Otherwise, render the payments table page
   return (
     <ErrorBoundary level="page">
       <div className="space-y-6">
@@ -92,50 +95,6 @@ function PaymentsPage() {
             </ErrorBoundary>
           </DialogContent>
         </Dialog>
-
-        {/* Edit Payment Dialog */}
-        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit Payment</DialogTitle>
-            </DialogHeader>
-            <ErrorBoundary level="component">
-              {editingPayment && (
-                <Suspense
-                  fallback={
-                    <div className="flex items-center justify-center py-12">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-                    </div>
-                  }
-                >
-                  <PaymentForm
-                    payment={editingPayment}
-                    onSuccess={() => {
-                      setShowEditDialog(false);
-                      setEditingPayment(null);
-                    }}
-                    onCancel={() => {
-                      setShowEditDialog(false);
-                      setEditingPayment(null);
-                    }}
-                  />
-                </Suspense>
-              )}
-            </ErrorBoundary>
-          </DialogContent>
-        </Dialog>
-
-        {/* View Payment Detail Dialog */}
-        <Suspense fallback={null}>
-          <PaymentDetailModal
-            payment={viewingPayment}
-            open={showViewDialog}
-            onOpenChange={(open) => {
-              setShowViewDialog(open);
-              if (!open) setViewingPayment(null);
-            }}
-          />
-        </Suspense>
       </div>
     </ErrorBoundary>
   );

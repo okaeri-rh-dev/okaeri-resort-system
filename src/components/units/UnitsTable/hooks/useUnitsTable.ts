@@ -22,6 +22,8 @@ import { useUnitColumns } from "../components/UnitColumns";
 interface UseUnitsTableOptions {
   pageSize?: number;
   onAddUnit?: () => void;
+  onViewUnit?: (unit: Unit) => void;
+  onEditUnit?: (unit: Unit) => void;
 }
 
 /**
@@ -29,7 +31,7 @@ interface UseUnitsTableOptions {
  * Handles filtering, sorting, pagination, and CRUD operations
  */
 export function useUnitsTable(options: UseUnitsTableOptions = {}) {
-  const { pageSize = 10, onAddUnit } = options;
+  const { pageSize = 10, onAddUnit, onViewUnit, onEditUnit } = options;
 
   // Query hooks
   const { data: units = [], isLoading, error } = useUnits();
@@ -131,6 +133,9 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
   const columns = useUnitColumns({
     onUpdateUnit: handleUpdateUnit,
     isEditMode,
+    onViewUnit,
+    onEditUnit,
+    onDeleteUnit: handleDeleteUnit,
   });
 
   // Create table instance with stable row IDs
