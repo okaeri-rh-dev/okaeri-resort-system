@@ -11,7 +11,7 @@ import { checkIdempotency, setIdempotencyResult, getIdempotencyKey } from "@/lib
 import { createResendClient, sendBookingConfirmation } from "@/lib/email";
 import { generateBookingReference } from "@/utils/booking-reference";
 import { calculatePricing } from "@/utils/pricing";
-import DOMPurify from "isomorphic-dompurify";
+import { sanitizeNameWorker, sanitizeTextWorker } from "@/lib/security/sanitize-worker";
 
 // Environment type for Cloudflare
 interface Env {
@@ -28,7 +28,7 @@ const guestBookingSchema = z.object({
     .string()
     .min(2)
     .max(100)
-    .transform((val) => DOMPurify.sanitize(val)),
+    .transform((val) => sanitizeNameWorker(val)),
   email: z.string().email().toLowerCase(),
   phone_number: z
     .string()
@@ -41,7 +41,7 @@ const guestBookingSchema = z.object({
     .string()
     .max(500)
     .optional()
-    .transform((val) => (val ? DOMPurify.sanitize(val) : undefined)),
+    .transform((val) => (val ? sanitizeTextWorker(val) : undefined)),
   turnstile_token: z.string(),
   file_name: z.string().max(255),
   file_type: z.enum(["image/jpeg", "image/png", "image/jpg", "image/webp", "application/pdf"]),
