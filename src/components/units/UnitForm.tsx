@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Building2, Users } from "lucide-react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -61,6 +62,11 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
   const watchedExtraPersonRate = form.watch("extra_person_rate");
   const watchedBaseOccupancy = form.watch("base_occupancy");
   const watchedMaxOccupancy = form.watch("max_occupancy");
+
+  // Sync weekend_rate with base_rate since weekend_rate field is hidden from UI
+  useEffect(() => {
+    form.setValue("weekend_rate", watchedBaseRate || 0);
+  }, [watchedBaseRate, form]);
 
   const onSubmit = async (data: UnitFormData) => {
     try {
