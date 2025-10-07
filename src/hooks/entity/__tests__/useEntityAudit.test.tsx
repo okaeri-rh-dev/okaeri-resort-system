@@ -106,7 +106,7 @@ describe("useEntityAudit", () => {
       );
 
       await waitFor(() => {
-        expect(mockChain.eq).toHaveBeenCalledWith("table_name", "unit");
+        expect(mockChain.eq).toHaveBeenCalledWith("table_name", "units");
         expect(mockChain.eq).toHaveBeenCalledWith("record_id", "unit-456");
       });
     });
@@ -234,7 +234,7 @@ describe("useEntityAudit", () => {
       );
 
       await waitFor(() => {
-        expect(mockChain.eq).toHaveBeenCalledWith("table_name", "booking");
+        expect(mockChain.eq).toHaveBeenCalledWith("table_name", "bookings");
         expect(mockChain.eq).toHaveBeenCalledWith("record_id", "booking-123");
         expect(mockChain.eq).toHaveBeenCalledWith("action", "UPDATE");
         expect(mockChain.eq).toHaveBeenCalledWith("user_id", "user-456");

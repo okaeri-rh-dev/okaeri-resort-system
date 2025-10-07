@@ -39,7 +39,7 @@ export interface DetailAuditSectionProps {
 export function DetailAuditSection({
   entityType: _entityType,
   entityId: _entityId,
-  title = "Change History",
+  title = "Audit Trail",
   defaultCollapsed,
   limit: _limit = 10,
 }: DetailAuditSectionProps) {
@@ -52,14 +52,7 @@ export function DetailAuditSection({
       collapsible
       defaultCollapsed={defaultCollapsed ?? isMobile}
     >
-      <AuditLogViewer
-      // filters={{
-      //   table_name: entityType,
-      //   record_id: entityId,
-      // }}
-      // limit={limit}
-      // compact
-      />
+      <AuditLogViewer />
     </DetailSection>
   );
 }
