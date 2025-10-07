@@ -9,12 +9,11 @@ import {
 import type { Booking, BookingStatus } from "@/types";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 const columnHelper = createColumnHelper<Booking>();
 
 interface UseBookingColumnsProps {
-  onViewBooking?: (booking: Booking) => void;
-  onEditBooking?: (booking: Booking) => void;
   handleUploadPayment: (booking: Booking) => void;
   updateBookingStatus: any;
   cancelBooking: any;
@@ -22,8 +21,6 @@ interface UseBookingColumnsProps {
 }
 
 export const useBookingColumns = ({
-  onViewBooking,
-  onEditBooking,
   handleUploadPayment,
   updateBookingStatus,
   cancelBooking,
@@ -35,7 +32,13 @@ export const useBookingColumns = ({
         header: ({ header }) => <SortableHeader header={header}>Guest</SortableHeader>,
         cell: ({ row }) => (
           <div className="space-y-1">
-            <div className="font-medium text-neutral-900">{row.original.guest_name}</div>
+            <Link
+              to="/guests"
+              search={{ search: row.original.guest_name }}
+              className="font-medium text-blue-600 hover:underline transition-colors"
+            >
+              {row.original.guest_name}
+            </Link>
             <div className="text-xs text-neutral-600">
               {formatPhoneNumber(row.original.contact_number) || row.original.email}
             </div>
@@ -97,8 +100,14 @@ export const useBookingColumns = ({
 
       columnHelper.accessor("booking_reference", {
         header: ({ header }) => <SortableHeader header={header}>Reference</SortableHeader>,
-        cell: ({ getValue }) => (
-          <div className="font-mono text-sm font-medium text-blue-600">{getValue()}</div>
+        cell: ({ row }) => (
+          <Link
+            to="/bookings/$bookingId"
+            params={{ bookingId: row.original.booking_id }}
+            className="font-mono text-sm font-medium text-blue-600 hover:underline transition-colors"
+          >
+            {row.getValue("booking_reference")}
+          </Link>
         ),
         size: 120,
       }),
@@ -107,73 +116,86 @@ export const useBookingColumns = ({
         id: "actions",
         header: "Actions",
         cell: ({ row }) => {
-          const booking = row.original;
-
-          const actions = [
-            {
-              label: "View Details",
-              onClick: () => onViewBooking?.(booking),
-            },
-            {
-              label: "Edit Booking",
-              onClick: () => onEditBooking?.(booking),
-            },
-            ...(booking.payment_status !== "Completed"
-              ? [
-                  {
-                    label: "Upload Payment",
-                    onClick: () => handleUploadPayment(booking),
-                  },
-                ]
-              : []),
-            ...(booking.booking_status === "Pending"
-              ? [
-                  {
-                    label: "Confirm",
-                    onClick: () =>
-                      updateBookingStatus.mutate({
-                        bookingId: booking.booking_id,
-                        status: "Confirmed" as BookingStatus,
-                      }),
-                  },
-                ]
-              : []),
-            ...(booking.booking_status !== "Cancelled"
-              ? [
-                  {
-                    label: "Cancel",
-                    onClick: () => cancelBooking.mutate(booking.booking_id),
-                    variant: "destructive" as const,
-                  },
-                ]
-              : []),
-            {
-              label: "Delete",
-              onClick: () => {
-                if (
-                  confirm(
-                    `Are you sure you want to permanently delete booking "${booking.booking_reference}"? This action cannot be undone.`
-                  )
-                ) {
-                  deleteBooking.mutate(booking.booking_id);
-                }
-              },
-              className: "text-red-600 hover:text-red-700",
-            },
-          ];
-
-          return <ActionMenu actions={actions} />;
+          return (
+            <BookingActionsCell
+              booking={row.original}
+              {...{ updateBookingStatus, cancelBooking, deleteBooking, handleUploadPayment }}
+            />
+          );
         },
         size: 80,
       }),
     ],
-    [
-      onViewBooking,
-      onEditBooking,
-      updateBookingStatus,
-      cancelBooking,
-      deleteBooking,
-      handleUploadPayment,
-    ]
+    [updateBookingStatus, cancelBooking, deleteBooking, handleUploadPayment]
   );
 };
+
+// Separate component to have access to router hooks
+function BookingActionsCell({
+  booking,
+  updateBookingStatus,
+  cancelBooking,
+  deleteBooking,
+  handleUploadPayment,
+}: {
+  booking: Booking;
+  updateBookingStatus: any;
+  cancelBooking: any;
+  deleteBooking: any;
+  handleUploadPayment: (booking: Booking) => void;
+}) {
+  const navigate = useNavigate();
+
+  const actions = [
+    {
+      label: "Edit Booking",
+      onClick: () => {
+        navigate({ to: "/bookings/$bookingId/edit", params: { bookingId: booking.booking_id } });
+      },
+    },
+    ...(booking.payment_status !== "Completed"
+      ? [
+          {
+            label: "Upload Payment",
+            onClick: () => handleUploadPayment(booking),
+          },
+        ]
+      : []),
+    ...(booking.booking_status === "Pending"
+      ? [
+          {
+            label: "Confirm",
+            onClick: () =>
+              updateBookingStatus.mutate({
+                bookingId: booking.booking_id,
+                status: "Confirmed" as BookingStatus,
+              }),
+          },
+        ]
+      : []),
+    ...(booking.booking_status !== "Cancelled"
+      ? [
+          {
+            label: "Cancel",
+            onClick: () => cancelBooking.mutate(booking.booking_id),
+            variant: "destructive" as const,
+          },
+        ]
+      : []),
+    {
+      label: "Delete",
+      onClick: () => {
+        if (
+          confirm(
+            `Are you sure you want to permanently delete booking "${booking.booking_reference}"? This action cannot be undone.`
+          )
+        ) {
+          deleteBooking.mutate(booking.booking_id);
+        }
+      },
+      variant: "destructive" as const,
+    },
+  ];
+
+  return <ActionMenu actions={actions} />;
+}

@@ -1,6 +1,7 @@
 import React from "react";
 import { Eye, Edit, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
 import {
   formatCurrency,
   formatTableDate,
@@ -10,13 +11,7 @@ import {
 } from "@/components/tables/utils";
 import type { BookingCardProps } from "../types";
 
-export const BookingCard: React.FC<BookingCardProps> = ({
-  booking,
-  onView,
-  onEdit,
-  onUploadPayment,
-  onCancel,
-}) => {
+export const BookingCard: React.FC<BookingCardProps> = ({ booking, onUploadPayment, onCancel }) => {
   return (
     <MobileCard className="space-y-3">
       <div className="flex items-start justify-between">
@@ -43,14 +38,26 @@ export const BookingCard: React.FC<BookingCardProps> = ({
       </div>
 
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" onClick={onView} className="flex-1">
-          <Eye className="mr-1 h-3 w-3" />
-          View
-        </Button>
-        <Button variant="outline" size="sm" onClick={onEdit} className="flex-1">
-          <Edit className="mr-1 h-3 w-3" />
-          Edit
-        </Button>
+        <Link
+          to="/bookings/$bookingId"
+          params={{ bookingId: booking.booking_id }}
+          className="flex-1"
+        >
+          <Button variant="outline" size="sm" className="w-full">
+            <Eye className="mr-1 h-3 w-3" />
+            View
+          </Button>
+        </Link>
+        <Link
+          to="/bookings/$bookingId/edit"
+          params={{ bookingId: booking.booking_id }}
+          className="flex-1"
+        >
+          <Button variant="outline" size="sm" className="w-full">
+            <Edit className="mr-1 h-3 w-3" />
+            Edit
+          </Button>
+        </Link>
       </div>
 
       <div className="flex gap-2">

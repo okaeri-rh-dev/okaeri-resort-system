@@ -14,19 +14,11 @@ import type { Booking, Unit, Guest } from "@/types";
  * This component demonstrates the enterprise table system
  */
 export const TableDemo: React.FC = () => {
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
 
   // Demo handlers
-  const handleViewBooking = (booking: Booking) => {
-    setSelectedBooking(booking);
-    console.log("View booking:", booking);
-  };
-
-  const handleEditBooking = (booking: Booking) => {
-    console.log("Edit booking:", booking);
-  };
+  // Note: Edit now uses direct Link navigation in BookingColumns
 
   const handleViewUnit = (unit: Unit) => {
     setSelectedUnit(unit);
@@ -89,17 +81,10 @@ export const TableDemo: React.FC = () => {
                   <li>• Philippine peso formatting</li>
                 </ul>
               </div>
-
-              {selectedBooking && (
-                <div className="rounded border border-blue-200 bg-blue-50 p-3 text-sm">
-                  <strong>Selected:</strong> {selectedBooking.booking_reference} -{" "}
-                  {selectedBooking.guest_name}
-                </div>
-              )}
             </div>
           </Card>
 
-          <BookingsTable onViewBooking={handleViewBooking} onEditBooking={handleEditBooking} />
+          <BookingsTable />
         </TabsContent>
 
         <TabsContent value="units" className="space-y-4">

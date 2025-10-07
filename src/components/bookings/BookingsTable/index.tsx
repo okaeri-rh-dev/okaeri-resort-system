@@ -9,7 +9,7 @@ import { BookingFilters } from "./components/BookingFilters";
 import { useBookingsTable } from "./hooks/useBookingsTable";
 import type { BookingsTableProps } from "./types";
 
-function BookingsTableComponent({ onViewBooking, onEditBooking, className }: BookingsTableProps) {
+function BookingsTableComponent({ className }: BookingsTableProps) {
   const {
     table,
     bookings,
@@ -24,7 +24,7 @@ function BookingsTableComponent({ onViewBooking, onEditBooking, className }: Boo
     handleExport,
     handleUploadPayment,
     cancelBooking,
-  } = useBookingsTable({ onViewBooking, onEditBooking });
+  } = useBookingsTable();
 
   if (isLoading) {
     return <BookingsTableSkeleton />;
@@ -58,8 +58,6 @@ function BookingsTableComponent({ onViewBooking, onEditBooking, className }: Boo
             <BookingCard
               key={booking.booking_id}
               booking={booking}
-              onView={() => onViewBooking?.(booking)}
-              onEdit={() => onEditBooking?.(booking)}
               onUploadPayment={() => handleUploadPayment(booking)}
               onCancel={() => cancelBooking.mutate(booking.booking_id)}
             />

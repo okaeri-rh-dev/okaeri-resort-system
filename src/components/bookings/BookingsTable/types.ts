@@ -1,15 +1,11 @@
 import type { Booking, BookingFilters } from "@/types";
 
 export interface BookingsTableProps {
-  onViewBooking?: (booking: Booking) => void;
-  onEditBooking?: (booking: Booking) => void;
   className?: string;
 }
 
 export interface BookingCardProps {
   booking: Booking;
-  onView: () => void;
-  onEdit: () => void;
   onUploadPayment: () => void;
   onCancel: () => void;
 }

@@ -1,5 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo, lazy, Suspense } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { createFileRoute, Outlet, useParams } from "@tanstack/react-router";
+import { lazy, Suspense, useState } from "react";
+import { z } from "zod";
 
 // Lazy load heavy components
 const BookingsTable = lazy(() =>
@@ -8,16 +12,6 @@ const BookingsTable = lazy(() =>
 const BookingForm = lazy(() =>
   import("@/components/bookings/BookingForm").then((m) => ({ default: m.BookingForm }))
 );
-const BookingDetailModal = lazy(() =>
-  import("@/components/bookings/BookingDetailModal").then((m) => ({
-    default: m.BookingDetailModal,
-  }))
-);
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { z } from "zod";
-import type { Booking } from "@/types";
 
 const bookingsSearchSchema = z.object({
   status: z.string().optional(),
@@ -31,41 +25,21 @@ export const Route = createFileRoute("/_authenticated/bookings")({
 });
 
 function BookingsPage() {
+  const params = useParams({ strict: false });
+  const isDetailView = !!(params as any).bookingId;
+
   const [showBookingForm, setShowBookingForm] = useState(false);
-  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
-  const [showViewDialog, setShowViewDialog] = useState(false);
 
-  const handleEditBooking = (booking: Booking) => {
-    setEditingBooking(booking);
-    setShowEditDialog(true);
-  };
+  // If we're viewing a specific booking detail, render the child route
+  if (isDetailView) {
+    return (
+      <ErrorBoundary level="page">
+        <Outlet />
+      </ErrorBoundary>
+    );
+  }
 
-  const handleViewBooking = (booking: Booking) => {
-    setViewingBooking(booking);
-    setShowViewDialog(true);
-  };
-
-  // Memoize initial data for edit form to prevent re-initialization
-  const editFormInitialData = useMemo(() => {
-    if (!editingBooking) return null;
-
-    return {
-      guest_name: editingBooking.guest_name,
-      email: editingBooking.email,
-      contact_number: editingBooking.contact_number || "",
-      check_in: new Date(editingBooking.check_in),
-      check_out: new Date(editingBooking.check_out),
-      unit_id: editingBooking.unit_id,
-      num_guests: editingBooking.num_guests,
-      payment_method: (editingBooking.payment_method === "Other"
-        ? undefined
-        : editingBooking.payment_method) as "Cash" | "GCash" | "BankTransfer" | "Card" | undefined,
-      special_requests: editingBooking.special_requests || "",
-    };
-  }, [editingBooking]);
-
+  // Otherwise, render the bookings table page
   return (
     <ErrorBoundary level="page">
       <div className="space-y-6">
@@ -85,7 +59,7 @@ function BookingsPage() {
               </div>
             }
           >
-            <BookingsTable onViewBooking={handleViewBooking} onEditBooking={handleEditBooking} />
+            <BookingsTable />
           </Suspense>
         </ErrorBoundary>
 
@@ -111,43 +85,6 @@ function BookingsPage() {
             </ErrorBoundary>
           </DialogContent>
         </Dialog>
-
-        {/* Edit Booking Dialog */}
-        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit Booking</DialogTitle>
-            </DialogHeader>
-            <ErrorBoundary level="component">
-              {editingBooking && editFormInitialData && (
-                <BookingForm
-                  bookingId={editingBooking.booking_id}
-                  initialData={editFormInitialData}
-                  onSuccess={() => {
-                    setShowEditDialog(false);
-                    setEditingBooking(null);
-                  }}
-                  onCancel={() => {
-                    setShowEditDialog(false);
-                    setEditingBooking(null);
-                  }}
-                />
-              )}
-            </ErrorBoundary>
-          </DialogContent>
-        </Dialog>
-
-        {/* View Booking Detail Dialog */}
-        <Suspense fallback={null}>
-          <BookingDetailModal
-            booking={viewingBooking}
-            open={showViewDialog}
-            onOpenChange={(open) => {
-              setShowViewDialog(open);
-              if (!open) setViewingBooking(null);
-            }}
-          />
-        </Suspense>
       </div>
     </ErrorBoundary>
   );

@@ -22,12 +22,7 @@ import { useBookingColumns } from "../components/BookingColumns";
 import { exportBookings } from "../utils/export";
 import type { Booking } from "@/types";
 
-interface UseBookingsTableProps {
-  onViewBooking?: (booking: Booking) => void;
-  onEditBooking?: (booking: Booking) => void;
-}
-
-export const useBookingsTable = ({ onViewBooking, onEditBooking }: UseBookingsTableProps) => {
+export const useBookingsTable = () => {
   // Store state
   const {
     filters,
@@ -78,8 +73,6 @@ export const useBookingsTable = ({ onViewBooking, onEditBooking }: UseBookingsTa
 
   // Get columns
   const columns = useBookingColumns({
-    onViewBooking,
-    onEditBooking,
     handleUploadPayment,
     updateBookingStatus,
     cancelBooking,
