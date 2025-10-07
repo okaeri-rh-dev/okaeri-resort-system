@@ -57,8 +57,8 @@ export default defineConfig(({ mode }) => ({
           ],
           // UI libraries
           "vendor-ui": ["react-day-picker", "sonner", "lucide-react", "next-themes"],
-          // File processing libraries (lazy loaded)
-          "file-processing": ["heic2any", "browser-image-compression"],
+          // Note: heic2any and browser-image-compression are dynamically imported
+          // in src/utils/file-compression.ts and will be automatically code-split
         },
       },
     },

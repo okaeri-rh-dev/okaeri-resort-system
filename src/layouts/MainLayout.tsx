@@ -20,7 +20,6 @@ import {
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { auth } from "@/lib/auth";
-import { isCurrentUserOwner } from "@/lib/audit-logger";
 import { supabase } from "@/lib/supabase";
 
 interface NavItem {
@@ -51,6 +50,8 @@ export function MainLayout({ children }: MainLayoutProps) {
   // Check if user can access audit logs
   useEffect(() => {
     const checkAuditAccess = async () => {
+      // Lazy load audit functions to reduce main bundle size
+      const { isCurrentUserOwner } = await import("@/lib/audit-logger");
       const canAccess = await isCurrentUserOwner();
       setShowAuditLink(canAccess);
     };

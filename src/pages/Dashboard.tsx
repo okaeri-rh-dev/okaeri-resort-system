@@ -4,7 +4,7 @@ import { DashboardCalendar } from "@/components/dashboard/DashboardCalendar";
 import { BookingsTable } from "@/components/bookings/BookingsTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useBookings } from "@/stores";
+import { useBookings } from "@/stores/useBookingStore";
 import { format, addDays } from "date-fns";
 
 export function Dashboard() {

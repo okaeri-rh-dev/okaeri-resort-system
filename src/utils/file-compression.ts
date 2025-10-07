@@ -1,5 +1,3 @@
-import imageCompression from "browser-image-compression";
-
 /**
  * Compress and validate file for upload
  * - Converts HEIC/HEIF to JPEG (iOS compatibility)
@@ -45,6 +43,13 @@ export async function compressAndValidateFile(file: File): Promise<File> {
   // Step 3: Compress images if > 500KB using Web Worker (non-blocking)
   if (file.type.startsWith("image/") && file.size > 500_000) {
     try {
+      // Lazy load browser-image-compression only when needed (reduces main bundle size by ~300KB)
+      const imageCompression = (
+        await import(
+          /* webpackChunkName: "browser-image-compression" */ "browser-image-compression"
+        )
+      ).default;
+
       file = await imageCompression(file, {
         maxSizeMB: 2,
         maxWidthOrHeight: 1920,

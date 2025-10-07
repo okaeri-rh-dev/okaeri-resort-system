@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useBookings, useGuests, useUnits } from "@/stores";
+import { useBookings } from "@/stores/useBookingStore";
+import { useGuests } from "@/stores/useGuestStore";
+import { useUnits } from "@/stores/useUnitStore";
 import { Building2, Calendar, TrendingUp, Users } from "lucide-react";
 import { DashboardStatsSkeleton } from "@/components/skeletons";
 
