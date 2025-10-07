@@ -256,14 +256,15 @@ COMMENT ON COLUMN bookings.unit_count IS 'Number of units in this booking (1 for
 
 ## Database Functions
 
-### 1. create_multi_unit_booking
+### 1. create_multi_unit_booking (Gap Resolution #3)
 
-**Purpose:** Atomically create a booking with multiple units
+**Purpose:** Atomically create a booking with multiple units, with guest_id support for both authenticated and anonymous bookings
 
 ```sql
 CREATE OR REPLACE FUNCTION create_multi_unit_booking(
     p_booking_data JSONB,
-    p_units JSONB[]
+    p_units JSONB[],
+    p_guest_id UUID DEFAULT NULL  -- NEW: Support guest linking
 ) RETURNS UUID AS $$
 DECLARE
     v_booking_id UUID;
@@ -279,6 +280,7 @@ BEGIN
     -- Insert main booking
     INSERT INTO bookings (
         booking_reference,
+        guest_id,  -- NEW: Link to guest record
         guest_name,
         contact_number,
         email,
@@ -293,6 +295,7 @@ BEGIN
     )
     SELECT
         p_booking_data->>'booking_reference',
+        p_guest_id,  -- NEW: NULL for anonymous, UUID for authenticated
         p_booking_data->>'guest_name',
         p_booking_data->>'contact_number',
         p_booking_data->>'email',
@@ -303,7 +306,7 @@ BEGIN
         TRUE,  -- is_multi_unit
         array_length(p_units, 1),  -- unit_count
         COALESCE(p_booking_data->>'booking_status', 'Pending'),
-        COALESCE(p_booking_data->>'payment_status', 'Pending')
+        COALESCE(p_booking_data->>'payment_status', 'Unpaid')
     RETURNING booking_id INTO v_booking_id;
 
     -- Insert unit associations
@@ -356,9 +359,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 COMMENT ON FUNCTION create_multi_unit_booking IS 'Atomically creates a booking with multiple units';
 ```
 
-### 2. check_multi_unit_availability
+### 2. check_multi_unit_availability (Gap Resolution #9)
 
-**Purpose:** Check availability for multiple units simultaneously
+**Purpose:** Check availability for multiple units simultaneously, with next available date suggestion
 
 ```sql
 CREATE OR REPLACE FUNCTION check_multi_unit_availability(
@@ -369,7 +372,8 @@ CREATE OR REPLACE FUNCTION check_multi_unit_availability(
 ) RETURNS TABLE(
     unit_id UUID,
     is_available BOOLEAN,
-    conflicting_bookings INTEGER
+    conflicting_bookings INTEGER,
+    next_available_date TIMESTAMPTZ  -- NEW: Suggest alternative dates
 ) AS $$
 BEGIN
     RETURN QUERY
@@ -390,14 +394,49 @@ BEGIN
               AND bua.booking_status NOT IN ('Cancelled', 'NoShow')
               AND tstzrange(bua.check_in, bua.check_out, '[)') && tstzrange(p_check_in, p_check_out, '[)')
               AND (p_exclude_booking_id IS NULL OR bua.booking_id != p_exclude_booking_id)
-        ) AS conflicting_bookings
+        ) AS conflicting_bookings,
+        -- NEW: Find earliest check_out date for bookings starting >= check_in
+        (
+            SELECT MIN(bua.check_out)
+            FROM booking_unit_availability bua
+            WHERE bua.unit_id = u.unit_id
+              AND bua.booking_status NOT IN ('Cancelled', 'NoShow')
+              AND bua.check_in >= p_check_in
+        ) AS next_available_date
     FROM units u
     WHERE u.unit_id = ANY(p_unit_ids)
       AND u.unit_status = 'Available';
 END;
 $$ LANGUAGE plpgsql STABLE;
 
-COMMENT ON FUNCTION check_multi_unit_availability IS 'Checks availability for multiple units in a single query';
+COMMENT ON FUNCTION check_multi_unit_availability IS 'Checks availability for multiple units in a single query, with next_available_date suggestion';
+```
+
+**Usage Example:**
+
+```typescript
+// API call
+const { data } = await supabase.rpc("check_multi_unit_availability", {
+  p_unit_ids: ["unit-1", "unit-2", "unit-3"],
+  p_check_in: "2025-03-15T06:00:00Z",
+  p_check_out: "2025-03-18T04:00:00Z",
+});
+
+// Response
+[
+  {
+    unit_id: "unit-1",
+    is_available: false,
+    conflicting_bookings: 1,
+    next_available_date: "2025-03-20T04:00:00Z", // Unit available after March 20 checkout
+  },
+  {
+    unit_id: "unit-2",
+    is_available: true,
+    conflicting_bookings: 0,
+    next_available_date: null, // Already available
+  },
+];
 ```
 
 ### 3. get_booking_units
@@ -557,6 +596,60 @@ CREATE TRIGGER trigger_cascade_status
     EXECUTE FUNCTION cascade_booking_status();
 ```
 
+### 4. Cleanup Availability on DELETE Trigger (NEW - Gap Resolution #4)
+
+**Purpose:** Remove availability records when booking_units are deleted
+
+```sql
+CREATE OR REPLACE FUNCTION cleanup_availability()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Delete corresponding availability record
+    DELETE FROM booking_unit_availability
+    WHERE booking_id = OLD.booking_id
+      AND unit_id = OLD.unit_id;
+
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_cleanup_availability
+    AFTER DELETE ON booking_units
+    FOR EACH ROW
+    EXECUTE FUNCTION cleanup_availability();
+
+COMMENT ON TRIGGER trigger_cleanup_availability ON booking_units IS 'Removes availability records when units are removed from bookings';
+```
+
+### 5. Sync Availability Unit ID on UPDATE Trigger (NEW - Gap Resolution #4)
+
+**Purpose:** Update availability when unit_id changes in booking_units
+
+```sql
+CREATE OR REPLACE FUNCTION sync_availability_unit()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Update unit_id in availability table
+    UPDATE booking_unit_availability
+    SET
+        unit_id = NEW.unit_id,
+        updated_at = NOW()
+    WHERE booking_id = NEW.booking_id
+      AND unit_id = OLD.unit_id;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_sync_availability_unit
+    AFTER UPDATE OF unit_id ON booking_units
+    FOR EACH ROW
+    WHEN (OLD.unit_id IS DISTINCT FROM NEW.unit_id)
+    EXECUTE FUNCTION sync_availability_unit();
+
+COMMENT ON TRIGGER trigger_sync_availability_unit ON booking_units IS 'Syncs unit_id changes to availability table';
+```
+
 ---
 
 ## Row Level Security (RLS)
@@ -640,19 +733,32 @@ CREATE POLICY "booking_units_delete_manager"
     );
 ```
 
-### booking_unit_availability Table
+### booking_unit_availability Table (Gap Resolution #10)
+
+**Security Note:** Direct table access exposes `booking_id` (potential PII leak). Use sanitized view for public access.
 
 ```sql
--- Enable RLS
+-- Enable RLS on base table
 ALTER TABLE booking_unit_availability ENABLE ROW LEVEL SECURITY;
 
--- Policy: Public can check availability (read-only)
-CREATE POLICY "availability_select_public"
-    ON booking_unit_availability
-    FOR SELECT
-    USING (true);
+-- Create sanitized PUBLIC VIEW without sensitive fields
+CREATE OR REPLACE VIEW public_unit_availability AS
+SELECT
+    unit_id,
+    check_in,
+    check_out,
+    booking_status
+    -- Excludes: availability_id, booking_id (security)
+FROM booking_unit_availability
+WHERE booking_status NOT IN ('Cancelled', 'NoShow');
 
--- Policy: Staff can manage availability
+-- Grant SELECT on view to public
+GRANT SELECT ON public_unit_availability TO anon, authenticated;
+
+-- Revoke direct table access for public (security hardening)
+REVOKE SELECT ON booking_unit_availability FROM anon;
+
+-- Policy: Staff has full access to base table
 CREATE POLICY "availability_all_staff"
     ON booking_unit_availability
     FOR ALL
@@ -664,6 +770,19 @@ CREATE POLICY "availability_all_staff"
               AND is_active = TRUE
         )
     );
+
+COMMENT ON VIEW public_unit_availability IS 'Public-safe availability view without booking_id or other sensitive fields';
+```
+
+**API Usage:**
+
+```typescript
+// ✅ GOOD: Public availability check (uses view)
+const { data } = await supabase.from("public_unit_availability").select("*").eq("unit_id", unitId);
+
+// ❌ BAD: Direct table access (exposes booking_id)
+// This will fail for anon users due to RLS
+const { data } = await supabase.from("booking_unit_availability").select("*");
 ```
 
 ---

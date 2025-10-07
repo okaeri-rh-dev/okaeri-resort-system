@@ -1,40 +1,45 @@
-# Phase 6: Migration & Production Rollout
+# Phase 6: Migration & Production Rollout (SIMPLIFIED)
 
-**Timeline**: Week 7 (Nov 17-22, 2025)
+**Timeline**: Week 7 (Nov 18-19, 2025) - 2 days
 **Lead Agent**: `cloudflare-deployment-optimizer`
-**Supporting Agents**: `postgres-serverless-architect`, `context-manager`, `security-compliance-auditor`
+**Supporting Agents**: `postgres-serverless-architect`, `security-compliance-auditor`
 **Dependencies**: Phases 1-5 complete, all tests passing
 **Deliverables**: Production deployment, monitoring dashboards, rollback procedures
+**Schema Reference**: See `SCHEMA-REFERENCE.md` for canonical column names
+
+---
+
+## Gap Resolutions Applied
+
+- **Gap #6:** NO feature flags (no users exist yet, direct deployment)
+- **Gap #11:** NO API versioning (no compatibility concerns)
+- **Gap #14:** NO legacy adapters (idealized implementation)
 
 ---
 
 ## Phase Overview
 
-Phase 6 executes the production rollout of multi-unit booking functionality using a phased deployment strategy with feature flags. This approach minimizes risk while enabling rapid rollback if issues arise.
+**Simplified Deployment Strategy:** Since there are no existing users, we can deploy directly without feature flags, gradual rollouts, or A/B testing.
 
 **Key Objectives**:
 
-- Zero-downtime deployment of database changes
-- Gradual user exposure (Beta → 10% → 25% → 50% → 100%)
-- Real-time monitoring and alerting
-- <5 minute rollback capability
-- Data integrity verification at each stage
-- Comprehensive audit trail of deployment activities
+- Wipe test data and execute clean migration
+- Deploy all components at once (DB + API + Frontend)
+- Monitor for 48 hours
+- Fast rollback via backup restore if needed (no feature flag complexity)
 
 ---
 
 ## Success Criteria
 
-| Metric                      | Target               | Measurement                 |
-| --------------------------- | -------------------- | --------------------------- |
-| **Deployment Success Rate** | 100% (zero failures) | Cloudflare deployment logs  |
-| **Downtime**                | 0 minutes            | Uptime monitoring           |
-| **Rollback Time**           | <5 minutes           | Incident response time      |
-| **Data Integrity**          | 100% (no data loss)  | Database validation queries |
-| **User Adoption Rate**      | ≥70% (Beta users)    | Analytics tracking          |
-| **Error Rate**              | <0.1% during rollout | Sentry error monitoring     |
-| **Performance Regression**  | 0 (no degradation)   | Compare Phase 5 benchmarks  |
-| **Customer Complaints**     | <5 during rollout    | Support ticket tracking     |
+| Metric                      | Target                | Measurement                 |
+| --------------------------- | --------------------- | --------------------------- |
+| **Deployment Success Rate** | 100% (zero failures)  | Cloudflare deployment logs  |
+| **Migration Success**       | Clean execution       | Database validation queries |
+| **Data Integrity**          | 100% (no data loss)   | Post-migration validation   |
+| **Error Rate**              | <1% in first 48h      | Sentry error monitoring     |
+| **Performance**             | <200ms API, <100ms DB | Performance monitoring      |
+| **Rollback Capability**     | <10 minutes           | Backup restore test         |
 
 ---
 
@@ -108,386 +113,268 @@ Phase 6 executes the production rollout of multi-unit booking functionality usin
 
 ---
 
-## 1. Feature Flag Infrastructure
+## 1. Direct Deployment Steps (Simplified - No Feature Flags)
 
-### Implementation with Cloudflare Workers KV
+### Pre-Deployment Checklist
 
-```typescript
-// functions/lib/feature-flags.ts
-import type { KVNamespace } from "@cloudflare/workers-types";
+**Date:** November 18, 2025  
+**Duration:** 2 hours  
+**Team:** DevOps Lead, Database Admin, 1 Developer
 
-export interface FeatureFlags {
-  MULTI_UNIT_BOOKING_ENABLED: boolean;
-  MULTI_UNIT_ROLLOUT_PERCENTAGE: number;
-  MULTI_UNIT_BETA_USERS: string[];
-  MULTI_UNIT_FORCE_DISABLE: boolean;
-}
+**Prerequisites:**
 
-export class FeatureFlagManager {
-  constructor(private kv: KVNamespace) {}
+- [ ] All Phase 5 tests passing (unit, integration, E2E)
+- [ ] Staging environment validated
+- [ ] Database backup plan ready
+- [ ] Rollback procedure documented and tested
+- [ ] Monitoring dashboards configured
+- [ ] Team available for 48h monitoring window
 
-  /**
-   * Check if multi-unit booking is enabled for a user
-   */
-  async isMultiUnitEnabled(userId: string, email: string): Promise<boolean> {
-    // 1. Check force disable (kill switch)
-    const forceDisable = await this.kv.get("MULTI_UNIT_FORCE_DISABLE");
-    if (forceDisable === "true") {
-      console.log("[FeatureFlag] Multi-unit force disabled");
-      return false;
-    }
+---
 
-    // 2. Check beta user list
-    const betaUsersJson = await this.kv.get("MULTI_UNIT_BETA_USERS");
-    if (betaUsersJson) {
-      const betaUsers: string[] = JSON.parse(betaUsersJson);
-      if (betaUsers.includes(userId) || betaUsers.includes(email)) {
-        console.log(`[FeatureFlag] Beta user access granted: ${email}`);
-        return true;
-      }
-    }
+### Step 1: Create Backup
 
-    // 3. Check rollout percentage
-    const rolloutPercentage = await this.kv.get("MULTI_UNIT_ROLLOUT_PERCENTAGE");
-    if (rolloutPercentage) {
-      const percentage = parseInt(rolloutPercentage, 10);
-      const userHash = this.hashUserId(userId);
-      const userPercentile = userHash % 100;
+```bash
+# Manual backup via Supabase Dashboard (REQUIRED)
+# Navigate to: Database → Backups → Create Manual Backup
+# Label: "pre-multi-unit-migration-2025-11-18"
 
-      const enabled = userPercentile < percentage;
-      console.log(`[FeatureFlag] Rollout check: ${userPercentile} < ${percentage} = ${enabled}`);
-      return enabled;
-    }
-
-    // 4. Default: disabled
-    return false;
-  }
-
-  /**
-   * Get current feature flag configuration
-   */
-  async getConfig(): Promise<FeatureFlags> {
-    const [forceDisable, rolloutPercentage, betaUsersJson] = await Promise.all([
-      this.kv.get("MULTI_UNIT_FORCE_DISABLE"),
-      this.kv.get("MULTI_UNIT_ROLLOUT_PERCENTAGE"),
-      this.kv.get("MULTI_UNIT_BETA_USERS"),
-    ]);
-
-    return {
-      MULTI_UNIT_BOOKING_ENABLED: forceDisable !== "true",
-      MULTI_UNIT_ROLLOUT_PERCENTAGE: parseInt(rolloutPercentage || "0", 10),
-      MULTI_UNIT_BETA_USERS: betaUsersJson ? JSON.parse(betaUsersJson) : [],
-      MULTI_UNIT_FORCE_DISABLE: forceDisable === "true",
-    };
-  }
-
-  /**
-   * Update feature flag (admin only)
-   */
-  async updateFlag(key: keyof FeatureFlags, value: any): Promise<void> {
-    const stringValue = typeof value === "string" ? value : JSON.stringify(value);
-    await this.kv.put(key, stringValue);
-    console.log(`[FeatureFlag] Updated ${key} = ${stringValue}`);
-  }
-
-  /**
-   * Hash user ID to consistent percentile (0-99)
-   */
-  private hashUserId(userId: string): number {
-    let hash = 0;
-    for (let i = 0; i < userId.length; i++) {
-      const char = userId.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    return Math.abs(hash) % 100;
-  }
-}
-
-// Singleton instance
-let featureFlagManager: FeatureFlagManager | null = null;
-
-export function getFeatureFlagManager(kv: KVNamespace): FeatureFlagManager {
-  if (!featureFlagManager) {
-    featureFlagManager = new FeatureFlagManager(kv);
-  }
-  return featureFlagManager;
-}
+# Verify backup exists
+echo "✅ Backup created and verified"
 ```
 
-### Feature Flag Middleware
+**Validation:**
 
-```typescript
-// functions/_middleware.ts
-import type { Request as CloudflareRequest, KVNamespace } from "@cloudflare/workers-types";
-import { getFeatureFlagManager } from "./lib/feature-flags";
+- Backup file size > 0
+- Backup includes all tables
+- Backup downloadable
 
-interface Env {
-  FEATURE_FLAGS: KVNamespace;
-  SUPABASE_URL: string;
-  SUPABASE_ANON_KEY: string;
-}
+---
 
-export async function onRequest(context: {
-  request: CloudflareRequest;
-  env: Env;
-  next: () => Promise<Response>;
-}) {
-  const { request, env, next } = context;
+### Step 2: Wipe Test Data
 
-  // Extract user from JWT
-  const authHeader = request.headers.get("Authorization");
-  let userId: string | null = null;
-  let userEmail: string | null = null;
+**⚠️ DESTRUCTIVE OPERATION - Confirm before proceeding**
 
-  if (authHeader?.startsWith("Bearer ")) {
-    const token = authHeader.substring(7);
-    const payload = parseJWT(token);
-    userId = payload?.sub || null;
-    userEmail = payload?.email || null;
-  }
+```sql
+-- Execute in Supabase SQL Editor
 
-  // Check feature flags
-  if (userId && env.FEATURE_FLAGS) {
-    const flagManager = getFeatureFlagManager(env.FEATURE_FLAGS);
-    const multiUnitEnabled = await flagManager.isMultiUnitEnabled(userId, userEmail || "");
+BEGIN;
 
-    // Attach flag to request context
-    (request as any).featureFlags = {
-      multiUnitEnabled,
-    };
-  }
+-- Wipe all test bookings (CASCADE handles related records)
+TRUNCATE TABLE bookings CASCADE;
+TRUNCATE TABLE payments CASCADE;
+TRUNCATE TABLE guests CASCADE;
 
-  return next();
-}
+-- Verify tables are empty
+SELECT
+  (SELECT COUNT(*) FROM bookings) as bookings_count,
+  (SELECT COUNT(*) FROM payments) as payments_count,
+  (SELECT COUNT(*) FROM guests) as guests_count;
+-- Expected: All counts = 0
 
-function parseJWT(token: string): any {
-  try {
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
-    );
-    return JSON.parse(jsonPayload);
-  } catch (error) {
-    console.error("Failed to parse JWT:", error);
-    return null;
-  }
-}
+COMMIT;
 ```
 
-### Client-Side Feature Flag Hook
+**Validation:**
 
-```typescript
-// src/hooks/useFeatureFlags.ts
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+- All booking/payment/guest tables empty
+- Units table unchanged
+- No foreign key violations
 
-interface FeatureFlags {
-  multiUnitEnabled: boolean;
-  rolloutPercentage: number;
-  isBetaUser: boolean;
-}
+---
 
-export function useFeatureFlags() {
-  return useQuery({
-    queryKey: ['feature-flags'],
-    queryFn: async (): Promise<FeatureFlags> => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) {
-        return {
-          multiUnitEnabled: false,
-          rolloutPercentage: 0,
-          isBetaUser: false,
-        };
-      }
+### Step 3: Execute Database Migration
 
-      // Fetch from backend API
-      const response = await fetch('/api/feature-flags', {
-        headers: {
-          Authorization: `Bearer ${session.session.access_token}`,
-        },
-      });
+**File:** `database/migrations/018-multi-unit-complete.sql`
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch feature flags');
-      }
+```bash
+# Run migration via Supabase SQL Editor or CLI
+psql $DATABASE_URL -f database/migrations/018-multi-unit-complete.sql
 
-      return response.json();
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
-  });
-}
+# Expected output:
+# ✓ Tables created
+# ✓ Triggers created
+# ✓ Functions created
+# ✓ RLS policies created
+# ✓ Indexes created
+```
 
-// Usage in components
-export function BookingPage() {
-  const { data: featureFlags, isLoading } = useFeatureFlags();
+**Migration includes:**
 
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
+- `ALTER TABLE bookings` (add is_multi_unit, unit_count, change to TIMESTAMPTZ)
+- `CREATE TABLE booking_units`
+- `CREATE TABLE booking_unit_availability`
+- `CREATE TABLE payment_adjustments`
+- All 5 triggers (including DELETE/UPDATE lifecycle)
+- `create_multi_unit_booking` function with guest_id support
+- `check_multi_unit_availability` function with next_available_date
+- Public availability view (security hardened)
+- Complete RLS policies
 
-  return (
-    <div>
-      {featureFlags?.multiUnitEnabled ? (
-        <MultiUnitBookingForm />
-      ) : (
-        <SingleUnitBookingForm />
-      )}
-    </div>
-  );
-}
+**Validation:**
+
+```sql
+-- Verify new tables exist
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
+  AND table_name IN ('booking_units', 'booking_unit_availability', 'payment_adjustments');
+-- Expected: 3 rows
+
+-- Verify functions exist
+SELECT routine_name
+FROM information_schema.routines
+WHERE routine_schema = 'public'
+  AND routine_name IN ('create_multi_unit_booking', 'check_multi_unit_availability');
+-- Expected: 2 rows
+
+-- Verify triggers exist
+SELECT trigger_name
+FROM information_schema.triggers
+WHERE trigger_schema = 'public';
+-- Expected: 5+ triggers
 ```
 
 ---
 
-## 2. Gradual Rollout Strategy
-
-### Rollout Phases
-
-| Phase    | Timeline            | Exposure            | Criteria                        | Rollback Trigger   |
-| -------- | ------------------- | ------------------- | ------------------------------- | ------------------ |
-| **Beta** | Nov 17 (Day 1)      | 10-20 beta users    | Handpicked power users          | >5 critical errors |
-| **10%**  | Nov 18-19 (Day 2-3) | 10% of active users | Beta success, <0.1% error rate  | >10 errors/hour    |
-| **25%**  | Nov 19-20 (Day 3-4) | 25% of active users | 10% success, stable performance | >25 errors/hour    |
-| **50%**  | Nov 20-21 (Day 4-5) | 50% of active users | 25% success, positive feedback  | >50 errors/hour    |
-| **100%** | Nov 21-22 (Day 5-7) | All users           | 50% success, no critical issues | >100 errors/hour   |
-
-### Rollout Execution Script
+### Step 4: Deploy Backend API
 
 ```bash
-#!/bin/bash
-# scripts/rollout-multi-unit.sh
+# Deploy Cloudflare Workers
+cd functions
+npm run deploy
 
-set -e
-
-CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN}"
-ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID}"
-KV_NAMESPACE_ID="${FEATURE_FLAGS_KV_NAMESPACE_ID}"
-
-function update_rollout_percentage() {
-  local percentage=$1
-  echo "📊 Updating rollout to ${percentage}%..."
-
-  curl -X PUT \
-    "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/storage/kv/namespaces/${KV_NAMESPACE_ID}/values/MULTI_UNIT_ROLLOUT_PERCENTAGE" \
-    -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-    -H "Content-Type: text/plain" \
-    --data "${percentage}"
-
-  echo "✅ Rollout percentage updated to ${percentage}%"
-}
-
-function enable_beta_users() {
-  local beta_users='["user-id-1", "user-id-2", "beta@resort.com"]'
-  echo "👥 Enabling beta users..."
-
-  curl -X PUT \
-    "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/storage/kv/namespaces/${KV_NAMESPACE_ID}/values/MULTI_UNIT_BETA_USERS" \
-    -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-    -H "Content-Type: application/json" \
-    --data "${beta_users}"
-
-  echo "✅ Beta users enabled"
-}
-
-function kill_switch() {
-  echo "🚨 ACTIVATING KILL SWITCH - Disabling multi-unit for all users..."
-
-  curl -X PUT \
-    "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/storage/kv/namespaces/${KV_NAMESPACE_ID}/values/MULTI_UNIT_FORCE_DISABLE" \
-    -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-    -H "Content-Type: text/plain" \
-    --data "true"
-
-  echo "❌ Multi-unit booking disabled for all users"
-}
-
-function monitor_metrics() {
-  local duration=$1
-  echo "📈 Monitoring metrics for ${duration} minutes..."
-
-  for i in $(seq 1 $duration); do
-    sleep 60
-
-    # Check error rate
-    ERROR_RATE=$(curl -s "https://api.sentry.io/v1/error-rate" | jq '.rate')
-    echo "[${i}/${duration}] Error rate: ${ERROR_RATE}"
-
-    if (( $(echo "$ERROR_RATE > 0.1" | bc -l) )); then
-      echo "⚠️  Error rate above threshold!"
-      return 1
-    fi
-  done
-
-  return 0
-}
-
-# Main rollout sequence
-case "${1}" in
-  beta)
-    echo "🚀 Phase 1: Beta Rollout"
-    enable_beta_users
-    update_rollout_percentage 0
-    ;;
-
-  10)
-    echo "🚀 Phase 2: 10% Rollout"
-    if monitor_metrics 30; then
-      update_rollout_percentage 10
-    else
-      echo "❌ Metrics check failed. Aborting rollout."
-      exit 1
-    fi
-    ;;
-
-  25)
-    echo "🚀 Phase 3: 25% Rollout"
-    if monitor_metrics 30; then
-      update_rollout_percentage 25
-    else
-      echo "❌ Metrics check failed. Aborting rollout."
-      exit 1
-    fi
-    ;;
-
-  50)
-    echo "🚀 Phase 4: 50% Rollout"
-    if monitor_metrics 30; then
-      update_rollout_percentage 50
-    else
-      echo "❌ Metrics check failed. Aborting rollout."
-      exit 1
-    fi
-    ;;
-
-  100)
-    echo "🚀 Phase 5: 100% Rollout (Full Release)"
-    if monitor_metrics 30; then
-      update_rollout_percentage 100
-    else
-      echo "❌ Metrics check failed. Aborting rollout."
-      exit 1
-    fi
-    ;;
-
-  rollback)
-    echo "⏪ ROLLBACK: Reverting to single-unit only"
-    kill_switch
-    ;;
-
-  *)
-    echo "Usage: $0 {beta|10|25|50|100|rollback}"
-    exit 1
-    ;;
-esac
-
-echo "✅ Rollout phase complete. Monitor dashboards for 30 minutes before next phase."
+# Expected output:
+# ✓ Middleware deployed
+# ✓ /api/pricing/quote deployed
+# ✓ /api/bookings/multi-unit deployed
+# ✓ /api/bookings/[id]/payments/capture deployed
+# ✓ /api/bookings/[id]/payments/refund deployed
+# ✓ /api/availability/multi-unit deployed
 ```
+
+**Validation:**
+
+```bash
+# Test pricing endpoint
+curl -X POST https://your-domain.com/api/pricing/quote \
+  -H "Content-Type: application/json" \
+  -d '{
+    "units": [{"unit_id": "test-unit-1", "guests": 2}],
+    "check_in": "2025-12-01T06:00:00Z",
+    "check_out": "2025-12-03T04:00:00Z"
+  }'
+# Expected: Pricing breakdown with total_amount
+
+# Test availability endpoint
+curl https://your-domain.com/api/availability/multi-unit?units=test-unit-1&check_in=2025-12-01&check_out=2025-12-03
+# Expected: Availability data with next_available_date
+```
+
+---
+
+### Step 5: Deploy Frontend
+
+```bash
+# Build and deploy to Cloudflare Pages
+npm run build
+npm run deploy
+
+# Expected output:
+# ✓ Build successful
+# ✓ Deployment to Cloudflare Pages complete
+# ✓ Preview URL available
+```
+
+**Validation:**
+
+```bash
+# Visit production URL
+# Check console for errors
+# Test multi-unit booking flow manually:
+#   1. Select dates
+#   2. Select 2+ units
+#   3. See pricing quote
+#   4. Create booking
+#   5. Verify in database
+```
+
+---
+
+### Step 6: Smoke Tests
+
+```bash
+# Run automated smoke tests
+npm run test:smoke
+
+# Manual checks:
+# [ ] Can create single-unit booking
+# [ ] Can create multi-unit booking (2 units)
+# [ ] Availability check works
+# [ ] Pricing calculation correct
+# [ ] Payment capture works
+# [ ] Database triggers firing correctly
+```
+
+---
+
+### Step 7: Enable Monitoring
+
+**Sentry:**
+
+```bash
+# Verify Sentry is capturing errors
+# Tag: feature=multi-unit-booking
+# Check dashboard for any errors in first 10 minutes
+```
+
+**Database Monitoring:**
+
+```sql
+-- Set up monitoring query (run every 5 minutes)
+SELECT
+  COUNT(*) as total_bookings,
+  COUNT(*) FILTER (WHERE is_multi_unit = true) as multi_unit_bookings,
+  AVG(unit_count) as avg_units_per_booking,
+  SUM(total_amount) as total_revenue
+FROM bookings
+WHERE created_at > NOW() - INTERVAL '1 hour';
+```
+
+**Performance:**
+
+- API response times (<200ms)
+- Database query times (<100ms)
+- Error rate (<1%)
+
+---
+
+### Post-Deployment Monitoring (48 hours)
+
+**Hour 1:**
+
+- [ ] No critical errors in Sentry
+- [ ] API endpoints responding
+- [ ] Database queries performing well
+- [ ] Test booking created successfully
+
+**Hour 6:**
+
+- [ ] Performance metrics stable
+- [ ] No data integrity issues
+- [ ] Monitoring dashboards green
+
+**Hour 24:**
+
+- [ ] Review error logs
+- [ ] Check performance trends
+- [ ] Validate data consistency
+
+**Hour 48:**
+
+- [ ] Final health check
+- [ ] Document any issues
+- [ ] Mark deployment as stable
 
 ---
 

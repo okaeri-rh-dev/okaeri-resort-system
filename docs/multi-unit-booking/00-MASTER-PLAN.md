@@ -1,9 +1,10 @@
 # Multi-Unit Booking: Master Implementation Plan
 
-**Document Version:** 1.0
+**Document Version:** 2.0 (Gap Resolutions Applied)
 **Created:** October 7, 2025
 **Last Updated:** October 7, 2025
 **Status:** Planning Phase
+**Schema Reference:** See `SCHEMA-REFERENCE.md` for canonical column names and types
 
 ---
 
@@ -11,7 +12,30 @@
 
 ### Objective
 
-Transform the Okaeri Resort System from single-unit bookings (1:1 relationship) to multi-unit bookings (1:N relationship) while maintaining backwards compatibility and enabling unified payment processing for multiple units.
+Transform the Okaeri Resort System from single-unit bookings (1:1 relationship) to multi-unit bookings (1:N relationship) with unified payment processing for multiple units.
+
+**Critical Context:** No existing users, so we can make breaking changes and wipe existing test data for a clean implementation.
+
+### Gap Resolutions Applied
+
+This plan incorporates resolutions for 14 critical architectural gaps identified during planning review:
+
+1. ✅ **Schema Constraint:** Any `booking_units` rows → `is_multi_unit = TRUE` (even for 1 unit)
+2. ✅ **Column Names:** Standardized on `check_in`, `check_out`, `booking_status`, `payment_status`
+3. ✅ **RLS + guest_id:** Both authenticated and anonymous bookings create guest records
+4. ✅ **Availability Lifecycle:** Complete triggers for INSERT, UPDATE, DELETE on `booking_units`
+5. ✅ **Payments Unification:** Full payment model with adjustments and refunds
+6. ✅ **No Feature Flags:** Direct deployment (no gradual rollout needed)
+7. ✅ **Centralized Pricing:** Server-side `/api/pricing/quote` as single source of truth
+8. ✅ **Auth Middleware:** Free-tier Cloudflare Workers middleware for all endpoints
+9. ✅ **Availability API:** Includes `next_available_date` computation
+10. ✅ **Public RLS:** Sanitized `public_unit_availability` view without `booking_id`
+11. ✅ **No API Versioning:** Single `/api/` namespace (no users to maintain compatibility for)
+12. ✅ **Timezone Handling:** TIMESTAMPTZ stored as UTC, displayed as Asia/Manila
+13. ✅ **Testing Targets:** ≥95% accessibility, zero critical violations (pragmatic)
+14. ✅ **No Legacy Adapter:** Idealized implementation (app can break during development)
+
+See `SCHEMA-REFERENCE.md` for canonical data types and column names.
 
 ### Business Value
 
@@ -22,16 +46,16 @@ Transform the Okaeri Resort System from single-unit bookings (1:1 relationship) 
 
 ### Success Metrics
 
-| Metric                        | Target                            | Measurement                          |
-| ----------------------------- | --------------------------------- | ------------------------------------ |
-| Multi-Unit Booking Support    | 2-10 units per booking            | System capacity test                 |
-| Performance (vs. single-unit) | No degradation                    | <200ms API response, <100ms DB query |
-| Payment Processing            | 50% reduction in transaction fees | Before/after comparison              |
-| Data Integrity                | Zero corruption incidents         | Post-deployment monitoring (30 days) |
-| User Satisfaction             | ≥4.5/5 stars                      | User feedback surveys                |
-| System Availability           | 99.9% uptime                      | Monitoring during rollout            |
-| Test Coverage                 | ≥90%                              | Code coverage reports                |
-| Backwards Compatibility       | 100% existing bookings work       | Regression testing                   |
+| Metric                     | Target                               | Measurement                          |
+| -------------------------- | ------------------------------------ | ------------------------------------ |
+| Multi-Unit Booking Support | 2-10 units per booking               | System capacity test                 |
+| Performance                | <200ms API response, <100ms DB query | Performance benchmarks               |
+| Payment Processing         | 50% reduction in transaction fees    | Unified payment vs separate payments |
+| Data Integrity             | Zero corruption incidents            | Post-deployment monitoring (30 days) |
+| User Satisfaction          | ≥4.5/5 stars                         | Early user feedback                  |
+| System Availability        | 99% uptime                           | Uptime monitoring                    |
+| Test Coverage              | ≥90%                                 | Code coverage reports                |
+| Accessibility Score        | ≥95% Lighthouse, 0 critical issues   | Automated accessibility testing      |
 
 ---
 
@@ -103,8 +127,10 @@ CREATE TABLE booking_units (
     UNIQUE(booking_id, unit_id)
 );
 
--- Maintain backwards compatibility
+-- Simplified schema (no legacy compatibility needed)
 ALTER TABLE bookings
+    ALTER COLUMN check_in TYPE TIMESTAMPTZ,  -- Upgrade to timestamptz
+    ALTER COLUMN check_out TYPE TIMESTAMPTZ,
     ALTER COLUMN unit_id DROP NOT NULL,  -- Nullable for multi-unit
     ADD COLUMN is_multi_unit BOOLEAN DEFAULT FALSE,
     ADD COLUMN unit_count INTEGER DEFAULT 1;
@@ -113,10 +139,12 @@ ALTER TABLE bookings
 **Key Design Decisions:**
 
 1. ✅ Junction table (`booking_units`) enables 1:N relationship
-2. ✅ Maintain `bookings.unit_id` for legacy single-unit bookings
-3. ✅ Denormalized availability table for fast queries
-4. ✅ Exclusion constraints prevent double-booking
-5. ✅ Triggers maintain data integrity
+2. ✅ Any rows in `booking_units` → `is_multi_unit = TRUE` (even for 1 unit)
+3. ✅ Denormalized availability table for fast queries with exclusion constraints
+4. ✅ Triggers maintain complete data integrity (including DELETE/UPDATE lifecycle)
+5. ✅ Guest records created for both authenticated and anonymous bookings
+6. ✅ Unified payment design from day 1 (payments reference `booking_id` not `unit_id`)
+7. ✅ Server-side pricing calculation as single source of truth
 
 ### Application Layer
 
@@ -445,49 +473,19 @@ function getBookingUnits(booking: Booking): BookingUnit[] {
 
 ### Migration Strategy
 
-**Phase 1: Schema Migration**
+**Deployment Strategy (Simplified - No Users Yet):**
 
-1. Add new tables without breaking existing schema
-2. Add nullable columns to bookings table
-3. Migrate existing bookings to booking_units table
-4. Validate data integrity
+1. **Wipe & Migrate:** Delete all test bookings, run full schema migration
+2. **Deploy All At Once:** Backend API + Frontend + Database in single deployment
+3. **Monitor:** Track errors and performance for 48 hours
+4. **Iterate:** Fix bugs quickly (no rollback concerns since no real users)
 
-**Phase 2: API Layer**
+**No Feature Flags Needed:**
 
-1. Create new multi-unit endpoints
-2. Maintain existing endpoints with adapters
-3. Add feature flag for gradual rollout
-
-**Phase 3: UI Rollout**
-
-1. Beta users get multi-unit interface
-2. A/B testing for UX validation
-3. Gradual rollout to all users
-4. Monitor metrics continuously
-
-### Feature Flag Strategy
-
-```typescript
-// Feature flags for controlled rollout
-const features = {
-  MULTI_UNIT_BOOKING_ENABLED: process.env.VITE_MULTI_UNIT_ENABLED === "true",
-  MULTI_UNIT_BETA_USERS: ["user-id-1", "user-id-2"],
-  MAX_UNITS_PER_BOOKING: 10,
-  BULK_DISCOUNT_THRESHOLD: 3, // 3+ units get discount
-};
-
-// Gradual rollout
-function isMultiUnitEnabled(userId: string): boolean {
-  if (!features.MULTI_UNIT_BOOKING_ENABLED) return false;
-
-  // Beta users always get access
-  if (features.MULTI_UNIT_BETA_USERS.includes(userId)) return true;
-
-  // Gradual rollout: 10% → 50% → 100%
-  const rolloutPercentage = parseInt(process.env.VITE_MULTI_UNIT_ROLLOUT || "0");
-  return hashUserId(userId) % 100 < rolloutPercentage;
-}
-```
+- ❌ No gradual rollout (no users to protect)
+- ❌ No A/B testing (no traffic to split)
+- ❌ No beta users (everyone gets new version)
+- ✅ Simple rollback: redeploy previous version + restore database backup
 
 ---
 
@@ -526,27 +524,32 @@ function isMultiUnitEnabled(userId: string): boolean {
 - ✅ Update guest assignments
 - ✅ Validate guest count per unit
 
-**4. Payment Processing**
+**4. Payment Processing (Unified Design)**
 
 - ✅ Unified payment for multiple units
+- ✅ Payment adjustments when units added/removed
 - ✅ Payment failure handling
-- ✅ Partial payment scenarios
+- ✅ Partial/full refund scenarios
 
-**5. Backwards Compatibility**
+**5. Guest Management**
 
-- ✅ Existing single-unit bookings still work
-- ✅ Migrate single-unit to multi-unit
-- ✅ Mixed booking types in database
+- ✅ Authenticated user creates guest record
+- ✅ Anonymous booking creates guest record (user_id NULL)
+- ✅ Guest can claim bookings after registration
 
 **6. Performance**
 
 - ✅ Load test with 10 units per booking
 - ✅ Concurrent multi-unit bookings
-- ✅ Database query performance under load
+- ✅ Database query performance under load (<100ms)
+- ✅ API response times (<200ms)
 
 **7. Edge Cases**
 
 - ✅ Remove last unit from booking (should fail)
+- ✅ Add unit after payment (triggers payment adjustment)
+- ✅ Timezone edge cases (Manila → UTC → Manila)
+- ✅ Booking with continuous date ranges
 - ✅ Add duplicate unit (should fail)
 - ✅ Exceed max units limit
 - ✅ Offline booking creation and sync

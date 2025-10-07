@@ -1,9 +1,21 @@
 # Phase 2: Backend API
 
-**Phase Duration:** October 14-18, 2025 (Week 2 - 5 days)
+**Phase Duration:** October 14-20, 2025 (Week 2 - 7 days, +2 days for payment unification)
 **Lead Agent:** `cloudflare-resort-api-architect`
 **Status:** Not Started
 **Dependencies:** Phase 1 (Database Foundation) must be complete
+**Schema Reference:** See `SCHEMA-REFERENCE.md` for canonical column names
+
+---
+
+## Gap Resolutions Applied
+
+This phase incorporates:
+
+- **Gap #7:** Centralized pricing endpoint (`/api/pricing/quote`) as single source of truth
+- **Gap #5:** Unified payment endpoints (capture, refund, adjust) with payment_adjustments tracking
+- **Gap #8:** Auth middleware for all mutating endpoints (Cloudflare Workers, free-tier compatible)
+- **Gap #6:** No feature flags (direct deployment)
 
 ---
 
@@ -11,7 +23,7 @@
 
 ### Objectives
 
-Design and implement REST API endpoints and serverless functions to support multi-unit booking operations, including creation, modification, availability checking, and payment processing.
+Design and implement REST API endpoints and serverless functions to support multi-unit booking operations, including creation, modification, availability checking, unified payment processing, and centralized pricing calculation.
 
 ### Success Criteria
 
@@ -52,11 +64,13 @@ Design and implement REST API endpoints and serverless functions to support mult
 
 **Deliverables:**
 
+- `functions/api/pricing/quote.ts` (NEW: Single source of truth for pricing)
 - `functions/api/bookings/multi-unit.ts`
-- `functions/api/bookings/add-unit.ts`
-- `functions/api/bookings/remove-unit.ts`
+- `functions/api/bookings/[id]/units/[unitId].ts` (add/remove units)
+- `functions/api/bookings/[id]/payments/capture.ts` (NEW: Unified payment)
+- `functions/api/bookings/[id]/payments/refund.ts` (NEW: Refund handling)
 - `functions/api/availability/multi-unit.ts`
-- `functions/api/payments/multi-unit.ts`
+- `functions/_middleware.ts` (NEW: Auth enforcement)
 - API documentation (OpenAPI spec)
 - Integration test suite
 
@@ -87,7 +101,242 @@ Design and implement REST API endpoints and serverless functions to support mult
 
 ---
 
+## Auth Middleware (Gap Resolution #8)
+
+**Purpose:** Centralized authentication enforcement for all mutating endpoints
+
+**File:** `functions/_middleware.ts`
+
+```typescript
+import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
+
+interface Env {
+  SUPABASE_URL: string;
+  SUPABASE_ANON_KEY: string;
+  SUPABASE_JWT_SECRET: string;
+}
+
+export async function onRequest(context: {
+  request: CloudflareRequest;
+  env: Env;
+  next: () => Promise<Response>;
+}) {
+  const { request, env, next } = context;
+  const url = new URL(request.url);
+
+  // Public endpoints (no auth required)
+  const publicPaths = [
+    "/api/availability/check",
+    "/api/availability/multi-unit",
+    "/api/units",
+    "/api/pricing/quote",
+  ];
+
+  if (publicPaths.some((path) => url.pathname.startsWith(path))) {
+    return next();
+  }
+
+  // Extract JWT from Authorization header
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const token = authHeader.substring(7);
+
+  // Verify Supabase JWT (free-tier compatible, CPU-bound only)
+  const user = await verifySupabaseJWT(token, env.SUPABASE_JWT_SECRET);
+
+  if (!user) {
+    return new Response(JSON.stringify({ error: "Invalid token" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  // Attach user to request context
+  (request as any).user = user;
+
+  return next();
+}
+
+async function verifySupabaseJWT(token: string, secret: string) {
+  // Implementation using jose or similar lightweight JWT library
+  // Free-tier compatible: <1ms CPU time, no external API calls
+  try {
+    const decoded = await jose.jwtVerify(token, new TextEncoder().encode(secret));
+    return decoded.payload;
+  } catch (error) {
+    console.error("JWT verification failed:", error);
+    return null;
+  }
+}
+```
+
+**Free-Tier Validation:**
+
+- ✅ No external API calls (JWT verification is CPU-bound)
+- ✅ Execution time: <1ms per request
+- ✅ Works within Cloudflare Workers 100,000 req/day limit
+- ✅ No additional costs incurred
+
+---
+
 ## API Endpoints Specification
+
+### 0. Centralized Pricing Quote (NEW - Gap Resolution #7)
+
+**Endpoint:** `POST /api/pricing/quote`
+
+**Purpose:** Single source of truth for pricing calculation (used by client for estimates and server for final totals)
+
+**Authentication:** None (public endpoint)
+
+**Request Body:**
+
+```typescript
+interface PricingQuoteRequest {
+  units: Array<{
+    unit_id: string;
+    guests: number;
+  }>;
+  check_in: string; // ISO 8601 UTC timestamp
+  check_out: string; // ISO 8601 UTC timestamp
+}
+```
+
+**Response:**
+
+```typescript
+interface PricingQuoteResponse {
+  total_amount: number;
+  nights: number;
+  units: Array<{
+    unit_id: string;
+    base_amount: number; // Sum of nightly rates
+    weekend_surcharge: number; // Weekend premium
+    extra_person_charge: number; // Charge for guests > base_occupancy
+    subtotal: number; // base + weekend + extra_person
+  }>;
+}
+```
+
+**Implementation:**
+
+```typescript
+// functions/api/pricing/quote.ts
+import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
+import { createClient } from "@supabase/supabase-js";
+
+export async function onRequestPost(context: { request: CloudflareRequest; env: Env }) {
+  const { request, env } = context;
+  const data: PricingQuoteRequest = await request.json();
+
+  // SINGLE SOURCE OF TRUTH: All pricing logic centralized here
+  const pricing = await calculateMultiUnitPricing(data, env);
+
+  return new Response(JSON.stringify(pricing), {
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "public, max-age=300", // Cache for 5 minutes
+    },
+  });
+}
+
+async function calculateMultiUnitPricing(
+  data: PricingQuoteRequest,
+  env: Env
+): Promise<PricingQuoteResponse> {
+  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
+
+  const checkIn = new Date(data.check_in);
+  const checkOut = new Date(data.check_out);
+  const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+
+  let totalAmount = 0;
+  const unitBreakdowns = [];
+
+  for (const unit of data.units) {
+    // Fetch unit pricing data
+    const { data: unitData } = await supabase
+      .from("units")
+      .select("base_rate, weekend_rate, extra_person_rate, base_occupancy")
+      .eq("unit_id", unit.unit_id)
+      .single();
+
+    if (!unitData) {
+      throw new Error(`Unit ${unit.unit_id} not found`);
+    }
+
+    let baseAmount = 0;
+    let weekendSurcharge = 0;
+
+    // Calculate nightly rates (weekend detection)
+    for (let i = 0; i < nights; i++) {
+      const currentDate = new Date(checkIn);
+      currentDate.setDate(currentDate.getDate() + i);
+      const dayOfWeek = currentDate.getDay();
+
+      const isWeekend = dayOfWeek === 5 || dayOfWeek === 6; // Friday or Saturday
+      const nightRate = isWeekend ? unitData.weekend_rate : unitData.base_rate;
+
+      if (isWeekend) {
+        weekendSurcharge += unitData.weekend_rate - unitData.base_rate;
+      }
+
+      baseAmount += nightRate;
+    }
+
+    // Extra person charges
+    const extraPersons = Math.max(0, unit.guests - unitData.base_occupancy);
+    const extraPersonCharge = extraPersons * unitData.extra_person_rate * nights;
+
+    const subtotal = baseAmount + extraPersonCharge;
+
+    unitBreakdowns.push({
+      unit_id: unit.unit_id,
+      base_amount: baseAmount,
+      weekend_surcharge: weekendSurcharge,
+      extra_person_charge: extraPersonCharge,
+      subtotal,
+    });
+
+    totalAmount += subtotal;
+  }
+
+  return {
+    total_amount: totalAmount,
+    nights,
+    units: unitBreakdowns,
+  };
+}
+```
+
+**Usage Pattern:**
+
+```typescript
+// Client: Get pricing estimate
+const pricing = await fetch("/api/pricing/quote", {
+  method: "POST",
+  body: JSON.stringify({
+    units: [
+      { unit_id: "unit-1", guests: 2 },
+      { unit_id: "unit-2", guests: 4 },
+    ],
+    check_in: "2025-03-15T06:00:00Z",
+    check_out: "2025-03-18T04:00:00Z",
+  }),
+}).then((r) => r.json());
+
+// Server: Use same function for booking creation
+const finalPricing = await calculateMultiUnitPricing(bookingData, env);
+await createBookingWithPricing(bookingData, finalPricing);
+```
+
+---
 
 ### 1. Create Multi-Unit Booking
 
@@ -711,6 +960,361 @@ function calculateUnitPricing(unit: any, checkIn: string, checkOut: string, numG
 
 - For single-unit bookings, `unit_id` field is populated
 - `booking_units` array always present (1 item for single-unit)
+
+---
+
+### 6. Capture Unified Payment (NEW - Gap Resolution #5)
+
+**Endpoint:** `POST /api/bookings/:booking_id/payments/capture`
+
+**Purpose:** Capture payment for all units in a multi-unit booking
+
+**Authentication:** Required (staff only)
+
+**Request Body:**
+
+```typescript
+interface CapturePaymentRequest {
+  amount: number;
+  payment_method: string; // 'GCash', 'BankTransfer', 'Cash', 'CreditCard'
+  payment_reference?: string;
+  proof_url?: string;
+  notes?: string;
+}
+```
+
+**Response:**
+
+```typescript
+{
+  success: true;
+  data: {
+    payment_id: string;
+    booking_id: string;
+    amount: number;
+    payment_method: string;
+    payment_date: string;
+    status: "completed";
+  }
+}
+```
+
+**Implementation:**
+
+```typescript
+// functions/api/bookings/[id]/payments/capture.ts
+export async function onRequestPost(context: {
+  request: CloudflareRequest;
+  env: Env;
+  params: { id: string };
+}) {
+  const { request, env, params } = context;
+  const bookingId = params.id;
+  const data: CapturePaymentRequest = await request.json();
+
+  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
+
+  // Verify booking exists and get total
+  const { data: booking, error: bookingError } = await supabase
+    .from("bookings")
+    .select("booking_id, total_amount, payment_status")
+    .eq("booking_id", bookingId)
+    .single();
+
+  if (bookingError || !booking) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: { code: "BOOKING_NOT_FOUND", message: "Booking not found" },
+      }),
+      { status: 404 }
+    );
+  }
+
+  // Validate payment amount
+  if (data.amount !== booking.total_amount) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: {
+          code: "AMOUNT_MISMATCH",
+          message: `Payment amount ${data.amount} does not match booking total ${booking.total_amount}`,
+        },
+      }),
+      { status: 400 }
+    );
+  }
+
+  // Create payment record
+  const { data: payment, error: paymentError } = await supabase
+    .from("payments")
+    .insert({
+      booking_id: bookingId,
+      amount: data.amount,
+      payment_method: data.payment_method,
+      payment_date: new Date().toISOString(),
+      proof_url: data.proof_url,
+      notes: data.notes,
+      created_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (paymentError) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: { code: "PAYMENT_FAILED", message: paymentError.message },
+      }),
+      { status: 500 }
+    );
+  }
+
+  // Update booking payment status
+  await supabase.from("bookings").update({ payment_status: "Paid" }).eq("booking_id", bookingId);
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      data: {
+        payment_id: payment.payment_id,
+        booking_id: bookingId,
+        amount: payment.amount,
+        payment_method: payment.payment_method,
+        payment_date: payment.payment_date,
+        status: "completed",
+      },
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+}
+```
+
+---
+
+### 7. Refund Payment (NEW - Gap Resolution #5)
+
+**Endpoint:** `POST /api/bookings/:booking_id/payments/refund`
+
+**Purpose:** Process full or partial refund for a booking
+
+**Authentication:** Required (manager only)
+
+**Request Body:**
+
+```typescript
+interface RefundPaymentRequest {
+  amount: number;
+  reason: string; // 'unit_removed', 'cancellation', 'price_adjustment', 'other'
+  notes?: string;
+}
+```
+
+**Response:**
+
+```typescript
+{
+  success: true;
+  data: {
+    adjustment_id: string;
+    payment_id: string;
+    amount_refunded: number;
+    total_refunded: number; // Cumulative refunds
+    reason: string;
+  }
+}
+```
+
+**Implementation:**
+
+```typescript
+// functions/api/bookings/[id]/payments/refund.ts
+export async function onRequestPost(context: {
+  request: CloudflareRequest;
+  env: Env;
+  params: { id: string };
+}) {
+  const { request, env, params } = context;
+  const bookingId = params.id;
+  const data: RefundPaymentRequest = await request.json();
+
+  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
+
+  // Get most recent payment
+  const { data: payment, error: paymentError } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("booking_id", bookingId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (paymentError || !payment) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: { code: "PAYMENT_NOT_FOUND", message: "No payment found for this booking" },
+      }),
+      { status: 404 }
+    );
+  }
+
+  // Validate refund amount
+  const totalRefunded = payment.refunded_amount + data.amount;
+  if (totalRefunded > payment.amount) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: {
+          code: "REFUND_EXCEEDS_PAYMENT",
+          message: `Cannot refund ${data.amount}. Total refund would be ${totalRefunded}, exceeding payment of ${payment.amount}`,
+        },
+      }),
+      { status: 400 }
+    );
+  }
+
+  // Update payment refunded_amount
+  const { error: updateError } = await supabase
+    .from("payments")
+    .update({ refunded_amount: totalRefunded })
+    .eq("payment_id", payment.payment_id);
+
+  if (updateError) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: { code: "REFUND_FAILED", message: updateError.message },
+      }),
+      { status: 500 }
+    );
+  }
+
+  // Create adjustment record
+  const { data: adjustment, error: adjustmentError } = await supabase
+    .from("payment_adjustments")
+    .insert({
+      payment_id: payment.payment_id,
+      reason: data.reason,
+      amount_change: -data.amount, // Negative for refund
+      created_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (adjustmentError) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: { code: "ADJUSTMENT_FAILED", message: adjustmentError.message },
+      }),
+      { status: 500 }
+    );
+  }
+
+  // Update booking payment status if fully refunded
+  if (totalRefunded === payment.amount) {
+    await supabase
+      .from("bookings")
+      .update({ payment_status: "Refunded" })
+      .eq("booking_id", bookingId);
+  } else if (totalRefunded > 0) {
+    await supabase
+      .from("bookings")
+      .update({ payment_status: "Partial" })
+      .eq("booking_id", bookingId);
+  }
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      data: {
+        adjustment_id: adjustment.adjustment_id,
+        payment_id: payment.payment_id,
+        amount_refunded: data.amount,
+        total_refunded: totalRefunded,
+        reason: data.reason,
+      },
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+}
+```
+
+---
+
+### 8. Adjust Payment (Automatic - Gap Resolution #5)
+
+**Purpose:** Automatically triggered when units are added/removed post-payment
+
+**Trigger Scenarios:**
+
+1. **Unit Added:** Calculate price delta, create adjustment record, update booking total
+2. **Unit Removed:** Calculate refund amount, create adjustment record, process refund
+
+**Implementation (called internally by add-unit/remove-unit endpoints):**
+
+```typescript
+async function adjustPaymentForUnitChange(
+  supabase: SupabaseClient,
+  bookingId: string,
+  deltaAmount: number, // Positive for add, negative for remove
+  reason: string
+) {
+  // Get existing payment
+  const { data: payment } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("booking_id", bookingId)
+    .single();
+
+  if (!payment) {
+    // No payment yet, just update booking total
+    await supabase
+      .from("bookings")
+      .update({
+        total_amount: db.raw("total_amount + ?", [deltaAmount]),
+      })
+      .eq("booking_id", bookingId);
+    return;
+  }
+
+  if (deltaAmount > 0) {
+    // Unit added - additional payment needed
+    await supabase.from("payment_adjustments").insert({
+      payment_id: payment.payment_id,
+      reason: "unit_added",
+      amount_change: deltaAmount,
+    });
+
+    await supabase
+      .from("bookings")
+      .update({ payment_status: "Partial" })
+      .eq("booking_id", bookingId);
+  } else {
+    // Unit removed - refund needed
+    await supabase.from("payment_adjustments").insert({
+      payment_id: payment.payment_id,
+      reason: "unit_removed",
+      amount_change: deltaAmount, // Negative value
+    });
+
+    const refundAmount = Math.abs(deltaAmount);
+    await supabase
+      .from("payments")
+      .update({
+        refunded_amount: db.raw("refunded_amount + ?", [refundAmount]),
+      })
+      .eq("payment_id", payment.payment_id);
+  }
+}
+```
 
 ---
 
