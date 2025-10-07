@@ -1,8 +1,8 @@
-import { useMemo } from "react";
-import { createColumnHelper } from "@tanstack/react-table";
+import { formatCurrency, SortableHeader, StatusBadge } from "@/components/tables/utils";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { Unit, UnitType, UnitStatus } from "@/types";
-import { formatCurrency, StatusBadge, SortableHeader } from "@/components/tables/utils";
+import type { Unit, UnitStatus } from "@/types";
+import { createColumnHelper } from "@tanstack/react-table";
+import { useMemo } from "react";
 import { InlineEdit, InlineSelect } from "./InlineEdit";
 
 const columnHelper = createColumnHelper<Unit>();
@@ -133,36 +133,36 @@ export function useUnitColumns({ onUpdateUnit, isEditMode }: UseUnitColumnsProps
         size: 120,
       }),
 
-      // Unit type column with inline editing
-      columnHelper.accessor("unit_type", {
-        header: "Type",
-        cell: ({ getValue, row }) => {
-          const unitTypes: Array<{ value: UnitType; label: string }> = [
-            { value: "Standard", label: "Standard" },
-            { value: "Deluxe", label: "Deluxe" },
-            { value: "Suite", label: "Suite" },
-            { value: "Villa", label: "Villa" },
-          ];
+      // // Unit type column with inline editing
+      // columnHelper.accessor("unit_type", {
+      //   header: "Type",
+      //   cell: ({ getValue, row }) => {
+      //     const unitTypes: Array<{ value: UnitType; label: string }> = [
+      //       { value: "Standard", label: "Standard" },
+      //       { value: "Deluxe", label: "Deluxe" },
+      //       { value: "Suite", label: "Suite" },
+      //       { value: "Villa", label: "Villa" },
+      //     ];
 
-          if (isEditMode) {
-            return (
-              <InlineSelect
-                value={getValue()}
-                options={unitTypes}
-                onSave={(value) => onUpdateUnit(row.original.unit_id, { unit_type: value })}
-              />
-            );
-          }
+      //     if (isEditMode) {
+      //       return (
+      //         <InlineSelect
+      //           value={getValue()}
+      //           options={unitTypes}
+      //           onSave={(value) => onUpdateUnit(row.original.unit_id, { unit_type: value })}
+      //         />
+      //       );
+      //     }
 
-          const typeLabel = unitTypes.find((t) => t.value === getValue())?.label;
-          return (
-            <div className="inline-flex rounded-md bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
-              {typeLabel || getValue()}
-            </div>
-          );
-        },
-        size: 120,
-      }),
+      //     const typeLabel = unitTypes.find((t) => t.value === getValue())?.label;
+      //     return (
+      //       <div className="inline-flex rounded-md bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
+      //         {typeLabel || getValue()}
+      //       </div>
+      //     );
+      //   },
+      //   size: 120,
+      // }),
 
       // Status column with inline editing
       columnHelper.accessor("unit_status", {
