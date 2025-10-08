@@ -51,9 +51,12 @@ if (import.meta.env.DEV) {
      * Test database query
      * Usage: await window.debug.testQuery('units')
      */
-    async testQuery(table = "units") {
+    async testQuery(table: string = "units") {
       console.log(`=== TESTING ${table.toUpperCase()} QUERY ===`);
-      const { data, error } = await supabase.from(table).select("*").limit(5);
+      const { data, error } = await supabase
+        .from(table as any)
+        .select("*")
+        .limit(5);
       console.log(`Results: ${data?.length || 0} rows`);
       console.log("Data:", data);
       console.log("Error:", error);
@@ -74,6 +77,8 @@ if (import.meta.env.DEV) {
         base_rate: 1000,
         base_occupancy: 2,
         max_occupancy: 4,
+        extra_person_rate: 500,
+        weekend_rate: 1200,
       };
 
       // Try insert

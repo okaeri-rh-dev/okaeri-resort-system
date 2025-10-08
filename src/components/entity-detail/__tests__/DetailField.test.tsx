@@ -117,7 +117,7 @@ describe("DetailField", () => {
 
   describe("Value styling", () => {
     it("applies proper text styling to value", () => {
-      const { container } = render(<DetailField label="Label" value="Value" />);
+      render(<DetailField label="Label" value="Value" />);
 
       const valueElement = screen.getByText("Value");
       expect(valueElement).toHaveClass("text-sm");
@@ -166,18 +166,14 @@ describe("DetailField", () => {
 
   describe("Custom className", () => {
     it("applies custom valueClassName to value", () => {
-      const { container } = render(
-        <DetailField label="Label" value="Value" valueClassName="custom-value-class" />
-      );
+      render(<DetailField label="Label" value="Value" valueClassName="custom-value-class" />);
 
       const value = screen.getByText("Value");
       expect(value).toHaveClass("custom-value-class", "text-sm", "text-neutral-900");
     });
 
     it("applies custom labelClassName to label", () => {
-      const { container } = render(
-        <DetailField label="Label" value="Value" labelClassName="custom-label-class" />
-      );
+      render(<DetailField label="Label" value="Value" labelClassName="custom-label-class" />);
 
       const label = screen.getByText("Label");
       expect(label).toHaveClass("custom-label-class", "text-sm", "font-medium", "text-neutral-600");

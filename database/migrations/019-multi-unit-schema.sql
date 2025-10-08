@@ -183,9 +183,38 @@ ALTER TABLE bookings
 
 -- Upgrade date columns from DATE to TIMESTAMPTZ (UTC storage)
 -- This is a BREAKING CHANGE but acceptable in greenfield deployment
-ALTER TABLE bookings
-    ALTER COLUMN check_in TYPE TIMESTAMP WITH TIME ZONE USING check_in::timestamp with time zone,
-    ALTER COLUMN check_out TYPE TIMESTAMP WITH TIME ZONE USING check_out::timestamp with time zone;
+-- Must drop exclusion constraint first (it references these columns)
+DO $$
+BEGIN
+    -- Only proceed if columns are not already timestamptz
+    IF (SELECT data_type FROM information_schema.columns WHERE table_name = 'bookings' AND column_name = 'check_in') != 'timestamp with time zone' THEN
+        -- Step 1: Drop exclusion constraint (uses check_in/check_out in expression)
+        ALTER TABLE bookings DROP CONSTRAINT IF EXISTS no_overlapping_bookings;
+
+        -- Step 2: Truncate bookings (greenfield - no production data to preserve)
+        TRUNCATE TABLE bookings CASCADE;
+
+        -- Step 3: Alter column types
+        ALTER TABLE bookings
+            ALTER COLUMN check_in TYPE TIMESTAMP WITH TIME ZONE
+            USING check_in::timestamp;
+
+        ALTER TABLE bookings
+            ALTER COLUMN check_out TYPE TIMESTAMP WITH TIME ZONE
+            USING check_out::timestamp;
+
+        -- Step 4: Recreate exclusion constraint with timestamptz
+        ALTER TABLE bookings
+            ADD CONSTRAINT no_overlapping_bookings
+            EXCLUDE USING gist (
+                unit_id WITH =,
+                tstzrange(check_in, check_out, '[)') WITH &&
+            ) WHERE (
+                is_guest_booking = false AND booking_status != 'Cancelled'
+                OR is_guest_booking = true AND booking_status IN ('Confirmed', 'CheckedIn', 'CheckedOut')
+            );
+    END IF;
+END $$;
 
 -- Make unit_id nullable (for multi-unit bookings)
 ALTER TABLE bookings
@@ -598,23 +627,23 @@ ALTER TABLE guest_assignments ENABLE ROW LEVEL SECURITY;
 -- 6.1 booking_units RLS Policies
 -- --------------------------------------------
 
--- Policy: Users can view their own booking units
+-- Policy: Guests can view booking units for their own bookings (via booking_reference)
+-- Staff can view all booking units
 CREATE POLICY "booking_units_select_own"
     ON booking_units
     FOR SELECT
     USING (
+        -- Staff access
         EXISTS (
-            SELECT 1 FROM bookings b
-            WHERE b.booking_id = booking_units.booking_id
-              AND (
-                  -- Guest owns the booking
-                  b.guest_id IN (
-                      SELECT guest_id FROM guests
-                      WHERE user_id = auth.uid()
-                  )
-                  -- Or has valid booking reference in session
-                  OR b.booking_reference = current_setting('app.booking_reference', true)
-              )
+            SELECT 1 FROM app_roles
+            WHERE user_id = auth.uid()
+              AND role IN ('admin', 'owner', 'manager', 'staff')
+              AND is_active = TRUE
+        )
+        -- Or guest access via booking_reference session variable
+        OR booking_id IN (
+            SELECT booking_id FROM bookings
+            WHERE booking_reference = current_setting('app.booking_reference', true)
         )
     );
 
@@ -710,14 +739,25 @@ COMMENT ON VIEW public_unit_availability IS 'Public-safe availability view witho
 -- 6.3 guest_assignments RLS Policies
 -- --------------------------------------------
 
--- Policy: Users can view their own guest assignments
+-- Policy: Guests can view their own assignments (via booking_reference)
+-- Staff can view all assignments
 CREATE POLICY "guest_assignments_select_own"
     ON guest_assignments
     FOR SELECT
     USING (
-        guest_id IN (
-            SELECT guest_id FROM guests
+        -- Staff access
+        EXISTS (
+            SELECT 1 FROM app_roles
             WHERE user_id = auth.uid()
+              AND role IN ('admin', 'owner', 'manager', 'staff')
+              AND is_active = TRUE
+        )
+        -- Or guest can view via booking that contains this booking_unit
+        OR booking_unit_id IN (
+            SELECT bu.booking_unit_id
+            FROM booking_units bu
+            JOIN bookings b ON b.booking_id = bu.booking_id
+            WHERE b.booking_reference = current_setting('app.booking_reference', true)
         )
     );
 

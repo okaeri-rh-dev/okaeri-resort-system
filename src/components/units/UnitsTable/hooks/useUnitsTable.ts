@@ -91,13 +91,13 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
 
   // Handle unit deletion
   const handleDeleteUnit = useCallback(
-    async (unitId: string) => {
+    async (unit: Unit) => {
       try {
-        await deleteMutationRef.current.mutateAsync(unitId);
+        await deleteMutationRef.current.mutateAsync(unit.unit_id);
         // Remove deleted unit from selection
         setRowSelection((prev) => {
           const newSelection = { ...prev };
-          delete newSelection[unitId];
+          delete newSelection[unit.unit_id];
           return newSelection;
         });
       } catch (error) {

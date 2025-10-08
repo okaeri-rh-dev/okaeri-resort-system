@@ -1,7 +1,7 @@
 // src/components/entity-detail/__tests__/DetailPageSkeleton.test.tsx
 
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { DetailPageSkeleton } from "../DetailPageSkeleton";
 
 describe("DetailPageSkeleton", () => {

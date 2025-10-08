@@ -119,7 +119,7 @@ describe("DetailPageLayout", () => {
     });
 
     it("does not render status badge section when not provided", () => {
-      const { container } = render(
+      render(
         <DetailPageLayout title="Test Entity" breadcrumbs={[]}>
           <div>Content</div>
         </DetailPageLayout>
@@ -145,7 +145,7 @@ describe("DetailPageLayout", () => {
     });
 
     it("does not render actions section when not provided", () => {
-      const { container } = render(
+      render(
         <DetailPageLayout title="Test Entity" breadcrumbs={[]}>
           <div>Content</div>
         </DetailPageLayout>

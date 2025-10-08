@@ -288,7 +288,7 @@ describe("Multi-Unit Booking Database Functions", () => {
         payment_status: "Unpaid",
       };
 
-      const { data: booking2, error } = await supabase.rpc("create_multi_unit_booking", {
+      const { data: _booking2, error } = await supabase.rpc("create_multi_unit_booking", {
         p_booking_data: bookingData2,
         p_units: [
           {

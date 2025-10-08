@@ -8,6 +8,88 @@ import { db } from "@/lib/supabase";
 import { logAuditEvent } from "@/lib/audit-logger";
 import type { ReactNode } from "react";
 
+// Mock factories for complete database rows
+const createMockBooking = (overrides: Record<string, any> = {}) => ({
+  booking_id: "booking-123",
+  booking_reference: "BKG-2024-001",
+  booking_status: "Confirmed",
+  check_in: "2024-12-20T14:00:00Z",
+  check_out: "2024-12-22T11:00:00Z",
+  contact_number: "+63 912 345 6789",
+  created_at: "2024-01-01T00:00:00Z",
+  email: "test@example.com",
+  guest_id: "guest-123",
+  guest_name: "Test Guest",
+  is_guest_booking: false,
+  num_guests: 2,
+  payment_method: null,
+  payment_proof_url: null,
+  payment_status: "Pending",
+  special_requests: null,
+  total_amount: 4500,
+  unit_id: "unit-123",
+  updated_at: "2024-01-01T00:00:00Z",
+  upload_status: null,
+  uploaded_at: null,
+  internal_notes: null,
+  upload_expires_at: null,
+  ...overrides,
+});
+
+const createMockUnit = (overrides: Record<string, any> = {}) => ({
+  unit_id: "unit-123",
+  unit_code: "DEL-1",
+  unit_name: "Deluxe Room 1",
+  unit_type: "Deluxe",
+  unit_status: "Available",
+  base_occupancy: 2,
+  max_occupancy: 4,
+  base_rate: 5000,
+  extra_person_rate: 500,
+  weekend_rate: 6000,
+  amenities: {},
+  created_at: "2024-01-01T00:00:00Z",
+  updated_at: "2024-01-01T00:00:00Z",
+  ...overrides,
+});
+
+const createMockGuest = (overrides: Record<string, any> = {}) => ({
+  guest_id: "guest-123",
+  guest_name: "Test Guest",
+  email: "test@example.com",
+  phone_number: "+63 912 345 6789",
+  created_at: "2024-01-01T00:00:00Z",
+  updated_at: "2024-01-01T00:00:00Z",
+  total_bookings: 5,
+  total_spent: 25000,
+  ...overrides,
+});
+
+const createMockPayment = (overrides: Record<string, any> = {}) => ({
+  payment_id: "payment-123",
+  booking_id: "booking-123",
+  amount: 4500,
+  payment_method: "Cash",
+  payment_date: "2024-01-01T00:00:00Z",
+  notes: null,
+  proof_url: null,
+  created_at: "2024-01-01T00:00:00Z",
+  ...overrides,
+});
+
+const createMockExpense = (overrides: Record<string, any> = {}) => ({
+  expense_id: "expense-123",
+  description: "Test Expense",
+  amount: 2500,
+  category: "Supplies",
+  expense_date: "2024-01-01",
+  notes: null,
+  receipt_url: null,
+  created_at: "2024-01-01T00:00:00Z",
+  updated_at: "2024-01-01T00:00:00Z",
+  ...overrides,
+});
+
 // Mock dependencies
 vi.mock("@/lib/supabase", () => ({
   db: {
@@ -73,11 +155,11 @@ describe("useEntityEdit", () => {
         guest_name: "Updated Name",
         email: "updated@example.com",
       };
-      const updatedBooking = {
+      const updatedBooking = createMockBooking({
         booking_id: entityId,
         ...updateData,
         booking_reference: "BK-001",
-      };
+      });
 
       vi.mocked(db.bookings.update).mockResolvedValue({
         data: updatedBooking,
@@ -88,9 +170,8 @@ describe("useEntityEdit", () => {
         wrapper: createWrapper(),
       });
 
-      let mutationPromise: Promise<any>;
       act(() => {
-        mutationPromise = result.current.mutateAsync(updateData);
+        result.current.mutateAsync(updateData);
       });
 
       await waitFor(() => {
@@ -104,13 +185,16 @@ describe("useEntityEdit", () => {
     it("logs audit event on successful update", async () => {
       const entityId = "booking-123";
       const updateData = { guest_name: "New Name" };
-      const updatedBooking = { booking_id: entityId, ...updateData };
+      const updatedBooking = createMockBooking({ booking_id: entityId, ...updateData });
 
       // Set up initial cached data
-      queryClient.setQueryData(["booking", entityId], {
-        booking_id: entityId,
-        guest_name: "Old Name",
-      });
+      queryClient.setQueryData(
+        ["booking", entityId],
+        createMockBooking({
+          booking_id: entityId,
+          guest_name: "Old Name",
+        })
+      );
 
       vi.mocked(db.bookings.update).mockResolvedValue({
         data: updatedBooking,
@@ -134,11 +218,11 @@ describe("useEntityEdit", () => {
 
     it("performs optimistic update", async () => {
       const entityId = "booking-123";
-      const initialData = {
+      const initialData = createMockBooking({
         booking_id: entityId,
         guest_name: "Original Name",
         email: "original@example.com",
-      };
+      });
       const updateData = { guest_name: "Optimistic Name" };
 
       queryClient.setQueryData(["booking", entityId], initialData);
@@ -179,7 +263,13 @@ describe("useEntityEdit", () => {
 
       vi.mocked(db.bookings.update).mockResolvedValue({
         data: null,
-        error: { message: "Update failed", code: "500" },
+        error: {
+          message: "Update failed",
+          code: "500",
+          details: "",
+          hint: "",
+          name: "PostgrestError",
+        },
       });
 
       const { result } = renderHook(() => useEntityEdit("booking", entityId), {
@@ -207,7 +297,7 @@ describe("useEntityEdit", () => {
         unit_name: "Updated Villa",
         base_rate: 6000,
       };
-      const updatedUnit = { unit_id: entityId, ...updateData };
+      const updatedUnit = createMockUnit({ unit_id: entityId, ...updateData });
 
       vi.mocked(db.units.update).mockResolvedValue({
         data: updatedUnit,
@@ -237,7 +327,7 @@ describe("useEntityEdit", () => {
         email: "newemail@example.com",
         contact_number: "09171234567",
       };
-      const updatedGuest = { guest_id: entityId, ...updateData };
+      const updatedGuest = createMockGuest({ guest_id: entityId, ...updateData });
 
       vi.mocked(db.guests.update).mockResolvedValue({
         data: updatedGuest,
@@ -267,7 +357,7 @@ describe("useEntityEdit", () => {
         payment_amount: 7500,
         payment_method: "Cash" as const,
       };
-      const updatedPayment = { payment_id: entityId, ...updateData };
+      const updatedPayment = createMockPayment({ payment_id: entityId, ...updateData });
 
       vi.mocked(db.payments.update).mockResolvedValue({
         data: updatedPayment,
@@ -297,7 +387,7 @@ describe("useEntityEdit", () => {
         description: "Updated maintenance",
         amount: 3000,
       };
-      const updatedExpense = { expense_id: entityId, ...updateData };
+      const updatedExpense = createMockExpense({ expense_id: entityId, ...updateData });
 
       vi.mocked(db.expenses.update).mockResolvedValue({
         data: updatedExpense,
@@ -324,7 +414,7 @@ describe("useEntityEdit", () => {
     it("calls onSuccess callback", async () => {
       const entityId = "booking-123";
       const updateData = { guest_name: "Success Test" };
-      const updatedData = { booking_id: entityId, ...updateData };
+      const updatedData = createMockBooking({ booking_id: entityId, ...updateData });
       const onSuccess = vi.fn();
 
       vi.mocked(db.bookings.update).mockResolvedValue({
@@ -354,7 +444,13 @@ describe("useEntityEdit", () => {
 
       vi.mocked(db.bookings.update).mockResolvedValue({
         data: null,
-        error: { message: "Update failed" },
+        error: {
+          message: "Update failed",
+          code: "500",
+          details: "",
+          hint: "",
+          name: "PostgrestError",
+        },
       });
 
       const { result } = renderHook(() => useEntityEdit("booking", entityId, { onError }), {
@@ -378,7 +474,7 @@ describe("useEntityEdit", () => {
     it("invalidates entity query on success", async () => {
       const entityId = "booking-123";
       const updateData = { guest_name: "Invalidate Test" };
-      const updatedData = { booking_id: entityId, ...updateData };
+      const updatedData = createMockBooking({ booking_id: entityId, ...updateData });
 
       vi.mocked(db.bookings.update).mockResolvedValue({
         data: updatedData,
@@ -386,7 +482,10 @@ describe("useEntityEdit", () => {
       });
 
       // Set initial data
-      queryClient.setQueryData(["booking", entityId], { booking_id: entityId, guest_name: "Old" });
+      queryClient.setQueryData(
+        ["booking", entityId],
+        createMockBooking({ booking_id: entityId, guest_name: "Old" })
+      );
 
       const { result } = renderHook(() => useEntityEdit("booking", entityId), {
         wrapper: createWrapper(),
