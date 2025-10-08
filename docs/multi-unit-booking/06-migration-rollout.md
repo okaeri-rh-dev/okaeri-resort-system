@@ -673,7 +673,9 @@ echo "=========================================="
 
 ## 4. Monitoring & Alerting
 
-### Sentry Configuration
+**Note**: Comprehensive monitoring (Sentry, Prometheus, etc.) is deferred to post-launch. Initial deployment will use basic error logging and manual monitoring only.
+
+### Sentry Configuration (Post-Launch Enhancement)
 
 ```typescript
 // src/lib/monitoring/sentry.ts
@@ -735,12 +737,7 @@ export function trackMultiUnitError(error: Error, context: Record<string, any>) 
             "title": "Deployment Progress %",
             "type": "graph",
             "targets":
-              [
-                {
-                  "expr": "cloudflare_kv_get{key='MULTI_UNIT_ROLLOUT_PERCENTAGE'}",
-                  "legendFormat": "Rollout Percentage",
-                },
-              ],
+              [{ "expr": "100", "legendFormat": "Deployment Complete (No gradual rollout)" }],
           },
           {
             "id": 2,
@@ -885,17 +882,9 @@ groups:
         annotations:
           summary: "Spike in booking conflicts"
           description: "{{ $value }} conflicts in last 5 minutes"
-
-      - alert: FeatureFlagKillSwitch
-        expr: cloudflare_kv_get{key="MULTI_UNIT_FORCE_DISABLE"} == 1
-        for: 1m
-        labels:
-          severity: critical
-          feature: multi-unit-booking
-        annotations:
-          summary: "Kill switch activated"
-          description: "Multi-unit booking has been force disabled"
 ```
+
+**Note**: Feature flag kill switches deferred to post-launch monitoring enhancement.
 
 ---
 
@@ -994,12 +983,12 @@ echo "4. Create incident report"
 
 ### Rollback Decision Matrix
 
-| Issue Severity | Symptoms                                                       | Rollback Action                             | Timeline        |
-| -------------- | -------------------------------------------------------------- | ------------------------------------------- | --------------- |
-| **Critical**   | >100 errors/hour, data corruption, security breach             | Full rollback (kill switch + database)      | <5 minutes      |
-| **High**       | >50 errors/hour, performance degradation >2x, payment failures | Kill switch only (retain data)              | <10 minutes     |
-| **Medium**     | >25 errors/hour, UI bugs, minor data inconsistencies           | Reduce rollout percentage (e.g., 50% → 10%) | <15 minutes     |
-| **Low**        | <10 errors/hour, cosmetic issues, feature requests             | Monitor and fix forward                     | Next deployment |
+| Issue Severity | Symptoms                                                       | Rollback Action                            | Timeline        |
+| -------------- | -------------------------------------------------------------- | ------------------------------------------ | --------------- |
+| **Critical**   | >100 errors/hour, data corruption, security breach             | Full database rollback + redeploy          | <30 minutes     |
+| **High**       | >50 errors/hour, performance degradation >2x, payment failures | Database rollback (retain recent bookings) | <45 minutes     |
+| **Medium**     | >25 errors/hour, UI bugs, minor data inconsistencies           | Fix forward in next deployment             | <1 day          |
+| **Low**        | <10 errors/hour, cosmetic issues, feature requests             | Monitor and fix forward                    | Next deployment |
 
 ---
 

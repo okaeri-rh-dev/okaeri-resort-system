@@ -541,13 +541,13 @@ const rowVirtualizer = useVirtualizer({
          ┌───────────────┴───────────────┐
          │                               │
          ↓                               ↓
-┌────────────────┐            ┌─────────────────────┐
-│ Vercel (Pages) │            │ Neon (PostgreSQL)   │
-│                │            │                     │
-│  • React App   │            │  • Database         │
-│  • Static      │            │  • Auto-scaling     │
-│  • SSR (opt)   │            │  • Branching        │
-└────────────────┘            └─────────────────────┘
+┌────────────────────┐        ┌─────────────────────┐
+│ Cloudflare Pages   │        │ Neon (PostgreSQL)   │
+│                    │        │                     │
+│  • React App       │        │  • Database         │
+│  • Static          │        │  • Auto-scaling     │
+│  • Workers (API)   │        │  • Branching        │
+└────────────────────┘        └─────────────────────┘
          │
          ↓
 ┌────────────────────────┐
@@ -580,11 +580,11 @@ GitHub Actions
     ├─→ Run E2E Tests (Playwright)
     ├─→ Run Security Scan (npm audit)
     ├─→ Build Application
-    ├─→ Deploy to Staging (Vercel Preview)
+    ├─→ Deploy to Staging (Cloudflare Pages Preview)
     │
     └─→ [Manual Approval]
           ↓
-        Deploy to Production (Vercel)
+        Deploy to Production (Cloudflare Pages)
           ↓
         Run Smoke Tests
           ↓

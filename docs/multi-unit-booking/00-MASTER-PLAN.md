@@ -16,9 +16,22 @@ Transform the Okaeri Resort System from single-unit bookings (1:1 relationship) 
 
 **Critical Context:** No existing users, so we can make breaking changes and wipe existing test data for a clean implementation.
 
-### Gap Resolutions Applied
+### Gap Resolutions Applied (Updated October 2025)
 
-This plan incorporates resolutions for 14 critical architectural gaps identified during planning review:
+This plan incorporates resolutions for 8 critical feedback gaps plus 14 original architectural gaps:
+
+#### Feedback-Driven Decisions (8 Gaps)
+
+1. ✅ **Infrastructure:** Cloudflare Pages + Workers only (no Vercel)
+2. ✅ **Documentation:** Complete file structure with API-STANDARDS.md, migrations/
+3. ✅ **Payment Endpoints:** `/payments/record` (manual payment recording semantics)
+4. ✅ **Availability Policy:** Aggressive (Pending doesn't block, manager is gatekeeper)
+5. ✅ **Backwards Compatibility:** Junction-only, `unit_id = NULL` for new bookings
+6. ✅ **Pricing:** Recalculate on submit, peak season via date ranges
+7. ✅ **Monitoring:** Deferred to post-launch (basic logging only initially)
+8. ✅ **Emergency Controls:** YOLO (no kill switches, database rollback only)
+
+#### Original Architecture Decisions (14 Gaps)
 
 1. ✅ **Schema Constraint:** Any `booking_units` rows → `is_multi_unit = TRUE` (even for 1 unit)
 2. ✅ **Column Names:** Standardized on `check_in`, `check_out`, `booking_status`, `payment_status`

@@ -67,7 +67,7 @@ Design and implement REST API endpoints and serverless functions to support mult
 - `functions/api/pricing/quote.ts` (NEW: Single source of truth for pricing)
 - `functions/api/bookings/multi-unit.ts`
 - `functions/api/bookings/[id]/units/[unitId].ts` (add/remove units)
-- `functions/api/bookings/[id]/payments/capture.ts` (NEW: Unified payment)
+- `functions/api/bookings/[id]/payments/record.ts` (NEW: Manual payment recording)
 - `functions/api/bookings/[id]/payments/refund.ts` (NEW: Refund handling)
 - `functions/api/availability/multi-unit.ts`
 - `functions/_middleware.ts` (NEW: Auth enforcement)
@@ -1029,11 +1029,11 @@ function calculateUnitPricing(unit: any, checkIn: string, checkOut: string, numG
 
 ---
 
-### 6. Capture Unified Payment (NEW - Gap Resolution #5)
+### 6. Record Manual Payment (NEW - Manual Payment Tracking)
 
-**Endpoint:** `POST /api/bookings/:booking_id/payments/capture`
+**Endpoint:** `POST /api/bookings/:booking_id/payments/record`
 
-**Purpose:** Capture payment for all units in a multi-unit booking
+**Purpose:** Record manual payment (GCash, bank transfer, cash) for multi-unit booking
 
 **Authentication:** Required (staff only)
 
@@ -1068,7 +1068,7 @@ interface CapturePaymentRequest {
 **Implementation:**
 
 ```typescript
-// functions/api/bookings/[id]/payments/capture.ts
+// functions/api/bookings/[id]/payments/record.ts
 export async function onRequestPost(context: {
   request: CloudflareRequest;
   env: Env;
@@ -1347,8 +1347,8 @@ Unpaid (Initial State)
 
 **Transition Triggers:**
 
-- **Unpaid → Paid**: `/api/bookings/:id/payments/capture` with full amount
-- **Unpaid → Partial**: `/api/bookings/:id/payments/capture` with partial amount
+- **Unpaid → Paid**: `/api/bookings/:id/payments/record` with full amount
+- **Unpaid → Partial**: `/api/bookings/:id/payments/record` with partial amount
 - **Partial → Paid**: Capture remaining balance
 - **Paid → Refunded**: `/api/bookings/:id/payments/refund` with full amount
 - **Paid → PartialRefund**: `/api/bookings/:id/payments/refund` with partial amount
