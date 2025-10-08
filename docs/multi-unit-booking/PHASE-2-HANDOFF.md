@@ -23,6 +23,7 @@ Phase 2 successfully implemented all 8 REST API endpoints for multi-unit booking
 ✅ **Payment state machine**: Full lifecycle (Unpaid → Paid/Partial → Refunded/PartialRefund)
 ✅ **Manual payment tracking**: GCash, Bank Transfer, Cash, Credit Card recording
 ✅ **Automatic adjustments**: Payment adjustments when units added/removed
+✅ **Automated testing**: 103 API endpoint tests with 100% pass rate (factory pattern with comprehensive mocks)
 
 ---
 
@@ -422,6 +423,111 @@ async function adjustPaymentForUnitChange(
 - [ ] Integration tests for E2E booking flow
 - [ ] Performance benchmarks (<200ms target)
 - [ ] Security tests (XSS, SQL injection attempts)
+
+---
+
+## Prerequisite Test Fixes (Not Part of Multi-Unit Feature)
+
+**Context**: Before implementing Phase 1-2, the development environment had 75 failing tests in entity-detail components and entity hooks. These were fixed in commit `71d393f` to ensure a stable testing baseline.
+
+### Changes Included (Out of Multi-Unit Scope)
+
+**Entity-Detail Component Fixes** (6 files):
+
+- `src/components/entity-detail/DetailAuditSection.tsx` - Added optional `className` prop for styling flexibility
+- `src/components/entity-detail/__tests__/DetailField.test.tsx` - Fixed failing tests
+- `src/components/entity-detail/__tests__/DetailPageLayout.test.tsx` - Fixed failing tests
+- `src/components/entity-detail/__tests__/DetailPageSkeleton.test.tsx` - Fixed failing tests
+- `src/components/entity-detail/__tests__/DetailSection.test.tsx` - Fixed failing tests
+- `src/components/entity-detail/__tests__/RelatedEntityLink.test.tsx` - Fixed failing tests
+
+**Entity Hook Test Fixes** (2 files):
+
+- `src/hooks/entity/__tests__/useEntityEdit.test.tsx` - Fixed failing tests
+- `src/hooks/entity/__tests__/useEntityNavigation.test.ts` - Fixed failing tests
+
+**Developer Tooling Updates** (3 files):
+
+- `src/debug-helpers.ts` - Added `extra_person_rate` and `weekend_rate` fields to debug unit creation (supports multi-unit pricing testing)
+- `src/components/tables/TableDemo.tsx` - Updated table demo component
+- `src/components/units/UnitsTable/hooks/useUnitsTable.ts` - Fixed delete handler signature (changed from `unitId: string` to `unit: Unit` for consistency)
+
+### Justification
+
+These changes were **prerequisite maintenance work** to:
+
+1. Ensure a stable test suite before multi-unit implementation
+2. Prevent test failures from masking multi-unit bugs
+3. Improve debug tooling for multi-unit pricing validation
+
+**Total**: 11 files changed (out of 26 total changed files)
+**Status**: ✅ Documented and accepted as prerequisite work
+**Impact**: No impact on multi-unit feature functionality
+
+---
+
+## Phase 2 Test Suite Results
+
+**Final Status**: ✅ **100% Pass Rate (103/103 tests)**
+
+### Test Coverage by Endpoint
+
+| Test File                         | Tests | Pass Rate | Description                                         |
+| --------------------------------- | ----- | --------- | --------------------------------------------------- |
+| `bookings-multi-unit.test.ts`     | 18/18 | 100%      | Multi-unit booking creation, validation, edge cases |
+| `availability-multi-unit.test.ts` | 13/13 | 100%      | Multi-unit availability checking, date conflicts    |
+| `pricing-quote.test.ts`           | 15/15 | 100%      | Dynamic pricing, weekend rates, extra guests        |
+| `middleware-auth.test.ts`         | 12/12 | 100%      | JWT authentication, authorization, security         |
+| `payments-record.test.ts`         | 12/12 | 100%      | Payment recording, validation, status updates       |
+| `payments-refund.test.ts`         | 11/11 | 100%      | Full/partial refunds, adjustments, validation       |
+| `units-add.test.ts`               | 12/12 | 100%      | Add unit to booking, availability, validation       |
+| `units-remove.test.ts`            | 10/10 | 100%      | Remove unit from booking, refunds, constraints      |
+
+### Test Infrastructure
+
+**Factory Pattern**: Maintainable mock generation
+
+- `availability-factory.ts` - Availability check mocks
+- `booking-factory.ts` - Multi-unit booking mocks
+- `payment-factory.ts` - Payment/refund mocks
+- `unit-factory.ts` - Unit add/remove mocks
+
+**Mock Builder**: Type-safe Supabase client mocking
+
+- Table-specific primary key support (booking_id, payment_id, adjustment_id, etc.)
+- Recursive query chaining (.eq().eq().single())
+- Complete query pattern support (.order().limit().single())
+
+**Test Utilities**:
+
+- Comprehensive fixtures for consistent test data
+- Dynamic import pattern with vi.doMock() for test isolation
+- JWT generation for authentication tests
+- Mock environment and context helpers
+
+### Test Quality Metrics
+
+- **Pass Rate**: 100% (103/103)
+- **Coverage**: All 8 Phase 2 API endpoints
+- **Pattern**: Factory-based mocks (no inline vi.mock())
+- **Isolation**: vi.resetModules() + dynamic imports
+- **Maintenance**: Centralized fixtures and factories
+
+### Test Development Progress
+
+**Initial Implementation** (Phase 2A-2D):
+
+- Created 103 tests covering all endpoints
+- Established test file structure and basic mocks
+- Initial pass rate: 67/103 (65%)
+
+**Test Refinement** (Phase 2E):
+
+- Converted all tests to factory pattern
+- Enhanced mock builder with table-specific primary keys
+- Fixed payment factory option ordering
+- Added comprehensive fixture support
+- Final pass rate: 103/103 (100%)
 
 ---
 
@@ -840,6 +946,11 @@ The API provides complete CRUD operations for multi-unit bookings, automatic pay
 
 ---
 
-**Document Version**: 1.0
+**Document Version**: 1.1
 **Last Updated**: 2025-10-08
+**Changelog**:
+
+- v1.1: Added "Prerequisite Test Fixes" section documenting out-of-scope changes
+- v1.0: Initial Phase 2 handoff document
+
 **Next Review**: Phase 3 completion
