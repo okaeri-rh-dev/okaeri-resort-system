@@ -198,53 +198,72 @@ The application will be available at `http://localhost:5173`
 
 ## 📁 Project Structure
 
+> **📖 For a comprehensive structure guide with visual diagrams, architecture flows, and detailed explanations, see [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)**
+
+### Quick Overview
+
 ```
 okaeri-resort-system/
-├── .claude/              # Claude AI agent configurations
-│   └── agents/          # Specialized AI agent definitions
-├── functions/           # Cloudflare Workers / Serverless functions
-│   ├── api/            # API endpoints
-│   │   ├── audit/      # Audit logging endpoints
-│   │   ├── guest-booking/  # Public booking endpoints
-│   │   └── monitoring/ # Quota and health monitoring
-│   └── cron/           # Scheduled tasks
-├── database/            # Database schema and migrations
-│   ├── migrations/      # SQL migration files with rollback support
-│   └── schema.sql       # Core database schema
-├── docs/                # Comprehensive documentation
-│   ├── initial/         # Initial planning and architecture
-│   ├── implementation/  # Feature implementation docs
-│   ├── releases/        # Phase release documentation
-│   ├── security/        # Security verification reports
-│   ├── verification/    # Feature verification reports
-│   └── deployment/      # Deployment guides
-├── src/                 # Application source code
-│   ├── components/      # React components
-│   │   ├── audit/      # Audit trail viewer components
-│   │   ├── bookings/   # Booking management (forms, tables)
-│   │   ├── dashboard/  # Analytics dashboard
-│   │   ├── expenses/   # Expense tracking
-│   │   ├── guest-booking/  # Public booking portal
-│   │   ├── guests/     # Guest management
-│   │   ├── payments/   # Payment processing
-│   │   ├── security/   # Security monitoring
-│   │   ├── tables/     # Reusable table patterns
-│   │   ├── units/      # Unit management
-│   │   └── ui/         # shadcn/ui components
-│   ├── lib/            # Core utilities
-│   │   ├── monitoring/ # Monitoring modules (quota, alerts, cleanup)
-│   │   ├── security/   # Security utilities (sanitization, validation)
-│   │   └── validation/ # Form validation schemas
-│   ├── hooks/          # Custom React hooks
-│   ├── routes/         # TanStack Router definitions
-│   ├── stores/         # Zustand state stores
-│   ├── __tests__/      # Test suites (E2E, performance, security)
-│   ├── styles/         # Global styles and Tailwind config
-│   ├── types/          # TypeScript type definitions
-│   └── utils/          # Utility functions
-├── scripts/            # Build and deployment scripts
-└── public/             # Static assets
+│
+├── 📱 src/                          # React application source code
+│   ├── components/                  # Feature-based UI components
+│   │   ├── bookings/               # Booking management (forms, tables)
+│   │   ├── guests/                 # Guest management
+│   │   ├── payments/               # Payment processing
+│   │   ├── expenses/               # Expense tracking
+│   │   ├── units/                  # Unit management
+│   │   ├── dashboard/              # Analytics dashboard
+│   │   ├── audit/                  # Audit trail viewer
+│   │   └── ui/                     # shadcn/ui components (29 total)
+│   │
+│   ├── lib/                        # Core utilities & infrastructure
+│   │   ├── monitoring/             # Quota & performance monitoring
+│   │   ├── security/               # XSS prevention & sanitization
+│   │   ├── validation/             # Form validation schemas
+│   │   ├── supabase.ts            # Typed database client
+│   │   └── audit-logger.ts        # Audit trail system
+│   │
+│   ├── stores/                     # Zustand state management (10 stores)
+│   ├── hooks/                      # Custom React hooks (19 total)
+│   ├── routes/                     # TanStack Router (file-based)
+│   └── types/                      # TypeScript definitions
+│
+├── ⚡ functions/                    # Cloudflare Workers / Serverless API
+│   ├── api/                        # API endpoints (audit, guest-booking, monitoring)
+│   └── cron/                       # Scheduled tasks
+│
+├── 🗄️ database/                     # PostgreSQL schema & migrations
+│   ├── schema.sql                  # Core database structure
+│   ├── migrations/                 # Versioned SQL migrations (60+ files)
+│   └── scripts/                    # Database utilities & diagnostics
+│
+├── 📚 docs/                         # Comprehensive documentation (53 READMEs)
+│   ├── initial/                    # Architecture & planning
+│   ├── implementation/             # Feature implementation guides
+│   ├── releases/                   # Phase completion handoffs
+│   ├── security/                   # Security audits & compliance
+│   ├── verification/               # Testing & verification reports
+│   └── deployment/                 # Production deployment guides
+│
+├── 🧪 __tests__/                    # Test suites
+│   ├── e2e/                        # Playwright end-to-end tests
+│   ├── performance/                # Performance benchmarks
+│   └── security/                   # Security & validation tests
+│
+└── ⚙️ Configuration                 # Root-level tooling & configs
+    ├── vite.config.ts              # Build configuration
+    ├── tsconfig.json               # TypeScript settings
+    ├── CLAUDE.md                   # AI development instructions
+    └── package.json                # Dependencies & scripts
 ```
+
+**Key Features:**
+- **Feature-Based Organization**: Components grouped by domain (bookings, guests, payments)
+- **Hybrid State Management**: Zustand (client state) + TanStack Query (server cache)
+- **Security-First**: Comprehensive audit trail, XSS prevention, sanitization
+- **Progressive TypeScript**: Strict mode with phased enablement
+- **60+ Database Migrations**: Versioned schema with rollback support
+- **53 Documentation Files**: Extensive guides throughout the codebase
 
 ## 💻 Development
 
