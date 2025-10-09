@@ -46,6 +46,17 @@ global.ResizeObserver = vi.fn().mockImplementation(() => ({
   disconnect: vi.fn(),
 }));
 
+// Polyfill for hasPointerCapture (required for Radix UI components in jsdom)
+if (!Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = vi.fn(() => false);
+}
+if (!Element.prototype.setPointerCapture) {
+  Element.prototype.setPointerCapture = vi.fn();
+}
+if (!Element.prototype.releasePointerCapture) {
+  Element.prototype.releasePointerCapture = vi.fn();
+}
+
 // Create enhanced Supabase mock with chainable methods
 const createChainableMock = (defaultResponse = { data: [], error: null }) => {
   const chainable = {
