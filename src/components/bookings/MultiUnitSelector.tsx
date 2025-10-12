@@ -43,8 +43,8 @@ export interface MultiUnitSelectorProps {
   selectedUnits: BookingUnit[];
 
   // Date range for availability checking
-  checkIn: string;
-  checkOut: string;
+  checkIn: Date | string;
+  checkOut: Date | string;
 
   // Callbacks
   onAddUnit: (unit: Unit) => void;
@@ -284,8 +284,8 @@ interface UnitCardProps {
   isSelected: boolean;
   canSelect: boolean;
   viewMode: "grid" | "list";
-  checkIn: string;
-  checkOut: string;
+  checkIn: Date | string;
+  checkOut: Date | string;
   onAdd: () => void;
   onRemove: () => void;
   onViewDetails: () => void;
@@ -344,7 +344,8 @@ function UnitCard({
           {/* Date Range Display */}
           {checkIn && checkOut && (
             <p className="text-xs text-muted-foreground">
-              {new Date(checkIn).toLocaleDateString()} - {new Date(checkOut).toLocaleDateString()}
+              {(checkIn instanceof Date ? checkIn : new Date(checkIn)).toLocaleDateString()} -{" "}
+              {(checkOut instanceof Date ? checkOut : new Date(checkOut)).toLocaleDateString()}
             </p>
           )}
         </div>

@@ -13,8 +13,8 @@ import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
 interface Env {
-  VITE_SUPABASE_URL: string;
-  VITE_SUPABASE_ANON_KEY: string;
+  SUPABASE_URL: string;
+  SUPABASE_ANON_KEY: string;
 }
 
 interface PricingQuoteRequest {
@@ -136,7 +136,7 @@ async function calculateMultiUnitPricing(
   env: Env,
   nights: number
 ): Promise<PricingQuoteResponse> {
-  const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
 
   const checkIn = new Date(data.check_in);
   let totalAmount = 0;

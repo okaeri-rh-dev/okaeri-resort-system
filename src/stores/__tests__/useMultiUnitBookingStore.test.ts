@@ -675,6 +675,55 @@ describe("useMultiUnitBookingStore", () => {
       expect(result.current.optimisticQueue.has("temp-100")).toBe(true);
     });
 
+    it("should selectively clear expired optimistic entries", () => {
+      // Ensure real timers before using fake timers
+      vi.useRealTimers();
+      vi.useFakeTimers();
+
+      const { result } = renderHook(() => useMultiUnitBookingStore());
+
+      // Add old optimistic entry (simulated as 6 minutes ago)
+      const oldTimestamp = Date.now() - 6 * 60 * 1000;
+      vi.setSystemTime(oldTimestamp);
+
+      act(() => {
+        result.current.addOptimisticBooking({
+          booking_id: "old-booking",
+          total_amount: 5000,
+          created_at: new Date().toISOString(),
+        } as MultiUnitBooking);
+      });
+
+      // Move forward to current time
+      vi.setSystemTime(Date.now());
+
+      // Add recent entry (within TTL)
+      act(() => {
+        result.current.addOptimisticBooking({
+          booking_id: "new-booking",
+          total_amount: 6000,
+          created_at: new Date().toISOString(),
+        } as MultiUnitBooking);
+      });
+
+      // Verify both exist before cleanup
+      expect(result.current.optimisticQueue.has("old-booking")).toBe(true);
+      expect(result.current.optimisticQueue.has("new-booking")).toBe(true);
+      expect(result.current.optimisticQueue.size).toBe(2);
+
+      // Clear expired entries
+      act(() => {
+        result.current.clearExpiredOptimistic();
+      });
+
+      // Old entry should be removed, recent should remain
+      expect(result.current.optimisticQueue.has("old-booking")).toBe(false);
+      expect(result.current.optimisticQueue.has("new-booking")).toBe(true);
+      expect(result.current.optimisticQueue.size).toBe(1);
+
+      vi.useRealTimers();
+    });
+
     it("should sync from realtime correctly", () => {
       const { result } = renderHook(() => useMultiUnitBookingStore());
 
@@ -836,6 +885,58 @@ describe("useMultiUnitBookingStore", () => {
       });
 
       await waitFor(() => {
+        expect(result.current.offlineQueue).toHaveLength(0);
+      });
+    });
+
+    it("should successfully retry after network restoration", async () => {
+      const { result } = renderHook(() => useMultiUnitBookingStore());
+
+      let attemptCount = 0;
+      const processFn = vi.fn(async () => {
+        attemptCount++;
+        // Fail first 2 attempts, succeed on 3rd
+        if (attemptCount < 3) {
+          throw new Error("Network error");
+        }
+        return { success: true };
+      });
+
+      act(() => {
+        result.current.setOnlineStatus(false);
+        result.current.addToOfflineQueue({
+          operation: "create",
+          data: { booking_id: "offline-1" },
+          maxRetries: 5, // Allow enough retries
+        });
+      });
+
+      // First attempt (offline, should fail)
+      await act(async () => {
+        result.current.setOnlineStatus(true);
+        await result.current.processOfflineQueue(processFn);
+      });
+
+      expect(attemptCount).toBe(1);
+      expect(result.current.offlineQueue).toHaveLength(1);
+      expect(result.current.offlineQueue[0].retryCount).toBe(1);
+
+      // Second attempt (should fail)
+      await act(async () => {
+        await result.current.processOfflineQueue(processFn);
+      });
+
+      expect(attemptCount).toBe(2);
+      expect(result.current.offlineQueue).toHaveLength(1);
+      expect(result.current.offlineQueue[0].retryCount).toBe(2);
+
+      // Third attempt (should succeed and clear queue)
+      await act(async () => {
+        await result.current.processOfflineQueue(processFn);
+      });
+
+      await waitFor(() => {
+        expect(attemptCount).toBe(3);
         expect(result.current.offlineQueue).toHaveLength(0);
       });
     });

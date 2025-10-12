@@ -1,7 +1,7 @@
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { createFileRoute, Outlet, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useParams } from "@tanstack/react-router";
 import { lazy, Suspense, useState } from "react";
 import { z } from "zod";
 
@@ -48,7 +48,12 @@ function BookingsPage() {
             <h1 className="text-3xl font-bold tracking-tight">Bookings</h1>
             <p className="text-muted-foreground">Manage all resort bookings and reservations</p>
           </div>
-          <Button onClick={() => setShowBookingForm(true)}>New Booking</Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowBookingForm(true)}>New Booking</Button>
+            <Button asChild variant="outline">
+              <Link to="/bookings/new-multi">New Multi-Unit Booking</Link>
+            </Button>
+          </div>
         </div>
 
         <ErrorBoundary level="component">

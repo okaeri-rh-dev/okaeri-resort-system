@@ -18,10 +18,11 @@ import {
   sanitizeEmailWorker,
   sanitizePhoneWorker,
 } from "../../../src/lib/security/sanitize-worker";
+import { logBookingCreated } from "../../lib/audit-logger-workers";
 
 interface Env {
-  VITE_SUPABASE_URL: string;
-  VITE_SUPABASE_ANON_KEY: string;
+  SUPABASE_URL: string;
+  SUPABASE_ANON_KEY: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   RATE_LIMIT_KV: KVNamespace;
 }
@@ -73,7 +74,7 @@ type MultiUnitBookingRequest = z.infer<typeof multiUnitBookingSchema>;
  * Main handler for multi-unit booking creation
  */
 export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const { request, env } = context;
+  const { request, env, waitUntil } = context;
   const startTime = Date.now();
 
   // CORS headers
@@ -170,6 +171,27 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // Create booking using database function (from spec lines 640-773)
     const booking = await createMultiUnitBooking(env, sanitizedData);
 
+    // Get user ID from request context (if authenticated)
+    const userId = (request as any).user?.id || undefined;
+
+    // Create Supabase client for audit logging
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+
+    // Log audit event (Phase 4.5: Compliance requirement)
+    await logBookingCreated(supabase, booking, userId, request);
+
+    // ✅ Invalidate availability cache for booked units (Phase 4.5)
+    // Use waitUntil to not block the response
+    const cacheKeys = sanitizedData.units.map(
+      (unit) => `availability:${unit.unit_id}:${sanitizedData.check_in}:${sanitizedData.check_out}`
+    );
+
+    waitUntil(
+      Promise.all(cacheKeys.map((key) => env.RATE_LIMIT_KV.delete(key))).catch((error) => {
+        console.error("Cache invalidation failed:", error);
+      })
+    );
+
     // Cache result for idempotency (24 hours)
     if (idempotencyKey) {
       await env.RATE_LIMIT_KV.put(
@@ -185,9 +207,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         { expirationTtl: 86400 } // 24 hours
       );
     }
-
-    // TODO: Log audit event (will implement after audit-logger is Workers-compatible)
-    // await logAuditEvent({...})
 
     const processingTime = Date.now() - startTime;
 
@@ -235,7 +254,7 @@ async function checkMultiUnitAvailability(
   checkIn: string,
   checkOut: string
 ): Promise<Array<{ unit_id: string; is_available: boolean }>> {
-  const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
 
   const { data, error } = await supabase.rpc("check_multi_unit_availability", {
     p_unit_ids: unitIds,
@@ -251,7 +270,7 @@ async function checkMultiUnitAvailability(
  * Create multi-unit booking using database function
  */
 async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
-  const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
   // Generate booking reference
   const { data: refData } = await supabase.rpc("generate_booking_reference");

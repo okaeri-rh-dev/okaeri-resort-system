@@ -7,6 +7,41 @@ import { useEntityEdit } from "../useEntityEdit";
 import { db } from "@/lib/supabase";
 import { logAuditEvent } from "@/lib/audit-logger";
 import type { ReactNode } from "react";
+import type { PostgrestSingleResponse } from "@supabase/supabase-js";
+
+// Helper to create Postgrest success response
+function createSuccessResponse<T>(data: T): PostgrestSingleResponse<T> {
+  return {
+    data,
+    error: null,
+    count: null,
+    status: 200,
+    statusText: "OK",
+  };
+}
+
+// Helper to create Postgrest error response
+function createErrorResponse<T>(error: {
+  message: string;
+  code: string;
+  details?: string;
+  hint?: string;
+  name?: string;
+}): PostgrestSingleResponse<T> {
+  return {
+    data: null,
+    error: {
+      message: error.message,
+      code: error.code,
+      details: error.details || "",
+      hint: error.hint || "",
+      name: error.name || "PostgrestError",
+    },
+    count: null,
+    status: 500,
+    statusText: "Internal Server Error",
+  };
+}
 
 // Mock factories for complete database rows
 const createMockBooking = (overrides: Record<string, any> = {}) => ({
@@ -161,10 +196,7 @@ describe("useEntityEdit", () => {
         booking_reference: "BK-001",
       });
 
-      vi.mocked(db.bookings.update).mockResolvedValue({
-        data: updatedBooking,
-        error: null,
-      });
+      vi.mocked(db.bookings.update).mockResolvedValue(createSuccessResponse(updatedBooking));
 
       const { result } = renderHook(() => useEntityEdit("booking", entityId), {
         wrapper: createWrapper(),
@@ -196,10 +228,7 @@ describe("useEntityEdit", () => {
         })
       );
 
-      vi.mocked(db.bookings.update).mockResolvedValue({
-        data: updatedBooking,
-        error: null,
-      });
+      vi.mocked(db.bookings.update).mockResolvedValue(createSuccessResponse(updatedBooking));
 
       const { result } = renderHook(() => useEntityEdit("booking", entityId), {
         wrapper: createWrapper(),
@@ -228,12 +257,16 @@ describe("useEntityEdit", () => {
       queryClient.setQueryData(["booking", entityId], initialData);
 
       // Delay the API response
-      vi.mocked(db.bookings.update).mockImplementation(
-        () =>
-          new Promise((resolve) =>
-            setTimeout(() => resolve({ data: { ...initialData, ...updateData }, error: null }), 100)
-          )
-      );
+      let resolvePromise: any;
+      const delayedPromise = new Promise<any>((resolve) => {
+        resolvePromise = resolve;
+      });
+      vi.mocked(db.bookings.update).mockReturnValue(delayedPromise as any);
+
+      // Resolve after 100ms
+      setTimeout(() => {
+        resolvePromise(createSuccessResponse({ ...initialData, ...updateData }));
+      }, 100);
 
       const { result } = renderHook(() => useEntityEdit("booking", entityId), {
         wrapper: createWrapper(),
@@ -261,16 +294,12 @@ describe("useEntityEdit", () => {
 
       queryClient.setQueryData(["booking", entityId], initialData);
 
-      vi.mocked(db.bookings.update).mockResolvedValue({
-        data: null,
-        error: {
+      vi.mocked(db.bookings.update).mockResolvedValue(
+        createErrorResponse({
           message: "Update failed",
           code: "500",
-          details: "",
-          hint: "",
-          name: "PostgrestError",
-        },
-      });
+        })
+      );
 
       const { result } = renderHook(() => useEntityEdit("booking", entityId), {
         wrapper: createWrapper(),
@@ -299,10 +328,7 @@ describe("useEntityEdit", () => {
       };
       const updatedUnit = createMockUnit({ unit_id: entityId, ...updateData });
 
-      vi.mocked(db.units.update).mockResolvedValue({
-        data: updatedUnit,
-        error: null,
-      });
+      vi.mocked(db.units.update).mockResolvedValue(createSuccessResponse(updatedUnit));
 
       const { result } = renderHook(() => useEntityEdit("unit", entityId), {
         wrapper: createWrapper(),
@@ -329,10 +355,7 @@ describe("useEntityEdit", () => {
       };
       const updatedGuest = createMockGuest({ guest_id: entityId, ...updateData });
 
-      vi.mocked(db.guests.update).mockResolvedValue({
-        data: updatedGuest,
-        error: null,
-      });
+      vi.mocked(db.guests.update).mockResolvedValue(createSuccessResponse(updatedGuest));
 
       const { result } = renderHook(() => useEntityEdit("guest", entityId), {
         wrapper: createWrapper(),
@@ -359,10 +382,7 @@ describe("useEntityEdit", () => {
       };
       const updatedPayment = createMockPayment({ payment_id: entityId, ...updateData });
 
-      vi.mocked(db.payments.update).mockResolvedValue({
-        data: updatedPayment,
-        error: null,
-      });
+      vi.mocked(db.payments.update).mockResolvedValue(createSuccessResponse(updatedPayment));
 
       const { result } = renderHook(() => useEntityEdit("payment", entityId), {
         wrapper: createWrapper(),
@@ -389,10 +409,7 @@ describe("useEntityEdit", () => {
       };
       const updatedExpense = createMockExpense({ expense_id: entityId, ...updateData });
 
-      vi.mocked(db.expenses.update).mockResolvedValue({
-        data: updatedExpense,
-        error: null,
-      });
+      vi.mocked(db.expenses.update).mockResolvedValue(createSuccessResponse(updatedExpense));
 
       const { result } = renderHook(() => useEntityEdit("expense", entityId), {
         wrapper: createWrapper(),
@@ -417,10 +434,7 @@ describe("useEntityEdit", () => {
       const updatedData = createMockBooking({ booking_id: entityId, ...updateData });
       const onSuccess = vi.fn();
 
-      vi.mocked(db.bookings.update).mockResolvedValue({
-        data: updatedData,
-        error: null,
-      });
+      vi.mocked(db.bookings.update).mockResolvedValue(createSuccessResponse(updatedData));
 
       const { result } = renderHook(() => useEntityEdit("booking", entityId, { onSuccess }), {
         wrapper: createWrapper(),
@@ -442,16 +456,12 @@ describe("useEntityEdit", () => {
       const updateData = { guest_name: "Error Test" };
       const onError = vi.fn();
 
-      vi.mocked(db.bookings.update).mockResolvedValue({
-        data: null,
-        error: {
+      vi.mocked(db.bookings.update).mockResolvedValue(
+        createErrorResponse({
           message: "Update failed",
           code: "500",
-          details: "",
-          hint: "",
-          name: "PostgrestError",
-        },
-      });
+        })
+      );
 
       const { result } = renderHook(() => useEntityEdit("booking", entityId, { onError }), {
         wrapper: createWrapper(),
@@ -476,10 +486,7 @@ describe("useEntityEdit", () => {
       const updateData = { guest_name: "Invalidate Test" };
       const updatedData = createMockBooking({ booking_id: entityId, ...updateData });
 
-      vi.mocked(db.bookings.update).mockResolvedValue({
-        data: updatedData,
-        error: null,
-      });
+      vi.mocked(db.bookings.update).mockResolvedValue(createSuccessResponse(updatedData));
 
       // Set initial data
       queryClient.setQueryData(
@@ -531,13 +538,12 @@ describe("useEntityEdit", () => {
       const entityId = "booking-123";
       const updateData = { guest_name: "Test" };
 
-      vi.mocked(db.bookings.update).mockResolvedValue({
-        data: null,
-        error: {
+      vi.mocked(db.bookings.update).mockResolvedValue(
+        createErrorResponse({
           message: "Database constraint violation",
           code: "23505",
-        },
-      });
+        })
+      );
 
       const { result } = renderHook(() => useEntityEdit("booking", entityId), {
         wrapper: createWrapper(),

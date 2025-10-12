@@ -63,11 +63,11 @@ export const useMultiUnitAvailability = (
   return useQuery({
     queryKey: ["multi-unit-availability", unitIds, checkIn, checkOut],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        unit_ids: unitIds.join(","),
-        check_in: checkIn,
-        check_out: checkOut,
-      });
+      // Build params with units[] array format expected by the API
+      const params = new URLSearchParams();
+      unitIds.forEach((id) => params.append("units[]", id));
+      params.append("check_in", checkIn);
+      params.append("check_out", checkOut);
 
       const response = await fetch(`/api/availability/multi-unit?${params}`);
       if (!response.ok) throw new Error("Availability check failed");

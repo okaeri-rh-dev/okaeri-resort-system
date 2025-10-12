@@ -11,13 +11,28 @@ import type { TestEnv } from "../mocks/env";
  */
 export function createMockRequest(
   url: string,
-  options: RequestInit & { query?: Record<string, string> } = {}
+  options: RequestInit & { query?: Record<string, string | string[]> } = {}
 ): Request {
   let finalUrl = url;
 
   // Add query parameters if provided
   if (options.query) {
-    const searchParams = new URLSearchParams(options.query);
+    const searchParams = new URLSearchParams();
+
+    // Handle both single values and arrays
+    for (const [key, value] of Object.entries(options.query)) {
+      if (Array.isArray(value)) {
+        // For arrays, append each value with the same key
+        value.forEach((v) => searchParams.append(key, v));
+      } else if (typeof value === "string" && value.includes(",") && key.endsWith("[]")) {
+        // Special handling for comma-separated values that should be arrays
+        // This maintains backward compatibility with existing tests
+        value.split(",").forEach((v) => searchParams.append(key, v.trim()));
+      } else {
+        searchParams.append(key, value);
+      }
+    }
+
     finalUrl = `${url}?${searchParams.toString()}`;
   }
 

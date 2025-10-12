@@ -13,9 +13,12 @@ import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { sanitizeTextWorker } from "../../../../../src/lib/security/sanitize-worker";
+import { requireRole } from "../../../../lib/rbac";
+import { logUnitAdded } from "../../../../lib/audit-logger-workers";
+import { calculateWeekendNights, calculateExtraPersonFee } from "../../../../../src/utils/pricing";
 
 interface Env {
-  VITE_SUPABASE_URL: string;
+  SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
 }
 
@@ -23,14 +26,17 @@ interface Env {
 const addUnitSchema = z
   .object({
     unit_id: z.string().uuid(),
-    guest_name: z.string().min(1).max(100),
+    num_guests: z.number().int().min(1).max(20),
     rate_per_night: z.number().positive(),
+    weekend_rate: z.number().positive().optional(),
+    extra_person_rate: z.number().nonnegative().optional(),
+    base_occupancy: z.number().int().positive().optional(),
     num_nights: z.number().int().positive(),
     subtotal: z.number().positive(),
     notes: z.string().max(500).optional(),
   })
-  .refine((data) => data.subtotal === data.rate_per_night * data.num_nights, {
-    message: "subtotal must equal rate_per_night * num_nights",
+  .refine((data) => data.subtotal >= data.rate_per_night * data.num_nights, {
+    message: "subtotal must be at least rate_per_night * num_nights",
     path: ["subtotal"],
   });
 
@@ -53,6 +59,22 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   };
 
   try {
+    // RBAC: Require staff role or above
+    try {
+      requireRole(request, ["staff", "manager", "admin"]);
+    } catch (error) {
+      return Response.json(
+        {
+          error: error instanceof Error ? error.name : "AUTHORIZATION_ERROR",
+          message: error instanceof Error ? error.message : "Access denied",
+        },
+        {
+          status: error instanceof Error && error.name === "UnauthorizedError" ? 401 : 403,
+          headers: corsHeaders,
+        }
+      );
+    }
+
     // Validate booking_id
     if (
       !bookingId ||
@@ -92,7 +114,24 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // Sanitize notes
     const sanitizedNotes = data.notes ? sanitizeTextWorker(data.notes) : undefined;
 
-    const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+
+    // Fetch unit data for pricing calculations
+    const { data: unitData, error: unitFetchError } = await supabase
+      .from("units")
+      .select("base_rate, weekend_rate, extra_person_rate, base_occupancy")
+      .eq("unit_id", data.unit_id)
+      .single();
+
+    if (unitFetchError || !unitData) {
+      return Response.json(
+        {
+          error: "UNIT_NOT_FOUND",
+          message: "Unit not found",
+        },
+        { status: 404, headers: corsHeaders }
+      );
+    }
 
     // 1. Verify booking exists and is modifiable
     const { data: booking, error: bookingError } = await supabase
@@ -158,17 +197,27 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     }
 
-    // 4. Insert into booking_units table
-    const { data: _newBookingUnit, error: insertError } = await supabase
+    // 4. Calculate weekend surcharge and extra person fee
+    const weekendNights = calculateWeekendNights(booking.check_in, booking.check_out);
+    const weekendSurcharge = weekendNights * (unitData.weekend_rate - unitData.base_rate);
+    const extraPersonCharge =
+      calculateExtraPersonFee(
+        data.num_guests,
+        unitData.base_occupancy,
+        unitData.extra_person_rate
+      ) * data.num_nights;
+
+    // 5. Insert into booking_units table
+    const { data: newBookingUnit, error: insertError } = await supabase
       .from("booking_units")
       .insert({
         booking_id: bookingId,
         unit_id: data.unit_id,
         unit_price: data.rate_per_night * data.num_nights,
-        weekend_surcharge: 0, // TODO: Calculate from pricing logic
-        extra_person_charge: 0, // TODO: Calculate from pricing logic
+        weekend_surcharge: weekendSurcharge,
+        extra_person_charge: extraPersonCharge,
         subtotal: data.subtotal,
-        assigned_guests: 0, // TODO: Extract from request
+        assigned_guests: data.num_guests,
         unit_notes: sanitizedNotes,
       })
       .select()
@@ -190,11 +239,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       throw insertError;
     }
 
-    // 5. Triggers will auto-update booking totals
-    // 6. Handle payment adjustment if payment exists
+    // 6. Triggers will auto-update booking totals
+    // 7. Handle payment adjustment if payment exists
     await adjustPaymentForUnitChange(supabase, bookingId, data.subtotal, "unit_added");
 
-    // 7. Fetch updated booking
+    // 8. Audit logging
+    const userId = (request as any).user?.id || undefined;
+    await logUnitAdded(supabase, bookingId, newBookingUnit, userId, request);
+
+    // 9. Fetch updated booking
     const { data: updatedBooking } = await supabase
       .from("bookings")
       .select(

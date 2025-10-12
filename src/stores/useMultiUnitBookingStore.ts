@@ -111,9 +111,42 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
               if (unitIndex !== -1) {
                 Object.assign(state.selectedUnits[unitIndex], updates);
 
-                // Recalculate pricing if guest assignment changed
+                // Inline pricing recalculation if guest assignment changed
                 if (updates.guest_assignment) {
-                  get().recalculateTotalPricing();
+                  const booking = state.draftBooking || state.selectedBooking;
+                  if (booking?.check_in && booking?.check_out) {
+                    let baseAmount = 0;
+                    let totalSurcharges = 0;
+
+                    state.selectedUnits.forEach((unit) => {
+                      const pricing = get().calculateUnitPricing(
+                        unit,
+                        booking.check_in!,
+                        booking.check_out!,
+                        unit.guest_assignment?.num_guests || unit.base_occupancy
+                      );
+
+                      unit.pricing = pricing;
+                      baseAmount += pricing.base_total;
+                      totalSurcharges += pricing.weekend_surcharge + pricing.extra_person_fee;
+                      state.unitPricingCache.set(unit.unit_id, pricing);
+                    });
+
+                    const subtotal = baseAmount + totalSurcharges;
+                    const discountAmount = state.draftBooking?.discount_amount || 0;
+                    const totalAmount = subtotal - discountAmount;
+
+                    if (state.draftBooking) {
+                      state.draftBooking.base_amount = baseAmount;
+                      state.draftBooking.total_surcharges = totalSurcharges;
+                      state.draftBooking.total_amount = totalAmount;
+                    }
+                    if (state.selectedBooking) {
+                      state.selectedBooking.base_amount = baseAmount;
+                      state.selectedBooking.total_surcharges = totalSurcharges;
+                      state.selectedBooking.total_amount = totalAmount;
+                    }
+                  }
                 }
               }
             }),
@@ -128,8 +161,41 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
                   special_requests: unit.guest_assignment?.special_requests,
                 };
 
-                // Trigger pricing recalculation
-                get().recalculateTotalPricing();
+                // Inline pricing recalculation
+                const booking = state.draftBooking || state.selectedBooking;
+                if (booking?.check_in && booking?.check_out) {
+                  let baseAmount = 0;
+                  let totalSurcharges = 0;
+
+                  state.selectedUnits.forEach((unit) => {
+                    const pricing = get().calculateUnitPricing(
+                      unit,
+                      booking.check_in!,
+                      booking.check_out!,
+                      unit.guest_assignment?.num_guests || unit.base_occupancy
+                    );
+
+                    unit.pricing = pricing;
+                    baseAmount += pricing.base_total;
+                    totalSurcharges += pricing.weekend_surcharge + pricing.extra_person_fee;
+                    state.unitPricingCache.set(unit.unit_id, pricing);
+                  });
+
+                  const subtotal = baseAmount + totalSurcharges;
+                  const discountAmount = state.draftBooking?.discount_amount || 0;
+                  const totalAmount = subtotal - discountAmount;
+
+                  if (state.draftBooking) {
+                    state.draftBooking.base_amount = baseAmount;
+                    state.draftBooking.total_surcharges = totalSurcharges;
+                    state.draftBooking.total_amount = totalAmount;
+                  }
+                  if (state.selectedBooking) {
+                    state.selectedBooking.base_amount = baseAmount;
+                    state.selectedBooking.total_surcharges = totalSurcharges;
+                    state.selectedBooking.total_amount = totalAmount;
+                  }
+                }
               }
             }),
 
@@ -225,6 +291,7 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
 
           applyBulkDiscount: (discountPercent) =>
             set((state: Draft<MultiUnitBookingStore>) => {
+              // Calculate discount
               const subtotal = get().getTotalAmount();
               const discountAmount = subtotal * (discountPercent / 100);
 
@@ -235,7 +302,40 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
                 state.selectedBooking.discount_amount = discountAmount;
               }
 
-              get().recalculateTotalPricing();
+              // Inline pricing recalculation
+              const booking = state.draftBooking || state.selectedBooking;
+              if (booking?.check_in && booking?.check_out) {
+                let baseAmount = 0;
+                let totalSurcharges = 0;
+
+                state.selectedUnits.forEach((unit) => {
+                  const pricing = get().calculateUnitPricing(
+                    unit,
+                    booking.check_in!,
+                    booking.check_out!,
+                    unit.guest_assignment?.num_guests || unit.base_occupancy
+                  );
+
+                  unit.pricing = pricing;
+                  baseAmount += pricing.base_total;
+                  totalSurcharges += pricing.weekend_surcharge + pricing.extra_person_fee;
+                  state.unitPricingCache.set(unit.unit_id, pricing);
+                });
+
+                const newSubtotal = baseAmount + totalSurcharges;
+                const totalAmount = newSubtotal - discountAmount;
+
+                if (state.draftBooking) {
+                  state.draftBooking.base_amount = baseAmount;
+                  state.draftBooking.total_surcharges = totalSurcharges;
+                  state.draftBooking.total_amount = totalAmount;
+                }
+                if (state.selectedBooking) {
+                  state.selectedBooking.base_amount = baseAmount;
+                  state.selectedBooking.total_surcharges = totalSurcharges;
+                  state.selectedBooking.total_amount = totalAmount;
+                }
+              }
             }),
 
           clearDiscount: () =>
@@ -247,7 +347,40 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
                 state.selectedBooking.discount_amount = 0;
               }
 
-              get().recalculateTotalPricing();
+              // Inline pricing recalculation
+              const booking = state.draftBooking || state.selectedBooking;
+              if (booking?.check_in && booking?.check_out) {
+                let baseAmount = 0;
+                let totalSurcharges = 0;
+
+                state.selectedUnits.forEach((unit) => {
+                  const pricing = get().calculateUnitPricing(
+                    unit,
+                    booking.check_in!,
+                    booking.check_out!,
+                    unit.guest_assignment?.num_guests || unit.base_occupancy
+                  );
+
+                  unit.pricing = pricing;
+                  baseAmount += pricing.base_total;
+                  totalSurcharges += pricing.weekend_surcharge + pricing.extra_person_fee;
+                  state.unitPricingCache.set(unit.unit_id, pricing);
+                });
+
+                const subtotal = baseAmount + totalSurcharges;
+                const totalAmount = subtotal; // No discount
+
+                if (state.draftBooking) {
+                  state.draftBooking.base_amount = baseAmount;
+                  state.draftBooking.total_surcharges = totalSurcharges;
+                  state.draftBooking.total_amount = totalAmount;
+                }
+                if (state.selectedBooking) {
+                  state.selectedBooking.base_amount = baseAmount;
+                  state.selectedBooking.total_surcharges = totalSurcharges;
+                  state.selectedBooking.total_amount = totalAmount;
+                }
+              }
             }),
 
           // ========== AVAILABILITY CHECKING ==========

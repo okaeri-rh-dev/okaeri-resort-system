@@ -76,4 +76,17 @@ export default defineConfig(({ mode }) => ({
     // Allow build to continue with TypeScript errors for Phase 2
     logOverride: { "this-is-undefined-in-esm": "silent" },
   },
+  server: {
+    port: 5173,
+    // Proxy API requests to Wrangler dev server
+    proxy: {
+      "/api": {
+        target: "http://localhost:8788",
+        changeOrigin: true,
+      },
+    },
+  },
+  preview: {
+    port: 4173,
+  },
 }));

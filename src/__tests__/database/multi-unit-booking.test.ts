@@ -9,97 +9,102 @@
  * - Triggers (totals, dates, status, cleanup)
  * - Exclusion constraints (prevent double-booking)
  * - RLS policies (security)
+ *
+ * Phase 4.5: Updated to use test database configuration
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { createClient } from "@supabase/supabase-js";
-
-// Test database connection
-// NOTE: These tests require a test database with migration 019 applied
-const supabaseUrl = process.env.VITE_SUPABASE_URL || "http://localhost:54321";
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || "test-key";
-const supabase = createClient(supabaseUrl, supabaseKey);
+import {
+  testSupabase as supabase,
+  testSupabaseAdmin,
+  cleanupTestData,
+  createTestUnit,
+  createTestGuest,
+  shouldRunDatabaseTests,
+} from "../setup/test-db";
 
 describe("Multi-Unit Booking Database Functions", () => {
   let testUnitIds: string[] = [];
   let testGuestId: string | null = null;
+  let shouldRun = false;
 
   beforeAll(async () => {
-    // Create test units
-    const { data: units, error } = await supabase
-      .from("units")
-      .insert([
-        {
-          unit_name: "Test Unit 1",
-          unit_code: "TEST-1",
-          unit_type: "Studio",
-          base_occupancy: 2,
-          max_occupancy: 2,
-          base_rate: 2500,
-          weekend_rate: 3000,
-          extra_person_rate: 500,
-        },
-        {
-          unit_name: "Test Unit 2",
-          unit_code: "TEST-2",
-          unit_type: "One Bedroom",
-          base_occupancy: 2,
-          max_occupancy: 4,
-          base_rate: 3500,
-          weekend_rate: 4000,
-          extra_person_rate: 750,
-        },
-        {
-          unit_name: "Test Unit 3",
-          unit_code: "TEST-3",
-          unit_type: "Two Bedroom",
-          base_occupancy: 4,
-          max_occupancy: 6,
-          base_rate: 5000,
-          weekend_rate: 6000,
-          extra_person_rate: 1000,
-        },
-      ])
-      .select("unit_id");
+    // Check if we should run database tests
+    shouldRun = await shouldRunDatabaseTests();
 
-    if (error) throw new Error(`Setup failed: ${error.message}`);
-    testUnitIds = units.map((u) => u.unit_id);
+    if (!shouldRun) {
+      console.log("⏭️  Skipping database tests - test database not configured");
+      return;
+    }
 
-    // Create test guest
-    const { data: guest, error: guestError } = await supabase
-      .from("guests")
-      .insert({
-        guest_name: "Test Guest",
-        email: "test@example.com",
-        phone_number: "+639123456789",
-      })
-      .select("guest_id")
-      .single();
+    // Create test units using helper
+    const unit1 = await createTestUnit({
+      unit_name: "Test Unit 1",
+      unit_code: "TEST-1",
+      unit_type: "Studio",
+      base_rate: 2500,
+      weekend_rate: 3000,
+      extra_person_rate: 500,
+    });
 
-    if (guestError) throw new Error(`Guest setup failed: ${guestError.message}`);
+    const unit2 = await createTestUnit({
+      unit_name: "Test Unit 2",
+      unit_code: "TEST-2",
+      unit_type: "One Bedroom",
+      base_occupancy: 2,
+      max_occupancy: 4,
+      base_rate: 3500,
+      weekend_rate: 4000,
+      extra_person_rate: 750,
+    });
+
+    const unit3 = await createTestUnit({
+      unit_name: "Test Unit 3",
+      unit_code: "TEST-3",
+      unit_type: "Two Bedroom",
+      base_occupancy: 4,
+      max_occupancy: 6,
+      base_rate: 5000,
+      weekend_rate: 6000,
+      extra_person_rate: 1000,
+    });
+
+    testUnitIds = [unit1.unit_id, unit2.unit_id, unit3.unit_id];
+
+    // Create test guest using helper
+    const guest = await createTestGuest({
+      guest_name: "Test Guest",
+      email: "test@example.com",
+      contact_number: "+639123456789",
+    });
+
     testGuestId = guest.guest_id;
   });
 
   afterAll(async () => {
-    // Cleanup test data
+    if (!shouldRun) return;
+
+    // Cleanup using helper
+    await cleanupTestData();
+
+    // Cleanup test units and guest
     if (testUnitIds.length > 0) {
-      await supabase.from("units").delete().in("unit_id", testUnitIds);
+      await testSupabaseAdmin.from("units").delete().in("unit_id", testUnitIds);
     }
     if (testGuestId) {
-      await supabase.from("guests").delete().eq("guest_id", testGuestId);
+      await testSupabaseAdmin.from("guests").delete().eq("guest_id", testGuestId);
     }
   });
 
   beforeEach(async () => {
+    if (!shouldRun) return;
+
     // Clean up bookings before each test
-    await supabase
-      .from("bookings")
-      .delete()
-      .or(`unit_id.in.(${testUnitIds.join(",")}),is_multi_unit.eq.true`);
+    await cleanupTestData();
   });
 
   describe("create_multi_unit_booking", () => {
-    it("should create a booking with 2 units atomically", async () => {
+    it.skipIf(!shouldRun)("should create a booking with 2 units atomically", async () => {
       const bookingData = {
         booking_reference: "BK-TEST-001",
         guest_name: "John Doe",

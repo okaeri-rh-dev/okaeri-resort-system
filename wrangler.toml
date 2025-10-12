@@ -2,6 +2,11 @@ name = "okaeri-resort-system"
 compatibility_date = "2025-09-29"
 pages_build_output_dir = "dist"
 
+# Development environment configuration
+[dev]
+port = 8788
+local_protocol = "http"
+
 # Production environment configuration
 [env.production]
 
@@ -32,3 +37,17 @@ id = "98171af1c3bd4f718ff86c1f966c64a5"
 [env.preview.vars]
 ENVIRONMENT = "preview"
 # SUPABASE_URL and SUPABASE_ANON_KEY should be set as secrets for preview too
+
+# Local development environment configuration
+[env.development]
+
+# KV Namespace for rate limiting (local development)
+[[env.development.kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+# This will create a local KV namespace for development
+preview_id = "local-rate-limit-kv"
+
+# Local development environment variables
+[env.development.vars]
+ENVIRONMENT = "development"
+# Note: Secrets should be in .dev.vars file

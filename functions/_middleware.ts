@@ -14,7 +14,7 @@ interface Env {
   ENVIRONMENT: "production" | "development";
   TURNSTILE_SECRET_KEY?: string;
   SUPABASE_JWT_SECRET?: string;
-  VITE_SUPABASE_URL?: string;
+  SUPABASE_URL?: string;
 }
 
 /**
@@ -162,6 +162,10 @@ interface JWTPayload {
   role?: string;
   aud?: string;
   iat?: number;
+  user_metadata?: {
+    role?: string;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 
@@ -291,9 +295,9 @@ export async function onRequest(
     }
 
     const token = authHeader.substring(7);
-    const user = await verifySupabaseJWT(token, env.SUPABASE_JWT_SECRET);
+    const payload = await verifySupabaseJWT(token, env.SUPABASE_JWT_SECRET);
 
-    if (!user) {
+    if (!payload) {
       return new Response(
         JSON.stringify({
           error: "UNAUTHORIZED",
@@ -312,11 +316,17 @@ export async function onRequest(
       );
     }
 
+    // Extract role from JWT (user_metadata.role takes precedence, then role, default to 'user')
+    const userRole = (payload.user_metadata?.role || payload.role || "user") as string;
+
     // Attach user to request context for downstream use
     interface AuthenticatedRequest extends Request {
-      user?: JWTPayload;
+      user?: JWTPayload & { role: string };
     }
-    (request as AuthenticatedRequest).user = user;
+    (request as AuthenticatedRequest).user = {
+      ...payload,
+      role: userRole,
+    };
   }
 
   try {

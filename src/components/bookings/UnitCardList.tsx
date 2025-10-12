@@ -103,7 +103,7 @@ function UnitCardItem({
   };
 
   return (
-    <Card role="article" aria-label={`Unit ${index + 1}: ${unit.unit_name}`}>
+    <Card role="listitem" aria-label={`Unit ${index + 1}: ${unit.unit_name}`}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           {/* Unit Info */}

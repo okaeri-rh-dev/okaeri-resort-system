@@ -13,9 +13,11 @@ import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { sanitizeTextWorker } from "../../../../../src/lib/security/sanitize-worker";
+import { requireRole } from "../../../../lib/rbac";
+import { logPaymentRecorded } from "../../../../lib/audit-logger-workers";
 
 interface Env {
-  VITE_SUPABASE_URL: string;
+  SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
 }
 
@@ -61,6 +63,22 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   };
 
   try {
+    // RBAC: Require staff role or above
+    try {
+      requireRole(request, ["staff", "manager", "admin"]);
+    } catch (error) {
+      return Response.json(
+        {
+          error: error instanceof Error ? error.name : "AUTHORIZATION_ERROR",
+          message: error instanceof Error ? error.message : "Access denied",
+        },
+        {
+          status: error instanceof Error && error.name === "UnauthorizedError" ? 401 : 403,
+          headers: corsHeaders,
+        }
+      );
+    }
+
     // Validate booking_id
     if (
       !bookingId ||
@@ -96,7 +114,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     const data = validationResult.data;
-    const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
     // 1. Verify booking exists and get total (from spec lines 1083-1099)
     const { data: booking, error: bookingError } = await supabase
@@ -175,6 +193,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       .from("bookings")
       .update({ payment_status: newPaymentStatus })
       .eq("booking_id", bookingId);
+
+    // 5. Audit logging
+    const userId = (request as any).user?.id || undefined;
+    await logPaymentRecorded(supabase, payment, userId, request);
 
     const processingTime = Date.now() - startTime;
 

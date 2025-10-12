@@ -13,8 +13,9 @@ import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
 interface Env {
-  VITE_SUPABASE_URL: string;
-  VITE_SUPABASE_ANON_KEY: string;
+  SUPABASE_URL: string;
+  SUPABASE_ANON_KEY: string;
+  RATE_LIMIT_KV: KVNamespace;
 }
 
 /**
@@ -92,8 +93,33 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const checkInUTC = checkInDate.toISOString();
     const checkOutUTC = checkOutDate.toISOString();
 
+    // ✅ Generate cache key
+    const sortedUnitIds = [...unitIds].sort();
+    const cacheKey = `availability:${sortedUnitIds.join(",")}:${checkIn}:${checkOut}`;
+
+    // ✅ Check KV cache first (1 minute TTL)
+    if (env.RATE_LIMIT_KV) {
+      try {
+        const cached = await env.RATE_LIMIT_KV.get(cacheKey);
+        if (cached) {
+          const cachedData = JSON.parse(cached);
+          return Response.json(cachedData, {
+            headers: {
+              "Content-Type": "application/json",
+              "X-Cache": "HIT",
+              "Cache-Control": "public, max-age=60",
+              "X-Processing-Time": "0ms",
+            },
+          });
+        }
+      } catch (cacheError) {
+        console.warn("[Availability] Cache read error:", cacheError);
+        // Continue to database query if cache fails
+      }
+    }
+
     // Call database function (from Phase 1)
-    const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
 
     const { data, error } = await supabase.rpc("check_multi_unit_availability", {
       p_unit_ids: unitIds,
@@ -140,28 +166,40 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     const processingTime = Date.now() - startTime;
 
-    return Response.json(
-      {
-        success: true,
-        data: {
-          check_in: checkIn,
-          check_out: checkOut,
-          results,
-          summary: {
-            total_units_checked: results.length,
-            available_units: availableCount,
-            unavailable_units: unavailableCount,
-          },
+    const responseData = {
+      success: true,
+      data: {
+        check_in: checkIn,
+        check_out: checkOut,
+        results,
+        summary: {
+          total_units_checked: results.length,
+          available_units: availableCount,
+          unavailable_units: unavailableCount,
         },
       },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "X-Processing-Time": `${processingTime}ms`,
-          "Cache-Control": "public, max-age=60", // Cache for 1 minute
-        },
+    };
+
+    // ✅ Cache result for 1 minute
+    if (env.RATE_LIMIT_KV) {
+      try {
+        await env.RATE_LIMIT_KV.put(cacheKey, JSON.stringify(responseData), {
+          expirationTtl: 60, // 1 minute
+        });
+      } catch (cacheError) {
+        console.warn("[Availability] Cache write error:", cacheError);
+        // Continue even if caching fails
       }
-    );
+    }
+
+    return Response.json(responseData, {
+      headers: {
+        "Content-Type": "application/json",
+        "X-Cache": "MISS",
+        "X-Processing-Time": `${processingTime}ms`,
+        "Cache-Control": "public, max-age=60",
+      },
+    });
   } catch (error) {
     console.error("[Availability] Error:", error);
 

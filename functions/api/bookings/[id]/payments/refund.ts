@@ -12,9 +12,11 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { requireRole } from "../../../../lib/rbac";
+import { logPaymentRefunded } from "../../../../lib/audit-logger-workers";
 
 interface Env {
-  VITE_SUPABASE_URL: string;
+  SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
 }
 
@@ -44,6 +46,22 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   };
 
   try {
+    // RBAC: Require manager role or above (refunds are sensitive operations)
+    try {
+      requireRole(request, ["manager", "admin"]);
+    } catch (error) {
+      return Response.json(
+        {
+          error: error instanceof Error ? error.name : "AUTHORIZATION_ERROR",
+          message: error instanceof Error ? error.message : "Access denied",
+        },
+        {
+          status: error instanceof Error && error.name === "UnauthorizedError" ? 401 : 403,
+          headers: corsHeaders,
+        }
+      );
+    }
+
     // Validate booking_id
     if (
       !bookingId ||
@@ -79,7 +97,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     const data = validationResult.data;
-    const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
     // 1. Get most recent payment (from spec lines 1211-1219)
     const { data: payment, error: paymentError } = await supabase
@@ -173,6 +191,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       .select("booking_reference")
       .eq("booking_id", bookingId)
       .single();
+
+    // 6. Audit logging
+    const userId = (request as any).user?.id || undefined;
+    await logPaymentRefunded(supabase, payment, data.amount, data.reason, userId, request);
 
     const processingTime = Date.now() - startTime;
 
