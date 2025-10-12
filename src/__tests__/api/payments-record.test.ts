@@ -73,7 +73,7 @@ describe("POST /api/bookings/:id/payments/record", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/record`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validPaymentData),
       }
     );
@@ -94,7 +94,7 @@ describe("POST /api/bookings/:id/payments/record", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/record`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validPaymentData), // 5000 of 10000
       }
     );
@@ -113,7 +113,7 @@ describe("POST /api/bookings/:id/payments/record", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/record`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify({
           ...validPaymentData,
           payment_method: "GCash",
@@ -139,7 +139,7 @@ describe("POST /api/bookings/:id/payments/record", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/record`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify({
           ...validPaymentData,
           payment_method: "BankTransfer",
@@ -162,7 +162,7 @@ describe("POST /api/bookings/:id/payments/record", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/record`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify({
           amount: 5000,
           payment_method: "Cash",
@@ -187,7 +187,7 @@ describe("POST /api/bookings/:id/payments/record", () => {
       "https://api.example.com/api/bookings/invalid-id/payments/record",
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validPaymentData),
       }
     );
@@ -204,7 +204,7 @@ describe("POST /api/bookings/:id/payments/record", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/record`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify({
           ...validPaymentData,
           amount: 15000, // Exceeds total of 10000
@@ -228,7 +228,7 @@ describe("POST /api/bookings/:id/payments/record", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/record`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify({
           ...validPaymentData,
           amount: -1000,
@@ -250,7 +250,7 @@ describe("POST /api/bookings/:id/payments/record", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/record`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify({
           ...validPaymentData,
           payment_method: "Bitcoin", // Invalid
@@ -289,7 +289,7 @@ describe("POST /api/bookings/:id/payments/record", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/record`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validPaymentData),
       }
     );
@@ -312,7 +312,7 @@ describe("POST /api/bookings/:id/payments/record", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/record`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify({
           ...validPaymentData,
           notes: "<script>alert('xss')</script>Important notes",
@@ -334,7 +334,7 @@ describe("POST /api/bookings/:id/payments/record", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/record`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validPaymentData),
       }
     );

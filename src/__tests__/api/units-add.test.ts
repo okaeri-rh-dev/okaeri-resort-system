@@ -59,7 +59,7 @@ describe("POST /api/bookings/:id/units/add", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/units/add`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validAddUnitData),
       }
     );
@@ -80,7 +80,7 @@ describe("POST /api/bookings/:id/units/add", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/units/add`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify({
           ...validAddUnitData,
           subtotal: 999, // Incorrect!
@@ -106,7 +106,7 @@ describe("POST /api/bookings/:id/units/add", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/units/add`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify({
           ...validAddUnitData,
           notes: "<script>alert('xss')</script>Important notes",
@@ -128,7 +128,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/[id]/units/add");
     const request = createMockRequest("https://api.example.com/api/bookings/invalid-id/units/add", {
       method: "POST",
-      headers: { Authorization: await generateTestJWT() },
+      headers: { Authorization: `Bearer ${await generateTestJWT()}` },
       body: JSON.stringify(validAddUnitData),
     });
 
@@ -147,7 +147,7 @@ describe("POST /api/bookings/:id/units/add", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/units/add`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify({
           ...validAddUnitData,
           unit_id: "not-a-uuid",
@@ -171,7 +171,7 @@ describe("POST /api/bookings/:id/units/add", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/units/add`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify({
           ...validAddUnitData,
           rate_per_night: -1000,
@@ -194,7 +194,7 @@ describe("POST /api/bookings/:id/units/add", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/units/add`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify({
           ...validAddUnitData,
           num_nights: 5, // Booking is only 2 nights
@@ -237,7 +237,7 @@ describe("POST /api/bookings/:id/units/add", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/units/add`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validAddUnitData),
       }
     );
@@ -277,7 +277,7 @@ describe("POST /api/bookings/:id/units/add", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/units/add`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validAddUnitData),
       }
     );
@@ -317,7 +317,7 @@ describe("POST /api/bookings/:id/units/add", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/units/add`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validAddUnitData),
       }
     );
@@ -358,7 +358,7 @@ describe("POST /api/bookings/:id/units/add", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/units/add`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validAddUnitData),
       }
     );
@@ -379,7 +379,7 @@ describe("POST /api/bookings/:id/units/add", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/units/add`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validAddUnitData),
       }
     );

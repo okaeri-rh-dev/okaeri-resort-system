@@ -7,7 +7,7 @@
 import type { TestEnv } from "../mocks/env";
 
 /**
- * Create a mock Request object for testing
+ * Create a mock Request object for testing with optional user context
  */
 export function createMockRequest(
   url: string,
@@ -36,14 +36,27 @@ export function createMockRequest(
     finalUrl = `${url}?${searchParams.toString()}`;
   }
 
-  return new Request(finalUrl, {
+  const request = new Request(finalUrl, {
     method: options.method || "GET",
     headers: {
       "Content-Type": "application/json",
       ...options.headers,
     },
     body: options.body,
-  });
+  }) as any;
+
+  // Add mock user context if Authorization header is present
+  // This simulates what the middleware does after JWT verification
+  const authHeader = options.headers?.["Authorization"] || options.headers?.["authorization"];
+  if (authHeader) {
+    request.user = {
+      id: "test-user-id",
+      email: "test@example.com",
+      role: "admin", // Default to admin for tests, can be overridden
+    };
+  }
+
+  return request;
 }
 
 /**
@@ -119,7 +132,7 @@ export async function generateTestJWT(
   const signatureString = String.fromCharCode(...signatureArray);
   const b64Signature = base64UrlEncode(signatureString);
 
-  return `Bearer ${b64Header}.${b64Payload}.${b64Signature}`;
+  return `${b64Header}.${b64Payload}.${b64Signature}`;
 }
 
 /**

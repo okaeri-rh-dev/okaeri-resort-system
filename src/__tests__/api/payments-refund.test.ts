@@ -63,7 +63,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/refund`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify({
           amount: 5000, // Full refund
           reason: "cancellation",
@@ -88,7 +88,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/refund`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validRefundData), // 2000 of 5000
       }
     );
@@ -107,7 +107,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/refund`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validRefundData),
       }
     );
@@ -127,7 +127,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/refund`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validRefundData),
       }
     );
@@ -149,7 +149,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
       "https://api.example.com/api/bookings/invalid-id/payments/refund",
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validRefundData),
       }
     );
@@ -166,7 +166,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/refund`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify({
           ...validRefundData,
           amount: 6000, // Exceeds payment of 5000
@@ -190,7 +190,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/refund`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify({
           amount: 2000,
           reason: "invalid_reason", // Not in enum
@@ -212,7 +212,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/refund`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify({
           ...validRefundData,
           amount: -1000,
@@ -247,7 +247,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/refund`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validRefundData),
       }
     );
@@ -286,7 +286,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/refund`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validRefundData),
       }
     );
@@ -307,7 +307,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
       `https://api.example.com/api/bookings/${testBookingResponse.booking_id}/payments/refund`,
       {
         method: "POST",
-        headers: { Authorization: await generateTestJWT() },
+        headers: { Authorization: `Bearer ${await generateTestJWT()}` },
         body: JSON.stringify(validRefundData),
       }
     );

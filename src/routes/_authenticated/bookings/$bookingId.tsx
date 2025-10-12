@@ -19,6 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
 import { useBookingRealtime } from "@/hooks/useBookingRealtime";
+import { useAuditStore } from "@/stores/useAuditStore";
+import { useEffect } from "react";
 import { format } from "date-fns";
 import { Calendar, Users, CreditCard, MapPin, Edit, ArrowLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -29,9 +31,19 @@ export const Route = createFileRoute("/_authenticated/bookings/$bookingId")({
 
 function BookingDetailPage() {
   const { bookingId } = Route.useParams();
+  const setFilters = useAuditStore((state) => state.setFilters);
 
   // ✅ Enable real-time booking updates (Phase 4.5 - Task 3)
   useBookingRealtime(bookingId);
+
+  // Set audit filters for this booking
+  useEffect(() => {
+    setFilters({
+      entity_type: "booking",
+      entity_id: bookingId,
+      limit: 10,
+    });
+  }, [bookingId, setFilters]);
 
   // Fetch booking data
   const { data: booking, isLoading } = useQuery({
@@ -40,7 +52,7 @@ function BookingDetailPage() {
       const response = await fetch(`/api/bookings/${bookingId}`);
       if (!response.ok) throw new Error("Failed to fetch booking");
       const data = await response.json();
-      return data.data;
+      return data.data as any;
     },
   });
 
@@ -261,14 +273,7 @@ function BookingDetailPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <AuditLogViewer
-            filters={{
-              entity_type: "booking",
-              entity_id: bookingId,
-            }}
-            pageSize={10}
-            showFilters={false}
-          />
+          <AuditLogViewer />
         </CardContent>
       </Card>
     </div>

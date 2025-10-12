@@ -97,7 +97,7 @@ describe("Middleware JWT Authentication", () => {
     const request = createMockRequest("https://api.example.com/api/bookings/123/units/add", {
       method: "POST",
       headers: {
-        Authorization: await generateTestJWT(),
+        Authorization: `Bearer ${await generateTestJWT()}`,
       },
     });
 
