@@ -132,27 +132,21 @@ describe("RelatedEntityLink", () => {
 
   describe("Link styling", () => {
     it("applies proper text color for links", () => {
-      const { container } = render(
-        <RelatedEntityLink type="booking" id="booking-123" label="Booking" />
-      );
+      render(<RelatedEntityLink type="booking" id="booking-123" label="Booking" />);
 
       const link = screen.getByTestId("router-link");
       expect(link).toHaveClass("text-blue-600");
     });
 
     it("applies hover styles", () => {
-      const { container } = render(
-        <RelatedEntityLink type="booking" id="booking-123" label="Booking" />
-      );
+      render(<RelatedEntityLink type="booking" id="booking-123" label="Booking" />);
 
       const link = screen.getByTestId("router-link");
       expect(link).toHaveClass("hover:underline");
     });
 
     it("applies font weight", () => {
-      const { container } = render(
-        <RelatedEntityLink type="booking" id="booking-123" label="Booking" />
-      );
+      render(<RelatedEntityLink type="booking" id="booking-123" label="Booking" />);
 
       const link = screen.getByTestId("router-link");
       expect(link).toHaveClass("font-medium");

@@ -13,6 +13,8 @@ interface Env {
   RATE_LIMIT_KV: KVNamespace;
   ENVIRONMENT: "production" | "development";
   TURNSTILE_SECRET_KEY?: string;
+  SUPABASE_JWT_SECRET?: string;
+  SUPABASE_URL?: string;
 }
 
 /**
@@ -151,6 +153,93 @@ function getRequestId(request: Request): string {
 }
 
 /**
+ * JWT payload structure from Supabase
+ */
+interface JWTPayload {
+  sub: string;
+  email?: string;
+  exp?: number;
+  role?: string;
+  aud?: string;
+  iat?: number;
+  user_metadata?: {
+    role?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+/**
+ * Verify Supabase JWT token
+ * Free-tier compatible: <1ms CPU time, no external API calls
+ */
+async function verifySupabaseJWT(token: string, secret: string): Promise<JWTPayload | null> {
+  try {
+    // Use Web Crypto API (available in Cloudflare Workers)
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(secret);
+
+    // Import the secret as a CryptoKey
+    const key = await crypto.subtle.importKey(
+      "raw",
+      keyData,
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+
+    // Split JWT into parts
+    const parts = token.split(".");
+    if (parts.length !== 3) {
+      throw new Error("Invalid JWT format");
+    }
+
+    const [headerB64, payloadB64, signatureB64] = parts;
+
+    // Verify signature
+    const data = encoder.encode(`${headerB64}.${payloadB64}`);
+    const signature = Uint8Array.from(
+      atob(signatureB64.replace(/-/g, "+").replace(/_/g, "/")),
+      (c) => c.charCodeAt(0)
+    );
+
+    const isValid = await crypto.subtle.verify("HMAC", key, signature, data);
+
+    if (!isValid) {
+      throw new Error("Invalid signature");
+    }
+
+    // Decode payload
+    const payload = JSON.parse(atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/")));
+
+    // Check expiration
+    if (payload.exp && payload.exp < Date.now() / 1000) {
+      throw new Error("Token expired");
+    }
+
+    return payload;
+  } catch (error) {
+    console.error("JWT verification failed:", error);
+    return null;
+  }
+}
+
+/**
+ * Check if path requires authentication
+ */
+function isPublicPath(pathname: string): boolean {
+  const publicPaths = [
+    "/api/availability/check",
+    "/api/availability/multi-unit",
+    "/api/units",
+    "/api/pricing/quote",
+    "/api/health",
+  ];
+
+  return publicPaths.some((path) => pathname.startsWith(path));
+}
+
+/**
  * Main middleware function
  */
 export async function onRequest(
@@ -180,6 +269,64 @@ export async function onRequest(
         "X-Request-ID": requestId,
       },
     });
+  }
+
+  // Authentication check for protected endpoints (Gap Resolution #8)
+  if (!isPublicPath(url.pathname) && env.SUPABASE_JWT_SECRET) {
+    const authHeader = request.headers.get("Authorization");
+
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({
+          error: "UNAUTHORIZED",
+          message: "Missing or invalid Authorization header",
+          code: 401,
+        }),
+        {
+          status: 401,
+          headers: {
+            ...corsHeaders,
+            ...securityHeaders,
+            "Content-Type": "application/json",
+            "X-Request-ID": requestId,
+          },
+        }
+      );
+    }
+
+    const token = authHeader.substring(7);
+    const payload = await verifySupabaseJWT(token, env.SUPABASE_JWT_SECRET);
+
+    if (!payload) {
+      return new Response(
+        JSON.stringify({
+          error: "UNAUTHORIZED",
+          message: "Invalid or expired token",
+          code: 401,
+        }),
+        {
+          status: 401,
+          headers: {
+            ...corsHeaders,
+            ...securityHeaders,
+            "Content-Type": "application/json",
+            "X-Request-ID": requestId,
+          },
+        }
+      );
+    }
+
+    // Extract role from JWT (user_metadata.role takes precedence, then role, default to 'user')
+    const userRole = (payload.user_metadata?.role || payload.role || "user") as string;
+
+    // Attach user to request context for downstream use
+    interface AuthenticatedRequest extends Request {
+      user?: JWTPayload & { role: string };
+    }
+    (request as AuthenticatedRequest).user = {
+      ...payload,
+      role: userRole,
+    };
   }
 
   try {

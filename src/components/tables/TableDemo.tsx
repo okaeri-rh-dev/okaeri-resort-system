@@ -7,7 +7,7 @@ import { BookingsTable } from "./index";
 import { UnitsTable } from "./index";
 import { GuestsTable } from "./index";
 
-import type { Booking, Unit, Guest } from "@/types";
+import type { Unit, Guest } from "@/types";
 
 /**
  * Demo component to test all table functionality

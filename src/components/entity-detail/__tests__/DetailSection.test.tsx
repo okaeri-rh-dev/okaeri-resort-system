@@ -1,6 +1,6 @@
 // src/components/entity-detail/__tests__/DetailSection.test.tsx
 
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { DetailSection } from "../DetailSection";
 
@@ -33,7 +33,7 @@ describe("DetailSection", () => {
     });
 
     it("does not render actions container when not provided", () => {
-      const { container } = render(
+      render(
         <DetailSection title="Test Section">
           <div>Content</div>
         </DetailSection>

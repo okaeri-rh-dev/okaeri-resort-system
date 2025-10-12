@@ -253,7 +253,7 @@ describe("useEntityNavigation", () => {
       });
 
       // TypeScript will prevent invalid entity types at compile time
-      // @ts-expect-error - Invalid entity type
+      // The following would fail at compile time:
       // result.current.navigateToDetail("invalid", "123");
     });
   });

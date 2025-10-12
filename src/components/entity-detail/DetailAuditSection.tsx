@@ -15,6 +15,7 @@ export interface DetailAuditSectionProps {
   title?: string;
   defaultCollapsed?: boolean;
   limit?: number; // Number of entries to show
+  className?: string; // Optional className for styling
 }
 
 /**
@@ -42,6 +43,7 @@ export function DetailAuditSection({
   title = "Audit Trail",
   defaultCollapsed,
   limit: _limit = 10,
+  className,
 }: DetailAuditSectionProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
 
@@ -51,6 +53,7 @@ export function DetailAuditSection({
       icon={<History className="h-5 w-5" />}
       collapsible
       defaultCollapsed={defaultCollapsed ?? isMobile}
+      className={className}
     >
       <AuditLogViewer />
     </DetailSection>

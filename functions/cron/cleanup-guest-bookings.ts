@@ -3,7 +3,7 @@ import { createSupabaseAdmin } from "@/lib/supabase-admin";
 // Environment type
 interface Env {
   SUPABASE_SERVICE_ROLE_KEY: string;
-  VITE_SUPABASE_URL: string;
+  SUPABASE_URL: string;
 }
 
 /**

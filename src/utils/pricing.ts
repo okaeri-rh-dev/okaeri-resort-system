@@ -764,3 +764,74 @@ export const calculatePriceComparison = (
     })
     .sort((a, b) => a.pricing.totalAmount - b.pricing.totalAmount);
 };
+
+// ============================================
+// MULTI-UNIT BOOKING UTILITIES (PHASE 4.5)
+// ============================================
+
+/**
+ * Calculates the number of weekend nights in a date range
+ *
+ * Counts Friday and Saturday nights for accurate weekend surcharge calculation.
+ * Used by multi-unit booking add-unit operations.
+ *
+ * @param checkIn - Check-in date (ISO 8601 string or Date)
+ * @param checkOut - Check-out date (ISO 8601 string or Date)
+ * @returns Number of weekend nights (Friday and Saturday)
+ *
+ * @example
+ * // Thu Jan 4 to Mon Jan 8, 2024 (includes Fri 5th and Sat 6th)
+ * calculateWeekendNights('2024-01-04', '2024-01-08'); // Returns: 2
+ *
+ * @example
+ * // Mon to Wed (no weekends)
+ * calculateWeekendNights('2024-01-08', '2024-01-10'); // Returns: 0
+ */
+export function calculateWeekendNights(checkIn: string | Date, checkOut: string | Date): number {
+  const start = new Date(checkIn);
+  const end = new Date(checkOut);
+  let weekendNights = 0;
+
+  // Iterate through each night (check-in to check-out)
+  const currentDate = new Date(start);
+  while (currentDate < end) {
+    const dayOfWeek = currentDate.getDay();
+
+    // Friday (5) or Saturday (6) = weekend nights
+    if (dayOfWeek === 5 || dayOfWeek === 6) {
+      weekendNights++;
+    }
+
+    // Move to next day
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return weekendNights;
+}
+
+/**
+ * Calculates extra person fee based on guest count
+ *
+ * Used for multi-unit bookings where each unit may have different guest assignments.
+ *
+ * @param numGuests - Number of guests assigned to unit
+ * @param baseOccupancy - Base occupancy of unit (included in base rate)
+ * @param extraPersonRate - Rate per extra person per night
+ * @returns Total extra person fee (not multiplied by nights)
+ *
+ * @example
+ * // 4 guests, base occupancy 2, ₱500/extra person
+ * calculateExtraPersonFee(4, 2, 500); // Returns: 1000 (2 extra guests * ₱500)
+ *
+ * @example
+ * // 2 guests, base occupancy 2 (no extra charge)
+ * calculateExtraPersonFee(2, 2, 500); // Returns: 0
+ */
+export function calculateExtraPersonFee(
+  numGuests: number,
+  baseOccupancy: number,
+  extraPersonRate: number
+): number {
+  const extraGuests = Math.max(0, numGuests - baseOccupancy);
+  return extraGuests * extraPersonRate;
+}

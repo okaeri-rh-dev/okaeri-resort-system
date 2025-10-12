@@ -251,3 +251,8 @@ export interface TableState {
     pageSize: number;
   };
 }
+
+// ============================================
+// MULTI-UNIT BOOKING TYPES (Phase 3)
+// ============================================
+export * from "./multi-unit-booking";

@@ -8,7 +8,7 @@ import { getClientIp } from "@/lib/turnstile";
 // Environment type
 interface Env {
   SUPABASE_SERVICE_ROLE_KEY: string;
-  VITE_SUPABASE_URL: string;
+  SUPABASE_URL: string;
   RESEND_API_KEY: string;
   RATE_LIMIT_KV: KVNamespace;
 }
