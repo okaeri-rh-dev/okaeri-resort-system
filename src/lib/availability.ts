@@ -128,22 +128,18 @@ export async function checkUnitAvailability(
 export async function checkMultiUnitAvailability(
   checkIn: string,
   checkOut: string,
-  filters: AvailabilityFilter = {},
-  limit: number = 50
+  filters: AvailabilityFilter = {}
 ): Promise<UnitAvailability[]> {
   try {
     const { data, error } = await supabase.rpc("check_multi_unit_availability", {
       p_check_in: checkIn,
       p_check_out: checkOut,
-      p_unit_types: filters.unitTypes ?? undefined,
-      p_min_occupancy: filters.minOccupancy ?? undefined,
-      p_max_rate: filters.maxRate ?? undefined,
-      p_limit: limit,
+      p_unit_ids: filters.excludeUnitIds ?? [],
     });
 
     if (error) throw error;
 
-    const typedData = data as UnitAvailabilityResponse[] | null;
+    const typedData = data as unknown as UnitAvailabilityResponse[] | null;
     return (typedData || []).map((unit) => ({
       unit_id: unit.unit_id,
       unit_name: unit.unit_name,

@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode } from "react";
 import {
@@ -258,7 +258,7 @@ describe("useMultiUnitBookingQueries Integration Tests", () => {
         booking_reference: "BK-123",
         ...newBooking,
         created_at: new Date().toISOString(),
-      } as MultiUnitBooking;
+      } as unknown as MultiUnitBooking;
 
       mockFetch.mockResolvedValue({
         ok: true,
@@ -756,7 +756,7 @@ describe("useMultiUnitBookingQueries Integration Tests", () => {
         total_amount: 5000,
         notes: "Client note",
         updated_at: "2025-10-01T10:00:00Z",
-      } as MultiUnitBooking;
+      } as unknown as MultiUnitBooking;
 
       act(() => {
         storeResult.current.addOptimisticBooking(optimisticBooking);
@@ -768,7 +768,7 @@ describe("useMultiUnitBookingQueries Integration Tests", () => {
         total_amount: 5500, // Server has different amount
         notes: "", // No notes from server
         updated_at: "2025-10-01T10:00:05Z",
-      } as MultiUnitBooking;
+      } as unknown as MultiUnitBooking;
 
       act(() => {
         storeResult.current.syncFromRealtime(serverBooking);

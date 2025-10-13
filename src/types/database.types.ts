@@ -654,6 +654,38 @@ export type Database = {
           },
         ];
       };
+      payment_adjustments: {
+        Row: {
+          adjustment_id: string;
+          payment_id: string;
+          reason: string;
+          amount_change: number;
+          created_at: string | null;
+        };
+        Insert: {
+          adjustment_id?: string;
+          payment_id: string;
+          reason: string;
+          amount_change: number;
+          created_at?: string | null;
+        };
+        Update: {
+          adjustment_id?: string;
+          payment_id?: string;
+          reason?: string;
+          amount_change?: number;
+          created_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payment_adjustments_payment_id_fkey";
+            columns: ["payment_id"];
+            isOneToOne: false;
+            referencedRelation: "payments";
+            referencedColumns: ["payment_id"];
+          },
+        ];
+      };
       payments: {
         Row: {
           amount: number;
@@ -664,6 +696,7 @@ export type Database = {
           payment_id: string;
           payment_method: string | null;
           proof_url: string | null;
+          refunded_amount: number | null;
         };
         Insert: {
           amount: number;
@@ -674,6 +707,7 @@ export type Database = {
           payment_id?: string;
           payment_method?: string | null;
           proof_url?: string | null;
+          refunded_amount?: number | null;
         };
         Update: {
           amount?: number;
@@ -684,6 +718,7 @@ export type Database = {
           payment_id?: string;
           payment_method?: string | null;
           proof_url?: string | null;
+          refunded_amount?: number | null;
         };
         Relationships: [
           {
@@ -742,6 +777,88 @@ export type Database = {
           weekend_rate?: number;
         };
         Relationships: [];
+      };
+      availability_blackouts: {
+        Row: {
+          blackout_id: string;
+          unit_id: string | null;
+          blackout_type: string;
+          start_date: string;
+          end_date: string;
+          reason: string | null;
+          created_by: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          blackout_id?: string;
+          unit_id?: string | null;
+          blackout_type: string;
+          start_date: string;
+          end_date: string;
+          reason?: string | null;
+          created_by?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          blackout_id?: string;
+          unit_id?: string | null;
+          blackout_type?: string;
+          start_date?: string;
+          end_date?: string;
+          reason?: string | null;
+          created_by?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "availability_blackouts_unit_id_fkey";
+            columns: ["unit_id"];
+            isOneToOne: false;
+            referencedRelation: "units";
+            referencedColumns: ["unit_id"];
+          },
+        ];
+      };
+      availability_cache: {
+        Row: {
+          cache_id: string;
+          unit_id: string | null;
+          date_range_start: string;
+          date_range_end: string;
+          available_dates: string[];
+          cache_expires_at: string;
+          created_at: string | null;
+        };
+        Insert: {
+          cache_id?: string;
+          unit_id?: string | null;
+          date_range_start: string;
+          date_range_end: string;
+          available_dates: string[];
+          cache_expires_at: string;
+          created_at?: string | null;
+        };
+        Update: {
+          cache_id?: string;
+          unit_id?: string | null;
+          date_range_start?: string;
+          date_range_end?: string;
+          available_dates?: string[];
+          cache_expires_at?: string;
+          created_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "availability_cache_unit_id_fkey";
+            columns: ["unit_id"];
+            isOneToOne: false;
+            referencedRelation: "units";
+            referencedColumns: ["unit_id"];
+          },
+        ];
       };
     };
     Views: {
@@ -849,6 +966,41 @@ export type Database = {
       check_unit_availability: {
         Args: { p_check_in: string; p_check_out: string; p_unit_id: string };
         Returns: boolean;
+      };
+      check_unit_availability_fast: {
+        Args: {
+          p_unit_id: string;
+          p_check_in: string;
+          p_check_out: string;
+          p_exclude_booking_id?: string;
+        };
+        Returns: {
+          is_available: boolean;
+          conflicting_bookings: number;
+          blackout_periods: number;
+          unit_status: string;
+        }[];
+      };
+      get_unit_availability_calendar: {
+        Args: {
+          p_unit_id: string;
+          p_start_date: string;
+          p_end_date: string;
+        };
+        Returns: {
+          calendar_date: string;
+          status: string;
+          booking_id: string | null;
+          guest_name: string | null;
+          booking_reference: string | null;
+        }[];
+      };
+      refresh_availability_cache: {
+        Args: {
+          p_unit_id?: string;
+          p_days_ahead?: number;
+        };
+        Returns: number;
       };
       create_multi_unit_booking: {
         Args: { p_booking_data: Json; p_guest_id?: string; p_units: Json[] };

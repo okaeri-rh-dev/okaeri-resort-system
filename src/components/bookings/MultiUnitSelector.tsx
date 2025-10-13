@@ -249,7 +249,6 @@ export function MultiUnitSelector({
               unit={unit}
               isSelected={isSelected(unit.unit_id)}
               canSelect={canAddMore || isSelected(unit.unit_id)}
-              viewMode={viewMode}
               checkIn={checkIn}
               checkOut={checkOut}
               onAdd={() => onAddUnit(unit)}
@@ -283,7 +282,6 @@ interface UnitCardProps {
   unit: Unit;
   isSelected: boolean;
   canSelect: boolean;
-  viewMode: "grid" | "list";
   checkIn: Date | string;
   checkOut: Date | string;
   onAdd: () => void;
@@ -295,7 +293,6 @@ function UnitCard({
   unit,
   isSelected,
   canSelect,
-  viewMode,
   checkIn,
   checkOut,
   onAdd,

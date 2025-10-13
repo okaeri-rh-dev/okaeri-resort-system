@@ -3,14 +3,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { axe, toHaveNoViolations } from "jest-axe";
+import { axe } from "vitest-axe";
 import { MultiUnitSelector } from "../MultiUnitSelector";
 import type { Unit } from "@/types";
 import type { BookingUnit } from "@/types/multi-unit-booking";
-
-expect.extend(toHaveNoViolations);
 
 // ============================================
 // MOCK DATA
@@ -339,8 +337,10 @@ describe("MultiUnitSelector", () => {
       render(<MultiUnitSelector {...defaultProps} />);
 
       // Find the Occupied unit card
-      const occupiedCard = screen.getByText("Standard Cabin").closest('[role="article"]');
-      const addButton = within(occupiedCard!).getByRole("button", {
+      const occupiedCard = screen
+        .getByText("Standard Cabin")
+        .closest('[role="article"]') as HTMLElement;
+      const addButton = within(occupiedCard).getByRole("button", {
         name: /add.*to booking/i,
       });
 

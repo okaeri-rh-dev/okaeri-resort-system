@@ -9,7 +9,6 @@
  * Phase 2C: Unit Management Operations
  */
 
-import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireRole } from "../../../../lib/rbac";
@@ -26,14 +25,15 @@ const removeUnitSchema = z.object({
   reason: z.string().max(500).optional(),
 });
 
-// Type for validation - prefix with underscore to indicate intentionally unused
-type _RemoveUnitRequest = z.infer<typeof removeUnitSchema>;
-
 /**
  * Main handler for removing unit from booking
  * Requires authentication (staff only)
  */
-export const onRequestPost: PagesFunction<Env> = async (context) => {
+export const onRequestPost = async (context: {
+  request: Request;
+  env: Env;
+  params: Record<string, string>;
+}): Promise<Response> => {
   const { request, env, params } = context;
   const startTime = Date.now();
   const bookingId = params.id as string;
@@ -234,7 +234,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
  * From spec lines 1368-1423
  */
 async function processRefundForRemovedUnit(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   bookingId: string,
   unitSubtotal: number,
   reason: string

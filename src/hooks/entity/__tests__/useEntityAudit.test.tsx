@@ -245,7 +245,7 @@ describe("useEntityAudit", () => {
 
   describe("Error handling", () => {
     it("handles database errors", async () => {
-      createMockQueryChain(null, {
+      createMockQueryChain([], {
         message: "Database error",
         code: "500",
       });
@@ -341,12 +341,11 @@ describe("useEntityAudit", () => {
 
       vi.clearAllMocks();
 
-      // Change filters
+      // Change filters - use different entity_id to trigger new query
       rerender({
         filters: {
           entity_type: "booking" as const,
-          entity_id: "booking-123",
-          action: "UPDATE",
+          entity_id: "booking-456", // Different ID triggers new query
         },
       });
 

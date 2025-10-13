@@ -9,7 +9,6 @@
  * Phase 2B: Core Booking Operations
  */
 
-import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import {
@@ -73,7 +72,11 @@ type MultiUnitBookingRequest = z.infer<typeof multiUnitBookingSchema>;
 /**
  * Main handler for multi-unit booking creation
  */
-export const onRequestPost: PagesFunction<Env> = async (context) => {
+export const onRequestPost = async (context: {
+  request: Request;
+  env: Env;
+  waitUntil: (promise: Promise<any>) => void;
+}): Promise<Response> => {
   const { request, env, waitUntil } = context;
   const startTime = Date.now();
 

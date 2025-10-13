@@ -107,7 +107,7 @@ export function useAvailableUnits(
 
   return useQuery({
     queryKey: ["available-units", checkIn, checkOut, filters, limit],
-    queryFn: () => checkMultiUnitAvailability(checkIn, checkOut, filters, limit),
+    queryFn: () => checkMultiUnitAvailability(checkIn, checkOut, filters),
     enabled: enabled && dateValidation.isValid,
     staleTime: 60000, // 1 minute
     retry: 2,

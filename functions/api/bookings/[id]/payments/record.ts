@@ -9,7 +9,6 @@
  * Phase 2D: Payment Integration (Manual Tracking)
  */
 
-import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { sanitizeTextWorker } from "../../../../../src/lib/security/sanitize-worker";
@@ -44,14 +43,15 @@ const capturePaymentSchema = z
     }
   );
 
-// Type for validation - prefix with underscore to indicate intentionally unused
-type _CapturePaymentRequest = z.infer<typeof capturePaymentSchema>;
-
 /**
  * Main handler for recording manual payment
  * Requires authentication (staff only)
  */
-export const onRequestPost: PagesFunction<Env> = async (context) => {
+export const onRequestPost = async (context: {
+  request: Request;
+  env: Env;
+  params: Record<string, string>;
+}): Promise<Response> => {
   const { request, env, params } = context;
   const startTime = Date.now();
   const bookingId = params.id as string;

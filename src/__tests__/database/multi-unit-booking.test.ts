@@ -141,7 +141,7 @@ describe("Multi-Unit Booking Database Functions", () => {
       const { data, error } = await supabase.rpc("create_multi_unit_booking", {
         p_booking_data: bookingData,
         p_units: units,
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
 
       expect(error).toBeNull();
@@ -225,7 +225,7 @@ describe("Multi-Unit Booking Database Functions", () => {
       const { data, error } = await supabase.rpc("create_multi_unit_booking", {
         p_booking_data: bookingData,
         p_units: units,
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
 
       expect(error).toBeNull();
@@ -275,7 +275,7 @@ describe("Multi-Unit Booking Database Functions", () => {
             assigned_guests: 2,
           },
         ],
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
 
       expect(booking1).toBeTruthy();
@@ -305,7 +305,7 @@ describe("Multi-Unit Booking Database Functions", () => {
             assigned_guests: 2,
           },
         ],
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
 
       expect(error).not.toBeNull();
@@ -338,7 +338,7 @@ describe("Multi-Unit Booking Database Functions", () => {
             assigned_guests: 2,
           },
         ],
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
 
       expect(error1).toBeNull();
@@ -369,7 +369,7 @@ describe("Multi-Unit Booking Database Functions", () => {
             assigned_guests: 2,
           },
         ],
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
 
       expect(error2).toBeNull();
@@ -423,7 +423,7 @@ describe("Multi-Unit Booking Database Functions", () => {
             assigned_guests: 2,
           },
         ],
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
 
       const { data, error } = await supabase.rpc("check_multi_unit_availability", {
@@ -466,7 +466,7 @@ describe("Multi-Unit Booking Database Functions", () => {
             assigned_guests: 2,
           },
         ],
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
 
       // Check availability excluding this booking (should be available)
@@ -474,7 +474,7 @@ describe("Multi-Unit Booking Database Functions", () => {
         p_unit_ids: [testUnitIds[0]],
         p_check_in: "2025-12-20T06:00:00Z",
         p_check_out: "2025-12-25T04:00:00Z",
-        p_exclude_booking_id: bookingId,
+        p_exclude_booking_id: bookingId ?? undefined,
       });
 
       expect(error).toBeNull();
@@ -517,11 +517,11 @@ describe("Multi-Unit Booking Database Functions", () => {
             assigned_guests: 2,
           },
         ],
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
 
       const { data, error } = await supabase.rpc("get_booking_units", {
-        p_booking_id: bookingId,
+        p_booking_id: bookingId!,
       });
 
       expect(error).toBeNull();
@@ -569,7 +569,7 @@ describe("Multi-Unit Booking Database Functions", () => {
             assigned_guests: 2,
           },
         ],
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
 
       // Verify initial total
@@ -586,7 +586,7 @@ describe("Multi-Unit Booking Database Functions", () => {
 
       // Add another unit
       await supabase.from("booking_units").insert({
-        booking_id: bookingId,
+        booking_id: bookingId!,
         unit_id: testUnitIds[1],
         unit_price: 17500,
         weekend_surcharge: 0,
@@ -631,7 +631,7 @@ describe("Multi-Unit Booking Database Functions", () => {
             assigned_guests: 2,
           },
         ],
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
 
       // Change booking dates
@@ -679,7 +679,7 @@ describe("Multi-Unit Booking Database Functions", () => {
             assigned_guests: 2,
           },
         ],
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
 
       // Change status
@@ -723,7 +723,7 @@ describe("Multi-Unit Booking Database Functions", () => {
             assigned_guests: 2,
           },
         ],
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
 
       // Verify availability exists

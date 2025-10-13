@@ -9,7 +9,6 @@
  * Phase 2B: Core Booking Operations
  */
 
-import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
 interface Env {
@@ -32,7 +31,7 @@ interface AvailabilityResult {
  * Main handler for multi-unit availability checking
  * Public endpoint - no authentication required
  */
-export const onRequestGet: PagesFunction<Env> = async (context) => {
+export const onRequestGet = async (context: { request: Request; env: Env }): Promise<Response> => {
   const { request, env } = context;
   const startTime = Date.now();
   const url = new URL(request.url);

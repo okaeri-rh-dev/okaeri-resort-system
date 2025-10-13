@@ -33,8 +33,47 @@ vi.mock("@/hooks/useAvailabilityRealtime", () => ({
 }));
 
 vi.mock("@/hooks/useMultiUnitBookingQueries", () => ({
+  useMultiUnitBookings: () => ({
+    data: [],
+    isLoading: false,
+    error: null,
+  }),
+  useMultiUnitAvailability: () => ({
+    data: null,
+    isLoading: false,
+    error: null,
+  }),
+  useMultiUnitPricingQuote: () => ({
+    data: null,
+    isLoading: false,
+    error: null,
+  }),
   useCreateMultiUnitBooking: () => ({
     mutateAsync: vi.fn().mockResolvedValue({ booking_id: "test-booking-123" }),
+    isPending: false,
+  }),
+  useAddUnitToBooking: () => ({
+    mutateAsync: vi.fn().mockResolvedValue({}),
+    isPending: false,
+  }),
+  useRemoveUnitFromBooking: () => ({
+    mutateAsync: vi.fn().mockResolvedValue({}),
+    isPending: false,
+  }),
+  useUpdateMultiUnitBooking: () => ({
+    mutateAsync: vi.fn().mockResolvedValue({}),
+    isPending: false,
+  }),
+  useDeleteMultiUnitBooking: () => ({
+    mutateAsync: vi.fn().mockResolvedValue({}),
+    isPending: false,
+  }),
+  useRecordMultiUnitPayment: () => ({
+    mutateAsync: vi.fn().mockResolvedValue({}),
+    isPending: false,
+  }),
+  useRefundMultiUnitPayment: () => ({
+    mutateAsync: vi.fn().mockResolvedValue({}),
     isPending: false,
   }),
 }));
@@ -76,7 +115,7 @@ const mockUnits: Unit[] = [
     base_rate: 3000,
     weekend_rate: 3500,
     extra_person_rate: 500,
-    amenities: {},
+    amenities: [],
     created_at: "2024-01-01",
     updated_at: "2024-01-01",
   },
@@ -91,7 +130,7 @@ const mockUnits: Unit[] = [
     base_rate: 5000,
     weekend_rate: 6000,
     extra_person_rate: 800,
-    amenities: {},
+    amenities: [],
     created_at: "2024-01-01",
     updated_at: "2024-01-01",
   },
@@ -179,7 +218,7 @@ describe("MultiUnitBookingForm", () => {
     });
 
     it("prevents adding more than 10 units", async () => {
-      const { user } = renderWithProviders(<MultiUnitBookingForm />);
+      renderWithProviders(<MultiUnitBookingForm />);
 
       // Add 10 units to store
       const store = useMultiUnitBookingStore.getState();
@@ -207,7 +246,7 @@ describe("MultiUnitBookingForm", () => {
 
       // Try to add 11th unit (this would happen via handleAddUnit)
       // The store should enforce the limit
-      const result = store.addUnit({
+      store.addUnit({
         unit_id: "unit-11",
         unit_name: "Unit 11",
         unit_code: "U-11",
@@ -436,9 +475,9 @@ describe("MultiUnitBookingForm", () => {
 
       // Step 3: Skip guest assignment
       await waitFor(() => {
-        nextButton = screen.queryByRole("button", { name: /next/i });
-        if (nextButton) {
-          user.click(nextButton);
+        const nextBtn = screen.queryByRole("button", { name: /next/i });
+        if (nextBtn) {
+          user.click(nextBtn);
         }
       });
 
@@ -547,7 +586,7 @@ describe("MultiUnitBookingForm", () => {
       // This test verifies the form reset behavior
       // Since the mutation is mocked to succeed, we can verify the form component
       // handles success properly
-      const { user } = renderWithProviders(<MultiUnitBookingForm />);
+      renderWithProviders(<MultiUnitBookingForm />);
 
       // Verify form renders
       expect(screen.getByText("Multi-Unit Booking")).toBeInTheDocument();
@@ -616,7 +655,7 @@ describe("MultiUnitBookingForm", () => {
       // Note: The mock is set up at the top of the file to succeed
       // For a failure test, we'd need to override the mock
       // This test verifies the component structure handles errors
-      const { user } = renderWithProviders(<MultiUnitBookingForm />);
+      renderWithProviders(<MultiUnitBookingForm />);
 
       // Verify component renders and has error handling structure
       expect(screen.getByText("Multi-Unit Booking")).toBeInTheDocument();
@@ -683,10 +722,9 @@ describe("MultiUnitBookingForm", () => {
     });
 
     it("updates pricing when units change", async () => {
-      const { user } = renderWithProviders(<MultiUnitBookingForm />);
+      renderWithProviders(<MultiUnitBookingForm />);
 
       const store = useMultiUnitBookingStore.getState();
-      const recalculateSpy = vi.spyOn(store, "recalculateTotalPricing");
 
       // Add a unit
       store.addUnit({

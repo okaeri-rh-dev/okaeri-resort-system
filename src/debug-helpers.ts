@@ -113,11 +113,13 @@ if (import.meta.env.DEV) {
       const tables = ["units", "bookings", "guests", "payments", "expenses"];
 
       for (const table of tables) {
-        const { data, error } = await supabase.from(table).select("count");
+        const { count, error } = await supabase
+          .from(table as any)
+          .select("*", { count: "exact", head: true });
         if (error) {
           console.error(`❌ ${table}: ${error.message}`);
         } else {
-          console.log(`✅ ${table}: Access granted (${data?.[0]?.count || 0} rows)`);
+          console.log(`✅ ${table}: Access granted (${count || 0} rows)`);
         }
       }
     },

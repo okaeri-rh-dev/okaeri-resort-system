@@ -16,7 +16,7 @@ export const createMockKV = (): KVNamespace => ({
   get: vi.fn(async (key: string) => {
     const value = kvStore.get(key);
     return value || null;
-  }),
+  }) as unknown as KVNamespace["get"],
 
   put: vi.fn(async (key: string, value: string, options?: { expirationTtl?: number }) => {
     kvStore.set(key, value);
@@ -39,13 +39,15 @@ export const createMockKV = (): KVNamespace => ({
       keys: filtered.slice(0, options?.limit || 1000).map((name) => ({ name })),
       list_complete: true,
       cursor: "",
+      cacheStatus: null,
     };
-  }),
+  }) as KVNamespace["list"],
 
   getWithMetadata: vi.fn(async () => ({
     value: null,
     metadata: null,
-  })),
+    cacheStatus: null,
+  })) as unknown as KVNamespace["getWithMetadata"],
 });
 
 /**

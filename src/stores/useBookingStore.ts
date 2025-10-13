@@ -769,10 +769,7 @@ export const useMultiUnitAvailability = (
   checkIn: string,
   checkOut: string,
   filters: {
-    unitTypes?: string[];
-    minOccupancy?: number;
-    maxRate?: number;
-    limit?: number;
+    unitIds?: string[];
   } = {},
   options: { enabled?: boolean } = {}
 ) => {

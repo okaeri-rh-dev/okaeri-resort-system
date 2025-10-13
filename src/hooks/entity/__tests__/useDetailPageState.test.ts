@@ -157,7 +157,7 @@ describe("useDetailPageState", () => {
     });
 
     it("accepts invalid tab value (no runtime validation)", () => {
-      // @ts-expect-error Testing invalid tab value
+      // Testing invalid tab value
       vi.mocked(useSearch).mockReturnValue({ tab: "invalid" });
 
       const { result } = renderHook(() => useDetailPageState());
@@ -182,7 +182,7 @@ describe("useDetailPageState", () => {
       });
 
       // TypeScript will prevent invalid tab values at compile time
-      // @ts-expect-error - Invalid tab value
+      // Invalid tab value would be caught at compile time:
       // result.current.setActiveTab("invalid");
     });
   });

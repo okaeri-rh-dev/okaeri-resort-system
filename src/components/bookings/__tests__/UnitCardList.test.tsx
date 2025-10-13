@@ -5,11 +5,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { axe, toHaveNoViolations } from "jest-axe";
+import { axe } from "vitest-axe";
 import { UnitCardList } from "../UnitCardList";
 import type { BookingUnit } from "@/types/multi-unit-booking";
-
-expect.extend(toHaveNoViolations);
 
 const mockUnits: BookingUnit[] = [
   {

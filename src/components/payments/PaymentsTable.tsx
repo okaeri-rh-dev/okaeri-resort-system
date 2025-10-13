@@ -404,7 +404,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
                       onEditPayment?.({
                         ...payment,
                         booking: payment.booking || undefined,
-                      })
+                      } as Payment)
                     }
                   >
                     <Edit className="h-4 w-4 mr-1" />

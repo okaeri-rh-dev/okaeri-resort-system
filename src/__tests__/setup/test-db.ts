@@ -118,7 +118,10 @@ export async function createTestGuest(overrides: Partial<any> = {}) {
     .insert({
       guest_name: overrides.guest_name || `Test Guest ${timestamp}`,
       email: overrides.email || `test${timestamp}@example.com`,
-      contact_number: overrides.contact_number || `+6391${timestamp.toString().slice(-8)}`,
+      phone_number:
+        overrides.phone_number ||
+        overrides.contact_number ||
+        `+6391${timestamp.toString().slice(-8)}`,
       ...overrides,
     })
     .select()
@@ -151,7 +154,7 @@ export async function createTestBooking(overrides: Partial<any> = {}) {
       unit_id: unit.unit_id,
       guest_name: guest.guest_name,
       email: guest.email,
-      contact_number: guest.contact_number,
+      contact_number: guest.phone_number,
       check_in: checkIn.toISOString(),
       check_out: checkOut.toISOString(),
       num_guests: overrides.num_guests || 2,
@@ -189,7 +192,7 @@ export async function createTestMultiUnitBooking(unitCount: number = 2) {
       booking_reference: `TEST-MU-${Date.now()}`,
       guest_name: guest.guest_name,
       email: guest.email,
-      contact_number: guest.contact_number,
+      contact_number: guest.phone_number,
       check_in: checkIn.toISOString(),
       check_out: checkOut.toISOString(),
       num_guests: unitCount * 2,

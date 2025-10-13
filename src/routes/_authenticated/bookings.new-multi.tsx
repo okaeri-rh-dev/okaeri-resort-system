@@ -13,7 +13,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { MultiUnitBookingForm } from "@/components/bookings/MultiUnitBookingForm";
 
-export const Route = createFileRoute("/bookings/new-multi")({
+export const Route = createFileRoute("/_authenticated/bookings/new-multi")({
   component: MultiUnitBookingPage,
 });
 

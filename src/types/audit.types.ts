@@ -115,6 +115,7 @@ export type AuditLogInsert = Database["public"]["Tables"]["audit_logs"]["Insert"
  */
 export interface AuditLogFilters {
   tableName?: string;
+  entity_type?: string;
   action?: AuditAction | string;
   category?: AuditCategory | string;
   severity?: AuditSeverity | string;

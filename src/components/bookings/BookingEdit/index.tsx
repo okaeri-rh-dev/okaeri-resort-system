@@ -1,6 +1,6 @@
 // src/components/bookings/BookingEdit/index.tsx
 
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams, useLoaderData, useNavigate } from "@tanstack/react-router";
 import { CalendarDays, Save, X } from "lucide-react";
@@ -54,7 +54,7 @@ export function BookingEditPage() {
       contact_number: booking.contact_number || "",
       check_in: new Date(booking.check_in),
       check_out: new Date(booking.check_out),
-      unit_id: booking.unit_id,
+      unit_id: booking.unit_id ?? "",
       num_guests: booking.num_guests,
       payment_method:
         (booking.payment_method as "Cash" | "GCash" | "BankTransfer" | "Card") || "Cash",
@@ -71,7 +71,7 @@ export function BookingEditPage() {
   });
 
   // Form submission handler
-  const onSubmit = (data: BookingEditInput) => {
+  const onSubmit: SubmitHandler<BookingEditInput> = (data) => {
     updateBooking.mutate(data);
   };
 

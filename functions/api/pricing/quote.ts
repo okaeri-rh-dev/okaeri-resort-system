@@ -9,7 +9,6 @@
  * Gap Resolution #7: Centralized pricing endpoint as authoritative source
  */
 
-import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
 interface Env {
@@ -44,7 +43,7 @@ interface PricingQuoteResponse {
  * This is the SINGLE SOURCE OF TRUTH for pricing.
  * All pricing logic centralized here - used by both client (estimates) and server (final totals).
  */
-export const onRequestPost: PagesFunction<Env> = async (context) => {
+export const onRequestPost = async (context: { request: Request; env: Env }): Promise<Response> => {
   const { request, env } = context;
   const startTime = Date.now();
 

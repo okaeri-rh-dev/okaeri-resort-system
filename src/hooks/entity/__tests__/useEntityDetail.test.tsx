@@ -61,12 +61,12 @@ describe("useEntityDetail", () => {
         booking_reference: "BK-2024-001",
         booking_status: "Confirmed",
         guest_name: "John Doe",
-      };
+      } as unknown as Awaited<ReturnType<typeof db.bookings.byId>>["data"];
 
       vi.mocked(db.bookings.byId).mockResolvedValue({
         data: mockBooking,
         error: null,
-      });
+      } as unknown as Awaited<ReturnType<typeof db.bookings.byId>>);
 
       const { result } = renderHook(
         () => useEntityDetail("booking", "123e4567-e89b-12d3-a456-426614174000"),
@@ -91,7 +91,7 @@ describe("useEntityDetail", () => {
       vi.mocked(db.bookings.byId).mockResolvedValue({
         data: null,
         error: null,
-      });
+      } as unknown as Awaited<ReturnType<typeof db.bookings.byId>>);
 
       const { result } = renderHook(() => useEntityDetail("booking", "nonexistent-id"), {
         wrapper: createWrapper(),
@@ -109,12 +109,13 @@ describe("useEntityDetail", () => {
       vi.mocked(db.bookings.byId).mockResolvedValue({
         data: null,
         error: {
+          name: "PostgrestError",
           message: "Database connection failed",
           code: "500",
           details: "",
           hint: "",
         },
-      });
+      } as unknown as Awaited<ReturnType<typeof db.bookings.byId>>);
 
       const { result } = renderHook(() => useEntityDetail("booking", "123"), {
         wrapper: createWrapper(),
@@ -135,12 +136,12 @@ describe("useEntityDetail", () => {
         unit_name: "Deluxe Villa 1",
         unit_code: "DV-001",
         base_rate: 5000,
-      };
+      } as unknown as Awaited<ReturnType<typeof db.units.byId>>["data"];
 
       vi.mocked(db.units.byId).mockResolvedValue({
         data: mockUnit,
         error: null,
-      });
+      } as unknown as Awaited<ReturnType<typeof db.units.byId>>);
 
       const { result } = renderHook(() => useEntityDetail("unit", "unit-123"), {
         wrapper: createWrapper(),
@@ -162,12 +163,12 @@ describe("useEntityDetail", () => {
         guest_name: "Jane Smith",
         email: "jane@example.com",
         contact_number: "09171234567",
-      };
+      } as unknown as Awaited<ReturnType<typeof db.guests.byId>>["data"];
 
       vi.mocked(db.guests.byId).mockResolvedValue({
         data: mockGuest,
         error: null,
-      });
+      } as unknown as Awaited<ReturnType<typeof db.guests.byId>>);
 
       const { result } = renderHook(() => useEntityDetail("guest", "guest-123"), {
         wrapper: createWrapper(),
@@ -188,12 +189,12 @@ describe("useEntityDetail", () => {
         payment_amount: 5000,
         payment_method: "GCash",
         booking_id: "booking-123",
-      };
+      } as unknown as Awaited<ReturnType<typeof db.payments.byId>>["data"];
 
       vi.mocked(db.payments.byId).mockResolvedValue({
         data: mockPayment,
         error: null,
-      });
+      } as unknown as Awaited<ReturnType<typeof db.payments.byId>>);
 
       const { result } = renderHook(() => useEntityDetail("payment", "payment-123"), {
         wrapper: createWrapper(),
@@ -214,12 +215,12 @@ describe("useEntityDetail", () => {
         description: "Pool maintenance",
         amount: 2500,
         category: "Maintenance",
-      };
+      } as unknown as Awaited<ReturnType<typeof db.expenses.byId>>["data"];
 
       vi.mocked(db.expenses.byId).mockResolvedValue({
         data: mockExpense,
         error: null,
-      });
+      } as unknown as Awaited<ReturnType<typeof db.expenses.byId>>);
 
       const { result } = renderHook(() => useEntityDetail("expense", "expense-123"), {
         wrapper: createWrapper(),
@@ -245,8 +246,13 @@ describe("useEntityDetail", () => {
     });
 
     it("respects enabled option when true", async () => {
-      const mockBooking = { booking_id: "123", booking_reference: "BK-001" };
-      vi.mocked(db.bookings.byId).mockResolvedValue({ data: mockBooking, error: null });
+      const mockBooking = { booking_id: "123", booking_reference: "BK-001" } as unknown as Awaited<
+        ReturnType<typeof db.bookings.byId>
+      >["data"];
+      vi.mocked(db.bookings.byId).mockResolvedValue({
+        data: mockBooking,
+        error: null,
+      } as unknown as Awaited<ReturnType<typeof db.bookings.byId>>);
 
       const { result } = renderHook(() => useEntityDetail("booking", "123", { enabled: true }), {
         wrapper: createWrapper(),
@@ -260,8 +266,13 @@ describe("useEntityDetail", () => {
     });
 
     it("respects custom staleTime option", async () => {
-      const mockBooking = { booking_id: "123", booking_reference: "BK-001" };
-      vi.mocked(db.bookings.byId).mockResolvedValue({ data: mockBooking, error: null });
+      const mockBooking = { booking_id: "123", booking_reference: "BK-001" } as unknown as Awaited<
+        ReturnType<typeof db.bookings.byId>
+      >["data"];
+      vi.mocked(db.bookings.byId).mockResolvedValue({
+        data: mockBooking,
+        error: null,
+      } as unknown as Awaited<ReturnType<typeof db.bookings.byId>>);
 
       const { result } = renderHook(
         () =>
@@ -294,8 +305,13 @@ describe("useEntityDetail", () => {
 
   describe("Query key generation", () => {
     it("uses correct query key format", async () => {
-      const mockBooking = { booking_id: "123", booking_reference: "BK-001" };
-      vi.mocked(db.bookings.byId).mockResolvedValue({ data: mockBooking, error: null });
+      const mockBooking = { booking_id: "123", booking_reference: "BK-001" } as unknown as Awaited<
+        ReturnType<typeof db.bookings.byId>
+      >["data"];
+      vi.mocked(db.bookings.byId).mockResolvedValue({
+        data: mockBooking,
+        error: null,
+      } as unknown as Awaited<ReturnType<typeof db.bookings.byId>>);
 
       renderHook(() => useEntityDetail("booking", "123"), {
         wrapper: createWrapper(),

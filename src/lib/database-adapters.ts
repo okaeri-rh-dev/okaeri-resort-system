@@ -92,7 +92,7 @@ export function adaptBookingFromDB(dbBooking: DbBooking): Booking {
   return {
     booking_id: dbBooking.booking_id,
     booking_reference: dbBooking.booking_reference,
-    unit_id: dbBooking.unit_id,
+    unit_id: dbBooking.unit_id ?? "",
     guest_id: dbBooking.guest_id,
     guest_name: dbBooking.guest_name,
     contact_number: dbBooking.contact_number,

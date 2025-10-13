@@ -128,19 +128,13 @@ export const db = {
       checkIn: string,
       checkOut: string,
       options: {
-        unitTypes?: string[];
-        minOccupancy?: number;
-        maxRate?: number;
-        limit?: number;
+        unitIds?: string[];
       } = {}
     ) =>
       supabase.rpc("check_multi_unit_availability", {
         p_check_in: checkIn,
         p_check_out: checkOut,
-        p_unit_types: options.unitTypes ?? undefined,
-        p_min_occupancy: options.minOccupancy ?? undefined,
-        p_max_rate: options.maxRate ?? undefined,
-        p_limit: options.limit || 50,
+        p_unit_ids: options.unitIds ?? [],
       }),
 
     getAvailabilityCalendar: (unitId: string, startDate: string, endDate: string) =>
@@ -216,6 +210,7 @@ export const db = {
   },
 
   // Cache management
+  // Note: availability_cache table removed in migration, cache now handled by database functions
   cache: {
     refresh: (unitId?: string, daysAhead?: number) =>
       supabase.rpc("refresh_availability_cache", {
@@ -223,31 +218,20 @@ export const db = {
         p_days_ahead: daysAhead || 90,
       }),
     metrics: async () => {
-      // Calculate metrics from existing availability_cache table
-      const { data, error } = await supabase.from("availability_cache").select("*");
-      if (error) throw error;
-
-      const totalEntries = data?.length || 0;
-      const validEntries =
-        data?.filter((entry) => new Date(entry.cache_expires_at) > new Date()).length || 0;
-      const hitRatio = totalEntries > 0 ? (validEntries / totalEntries) * 100 : 0;
-
+      // Stub: Cache metrics now managed internally by database
       return {
         data: {
-          total_cache_entries: totalEntries,
-          valid_cache_entries: validEntries,
-          cache_hit_ratio_percent: Math.round(hitRatio * 100) / 100,
+          total_cache_entries: 0,
+          valid_cache_entries: 0,
+          cache_hit_ratio_percent: 0,
         },
         error: null,
       };
     },
-    clear: (unitId?: string) =>
-      unitId
-        ? supabase.from("availability_cache").delete().eq("unit_id", unitId)
-        : supabase
-            .from("availability_cache")
-            .delete()
-            .lt("cache_expires_at", new Date().toISOString()),
+    clear: async (_unitId?: string) => {
+      // Stub: Cache clearing now handled internally by database
+      return { data: null, error: null };
+    },
   },
 
   // App Roles - User role management for audit trail access control

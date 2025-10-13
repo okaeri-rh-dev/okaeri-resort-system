@@ -530,16 +530,16 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                           <UnitCardList
                             units={selectedUnits}
                             onRemove={handleRemoveUnit}
-                            onEditAssignment={(unitId) => {
+                            onUpdateGuestCount={(unitId: string, count: number) => {
+                              assignGuestsToUnit(unitId, [], count);
+                              recalculateTotalPricing();
+                            }}
+                            onAssignGuests={(unitId: string) => {
                               setSelectedUnitForAssignment(unitId);
                               setGuestAssignmentOpen(true);
                             }}
                           />
-                          <MultiUnitPricingSummary
-                            units={selectedUnits}
-                            checkIn={checkInStr}
-                            checkOut={checkOutStr}
-                          />
+                          <MultiUnitPricingSummary units={selectedUnits} />
                         </div>
                       )}
                     </>
@@ -609,7 +609,11 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                     <UnitCardList
                       units={selectedUnits}
                       onRemove={handleRemoveUnit}
-                      onEditAssignment={(unitId) => {
+                      onUpdateGuestCount={(unitId: string, count: number) => {
+                        assignGuestsToUnit(unitId, [], count);
+                        recalculateTotalPricing();
+                      }}
+                      onAssignGuests={(unitId: string) => {
                         setSelectedUnitForAssignment(unitId);
                         setGuestAssignmentOpen(true);
                       }}
@@ -638,11 +642,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                     </div>
                   </div>
 
-                  <MultiUnitPricingSummary
-                    units={selectedUnits}
-                    checkIn={checkInStr}
-                    checkOut={checkOutStr}
-                  />
+                  <MultiUnitPricingSummary units={selectedUnits} />
 
                   <FormField
                     control={form.control}
@@ -722,12 +722,10 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
             unit={selectedUnits.find((u) => u.unit_id === selectedUnitForAssignment)!}
             open={guestAssignmentOpen}
             onOpenChange={setGuestAssignmentOpen}
-            onSave={(assignment) => {
-              if (selectedUnitForAssignment) {
-                assignGuestsToUnit(selectedUnitForAssignment, [], assignment.num_guests);
-                setGuestAssignmentOpen(false);
-                toast.success("Guest assignment saved");
-              }
+            onSave={(unitId, numGuests) => {
+              assignGuestsToUnit(unitId, [], numGuests);
+              setGuestAssignmentOpen(false);
+              toast.success("Guest assignment saved");
             }}
           />
         </CardContent>

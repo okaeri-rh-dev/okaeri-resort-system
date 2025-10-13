@@ -47,7 +47,8 @@ export function createMockRequest(
 
   // Add mock user context if Authorization header is present
   // This simulates what the middleware does after JWT verification
-  const authHeader = options.headers?.["Authorization"] || options.headers?.["authorization"];
+  const headersObj = options.headers as Record<string, string> | undefined;
+  const authHeader = headersObj?.["Authorization"] || headersObj?.["authorization"];
   if (authHeader) {
     request.user = {
       id: "test-user-id",
