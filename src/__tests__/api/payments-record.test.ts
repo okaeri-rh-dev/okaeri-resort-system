@@ -14,6 +14,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createMockRequest, createMockContext, mockEnv, generateTestJWT } from "./setup";
 import { createPaymentRecordMocks } from "./factories/payment-factory";
 import { testBookingResponse } from "./utils/fixtures";
+import type { RecordPaymentResponse, ApiErrorResponse } from "./types/responses";
 
 describe("POST /api/bookings/:id/payments/record", () => {
   const validPaymentData = {
@@ -84,7 +85,7 @@ describe("POST /api/bookings/:id/payments/record", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(200);
-    const data = await response.json();
+    const data = (await response.json()) as RecordPaymentResponse;
     expect(data.success).toBe(true);
   });
 
@@ -128,9 +129,11 @@ describe("POST /api/bookings/:id/payments/record", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("VALIDATION_ERROR");
-    expect(data.details.validation_errors.some((e: any) => e.field === "proof_url")).toBe(true);
+    expect((data as any).details.validation_errors.some((e: any) => e.field === "proof_url")).toBe(
+      true
+    );
   });
 
   it("should require proof_url for BankTransfer payment", async () => {
@@ -218,7 +221,7 @@ describe("POST /api/bookings/:id/payments/record", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("AMOUNT_EXCEEDS_TOTAL");
   });
 
@@ -300,7 +303,7 @@ describe("POST /api/bookings/:id/payments/record", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(404);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("BOOKING_NOT_FOUND");
   });
 

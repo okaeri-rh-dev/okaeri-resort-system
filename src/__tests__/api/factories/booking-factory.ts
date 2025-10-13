@@ -135,7 +135,7 @@ export function createBookingMocks(options: BookingMockOptions = {}) {
       /**
        * Create multi-unit booking
        */
-      create_multi_unit_booking: (params: any) => {
+      create_multi_unit_booking: (_params: any) => {
         // Return the booking ID that was created
         return createdBookingId;
       },

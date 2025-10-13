@@ -86,7 +86,7 @@ export class SupabaseMockBuilder {
         const error = tableErrors.get(table) || null;
 
         return {
-          select: vi.fn((columns = "*") => {
+          select: vi.fn((_columns = "*") => {
             const selectResult = {
               eq: vi.fn((column: string, value: any) => {
                 const filtered = data.filter((item: any) => item[column] === value);
@@ -103,7 +103,7 @@ export class SupabaseMockBuilder {
                     data: currentData[0] || null,
                     error: currentData[0] ? null : error,
                   })),
-                  order: vi.fn((column: string, options?: { ascending?: boolean }) => ({
+                  order: vi.fn((_column: string, _options?: { ascending?: boolean }) => ({
                     limit: vi.fn((count: number) => ({
                       single: vi.fn(() => ({
                         data: currentData.slice(0, count)[0] || null,
@@ -139,7 +139,7 @@ export class SupabaseMockBuilder {
                 })),
               })),
 
-              order: vi.fn((column: string, options?: { ascending?: boolean }) => ({
+              order: vi.fn((_column: string, _options?: { ascending?: boolean }) => ({
                 limit: vi.fn((count: number) => ({
                   single: vi.fn(() => ({
                     data: data.slice(0, count)[0] || null,
@@ -184,7 +184,7 @@ export class SupabaseMockBuilder {
           }),
 
           update: vi.fn((updateData: any) => ({
-            eq: vi.fn((column: string, value: any) => ({
+            eq: vi.fn((_column: string, _value: any) => ({
               select: vi.fn(() => ({
                 single: vi.fn(() => ({
                   data: { ...updateData, updated_at: new Date().toISOString() },

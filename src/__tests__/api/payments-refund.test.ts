@@ -14,6 +14,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createMockRequest, createMockContext, mockEnv, generateTestJWT } from "./setup";
 import { createPaymentRefundMocks } from "./factories/payment-factory";
 import { testBookingResponse } from "./utils/fixtures";
+import type { RefundPaymentResponse, ApiErrorResponse } from "./types/responses";
 
 describe("POST /api/bookings/:id/payments/refund", () => {
   const validRefundData = {
@@ -29,7 +30,9 @@ describe("POST /api/bookings/:id/payments/refund", () => {
       payment: {
         payment_id: "payment-123",
         booking_id: testBookingResponse.booking_id,
+        amount: 5000,
         amount_paid: 5000,
+        payment_method: "GCash",
         payment_status: "Paid",
       },
     });
@@ -48,7 +51,9 @@ describe("POST /api/bookings/:id/payments/refund", () => {
       payment: {
         payment_id: "p-1",
         booking_id: testBookingResponse.booking_id,
+        amount: 5000,
         amount_paid: 5000,
+        payment_method: "GCash",
         payment_status: "Paid",
       },
     });
@@ -78,7 +83,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(200);
-    const data = await response.json();
+    const data = (await response.json()) as RefundPaymentResponse;
     expect(data.success).toBe(true);
   });
 
@@ -117,7 +122,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
     });
     const response = await onRequestPost(context as any);
 
-    const data = await response.json();
+    const data = (await response.json()) as RefundPaymentResponse;
     expect(data.data.adjustment_id).toBeDefined();
   });
 
@@ -180,7 +185,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("REFUND_EXCEEDS_PAYMENT");
   });
 
@@ -258,7 +263,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(404);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("PAYMENT_NOT_FOUND");
   });
 
@@ -271,6 +276,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
         booking_id: testBookingResponse.booking_id,
         amount: 5000,
         amount_paid: 5000,
+        payment_method: "GCash",
         payment_status: "Refunded",
         refunded_amount: 5000, // Already fully refunded
       },
@@ -297,7 +303,7 @@ describe("POST /api/bookings/:id/payments/refund", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("REFUND_EXCEEDS_PAYMENT");
   });
 

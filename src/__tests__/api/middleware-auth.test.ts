@@ -20,6 +20,7 @@ import {
   generateTestJWT,
   generateExpiredJWT,
 } from "./setup";
+import type { ApiErrorResponse } from "./types/responses";
 
 describe("Middleware JWT Authentication", () => {
   beforeEach(() => {
@@ -89,7 +90,7 @@ describe("Middleware JWT Authentication", () => {
     const response = await onRequest(context as any);
 
     expect(response.status).toBe(401);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("UNAUTHORIZED");
   });
 
@@ -106,7 +107,7 @@ describe("Middleware JWT Authentication", () => {
       next: vi.fn(async () => new Response(JSON.stringify({ success: true }), { status: 200 })),
     };
 
-    const response = await onRequest(context as any);
+    await onRequest(context as any);
 
     // With valid JWT, middleware should call next()
     expect(context.next).toHaveBeenCalled();
@@ -128,7 +129,7 @@ describe("Middleware JWT Authentication", () => {
     const response = await onRequest(context as any);
 
     expect(response.status).toBe(401);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("UNAUTHORIZED");
   });
 
@@ -230,7 +231,7 @@ describe("Middleware JWT Authentication", () => {
       next: vi.fn(async () => new Response("OK", { status: 200 })),
     };
 
-    const response = await onRequest(context as any);
+    await onRequest(context as any);
 
     // Should call next() without processing
     expect(context.next).toHaveBeenCalled();

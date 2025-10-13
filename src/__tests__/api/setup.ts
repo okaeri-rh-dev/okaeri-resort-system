@@ -8,7 +8,7 @@ import { beforeEach, afterEach, vi } from "vitest";
 import { webcrypto } from "node:crypto";
 import { createMockEnv, type TestEnv } from "./mocks/env";
 import { resetKVStore } from "./mocks/kv";
-import { mockSupabaseModule, setMockData, resetMockData } from "./mocks/supabase";
+import { mockSupabaseModule, resetMockData } from "./mocks/supabase";
 
 // Hoist module mocks to top level (required by Vitest)
 vi.mock("@supabase/supabase-js", () => mockSupabaseModule());

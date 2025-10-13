@@ -45,7 +45,7 @@ export const createMockSupabaseClient = (mockData?: Record<string, any>) => {
       const hasError = data[`${table}:error`];
 
       return {
-        select: vi.fn((columns = "*") => {
+        select: vi.fn((_columns = "*") => {
           const selectChain = {
             eq: vi.fn((column: string, value: any) => {
               const filtered = Array.isArray(tableData)

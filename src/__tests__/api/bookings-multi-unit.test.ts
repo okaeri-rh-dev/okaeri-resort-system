@@ -14,7 +14,12 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createMockRequest, createMockContext, mockEnv, generateIdempotencyKey } from "./setup";
 import { createBookingMocks } from "./factories/booking-factory";
-import { testUnits, testGuest, testBookingResponse } from "./utils/fixtures";
+import { testUnits } from "./utils/fixtures";
+import type {
+  MultiUnitBookingResponse,
+  ValidationErrorResponse,
+  BusinessErrorResponse,
+} from "./types/responses";
 
 describe("POST /api/bookings/multi-unit", () => {
   const validBookingData = {
@@ -75,7 +80,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(201);
-    const data = await response.json();
+    const data = (await response.json()) as MultiUnitBookingResponse;
 
     expect(data.success).toBe(true);
     expect(data.data.booking_id).toBeDefined();
@@ -101,7 +106,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(201);
-    const data = await response.json();
+    const data = (await response.json()) as MultiUnitBookingResponse;
     expect(data.metadata.units_booked).toBe(10);
   });
 
@@ -122,7 +127,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const response1 = await onRequestPost(context1 as any);
 
     expect(response1.status).toBe(201);
-    const data1 = await response1.json();
+    const data1 = (await response1.json()) as MultiUnitBookingResponse;
 
     // Second request with same key - should return cached result
     const request2 = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
@@ -139,7 +144,7 @@ describe("POST /api/bookings/multi-unit", () => {
     expect(response2.status).toBe(200); // Not 201!
     expect(response2.headers.get("X-Idempotency-Replay")).toBe("true");
 
-    const data2 = await response2.json();
+    const data2 = (await response2.json()) as MultiUnitBookingResponse;
     expect(data2.data.booking_id).toBe(data1.data.booking_id);
   });
 
@@ -181,7 +186,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const context = createMockContext(request, mockEnv);
     const response = await onRequestPost(context as any);
 
-    const data = await response.json();
+    const data = (await response.json()) as MultiUnitBookingResponse;
     expect(data.data.booking_units).toBeDefined();
     expect(Array.isArray(data.data.booking_units)).toBe(true);
   });
@@ -202,7 +207,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ValidationErrorResponse;
     expect(data.success).toBe(false);
     expect(data.error.code).toBe("VALIDATION_ERROR");
   });
@@ -220,7 +225,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ValidationErrorResponse;
     expect(data.error.code).toBe("VALIDATION_ERROR");
     expect(data.error.details.validation_errors).toBeDefined();
   });
@@ -242,7 +247,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ValidationErrorResponse;
     expect(data.error.code).toBe("VALIDATION_ERROR");
   });
 
@@ -261,7 +266,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ValidationErrorResponse;
     expect(data.error.code).toBe("VALIDATION_ERROR");
   });
 
@@ -279,7 +284,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ValidationErrorResponse;
     expect(data.error.code).toBe("VALIDATION_ERROR");
   });
 
@@ -301,7 +306,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ValidationErrorResponse;
     expect(data.error.code).toBe("VALIDATION_ERROR");
   });
 
@@ -322,7 +327,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ValidationErrorResponse;
     expect(data.error.code).toBe("VALIDATION_ERROR");
   });
 
@@ -362,9 +367,9 @@ describe("POST /api/bookings/multi-unit", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(409);
-    const data = await response.json();
+    const data = (await response.json()) as BusinessErrorResponse;
     expect(data.error.code).toBe("UNIT_UNAVAILABLE");
-    expect(data.error.details.unavailable_units).toContain(testUnits[0].unit_id);
+    expect(data.error.details?.unavailable_units).toContain(testUnits[0].unit_id);
   });
 
   // ========== SECURITY TESTS ==========
@@ -458,7 +463,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(500);
-    const data = await response.json();
+    const data = (await response.json()) as BusinessErrorResponse;
     expect(data.error.code).toBe("INTERNAL_ERROR");
   });
 });

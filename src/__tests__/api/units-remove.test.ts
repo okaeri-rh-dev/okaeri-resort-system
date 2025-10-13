@@ -14,6 +14,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createMockRequest, createMockContext, mockEnv, generateTestJWT } from "./setup";
 import { createUnitRemoveMocks } from "./factories/unit-factory";
 import { testUnits, testBookingResponse } from "./utils/fixtures";
+import type { RemoveUnitResponse, ApiErrorResponse } from "./types/responses";
 
 describe("POST /api/bookings/:id/units/remove", () => {
   const validRemoveUnitData = {
@@ -53,7 +54,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(200);
-    const data = await response.json();
+    const data = (await response.json()) as RemoveUnitResponse;
     expect(data.success).toBe(true);
   });
 
@@ -73,7 +74,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     });
     const response = await onRequestPost(context as any);
 
-    const data = await response.json();
+    const data = (await response.json()) as RemoveUnitResponse;
     expect(data.data.refund_amount).toBeDefined();
   });
 
@@ -94,7 +95,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("VALIDATION_ERROR");
   });
 
@@ -157,7 +158,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("LAST_UNIT_REMOVAL");
   });
 
@@ -193,7 +194,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(404);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("BOOKING_NOT_FOUND");
   });
 
@@ -207,20 +208,15 @@ describe("POST /api/bookings/:id/units/remove", () => {
       booking: {
         ...testBookingResponse,
         booking_status: "Pending",
-        unit_count: 2,
         // booking_units has different units, not the one we're trying to remove
         booking_units: [
           {
             booking_unit_id: "unit-other-1",
-            booking_id: testBookingResponse.booking_id,
             unit_id: "other-unit-id-1",
-            subtotal: 5000,
           },
           {
             booking_unit_id: "unit-other-2",
-            booking_id: testBookingResponse.booking_id,
             unit_id: "other-unit-id-2",
-            subtotal: 3000,
           },
         ],
       },
@@ -247,7 +243,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(404);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("UNIT_NOT_IN_BOOKING");
   });
 
@@ -260,7 +256,6 @@ describe("POST /api/bookings/:id/units/remove", () => {
       booking: {
         ...testBookingResponse,
         booking_status: "CheckedIn",
-        unit_count: 2,
         booking_units: [
           { unit_id: testUnits[0].unit_id, booking_unit_id: "unit-1" },
           { unit_id: testUnits[1].unit_id, booking_unit_id: "unit-2" },
@@ -289,7 +284,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(409);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("CANNOT_MODIFY_BOOKING");
   });
 
@@ -302,7 +297,6 @@ describe("POST /api/bookings/:id/units/remove", () => {
       booking: {
         ...testBookingResponse,
         booking_status: "Cancelled",
-        unit_count: 2,
         booking_units: [
           { unit_id: testUnits[0].unit_id, booking_unit_id: "unit-1" },
           { unit_id: testUnits[1].unit_id, booking_unit_id: "unit-2" },

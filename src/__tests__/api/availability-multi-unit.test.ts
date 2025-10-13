@@ -14,6 +14,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createMockRequest, createMockContext, mockEnv } from "./setup";
 import { createAvailabilityMocks } from "./factories/availability-factory";
 import { testUnits } from "./utils/fixtures";
+import type { AvailabilityResponse, ApiErrorResponse } from "./types/responses";
 
 describe("GET /api/availability/multi-unit", () => {
   beforeEach(async () => {
@@ -78,7 +79,7 @@ describe("GET /api/availability/multi-unit", () => {
     const response = await onRequestGet(context as any);
 
     expect(response.status).toBe(200);
-    const data = await response.json();
+    const data = (await response.json()) as AvailabilityResponse;
 
     expect(data.success).toBe(true);
     expect(data.data.results).toHaveLength(2);
@@ -131,7 +132,7 @@ describe("GET /api/availability/multi-unit", () => {
     const response = await onRequestGet(context as any);
 
     expect(response.status).toBe(200);
-    const data = await response.json();
+    const data = (await response.json()) as AvailabilityResponse;
     expect(data.data.summary.total_units_checked).toBe(10);
   });
 
@@ -169,7 +170,7 @@ describe("GET /api/availability/multi-unit", () => {
     const context = createMockContext(request, mockEnv);
     const response = await onRequestGet(context as any);
 
-    const data = await response.json();
+    const data = (await response.json()) as AvailabilityResponse;
     expect(data.data.results[0].is_available).toBe(false);
     expect(data.data.results[0].conflicting_bookings).toBe(2);
     expect(data.data.results[0].next_available_date).toBe("2025-12-25T04:00:00Z");
@@ -211,7 +212,7 @@ describe("GET /api/availability/multi-unit", () => {
     const context = createMockContext(request, mockEnv);
     const response = await onRequestGet(context as any);
 
-    const data = await response.json();
+    const data = (await response.json()) as AvailabilityResponse;
     const result = data.data.results[0];
 
     expect(result.unit_name).toBeDefined();
@@ -270,7 +271,7 @@ describe("GET /api/availability/multi-unit", () => {
     const response = await onRequestGet(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("VALIDATION_ERROR");
     expect(data.message).toContain("units[]");
   });
@@ -289,7 +290,7 @@ describe("GET /api/availability/multi-unit", () => {
     const response = await onRequestGet(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("VALIDATION_ERROR");
     expect(data.message).toContain("check_in");
   });
@@ -308,7 +309,7 @@ describe("GET /api/availability/multi-unit", () => {
     const response = await onRequestGet(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("VALIDATION_ERROR");
     expect(data.message).toContain("check_out");
   });
@@ -328,7 +329,7 @@ describe("GET /api/availability/multi-unit", () => {
     const response = await onRequestGet(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("INVALID_DATES");
   });
 
@@ -347,7 +348,7 @@ describe("GET /api/availability/multi-unit", () => {
     const response = await onRequestGet(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("INVALID_DATES");
   });
 
@@ -381,7 +382,7 @@ describe("GET /api/availability/multi-unit", () => {
     const response = await onRequestGet(context as any);
 
     expect(response.status).toBe(500);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("DATABASE_ERROR");
   });
 });

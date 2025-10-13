@@ -12,7 +12,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { onRequestPost } from "../../../functions/api/pricing/quote";
 import { createMockRequest, createMockContext, mockEnv } from "./setup";
-import { testUnits, testPricingRequest, dateHelpers } from "./utils/fixtures";
+import { testUnits, testPricingRequest } from "./utils/fixtures";
+import type { PricingQuoteResponse, ApiErrorResponse } from "./types/responses";
 
 describe("POST /api/pricing/quote", () => {
   beforeEach(() => {
@@ -23,7 +24,7 @@ describe("POST /api/pricing/quote", () => {
           if (table === "units") {
             return {
               select: vi.fn(() => ({
-                eq: vi.fn((column: string, value: any) => ({
+                eq: vi.fn((_column: string, value: any) => ({
                   single: vi.fn(() => {
                     const unit = testUnits.find((u) => u.unit_id === value);
                     return {
@@ -60,7 +61,7 @@ describe("POST /api/pricing/quote", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(200);
-    const data = await response.json();
+    const data = (await response.json()) as PricingQuoteResponse;
 
     expect(data.total_amount).toBeGreaterThan(0);
     expect(data.nights).toBe(2);
@@ -85,7 +86,7 @@ describe("POST /api/pricing/quote", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(200);
-    const data = await response.json();
+    const data = (await response.json()) as PricingQuoteResponse;
 
     expect(data.units).toHaveLength(1);
     expect(data.total_amount).toBe(data.units[0].subtotal);
@@ -104,7 +105,7 @@ describe("POST /api/pricing/quote", () => {
     const context = createMockContext(request, mockEnv);
     const response = await onRequestPost(context as any);
 
-    const data = await response.json();
+    const data = (await response.json()) as PricingQuoteResponse;
     const unit = data.units[0];
 
     // 2 extra persons × ₱500 × 2 nights = ₱2,000
@@ -125,7 +126,7 @@ describe("POST /api/pricing/quote", () => {
     const context = createMockContext(request, mockEnv);
     const response = await onRequestPost(context as any);
 
-    const data = await response.json();
+    const data = (await response.json()) as PricingQuoteResponse;
     const unit = data.units[0];
 
     // No weekends, so surcharge should be 0
@@ -152,7 +153,7 @@ describe("POST /api/pricing/quote", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(200);
-    const data = await response.json();
+    const data = (await response.json()) as PricingQuoteResponse;
     expect(data.units).toHaveLength(10);
     expect(data.total_amount).toBeGreaterThan(0);
   });
@@ -170,7 +171,7 @@ describe("POST /api/pricing/quote", () => {
     const context = createMockContext(request, mockEnv);
     const response = await onRequestPost(context as any);
 
-    const data = await response.json();
+    const data = (await response.json()) as PricingQuoteResponse;
     expect(data.nights).toBe(3);
 
     // Should have weekend surcharge for Friday and Saturday
@@ -194,7 +195,7 @@ describe("POST /api/pricing/quote", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("VALIDATION_ERROR");
     expect(data.message).toContain("units");
   });
@@ -213,7 +214,7 @@ describe("POST /api/pricing/quote", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("INVALID_DATES");
     expect(data.message).toContain("check_out");
   });
@@ -232,7 +233,7 @@ describe("POST /api/pricing/quote", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("INVALID_DATES");
   });
 
@@ -249,7 +250,7 @@ describe("POST /api/pricing/quote", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("VALIDATION_ERROR");
     expect(data.message).toContain("check_in");
   });
@@ -267,7 +268,7 @@ describe("POST /api/pricing/quote", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("VALIDATION_ERROR");
     expect(data.message).toContain("check_out");
   });
@@ -287,7 +288,7 @@ describe("POST /api/pricing/quote", () => {
     const context = createMockContext(request, mockEnv);
     const response = await onRequestPost(context as any);
 
-    const data = await response.json();
+    const data = (await response.json()) as PricingQuoteResponse;
     expect(data.units[0].extra_person_charge).toBe(0);
   });
 
@@ -304,7 +305,7 @@ describe("POST /api/pricing/quote", () => {
     const context = createMockContext(request, mockEnv);
     const response = await onRequestPost(context as any);
 
-    const data = await response.json();
+    const data = (await response.json()) as PricingQuoteResponse;
     expect(data.nights).toBe(1);
     expect(data.units[0].base_amount).toBeGreaterThan(0);
   });

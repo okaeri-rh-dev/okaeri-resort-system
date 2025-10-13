@@ -14,6 +14,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createMockRequest, createMockContext, mockEnv, generateTestJWT } from "./setup";
 import { createUnitAddMocks } from "./factories/unit-factory";
 import { testUnits, testBookingResponse } from "./utils/fixtures";
+import type { AddUnitResponse, ApiErrorResponse } from "./types/responses";
 
 describe("POST /api/bookings/:id/units/add", () => {
   const validAddUnitData = {
@@ -70,7 +71,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(200);
-    const data = await response.json();
+    const data = (await response.json()) as AddUnitResponse;
     expect(data.success).toBe(true);
   });
 
@@ -94,7 +95,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("VALIDATION_ERROR");
   });
 
@@ -136,7 +137,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("VALIDATION_ERROR");
     expect(data.message).toContain("Invalid booking_id");
   });
@@ -161,7 +162,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("VALIDATION_ERROR");
   });
 
@@ -209,7 +210,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(400);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.message).toContain("num_nights");
   });
 
@@ -248,7 +249,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(404);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("BOOKING_NOT_FOUND");
   });
 
@@ -288,7 +289,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(409);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("CANNOT_MODIFY_BOOKING");
   });
 
@@ -369,7 +370,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const response = await onRequestPost(context as any);
 
     expect(response.status).toBe(409);
-    const data = await response.json();
+    const data = (await response.json()) as ApiErrorResponse;
     expect(data.error).toBe("UNIT_UNAVAILABLE");
   });
 
