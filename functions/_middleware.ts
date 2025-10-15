@@ -229,6 +229,7 @@ async function verifySupabaseJWT(token: string, secret: string): Promise<JWTPayl
  */
 function isPublicPath(pathname: string): boolean {
   const publicPaths = [
+    "/api/public/",
     "/api/availability/check",
     "/api/availability/multi-unit",
     "/api/units",

@@ -101,7 +101,7 @@ BEGIN
     -- TODO: Add multi-unit support when booking_units table is created
     SELECT
       ds.date,
-      COUNT(DISTINCT b.unit_id) as booked_count
+      COUNT(DISTINCT b.unit_id)::INT as booked_count
     FROM date_series ds
     LEFT JOIN bookings b ON (
       b.unit_id IN (SELECT unit_id FROM units WHERE unit_status = 'Available')
@@ -118,7 +118,7 @@ BEGIN
     -- Count blackout units per day (only from Available units)
     SELECT
       ds.date,
-      COUNT(DISTINCT ab.unit_id) as blackout_count
+      COUNT(DISTINCT ab.unit_id)::INT as blackout_count
     FROM date_series ds
     LEFT JOIN availability_blackouts ab ON (
       ab.unit_id IN (SELECT unit_id FROM units WHERE unit_status = 'Available')
@@ -133,7 +133,7 @@ BEGIN
     GREATEST(
       0,
       v_total_units - COALESCE(opd.booked_count, 0) - COALESCE(bpd.blackout_count, 0)
-    ) as available_count
+    )::INT as available_count
   FROM occupied_per_day opd
   JOIN blackout_per_day bpd ON opd.date = bpd.date
   ORDER BY opd.date;
@@ -156,10 +156,10 @@ COMMENT ON FUNCTION get_public_aggregate_availability(DATE, DATE) IS
 -- VERIFICATION QUERIES
 -- ============================================================================
 
--- Test 1: Query current month
+-- Test 1: Query next 30 days (starting from today)
 SELECT * FROM get_public_aggregate_availability(
-  DATE_TRUNC('month', CURRENT_DATE)::date,
-  (DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month - 1 day')::date
+  CURRENT_DATE,
+  (CURRENT_DATE + INTERVAL '30 days')::date
 )
 LIMIT 5;
 
@@ -167,14 +167,14 @@ LIMIT 5;
 EXPLAIN ANALYZE
 SELECT * FROM get_public_aggregate_availability(
   CURRENT_DATE,
-  CURRENT_DATE + INTERVAL '30 days'
+  (CURRENT_DATE + INTERVAL '30 days')::date
 );
 
 -- Test 3: Verify anonymous access works
 SET ROLE anon;
 SELECT COUNT(*) FROM get_public_aggregate_availability(
   CURRENT_DATE,
-  CURRENT_DATE + INTERVAL '7 days'
+  (CURRENT_DATE + INTERVAL '7 days')::date
 );
 RESET ROLE;
 

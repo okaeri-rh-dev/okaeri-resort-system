@@ -7,6 +7,7 @@ import { useBookingStore } from "@/stores/useBookingStore";
 import { auth } from "@/lib/auth";
 import { routeTree } from "@/routeTree.gen";
 import type { RouterContext } from "@/routes/__root";
+import "@/styles/calendar.css";
 
 // Create a new query client instance
 const queryClient = new QueryClient();

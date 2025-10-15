@@ -17,6 +17,7 @@ export default tseslint.config([
       "**/*.bundle.js",
       "public/**/*",
       "scripts/**/*",
+      ".wrangler/**/*", // Cloudflare Wrangler build artifacts
     ],
   },
 

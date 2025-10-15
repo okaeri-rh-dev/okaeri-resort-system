@@ -68,40 +68,38 @@ BEGIN
     END IF;
 END $$;
 
--- Create optimized indexes with CONCURRENTLY for zero-downtime
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_bookings_availability_primary
-ON bookings USING gist (
-    unit_id,
-    daterange(check_in, check_out, '[]')
-) WHERE booking_status NOT IN ('Cancelled');
+-- Create optimized indexes for availability queries
+-- Note: GIST index with daterange removed due to timestamptz incompatibility
+-- The combination of idx_bookings_status_dates and idx_bookings_unit_status_range
+-- provides sufficient query optimization for availability checks
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_bookings_status_dates
+CREATE INDEX IF NOT EXISTS idx_bookings_status_dates
 ON bookings (booking_status, check_in, check_out)
 WHERE booking_status NOT IN ('Cancelled');
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_bookings_unit_status_range
+CREATE INDEX IF NOT EXISTS idx_bookings_unit_status_range
 ON bookings (unit_id, booking_status, check_in)
 WHERE booking_status NOT IN ('Cancelled');
 
 -- Blackout period indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_blackouts_unit_dates
+CREATE INDEX IF NOT EXISTS idx_blackouts_unit_dates
 ON availability_blackouts USING gist (
     unit_id,
     daterange(start_date, end_date, '[]')
 );
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_blackouts_date_range
+CREATE INDEX IF NOT EXISTS idx_blackouts_date_range
 ON availability_blackouts (start_date, end_date);
 
 -- Cache table indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_availability_cache_unit_dates
+CREATE INDEX IF NOT EXISTS idx_availability_cache_unit_dates
 ON availability_cache (unit_id, date_range_start, date_range_end, cache_expires_at);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_availability_cache_expires
+CREATE INDEX IF NOT EXISTS idx_availability_cache_expires
 ON availability_cache (cache_expires_at);
 
 -- Enhanced units index
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_units_status_type
+CREATE INDEX IF NOT EXISTS idx_units_status_type
 ON units (unit_status, unit_type)
 WHERE unit_status = 'Available';
 
@@ -130,7 +128,7 @@ BEGIN
         WHERE b.unit_id = p_unit_id
           AND b.booking_status NOT IN ('Cancelled', 'CheckedOut')
           AND (p_exclude_booking_id IS NULL OR b.booking_id != p_exclude_booking_id)
-          AND daterange(b.check_in, b.check_out, '[]') && daterange(p_check_in, p_check_out, '[]')
+          AND daterange(b.check_in::date, b.check_out::date, '[]') && daterange(p_check_in, p_check_out, '[]')
     ),
     blackout_conflicts AS (
         SELECT COUNT(*) as blackout_count
@@ -188,7 +186,7 @@ BEGIN
                     SELECT 1 FROM bookings b
                     WHERE b.unit_id = u.unit_id
                       AND b.booking_status NOT IN ('Cancelled', 'CheckedOut')
-                      AND daterange(b.check_in, b.check_out, '[]') && daterange(p_check_in, p_check_out, '[]')
+                      AND daterange(b.check_in::date, b.check_out::date, '[]') && daterange(p_check_in, p_check_out, '[]')
                 ) OR EXISTS (
                     SELECT 1 FROM availability_blackouts ab
                     WHERE ab.unit_id = u.unit_id

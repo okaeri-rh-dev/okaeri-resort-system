@@ -1,0 +1,53 @@
+/**
+ * Custom Calendar Styles
+ *
+ * Additional styles for the public availability calendar that enhance
+ * the user experience with animations, mobile optimizations, and
+ * accessibility improvements.
+ */
+
+/* Calendar animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.calendar-grid {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .calendar-grid {
+    font-size: 0.875rem;
+  }
+}
+
+/* Accessibility: High contrast mode */
+@media (prefers-contrast: high) {
+  .bg-green-500 {
+    background-color: rgb(21 128 61) !important; /* green-700 */
+  }
+  .bg-yellow-500 {
+    background-color: rgb(161 98 7) !important; /* yellow-700 */
+  }
+  .bg-orange-500 {
+    background-color: rgb(194 65 12) !important; /* orange-700 */
+  }
+  .bg-red-500 {
+    background-color: rgb(185 28 28) !important; /* red-700 */
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
