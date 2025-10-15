@@ -160,7 +160,11 @@ export function PublicAvailabilityCalendar() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-96 bg-white rounded-lg shadow-lg p-8">
-        <Loader2 className="w-12 h-12 animate-spin text-blue-600 mb-4" />
+        <Loader2
+          className="w-12 h-12 animate-spin text-blue-600 mb-4"
+          role="progressbar"
+          aria-label="Loading calendar"
+        />
         <p className="text-gray-600">Loading availability calendar...</p>
       </div>
     );
@@ -191,11 +195,12 @@ export function PublicAvailabilityCalendar() {
     year: "numeric",
   });
 
-  // Check if previous month button should be disabled
-  const now = new Date();
-  const isCurrentOrFutureMonth =
-    currentMonth.getFullYear() > now.getFullYear() ||
-    (currentMonth.getFullYear() === now.getFullYear() && currentMonth.getMonth() >= now.getMonth());
+  // Check if navigation buttons should be disabled based on validation
+  const prevMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+  const isPrevMonthValid = validateMonth(prevMonth).valid;
+
+  const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+  const isNextMonthValid = validateMonth(nextMonth).valid;
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
@@ -205,7 +210,7 @@ export function PublicAvailabilityCalendar() {
           {/* Previous Month Button */}
           <Button
             onClick={goToPreviousMonth}
-            disabled={!isCurrentOrFutureMonth}
+            disabled={!isPrevMonthValid}
             variant="ghost"
             size="sm"
             className="text-white hover:bg-blue-500/20 disabled:opacity-30"
@@ -228,9 +233,10 @@ export function PublicAvailabilityCalendar() {
           {/* Next Month Button */}
           <Button
             onClick={goToNextMonth}
+            disabled={!isNextMonthValid}
             variant="ghost"
             size="sm"
-            className="text-white hover:bg-blue-500/20"
+            className="text-white hover:bg-blue-500/20 disabled:opacity-30"
             aria-label="Next month"
           >
             <ChevronRight className="w-5 h-5" />

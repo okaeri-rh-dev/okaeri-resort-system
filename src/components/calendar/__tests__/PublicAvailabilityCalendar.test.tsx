@@ -189,16 +189,21 @@ describe("PublicAvailabilityCalendar", () => {
 
     it("should navigate to previous month when previous button clicked", async () => {
       const user = userEvent.setup();
-
-      // Set to February so we can go back to January
-      vi.setSystemTime(new Date("2025-02-15T12:00:00Z"));
-
       renderComponent();
+
+      await waitFor(() => {
+        expect(screen.getByText("January 2025")).toBeInTheDocument();
+      });
+
+      // Navigate to next month (February)
+      const nextButton = screen.getByLabelText(/next month/i);
+      await user.click(nextButton);
 
       await waitFor(() => {
         expect(screen.getByText("February 2025")).toBeInTheDocument();
       });
 
+      // Navigate back to previous month (January)
       const prevButton = screen.getByLabelText(/previous month/i);
       await user.click(prevButton);
 
@@ -243,6 +248,22 @@ describe("PublicAvailabilityCalendar", () => {
 
     it("should show updating indicator while fetching new month", async () => {
       const user = userEvent.setup();
+
+      // Add a delay to make isFetching state observable
+      (fetch as ReturnType<typeof vi.fn>).mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () =>
+                resolve({
+                  ok: true,
+                  json: async () => mockApiResponse,
+                }),
+              100 // 100ms delay to observe "Updating..." state
+            )
+          )
+      );
+
       renderComponent();
 
       await waitFor(() => {
@@ -253,37 +274,48 @@ describe("PublicAvailabilityCalendar", () => {
       await user.click(nextButton);
 
       // Should show "Updating..." during fetch
-      await waitFor(() => {
-        expect(screen.getByText(/updating/i)).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.getByText(/updating/i)).toBeInTheDocument();
+        },
+        { timeout: 200 }
+      );
     });
   });
 
   describe("Error Handling", () => {
     it("should display error message when API fails", async () => {
-      (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      // Mock all retry attempts (component has retry: 2, so 3 total attempts)
+      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: false,
         json: async () => ({ error: "Failed to fetch availability" }),
       });
 
       renderComponent();
 
-      await waitFor(() => {
-        expect(screen.getByText(/failed to load availability data/i)).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.getByText(/failed to load availability data/i)).toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
     });
 
     it("should display specific error message from API", async () => {
-      (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      // Mock all retry attempts (component has retry: 2, so 3 total attempts)
+      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: false,
         json: async () => ({ error: "Invalid date range" }),
       });
 
       renderComponent();
 
-      await waitFor(() => {
-        expect(screen.getByText(/invalid date range/i)).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.getByText(/invalid date range/i)).toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
     });
 
     it("should retry failed requests", async () => {
