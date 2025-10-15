@@ -103,9 +103,10 @@ export function validateMonth(month: Date): DateValidationResult {
   }
 
   // Check if more than 1 year in the future
-  // Use the last day of the target month for this check
-  const lastDayOfMonth = new Date(targetYear, targetMonthNum + 1, 0);
-  if (isTooFarInFuture(lastDayOfMonth)) {
+  // Use the first day of the target month for this check (more user-friendly)
+  // This allows any month that STARTS within 1 year, even if it ends slightly after
+  const firstDayOfMonth = new Date(targetYear, targetMonthNum, 1);
+  if (isTooFarInFuture(firstDayOfMonth)) {
     return {
       valid: false,
       error: "Cannot query more than 1 year in the future.",

@@ -32,6 +32,7 @@ import {
 describe("Timezone Utilities", () => {
   // Mock current date to 2025-01-15 12:00:00 UTC for consistent testing
   beforeEach(() => {
+    vi.useRealTimers(); // Clear any existing timers first
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2025-01-15T12:00:00Z"));
   });
@@ -73,8 +74,8 @@ describe("Timezone Utilities", () => {
       const date = new Date("2025-01-15T00:00:00Z");
       const formatted = formatPhilippineDate(date);
 
-      // Default format is 'PPP' which produces "January 15, 2025"
-      expect(formatted).toMatch(/January 15, 2025/i);
+      // Default format is 'PPP' which produces "January 15th, 2025" (with ordinal suffix)
+      expect(formatted).toMatch(/January 15(th)?, 2025/i);
     });
 
     it("should format date with custom format string", () => {
@@ -235,11 +236,11 @@ describe("Timezone Utilities", () => {
     });
 
     it("should handle end of month dates", () => {
-      const date = new Date("2025-01-31T23:59:59Z");
+      const date = new Date("2025-01-31T23:59:59Z"); // 11:59:59 PM UTC = 7:59:59 AM Feb 1 in PH
       const monthStart = getMonthStart(date);
 
       expect(monthStart.getDate()).toBe(1);
-      expect(monthStart.getMonth()).toBe(0); // Still January
+      expect(monthStart.getMonth()).toBe(1); // February (because PH Time crosses into Feb)
     });
 
     it("should normalize to Philippine Time", () => {

@@ -17,6 +17,7 @@ import { validateCalendarDate, validateMonth, type DateValidationResult } from "
 describe("Calendar Date Validation", () => {
   // Mock current date to 2025-01-15 12:00:00 UTC for consistent testing
   beforeEach(() => {
+    vi.useRealTimers(); // Clear any existing timers first
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2025-01-15T12:00:00Z"));
   });

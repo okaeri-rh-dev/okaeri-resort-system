@@ -14,17 +14,12 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-// @ts-ignore - jest-axe doesn't have types but works with Vitest
-import { axe, toHaveNoViolations } from "jest-axe";
+import { axe } from "vitest-axe";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PublicAvailabilityCalendar } from "@/components/calendar/PublicAvailabilityCalendar";
 import { CalendarGrid, type AvailabilityDay } from "@/components/calendar/CalendarGrid";
 import { AvailabilityLegend } from "@/components/calendar/AvailabilityLegend";
-
-// Extend Vitest matchers
-// @ts-ignore - jest-axe matchers work with Vitest
-expect.extend(toHaveNoViolations);
 
 // Mock API response
 const mockApiResponse = {
@@ -79,14 +74,14 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
       );
 
       const results = await axe(container);
-      expect(results).toHaveNoViolations();
+      expect(results.violations).toHaveLength(0);
     });
 
     it("should have no accessibility violations in AvailabilityLegend", async () => {
       const { container } = render(<AvailabilityLegend />);
 
       const results = await axe(container);
-      expect(results).toHaveNoViolations();
+      expect(results.violations).toHaveLength(0);
     });
 
     it("should have no accessibility violations in full calendar", async () => {
@@ -100,7 +95,7 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
       await screen.findByText("January 2025");
 
       const results = await axe(container);
-      expect(results).toHaveNoViolations();
+      expect(results.violations).toHaveLength(0);
     });
   });
 
@@ -464,7 +459,7 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
       const results = await axe(container);
 
       // Should have no critical violations
-      expect(results).toHaveNoViolations();
+      expect(results.violations).toHaveLength(0);
 
       /**
        * WCAG 2.1 AA Checklist (verified):
