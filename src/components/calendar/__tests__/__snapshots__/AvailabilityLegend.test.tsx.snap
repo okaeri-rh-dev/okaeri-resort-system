@@ -1,0 +1,105 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`AvailabilityLegend > Snapshot > should match snapshot 1`] = `
+<div
+  class="bg-gray-50 rounded-lg p-4 border border-gray-200"
+>
+  <h4
+    class="text-sm font-semibold text-gray-700 mb-3"
+  >
+    Availability Legend
+  </h4>
+  <div
+    class="grid grid-cols-2 md:grid-cols-4 gap-3"
+  >
+    <div
+      class="flex items-center gap-2"
+    >
+      <div
+        aria-hidden="true"
+        class="w-4 h-4 rounded bg-green-500"
+      />
+      <div
+        class="flex flex-col"
+      >
+        <span
+          class="text-xs font-medium text-gray-900"
+        >
+          3 units available
+        </span>
+        <span
+          class="text-xs text-gray-500"
+        >
+          Full availability
+        </span>
+      </div>
+    </div>
+    <div
+      class="flex items-center gap-2"
+    >
+      <div
+        aria-hidden="true"
+        class="w-4 h-4 rounded bg-yellow-500"
+      />
+      <div
+        class="flex flex-col"
+      >
+        <span
+          class="text-xs font-medium text-gray-900"
+        >
+          2 units available
+        </span>
+        <span
+          class="text-xs text-gray-500"
+        >
+          Moderate
+        </span>
+      </div>
+    </div>
+    <div
+      class="flex items-center gap-2"
+    >
+      <div
+        aria-hidden="true"
+        class="w-4 h-4 rounded bg-orange-500"
+      />
+      <div
+        class="flex flex-col"
+      >
+        <span
+          class="text-xs font-medium text-gray-900"
+        >
+          1 unit available
+        </span>
+        <span
+          class="text-xs text-gray-500"
+        >
+          Limited
+        </span>
+      </div>
+    </div>
+    <div
+      class="flex items-center gap-2"
+    >
+      <div
+        aria-hidden="true"
+        class="w-4 h-4 rounded bg-red-500"
+      />
+      <div
+        class="flex flex-col"
+      >
+        <span
+          class="text-xs font-medium text-gray-900"
+        >
+          Fully booked
+        </span>
+        <span
+          class="text-xs text-gray-500"
+        >
+          No availability
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+`;
