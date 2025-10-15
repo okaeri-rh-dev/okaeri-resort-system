@@ -18,10 +18,16 @@
  * @route /calendar
  */
 
-import { PublicAvailabilityCalendar } from "@/components/calendar/PublicAvailabilityCalendar";
 import { createFileRoute } from "@tanstack/react-router";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { useEffect } from "react";
+import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
+import { useEffect, lazy, Suspense } from "react";
+
+// Lazy load the calendar component for better initial page load performance
+const PublicAvailabilityCalendar = lazy(() =>
+  import("@/components/calendar/PublicAvailabilityCalendar").then((mod) => ({
+    default: mod.PublicAvailabilityCalendar,
+  }))
+);
 
 export const Route = createFileRoute("/calendar")({
   component: AvailabilityPage,
@@ -127,7 +133,16 @@ function AvailabilityPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <PublicAvailabilityCalendar />
+        <Suspense
+          fallback={
+            <div className="flex flex-col items-center justify-center h-96 bg-white rounded-lg shadow-lg p-8">
+              <Loader2 className="w-12 h-12 animate-spin text-blue-600 mb-4" />
+              <p className="text-gray-600">Loading availability calendar...</p>
+            </div>
+          }
+        >
+          <PublicAvailabilityCalendar />
+        </Suspense>
 
         {/* Information Box */}
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
