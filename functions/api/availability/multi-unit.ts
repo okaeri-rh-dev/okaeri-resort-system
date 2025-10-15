@@ -118,7 +118,13 @@ export const onRequestGet = async (context: { request: Request; env: Env }): Pro
     }
 
     // Call database function (from Phase 1)
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+    // Use Authorization header to authenticate as the logged-in user
+    const authHeader = request.headers.get("Authorization");
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+      global: {
+        headers: authHeader ? { Authorization: authHeader } : {},
+      },
+    });
 
     const { data, error } = await supabase.rpc("check_multi_unit_availability", {
       p_unit_ids: unitIds,

@@ -231,7 +231,6 @@ function isPublicPath(pathname: string): boolean {
   const publicPaths = [
     "/api/public/",
     "/api/availability/check",
-    "/api/availability/multi-unit",
     "/api/units",
     "/api/pricing/quote",
     "/api/health",

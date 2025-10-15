@@ -12,6 +12,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
+import { supabase } from "@/lib/supabase";
 import type {
   MultiUnitBooking,
   BookingUnit,
@@ -63,13 +64,24 @@ export const useMultiUnitAvailability = (
   return useQuery({
     queryKey: ["multi-unit-availability", unitIds, checkIn, checkOut],
     queryFn: async () => {
+      // Get current session token for authentication
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       // Build params with units[] array format expected by the API
       const params = new URLSearchParams();
       unitIds.forEach((id) => params.append("units[]", id));
       params.append("check_in", checkIn);
       params.append("check_out", checkOut);
 
-      const response = await fetch(`/api/availability/multi-unit?${params}`);
+      const response = await fetch(`/api/availability/multi-unit?${params}`, {
+        headers: {
+          ...(session?.access_token && {
+            Authorization: `Bearer ${session.access_token}`,
+          }),
+        },
+      });
       if (!response.ok) throw new Error("Availability check failed");
 
       const data = (await response.json()) as { data: { results: any[] } };

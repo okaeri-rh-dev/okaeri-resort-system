@@ -51,7 +51,7 @@ function BookingsPage() {
           <div className="flex gap-2">
             <Button onClick={() => setShowBookingForm(true)}>New Booking</Button>
             <Button asChild variant="outline">
-              <Link to="/bookings/new-multi">New Multi-Unit Booking</Link>
+              <Link to="/bookings-new-multi">New Multi-Unit Booking</Link>
             </Button>
           </div>
         </div>
