@@ -57,7 +57,7 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
 
           // ========== UNIT MANAGEMENT ==========
 
-          addUnit: (unit) =>
+          addUnit: (unit, checkIn?, checkOut?) =>
             set((state: Draft<MultiUnitBookingStore>) => {
               // Prevent duplicates
               const exists = state.selectedUnits.some((u) => u.unit_id === unit.unit_id);
@@ -75,13 +75,27 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
               // Add unit
               state.selectedUnits.push(unit);
 
-              // Auto-calculate pricing if dates are set
+              // Auto-calculate pricing if dates are available
+              // Priority: 1. Passed dates, 2. Draft/selected booking dates
               const booking = state.draftBooking || state.selectedBooking;
-              if (booking?.check_in && booking?.check_out) {
+              const effectiveCheckIn = checkIn || booking?.check_in;
+              const effectiveCheckOut = checkOut || booking?.check_out;
+
+              if (effectiveCheckIn && effectiveCheckOut) {
+                // Convert Date objects to ISO strings for calculateUnitPricing
+                const checkInStr =
+                  effectiveCheckIn instanceof Date
+                    ? effectiveCheckIn.toISOString()
+                    : effectiveCheckIn;
+                const checkOutStr =
+                  effectiveCheckOut instanceof Date
+                    ? effectiveCheckOut.toISOString()
+                    : effectiveCheckOut;
+
                 const pricing = get().calculateUnitPricing(
                   unit,
-                  booking.check_in!,
-                  booking.check_out!,
+                  checkInStr,
+                  checkOutStr,
                   unit.guest_assignment?.num_guests || unit.base_occupancy
                 );
                 unit.pricing = pricing;
@@ -251,10 +265,24 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
             };
           },
 
-          recalculateTotalPricing: () =>
+          recalculateTotalPricing: (checkIn?, checkOut?) =>
             set((state: Draft<MultiUnitBookingStore>) => {
+              // Priority: 1. Passed dates, 2. Draft/selected booking dates
               const booking = state.draftBooking || state.selectedBooking;
-              if (!booking?.check_in || !booking?.check_out) return;
+              const effectiveCheckIn = checkIn || booking?.check_in;
+              const effectiveCheckOut = checkOut || booking?.check_out;
+
+              if (!effectiveCheckIn || !effectiveCheckOut) return;
+
+              // Convert Date objects to ISO strings for calculateUnitPricing
+              const checkInStr =
+                effectiveCheckIn instanceof Date
+                  ? effectiveCheckIn.toISOString()
+                  : effectiveCheckIn;
+              const checkOutStr =
+                effectiveCheckOut instanceof Date
+                  ? effectiveCheckOut.toISOString()
+                  : effectiveCheckOut;
 
               let baseAmount = 0;
               let totalSurcharges = 0;
@@ -262,8 +290,8 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
               state.selectedUnits.forEach((unit) => {
                 const pricing = get().calculateUnitPricing(
                   unit,
-                  booking.check_in!,
-                  booking.check_out!,
+                  checkInStr,
+                  checkOutStr,
                   unit.guest_assignment?.num_guests || unit.base_occupancy
                 );
 

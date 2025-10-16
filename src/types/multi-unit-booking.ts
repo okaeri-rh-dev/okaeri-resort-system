@@ -171,7 +171,7 @@ export interface MultiUnitBookingState {
 export interface MultiUnitBookingActions {
   // ========== UNIT MANAGEMENT ACTIONS ==========
 
-  addUnit: (unit: BookingUnit) => void;
+  addUnit: (unit: BookingUnit, checkIn?: string | Date, checkOut?: string | Date) => void;
   removeUnit: (unitId: string) => void;
   updateUnit: (unitId: string, updates: Partial<BookingUnit>) => void;
   assignGuestsToUnit: (unitId: string, guestIds: string[], numGuests: number) => void;
@@ -187,7 +187,7 @@ export interface MultiUnitBookingActions {
     numGuests: number
   ) => BookingUnit["pricing"];
 
-  recalculateTotalPricing: () => void;
+  recalculateTotalPricing: (checkIn?: string | Date, checkOut?: string | Date) => void;
   applyBulkDiscount: (discountPercent: number) => void;
   clearDiscount: () => void;
 
