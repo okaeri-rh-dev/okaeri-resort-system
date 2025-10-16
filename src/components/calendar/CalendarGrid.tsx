@@ -123,18 +123,22 @@ export function CalendarGrid({ availability, currentMonth, onDateClick }: Calend
   }, [currentMonth, availabilityMap]);
 
   return (
-    <div className="calendar-grid">
+    <div className="calendar-grid" role="grid" aria-label="Availability calendar">
       {/* Day headers (Sun, Mon, Tue, ...) */}
-      <div className="grid grid-cols-7 gap-2 mb-2">
+      <div className="grid grid-cols-7 gap-2 mb-2" role="row">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-          <div key={day} className="text-center text-xs font-semibold text-gray-600 uppercase py-2">
+          <div
+            key={day}
+            className="text-center text-xs font-semibold text-gray-600 uppercase py-2"
+            role="columnheader"
+          >
             {day}
           </div>
         ))}
       </div>
 
       {/* Calendar days grid */}
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-2" role="row">
         {calendarDays.map((day, index) => (
           <DayCell
             key={index}

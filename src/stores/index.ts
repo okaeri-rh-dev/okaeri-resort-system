@@ -257,7 +257,10 @@ export const useRecentActivity = (limit = 10) => {
         .select(
           `
           *,
-          unit:units(unit_name, unit_code),
+          booking_units(
+            *,
+            unit:units(unit_name, unit_code)
+          ),
           guest:guests(guest_name)
         `
         )
@@ -267,14 +270,22 @@ export const useRecentActivity = (limit = 10) => {
       if (error) throw new Error(handleSupabaseError(error));
 
       return (
-        bookings?.map((booking) => ({
-          id: booking.booking_id,
-          type: "booking" as const,
-          title: `New booking for ${booking.unit?.unit_name}`,
-          description: `${booking.guest_name} - ${booking.booking_reference}`,
-          timestamp: booking.created_at,
-          status: booking.booking_status,
-        })) || []
+        bookings?.map((booking) => {
+          // Get first unit name from booking_units array
+          const firstUnit = booking.booking_units?.[0]?.unit;
+          const unitName = firstUnit?.unit_name || "Unit";
+          const unitCount = booking.booking_units?.length || 0;
+          const unitDisplay = unitCount > 1 ? `${unitName} +${unitCount - 1} more` : unitName;
+
+          return {
+            id: booking.booking_id,
+            type: "booking" as const,
+            title: `New booking for ${unitDisplay}`,
+            description: `${booking.guest_name} - ${booking.booking_reference}`,
+            timestamp: booking.created_at,
+            status: booking.booking_status,
+          };
+        }) || []
       );
     },
     staleTime: 60000,

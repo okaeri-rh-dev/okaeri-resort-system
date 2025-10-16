@@ -12,6 +12,7 @@ import {
   formatPhoneNumber,
 } from "@/components/entity-detail";
 import { StatusBadge } from "@/components/tables/utils";
+import { Badge } from "@/components/ui/badge";
 import { Calendar, User, Home, DollarSign, FileText } from "lucide-react";
 import type { Booking } from "@/types";
 
@@ -110,27 +111,46 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
 
       {/* 3. Unit Information Section */}
       <DetailSection title="Unit Information" icon={<Home className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
           <DetailField
-            label="Unit"
+            label={`Unit${(booking.booking_units?.length || 0) > 1 ? "s" : ""}`}
             value={
-              booking.unit ? (
-                <RelatedEntityLink
-                  type="unit"
-                  id={booking.unit_id}
-                  label={booking.unit.unit_name}
-                  badge={booking.unit.unit_code}
-                />
+              booking.booking_units && booking.booking_units.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {booking.booking_units.map((bu) => (
+                    <div key={bu.booking_unit_id} className="flex items-center gap-2">
+                      {bu.unit && bu.unit_id ? (
+                        <RelatedEntityLink
+                          type="unit"
+                          id={bu.unit_id}
+                          label={bu.unit.unit_name}
+                          badge={bu.unit.unit_code}
+                        />
+                      ) : (
+                        <Badge variant="secondary" className="font-mono">
+                          {bu.unit_id.slice(0, 8)}
+                        </Badge>
+                      )}
+                      {booking.booking_units!.length > 1 && (
+                        <span className="text-xs text-neutral-500">
+                          ({bu.assigned_guests || 0} guests)
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <span className="text-neutral-500">N/A</span>
+                <span className="text-neutral-500">No units assigned</span>
               )
             }
           />
-          <DetailField
-            label="Unit Type"
-            value={booking.unit?.unit_type || "N/A"}
-            valueClassName="font-medium"
-          />
+          {booking.booking_units && booking.booking_units.length > 1 && (
+            <DetailField
+              label="Total Units"
+              value={booking.unit_count || booking.booking_units.length}
+              valueClassName="font-medium"
+            />
+          )}
         </div>
       </DetailSection>
 

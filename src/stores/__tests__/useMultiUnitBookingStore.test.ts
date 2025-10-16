@@ -682,10 +682,11 @@ describe("useMultiUnitBookingStore", () => {
 
       const { result } = renderHook(() => useMultiUnitBookingStore());
 
-      // Add old optimistic entry (simulated as 6 minutes ago)
-      const oldTimestamp = Date.now() - 6 * 60 * 1000;
-      vi.setSystemTime(oldTimestamp);
+      // Set initial time
+      const startTime = new Date("2025-10-01T10:00:00Z").getTime();
+      vi.setSystemTime(startTime);
 
+      // Add old optimistic entry
       act(() => {
         result.current.addOptimisticBooking({
           booking_id: "old-booking",
@@ -694,8 +695,8 @@ describe("useMultiUnitBookingStore", () => {
         } as MultiUnitBooking);
       });
 
-      // Move forward to current time
-      vi.setSystemTime(Date.now());
+      // Advance time by 6 minutes (past the 5-minute TTL)
+      vi.setSystemTime(startTime + 6 * 60 * 1000);
 
       // Add recent entry (within TTL)
       act(() => {
@@ -813,15 +814,15 @@ describe("useMultiUnitBookingStore", () => {
 
       const processFn = vi.fn(async () => ({ success: true }));
 
+      // Add to queue without triggering auto-processing
       act(() => {
-        result.current.setOnlineStatus(false);
         result.current.addToOfflineQueue({
           operation: "create",
           data: { booking_id: "offline-1" },
         });
-        result.current.setOnlineStatus(true);
       });
 
+      // Manually process queue with test function
       await act(async () => {
         await result.current.processOfflineQueue(processFn);
       });
@@ -880,13 +881,14 @@ describe("useMultiUnitBookingStore", () => {
         });
       });
 
+      // First attempt should fail and increment retry count
       await act(async () => {
         await result.current.processOfflineQueue(processFn);
       });
 
-      await waitFor(() => {
-        expect(result.current.offlineQueue).toHaveLength(0);
-      });
+      // Queue should now be empty (maxRetries=1 means after 1 retry it's removed)
+      expect(result.current.offlineQueue).toHaveLength(0);
+      expect(processFn).toHaveBeenCalledTimes(1);
     });
 
     it("should successfully retry after network restoration", async () => {
@@ -903,7 +905,6 @@ describe("useMultiUnitBookingStore", () => {
       });
 
       act(() => {
-        result.current.setOnlineStatus(false);
         result.current.addToOfflineQueue({
           operation: "create",
           data: { booking_id: "offline-1" },
@@ -911,9 +912,8 @@ describe("useMultiUnitBookingStore", () => {
         });
       });
 
-      // First attempt (offline, should fail)
+      // First attempt (should fail)
       await act(async () => {
-        result.current.setOnlineStatus(true);
         await result.current.processOfflineQueue(processFn);
       });
 
@@ -935,10 +935,8 @@ describe("useMultiUnitBookingStore", () => {
         await result.current.processOfflineQueue(processFn);
       });
 
-      await waitFor(() => {
-        expect(attemptCount).toBe(3);
-        expect(result.current.offlineQueue).toHaveLength(0);
-      });
+      expect(attemptCount).toBe(3);
+      expect(result.current.offlineQueue).toHaveLength(0);
     });
   });
 

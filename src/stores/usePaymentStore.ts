@@ -124,13 +124,11 @@ export const usePayments = () => {
           num_guests,
           check_in,
           check_out,
-          unit_id,
           total_amount,
           payment_status,
           booking_status,
           created_at,
-          updated_at,
-          units(unit_name)
+          updated_at
         )
       `);
 
@@ -456,8 +454,7 @@ export const useExportPayments = () => {
         *,
         booking:bookings(
           booking_reference,
-          guest_name,
-          units(unit_name)
+          guest_name
         )
       `);
 
@@ -501,7 +498,7 @@ function convertToCSV(data: any[]): string {
     payment.payment_date,
     payment.booking?.booking_reference || "",
     payment.booking?.guest_name || "",
-    payment.booking?.units?.unit_name || "",
+    "N/A", // Unit info not available in payment export (bookings now use booking_units junction table)
     payment.amount,
     payment.payment_method || "",
     payment.payment_status || "",

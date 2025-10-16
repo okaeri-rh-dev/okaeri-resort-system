@@ -19,7 +19,7 @@ import type { AddUnitResponse, ApiErrorResponse } from "./types/responses";
 describe("POST /api/bookings/:id/units/add", () => {
   const validAddUnitData = {
     unit_id: testUnits[2].unit_id,
-    guest_name: "Jane Smith",
+    num_guests: 2, // Required by schema
     rate_per_night: 3500,
     num_nights: 2,
     subtotal: 7000,

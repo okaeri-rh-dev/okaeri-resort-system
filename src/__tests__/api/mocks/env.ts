@@ -7,8 +7,12 @@
 import { createMockKV } from "./kv";
 
 export interface TestEnv {
+  // Frontend environment variables (Vite)
   VITE_SUPABASE_URL: string;
   VITE_SUPABASE_ANON_KEY: string;
+  // Cloudflare Workers environment variables (no VITE_ prefix)
+  SUPABASE_URL: string;
+  SUPABASE_ANON_KEY: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   SUPABASE_JWT_SECRET: string;
   TURNSTILE_SECRET_KEY: string;
@@ -20,8 +24,12 @@ export interface TestEnv {
 }
 
 export const createMockEnv = (): TestEnv => ({
+  // Frontend environment variables (Vite)
   VITE_SUPABASE_URL: "https://test.supabase.co",
   VITE_SUPABASE_ANON_KEY: "test-anon-key",
+  // Cloudflare Workers environment variables (no VITE_ prefix)
+  SUPABASE_URL: "https://test.supabase.co",
+  SUPABASE_ANON_KEY: "test-anon-key",
   SUPABASE_SERVICE_ROLE_KEY: "test-service-role-key",
   SUPABASE_JWT_SECRET: "test-jwt-secret-key-for-hmac-256-signing",
   TURNSTILE_SECRET_KEY: "test-turnstile-secret",

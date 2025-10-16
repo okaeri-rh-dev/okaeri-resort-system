@@ -46,6 +46,8 @@ export function BookingEditPage() {
   const navigate = useNavigate();
 
   // Initialize form with default values from booking
+  // NOTE: Single-unit editing only - extracts first unit from booking_units array
+  // Multi-unit editing UI is planned for a later phase
   const form = useForm<BookingEditInput>({
     resolver: zodResolver(bookingEditSchema),
     defaultValues: {
@@ -54,7 +56,7 @@ export function BookingEditPage() {
       contact_number: booking.contact_number || "",
       check_in: new Date(booking.check_in),
       check_out: new Date(booking.check_out),
-      unit_id: booking.unit_id ?? "",
+      unit_id: booking.booking_units?.[0]?.unit_id ?? "",
       num_guests: booking.num_guests,
       payment_method:
         (booking.payment_method as "Cash" | "GCash" | "BankTransfer" | "Card") || "Cash",

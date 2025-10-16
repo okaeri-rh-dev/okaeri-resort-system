@@ -118,6 +118,22 @@ export function createUnitManagementMocks(options: UnitManagementMockOptions = {
  * Helper to create mock with unit already in booking (for remove tests)
  */
 export function createUnitRemoveMocks(options: Partial<UnitManagementMockOptions> = {}) {
+  // Use complete booking unit records with all required fields (including subtotal)
+  const defaultBookingUnits = [
+    {
+      ...testBookingUnits[0], // Includes subtotal and all other fields
+      booking_unit_id: "unit-1-id",
+      unit_id: testUnits[0].unit_id,
+      booking_id: testBookingResponse.booking_id,
+    },
+    {
+      ...testBookingUnits[1], // Includes subtotal and all other fields
+      booking_unit_id: "unit-2-id",
+      unit_id: testUnits[1].unit_id,
+      booking_id: testBookingResponse.booking_id,
+    },
+  ];
+
   return createUnitManagementMocks({
     includePayment: true, // Default to including payment for remove tests (refund calculation)
     ...options,
@@ -125,16 +141,7 @@ export function createUnitRemoveMocks(options: Partial<UnitManagementMockOptions
     booking: {
       ...testBookingResponse,
       booking_status: "Pending",
-      booking_units: [
-        {
-          booking_unit_id: "unit-1-id",
-          unit_id: testUnits[0].unit_id,
-        },
-        {
-          booking_unit_id: "unit-2-id",
-          unit_id: testUnits[1].unit_id,
-        },
-      ],
+      booking_units: defaultBookingUnits,
       ...options.booking,
     },
   });

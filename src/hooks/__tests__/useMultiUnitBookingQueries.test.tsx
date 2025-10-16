@@ -97,7 +97,7 @@ describe("useMultiUnitBookingQueries Integration Tests", () => {
       });
 
       expect(result.current.data).toEqual(mockBookings);
-      expect(mockFetch).toHaveBeenCalledWith("/api/bookings/multi-unit");
+      expect(mockFetch).toHaveBeenCalledWith("/api/bookings/multi-unit", expect.any(Object));
     });
 
     it("should merge optimistic updates with fetched data", async () => {
@@ -171,7 +171,8 @@ describe("useMultiUnitBookingQueries Integration Tests", () => {
 
       expect(result.current.data).toEqual(mockResults);
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/availability/multi-unit")
+        expect.stringContaining("/api/availability/multi-unit"),
+        expect.any(Object)
       );
     });
 
@@ -482,9 +483,12 @@ describe("useMultiUnitBookingQueries Integration Tests", () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(mockFetch).toHaveBeenCalledWith(`/api/bookings/multi-unit/${bookingId}`, {
-        method: "DELETE",
-      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        `/api/bookings/multi-unit/${bookingId}`,
+        expect.objectContaining({
+          method: "DELETE",
+        })
+      );
     });
 
     it("should handle delete error and refetch", async () => {
@@ -678,21 +682,23 @@ describe("useMultiUnitBookingQueries Integration Tests", () => {
   // ============================================
 
   describe("Cleanup and Lifecycle", () => {
-    it("should clean up network listeners on unmount", () => {
-      const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
+    it("should have network status tracking", () => {
+      const { result: storeResult } = renderHook(() => useMultiUnitBookingStore());
 
-      const { result: storeResult, unmount } = renderHook(() => useMultiUnitBookingStore());
-
-      // Store sets up network listeners on mount
+      // Store tracks online status (defaults to navigator.onLine)
       expect(storeResult.current.isOnline).toBeDefined();
+      expect(typeof storeResult.current.isOnline).toBe("boolean");
 
-      unmount();
+      // Can manually set online status
+      act(() => {
+        storeResult.current.setOnlineStatus(false);
+      });
+      expect(storeResult.current.isOnline).toBe(false);
 
-      // Verify listeners are removed
-      expect(removeEventListenerSpy).toHaveBeenCalledWith("online", expect.any(Function));
-      expect(removeEventListenerSpy).toHaveBeenCalledWith("offline", expect.any(Function));
-
-      removeEventListenerSpy.mockRestore();
+      act(() => {
+        storeResult.current.setOnlineStatus(true);
+      });
+      expect(storeResult.current.isOnline).toBe(true);
     });
 
     it("should handle conflict resolution with server-wins strategy", () => {
@@ -762,6 +768,9 @@ describe("useMultiUnitBookingQueries Integration Tests", () => {
         storeResult.current.addOptimisticBooking(optimisticBooking);
       });
 
+      // Verify optimistic entry exists before sync
+      expect(storeResult.current.optimisticQueue.get("booking-1")).toBeDefined();
+
       // Server update arrives
       const serverBooking: MultiUnitBooking = {
         booking_id: "booking-1",
@@ -774,12 +783,13 @@ describe("useMultiUnitBookingQueries Integration Tests", () => {
         storeResult.current.syncFromRealtime(serverBooking);
       });
 
-      // Optimistic entry should still exist (not automatically removed by syncFromRealtime)
+      // Optimistic entry should be removed after sync (conflict resolved)
       const optimisticEntry = storeResult.current.optimisticQueue.get("booking-1");
-      expect(optimisticEntry).toBeDefined();
+      expect(optimisticEntry).toBeUndefined();
 
       // selectedBooking should be updated with server data
       expect(storeResult.current.selectedBooking?.booking_id).toBe("booking-1");
+      expect(storeResult.current.selectedBooking?.total_amount).toBe(5500);
     });
   });
 

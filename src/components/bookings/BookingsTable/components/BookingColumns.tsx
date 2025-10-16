@@ -10,6 +10,7 @@ import type { Booking, BookingStatus } from "@/types";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { Badge } from "@/components/ui/badge";
 
 const columnHelper = createColumnHelper<Booking>();
 
@@ -47,10 +48,26 @@ export const useBookingColumns = ({
         size: 180,
       }),
 
-      columnHelper.accessor("unit.unit_name", {
-        header: "Unit",
-        cell: ({ getValue }) => <div className="font-medium">{getValue() || "N/A"}</div>,
-        size: 120,
+      columnHelper.accessor("booking_units", {
+        header: "Unit(s)",
+        cell: ({ row }) => {
+          const units = row.original.booking_units || [];
+
+          if (units.length === 0) {
+            return <span className="text-neutral-400 text-xs">No units</span>;
+          }
+
+          return (
+            <div className="flex flex-wrap gap-1">
+              {units.map((bu) => (
+                <Badge key={bu.booking_unit_id} variant="secondary" className="text-xs font-mono">
+                  {bu.unit?.unit_code || bu.unit?.unit_name || `Unit ${bu.unit_id.slice(0, 4)}`}
+                </Badge>
+              ))}
+            </div>
+          );
+        },
+        size: 150,
       }),
 
       columnHelper.accessor("check_in", {

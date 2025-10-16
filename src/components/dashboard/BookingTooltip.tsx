@@ -91,7 +91,9 @@ const BookingTooltipItem = React.memo(function BookingTooltipItem({
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="font-mono text-xs font-semibold text-neutral-900">
-            {booking.unit?.unit_code || booking.unit?.unit_name || "—"}
+            {booking.booking_units?.[0]?.unit?.unit_code ||
+              booking.booking_units?.[0]?.unit?.unit_name ||
+              "—"}
           </span>
           <span
             className={cn(

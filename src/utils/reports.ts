@@ -60,7 +60,8 @@ export function generateOccupancyReport(
       const checkOut = new Date(booking.check_out);
 
       if (isWithinInterval(day, { start: checkIn, end: checkOut })) {
-        occupiedUnits.add(booking.unit_id);
+        const unitId = booking.booking_units?.[0]?.unit_id;
+        if (unitId) occupiedUnits.add(unitId);
         // Calculate daily revenue (simplified)
         const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
         dayRevenue += booking.total_amount / nights;
@@ -392,24 +393,27 @@ export function formatBookingsForExport(
 ): Record<string, unknown>[] {
   const unitMap = new Map(units.map((u) => [u.unit_id, u]));
 
-  return bookings.map((booking) => ({
-    "Booking Reference": booking.booking_reference,
-    "Guest Name": booking.guest_name,
-    Email: booking.email,
-    "Contact Number": booking.contact_number,
-    Unit: unitMap.get(booking.unit_id)?.unit_name || "Unknown",
-    "Check In": format(new Date(booking.check_in), "yyyy-MM-dd"),
-    "Check Out": format(new Date(booking.check_out), "yyyy-MM-dd"),
-    "Number of Guests": booking.num_guests,
-    "Total Amount": booking.total_amount,
-    "Booking Status": booking.booking_status || "N/A",
-    "Payment Status": booking.payment_status || "N/A",
-    "Payment Method": booking.payment_method || "N/A",
-    "Special Requests": booking.special_requests || "",
-    "Created Date": booking.created_at
-      ? format(new Date(booking.created_at), "yyyy-MM-dd HH:mm")
-      : "N/A",
-  }));
+  return bookings.map((booking) => {
+    const unitId = booking.booking_units?.[0]?.unit_id;
+    return {
+      "Booking Reference": booking.booking_reference,
+      "Guest Name": booking.guest_name,
+      Email: booking.email,
+      "Contact Number": booking.contact_number,
+      Unit: unitId ? unitMap.get(unitId)?.unit_name || "Unknown" : "N/A",
+      "Check In": format(new Date(booking.check_in), "yyyy-MM-dd"),
+      "Check Out": format(new Date(booking.check_out), "yyyy-MM-dd"),
+      "Number of Guests": booking.num_guests,
+      "Total Amount": booking.total_amount,
+      "Booking Status": booking.booking_status || "N/A",
+      "Payment Status": booking.payment_status || "N/A",
+      "Payment Method": booking.payment_method || "N/A",
+      "Special Requests": booking.special_requests || "",
+      "Created Date": booking.created_at
+        ? format(new Date(booking.created_at), "yyyy-MM-dd HH:mm")
+        : "N/A",
+    };
+  });
 }
 
 /**

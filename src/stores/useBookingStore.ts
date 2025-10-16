@@ -372,7 +372,6 @@ export const useCreateBooking = () => {
       const optimisticBooking: Booking = {
         booking_id: `temp-${Date.now()}`,
         booking_reference: `BK-${Date.now()}`,
-        unit_id: newBooking.unit_id,
         guest_id: null,
         guest_name: newBooking.guest_name,
         contact_number: newBooking.contact_number,

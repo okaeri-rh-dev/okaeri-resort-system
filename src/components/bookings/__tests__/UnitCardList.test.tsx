@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import { UnitCardList } from "../UnitCardList";
@@ -115,7 +115,6 @@ describe("UnitCardList", () => {
     });
 
     it("calls onUpdateGuestCount when changed", async () => {
-      const user = userEvent.setup();
       render(
         <UnitCardList
           units={mockUnits}
@@ -125,10 +124,11 @@ describe("UnitCardList", () => {
       );
 
       const input = screen.getAllByLabelText(/Number of guests/i)[0];
-      await user.clear(input);
-      await user.type(input, "4");
+      fireEvent.change(input, { target: { value: "4" } });
 
-      expect(mockOnUpdateGuestCount).toHaveBeenCalledWith("unit-1", 4);
+      await waitFor(() => {
+        expect(mockOnUpdateGuestCount).toHaveBeenCalledWith("unit-1", 4);
+      });
     });
 
     it("shows Assign Guests button when callback provided", () => {
@@ -192,7 +192,7 @@ describe("UnitCardList", () => {
 
       expect(screen.getByText(/Base \(2 nights/i)).toBeInTheDocument();
       expect(screen.getByText("Weekend surcharge")).toBeInTheDocument();
-      expect(screen.getByText("Extra persons")).toBeInTheDocument();
+      expect(screen.getByText(/Extra persons/i)).toBeInTheDocument();
     });
   });
 

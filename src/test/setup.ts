@@ -4,9 +4,12 @@
  */
 
 import "@testing-library/jest-dom";
-import "vitest-axe/extend-expect";
 import { cleanup } from "@testing-library/react";
-import { afterEach, beforeAll, afterAll, vi } from "vitest";
+import { afterEach, beforeAll, afterAll, vi, expect } from "vitest";
+import { toHaveNoViolations } from "jest-axe";
+
+// Extend Vitest's expect with jest-axe matchers
+expect.extend(toHaveNoViolations);
 
 // Cleanup after each test
 afterEach(() => {
@@ -236,9 +239,31 @@ export const testUtils = {
     guest_name: "Test Guest",
     check_in: "2025-10-01",
     check_out: "2025-10-05",
-    unit_id: "test-unit-id",
+    is_multi_unit: true,
+    unit_count: 1,
     total_amount: 5000,
     booking_status: "confirmed",
+    booking_units: [
+      {
+        booking_unit_id: "test-booking-unit-id",
+        booking_id: "test-booking-id",
+        unit_id: "test-unit-id",
+        unit_price: 5000,
+        weekend_surcharge: 0,
+        extra_person_charge: 0,
+        subtotal: 5000,
+        assigned_guests: 2,
+        unit: {
+          unit_id: "test-unit-id",
+          unit_name: "Test Unit",
+          unit_code: "TEST-001",
+          unit_type: "villa",
+          base_rate: 1000,
+          max_occupancy: 4,
+          is_active: true,
+        },
+      },
+    ],
     ...overrides,
   }),
 

@@ -38,15 +38,25 @@ export async function cleanupTestData() {
 
   try {
     // Delete in reverse dependency order
-    await testSupabaseAdmin
-      .from("audit_logs")
-      .delete()
-      .neq("audit_id", "00000000-0000-0000-0000-000000000000");
+    // Note: Some tables may not exist yet (audit_logs, payment_adjustments), so we ignore errors
 
-    await testSupabaseAdmin
-      .from("payment_adjustments")
-      .delete()
-      .neq("adjustment_id", "00000000-0000-0000-0000-000000000000");
+    try {
+      await testSupabaseAdmin
+        .from("audit_logs")
+        .delete()
+        .neq("audit_id", "00000000-0000-0000-0000-000000000000");
+    } catch (e) {
+      // Table may not exist yet
+    }
+
+    try {
+      await testSupabaseAdmin
+        .from("payment_adjustments")
+        .delete()
+        .neq("adjustment_id", "00000000-0000-0000-0000-000000000000");
+    } catch (e) {
+      // Table may not exist yet
+    }
 
     await testSupabaseAdmin
       .from("payments")
@@ -94,7 +104,7 @@ export async function createTestUnit(overrides: Partial<any> = {}) {
       base_occupancy: overrides.base_occupancy || 2,
       extra_person_rate: overrides.extra_person_rate || 500,
       unit_status: overrides.unit_status || "Available",
-      description: overrides.description || "Test unit for automated testing",
+      // description field removed - not in database schema
       ...overrides,
     })
     .select()
@@ -118,10 +128,7 @@ export async function createTestGuest(overrides: Partial<any> = {}) {
     .insert({
       guest_name: overrides.guest_name || `Test Guest ${timestamp}`,
       email: overrides.email || `test${timestamp}@example.com`,
-      phone_number:
-        overrides.phone_number ||
-        overrides.contact_number ||
-        `+6391${timestamp.toString().slice(-8)}`,
+      phone_number: overrides.phone_number || `+6391${timestamp.toString().slice(-8)}`,
       ...overrides,
     })
     .select()
@@ -137,6 +144,7 @@ export async function createTestGuest(overrides: Partial<any> = {}) {
 
 /**
  * Create test booking fixture
+ * Uses the unified multi-unit pattern (via create_multi_unit_booking function)
  */
 export async function createTestBooking(overrides: Partial<any> = {}) {
   // Ensure we have a test guest and unit
@@ -146,12 +154,10 @@ export async function createTestBooking(overrides: Partial<any> = {}) {
   const checkIn = overrides.check_in || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 1 week from now
   const checkOut = overrides.check_out || new Date(checkIn.getTime() + 2 * 24 * 60 * 60 * 1000); // 2 days later
 
-  const { data, error } = await testSupabaseAdmin
-    .from("bookings")
-    .insert({
+  // Use the database function to create booking with multi-unit pattern
+  const { data: bookingId, error } = await testSupabaseAdmin.rpc("create_multi_unit_booking", {
+    p_booking_data: {
       booking_reference: overrides.booking_reference || `TEST-BK-${Date.now()}`,
-      guest_id: guest.guest_id,
-      unit_id: unit.unit_id,
       guest_name: guest.guest_name,
       email: guest.email,
       contact_number: guest.phone_number,
@@ -162,16 +168,41 @@ export async function createTestBooking(overrides: Partial<any> = {}) {
       payment_status: overrides.payment_status || "Paid",
       total_amount: overrides.total_amount || 5000,
       ...overrides,
-    })
-    .select()
-    .single();
+    },
+    p_units: [
+      {
+        unit_id: unit.unit_id,
+        unit_price: overrides.unit_price || 4000,
+        weekend_surcharge: overrides.weekend_surcharge || 0,
+        extra_person_charge: overrides.extra_person_charge || 0,
+        subtotal: overrides.subtotal || 5000,
+        assigned_guests: overrides.num_guests || 2,
+      },
+    ],
+    p_guest_id: guest.guest_id,
+  });
 
   if (error) {
     console.error("Failed to create test booking:", error);
     throw error;
   }
 
-  return data;
+  // Fetch the complete booking with junction table data
+  const { data: booking } = await testSupabaseAdmin
+    .from("bookings")
+    .select(
+      `
+      *,
+      booking_units (
+        *,
+        unit:units (*)
+      )
+    `
+    )
+    .eq("booking_id", bookingId)
+    .single();
+
+  return booking;
 }
 
 /**
@@ -264,10 +295,26 @@ export async function setupTestDatabase() {
 // Export a helper to check if tests should run
 export async function shouldRunDatabaseTests(): Promise<boolean> {
   if (!TEST_SUPABASE_URL || TEST_SUPABASE_URL === "http://localhost:54321") {
-    if (!TEST_SUPABASE_ANON_KEY) {
+    if (!TEST_SERVICE_KEY) {
       return false;
     }
   }
 
-  return await waitForDatabase(2); // Quick check with 2 attempts
+  // Use admin client for availability check (bypasses RLS)
+  for (let i = 0; i < 2; i++) {
+    try {
+      const { error } = await testSupabaseAdmin.from("units").select("unit_id").limit(1);
+
+      if (!error) {
+        console.log("Test database is ready");
+        return true;
+      }
+    } catch (e) {
+      console.log(`Database not ready (attempt ${i + 1}/2)`);
+      await new Promise((r) => setTimeout(r, 1000)); // Wait 1 second
+    }
+  }
+
+  console.warn("Test database not available after 2 attempts");
+  return false;
 }

@@ -336,7 +336,6 @@ export type Database = {
           total_amount: number;
           total_surcharges: number | null;
           unit_count: number | null;
-          unit_id: string | null;
           updated_at: string | null;
           upload_expires_at: string | null;
           upload_status: string | null;
@@ -366,7 +365,6 @@ export type Database = {
           total_amount: number;
           total_surcharges?: number | null;
           unit_count?: number | null;
-          unit_id?: string | null;
           updated_at?: string | null;
           upload_expires_at?: string | null;
           upload_status?: string | null;
@@ -396,7 +394,6 @@ export type Database = {
           total_amount?: number;
           total_surcharges?: number | null;
           unit_count?: number | null;
-          unit_id?: string | null;
           updated_at?: string | null;
           upload_expires_at?: string | null;
           upload_status?: string | null;
@@ -408,13 +405,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "guests";
             referencedColumns: ["guest_id"];
-          },
-          {
-            foreignKeyName: "bookings_unit_id_fkey";
-            columns: ["unit_id"];
-            isOneToOne: false;
-            referencedRelation: "units";
-            referencedColumns: ["unit_id"];
           },
         ];
       };

@@ -47,10 +47,26 @@ export type BookingStatus = "Pending" | "Confirmed" | "CheckedIn" | "CheckedOut"
 export type PaymentStatus = "Pending" | "Partial" | "Completed" | "Refunded";
 export type PaymentMethod = "Cash" | "GCash" | "BankTransfer" | "Card" | "Other";
 
+// Database booking unit junction table record
+export interface BookingUnitRecord {
+  booking_unit_id: string;
+  booking_id: string;
+  unit_id: string;
+  unit_price: number;
+  weekend_surcharge: number | null;
+  extra_person_charge: number | null;
+  subtotal: number;
+  assigned_guests: number | null;
+  unit_notes: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  // Relation to unit
+  unit?: Unit;
+}
+
 export interface Booking {
   booking_id: string;
   booking_reference: string;
-  unit_id: string;
   guest_id?: string | null;
   guest_name: string;
   contact_number: string;
@@ -65,11 +81,15 @@ export interface Booking {
   payment_proof_url?: string | null;
   special_requests?: string | null;
   internal_notes?: string | null;
+  is_multi_unit?: boolean | null;
+  unit_count?: number | null;
   created_at: string | null;
   updated_at: string | null;
-  // Relations
-  unit?: Unit;
+  // Relations (NEW: junction table pattern)
+  booking_units?: BookingUnitRecord[];
   guest?: Guest | null;
+  // Deprecated: Direct unit relation removed (use booking_units instead)
+  // unit?: Unit;
 }
 
 // ============================================
@@ -129,7 +149,9 @@ export interface MaintenanceLog {
 // FORM INPUT TYPES
 // ============================================
 export interface BookingFormData {
-  unit_id: string;
+  // Note: For single-unit bookings, use unit_id. For multi-unit, use unit_ids array.
+  unit_id?: string; // Single-unit booking (legacy)
+  unit_ids?: string[]; // Multi-unit booking
   guest_name: string;
   contact_number: string;
   email: string;

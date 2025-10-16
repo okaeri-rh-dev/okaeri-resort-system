@@ -16,7 +16,7 @@
 
 1. **No Legacy Compatibility:** Clean slate implementation (no existing users)
 2. **No Feature Flags:** Direct deployment (wipe → migrate → deploy)
-3. **No API Versioning:** Single API namespace, no v1/v2 endpoints
+3. **No API Versioning:** Single `/api` namespace, no v1/v2 endpoints (backward compatibility at response level)
 4. **Aggressive Availability Blocking:** Only Confirmed + CheckedIn bookings block units
 5. **Any Junction = Multi-Unit:** If `booking_units` table has rows → `is_multi_unit = TRUE`
 6. **UTC Storage, Manila Display:** All timestamps stored as UTC, displayed as Asia/Manila

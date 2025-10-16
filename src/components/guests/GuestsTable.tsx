@@ -111,8 +111,8 @@ const GuestBookingHistory: React.FC<GuestBookingHistoryProps> = ({ guestId, clas
                 <StatusBadge status={booking.booking_status ?? "Pending"} />
               </div>
               <div className="text-sm text-neutral-600">
-                {booking.unit?.unit_name} • {formatTableDate(booking.check_in)} -{" "}
-                {formatTableDate(booking.check_out)}
+                {booking.booking_units?.[0]?.unit?.unit_name} • {formatTableDate(booking.check_in)}{" "}
+                - {formatTableDate(booking.check_out)}
               </div>
             </div>
             <div className="text-right">

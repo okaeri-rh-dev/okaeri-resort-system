@@ -127,7 +127,7 @@ export const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                 <p className="text-muted-foreground">Cabin</p>
                 <p className="font-medium flex items-center gap-1">
                   <Home className="h-3 w-3" />
-                  Cabin {booking.unit_id}
+                  Cabin {booking.booking_units?.[0]?.unit_id}
                 </p>
               </div>
               <div>

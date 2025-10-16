@@ -28,7 +28,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onUploadPayme
       </div>
 
       <div className="space-y-2">
-        <MobileCardRow label="Unit" value={booking.unit?.unit_name || "N/A"} />
+        <MobileCardRow label="Unit" value={booking.booking_units?.[0]?.unit?.unit_name || "N/A"} />
         <MobileCardRow
           label="Dates"
           value={`${formatTableDate(booking.check_in)} - ${formatTableDate(booking.check_out)}`}

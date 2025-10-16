@@ -2,7 +2,7 @@
 // Handles the mismatch between DB Json types and typed arrays, nullable enums, etc.
 
 import type { Tables } from "@/types/database.types";
-import type { Booking, Unit, Guest, Payment } from "@/types";
+import type { Booking, Unit, Guest, Payment, BookingUnitRecord } from "@/types";
 
 // ============================================
 // DATABASE TYPE ALIASES
@@ -13,8 +13,11 @@ import type { Booking, Unit, Guest, Payment } from "@/types";
  */
 export type DbUnit = Tables<"units">;
 export type DbGuest = Tables<"guests">;
-export type DbBooking = Tables<"bookings"> & {
+export type DbBookingUnit = Tables<"booking_units"> & {
   unit?: DbUnit;
+};
+export type DbBooking = Tables<"bookings"> & {
+  booking_units?: DbBookingUnit[];
   guest?: DbGuest | null;
 };
 export type DbPayment = Tables<"payments"> & {
@@ -81,18 +84,43 @@ export function adaptGuestFromDB(dbGuest: DbGuest): Guest {
 }
 
 // ============================================
+// BOOKING UNIT ADAPTER
+// ============================================
+
+/**
+ * Convert database BookingUnit to application BookingUnitRecord
+ * Handles the junction table record with nested unit relation
+ */
+export function adaptBookingUnitFromDB(dbBookingUnit: DbBookingUnit): BookingUnitRecord {
+  return {
+    booking_unit_id: dbBookingUnit.booking_unit_id,
+    booking_id: dbBookingUnit.booking_id,
+    unit_id: dbBookingUnit.unit_id,
+    unit_price: dbBookingUnit.unit_price,
+    weekend_surcharge: dbBookingUnit.weekend_surcharge,
+    extra_person_charge: dbBookingUnit.extra_person_charge,
+    subtotal: dbBookingUnit.subtotal,
+    assigned_guests: dbBookingUnit.assigned_guests,
+    unit_notes: dbBookingUnit.unit_notes,
+    created_at: dbBookingUnit.created_at,
+    updated_at: dbBookingUnit.updated_at,
+    // Convert related unit if present
+    unit: dbBookingUnit.unit ? adaptUnitFromDB(dbBookingUnit.unit) : undefined,
+  };
+}
+
+// ============================================
 // BOOKING ADAPTER
 // ============================================
 
 /**
  * Convert database Booking to application Booking
- * Handles related unit and guest conversions
+ * Handles related booking_units (junction table) and guest conversions
  */
 export function adaptBookingFromDB(dbBooking: DbBooking): Booking {
   return {
     booking_id: dbBooking.booking_id,
     booking_reference: dbBooking.booking_reference,
-    unit_id: dbBooking.unit_id ?? "",
     guest_id: dbBooking.guest_id,
     guest_name: dbBooking.guest_name,
     contact_number: dbBooking.contact_number,
@@ -107,10 +135,12 @@ export function adaptBookingFromDB(dbBooking: DbBooking): Booking {
     payment_proof_url: dbBooking.payment_proof_url,
     special_requests: dbBooking.special_requests,
     internal_notes: dbBooking.internal_notes,
+    is_multi_unit: dbBooking.is_multi_unit,
+    unit_count: dbBooking.unit_count,
     created_at: dbBooking.created_at,
     updated_at: dbBooking.updated_at,
-    // Convert related entities
-    unit: dbBooking.unit ? adaptUnitFromDB(dbBooking.unit) : undefined,
+    // Convert related entities (NEW: junction table pattern)
+    booking_units: dbBooking.booking_units?.map(adaptBookingUnitFromDB) || [],
     guest: dbBooking.guest ? adaptGuestFromDB(dbBooking.guest) : null,
   };
 }
@@ -170,7 +200,7 @@ export function unitAmenitiesToJson(amenities: string[] | null): unknown {
  */
 export function prepareBookingForDB(booking: Partial<Booking>): Partial<Tables<"bookings">> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { unit, guest, ...dbBooking } = booking;
+  const { booking_units, guest, ...dbBooking } = booking;
 
   return dbBooking;
 }

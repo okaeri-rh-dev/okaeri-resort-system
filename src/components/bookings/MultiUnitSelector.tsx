@@ -30,6 +30,7 @@ import type { Unit } from "@/types";
 import type { BookingUnit } from "@/types/multi-unit-booking";
 import { Filter, Grid3x3, List } from "lucide-react";
 import { useMemo, useState } from "react";
+import { filterUnits, hasActiveFilters, type FilterState } from "./MultiUnitSelector/utils";
 
 // ============================================
 // TYPES
@@ -61,12 +62,6 @@ export interface MultiUnitSelectorProps {
   error?: string | null;
 }
 
-interface FilterState {
-  unitType: string;
-  maxOccupancy: string;
-  maxRate: string;
-}
-
 // ============================================
 // MAIN COMPONENT
 // ============================================
@@ -91,22 +86,14 @@ export function MultiUnitSelector({
     maxRate: "all",
   });
 
-  // Filter units based on criteria
-  const filteredUnits = useMemo(() => {
-    return units.filter((unit) => {
-      if (filters.unitType !== "all" && unit.unit_type !== filters.unitType) return false;
-      if (filters.maxOccupancy !== "all" && unit.max_occupancy < parseInt(filters.maxOccupancy))
-        return false;
-      if (filters.maxRate !== "all" && unit.base_rate > parseInt(filters.maxRate)) return false;
-      return true;
-    });
-  }, [units, filters]);
+  // Filter units based on criteria using utility function
+  const filteredUnits = useMemo(() => filterUnits(units, filters), [units, filters]);
 
   const canAddMore = selectedUnits.length < maxUnits;
   const isSelected = (unitId: string) => selectedUnits.some((u) => u.unit_id === unitId);
 
-  const hasActiveFilters =
-    filters.unitType !== "all" || filters.maxOccupancy !== "all" || filters.maxRate !== "all";
+  // Check if filters are active using utility function
+  const filtersActive = hasActiveFilters(filters);
 
   const clearFilters = () => {
     setFilters({ unitType: "all", maxOccupancy: "all", maxRate: "all" });
@@ -197,7 +184,7 @@ export function MultiUnitSelector({
             </SelectContent>
           </Select>
 
-          {hasActiveFilters && (
+          {filtersActive && (
             <Button variant="ghost" size="sm" onClick={clearFilters} className="h-10">
               <Filter className="mr-2 h-4 w-4" />
               Clear Filters
@@ -240,7 +227,6 @@ export function MultiUnitSelector({
             "grid gap-4",
             viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
           )}
-          role="list"
           aria-label="Available units"
         >
           {filteredUnits.map((unit) => (
@@ -262,7 +248,7 @@ export function MultiUnitSelector({
       {!isLoading && filteredUnits.length === 0 && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No units match your filters</p>
-          {hasActiveFilters && (
+          {filtersActive && (
             <Button variant="outline" size="sm" className="mt-4" onClick={clearFilters}>
               Clear Filters
             </Button>
@@ -307,7 +293,6 @@ function UnitCard({
       )}
       role="article"
       aria-label={`${unit.unit_name}, ${formatCurrency(unit.base_rate)} per night, max ${unit.max_occupancy} guests${isSelected ? ", selected" : ""}`}
-      aria-selected={isSelected}
     >
       <CardContent className="p-4">
         {/* Unit Info */}

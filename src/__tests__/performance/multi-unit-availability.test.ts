@@ -11,24 +11,31 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { createClient } from "@supabase/supabase-js";
 import { performance } from "perf_hooks";
-
-// Test database connection
-const supabaseUrl = process.env.VITE_SUPABASE_URL || "http://localhost:54321";
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || "test-key";
-const supabase = createClient(supabaseUrl, supabaseKey);
+import {
+  testSupabaseAdmin as supabase,
+  cleanupTestData,
+  shouldRunDatabaseTests,
+} from "../setup/test-db";
 
 describe("Multi-Unit Availability Performance Benchmarks", () => {
   let testUnitIds: string[] = [];
   let testGuestId: string | null = null;
+  let shouldRun = false;
 
   beforeAll(async () => {
+    // Check if we should run database tests
+    shouldRun = await shouldRunDatabaseTests();
+
+    if (!shouldRun) {
+      console.log("⏭️  Skipping performance tests - test database not configured");
+      return;
+    }
     // Create 20 test units for comprehensive testing
     const units = Array.from({ length: 20 }, (_, i) => ({
       unit_name: `Perf Test Unit ${i + 1}`,
       unit_code: `PERF-${i + 1}`,
-      unit_type: i % 2 === 0 ? "Studio" : "One Bedroom",
+      unit_type: i % 2 === 0 ? "Standard" : "Deluxe", // Valid types: Standard, Deluxe, Suite, Villa
       base_occupancy: 2,
       max_occupancy: 4,
       base_rate: 2500,
@@ -67,7 +74,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
           check_in: `2025-${String(i + 1).padStart(2, "0")}-01T06:00:00Z`,
           check_out: `2025-${String(i + 1).padStart(2, "0")}-05T04:00:00Z`,
           booking_status: "Confirmed",
-          payment_status: "Unpaid",
+          payment_status: "Pending",
         },
         p_units: [
           {
@@ -79,13 +86,17 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
             assigned_guests: 2,
           },
         ],
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
     }
   });
 
   afterAll(async () => {
+    if (!shouldRun) return;
+
     // Cleanup test data
+    await cleanupTestData();
+
     if (testUnitIds.length > 0) {
       await supabase.from("units").delete().in("unit_id", testUnitIds);
     }
@@ -95,7 +106,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
   });
 
   describe("Availability Checking Performance", () => {
-    it("should check availability for 10 units in <100ms", async () => {
+    it.skipIf(!shouldRun)("should check availability for 10 units in <100ms", async () => {
       const unitBatch = testUnitIds.slice(0, 10);
 
       const startTime = performance.now();
@@ -160,7 +171,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
   describe("Booking Creation Performance", () => {
     it("should create booking with 2 units in <200ms", async () => {
       const bookingData = {
-        booking_reference: `BK-PERF-2UNIT-${Date.now()}`,
+        booking_reference: `BK-2U-${Date.now().toString().slice(-6)}`, // Max 20 chars
         guest_name: "2 Unit Test",
         contact_number: "+639123456789",
         email: "2unit@example.com",
@@ -168,7 +179,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
         check_in: "2025-12-20T06:00:00Z",
         check_out: "2025-12-25T04:00:00Z",
         booking_status: "Confirmed",
-        payment_status: "Unpaid",
+        payment_status: "Pending", // Valid values: Pending, Partial, Completed, Refunded
       };
 
       const units = [
@@ -194,7 +205,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
       const { data, error } = await supabase.rpc("create_multi_unit_booking", {
         p_booking_data: bookingData,
         p_units: units,
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
       const endTime = performance.now();
 
@@ -208,7 +219,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
 
     it("should create booking with 5 units in <200ms", async () => {
       const bookingData = {
-        booking_reference: `BK-PERF-5UNIT-${Date.now()}`,
+        booking_reference: `BK-5U-${Date.now().toString().slice(-6)}`, // Max 20 chars
         guest_name: "5 Unit Test",
         contact_number: "+639123456789",
         email: "5unit@example.com",
@@ -216,7 +227,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
         check_in: "2025-12-20T06:00:00Z",
         check_out: "2025-12-25T04:00:00Z",
         booking_status: "Confirmed",
-        payment_status: "Unpaid",
+        payment_status: "Pending", // Valid values: Pending, Partial, Completed, Refunded
       };
 
       const units = testUnitIds.slice(12, 17).map((unitId) => ({
@@ -232,7 +243,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
       const { data, error } = await supabase.rpc("create_multi_unit_booking", {
         p_booking_data: bookingData,
         p_units: units,
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
       const endTime = performance.now();
 
@@ -246,7 +257,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
 
     it("should create booking with 10 units in <300ms", async () => {
       const bookingData = {
-        booking_reference: `BK-PERF-10UNIT-${Date.now()}`,
+        booking_reference: `BK-10U-${Date.now().toString().slice(-6)}`, // Max 20 chars
         guest_name: "10 Unit Test",
         contact_number: "+639123456789",
         email: "10unit@example.com",
@@ -254,7 +265,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
         check_in: "2025-12-20T06:00:00Z",
         check_out: "2025-12-25T04:00:00Z",
         booking_status: "Confirmed",
-        payment_status: "Unpaid",
+        payment_status: "Pending", // Valid values: Pending, Partial, Completed, Refunded
       };
 
       const units = testUnitIds.slice(0, 10).map((unitId) => ({
@@ -270,7 +281,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
       const { data, error } = await supabase.rpc("create_multi_unit_booking", {
         p_booking_data: bookingData,
         p_units: units,
-        p_guest_id: testGuestId,
+        p_guest_id: testGuestId ?? undefined,
       });
       const endTime = performance.now();
 
@@ -286,28 +297,37 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
   describe("get_booking_units Performance", () => {
     it("should fetch booking units in <50ms", async () => {
       // Create test booking
-      const { data: bookingId } = await supabase.rpc("create_multi_unit_booking", {
-        p_booking_data: {
-          booking_reference: `BK-PERF-GET-${Date.now()}`,
-          guest_name: "Get Test",
-          contact_number: "+639123456789",
-          email: "get@example.com",
-          num_guests: 6,
-          check_in: "2025-12-20T06:00:00Z",
-          check_out: "2025-12-25T04:00:00Z",
-          booking_status: "Confirmed",
-          payment_status: "Unpaid",
-        },
-        p_units: testUnitIds.slice(0, 3).map((unitId) => ({
-          unit_id: unitId,
-          unit_price: 12500,
-          weekend_surcharge: 0,
-          extra_person_charge: 0,
-          subtotal: 12500,
-          assigned_guests: 2,
-        })),
-        p_guest_id: testGuestId,
-      });
+      const { data: bookingId, error: createError } = await supabase.rpc(
+        "create_multi_unit_booking",
+        {
+          p_booking_data: {
+            booking_reference: `BK-GET-${Date.now().toString().slice(-8)}`, // Max 20 chars
+            guest_name: "Get Test",
+            contact_number: "+639123456789",
+            email: "get@example.com",
+            num_guests: 6,
+            check_in: "2025-12-20T06:00:00Z",
+            check_out: "2025-12-25T04:00:00Z",
+            booking_status: "Confirmed",
+            payment_status: "Pending",
+          },
+          p_units: testUnitIds.slice(17, 20).map((unitId) => ({
+            // Use units 17-19 (the last 3 units, not used by other tests)
+            unit_id: unitId,
+            unit_price: 12500,
+            weekend_surcharge: 0,
+            extra_person_charge: 0,
+            subtotal: 12500,
+            assigned_guests: 2,
+          })),
+          p_guest_id: testGuestId ?? undefined,
+        }
+      );
+
+      if (createError) {
+        console.error("Booking creation error:", createError);
+        throw new Error(`Failed to create test booking: ${createError.message}`);
+      }
 
       const startTime = performance.now();
       const { data, error } = await supabase.rpc("get_booking_units", {
@@ -354,15 +374,15 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
       const promises = Array.from({ length: concurrentBookings }, (_, i) =>
         supabase.rpc("create_multi_unit_booking", {
           p_booking_data: {
-            booking_reference: `BK-CONCURRENT-${i}-${Date.now()}`,
+            booking_reference: `BK-C${i}-${Date.now().toString().slice(-9)}`, // Max 20 chars
             guest_name: `Concurrent Guest ${i}`,
             contact_number: "+639123456789",
             email: `concurrent${i}@example.com`,
             num_guests: 2,
-            check_in: "2025-12-20T06:00:00Z",
-            check_out: "2025-12-25T04:00:00Z",
+            check_in: "2026-01-20T06:00:00Z", // Use different dates to avoid conflicts
+            check_out: "2026-01-25T04:00:00Z",
             booking_status: "Confirmed",
-            payment_status: "Unpaid",
+            payment_status: "Pending",
           },
           p_units: [
             {
@@ -374,7 +394,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
               assigned_guests: 2,
             },
           ],
-          p_guest_id: testGuestId,
+          p_guest_id: testGuestId ?? undefined,
         })
       );
 

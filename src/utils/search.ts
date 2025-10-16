@@ -58,7 +58,7 @@ export function filterBookings(bookings: Booking[], filters: BookingFilters): Bo
 
   // Unit filter
   if (filters.unitId) {
-    filtered = filtered.filter((b) => b.unit_id === filters.unitId);
+    filtered = filtered.filter((b) => b.booking_units?.[0]?.unit_id === filters.unitId);
   }
 
   // Payment status filter

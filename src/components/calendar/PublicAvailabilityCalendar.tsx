@@ -260,7 +260,7 @@ export function PublicAvailabilityCalendar() {
       </div>
 
       {/* Calendar Grid */}
-      <div className="p-6" role="grid" aria-label="Availability calendar">
+      <div className="p-6">
         <CalendarGrid
           availability={data.availability}
           currentMonth={currentMonth}

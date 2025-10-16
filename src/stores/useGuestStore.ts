@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, db, handleSupabaseError } from "@/lib/supabase";
-import type { Guest, Unit, Booking } from "@/types";
+import type { Guest, Booking } from "@/types";
 
 // ============================================
 // ZUSTAND STORE
@@ -195,14 +195,17 @@ export const useGuestBookings = (guestId: string | undefined) => {
         .select(
           `
           *,
-          unit:units(*)
+          booking_units(
+            *,
+            unit:units(*)
+          )
         `
         )
         .eq("guest_id", guestId)
         .order("created_at", { ascending: false });
 
       if (error) throw new Error(handleSupabaseError(error));
-      return data as Array<Booking & { unit: Unit }>;
+      return data as Booking[];
     },
     enabled: !!guestId,
     staleTime: 30000,

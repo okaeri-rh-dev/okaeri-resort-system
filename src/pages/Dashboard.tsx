@@ -81,7 +81,8 @@ export function Dashboard() {
                       <div>
                         <p className="font-medium">{booking.guest_name}</p>
                         <p className="text-muted-foreground text-sm">
-                          {booking.unit?.unit_name} • {booking.num_guests} guests
+                          {booking.booking_units?.[0]?.unit?.unit_name || "N/A"} •{" "}
+                          {booking.num_guests} guests
                         </p>
                       </div>
                       <div className="text-right">
@@ -106,7 +107,8 @@ export function Dashboard() {
                       <div>
                         <p className="font-medium">{booking.guest_name}</p>
                         <p className="text-muted-foreground text-sm">
-                          {booking.unit?.unit_name} • {booking.num_guests} guests
+                          {booking.booking_units?.[0]?.unit?.unit_name || "N/A"} •{" "}
+                          {booking.num_guests} guests
                         </p>
                       </div>
                       <div className="text-right">
@@ -148,7 +150,9 @@ export function Dashboard() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium">{booking.unit?.unit_name}</p>
+                      <p className="text-sm font-medium">
+                        {booking.booking_units?.[0]?.unit?.unit_name || "N/A"}
+                      </p>
                       <span
                         className={`rounded-full px-2 py-1 text-xs ${
                           booking.booking_status === "Confirmed"

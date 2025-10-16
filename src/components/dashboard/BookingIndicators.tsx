@@ -42,7 +42,9 @@ export const BookingIndicators = React.memo(function BookingIndicators({
             getBookingStatusColor(booking.booking_status ?? "Pending")
           )}
         >
-          {booking.unit?.unit_code || booking.unit?.unit_name?.slice(0, 3) || "—"}
+          {booking.booking_units?.[0]?.unit?.unit_code ||
+            booking.booking_units?.[0]?.unit?.unit_name?.slice(0, 3) ||
+            "—"}
         </div>
       ))}
       {remainingCount > 0 && (

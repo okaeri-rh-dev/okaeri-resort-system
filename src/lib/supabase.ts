@@ -64,25 +64,49 @@ export const db = {
   },
 
   bookings: {
+    // Fetch all bookings with units via junction table
     all: () =>
       supabase.from("bookings").select(`
       *,
-      unit:units(*),
+      booking_units(
+        *,
+        unit:units(*)
+      ),
       guest:guests(*)
     `),
+
+    // Fetch single booking with units via junction table
     byId: (id: string) =>
       supabase
         .from("bookings")
         .select(
           `
       *,
-      unit:units(*),
+      booking_units(
+        *,
+        unit:units(*)
+      ),
       guest:guests(*)
     `
         )
         .eq("booking_id", id)
         .single(),
-    byUnit: (unitId: string) => supabase.from("bookings").select("*").eq("unit_id", unitId),
+
+    // Fetch bookings by unit (via junction table)
+    byUnit: (unitId: string) =>
+      supabase
+        .from("booking_units")
+        .select(
+          `
+      *,
+      booking:bookings(
+        *,
+        guest:guests(*)
+      )
+    `
+        )
+        .eq("unit_id", unitId),
+
     byGuest: (guestId: string) => supabase.from("bookings").select("*").eq("guest_id", guestId),
     create: async (
       data: Omit<Database["public"]["Tables"]["bookings"]["Insert"], "booking_reference">
@@ -102,9 +126,11 @@ export const db = {
       supabase.from("bookings").update(data).eq("booking_id", id).select().single(),
     cancel: (id: string) =>
       supabase.from("bookings").update({ booking_status: "Cancelled" }).eq("booking_id", id),
+
+    // Check availability via junction table (legacy method - use checkAvailabilityFast for better performance)
     checkAvailability: (unitId: string, checkIn: string, checkOut: string) =>
       supabase
-        .from("bookings")
+        .from("booking_unit_availability")
         .select("booking_id")
         .eq("unit_id", unitId)
         .not("booking_status", "eq", "Cancelled")
