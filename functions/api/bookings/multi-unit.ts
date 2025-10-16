@@ -322,7 +322,7 @@ async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
       special_requests: data.special_requests,
       internal_notes: data.internal_notes,
       booking_status: "Pending",
-      payment_status: "Unpaid",
+      payment_status: "Pending",
     },
     p_units: unitsWithPricing,
     p_guest_id: data.primary_guest.guest_id || null,

@@ -34,7 +34,18 @@ export const useMultiUnitBookings = (filters?: any) => {
   return useQuery({
     queryKey: ["multi-unit-bookings", filters],
     queryFn: async () => {
-      const response = await fetch("/api/bookings/multi-unit");
+      // Get current session token for authentication
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const response = await fetch("/api/bookings/multi-unit", {
+        headers: {
+          ...(session?.access_token && {
+            Authorization: `Bearer ${session.access_token}`,
+          }),
+        },
+      });
       if (!response.ok) throw new Error("Failed to fetch bookings");
 
       const data = (await response.json()) as MultiUnitBookingsApiResponse;
@@ -145,11 +156,19 @@ export const useCreateMultiUnitBooking = () => {
 
       const idempotencyKey = crypto.randomUUID();
 
+      // Get current session token for authentication
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch("/api/bookings/multi-unit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Idempotency-Key": idempotencyKey,
+          ...(session?.access_token && {
+            Authorization: `Bearer ${session.access_token}`,
+          }),
         },
         body: JSON.stringify(bookingData),
       });
@@ -200,9 +219,19 @@ export const useAddUnitToBooking = (bookingId: string) => {
 
   return useMutation({
     mutationFn: async (unitData: Partial<BookingUnit>) => {
+      // Get current session token for authentication
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch(`/api/bookings/${bookingId}/units/add`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token && {
+            Authorization: `Bearer ${session.access_token}`,
+          }),
+        },
         body: JSON.stringify(unitData),
       });
 
@@ -252,9 +281,19 @@ export const useRemoveUnitFromBooking = (bookingId: string) => {
 
   return useMutation({
     mutationFn: async (unitId: string) => {
+      // Get current session token for authentication
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch(`/api/bookings/${bookingId}/units/remove`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token && {
+            Authorization: `Bearer ${session.access_token}`,
+          }),
+        },
         body: JSON.stringify({ unit_id: unitId }),
       });
 
@@ -304,9 +343,19 @@ export const useUpdateMultiUnitBooking = (bookingId: string) => {
 
   return useMutation({
     mutationFn: async (updates: Partial<MultiUnitBooking>) => {
+      // Get current session token for authentication
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch(`/api/bookings/multi-unit/${bookingId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token && {
+            Authorization: `Bearer ${session.access_token}`,
+          }),
+        },
         body: JSON.stringify(updates),
       });
 
@@ -347,8 +396,18 @@ export const useDeleteMultiUnitBooking = () => {
 
   return useMutation({
     mutationFn: async (bookingId: string) => {
+      // Get current session token for authentication
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch(`/api/bookings/multi-unit/${bookingId}`, {
         method: "DELETE",
+        headers: {
+          ...(session?.access_token && {
+            Authorization: `Bearer ${session.access_token}`,
+          }),
+        },
       });
 
       if (!response.ok) throw new Error("Failed to delete booking");
@@ -384,9 +443,19 @@ export const useRecordMultiUnitPayment = (bookingId: string) => {
       proof_url?: string;
       notes?: string;
     }) => {
+      // Get current session token for authentication
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch(`/api/bookings/${bookingId}/payments/record`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token && {
+            Authorization: `Bearer ${session.access_token}`,
+          }),
+        },
         body: JSON.stringify(paymentData),
       });
 
@@ -410,9 +479,19 @@ export const useRefundMultiUnitPayment = (bookingId: string) => {
 
   return useMutation({
     mutationFn: async (refundData: { amount: number; reason: string; notes?: string }) => {
+      // Get current session token for authentication
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch(`/api/bookings/${bookingId}/payments/refund`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token && {
+            Authorization: `Bearer ${session.access_token}`,
+          }),
+        },
         body: JSON.stringify(refundData),
       });
 
