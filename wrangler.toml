@@ -2,6 +2,12 @@ name = "okaeri-resort-system"
 compatibility_date = "2025-09-29"
 pages_build_output_dir = "dist"
 
+# KV Namespaces (available in all environments including local dev)
+# For local development, Miniflare creates an in-memory KV store
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "local-rate-limit-kv"
+
 # Development environment configuration
 [dev]
 port = 8788
