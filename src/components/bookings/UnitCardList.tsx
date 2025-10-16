@@ -2,11 +2,11 @@
  * UnitCardList Component
  *
  * Displays selected units with editing capabilities:
- * - Guest count adjustment per unit
- * - Guest assignment to units
+ * - Guest count adjustment per unit (primary feature)
  * - Unit removal
  * - Pricing breakdown (collapsible)
  * - Empty state handling
+ * - Optional guest assignment button (hidden by default)
  *
  * @module UnitCardList
  */

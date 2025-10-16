@@ -98,10 +98,6 @@ vi.mock("../MultiUnitPricingSummary", () => ({
   MultiUnitPricingSummary: () => <div data-testid="pricing-summary">PricingSummary</div>,
 }));
 
-vi.mock("../GuestAssignment", () => ({
-  GuestAssignment: () => <div data-testid="guest-assignment">GuestAssignment</div>,
-}));
-
 // Mock units data
 const mockUnits: Unit[] = [
   {
@@ -358,69 +354,7 @@ describe("MultiUnitBookingForm", () => {
     });
   });
 
-  describe("Step 3: Guest Assignment (Optional)", () => {
-    it("renders guest assignment step and allows skipping", async () => {
-      const { user } = renderWithProviders(<MultiUnitBookingForm />);
-
-      // Step 1: Fill dates
-      const checkInInput = screen.getByLabelText(/check-in date/i);
-      const checkOutInput = screen.getByLabelText(/check-out date/i);
-      await user.type(checkInInput, "2025-12-01T14:00");
-      await user.type(checkOutInput, "2025-12-03T11:00");
-
-      // Add unit
-      const store = useMultiUnitBookingStore.getState();
-      store.addUnit({
-        unit_id: "unit-1",
-        unit_name: "Test Unit",
-        unit_code: "TU-1",
-        unit_type: "Standard",
-        base_occupancy: 2,
-        max_occupancy: 4,
-        base_rate: 2000,
-        weekend_rate: 2500,
-        extra_person_rate: 500,
-        pricing: {
-          nights: 2,
-          base_total: 4000,
-          weekend_surcharge: 0,
-          extra_person_fee: 0,
-          unit_total: 4000,
-        },
-        availability: { is_available: true, checking: false },
-      });
-
-      // Go to step 2
-      let nextButton = screen.getByRole("button", { name: /next/i });
-      await user.click(nextButton);
-
-      // Step 2: Fill guest info
-      await waitFor(() => {
-        expect(screen.getByLabelText(/primary guest name/i)).toBeInTheDocument();
-      });
-
-      const guestNameInput = screen.getByLabelText(/primary guest name/i);
-      const emailInput = screen.getByLabelText(/email/i);
-      const phoneInput = screen.getByLabelText(/contact number/i);
-
-      await user.type(guestNameInput, "John Doe");
-      await user.type(emailInput, "john@example.com");
-      await user.type(phoneInput, "+639123456789");
-
-      // Go to step 3
-      nextButton = screen.getByRole("button", { name: /next/i });
-      await user.click(nextButton);
-
-      // Step 3 should be optional - can skip directly to step 4
-      await waitFor(() => {
-        // Look for step 3 indicators or step 4 content
-        const nextBtn = screen.queryByRole("button", { name: /next/i });
-        expect(nextBtn || screen.queryByRole("button", { name: /confirm/i })).toBeTruthy();
-      });
-    });
-  });
-
-  describe("Step 4: Review and Payment", () => {
+  describe("Step 3: Review and Payment", () => {
     it("displays booking summary", async () => {
       const { user } = renderWithProviders(<MultiUnitBookingForm />);
 
@@ -473,15 +407,7 @@ describe("MultiUnitBookingForm", () => {
       nextButton = screen.getByRole("button", { name: /next/i });
       await user.click(nextButton);
 
-      // Step 3: Skip guest assignment
-      await waitFor(() => {
-        const nextBtn = screen.queryByRole("button", { name: /next/i });
-        if (nextBtn) {
-          user.click(nextBtn);
-        }
-      });
-
-      // Step 4: Should display summary
+      // Step 3: Should display summary and confirm button
       await waitFor(
         () => {
           const summaryElement =
@@ -673,7 +599,7 @@ describe("MultiUnitBookingForm", () => {
       expect(screen.getByText("Multi-Unit Booking")).toBeInTheDocument();
 
       // Note: To fully test this, we'd need to:
-      // 1. Navigate to step 4
+      // 1. Navigate to step 3
       // 2. Mock isPending: true
       // 3. Verify submit button is disabled
       // For now, verify the component structure exists
@@ -689,7 +615,7 @@ describe("MultiUnitBookingForm", () => {
       expect(screen.getByText("Multi-Unit Booking")).toBeInTheDocument();
 
       // Note: Full test would require:
-      // 1. Completing all 4 steps
+      // 1. Completing all 3 steps
       // 2. Submitting the form
       // 3. Waiting for mutation success
       // 4. Verifying onSuccess called with booking ID

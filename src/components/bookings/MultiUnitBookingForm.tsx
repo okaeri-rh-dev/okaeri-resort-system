@@ -1,11 +1,10 @@
 /**
  * MultiUnitBookingForm Component
  *
- * 4-step wizard for creating multi-unit bookings:
+ * 3-step wizard for creating multi-unit bookings:
  * 1. Date and Unit Selection
  * 2. Primary Guest Information
- * 3. Guest Assignment (optional)
- * 4. Review and Payment
+ * 3. Review and Payment
  *
  * Features:
  * - Real-time availability checking
@@ -13,20 +12,14 @@
  * - Idempotency key generation
  * - Form validation with Zod
  * - Responsive design
+ * - Guest count management in Step 1
  *
  * @module MultiUnitBookingForm
  */
 
-import { useState, useMemo } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Check, CalendarDays } from "lucide-react";
-import { format } from "date-fns";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -37,7 +30,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -45,25 +38,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
-import { MultiUnitSelector } from "./MultiUnitSelector";
-import { UnitCardList } from "./UnitCardList";
-import { MultiUnitPricingSummary } from "./MultiUnitPricingSummary";
-import { GuestAssignment } from "./GuestAssignment";
-import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
+import { Textarea } from "@/components/ui/textarea";
+import { useAvailabilityRealtime } from "@/hooks/useAvailabilityRealtime";
+import { useIdempotencyKey } from "@/hooks/useIdempotencyKey";
 import {
   useCreateMultiUnitBooking,
   useMultiUnitAvailability,
 } from "@/hooks/useMultiUnitBookingQueries";
-import { useIdempotencyKey } from "@/hooks/useIdempotencyKey";
-import { useAvailabilityRealtime } from "@/hooks/useAvailabilityRealtime";
-import { useUnits } from "@/stores/useUnitStore";
+import { cn } from "@/lib/utils";
 import {
   multiUnitBookingSchema,
   type MultiUnitBookingFormData,
 } from "@/lib/validation/multi-unit-booking";
+import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
+import { useUnits } from "@/stores/useUnitStore";
 import type { Unit } from "@/types";
-import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "@tanstack/react-router";
+import { format } from "date-fns";
+import { CalendarDays, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { MultiUnitPricingSummary } from "./MultiUnitPricingSummary";
+import { MultiUnitSelector } from "./MultiUnitSelector";
+import { UnitCardList } from "./UnitCardList";
 
 // ============================================
 // TYPES
@@ -74,7 +73,7 @@ interface MultiUnitBookingFormProps {
   onCancel?: () => void;
 }
 
-type FormStep = 1 | 2 | 3 | 4;
+type FormStep = 1 | 2 | 3;
 
 // ============================================
 // MAIN COMPONENT
@@ -83,8 +82,6 @@ type FormStep = 1 | 2 | 3 | 4;
 export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFormProps) {
   const navigate = useNavigate();
   const [step, setStep] = useState<FormStep>(1);
-  const [guestAssignmentOpen, setGuestAssignmentOpen] = useState(false);
-  const [selectedUnitForAssignment, setSelectedUnitForAssignment] = useState<string | null>(null);
 
   // Zustand Store
   const {
@@ -210,14 +207,15 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
       },
     };
 
-    addUnit(bookingUnit);
-    recalculateTotalPricing();
+    // Pass dates from form to ensure pricing is calculated immediately
+    addUnit(bookingUnit, checkIn, checkOut);
+    recalculateTotalPricing(checkIn, checkOut);
     toast.success(`${unit.unit_name} added to booking`);
   };
 
   const handleRemoveUnit = (unitId: string) => {
     removeUnit(unitId);
-    recalculateTotalPricing();
+    recalculateTotalPricing(checkIn, checkOut);
     toast.info("Unit removed from booking");
   };
 
@@ -237,14 +235,11 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
         isValid = await form.trigger(["guest_name", "email", "contact_number"]);
         break;
       case 3:
-        isValid = true; // Guest assignment is optional
-        break;
-      case 4:
         isValid = await form.trigger();
         break;
     }
 
-    if (isValid && step < 4) {
+    if (isValid && step < 3) {
       setStep((s) => (s + 1) as FormStep);
     }
   };
@@ -330,7 +325,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
 
           {/* Progress Indicator */}
           <div className="flex items-center gap-2 mt-4">
-            {[1, 2, 3, 4].map((s) => (
+            {[1, 2, 3].map((s) => (
               <div key={s} className="flex items-center gap-2">
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
@@ -343,7 +338,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                 >
                   {step > s ? <Check className="h-4 w-4" /> : s}
                 </div>
-                {s < 4 && <div className="h-0.5 w-12 bg-muted" />}
+                {s < 3 && <div className="h-0.5 w-12 bg-muted" />}
               </div>
             ))}
           </div>
@@ -351,8 +346,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
           <div className="text-sm text-muted-foreground mt-2">
             {step === 1 && "Select dates and units"}
             {step === 2 && "Enter primary guest information"}
-            {step === 3 && "Assign guests to units (optional)"}
-            {step === 4 && "Review and complete payment"}
+            {step === 3 && "Review and complete payment"}
           </div>
         </CardHeader>
 
@@ -519,7 +513,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                         onRemoveUnit={handleRemoveUnit}
                         onViewDetails={(unitId) => console.log("View details:", unitId)}
                         isLoading={isLoadingUnits}
-                        maxUnits={10}
+                        maxUnits={3}
                         enableFilters={false}
                       />
 
@@ -532,11 +526,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                             onRemove={handleRemoveUnit}
                             onUpdateGuestCount={(unitId: string, count: number) => {
                               assignGuestsToUnit(unitId, [], count);
-                              recalculateTotalPricing();
-                            }}
-                            onAssignGuests={(unitId: string) => {
-                              setSelectedUnitForAssignment(unitId);
-                              setGuestAssignmentOpen(true);
+                              recalculateTotalPricing(checkIn, checkOut);
                             }}
                           />
                           <MultiUnitPricingSummary units={selectedUnits} />
@@ -597,33 +587,8 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                 </div>
               )}
 
-              {/* Step 3: Guest Assignment */}
+              {/* Step 3: Review and Payment */}
               {step === 3 && (
-                <div className="space-y-4">
-                  <div className="text-center py-6">
-                    <h3 className="text-lg font-semibold mb-2">Guest Assignment</h3>
-                    <p className="text-sm text-muted-foreground mb-6">
-                      Optionally assign specific guests to each unit
-                    </p>
-
-                    <UnitCardList
-                      units={selectedUnits}
-                      onRemove={handleRemoveUnit}
-                      onUpdateGuestCount={(unitId: string, count: number) => {
-                        assignGuestsToUnit(unitId, [], count);
-                        recalculateTotalPricing();
-                      }}
-                      onAssignGuests={(unitId: string) => {
-                        setSelectedUnitForAssignment(unitId);
-                        setGuestAssignmentOpen(true);
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Step 4: Review and Payment */}
-              {step === 4 && (
                 <div className="space-y-6">
                   {/* Booking Summary */}
                   <div className="border rounded-lg p-4 space-y-4">
@@ -701,13 +666,13 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                 </div>
 
                 <div className="flex gap-2">
-                  {step < 4 && (
+                  {step < 3 && (
                     <Button type="button" onClick={handleNext}>
                       Next
                       <ChevronRight className="ml-2 h-4 w-4" />
                     </Button>
                   )}
-                  {step === 4 && (
+                  {step === 3 && (
                     <Button type="submit" disabled={createBooking.isPending}>
                       {createBooking.isPending ? "Creating..." : "Confirm Booking"}
                     </Button>
@@ -716,18 +681,6 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
               </div>
             </form>
           </Form>
-
-          {/* Guest Assignment Modal */}
-          <GuestAssignment
-            unit={selectedUnits.find((u) => u.unit_id === selectedUnitForAssignment)!}
-            open={guestAssignmentOpen}
-            onOpenChange={setGuestAssignmentOpen}
-            onSave={(unitId, numGuests) => {
-              assignGuestsToUnit(unitId, [], numGuests);
-              setGuestAssignmentOpen(false);
-              toast.success("Guest assignment saved");
-            }}
-          />
         </CardContent>
       </Card>
     </div>

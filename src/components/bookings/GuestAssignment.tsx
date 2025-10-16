@@ -1,13 +1,26 @@
 /**
  * GuestAssignment Component
  *
- * Modal/Dialog for assigning guests to specific units:
+ * ⚠️ **ARCHIVED**: This component is not currently used in the multi-unit booking flow.
+ *
+ * The multi-unit booking has been simplified to a 3-step wizard (Date Selection,
+ * Guest Info, Review & Payment). Guest count is managed directly in Step 1 via
+ * UnitCardList component.
+ *
+ * This component is preserved for potential future use if detailed guest-to-unit
+ * assignment becomes necessary (e.g., corporate bookings, group reservations with
+ * specific room assignments).
+ *
+ * Original functionality:
  * - Guest count validation (within unit capacity)
  * - Optional special requests per unit
  * - Save/Cancel actions
  * - Mobile-responsive design
  *
  * @module GuestAssignment
+ * @status ARCHIVED
+ * @since Phase 2B
+ * @deprecated Use guest count controls in UnitCardList instead
  */
 
 import { useState, useEffect } from "react";

@@ -12,11 +12,10 @@
  * @module MultiUnitSelector
  */
 
-import { useState, useMemo } from "react";
-import { Grid3x3, List, Filter } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -25,11 +24,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { formatCurrency } from "@/lib/validations";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/validations";
 import type { Unit } from "@/types";
 import type { BookingUnit } from "@/types/multi-unit-booking";
+import { Filter, Grid3x3, List } from "lucide-react";
+import { useMemo, useState } from "react";
 
 // ============================================
 // TYPES
@@ -49,7 +49,7 @@ export interface MultiUnitSelectorProps {
   // Callbacks
   onAddUnit: (unit: Unit) => void;
   onRemoveUnit: (unitId: string) => void;
-  onViewDetails: (unitId: string) => void;
+  onViewDetails?: (unitId: string) => void;
 
   // Configuration
   maxUnits?: number; // Default: 10
@@ -78,7 +78,6 @@ export function MultiUnitSelector({
   checkOut,
   onAddUnit,
   onRemoveUnit,
-  onViewDetails,
   maxUnits = 10,
   enableFilters = true,
   viewMode: initialViewMode = "grid",
@@ -118,9 +117,10 @@ export function MultiUnitSelector({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h2 className="text-2xl font-semibold tracking-tight">Select Units</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">Select Cabins</h2>
           <p className="text-sm text-muted-foreground">
-            {selectedUnits.length} of {maxUnits} units selected
+            {selectedUnits.length} of {maxUnits} {selectedUnits.length === 1 ? "cabin" : "cabins"}{" "}
+            selected
           </p>
         </div>
 
@@ -224,9 +224,9 @@ export function MultiUnitSelector({
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i}>
               <CardContent className="p-4">
-                <Skeleton className="h-48 w-full mb-4" />
                 <Skeleton className="h-6 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-4 w-1/2 mb-2" />
+                <Skeleton className="h-4 w-2/3" />
               </CardContent>
             </Card>
           ))}
@@ -253,7 +253,6 @@ export function MultiUnitSelector({
               checkOut={checkOut}
               onAdd={() => onAddUnit(unit)}
               onRemove={() => onRemoveUnit(unit.unit_id)}
-              onViewDetails={() => onViewDetails(unit.unit_id)}
             />
           ))}
         </div>
@@ -286,7 +285,6 @@ interface UnitCardProps {
   checkOut: Date | string;
   onAdd: () => void;
   onRemove: () => void;
-  onViewDetails: () => void;
 }
 
 function UnitCard({
@@ -297,7 +295,6 @@ function UnitCard({
   checkOut,
   onAdd,
   onRemove,
-  onViewDetails,
 }: UnitCardProps) {
   const isAvailable = unit.unit_status === "Available";
 
@@ -309,26 +306,21 @@ function UnitCard({
         !isAvailable && "opacity-60"
       )}
       role="article"
-      aria-label={`${unit.unit_name}, ${unit.unit_type}, ${formatCurrency(unit.base_rate)} per night${isSelected ? ", selected" : ""}`}
+      aria-label={`${unit.unit_name}, ${formatCurrency(unit.base_rate)} per night, max ${unit.max_occupancy} guests${isSelected ? ", selected" : ""}`}
       aria-selected={isSelected}
     >
       <CardContent className="p-4">
-        {/* Unit Image Placeholder */}
-        <div className="relative h-48 bg-muted rounded-md mb-4 flex items-center justify-center">
-          <span className="text-muted-foreground text-sm">{unit.unit_type}</span>
-          {isSelected && (
-            <Badge className="absolute top-2 right-2" aria-label="Unit selected">
-              Selected
-            </Badge>
-          )}
-        </div>
-
         {/* Unit Info */}
         <div className="space-y-2">
-          <h3 className="font-semibold text-lg">{unit.unit_name}</h3>
-          <p className="text-sm text-muted-foreground">
-            {unit.unit_type} • Max {unit.max_occupancy} guests
-          </p>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-lg">{unit.unit_name}</h3>
+            {isSelected && (
+              <Badge variant="secondary" aria-label="Cabin selected">
+                Selected
+              </Badge>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">Max {unit.max_occupancy} guests</p>
           <p className="text-lg font-semibold text-primary">
             {formatCurrency(unit.base_rate)}/night
           </p>
@@ -348,23 +340,13 @@ function UnitCard({
         </div>
       </CardContent>
 
-      <CardFooter className="flex gap-2 p-4 pt-0">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onViewDetails}
-          className="flex-1 h-11"
-          aria-label={`View details for ${unit.unit_name}`}
-        >
-          Details
-        </Button>
-
+      <CardFooter className="p-4 pt-0">
         {isSelected ? (
           <Button
             variant="destructive"
             size="sm"
             onClick={onRemove}
-            className="flex-1 h-11"
+            className="w-full h-11"
             aria-label={`Remove ${unit.unit_name} from booking`}
           >
             Remove
@@ -375,7 +357,7 @@ function UnitCard({
             size="sm"
             onClick={onAdd}
             disabled={!canSelect || !isAvailable}
-            className="flex-1 h-11"
+            className="w-full h-11"
             aria-label={`Add ${unit.unit_name} to booking`}
             aria-disabled={!canSelect || !isAvailable}
           >
