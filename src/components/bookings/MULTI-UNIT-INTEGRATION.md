@@ -146,10 +146,9 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: Props) {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          {/* Step 1: Date Selection + Multi-Unit Selector */}
+          {/* Step 1: Date Selection + Multi-Unit Selector (with guest count) */}
           {/* Step 2: Guest Information (primary contact) */}
-          {/* Step 3: Guest Assignment (per unit) */}
-          {/* Step 4: Payment & Review */}
+          {/* Step 3: Payment & Review */}
         </Form>
       </CardContent>
     </Card>
@@ -169,9 +168,9 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: Props) {
 ### Step 2: Component Replacement
 
 - [ ] Replace `<Select>` with `<MultiUnitSelector>` in UnitSelection step
-- [ ] Add `<UnitCardList>` to show selected units
+- [ ] Add `<UnitCardList>` to show selected units (includes guest count controls)
 - [ ] Add `<MultiUnitPricingSummary>` to show pricing breakdown
-- [ ] Add `<GuestAssignment>` modal with state management
+- [ ] ~~Add `<GuestAssignment>` modal with state management~~ (ARCHIVED - guest count handled in UnitCardList)
 
 ### Step 3: Form Schema Updates
 
@@ -291,12 +290,9 @@ test("complete multi-unit booking flow", async ({ page }) => {
   await page.fill("#guest_name", "John Doe");
   await page.fill("#email", "john@example.com");
 
-  // Step 3: Payment
+  // Step 3: Review, Payment & Submit
   await page.click('button:has-text("Next")');
   await page.selectOption("#payment_method", "GCash");
-
-  // Step 4: Review & Submit
-  await page.click('button:has-text("Next")');
   expect(await page.textContent(".total-amount")).toBe("₱8,000.00");
 
   await page.click('button:has-text("Confirm Booking")');

@@ -212,13 +212,32 @@ function BookingReview() {
 
 ---
 
-## 4. GuestAssignment
+## 4. GuestAssignment ⚠️ **ARCHIVED**
 
 **File**: `src/components/bookings/GuestAssignment.tsx`
 
-**Purpose**: Modal for assigning guests to specific units.
+**Status**: Component archived as of Phase 2B. Guest count is now managed directly in `UnitCardList`.
 
-### Props
+**Previous Purpose**: Modal for assigning guests to specific units.
+
+### Why Archived?
+
+The multi-unit booking flow was simplified from 4 steps to 3 steps:
+
+- **Old Flow**: Date Selection → Guest Info → Guest Assignment (Modal) → Review & Payment
+- **New Flow**: Date Selection (with guest count) → Guest Info → Review & Payment
+
+Guest count is now adjusted inline in Step 1 via the `UnitCardList` component's number input, eliminating the need for a separate modal step.
+
+### Future Use Cases
+
+This component is preserved for potential future features:
+
+- Corporate bookings requiring detailed guest-to-unit mapping
+- Group reservations with specific room assignments
+- Named guest tracking (linking to guest database)
+
+### Props (Archived)
 
 ```typescript
 interface GuestAssignmentProps {
@@ -229,44 +248,23 @@ interface GuestAssignmentProps {
 }
 ```
 
-### Features
+### Alternative: Use UnitCardList
 
-- **Guest Count Input**: Number input with validation
-- **Special Requests**: Optional textarea (500 char limit)
-- **Validation**: Min/max guest validation
-- **Error Handling**: Inline error messages
-- **Character Counter**: Shows remaining characters
-
-### Usage Example
+For guest count management, use `UnitCardList` directly:
 
 ```typescript
-import { GuestAssignment } from "@/components/bookings/GuestAssignment";
-import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
+import { UnitCardList } from "@/components/bookings/UnitCardList";
 
-function BookingForm() {
+function BookingStep1() {
   const { selectedUnits, assignGuestsToUnit } = useMultiUnitBookingStore();
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedUnit, setSelectedUnit] = useState<BookingUnit | null>(null);
 
   return (
-    <>
-      <Button onClick={() => {
-        setSelectedUnit(selectedUnits[0]);
-        setModalOpen(true);
-      }}>
-        Assign Guests to Unit 1
-      </Button>
-
-      <GuestAssignment
-        unit={selectedUnit}
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        onSave={(unitId, numGuests, requests) => {
-          assignGuestsToUnit(unitId, [], numGuests);
-          // Handle special requests if needed
-        }}
-      />
-    </>
+    <UnitCardList
+      units={selectedUnits}
+      onUpdateGuestCount={(unitId, count) => {
+        assignGuestsToUnit(unitId, [], count); // Empty array for guest_ids
+      }}
+    />
   );
 }
 ```
@@ -364,7 +362,7 @@ All components have comprehensive test coverage:
 - `__tests__/MultiUnitSelector.test.tsx` (45 tests)
 - `__tests__/UnitCardList.test.tsx` (25 tests)
 - `__tests__/MultiUnitPricingSummary.test.tsx` (20 tests)
-- `__tests__/GuestAssignment.test.tsx` (18 tests)
+- `__tests__/GuestAssignment.test.tsx` (18 tests) ⚠️ _Component archived_
 
 ### Running Tests
 
