@@ -36,10 +36,13 @@ describe("Multi-Unit Booking Database Functions", () => {
       return;
     }
 
-    // Create test units using helper
+    // Create test units using helper with unique codes to avoid constraint violations
+    // Both unit_name and unit_code have unique constraints, so make them unique
+    // unit_code is VARCHAR(10), so use last 5 digits of timestamp
+    const shortId = Date.now().toString().slice(-5);
     const unit1 = await createTestUnit({
-      unit_name: "Test Unit 1",
-      unit_code: "TEST-1",
+      unit_name: `Test Unit 1 ${shortId}`,
+      unit_code: `T1-${shortId}`,
       unit_type: "Standard", // Valid types: Standard, Deluxe, Suite, Villa
       base_rate: 2500,
       weekend_rate: 3000,
@@ -47,8 +50,8 @@ describe("Multi-Unit Booking Database Functions", () => {
     });
 
     const unit2 = await createTestUnit({
-      unit_name: "Test Unit 2",
-      unit_code: "TEST-2",
+      unit_name: `Test Unit 2 ${shortId}`,
+      unit_code: `T2-${shortId}`,
       unit_type: "Deluxe", // Valid types: Standard, Deluxe, Suite, Villa
       base_occupancy: 2,
       max_occupancy: 4,
@@ -58,8 +61,8 @@ describe("Multi-Unit Booking Database Functions", () => {
     });
 
     const unit3 = await createTestUnit({
-      unit_name: "Test Unit 3",
-      unit_code: "TEST-3",
+      unit_name: `Test Unit 3 ${shortId}`,
+      unit_code: `T3-${shortId}`,
       unit_type: "Suite", // Valid types: Standard, Deluxe, Suite, Villa
       base_occupancy: 4,
       max_occupancy: 6,
@@ -70,11 +73,11 @@ describe("Multi-Unit Booking Database Functions", () => {
 
     testUnitIds = [unit1.unit_id, unit2.unit_id, unit3.unit_id];
 
-    // Create test guest using helper
+    // Create test guest using helper (let it generate unique email)
     const guest = await createTestGuest({
       guest_name: "Test Guest",
-      email: "test@example.com",
       phone_number: "+639123456789", // Column name is phone_number, not contact_number
+      // email will be auto-generated as unique by createTestGuest helper
     });
 
     testGuestId = guest.guest_id;
@@ -538,13 +541,13 @@ describe("Multi-Unit Booking Database Functions", () => {
         expect.arrayContaining([
           expect.objectContaining({
             unit_id: testUnitIds[0],
-            unit_name: "Test Unit 1",
+            unit_name: expect.stringContaining("Test Unit 1"),
             subtotal: expect.any(Number), // Database returns numeric type, not string
             assigned_guests: 2,
           }),
           expect.objectContaining({
             unit_id: testUnitIds[1],
-            unit_name: "Test Unit 2",
+            unit_name: expect.stringContaining("Test Unit 2"),
             subtotal: expect.any(Number), // Database returns numeric type, not string
             assigned_guests: 2,
           }),

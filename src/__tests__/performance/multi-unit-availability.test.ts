@@ -31,10 +31,13 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
       console.log("⏭️  Skipping performance tests - test database not configured");
       return;
     }
-    // Create 20 test units for comprehensive testing
+    // Create 20 test units for comprehensive testing with unique codes
+    // Both unit_name and unit_code have unique constraints, so make them unique
+    // unit_code is VARCHAR(10), so use last 5 digits of timestamp
+    const shortId = Date.now().toString().slice(-5);
     const units = Array.from({ length: 20 }, (_, i) => ({
-      unit_name: `Perf Test Unit ${i + 1}`,
-      unit_code: `PERF-${i + 1}`,
+      unit_name: `Perf Test Unit ${i + 1} ${shortId}`,
+      unit_code: `PF${shortId}-${i}`,
       unit_type: i % 2 === 0 ? "Standard" : "Deluxe", // Valid types: Standard, Deluxe, Suite, Villa
       base_occupancy: 2,
       max_occupancy: 4,
@@ -48,12 +51,12 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
     if (error) throw new Error(`Setup failed: ${error.message}`);
     testUnitIds = data.map((u) => u.unit_id);
 
-    // Create test guest
+    // Create test guest with unique email to avoid constraint violations
     const { data: guest, error: guestError } = await supabase
       .from("guests")
       .insert({
         guest_name: "Performance Test Guest",
-        email: "perf-test@example.com",
+        email: `perf-test-${shortId}@example.com`,
         phone_number: "+639123456789",
       })
       .select("guest_id")
