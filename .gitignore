@@ -108,6 +108,9 @@ build/
 assets/
 .dev.vars
 
+# Cloudflare Functions (copied to dist/ during build)
+dist/functions/
+
 # Local environment
 *.local
 
