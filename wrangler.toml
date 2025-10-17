@@ -54,16 +54,30 @@ id = "TO_BE_CREATED"  # Create via: npx wrangler kv namespace create "BLOCKED_IP
 ENVIRONMENT = "preview"
 # SUPABASE_URL and SUPABASE_ANON_KEY should be set as secrets for preview too
 
-# Local development environment configuration
-[env.development]
+# =============================================================================
+# LOCAL DEVELOPMENT CONFIGURATION
+# =============================================================================
+# NOTE: The [env.development] section below is COMMENTED OUT because:
+# 1. Cloudflare Pages only supports "preview" and "production" named environments
+# 2. Local development works perfectly without it using:
+#    - Root-level configuration (lines 7-14)
+#    - [dev] section for local server settings
+#    - .dev.vars file for environment variables and secrets
+# 3. Miniflare automatically creates in-memory KV stores for local development
+#
+# If you're deploying to Cloudflare Workers (not Pages), you can uncomment this.
+# For Pages deployments, keep this commented to avoid deployment errors.
+# =============================================================================
 
-# KV Namespace for rate limiting (local development)
-[[env.development.kv_namespaces]]
-binding = "RATE_LIMIT_KV"
-# This will create a local KV namespace for development
-preview_id = "local-rate-limit-kv"
-
-# Local development environment variables
-[env.development.vars]
-ENVIRONMENT = "development"
-# Note: Secrets should be in .dev.vars file
+# [env.development]
+#
+# # KV Namespace for rate limiting (local development)
+# [[env.development.kv_namespaces]]
+# binding = "RATE_LIMIT_KV"
+# # This will create a local KV namespace for development
+# preview_id = "local-rate-limit-kv"
+#
+# # Local development environment variables
+# [env.development.vars]
+# ENVIRONMENT = "development"
+# # Note: Secrets should be in .dev.vars file

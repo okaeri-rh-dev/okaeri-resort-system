@@ -107,8 +107,12 @@ const wranglerToml = fs.readFileSync(path.join(projectRoot, "wrangler.toml"), "u
 if (wranglerToml.includes("[dev]")) {
   console.log("  ✅ Development configuration found");
 }
-if (wranglerToml.includes("[env.development]")) {
-  console.log("  ✅ Development environment configured");
+// Note: [env.development] should be commented out for Cloudflare Pages compatibility
+if (wranglerToml.includes("# [env.development]")) {
+  console.log("  ✅ Development environment commented out (correct for Pages deployment)");
+} else if (wranglerToml.includes("[env.development]")) {
+  console.log("  ⚠️  [env.development] is active - this will break Cloudflare Pages deployment!");
+  console.log("     Cloudflare Pages only supports 'preview' and 'production' environments.");
 }
 if (wranglerToml.includes("RATE_LIMIT_KV")) {
   console.log("  ✅ KV namespace configured");
