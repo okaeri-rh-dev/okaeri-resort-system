@@ -57,7 +57,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { CalendarDays, Check, ChevronLeft, ChevronRight } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { MultiUnitPricingSummary } from "./MultiUnitPricingSummary";
@@ -117,6 +117,16 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
   // Watch form values for real-time availability
   const checkIn = form.watch("check_in");
   const checkOut = form.watch("check_out");
+
+  // Auto-adjust check_out when check_in changes to prevent date inversion
+  useEffect(() => {
+    if (checkIn && checkOut && checkOut <= checkIn) {
+      // Automatically set check_out to the day after check_in
+      const newCheckOut = new Date(checkIn);
+      newCheckOut.setDate(newCheckOut.getDate() + 1);
+      form.setValue("check_out", newCheckOut);
+    }
+  }, [checkIn, checkOut, form]);
 
   // Convert dates to ISO strings for API calls
   const checkInStr = checkIn ? checkIn.toISOString() : "";
