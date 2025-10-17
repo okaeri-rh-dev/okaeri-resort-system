@@ -1,9 +1,9 @@
 -- ============================================================================
 -- Multi-Unit Booking Migration - Post-Migration Verification Script
 -- ============================================================================
--- Version: 2.2
+-- Version: 2.3
 -- Created: 2025-10-17
--- Updated: 2025-10-17 (Fixed: corrected column names to match actual schema)
+-- Updated: 2025-10-17 (Fixed: removed non-existent unit_order column)
 -- Purpose: Validation queries to run AFTER migration completes
 -- Safety: All queries are READ-ONLY (SELECT only)
 -- Usage: Copy/paste into Supabase SQL Editor immediately after migration
@@ -13,7 +13,7 @@ DO $$
 BEGIN
   RAISE NOTICE '============================================';
   RAISE NOTICE 'POST-MIGRATION VERIFICATION SCRIPT';
-  RAISE NOTICE 'Version 2.2 - Actual Schema Column Names';
+  RAISE NOTICE 'Version 2.3 - Fixed Column References';
   RAISE NOTICE '============================================';
   RAISE NOTICE '';
 END $$;
@@ -263,9 +263,8 @@ SELECT
     'unit_id', bu.unit_id,
     'unit_name', u.unit_name,
     'unit_type', u.unit_type,
-    'subtotal', bu.subtotal,
-    'unit_order', bu.unit_order
-  ) ORDER BY bu.unit_order) AS units
+    'subtotal', bu.subtotal
+  ) ORDER BY bu.unit_id) AS units
 FROM bookings b
 JOIN booking_units bu ON bu.booking_id = b.booking_id
 JOIN units u ON u.unit_id = bu.unit_id
