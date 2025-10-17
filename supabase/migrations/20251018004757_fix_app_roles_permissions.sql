@@ -107,7 +107,13 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.guest_assignments TO authen
 
 -- Grant to anon for public availability checks
 GRANT SELECT ON TABLE public.booking_unit_availability TO anon;
-GRANT SELECT ON VIEW public.public_unit_availability TO anon;
+-- Grant SELECT on the view if it exists
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.views WHERE table_name = 'public_unit_availability') THEN
+        EXECUTE 'GRANT SELECT ON public.public_unit_availability TO anon';
+    END IF;
+END $$;
 
 -- ============================================
 -- STEP 4: ENSURE AUDIT TABLES HAVE PERMISSIONS

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCalendarBookings } from "@/hooks/useCalendarBookings";
 import { cn } from "@/lib/utils";
 import type { Booking } from "@/types";
-import { format } from "date-fns";
+import { format, getDay } from "date-fns";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useCallback, useState } from "react";
 import { BookingIndicators } from "./BookingIndicators";
@@ -14,6 +14,14 @@ interface DashboardCalendarProps {
   bookings: Booking[] | undefined;
   isLoading?: boolean;
   className?: string;
+}
+
+// Helper function to determine background color based on booking count
+function getDayBackgroundClass(bookingCount: number): string {
+  if (bookingCount === 0) return "";
+  if (bookingCount <= 2) return "bg-blue-50 hover:bg-blue-100/80";
+  if (bookingCount <= 4) return "bg-blue-100 hover:bg-blue-200/80";
+  return "bg-amber-50 hover:bg-amber-100"; // 5+ bookings (busy day)
 }
 
 // Extracted DayButton component for better performance
@@ -34,6 +42,9 @@ const DayButton = React.memo(function DayButton({
   const dateKey = format(date, "yyyy-MM-dd");
   const dayBookings = bookingsByDate[dateKey] || [];
   const isToday = format(date, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+  const isWeekend = getDay(date) === 0 || getDay(date) === 6; // Sunday = 0, Saturday = 6
+  const bookingCountClass = getDayBackgroundClass(dayBookings.length);
+  const isOutsideMonth = modifiers?.outside;
 
   return (
     <BookingTooltip bookings={dayBookings} date={date}>
@@ -43,10 +54,18 @@ const DayButton = React.memo(function DayButton({
         className={cn(
           "relative h-16 sm:h-20 md:h-24 w-full p-1 font-normal text-sm",
           "min-w-0", // Allow shrinking below content size
-          "hover:bg-accent hover:text-accent-foreground",
-          "transition-colors duration-150",
-          isToday && "bg-blue-50 font-semibold text-blue-900 hover:bg-blue-100",
-          dayBookings.length > 0 && "font-medium"
+          "transition-all duration-150",
+          // Base weekend styling (only if no bookings)
+          isWeekend && dayBookings.length === 0 && !isToday && "bg-slate-50/50",
+          // Booking count-based colors
+          bookingCountClass,
+          // Today special styling (overrides other backgrounds)
+          isToday &&
+            "bg-blue-100 border border-blue-300 font-semibold text-blue-900 hover:bg-blue-200",
+          // Make text bolder when there are bookings
+          dayBookings.length > 0 && "font-medium",
+          // Outside month dates - reduce opacity but not for the button itself
+          isOutsideMonth && "opacity-40 hover:opacity-60"
         )}
         aria-label={`${format(date, "MMMM d, yyyy")}${
           dayBookings.length > 0
@@ -55,7 +74,15 @@ const DayButton = React.memo(function DayButton({
         }`}
       >
         <div className="flex flex-col items-start justify-start h-full p-1">
-          <span className="text-xs sm:text-sm font-medium self-start">{format(date, "d")}</span>
+          <span
+            className={cn(
+              "text-xs sm:text-sm font-medium self-start",
+              isToday && "text-blue-900",
+              dayBookings.length > 4 && "text-amber-700"
+            )}
+          >
+            {format(date, "d")}
+          </span>
           {dayBookings.length > 0 && (
             <BookingIndicators bookings={dayBookings} maxVisible={3} className="mt-1 w-full" />
           )}
@@ -102,15 +129,15 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
 
   return (
     <Card className={cn("w-full", className)}>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 bg-gradient-to-r from-slate-50 to-blue-50/30 rounded-t-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <CardTitle className="text-xl font-semibold flex items-center gap-2">
-              <CalendarDays className="size-5 text-neutral-600" />
-              Booking Calendar
+              <CalendarDays className="size-5 text-blue-600" />
+              <span className="text-slate-800">Booking Calendar</span>
             </CardTitle>
             {monthlyBookingCount > 0 && (
-              <span className="text-sm text-neutral-600 font-medium">
+              <span className="text-sm text-slate-600 font-medium bg-blue-100 px-2 py-0.5 rounded-full">
                 {monthlyBookingCount} booking{monthlyBookingCount !== 1 ? "s" : ""} this month
               </span>
             )}
@@ -136,8 +163,8 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
               >
                 <ChevronLeft className="size-4" />
               </Button>
-              <div className="min-w-[140px] text-center">
-                <span className="text-sm font-semibold text-neutral-900">
+              <div className="min-w-[140px] text-center bg-white px-3 py-1 rounded-md border border-slate-200">
+                <span className="text-sm font-semibold text-slate-800">
                   {format(currentMonth, "MMMM yyyy")}
                 </span>
               </div>
@@ -180,7 +207,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
               month_grid: "w-full border-collapse space-y-1", // renamed from 'table'
               weekdays: "flex w-full", // renamed from 'head_row'
               weekday:
-                "text-neutral-500 rounded-md w-full font-normal text-[11px] uppercase tracking-wider", // renamed from 'head_cell'
+                "text-slate-600 rounded-md w-full font-medium text-[11px] uppercase tracking-wider", // renamed from 'head_cell'
               week: "flex w-full mt-1", // renamed from 'row'
               day: cn(
                 "relative h-16 sm:h-20 md:h-24 flex-1 p-0 text-center text-sm",

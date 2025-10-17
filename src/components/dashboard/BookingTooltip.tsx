@@ -35,7 +35,7 @@ export const BookingTooltip = React.memo(function BookingTooltip({
   return (
     <HoverCard openDelay={150} closeDelay={100}>
       <HoverCardTrigger asChild>{children}</HoverCardTrigger>
-      <HoverCardContent className="w-80 p-3" align="center">
+      <HoverCardContent className="w-80 p-3 isolate z-50 bg-white shadow-lg" align="center">
         <div className="space-y-3">
           {/* Header */}
           <div className="border-b border-neutral-200 pb-2">
@@ -79,10 +79,10 @@ const BookingTooltipItem = React.memo(function BookingTooltipItem({
 }: BookingTooltipItemProps) {
   const statusColors = {
     Confirmed: "bg-blue-50 text-blue-700 border-blue-200",
-    CheckedIn: "bg-green-50 text-green-700 border-green-200",
-    Pending: "bg-gray-50 text-gray-700 border-gray-200",
-    CheckedOut: "bg-gray-50 text-gray-600 border-gray-200",
-    Cancelled: "bg-red-50 text-red-700 border-red-200",
+    CheckedIn: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    Pending: "bg-slate-50 text-slate-700 border-slate-200",
+    CheckedOut: "bg-violet-50 text-violet-600 border-violet-200",
+    Cancelled: "bg-rose-50 text-rose-700 border-rose-200",
   };
 
   return (

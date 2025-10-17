@@ -116,21 +116,21 @@ export function getBookingStatusPriority(status: string): number {
   return priorities[status] ?? 5;
 }
 
-// Helper function to get status color class
+// Helper function to get status color class (professional palette)
 export function getBookingStatusColor(status: string): string {
   switch (status) {
     case "Confirmed":
-      return "bg-blue-100 text-blue-800 border-blue-200";
+      return "bg-blue-100 text-blue-800 border-blue-300";
     case "CheckedIn":
-      return "bg-green-100 text-green-800 border-green-200";
+      return "bg-emerald-100 text-emerald-800 border-emerald-300";
     case "Pending":
-      return "bg-gray-100 text-gray-700 border-gray-200";
+      return "bg-slate-100 text-slate-700 border-slate-300";
     case "CheckedOut":
-      return "bg-gray-50 text-gray-600 border-gray-200";
+      return "bg-violet-50 text-violet-700 border-violet-200";
     case "Cancelled":
-      return "bg-red-50 text-red-700 border-red-200";
+      return "bg-rose-50 text-rose-700 border-rose-200";
     default:
-      return "bg-gray-100 text-gray-700 border-gray-200";
+      return "bg-gray-100 text-gray-700 border-gray-300";
   }
 }
 
