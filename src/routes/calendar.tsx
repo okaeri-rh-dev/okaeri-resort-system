@@ -19,7 +19,7 @@
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useEffect, lazy, Suspense } from "react";
 
 // Lazy load the calendar component for better initial page load performance
@@ -109,71 +109,35 @@ function AvailabilityPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-gray-50">
+    <div className="flex flex-col min-h-screen bg-white">
       {/* Add structured data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
 
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="container mx-auto px-4 py-6 max-w-4xl">
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-              <CalendarIcon className="w-8 h-8 text-blue-600" />
+      {/* Main Content - Fills remaining viewport space */}
+      <main className="flex-1 overflow-auto">
+        <div className="container mx-auto px-3 py-2 sm:px-4 sm:py-3 max-w-7xl h-full">
+          <div className="flex flex-col h-full">
+            <Suspense
+              fallback={
+                <div className="flex flex-col items-center justify-center h-96 bg-white rounded-lg border border-slate-200 p-8">
+                  <Loader2 className="w-10 h-10 animate-spin text-slate-600 mb-4" />
+                  <p className="text-slate-600">Loading availability calendar...</p>
+                </div>
+              }
+            >
+              <PublicAvailabilityCalendar />
+            </Suspense>
+
+            {/* Compact Information Notice */}
+            <div className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded text-xs sm:text-sm text-slate-700">
+              <strong>View-Only:</strong> Contact us to book available dates.
             </div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Okaeri Availability Calendar</h1>
-            <p className="text-lg text-gray-600">
-              Check real-time availability for our 3 beachfront units in Taboc, La Union
-            </p>
           </div>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <Suspense
-          fallback={
-            <div className="flex flex-col items-center justify-center h-96 bg-white rounded-lg shadow-lg p-8">
-              <Loader2 className="w-12 h-12 animate-spin text-blue-600 mb-4" />
-              <p className="text-gray-600">Loading availability calendar...</p>
-            </div>
-          }
-        >
-          <PublicAvailabilityCalendar />
-        </Suspense>
-
-        {/* Information Box */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-900">
-            <strong>View-Only Calendar:</strong> This calendar shows real-time availability for
-            planning purposes only. To make a booking, please contact us through our main website.
-            Our manager will confirm availability, discuss pricing and requirements, and guide you
-            through the booking process.
-          </p>
-        </div>
       </main>
-
-      {/* Footer */}
-      <footer className="mt-12 py-6 bg-gray-100 border-t border-gray-200">
-        <div className="container mx-auto px-4 max-w-4xl text-center text-sm text-gray-600">
-          <p>&copy; {new Date().getFullYear()} Okaeri Resort. All rights reserved.</p>
-          <p className="mt-1">
-            <a href="/" className="text-blue-600 hover:underline">
-              Home
-            </a>
-            {" • "}
-            <a href="/contact" className="text-blue-600 hover:underline">
-              Contact
-            </a>
-            {" • "}
-            <a href="/privacy" className="text-blue-600 hover:underline">
-              Privacy Policy
-            </a>
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

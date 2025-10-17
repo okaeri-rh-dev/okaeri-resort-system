@@ -125,11 +125,11 @@ export function CalendarGrid({ availability, currentMonth, onDateClick }: Calend
   return (
     <div className="calendar-grid" role="grid" aria-label="Availability calendar">
       {/* Day headers (Sun, Mon, Tue, ...) */}
-      <div className="grid grid-cols-7 gap-2 mb-2" role="row">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-1 sm:mb-2" role="row">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
           <div
             key={day}
-            className="text-center text-xs font-semibold text-gray-600 uppercase py-2"
+            className="text-center text-xs font-semibold text-slate-600 uppercase py-1 sm:py-2"
             role="columnheader"
           >
             {day}
@@ -138,7 +138,7 @@ export function CalendarGrid({ availability, currentMonth, onDateClick }: Calend
       </div>
 
       {/* Calendar days grid */}
-      <div className="grid grid-cols-7 gap-2" role="row">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2" role="row">
         {calendarDays.map((day, index) => (
           <DayCell
             key={index}
@@ -187,44 +187,44 @@ function DayCell({
 
   /**
    * Get background color based on availability status
-   * Uses Tailwind utility classes for consistency
+   * Uses soft, muted colors with transparency for reduced eye strain
    */
   const getStatusColor = () => {
-    // Past dates: gray (cannot navigate)
-    if (isPast) return "bg-gray-100 text-gray-400";
+    // Past dates: soft gray
+    if (isPast) return "bg-slate-100/50 text-slate-400";
 
-    // Adjacent month dates: reduced opacity with availability colors
+    // Adjacent month dates: reduced opacity with soft colors
     if (!isCurrentMonth) {
-      if (!availability) return "bg-gray-50/50 text-gray-500";
+      if (!availability) return "bg-slate-50/30 text-slate-500";
 
       switch (availability.status) {
         case "full":
-          return "bg-green-500/30 text-green-800 hover:bg-green-500/40";
+          return "bg-emerald-400/30 text-emerald-700 hover:bg-emerald-400/40";
         case "moderate":
-          return "bg-yellow-500/30 text-yellow-800 hover:bg-yellow-500/40";
+          return "bg-amber-400/30 text-amber-700 hover:bg-amber-400/40";
         case "limited":
-          return "bg-orange-500/30 text-orange-800 hover:bg-orange-500/40";
+          return "bg-orange-400/30 text-orange-700 hover:bg-orange-400/40";
         case "booked":
-          return "bg-red-500/30 text-red-800 hover:bg-red-500/40";
+          return "bg-rose-400/30 text-rose-700 hover:bg-rose-400/40";
         default:
-          return "bg-gray-50/50 text-gray-500";
+          return "bg-slate-50/30 text-slate-500";
       }
     }
 
-    // Current month dates: full color
-    if (!availability) return "bg-gray-50 text-gray-700";
+    // Current month dates: soft muted colors
+    if (!availability) return "bg-slate-50/50 text-slate-700";
 
     switch (availability.status) {
       case "full":
-        return "bg-green-500 text-white hover:bg-green-600";
+        return "bg-emerald-400/70 text-slate-800 hover:bg-emerald-400/80";
       case "moderate":
-        return "bg-yellow-500 text-white hover:bg-yellow-600";
+        return "bg-amber-400/70 text-slate-800 hover:bg-amber-400/80";
       case "limited":
-        return "bg-orange-500 text-white hover:bg-orange-600";
+        return "bg-orange-400/70 text-slate-800 hover:bg-orange-400/80";
       case "booked":
-        return "bg-red-500 text-white hover:bg-red-600";
+        return "bg-rose-400/70 text-slate-800 hover:bg-rose-400/80";
       default:
-        return "bg-gray-50 text-gray-700";
+        return "bg-slate-50/50 text-slate-700";
     }
   };
 
@@ -259,13 +259,14 @@ function DayCell({
     <div
       onClick={handleClick}
       className={cn(
-        "relative aspect-square rounded-lg flex flex-col items-center justify-center",
+        // Further reduced heights for desktop to prevent scrolling
+        "relative min-h-[44px] sm:min-h-[52px] md:min-h-[60px] lg:min-h-[64px] rounded flex flex-col items-center justify-center py-1",
         "transition-all duration-200",
         getStatusColor(),
-        isToday && "ring-2 ring-blue-600 ring-offset-2",
-        !isPast && isCurrentMonth && "hover:shadow-md",
+        isToday && "ring-2 ring-slate-500 ring-offset-1",
+        !isPast && isCurrentMonth && "hover:shadow-sm",
         isPast && "cursor-not-allowed",
-        isClickable && "cursor-pointer hover:shadow-md",
+        isClickable && "cursor-pointer hover:shadow-sm",
         !isPast && !isClickable && isCurrentMonth && "cursor-default"
       )}
       title={getStatusLabel()}
@@ -279,7 +280,7 @@ function DayCell({
       {/* Day number */}
       <span
         className={cn(
-          "text-lg font-semibold"
+          "text-sm sm:text-base font-semibold"
           // No opacity reduction for adjacent months anymore - color handles visibility
         )}
       >
@@ -295,10 +296,10 @@ function DayCell({
         </span>
       )}
 
-      {/* Today indicator (blue dot) */}
+      {/* Today indicator (slate dot) */}
       {isToday && (
         <div
-          className="absolute -bottom-1 w-1.5 h-1.5 bg-blue-600 rounded-full"
+          className="absolute -bottom-1 w-1.5 h-1.5 bg-slate-600 rounded-full"
           aria-label="Today"
         />
       )}

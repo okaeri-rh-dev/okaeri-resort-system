@@ -28,7 +28,7 @@ import {
 import { validateMonth } from "@/lib/validation/calendar";
 import { useQuery } from "@tanstack/react-query";
 import { isAfter, max } from "date-fns";
-import { ChevronLeft, ChevronRight, Info, Loader2 } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Info, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { AvailabilityLegend } from "./AvailabilityLegend";
 import type { AvailabilityDay } from "./CalendarGrid";
@@ -203,64 +203,78 @@ export function PublicAvailabilityCalendar() {
   const isNextMonthValid = validateMonth(nextMonth).valid;
 
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-      {/* Calendar Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
-        <div className="flex items-center justify-between mb-4">
-          {/* Previous Month Button */}
-          <Button
-            onClick={goToPreviousMonth}
-            disabled={!isPrevMonthValid}
-            variant="ghost"
-            size="sm"
-            className="text-white hover:bg-blue-500/20 disabled:opacity-30"
-            aria-label="Previous month"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-
-          {/* Current Month Display */}
-          <div className="text-center">
-            <h3 className="text-2xl font-bold">{monthName}</h3>
-            {isFetching && (
-              <span className="text-sm text-blue-200 flex items-center justify-center gap-1 mt-1">
-                <Loader2 className="w-3 h-3 animate-spin" />
-                Updating...
-              </span>
-            )}
+    <div className="bg-white rounded-lg border border-slate-200/80 overflow-hidden">
+      {/* Calendar Header with Title - Clean White with Border */}
+      <div className="bg-slate-50 border-b border-slate-200">
+        {/* Title Row */}
+        <div className="px-4 pt-2.5 pb-2 border-b border-slate-200/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CalendarIcon className="w-5 h-5 text-slate-600" />
+              <h1 className="text-lg font-semibold text-slate-800">Okaeri Availability</h1>
+            </div>
+            <span className="text-xs text-slate-600">3 Units</span>
           </div>
-
-          {/* Next Month Button */}
-          <Button
-            onClick={goToNextMonth}
-            disabled={!isNextMonthValid}
-            variant="ghost"
-            size="sm"
-            className="text-white hover:bg-blue-500/20 disabled:opacity-30"
-            aria-label="Next month"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </Button>
         </div>
 
-        {/* Today Button */}
-        <Button
-          onClick={goToToday}
-          variant="secondary"
-          size="sm"
-          className="w-full bg-white/10 hover:bg-white/20 text-white border-0"
-        >
-          Today
-        </Button>
+        {/* Month Navigation - Compact */}
+        <div className="px-4 py-2 bg-white">
+          <div className="flex items-center justify-between">
+            {/* Previous Month Button */}
+            <Button
+              onClick={goToPreviousMonth}
+              disabled={!isPrevMonthValid}
+              variant="ghost"
+              size="sm"
+              className="text-slate-700 hover:bg-slate-100 disabled:opacity-30"
+              aria-label="Previous month"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+
+            {/* Current Month Display */}
+            <div className="text-center">
+              <h2 className="text-xl font-bold text-slate-800">{monthName}</h2>
+              {isFetching && (
+                <span className="text-xs text-slate-600 flex items-center justify-center gap-1 mt-1">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Updating...
+                </span>
+              )}
+            </div>
+
+            {/* Next Month Button */}
+            <Button
+              onClick={goToNextMonth}
+              disabled={!isNextMonthValid}
+              variant="ghost"
+              size="sm"
+              className="text-slate-700 hover:bg-slate-100 disabled:opacity-30"
+              aria-label="Next month"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+          </div>
+
+          {/* Today Button - Even Smaller */}
+          <Button
+            onClick={goToToday}
+            variant="secondary"
+            size="sm"
+            className="w-full mt-1.5 h-7 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+          >
+            Today
+          </Button>
+        </div>
       </div>
 
-      {/* Legend */}
-      <div className="px-6 pt-6">
+      {/* Legend - More Compact */}
+      <div className="px-4 py-2 border-b border-slate-200/80">
         <AvailabilityLegend />
       </div>
 
-      {/* Calendar Grid */}
-      <div className="p-6">
+      {/* Calendar Grid - Reduced Padding */}
+      <div className="p-2 sm:p-3">
         <CalendarGrid
           availability={data.availability}
           currentMonth={currentMonth}
@@ -275,16 +289,18 @@ export function PublicAvailabilityCalendar() {
         />
       </div>
 
-      {/* Last Updated Timestamp */}
-      <div className="px-6 pb-4 text-center text-xs text-gray-500">
-        Last updated:{" "}
-        {new Date(data.metadata.generatedAt).toLocaleString("en-US", {
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        })}
+      {/* Last Updated Timestamp - Minimal Footer */}
+      <div className="px-4 py-2 border-t border-slate-200/80 bg-slate-50/50 text-center">
+        <p className="text-xs text-slate-600">
+          Updated{" "}
+          {new Date(data.metadata.generatedAt).toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          })}
+        </p>
       </div>
     </div>
   );

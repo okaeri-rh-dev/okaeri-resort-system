@@ -105,7 +105,11 @@ describe("PublicAvailabilityCalendar", () => {
       renderComponent();
 
       await waitFor(() => {
-        expect(screen.getByText("Availability Legend")).toBeInTheDocument();
+        // Check for legend items instead of title (we removed the heading)
+        expect(screen.getByText("3 units")).toBeInTheDocument();
+        expect(screen.getByText("2 units")).toBeInTheDocument();
+        expect(screen.getByText("1 unit")).toBeInTheDocument();
+        expect(screen.getByText("Booked")).toBeInTheDocument();
       });
     });
 
@@ -144,7 +148,7 @@ describe("PublicAvailabilityCalendar", () => {
       renderComponent();
 
       await waitFor(() => {
-        expect(screen.getByText(/last updated:/i)).toBeInTheDocument();
+        expect(screen.getByText(/updated/i)).toBeInTheDocument();
       });
     });
 

@@ -85,32 +85,32 @@ describe("CalendarGrid", () => {
   });
 
   describe("Color Coding", () => {
-    it("should apply green background for full availability", () => {
+    it("should apply emerald background for full availability", () => {
       render(<CalendarGrid availability={mockAvailability} currentMonth={currentMonth} />);
 
       const fullAvailabilityCell = screen.getByLabelText(/January 1, 2025.*3 available/i);
-      expect(fullAvailabilityCell).toHaveClass("bg-green-500");
+      expect(fullAvailabilityCell).toHaveClass("bg-emerald-400/70");
     });
 
-    it("should apply yellow background for moderate availability", () => {
+    it("should apply amber background for moderate availability", () => {
       render(<CalendarGrid availability={mockAvailability} currentMonth={currentMonth} />);
 
       const moderateCell = screen.getByLabelText(/January 15, 2025.*2 available/i);
-      expect(moderateCell).toHaveClass("bg-yellow-500");
+      expect(moderateCell).toHaveClass("bg-amber-400/70");
     });
 
     it("should apply orange background for limited availability", () => {
       render(<CalendarGrid availability={mockAvailability} currentMonth={currentMonth} />);
 
       const limitedCell = screen.getByLabelText(/January 20, 2025.*1 available/i);
-      expect(limitedCell).toHaveClass("bg-orange-500");
+      expect(limitedCell).toHaveClass("bg-orange-400/70");
     });
 
-    it("should apply red background for fully booked", () => {
+    it("should apply rose background for fully booked", () => {
       render(<CalendarGrid availability={mockAvailability} currentMonth={currentMonth} />);
 
       const bookedCell = screen.getByLabelText(/January 25, 2025.*Fully booked/i);
-      expect(bookedCell).toHaveClass("bg-red-500");
+      expect(bookedCell).toHaveClass("bg-rose-400/70");
     });
 
     it("should gray out past dates", () => {
@@ -121,7 +121,7 @@ describe("CalendarGrid", () => {
 
       // January 1 should be grayed out (past date)
       const pastDateCell = screen.getByLabelText(/January 1, 2025/i);
-      expect(pastDateCell).toHaveClass("bg-gray-100");
+      expect(pastDateCell).toHaveClass("bg-slate-100/50");
     });
 
     it.skip("should show reduced opacity for adjacent month dates", () => {
@@ -169,16 +169,16 @@ describe("CalendarGrid", () => {
   });
 
   describe("Today Indicator", () => {
-    it("should highlight today's date with blue ring", () => {
+    it("should highlight today's date with slate ring", () => {
       vi.setSystemTime(new Date("2025-01-15T12:00:00Z"));
 
       render(<CalendarGrid availability={mockAvailability} currentMonth={currentMonth} />);
 
       const todayCell = screen.getByLabelText(/January 15, 2025/i);
-      expect(todayCell).toHaveClass("ring-2", "ring-blue-600");
+      expect(todayCell).toHaveClass("ring-2", "ring-slate-500");
     });
 
-    it("should show blue dot indicator for today", () => {
+    it("should show slate dot indicator for today", () => {
       vi.setSystemTime(new Date("2025-01-15T12:00:00Z"));
 
       render(<CalendarGrid availability={mockAvailability} currentMonth={currentMonth} />);
@@ -260,7 +260,7 @@ describe("CalendarGrid", () => {
       render(<CalendarGrid availability={mockAvailability} currentMonth={currentMonth} />);
 
       const futureCell = screen.getByLabelText(/January 15, 2025/i);
-      expect(futureCell).toHaveClass("hover:shadow-md");
+      expect(futureCell).toHaveClass("hover:shadow-sm");
     });
 
     it("should show cursor-not-allowed for past dates", () => {

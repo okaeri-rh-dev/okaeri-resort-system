@@ -5,9 +5,9 @@
  *
  * Test Coverage:
  * - Rendering: Legend items, colors, labels
- * - Layout: Responsive grid behavior
+ * - Layout: Responsive flex behavior
  * - Accessibility: ARIA attributes, hidden elements
- * - Content: Correct status descriptions
+ * - Content: Correct unit counts
  */
 
 import { describe, it, expect } from "vitest";
@@ -16,132 +16,96 @@ import { AvailabilityLegend } from "../AvailabilityLegend";
 
 describe("AvailabilityLegend", () => {
   describe("Rendering", () => {
-    it("should render legend title", () => {
-      render(<AvailabilityLegend />);
-
-      expect(screen.getByText("Availability Legend")).toBeInTheDocument();
-    });
-
     it("should render all four legend items", () => {
       render(<AvailabilityLegend />);
 
-      expect(screen.getByText("3 units available")).toBeInTheDocument();
-      expect(screen.getByText("2 units available")).toBeInTheDocument();
-      expect(screen.getByText("1 unit available")).toBeInTheDocument();
-      expect(screen.getByText("Fully booked")).toBeInTheDocument();
-    });
-
-    it("should render status descriptions for each item", () => {
-      render(<AvailabilityLegend />);
-
-      expect(screen.getByText("Full availability")).toBeInTheDocument();
-      expect(screen.getByText("Moderate")).toBeInTheDocument();
-      expect(screen.getByText("Limited")).toBeInTheDocument();
-      expect(screen.getByText("No availability")).toBeInTheDocument();
+      expect(screen.getByText("3 units")).toBeInTheDocument();
+      expect(screen.getByText("2 units")).toBeInTheDocument();
+      expect(screen.getByText("1 unit")).toBeInTheDocument();
+      expect(screen.getByText("Booked")).toBeInTheDocument();
     });
 
     it("should render color indicators for each status", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      // Check for color class elements
-      expect(container.querySelector(".bg-green-500")).toBeInTheDocument();
-      expect(container.querySelector(".bg-yellow-500")).toBeInTheDocument();
-      expect(container.querySelector(".bg-orange-500")).toBeInTheDocument();
-      expect(container.querySelector(".bg-red-500")).toBeInTheDocument();
+      // Check for new soft color classes
+      expect(container.querySelector(".bg-emerald-400\\/70")).toBeInTheDocument();
+      expect(container.querySelector(".bg-amber-400\\/70")).toBeInTheDocument();
+      expect(container.querySelector(".bg-orange-400\\/70")).toBeInTheDocument();
+      expect(container.querySelector(".bg-rose-400\\/70")).toBeInTheDocument();
     });
   });
 
   describe("Color Coding", () => {
-    it("should associate green with full availability", () => {
+    it("should associate emerald with full availability", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const greenIndicator = container.querySelector(".bg-green-500");
-      expect(greenIndicator).toBeInTheDocument();
+      const emeraldIndicator = container.querySelector(".bg-emerald-400\\/70");
+      expect(emeraldIndicator).toBeInTheDocument();
 
-      // Check that green is near "3 units available"
+      // Check that emerald is near "3 units"
       const legend = container.textContent;
-      expect(legend).toContain("3 units available");
-      expect(legend).toContain("Full availability");
+      expect(legend).toContain("3 units");
     });
 
-    it("should associate yellow with moderate availability", () => {
+    it("should associate amber with moderate availability", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const yellowIndicator = container.querySelector(".bg-yellow-500");
-      expect(yellowIndicator).toBeInTheDocument();
+      const amberIndicator = container.querySelector(".bg-amber-400\\/70");
+      expect(amberIndicator).toBeInTheDocument();
 
       const legend = container.textContent;
-      expect(legend).toContain("2 units available");
-      expect(legend).toContain("Moderate");
+      expect(legend).toContain("2 units");
     });
 
     it("should associate orange with limited availability", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const orangeIndicator = container.querySelector(".bg-orange-500");
+      const orangeIndicator = container.querySelector(".bg-orange-400\\/70");
       expect(orangeIndicator).toBeInTheDocument();
 
       const legend = container.textContent;
-      expect(legend).toContain("1 unit available");
-      expect(legend).toContain("Limited");
+      expect(legend).toContain("1 unit");
     });
 
-    it("should associate red with fully booked", () => {
+    it("should associate rose with fully booked", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const redIndicator = container.querySelector(".bg-red-500");
-      expect(redIndicator).toBeInTheDocument();
+      const roseIndicator = container.querySelector(".bg-rose-400\\/70");
+      expect(roseIndicator).toBeInTheDocument();
 
       const legend = container.textContent;
-      expect(legend).toContain("Fully booked");
-      expect(legend).toContain("No availability");
+      expect(legend).toContain("Booked");
     });
   });
 
   describe("Layout", () => {
-    it("should have gray background", () => {
+    it("should use flex layout for items", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const legendContainer = container.querySelector(".bg-gray-50");
-      expect(legendContainer).toBeInTheDocument();
+      const flexContainer = container.querySelector(".flex");
+      expect(flexContainer).toBeInTheDocument();
     });
 
-    it("should have border and rounded corners", () => {
+    it("should have gap between items", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const legendContainer = container.firstChild;
-      expect(legendContainer).toHaveClass("rounded-lg");
-      expect(legendContainer).toHaveClass("border");
-      expect(legendContainer).toHaveClass("border-gray-200");
+      const flexContainer = container.querySelector(".gap-3");
+      expect(flexContainer).toBeInTheDocument();
     });
 
-    it("should have padding", () => {
+    it("should be responsive with different gap on desktop", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const legendContainer = container.firstChild;
-      expect(legendContainer).toHaveClass("p-4");
+      const flexContainer = container.querySelector(".sm\\:gap-4");
+      expect(flexContainer).toBeInTheDocument();
     });
 
-    it("should use grid layout for items", () => {
+    it("should allow wrapping on small screens", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const gridContainer = container.querySelector(".grid");
-      expect(gridContainer).toBeInTheDocument();
-    });
-
-    it("should have responsive grid columns", () => {
-      const { container } = render(<AvailabilityLegend />);
-
-      const gridContainer = container.querySelector(".grid");
-      expect(gridContainer).toHaveClass("grid-cols-2"); // Mobile: 2 columns
-      expect(gridContainer).toHaveClass("md:grid-cols-4"); // Desktop: 4 columns
-    });
-
-    it("should have gap between grid items", () => {
-      const { container } = render(<AvailabilityLegend />);
-
-      const gridContainer = container.querySelector(".grid");
-      expect(gridContainer).toHaveClass("gap-3");
+      const flexContainer = container.querySelector(".flex-wrap");
+      expect(flexContainer).toBeInTheDocument();
     });
   });
 
@@ -149,7 +113,7 @@ describe("AvailabilityLegend", () => {
     it("should have color indicator squares", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const colorSquares = container.querySelectorAll(".w-4.h-4.rounded");
+      const colorSquares = container.querySelectorAll(".w-3.h-3.rounded");
       expect(colorSquares.length).toBe(4); // One for each status
     });
 
@@ -157,15 +121,8 @@ describe("AvailabilityLegend", () => {
       const { container } = render(<AvailabilityLegend />);
 
       // Check for text styling classes
-      const labels = container.querySelectorAll(".text-xs.font-medium");
-      expect(labels.length).toBeGreaterThan(0);
-    });
-
-    it("should display status descriptions with muted styling", () => {
-      const { container } = render(<AvailabilityLegend />);
-
-      const descriptions = container.querySelectorAll(".text-xs.text-gray-500");
-      expect(descriptions.length).toBe(4); // One for each status
+      const labels = container.querySelectorAll(".text-slate-700.font-medium");
+      expect(labels.length).toBe(4);
     });
   });
 
@@ -177,22 +134,11 @@ describe("AvailabilityLegend", () => {
       expect(colorIndicators.length).toBeGreaterThanOrEqual(4); // At least the 4 color squares
     });
 
-    it("should have semantic heading for title", () => {
-      render(<AvailabilityLegend />);
-
-      const heading = screen.getByRole("heading", { name: /availability legend/i });
-      expect(heading).toBeInTheDocument();
-    });
-
     it("should have proper text contrast for readability", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      // Title should be dark gray for good contrast
-      const title = screen.getByText("Availability Legend");
-      expect(title).toHaveClass("text-gray-700");
-
-      // Labels should be dark for readability
-      const labels = container.querySelectorAll(".text-gray-900");
+      // Labels should use slate-700 for good contrast
+      const labels = container.querySelectorAll(".text-slate-700");
       expect(labels.length).toBe(4); // Main labels
     });
   });
@@ -201,28 +147,19 @@ describe("AvailabilityLegend", () => {
     it("should use correct unit count in labels", () => {
       render(<AvailabilityLegend />);
 
-      expect(screen.getByText("3 units available")).toBeInTheDocument();
-      expect(screen.getByText("2 units available")).toBeInTheDocument();
-      expect(screen.getByText("1 unit available")).toBeInTheDocument();
-    });
-
-    it("should use descriptive status labels", () => {
-      render(<AvailabilityLegend />);
-
-      expect(screen.getByText("Full availability")).toBeInTheDocument();
-      expect(screen.getByText("Moderate")).toBeInTheDocument();
-      expect(screen.getByText("Limited")).toBeInTheDocument();
-      expect(screen.getByText("No availability")).toBeInTheDocument();
+      expect(screen.getByText("3 units")).toBeInTheDocument();
+      expect(screen.getByText("2 units")).toBeInTheDocument();
+      expect(screen.getByText("1 unit")).toBeInTheDocument();
     });
 
     it("should match color scheme with CalendarGrid", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      // Colors should match those used in CalendarGrid
-      expect(container.querySelector(".bg-green-500")).toBeInTheDocument(); // Full
-      expect(container.querySelector(".bg-yellow-500")).toBeInTheDocument(); // Moderate
-      expect(container.querySelector(".bg-orange-500")).toBeInTheDocument(); // Limited
-      expect(container.querySelector(".bg-red-500")).toBeInTheDocument(); // Booked
+      // Colors should match those used in CalendarGrid (soft muted palette)
+      expect(container.querySelector(".bg-emerald-400\\/70")).toBeInTheDocument(); // Full
+      expect(container.querySelector(".bg-amber-400\\/70")).toBeInTheDocument(); // Moderate
+      expect(container.querySelector(".bg-orange-400\\/70")).toBeInTheDocument(); // Limited
+      expect(container.querySelector(".bg-rose-400\\/70")).toBeInTheDocument(); // Booked
     });
   });
 
@@ -230,22 +167,17 @@ describe("AvailabilityLegend", () => {
     it("should display items in correct order", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const itemLabels = Array.from(container.querySelectorAll(".text-xs.font-medium")).map(
+      const itemLabels = Array.from(container.querySelectorAll(".text-slate-700.font-medium")).map(
         (el) => el.textContent
       );
 
-      expect(itemLabels).toEqual([
-        "3 units available",
-        "2 units available",
-        "1 unit available",
-        "Fully booked",
-      ]);
+      expect(itemLabels).toEqual(["3 units", "2 units", "1 unit", "Booked"]);
     });
 
     it("should have small, compact color indicators", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const colorSquares = container.querySelectorAll(".w-4.h-4");
+      const colorSquares = container.querySelectorAll(".w-3.h-3");
       expect(colorSquares.length).toBe(4);
     });
 
@@ -260,30 +192,30 @@ describe("AvailabilityLegend", () => {
       const { container } = render(<AvailabilityLegend />);
 
       const legendItems = container.querySelectorAll(".flex.items-center");
-      expect(legendItems.length).toBe(4); // One for each legend item
+      expect(legendItems.length).toBe(5); // 4 items + 1 container
     });
 
     it("should have gap between color and text", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const legendItems = container.querySelectorAll(".gap-2");
-      expect(legendItems.length).toBeGreaterThanOrEqual(4);
+      const legendItems = container.querySelectorAll(".gap-1\\.5");
+      expect(legendItems.length).toBe(4);
     });
   });
 
   describe("Responsive Behavior", () => {
-    it("should stack vertically on mobile (2 columns)", () => {
+    it("should use horizontal flex layout", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const gridContainer = container.querySelector(".grid-cols-2");
-      expect(gridContainer).toBeInTheDocument();
+      const flexContainer = container.querySelector(".flex");
+      expect(flexContainer).toBeInTheDocument();
     });
 
-    it("should display in 4 columns on desktop", () => {
+    it("should wrap items on small screens", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const gridContainer = container.querySelector(".md\\:grid-cols-4");
-      expect(gridContainer).toBeInTheDocument();
+      const flexContainer = container.querySelector(".flex-wrap");
+      expect(flexContainer).toBeInTheDocument();
     });
   });
 
