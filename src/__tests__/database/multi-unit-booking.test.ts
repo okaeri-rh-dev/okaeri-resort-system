@@ -411,30 +411,37 @@ describe("Multi-Unit Booking Database Functions", () => {
 
     it("should return next_available_date for unavailable units", async () => {
       // Create blocking booking
-      await supabase.rpc("create_multi_unit_booking", {
-        p_booking_data: {
-          booking_reference: "BK-TEST-007",
-          guest_name: "Blocker",
-          contact_number: "+639123456789",
-          email: "blocker@example.com",
-          num_guests: 2,
-          check_in: "2025-12-20T06:00:00Z",
-          check_out: "2025-12-25T04:00:00Z",
-          booking_status: "Confirmed",
-          payment_status: "Pending",
-        },
-        p_units: [
-          {
-            unit_id: testUnitIds[0],
-            unit_price: 12500,
-            weekend_surcharge: 0,
-            extra_person_charge: 0,
-            subtotal: 12500,
-            assigned_guests: 2,
+      const { data: bookingId, error: createError } = await supabase.rpc(
+        "create_multi_unit_booking",
+        {
+          p_booking_data: {
+            booking_reference: "BK-TEST-007",
+            guest_name: "Blocker",
+            contact_number: "+639123456789",
+            email: "blocker@example.com",
+            num_guests: 2,
+            check_in: "2025-12-20T06:00:00Z",
+            check_out: "2025-12-25T04:00:00Z",
+            booking_status: "Confirmed",
+            payment_status: "Pending",
           },
-        ],
-        p_guest_id: testGuestId ?? undefined,
-      });
+          p_units: [
+            {
+              unit_id: testUnitIds[0],
+              unit_price: 12500,
+              weekend_surcharge: 0,
+              extra_person_charge: 0,
+              subtotal: 12500,
+              assigned_guests: 2,
+            },
+          ],
+          p_guest_id: testGuestId ?? undefined,
+        }
+      );
+
+      // Verify booking was created successfully
+      expect(createError).toBeNull();
+      expect(bookingId).toBeTruthy();
 
       const { data, error } = await supabase.rpc("check_multi_unit_availability", {
         p_unit_ids: [testUnitIds[0]],
