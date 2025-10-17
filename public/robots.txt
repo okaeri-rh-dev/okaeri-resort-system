@@ -1,0 +1,9 @@
+# Robots.txt for Okaeri Resort System
+
+User-agent: *
+Allow: /
+Allow: /calendar
+Disallow: /_authenticated/
+Disallow: /login
+
+Sitemap: https://okaeri-resort.com/sitemap.xml
