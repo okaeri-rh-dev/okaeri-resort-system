@@ -1,9 +1,9 @@
 -- ============================================================================
 -- Multi-Unit Booking Migration - Pre-Deployment Verification Script
 -- ============================================================================
--- Version: 2.2
+-- Version: 2.3
 -- Created: 2025-10-17
--- Updated: 2025-10-17 (Fixed: removed non-existent columns from queries)
+-- Updated: 2025-10-17 (Fixed: corrected column names to match actual schema)
 -- Purpose: Read-only validation queries to run on production BEFORE migration
 -- Safety: ALL queries are READ-ONLY and safe to execute on production
 -- Usage: Copy/paste into Supabase SQL Editor
@@ -13,7 +13,7 @@ DO $$
 BEGIN
   RAISE NOTICE '============================================';
   RAISE NOTICE 'PRE-DEPLOYMENT VERIFICATION SCRIPT';
-  RAISE NOTICE 'Version 2.2 - Fixed Pre-Migration Column Queries';
+  RAISE NOTICE 'Version 2.3 - Actual Schema Column Names';
   RAISE NOTICE '============================================';
   RAISE NOTICE '';
 END $$;
@@ -153,10 +153,11 @@ SELECT
   booking_reference,
   guest_name,
   unit_id,
-  check_in_date,
-  check_out_date,
+  check_in,
+  check_out,
   total_amount,
-  status
+  booking_status,
+  payment_status
 FROM bookings
 ORDER BY created_at DESC
 LIMIT 5;

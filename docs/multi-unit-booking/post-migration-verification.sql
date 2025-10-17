@@ -1,9 +1,9 @@
 -- ============================================================================
 -- Multi-Unit Booking Migration - Post-Migration Verification Script
 -- ============================================================================
--- Version: 2.1
+-- Version: 2.2
 -- Created: 2025-10-17
--- Updated: 2025-10-17 (Supabase SQL Editor compatible)
+-- Updated: 2025-10-17 (Fixed: corrected column names to match actual schema)
 -- Purpose: Validation queries to run AFTER migration completes
 -- Safety: All queries are READ-ONLY (SELECT only)
 -- Usage: Copy/paste into Supabase SQL Editor immediately after migration
@@ -13,7 +13,7 @@ DO $$
 BEGIN
   RAISE NOTICE '============================================';
   RAISE NOTICE 'POST-MIGRATION VERIFICATION SCRIPT';
-  RAISE NOTICE 'Version 2.1 - Supabase SQL Editor Compatible';
+  RAISE NOTICE 'Version 2.2 - Actual Schema Column Names';
   RAISE NOTICE '============================================';
   RAISE NOTICE '';
 END $$;
@@ -257,8 +257,8 @@ SELECT
   b.is_multi_unit,
   b.unit_count,
   b.total_amount,
-  b.check_in_date,
-  b.check_out_date,
+  b.check_in,
+  b.check_out,
   json_agg(json_build_object(
     'unit_id', bu.unit_id,
     'unit_name', u.unit_name,
