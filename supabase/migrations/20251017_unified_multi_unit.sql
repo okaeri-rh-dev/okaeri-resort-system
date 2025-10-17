@@ -13,6 +13,11 @@
 -- - Database migration MUST complete before deploying updated code
 -- - Estimated duration: 2-5 minutes (depends on booking count)
 -- - Downtime window: 5-10 minutes recommended
+--
+-- COMPATIBILITY:
+-- - Works on databases with Oct 8 migration (booking_units already exists)
+-- - Works on fresh databases (creates booking_units in Step 0)
+-- - Idempotent: Safe to re-run if migration was interrupted
 -- ============================================
 
 BEGIN;
@@ -20,23 +25,119 @@ BEGIN;
 -- ============================================
 -- PRE-FLIGHT CHECKS
 -- ============================================
+-- Note: Checks if required tables exist before querying them
+-- This handles both fresh databases and databases with Oct 8 migration
 
 DO $$
 DECLARE
   v_booking_count INTEGER;
-  v_junction_count INTEGER;
-  v_availability_count INTEGER;
+  v_junction_count INTEGER := 0;
+  v_availability_count INTEGER := 0;
+  v_table_exists BOOLEAN;
 BEGIN
-  -- Count current bookings
+  -- Count current bookings (must exist)
   SELECT COUNT(*) INTO v_booking_count FROM bookings;
-  SELECT COUNT(*) INTO v_junction_count FROM booking_units;
-  SELECT COUNT(*) INTO v_availability_count FROM booking_unit_availability;
+
+  -- Check if booking_units exists before counting (may not exist on fresh DB)
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'booking_units'
+  ) INTO v_table_exists;
+
+  IF v_table_exists THEN
+    SELECT COUNT(*) INTO v_junction_count FROM booking_units;
+  ELSE
+    RAISE WARNING 'booking_units table not found - may need to run 20251008152700_multi_unit_schema.sql first';
+  END IF;
+
+  -- Check if booking_unit_availability exists before counting
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'booking_unit_availability'
+  ) INTO v_table_exists;
+
+  IF v_table_exists THEN
+    SELECT COUNT(*) INTO v_availability_count FROM booking_unit_availability;
+  ELSE
+    RAISE WARNING 'booking_unit_availability table not found - may need to run 20251008152700_multi_unit_schema.sql first';
+  END IF;
 
   RAISE NOTICE '=== PRE-FLIGHT STATUS ===';
   RAISE NOTICE 'Total bookings: %', v_booking_count;
   RAISE NOTICE 'Existing booking_units: %', v_junction_count;
   RAISE NOTICE 'Availability records: %', v_availability_count;
   RAISE NOTICE '========================';
+END $$;
+
+-- ============================================
+-- STEP 0: Ensure required tables exist
+-- ============================================
+-- Purpose: Support databases that haven't run Oct 8 migration
+-- Safety: Uses CREATE TABLE IF NOT EXISTS (idempotent)
+
+CREATE TABLE IF NOT EXISTS booking_units (
+    -- Primary key
+    booking_unit_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- Foreign keys
+    booking_id UUID NOT NULL REFERENCES bookings(booking_id) ON DELETE CASCADE,
+    unit_id UUID NOT NULL REFERENCES units(unit_id) ON DELETE RESTRICT,
+
+    -- Pricing breakdown for this specific unit
+    unit_price DECIMAL(10,2) NOT NULL CHECK (unit_price >= 0),
+    weekend_surcharge DECIMAL(10,2) DEFAULT 0 CHECK (weekend_surcharge >= 0),
+    extra_person_charge DECIMAL(10,2) DEFAULT 0 CHECK (extra_person_charge >= 0),
+    subtotal DECIMAL(10,2) NOT NULL CHECK (subtotal >= 0),
+
+    -- Guest assignment (optional)
+    assigned_guests INTEGER CHECK (assigned_guests > 0),
+    guest_names TEXT[],  -- Array of guest names for this unit
+
+    -- Unit-specific details
+    unit_notes TEXT,
+
+    -- Timestamps
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    -- Constraints
+    UNIQUE(booking_id, unit_id),  -- Prevent duplicate unit assignments
+    CHECK (subtotal = unit_price + weekend_surcharge + extra_person_charge)
+);
+
+CREATE TABLE IF NOT EXISTS booking_unit_availability (
+    -- Primary key
+    availability_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- References
+    unit_id UUID NOT NULL REFERENCES units(unit_id) ON DELETE CASCADE,
+    booking_id UUID NOT NULL REFERENCES bookings(booking_id) ON DELETE CASCADE,
+
+    -- Date range (TIMESTAMPTZ for UTC storage)
+    check_in TIMESTAMP WITH TIME ZONE NOT NULL,
+    check_out TIMESTAMP WITH TIME ZONE NOT NULL,
+
+    -- Booking status (for filtering)
+    booking_status VARCHAR(20) NOT NULL,
+
+    -- Timestamps
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    -- Exclusion constraint: Prevent overlapping bookings for same unit
+    -- AGGRESSIVE BLOCKING: Only Confirmed and CheckedIn bookings block availability
+    -- Rationale: Better UX (Pending bookings don't block), acceptable race condition risk at low volume
+    EXCLUDE USING gist (
+        unit_id WITH =,
+        tstzrange(check_in, check_out, '[)') WITH &&
+    ) WHERE (booking_status IN ('Confirmed', 'CheckedIn')),
+
+    -- Additional constraints
+    CHECK (check_out > check_in)
+);
+
+DO $$ BEGIN
+  RAISE NOTICE 'Step 0 complete: Required tables ensured to exist (booking_units, booking_unit_availability)';
 END $$;
 
 -- ============================================
@@ -228,7 +329,23 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger already exists from Oct 8 migration, no need to recreate
+-- Create trigger if it doesn't exist (handles fresh databases)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname = 'trigger_update_booking_totals'
+      AND tgrelid = 'booking_units'::regclass
+  ) THEN
+    EXECUTE 'CREATE TRIGGER trigger_update_booking_totals
+      AFTER INSERT OR UPDATE OR DELETE ON booking_units
+      FOR EACH ROW
+      EXECUTE FUNCTION update_booking_totals()';
+    RAISE NOTICE 'Created trigger: trigger_update_booking_totals';
+  ELSE
+    RAISE NOTICE 'Trigger already exists: trigger_update_booking_totals';
+  END IF;
+END $$;
 
 DO $$ BEGIN
   RAISE NOTICE 'Step 3 complete: Trigger logic updated to >= 1 (unified architecture)';
