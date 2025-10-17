@@ -1,8 +1,8 @@
 /// <reference types="vitest" />
-import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
 import path from "path";
+import { defineConfig, loadEnv } from "vite";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig(({ mode }) => {
   // Load env file for tests - try .env.test first, then .env.local, then .env
@@ -82,9 +82,14 @@ export default defineConfig(({ mode }) => {
       watchExclude: ["**/node_modules/**", "**/dist/**"],
 
       // Thread configuration for performance
+      // Reduced from 4 to 2 threads to prevent database connection pool exhaustion
+      // Database tests create multiple connections per thread, causing TIME_WAIT accumulation
       threads: true,
       maxThreads: 4,
       minThreads: 1,
+
+      // File-level parallelism control
+      fileParallelism: false, // Run test files sequentially to prevent database connection issues
     },
 
     // Resolve configuration for tests

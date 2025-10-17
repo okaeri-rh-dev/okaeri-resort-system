@@ -38,11 +38,11 @@ describe("Multi-Unit Booking Database Functions", () => {
 
     // Create test units using helper with unique codes to avoid constraint violations
     // Both unit_name and unit_code have unique constraints, so make them unique
-    // unit_code is VARCHAR(10), so use last 5 digits of timestamp
-    const shortId = Date.now().toString().slice(-5);
+    // Use crypto.randomUUID() for true uniqueness in parallel tests
+    const uniqueId = crypto.randomUUID().slice(0, 8); // 8 chars, globally unique
     const unit1 = await createTestUnit({
-      unit_name: `Test Unit 1 ${shortId}`,
-      unit_code: `T1-${shortId}`,
+      unit_name: `Test Unit 1 ${uniqueId}`,
+      unit_code: `T1-${uniqueId.slice(0, 6)}`, // VARCHAR(10) limit: "T1-" (3) + 6 chars = 9
       unit_type: "Standard", // Valid types: Standard, Deluxe, Suite, Villa
       base_rate: 2500,
       weekend_rate: 3000,
@@ -50,8 +50,8 @@ describe("Multi-Unit Booking Database Functions", () => {
     });
 
     const unit2 = await createTestUnit({
-      unit_name: `Test Unit 2 ${shortId}`,
-      unit_code: `T2-${shortId}`,
+      unit_name: `Test Unit 2 ${uniqueId}`,
+      unit_code: `T2-${uniqueId.slice(0, 6)}`, // VARCHAR(10) limit
       unit_type: "Deluxe", // Valid types: Standard, Deluxe, Suite, Villa
       base_occupancy: 2,
       max_occupancy: 4,
@@ -61,8 +61,8 @@ describe("Multi-Unit Booking Database Functions", () => {
     });
 
     const unit3 = await createTestUnit({
-      unit_name: `Test Unit 3 ${shortId}`,
-      unit_code: `T3-${shortId}`,
+      unit_name: `Test Unit 3 ${uniqueId}`,
+      unit_code: `T3-${uniqueId.slice(0, 6)}`, // VARCHAR(10) limit
       unit_type: "Suite", // Valid types: Standard, Deluxe, Suite, Villa
       base_occupancy: 4,
       max_occupancy: 6,
@@ -184,7 +184,7 @@ describe("Multi-Unit Booking Database Functions", () => {
 
     it("should create booking with 10 units (max test)", async () => {
       // Create additional units for this test
-      const uniqueId = Math.random().toString(36).substring(7); // 5-char random ID
+      const uniqueId = crypto.randomUUID().slice(0, 6); // 6 chars, globally unique
       const { data: moreUnits, error: insertError } = await supabase
         .from("units")
         .insert(
