@@ -35,8 +35,17 @@ jobs:
           echo "📦 Checking dist/ contents..."
           ls -la dist/
           echo ""
-          echo "🔧 Checking dist/functions/ structure..."
-          ls -la dist/functions/ || echo "❌ No functions directory found"
+          echo "📂 Source functions/ structure:"
+          find functions -type f | sort
+          echo ""
+          echo "📊 Source file count:"
+          find functions -type f | wc -l
+          echo ""
+          echo "📂 Built dist/functions/ structure:"
+          find dist/functions -type f 2>/dev/null | sort || echo "❌ No functions directory found"
+          echo ""
+          echo "📊 Built file count:"
+          find dist/functions -type f 2>/dev/null | wc -l || echo "0"
           echo ""
           echo "✅ Verification complete"
 
