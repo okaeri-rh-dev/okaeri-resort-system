@@ -8,7 +8,13 @@ export const exportBookings = async (bookings: Booking[]) => {
     const exportData = bookings.map((booking) => ({
       booking_reference: booking.booking_reference,
       guest_name: booking.guest_name,
-      unit_name: booking.booking_units?.[0]?.unit?.unit_name || "N/A",
+      unit_name:
+        booking.booking_units && booking.booking_units.length > 0
+          ? booking.booking_units
+              .map((bu) => bu.unit?.unit_name || bu.unit?.unit_code || "Unknown")
+              .join(", ")
+          : "N/A",
+      unit_count: booking.booking_units?.length || 0,
       check_in: booking.check_in,
       check_out: booking.check_out,
       number_of_guests: booking.num_guests,
@@ -28,7 +34,8 @@ export const exportBookings = async (bookings: Booking[]) => {
       [
         "Booking Ref",
         "Guest Name",
-        "Unit",
+        "Unit(s)",
+        "Unit Count",
         "Check In",
         "Check Out",
         "Guests",

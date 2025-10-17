@@ -230,9 +230,30 @@ export const useBookings = () => {
   return useQuery({
     queryKey: ["bookings", filters, searchQuery, sortBy, sortOrder],
     queryFn: async () => {
+      // Handle unit_id filter via junction table
+      let bookingIdsForUnit: string[] | null = null;
+      if (filters.unit_id) {
+        const { data: bookingUnits, error: unitError } = await supabase
+          .from("booking_units")
+          .select("booking_id")
+          .eq("unit_id", filters.unit_id);
+
+        if (unitError) throw new Error(handleSupabaseError(unitError));
+
+        bookingIdsForUnit = bookingUnits?.map((bu) => bu.booking_id) || [];
+
+        // Early return if no bookings found for this unit
+        if (bookingIdsForUnit.length === 0) {
+          return [];
+        }
+      }
+
       let query = supabase.from("bookings").select(`
         *,
-        unit:units(*),
+        booking_units(
+          *,
+          unit:units(*)
+        ),
         guest:guests(*)
       `);
 
@@ -243,8 +264,8 @@ export const useBookings = () => {
       if (filters.payment_status) {
         query = query.eq("payment_status", filters.payment_status);
       }
-      if (filters.unit_id) {
-        query = query.eq("unit_id", filters.unit_id);
+      if (bookingIdsForUnit) {
+        query = query.in("booking_id", bookingIdsForUnit);
       }
       if (filters.guest_id) {
         query = query.eq("guest_id", filters.guest_id);
@@ -340,7 +361,7 @@ export const useCreateBooking = () => {
 
       const booking = {
         booking_reference: reference || `BK-${Date.now()}`,
-        unit_id: bookingData.unit_id,
+        // unit_id removed - handled via booking_units junction table
         guest_id: guestId,
         guest_name: bookingData.guest_name,
         contact_number: bookingData.contact_number,
@@ -363,6 +384,26 @@ export const useCreateBooking = () => {
 
       const { data, error } = await supabase.from("bookings").insert(booking).select().single();
       if (error) throw new Error(handleSupabaseError(error));
+
+      // Create booking_units entry
+      if (data && bookingData.unit_id) {
+        const { error: unitError } = await supabase.from("booking_units").insert({
+          booking_id: data.booking_id,
+          unit_id: bookingData.unit_id,
+          assigned_guests: bookingData.num_guests,
+          unit_price: bookingData.total_amount,
+          subtotal: bookingData.total_amount,
+          weekend_surcharge: 0,
+          extra_person_charge: 0,
+        });
+
+        if (unitError) {
+          // Rollback: delete the booking if junction table insert fails
+          await supabase.from("bookings").delete().eq("booking_id", data.booking_id);
+          throw new Error(handleSupabaseError(unitError));
+        }
+      }
+
       return data;
     },
     onMutate: async (newBooking) => {
@@ -1031,7 +1072,10 @@ export const useUpcomingCheckIns = (days = 7) => {
         .select(
           `
           *,
-          unit:units(*),
+          booking_units(
+            *,
+            unit:units(*)
+          ),
           guest:guests(*)
         `
         )
@@ -1062,7 +1106,10 @@ export const useUpcomingCheckOuts = (days = 7) => {
         .select(
           `
           *,
-          unit:units(*),
+          booking_units(
+            *,
+            unit:units(*)
+          ),
           guest:guests(*)
         `
         )
@@ -1297,7 +1344,10 @@ export const useBookingsNeedingAttention = (resortId = "resort-okaeri") => {
         .select(
           `
           *,
-          unit:units(*),
+          booking_units(
+            *,
+            unit:units(*)
+          ),
           guest:guests(*)
         `
         )

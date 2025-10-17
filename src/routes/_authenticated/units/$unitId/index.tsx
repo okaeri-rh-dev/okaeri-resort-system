@@ -59,10 +59,20 @@ export const Route = createFileRoute("/_authenticated/units/$unitId/")({
       queryKey: ["unit", unitId, "revenue-stats"],
       queryFn: async () => {
         const { data, error } = await supabase
-          .from("bookings")
-          .select("total_amount, booking_status")
+          .from("booking_units")
+          .select(
+            `
+            unit_id,
+            subtotal,
+            booking:bookings!inner(
+              booking_id,
+              booking_status,
+              total_amount
+            )
+          `
+          )
           .eq("unit_id", unitId)
-          .neq("booking_status", "Cancelled");
+          .neq("booking.booking_status", "Cancelled");
 
         if (error) {
           console.error("[Unit Detail] Failed to fetch revenue stats:", error);
@@ -73,9 +83,13 @@ export const Route = createFileRoute("/_authenticated/units/$unitId/")({
           };
         }
 
-        const total_bookings = data?.length || 0;
+        // Count unique bookings (in case a booking has multiple units)
+        const uniqueBookingIds = new Set(data?.map((bu) => bu.booking.booking_id) || []);
+        const total_bookings = uniqueBookingIds.size;
+
+        // Sum revenue from all booking_units for this unit
         const total_revenue =
-          data?.reduce((sum, booking) => sum + (booking.total_amount || 0), 0) || 0;
+          data?.reduce((sum, bu) => sum + (bu.booking.total_amount || 0), 0) || 0;
         const average_booking_value = total_bookings > 0 ? total_revenue / total_bookings : 0;
 
         return {

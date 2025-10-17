@@ -3,10 +3,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { differenceInDays, isWeekend, eachDayOfInterval } from "date-fns";
 import { toast } from "sonner";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { completeBookingSchema, type CompleteBookingData } from "@/lib/validations";
 
-import { useCreateBooking, useUpdateBooking } from "@/stores/useBookingStore";
+import { useUpdateBooking } from "@/stores/useBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
 import { checkUnitAvailability } from "@/lib/availability";
@@ -25,9 +26,63 @@ export function useBookingForm({ initialData, bookingId, onSuccess }: UseBooking
   const [calculatedTotal, setCalculatedTotal] = useState<number>(0);
 
   const isEditMode = !!bookingId;
-  const createBookingMutation = useCreateBooking();
+  const queryClient = useQueryClient();
   const updateBookingMutation = useUpdateBooking();
   const { data: units, isLoading: unitsLoading } = useUnits();
+
+  // Create booking via multi-unit endpoint
+  const createBookingMutation = useMutation({
+    mutationFn: async (data: CompleteBookingData) => {
+      const sanitizedData = sanitizeBookingFormData(data);
+
+      // Transform single-unit form data to multi-unit API format
+      const payload = {
+        primary_guest: {
+          guest_name: sanitizedData.guest_name || data.guest_name,
+          email: sanitizedData.email || data.email,
+          contact_number: sanitizedData.contact_number || data.contact_number,
+        },
+        check_in: typeof data.check_in === "string" ? data.check_in : data.check_in.toISOString(),
+        check_out:
+          typeof data.check_out === "string" ? data.check_out : data.check_out.toISOString(),
+        units: [
+          {
+            unit_id: data.unit_id,
+            num_guests: data.num_guests,
+          },
+        ],
+        payment: {
+          method: data.payment_method,
+          amount: calculatedTotal,
+        },
+        special_requests: sanitizedData.special_requests || data.special_requests,
+        source: "web" as const,
+      };
+
+      const response = await fetch("/api/bookings/multi-unit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": crypto.randomUUID(), // Generate unique key per form session
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const error = (await response.json()) as { message?: string };
+        throw new Error(error.message || "Failed to create booking");
+      }
+
+      const result = (await response.json()) as { success: boolean; data: any };
+      return result.data; // Returns the created booking
+    },
+    onSuccess: () => {
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["guests"] });
+      queryClient.invalidateQueries({ queryKey: ["units"] });
+    },
+  });
 
   const form = useForm<CompleteBookingData>({
     resolver: zodResolver(completeBookingSchema),
@@ -169,31 +224,32 @@ export function useBookingForm({ initialData, bookingId, onSuccess }: UseBooking
   const handleSubmit = useCallback(
     async (data: CompleteBookingData) => {
       try {
-        const sanitizedData = sanitizeBookingFormData(data);
-
-        // Construct complete booking data
-        const bookingData = {
-          unit_id: data.unit_id,
-          guest_name: sanitizedData.guest_name || data.guest_name,
-          email: sanitizedData.email || data.email,
-          contact_number: sanitizedData.contact_number || data.contact_number,
-          num_guests: data.num_guests,
-          check_in: typeof data.check_in === "string" ? data.check_in : data.check_in.toISOString(),
-          check_out:
-            typeof data.check_out === "string" ? data.check_out : data.check_out.toISOString(),
-          special_requests: sanitizedData.special_requests || data.special_requests,
-          payment_method: data.payment_method,
-          total_amount: calculatedTotal,
-        };
-
         if (isEditMode) {
+          // For edit mode, use the old update mutation with sanitized data
+          const sanitizedData = sanitizeBookingFormData(data);
+          const bookingData = {
+            unit_id: data.unit_id,
+            guest_name: sanitizedData.guest_name || data.guest_name,
+            email: sanitizedData.email || data.email,
+            contact_number: sanitizedData.contact_number || data.contact_number,
+            num_guests: data.num_guests,
+            check_in:
+              typeof data.check_in === "string" ? data.check_in : data.check_in.toISOString(),
+            check_out:
+              typeof data.check_out === "string" ? data.check_out : data.check_out.toISOString(),
+            special_requests: sanitizedData.special_requests || data.special_requests,
+            payment_method: data.payment_method,
+            total_amount: calculatedTotal,
+          };
+
           await updateBookingMutation.mutateAsync({
             bookingId,
             updates: bookingData,
           });
           toast.success("Booking updated successfully!");
         } else {
-          const result = await createBookingMutation.mutateAsync(bookingData);
+          // For new bookings, use multi-unit endpoint (mutation handles transformation)
+          const result = await createBookingMutation.mutateAsync(data);
           toast.success("Booking created successfully!");
           onSuccess?.(result);
         }
