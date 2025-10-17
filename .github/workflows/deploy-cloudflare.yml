@@ -1,0 +1,51 @@
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  deploy:
+    name: Build and Deploy to Cloudflare Pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend and functions
+        run: npm run build:full
+
+      - name: Verify dist structure
+        run: |
+          echo "📦 Checking dist/ contents..."
+          ls -la dist/
+          echo ""
+          echo "🔧 Checking dist/functions/ structure..."
+          ls -la dist/functions/ || echo "❌ No functions directory found"
+          echo ""
+          echo "✅ Verification complete"
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=okaeri-resort-system
+
+      - name: Deployment summary
+        run: |
+          echo "🚀 Deployment triggered successfully!"
+          echo "📍 URL: https://okaeri-resort-system.pages.dev"
+          echo "🔍 Check deployment status in Cloudflare Dashboard"
