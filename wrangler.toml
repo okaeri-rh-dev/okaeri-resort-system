@@ -22,9 +22,11 @@ binding = "RATE_LIMIT_KV"
 id = "98171af1c3bd4f718ff86c1f966c64a5"
 
 # KV Namespace for blocked IPs (optional - for DDoS protection)
-[[env.production.kv_namespaces]]
-binding = "BLOCKED_IPS_KV"
-id = "TO_BE_CREATED"  # Create via: npx wrangler kv namespace create "BLOCKED_IPS_KV"
+# NOTE: Commented out because this feature is not implemented yet
+# Uncomment when implementing IP blocking functionality
+# [[env.production.kv_namespaces]]
+# binding = "BLOCKED_IPS_KV"
+# id = "TO_BE_CREATED"  # Create via: npx wrangler kv namespace create "BLOCKED_IPS_KV"
 
 # Production environment variables
 [env.production.vars]
@@ -45,9 +47,11 @@ binding = "RATE_LIMIT_KV"
 id = "98171af1c3bd4f718ff86c1f966c64a5"
 
 # KV Namespace for blocked IPs (optional - for DDoS protection)
-[[env.preview.kv_namespaces]]
-binding = "BLOCKED_IPS_KV"
-id = "TO_BE_CREATED"  # Create via: npx wrangler kv namespace create "BLOCKED_IPS_KV" --preview
+# NOTE: Commented out because this feature is not implemented yet
+# Uncomment when implementing IP blocking functionality
+# [[env.preview.kv_namespaces]]
+# binding = "BLOCKED_IPS_KV"
+# id = "TO_BE_CREATED"  # Create via: npx wrangler kv namespace create "BLOCKED_IPS_KV" --preview
 
 # Preview environment variables
 [env.preview.vars]

@@ -42,7 +42,7 @@ interface Env {
 
   // KV Namespaces
   RATE_LIMIT_KV: KVNamespace;
-  BLOCKED_IPS_KV: KVNamespace;
+  BLOCKED_IPS_KV?: KVNamespace; // Optional - not yet implemented
 
   // Environment
   ENVIRONMENT: "production" | "development";
