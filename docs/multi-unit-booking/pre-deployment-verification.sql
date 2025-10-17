@@ -1,9 +1,9 @@
 -- ============================================================================
 -- Multi-Unit Booking Migration - Pre-Deployment Verification Script
 -- ============================================================================
--- Version: 2.1
+-- Version: 2.2
 -- Created: 2025-10-17
--- Updated: 2025-10-17 (Supabase SQL Editor compatible)
+-- Updated: 2025-10-17 (Fixed: removed non-existent columns from queries)
 -- Purpose: Read-only validation queries to run on production BEFORE migration
 -- Safety: ALL queries are READ-ONLY and safe to execute on production
 -- Usage: Copy/paste into Supabase SQL Editor
@@ -13,7 +13,7 @@ DO $$
 BEGIN
   RAISE NOTICE '============================================';
   RAISE NOTICE 'PRE-DEPLOYMENT VERIFICATION SCRIPT';
-  RAISE NOTICE 'Version 2.1 - Supabase SQL Editor Compatible';
+  RAISE NOTICE 'Version 2.2 - Fixed Pre-Migration Column Queries';
   RAISE NOTICE '============================================';
   RAISE NOTICE '';
 END $$;
@@ -92,8 +92,9 @@ END $$;
 DO $$
 BEGIN
   RAISE NOTICE '✓ Check 5/7: Column data types';
-  RAISE NOTICE '  Expected: booking_id=uuid, unit_id=uuid, is_multi_unit=boolean, unit_count=integer';
-  RAISE NOTICE '  Review the query result below:';
+  RAISE NOTICE '  Existing columns: booking_id=uuid, unit_id=uuid';
+  RAISE NOTICE '  Will be added: is_multi_unit=boolean, unit_count=integer';
+  RAISE NOTICE '  Review the query result below (should show booking_id and unit_id only):';
 END $$;
 
 SELECT
@@ -152,11 +153,10 @@ SELECT
   booking_reference,
   guest_name,
   unit_id,
-  is_multi_unit,
-  unit_count,
   check_in_date,
   check_out_date,
-  total_amount
+  total_amount,
+  status
 FROM bookings
 ORDER BY created_at DESC
 LIMIT 5;
@@ -166,23 +166,18 @@ DO $$
 DECLARE
   v_total_units INTEGER;
   v_total_bookings INTEGER;
-  v_multi_unit INTEGER;
-  v_single_unit INTEGER;
 BEGIN
   SELECT
     COUNT(DISTINCT unit_id),
-    COUNT(*),
-    COUNT(DISTINCT CASE WHEN is_multi_unit = true THEN booking_id END),
-    COUNT(DISTINCT CASE WHEN is_multi_unit = false THEN booking_id END)
-  INTO v_total_units, v_total_bookings, v_multi_unit, v_single_unit
+    COUNT(*)
+  INTO v_total_units, v_total_bookings
   FROM bookings
   WHERE unit_id IS NOT NULL;
 
   RAISE NOTICE 'Unit statistics:';
-  RAISE NOTICE '  Total unique units: %', v_total_units;
+  RAISE NOTICE '  Total unique units in use: %', v_total_units;
   RAISE NOTICE '  Total bookings: %', v_total_bookings;
-  RAISE NOTICE '  Multi-unit bookings: %', v_multi_unit;
-  RAISE NOTICE '  Single-unit bookings: %', v_single_unit;
+  RAISE NOTICE '  Note: Multi-unit flags will be added by migration';
   RAISE NOTICE '';
 END $$;
 
