@@ -159,22 +159,6 @@ export interface RecordPaymentResponse {
   };
 }
 
-/**
- * POST /api/bookings/:id/payments/refund
- * Success response for payment refund
- */
-export interface RefundPaymentResponse {
-  success: boolean;
-  data: {
-    payment_id: string;
-    booking_id: string;
-    refund_amount: number;
-    refunded_amount: number;
-    payment_status: string;
-    adjustment_id?: string;
-  };
-}
-
 // ============================================================
 // ERROR RESPONSES
 // ============================================================
@@ -246,7 +230,7 @@ export type AvailabilityApiResponse = AvailabilityResponse | ApiErrorResponse;
 /**
  * Union type for payment API responses (success or error)
  */
-export type PaymentApiResponse = RecordPaymentResponse | RefundPaymentResponse | ApiErrorResponse;
+export type PaymentApiResponse = RecordPaymentResponse | ApiErrorResponse;
 
 /**
  * Union type for unit management responses (success or error)

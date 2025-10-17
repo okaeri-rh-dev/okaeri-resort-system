@@ -38,22 +38,13 @@ export async function cleanupTestData() {
 
   try {
     // Delete in reverse dependency order
-    // Note: Some tables may not exist yet (audit_logs, payment_adjustments), so we ignore errors
+    // Note: audit_logs table may not exist yet, so we ignore errors
 
     try {
       await testSupabaseAdmin
         .from("audit_logs")
         .delete()
         .neq("audit_id", "00000000-0000-0000-0000-000000000000");
-    } catch (e) {
-      // Table may not exist yet
-    }
-
-    try {
-      await testSupabaseAdmin
-        .from("payment_adjustments")
-        .delete()
-        .neq("adjustment_id", "00000000-0000-0000-0000-000000000000");
     } catch (e) {
       // Table may not exist yet
     }

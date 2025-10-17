@@ -15,13 +15,13 @@ import { useCallback, useMemo } from "react";
 import {
   checkUnitAvailability,
   checkMultiUnitAvailability,
-  getUnitAvailabilityCalendar,
+  // getUnitAvailabilityCalendar, // ❌ DISABLED: Function not deployed
   batchCheckUnitAvailability,
   getAvailableUnitsByType,
   createBlackoutPeriod,
   getUnitBlackoutPeriods,
-  refreshAvailabilityCache,
-  getCachePerformanceMetrics,
+  // refreshAvailabilityCache, // ❌ DISABLED: Function not deployed
+  // getCachePerformanceMetrics, // ❌ DISABLED: Function not deployed
   validateDateRange,
   formatAvailabilityMessage,
 } from "@/lib/availability";
@@ -67,7 +67,10 @@ export function useUnitAvailability(
 
 /**
  * Hook for availability calendar view
+ * ❌ TEMPORARILY DISABLED: Requires get_unit_availability_calendar() database function
+ * TODO: Deploy availability calendar migration or remove if not needed
  */
+/*
 export function useAvailabilityCalendar(
   unitId: string,
   startDate: string,
@@ -84,6 +87,7 @@ export function useAvailabilityCalendar(
     retry: 1,
   });
 }
+*/
 
 // ============================================
 // MULTI-UNIT AVAILABILITY HOOKS
@@ -224,11 +228,11 @@ export function useCreateBlackout() {
 
 // ============================================
 // CACHE MANAGEMENT HOOKS
+// ❌ TEMPORARILY DISABLED: Require availability_cache table and related RPC functions
+// TODO: Deploy availability cache migration or remove if not needed
 // ============================================
 
-/**
- * Hook for refreshing availability cache
- */
+/*
 export function useRefreshAvailabilityCache() {
   const queryClient = useQueryClient();
 
@@ -253,9 +257,6 @@ export function useRefreshAvailabilityCache() {
   });
 }
 
-/**
- * Hook for monitoring cache performance
- */
 export function useCacheMetrics(options: { enabled?: boolean; refetchInterval?: number } = {}) {
   const { enabled = true, refetchInterval = 60000 } = options; // 1 minute
 
@@ -268,6 +269,7 @@ export function useCacheMetrics(options: { enabled?: boolean; refetchInterval?: 
     retry: 1,
   });
 }
+*/
 
 // ============================================
 // UTILITY HOOKS
@@ -297,7 +299,10 @@ export function useAvailabilityMessage(result?: AvailabilityResult) {
 
 /**
  * Hook for automatic cache refresh based on booking patterns
+ * ❌ TEMPORARILY DISABLED: Depends on useRefreshAvailabilityCache which is disabled
+ * TODO: Deploy availability cache migration or remove if not needed
  */
+/*
 export function useAutoRefreshCache(averageBookingsPerDay: number = 5) {
   const refreshCache = useRefreshAvailabilityCache();
 
@@ -321,6 +326,7 @@ export function useAutoRefreshCache(averageBookingsPerDay: number = 5) {
     isRefreshing: refreshCache.isPending,
   };
 }
+*/
 
 /**
  * Hook for optimistic availability updates

@@ -137,6 +137,9 @@ export const db = {
         .or(`check_in.lte.${checkOut},check_out.gte.${checkIn}`),
 
     // Enhanced availability methods using optimized functions
+    // ❌ TEMPORARILY DISABLED: checkAvailabilityFast requires check_unit_availability_fast() RPC
+    // Use checkMultiUnitAvailability() with single unit array instead
+    /*
     checkAvailabilityFast: (
       unitId: string,
       checkIn: string,
@@ -149,6 +152,7 @@ export const db = {
         p_check_out: checkOut,
         p_exclude_booking_id: excludeBookingId ?? undefined,
       }),
+    */
 
     checkMultiUnitAvailability: (
       checkIn: string,
@@ -163,12 +167,16 @@ export const db = {
         p_unit_ids: options.unitIds ?? [],
       }),
 
+    // ❌ TEMPORARILY DISABLED: getAvailabilityCalendar requires get_unit_availability_calendar() RPC
+    // TODO: Deploy availability calendar migration or remove if not needed
+    /*
     getAvailabilityCalendar: (unitId: string, startDate: string, endDate: string) =>
       supabase.rpc("get_unit_availability_calendar", {
         p_unit_id: unitId,
         p_start_date: startDate,
         p_end_date: endDate,
       }),
+    */
   },
 
   guests: {
@@ -235,8 +243,9 @@ export const db = {
         .lte("start_date", endDate),
   },
 
-  // Cache management
-  // Note: availability_cache table removed in migration, cache now handled by database functions
+  // ❌ TEMPORARILY DISABLED: Cache management requires availability_cache table and refresh_availability_cache() RPC
+  // TODO: Deploy availability cache migration or remove if not needed
+  /*
   cache: {
     refresh: (unitId?: string, daysAhead?: number) =>
       supabase.rpc("refresh_availability_cache", {
@@ -259,6 +268,7 @@ export const db = {
       return { data: null, error: null };
     },
   },
+  */
 
   // App Roles - User role management for audit trail access control
   appRoles: {

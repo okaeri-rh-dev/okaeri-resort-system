@@ -119,7 +119,6 @@ const createMockPayment = (overrides: Record<string, any> = {}) => ({
   payment_method: "Cash",
   payment_date: "2024-01-01T00:00:00Z",
   payment_status: "Completed",
-  refunded_amount: null,
   notes: null,
   proof_url: null,
   created_at: "2024-01-01T00:00:00Z",

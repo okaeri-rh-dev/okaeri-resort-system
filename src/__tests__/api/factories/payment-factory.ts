@@ -21,11 +21,10 @@ export interface PaymentMockOptions {
   payment?: {
     payment_id: string;
     booking_id: string;
-    amount: number; // Total payment amount (for refund validation)
+    amount: number; // Total payment amount
     amount_paid: number;
     payment_method: string;
     payment_status: string;
-    refunded_amount?: number; // Optional - for testing refund scenarios
   };
 
   /** Whether booking exists (default: true) */
@@ -69,13 +68,10 @@ export function createPaymentMocks(options: PaymentMockOptions = {}) {
     tables: {
       bookings: bookingExists ? [booking] : [],
       payments: paymentExists ? [payment] : [],
-      payment_adjustments: [],
     },
     rpcs: {},
     errors: {
-      tables: hasError
-        ? { bookings: error, payments: error, payment_adjustments: error }
-        : undefined,
+      tables: hasError ? { bookings: error, payments: error } : undefined,
     },
   });
 }
@@ -93,31 +89,6 @@ export function createPaymentRecordMocks(options: Partial<PaymentMockOptions> = 
       amount_paid: 0,
       payment_status: "Unpaid",
       ...options.booking,
-    },
-  });
-}
-
-/**
- * Helper to create mock for payment refund tests (existing payment)
- */
-export function createPaymentRefundMocks(options: Partial<PaymentMockOptions> = {}) {
-  return createPaymentMocks({
-    paymentExists: true, // Default - can be overridden by options
-    ...options, // Options come after defaults to override them
-    booking: {
-      ...testBookingResponse,
-      total_amount: 10000,
-      amount_paid: 5000,
-      payment_status: "Partial",
-      ...options.booking,
-    },
-    payment: {
-      ...testPayment,
-      amount: 5000, // Total payment amount (for refund validation)
-      amount_paid: 5000,
-      payment_status: "Paid",
-      refunded_amount: 0, // Default to no refund
-      ...options.payment,
     },
   });
 }

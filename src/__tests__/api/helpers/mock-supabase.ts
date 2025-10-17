@@ -29,7 +29,6 @@ const TABLE_PRIMARY_KEYS: Record<string, string> = {
   units: "unit_id",
   guests: "guest_id",
   payments: "payment_id",
-  payment_adjustments: "adjustment_id",
   audit_logs: "log_id",
 };
 

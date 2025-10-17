@@ -13,7 +13,7 @@ import type {
 } from "@/types";
 import type {
   UnitAvailabilityResponse,
-  CalendarDayResponse,
+  // CalendarDayResponse, // ❌ DISABLED: Used by commented-out useAvailabilityCalendar
   BlackoutResponse,
 } from "@/types/supabase";
 // import { useWorkflowStore } from "./useWorkflowStore"; // Phase 3-4
@@ -753,8 +753,8 @@ export const useDeleteBooking = () => {
 // ============================================
 
 /**
- * Fast unit availability check using optimized database function
- * Replaces the basic availability check with sub-100ms performance
+ * Fast unit availability check using check_multi_unit_availability RPC
+ * Updated to use existing RPC function with single-unit array
  */
 export const useUnitAvailabilityFast = (
   unitId: string,
@@ -770,29 +770,20 @@ export const useUnitAvailabilityFast = (
     queryFn: async () => {
       if (!unitId || !checkIn || !checkOut) return null;
 
-      const { data, error } = await db.bookings.checkAvailabilityFast(
-        unitId,
-        checkIn,
-        checkOut,
-        excludeBookingId
-      );
+      // Use checkMultiUnitAvailability with single unit array
+      const { data, error } = await db.bookings.checkMultiUnitAvailability(checkIn, checkOut, {
+        unitIds: [unitId],
+      });
 
       if (error) throw new Error(handleSupabaseError(error));
 
-      // RPC result type: check_unit_availability_fast returns array with availability data
-      const result = (
-        data as unknown as Array<{
-          is_available: boolean;
-          conflicting_bookings: number;
-          blackout_periods: number;
-          unit_status: string;
-        }>
-      )?.[0];
+      // Extract first result from array
+      const result = (data as unknown as UnitAvailabilityResponse[])?.[0];
       return {
         isAvailable: result?.is_available || false,
-        conflictingBookings: result?.conflicting_bookings || 0,
-        blackoutPeriods: result?.blackout_periods || 0,
-        unitStatus: result?.unit_status || "Unknown",
+        conflictingBookings: 0, // check_multi_unit_availability doesn't return conflicting bookings count
+        blackoutPeriods: 0, // check_multi_unit_availability doesn't return blackout count
+        unitStatus: result?.is_available ? "Available" : "Unavailable",
       };
     },
     enabled: enabled && !!unitId && !!checkIn && !!checkOut,
@@ -852,7 +843,10 @@ export const useMultiUnitAvailability = (
 
 /**
  * Unit availability calendar for calendar UI components
+ * ❌ TEMPORARILY DISABLED: Requires get_unit_availability_calendar() RPC function
+ * TODO: Deploy availability calendar migration or remove if not needed
  */
+/*
 export const useAvailabilityCalendar = (
   unitId: string,
   startDate: string,
@@ -884,6 +878,7 @@ export const useAvailabilityCalendar = (
     retry: 1,
   });
 };
+*/
 
 /**
  * Blackout period management
@@ -972,7 +967,10 @@ export const useCreateBlackout = () => {
 
 /**
  * Cache management and performance optimization
+ * ❌ TEMPORARILY DISABLED: Requires availability_cache table and refresh_availability_cache() RPC
+ * TODO: Deploy availability cache migration or remove if not needed
  */
+/*
 export const useAvailabilityCache = () => {
   const queryClient = useQueryClient();
 
@@ -1018,6 +1016,7 @@ export const useAvailabilityCache = () => {
     getCacheMetrics,
   };
 };
+*/
 
 // Real-time subscription for booking updates
 // NOTE: Disabled for Phase 1 - Real-time features scheduled for Phase 2

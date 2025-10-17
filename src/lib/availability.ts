@@ -16,7 +16,7 @@ import type { Unit, UnitType } from "@/types";
 import { toUnitType, toBlackoutType } from "@/types/supabase";
 import type {
   UnitAvailabilityResponse as SupabaseUnitResponse,
-  CalendarDayResponse,
+  // CalendarDayResponse, // ❌ DISABLED: Used by commented-out getUnitAvailabilityCalendar
   BlackoutResponse,
 } from "@/types/supabase";
 
@@ -40,6 +40,8 @@ export interface UnitAvailability extends Unit {
   nextAvailableDate?: string;
 }
 
+// ❌ TEMPORARILY DISABLED: Used by commented-out getUnitAvailabilityCalendar function
+/*
 export interface AvailabilityCalendarDay {
   date: string;
   status: "Available" | "CheckIn" | "CheckOut" | "Occupied" | "Maintenance";
@@ -47,6 +49,7 @@ export interface AvailabilityCalendarDay {
   guestName?: string;
   bookingReference?: string;
 }
+*/
 
 export interface AvailabilityFilter {
   unitTypes?: string[];
@@ -68,7 +71,8 @@ export interface BlackoutPeriod {
 // HELPER FUNCTIONS
 // ============================================
 
-// Helper function to convert API status to internal status
+// ❌ TEMPORARILY DISABLED: Used by commented-out getUnitAvailabilityCalendar function
+/*
 function convertCalendarStatus(
   apiStatus: "available" | "booked" | "blackout"
 ): AvailabilityCalendarDay["status"] {
@@ -83,6 +87,7 @@ function convertCalendarStatus(
       return "Available";
   }
 }
+*/
 
 // ============================================
 // CORE AVAILABILITY FUNCTIONS
@@ -90,7 +95,7 @@ function convertCalendarStatus(
 
 /**
  * Fast availability check for a single unit
- * Uses optimized database function for sub-100ms response
+ * Uses check_multi_unit_availability with single unit for detailed results
  */
 export async function checkUnitAvailability(
   unitId: string,
@@ -99,10 +104,10 @@ export async function checkUnitAvailability(
   excludeBookingId?: string
 ): Promise<AvailabilityResult> {
   try {
-    const { data, error } = await supabase.rpc("check_unit_availability_fast", {
-      p_unit_id: unitId,
+    const { data, error } = await supabase.rpc("check_multi_unit_availability", {
       p_check_in: checkIn,
       p_check_out: checkOut,
+      p_unit_ids: [unitId],
       p_exclude_booking_id: excludeBookingId ?? undefined,
     });
 
@@ -112,8 +117,9 @@ export async function checkUnitAvailability(
     return {
       isAvailable: result?.is_available || false,
       conflictingBookings: result?.conflicting_bookings || 0,
-      blackoutPeriods: result?.blackout_periods || 0,
-      unitStatus: result?.unit_status || "Unknown",
+      blackoutPeriods: 0, // check_multi_unit_availability doesn't return this
+      unitStatus: result?.is_available ? "Available" : "Unavailable",
+      nextAvailableDate: result?.next_available_date,
     };
   } catch (error) {
     console.error("Error checking unit availability:", error);
@@ -170,7 +176,11 @@ export async function checkMultiUnitAvailability(
 /**
  * Get availability calendar for a unit
  * Optimized for calendar UI components
+ *
+ * ❌ TEMPORARILY DISABLED: Requires get_unit_availability_calendar() database function
+ * TODO: Deploy availability calendar migration or remove if not needed
  */
+/*
 export async function getUnitAvailabilityCalendar(
   unitId: string,
   startDate: string,
@@ -198,6 +208,7 @@ export async function getUnitAvailabilityCalendar(
     throw new Error("Failed to get availability calendar");
   }
 }
+*/
 
 // ============================================
 // BATCH AVAILABILITY OPERATIONS
@@ -358,7 +369,11 @@ export async function getUnitBlackoutPeriods(
 /**
  * Refresh availability cache for units
  * Should be called periodically or after major booking changes
+ *
+ * ❌ TEMPORARILY DISABLED: Requires refresh_availability_cache() database function
+ * TODO: Deploy availability cache migration or remove if not needed
  */
+/*
 export async function refreshAvailabilityCache(
   unitId?: string,
   daysAhead: number = 90
@@ -377,11 +392,16 @@ export async function refreshAvailabilityCache(
     throw new Error("Failed to refresh availability cache");
   }
 }
+*/
 
 /**
  * Get cache performance metrics
  * Useful for monitoring cache efficiency
+ *
+ * ❌ TEMPORARILY DISABLED: Requires availability_cache table
+ * TODO: Deploy availability cache migration or remove if not needed
  */
+/*
 export async function getCachePerformanceMetrics(): Promise<{
   totalCacheEntries: number;
   validCacheEntries: number;
@@ -412,6 +432,7 @@ export async function getCachePerformanceMetrics(): Promise<{
     };
   }
 }
+*/
 
 // ============================================
 // UTILITY FUNCTIONS

@@ -15,17 +15,17 @@ export {
 // Availability hooks
 export {
   useUnitAvailability,
-  useAvailabilityCalendar,
+  // useAvailabilityCalendar, // ❌ DISABLED: Requires get_unit_availability_calendar() RPC
   useAvailableUnits,
   useAvailableUnitsByType,
   useBatchUnitAvailability,
   useUnitBlackouts,
   useCreateBlackout,
-  useRefreshAvailabilityCache,
-  useCacheMetrics,
+  // useRefreshAvailabilityCache, // ❌ DISABLED: Requires refresh_availability_cache() RPC
+  // useCacheMetrics, // ❌ DISABLED: Requires availability_cache table
   useDateValidation,
   useAvailabilityMessage,
-  useAutoRefreshCache,
+  // useAutoRefreshCache, // ❌ DISABLED: Depends on disabled cache hooks
   useOptimisticAvailability,
   useAvailabilityPerformance,
 } from "./useAvailability";

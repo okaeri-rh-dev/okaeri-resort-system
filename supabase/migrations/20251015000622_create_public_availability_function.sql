@@ -95,20 +95,21 @@ BEGIN
   ),
   occupied_per_day AS (
     -- Count booked units per day (only from Available units)
-    -- Currently supports single-unit bookings (bookings.unit_id)
-    -- TODO: Add multi-unit support when booking_units table is created
+    -- Supports unified multi-unit architecture via booking_units junction table
     SELECT
       ds.date,
-      COUNT(DISTINCT b.unit_id)::INT as booked_count
+      COUNT(DISTINCT bu.unit_id)::INT as booked_count
     FROM date_series ds
     LEFT JOIN bookings b ON (
-      b.unit_id IN (SELECT unit_id FROM units WHERE unit_status = 'Available')
-      AND b.booking_status IN ('Confirmed', 'CheckedIn', 'Hold')
+      b.booking_status IN ('Confirmed', 'CheckedIn', 'Hold')
       -- Hold status counts as occupied to prevent overbooking
       -- Guest occupies unit from check-in (inclusive) to check-out (exclusive)
       AND ds.date >= b.check_in::date
       AND ds.date < b.check_out::date  -- Checkout day is available
-      AND b.unit_id IS NOT NULL  -- Only single-unit bookings for now
+    )
+    LEFT JOIN booking_units bu ON (
+      bu.booking_id = b.booking_id
+      AND bu.unit_id IN (SELECT unit_id FROM units WHERE unit_status = 'Available')
     )
     GROUP BY ds.date
   ),
@@ -149,4 +150,4 @@ GRANT EXECUTE ON FUNCTION get_public_aggregate_availability(DATE, DATE) TO authe
 -- FUNCTION METADATA
 -- ============================================================================
 COMMENT ON FUNCTION get_public_aggregate_availability(DATE, DATE) IS
-  'Returns aggregated availability counts for public calendar (bookings + blackouts). Fixed validation to allow current month queries (v1.1). Uses Option C hybrid model: static unit_status + date-specific blackouts. Currently supports single-unit bookings via bookings.unit_id. Multi-unit support will be added when booking_units table is created. SECURITY DEFINER bypasses RLS to safely expose availability without revealing guest data. VIEW-ONLY: No pricing, no guest information, no booking details exposed.';
+  'Returns aggregated availability counts for public calendar (bookings + blackouts). Fixed validation to allow current month queries (v1.1). Uses Option C hybrid model: static unit_status + date-specific blackouts. Supports unified multi-unit architecture via booking_units junction table (compatible with Oct 17, 2025 schema migration). SECURITY DEFINER bypasses RLS to safely expose availability without revealing guest data. VIEW-ONLY: No pricing, no guest information, no booking details exposed.';
