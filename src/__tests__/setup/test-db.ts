@@ -29,8 +29,13 @@ export const testSupabaseAdmin = createClient<Database>(TEST_SUPABASE_URL, TEST_
 /**
  * Cleanup helper - call in beforeEach/afterAll
  * Deletes test data in reverse dependency order to avoid foreign key violations
+ *
+ * Options:
+ * - includeTestFixtures: if true, also deletes test units/guests with recognizable test patterns
+ *   Patterns: unit_name/code contain 'Test', 'test', 'Perf', or start with 'PF'
+ *             guest email contains 'test' or 'perf-test'
  */
-export async function cleanupTestData() {
+export async function cleanupTestData(options?: { includeTestFixtures?: boolean }) {
   if (!testSupabaseAdmin) {
     console.warn("Test Supabase admin client not available");
     return;
@@ -69,8 +74,35 @@ export async function cleanupTestData() {
       .delete()
       .neq("booking_id", "00000000-0000-0000-0000-000000000000");
 
-    // Note: Don't delete units or guests as they may be test fixtures
-    // Only delete if specifically created in tests
+    // Cleanup test fixtures if requested (pattern-based, safe for real data)
+    if (options?.includeTestFixtures) {
+      // Delete test units by pattern (test names/codes)
+      // Patterns: "Test Unit", "Perf Test", codes like "TEST-", "T1-", "T2-", "T3-", "PF"
+      const { data: testUnits, error: unitsError } = await testSupabaseAdmin
+        .from("units")
+        .select("unit_id")
+        .or(
+          `unit_name.ilike.%Test Unit%,unit_name.ilike.%Perf Test%,unit_code.ilike.TEST-%,unit_code.ilike.T1-%,unit_code.ilike.T2-%,unit_code.ilike.T3-%,unit_code.ilike.PF%`
+        );
+
+      if (!unitsError && testUnits && testUnits.length > 0) {
+        const unitIds = testUnits.map((u) => u.unit_id);
+        await testSupabaseAdmin.from("units").delete().in("unit_id", unitIds);
+        console.log(`Cleaned up ${unitIds.length} test units`);
+      }
+
+      // Delete test guests by pattern (test emails)
+      const { data: testGuests, error: guestsError } = await testSupabaseAdmin
+        .from("guests")
+        .select("guest_id")
+        .or(`email.ilike.%test%@example.com,email.ilike.%perf-test%@example.com`);
+
+      if (!guestsError && testGuests && testGuests.length > 0) {
+        const guestIds = testGuests.map((g) => g.guest_id);
+        await testSupabaseAdmin.from("guests").delete().in("guest_id", guestIds);
+        console.log(`Cleaned up ${guestIds.length} test guests`);
+      }
+    }
 
     console.log("Test data cleanup completed");
   } catch (error) {

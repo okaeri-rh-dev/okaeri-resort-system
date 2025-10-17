@@ -31,6 +31,11 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
       console.log("⏭️  Skipping performance tests - test database not configured");
       return;
     }
+
+    // Cleanup any orphaned test data from previous interrupted runs
+    // This ensures a clean slate even if previous tests failed
+    await cleanupTestData({ includeTestFixtures: true });
+
     // Create 20 test units for comprehensive testing with unique codes
     // Both unit_name and unit_code have unique constraints, so make them unique
     // unit_code is VARCHAR(10), so use last 5 digits of timestamp
@@ -97,15 +102,8 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
   afterAll(async () => {
     if (!shouldRun) return;
 
-    // Cleanup test data
-    await cleanupTestData();
-
-    if (testUnitIds.length > 0) {
-      await supabase.from("units").delete().in("unit_id", testUnitIds);
-    }
-    if (testGuestId) {
-      await supabase.from("guests").delete().eq("guest_id", testGuestId);
-    }
+    // Cleanup test data (now includes test fixtures cleanup)
+    await cleanupTestData({ includeTestFixtures: true });
   });
 
   describe("Availability Checking Performance", () => {

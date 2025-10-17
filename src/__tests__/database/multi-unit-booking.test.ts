@@ -36,6 +36,10 @@ describe("Multi-Unit Booking Database Functions", () => {
       return;
     }
 
+    // Cleanup any orphaned test data from previous interrupted runs
+    // This ensures a clean slate even if previous tests failed
+    await cleanupTestData({ includeTestFixtures: true });
+
     // Create test units using helper with unique codes to avoid constraint violations
     // Both unit_name and unit_code have unique constraints, so make them unique
     // Use crypto.randomUUID() for true uniqueness in parallel tests
@@ -86,22 +90,14 @@ describe("Multi-Unit Booking Database Functions", () => {
   afterAll(async () => {
     if (!shouldRun) return;
 
-    // Cleanup using helper
-    await cleanupTestData();
-
-    // Cleanup test units and guest
-    if (testUnitIds.length > 0) {
-      await supabase.from("units").delete().in("unit_id", testUnitIds);
-    }
-    if (testGuestId) {
-      await supabase.from("guests").delete().eq("guest_id", testGuestId);
-    }
+    // Cleanup using helper (now includes test fixtures cleanup)
+    await cleanupTestData({ includeTestFixtures: true });
   });
 
   beforeEach(async () => {
     if (!shouldRun) return;
 
-    // Clean up bookings before each test
+    // Clean up bookings before each test (but keep units/guests for reuse)
     await cleanupTestData();
   });
 
