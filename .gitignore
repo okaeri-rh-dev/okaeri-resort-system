@@ -222,3 +222,7 @@ src/routeTree.gen.ts
 docs/sample-ui
 
 bundle-stats.html
+
+# Database backups (contains production data)
+backups/
+*.sql.backup*
