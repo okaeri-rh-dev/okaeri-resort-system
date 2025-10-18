@@ -1,15 +1,16 @@
-import { useMemo } from "react";
-import {
-  startOfMonth,
-  endOfMonth,
-  addMonths,
-  isWithinInterval,
-  eachDayOfInterval,
-  min,
-  max,
-} from "date-fns";
 import type { Booking } from "@/types";
-import { utcToResortTime, getCalendarDateKey } from "@/utils/date-helpers";
+import { getCalendarDateKey, utcToResortTime } from "@/utils/date-helpers";
+import {
+  addMonths,
+  eachDayOfInterval,
+  endOfMonth,
+  isWithinInterval,
+  max,
+  min,
+  startOfMonth,
+  subDays,
+} from "date-fns";
+import { useMemo } from "react";
 
 interface BookingsByDate {
   [date: string]: Booking[];
@@ -68,7 +69,7 @@ export function useCalendarBookings(
       // Use eachDayOfInterval for efficient date iteration
       const bookingDays = eachDayOfInterval({
         start: effectiveStart,
-        end: effectiveEnd,
+        end: subDays(effectiveEnd, 1),
       });
 
       // Process each day efficiently
