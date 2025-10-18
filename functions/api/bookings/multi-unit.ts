@@ -80,6 +80,14 @@ export const onRequestPost = async (context: {
   const { request, env, waitUntil } = context;
   const startTime = Date.now();
 
+  // [DEBUG] Temporary logging to diagnose environment variable issue
+  console.log("[DEBUG] Environment check:", {
+    hasServiceRole: !!env.SUPABASE_SERVICE_ROLE_KEY,
+    keyPrefix: env.SUPABASE_SERVICE_ROLE_KEY?.substring(0, 15) + "...",
+    url: env.SUPABASE_URL,
+    hasAnonKey: !!env.SUPABASE_ANON_KEY,
+  });
+
   // CORS headers
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
