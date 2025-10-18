@@ -12,10 +12,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import {
-  sanitizeTextWorker,
-  sanitizeNameWorker,
   sanitizeEmailWorker,
+  sanitizeNameWorker,
   sanitizePhoneWorker,
+  sanitizeTextWorker,
 } from "../../../src/lib/security/sanitize-worker";
 import { logBookingCreated } from "../../lib/audit-logger-workers";
 
@@ -79,14 +79,6 @@ export const onRequestPost = async (context: {
 }): Promise<Response> => {
   const { request, env, waitUntil } = context;
   const startTime = Date.now();
-
-  // [DEBUG] Temporary logging to diagnose environment variable issue
-  console.log("[DEBUG] Environment check:", {
-    hasServiceRole: !!env.SUPABASE_SERVICE_ROLE_KEY,
-    keyPrefix: env.SUPABASE_SERVICE_ROLE_KEY?.substring(0, 15) + "...",
-    url: env.SUPABASE_URL,
-    hasAnonKey: !!env.SUPABASE_ANON_KEY,
-  });
 
   // CORS headers
   const corsHeaders = {
@@ -186,7 +178,12 @@ export const onRequestPost = async (context: {
     const userId = (request as any).user?.id || undefined;
 
     // Create Supabase client for audit logging
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
 
     // Log audit event (Phase 4.5: Compliance requirement)
     await logBookingCreated(supabase, booking, userId, request);
@@ -265,7 +262,12 @@ async function checkMultiUnitAvailability(
   checkIn: string,
   checkOut: string
 ): Promise<Array<{ unit_id: string; is_available: boolean }>> {
-  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 
   const { data, error } = await supabase.rpc("check_multi_unit_availability", {
     p_unit_ids: unitIds,
@@ -281,10 +283,20 @@ async function checkMultiUnitAvailability(
  * Create multi-unit booking using database function
  */
 async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
-  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 
   // Generate booking reference
-  const { data: refData } = await supabase.rpc("generate_booking_reference");
+  const { data: refData, error: refError } = await supabase.rpc("generate_booking_reference");
+
+  if (refError) {
+    console.error("Error generating booking reference:", refError.message);
+  }
+
   const bookingReference = refData || `BK-${Date.now()}`;
 
   // Calculate pricing for each unit (reuse pricing logic)
@@ -336,7 +348,9 @@ async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
     p_guest_id: data.primary_guest.guest_id || null,
   });
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
 
   // Fetch created booking with units
   const { data: createdBooking } = await supabase

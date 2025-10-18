@@ -114,7 +114,12 @@ export const onRequestPost = async (context: {
     // Sanitize notes
     const sanitizedNotes = data.notes ? sanitizeTextWorker(data.notes) : undefined;
 
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
 
     // Fetch unit data for pricing calculations
     const { data: unitData, error: unitFetchError } = await supabase

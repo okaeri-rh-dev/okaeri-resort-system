@@ -124,6 +124,10 @@ export const onRequestGet = async (context: { request: Request; env: Env }): Pro
       global: {
         headers: authHeader ? { Authorization: authHeader } : {},
       },
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
     });
 
     const { data, error } = await supabase.rpc("check_multi_unit_availability", {

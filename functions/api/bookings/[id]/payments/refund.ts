@@ -97,7 +97,12 @@ export const onRequestPost = async (context: {
     }
 
     const data = validationResult.data;
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
 
     // 1. Get most recent payment (from spec lines 1211-1219)
     const { data: payment, error: paymentError } = await supabase

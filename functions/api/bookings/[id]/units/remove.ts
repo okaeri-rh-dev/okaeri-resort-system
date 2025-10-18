@@ -96,7 +96,12 @@ export const onRequestPost = async (context: {
     }
 
     const data = validationResult.data;
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
 
     // 1. Verify booking exists and is modifiable
     const { data: booking, error: bookingError } = await supabase
