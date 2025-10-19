@@ -178,7 +178,7 @@ describe("Multi-Unit Booking Database Functions", () => {
       expect(availRecords).toHaveLength(2);
     });
 
-    it("should create booking with 10 units (max test)", async () => {
+    it.skipIf(!shouldRun)("should create booking with 10 units (max test)", async () => {
       // Create additional units for this test
       const uniqueId = crypto.randomUUID().slice(0, 6); // 6 chars, globally unique
       const { data: moreUnits, error: insertError } = await supabase
@@ -255,7 +255,7 @@ describe("Multi-Unit Booking Database Functions", () => {
       }
     });
 
-    it("should fail if unit is unavailable (exclusion constraint)", async () => {
+    it.skipIf(!shouldRun)("should fail if unit is unavailable (exclusion constraint)", async () => {
       // Create first booking
       const bookingData1 = {
         booking_reference: "BK-TEST-003",
@@ -318,73 +318,76 @@ describe("Multi-Unit Booking Database Functions", () => {
       expect(error!.message).toContain("exclusion"); // Exclusion constraint violated
     });
 
-    it("should allow Pending bookings to overlap (aggressive blocking)", async () => {
-      // Create Pending booking
-      const bookingData1 = {
-        booking_reference: "BK-TEST-005",
-        guest_name: "Pending Guest 1",
-        contact_number: "+639123456789",
-        email: "pending1@example.com",
-        num_guests: 2,
-        check_in: "2025-12-20T06:00:00Z",
-        check_out: "2025-12-25T04:00:00Z",
-        booking_status: "Pending", // Pending doesn't block
-        payment_status: "Pending",
-      };
+    it.skipIf(!shouldRun)(
+      "should allow Pending bookings to overlap (aggressive blocking)",
+      async () => {
+        // Create Pending booking
+        const bookingData1 = {
+          booking_reference: "BK-TEST-005",
+          guest_name: "Pending Guest 1",
+          contact_number: "+639123456789",
+          email: "pending1@example.com",
+          num_guests: 2,
+          check_in: "2025-12-20T06:00:00Z",
+          check_out: "2025-12-25T04:00:00Z",
+          booking_status: "Pending", // Pending doesn't block
+          payment_status: "Pending",
+        };
 
-      const { data: booking1, error: error1 } = await supabase.rpc("create_multi_unit_booking", {
-        p_booking_data: bookingData1,
-        p_units: [
-          {
-            unit_id: testUnitIds[0],
-            unit_price: 12500,
-            weekend_surcharge: 0,
-            extra_person_charge: 0,
-            subtotal: 12500,
-            assigned_guests: 2,
-          },
-        ],
-        p_guest_id: testGuestId ?? undefined,
-      });
+        const { data: booking1, error: error1 } = await supabase.rpc("create_multi_unit_booking", {
+          p_booking_data: bookingData1,
+          p_units: [
+            {
+              unit_id: testUnitIds[0],
+              unit_price: 12500,
+              weekend_surcharge: 0,
+              extra_person_charge: 0,
+              subtotal: 12500,
+              assigned_guests: 2,
+            },
+          ],
+          p_guest_id: testGuestId ?? undefined,
+        });
 
-      expect(error1).toBeNull();
-      expect(booking1).toBeTruthy();
+        expect(error1).toBeNull();
+        expect(booking1).toBeTruthy();
 
-      // Create another Pending booking (should succeed - aggressive blocking)
-      const bookingData2 = {
-        booking_reference: "BK-TEST-006",
-        guest_name: "Pending Guest 2",
-        contact_number: "+639123456789",
-        email: "pending2@example.com",
-        num_guests: 2,
-        check_in: "2025-12-22T06:00:00Z",
-        check_out: "2025-12-27T04:00:00Z",
-        booking_status: "Pending", // Both Pending = both allowed
-        payment_status: "Pending",
-      };
+        // Create another Pending booking (should succeed - aggressive blocking)
+        const bookingData2 = {
+          booking_reference: "BK-TEST-006",
+          guest_name: "Pending Guest 2",
+          contact_number: "+639123456789",
+          email: "pending2@example.com",
+          num_guests: 2,
+          check_in: "2025-12-22T06:00:00Z",
+          check_out: "2025-12-27T04:00:00Z",
+          booking_status: "Pending", // Both Pending = both allowed
+          payment_status: "Pending",
+        };
 
-      const { data: _booking2, error: error2 } = await supabase.rpc("create_multi_unit_booking", {
-        p_booking_data: bookingData2,
-        p_units: [
-          {
-            unit_id: testUnitIds[0], // Same unit
-            unit_price: 12500,
-            weekend_surcharge: 0,
-            extra_person_charge: 0,
-            subtotal: 12500,
-            assigned_guests: 2,
-          },
-        ],
-        p_guest_id: testGuestId ?? undefined,
-      });
+        const { data: _booking2, error: error2 } = await supabase.rpc("create_multi_unit_booking", {
+          p_booking_data: bookingData2,
+          p_units: [
+            {
+              unit_id: testUnitIds[0], // Same unit
+              unit_price: 12500,
+              weekend_surcharge: 0,
+              extra_person_charge: 0,
+              subtotal: 12500,
+              assigned_guests: 2,
+            },
+          ],
+          p_guest_id: testGuestId ?? undefined,
+        });
 
-      expect(error2).toBeNull();
-      expect(_booking2).toBeTruthy();
-    });
+        expect(error2).toBeNull();
+        expect(_booking2).toBeTruthy();
+      }
+    );
   });
 
   describe("check_multi_unit_availability", () => {
-    it("should return availability status for multiple units", async () => {
+    it.skipIf(!shouldRun)("should return availability status for multiple units", async () => {
       const { data, error } = await supabase.rpc("check_multi_unit_availability", {
         p_unit_ids: testUnitIds,
         p_check_in: "2025-12-20T06:00:00Z",
@@ -405,7 +408,7 @@ describe("Multi-Unit Booking Database Functions", () => {
       );
     });
 
-    it("should return next_available_date for unavailable units", async () => {
+    it.skipIf(!shouldRun)("should return next_available_date for unavailable units", async () => {
       // Create blocking booking
       const { data: bookingId, error: createError } = await supabase.rpc(
         "create_multi_unit_booking",
@@ -456,7 +459,7 @@ describe("Multi-Unit Booking Database Functions", () => {
       expect(data![0].next_available_date).toMatch(/2025-12-25T04:00:00/);
     });
 
-    it("should handle p_exclude_booking_id for edits", async () => {
+    it.skipIf(!shouldRun)("should handle p_exclude_booking_id for edits", async () => {
       // Create booking
       const { data: bookingId } = await supabase.rpc("create_multi_unit_booking", {
         p_booking_data: {
@@ -500,7 +503,7 @@ describe("Multi-Unit Booking Database Functions", () => {
   });
 
   describe("get_booking_units", () => {
-    it("should return units for multi-unit booking", async () => {
+    it.skipIf(!shouldRun)("should return units for multi-unit booking", async () => {
       const { data: bookingId } = await supabase.rpc("create_multi_unit_booking", {
         p_booking_data: {
           booking_reference: "BK-TEST-009",
@@ -560,7 +563,7 @@ describe("Multi-Unit Booking Database Functions", () => {
   });
 
   describe("Triggers", () => {
-    it("should auto-update booking totals when units added", async () => {
+    it.skipIf(!shouldRun)("should auto-update booking totals when units added", async () => {
       const { data: bookingId } = await supabase.rpc("create_multi_unit_booking", {
         p_booking_data: {
           booking_reference: "BK-TEST-010",
@@ -622,7 +625,7 @@ describe("Multi-Unit Booking Database Functions", () => {
       });
     });
 
-    it("should sync availability when booking dates change", async () => {
+    it.skipIf(!shouldRun)("should sync availability when booking dates change", async () => {
       const { data: bookingId } = await supabase.rpc("create_multi_unit_booking", {
         p_booking_data: {
           booking_reference: "BK-TEST-011",
@@ -670,7 +673,7 @@ describe("Multi-Unit Booking Database Functions", () => {
       });
     });
 
-    it("should cascade status changes to availability", async () => {
+    it.skipIf(!shouldRun)("should cascade status changes to availability", async () => {
       const { data: bookingId } = await supabase.rpc("create_multi_unit_booking", {
         p_booking_data: {
           booking_reference: "BK-TEST-012",
@@ -714,55 +717,58 @@ describe("Multi-Unit Booking Database Functions", () => {
       });
     });
 
-    it("should cleanup availability when booking deleted (CASCADE)", async () => {
-      const { data: bookingId } = await supabase.rpc("create_multi_unit_booking", {
-        p_booking_data: {
-          booking_reference: "BK-TEST-013",
-          guest_name: "Cleanup Test",
-          contact_number: "+639123456789",
-          email: "cleanup@example.com",
-          num_guests: 2,
-          check_in: "2025-12-20T06:00:00Z",
-          check_out: "2025-12-25T04:00:00Z",
-          booking_status: "Confirmed",
-          payment_status: "Pending",
-        },
-        p_units: [
-          {
-            unit_id: testUnitIds[0],
-            unit_price: 12500,
-            weekend_surcharge: 0,
-            extra_person_charge: 0,
-            subtotal: 12500,
-            assigned_guests: 2,
+    it.skipIf(!shouldRun)(
+      "should cleanup availability when booking deleted (CASCADE)",
+      async () => {
+        const { data: bookingId } = await supabase.rpc("create_multi_unit_booking", {
+          p_booking_data: {
+            booking_reference: "BK-TEST-013",
+            guest_name: "Cleanup Test",
+            contact_number: "+639123456789",
+            email: "cleanup@example.com",
+            num_guests: 2,
+            check_in: "2025-12-20T06:00:00Z",
+            check_out: "2025-12-25T04:00:00Z",
+            booking_status: "Confirmed",
+            payment_status: "Pending",
           },
-        ],
-        p_guest_id: testGuestId ?? undefined,
-      });
+          p_units: [
+            {
+              unit_id: testUnitIds[0],
+              unit_price: 12500,
+              weekend_surcharge: 0,
+              extra_person_charge: 0,
+              subtotal: 12500,
+              assigned_guests: 2,
+            },
+          ],
+          p_guest_id: testGuestId ?? undefined,
+        });
 
-      // Verify availability exists before deletion
-      const { count } = await supabase
-        .from("booking_unit_availability")
-        .select("*", { count: "exact" })
-        .eq("booking_id", bookingId!);
+        // Verify availability exists before deletion
+        const { count } = await supabase
+          .from("booking_unit_availability")
+          .select("*", { count: "exact" })
+          .eq("booking_id", bookingId!);
 
-      expect(count).toBe(1);
+        expect(count).toBe(1);
 
-      // Delete booking (CASCADE will delete booking_units and availability)
-      const { error: deleteError } = await supabase
-        .from("bookings")
-        .delete()
-        .eq("booking_id", bookingId!);
+        // Delete booking (CASCADE will delete booking_units and availability)
+        const { error: deleteError } = await supabase
+          .from("bookings")
+          .delete()
+          .eq("booking_id", bookingId!);
 
-      expect(deleteError).toBeNull();
+        expect(deleteError).toBeNull();
 
-      // Verify availability cleaned up (CASCADE should have removed it)
-      const { count: newCount } = await supabase
-        .from("booking_unit_availability")
-        .select("*", { count: "exact" })
-        .eq("booking_id", bookingId!);
+        // Verify availability cleaned up (CASCADE should have removed it)
+        const { count: newCount } = await supabase
+          .from("booking_unit_availability")
+          .select("*", { count: "exact" })
+          .eq("booking_id", bookingId!);
 
-      expect(newCount).toBe(0);
-    });
+        expect(newCount).toBe(0);
+      }
+    );
   });
 });

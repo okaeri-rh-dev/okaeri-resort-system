@@ -6,7 +6,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig(({ mode }) => {
   // Load env file for tests - try .env.test first, then .env.local, then .env
-  const env = loadEnv(mode || "development", process.cwd(), "");
+  const env = loadEnv(mode || "test", process.cwd(), "");
 
   // Override with test-specific values
   const testEnv = {
