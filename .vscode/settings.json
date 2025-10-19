@@ -79,7 +79,8 @@
     "**/node_modules/**": true,
     "**/dist/**": true,
     "**/.next/**": true,
-    "**/coverage/**": true
+    "**/coverage/**": true,
+    "**/routeTree.gen.ts": true
   },
   "files.associations": {
     "*.css": "tailwindcss",
@@ -100,7 +101,8 @@
     "**/.git": true,
     "**/.turbo": true,
     "**/package-lock.json": true,
-    "**/pnpm-lock.yaml": true
+    "**/pnpm-lock.yaml": true,
+    "**/routeTree.gen.ts": true
   },
 
   // Git Configuration
@@ -288,5 +290,8 @@
       "italic": false
     }
   ],
-  "prettier.useEditorConfig": false
+  "prettier.useEditorConfig": false,
+  "files.readonlyInclude": {
+    "**/routeTree.gen.ts": true
+  }
 }

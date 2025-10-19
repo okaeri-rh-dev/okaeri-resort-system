@@ -70,6 +70,7 @@ okaeri-resort-system/
 │   │   ├── guest-booking/          # Public booking (unauthenticated)
 │   │   └── monitoring/             # Health & quota checks
 │   ├── cron/                       # Scheduled tasks
+│   ├── lib/                        # Serverless helpers (e.g., supabase-admin)
 │   └── _middleware.ts              # Global auth, CORS, rate limiting
 │
 ├── 🗄️ database/                     # PostgreSQL schema & migrations
@@ -79,6 +80,16 @@ okaeri-resort-system/
 │   │   └── backups/                # Schema backups
 │   └── scripts/                    # Database utilities
 │       └── diagnostics/            # Health check scripts
+│
+├── 🧰 supabase/                     # Local Supabase config, migrations, seeds
+│   ├── config.toml                 # Supabase CLI project config
+│   ├── migrations/                 # Remote schema snapshots/migrations
+│   └── seed.sql                    # Seed data for local dev
+│
+├── 🛠️ scripts/                      # Deployment & maintenance scripts
+│   ├── deploy.sh                   # Deploy automation
+│   ├── run-migrations.sh           # DB migration runner
+│   └── README.md                   # Scripts usage guide
 │
 ├── 📚 docs/                         # Comprehensive documentation (53 README files)
 │   ├── initial/                    # Architecture & planning
@@ -93,10 +104,21 @@ okaeri-resort-system/
 │   ├── performance/                # Performance benchmarks
 │   └── security/                   # Security & validation tests
 │
+├── 🗃️ backups/                      # Project-level backups
+├── 🗂️ types/                        # Global TypeScript types (build/shared)
+├── 🗂️ public/                       # Static assets served by Vite
+├── 📦 dist/                         # Production build output (generated)
+├── 📊 test-results/                 # Test artifacts (generated)
+│
 └── ⚙️ Configuration Files           # Root-level tooling setup
     ├── vite.config.ts              # Build configuration
     ├── tsconfig.json               # TypeScript settings
+    ├── tsconfig.app.json           # TS app settings (monorepo-friendly)
+    ├── playwright.config.ts        # Playwright test runner config
+    ├── lint-staged.config.js       # Lint-staged configuration
+    ├── bundle-stats.html           # Bundle analysis report (generated)
     ├── CLAUDE.md                   # AI agent instructions
+    ├── index.html                  # Vite HTML entry
     └── package.json                # Dependencies & scripts
 ```
 
@@ -181,14 +203,27 @@ okaeri-resort-system/
 ├── README.md                # Project overview & quick start
 ├── PROJECT_STRUCTURE.md     # This file
 │
+├── components.json          # shadcn/ui component registry
+├── eslint.config.js         # ESLint v9 flat config
+├── lint-staged.config.js    # Lint-staged configuration
+├── playwright.config.ts     # Playwright configuration
 ├── package.json             # Dependencies & npm scripts
 ├── tsconfig.json            # TypeScript configuration (strict mode)
+├── tsconfig.app.json        # App-specific TS config
 ├── vite.config.ts           # Vite build configuration (manual chunking)
 ├── vitest.config.ts         # Test runner configuration
-├── eslint.config.js         # ESLint v9 flat config
 ├── wrangler.toml            # Cloudflare Workers configuration
 │
-└── components.json          # shadcn/ui component registry
+├── index.html               # Vite HTML entry
+├── bundle-stats.html        # Bundle analysis report (generated)
+│
+├── dist/                    # Production build output (generated)
+├── test-results/            # Test artifacts (generated)
+├── backups/                 # Project-level backups
+├── public/                  # Static assets
+├── scripts/                 # Deployment & maintenance scripts
+├── supabase/                # Local Supabase project (CLI)
+└── types/                   # Global TypeScript types (build/shared)
 ```
 
 **Key Configuration Files:**
@@ -314,6 +349,8 @@ lib/
 │
 ├── 🗄️ supabase.ts                   # Typed Database Client
 │   └── Helpers: db.bookings.*, db.units.*, db.guests.*
+│
+├── 🛠️ supabase-admin.ts             # Admin client (service role; server-only)
 │
 ├── 📝 audit-logger.ts               # Audit Trail System
 │   └── logAuditEvent() - Compliance logging
@@ -545,6 +582,9 @@ functions/
 │   │   └── README.md       # Monitoring API docs
 │   │
 │   └── health.ts           # Health check endpoint
+│
+├── lib/                    # Serverless helpers (admin clients, utils)
+│   └── supabase-admin.ts   # Supabase admin client (service role)
 │
 └── cron/                   # Scheduled Tasks
     └── (cron jobs)         # Automated cleanup, monitoring
@@ -947,4 +987,4 @@ psql $DATABASE_URL < database/migrations/XXX-feature.sql  # Apply migration
 
 **Built with ❤️ for the Philippine hospitality industry**
 
-_Last updated: 2025-10-09_
+_Last updated: 2025-10-19_
