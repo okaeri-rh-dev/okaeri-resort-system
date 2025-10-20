@@ -324,6 +324,7 @@ export async function shouldRunDatabaseTests(): Promise<boolean> {
   }
 
   // Use admin client for availability check (bypasses RLS)
+  // Note: Database restart is handled by global-setup.ts before tests run
   for (let i = 0; i < 2; i++) {
     try {
       const { error } = await testSupabaseAdmin.from("units").select("unit_id").limit(1);
