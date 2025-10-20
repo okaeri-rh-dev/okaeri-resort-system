@@ -3,6 +3,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import DOMPurify from "dompurify";
 import { Calendar, CreditCard, Mail, Phone, Upload, Users } from "lucide-react";
@@ -600,8 +601,16 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
             </Button>
 
             <p className="text-muted-foreground mt-2 text-center text-xs">
-              By submitting, you agree to our terms and conditions. This site is protected by
-              Cloudflare Turnstile.
+              By submitting, you agree to our{" "}
+              <Link
+                to="/terms-and-conditions"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:text-primary/80 underline transition-colors"
+              >
+                terms and conditions
+              </Link>
+              .
             </p>
           </CardContent>
         </Card>
