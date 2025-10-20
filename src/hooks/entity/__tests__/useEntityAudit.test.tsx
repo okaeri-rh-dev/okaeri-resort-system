@@ -1,11 +1,14 @@
 // src/hooks/entity/__tests__/useEntityAudit.test.ts
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEntityAudit } from "../useEntityAudit";
-import { supabase } from "@/lib/supabase";
 import type { ReactNode } from "react";
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderHook, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { supabase } from "@/lib/supabase";
+
+import { useEntityAudit } from "../useEntityAudit";
 
 // Mock Supabase
 vi.mock("@/lib/supabase", () => ({

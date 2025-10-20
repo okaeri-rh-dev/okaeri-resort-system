@@ -1,9 +1,11 @@
 // src/components/audit/__tests__/AuditDiffViewer.test.tsx
 
-import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { AuditDiffViewer } from "../AuditDiffViewer";
+import { describe, expect, it, vi } from "vitest";
+
 import type { AuditLog } from "@/types/audit.types";
+
+import { AuditDiffViewer } from "../AuditDiffViewer";
 
 // Mock SafeAuditText to avoid DOMPurify issues in tests
 vi.mock("../SafeAuditText", () => ({

@@ -1,6 +1,7 @@
 // src/hooks/entity/useEntityNavigation.ts
 
 import { useNavigate } from "@tanstack/react-router";
+
 import type { EntityType } from "@/types/entity-detail.types";
 
 /**

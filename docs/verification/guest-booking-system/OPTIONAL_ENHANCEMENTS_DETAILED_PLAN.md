@@ -397,8 +397,8 @@ CREATE TABLE email_template_versions (
 ```typescript
 // src/i18n/config.ts
 import i18n from "i18next";
-import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
+import { initReactI18next } from "react-i18next";
 
 const resources = {
   en: {
@@ -469,7 +469,7 @@ const LocalizedGuestForm: React.FC = () => {
 // src/service-worker.ts
 import { precacheAndRoute } from "workbox-precaching";
 import { registerRoute } from "workbox-routing";
-import { StaleWhileRevalidate, CacheFirst } from "workbox-strategies";
+import { CacheFirst, StaleWhileRevalidate } from "workbox-strategies";
 
 // Precache static assets
 precacheAndRoute(self.__WB_MANIFEST);
@@ -608,8 +608,8 @@ CREATE TABLE sms_preferences (
 
 ```typescript
 // functions/api/validate-receipt.ts
-import { createWorker } from "tesseract.js";
 import OpenAI from "openai";
+import { createWorker } from "tesseract.js";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 

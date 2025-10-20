@@ -137,7 +137,7 @@ export default defineConfig({
 
 ```typescript
 // e2e/multi-unit-booking-flow.spec.ts
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("Multi-Unit Booking Complete Flow", () => {
   test.beforeEach(async ({ page }) => {
@@ -295,7 +295,7 @@ test.describe("Multi-Unit Booking Complete Flow", () => {
 
 ```typescript
 // e2e/multi-unit-availability.spec.ts
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("Multi-Unit Availability Search", () => {
   test("should show real-time availability for multiple units", async ({ page }) => {
@@ -371,7 +371,7 @@ test.describe("Multi-Unit Availability Search", () => {
 
 ```typescript
 // e2e/backwards-compatibility.spec.ts
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("Single-Unit Bookings", () => {
   test("should create single-unit booking correctly", async ({ page }) => {
@@ -715,9 +715,10 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 
 ```typescript
 // tests/performance/db-benchmarks.test.ts
-import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { createClient } from "@supabase/supabase-js";
 import { performance } from "perf_hooks";
+
+import { createClient } from "@supabase/supabase-js";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
@@ -942,7 +943,8 @@ rules:
 
 ```typescript
 // tests/security/audit-checklist.test.ts
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
+
 import { supabase } from "@/lib/supabase";
 
 describe("Security Audit Checklist", () => {

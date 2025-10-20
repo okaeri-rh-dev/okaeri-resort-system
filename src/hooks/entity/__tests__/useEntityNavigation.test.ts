@@ -1,9 +1,10 @@
 // src/hooks/entity/__tests__/useEntityNavigation.test.ts
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
-import { useEntityNavigation } from "../useEntityNavigation";
 import { useNavigate } from "@tanstack/react-router";
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { useEntityNavigation } from "../useEntityNavigation";
 
 // Mock TanStack Router
 vi.mock("@tanstack/react-router", () => ({

@@ -3,8 +3,9 @@
  * Includes security measures against common attacks
  */
 
-import { z } from "zod";
 import DOMPurify from "dompurify";
+import { z } from "zod";
+
 import { isDisposableEmail } from "../disposable-emails";
 
 /**

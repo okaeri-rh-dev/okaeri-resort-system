@@ -1,3 +1,5 @@
+import { CreditCard } from "lucide-react";
+
 import {
   FormControl,
   FormDescription,
@@ -6,7 +8,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -14,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CreditCard } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 import type { StepProps } from "../types";
 
@@ -26,14 +27,14 @@ export function PaymentDetails({ form }: StepProps) {
         name="payment_method"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base sm:text-sm font-medium">Payment Method</FormLabel>
+            <FormLabel className="text-base font-medium sm:text-sm">Payment Method</FormLabel>
             <Select
               onValueChange={field.onChange}
               value={field.value}
               defaultValue={field.value || ""}
             >
               <FormControl>
-                <SelectTrigger className="h-12 sm:h-10 text-base sm:text-sm touch-manipulation">
+                <SelectTrigger className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm">
                   <div className="flex items-center">
                     <CreditCard className="mr-2 h-5 w-5 sm:h-4 sm:w-4" />
                     <SelectValue placeholder="Select payment method" />
@@ -61,13 +62,13 @@ export function PaymentDetails({ form }: StepProps) {
         name="special_requests"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base sm:text-sm font-medium">
+            <FormLabel className="text-base font-medium sm:text-sm">
               Special Requests (Optional)
             </FormLabel>
             <FormControl>
               <Textarea
                 placeholder="Any special requests or notes for your stay..."
-                className="min-h-[120px] text-base sm:text-sm touch-manipulation resize-none"
+                className="min-h-[120px] touch-manipulation resize-none text-base sm:text-sm"
                 {...field}
               />
             </FormControl>

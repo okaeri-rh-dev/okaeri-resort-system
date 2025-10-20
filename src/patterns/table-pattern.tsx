@@ -1,6 +1,14 @@
-import { ReactNode, memo, useCallback, useState } from "react";
+import { memo, ReactNode, useCallback, useState } from "react";
+
+import { ChevronDown, ChevronUp, MoreHorizontal } from "lucide-react";
+
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { DataFetchingWrapper } from "./data-fetching-pattern";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -9,14 +17,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ChevronUp, ChevronDown, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+import { DataFetchingWrapper } from "./data-fetching-pattern";
 
 export interface Column<T> {
   key: string;
@@ -80,7 +83,7 @@ export function TableWrapper<T>({
       error={error}
       isEmpty={(d) => d.length === 0}
       emptyComponent={
-        <div className="text-center py-12">
+        <div className="py-12 text-center">
           <p className="text-gray-500">{emptyMessage}</p>
         </div>
       }
@@ -200,7 +203,7 @@ export function TableActionMenu({ actions }: ActionMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="p-1 rounded hover:bg-gray-100">
+        <button className="rounded p-1 hover:bg-gray-100">
           <MoreHorizontal className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>

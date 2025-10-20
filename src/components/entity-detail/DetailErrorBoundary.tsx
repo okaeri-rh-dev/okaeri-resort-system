@@ -1,7 +1,8 @@
 // src/components/entity-detail/DetailErrorBoundary.tsx
 
-import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 /**
  * Props for DetailErrorBoundary component
@@ -37,7 +38,7 @@ export function DetailErrorBoundary({
 }: DetailErrorBoundaryProps) {
   return (
     <div className="container mx-auto py-12">
-      <div className="max-w-md mx-auto text-center space-y-4">
+      <div className="mx-auto max-w-md space-y-4 text-center">
         {/* Error Icon */}
         <div className="flex justify-center">
           <div className="rounded-full bg-red-100 p-3">
@@ -54,7 +55,7 @@ export function DetailErrorBoundary({
         <p className="text-neutral-600">{error.message}</p>
 
         {/* Action Buttons */}
-        <div className="flex gap-2 justify-center">
+        <div className="flex justify-center gap-2">
           <Button onClick={reset} variant="default">
             Try Again
           </Button>

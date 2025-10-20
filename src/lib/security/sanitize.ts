@@ -7,9 +7,11 @@
  * @module SecuritySanitization
  */
 
-import type { BookingFormData, Guest } from "@/types";
-import DOMPurify from "dompurify";
 import { useCallback, useState } from "react";
+
+import DOMPurify from "dompurify";
+
+import type { BookingFormData, Guest } from "@/types";
 
 // ============================================
 // CONFIGURATION

@@ -12,9 +12,9 @@
  * 3. Check console output for results
  */
 
-import { logAuditEvent, logBookingEvent, logPaymentEvent, logAuthEvent } from "@/lib/audit-logger";
-import { AuditCategory, AuditSeverity } from "@/types/audit.types";
+import { logAuditEvent, logAuthEvent, logBookingEvent, logPaymentEvent } from "@/lib/audit-logger";
 import { db } from "@/lib/supabase";
+import { AuditCategory, AuditSeverity } from "@/types/audit.types";
 
 export async function testAuditSystem() {
   console.log("🧪 Testing Audit Trail System (Phase 2)\n");

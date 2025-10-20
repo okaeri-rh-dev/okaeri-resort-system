@@ -7,6 +7,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+
 import type { StepProps } from "../types";
 
 export function GuestInformation({ form }: StepProps) {
@@ -17,11 +18,11 @@ export function GuestInformation({ form }: StepProps) {
         name="guest_name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base sm:text-sm font-medium">Full Name</FormLabel>
+            <FormLabel className="text-base font-medium sm:text-sm">Full Name</FormLabel>
             <FormControl>
               <Input
                 placeholder="Enter guest's full name"
-                className="h-12 sm:h-10 text-base sm:text-sm touch-manipulation"
+                className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm"
                 {...field}
               />
             </FormControl>
@@ -35,12 +36,12 @@ export function GuestInformation({ form }: StepProps) {
         name="email"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base sm:text-sm font-medium">Email Address</FormLabel>
+            <FormLabel className="text-base font-medium sm:text-sm">Email Address</FormLabel>
             <FormControl>
               <Input
                 type="email"
                 placeholder="guest@example.com"
-                className="h-12 sm:h-10 text-base sm:text-sm touch-manipulation"
+                className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm"
                 autoComplete="email"
                 {...field}
               />
@@ -58,12 +59,12 @@ export function GuestInformation({ form }: StepProps) {
         name="contact_number"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base sm:text-sm font-medium">Phone Number</FormLabel>
+            <FormLabel className="text-base font-medium sm:text-sm">Phone Number</FormLabel>
             <FormControl>
               <Input
                 type="tel"
                 placeholder="+639123456789 or 09123456789"
-                className="h-12 sm:h-10 text-base sm:text-sm touch-manipulation"
+                className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm"
                 autoComplete="tel"
                 {...field}
               />

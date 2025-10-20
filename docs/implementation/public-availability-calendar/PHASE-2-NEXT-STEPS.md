@@ -347,11 +347,11 @@ npm install --save-dev vitest-axe
 
 // BEFORE:
 import { axe, toHaveNoViolations } from "jest-axe";
-expect.extend(toHaveNoViolations);
-
+import { describe, expect, it } from "vitest";
 // AFTER:
 import { axe } from "vitest-axe";
-import { expect, describe, it } from "vitest";
+
+expect.extend(toHaveNoViolations);
 
 // Then in tests:
 const results = await axe(container);

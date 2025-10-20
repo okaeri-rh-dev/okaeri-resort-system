@@ -1,7 +1,8 @@
 // src/hooks/entity/useDetailPageState.ts
 
 import { useCallback } from "react";
-import { useSearch, useNavigate } from "@tanstack/react-router";
+
+import { useNavigate, useSearch } from "@tanstack/react-router";
 
 /**
  * Valid tab values for detail pages

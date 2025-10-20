@@ -1,7 +1,7 @@
 // Type guard utilities for runtime type validation
 // Provides type-safe alternatives to 'as any' casts
 
-import type { UnitType, UnitStatus, BookingStatus, PaymentStatus, PaymentMethod } from "@/types";
+import type { BookingStatus, PaymentMethod, PaymentStatus, UnitStatus, UnitType } from "@/types";
 
 // ============================================
 // ENUM TYPE GUARDS

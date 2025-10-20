@@ -10,11 +10,12 @@
  * - Response format (summary, enriched unit data)
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { createMockRequest, createMockContext, mockEnv } from "./setup";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { createAvailabilityMocks } from "./factories/availability-factory";
+import { createMockContext, createMockRequest, mockEnv } from "./setup";
+import type { ApiErrorResponse, AvailabilityResponse } from "./types/responses";
 import { testUnits } from "./utils/fixtures";
-import type { AvailabilityResponse, ApiErrorResponse } from "./types/responses";
 
 describe("GET /api/availability/multi-unit", () => {
   beforeEach(async () => {

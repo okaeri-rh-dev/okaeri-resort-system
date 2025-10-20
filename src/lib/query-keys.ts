@@ -1,6 +1,6 @@
 // src/lib/query-keys.ts
 
-import type { EntityType, AuditFilters } from "@/types/entity-detail.types";
+import type { AuditFilters, EntityType } from "@/types/entity-detail.types";
 
 /**
  * Centralized query key factory for TanStack Query

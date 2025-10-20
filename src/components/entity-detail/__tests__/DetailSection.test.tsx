@@ -1,7 +1,8 @@
 // src/components/entity-detail/__tests__/DetailSection.test.tsx
 
-import { describe, it, expect } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+
 import { DetailSection } from "../DetailSection";
 
 describe("DetailSection", () => {

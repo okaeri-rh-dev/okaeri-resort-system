@@ -1,8 +1,10 @@
 // src/lib/__tests__/audit-logger-workers.test.ts
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { logAuditEventWithIP } from "../audit-logger-workers";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import { AuditCategory, AuditSeverity } from "@/types/audit.types";
+
+import { logAuditEventWithIP } from "../audit-logger-workers";
 
 // Mock Supabase module
 vi.mock("../supabase", () => ({

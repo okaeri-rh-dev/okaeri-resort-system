@@ -8,7 +8,6 @@
  *   npm run seed:roles:verify
  *   tsx scripts/verify-roles.ts
  */
-
 import { createClient } from "@supabase/supabase-js";
 
 // Use service role key for admin operations

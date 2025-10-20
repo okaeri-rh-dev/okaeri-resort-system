@@ -456,15 +456,15 @@ export default async function handler(req: Request) {
 // Sanitize user input
 import DOMPurify from "isomorphic-dompurify";
 
+// Encrypt sensitive data
+import { decrypt, encrypt } from "@/lib/crypto";
+
 const sanitizeInput = (input: string) => {
   return DOMPurify.sanitize(input, {
     ALLOWED_TAGS: [],
     ALLOWED_ATTR: [],
   });
 };
-
-// Encrypt sensitive data
-import { encrypt, decrypt } from "@/lib/crypto";
 
 const storeSecureData = async (data: SensitiveData) => {
   const encrypted = await encrypt(JSON.stringify(data));

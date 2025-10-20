@@ -12,10 +12,11 @@
  * - User interactions: Today button, swipe gestures
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import { PublicAvailabilityCalendar } from "../PublicAvailabilityCalendar";
 
 // Mock fetch

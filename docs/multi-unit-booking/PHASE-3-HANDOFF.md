@@ -53,10 +53,10 @@ Phase 3 State Management implementation is **fully complete** and production-rea
 
 ```typescript
 // Zustand with Immer middleware
+import { enableMapSet } from "immer";
 import { create } from "zustand";
 import { devtools, persist, subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import { enableMapSet } from "immer";
 
 // Enable Map and Set support in Immer
 enableMapSet();

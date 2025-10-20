@@ -1,17 +1,19 @@
 // src/routes/_authenticated/audit-logs.tsx
 
+import { useEffect, useState } from "react";
+
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield } from "lucide-react";
-import { AuditStatsPanel } from "@/components/audit/AuditStatsPanel";
-import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
+
 import { AuditFilters } from "@/components/audit/AuditFilters";
-import { useAuditStore } from "@/stores/useAuditStore";
+import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
+import { AuditStatsPanel } from "@/components/audit/AuditStatsPanel";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuditStats } from "@/lib/audit-hooks";
 import { isCurrentUserOwner } from "@/lib/audit-logger";
-import { useEffect, useState } from "react";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useAuditStore } from "@/stores/useAuditStore";
 
 // ============================================
 // ROUTE DEFINITION
@@ -64,7 +66,7 @@ function AuditLogsPage() {
     return (
       <div className="container mx-auto py-8">
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
         </div>
       </div>
     );
@@ -87,7 +89,7 @@ function AuditLogsPage() {
 
   return (
     <ErrorBoundary level="page">
-      <div className="container mx-auto py-8 space-y-6">
+      <div className="container mx-auto space-y-6 py-8">
         {/* Page Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -97,7 +99,7 @@ function AuditLogsPage() {
 
           <button
             onClick={toggleFilters}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
           >
             {showFilters ? "Hide" : "Show"} Filters
           </button>

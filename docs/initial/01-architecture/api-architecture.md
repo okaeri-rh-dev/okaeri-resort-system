@@ -463,8 +463,7 @@ export async function GET() {
 
 ```typescript
 // src/middleware.ts
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 const rateLimit = new Map();
 

@@ -2,15 +2,16 @@
  * Input Validation Security Tests
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
+
+import { isDisposableEmail, validateEmailWithDisposableCheck } from "@/lib/disposable-emails";
 import {
+  fileUploadSchema,
   guestBookingSchema,
   guestInfoSchema,
-  fileUploadSchema,
   statusCheckSchema,
   validateSearchQuery,
 } from "@/lib/validation/guest-booking";
-import { isDisposableEmail, validateEmailWithDisposableCheck } from "@/lib/disposable-emails";
 
 describe("Input Validation Security", () => {
   describe("Email Validation", () => {

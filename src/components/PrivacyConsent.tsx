@@ -1,7 +1,10 @@
 import React from "react";
-import { Checkbox } from "@/components/ui/checkbox";
+
+import { Info } from "lucide-react";
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +14,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Info } from "lucide-react";
 
 interface PrivacyConsentProps {
   onAccept: (accepted: boolean) => void;

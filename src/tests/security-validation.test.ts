@@ -6,10 +6,11 @@
  * before Phase 2 deployment.
  */
 
-import { describe, test, expect, vi } from "vitest";
-import { supabase } from "@/lib/supabase";
+import { describe, expect, test, vi } from "vitest";
+
 import { auth } from "@/lib/auth";
 import { fileValidation, storage } from "@/lib/storage-security";
+import { supabase } from "@/lib/supabase";
 
 // Test configuration
 const TEST_TIMEOUT = 10000;

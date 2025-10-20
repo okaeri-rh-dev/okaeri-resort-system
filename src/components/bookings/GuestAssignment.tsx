@@ -23,7 +23,9 @@
  * @deprecated Use guest count controls in UnitCardList instead
  */
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,7 +38,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { BookingUnit } from "@/types/multi-unit-booking";
 
 // ============================================
@@ -162,7 +163,7 @@ export function GuestAssignment({ unit, open, onOpenChange, onSave }: GuestAssig
               aria-invalid={!!error}
               aria-required="true"
             />
-            <p id="num-guests-hint" className="text-sm text-muted-foreground">
+            <p id="num-guests-hint" className="text-muted-foreground text-sm">
               Maximum {unit.max_occupancy} guests for this unit
             </p>
           </div>
@@ -182,7 +183,7 @@ export function GuestAssignment({ unit, open, onOpenChange, onSave }: GuestAssig
               maxLength={500}
               aria-describedby="special-requests-hint"
             />
-            <p id="special-requests-hint" className="text-sm text-muted-foreground">
+            <p id="special-requests-hint" className="text-muted-foreground text-sm">
               {formState.specialRequests.length}/500 characters
             </p>
           </div>

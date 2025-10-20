@@ -230,9 +230,11 @@ VITE_AUDIT_DEBUG = true;
    ```
 
 3. **Import errors**:
+
    ```typescript
    // Verify imports are correct
    import { logAuditEvent } from "@/lib/audit-logger"; // ✅ Correct
+
    import { logAuditEvent } from "./audit-logger"; // ❌ Wrong path
    ```
 
@@ -250,6 +252,7 @@ VITE_AUDIT_DEBUG = true;
 ```typescript
 // Check if field is in SENSITIVE_FIELDS
 import { isSensitiveField } from "@/lib/audit-constants";
+
 console.log("Is guest_phone sensitive?", isSensitiveField("guests", "guest_phone"));
 ```
 

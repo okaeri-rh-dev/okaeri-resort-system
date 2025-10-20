@@ -1,10 +1,14 @@
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { toast } from "sonner";
-import { Upload, X } from "lucide-react";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import { CalendarIcon, Upload, X } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
@@ -14,9 +18,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -24,16 +27,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-
-import { useCreatePayment, useUpdatePayment } from "@/stores/usePaymentStore";
-import { useBookings } from "@/stores/useBookingStore";
-import type { Payment } from "@/types";
-import { formatCurrency } from "@/lib/validations";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { formatCurrency } from "@/lib/validations";
+import { useBookings } from "@/stores/useBookingStore";
+import { useCreatePayment, useUpdatePayment } from "@/stores/usePaymentStore";
+import type { Payment } from "@/types";
 
 // Validation schema
 const paymentFormSchema = z.object({
@@ -153,9 +152,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 <SelectContent>
                   {activeBookings.map((booking) => (
                     <SelectItem key={booking.booking_id} value={booking.booking_id}>
-                      <div className="flex items-center justify-between w-full">
+                      <div className="flex w-full items-center justify-between">
                         <span>{booking.booking_reference}</span>
-                        <span className="text-xs text-neutral-500 ml-2">
+                        <span className="ml-2 text-xs text-neutral-500">
                           {booking.guest_name} - {formatCurrency(booking.total_amount)}
                         </span>
                       </div>
@@ -262,13 +261,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         {/* Receipt Upload */}
         <div className="space-y-2">
           <FormLabel>Payment Receipt</FormLabel>
-          <div className="border-2 border-dashed border-neutral-300 rounded-lg p-4">
+          <div className="rounded-lg border-2 border-dashed border-neutral-300 p-4">
             {receiptPreview ? (
               <div className="relative">
                 <img
                   src={receiptPreview}
                   alt="Receipt preview"
-                  className="max-h-48 mx-auto rounded"
+                  className="mx-auto max-h-48 rounded"
                 />
                 <Button
                   type="button"
@@ -281,7 +280,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 </Button>
               </div>
             ) : (
-              <label className="cursor-pointer flex flex-col items-center space-y-2">
+              <label className="flex cursor-pointer flex-col items-center space-y-2">
                 <Upload className="h-8 w-8 text-neutral-400" />
                 <span className="text-sm text-neutral-600">Click to upload receipt (Max 5MB)</span>
                 <input

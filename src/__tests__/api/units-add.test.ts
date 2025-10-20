@@ -10,11 +10,12 @@
  * - Security (XSS prevention, authentication)
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { createMockRequest, createMockContext, mockEnv, generateTestJWT } from "./setup";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { createUnitAddMocks } from "./factories/unit-factory";
-import { testUnits, testBookingResponse } from "./utils/fixtures";
+import { createMockContext, createMockRequest, generateTestJWT, mockEnv } from "./setup";
 import type { AddUnitResponse, ApiErrorResponse } from "./types/responses";
+import { testBookingResponse, testUnits } from "./utils/fixtures";
 
 describe("POST /api/bookings/:id/units/add", () => {
   const validAddUnitData = {

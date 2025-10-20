@@ -345,7 +345,7 @@ export function BookingForm({ ... }) {
 ```typescript
 // File: /src/hooks/useOptimizedQueries.ts - NEW FILE
 
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 
 // Batch multiple queries
 export function useBatchedBookingData(bookingIds: string[]) {
@@ -567,6 +567,7 @@ If performance degrades:
    ```typescript
    // Temporarily remove lazy loading
    import Dashboard from "@/routes/_authenticated/dashboard";
+
    // Instead of: const Dashboard = lazy(...)
    ```
 

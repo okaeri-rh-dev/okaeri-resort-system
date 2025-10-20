@@ -1,12 +1,13 @@
 // src/hooks/entity/useEntityEdit.ts
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { EntityType } from "@/types/entity-detail.types";
-import { db } from "@/lib/supabase";
-import { logAuditEvent } from "@/lib/audit-logger";
-import { AuditCategory, AuditSeverity } from "@/types/audit.types";
 import { toast } from "sonner";
+
+import { logAuditEvent } from "@/lib/audit-logger";
 import { queryKeys } from "@/lib/query-keys";
+import { db } from "@/lib/supabase";
+import { AuditCategory, AuditSeverity } from "@/types/audit.types";
+import type { EntityType } from "@/types/entity-detail.types";
 
 /**
  * Options for useEntityEdit hook

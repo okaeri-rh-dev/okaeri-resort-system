@@ -1,11 +1,13 @@
+import React from "react";
+
+import { format } from "date-fns";
+import { Calendar, DollarSign, Info, Users } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/validations";
 import type { Unit } from "@/types";
-import { format } from "date-fns";
-import { Calendar, DollarSign, Info, Users } from "lucide-react";
-import React from "react";
 
 interface UnitDetailModalProps {
   unit: Unit | null;
@@ -30,7 +32,7 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, on
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Cabin Details</span>
@@ -42,14 +44,14 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, on
 
         <div className="space-y-6">
           {/* Basic Information */}
-          <div className="border rounded-lg p-4 bg-muted/30">
+          <div className="bg-muted/30 rounded-lg border p-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm text-muted-foreground mb-1">Cabin Code</p>
+                <p className="text-muted-foreground mb-1 text-sm">Cabin Code</p>
                 <p className="font-mono text-lg font-semibold">{unit.unit_code}</p>
               </div>
               <div className="flex-1">
-                <p className="text-sm text-muted-foreground mb-1">Cabin Name</p>
+                <p className="text-muted-foreground mb-1 text-sm">Cabin Name</p>
                 <p className="text-lg font-medium">{unit.unit_name}</p>
               </div>
             </div>
@@ -58,25 +60,25 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, on
           <Separator />
 
           {/* Occupancy & Pricing Card */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Occupancy Information */}
-            <div className="border rounded-lg p-4">
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
+            <div className="rounded-lg border p-4">
+              <h3 className="mb-4 flex items-center gap-2 font-semibold">
+                <Users className="text-muted-foreground h-4 w-4" />
                 Occupancy
               </h3>
               <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Base Occupancy</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-sm">Base Occupancy</span>
                   <span className="font-semibold">{unit.base_occupancy} guests</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Maximum Occupancy</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-sm">Maximum Occupancy</span>
                   <span className="font-semibold">{unit.max_occupancy} guests</span>
                 </div>
                 {unit.base_occupancy < unit.max_occupancy && (
-                  <div className="pt-2 border-t">
-                    <p className="text-xs text-muted-foreground">
+                  <div className="border-t pt-2">
+                    <p className="text-muted-foreground text-xs">
                       Can accommodate {unit.max_occupancy - unit.base_occupancy} extra{" "}
                       {unit.max_occupancy - unit.base_occupancy === 1 ? "guest" : "guests"}
                     </p>
@@ -86,19 +88,19 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, on
             </div>
 
             {/* Pricing Information */}
-            <div className="border rounded-lg p-4">
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <div className="rounded-lg border p-4">
+              <h3 className="mb-4 flex items-center gap-2 font-semibold">
+                <DollarSign className="text-muted-foreground h-4 w-4" />
                 Pricing
               </h3>
               <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Nightly Rate</span>
-                  <span className="font-semibold text-lg">{formatCurrency(unit.base_rate)}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-sm">Nightly Rate</span>
+                  <span className="text-lg font-semibold">{formatCurrency(unit.base_rate)}</span>
                 </div>
                 {unit.extra_person_rate && unit.extra_person_rate > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Extra Person</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground text-sm">Extra Person</span>
                     <span className="font-semibold">+{formatCurrency(unit.extra_person_rate)}</span>
                   </div>
                 )}
@@ -111,7 +113,7 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, on
             <>
               <Separator />
               <div>
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <h3 className="mb-3 flex items-center gap-2 font-semibold">
                   <Info className="h-4 w-4" />
                   Features & Amenities
                 </h3>
@@ -131,8 +133,8 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, on
             <>
               <Separator />
               <div>
-                <h3 className="font-semibold mb-3">Description</h3>
-                <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                <h3 className="mb-3 font-semibold">Description</h3>
+                <p className="text-muted-foreground bg-muted rounded-md p-3 text-sm">
                   {unit?.description ?? "No description available"}
                 </p>
               </div>
@@ -144,8 +146,8 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, on
             <>
               <Separator />
               <div>
-                <h3 className="font-semibold mb-3 text-yellow-600">Maintenance Notes</h3>
-                <p className="text-sm bg-yellow-50 p-3 rounded-md">
+                <h3 className="mb-3 font-semibold text-yellow-600">Maintenance Notes</h3>
+                <p className="rounded-md bg-yellow-50 p-3 text-sm">
                   {/* maintenance_notes field not in schema */}
                 </p>
               </div>
@@ -154,7 +156,7 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, on
 
           {/* Metadata */}
           <Separator />
-          <div className="text-xs text-muted-foreground">
+          <div className="text-muted-foreground text-xs">
             {unit.created_at && (
               <div className="flex items-center gap-2">
                 <Calendar className="h-3 w-3" />
@@ -162,7 +164,7 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({ unit, open, on
               </div>
             )}
             {unit.updated_at && (
-              <div className="flex items-center gap-2 mt-1">
+              <div className="mt-1 flex items-center gap-2">
                 <Calendar className="h-3 w-3" />
                 <span>Last Updated: {format(new Date(unit.updated_at), "PPpp")}</span>
               </div>

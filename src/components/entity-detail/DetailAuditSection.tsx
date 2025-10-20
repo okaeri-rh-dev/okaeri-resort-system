@@ -1,10 +1,12 @@
 // src/components/entity-detail/DetailAuditSection.tsx
 
-import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
-import { DetailSection } from "./DetailSection";
 import { History } from "lucide-react";
+
+import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { EntityType } from "@/types/entity-detail.types";
+
+import { DetailSection } from "./DetailSection";
 
 /**
  * Props for DetailAuditSection component

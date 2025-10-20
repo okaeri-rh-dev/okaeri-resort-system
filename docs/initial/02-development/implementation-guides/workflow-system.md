@@ -69,7 +69,7 @@ provides:
 The heart of the system, providing:
 
 ```typescript
-import { createWorkflowEngine, createWorkflowContext } from "@/workflow/engine";
+import { createWorkflowContext, createWorkflowEngine } from "@/workflow/engine";
 
 // Create engine instance
 const engine = createWorkflowEngine();

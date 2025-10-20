@@ -12,31 +12,32 @@
  * - Batch operations and reporting
  */
 
+import {
+  addDays,
+  endOfMonth,
+  endOfWeek,
+  format,
+  startOfMonth,
+  startOfWeek,
+  subDays,
+} from "date-fns";
+
 import type {
-  SearchPreset,
   AdvancedFilter,
+  SearchPreset,
   SearchQuery,
   SearchResult,
 } from "@/stores/useSearchStore";
 import type { Booking, Guest, Unit } from "@/types";
 import {
   DateRangeFilterBuilder,
-  StatusFilterBuilder,
-  FinancialFilterBuilder,
-  WorkflowStateFilterBuilder,
-  GuestFilterBuilder,
-  UnitFilterBuilder,
   FilterPresets,
+  FinancialFilterBuilder,
+  GuestFilterBuilder,
+  StatusFilterBuilder,
+  UnitFilterBuilder,
+  WorkflowStateFilterBuilder,
 } from "@/utils/filter-builder";
-import {
-  format,
-  startOfMonth,
-  endOfMonth,
-  startOfWeek,
-  endOfWeek,
-  addDays,
-  subDays,
-} from "date-fns";
 
 // ============================================
 // DEFAULT SEARCH PRESETS

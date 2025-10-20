@@ -1,6 +1,7 @@
+import { useEffect } from "react";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Building2, Users } from "lucide-react";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -17,14 +18,12 @@ import {
 } from "@/components/ui/form";
 import { Input, NumberInput } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-
+import { cn } from "@/lib/utils";
 import {
   formatCurrency,
   unitFormWithRateValidationSchema,
   type UnitFormData,
 } from "@/lib/validations";
-
-import { cn } from "@/lib/utils";
 import { useCreateUnit, useUpdateUnit } from "@/stores/useUnitStore";
 import type { Unit, UnitType } from "@/types";
 
@@ -305,7 +304,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                   <div className="text-sm">
                     <div>
                       <span className="text-muted-foreground">Nightly Rate:</span>
-                      <p className="font-medium text-lg">{formatCurrency(watchedBaseRate)}</p>
+                      <p className="text-lg font-medium">{formatCurrency(watchedBaseRate)}</p>
                     </div>
                   </div>
                   {watchedBaseOccupancy > 0 && watchedMaxOccupancy > 0 && (

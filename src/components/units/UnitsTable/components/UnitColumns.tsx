@@ -1,9 +1,12 @@
-import { formatCurrency, SortableHeader, StatusBadge, ActionMenu } from "@/components/tables/utils";
+import { useMemo } from "react";
+
+import { Link } from "@tanstack/react-router";
+import { createColumnHelper } from "@tanstack/react-table";
+
+import { ActionMenu, formatCurrency, SortableHeader, StatusBadge } from "@/components/tables/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Unit, UnitStatus } from "@/types";
-import { createColumnHelper } from "@tanstack/react-table";
-import { useMemo } from "react";
-import { Link } from "@tanstack/react-router";
+
 import { InlineEdit, InlineSelect } from "./InlineEdit";
 
 const columnHelper = createColumnHelper<Unit>();
@@ -78,7 +81,7 @@ export function useUnitColumns({
             <Link
               to="/units/$unitId"
               params={{ unitId: row.original.unit_id }}
-              className="text-blue-600 hover:underline font-medium transition-colors"
+              className="font-medium text-blue-600 transition-colors hover:underline"
               preload="intent"
             >
               {getValue()}

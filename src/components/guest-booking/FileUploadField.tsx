@@ -1,8 +1,10 @@
 import React, { useCallback, useState } from "react";
-import { Upload, X, FileText, Image, AlertCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+
+import { AlertCircle, FileText, Image, Upload, X } from "lucide-react";
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface FileUploadFieldProps {
   onChange: (file: File | null) => void;
@@ -140,19 +142,19 @@ export function FileUploadField({
   return (
     <div className="space-y-4">
       {value ? (
-        <div className="border rounded-lg p-4">
+        <div className="rounded-lg border p-4">
           <div className="flex items-start gap-4">
             {preview ? (
-              <img src={preview} alt="Preview" className="w-20 h-20 object-cover rounded" />
+              <img src={preview} alt="Preview" className="h-20 w-20 rounded object-cover" />
             ) : (
-              <div className="w-20 h-20 flex items-center justify-center bg-muted rounded">
+              <div className="bg-muted flex h-20 w-20 items-center justify-center rounded">
                 {getFileIcon(value)}
               </div>
             )}
 
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{value.name}</p>
-              <p className="text-xs text-muted-foreground">{formatFileSize(value.size)}</p>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{value.name}</p>
+              <p className="text-muted-foreground text-xs">{formatFileSize(value.size)}</p>
             </div>
 
             <Button
@@ -172,9 +174,9 @@ export function FileUploadField({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           className={cn(
-            "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+            "cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors",
             isDragActive && "border-primary bg-primary/5",
-            disabled && "opacity-50 cursor-not-allowed",
+            disabled && "cursor-not-allowed opacity-50",
             error && "border-destructive"
           )}
         >
@@ -190,15 +192,15 @@ export function FileUploadField({
           />
 
           <label htmlFor={name} className={cn("cursor-pointer", disabled && "cursor-not-allowed")}>
-            <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <Upload className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
 
-            <p className="text-sm font-medium mb-1">
+            <p className="mb-1 text-sm font-medium">
               {isDragActive
                 ? "Drop the file here"
                 : "Drag & drop your file here, or click to browse"}
             </p>
 
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               JPG, PNG or PDF up to {formatFileSize(maxSize)}
             </p>
           </label>

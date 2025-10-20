@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
+
 import { UseQueryResult } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
+
+import { useAdaptiveLoading } from "@/components/providers/LoadingProvider";
 import {
-  TableSkeleton,
-  KPICardSkeleton,
   FormSkeleton,
+  KPICardSkeleton,
   MobileCardSkeleton,
   Skeleton,
+  TableSkeleton,
   TextSkeleton,
 } from "@/components/ui/skeleton";
-import { useAdaptiveLoading } from "@/components/providers/LoadingProvider";
+import { cn } from "@/lib/utils";
 
 // ============================================
 // SMART LOADING WRAPPER
@@ -92,7 +94,7 @@ export const SmartLoading: React.FC<SmartLoadingProps> = ({
     return (
       <div className={cn("p-6 text-center", className)}>
         <div className="space-y-3">
-          <div className="text-red-600 font-medium">Error loading data</div>
+          <div className="font-medium text-red-600">Error loading data</div>
           <div className="text-sm text-neutral-600">
             {errors.length > 0
               ? errors[0]?.message || "An unexpected error occurred"
@@ -124,7 +126,7 @@ const DefaultSkeleton: React.FC<DefaultSkeletonProps> = ({ type, reducedAnimatio
 
     case "cards":
       return (
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, index) => (
             <MobileCardSkeleton key={index} hasActions={true} {...animationProp} />
           ))}
@@ -175,7 +177,7 @@ export const BookingsLoading: React.FC<BookingsLoadingProps> = ({
       skeleton={
         <div className="space-y-4">
           {/* Filters skeleton */}
-          <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center space-x-3">
               <Skeleton className="h-9 w-48" />
               <Skeleton className="h-9 w-20" />
@@ -243,7 +245,7 @@ export const UnitsLoading: React.FC<UnitsLoadingProps> = ({
           {viewMode === "grid" ? (
             <div className="space-y-3">
               {Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="border rounded-lg p-4 space-y-3">
+                <div key={index} className="space-y-3 rounded-lg border p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <Skeleton className="h-4 w-4" />
@@ -311,7 +313,7 @@ export const GuestsLoading: React.FC<GuestsLoadingProps> = ({
           {isMobile ? (
             <div className="space-y-3">
               {Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="border rounded-lg p-4 space-y-3">
+                <div key={index} className="space-y-3 rounded-lg border p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <Skeleton className="h-10 w-10 rounded-full" />
@@ -373,17 +375,17 @@ export const DashboardLoading: React.FC<DashboardLoadingProps> = ({
       skeleton={
         <div className="space-y-6">
           {/* KPI Cards skeleton */}
-          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
               <KPICardSkeleton key={index} hasIcon={true} />
             ))}
           </div>
 
           {/* Additional dashboard content skeleton */}
-          <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className="space-y-4">
               <Skeleton className="h-6 w-32" />
-              <div className="h-64 border rounded-lg p-4">
+              <div className="h-64 rounded-lg border p-4">
                 <div className="space-y-3">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <div key={i} className="flex justify-between">
@@ -397,7 +399,7 @@ export const DashboardLoading: React.FC<DashboardLoadingProps> = ({
 
             <div className="space-y-4">
               <Skeleton className="h-6 w-28" />
-              <div className="h-64 border rounded-lg p-4">
+              <div className="h-64 rounded-lg border p-4">
                 <div className="space-y-2">
                   {Array.from({ length: 8 }).map((_, i) => (
                     <Skeleton key={i} className="h-3 w-full" />

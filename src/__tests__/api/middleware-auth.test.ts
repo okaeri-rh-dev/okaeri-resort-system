@@ -11,14 +11,15 @@
  * - Security headers
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { onRequest } from "../../../functions/_middleware";
 import {
-  createMockRequest,
   createMockContext,
-  mockEnv,
-  generateTestJWT,
+  createMockRequest,
   generateExpiredJWT,
+  generateTestJWT,
+  mockEnv,
 } from "./setup";
 import type { ApiErrorResponse } from "./types/responses";
 

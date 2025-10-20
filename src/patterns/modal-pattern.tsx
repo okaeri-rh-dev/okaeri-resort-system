@@ -1,15 +1,17 @@
 import { ReactNode, useEffect, useRef } from "react";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+
 import { X } from "lucide-react";
-import { cn } from "@/lib/utils";
+
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 interface ModalWrapperProps {
   isOpen: boolean;
@@ -161,7 +163,7 @@ export function ConfirmModal({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors disabled:opacity-50"
+            className="rounded bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200 disabled:opacity-50"
           >
             {cancelText}
           </button>
@@ -169,7 +171,7 @@ export function ConfirmModal({
             onClick={handleConfirm}
             disabled={isLoading}
             className={cn(
-              "px-4 py-2 rounded transition-colors disabled:opacity-50",
+              "rounded px-4 py-2 transition-colors disabled:opacity-50",
               confirmButtonClass
             )}
           >
@@ -247,14 +249,14 @@ export function DrawerWrapper({
             translateClasses[position]
           )}
         >
-          <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center justify-between border-b p-4">
             <h2 className="text-lg font-semibold">{title}</h2>
-            <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 transition-colors">
+            <button onClick={onClose} className="rounded p-1 transition-colors hover:bg-gray-100">
               <X className="h-5 w-5" />
             </button>
           </div>
 
-          <div className="p-4 overflow-y-auto h-[calc(100%-64px)]">{children}</div>
+          <div className="h-[calc(100%-64px)] overflow-y-auto p-4">{children}</div>
         </div>
       </div>
     </ErrorBoundary>

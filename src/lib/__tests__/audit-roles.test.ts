@@ -1,16 +1,17 @@
 // src/lib/__tests__/audit-roles.test.ts
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import {
-  getUserAuditRole,
-  hasAuditRole,
-  canAccessAuditTrail,
-  grantRole,
-  revokeRole,
-  getRoleDisplayName,
-  getRoleBadgeColor,
-  isRoleChangeValid,
   AuditRole,
+  canAccessAuditTrail,
+  getRoleBadgeColor,
+  getRoleDisplayName,
+  getUserAuditRole,
+  grantRole,
+  hasAuditRole,
+  isRoleChangeValid,
+  revokeRole,
 } from "../audit-roles";
 import { supabase } from "../supabase";
 

@@ -3,7 +3,8 @@
 // to ensure type safety and eliminate the use of 'any' types throughout the application
 
 import type { Database } from "@/types/database.types";
-import type { UnitType, UnitStatus, BookingStatus, PaymentStatus, PaymentMethod } from "./index";
+
+import type { BookingStatus, PaymentMethod, PaymentStatus, UnitStatus, UnitType } from "./index";
 
 // Additional enum types not in index.ts
 export type BlackoutType = "Maintenance" | "Renovation" | "Seasonal" | "Manual";

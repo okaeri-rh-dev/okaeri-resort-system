@@ -8,10 +8,15 @@
  */
 
 import { useCallback } from "react";
-import { useMultiUnitAvailabilitySubscription } from "./useMultiUnitRealtime";
-import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
+
 import { toast } from "sonner";
-import type { RealtimeSubscriptionOptions } from "./useMultiUnitRealtime";
+
+import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
+
+import {
+  useMultiUnitAvailabilitySubscription,
+  type RealtimeSubscriptionOptions,
+} from "./useMultiUnitRealtime";
 
 /**
  * Subscribe to real-time availability changes

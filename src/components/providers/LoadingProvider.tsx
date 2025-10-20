@@ -1,5 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { useRouter } from "@tanstack/react-router";
+import React, { createContext, useContext, useEffect, useState } from "react";
+
+// ============================================
+// LINK LOADING WRAPPER
+// ============================================
+import { LinkProps, Link as RouterLink, useRouter } from "@tanstack/react-router";
+
 import { PageTransitionSkeleton } from "@/components/skeletons";
 
 // ============================================
@@ -67,9 +72,9 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
       {children}
       {isNavigating && <PageTransitionSkeleton />}
       {isGlobalLoading && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 shadow-xl space-y-4 max-w-sm mx-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+          <div className="mx-4 max-w-sm space-y-4 rounded-lg bg-white p-6 shadow-xl">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
             <div className="text-center text-sm text-neutral-600">
               {loadingMessage || "Loading..."}
             </div>
@@ -100,12 +105,6 @@ export const useQueryLoading = () => {
 
   return { startLoading, stopLoading };
 };
-
-// ============================================
-// LINK LOADING WRAPPER
-// ============================================
-
-import { Link as RouterLink, LinkProps } from "@tanstack/react-router";
 
 interface LoadingLinkProps extends LinkProps {
   children: React.ReactNode;

@@ -8,8 +8,8 @@
  *   npm run seed:roles:dev
  *   tsx scripts/seed-dev-roles.ts
  */
-
 import { createClient } from "@supabase/supabase-js";
+
 import { AuditRole } from "../src/lib/audit-roles";
 
 // Use service role key for admin operations

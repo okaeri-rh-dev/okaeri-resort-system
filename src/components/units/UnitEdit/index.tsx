@@ -1,21 +1,21 @@
 // src/components/units/UnitEdit/index.tsx
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useParams, useLoaderData, useNavigate } from "@tanstack/react-router";
+import { useLoaderData, useNavigate, useParams } from "@tanstack/react-router";
 import { Save, X } from "lucide-react";
+import { useForm } from "react-hook-form";
 
-import { unitEditSchema, type UnitEditInput } from "@/lib/validation/entity-schemas";
-import { useEntityEdit } from "@/hooks/entity";
 import { DetailPageLayout } from "@/components/entity-detail";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,9 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
+import { useEntityEdit } from "@/hooks/entity";
+import { unitEditSchema, type UnitEditInput } from "@/lib/validation/entity-schemas";
 import type { Unit } from "@/types/entity-detail.types";
 
 export interface UnitEditPageProps {
@@ -90,7 +89,7 @@ export function UnitEditPage() {
               <CardTitle className="text-lg">Basic Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="unit_name"
@@ -121,7 +120,7 @@ export function UnitEditPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="unit_type"
@@ -176,7 +175,7 @@ export function UnitEditPage() {
               <CardTitle className="text-lg">Pricing</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="base_rate"
@@ -225,7 +224,7 @@ export function UnitEditPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="extra_person_rate"
@@ -287,11 +286,11 @@ export function UnitEditPage() {
               onClick={handleCancel}
               disabled={updateUnit.isPending}
             >
-              <X className="h-4 w-4 mr-2" />
+              <X className="mr-2 h-4 w-4" />
               Cancel
             </Button>
             <Button type="submit" disabled={updateUnit.isPending}>
-              <Save className="h-4 w-4 mr-2" />
+              <Save className="mr-2 h-4 w-4" />
               {updateUnit.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </div>

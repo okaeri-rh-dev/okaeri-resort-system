@@ -1,7 +1,10 @@
+import { Link } from "@tanstack/react-router";
 import { createColumnHelper } from "@tanstack/react-table";
-import { Receipt, MoreHorizontal, Eye, Edit2, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Edit2, Eye, MoreHorizontal, Receipt, Trash2 } from "lucide-react";
+
+import { formatCurrency, formatTableDate, SortableHeader } from "@/components/tables/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,9 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Link } from "@tanstack/react-router";
 import type { Expense } from "@/types";
-import { formatCurrency, formatTableDate, SortableHeader } from "@/components/tables/utils";
 
 const columnHelper = createColumnHelper<Expense>();
 
@@ -83,7 +84,7 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
           <Link
             to="/expenses/$expenseId"
             params={{ expenseId: row.original.expense_id }}
-            className="text-blue-600 hover:underline transition-colors"
+            className="text-blue-600 transition-colors hover:underline"
             title={description}
             preload="intent"
           >

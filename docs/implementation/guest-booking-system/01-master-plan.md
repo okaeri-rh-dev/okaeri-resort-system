@@ -657,7 +657,7 @@ Guest booking API endpoints provide **rich contextual logging** using the audit 
 
 ```typescript
 // Example: Guest booking submission with audit context
-import { logAuditEvent, AuditCategory, AuditSeverity } from "@/lib/audit-logger";
+import { AuditCategory, AuditSeverity, logAuditEvent } from "@/lib/audit-logger";
 
 // In guest booking API endpoint
 await logAuditEvent({

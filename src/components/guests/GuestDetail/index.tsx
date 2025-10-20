@@ -1,19 +1,20 @@
 // src/components/guests/GuestDetail/index.tsx
 
+import { Calendar, FileText, Mail, TrendingUp } from "lucide-react";
+
 import {
+  DetailAuditSection,
+  DetailField,
   DetailPageLayout,
   DetailSection,
-  DetailField,
-  RelatedEntityLink,
-  DetailAuditSection,
   formatCurrency,
   formatFullDate,
-  formatTableDate,
   formatPhoneNumber,
+  formatTableDate,
+  RelatedEntityLink,
 } from "@/components/entity-detail";
 import { StatusBadge } from "@/components/tables/utils";
-import { Mail, Calendar, TrendingUp, FileText } from "lucide-react";
-import type { Guest, Booking } from "@/types";
+import type { Booking, Guest } from "@/types";
 
 /**
  * Props for GuestDetailPage component
@@ -68,13 +69,13 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
     >
       {/* 1. Contact Information Section */}
       <DetailSection title="Contact Information" icon={<Mail className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <DetailField
             label="Email"
             value={
               <a
                 href={`mailto:${guest.email}`}
-                className="text-blue-600 hover:underline font-medium"
+                className="font-medium text-blue-600 hover:underline"
               >
                 {guest.email}
               </a>
@@ -85,7 +86,7 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
             value={
               <a
                 href={`tel:${guest.phone_number}`}
-                className="text-blue-600 hover:underline font-medium"
+                className="font-medium text-blue-600 hover:underline"
               >
                 {formatPhoneNumber(guest.phone_number)}
               </a>
@@ -103,7 +104,7 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
 
       {/* 2. Guest Statistics Section */}
       <DetailSection title="Guest Statistics" icon={<TrendingUp className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <DetailField
             label="Total Bookings"
             value={(guest.total_bookings || 0).toString()}
@@ -128,7 +129,7 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-neutral-100 border-b border-neutral-200">
+                <tr className="border-b border-neutral-200 bg-neutral-100">
                   <th className="px-4 py-3 text-left text-sm font-semibold text-neutral-900">
                     Booking Reference
                   </th>
@@ -162,7 +163,7 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
                     <td className="px-4 py-3 text-sm text-neutral-700">
                       {formatTableDate(booking.check_out)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-right font-mono font-medium text-neutral-900">
+                    <td className="px-4 py-3 text-right font-mono text-sm font-medium text-neutral-900">
                       {formatCurrency(booking.total_amount)}
                     </td>
                     <td className="px-4 py-3 text-sm">
@@ -180,7 +181,7 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
       {guest.notes && (
         <DetailSection title="Notes" icon={<FileText className="h-5 w-5" />}>
           <div className="prose prose-sm max-w-none">
-            <p className="text-sm text-neutral-700 whitespace-pre-wrap">{guest.notes}</p>
+            <p className="text-sm whitespace-pre-wrap text-neutral-700">{guest.notes}</p>
           </div>
         </DetailSection>
       )}

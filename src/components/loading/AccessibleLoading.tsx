@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
+
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 // ============================================
 // ACCESSIBLE LOADING COMPONENT
@@ -79,7 +80,7 @@ export const AccessibleLoading: React.FC<AccessibleLoadingProps> = ({
         {/* Focus trap for keyboard users */}
         <div
           tabIndex={0}
-          className="absolute inset-0 opacity-0 pointer-events-none"
+          className="pointer-events-none absolute inset-0 opacity-0"
           aria-label={`${loadingText}. Please wait.`}
         />
       </div>
@@ -162,9 +163,9 @@ export const ProgressiveLoading: React.FC<ProgressiveLoadingProps> = ({ steps, c
       aria-label="Loading progress"
     >
       {/* Progress bar */}
-      <div className="w-full bg-neutral-200 rounded-full h-2">
+      <div className="h-2 w-full rounded-full bg-neutral-200">
         <div
-          className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+          className="h-2 rounded-full bg-blue-600 transition-all duration-500 ease-out"
           style={{ width: `${progress}%` }}
           aria-hidden="true"
         />
@@ -195,11 +196,11 @@ export const ProgressiveLoading: React.FC<ProgressiveLoadingProps> = ({ steps, c
           <React.Fragment key={step.key}>
             <div
               className={cn(
-                "flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium",
+                "flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium",
                 step.isComplete
                   ? "bg-green-600 text-white"
                   : step.isLoading
-                    ? "bg-blue-600 text-white animate-pulse"
+                    ? "animate-pulse bg-blue-600 text-white"
                     : "bg-neutral-300 text-neutral-600"
               )}
             >
@@ -207,7 +208,7 @@ export const ProgressiveLoading: React.FC<ProgressiveLoadingProps> = ({ steps, c
             </div>
             {index < steps.length - 1 && (
               <div
-                className={cn("flex-1 h-0.5", step.isComplete ? "bg-green-600" : "bg-neutral-300")}
+                className={cn("h-0.5 flex-1", step.isComplete ? "bg-green-600" : "bg-neutral-300")}
               />
             )}
           </React.Fragment>
@@ -279,7 +280,7 @@ export const KeyboardAccessibleLoading: React.FC<KeyboardLoadingProps> = ({
           <div className="mt-4 text-center">
             <button
               onClick={onSkipLoading}
-              className="text-sm text-blue-600 hover:text-blue-800 underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+              className="rounded text-sm text-blue-600 underline hover:text-blue-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
             >
               Skip loading and continue (Press Escape)
             </button>
@@ -345,9 +346,9 @@ export const ReducedMotionLoading: React.FC<ReducedMotionLoadingProps> = ({
         {prefersReducedMotion ? (
           // Static loading indicator for reduced motion
           <div className="space-y-3" aria-hidden="true">
-            <div className="h-4 bg-neutral-200 rounded w-3/4" />
-            <div className="h-4 bg-neutral-200 rounded w-1/2" />
-            <div className="h-4 bg-neutral-200 rounded w-5/6" />
+            <div className="h-4 w-3/4 rounded bg-neutral-200" />
+            <div className="h-4 w-1/2 rounded bg-neutral-200" />
+            <div className="h-4 w-5/6 rounded bg-neutral-200" />
           </div>
         ) : (
           // Animated loading indicator for normal motion

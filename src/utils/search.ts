@@ -3,8 +3,9 @@
  * Provides booking search, filtering, and sorting functionality
  */
 
-import type { Booking, Unit, Guest } from "@/types";
 import { isWithinInterval, parseISO } from "date-fns";
+
+import type { Booking, Guest, Unit } from "@/types";
 
 // ============================================
 // TYPES

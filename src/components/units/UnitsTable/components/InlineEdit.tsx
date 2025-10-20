@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { Edit2, Check, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
+
+import { Check, Edit2, X } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface InlineEditProps {
@@ -88,15 +90,15 @@ export const InlineEdit: React.FC<InlineEditProps> = ({
   return (
     <div
       className={cn(
-        "flex items-center justify-between group",
-        !disabled && "hover:bg-gray-50 rounded px-2 py-1 cursor-pointer",
+        "group flex items-center justify-between",
+        !disabled && "cursor-pointer rounded px-2 py-1 hover:bg-gray-50",
         className
       )}
       onClick={() => !disabled && setIsEditing(true)}
     >
       <span>{value}</span>
       {!disabled && (
-        <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+        <Edit2 className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
       )}
     </div>
   );
@@ -141,7 +143,7 @@ export function InlineSelect<T extends string>({
         }}
         onBlur={() => setIsEditing(false)}
         className={cn(
-          "h-8 rounded border border-gray-300 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary",
+          "focus:ring-primary h-8 rounded border border-gray-300 px-2 text-sm focus:ring-2 focus:outline-none",
           className
         )}
         autoFocus
@@ -160,15 +162,15 @@ export function InlineSelect<T extends string>({
   return (
     <div
       className={cn(
-        "flex items-center justify-between group",
-        !disabled && "hover:bg-gray-50 rounded px-2 py-1 cursor-pointer",
+        "group flex items-center justify-between",
+        !disabled && "cursor-pointer rounded px-2 py-1 hover:bg-gray-50",
         className
       )}
       onClick={() => !disabled && setIsEditing(true)}
     >
       <span>{currentOption?.label || value}</span>
       {!disabled && (
-        <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+        <Edit2 className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
       )}
     </div>
   );

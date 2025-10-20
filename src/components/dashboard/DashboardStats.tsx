@@ -1,10 +1,12 @@
 import { useMemo } from "react";
+
+import { Building2, Calendar, TrendingUp, Users } from "lucide-react";
+
+import { DashboardStatsSkeleton } from "@/components/skeletons";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBookings } from "@/stores/useBookingStore";
 import { useGuests } from "@/stores/useGuestStore";
 import { useUnits } from "@/stores/useUnitStore";
-import { Building2, Calendar, TrendingUp, Users } from "lucide-react";
-import { DashboardStatsSkeleton } from "@/components/skeletons";
 
 interface StatCard {
   title: string;
@@ -70,16 +72,16 @@ export function DashboardStats() {
   }
 
   return (
-    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat, index) => {
         const Icon = stat.icon;
         return (
           <Card
             key={index}
-            className="kpi-card border border-neutral-200 shadow-sm hover:shadow-md transition-shadow"
+            className="kpi-card border border-neutral-200 shadow-sm transition-shadow hover:shadow-md"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-neutral-700 leading-tight">
+              <CardTitle className="text-sm leading-tight font-medium text-neutral-700">
                 {stat.title}
               </CardTitle>
               <div className="flex-shrink-0">
@@ -87,7 +89,7 @@ export function DashboardStats() {
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="text-2xl lg:text-3xl font-bold text-neutral-900 mb-1 font-mono">
+              <div className="mb-1 font-mono text-2xl font-bold text-neutral-900 lg:text-3xl">
                 {stat.value}
               </div>
               <p className="text-muted-foreground text-xs leading-tight">{stat.description}</p>

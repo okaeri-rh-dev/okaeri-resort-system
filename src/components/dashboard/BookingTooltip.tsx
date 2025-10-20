@@ -1,9 +1,11 @@
 import React from "react";
+
 import { format } from "date-fns";
+
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import type { Booking } from "@/types";
 import { formatCurrency, getBookingStatusPriority } from "@/hooks/useCalendarBookings";
 import { cn } from "@/lib/utils";
+import type { Booking } from "@/types";
 
 interface BookingTooltipProps {
   bookings: Booking[];
@@ -35,7 +37,7 @@ export const BookingTooltip = React.memo(function BookingTooltip({
   return (
     <HoverCard openDelay={150} closeDelay={100}>
       <HoverCardTrigger asChild>{children}</HoverCardTrigger>
-      <HoverCardContent className="w-80 p-3 isolate z-50 bg-white shadow-lg" align="center">
+      <HoverCardContent className="isolate z-50 w-80 bg-white p-3 shadow-lg" align="center">
         <div className="space-y-3">
           {/* Header */}
           <div className="border-b border-neutral-200 pb-2">
@@ -58,8 +60,8 @@ export const BookingTooltip = React.memo(function BookingTooltip({
 
           {/* More indicator */}
           {remainingCount > 0 && (
-            <div className="pt-2 border-t border-neutral-200">
-              <span className="text-xs text-neutral-600 font-medium">
+            <div className="border-t border-neutral-200 pt-2">
+              <span className="text-xs font-medium text-neutral-600">
                 +{remainingCount} more booking{remainingCount !== 1 ? "s" : ""}
               </span>
             </div>
@@ -86,7 +88,7 @@ const BookingTooltipItem = React.memo(function BookingTooltipItem({
   };
 
   return (
-    <div className="space-y-1.5 p-2 rounded border border-neutral-200 bg-white">
+    <div className="space-y-1.5 rounded border border-neutral-200 bg-white p-2">
       {/* Unit and Status */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
@@ -97,7 +99,7 @@ const BookingTooltipItem = React.memo(function BookingTooltipItem({
           </span>
           <span
             className={cn(
-              "px-1.5 py-0.5 text-[10px] font-medium rounded border",
+              "rounded border px-1.5 py-0.5 text-[10px] font-medium",
               statusColors[booking.booking_status as keyof typeof statusColors] ||
                 statusColors.Pending
             )}
@@ -112,7 +114,7 @@ const BookingTooltipItem = React.memo(function BookingTooltipItem({
 
       {/* Guest Details */}
       <div className="space-y-0.5">
-        <div className="text-xs text-neutral-700 font-medium">{booking.guest_name}</div>
+        <div className="text-xs font-medium text-neutral-700">{booking.guest_name}</div>
         <div className="flex items-center gap-3 text-[11px] text-neutral-600">
           <span>
             {booking.num_guests} guest{booking.num_guests !== 1 ? "s" : ""}

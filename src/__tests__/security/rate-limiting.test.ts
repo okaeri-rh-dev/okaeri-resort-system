@@ -2,7 +2,8 @@
  * Rate Limiting Security Tests
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { checkKVRateLimit, createAdvancedFingerprint, getClientIp } from "@/lib/kv-rate-limit";
 
 // Mock KV namespace

@@ -1,24 +1,24 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
+
+import { Link } from "@tanstack/react-router";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
   createColumnHelper,
   flexRender,
-  type SortingState,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
   type ColumnFiltersState,
+  type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { withErrorBoundary } from "@/components/ErrorBoundary";
-import { useResponsiveView } from "@/hooks";
 import { Download, Edit } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { withErrorBoundary } from "@/components/ErrorBoundary";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -26,31 +26,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Link } from "@tanstack/react-router";
-
+import { useResponsiveView } from "@/hooks";
+import { cn } from "@/lib/utils";
 import {
-  usePayments,
   useDeletePayment,
-  useVerifyPayment,
-  usePaymentStore,
   useExportPayments,
+  usePayments,
+  usePaymentStore,
+  useVerifyPayment,
 } from "@/stores/usePaymentStore";
-
 import type { Payment } from "@/types";
 
 import {
+  ActionMenu,
+  FilterPopover,
   formatCurrency,
   formatTableDate,
-  StatusBadge,
-  SortableHeader,
-  TableSearch,
-  TablePagination,
-  ActionMenu,
-  TableEmptyState,
-  ResponsiveTable,
   MobileCard,
   MobileCardRow,
-  FilterPopover,
+  ResponsiveTable,
+  SortableHeader,
+  StatusBadge,
+  TableEmptyState,
+  TablePagination,
+  TableSearch,
 } from "../tables/utils";
 
 const columnHelper = createColumnHelper<Payment>();
@@ -142,7 +141,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
               <Link
                 to="/bookings/$bookingId"
                 params={{ bookingId }}
-                className="font-mono text-blue-600 hover:underline transition-colors"
+                className="font-mono text-blue-600 transition-colors hover:underline"
                 preload="intent"
               >
                 {booking.booking_reference}
@@ -222,7 +221,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
               <Download className="h-4 w-4" />
             </Button>
           ) : (
-            <span className="text-neutral-400 text-xs">No receipt</span>
+            <span className="text-xs text-neutral-400">No receipt</span>
           );
         },
         size: 80,
@@ -308,10 +307,10 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
     return (
       <Card className="p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-neutral-200 rounded w-1/4"></div>
-          <div className="h-10 bg-neutral-200 rounded"></div>
-          <div className="h-10 bg-neutral-200 rounded"></div>
-          <div className="h-10 bg-neutral-200 rounded"></div>
+          <div className="h-4 w-1/4 rounded bg-neutral-200"></div>
+          <div className="h-10 rounded bg-neutral-200"></div>
+          <div className="h-10 rounded bg-neutral-200"></div>
+          <div className="h-10 rounded bg-neutral-200"></div>
         </div>
       </Card>
     );
@@ -333,11 +332,11 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
         <div className="grid grid-cols-2 gap-3">
           <Card className="p-3">
             <div className="text-xs text-neutral-500">Total Amount</div>
-            <div className="font-mono font-bold text-lg">{formatCurrency(stats.total)}</div>
+            <div className="font-mono text-lg font-bold">{formatCurrency(stats.total)}</div>
           </Card>
           <Card className="p-3">
             <div className="text-xs text-neutral-500">Payments</div>
-            <div className="font-bold text-lg">
+            <div className="text-lg font-bold">
               {stats.verified}/{stats.count} Verified
             </div>
           </Card>
@@ -357,9 +356,9 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
           {filteredPayments.map((payment) => (
             <MobileCard key={payment.payment_id}>
               <div className="space-y-2">
-                <div className="flex justify-between items-start">
+                <div className="flex items-start justify-between">
                   <div>
-                    <div className="font-mono font-semibold text-lg">
+                    <div className="font-mono text-lg font-semibold">
                       {formatCurrency(payment.amount)}
                     </div>
                     <div className="text-xs text-neutral-500">
@@ -393,7 +392,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
                       size="sm"
                       onClick={() => window.open(payment.proof_url!, "_blank")}
                     >
-                      <Download className="h-4 w-4 mr-1" />
+                      <Download className="mr-1 h-4 w-4" />
                       Receipt
                     </Button>
                   )}
@@ -407,7 +406,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
                       } as Payment)
                     }
                   >
-                    <Edit className="h-4 w-4 mr-1" />
+                    <Edit className="mr-1 h-4 w-4" />
                     Edit
                   </Button>
                 </div>
@@ -449,8 +448,8 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
       </div> */}
 
       {/* Toolbar */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center space-x-3 flex-1 min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-1 items-center space-x-3">
           <TableSearch
             value={searchQuery}
             onChange={setSearchQuery}

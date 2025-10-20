@@ -1,12 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { Search, Calendar, CreditCard, MapPin } from "lucide-react";
-import { format } from "date-fns";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createFileRoute } from "@tanstack/react-router";
+import { format } from "date-fns";
+import { Calendar, CreditCard, MapPin, Search } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -16,14 +21,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-
-import { formatCurrency } from "@/lib/validations";
 import { validateStatusResponse, type StatusResponse } from "@/lib/schema-transform";
+import { formatCurrency } from "@/lib/validations";
 
 const searchSchema = z.object({
   booking_reference: z.string().min(1, "Booking reference is required"),
@@ -114,18 +114,18 @@ function CheckBookingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background">
-      <div className="container mx-auto py-8 px-4">
+    <div className="from-primary/5 to-background min-h-screen bg-gradient-to-b">
+      <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Check Booking Status</h1>
+        <div className="mb-8 text-center">
+          <h1 className="mb-2 text-3xl font-bold">Check Booking Status</h1>
           <p className="text-muted-foreground">
             Enter your booking reference and email to view details
           </p>
         </div>
 
         {/* Search Form */}
-        <Card className="max-w-md mx-auto mb-8">
+        <Card className="mx-auto mb-8 max-w-md">
           <CardHeader>
             <CardTitle>Find Your Booking</CardTitle>
             <CardDescription>Use the details from your confirmation email</CardDescription>
@@ -183,7 +183,7 @@ function CheckBookingPage() {
 
         {/* Search Results */}
         {isSearching && (
-          <Card className="max-w-2xl mx-auto">
+          <Card className="mx-auto max-w-2xl">
             <CardContent className="py-8">
               <div className="space-y-4">
                 <Skeleton className="h-4 w-full" />
@@ -195,7 +195,7 @@ function CheckBookingPage() {
         )}
 
         {notFound && (
-          <Card className="max-w-md mx-auto">
+          <Card className="mx-auto max-w-md">
             <CardContent className="py-8 text-center">
               <p className="text-muted-foreground mb-4">
                 No booking found with the provided details.
@@ -206,9 +206,9 @@ function CheckBookingPage() {
         )}
 
         {booking && (
-          <Card className="max-w-2xl mx-auto">
+          <Card className="mx-auto max-w-2xl">
             <CardHeader>
-              <div className="flex justify-between items-start">
+              <div className="flex items-start justify-between">
                 <div>
                   <CardTitle>Booking Details</CardTitle>
                   <CardDescription>Reference: {booking.booking_reference}</CardDescription>
@@ -227,18 +227,18 @@ function CheckBookingPage() {
               <div className="grid gap-4">
                 {/* Unit Details */}
                 <div className="flex items-center gap-3">
-                  <MapPin className="h-5 w-5 text-muted-foreground" />
+                  <MapPin className="text-muted-foreground h-5 w-5" />
                   <div>
                     <p className="font-medium">{booking.unit.unit_name}</p>
-                    <p className="text-sm text-muted-foreground">{booking.unit.unit_type}</p>
+                    <p className="text-muted-foreground text-sm">{booking.unit.unit_type}</p>
                   </div>
                 </div>
 
                 {/* Dates */}
                 <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
+                  <Calendar className="text-muted-foreground h-5 w-5" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Check-in / Check-out</p>
+                    <p className="text-muted-foreground text-sm">Check-in / Check-out</p>
                     <p className="font-medium">
                       {formatDate(booking.check_in)} - {formatDate(booking.check_out)}
                     </p>
@@ -247,10 +247,10 @@ function CheckBookingPage() {
 
                 {/* Payment */}
                 <div className="flex items-center gap-3">
-                  <CreditCard className="h-5 w-5 text-muted-foreground" />
+                  <CreditCard className="text-muted-foreground h-5 w-5" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Amount</p>
-                    <p className="font-medium text-lg">{formatCurrency(booking.total_amount)}</p>
+                    <p className="text-muted-foreground text-sm">Total Amount</p>
+                    <p className="text-lg font-medium">{formatCurrency(booking.total_amount)}</p>
                   </div>
                 </div>
 

@@ -71,8 +71,9 @@ starting from zero.
 
 ```typescript
 // src/utils/availability.ts
+import { areIntervalsOverlapping, isWithinInterval } from "date-fns";
+
 import { Booking, Unit } from "@/types";
-import { isWithinInterval, areIntervalsOverlapping } from "date-fns";
 
 export function checkUnitAvailability(
   unit: Unit,
@@ -198,8 +199,9 @@ export function getPaymentStatusColor(status: PaymentStatus): string {
 
 ```typescript
 // src/utils/search.ts
-import { Booking, Unit, Guest } from "@/types";
 import { isWithinInterval, parseISO } from "date-fns";
+
+import { Booking, Guest, Unit } from "@/types";
 
 export interface BookingFilters {
   status?: string;
@@ -297,12 +299,14 @@ export function sortBookings(
 ```tsx
 // src/components/BookingSearch.tsx
 import { useState } from "react";
-import { useBookingStore } from "@/stores/bookingStore";
+
+import { Calendar } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "lucide-react";
-import { filterBookings, sortBookings, BookingFilters } from "@/utils/search";
+import { useBookingStore } from "@/stores/bookingStore";
+import { BookingFilters, filterBookings, sortBookings } from "@/utils/search";
 
 export function BookingSearch() {
   const { bookings } = useBookingStore();
@@ -395,8 +399,9 @@ export function BookingSearch() {
 
 ```typescript
 // src/utils/reports.ts
+import { eachDayOfInterval, endOfMonth, format, isWithinInterval, startOfMonth } from "date-fns";
+
 import { Booking, Unit } from "@/types";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval } from "date-fns";
 
 export interface OccupancyReport {
   date: string;
@@ -528,13 +533,15 @@ export function exportToCSV(data: any[], filename: string) {
 
 ```tsx
 // src/components/ReportDashboard.tsx
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
+import { endOfMonth, startOfMonth } from "date-fns";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBookingStore } from "@/stores/bookingStore";
 import { useUnitStore } from "@/stores/unitStore";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { generateOccupancyReport, generateRevenueReport, exportToCSV } from "@/utils/reports";
-import { startOfMonth, endOfMonth } from "date-fns";
+import { exportToCSV, generateOccupancyReport, generateRevenueReport } from "@/utils/reports";
 
 export function ReportDashboard() {
   const { bookings } = useBookingStore();

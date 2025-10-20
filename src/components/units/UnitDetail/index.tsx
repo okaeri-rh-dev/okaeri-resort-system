@@ -1,18 +1,19 @@
 // src/components/units/UnitDetail/index.tsx
 
+import { Calendar, DollarSign, Home, Sparkles, TrendingUp } from "lucide-react";
+
 import {
+  DetailAuditSection,
+  DetailField,
   DetailPageLayout,
   DetailSection,
-  DetailField,
-  RelatedEntityLink,
-  DetailAuditSection,
   formatCurrency,
-  formatTableDate,
   formatPercentage,
+  formatTableDate,
+  RelatedEntityLink,
 } from "@/components/entity-detail";
 import { StatusBadge } from "@/components/tables/utils";
-import { Home, DollarSign, Calendar, TrendingUp, Sparkles } from "lucide-react";
-import type { Unit, Booking } from "@/types";
+import type { Booking, Unit } from "@/types";
 
 /**
  * Props for UnitDetailPage component
@@ -69,7 +70,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
     >
       {/* 1. Unit Specifications Section */}
       <DetailSection title="Unit Specifications" icon={<Home className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <DetailField
             label="Unit Code"
             value={unit.unit_code}
@@ -90,7 +91,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
 
       {/* 2. Pricing Information Section */}
       <DetailSection title="Pricing Information" icon={<DollarSign className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <DetailField
             label="Base Rate (per night)"
             value={formatCurrency(unit.base_rate)}
@@ -127,7 +128,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
             {unit.amenities.map((amenity, index) => (
               <span
                 key={index}
-                className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-neutral-100 text-neutral-700 border border-neutral-200"
+                className="inline-flex items-center rounded-md border border-neutral-200 bg-neutral-100 px-3 py-1 text-sm font-medium text-neutral-700"
               >
                 {amenity}
               </span>
@@ -143,7 +144,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
             {unit.bookings.map((booking) => (
               <div
                 key={booking.booking_id}
-                className="flex flex-col md:flex-row md:items-center md:justify-between p-4 bg-neutral-50 border border-neutral-200 rounded-md"
+                className="flex flex-col rounded-md border border-neutral-200 bg-neutral-50 p-4 md:flex-row md:items-center md:justify-between"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -159,8 +160,8 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
                   </p>
                   <p className="text-sm text-neutral-600">{booking.guest_name}</p>
                 </div>
-                <div className="mt-2 md:mt-0 text-right">
-                  <p className="font-mono font-semibold text-lg text-neutral-900">
+                <div className="mt-2 text-right md:mt-0">
+                  <p className="font-mono text-lg font-semibold text-neutral-900">
                     {formatCurrency(booking.total_amount)}
                   </p>
                   <p className="text-sm text-neutral-600">{booking.num_guests} guests</p>
@@ -174,7 +175,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
       {/* 5. Revenue Statistics Section */}
       {unit.revenue_stats && (
         <DetailSection title="Revenue Statistics" icon={<TrendingUp className="h-5 w-5" />}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <DetailField
               label="Total Bookings"
               value={unit.revenue_stats.total_bookings.toString()}

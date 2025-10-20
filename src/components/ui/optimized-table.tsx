@@ -3,8 +3,7 @@
  * Performance-optimized wrappers for table components
  */
 
-import React, { memo, useCallback, useMemo } from "react";
-import type { ReactNode } from "react";
+import React, { memo, useCallback, useMemo, type ReactNode } from "react";
 
 // ============================================
 // MEMOIZED TABLE ROW COMPONENT
@@ -40,7 +39,7 @@ export const MemoizedTableRow = memo(
       <tr
         key={rowKey}
         onClick={handleClick}
-        className={`hover:bg-gray-50 transition-colors ${rowClassName} ${
+        className={`transition-colors hover:bg-gray-50 ${rowClassName} ${
           onRowClick ? "cursor-pointer" : ""
         }`}
       >
@@ -123,7 +122,7 @@ export const OptimizedTable = memo(
       return columns.map((column) => (
         <th
           key={column.key}
-          className={`px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
+          className={`px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase ${
             column.sortable ? "cursor-pointer hover:text-gray-700" : ""
           }`}
           onClick={() => {
@@ -147,13 +146,13 @@ export const OptimizedTable = memo(
     if (isLoading) {
       return (
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
         </div>
       );
     }
 
     if (processedData.length === 0) {
-      return <div className="text-center py-8 text-gray-500">{emptyMessage}</div>;
+      return <div className="py-8 text-center text-gray-500">{emptyMessage}</div>;
     }
 
     return (
@@ -162,7 +161,7 @@ export const OptimizedTable = memo(
           <thead className="bg-gray-50">
             <tr>{headers}</tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-200 bg-white">
             {processedData.map((item) => (
               <MemoizedTableRow
                 key={getRowKey(item)}

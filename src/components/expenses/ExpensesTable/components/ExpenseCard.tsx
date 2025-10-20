@@ -1,8 +1,10 @@
-import { Eye, Edit2, Trash2, Receipt, Calendar, DollarSign } from "lucide-react";
+import { Calendar, DollarSign, Edit2, Eye, Receipt, Trash2 } from "lucide-react";
+
+import { formatCurrency, formatTableDate } from "@/components/tables/utils";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { formatCurrency, formatTableDate } from "@/components/tables/utils";
+
 import type { ExpenseCardProps } from "../types";
 
 // Icon mapping for categories - using icons instead of colors for professional look
@@ -47,7 +49,7 @@ export function ExpenseCard({ expense, onView, onEdit, onDelete }: ExpenseCardPr
       <div className="space-y-3 p-4">
         {/* Description */}
         <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+          <p className="text-xs font-medium tracking-wide text-neutral-500 uppercase">
             Description
           </p>
           <p className="text-sm text-neutral-900">
@@ -85,7 +87,7 @@ export function ExpenseCard({ expense, onView, onEdit, onDelete }: ExpenseCardPr
         {/* Notes if present */}
         {expense.notes && (
           <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Notes</p>
+            <p className="text-xs font-medium tracking-wide text-neutral-500 uppercase">Notes</p>
             <p className="text-xs text-neutral-600">{expense.notes}</p>
           </div>
         )}

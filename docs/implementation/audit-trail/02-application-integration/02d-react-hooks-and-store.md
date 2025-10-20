@@ -19,16 +19,17 @@ Create `src/lib/audit-hooks.ts`:
 ```typescript
 // src/lib/audit-hooks.ts
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { db } from "./supabase";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import type {
+  AuditEventContext,
   AuditLog,
   AuditLogFilters,
   AuditLogQueryResult,
   AuditLogStats,
-  AuditEventContext,
 } from "../../database.types";
 import { AUDIT_CACHE_CONFIG } from "./audit-constants";
+import { db } from "./supabase";
 
 // ============================================
 // QUERY KEYS
@@ -329,6 +330,7 @@ Create `src/stores/useAuditStore.ts`:
 
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
+
 import type { AuditLog, AuditLogFilters, TableState } from "@/types";
 
 // ============================================
@@ -647,6 +649,7 @@ export { useAuditStore, useAuditFilters, useSelectedAuditLog } from "./useAuditS
 ```typescript
 // Test hooks and store integration
 import { renderHook, waitFor } from "@testing-library/react";
+
 import { useAuditLogs, useAuditStats } from "@/lib/audit-hooks";
 import { useAuditStore } from "@/stores/useAuditStore";
 

@@ -1,10 +1,16 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import React, { useEffect, useMemo, useState } from "react";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarDays, Users, CreditCard, CheckCircle } from "lucide-react";
-import { format, differenceInDays, eachDayOfInterval } from "date-fns";
+import { differenceInDays, eachDayOfInterval, format } from "date-fns";
+import { CalendarDays, CheckCircle, CreditCard, Users } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { BookingFormSkeleton } from "@/components/skeletons";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -14,14 +20,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { Input, NumberInput } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -29,25 +30,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
-
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { RESORT_OPERATION_HOURS } from "@/config/settings";
+import { sanitizeBookingFormData } from "@/lib/security/sanitize";
+import { cn } from "@/lib/utils";
 import {
-  completeBookingSchema,
   bookingStep1Schema,
   bookingStep2Schema,
   bookingStep3Schema,
+  completeBookingSchema,
   formatCurrency,
   formatPhoneNumber,
   type CompleteBookingData,
 } from "@/lib/validations";
-
 import { useCreateBooking, useUpdateBooking } from "@/stores/useBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
-import { cn } from "@/lib/utils";
-import { BookingFormSkeleton } from "@/components/skeletons";
-import { sanitizeBookingFormData } from "@/lib/security/sanitize";
 import { formDateToUTC } from "@/utils/date-helpers";
-import { RESORT_OPERATION_HOURS } from "@/config/settings";
 
 interface BookingFormProps {
   onSuccess?: (booking: any) => void;
@@ -275,7 +274,7 @@ export function BookingForm({
         <React.Fragment key={step}>
           <div
             className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-medium touch-manipulation",
+              "flex h-10 w-10 touch-manipulation items-center justify-center rounded-full border-2 text-sm font-medium",
               "sm:h-8 sm:w-8",
               step < currentStep
                 ? "bg-primary border-primary text-primary-foreground"
@@ -306,10 +305,10 @@ export function BookingForm({
         name="unit_id"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base sm:text-sm font-medium">Select Unit</FormLabel>
+            <FormLabel className="text-base font-medium sm:text-sm">Select Unit</FormLabel>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
-                <SelectTrigger className="h-12 sm:h-10 text-base sm:text-sm touch-manipulation">
+                <SelectTrigger className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm">
                   <SelectValue placeholder="Choose a unit" />
                 </SelectTrigger>
               </FormControl>
@@ -340,19 +339,19 @@ export function BookingForm({
           name="check_in"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel className="text-base sm:text-sm font-medium">Check-in Date</FormLabel>
+              <FormLabel className="text-base font-medium sm:text-sm">Check-in Date</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full h-12 sm:h-10 pl-4 text-left font-normal text-base sm:text-sm touch-manipulation",
+                        "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
                         !field.value && "text-muted-foreground"
                       )}
                     >
                       {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                      <CalendarDays className="ml-auto h-5 w-5 sm:h-4 sm:w-4 opacity-50" />
+                      <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" />
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
@@ -377,19 +376,19 @@ export function BookingForm({
           name="check_out"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel className="text-base sm:text-sm font-medium">Check-out Date</FormLabel>
+              <FormLabel className="text-base font-medium sm:text-sm">Check-out Date</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full h-12 sm:h-10 pl-4 text-left font-normal text-base sm:text-sm touch-manipulation",
+                        "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
                         !field.value && "text-muted-foreground"
                       )}
                     >
                       {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                      <CalendarDays className="ml-auto h-5 w-5 sm:h-4 sm:w-4 opacity-50" />
+                      <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" />
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
@@ -415,13 +414,13 @@ export function BookingForm({
         name="num_guests"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base sm:text-sm font-medium">Number of Guests</FormLabel>
+            <FormLabel className="text-base font-medium sm:text-sm">Number of Guests</FormLabel>
             <FormControl>
               <NumberInput
                 min={1}
                 max={selectedUnit?.max_occupancy || 20}
                 allowDecimals={false}
-                className="h-12 sm:h-10 text-base sm:text-sm touch-manipulation"
+                className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm"
                 startIcon={<Users className="h-5 w-5 sm:h-4 sm:w-4" />}
                 value={field.value}
                 onChange={(value) => field.onChange(value)}
@@ -436,7 +435,7 @@ export function BookingForm({
                 Base occupancy: {selectedUnit.base_occupancy} guests (included) • Max:{" "}
                 {selectedUnit.max_occupancy} guests
                 {selectedUnit.max_occupancy > selectedUnit.base_occupancy && (
-                  <span className="block text-xs mt-1">
+                  <span className="mt-1 block text-xs">
                     Extra person rate: {formatCurrency(selectedUnit.extra_person_rate)} per person
                     per night
                   </span>
@@ -493,11 +492,11 @@ export function BookingForm({
         name="guest_name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base sm:text-sm font-medium">Full Name</FormLabel>
+            <FormLabel className="text-base font-medium sm:text-sm">Full Name</FormLabel>
             <FormControl>
               <Input
                 placeholder="Enter guest's full name"
-                className="h-12 sm:h-10 text-base sm:text-sm touch-manipulation"
+                className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm"
                 {...field}
               />
             </FormControl>
@@ -511,12 +510,12 @@ export function BookingForm({
         name="email"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base sm:text-sm font-medium">Email Address</FormLabel>
+            <FormLabel className="text-base font-medium sm:text-sm">Email Address</FormLabel>
             <FormControl>
               <Input
                 type="email"
                 placeholder="guest@example.com"
-                className="h-12 sm:h-10 text-base sm:text-sm touch-manipulation"
+                className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm"
                 autoComplete="email"
                 {...field}
               />
@@ -534,12 +533,12 @@ export function BookingForm({
         name="contact_number"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base sm:text-sm font-medium">Phone Number</FormLabel>
+            <FormLabel className="text-base font-medium sm:text-sm">Phone Number</FormLabel>
             <FormControl>
               <Input
                 type="tel"
                 placeholder="+639123456789 or 09123456789"
-                className="h-12 sm:h-10 text-base sm:text-sm touch-manipulation"
+                className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm"
                 autoComplete="tel"
                 {...field}
               />
@@ -559,10 +558,10 @@ export function BookingForm({
         name="payment_method"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base sm:text-sm font-medium">Payment Method</FormLabel>
+            <FormLabel className="text-base font-medium sm:text-sm">Payment Method</FormLabel>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
-                <SelectTrigger className="h-12 sm:h-10 text-base sm:text-sm touch-manipulation">
+                <SelectTrigger className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm">
                   <SelectValue placeholder="Select payment method" />
                 </SelectTrigger>
               </FormControl>
@@ -588,13 +587,13 @@ export function BookingForm({
         name="special_requests"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base sm:text-sm font-medium">
+            <FormLabel className="text-base font-medium sm:text-sm">
               Special Requests (Optional)
             </FormLabel>
             <FormControl>
               <Textarea
                 placeholder="Any special requests or notes for your stay..."
-                className="min-h-[120px] sm:min-h-[100px] text-base sm:text-sm touch-manipulation resize-none"
+                className="min-h-[120px] touch-manipulation resize-none text-base sm:min-h-[100px] sm:text-sm"
                 {...field}
               />
             </FormControl>
@@ -741,7 +740,7 @@ export function BookingForm({
       <Card className={cn("mx-auto w-full max-w-2xl", className)}>
         <CardHeader className="px-4 sm:px-6">
           <div className="text-center">
-            <CardTitle className="text-xl sm:text-lg font-semibold">
+            <CardTitle className="text-xl font-semibold sm:text-lg">
               {bookingId ? "Edit Booking" : "Create New Booking"}
             </CardTitle>
           </div>
@@ -765,7 +764,7 @@ export function BookingForm({
           </p>
         </div>
         {renderStepIndicator()}
-        <Progress value={getStepProgress()} className="w-full h-2" />
+        <Progress value={getStepProgress()} className="h-2 w-full" />
       </CardHeader>
 
       <CardContent className="px-4 sm:px-6">
@@ -776,12 +775,12 @@ export function BookingForm({
             {currentStep === 3 && renderStep3()}
             {currentStep === 4 && renderStep4()}
 
-            <div className="flex justify-between pt-6 gap-4">
+            <div className="flex justify-between gap-4 pt-6">
               <Button
                 type="button"
                 variant="outline"
                 onClick={currentStep === 1 ? onCancel : handlePreviousStep}
-                className="h-12 sm:h-10 px-6 text-base sm:text-sm touch-manipulation flex-1 max-w-[140px]"
+                className="h-12 max-w-[140px] flex-1 touch-manipulation px-6 text-base sm:h-10 sm:text-sm"
               >
                 {currentStep === 1 ? "Cancel" : "Previous"}
               </Button>
@@ -791,7 +790,7 @@ export function BookingForm({
                   key="next-button"
                   type="button"
                   onClick={handleNextStep}
-                  className="h-12 sm:h-10 px-6 text-base sm:text-sm touch-manipulation flex-1 max-w-[140px]"
+                  className="h-12 max-w-[140px] flex-1 touch-manipulation px-6 text-base sm:h-10 sm:text-sm"
                 >
                   Next
                 </Button>
@@ -800,7 +799,7 @@ export function BookingForm({
                   key="submit-button"
                   type="submit"
                   disabled={createBookingMutation.isPending || updateBookingMutation.isPending}
-                  className="h-12 sm:h-10 px-6 text-base sm:text-sm touch-manipulation flex-1 max-w-[200px]"
+                  className="h-12 max-w-[200px] flex-1 touch-manipulation px-6 text-base sm:h-10 sm:text-sm"
                 >
                   {isEditMode
                     ? updateBookingMutation.isPending

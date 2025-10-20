@@ -3,31 +3,25 @@
  * Real-time security event monitoring and threat analysis
  */
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
-  Shield,
-  AlertTriangle,
   Activity,
+  AlertTriangle,
   Ban,
+  Globe,
   RefreshCw,
   Search,
+  Shield,
   UserX,
-  Globe,
 } from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -37,12 +31,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-import { supabase } from "@/lib/supabase";
 import { getTopThreatSources } from "@/lib/security-monitoring";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 type AuditLog = {
@@ -176,11 +176,11 @@ export function SecurityMonitoringDashboard() {
             size="sm"
             onClick={() => setAutoRefresh(!autoRefresh)}
           >
-            <Activity className={cn("h-4 w-4 mr-2", autoRefresh && "animate-pulse")} />
+            <Activity className={cn("mr-2 h-4 w-4", autoRefresh && "animate-pulse")} />
             {autoRefresh ? "Auto-Refresh ON" : "Auto-Refresh OFF"}
           </Button>
           <Button variant="outline" size="sm" onClick={handleRefresh}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
         </div>
@@ -191,11 +191,11 @@ export function SecurityMonitoringDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Events</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
+            <Shield className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{statistics.total}</div>
-            <p className="text-xs text-muted-foreground">Last {selectedTimeRange}</p>
+            <p className="text-muted-foreground text-xs">Last {selectedTimeRange}</p>
           </CardContent>
         </Card>
 
@@ -206,7 +206,7 @@ export function SecurityMonitoringDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-500">{statistics.critical}</div>
-            <Progress value={(statistics.critical / statistics.total) * 100} className="h-2 mt-2" />
+            <Progress value={(statistics.critical / statistics.total) * 100} className="mt-2 h-2" />
           </CardContent>
         </Card>
 
@@ -217,7 +217,7 @@ export function SecurityMonitoringDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-500">{statistics.errors}</div>
-            <Progress value={(statistics.errors / statistics.total) * 100} className="h-2 mt-2" />
+            <Progress value={(statistics.errors / statistics.total) * 100} className="mt-2 h-2" />
           </CardContent>
         </Card>
 
@@ -228,18 +228,18 @@ export function SecurityMonitoringDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-500">{statistics.warnings}</div>
-            <Progress value={(statistics.warnings / statistics.total) * 100} className="h-2 mt-2" />
+            <Progress value={(statistics.warnings / statistics.total) * 100} className="mt-2 h-2" />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Unique IPs</CardTitle>
-            <Globe className="h-4 w-4 text-muted-foreground" />
+            <Globe className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{statistics.uniqueIPs}</div>
-            <p className="text-xs text-muted-foreground">Active sources</p>
+            <p className="text-muted-foreground text-xs">Active sources</p>
           </CardContent>
         </Card>
       </div>
@@ -273,9 +273,9 @@ export function SecurityMonitoringDashboard() {
             </SelectContent>
           </Select>
 
-          <div className="flex-1 max-w-md">
+          <div className="max-w-md flex-1">
             <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
               <Input
                 placeholder="Search IP, action, or description..."
                 value={searchFilter}
@@ -328,7 +328,7 @@ export function SecurityMonitoringDashboard() {
                           {log.ip_address || "unknown"}
                         </TableCell>
                         <TableCell className="text-xs">{log.action}</TableCell>
-                        <TableCell className="text-xs max-w-[300px] truncate">
+                        <TableCell className="max-w-[300px] truncate text-xs">
                           {log.description}
                         </TableCell>
                         <TableCell>
@@ -393,7 +393,7 @@ export function SecurityMonitoringDashboard() {
                       </TableCell>
                       <TableCell>
                         <Button variant="destructive" size="sm" disabled={threat.threatScore < 50}>
-                          <Ban className="h-3 w-3 mr-1" />
+                          <Ban className="mr-1 h-3 w-3" />
                           Block IP
                         </Button>
                       </TableCell>
@@ -495,7 +495,7 @@ function BlockedIPsList() {
                   <TableCell>{format(new Date(blocked.expiresAt), "MMM d, HH:mm")}</TableCell>
                   <TableCell>
                     <Button variant="outline" size="sm">
-                      <UserX className="h-3 w-3 mr-1" />
+                      <UserX className="mr-1 h-3 w-3" />
                       Unblock
                     </Button>
                   </TableCell>

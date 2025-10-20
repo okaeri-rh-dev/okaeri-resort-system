@@ -1,3 +1,5 @@
+import React, { useRef, useState } from "react";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertCircle,
@@ -8,7 +10,6 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import React, { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -35,10 +36,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-
-import { formatCurrency, paymentUploadSchema, type PaymentUploadData } from "@/lib/validations";
-
 import { cn } from "@/lib/utils";
+import { formatCurrency, paymentUploadSchema, type PaymentUploadData } from "@/lib/validations";
 import { useUploadPaymentProof } from "@/stores/useBookingStore";
 
 interface PaymentUploadFormProps {

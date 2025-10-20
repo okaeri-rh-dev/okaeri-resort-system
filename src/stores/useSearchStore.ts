@@ -13,11 +13,12 @@
  * - Integration with workflow states
  */
 
+import { enableMapSet } from "immer";
 import { create } from "zustand";
 import { devtools, persist, subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import { enableMapSet } from "immer";
-import type { BookingStatus, PaymentStatus, BookingFilters, Booking, Unit, Guest } from "@/types";
+
+import type { Booking, BookingFilters, BookingStatus, Guest, PaymentStatus, Unit } from "@/types";
 
 // Enable MapSet plugin for Immer to handle Map and Set objects
 enableMapSet();

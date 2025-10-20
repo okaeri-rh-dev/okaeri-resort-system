@@ -40,11 +40,11 @@ export function AvailabilityLegend() {
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
+    <div className="flex flex-wrap items-center gap-3 text-xs sm:gap-4">
       {legendItems.map((item) => (
         <div key={item.label} className="flex items-center gap-1.5">
-          <div className={cn("w-3 h-3 rounded", item.color)} aria-hidden="true" />
-          <span className="text-slate-700 font-medium">{item.label}</span>
+          <div className={cn("h-3 w-3 rounded", item.color)} aria-hidden="true" />
+          <span className="font-medium text-slate-700">{item.label}</span>
         </div>
       ))}
     </div>

@@ -1,9 +1,10 @@
-import { Calendar, DollarSign, CreditCard, FileText, Receipt, Clock, User } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Calendar, Clock, CreditCard, DollarSign, FileText, Receipt, User } from "lucide-react";
+
+import { formatCurrency, formatTableDate } from "@/components/tables/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { formatCurrency, formatTableDate } from "@/components/tables/utils";
 import type { Payment } from "@/types";
 
 interface PaymentDetailModalProps {
@@ -29,7 +30,7 @@ export function PaymentDetailModal({ payment, open, onOpenChange }: PaymentDetai
           <div className="rounded-lg border border-neutral-200 bg-neutral-50/50 p-4">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                <p className="text-xs font-medium tracking-wide text-neutral-500 uppercase">
                   Payment ID
                 </p>
                 <p className="font-mono text-sm font-medium text-neutral-900">
@@ -54,7 +55,7 @@ export function PaymentDetailModal({ payment, open, onOpenChange }: PaymentDetai
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-neutral-600">
                 <Calendar className="h-4 w-4" />
-                <span className="text-xs font-medium uppercase tracking-wide">Payment Date</span>
+                <span className="text-xs font-medium tracking-wide uppercase">Payment Date</span>
               </div>
               <p className="text-sm font-medium text-neutral-900">
                 {formatTableDate(payment.payment_date || "")}
@@ -65,7 +66,7 @@ export function PaymentDetailModal({ payment, open, onOpenChange }: PaymentDetai
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-neutral-600">
                 <DollarSign className="h-4 w-4" />
-                <span className="text-xs font-medium uppercase tracking-wide">Amount</span>
+                <span className="text-xs font-medium tracking-wide uppercase">Amount</span>
               </div>
               <p className="font-mono text-lg font-semibold text-neutral-900">
                 {formatCurrency(payment.amount)}
@@ -80,20 +81,20 @@ export function PaymentDetailModal({ payment, open, onOpenChange }: PaymentDetai
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-neutral-600">
                   <User className="h-4 w-4" />
-                  <span className="text-xs font-medium uppercase tracking-wide">
+                  <span className="text-xs font-medium tracking-wide uppercase">
                     Booking Information
                   </span>
                 </div>
-                <div className="rounded-md border border-neutral-200 bg-white p-4 space-y-3">
+                <div className="space-y-3 rounded-md border border-neutral-200 bg-white p-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <p className="text-xs text-neutral-500 mb-1">Booking Reference</p>
+                      <p className="mb-1 text-xs text-neutral-500">Booking Reference</p>
                       <p className="font-mono text-sm font-medium text-neutral-900">
                         {payment.booking.booking_reference}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-neutral-500 mb-1">Guest Name</p>
+                      <p className="mb-1 text-xs text-neutral-500">Guest Name</p>
                       <p className="text-sm font-medium text-neutral-900">
                         {payment.booking.guest_name}
                       </p>
@@ -101,7 +102,7 @@ export function PaymentDetailModal({ payment, open, onOpenChange }: PaymentDetai
                   </div>
                   {payment.booking.payment_status && (
                     <div>
-                      <p className="text-xs text-neutral-500 mb-2">Booking Payment Status</p>
+                      <p className="mb-2 text-xs text-neutral-500">Booking Payment Status</p>
                       <Badge
                         variant={
                           payment.booking.payment_status === "Completed"
@@ -129,7 +130,7 @@ export function PaymentDetailModal({ payment, open, onOpenChange }: PaymentDetai
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-neutral-600">
                 <FileText className="h-4 w-4" />
-                <span className="text-xs font-medium uppercase tracking-wide">Notes</span>
+                <span className="text-xs font-medium tracking-wide uppercase">Notes</span>
               </div>
               <div className="rounded-md border border-neutral-200 bg-white p-3">
                 <p className="text-sm text-neutral-700">{payment.notes}</p>
@@ -142,7 +143,7 @@ export function PaymentDetailModal({ payment, open, onOpenChange }: PaymentDetai
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-neutral-600">
                 <Receipt className="h-4 w-4" />
-                <span className="text-xs font-medium uppercase tracking-wide">Documents</span>
+                <span className="text-xs font-medium tracking-wide uppercase">Documents</span>
               </div>
               <Button
                 variant="outline"

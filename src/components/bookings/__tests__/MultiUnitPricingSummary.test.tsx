@@ -2,11 +2,13 @@
  * @vitest-environment jsdom
  */
 
-import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import { axe } from "vitest-axe";
-import { MultiUnitPricingSummary } from "../MultiUnitPricingSummary";
+
 import type { BookingUnit } from "@/types/multi-unit-booking";
+
+import { MultiUnitPricingSummary } from "../MultiUnitPricingSummary";
 
 const mockUnits: BookingUnit[] = [
   {

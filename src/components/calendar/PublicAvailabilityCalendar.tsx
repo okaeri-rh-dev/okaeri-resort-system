@@ -17,6 +17,12 @@
  * @component
  */
 
+import { useState } from "react";
+
+import { useQuery } from "@tanstack/react-query";
+import { isAfter, max } from "date-fns";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Info, Loader2 } from "lucide-react";
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,13 +32,9 @@ import {
   toISODateString,
 } from "@/lib/timezone";
 import { validateMonth } from "@/lib/validation/calendar";
-import { useQuery } from "@tanstack/react-query";
-import { isAfter, max } from "date-fns";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Info, Loader2 } from "lucide-react";
-import { useState } from "react";
+
 import { AvailabilityLegend } from "./AvailabilityLegend";
-import type { AvailabilityDay } from "./CalendarGrid";
-import { CalendarGrid } from "./CalendarGrid";
+import { CalendarGrid, type AvailabilityDay } from "./CalendarGrid";
 import { useSwipeGesture } from "./useSwipeGesture";
 
 /**
@@ -159,9 +161,9 @@ export function PublicAvailabilityCalendar() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 bg-white rounded-lg shadow-lg p-8">
+      <div className="flex h-96 flex-col items-center justify-center rounded-lg bg-white p-8 shadow-lg">
         <Loader2
-          className="w-12 h-12 animate-spin text-blue-600 mb-4"
+          className="mb-4 h-12 w-12 animate-spin text-blue-600"
           role="progressbar"
           aria-label="Loading calendar"
         />
@@ -173,12 +175,12 @@ export function PublicAvailabilityCalendar() {
   // Error state
   if (error) {
     return (
-      <Alert variant="destructive" className="max-w-2xl mx-auto">
+      <Alert variant="destructive" className="mx-auto max-w-2xl">
         <Info className="h-4 w-4" />
         <AlertDescription>
           Failed to load availability data. Please try refreshing the page.
           {error instanceof Error && (
-            <span className="block mt-2 text-sm opacity-75">Error: {error.message}</span>
+            <span className="mt-2 block text-sm opacity-75">Error: {error.message}</span>
           )}
         </AlertDescription>
       </Alert>
@@ -203,14 +205,14 @@ export function PublicAvailabilityCalendar() {
   const isNextMonthValid = validateMonth(nextMonth).valid;
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200/80 overflow-hidden">
+    <div className="overflow-hidden rounded-lg border border-slate-200/80 bg-white">
       {/* Calendar Header with Title - Clean White with Border */}
-      <div className="bg-slate-50 border-b border-slate-200">
+      <div className="border-b border-slate-200 bg-slate-50">
         {/* Title Row */}
-        <div className="px-4 pt-2.5 pb-2 border-b border-slate-200/50">
+        <div className="border-b border-slate-200/50 px-4 pt-2.5 pb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5 text-slate-600" />
+              <CalendarIcon className="h-5 w-5 text-slate-600" />
               <h1 className="text-lg font-semibold text-slate-800">Okaeri Availability</h1>
             </div>
             <span className="text-xs text-slate-600">3 Units</span>
@@ -218,7 +220,7 @@ export function PublicAvailabilityCalendar() {
         </div>
 
         {/* Month Navigation - Compact */}
-        <div className="px-4 py-2 bg-white">
+        <div className="bg-white px-4 py-2">
           <div className="flex items-center justify-between">
             {/* Previous Month Button */}
             <Button
@@ -229,15 +231,15 @@ export function PublicAvailabilityCalendar() {
               className="text-slate-700 hover:bg-slate-100 disabled:opacity-30"
               aria-label="Previous month"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="h-5 w-5" />
             </Button>
 
             {/* Current Month Display */}
             <div className="text-center">
               <h2 className="text-xl font-bold text-slate-800">{monthName}</h2>
               {isFetching && (
-                <span className="text-xs text-slate-600 flex items-center justify-center gap-1 mt-1">
-                  <Loader2 className="w-3 h-3 animate-spin" />
+                <span className="mt-1 flex items-center justify-center gap-1 text-xs text-slate-600">
+                  <Loader2 className="h-3 w-3 animate-spin" />
                   Updating...
                 </span>
               )}
@@ -252,7 +254,7 @@ export function PublicAvailabilityCalendar() {
               className="text-slate-700 hover:bg-slate-100 disabled:opacity-30"
               aria-label="Next month"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="h-5 w-5" />
             </Button>
           </div>
 
@@ -261,7 +263,7 @@ export function PublicAvailabilityCalendar() {
             onClick={goToToday}
             variant="secondary"
             size="sm"
-            className="w-full mt-1.5 h-7 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+            className="mt-1.5 h-7 w-full border border-slate-200 bg-slate-100 text-sm text-slate-700 hover:bg-slate-200"
           >
             Today
           </Button>
@@ -269,7 +271,7 @@ export function PublicAvailabilityCalendar() {
       </div>
 
       {/* Legend - More Compact */}
-      <div className="px-4 py-2 border-b border-slate-200/80">
+      <div className="border-b border-slate-200/80 px-4 py-2">
         <AvailabilityLegend />
       </div>
 
@@ -290,7 +292,7 @@ export function PublicAvailabilityCalendar() {
       </div>
 
       {/* Last Updated Timestamp - Minimal Footer */}
-      <div className="px-4 py-2 border-t border-slate-200/80 bg-slate-50/50 text-center">
+      <div className="border-t border-slate-200/80 bg-slate-50/50 px-4 py-2 text-center">
         <p className="text-xs text-slate-600">
           Updated{" "}
           {new Date(data.metadata.generatedAt).toLocaleString("en-US", {

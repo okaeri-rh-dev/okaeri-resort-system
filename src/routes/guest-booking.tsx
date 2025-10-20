@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+
 import { GuestBookingForm } from "@/components/guest-booking/GuestBookingForm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoIcon } from "lucide-react";
+
+// import { InfoIcon } from "lucide-react";
 
 export const Route = createFileRoute("/guest-booking")({
   component: GuestBookingPage,
@@ -24,16 +26,16 @@ function GuestBookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background">
-      <div className="container mx-auto py-8 px-4">
+    <div className="from-primary/5 to-background min-h-screen bg-gradient-to-b">
+      <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Book Your Stay</h1>
+        <div className="mb-8 text-center">
+          <h1 className="mb-2 text-3xl font-bold">Book Your Stay</h1>
           <p className="text-muted-foreground">Complete the form below to make a reservation</p>
         </div>
 
         {/* Info Banner */}
-        <Card className="max-w-2xl mx-auto mb-6">
+        {/* <Card className="max-w-2xl mx-auto mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <InfoIcon className="h-5 w-5" />
@@ -49,7 +51,7 @@ function GuestBookingPage() {
               <li>• Payment verification usually within 24 hours</li>
             </ul>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Booking Form */}
         <GuestBookingForm

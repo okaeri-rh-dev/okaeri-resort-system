@@ -1,7 +1,7 @@
-import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import * as React from "react";
-import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker";
 
+import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker";
 import { Button, buttonVariants } from "src/components/ui/button";
 import { cn } from "src/lib/utils";
 
@@ -167,7 +167,7 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        "gap-0 text-center group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 flex aspect-square h-[--cell-size] w-[--cell-size] min-w-[--cell-size] font-normal leading-none group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] [&>span]:text-xs [&>span]:opacity-70 p-0 items-center justify-center bg-transparent hover:bg-transparent",
+        "group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 flex aspect-square h-[--cell-size] w-[--cell-size] min-w-[--cell-size] items-center justify-center gap-0 bg-transparent p-0 text-center leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] hover:bg-transparent [&>span]:text-xs [&>span]:opacity-70",
         defaultClassNames.day,
         className,
         "size-full"

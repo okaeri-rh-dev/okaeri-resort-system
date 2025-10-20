@@ -80,10 +80,14 @@ const auditLog: Database["public"]["Tables"]["audit_logs"]["Insert"] = {
 
 ```typescript
 // Before:
-import { AuditCategory, AuditSeverity, AuditEventType } from "../../database.types";
-
 // After:
-import { AuditCategory, AuditSeverity } from "../../database.types";
+import {
+  AuditCategory,
+  AuditCategory,
+  AuditEventType,
+  AuditSeverity,
+  AuditSeverity,
+} from "../../database.types";
 ```
 
 ---

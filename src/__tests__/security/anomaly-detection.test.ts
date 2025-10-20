@@ -2,8 +2,9 @@
  * Anomaly Detection Security Tests
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { detectAnomalies, shouldAutoBlock, logSecurityEvent } from "@/lib/security-monitoring";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { detectAnomalies, logSecurityEvent, shouldAutoBlock } from "@/lib/security-monitoring";
 import { supabase } from "@/lib/supabase";
 
 // Mock Supabase

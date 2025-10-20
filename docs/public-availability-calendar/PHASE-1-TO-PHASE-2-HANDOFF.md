@@ -259,7 +259,7 @@ export function PublicAvailabilityCalendar() {
 
 ```typescript
 // utils/timezone.ts
-import { zonedTimeToUtc, utcToZonedTime, format } from "date-fns-tz";
+import { format, utcToZonedTime, zonedTimeToUtc } from "date-fns-tz";
 
 const TIMEZONE = "Asia/Manila"; // Philippine Time (UTC+8)
 

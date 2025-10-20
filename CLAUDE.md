@@ -449,7 +449,7 @@ await logAuditEvent({
 Monitor resource usage to stay within free tier limits:
 
 ```typescript
-import { monitorQuota, alertOnThreshold } from "@/lib/monitoring";
+import { alertOnThreshold, monitorQuota } from "@/lib/monitoring";
 
 // Check quotas before expensive operations
 const { kv, email, bandwidth } = await monitorQuota();

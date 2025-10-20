@@ -687,21 +687,21 @@ psql $DATABASE_URL -f database/scripts/verify-production-state.sql
 
 ### Pre-Deployment Review
 
-- [ ] Migration plan reviewed: ******\_\_\_******
-- [ ] Backup verified: ******\_\_\_******
-- [ ] Team notified: ******\_\_\_******
+- [ ] Migration plan reviewed: **\*\***\_\_\_**\*\***
+- [ ] Backup verified: **\*\***\_\_\_**\*\***
+- [ ] Team notified: **\*\***\_\_\_**\*\***
 
-**Approved by**: ******\_\_\_******
-**Date**: ******\_\_\_******
+**Approved by**: **\*\***\_\_\_**\*\***
+**Date**: **\*\***\_\_\_**\*\***
 
 ### Post-Deployment Review
 
-- [ ] Deployment successful: ******\_\_\_******
-- [ ] Validation passed: ******\_\_\_******
-- [ ] Monitoring active: ******\_\_\_******
+- [ ] Deployment successful: **\*\***\_\_\_**\*\***
+- [ ] Validation passed: **\*\***\_\_\_**\*\***
+- [ ] Monitoring active: **\*\***\_\_\_**\*\***
 
-**Completed by**: ******\_\_\_******
-**Date**: ******\_\_\_******
+**Completed by**: **\*\***\_\_\_**\*\***
+**Date**: **\*\***\_\_\_**\*\***
 
 ---
 

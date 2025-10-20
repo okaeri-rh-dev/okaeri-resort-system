@@ -588,11 +588,11 @@ if ("serviceWorker" in navigator) {
 ### Browser DevTools
 
 ```javascript
-// Debug Zustand stores
-window.__ZUSTAND_DEVTOOLS__ = true;
-
 // Debug React Query
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+// Debug Zustand stores
+window.__ZUSTAND_DEVTOOLS__ = true;
 
 // Debug network requests
 window.addEventListener("fetch", (e) => {
@@ -659,7 +659,7 @@ ORDER BY n_live_tup DESC;
 
 ```javascript
 // Monitor Core Web Vitals
-import { getCLS, getFID, getFCP, getLCP, getTTFB } from "web-vitals";
+import { getCLS, getFCP, getFID, getLCP, getTTFB } from "web-vitals";
 
 getCLS(console.log); // Cumulative Layout Shift
 getFID(console.log); // First Input Delay

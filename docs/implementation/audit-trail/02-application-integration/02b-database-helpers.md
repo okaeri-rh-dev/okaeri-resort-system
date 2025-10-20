@@ -16,14 +16,15 @@ Add to existing `src/lib/supabase.ts` (after the existing `db` object):
 // src/lib/supabase.ts
 
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "../../database.types";
+
 import type {
+  AuditAction,
+  AuditEventContext,
   AuditLog,
   AuditLogFilters,
   AuditLogQueryResult,
   AuditLogStats,
-  AuditEventContext,
-  AuditAction,
+  Database,
 } from "../../database.types";
 import { PAGINATION_DEFAULTS } from "./audit-constants";
 

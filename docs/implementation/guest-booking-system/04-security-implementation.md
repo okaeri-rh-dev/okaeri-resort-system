@@ -261,8 +261,9 @@ export async function verifyTurnstile(
 
 ```tsx
 // components/guest-booking/TurnstileProtectedForm.tsx
-import { Turnstile } from "@marsidev/react-turnstile";
 import { useState } from "react";
+
+import { Turnstile } from "@marsidev/react-turnstile";
 
 export function TurnstileProtectedForm({ children, onSubmit }: Props) {
   const [turnstileToken, setTurnstileToken] = useState<string>("");
@@ -301,7 +302,7 @@ export function TurnstileProtectedForm({ children, onSubmit }: Props) {
         onExpire={() => setTurnstileToken("")}
       />
 
-      {isVerifying && <div className="text-sm text-muted-foreground">Processing...</div>}
+      {isVerifying && <div className="text-muted-foreground text-sm">Processing...</div>}
     </form>
   );
 }
@@ -313,9 +314,9 @@ export function TurnstileProtectedForm({ children, onSubmit }: Props) {
 
 ```typescript
 // lib/validation/guest-booking.ts
-import { z } from "zod";
 import DOMPurify from "isomorphic-dompurify";
 import validator from "validator";
+import { z } from "zod";
 
 // Philippine phone number regex
 const phPhoneRegex = /^(\+63|0)?9\d{9}$/;
@@ -988,8 +989,9 @@ return (
 ```typescript
 // lib/file-security.ts
 import { createHash } from "crypto";
-import sharp from "sharp";
+
 import pdf from "pdf-parse";
+import sharp from "sharp";
 
 export interface FileValidationResult {
   valid: boolean;
@@ -1164,30 +1166,29 @@ The guest booking system leverages the **implemented audit trail system** (Phase
 
 ```typescript
 // Using the implemented audit system from Phase 2
-import { logAuditEventWithIp } from "@/lib/audit-logger-workers";
 import { AuditCategory, AuditSeverity, EventType } from "@/database.types";
+import { logAuditEventWithIp } from "@/lib/audit-logger-workers";
 
 // Security-focused audit events for guest bookings
-export async function logSecurityEvent(
-  event: {
-    type: 'rate_limit_exceeded' | 'captcha_failed' | 'suspicious_pattern' | 'file_validation_failed';
-    ip: string;
-    userAgent: string;
-    metadata?: Record<string, any>;
-  }
-) {
+export async function logSecurityEvent(event: {
+  type: "rate_limit_exceeded" | "captcha_failed" | "suspicious_pattern" | "file_validation_failed";
+  ip: string;
+  userAgent: string;
+  metadata?: Record<string, any>;
+}) {
   await logAuditEventWithIp(
     {
       action: `security_${event.type}` as EventType,
       category: AuditCategory.SYSTEM,
-      severity: event.type === 'suspicious_pattern' ? AuditSeverity.CRITICAL : AuditSeverity.WARNING,
-      description: `Security event: ${event.type.replace(/_/g, ' ')}`,
+      severity:
+        event.type === "suspicious_pattern" ? AuditSeverity.CRITICAL : AuditSeverity.WARNING,
+      description: `Security event: ${event.type.replace(/_/g, " ")}`,
       metadata: {
         ...event.metadata,
         threat_level: calculateThreatLevel(event.type),
         blocked: true,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     },
     event.ip,
     event.userAgent
@@ -1221,66 +1222,63 @@ export async function detectAnomalies(ip: string): Promise<{
   let threatScore = 0;
 
   // Pattern 1: Multiple failed booking attempts
-  const failedBookings = recentLogs.filter(log =>
-    log.action?.includes('guest_booking_failed') ||
-    log.metadata?.action === 'guest_booking_failed'
+  const failedBookings = recentLogs.filter(
+    (log) =>
+      log.action?.includes("guest_booking_failed") ||
+      log.metadata?.action === "guest_booking_failed"
   );
   if (failedBookings.length > 3) {
-    patterns.push('multiple_failed_bookings');
+    patterns.push("multiple_failed_bookings");
     threatScore += 30;
   }
 
   // Pattern 2: Rate limit violations
-  const rateLimitHits = recentLogs.filter(log =>
-    log.action?.includes('rate_limit') ||
-    log.metadata?.ip_blocked === true
+  const rateLimitHits = recentLogs.filter(
+    (log) => log.action?.includes("rate_limit") || log.metadata?.ip_blocked === true
   );
   if (rateLimitHits.length > 0) {
-    patterns.push('rate_limit_violation');
+    patterns.push("rate_limit_violation");
     threatScore += 40;
   }
 
   // Pattern 3: CAPTCHA failures
-  const captchaFailures = recentLogs.filter(log =>
-    log.action?.includes('captcha_failed') ||
-    log.metadata?.turnstile_verified === false
+  const captchaFailures = recentLogs.filter(
+    (log) => log.action?.includes("captcha_failed") || log.metadata?.turnstile_verified === false
   );
   if (captchaFailures.length > 2) {
-    patterns.push('captcha_failures');
+    patterns.push("captcha_failures");
     threatScore += 25;
   }
 
   // Pattern 4: Multiple different emails from same IP
   const uniqueEmails = new Set(
-    recentLogs
-      .filter(log => log.metadata?.guest_email)
-      .map(log => log.metadata.guest_email)
+    recentLogs.filter((log) => log.metadata?.guest_email).map((log) => log.metadata.guest_email)
   );
   if (uniqueEmails.size > 3) {
-    patterns.push('email_enumeration');
+    patterns.push("email_enumeration");
     threatScore += 35;
   }
 
   // Pattern 5: Rapid-fire requests
   if (recentLogs.length > 50) {
-    patterns.push('rapid_requests');
+    patterns.push("rapid_requests");
     threatScore += 20;
   }
 
   // Pattern 6: File upload anomalies
-  const uploadFailures = recentLogs.filter(log =>
-    log.action?.includes('file_validation_failed') ||
-    log.metadata?.file_validation === false
+  const uploadFailures = recentLogs.filter(
+    (log) =>
+      log.action?.includes("file_validation_failed") || log.metadata?.file_validation === false
   );
   if (uploadFailures.length > 0) {
-    patterns.push('suspicious_uploads');
+    patterns.push("suspicious_uploads");
     threatScore += 45;
   }
 
   return {
     isAnomaly: threatScore >= 50,
     patterns,
-    threatScore: Math.min(threatScore, 100)
+    threatScore: Math.min(threatScore, 100),
   };
 }
 ```
@@ -1372,12 +1370,12 @@ export async function autoBlockThreats(ip: string): Promise<boolean> {
         metadata: {
           threat_score: threatScore,
           patterns: patterns,
-          block_duration: '24h',
-          auto_blocked: true
-        }
+          block_duration: "24h",
+          auto_blocked: true,
+        },
       },
       ip,
-      'System'
+      "System"
     );
 
     // Add to Cloudflare KV blocklist
@@ -1452,7 +1450,8 @@ ORDER BY attempts DESC;
    - Real-time threat detection
    - Automated blocking capabilities
    - Evidence preservation
-```
+
+````
 
 ## Security Headers
 
@@ -1496,7 +1495,7 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
-```
+````
 
 ## Security Testing
 

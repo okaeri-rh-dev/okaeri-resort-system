@@ -1,5 +1,5 @@
-import type { Expense } from "@/types";
 import type { ExpenseFilters } from "@/stores/useExpenseStore";
+import type { Expense } from "@/types";
 
 export interface ExpensesTableProps {
   onViewExpense?: (expense: Expense) => void;

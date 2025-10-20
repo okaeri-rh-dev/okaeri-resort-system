@@ -11,14 +11,16 @@
  * - Real-time availability updates
  */
 
-import { supabase } from "./supabase";
 import type { Unit, UnitType } from "@/types";
-import { toUnitType, toBlackoutType } from "@/types/supabase";
-import type {
-  UnitAvailabilityResponse as SupabaseUnitResponse,
+import {
+  toBlackoutType,
+  toUnitType,
   // CalendarDayResponse, // ❌ DISABLED: Used by commented-out getUnitAvailabilityCalendar
-  BlackoutResponse,
+  type BlackoutResponse,
+  type UnitAvailabilityResponse as SupabaseUnitResponse,
 } from "@/types/supabase";
+
+import { supabase } from "./supabase";
 
 // ============================================
 // TYPE DEFINITIONS

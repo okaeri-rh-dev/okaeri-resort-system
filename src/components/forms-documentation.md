@@ -141,11 +141,7 @@ function PaymentProofPage({ bookingId, amount }) {
   };
 
   return (
-    <PaymentUploadForm
-      bookingId={bookingId}
-      bookingAmount={amount}
-      onSuccess={handleSuccess}
-    />
+    <PaymentUploadForm bookingId={bookingId} bookingAmount={amount} onSuccess={handleSuccess} />
   );
 }
 ```

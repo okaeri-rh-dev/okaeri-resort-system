@@ -1,12 +1,15 @@
+import React, { useCallback, useState } from "react";
+
+import { format, getDay } from "date-fns";
+import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCalendarBookings } from "@/hooks/useCalendarBookings";
 import { cn } from "@/lib/utils";
 import type { Booking } from "@/types";
-import { format, getDay } from "date-fns";
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
-import React, { useCallback, useState } from "react";
+
 import { BookingIndicators } from "./BookingIndicators";
 import { BookingTooltip } from "./BookingTooltip";
 
@@ -52,7 +55,7 @@ const DayButton = React.memo(function DayButton({
         {...props}
         variant="ghost"
         className={cn(
-          "relative h-16 sm:h-20 md:h-24 w-full p-1 font-normal text-sm",
+          "relative h-16 w-full p-1 text-sm font-normal sm:h-20 md:h-24",
           "min-w-0", // Allow shrinking below content size
           "transition-all duration-150",
           // Base weekend styling (only if no bookings)
@@ -61,7 +64,7 @@ const DayButton = React.memo(function DayButton({
           bookingCountClass,
           // Today special styling (overrides other backgrounds)
           isToday &&
-            "bg-blue-100 border border-blue-300 font-semibold text-blue-900 hover:bg-blue-200",
+            "border border-blue-300 bg-blue-100 font-semibold text-blue-900 hover:bg-blue-200",
           // Make text bolder when there are bookings
           dayBookings.length > 0 && "font-medium",
           // Outside month dates - reduce opacity but not for the button itself
@@ -73,10 +76,10 @@ const DayButton = React.memo(function DayButton({
             : ""
         }`}
       >
-        <div className="flex flex-col items-start justify-start h-full p-1">
+        <div className="flex h-full flex-col items-start justify-start p-1">
           <span
             className={cn(
-              "text-xs sm:text-sm font-medium self-start",
+              "self-start text-xs font-medium sm:text-sm",
               isToday && "text-blue-900",
               dayBookings.length > 4 && "text-amber-700"
             )}
@@ -129,15 +132,15 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
 
   return (
     <Card className={cn("w-full", className)}>
-      <CardHeader className="pb-3 bg-gradient-to-r from-slate-50 to-blue-50/30 rounded-t-lg">
+      <CardHeader className="rounded-t-lg bg-gradient-to-r from-slate-50 to-blue-50/30 pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <CardTitle className="text-xl font-semibold flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-xl font-semibold">
               <CalendarDays className="size-5 text-blue-600" />
               <span className="text-slate-800">Booking Calendar</span>
             </CardTitle>
             {monthlyBookingCount > 0 && (
-              <span className="text-sm text-slate-600 font-medium bg-blue-100 px-2 py-0.5 rounded-full">
+              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-sm font-medium text-slate-600">
                 {monthlyBookingCount} booking{monthlyBookingCount !== 1 ? "s" : ""} this month
               </span>
             )}
@@ -163,7 +166,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
               >
                 <ChevronLeft className="size-4" />
               </Button>
-              <div className="min-w-[140px] text-center bg-white px-3 py-1 rounded-md border border-slate-200">
+              <div className="min-w-[140px] rounded-md border border-slate-200 bg-white px-3 py-1 text-center">
                 <span className="text-sm font-semibold text-slate-800">
                   {format(currentMonth, "MMMM yyyy")}
                 </span>
@@ -184,7 +187,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
 
       <CardContent className="p-4 pt-0">
         {isLoading ? (
-          <div className="flex items-center justify-center h-[480px]">
+          <div className="flex h-[480px] items-center justify-center">
             <div className="text-sm text-neutral-600">Loading calendar...</div>
           </div>
         ) : (
@@ -194,7 +197,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
             month={currentMonth}
             onMonthChange={setCurrentMonth}
             showOutsideDays={true}
-            className="rounded-md border w-full"
+            className="w-full rounded-md border"
             classNames={{
               months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 w-full",
               month: "space-y-3 w-full",

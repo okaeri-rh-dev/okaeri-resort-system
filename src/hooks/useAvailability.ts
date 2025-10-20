@@ -10,27 +10,27 @@
  * - Integration with existing React Query patterns
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import {
-  checkUnitAvailability,
-  checkMultiUnitAvailability,
   // getUnitAvailabilityCalendar, // ❌ DISABLED: Function not deployed
   batchCheckUnitAvailability,
-  getAvailableUnitsByType,
+  checkMultiUnitAvailability,
+  checkUnitAvailability,
   createBlackoutPeriod,
+  formatAvailabilityMessage,
+  getAvailableUnitsByType,
   getUnitBlackoutPeriods,
   // refreshAvailabilityCache, // ❌ DISABLED: Function not deployed
   // getCachePerformanceMetrics, // ❌ DISABLED: Function not deployed
   validateDateRange,
-  formatAvailabilityMessage,
-} from "@/lib/availability";
-import type {
-  AvailabilityResult,
   // UnitAvailability, // Phase 3 - Not used yet
   // AvailabilityCalendarDay, // Phase 3 - Not used yet
-  AvailabilityFilter,
-  BlackoutPeriod,
+  type AvailabilityFilter,
+  type AvailabilityResult,
+  type BlackoutPeriod,
 } from "@/lib/availability";
 
 // ============================================

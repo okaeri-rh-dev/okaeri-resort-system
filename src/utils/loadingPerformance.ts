@@ -1,3 +1,6 @@
+// Import React for hooks
+import React from "react";
+
 // ============================================
 // LOADING PERFORMANCE MONITORING UTILITIES
 // ============================================
@@ -535,6 +538,3 @@ export const setupDevelopmentMonitoring = () => {
   console.log("- __generateLoadingReport(): Generate detailed performance report");
   console.log("- __runLoadingTests(): Run performance test suite");
 };
-
-// Import React for hooks
-import React from "react";

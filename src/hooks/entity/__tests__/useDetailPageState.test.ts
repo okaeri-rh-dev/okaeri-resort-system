@@ -1,9 +1,10 @@
 // src/hooks/entity/__tests__/useDetailPageState.test.ts
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { useDetailPageState } from "../useDetailPageState";
-import { useSearch, useNavigate } from "@tanstack/react-router";
 
 // Mock TanStack Router
 vi.mock("@tanstack/react-router", () => ({

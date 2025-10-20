@@ -5,9 +5,10 @@
  * for Cloudflare scheduled triggers.
  */
 
-import { getAlertSystem } from "./alert-system";
-import { logAuditEvent } from "../audit-logger";
 import { AuditCategory, AuditSeverity } from "@/types/audit.types";
+
+import { logAuditEvent } from "../audit-logger";
+import { getAlertSystem } from "./alert-system";
 
 interface CronJobExecution {
   id: string;

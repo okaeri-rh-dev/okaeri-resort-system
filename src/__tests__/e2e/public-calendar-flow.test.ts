@@ -11,8 +11,8 @@
  * - Mobile responsiveness
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { preview, PreviewServer } from "vite";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 describe("Public Calendar E2E Flow", () => {
   let server: PreviewServer;

@@ -4,18 +4,19 @@
  * Leverages existing XSS_TEST_PAYLOADS from Phase 1 implementation
  */
 
-import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
+
 import {
-  sanitizeText,
-  sanitizeRichText,
-  sanitizeUrl,
-  sanitizeEmail,
-  sanitizePhoneNumber,
-  sanitizeName,
   containsSuspiciousContent,
   sanitizeBookingFormData,
+  sanitizeEmail,
+  sanitizeName,
+  sanitizePhoneNumber,
+  sanitizeRichText,
+  sanitizeText,
+  sanitizeUrl,
   XSS_TEST_PAYLOADS,
 } from "@/lib/security/sanitize";
 

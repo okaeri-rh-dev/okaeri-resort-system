@@ -31,6 +31,10 @@ addOptimisticBooking: (booking) => // Grows indefinitely
 #### Solution Implementation
 
 ```typescript
+// Initialize cleanup on app start
+// File: /src/main.tsx
+import { useBookingStore } from "@/stores/useBookingStore";
+
 // SOLUTION - Add TTL and cleanup mechanism
 // File: /src/stores/useBookingStore.ts
 
@@ -106,10 +110,6 @@ export const useBookingStore = create<BookingStore>()(
     }))
   )
 );
-
-// Initialize cleanup on app start
-// File: /src/main.tsx
-import { useBookingStore } from "@/stores/useBookingStore";
 
 // In App component or main initialization
 useEffect(() => {

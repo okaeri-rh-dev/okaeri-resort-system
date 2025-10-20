@@ -1,5 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
+
+import { createFileRoute } from "@tanstack/react-router";
+
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Lazy load the Dashboard component
@@ -17,7 +19,7 @@ function DashboardPage() {
           <Suspense
             fallback={
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
               </div>
             }
           >

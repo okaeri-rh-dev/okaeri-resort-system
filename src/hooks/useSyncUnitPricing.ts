@@ -7,10 +7,12 @@
  * @module useSyncUnitPricing
  */
 
-import { useEffect, useMemo, useCallback } from "react";
+import { useCallback, useEffect, useMemo } from "react";
+
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
-import { useMultiUnitPricingQuote } from "./useMultiUnitBookingQueries";
 import type { BookingUnit } from "@/types";
+
+import { useMultiUnitPricingQuote } from "./useMultiUnitBookingQueries";
 
 // ============================================
 // AUTO PRICE SYNC HOOK

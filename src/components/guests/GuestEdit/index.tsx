@@ -1,13 +1,13 @@
 // src/components/guests/GuestEdit/index.tsx
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useParams, useLoaderData, useNavigate } from "@tanstack/react-router";
+import { useLoaderData, useNavigate, useParams } from "@tanstack/react-router";
 import { Save, X } from "lucide-react";
+import { useForm } from "react-hook-form";
 
-import { guestEditSchema, type GuestEditInput } from "@/lib/validation/entity-schemas";
-import { useEntityEdit } from "@/hooks/entity";
 import { DetailPageLayout } from "@/components/entity-detail";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -18,9 +18,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
+import { useEntityEdit } from "@/hooks/entity";
+import { guestEditSchema, type GuestEditInput } from "@/lib/validation/entity-schemas";
 import type { Guest } from "@/types/entity-detail.types";
 
 export interface GuestEditPageProps {
@@ -93,7 +92,7 @@ export function GuestEditPage() {
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="email"
@@ -177,11 +176,11 @@ export function GuestEditPage() {
               onClick={handleCancel}
               disabled={updateGuest.isPending}
             >
-              <X className="h-4 w-4 mr-2" />
+              <X className="mr-2 h-4 w-4" />
               Cancel
             </Button>
             <Button type="submit" disabled={updateGuest.isPending}>
-              <Save className="h-4 w-4 mr-2" />
+              <Save className="mr-2 h-4 w-4" />
               {updateGuest.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </div>

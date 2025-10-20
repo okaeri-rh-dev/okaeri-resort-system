@@ -231,6 +231,7 @@ After migration is deployed:
    ```typescript
    // In src/components/auth/LoginForm.tsx
    import { signInWithAudit } from "@/lib/auth-audit";
+
    await signInWithAudit(email, password);
    ```
 

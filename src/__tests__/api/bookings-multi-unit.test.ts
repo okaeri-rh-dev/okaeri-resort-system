@@ -11,15 +11,16 @@
  * - Idempotency (replay detection, caching)
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { createMockRequest, createMockContext, mockEnv, generateIdempotencyKey } from "./setup";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { createBookingMocks } from "./factories/booking-factory";
-import { testUnits } from "./utils/fixtures";
+import { createMockContext, createMockRequest, generateIdempotencyKey, mockEnv } from "./setup";
 import type {
+  BusinessErrorResponse,
   MultiUnitBookingResponse,
   ValidationErrorResponse,
-  BusinessErrorResponse,
 } from "./types/responses";
+import { testUnits } from "./utils/fixtures";
 
 describe("POST /api/bookings/multi-unit", () => {
   const validBookingData = {

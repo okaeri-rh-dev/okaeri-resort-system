@@ -9,16 +9,17 @@
  * @module BusinessValidation
  */
 
-import type { Guest, Booking, BookingFormData, Unit, PaymentStatus } from "@/types";
-import { getPhilippineTime, analyzeBookingPeriod } from "./date-helpers";
 import {
+  sanitizeName,
+  sanitizePhoneNumber,
   sanitizeText,
   sanitizeEmail as secureSanitizeEmail,
-  sanitizePhoneNumber,
-  sanitizeName,
   // sanitizeFormData is available if needed in the future
   // sanitizeFormData as secureSanitizeFormData,
 } from "@/lib/security/sanitize";
+import type { Booking, BookingFormData, Guest, PaymentStatus, Unit } from "@/types";
+
+import { analyzeBookingPeriod, getPhilippineTime } from "./date-helpers";
 
 // ============================================
 // TYPE DEFINITIONS

@@ -2,12 +2,14 @@
  * @vitest-environment jsdom
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
-import { GuestAssignment } from "../GuestAssignment";
+
 import type { BookingUnit } from "@/types/multi-unit-booking";
+
+import { GuestAssignment } from "../GuestAssignment";
 
 const mockUnit: BookingUnit = {
   unit_id: "unit-1",

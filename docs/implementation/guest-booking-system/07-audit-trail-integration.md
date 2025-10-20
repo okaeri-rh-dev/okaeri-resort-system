@@ -66,8 +66,8 @@ await logAuditEventWithIp(
       is_guest_booking: true,
       source: "guest_portal",
       // Sensitive data will be automatically redacted
-      guest_email: email
-    }
+      guest_email: email,
+    },
   },
   request.headers.get("CF-Connecting-IP"),
   request.headers.get("User-Agent")
@@ -132,16 +132,16 @@ sequenceDiagram
 
 ### Audit Events at Each Step
 
-| Step | Database Audit | Application Audit | Metadata Captured |
-|------|----------------|-------------------|-------------------|
-| 1. Guest submits form | - | `guest_booking_attempt` | IP, dates, unit |
-| 2. Availability check | - | `availability_check` | Unit, dates, result |
-| 3. Booking created | `INSERT bookings` | `guest_booking_created` | Full booking record |
-| 4. Upload initiated | - | `signed_url_generated` | Expiry, path |
-| 5. Payment uploaded | - | `payment_proof_uploaded` | File metadata |
-| 6. Booking updated | `UPDATE bookings` | - | Changed fields |
-| 7. Admin reviews | - | `admin_review_started` | Admin ID, timestamp |
-| 8. Admin confirms | `UPDATE bookings` | `booking_confirmed` | Status change |
+| Step                  | Database Audit    | Application Audit        | Metadata Captured   |
+| --------------------- | ----------------- | ------------------------ | ------------------- |
+| 1. Guest submits form | -                 | `guest_booking_attempt`  | IP, dates, unit     |
+| 2. Availability check | -                 | `availability_check`     | Unit, dates, result |
+| 3. Booking created    | `INSERT bookings` | `guest_booking_created`  | Full booking record |
+| 4. Upload initiated   | -                 | `signed_url_generated`   | Expiry, path        |
+| 5. Payment uploaded   | -                 | `payment_proof_uploaded` | File metadata       |
+| 6. Booking updated    | `UPDATE bookings` | -                        | Changed fields      |
+| 7. Admin reviews      | -                 | `admin_review_started`   | Admin ID, timestamp |
+| 8. Admin confirms     | `UPDATE bookings` | `booking_confirmed`      | Status change       |
 
 ## Security Monitoring Integration
 
@@ -165,7 +165,7 @@ export async function monitorGuestBookingThreats(ip: string) {
       action: EventType.security_threat_detected,
       category: AuditCategory.SYSTEM,
       severity: AuditSeverity.CRITICAL,
-      metadata: { ip, threats }
+      metadata: { ip, threats },
     });
 
     await blockIP(ip);
@@ -231,28 +231,28 @@ const guestBookingFilters = [
   {
     label: "Today's Guest Submissions",
     filter: {
-      table: 'bookings',
-      metadata: { source: 'guest_portal' },
-      dateFrom: today()
-    }
+      table: "bookings",
+      metadata: { source: "guest_portal" },
+      dateFrom: today(),
+    },
   },
   {
     label: "Pending Guest Reviews",
     filter: {
-      table: 'bookings',
+      table: "bookings",
       metadata: {
         is_guest_booking: true,
-        booking_status: 'Pending'
-      }
-    }
+        booking_status: "Pending",
+      },
+    },
   },
   {
     label: "Failed Guest Bookings",
     filter: {
-      action: 'guest_booking_failed',
-      severity: 'WARNING'
-    }
-  }
+      action: "guest_booking_failed",
+      severity: "WARNING",
+    },
+  },
 ];
 ```
 
@@ -363,13 +363,13 @@ ORDER BY created_at DESC;
 // Use indexed fields for fast queries
 const efficientQuery = {
   // Good - uses indexes
-  table: 'bookings',
+  table: "bookings",
   created_at: { gte: yesterday },
 
   // Avoid - requires full scan
   metadata: {
-    complex_nested_field: value // Slower
-  }
+    complex_nested_field: value, // Slower
+  },
 };
 ```
 
@@ -379,13 +379,11 @@ const efficientQuery = {
 // Batch audit log writes for bulk operations
 const batchAuditLogs = async (events: AuditEvent[]) => {
   // Group events by type for efficient processing
-  const grouped = groupBy(events, 'action');
+  const grouped = groupBy(events, "action");
 
   // Write in parallel with controlled concurrency
   await Promise.all(
-    Object.entries(grouped).map(([action, events]) =>
-      logBatchEvents(action, events)
-    )
+    Object.entries(grouped).map(([action, events]) => logBatchEvents(action, events))
   );
 };
 ```
@@ -396,7 +394,7 @@ const batchAuditLogs = async (events: AuditEvent[]) => {
 // Cache audit queries with React Query
 export function useGuestBookingAudit(bookingId: string) {
   return useQuery({
-    queryKey: ['guest-booking-audit', bookingId],
+    queryKey: ["guest-booking-audit", bookingId],
     queryFn: () => fetchAuditLogs({ recordId: bookingId }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     cacheTime: 30 * 60 * 1000, // 30 minutes
@@ -426,9 +424,9 @@ export async function deleteGuestAuditData(email: string) {
   await supabase
     .from("audit_logs")
     .update({
-      metadata: { ...metadata, guest_email: '[DELETED]' },
+      metadata: { ...metadata, guest_email: "[DELETED]" },
       old_data: redactPII(old_data),
-      new_data: redactPII(new_data)
+      new_data: redactPII(new_data),
     })
     .or(`metadata->>'guest_email'.eq.${email}`);
 }
@@ -444,7 +442,7 @@ export async function generateComplianceReport(dateRange: DateRange) {
     securityEvents: await countSecurityEvents(dateRange),
     adminActions: await countAdminActions(dateRange),
     dataRetention: await checkRetentionCompliance(dateRange),
-    piiRedaction: await verifyPIIRedaction(dateRange)
+    piiRedaction: await verifyPIIRedaction(dateRange),
   };
 
   return formatReport(report);
@@ -456,21 +454,25 @@ export async function generateComplianceReport(dateRange: DateRange) {
 ### Common Issues
 
 **Issue: Audit logs not appearing for guest bookings**
+
 - Verify database triggers are installed: `SELECT * FROM information_schema.triggers`
 - Check application logger is imported correctly
 - Ensure Supabase service role key has INSERT permission on audit_logs
 
 **Issue: PII visible in audit logs**
+
 - Review `SENSITIVE_FIELDS` configuration in `audit-constants.ts`
 - Ensure redaction function is applied before logging
 - Check database trigger redaction logic
 
 **Issue: Performance degradation with audit queries**
+
 - Check indexes on audit_logs table
 - Use date range filters to limit result set
 - Consider partitioning for high-volume environments
 
 **Issue: Audit logs growing too large**
+
 - Implement retention policy (90 days standard)
 - Archive old logs to cold storage
 - Use database partitioning by month
@@ -483,10 +485,10 @@ export async function generateComplianceReport(dateRange: DateRange) {
 // Use consistent naming convention
 const eventNames = {
   // Pattern: entity_action_result
-  guest_booking_created: 'guest_booking_created',
-  guest_booking_failed: 'guest_booking_failed',
-  payment_proof_uploaded: 'payment_proof_uploaded',
-  payment_proof_rejected: 'payment_proof_rejected'
+  guest_booking_created: "guest_booking_created",
+  guest_booking_failed: "guest_booking_failed",
+  payment_proof_uploaded: "payment_proof_uploaded",
+  payment_proof_rejected: "payment_proof_rejected",
 };
 ```
 
@@ -495,7 +497,7 @@ const eventNames = {
 ```typescript
 // Provide clear, actionable descriptions
 await logAuditEvent({
-  action: 'guest_booking_failed',
+  action: "guest_booking_failed",
   description: `Guest booking failed: Unit ${unitId} unavailable for dates ${checkIn} to ${checkOut}`,
   // Not just: "Booking failed"
 });
@@ -524,12 +526,12 @@ const metadata = {
 ```typescript
 // Always redact sensitive data
 const safeMetadata = {
-  guest_email: '[REDACTED]',
-  guest_phone: '[REDACTED]',
-  payment_details: '[REDACTED]',
+  guest_email: "[REDACTED]",
+  guest_phone: "[REDACTED]",
+  payment_details: "[REDACTED]",
   // But keep non-sensitive identifiers
   booking_id: booking.id,
-  booking_reference: booking.reference
+  booking_reference: booking.reference,
 };
 ```
 
@@ -570,7 +572,7 @@ WHERE is_guest_booking = true;
 
 ```typescript
 // Feature flag for audit logging
-const AUDIT_ENABLED = process.env.ENABLE_AUDIT_LOGGING === 'true';
+const AUDIT_ENABLED = process.env.ENABLE_AUDIT_LOGGING === "true";
 
 export async function logGuestBookingEvent(event: AuditEvent) {
   if (!AUDIT_ENABLED) return;

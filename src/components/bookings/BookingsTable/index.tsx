@@ -1,8 +1,9 @@
+import { flexRender } from "@tanstack/react-table";
+
 import { withErrorBoundary } from "@/components/ErrorBoundary";
 import { BookingsTableSkeleton } from "@/components/skeletons";
 import { ResponsiveTable, TableEmptyState, TablePagination } from "@/components/tables/utils";
 import { cn } from "@/lib/utils";
-import { flexRender } from "@tanstack/react-table";
 
 import { BookingCard } from "./components/BookingCard";
 import { BookingFilters } from "./components/BookingFilters";
@@ -34,7 +35,7 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
     return (
       <div className="p-8 text-center text-red-600">
         <p>Failed to load bookings</p>
-        <p className="text-sm mt-2">{error.message}</p>
+        <p className="mt-2 text-sm">{error.message}</p>
       </div>
     );
   }
@@ -100,7 +101,7 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
                   <tr
                     key={row.id}
                     className={cn(
-                      "h-14 border-b border-neutral-100 hover:bg-neutral-50 py-2",
+                      "h-14 border-b border-neutral-100 py-2 hover:bg-neutral-50",
                       index % 2 === 0 && "bg-neutral-50/30"
                     )}
                   >

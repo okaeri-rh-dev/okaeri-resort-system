@@ -252,7 +252,8 @@ describe("SQL Injection Prevention", () => {
 
 ```typescript
 // File: /src/__tests__/performance/memory-leaks.test.ts
-import { renderHook, act, cleanup } from "@testing-library/react-hooks";
+import { act, cleanup, renderHook } from "@testing-library/react-hooks";
+
 import { useBookingStore } from "@/stores/useBookingStore";
 
 describe("Memory Leak Prevention", () => {
@@ -660,7 +661,7 @@ jobs:
 
 ```typescript
 // File: /src/utils/performance-monitoring.ts
-import { getCLS, getFID, getFCP, getLCP, getTTFB } from "web-vitals";
+import { getCLS, getFCP, getFID, getLCP, getTTFB } from "web-vitals";
 
 export function initPerformanceMonitoring() {
   // Send metrics to analytics service

@@ -10,8 +10,8 @@
  * 3. Use: window.debug.supabase, window.debug.checkSession(), etc.
  */
 
-import { supabase } from "@/lib/supabase";
 import { auth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 
 // Only expose debug helpers in development
 if (import.meta.env.DEV) {

@@ -7,16 +7,19 @@
  * @module useMultiUnitRealtime
  */
 
-import { useEffect, useCallback, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
+// Add useState import
+import { useCallback, useEffect, useRef, useState } from "react";
+
 import type {
+  REALTIME_SUBSCRIBE_STATES,
   RealtimeChannel,
   RealtimePostgresChangesPayload,
-  REALTIME_SUBSCRIBE_STATES,
 } from "@supabase/supabase-js";
-import type { MultiUnitBooking, BookingUnit } from "@/types";
+import { useQueryClient } from "@tanstack/react-query";
+
+import { supabase } from "@/lib/supabase";
+import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
+import type { BookingUnit, MultiUnitBooking } from "@/types";
 
 // ============================================
 // TYPES
@@ -457,9 +460,6 @@ export function useMultiUnitPresence(bookingId: string, options: { enabled?: boo
     }, []),
   };
 }
-
-// Add useState import
-import { useState } from "react";
 
 // ============================================
 // BROADCAST SUBSCRIPTION

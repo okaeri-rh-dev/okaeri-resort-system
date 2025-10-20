@@ -13,13 +13,14 @@
  * Phase 4.5: Updated to use test database configuration
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+
 import {
-  testSupabaseAdmin as supabase, // Use admin client for database tests (bypasses RLS)
   cleanupTestData,
-  createTestUnit,
   createTestGuest,
+  createTestUnit,
   shouldRunDatabaseTests,
+  testSupabaseAdmin as supabase, // Use admin client for database tests (bypasses RLS)
 } from "../setup/test-db";
 
 describe("Multi-Unit Booking Database Functions", () => {

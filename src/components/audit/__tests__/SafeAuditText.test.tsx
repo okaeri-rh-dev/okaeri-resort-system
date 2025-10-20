@@ -1,7 +1,8 @@
 // src/components/audit/__tests__/SafeAuditText.test.tsx
 
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
+
 import { SafeAuditText, SafeAuditTextMemo } from "../SafeAuditText";
 
 describe("SafeAuditText", () => {

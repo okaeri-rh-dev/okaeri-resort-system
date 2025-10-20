@@ -499,8 +499,8 @@ Schedule via Vercel cron (`vercel.json`):
 API handler (`/api/cron/create-audit-partitions.ts`):
 
 ```typescript
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Verify cron secret

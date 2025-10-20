@@ -1,9 +1,11 @@
 // src/components/entity-detail/DetailPageLayout.tsx
 
 import React from "react";
+
 import { Link } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
 import { ChevronRight, Edit } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
@@ -69,31 +71,31 @@ export function DetailPageLayout({
   className,
 }: DetailPageLayoutProps) {
   return (
-    <div className={cn("container mx-auto py-6 space-y-6 max-w-[1400px]", className)}>
+    <div className={cn("container mx-auto max-w-[1400px] space-y-6 py-6", className)}>
       {/* Breadcrumbs */}
       <nav className="flex items-center space-x-2 text-sm text-neutral-600" aria-label="Breadcrumb">
         {breadcrumbs.map((crumb, index) => (
           <React.Fragment key={index}>
             {index > 0 && <ChevronRight className="h-4 w-4" />}
             {crumb.to ? (
-              <Link to={crumb.to} className="hover:text-neutral-900 transition-colors">
+              <Link to={crumb.to} className="transition-colors hover:text-neutral-900">
                 {crumb.label}
               </Link>
             ) : (
-              <span className="text-neutral-900 font-medium">{crumb.label}</span>
+              <span className="font-medium text-neutral-900">{crumb.label}</span>
             )}
           </React.Fragment>
         ))}
       </nav>
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-semibold text-neutral-900 tracking-tight">{title}</h1>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">{title}</h1>
             {status}
           </div>
-          {subtitle && <p className="text-sm text-neutral-500 mt-1">{subtitle}</p>}
+          {subtitle && <p className="mt-1 text-sm text-neutral-500">{subtitle}</p>}
         </div>
 
         <div className="flex items-center gap-2">
@@ -101,7 +103,7 @@ export function DetailPageLayout({
           {editRoute && (
             <Link to={editRoute.to} params={editRoute.params}>
               <Button size="sm">
-                <Edit className="h-4 w-4 mr-2" />
+                <Edit className="mr-2 h-4 w-4" />
                 Edit
               </Button>
             </Link>

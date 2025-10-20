@@ -11,9 +11,10 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+
 import { sanitizeTextWorker } from "../../../../../src/lib/security/sanitize-worker";
-import { requireRole } from "../../../../lib/rbac";
 import { logPaymentRecorded } from "../../../../lib/audit-logger-workers";
+import { requireRole } from "../../../../lib/rbac";
 
 interface Env {
   SUPABASE_URL: string;

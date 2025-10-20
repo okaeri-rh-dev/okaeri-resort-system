@@ -1,5 +1,10 @@
+import { lazy, Suspense, useState } from "react";
+
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, lazy, Suspense } from "react";
+import { z } from "zod";
+
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBookings } from "@/stores/useBookingStore";
 
 // Lazy load heavy components
@@ -9,10 +14,6 @@ const UnitsTable = lazy(() =>
 const DashboardCalendar = lazy(() =>
   import("@/components/dashboard/DashboardCalendar").then((m) => ({ default: m.DashboardCalendar }))
 );
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { z } from "zod";
 
 const availabilitySearchSchema = z.object({
   view: z.string().optional(),
@@ -52,7 +53,7 @@ function AvailabilityPage() {
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
                   </div>
                 }
               >
@@ -66,7 +67,7 @@ function AvailabilityPage() {
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
                   </div>
                 }
               >

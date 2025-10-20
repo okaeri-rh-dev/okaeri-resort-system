@@ -1,4 +1,5 @@
 import React from "react";
+
 import { cn } from "src/lib/utils";
 
 // ============================================
@@ -126,7 +127,7 @@ const ButtonSkeleton: React.FC<ButtonSkeletonProps> = ({
     ghost: "bg-neutral-100/50",
   }[variant];
 
-  return <Skeleton className={cn("rounded-md w-20", sizeClass, variantClass, className)} />;
+  return <Skeleton className={cn("w-20 rounded-md", sizeClass, variantClass, className)} />;
 };
 
 // ============================================
@@ -147,7 +148,7 @@ const CardSkeleton: React.FC<CardSkeletonProps> = ({
   className,
 }) => {
   return (
-    <div className={cn("rounded-lg border border-neutral-200 bg-white p-4 space-y-4", className)}>
+    <div className={cn("space-y-4 rounded-lg border border-neutral-200 bg-white p-4", className)}>
       {hasHeader && (
         <div className="space-y-2">
           <Skeleton className="h-5 w-2/3" />
@@ -213,7 +214,7 @@ const TableRowSkeleton: React.FC<TableRowSkeletonProps> = ({
 }) => {
   return (
     <div
-      className={cn("flex items-center space-x-4 px-4 py-3 border-b border-neutral-100", className)}
+      className={cn("flex items-center space-x-4 border-b border-neutral-100 px-4 py-3", className)}
     >
       {showCheckbox && <Skeleton variant="sharp" className="h-4 w-4" />}
 
@@ -221,7 +222,7 @@ const TableRowSkeleton: React.FC<TableRowSkeletonProps> = ({
         <Skeleton key={index} className="h-4" style={{ width: `${width}px` }} />
       ))}
 
-      {showActions && <Skeleton variant="circle" className="h-6 w-6 ml-auto" />}
+      {showActions && <Skeleton variant="circle" className="ml-auto h-6 w-6" />}
     </div>
   );
 };
@@ -244,9 +245,9 @@ const TableSkeleton: React.FC<TableSkeletonProps> = ({
   className,
 }) => {
   return (
-    <div className={cn("rounded-lg border border-neutral-200 bg-white overflow-hidden", className)}>
+    <div className={cn("overflow-hidden rounded-lg border border-neutral-200 bg-white", className)}>
       {hasHeader && (
-        <div className="bg-neutral-50 border-b border-neutral-200">
+        <div className="border-b border-neutral-200 bg-neutral-50">
           <TableRowSkeleton
             columns={columns}
             showCheckbox={showCheckbox}
@@ -292,7 +293,7 @@ const MobileCardSkeleton: React.FC<MobileCardSkeletonProps> = ({
   className,
 }) => {
   return (
-    <div className={cn("rounded-lg border border-neutral-200 bg-white p-4 space-y-3", className)}>
+    <div className={cn("space-y-3 rounded-lg border border-neutral-200 bg-white p-4", className)}>
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center space-x-3">
@@ -413,20 +414,20 @@ const StepFormSkeleton: React.FC<StepFormSkeletonProps> = ({
             <React.Fragment key={index}>
               <div
                 className={cn(
-                  "flex items-center justify-center w-8 h-8 rounded-full border-2",
-                  index < currentStep ? "bg-blue-600 border-blue-600" : "border-neutral-300"
+                  "flex h-8 w-8 items-center justify-center rounded-full border-2",
+                  index < currentStep ? "border-blue-600 bg-blue-600" : "border-neutral-300"
                 )}
               >
                 {index < currentStep ? (
-                  <div className="w-2 h-2 bg-white rounded-full" />
+                  <div className="h-2 w-2 rounded-full bg-white" />
                 ) : (
-                  <Skeleton variant="circle" className="w-2 h-2" />
+                  <Skeleton variant="circle" className="h-2 w-2" />
                 )}
               </div>
               {index < steps - 1 && (
                 <div
                   className={cn(
-                    "flex-1 h-0.5",
+                    "h-0.5 flex-1",
                     index < currentStep - 1 ? "bg-blue-600" : "bg-neutral-300"
                   )}
                 />
@@ -464,7 +465,7 @@ const NavigationSkeleton: React.FC<NavigationSkeletonProps> = ({
   return (
     <nav
       className={cn(
-        "flex items-center justify-between p-4 border-b border-neutral-200 bg-white",
+        "flex items-center justify-between border-b border-neutral-200 bg-white p-4",
         className
       )}
     >

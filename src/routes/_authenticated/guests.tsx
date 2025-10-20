@@ -1,13 +1,15 @@
-import { createFileRoute, useNavigate, Outlet, useParams } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
+
+import { createFileRoute, Outlet, useNavigate, useParams } from "@tanstack/react-router";
+import { z } from "zod";
+
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import type { Guest } from "@/types";
 
 // Lazy load components for better performance
 const GuestsTable = lazy(() =>
   import("@/components/guests/GuestsTable").then((m) => ({ default: m.GuestsTable }))
 );
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { z } from "zod";
 
 const guestsSearchSchema = z.object({
   search: z.string().optional(),
@@ -55,7 +57,7 @@ function GuestsPage() {
           <Suspense
             fallback={
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
               </div>
             }
           >

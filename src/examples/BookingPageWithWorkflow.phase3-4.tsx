@@ -12,40 +12,39 @@
  */
 
 import React, { useState } from "react";
+
 import { useParams } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Activity,
+  BarChart3,
   Calendar,
+  Clock,
   CreditCard,
+  ExternalLink,
   Mail,
   MapPin,
   Phone,
-  User,
-  Settings,
-  BarChart3,
-  Clock,
   RefreshCw,
-  ExternalLink,
+  Settings,
+  User,
 } from "lucide-react";
 
 // Workflow Components
 import { BookingWorkflowPanel } from "@/components/bookings/BookingWorkflowPanel";
-import { WorkflowStatusBadge } from "@/components/workflow/WorkflowStatusBadge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WorkflowDashboard } from "@/components/workflow/WorkflowDashboard";
-
+import { WorkflowStatusBadge } from "@/components/workflow/WorkflowStatusBadge";
 // Store Hooks
 import {
-  useBookingWithWorkflow,
   useBookingsNeedingAttention,
+  useBookingWithWorkflow,
   useUpdateBookingStatusWithWorkflow,
 } from "@/stores/useBookingStore";
 import { useWorkflowStore, useWorkflowSummary } from "@/stores/useWorkflowStore";
-
 // Types
 import type { Booking, BookingStatus } from "@/types";
 

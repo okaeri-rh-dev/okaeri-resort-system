@@ -1,10 +1,11 @@
 // src/components/audit/AuditStatsPanel.tsx
 
+import { Activity, Database, FileText, Users } from "lucide-react";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ACTION_DISPLAY_NAMES, TABLE_DISPLAY_NAMES } from "@/lib/audit-constants";
 import type { AuditLogStats } from "@/types/audit.types";
-import { TABLE_DISPLAY_NAMES, ACTION_DISPLAY_NAMES } from "@/lib/audit-constants";
-import { Activity, Database, FileText, Users } from "lucide-react";
 
 // ============================================
 // TYPES
@@ -62,10 +63,10 @@ export function AuditStatsPanel({ stats, isLoading }: AuditStatsPanelProps) {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Logs</p>
+              <p className="text-muted-foreground text-sm font-medium">Total Logs</p>
               <p className="text-2xl font-bold">{stats.totalLogs.toLocaleString()}</p>
             </div>
-            <FileText className="h-8 w-8 text-muted-foreground" />
+            <FileText className="text-muted-foreground h-8 w-8" />
           </div>
         </CardContent>
       </Card>
@@ -75,13 +76,13 @@ export function AuditStatsPanel({ stats, isLoading }: AuditStatsPanelProps) {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Most Active Table</p>
+              <p className="text-muted-foreground text-sm font-medium">Most Active Table</p>
               <p className="text-2xl font-bold">{getMostActiveTable(stats.byTable)}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {getMostActiveTableCount(stats.byTable)} logs
               </p>
             </div>
-            <Database className="h-8 w-8 text-muted-foreground" />
+            <Database className="text-muted-foreground h-8 w-8" />
           </div>
         </CardContent>
       </Card>
@@ -91,13 +92,13 @@ export function AuditStatsPanel({ stats, isLoading }: AuditStatsPanelProps) {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Most Common Action</p>
+              <p className="text-muted-foreground text-sm font-medium">Most Common Action</p>
               <p className="text-2xl font-bold">{getMostCommonAction(stats.byAction)}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {getMostCommonActionCount(stats.byAction)} times
               </p>
             </div>
-            <Activity className="h-8 w-8 text-muted-foreground" />
+            <Activity className="text-muted-foreground h-8 w-8" />
           </div>
         </CardContent>
       </Card>
@@ -107,18 +108,18 @@ export function AuditStatsPanel({ stats, isLoading }: AuditStatsPanelProps) {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Most Active User</p>
+              <p className="text-muted-foreground text-sm font-medium">Most Active User</p>
               <p
-                className="text-lg font-bold truncate max-w-[150px]"
+                className="max-w-[150px] truncate text-lg font-bold"
                 title={getTopUserEmail(stats.byUser)}
               >
                 {getTopUserEmail(stats.byUser)}
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {getTopUserCount(stats.byUser)} actions
               </p>
             </div>
-            <Users className="h-8 w-8 text-muted-foreground" />
+            <Users className="text-muted-foreground h-8 w-8" />
           </div>
         </CardContent>
       </Card>

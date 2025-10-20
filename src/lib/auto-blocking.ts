@@ -3,7 +3,7 @@
  * Manages automatic blocking based on threat scores and patterns
  */
 
-import { shouldAutoBlock, logSecurityEvent } from "./security-monitoring";
+import { logSecurityEvent, shouldAutoBlock } from "./security-monitoring";
 
 /**
  * Block an IP in Cloudflare KV

@@ -1,13 +1,13 @@
-import { format, differenceInDays } from "date-fns";
+import { differenceInDays, format } from "date-fns";
 import { CheckCircle } from "lucide-react";
 
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/validations";
+import type { Unit } from "@/types";
 
 import type { StepProps } from "../types";
-import type { Unit } from "@/types";
 
 interface BookingReviewProps extends StepProps {
   units?: Unit[];
@@ -24,16 +24,16 @@ export function BookingReview({ form, calculatedTotal = 0, units = [] }: Booking
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 p-4 bg-green-50 rounded-lg">
+      <div className="flex items-center gap-2 rounded-lg bg-green-50 p-4">
         <CheckCircle className="h-5 w-5 text-green-600" />
-        <span className="text-green-700 font-medium">Please review your booking details</span>
+        <span className="font-medium text-green-700">Please review your booking details</span>
       </div>
 
       <Card>
         <CardContent className="pt-6">
           <div className="space-y-4">
             <div>
-              <h3 className="font-semibold mb-2">Accommodation</h3>
+              <h3 className="mb-2 font-semibold">Accommodation</h3>
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Unit:</span>
@@ -49,7 +49,7 @@ export function BookingReview({ form, calculatedTotal = 0, units = [] }: Booking
             <Separator />
 
             <div>
-              <h3 className="font-semibold mb-2">Stay Details</h3>
+              <h3 className="mb-2 font-semibold">Stay Details</h3>
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Check-in:</span>
@@ -77,7 +77,7 @@ export function BookingReview({ form, calculatedTotal = 0, units = [] }: Booking
             <Separator />
 
             <div>
-              <h3 className="font-semibold mb-2">Guest Information</h3>
+              <h3 className="mb-2 font-semibold">Guest Information</h3>
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Name:</span>
@@ -97,7 +97,7 @@ export function BookingReview({ form, calculatedTotal = 0, units = [] }: Booking
             <Separator />
 
             <div>
-              <h3 className="font-semibold mb-2">Payment</h3>
+              <h3 className="mb-2 font-semibold">Payment</h3>
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Method:</span>
@@ -110,8 +110,8 @@ export function BookingReview({ form, calculatedTotal = 0, units = [] }: Booking
               <>
                 <Separator />
                 <div>
-                  <h3 className="font-semibold mb-2">Special Requests</h3>
-                  <p className="text-sm text-muted-foreground">{values.special_requests}</p>
+                  <h3 className="mb-2 font-semibold">Special Requests</h3>
+                  <p className="text-muted-foreground text-sm">{values.special_requests}</p>
                 </div>
               </>
             )}
@@ -128,7 +128,7 @@ export function BookingReview({ form, calculatedTotal = 0, units = [] }: Booking
         </CardContent>
       </Card>
 
-      <div className="text-sm text-muted-foreground">
+      <div className="text-muted-foreground text-sm">
         By confirming this booking, you agree to our terms and conditions.
       </div>
     </div>

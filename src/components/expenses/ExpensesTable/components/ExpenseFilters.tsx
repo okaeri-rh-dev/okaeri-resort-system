@@ -1,5 +1,8 @@
 import React, { useState } from "react";
-import { CalendarDays, Download, DollarSign } from "lucide-react";
+
+import { CalendarDays, DollarSign, Download } from "lucide-react";
+
+import { FilterPopover, TableSearch } from "@/components/tables/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -10,10 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TableSearch, FilterPopover } from "@/components/tables/utils";
+import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/stores/useExpenseStore";
+
 import type { ExpenseFiltersProps } from "../types";
-import { EXPENSE_CATEGORIES } from "@/stores/useExpenseStore";
-import type { ExpenseCategory } from "@/stores/useExpenseStore";
 
 interface DateRange {
   from: Date | undefined;
@@ -67,7 +69,7 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
   );
 
   return (
-    <div className="flex justify-between items-center p-4 bg-neutral-50 border-b">
+    <div className="flex items-center justify-between border-b bg-neutral-50 p-4">
       <div className="flex items-center gap-2">
         <TableSearch
           value={searchQuery}

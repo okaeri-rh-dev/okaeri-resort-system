@@ -1028,7 +1028,8 @@ const onSubmit = async (data: GuestBookingFormData) => {
 
 ```typescript
 // src/__tests__/schema-alignment.test.ts
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
+
 import { transformToAPIFormat } from "@/lib/schema-transform";
 
 describe("Schema Alignment", () => {
@@ -1699,12 +1700,12 @@ const handleSubmit = async (data: GuestBookingFormData) => {
     // - guest_booking_attempt (on submission)
     // - guest_booking_created (on success)
     // - guest_booking_failed (on error)
-    const response = await fetch('/api/guest-booking', {
-      method: 'POST',
+    const response = await fetch("/api/guest-booking", {
+      method: "POST",
       body: JSON.stringify({
         ...data,
         // Backend will capture IP and user agent for audit
-      })
+      }),
     });
 
     if (response.ok) {
@@ -1716,7 +1717,7 @@ const handleSubmit = async (data: GuestBookingFormData) => {
     }
   } catch (error) {
     // Failures are automatically logged in backend audit
-    console.error('Booking failed:', error);
+    console.error("Booking failed:", error);
   }
 };
 ```
@@ -1828,26 +1829,31 @@ export function GuestBookingTimeline({ bookingId }: { bookingId: string }) {
 Use Supabase realtime to show live audit updates:
 
 ```typescript
-import { useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { queryClient } from '@/lib/query-client';
+import { useEffect } from "react";
+
+import { queryClient } from "@/lib/query-client";
+import { supabase } from "@/lib/supabase";
 
 export function useRealtimeAudit(bookingId: string) {
   useEffect(() => {
     const subscription = supabase
       .channel(`audit-${bookingId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'audit_logs',
-        filter: `record_id=eq.${bookingId}`
-      }, (payload) => {
-        // Invalidate audit log queries to refresh UI
-        queryClient.invalidateQueries(['audit-logs', bookingId]);
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "audit_logs",
+          filter: `record_id=eq.${bookingId}`,
+        },
+        (payload) => {
+          // Invalidate audit log queries to refresh UI
+          queryClient.invalidateQueries(["audit-logs", bookingId]);
 
-        // Optional: Show toast notification
-        toast.info(`New audit event: ${payload.new.description}`);
-      })
+          // Optional: Show toast notification
+          toast.info(`New audit event: ${payload.new.description}`);
+        }
+      )
       .subscribe();
 
     return () => {
@@ -1946,12 +1952,12 @@ Optimize audit log queries for guest bookings:
 // Use React Query with proper caching
 export function useGuestBookingAudit(bookingId: string) {
   return useQuery({
-    queryKey: ['guest-booking-audit', bookingId],
+    queryKey: ["guest-booking-audit", bookingId],
     queryFn: () => fetchGuestBookingAudit(bookingId),
     staleTime: 5 * 60 * 1000, // 5 minutes
     cacheTime: 30 * 60 * 1000, // 30 minutes
     // Only fetch if booking is guest booking
-    enabled: booking?.is_guest_booking === true
+    enabled: booking?.is_guest_booking === true,
   });
 }
 
@@ -1960,10 +1966,9 @@ export function usePagedAudit(bookingId: string) {
   const [page, setPage] = useState(0);
 
   return useInfiniteQuery({
-    queryKey: ['audit-pages', bookingId],
-    queryFn: ({ pageParam = 0 }) =>
-      fetchAuditPage(bookingId, pageParam),
-    getNextPageParam: (lastPage) => lastPage.nextCursor
+    queryKey: ["audit-pages", bookingId],
+    queryFn: ({ pageParam = 0 }) => fetchAuditPage(bookingId, pageParam),
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
 }
 ```

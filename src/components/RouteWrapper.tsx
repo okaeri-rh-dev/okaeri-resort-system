@@ -1,8 +1,10 @@
 import { ReactNode, Suspense } from "react";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card } from "@/components/ui/card";
+
 import { AlertCircle, RefreshCw } from "lucide-react";
+
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface RouteWrapperProps {
   children: ReactNode;
@@ -40,7 +42,7 @@ export function RouteWrapper({
 function RouteSkeleton({ title }: { title?: string }) {
   return (
     <div className="container mx-auto p-6">
-      {title && <Skeleton className="h-8 w-64 mb-6" />}
+      {title && <Skeleton className="mb-6 h-8 w-64" />}
       <div className="space-y-4">
         <Skeleton className="h-32 w-full" />
         <Skeleton className="h-32 w-full" />
@@ -70,7 +72,7 @@ function RouteErrorFallback({ title }: { title?: string }) {
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            className="bg-primary hover:bg-primary/90 flex items-center gap-2 rounded-lg px-4 py-2 text-white transition-colors"
           >
             <RefreshCw className="h-4 w-4" />
             Refresh Page

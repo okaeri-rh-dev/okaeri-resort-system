@@ -12,18 +12,20 @@
  * - Infinite scroll support
  */
 
-import { useQuery, useMutation, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { useSearchStore, searchSelectors, type SearchResult } from "@/stores/useSearchStore";
+
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import { db, handleSupabaseError, supabase } from "@/lib/supabase";
+import { searchSelectors, useSearchStore, type SearchResult } from "@/stores/useSearchStore";
 import type { Booking, Guest, Unit } from "@/types";
-import { supabase, db, handleSupabaseError } from "@/lib/supabase";
+import { buildSupabaseQuery, type FilterBuilder } from "@/utils/filter-builder";
 import {
-  processSearchResults,
   applyBookingFilters,
   fuzzySearchScore,
+  processSearchResults,
   type SearchField,
 } from "@/utils/search-filter";
-import { buildSupabaseQuery, type FilterBuilder } from "@/utils/filter-builder";
 
 // ============================================
 // UNIFIED SEARCH HOOK

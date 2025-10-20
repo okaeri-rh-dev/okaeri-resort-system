@@ -1,5 +1,15 @@
+import { lazy, Suspense, useState } from "react";
+
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, lazy, Suspense } from "react";
+import { Building, Settings, Shield, User } from "lucide-react";
+import { z } from "zod";
+
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Unit } from "@/types";
 
 // Lazy load heavy components
 const UnitsTable = lazy(() =>
@@ -8,15 +18,6 @@ const UnitsTable = lazy(() =>
 const UnitForm = lazy(() =>
   import("@/components/units/UnitForm").then((m) => ({ default: m.UnitForm }))
 );
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Settings, Building, User, Shield } from "lucide-react";
-import { z } from "zod";
-import type { Unit } from "@/types";
 
 const settingsSearchSchema = z.object({
   tab: z.string().optional(),
@@ -82,11 +83,11 @@ function SettingsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium">Resort Name</label>
-                    <p className="text-sm text-muted-foreground">Okaeri Resort</p>
+                    <p className="text-muted-foreground text-sm">Okaeri Resort</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Location</label>
-                    <p className="text-sm text-muted-foreground">Not configured</p>
+                    <p className="text-muted-foreground text-sm">Not configured</p>
                   </div>
                 </div>
                 <Button variant="outline">Edit Resort Information</Button>
@@ -98,7 +99,7 @@ function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold">Accommodation Units</h3>
-                <p className="text-sm text-muted-foreground">Manage your resort units and rooms</p>
+                <p className="text-muted-foreground text-sm">Manage your resort units and rooms</p>
               </div>
               <Button onClick={() => setShowUnitForm(true)}>Add New Unit</Button>
             </div>
@@ -107,7 +108,7 @@ function SettingsPage() {
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
                   </div>
                 }
               >
@@ -125,11 +126,11 @@ function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Display Name</label>
-                  <p className="text-sm text-muted-foreground">Not configured</p>
+                  <p className="text-muted-foreground text-sm">Not configured</p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Email</label>
-                  <p className="text-sm text-muted-foreground">Not configured</p>
+                  <p className="text-muted-foreground text-sm">Not configured</p>
                 </div>
                 <Button variant="outline">Edit Profile</Button>
               </CardContent>
@@ -145,11 +146,11 @@ function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Password</label>
-                  <p className="text-sm text-muted-foreground">Last changed: Never</p>
+                  <p className="text-muted-foreground text-sm">Last changed: Never</p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Two-Factor Authentication</label>
-                  <p className="text-sm text-muted-foreground">Disabled</p>
+                  <p className="text-muted-foreground text-sm">Disabled</p>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline">Change Password</Button>
@@ -162,7 +163,7 @@ function SettingsPage() {
 
         {/* Unit Form Dialog */}
         <Dialog open={showUnitForm} onOpenChange={setShowUnitForm}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingUnit ? "Edit Unit" : "Add New Unit"}</DialogTitle>
             </DialogHeader>
@@ -170,7 +171,7 @@ function SettingsPage() {
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
                   </div>
                 }
               >

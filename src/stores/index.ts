@@ -1,4 +1,13 @@
 // ============================================
+// COMBINED HOOKS
+// ============================================
+
+import { useQuery } from "@tanstack/react-query";
+
+import { handleSupabaseError, supabase } from "@/lib/supabase";
+import type { DashboardStats } from "@/types";
+
+// ============================================
 // CENTRAL EXPORT FOR ALL STORES
 // ============================================
 
@@ -94,14 +103,6 @@ export {
   useAuditTableState,
   QuickFilterPreset,
 } from "./useAuditStore";
-
-// ============================================
-// COMBINED HOOKS
-// ============================================
-
-import { useQuery } from "@tanstack/react-query";
-import { supabase, handleSupabaseError } from "@/lib/supabase";
-import type { DashboardStats } from "@/types";
 
 // Dashboard statistics combining data from multiple stores
 export const useDashboardStats = () => {

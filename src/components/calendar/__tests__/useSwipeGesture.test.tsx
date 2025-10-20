@@ -11,10 +11,12 @@
  * - Cleanup: Event listener removal
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook } from "@testing-library/react";
-import { useSwipeGesture } from "../useSwipeGesture";
 import { act } from "react";
+
+import { renderHook } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { useSwipeGesture } from "../useSwipeGesture";
 
 describe("useSwipeGesture", () => {
   beforeEach(() => {

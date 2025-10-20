@@ -1,9 +1,10 @@
+import { flexRender } from "@tanstack/react-table";
+
 import { withErrorBoundary } from "@/components/ErrorBoundary";
 import { ExpensesTableSkeleton } from "@/components/skeletons";
 import { ResponsiveTable, TableEmptyState, TablePagination } from "@/components/tables/utils";
-import { cn } from "@/lib/utils";
-import { flexRender } from "@tanstack/react-table";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 import { ExpenseCard } from "./components/ExpenseCard";
 import { ExpenseFilters } from "./components/ExpenseFilters";

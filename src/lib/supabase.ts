@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
+
+import type { AuditEventContext, AuditLogFilters } from "@/types/audit.types";
 import type { Database, Json } from "@/types/database.types";
-import type { AuditLogFilters, AuditEventContext } from "@/types/audit.types";
 
 // Environment variables validation
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;

@@ -516,7 +516,8 @@ For programmatic role seeding (development automation):
 // scripts/seed-dev-roles.ts
 
 import { createClient } from "@supabase/supabase-js";
-import { grantRole, AuditRole } from "../src/lib/audit-roles";
+
+import { AuditRole, grantRole } from "../src/lib/audit-roles";
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
@@ -837,6 +838,7 @@ COMMENT ON FUNCTION get_current_audit_role() IS
 ```typescript
 // src/routes/audit/_layout.tsx
 import { createFileRoute } from "@tanstack/react-router";
+
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/audit/_layout")({

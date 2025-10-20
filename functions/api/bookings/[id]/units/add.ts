@@ -11,10 +11,11 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+
 import { sanitizeTextWorker } from "../../../../../src/lib/security/sanitize-worker";
-import { requireRole } from "../../../../lib/rbac";
+import { calculateExtraPersonFee, calculateWeekendNights } from "../../../../../src/utils/pricing";
 import { logUnitAdded } from "../../../../lib/audit-logger-workers";
-import { calculateWeekendNights, calculateExtraPersonFee } from "../../../../../src/utils/pricing";
+import { requireRole } from "../../../../lib/rbac";
 
 interface Env {
   SUPABASE_URL: string;

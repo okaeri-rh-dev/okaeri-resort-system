@@ -1,11 +1,13 @@
 import { useMemo } from "react";
-import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { DashboardCalendar } from "@/components/dashboard/DashboardCalendar";
+
+import { addDays, format } from "date-fns";
+
 import { BookingsTable } from "@/components/bookings/BookingsTable";
+import { DashboardCalendar } from "@/components/dashboard/DashboardCalendar";
+import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBookings } from "@/stores/useBookingStore";
-import { format, addDays } from "date-fns";
 
 export function Dashboard() {
   const { data: bookings, isLoading } = useBookings();

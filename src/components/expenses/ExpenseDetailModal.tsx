@@ -1,9 +1,10 @@
-import { Calendar, DollarSign, Tag, FileText, Receipt, Clock } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Calendar, Clock, DollarSign, FileText, Receipt, Tag } from "lucide-react";
+
+import { formatCurrency, formatTableDate } from "@/components/tables/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { formatCurrency, formatTableDate } from "@/components/tables/utils";
 import type { Expense } from "@/types";
 
 interface ExpenseDetailModalProps {
@@ -29,7 +30,7 @@ export function ExpenseDetailModal({ expense, open, onOpenChange }: ExpenseDetai
           <div className="rounded-lg border border-neutral-200 bg-neutral-50/50 p-4">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                <p className="text-xs font-medium tracking-wide text-neutral-500 uppercase">
                   Expense ID
                 </p>
                 <p className="font-mono text-sm font-medium text-neutral-900">
@@ -52,7 +53,7 @@ export function ExpenseDetailModal({ expense, open, onOpenChange }: ExpenseDetai
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-neutral-600">
                 <Calendar className="h-4 w-4" />
-                <span className="text-xs font-medium uppercase tracking-wide">Date</span>
+                <span className="text-xs font-medium tracking-wide uppercase">Date</span>
               </div>
               <p className="text-sm font-medium text-neutral-900">
                 {formatTableDate(expense.date)}
@@ -63,7 +64,7 @@ export function ExpenseDetailModal({ expense, open, onOpenChange }: ExpenseDetai
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-neutral-600">
                 <DollarSign className="h-4 w-4" />
-                <span className="text-xs font-medium uppercase tracking-wide">Amount</span>
+                <span className="text-xs font-medium tracking-wide uppercase">Amount</span>
               </div>
               <p className="font-mono text-lg font-semibold text-neutral-900">
                 {formatCurrency(expense.amount)}
@@ -77,7 +78,7 @@ export function ExpenseDetailModal({ expense, open, onOpenChange }: ExpenseDetai
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-neutral-600">
               <FileText className="h-4 w-4" />
-              <span className="text-xs font-medium uppercase tracking-wide">Description</span>
+              <span className="text-xs font-medium tracking-wide uppercase">Description</span>
             </div>
             <div className="rounded-md border border-neutral-200 bg-white p-3">
               <p className="text-sm text-neutral-900">
@@ -91,7 +92,7 @@ export function ExpenseDetailModal({ expense, open, onOpenChange }: ExpenseDetai
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-neutral-600">
                 <FileText className="h-4 w-4" />
-                <span className="text-xs font-medium uppercase tracking-wide">Notes</span>
+                <span className="text-xs font-medium tracking-wide uppercase">Notes</span>
               </div>
               <div className="rounded-md border border-neutral-200 bg-white p-3">
                 <p className="text-sm text-neutral-700">{expense.notes}</p>
@@ -104,7 +105,7 @@ export function ExpenseDetailModal({ expense, open, onOpenChange }: ExpenseDetai
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-neutral-600">
                 <Receipt className="h-4 w-4" />
-                <span className="text-xs font-medium uppercase tracking-wide">Receipt</span>
+                <span className="text-xs font-medium tracking-wide uppercase">Receipt</span>
               </div>
               <Button
                 variant="outline"

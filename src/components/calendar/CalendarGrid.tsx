@@ -16,8 +16,9 @@
  */
 
 import { useMemo } from "react";
-import { cn } from "@/lib/utils";
+
 import { toISODateString } from "@/lib/timezone";
+import { cn } from "@/lib/utils";
 
 /**
  * Availability data for a single day
@@ -125,11 +126,11 @@ export function CalendarGrid({ availability, currentMonth, onDateClick }: Calend
   return (
     <div className="calendar-grid" role="grid" aria-label="Availability calendar">
       {/* Day headers (Sun, Mon, Tue, ...) */}
-      <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-1 sm:mb-2" role="row">
+      <div className="mb-1 grid grid-cols-7 gap-1 sm:mb-2 sm:gap-2" role="row">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
           <div
             key={day}
-            className="text-center text-xs font-semibold text-slate-600 uppercase py-1 sm:py-2"
+            className="py-1 text-center text-xs font-semibold text-slate-600 uppercase sm:py-2"
             role="columnheader"
           >
             {day}
@@ -260,7 +261,7 @@ function DayCell({
       onClick={handleClick}
       className={cn(
         // Further reduced heights for desktop to prevent scrolling
-        "relative min-h-[44px] sm:min-h-[52px] md:min-h-[60px] lg:min-h-[64px] rounded flex flex-col items-center justify-center py-1",
+        "relative flex min-h-[44px] flex-col items-center justify-center rounded py-1 sm:min-h-[52px] md:min-h-[60px] lg:min-h-[64px]",
         "transition-all duration-200",
         getStatusColor(),
         isToday && "ring-2 ring-slate-500 ring-offset-1",
@@ -280,7 +281,7 @@ function DayCell({
       {/* Day number */}
       <span
         className={cn(
-          "text-sm sm:text-base font-semibold"
+          "text-sm font-semibold sm:text-base"
           // No opacity reduction for adjacent months anymore - color handles visibility
         )}
       >
@@ -290,7 +291,7 @@ function DayCell({
       {/* Available count (for all future dates with data) */}
       {availability && !isPast && (
         <span
-          className={cn("text-xs font-medium mt-0.5", isCurrentMonth ? "opacity-90" : "opacity-75")}
+          className={cn("mt-0.5 text-xs font-medium", isCurrentMonth ? "opacity-90" : "opacity-75")}
         >
           {availability.availableCount}
         </span>
@@ -299,7 +300,7 @@ function DayCell({
       {/* Today indicator (slate dot) */}
       {isToday && (
         <div
-          className="absolute -bottom-1 w-1.5 h-1.5 bg-slate-600 rounded-full"
+          className="absolute -bottom-1 h-1.5 w-1.5 rounded-full bg-slate-600"
           aria-label="Today"
         />
       )}

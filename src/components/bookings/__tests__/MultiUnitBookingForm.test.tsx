@@ -2,19 +2,21 @@
  * @vitest-environment jsdom
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MultiUnitBookingForm } from "../MultiUnitBookingForm";
-import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import {
   multiUnitBookingSchema,
   step1Schema,
   step2Schema,
   type MultiUnitBookingFormData,
 } from "@/lib/validation/multi-unit-booking";
+import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import type { Unit } from "@/types";
+
+import { MultiUnitBookingForm } from "../MultiUnitBookingForm";
 
 // ============================================
 // MOCKS

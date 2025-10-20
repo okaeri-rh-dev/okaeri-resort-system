@@ -324,7 +324,7 @@ const rateLimit = await checkKVRateLimit(env.RATE_LIMIT_KV, clientIp, {
 ### 2. Turnstile Verification (`src/lib/turnstile.ts`)
 
 ```typescript
-import { verifyTurnstile, getClientIp } from "@/lib/turnstile";
+import { getClientIp, verifyTurnstile } from "@/lib/turnstile";
 
 const clientIp = getClientIp(request);
 const isValid = await verifyTurnstile(token, env.TURNSTILE_SECRET_KEY, {

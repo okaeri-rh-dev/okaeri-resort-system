@@ -2,14 +2,16 @@
  * @vitest-environment jsdom
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
-import { MultiUnitSelector } from "../MultiUnitSelector";
-import { filterUnits, hasActiveFilters, getEmptyFilters } from "../MultiUnitSelector/utils";
+
 import type { Unit } from "@/types";
 import type { BookingUnit } from "@/types/multi-unit-booking";
+
+import { MultiUnitSelector } from "../MultiUnitSelector";
+import { filterUnits, getEmptyFilters, hasActiveFilters } from "../MultiUnitSelector/utils";
 
 // ============================================
 // MOCK DATA

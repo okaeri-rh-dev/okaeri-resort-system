@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
+
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
-import { QueryProvider } from "@/providers/QueryProvider";
-import { initializeTheme } from "@/stores/useUIStore";
-import { useBookingStore } from "@/stores/useBookingStore";
+
 import { auth } from "@/lib/auth";
-import { routeTree } from "@/routeTree.gen";
+import { QueryProvider } from "@/providers/QueryProvider";
 import type { RouterContext } from "@/routes/__root";
+import { routeTree } from "@/routeTree.gen";
+import { useBookingStore } from "@/stores/useBookingStore";
+import { initializeTheme } from "@/stores/useUIStore";
+
 import "@/styles/calendar.css";
 
 // Create a new query client instance

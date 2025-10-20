@@ -11,7 +11,8 @@
  * - Error messages: Descriptive validation errors
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import { validateCalendarDate, validateMonth, type DateValidationResult } from "../calendar";
 
 describe("Calendar Date Validation", () => {

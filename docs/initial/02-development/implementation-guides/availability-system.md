@@ -288,7 +288,7 @@ await refreshAvailabilityCache(unitId, 30); // Specific unit, 30 days
 ### Unit Tests
 
 ```typescript
-import { validateDateRange, formatAvailabilityMessage } from "@/lib/availability";
+import { formatAvailabilityMessage, validateDateRange } from "@/lib/availability";
 
 describe("Availability Utils", () => {
   test("validates date ranges correctly", () => {
@@ -312,6 +312,7 @@ describe("Availability Utils", () => {
 
 ```typescript
 import { renderHook, waitFor } from "@testing-library/react";
+
 import { useUnitAvailabilityFast } from "@/stores/useBookingStore";
 
 describe("Availability Hooks", () => {

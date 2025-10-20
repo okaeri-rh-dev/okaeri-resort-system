@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+
 import { cn } from "@/lib/utils";
 
 // ============================================
@@ -214,9 +215,9 @@ export const MobileCardLoading: React.FC<MobileCardLoadingProps> = ({
       ))}
 
       {visibleItems < count && (
-        <div className="text-center py-4">
+        <div className="py-4 text-center">
           <OptimizedSkeleton
-            className="h-4 w-32 mx-auto"
+            className="mx-auto h-4 w-32"
             complexity={strategy.skeletonComplexity}
             animation={strategy.animationIntensity}
           />
@@ -242,18 +243,18 @@ const MobileCardSkeleton: React.FC<MobileCardSkeletonProps> = ({
   style,
 }) => {
   return (
-    <div className="border border-neutral-200 rounded-lg p-4 bg-white" style={style}>
+    <div className="rounded-lg border border-neutral-200 bg-white p-4" style={style}>
       {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center space-x-3 flex-1">
+      <div className="mb-3 flex items-start justify-between">
+        <div className="flex flex-1 items-center space-x-3">
           {hasAvatar && (
             <OptimizedSkeleton
-              className="h-10 w-10 rounded-full flex-shrink-0"
+              className="h-10 w-10 flex-shrink-0 rounded-full"
               complexity={complexity}
               animation={animation}
             />
           )}
-          <div className="space-y-1 flex-1">
+          <div className="flex-1 space-y-1">
             <OptimizedSkeleton className="h-4 w-20" complexity={complexity} animation={animation} />
             <OptimizedSkeleton className="h-5 w-32" complexity={complexity} animation={animation} />
           </div>
@@ -275,7 +276,7 @@ const MobileCardSkeleton: React.FC<MobileCardSkeletonProps> = ({
       </div>
 
       {/* Content rows */}
-      <div className="space-y-2 mb-3">
+      <div className="mb-3 space-y-2">
         {Array.from({ length: complexity === "minimal" ? 2 : complexity === "basic" ? 3 : 4 }).map(
           (_, index) => (
             <div key={index} className="flex items-center justify-between">
@@ -428,10 +429,10 @@ export const TouchOptimizedLoading: React.FC<TouchLoadingProps> = ({
       {/* Pull to refresh indicator */}
       {isPulling && (
         <div
-          className="absolute top-0 left-0 right-0 flex items-center justify-center bg-blue-50 transition-all duration-200 ease-out"
+          className="absolute top-0 right-0 left-0 flex items-center justify-center bg-blue-50 transition-all duration-200 ease-out"
           style={{ height: `${pullDistance}px` }}
         >
-          <div className="text-blue-600 text-sm">
+          <div className="text-sm text-blue-600">
             {pullDistance > 50 ? "Release to refresh" : "Pull to refresh"}
           </div>
         </div>
@@ -447,9 +448,9 @@ export const TouchOptimizedLoading: React.FC<TouchLoadingProps> = ({
 
       {/* Loading overlay */}
       {isLoading && (
-        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm">
           <div className="space-y-2 text-center">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto" />
+            <div className="mx-auto h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" />
             <div className="text-sm text-neutral-600">Refreshing...</div>
           </div>
         </div>

@@ -1,13 +1,7 @@
-import { Download, Plus, Settings, Eye, Filter, Search } from "lucide-react";
+import type { Table } from "@tanstack/react-table";
+import { Download, Eye, Filter, Plus, Search, Settings } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -16,7 +10,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Table } from "@tanstack/react-table";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { Unit, UnitStatus } from "@/types";
 
 interface TableHeaderProps {
@@ -70,13 +71,13 @@ export function TableHeader({
   ];
 
   return (
-    <div className="space-y-4 mb-4">
+    <div className="mb-4 space-y-4">
       {/* Main actions row */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <div className="flex-1 flex flex-col sm:flex-row gap-2">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row">
+        <div className="flex flex-1 flex-col gap-2 sm:flex-row">
           {/* Search input */}
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <div className="relative max-w-sm flex-1">
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
             <Input
               placeholder="Search units..."
               value={globalFilter}
@@ -88,7 +89,7 @@ export function TableHeader({
           {/* Type filter */}
           <Select value={typeFilter} onValueChange={onTypeFilterChange}>
             <SelectTrigger className="w-full sm:w-[150px]">
-              <Filter className="h-4 w-4 mr-2" />
+              <Filter className="mr-2 h-4 w-4" />
               <SelectValue placeholder="Filter by type" />
             </SelectTrigger>
             <SelectContent>
@@ -103,7 +104,7 @@ export function TableHeader({
           {/* Status filter */}
           <Select value={statusFilter} onValueChange={onStatusFilterChange}>
             <SelectTrigger className="w-full sm:w-[150px]">
-              <Filter className="h-4 w-4 mr-2" />
+              <Filter className="mr-2 h-4 w-4" />
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
@@ -122,7 +123,7 @@ export function TableHeader({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
-                <Eye className="h-4 w-4 mr-2" />
+                <Eye className="mr-2 h-4 w-4" />
                 View
               </Button>
             </DropdownMenuTrigger>
@@ -149,20 +150,20 @@ export function TableHeader({
 
           {/* Edit mode toggle */}
           <Button variant={isEditMode ? "default" : "outline"} size="sm" onClick={onEditModeToggle}>
-            <Settings className="h-4 w-4 mr-2" />
+            <Settings className="mr-2 h-4 w-4" />
             {isEditMode ? "Done" : "Edit"}
           </Button>
 
           {/* Export button */}
           <Button variant="outline" size="sm" onClick={onExport}>
-            <Download className="h-4 w-4 mr-2" />
+            <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
 
           {/* Add new button */}
           {onAddNew && (
             <Button size="sm" onClick={onAddNew}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Add Unit
             </Button>
           )}
@@ -171,7 +172,7 @@ export function TableHeader({
 
       {/* Batch actions row - shown when items are selected */}
       {selectedCount > 0 && (
-        <div className="flex items-center justify-between bg-blue-50 rounded-lg p-3">
+        <div className="flex items-center justify-between rounded-lg bg-blue-50 p-3">
           <span className="text-sm text-blue-700">
             {selectedCount} unit{selectedCount > 1 ? "s" : ""} selected
           </span>
@@ -182,7 +183,7 @@ export function TableHeader({
                   size="sm"
                   variant="outline"
                   onClick={() => onBatchStatusUpdate("Available")}
-                  className="text-green-600 border-green-600 hover:bg-green-50"
+                  className="border-green-600 text-green-600 hover:bg-green-50"
                 >
                   Mark Available
                 </Button>
@@ -190,7 +191,7 @@ export function TableHeader({
                   size="sm"
                   variant="outline"
                   onClick={() => onBatchStatusUpdate("Maintenance")}
-                  className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                  className="border-orange-600 text-orange-600 hover:bg-orange-50"
                 >
                   Mark Maintenance
                 </Button>
@@ -198,7 +199,7 @@ export function TableHeader({
                   size="sm"
                   variant="outline"
                   onClick={() => onBatchStatusUpdate("Reserved")}
-                  className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                  className="border-blue-600 text-blue-600 hover:bg-blue-50"
                 >
                   Mark Reserved
                 </Button>

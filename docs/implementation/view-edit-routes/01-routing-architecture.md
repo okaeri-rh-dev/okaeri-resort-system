@@ -344,11 +344,12 @@ export const Route = createFileRoute('/_authenticated/bookings/$bookingId')({
 
 ```typescript
 // src/routes/_authenticated/bookings/$bookingId.edit.tsx
-import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
-import { db } from "@/lib/supabase";
+
 import { BookingEditPage } from "@/components/bookings/BookingEdit";
 import { isCurrentUserManagerOrAbove } from "@/lib/audit-roles";
+import { db } from "@/lib/supabase";
 
 const paramsSchema = z.object({
   bookingId: z.string().uuid(),

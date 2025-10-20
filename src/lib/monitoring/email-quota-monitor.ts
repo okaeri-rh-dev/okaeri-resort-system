@@ -5,9 +5,10 @@
  * and provides usage analytics and alerts.
  */
 
-import { getAlertSystem, Alert } from "./alert-system";
-import { logAuditEvent } from "../audit-logger";
 import { AuditCategory, AuditSeverity } from "@/types/audit.types";
+
+import { logAuditEvent } from "../audit-logger";
+import { Alert, getAlertSystem } from "./alert-system";
 
 interface EmailUsageStats {
   sentCount: number;

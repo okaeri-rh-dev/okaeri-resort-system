@@ -1,14 +1,18 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { toast } from "sonner";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { Upload, Calendar, Users, Mail, Phone, CreditCard } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import DOMPurify from "dompurify";
+import { Calendar, CreditCard, Mail, Phone, Upload, Users } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -18,9 +22,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -28,17 +31,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
-
-import { FileUploadField } from "./FileUploadField";
-import { formatCurrency } from "@/lib/validations";
-import { compressAndValidateFile } from "@/utils/file-compression";
+import { Textarea } from "@/components/ui/textarea";
+import { adaptUnitFromDB } from "@/lib/database-adapters";
 import { transformToAPIFormat, validateAPIResponse } from "@/lib/schema-transform";
 import { supabase } from "@/lib/supabase";
+import { formatCurrency } from "@/lib/validations";
+import { compressAndValidateFile } from "@/utils/file-compression";
 import { calculatePricing } from "@/utils/pricing";
-import { adaptUnitFromDB } from "@/lib/database-adapters";
+
+import { FileUploadField } from "./FileUploadField";
 
 // Form validation schema
 const guestBookingSchema = z
@@ -246,7 +247,7 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
 
   if (bookingReference) {
     return (
-      <Card className="max-w-2xl mx-auto">
+      <Card className="mx-auto max-w-2xl">
         <CardHeader>
           <CardTitle className="text-green-600">Booking Confirmed!</CardTitle>
           <CardDescription>Your booking has been successfully created</CardDescription>
@@ -259,7 +260,7 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
               </AlertDescription>
             </Alert>
 
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               We've sent a confirmation email to {form.getValues("email")}. Please check your inbox
               for booking details and next steps.
             </p>
@@ -311,7 +312,7 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="email"
@@ -320,7 +321,7 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
                     <FormLabel>Email Address</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Mail className="text-muted-foreground absolute top-3 left-3 h-4 w-4" />
                         <Input
                           type="email"
                           placeholder="john@example.com"
@@ -343,7 +344,7 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
                     <FormLabel>Phone Number</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Phone className="text-muted-foreground absolute top-3 left-3 h-4 w-4" />
                         <Input
                           type="tel"
                           placeholder="+63 912 345 6789"
@@ -389,9 +390,9 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
                         .filter((u) => u.unit_status === "Available")
                         .map((unit) => (
                           <SelectItem key={unit.unit_id} value={unit.unit_id}>
-                            <div className="flex justify-between items-center w-full">
+                            <div className="flex w-full items-center justify-between">
                               <span>{unit.unit_name}</span>
-                              <span className="text-sm text-muted-foreground ml-2">
+                              <span className="text-muted-foreground ml-2 text-sm">
                                 {formatCurrency(unit.base_rate)}/night
                               </span>
                             </div>
@@ -410,7 +411,7 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="check_in"
@@ -419,7 +420,7 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
                     <FormLabel>Check-in Date</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Calendar className="text-muted-foreground absolute top-3 left-3 h-4 w-4" />
                         <Input
                           type="date"
                           className="pl-10"
@@ -444,7 +445,7 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
                     <FormLabel>Check-out Date</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Calendar className="text-muted-foreground absolute top-3 left-3 h-4 w-4" />
                         <Input
                           type="date"
                           className="pl-10"
@@ -473,7 +474,7 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
                   <FormLabel>Number of Guests</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Users className="text-muted-foreground absolute top-3 left-3 h-4 w-4" />
                       <Input
                         type="number"
                         min={1}
@@ -569,7 +570,7 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
             )}
 
             {/* Cloudflare Turnstile Widget */}
-            <div className="flex justify-center mb-4">
+            <div className="mb-4 flex justify-center">
               <Turnstile
                 siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || ""}
                 onSuccess={(token) => setTurnstileToken(token)}
@@ -598,7 +599,7 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
               )}
             </Button>
 
-            <p className="text-xs text-center text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2 text-center text-xs">
               By submitting, you agree to our terms and conditions. This site is protected by
               Cloudflare Turnstile.
             </p>

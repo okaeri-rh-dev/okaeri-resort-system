@@ -807,11 +807,11 @@ Each API endpoint automatically generates audit logs for security, compliance, a
 
 All database operations are automatically logged by PostgreSQL triggers:
 
-| Table | Operations | Captured Data |
-|-------|------------|---------------|
-| `guests` | INSERT, UPDATE, DELETE | Full record with PII redacted |
-| `bookings` | INSERT, UPDATE, DELETE | Booking details, `is_guest_booking` flag |
-| `payments` | INSERT, UPDATE | Payment records (sensitive fields redacted) |
+| Table      | Operations             | Captured Data                               |
+| ---------- | ---------------------- | ------------------------------------------- |
+| `guests`   | INSERT, UPDATE, DELETE | Full record with PII redacted               |
+| `bookings` | INSERT, UPDATE, DELETE | Booking details, `is_guest_booking` flag    |
+| `payments` | INSERT, UPDATE         | Payment records (sensitive fields redacted) |
 
 ### Layer 2: Application Events (Enriched)
 
@@ -819,35 +819,35 @@ API endpoints log additional context and business events:
 
 #### Guest Booking Events (`POST /api/guest-booking`)
 
-| Event | Trigger | Severity | Metadata |
-|-------|---------|----------|----------|
-| `guest_booking_attempt` | Request received | INFO | IP, user agent, unit_id, dates |
-| `turnstile_verification` | CAPTCHA check | INFO | Success/failure, token status |
-| `rate_limit_check` | Rate limit evaluation | INFO | IP, remaining quota |
-| `rate_limit_exceeded` | Limit hit | WARNING | IP, retry_after |
-| `availability_check` | Unit availability query | INFO | Unit, dates, result |
-| `guest_booking_created` | Success | INFO | Booking ID, reference, amount |
-| `guest_booking_failed` | Any failure | WARNING | Error type, reason |
-| `signed_url_generated` | Upload URL created | INFO | Expiry, bucket |
+| Event                    | Trigger                 | Severity | Metadata                       |
+| ------------------------ | ----------------------- | -------- | ------------------------------ |
+| `guest_booking_attempt`  | Request received        | INFO     | IP, user agent, unit_id, dates |
+| `turnstile_verification` | CAPTCHA check           | INFO     | Success/failure, token status  |
+| `rate_limit_check`       | Rate limit evaluation   | INFO     | IP, remaining quota            |
+| `rate_limit_exceeded`    | Limit hit               | WARNING  | IP, retry_after                |
+| `availability_check`     | Unit availability query | INFO     | Unit, dates, result            |
+| `guest_booking_created`  | Success                 | INFO     | Booking ID, reference, amount  |
+| `guest_booking_failed`   | Any failure             | WARNING  | Error type, reason             |
+| `signed_url_generated`   | Upload URL created      | INFO     | Expiry, bucket                 |
 
 #### Upload Confirmation Events (`POST /api/guest-booking/confirm`)
 
-| Event | Trigger | Severity | Metadata |
-|-------|---------|----------|----------|
-| `upload_initiated` | Confirmation request | INFO | Booking ID, file size |
-| `file_validation` | Magic byte check | INFO | Detected type, validation result |
-| `payment_proof_uploaded` | Success | INFO | Booking ID, file metadata |
-| `upload_failed` | Validation failure | WARNING | Reason, file info |
-| `booking_status_updated` | Status change | INFO | Old status, new status |
+| Event                    | Trigger              | Severity | Metadata                         |
+| ------------------------ | -------------------- | -------- | -------------------------------- |
+| `upload_initiated`       | Confirmation request | INFO     | Booking ID, file size            |
+| `file_validation`        | Magic byte check     | INFO     | Detected type, validation result |
+| `payment_proof_uploaded` | Success              | INFO     | Booking ID, file metadata        |
+| `upload_failed`          | Validation failure   | WARNING  | Reason, file info                |
+| `booking_status_updated` | Status change        | INFO     | Old status, new status           |
 
 #### Status Check Events (`GET /api/guest-booking/status`)
 
-| Event | Trigger | Severity | Metadata |
-|-------|---------|----------|----------|
-| `status_check_request` | Query received | INFO | Reference, email provided |
-| `status_check_success` | Found booking | INFO | Booking ID, status |
-| `status_check_failed` | Not found | INFO | Reference attempted |
-| `suspicious_enumeration` | Multiple failures | WARNING | IP, pattern detected |
+| Event                    | Trigger           | Severity | Metadata                  |
+| ------------------------ | ----------------- | -------- | ------------------------- |
+| `status_check_request`   | Query received    | INFO     | Reference, email provided |
+| `status_check_success`   | Found booking     | INFO     | Booking ID, status        |
+| `status_check_failed`    | Not found         | INFO     | Reference attempted       |
+| `suspicious_enumeration` | Multiple failures | WARNING  | IP, pattern detected      |
 
 ### Audit Log Schema
 
@@ -856,32 +856,32 @@ All audit logs follow this structure:
 ```typescript
 interface AuditLog {
   // Identity
-  audit_id: string;           // UUID
+  audit_id: string; // UUID
 
   // What changed
-  table_name?: string;        // For database operations
-  record_id?: string;         // Related record UUID
-  action: string;             // Event type
+  table_name?: string; // For database operations
+  record_id?: string; // Related record UUID
+  action: string; // Event type
 
   // Who made the change
-  user_id?: string;           // Null for guest operations
-  user_email?: string;        // Admin email if applicable
-  ip_address?: string;        // Client IP
-  user_agent?: string;        // Browser info
+  user_id?: string; // Null for guest operations
+  user_email?: string; // Admin email if applicable
+  ip_address?: string; // Client IP
+  user_agent?: string; // Browser info
 
   // Change details
-  old_data?: Record<string, any>;  // Previous values (UPDATE)
-  new_data?: Record<string, any>;  // New values
-  changed_fields?: string[];       // Modified fields
+  old_data?: Record<string, any>; // Previous values (UPDATE)
+  new_data?: Record<string, any>; // New values
+  changed_fields?: string[]; // Modified fields
 
   // Context
-  description?: string;       // Human-readable description
-  category?: string;          // BOOKING, PAYMENT, SYSTEM
-  severity?: string;          // INFO, WARNING, CRITICAL
-  metadata?: Record<string, any>;  // Additional context
+  description?: string; // Human-readable description
+  category?: string; // BOOKING, PAYMENT, SYSTEM
+  severity?: string; // INFO, WARNING, CRITICAL
+  metadata?: Record<string, any>; // Additional context
 
   // Timing
-  created_at: string;         // ISO timestamp
+  created_at: string; // ISO timestamp
 }
 ```
 

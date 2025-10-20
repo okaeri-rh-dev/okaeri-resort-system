@@ -4,7 +4,6 @@
  * Bundle Size Validation Script
  * Validates that the production bundle meets size requirements
  */
-
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";

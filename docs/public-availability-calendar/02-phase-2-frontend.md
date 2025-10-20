@@ -676,7 +676,7 @@ export function getMonthEnd(date: Date): Date {
 Update `/src/components/calendar/PublicAvailabilityCalendar.tsx`:
 
 ```typescript
-import { toISODateString, getMonthStart, getMonthEnd } from "@/lib/timezone";
+import { getMonthEnd, getMonthStart, toISODateString } from "@/lib/timezone";
 
 // Update fetchAvailability function
 async function fetchAvailability(month: Date): Promise<AvailabilityResponse> {
@@ -749,8 +749,8 @@ export function validateMonth(month: Date): DateValidationResult {
 Update `/src/components/calendar/PublicAvailabilityCalendar.tsx`:
 
 ```typescript
-import { validateMonth } from "@/lib/validation/calendar";
 import { getTodayPhilippineTime } from "@/lib/timezone";
+import { validateMonth } from "@/lib/validation/calendar";
 
 export function PublicAvailabilityCalendar() {
   const [currentMonth, setCurrentMonth] = useState(getTodayPhilippineTime());

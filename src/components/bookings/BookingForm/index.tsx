@@ -1,21 +1,18 @@
-import { CalendarDays, Users, CreditCard, CheckCircle } from "lucide-react";
+import { CalendarDays, CheckCircle, CreditCard, Users } from "lucide-react";
 
-import { Form } from "@/components/ui/form";
+import { withErrorBoundary } from "@/components/ErrorBoundary";
+import { BookingFormSkeleton } from "@/components/skeletons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
 import { Progress } from "@/components/ui/progress";
 
-import { BookingFormSkeleton } from "@/components/skeletons";
-import { withErrorBoundary } from "@/components/ErrorBoundary";
-
 import { useBookingForm } from "./hooks/useBookingForm";
-import { UnitSelection } from "./steps/UnitSelection";
+import { BookingReview } from "./steps/BookingReview";
 import { GuestInformation } from "./steps/GuestInformation";
 import { PaymentDetails } from "./steps/PaymentDetails";
-import { BookingReview } from "./steps/BookingReview";
-
-import type { BookingFormProps } from "./types";
-import { STEP_DESCRIPTIONS } from "./types";
+import { UnitSelection } from "./steps/UnitSelection";
+import { STEP_DESCRIPTIONS, type BookingFormProps } from "./types";
 
 const STEP_ICONS = {
   1: CalendarDays,
@@ -94,10 +91,10 @@ function BookingFormComponent({
       <CardHeader>
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <StepIcon className="h-5 w-5 text-primary" />
+            <StepIcon className="text-primary h-5 w-5" />
             <CardTitle>{STEP_TITLES[currentStep]}</CardTitle>
             {isEditMode && (
-              <span className="ml-auto text-sm text-muted-foreground">Editing Booking</span>
+              <span className="text-muted-foreground ml-auto text-sm">Editing Booking</span>
             )}
           </div>
           <CardDescription>{STEP_DESCRIPTIONS[currentStep]}</CardDescription>
@@ -110,7 +107,7 @@ function BookingFormComponent({
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             {renderStep()}
 
-            <div className="flex gap-4 justify-between pt-6">
+            <div className="flex justify-between gap-4 pt-6">
               {currentStep > 1 && (
                 <Button
                   type="button"

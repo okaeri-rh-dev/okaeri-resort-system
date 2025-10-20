@@ -10,12 +10,14 @@
  * These tests measure actual database query performance
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { performance } from "perf_hooks";
+
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
 import {
-  testSupabaseAdmin as supabase,
   cleanupTestData,
   shouldRunDatabaseTests,
+  testSupabaseAdmin as supabase,
 } from "../setup/test-db";
 
 describe("Multi-Unit Availability Performance Benchmarks", () => {

@@ -1,11 +1,13 @@
+import React from "react";
+
+import { format } from "date-fns";
+import { Calendar, Hash, Mail, Phone, User } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/validations";
 import type { Guest } from "@/types";
-import { format } from "date-fns";
-import { Calendar, Hash, Mail, Phone, User } from "lucide-react";
-import React from "react";
 
 interface GuestDetailModalProps {
   guest: Guest | null;
@@ -27,7 +29,7 @@ export const GuestDetailModal: React.FC<GuestDetailModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Guest Profile</span>
@@ -41,14 +43,14 @@ export const GuestDetailModal: React.FC<GuestDetailModalProps> = ({
         <div className="space-y-6">
           {/* Personal Information */}
           <div>
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <h3 className="mb-3 flex items-center gap-2 font-semibold">
               <User className="h-4 w-4" />
               Personal Information
             </h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Full Name</p>
-                <p className="font-medium text-lg">{guest.guest_name}</p>
+                <p className="text-lg font-medium">{guest.guest_name}</p>
               </div>
               {/* Nationality field not in current schema */}
             </div>
@@ -58,11 +60,11 @@ export const GuestDetailModal: React.FC<GuestDetailModalProps> = ({
 
           {/* Contact Information */}
           <div>
-            <h3 className="font-semibold mb-3">Contact Details</h3>
+            <h3 className="mb-3 font-semibold">Contact Details</h3>
             <div className="grid grid-cols-1 gap-3 text-sm">
               {guest.email && (
                 <div className="flex items-center gap-3">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <Mail className="text-muted-foreground h-4 w-4" />
                   <div>
                     <p className="text-muted-foreground text-xs">Email</p>
                     <p className="font-medium">{guest.email}</p>
@@ -71,7 +73,7 @@ export const GuestDetailModal: React.FC<GuestDetailModalProps> = ({
               )}
               {guest.phone_number && (
                 <div className="flex items-center gap-3">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <Phone className="text-muted-foreground h-4 w-4" />
                   <div>
                     <p className="text-muted-foreground text-xs">Phone</p>
                     <p className="font-medium">{guest.phone_number}</p>
@@ -86,26 +88,26 @@ export const GuestDetailModal: React.FC<GuestDetailModalProps> = ({
 
           {/* Booking Statistics */}
           <div>
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <h3 className="mb-3 flex items-center gap-2 font-semibold">
               <Calendar className="h-4 w-4" />
               Booking History
             </h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Total Bookings</p>
-                <p className="font-medium text-xl">{guest.total_bookings || 0}</p>
+                <p className="text-xl font-medium">{guest.total_bookings || 0}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Total Spent</p>
-                <p className="font-medium text-xl">{formatCurrency(guest.total_spent || 0)}</p>
+                <p className="text-xl font-medium">{formatCurrency(guest.total_spent || 0)}</p>
               </div>
               {/* First/Last visit dates not in current schema */}
             </div>
 
             {/* Average metrics */}
             {guest.total_bookings && guest.total_bookings > 0 && (
-              <div className="mt-4 p-3 bg-muted rounded-md">
-                <p className="text-sm text-muted-foreground mb-1">Average Spending per Visit</p>
+              <div className="bg-muted mt-4 rounded-md p-3">
+                <p className="text-muted-foreground mb-1 text-sm">Average Spending per Visit</p>
                 <p className="font-medium">
                   {formatCurrency((guest.total_spent || 0) / guest.total_bookings)}
                 </p>
@@ -120,17 +122,17 @@ export const GuestDetailModal: React.FC<GuestDetailModalProps> = ({
             <>
               <Separator />
               <div>
-                <h3 className="font-semibold mb-3">Recent Bookings</h3>
+                <h3 className="mb-3 font-semibold">Recent Bookings</h3>
                 <div className="space-y-2">
                   {[].slice(0, 3).map((booking: any, index: number) => (
-                    <div key={index} className="p-3 border rounded-md">
-                      <div className="flex justify-between items-start text-sm">
+                    <div key={index} className="rounded-md border p-3">
+                      <div className="flex items-start justify-between text-sm">
                         <div>
-                          <p className="font-medium flex items-center gap-2">
+                          <p className="flex items-center gap-2 font-medium">
                             <Hash className="h-3 w-3" />
                             {booking.reference}
                           </p>
-                          <p className="text-muted-foreground text-xs mt-1">
+                          <p className="text-muted-foreground mt-1 text-xs">
                             {format(new Date(booking.check_in), "PP")} -
                             {format(new Date(booking.check_out), "PP")}
                           </p>
@@ -139,7 +141,7 @@ export const GuestDetailModal: React.FC<GuestDetailModalProps> = ({
                           <Badge variant="outline" className="text-xs">
                             {booking.status}
                           </Badge>
-                          <p className="text-sm font-medium mt-1">
+                          <p className="mt-1 text-sm font-medium">
                             {formatCurrency(booking.total)}
                           </p>
                         </div>
@@ -153,7 +155,7 @@ export const GuestDetailModal: React.FC<GuestDetailModalProps> = ({
 
           {/* Metadata */}
           <Separator />
-          <div className="text-xs text-muted-foreground">
+          <div className="text-muted-foreground text-xs">
             <p>Guest ID: {guest.guest_id}</p>
             {guest.created_at && <p>Created: {format(new Date(guest.created_at), "PPpp")}</p>}
             {guest.updated_at && <p>Last Updated: {format(new Date(guest.updated_at), "PPpp")}</p>}

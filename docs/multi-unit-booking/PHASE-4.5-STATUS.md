@@ -277,7 +277,7 @@ const surcharge = weekendNights * unit.weekend_rate;
 
 ```typescript
 // 2. RBAC enforcement in endpoint
-import { requireRole, createErrorResponse } from "../../lib/rbac";
+import { createErrorResponse, requireRole } from "../../lib/rbac";
 
 export const onRequestPost = async (context) => {
   try {
@@ -291,8 +291,9 @@ export const onRequestPost = async (context) => {
 
 ```typescript
 // 3. Audit logging in endpoint
-import { logUnitAdded } from "../../lib/audit-logger-workers";
 import { createClient } from "@supabase/supabase-js";
+
+import { logUnitAdded } from "../../lib/audit-logger-workers";
 
 const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 const userId = (request as any).user?.id;

@@ -7,15 +7,15 @@
  * Note: Advanced features deferred to Phase 4
  */
 
-import { supabase } from "@/lib/supabase";
 import {
-  checkUnitAvailability,
-  checkMultiUnitAvailability,
   // getUnitAvailabilityCalendar, // ❌ DISABLED: Function not deployed yet (Phase 4)
   batchCheckUnitAvailability,
+  checkMultiUnitAvailability,
+  checkUnitAvailability,
   // refreshAvailabilityCache, // ❌ DISABLED: Function not deployed yet (Phase 4)
   // getCachePerformanceMetrics, // ❌ DISABLED: Function not deployed yet (Phase 4)
 } from "@/lib/availability";
+import { supabase } from "@/lib/supabase";
 
 // Performance targets
 const PERFORMANCE_TARGETS = {

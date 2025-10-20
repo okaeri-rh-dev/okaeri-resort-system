@@ -1,8 +1,9 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase, db, handleSupabaseError } from "@/lib/supabase";
-import type { Guest, Booking } from "@/types";
+
+import { db, handleSupabaseError, supabase } from "@/lib/supabase";
+import type { Booking, Guest } from "@/types";
 
 // ============================================
 // ZUSTAND STORE

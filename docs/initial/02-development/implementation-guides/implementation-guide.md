@@ -145,9 +145,10 @@ src/
 // Template for all API routes
 // src/app/api/[resource]/route.ts
 
-import { sql } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+
 import { handleApiError, validateRequest } from "@/lib/api-helpers";
+import { sql } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {

@@ -4,7 +4,8 @@
  * Validates session management, route protection, and error handling
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import { auth } from "@/lib/auth";
 
 // Mock Supabase client is already configured in setup.ts

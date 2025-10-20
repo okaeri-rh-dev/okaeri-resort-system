@@ -92,10 +92,10 @@ Design and implement comprehensive state management for multi-unit bookings usin
 **File:** `src/stores/useMultiUnitBookingStore.ts`
 
 ```typescript
+import type { Draft } from "immer";
 import { create } from "zustand";
 import { devtools, persist, subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import type { Draft } from "immer";
 
 // ============================================
 // TYPE DEFINITIONS
@@ -879,7 +879,8 @@ if (typeof window !== "undefined") {
 **File:** `src/hooks/useMultiUnitBookingQueries.ts`
 
 ```typescript
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 
 // ============================================
@@ -1016,8 +1017,9 @@ export const useCreateMultiUnitBooking = () => {
 **File:** `src/stores/__tests__/useMultiUnitBookingStore.test.ts`
 
 ```typescript
-import { describe, it, expect, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it } from "vitest";
+
 import { useMultiUnitBookingStore } from "../useMultiUnitBookingStore";
 
 describe("useMultiUnitBookingStore", () => {

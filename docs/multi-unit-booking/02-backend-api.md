@@ -503,8 +503,9 @@ export async function onRequestPost(context: { request: CloudflareRequest; env: 
 // functions/api/bookings/multi-unit.ts
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { z } from "zod";
-import { sanitizeInput, sanitizeHTML } from "@/lib/security/sanitize";
+
 import { logAuditEvent } from "@/lib/audit-logger";
+import { sanitizeHTML, sanitizeInput } from "@/lib/security/sanitize";
 
 // Validation schema
 const multiUnitBookingSchema = z

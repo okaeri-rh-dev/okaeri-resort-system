@@ -11,8 +11,9 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { requireRole } from "../../../../lib/rbac";
+
 import { logUnitRemoved } from "../../../../lib/audit-logger-workers";
+import { requireRole } from "../../../../lib/rbac";
 
 interface Env {
   SUPABASE_URL: string;

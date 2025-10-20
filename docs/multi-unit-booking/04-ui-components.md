@@ -905,7 +905,7 @@ it('should have no accessibility violations', async () => {
 
 ```typescript
 // Using Chromatic or Percy
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test("MultiUnitSelector visual regression", async ({ page }) => {
   await page.goto("/bookings/new");

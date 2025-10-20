@@ -1,7 +1,7 @@
 // src/components/entity-detail/DetailPageSkeleton.tsx
 
-import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * Consistent loading states that preserve layout structure
@@ -23,7 +23,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
  */
 export function DetailPageSkeleton() {
   return (
-    <div className="container mx-auto py-6 space-y-6 max-w-[1400px]">
+    <div className="container mx-auto max-w-[1400px] space-y-6 py-6">
       {/* Breadcrumbs skeleton */}
       <div className="flex items-center gap-2">
         <Skeleton className="h-4 w-20" />
@@ -48,7 +48,7 @@ export function DetailPageSkeleton() {
           </CardHeader>
           <CardContent className="space-y-4">
             {[1, 2, 3].map((j) => (
-              <div key={j} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div key={j} className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-1">
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="h-4 w-32" />

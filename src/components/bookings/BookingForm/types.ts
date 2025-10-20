@@ -1,5 +1,6 @@
-import type { CompleteBookingData } from "@/lib/validations";
 import type { UseFormReturn } from "react-hook-form";
+
+import type { CompleteBookingData } from "@/lib/validations";
 import type { Unit } from "@/types";
 
 export interface BookingFormProps {

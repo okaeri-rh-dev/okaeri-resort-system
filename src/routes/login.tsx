@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+
 import { LoginForm } from "@/components/auth/LoginForm";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
@@ -17,8 +18,8 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   return (
     <ErrorBoundary level="page">
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full space-y-8">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="w-full max-w-md space-y-8">
           <div>
             <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
               Okaeri Resort System

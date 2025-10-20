@@ -49,18 +49,18 @@ npm install -D @types/express @types/cors @types/pg
 
 ```javascript
 // server/index.js
-import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
+import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
-import dotenv from "dotenv";
-import { errorHandler } from "./middleware/errorHandler.js";
-import { connectDB } from "./db/connection.js";
 
-// Routes
-import unitsRouter from "./routes/units.js";
+import { connectDB } from "./db/connection.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 import bookingsRouter from "./routes/bookings.js";
 import guestsRouter from "./routes/guests.js";
+// Routes
+import unitsRouter from "./routes/units.js";
 
 dotenv.config();
 
@@ -118,6 +118,7 @@ startServer();
 ```javascript
 // server/db/connection.js
 import pg from "pg";
+
 const { Pool } = pg;
 
 let pool;
@@ -338,6 +339,7 @@ runMigrations();
 ```javascript
 // server/routes/units.js
 import express from "express";
+
 import { query } from "../db/connection.js";
 
 const router = express.Router();
@@ -460,6 +462,7 @@ export default router;
 ```javascript
 // server/routes/bookings.js
 import express from "express";
+
 import { query } from "../db/connection.js";
 
 const router = express.Router();
@@ -666,6 +669,7 @@ npm install react-hook-form zod @hookform/resolvers
 ```typescript
 // src/stores/unitStore.ts
 import { create } from "zustand";
+
 import { Unit } from "@/types";
 
 interface UnitStore {
@@ -714,6 +718,7 @@ export const useUnitStore = create<UnitStore>((set) => ({
 ```typescript
 // src/stores/bookingStore.ts
 import { create } from "zustand";
+
 import { Booking } from "@/types";
 
 interface BookingStore {
@@ -807,9 +812,10 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
 
 ```typescript
 // vite.config.ts
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
 import path from "path";
+
+import react from "@vitejs/plugin-react-swc";
+import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [react()],
@@ -899,10 +905,11 @@ export interface Payment {
 ```tsx
 // src/components/UnitsDisplay.tsx
 import { useEffect } from "react";
-import { useUnitStore } from "@/stores/unitStore";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useUnitStore } from "@/stores/unitStore";
 
 export function UnitsDisplay() {
   const { units, loading, error, fetchUnits } = useUnitStore();
@@ -941,14 +948,15 @@ export function UnitsDisplay() {
 
 ```tsx
 // src/components/BookingForm.tsx
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useBookingStore } from "@/stores/bookingStore";
-import { useUnitStore } from "@/stores/unitStore";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useBookingStore } from "@/stores/bookingStore";
+import { useUnitStore } from "@/stores/unitStore";
 
 const bookingSchema = z.object({
   unit_id: z.string().min(1, "Please select a unit"),

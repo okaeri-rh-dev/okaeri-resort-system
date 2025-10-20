@@ -1,5 +1,12 @@
-import { createFileRoute, useNavigate, Outlet, useParams } from "@tanstack/react-router";
-import { useState, lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
+
+import { createFileRoute, Outlet, useNavigate, useParams } from "@tanstack/react-router";
+import { z } from "zod";
+
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import type { Payment } from "@/types";
 
 // Lazy load heavy components
 const PaymentsTable = lazy(() =>
@@ -8,11 +15,6 @@ const PaymentsTable = lazy(() =>
 const PaymentForm = lazy(() =>
   import("@/components/payments/PaymentForm").then((m) => ({ default: m.PaymentForm }))
 );
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { z } from "zod";
-import type { Payment } from "@/types";
 
 const paymentsSearchSchema = z.object({
   status: z.string().optional(),
@@ -65,7 +67,7 @@ function PaymentsPage() {
           <Suspense
             fallback={
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
               </div>
             }
           >
@@ -75,7 +77,7 @@ function PaymentsPage() {
 
         {/* New Payment Dialog */}
         <Dialog open={showPaymentForm} onOpenChange={setShowPaymentForm}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Record New Payment</DialogTitle>
             </DialogHeader>
@@ -83,7 +85,7 @@ function PaymentsPage() {
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
                   </div>
                 }
               >

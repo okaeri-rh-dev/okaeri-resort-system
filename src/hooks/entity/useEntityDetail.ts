@@ -1,9 +1,10 @@
 // src/hooks/entity/useEntityDetail.ts
 
 import { useQuery } from "@tanstack/react-query";
-import type { EntityType, EntityDetail } from "@/types/entity-detail.types";
-import { db } from "@/lib/supabase";
+
 import { queryKeys } from "@/lib/query-keys";
+import { db } from "@/lib/supabase";
+import type { EntityDetail, EntityType } from "@/types/entity-detail.types";
 
 /**
  * Options for useEntityDetail hook

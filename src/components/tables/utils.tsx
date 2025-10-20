@@ -1,3 +1,5 @@
+import React from "react";
+
 import { Header, Table as TanStackTable } from "@tanstack/react-table";
 import { format } from "date-fns";
 import {
@@ -9,8 +11,6 @@ import {
   MoreHorizontal,
   X,
 } from "lucide-react";
-import { utcToResortTime } from "@/utils/date-helpers";
-import React from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { utcToResortTime } from "@/utils/date-helpers";
 
 // ============================================
 // FORMATTING UTILITIES
@@ -297,7 +298,7 @@ export const FilterPopover: React.FC<FilterPopoverProps> = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className={cn("w-56", isCalendarContent ? "p-0 w-[340px]" : "p-3")}
+        className={cn("w-56", isCalendarContent ? "w-[340px] p-0" : "p-3")}
         align="start"
       >
         <div>

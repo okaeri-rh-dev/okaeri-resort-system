@@ -18,9 +18,10 @@
  * @route /calendar
  */
 
+import { lazy, Suspense, useEffect } from "react";
+
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
-import { useEffect, lazy, Suspense } from "react";
 
 // Lazy load the calendar component for better initial page load performance
 const PublicAvailabilityCalendar = lazy(() =>
@@ -109,7 +110,7 @@ function AvailabilityPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex min-h-screen flex-col bg-white">
       {/* Add structured data */}
       <script
         type="application/ld+json"
@@ -118,12 +119,12 @@ function AvailabilityPage() {
 
       {/* Main Content - Fills remaining viewport space */}
       <main className="flex-1 overflow-auto">
-        <div className="container mx-auto px-3 py-2 sm:px-4 sm:py-3 max-w-7xl h-full">
-          <div className="flex flex-col h-full">
+        <div className="container mx-auto h-full max-w-7xl px-3 py-2 sm:px-4 sm:py-3">
+          <div className="flex h-full flex-col">
             <Suspense
               fallback={
-                <div className="flex flex-col items-center justify-center h-96 bg-white rounded-lg border border-slate-200 p-8">
-                  <Loader2 className="w-10 h-10 animate-spin text-slate-600 mb-4" />
+                <div className="flex h-96 flex-col items-center justify-center rounded-lg border border-slate-200 bg-white p-8">
+                  <Loader2 className="mb-4 h-10 w-10 animate-spin text-slate-600" />
                   <p className="text-slate-600">Loading availability calendar...</p>
                 </div>
               }
@@ -132,7 +133,7 @@ function AvailabilityPage() {
             </Suspense>
 
             {/* Compact Information Notice */}
-            <div className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded text-xs sm:text-sm text-slate-700">
+            <div className="mt-2 rounded border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700 sm:text-sm">
               <strong>View-Only:</strong> Contact us to book available dates.
             </div>
           </div>

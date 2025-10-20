@@ -12,6 +12,10 @@
  * @module MultiUnitSelector
  */
 
+import { useMemo, useState } from "react";
+
+import { Filter, Grid3x3, List } from "lucide-react";
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,8 +32,7 @@ import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/validations";
 import type { Unit } from "@/types";
 import type { BookingUnit } from "@/types/multi-unit-booking";
-import { Filter, Grid3x3, List } from "lucide-react";
-import { useMemo, useState } from "react";
+
 import { filterUnits, hasActiveFilters, type FilterState } from "./MultiUnitSelector/utils";
 
 // ============================================
@@ -105,7 +108,7 @@ export function MultiUnitSelector({
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h2 className="text-2xl font-semibold tracking-tight">Select Cabins</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {selectedUnits.length} of {maxUnits} {selectedUnits.length === 1 ? "cabin" : "cabins"}{" "}
             selected
           </p>
@@ -211,8 +214,8 @@ export function MultiUnitSelector({
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i}>
               <CardContent className="p-4">
-                <Skeleton className="h-6 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-1/2 mb-2" />
+                <Skeleton className="mb-2 h-6 w-3/4" />
+                <Skeleton className="mb-2 h-4 w-1/2" />
                 <Skeleton className="h-4 w-2/3" />
               </CardContent>
             </Card>
@@ -246,7 +249,7 @@ export function MultiUnitSelector({
 
       {/* Empty State */}
       {!isLoading && filteredUnits.length === 0 && (
-        <div className="text-center py-12">
+        <div className="py-12 text-center">
           <p className="text-muted-foreground">No units match your filters</p>
           {filtersActive && (
             <Button variant="outline" size="sm" className="mt-4" onClick={clearFilters}>
@@ -288,7 +291,7 @@ function UnitCard({
     <Card
       className={cn(
         "transition-all hover:shadow-lg",
-        isSelected && "ring-2 ring-primary",
+        isSelected && "ring-primary ring-2",
         !isAvailable && "opacity-60"
       )}
       role="article"
@@ -298,15 +301,15 @@ function UnitCard({
         {/* Unit Info */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-lg">{unit.unit_name}</h3>
+            <h3 className="text-lg font-semibold">{unit.unit_name}</h3>
             {isSelected && (
               <Badge variant="secondary" aria-label="Cabin selected">
                 Selected
               </Badge>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">Max {unit.max_occupancy} guests</p>
-          <p className="text-lg font-semibold text-primary">
+          <p className="text-muted-foreground text-sm">Max {unit.max_occupancy} guests</p>
+          <p className="text-primary text-lg font-semibold">
             {formatCurrency(unit.base_rate)}/night
           </p>
 
@@ -317,7 +320,7 @@ function UnitCard({
 
           {/* Date Range Display */}
           {checkIn && checkOut && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               {(checkIn instanceof Date ? checkIn : new Date(checkIn)).toLocaleDateString()} -{" "}
               {(checkOut instanceof Date ? checkOut : new Date(checkOut)).toLocaleDateString()}
             </p>
@@ -331,7 +334,7 @@ function UnitCard({
             variant="destructive"
             size="sm"
             onClick={onRemove}
-            className="w-full h-11"
+            className="h-11 w-full"
             aria-label={`Remove ${unit.unit_name} from booking`}
           >
             Remove
@@ -342,7 +345,7 @@ function UnitCard({
             size="sm"
             onClick={onAdd}
             disabled={!canSelect || !isAvailable}
-            className="w-full h-11"
+            className="h-11 w-full"
             aria-label={`Add ${unit.unit_name} to booking`}
             aria-disabled={!canSelect || !isAvailable}
           >

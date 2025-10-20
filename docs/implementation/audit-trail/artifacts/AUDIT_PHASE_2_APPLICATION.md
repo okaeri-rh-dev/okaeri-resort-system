@@ -525,9 +525,9 @@ Build the core logging utility that interfaces with Supabase.
  */
 
 import { supabase } from "@/lib/supabase";
-import type { AuditContext, AuditLogInsert } from "./types";
-import { ACTION_SEVERITY_MAP, ACTION_CATEGORY_MAP, SENSITIVE_FIELDS } from "./constants";
-import { AuditSeverity } from "./types";
+
+import { ACTION_CATEGORY_MAP, ACTION_SEVERITY_MAP, SENSITIVE_FIELDS } from "./constants";
+import { AuditSeverity, type AuditContext, type AuditLogInsert } from "./types";
 
 // ============================================
 // ERROR HANDLING
@@ -834,8 +834,9 @@ Create wrapper for Supabase operations with automatic audit logging.
  */
 
 import type { PostgrestError } from "@supabase/supabase-js";
+
 import { logAuditEvent } from "./logger";
-import type { AuditedOperationOptions, AuditedOperationResult, AuditContext } from "./types";
+import type { AuditContext, AuditedOperationOptions, AuditedOperationResult } from "./types";
 
 // ============================================
 // OPERATION WRAPPER

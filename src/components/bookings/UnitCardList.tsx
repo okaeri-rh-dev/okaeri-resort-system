@@ -12,11 +12,12 @@
  */
 
 import { ChevronDown } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/validations";
 import type { BookingUnit } from "@/types/multi-unit-booking";
 
@@ -46,7 +47,7 @@ export function UnitCardList({
   if (units.length === 0) {
     return (
       <div
-        className="text-center py-8 text-muted-foreground"
+        className="text-muted-foreground py-8 text-center"
         role="status"
         aria-label="No units selected"
       >
@@ -108,14 +109,14 @@ function UnitCardItem({
         <div className="flex items-start justify-between gap-4">
           {/* Unit Info */}
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="mb-2 flex items-center gap-2">
               <Badge variant="outline" aria-label={`Unit number ${index + 1}`}>
                 {index + 1}
               </Badge>
               <h3 className="font-semibold">{unit.unit_name}</h3>
             </div>
 
-            <div className="space-y-1 text-sm text-muted-foreground">
+            <div className="text-muted-foreground space-y-1 text-sm">
               <p>
                 {unit.unit_code} • {unit.unit_type}
               </p>
@@ -124,7 +125,7 @@ function UnitCardItem({
 
             {/* Guest Count Input */}
             {editable && (
-              <div className="mt-4 flex items-center gap-2 flex-wrap">
+              <div className="mt-4 flex flex-wrap items-center gap-2">
                 <label htmlFor={`guests-${unit.unit_id}`} className="text-sm font-medium">
                   Guests:
                 </label>
@@ -135,13 +136,13 @@ function UnitCardItem({
                   max={unit.max_occupancy}
                   value={guestCount}
                   onChange={handleGuestCountChange}
-                  className="w-24 h-10"
+                  className="h-10 w-24"
                   aria-label={`Number of guests for ${unit.unit_name}`}
                   aria-describedby={`guests-${unit.unit_id}-description`}
                 />
                 <span
                   id={`guests-${unit.unit_id}-description`}
-                  className="text-xs text-muted-foreground sr-only"
+                  className="text-muted-foreground sr-only text-xs"
                 >
                   Maximum {unit.max_occupancy} guests
                 </span>
@@ -169,7 +170,7 @@ function UnitCardItem({
             >
               {formatCurrency(unit.pricing.unit_total)}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               {unit.pricing.nights} night{unit.pricing.nights !== 1 ? "s" : ""}
             </p>
 
@@ -178,7 +179,7 @@ function UnitCardItem({
                 variant="ghost"
                 size="sm"
                 onClick={() => onRemove(unit.unit_id)}
-                className="mt-2 text-destructive hover:text-destructive h-10"
+                className="text-destructive hover:text-destructive mt-2 h-10"
                 aria-label={`Remove ${unit.unit_name} from booking`}
               >
                 Remove
@@ -193,7 +194,7 @@ function UnitCardItem({
             <Button
               variant="ghost"
               size="sm"
-              className="w-full justify-between h-10"
+              className="h-10 w-full justify-between"
               aria-label={`Show pricing breakdown for ${unit.unit_name}`}
             >
               <span className="text-xs">Pricing Breakdown</span>
@@ -209,13 +210,13 @@ function UnitCardItem({
               <span className="font-mono">{formatCurrency(unit.pricing.base_total)}</span>
             </div>
             {unit.pricing.weekend_surcharge > 0 && (
-              <div className="flex justify-between text-muted-foreground">
+              <div className="text-muted-foreground flex justify-between">
                 <span>Weekend surcharge</span>
                 <span className="font-mono">+{formatCurrency(unit.pricing.weekend_surcharge)}</span>
               </div>
             )}
             {unit.pricing.extra_person_fee > 0 && (
-              <div className="flex justify-between text-muted-foreground">
+              <div className="text-muted-foreground flex justify-between">
                 <span>
                   Extra persons (
                   {(unit.guest_assignment?.num_guests || unit.base_occupancy) - unit.base_occupancy}{" "}

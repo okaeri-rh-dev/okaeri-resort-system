@@ -198,13 +198,10 @@ npm run build:phase2 && ls -la dist/assets/*.js
 
 ```typescript
 // Replace standard tables with optimized version
-import { OptimizedTable, useTableSort } from "@/components/ui/optimized-table";
-
 // Use virtualization for large datasets
-import { VirtualizedTable } from "@/components/ui/optimized-table";
-
+import { OptimizedTable, useTableSort, VirtualizedTable } from "@/components/ui/optimized-table";
 // Proper typing with new types
-import type { SupabaseError, BookingResponse } from "@/types/supabase";
+import type { BookingResponse, SupabaseError } from "@/types/supabase";
 ```
 
 ### Lazy Loading Routes

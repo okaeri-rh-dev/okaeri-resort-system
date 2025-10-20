@@ -580,7 +580,7 @@ WHERE ds.date >= b.check_in::date
 **Implementation**:
 
 ```tsx
-<div className="text-sm text-gray-600 mb-4">
+<div className="mb-4 text-sm text-gray-600">
   Note: 2-night minimum stay required for weekends and holidays
 </div>
 ```

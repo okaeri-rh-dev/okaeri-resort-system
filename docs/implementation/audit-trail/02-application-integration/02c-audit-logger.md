@@ -20,15 +20,15 @@ Create `src/lib/audit-logger.ts`:
 ```typescript
 // src/lib/audit-logger.ts
 
-import { db, supabase } from "./supabase";
 import type {
-  AuditEventContext,
-  AuditCategory,
-  AuditSeverity,
   AuditAction,
+  AuditCategory,
+  AuditEventContext,
   AuditEventType,
+  AuditSeverity,
 } from "../../database.types";
-import { redactSensitiveData, isAuditedTable, AUDIT_DEBUG, auditDebugLog } from "./audit-constants";
+import { AUDIT_DEBUG, auditDebugLog, isAuditedTable, redactSensitiveData } from "./audit-constants";
+import { db, supabase } from "./supabase";
 
 // ============================================
 // MAIN AUDIT LOGGING FUNCTION
@@ -714,7 +714,8 @@ try {
 
 ```typescript
 // src/scripts/test-audit-logger.ts
-import { logAuditEvent, logBookingEvent, logPaymentEvent, logAuthEvent } from "@/lib/audit-logger";
+import { logAuditEvent, logAuthEvent, logBookingEvent, logPaymentEvent } from "@/lib/audit-logger";
+
 import { AuditCategory, AuditSeverity } from "../../database.types";
 
 async function testAuditLogger() {

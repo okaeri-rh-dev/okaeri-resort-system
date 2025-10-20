@@ -1,5 +1,10 @@
 // src/components/audit/AuditDiffViewer.tsx
 
+import { format } from "date-fns";
+import { AlertCircle, ArrowRight } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -7,16 +12,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import type { AuditLog } from "@/types/audit.types";
-import { TABLE_DISPLAY_NAMES, ACTION_DISPLAY_NAMES } from "@/lib/audit-constants";
-import { ArrowRight, AlertCircle } from "lucide-react";
-import { format } from "date-fns";
-import { SafeAuditText } from "./SafeAuditText";
-import { ActionBadge } from "./ActionBadge";
+import { ACTION_DISPLAY_NAMES, TABLE_DISPLAY_NAMES } from "@/lib/audit-constants";
 import { sanitizeText } from "@/lib/security/sanitize";
+import type { AuditLog } from "@/types/audit.types";
+
+import { ActionBadge } from "./ActionBadge";
+import { SafeAuditText } from "./SafeAuditText";
 
 // ============================================
 // MAIN DIFF VIEWER COMPONENT
@@ -48,7 +50,7 @@ export function AuditDiffViewer({ log, open, onOpenChange }: AuditDiffViewerProp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Audit Log Details</DialogTitle>
           <DialogDescription>
@@ -63,23 +65,23 @@ export function AuditDiffViewer({ log, open, onOpenChange }: AuditDiffViewerProp
           {/* Metadata Section */}
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <div className="text-sm font-medium text-muted-foreground">User</div>
+              <div className="text-muted-foreground text-sm font-medium">User</div>
               <div className="text-sm">{log.user_email || "System"}</div>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Action</div>
+              <div className="text-muted-foreground text-sm font-medium">Action</div>
               <ActionBadge action={log.action} />
             </div>
             {log.record_id && (
               <div>
-                <div className="text-sm font-medium text-muted-foreground">Record ID</div>
-                <div className="text-xs font-mono truncate">{log.record_id}</div>
+                <div className="text-muted-foreground text-sm font-medium">Record ID</div>
+                <div className="truncate font-mono text-xs">{log.record_id}</div>
               </div>
             )}
             {log.ip_address !== null && log.ip_address !== undefined && (
               <div>
-                <div className="text-sm font-medium text-muted-foreground">IP Address</div>
-                <div className="text-sm font-mono">{String(log.ip_address)}</div>
+                <div className="text-muted-foreground text-sm font-medium">IP Address</div>
+                <div className="font-mono text-sm">{String(log.ip_address)}</div>
               </div>
             )}
           </div>
@@ -87,10 +89,10 @@ export function AuditDiffViewer({ log, open, onOpenChange }: AuditDiffViewerProp
           {/* Description (from column, not metadata) - XSS protected via SafeAuditText */}
           {log.description && (
             <div>
-              <div className="text-sm font-medium text-muted-foreground mb-2">Description</div>
+              <div className="text-muted-foreground mb-2 text-sm font-medium">Description</div>
               <SafeAuditText
                 text={log.description}
-                className="text-sm bg-muted p-3 rounded-md block"
+                className="bg-muted block rounded-md p-3 text-sm"
               />
             </div>
           )}
@@ -100,7 +102,7 @@ export function AuditDiffViewer({ log, open, onOpenChange }: AuditDiffViewerProp
           {/* Changed Fields Summary - Only show for DB triggers with actual changes */}
           {log.source === "db" && changedFields.length > 0 && (
             <div>
-              <div className="text-sm font-medium text-muted-foreground mb-2">
+              <div className="text-muted-foreground mb-2 text-sm font-medium">
                 Changed Fields ({changedFields.length})
               </div>
               <div className="flex flex-wrap gap-2">
@@ -122,7 +124,7 @@ export function AuditDiffViewer({ log, open, onOpenChange }: AuditDiffViewerProp
               action={log.action}
             />
           ) : (
-            <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="text-muted-foreground flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
               <span className="text-sm">No data changes recorded for this log entry</span>
             </div>
@@ -131,12 +133,12 @@ export function AuditDiffViewer({ log, open, onOpenChange }: AuditDiffViewerProp
           {/* Additional Metadata */}
           {log.metadata && typeof log.metadata === "object" && (
             <div>
-              <div className="text-sm font-medium text-muted-foreground mb-2">
+              <div className="text-muted-foreground mb-2 text-sm font-medium">
                 Additional Metadata
               </div>
               {/* XSS-Safe: JSON.stringify automatically escapes <, >, & as Unicode (\u003C, \u003E, \u0026).
                   Rendered in <pre> tag, not interpreted as HTML. More flexible than per-field SafeAuditText. */}
-              <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto">
+              <pre className="bg-muted overflow-x-auto rounded-md p-3 text-xs">
                 {JSON.stringify(log.metadata, null, 2)}
               </pre>
             </div>
@@ -163,7 +165,7 @@ function DiffComparison({ oldData, newData, changedFields, action }: DiffCompari
   if (action === "INSERT" && newData) {
     return (
       <div>
-        <div className="text-sm font-medium text-muted-foreground mb-2">New Record Data</div>
+        <div className="text-muted-foreground mb-2 text-sm font-medium">New Record Data</div>
         <Card>
           <CardContent className="pt-6">
             <DataDisplay data={newData} highlightFields={[]} variant="created" />
@@ -177,7 +179,7 @@ function DiffComparison({ oldData, newData, changedFields, action }: DiffCompari
   if (action === "DELETE" && oldData) {
     return (
       <div>
-        <div className="text-sm font-medium text-muted-foreground mb-2">Deleted Record Data</div>
+        <div className="text-muted-foreground mb-2 text-sm font-medium">Deleted Record Data</div>
         <Card>
           <CardContent className="pt-6">
             <DataDisplay data={oldData} highlightFields={[]} variant="deleted" />
@@ -194,7 +196,7 @@ function DiffComparison({ oldData, newData, changedFields, action }: DiffCompari
         {/* Before */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-sm">
               <div className="h-2 w-2 rounded-full bg-red-500" />
               Before
             </CardTitle>
@@ -212,10 +214,10 @@ function DiffComparison({ oldData, newData, changedFields, action }: DiffCompari
         {/* After */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-sm">
               <div className="h-2 w-2 rounded-full bg-green-500" />
               After
-              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              <ArrowRight className="text-muted-foreground h-4 w-4" />
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -276,7 +278,7 @@ function DataDisplay({ data, highlightFields, variant, comparisonData }: DataDis
 
         return (
           <div key={key} className={`py-2 ${highlightClass}`}>
-            <div className="text-xs font-medium text-muted-foreground mb-1">
+            <div className="text-muted-foreground mb-1 text-xs font-medium">
               {formatFieldName(key)}
               {isChanged && (
                 <Badge variant="secondary" className="ml-2 text-xs">
@@ -364,7 +366,7 @@ function ValueDisplay({ value }: { value: unknown }) {
     return (
       <details className="cursor-pointer">
         <summary className="text-muted-foreground">Object/Array (click to expand)</summary>
-        <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-x-auto">
+        <pre className="bg-muted mt-2 overflow-x-auto rounded p-2 text-xs">
           {JSON.stringify(value, null, 2)}
         </pre>
       </details>

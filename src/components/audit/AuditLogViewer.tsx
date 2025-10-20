@@ -1,6 +1,21 @@
 // src/components/audit/AuditLogViewer.tsx
 
 import React, { useState } from "react";
+
+import { formatDistanceToNow } from "date-fns";
+import {
+  AlertCircle,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  ChevronRight as Next,
+} from "lucide-react";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -9,26 +24,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  ChevronDown,
-  ChevronRight,
-  ChevronLeft,
-  ChevronRight as Next,
-  Eye,
-  AlertCircle,
-} from "lucide-react";
+import { PAGINATION_DEFAULTS, TABLE_DISPLAY_NAMES } from "@/lib/audit-constants";
 import { useAuditLogs } from "@/lib/audit-hooks";
 import { useAuditStore } from "@/stores/useAuditStore";
 import type { AuditLog, AuditLogQueryResult } from "@/types/audit.types";
-import { TABLE_DISPLAY_NAMES, PAGINATION_DEFAULTS } from "@/lib/audit-constants";
-import { formatDistanceToNow } from "date-fns";
-import { SafeAuditText } from "./SafeAuditText";
-import { AuditDiffViewer } from "./AuditDiffViewer";
+
 import { ActionBadge } from "./ActionBadge";
+import { AuditDiffViewer } from "./AuditDiffViewer";
+import { SafeAuditText } from "./SafeAuditText";
 
 // ============================================
 // MAIN TABLE COMPONENT
@@ -108,7 +111,7 @@ export function AuditLogViewer() {
   // Empty state
   if (!data || (data as unknown as AuditLogQueryResult).data.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
+      <div className="text-muted-foreground py-12 text-center">
         <p className="text-lg font-medium">No audit logs found</p>
         <p className="text-sm">Try adjusting your filters to see more results</p>
       </div>
@@ -152,7 +155,7 @@ export function AuditLogViewer() {
 
       {/* Pagination */}
       <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
+        <div className="text-muted-foreground text-sm">
           Showing {queryResult.data.length} of {queryResult.totalCount} logs
           {queryResult.currentPage > 1 &&
             ` (Page ${queryResult.currentPage} of ${queryResult.totalPages})`}
@@ -160,11 +163,11 @@ export function AuditLogViewer() {
 
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={currentPage === 1}>
-            <ChevronLeft className="h-4 w-4 mr-1" />
+            <ChevronLeft className="mr-1 h-4 w-4" />
             Previous
           </Button>
 
-          <span className="text-sm text-muted-foreground">
+          <span className="text-muted-foreground text-sm">
             Page {currentPage} of {queryResult.totalPages}
           </span>
 
@@ -175,7 +178,7 @@ export function AuditLogViewer() {
             disabled={!queryResult.hasMore}
           >
             Next
-            <Next className="h-4 w-4 ml-1" />
+            <Next className="ml-1 h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -222,7 +225,7 @@ function AuditLogRow({ log, isExpanded, onToggle, onViewDiff }: AuditLogRowProps
         {/* Timestamp */}
         <TableCell className="font-mono text-sm">
           <div>{log.created_at && new Date(log.created_at).toLocaleString()}</div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-muted-foreground text-xs">
             {log.created_at && formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
           </div>
         </TableCell>
@@ -231,7 +234,7 @@ function AuditLogRow({ log, isExpanded, onToggle, onViewDiff }: AuditLogRowProps
         <TableCell>
           <div className="text-sm">{log.user_email || "System"}</div>
           {log.user_id && (
-            <div className="text-xs text-muted-foreground truncate max-w-[150px]">
+            <div className="text-muted-foreground max-w-[150px] truncate text-xs">
               {log.user_id}
             </div>
           )}
@@ -256,7 +259,7 @@ function AuditLogRow({ log, isExpanded, onToggle, onViewDiff }: AuditLogRowProps
         </TableCell>
 
         {/* Record ID */}
-        <TableCell className="font-mono text-xs truncate max-w-[120px]">
+        <TableCell className="max-w-[120px] truncate font-mono text-xs">
           {log.record_id || "—"}
         </TableCell>
 
@@ -284,7 +287,7 @@ function AuditLogRow({ log, isExpanded, onToggle, onViewDiff }: AuditLogRowProps
         <TableCell>
           {hasChanges && (
             <Button variant="ghost" size="sm" onClick={onViewDiff}>
-              <Eye className="h-4 w-4 mr-1" />
+              <Eye className="mr-1 h-4 w-4" />
               View
             </Button>
           )}
@@ -315,20 +318,20 @@ function ExpandedRowDetails({ log }: { log: AuditLog }): React.ReactElement {
     <div className="space-y-3 p-4">
       {/* Description (from Layer 2 logs) - XSS protected via SafeAuditText */}
       <div>
-        <div className="text-sm font-medium mb-1">Description</div>
-        <SafeAuditText text={log.description} className="text-sm text-muted-foreground" />
+        <div className="mb-1 text-sm font-medium">Description</div>
+        <SafeAuditText text={log.description} className="text-muted-foreground text-sm" />
       </div>
 
       <div className="flex gap-4">
         {category && (
           <div>
-            <div className="text-sm font-medium mb-1">Category</div>
+            <div className="mb-1 text-sm font-medium">Category</div>
             <Badge>{category}</Badge>
           </div>
         )}
         {severity && (
           <div>
-            <div className="text-sm font-medium mb-1">Severity</div>
+            <div className="mb-1 text-sm font-medium">Severity</div>
             <SeverityBadge severity={severity} />
           </div>
         )}
@@ -337,18 +340,18 @@ function ExpandedRowDetails({ log }: { log: AuditLog }): React.ReactElement {
       {/* IP Address */}
       {log.ip_address != null && (
         <div>
-          <div className="text-sm font-medium mb-1">IP Address</div>
-          <div className="text-sm font-mono text-muted-foreground">{String(log.ip_address)}</div>
+          <div className="mb-1 text-sm font-medium">IP Address</div>
+          <div className="text-muted-foreground font-mono text-sm">{String(log.ip_address)}</div>
         </div>
       )}
 
       {/* Additional Metadata */}
       {log.metadata && typeof log.metadata === "object" && (
         <div>
-          <div className="text-sm font-medium mb-1">Additional Metadata</div>
+          <div className="mb-1 text-sm font-medium">Additional Metadata</div>
           {/* XSS-Safe: JSON.stringify automatically escapes <, >, & as Unicode (\u003C, \u003E, \u0026).
               Rendered in <pre> tag, not interpreted as HTML. More flexible than per-field SafeAuditText. */}
-          <pre className="text-xs bg-background p-2 rounded border overflow-x-auto">
+          <pre className="bg-background overflow-x-auto rounded border p-2 text-xs">
             {JSON.stringify(log.metadata, null, 2)}
           </pre>
         </div>

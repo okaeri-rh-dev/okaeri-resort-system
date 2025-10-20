@@ -1,24 +1,23 @@
 // src/components/payments/PaymentEdit/index.tsx
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useParams, useLoaderData, useNavigate } from "@tanstack/react-router";
+import { useLoaderData, useNavigate, useParams } from "@tanstack/react-router";
 import { Save, X } from "lucide-react";
+import { useForm } from "react-hook-form";
 
-import { paymentEditSchema, type PaymentEditInput } from "@/lib/validation/entity-schemas";
-import { useEntityEdit } from "@/hooks/entity";
 import { DetailPageLayout } from "@/components/entity-detail";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -26,9 +25,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
+import { Textarea } from "@/components/ui/textarea";
+import { useEntityEdit } from "@/hooks/entity";
+import { paymentEditSchema, type PaymentEditInput } from "@/lib/validation/entity-schemas";
 import type { Payment } from "@/types/entity-detail.types";
 
 export interface PaymentEditPageProps {
@@ -92,12 +91,12 @@ export function PaymentEditPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {isVerified && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">
+                <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
                   Note: This payment has been verified. Amount and method are read-only.
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="payment_amount"
@@ -206,11 +205,11 @@ export function PaymentEditPage() {
               onClick={handleCancel}
               disabled={updatePayment.isPending}
             >
-              <X className="h-4 w-4 mr-2" />
+              <X className="mr-2 h-4 w-4" />
               Cancel
             </Button>
             <Button type="submit" disabled={updatePayment.isPending}>
-              <Save className="h-4 w-4 mr-2" />
+              <Save className="mr-2 h-4 w-4" />
               {updatePayment.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </div>

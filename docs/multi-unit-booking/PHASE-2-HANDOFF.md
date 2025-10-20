@@ -286,10 +286,10 @@ Uses `src/lib/security/sanitize-worker.ts` (Workers-compatible, no DOMPurify):
 
 ```typescript
 import {
-  sanitizeTextWorker,
-  sanitizeNameWorker,
   sanitizeEmailWorker,
+  sanitizeNameWorker,
   sanitizePhoneWorker,
+  sanitizeTextWorker,
 } from "../../../src/lib/security/sanitize-worker";
 
 // Sanitize user inputs

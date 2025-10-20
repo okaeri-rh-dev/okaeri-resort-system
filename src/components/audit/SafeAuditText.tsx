@@ -22,6 +22,24 @@
  * @see Phase 3E documentation: docs/implementation/audit-trail/03-audit-viewer-ui/03e-safe-components.md
  */
 
+/**
+ * SafeAuditTextMemo - Memoized version for performance in large lists
+ *
+ * Use this in tables with 50+ rows to prevent unnecessary re-sanitization
+ *
+ * @example
+ * ```tsx
+ * {logs.map(log => (
+ *   <TableRow key={log.audit_id}>
+ *     <TableCell>
+ *       <SafeAuditTextMemo text={log.description} />
+ *     </TableCell>
+ *   </TableRow>
+ * ))}
+ * ```
+ */
+import { memo } from "react";
+
 import { sanitizeText } from "@/lib/security/sanitize";
 
 // ============================================
@@ -104,21 +122,4 @@ export function SafeAuditText({
   return <span className={className}>{sanitized}</span>;
 }
 
-/**
- * SafeAuditTextMemo - Memoized version for performance in large lists
- *
- * Use this in tables with 50+ rows to prevent unnecessary re-sanitization
- *
- * @example
- * ```tsx
- * {logs.map(log => (
- *   <TableRow key={log.audit_id}>
- *     <TableCell>
- *       <SafeAuditTextMemo text={log.description} />
- *     </TableCell>
- *   </TableRow>
- * ))}
- * ```
- */
-import { memo } from "react";
 export const SafeAuditTextMemo = memo(SafeAuditText);

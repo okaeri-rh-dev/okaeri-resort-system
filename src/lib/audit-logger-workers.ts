@@ -1,7 +1,8 @@
 // src/lib/audit-logger-workers.ts
 
-import { supabase } from "./supabase";
 import type { AuditEventContext } from "@/types/audit.types";
+
+import { supabase } from "./supabase";
 
 /**
  * Log audit event with IP capture via Cloudflare Workers

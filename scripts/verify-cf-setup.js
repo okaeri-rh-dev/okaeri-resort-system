@@ -3,7 +3,6 @@
 /**
  * Script to verify Cloudflare Functions local development setup
  */
-
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";

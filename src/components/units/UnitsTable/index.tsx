@@ -1,6 +1,10 @@
 import { useCallback } from "react";
+
 import { flexRender } from "@tanstack/react-table";
+
 import { withErrorBoundary } from "@/components/ErrorBoundary";
+import { UnitsTableSkeleton } from "@/components/skeletons";
+import { TableEmptyState, TablePagination } from "@/components/tables/utils";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -10,14 +14,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TablePagination, TableEmptyState } from "@/components/tables/utils";
-import { UnitsTableSkeleton } from "@/components/skeletons";
 import { useResponsiveView } from "@/hooks";
+import { cn } from "@/lib/utils";
+
 import { TableHeader as TableHeaderControls } from "./components/TableHeader";
 import { useUnitsTable } from "./hooks/useUnitsTable";
-import { exportUnitsToCSV } from "./utils/export";
-import { cn } from "@/lib/utils";
 import type { UnitsTableProps } from "./types";
+import { exportUnitsToCSV } from "./utils/export";
 
 /**
  * UnitsTable Component
@@ -74,7 +77,7 @@ function UnitsTableComponent({
         <p className="text-red-600">Error loading units: {error.message}</p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+          className="bg-primary hover:bg-primary/90 mt-4 rounded px-4 py-2 text-white"
         >
           Retry
         </button>
@@ -127,7 +130,7 @@ function UnitsTableComponent({
                     data-state={row.getIsSelected() && "selected"}
                     className={cn(
                       row.getIsSelected() && "bg-blue-50",
-                      "hover:bg-gray-50 transition-colors"
+                      "transition-colors hover:bg-gray-50"
                     )}
                   >
                     {row.getVisibleCells().map((cell) => (
@@ -165,10 +168,10 @@ export const UnitsTable = withErrorBoundary(UnitsTableComponent, {
   level: "component",
   fallback: (
     <Card className="p-8 text-center">
-      <p className="text-red-600 mb-4">Failed to load units table</p>
+      <p className="mb-4 text-red-600">Failed to load units table</p>
       <button
         onClick={() => window.location.reload()}
-        className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+        className="bg-primary hover:bg-primary/90 rounded px-4 py-2 text-white"
       >
         Reload Page
       </button>

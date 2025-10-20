@@ -886,8 +886,8 @@ api/workflows.phase3-4/**                 # Future: Workflow API
 
 ```typescript
 // ✅ Recommended: Path alias
-import { db } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
+import { db } from "@/lib/supabase";
 import { useBookingStore } from "@/stores/useBookingStore";
 
 // ❌ Avoid: Relative paths

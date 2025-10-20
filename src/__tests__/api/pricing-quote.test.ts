@@ -9,11 +9,12 @@
  * - Edge cases (max units, weekday-only, boundary conditions)
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { onRequestPost } from "../../../functions/api/pricing/quote";
-import { createMockRequest, createMockContext, mockEnv } from "./setup";
-import { testUnits, testPricingRequest } from "./utils/fixtures";
-import type { PricingQuoteResponse, ApiErrorResponse } from "./types/responses";
+import { createMockContext, createMockRequest, mockEnv } from "./setup";
+import type { ApiErrorResponse, PricingQuoteResponse } from "./types/responses";
+import { testPricingRequest, testUnits } from "./utils/fixtures";
 
 describe("POST /api/pricing/quote", () => {
   beforeEach(() => {

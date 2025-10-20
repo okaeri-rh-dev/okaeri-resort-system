@@ -212,8 +212,8 @@ const handleFileUpload = async (file: File) => {
 ## Validation Schema
 
 ```typescript
-import { z } from "zod";
 import { differenceInDays } from "date-fns";
+import { z } from "zod";
 
 const bookingFormSchema = z
   .object({

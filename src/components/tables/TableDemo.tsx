@@ -1,13 +1,11 @@
 import React, { useState } from "react";
+
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Guest, Unit } from "@/types";
 
 // Import our table components
-import { BookingsTable } from "./index";
-import { UnitsTable } from "./index";
-import { GuestsTable } from "./index";
-
-import type { Unit, Guest } from "@/types";
+import { BookingsTable, GuestsTable, UnitsTable } from "./index";
 
 /**
  * Demo component to test all table functionality

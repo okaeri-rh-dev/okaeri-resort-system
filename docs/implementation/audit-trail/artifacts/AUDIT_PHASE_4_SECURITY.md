@@ -552,6 +552,7 @@ Implement automated anomaly detection and alerting.
  */
 
 import { supabase } from "@/lib/supabase";
+
 import type { AuditLog } from "./types";
 
 // ============================================

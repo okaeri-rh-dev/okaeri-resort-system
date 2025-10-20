@@ -102,7 +102,7 @@ useEffect(() => {
 ### Use Custom Hooks for Common Patterns
 
 ```typescript
-import { useInterval, useTimeout, useEventListener } from "@/hooks/useCleanup";
+import { useEventListener, useInterval, useTimeout } from "@/hooks/useCleanup";
 
 // Instead of manual cleanup, use utility hooks
 useInterval(() => {

@@ -1,17 +1,18 @@
 import React from "react";
-import { cn } from "@/lib/utils";
+
 import {
-  Skeleton,
-  TableSkeleton,
-  MobileCardSkeleton,
-  KPICardSkeleton,
-  FormSkeleton,
-  StepFormSkeleton,
-  NavigationSkeleton,
   AvatarSkeleton,
   ButtonSkeleton,
+  FormSkeleton,
+  KPICardSkeleton,
+  MobileCardSkeleton,
+  NavigationSkeleton,
+  Skeleton,
+  StepFormSkeleton,
+  TableSkeleton,
   TextSkeleton,
 } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 // ============================================
 // BOOKINGS TABLE SKELETONS
@@ -58,13 +59,13 @@ export const BookingsTableSkeleton: React.FC<BookingsTableSkeletonProps> = ({
         <div className="flex items-center justify-between border-t border-neutral-200 bg-white px-4 py-3">
           <Skeleton className="h-4 w-32" />
           <div className="flex items-center space-x-2">
-            <ButtonSkeleton size="sm" className="w-8 h-8" />
+            <ButtonSkeleton size="sm" className="h-8 w-8" />
             <div className="flex space-x-1">
               {Array.from({ length: 3 }).map((_, i) => (
-                <ButtonSkeleton key={i} size="sm" className="w-8 h-8" />
+                <ButtonSkeleton key={i} size="sm" className="h-8 w-8" />
               ))}
             </div>
-            <ButtonSkeleton size="sm" className="w-8 h-8" />
+            <ButtonSkeleton size="sm" className="h-8 w-8" />
           </div>
         </div>
       </div>
@@ -74,8 +75,8 @@ export const BookingsTableSkeleton: React.FC<BookingsTableSkeletonProps> = ({
   return (
     <div className={cn("space-y-4", className)}>
       {/* Desktop filters skeleton */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center space-x-3 flex-1 min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-1 items-center space-x-3">
           <Skeleton className="h-9 w-48" />
           <ButtonSkeleton size="sm" className="w-16" />
           <ButtonSkeleton size="sm" className="w-20" />
@@ -98,13 +99,13 @@ export const BookingsTableSkeleton: React.FC<BookingsTableSkeletonProps> = ({
       <div className="flex items-center justify-between border-t border-neutral-200 bg-white px-4 py-3">
         <Skeleton className="h-4 w-40" />
         <div className="flex items-center space-x-2">
-          <ButtonSkeleton size="sm" className="w-8 h-8" />
+          <ButtonSkeleton size="sm" className="h-8 w-8" />
           <div className="flex space-x-1">
             {Array.from({ length: 5 }).map((_, i) => (
-              <ButtonSkeleton key={i} size="sm" className="w-8 h-8" />
+              <ButtonSkeleton key={i} size="sm" className="h-8 w-8" />
             ))}
           </div>
-          <ButtonSkeleton size="sm" className="w-8 h-8" />
+          <ButtonSkeleton size="sm" className="h-8 w-8" />
         </div>
       </div>
     </div>
@@ -152,7 +153,7 @@ export const UnitsTableSkeleton: React.FC<UnitsTableSkeletonProps> = ({
           {Array.from({ length: rows }).map((_, index) => (
             <div
               key={index}
-              className="rounded-lg border border-neutral-200 bg-white p-4 space-y-3"
+              className="space-y-3 rounded-lg border border-neutral-200 bg-white p-4"
             >
               {/* Header with checkbox */}
               <div className="flex items-start justify-between">
@@ -252,7 +253,7 @@ export const GuestsTableSkeleton: React.FC<GuestsTableSkeletonProps> = ({
           {Array.from({ length: rows }).map((_, index) => (
             <div
               key={index}
-              className="rounded-lg border border-neutral-200 bg-white p-4 space-y-3"
+              className="space-y-3 rounded-lg border border-neutral-200 bg-white p-4"
             >
               {/* Guest header with avatar */}
               <div className="flex items-start justify-between">
@@ -335,7 +336,7 @@ export const DashboardStatsSkeleton: React.FC<DashboardStatsSkeletonProps> = ({
   className,
 }) => {
   return (
-    <div className={cn("grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4", className)}>
+    <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4", className)}>
       {Array.from({ length: cardCount }).map((_, index) => (
         <KPICardSkeleton
           key={index}
@@ -369,20 +370,20 @@ export const BookingFormSkeleton: React.FC<BookingFormSkeletonProps> = ({
             <React.Fragment key={index}>
               <div
                 className={cn(
-                  "flex items-center justify-center w-8 h-8 rounded-full border-2",
-                  index < currentStep ? "bg-blue-600 border-blue-600" : "border-neutral-300"
+                  "flex h-8 w-8 items-center justify-center rounded-full border-2",
+                  index < currentStep ? "border-blue-600 bg-blue-600" : "border-neutral-300"
                 )}
               >
                 {index < currentStep ? (
-                  <div className="w-2 h-2 bg-white rounded-full" />
+                  <div className="h-2 w-2 rounded-full bg-white" />
                 ) : (
-                  <Skeleton variant="circle" className="w-2 h-2" />
+                  <Skeleton variant="circle" className="h-2 w-2" />
                 )}
               </div>
               {index < 3 && (
                 <div
                   className={cn(
-                    "flex-1 h-0.5",
+                    "h-0.5 flex-1",
                     index < currentStep - 1 ? "bg-blue-600" : "bg-neutral-300"
                   )}
                 />
@@ -453,7 +454,7 @@ export const BookingFormSkeleton: React.FC<BookingFormSkeletonProps> = ({
       {currentStep === 4 && (
         <div className="space-y-4">
           <Skeleton className="h-6 w-32" />
-          <div className="rounded-lg border border-neutral-200 p-4 space-y-3">
+          <div className="space-y-3 rounded-lg border border-neutral-200 p-4">
             {Array.from({ length: 6 }).map((_, index) => (
               <div key={index} className="flex justify-between">
                 <Skeleton className="h-4 w-24" />
@@ -494,7 +495,7 @@ export const MainLayoutSkeleton: React.FC<MainLayoutSkeletonProps> = ({
       <div className="flex">
         {/* Sidebar skeleton */}
         {showSidebar && (
-          <div className="w-64 bg-white border-r border-neutral-200 p-4 space-y-4">
+          <div className="w-64 space-y-4 border-r border-neutral-200 bg-white p-4">
             {Array.from({ length: 8 }).map((_, index) => (
               <div key={index} className="flex items-center space-x-3">
                 <Skeleton variant="circle" className="h-4 w-4" />
@@ -531,10 +532,10 @@ export const MainLayoutSkeleton: React.FC<MainLayoutSkeletonProps> = ({
 
 export const PageTransitionSkeleton: React.FC<{ className?: string }> = ({ className }) => {
   return (
-    <div className={cn("fixed inset-0 bg-white z-50 flex items-center justify-center", className)}>
+    <div className={cn("fixed inset-0 z-50 flex items-center justify-center bg-white", className)}>
       <div className="space-y-4 text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
-        <Skeleton className="h-4 w-32 mx-auto" />
+        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+        <Skeleton className="mx-auto h-4 w-32" />
       </div>
     </div>
   );
@@ -559,7 +560,7 @@ export const ExpensesTableSkeleton: React.FC<ExpensesTableSkeletonProps> = ({
     return (
       <div className={cn("space-y-4", className)}>
         {/* Mobile filters skeleton */}
-        <div className="rounded-lg border border-neutral-200 bg-white p-4 space-y-4">
+        <div className="space-y-4 rounded-lg border border-neutral-200 bg-white p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Skeleton className="h-4 w-4" />
@@ -594,7 +595,7 @@ export const ExpensesTableSkeleton: React.FC<ExpensesTableSkeletonProps> = ({
   return (
     <div className={cn("space-y-4", className)}>
       {/* Desktop filters skeleton - nested card structure */}
-      <div className="rounded-lg border border-neutral-200 bg-white p-4 space-y-4">
+      <div className="space-y-4 rounded-lg border border-neutral-200 bg-white p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Skeleton className="h-4 w-4" />
@@ -602,8 +603,8 @@ export const ExpensesTableSkeleton: React.FC<ExpensesTableSkeletonProps> = ({
             <Skeleton className="h-3 w-24" />
           </div>
           <div className="flex items-center gap-2">
-            <ButtonSkeleton size="sm" className="w-16 h-8" />
-            <ButtonSkeleton size="sm" className="w-24 h-8" />
+            <ButtonSkeleton size="sm" className="h-8 w-16" />
+            <ButtonSkeleton size="sm" className="h-8 w-24" />
           </div>
         </div>
         <Skeleton className="h-9 w-full" />
@@ -617,7 +618,7 @@ export const ExpensesTableSkeleton: React.FC<ExpensesTableSkeletonProps> = ({
       </div>
 
       {/* Desktop table skeleton - nested card structure */}
-      <div className="rounded-lg border border-neutral-200 bg-white overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
         <TableSkeleton
           rows={rows}
           columns={[120, 180, 300, 120, 80, 80]}
@@ -631,13 +632,13 @@ export const ExpensesTableSkeleton: React.FC<ExpensesTableSkeletonProps> = ({
           <div className="flex items-center justify-between">
             <Skeleton className="h-4 w-32" />
             <div className="flex items-center space-x-2">
-              <ButtonSkeleton size="sm" className="w-8 h-8" />
+              <ButtonSkeleton size="sm" className="h-8 w-8" />
               <div className="flex space-x-1">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <ButtonSkeleton key={i} size="sm" className="w-8 h-8" />
+                  <ButtonSkeleton key={i} size="sm" className="h-8 w-8" />
                 ))}
               </div>
-              <ButtonSkeleton size="sm" className="w-8 h-8" />
+              <ButtonSkeleton size="sm" className="h-8 w-8" />
             </div>
           </div>
         </div>

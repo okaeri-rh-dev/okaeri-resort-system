@@ -7,7 +7,7 @@
  * @module useIdempotencyKey
  */
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Generate and persist an idempotency key for the current operation

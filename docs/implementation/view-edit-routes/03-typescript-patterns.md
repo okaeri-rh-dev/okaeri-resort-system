@@ -197,8 +197,9 @@ export type EntityRelations = {
 // src/hooks/entity/useEntityDetail.ts
 
 import { useQuery } from "@tanstack/react-query";
-import type { EntityType, EntityDetail } from "@/types/entity-detail.types";
+
 import { db } from "@/lib/supabase";
+import type { EntityDetail, EntityType } from "@/types/entity-detail.types";
 
 type UseEntityDetailOptions = {
   enabled?: boolean;
@@ -265,10 +266,11 @@ const { data: unit } = useEntityDetail("unit", unitId, {
 // src/hooks/entity/useEntityEdit.ts
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { EntityType } from "@/types/entity-detail.types";
-import { db } from "@/lib/supabase";
-import { logAuditEvent } from "@/lib/audit-logger";
 import { toast } from "sonner";
+
+import { logAuditEvent } from "@/lib/audit-logger";
+import { db } from "@/lib/supabase";
+import type { EntityType } from "@/types/entity-detail.types";
 
 type UseEntityEditOptions<T> = {
   onSuccess?: (data: T) => void;
@@ -374,8 +376,9 @@ const handleSubmit = (data: BookingFormData) => {
 // src/hooks/entity/useEntityAudit.ts
 
 import { useQuery } from "@tanstack/react-query";
-import type { EntityType, AuditFilters } from "@/types/entity-detail.types";
+
 import { supabase } from "@/lib/supabase";
+import type { AuditFilters, EntityType } from "@/types/entity-detail.types";
 
 export function useEntityAudit(filters: AuditFilters) {
   return useQuery({
@@ -431,6 +434,7 @@ const { data: auditLogs } = useEntityAudit({
 // src/hooks/entity/useEntityNavigation.ts
 
 import { useNavigate } from "@tanstack/react-router";
+
 import type { EntityType, NavigationTarget } from "@/types/entity-navigation.types";
 
 export function useEntityNavigation() {
@@ -501,8 +505,9 @@ navigateToEdit("booking", bookingId);
 ```typescript
 // src/hooks/entity/useDetailPageState.ts
 
-import { useState, useCallback } from "react";
-import { useSearch, useNavigate } from "@tanstack/react-router";
+import { useCallback, useState } from "react";
+
+import { useNavigate, useSearch } from "@tanstack/react-router";
 
 type TabValue = "details" | "payments" | "audit" | "history";
 
@@ -550,7 +555,7 @@ const { activeTab, setActiveTab } = useDetailPageState()
 ```typescript
 // src/lib/query-keys.ts
 
-import type { EntityType, AuditFilters } from "@/types/entity-detail.types";
+import type { AuditFilters, EntityType } from "@/types/entity-detail.types";
 
 export const queryKeys = {
   // Entity details
@@ -593,8 +598,8 @@ queryClient.prefetchQuery({
 ```typescript
 // src/lib/validation/entity-schemas.ts
 
-import { z } from "zod";
 import DOMPurify from "dompurify";
+import { z } from "zod";
 
 // Booking edit schema
 export const bookingEditSchema = z
@@ -688,8 +693,9 @@ export type ExpenseEditInput = z.infer<typeof expenseEditSchema>;
 **Usage with React Hook Form**:
 
 ```typescript
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+
 import { bookingEditSchema, type BookingEditInput } from "@/lib/validation/entity-schemas";
 
 const form = useForm<BookingEditInput>({
@@ -708,12 +714,12 @@ const onSubmit = (data: BookingEditInput) => {
 // src/lib/type-guards.ts
 
 import type {
-  EntityType,
   Booking,
-  Unit,
+  EntityType,
+  Expense,
   Guest,
   Payment,
-  Expense,
+  Unit,
 } from "@/types/entity-detail.types";
 
 export function isBooking(entity: any): entity is Booking {

@@ -71,6 +71,7 @@ ENVIRONMENT = "production"
 
 ```typescript
 import { createClient } from "@supabase/supabase-js";
+
 import type { Database } from "@/database.types";
 
 /**
@@ -160,13 +161,14 @@ export async function generateSignedDownloadUrl(
 - KV binding via `context.env.RATE_LIMIT_KV`
 
 ```typescript
+import DOMPurify from "isomorphic-dompurify";
 import { z } from "zod";
+
+import { sendBookingConfirmation } from "@/lib/email";
+import { checkKVRateLimit } from "@/lib/kv-rate-limit";
 import { createSupabaseAdmin, generateSignedUploadUrl } from "@/lib/supabase-admin";
 import { verifyTurnstile } from "@/lib/turnstile";
-import { checkKVRateLimit } from "@/lib/kv-rate-limit";
-import { sendBookingConfirmation } from "@/lib/email";
 import { generateBookingReference } from "@/utils/booking";
-import DOMPurify from "isomorphic-dompurify";
 
 // Environment type for Cloudflare
 interface Env {
@@ -471,8 +473,9 @@ export async function onRequest(context: EventContext<Env, any, Record<string, u
 ```typescript
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+
 import { sendUploadConfirmation } from "@/lib/email";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 const confirmSchema = z.object({
   booking_id: z.string().uuid(),
@@ -1568,6 +1571,7 @@ curl -X POST http://localhost:3000/api/guest-booking \
 ```typescript
 // __tests__/api/guest-booking.test.ts
 import { createMocks } from "node-mocks-http";
+
 import handler from "@/api/guest-booking";
 
 describe("/api/guest-booking", () => {
@@ -1665,8 +1669,8 @@ Add enriched audit logging to capture business context and metadata:
 **File**: `functions/api/guest-booking.ts` (enhanced with audit logging)
 
 ```typescript
-import { logAuditEventWithIp } from "@/lib/audit-logger-workers";
 import { AuditCategory, AuditSeverity, EventType } from "@/database.types";
+import { logAuditEventWithIp } from "@/lib/audit-logger-workers";
 
 export async function onRequest(context: EventContext<Env, any, Record<string, unknown>>) {
   const { request, env } = context;
@@ -1687,8 +1691,8 @@ export async function onRequest(context: EventContext<Env, any, Record<string, u
           check_out: data.check_out,
           guest_email: data.email, // Will be redacted
           turnstile_verified: true,
-          source: "guest_portal"
-        }
+          source: "guest_portal",
+        },
       },
       request.headers.get("CF-Connecting-IP") || "unknown",
       request.headers.get("User-Agent") || "unknown"
@@ -1708,15 +1712,14 @@ export async function onRequest(context: EventContext<Env, any, Record<string, u
           booking_reference: bookingReference,
           total_amount: totalAmount,
           upload_expiry: uploadCredentials.expires_at,
-          is_guest_booking: true
-        }
+          is_guest_booking: true,
+        },
       },
       request.headers.get("CF-Connecting-IP") || "unknown",
       request.headers.get("User-Agent") || "unknown"
     );
 
     // ... rest of the function ...
-
   } catch (error) {
     // Log failures for security monitoring
     await logAuditEventWithIp(
@@ -1728,8 +1731,8 @@ export async function onRequest(context: EventContext<Env, any, Record<string, u
         metadata: {
           error_type: error.name,
           unit_id: data?.unit_id,
-          ip_blocked: rateLimitResult?.allowed === false
-        }
+          ip_blocked: rateLimitResult?.allowed === false,
+        },
       },
       request.headers.get("CF-Connecting-IP") || "unknown",
       request.headers.get("User-Agent") || "unknown"
@@ -1760,8 +1763,8 @@ export async function onRequest(context: EventContext<Env, any, Record<string, u
       booking_id: data.booking_id,
       file_size: data.file_size,
       file_path: "[REDACTED]", // Don't log actual paths
-      upload_duration_ms: Date.now() - uploadStartTime
-    }
+      upload_duration_ms: Date.now() - uploadStartTime,
+    },
   });
 
   // Update booking status with audit trail
@@ -1769,7 +1772,7 @@ export async function onRequest(context: EventContext<Env, any, Record<string, u
     .from("bookings")
     .update({
       upload_status: "uploaded",
-      payment_proof_path: data.file_path
+      payment_proof_path: data.file_path,
     })
     .eq("booking_id", data.booking_id);
   // ^ This UPDATE triggers automatic database audit log
@@ -1794,8 +1797,8 @@ export async function reviewGuestBooking(bookingId: string, adminEmail: string) 
     metadata: {
       booking_id: bookingId,
       admin_email: adminEmail,
-      review_timestamp: new Date().toISOString()
-    }
+      review_timestamp: new Date().toISOString(),
+    },
   });
 
   // ... review logic ...
@@ -1805,13 +1808,13 @@ export async function reviewGuestBooking(bookingId: string, adminEmail: string) 
     action: EventType.booking_status_change,
     category: AuditCategory.BOOKING,
     severity: AuditSeverity.INFO,
-    description: `Guest booking ${approved ? 'approved' : 'rejected'} by admin`,
+    description: `Guest booking ${approved ? "approved" : "rejected"} by admin`,
     metadata: {
       booking_id: bookingId,
-      new_status: approved ? 'Confirmed' : 'Cancelled',
+      new_status: approved ? "Confirmed" : "Cancelled",
       admin_email: adminEmail,
-      adjustment_notes: adjustmentNotes
-    }
+      adjustment_notes: adjustmentNotes,
+    },
   });
 }
 ```
@@ -1874,7 +1877,7 @@ export enum EventType {
   booking_dates_adjusted = "booking_dates_adjusted",
   guest_booking_confirmed = "guest_booking_confirmed",
   guest_booking_cancelled = "guest_booking_cancelled",
-  guest_email_sent = "guest_email_sent"
+  guest_email_sent = "guest_email_sent",
 }
 ```
 

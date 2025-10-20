@@ -1,5 +1,8 @@
 import React, { useState } from "react";
+
 import { CalendarDays, Download } from "lucide-react";
+
+import { FilterPopover, TableSearch } from "@/components/tables/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -9,8 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TableSearch, FilterPopover } from "@/components/tables/utils";
 import type { BookingStatus, PaymentStatus } from "@/types";
+
 import type { BookingFiltersProps, DateRange } from "../types";
 
 export const BookingFilters: React.FC<BookingFiltersProps> = ({
@@ -32,7 +35,7 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
   const [dateFilterOpen, setDateFilterOpen] = useState(false);
 
   return (
-    <div className="flex justify-between items-center p-4 bg-neutral-50 border-b">
+    <div className="flex items-center justify-between border-b bg-neutral-50 p-4">
       <div className="flex items-center gap-2">
         <TableSearch
           value={searchQuery}

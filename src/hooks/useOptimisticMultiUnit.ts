@@ -8,8 +8,9 @@
  */
 
 import { useOptimistic, useTransition } from "react";
-import type { MultiUnitBooking, BookingUnit } from "@/types";
+
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
+import type { BookingUnit, MultiUnitBooking } from "@/types";
 
 // ============================================
 // OPTIMISTIC BOOKING CREATION

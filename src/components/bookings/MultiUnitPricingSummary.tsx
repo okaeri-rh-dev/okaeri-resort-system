@@ -12,9 +12,9 @@
  * @module MultiUnitPricingSummary
  */
 
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/validations";
 import type { BookingUnit } from "@/types/multi-unit-booking";
 
@@ -62,7 +62,7 @@ export function MultiUnitPricingSummary({
                 </span>
                 <span className="font-mono">{formatCurrency(unit.pricing.unit_total)}</span>
               </div>
-              <div className="text-sm text-muted-foreground pl-4">
+              <div className="text-muted-foreground pl-4 text-sm">
                 {unit.pricing.nights} night{unit.pricing.nights !== 1 ? "s" : ""} ×{" "}
                 {formatCurrency(unit.base_rate)}
                 {unit.pricing.weekend_surcharge > 0 &&

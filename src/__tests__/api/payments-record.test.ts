@@ -10,11 +10,12 @@
  * - Security (authentication, input sanitization)
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { createMockRequest, createMockContext, mockEnv, generateTestJWT } from "./setup";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { createPaymentRecordMocks } from "./factories/payment-factory";
+import { createMockContext, createMockRequest, generateTestJWT, mockEnv } from "./setup";
+import type { ApiErrorResponse, RecordPaymentResponse } from "./types/responses";
 import { testBookingResponse } from "./utils/fixtures";
-import type { RecordPaymentResponse, ApiErrorResponse } from "./types/responses";
 
 describe("POST /api/bookings/:id/payments/record", () => {
   const validPaymentData = {

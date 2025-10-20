@@ -11,6 +11,7 @@
  */
 
 import { Filter } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -62,7 +63,7 @@ export function FilterPanel({
       {isSheet && (
         <div className="space-y-1">
           <h3 className="text-lg font-semibold">Filter Units</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Narrow down units by type, occupancy, and price range
           </p>
         </div>
@@ -155,8 +156,8 @@ export function FilterPanel({
 
       {/* Apply Button for Sheet Variant */}
       {isSheet && (
-        <div className="pt-4 border-t">
-          <p className="text-sm text-muted-foreground mb-2">
+        <div className="border-t pt-4">
+          <p className="text-muted-foreground mb-2 text-sm">
             {hasActiveFilters
               ? "Filters applied - close to see results"
               : "Select filters above to narrow results"}

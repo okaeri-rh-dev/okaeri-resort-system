@@ -5,8 +5,9 @@
  * unified notification and escalation mechanisms.
  */
 
-import { logAuditEvent } from "../audit-logger";
 import { AuditCategory, AuditSeverity } from "@/types/audit.types";
+
+import { logAuditEvent } from "../audit-logger";
 
 export type AlertLevel = "info" | "warning" | "critical" | "resolved";
 

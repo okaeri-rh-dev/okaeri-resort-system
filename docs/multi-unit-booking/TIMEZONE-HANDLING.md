@@ -206,7 +206,8 @@ const { data, error } = await supabase.from("bookings").insert({
 
 ```typescript
 // tests/timezone.test.ts
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
+
 import { dateToCheckInUTC, dateToCheckOutUTC, utcToManilaDisplay } from "@/lib/timezone";
 
 describe("Timezone Handling", () => {

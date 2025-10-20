@@ -1,10 +1,14 @@
 // src/components/audit/AuditFilters.tsx
 
 import { useState } from "react";
+
+import { format } from "date-fns";
 import { CalendarDays, Download, X, Zap } from "lucide-react";
+
+import { FilterPopover, TableSearch } from "@/components/tables/utils";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -12,13 +16,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TableSearch, FilterPopover } from "@/components/tables/utils";
-import { useAuditStore, QuickFilterPreset } from "@/stores/useAuditStore";
+import { ACTION_DISPLAY_NAMES, ALL_AUDIT_TABLES, TABLE_DISPLAY_NAMES } from "@/lib/audit-constants";
 import { useExportAuditLogs } from "@/lib/audit-hooks";
-import { ALL_AUDIT_TABLES, TABLE_DISPLAY_NAMES, ACTION_DISPLAY_NAMES } from "@/lib/audit-constants";
-import type { AuditAction, AuditLogFilters } from "@/types/audit.types";
-import { EVENT_TYPE_DISPLAY_NAMES, AuditEventType } from "@/types/audit.types";
-import { format } from "date-fns";
+import { QuickFilterPreset, useAuditStore } from "@/stores/useAuditStore";
+import {
+  AuditEventType,
+  EVENT_TYPE_DISPLAY_NAMES,
+  type AuditAction,
+  type AuditLogFilters,
+} from "@/types/audit.types";
 
 // ============================================
 // TYPES
@@ -121,8 +127,8 @@ export function AuditFilters() {
       </div>
 
       {/* Filter Row */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center gap-2">
           {/* User Email Search */}
           <TableSearch
             value={searchQuery}
@@ -361,7 +367,7 @@ export function AuditFilters() {
 
       {/* Active Filters Display */}
       {hasActiveFilters && (
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-neutral-700">Active Filters:</span>
           {filters.tableName && (
             <Badge variant="secondary" className="gap-1">
@@ -369,7 +375,7 @@ export function AuditFilters() {
               {TABLE_DISPLAY_NAMES[filters.tableName as keyof typeof TABLE_DISPLAY_NAMES] ||
                 filters.tableName}
               <X
-                className="h-3 w-3 cursor-pointer hover:text-destructive"
+                className="hover:text-destructive h-3 w-3 cursor-pointer"
                 onClick={() => updateFilter("tableName", undefined)}
               />
             </Badge>
@@ -378,7 +384,7 @@ export function AuditFilters() {
             <Badge variant="secondary" className="gap-1">
               Source: {filters.source === "db" ? "Database Triggers" : "Application Events"}
               <X
-                className="h-3 w-3 cursor-pointer hover:text-destructive"
+                className="hover:text-destructive h-3 w-3 cursor-pointer"
                 onClick={() => updateFilter("source", undefined)}
               />
             </Badge>
@@ -387,7 +393,7 @@ export function AuditFilters() {
             <Badge variant="secondary" className="gap-1">
               Event: {EVENT_TYPE_DISPLAY_NAMES[filters.eventType] || filters.eventType}
               <X
-                className="h-3 w-3 cursor-pointer hover:text-destructive"
+                className="hover:text-destructive h-3 w-3 cursor-pointer"
                 onClick={() => updateFilter("eventType", undefined)}
               />
             </Badge>
@@ -396,7 +402,7 @@ export function AuditFilters() {
             <Badge variant="secondary" className="gap-1">
               Action: {ACTION_DISPLAY_NAMES[filters.action as AuditAction]}
               <X
-                className="h-3 w-3 cursor-pointer hover:text-destructive"
+                className="hover:text-destructive h-3 w-3 cursor-pointer"
                 onClick={() => updateFilter("action", undefined)}
               />
             </Badge>
@@ -405,7 +411,7 @@ export function AuditFilters() {
             <Badge variant="secondary" className="gap-1">
               User: {filters.userEmail}
               <X
-                className="h-3 w-3 cursor-pointer hover:text-destructive"
+                className="hover:text-destructive h-3 w-3 cursor-pointer"
                 onClick={() => {
                   updateFilter("userEmail", undefined);
                   setSearchQuery("");
@@ -417,7 +423,7 @@ export function AuditFilters() {
             <Badge variant="secondary" className="gap-1">
               From: {format(new Date(filters.startDate), "PP")}
               <X
-                className="h-3 w-3 cursor-pointer hover:text-destructive"
+                className="hover:text-destructive h-3 w-3 cursor-pointer"
                 onClick={() => {
                   setDateRange({ ...dateRange, from: undefined });
                   setFilters({
@@ -433,7 +439,7 @@ export function AuditFilters() {
             <Badge variant="secondary" className="gap-1">
               To: {format(new Date(filters.endDate), "PP")}
               <X
-                className="h-3 w-3 cursor-pointer hover:text-destructive"
+                className="hover:text-destructive h-3 w-3 cursor-pointer"
                 onClick={() => {
                   setDateRange({ ...dateRange, to: undefined });
                   setFilters({

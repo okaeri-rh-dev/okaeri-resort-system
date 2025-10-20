@@ -1,64 +1,63 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
+
+import { Link } from "@tanstack/react-router";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getExpandedRowModel,
   createColumnHelper,
   flexRender,
-  type SortingState,
+  getCoreRowModel,
+  getExpandedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
   type ColumnFiltersState,
-  type VisibilityState,
   type ExpandedState,
+  type SortingState,
+  type VisibilityState,
 } from "@tanstack/react-table";
-import { withErrorBoundary } from "@/components/ErrorBoundary";
-import { useResponsiveView } from "@/hooks";
 import {
+  Calendar,
   ChevronDown,
   ChevronRight,
-  Eye,
+  DollarSign,
+  Download,
   Edit,
+  Eye,
   Mail,
   Phone,
-  Download,
-  Calendar,
-  DollarSign,
 } from "lucide-react";
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { withErrorBoundary } from "@/components/ErrorBoundary";
+import { GuestsTableSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Link } from "@tanstack/react-router";
+import { useResponsiveView } from "@/hooks";
+import { cn } from "@/lib/utils";
+import type { Guest } from "@/types";
 
 import {
-  useGuests,
-  useGuestBookings,
-  useGuestStore,
   useDeleteGuest,
   useExportGuests,
+  useGuestBookings,
+  useGuests,
+  useGuestStore,
 } from "../../stores/useGuestStore";
-
-import type { Guest } from "@/types";
-import { GuestEditDialog } from "./GuestEditDialog";
-
 import {
-  formatCurrency,
-  formatTableDate,
-  formatPhoneNumber,
-  StatusBadge,
-  SortableHeader,
-  TableSearch,
-  TablePagination,
   ActionMenu,
-  TableEmptyState,
-  ResponsiveTable,
+  formatCurrency,
+  formatPhoneNumber,
+  formatTableDate,
   MobileCard,
+  ResponsiveTable,
+  SortableHeader,
+  StatusBadge,
+  TableEmptyState,
+  TablePagination,
+  TableSearch,
 } from "../tables/utils";
-import { GuestsTableSkeleton } from "@/components/skeletons";
+import { GuestEditDialog } from "./GuestEditDialog";
 
 const columnHelper = createColumnHelper<Guest>();
 
@@ -299,7 +298,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
             <Link
               to="/guests/$guestId"
               params={{ guestId: row.original.guest_id }}
-              className="text-blue-600 hover:underline font-medium transition-colors"
+              className="font-medium text-blue-600 transition-colors hover:underline"
               preload="intent"
             >
               {getValue()}

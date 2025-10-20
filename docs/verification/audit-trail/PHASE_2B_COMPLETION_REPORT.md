@@ -51,6 +51,7 @@ Phase 2B has been **successfully completed** with all missing database helper me
 
 ```typescript
 import { createClient } from "@supabase/supabase-js";
+
 import type { Database } from "../../database.types";
 ```
 
@@ -58,7 +59,8 @@ import type { Database } from "../../database.types";
 
 ```typescript
 import { createClient } from "@supabase/supabase-js";
-import type { Database, AuditLogFilters, AuditEventContext } from "../../database.types";
+
+import type { AuditEventContext, AuditLogFilters, Database } from "../../database.types";
 ```
 
 **Impact:** Enables proper type checking for audit helpers

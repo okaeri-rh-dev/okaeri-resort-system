@@ -17,6 +17,15 @@
  * @module MultiUnitBookingForm
  */
 
+import { useEffect, useMemo, useState } from "react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "@tanstack/react-router";
+import { format } from "date-fns";
+import { CalendarDays, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,13 +62,7 @@ import {
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
 import type { Unit } from "@/types";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "@tanstack/react-router";
-import { format } from "date-fns";
-import { CalendarDays, Check, ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
+
 import { MultiUnitPricingSummary } from "./MultiUnitPricingSummary";
 import { MultiUnitSelector } from "./MultiUnitSelector";
 import { UnitCardList } from "./UnitCardList";
@@ -327,14 +330,14 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
   // ============================================
 
   return (
-    <div className="container mx-auto py-8 max-w-6xl">
+    <div className="container mx-auto max-w-6xl py-8">
       <Card>
         <CardHeader>
           <CardTitle>Multi-Unit Booking</CardTitle>
           <CardDescription>Book multiple units in a single reservation</CardDescription>
 
           {/* Progress Indicator */}
-          <div className="flex items-center gap-2 mt-4">
+          <div className="mt-4 flex items-center gap-2">
             {[1, 2, 3].map((s) => (
               <div key={s} className="flex items-center gap-2">
                 <div
@@ -348,12 +351,12 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                 >
                   {step > s ? <Check className="h-4 w-4" /> : s}
                 </div>
-                {s < 3 && <div className="h-0.5 w-12 bg-muted" />}
+                {s < 3 && <div className="bg-muted h-0.5 w-12" />}
               </div>
             ))}
           </div>
 
-          <div className="text-sm text-muted-foreground mt-2">
+          <div className="text-muted-foreground mt-2 text-sm">
             {step === 1 && "Select dates and units"}
             {step === 2 && "Enter primary guest information"}
             {step === 3 && "Review and complete payment"}
@@ -367,13 +370,13 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
               {step === 1 && (
                 <div className="space-y-6">
                   {/* Date Selection */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="check_in"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
-                          <FormLabel className="text-base sm:text-sm font-medium">
+                          <FormLabel className="text-base font-medium sm:text-sm">
                             Check-in Date
                           </FormLabel>
                           <Popover>
@@ -382,7 +385,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                                 <Button
                                   variant="outline"
                                   className={cn(
-                                    "w-full h-12 sm:h-10 pl-4 text-left font-normal text-base sm:text-sm touch-manipulation",
+                                    "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
                                     !field.value && "text-muted-foreground"
                                   )}
                                 >
@@ -391,7 +394,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                                   ) : (
                                     <span>Pick a date</span>
                                   )}
-                                  <CalendarDays className="ml-auto h-5 w-5 sm:h-4 sm:w-4 opacity-50" />
+                                  <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" />
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
@@ -418,7 +421,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                       name="check_out"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
-                          <FormLabel className="text-base sm:text-sm font-medium">
+                          <FormLabel className="text-base font-medium sm:text-sm">
                             Check-out Date
                           </FormLabel>
                           <Popover>
@@ -427,7 +430,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                                 <Button
                                   variant="outline"
                                   className={cn(
-                                    "w-full h-12 sm:h-10 pl-4 text-left font-normal text-base sm:text-sm touch-manipulation",
+                                    "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
                                     !field.value && "text-muted-foreground"
                                   )}
                                 >
@@ -436,7 +439,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                                   ) : (
                                     <span>Pick a date</span>
                                   )}
-                                  <CalendarDays className="ml-auto h-5 w-5 sm:h-4 sm:w-4 opacity-50" />
+                                  <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" />
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
@@ -458,9 +461,9 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                   </div>
 
                   {/* Debug Info */}
-                  <div className="border-2 border-yellow-500 bg-yellow-50 p-4 rounded-lg space-y-2">
+                  <div className="space-y-2 rounded-lg border-2 border-yellow-500 bg-yellow-50 p-4">
                     <h3 className="font-bold text-yellow-900">🐛 Availability Check Debug</h3>
-                    <div className="text-sm text-yellow-900 space-y-1">
+                    <div className="space-y-1 text-sm text-yellow-900">
                       <p>
                         <strong>Dates Selected:</strong> {checkIn ? "✅" : "❌"} Check-in,{" "}
                         {checkOut ? "✅" : "❌"} Check-out
@@ -492,7 +495,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                         <summary className="cursor-pointer font-semibold">
                           View Availability Results
                         </summary>
-                        <pre className="mt-2 text-xs bg-white p-2 rounded overflow-auto max-h-40">
+                        <pre className="mt-2 max-h-40 overflow-auto rounded bg-white p-2 text-xs">
                           {JSON.stringify(
                             {
                               allUnits: allUnits.map((u) => ({
@@ -601,7 +604,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
               {step === 3 && (
                 <div className="space-y-6">
                   {/* Booking Summary */}
-                  <div className="border rounded-lg p-4 space-y-4">
+                  <div className="space-y-4 rounded-lg border p-4">
                     <h3 className="text-lg font-semibold">Booking Summary</h3>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <span className="text-muted-foreground">Guest:</span>

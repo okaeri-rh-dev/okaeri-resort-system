@@ -169,7 +169,7 @@ Duration    762ms
 **Verified Imports:**
 
 ```typescript
-import { useAuditStore, QuickFilterPreset } from "@/stores/useAuditStore";
+import { QuickFilterPreset, useAuditStore } from "@/stores/useAuditStore";
 ```
 
 **Verified Usage:**
@@ -201,7 +201,7 @@ import { useExportAuditLogs } from "@/lib/audit-hooks";
 **Verified Imports:**
 
 ```typescript
-import { TableSearch, FilterPopover } from "@/components/tables/utils";
+import { FilterPopover, TableSearch } from "@/components/tables/utils";
 import { Calendar } from "@/components/ui/calendar";
 ```
 

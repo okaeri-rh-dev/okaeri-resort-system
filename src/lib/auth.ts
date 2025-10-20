@@ -1,5 +1,6 @@
+import type { AuthChangeEvent, AuthSession } from "@/types/supabase";
+
 import { supabase } from "./supabase";
-import type { AuthSession, AuthChangeEvent } from "@/types/supabase";
 
 /**
  * Authentication module for Phase 1

@@ -1,12 +1,14 @@
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { toast } from "sonner";
-import { Upload, X, CalendarIcon } from "lucide-react";
-import { sanitizeFormData } from "@/lib/security/sanitize";
-import { format } from "date-fns";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import { CalendarIcon, Upload, X } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
@@ -16,9 +18,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { Input, NumberInput } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -26,12 +27,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-
-import { useCreateExpense, useUpdateExpense, EXPENSE_CATEGORIES } from "@/stores/useExpenseStore";
-import type { Expense } from "@/types";
+import { Textarea } from "@/components/ui/textarea";
+import { sanitizeFormData } from "@/lib/security/sanitize";
 import { cn } from "@/lib/utils";
+import { EXPENSE_CATEGORIES, useCreateExpense, useUpdateExpense } from "@/stores/useExpenseStore";
+import type { Expense } from "@/types";
 
 // Validation schema
 const expenseFormSchema = z.object({
@@ -200,7 +200,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
           )}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Amount */}
           <FormField
             control={form.control}
@@ -270,14 +270,14 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
         {/* Receipt Upload */}
         <div className="space-y-4">
           <FormLabel>Receipt (Optional)</FormLabel>
-          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+          <div className="border-muted-foreground/25 rounded-lg border-2 border-dashed p-6">
             {receiptPreview ? (
               <div className="space-y-4">
                 <div className="relative inline-block">
                   <img
                     src={receiptPreview}
                     alt="Receipt preview"
-                    className="max-w-full max-h-48 object-contain rounded-lg"
+                    className="max-h-48 max-w-full rounded-lg object-contain"
                   />
                   <Button
                     type="button"
@@ -289,13 +289,13 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
                     <X className="h-3 w-3" />
                   </Button>
                 </div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-muted-foreground text-sm">
                   {receiptFile ? receiptFile.name : "Existing receipt"}
                 </div>
               </div>
             ) : (
               <div className="text-center">
-                <Upload className="mx-auto h-12 w-12 text-muted-foreground/40" />
+                <Upload className="text-muted-foreground/40 mx-auto h-12 w-12" />
                 <div className="mt-4">
                   <Button type="button" variant="outline" asChild>
                     <label htmlFor="receipt-upload" className="cursor-pointer">
@@ -310,7 +310,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
                     onChange={handleFileChange}
                   />
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">PNG, JPG up to 5MB</p>
+                <p className="text-muted-foreground mt-2 text-xs">PNG, JPG up to 5MB</p>
               </div>
             )}
           </div>
@@ -339,7 +339,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
         />
 
         {/* Actions */}
-        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
             Cancel
           </Button>

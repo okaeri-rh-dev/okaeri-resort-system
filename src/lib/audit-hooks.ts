@@ -1,15 +1,17 @@
 // src/lib/audit-hooks.ts
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { db } from "./supabase";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import type {
+  AuditEventContext,
   AuditLog,
   AuditLogFilters,
   AuditLogQueryResult,
   AuditLogStats,
-  AuditEventContext,
 } from "@/types/audit.types";
+
 import { AUDIT_CACHE_CONFIG } from "./audit-constants";
+import { db } from "./supabase";
 
 // ============================================
 // QUERY KEYS

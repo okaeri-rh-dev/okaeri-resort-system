@@ -7,8 +7,10 @@
  * @module useBookingRealtime
  */
 
-import { useMultiUnitBookingSubscription } from "./useMultiUnitRealtime";
-import type { RealtimeSubscriptionOptions } from "./useMultiUnitRealtime";
+import {
+  useMultiUnitBookingSubscription,
+  type RealtimeSubscriptionOptions,
+} from "./useMultiUnitRealtime";
 
 /**
  * Subscribe to real-time updates for a specific booking

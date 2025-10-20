@@ -13,24 +13,27 @@
  * Target: ≥95% code coverage
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode } from "react";
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
+import type { BookingUnit, MultiUnitBooking } from "@/types";
+
 import {
-  useMultiUnitBookings,
-  useMultiUnitAvailability,
-  useMultiUnitPricingQuote,
-  useCreateMultiUnitBooking,
   useAddUnitToBooking,
-  useRemoveUnitFromBooking,
-  useUpdateMultiUnitBooking,
+  useCreateMultiUnitBooking,
   useDeleteMultiUnitBooking,
+  useMultiUnitAvailability,
+  useMultiUnitBookings,
+  useMultiUnitPricingQuote,
   useRecordMultiUnitPayment,
   useRefundMultiUnitPayment,
+  useRemoveUnitFromBooking,
+  useUpdateMultiUnitBooking,
 } from "../useMultiUnitBookingQueries";
-import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
-import type { MultiUnitBooking, BookingUnit } from "@/types";
 
 // Test wrapper with QueryClient
 const createWrapper = () => {

@@ -1,6 +1,7 @@
 // src/components/entity-detail/DetailField.tsx
 
 import React from "react";
+
 import { cn } from "@/lib/utils";
 
 /**

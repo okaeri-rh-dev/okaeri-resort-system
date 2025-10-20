@@ -212,10 +212,10 @@ See `src/components/bookings/MULTI-UNIT-INTEGRATION.md` for detailed integration
 **1. Import components**:
 
 ```typescript
+import { GuestAssignment } from "@/components/bookings/GuestAssignment";
+import { MultiUnitPricingSummary } from "@/components/bookings/MultiUnitPricingSummary";
 import { MultiUnitSelector } from "@/components/bookings/MultiUnitSelector";
 import { UnitCardList } from "@/components/bookings/UnitCardList";
-import { MultiUnitPricingSummary } from "@/components/bookings/MultiUnitPricingSummary";
-import { GuestAssignment } from "@/components/bookings/GuestAssignment";
 ```
 
 **2. Use in BookingForm**:

@@ -1,7 +1,8 @@
 // src/components/entity-detail/__tests__/RelatedEntityLink.test.tsx
 
-import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+
 import { RelatedEntityLink } from "../RelatedEntityLink";
 
 // Mock TanStack Router Link

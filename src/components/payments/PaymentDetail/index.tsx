@@ -1,19 +1,20 @@
 // src/components/payments/PaymentDetail/index.tsx
 
+import { Calendar, DollarSign, FileText, Image } from "lucide-react";
+
 import {
+  DetailAuditSection,
+  DetailField,
   DetailPageLayout,
   DetailSection,
-  DetailField,
-  RelatedEntityLink,
-  DetailAuditSection,
   formatCurrency,
+  formatDateTime,
   formatFullDate,
   formatTableDate,
-  formatDateTime,
+  RelatedEntityLink,
 } from "@/components/entity-detail";
 import { StatusBadge } from "@/components/tables/utils";
-import { DollarSign, Calendar, FileText, Image } from "lucide-react";
-import type { Payment, Booking, Guest } from "@/types";
+import type { Booking, Guest, Payment } from "@/types";
 
 /**
  * Props for PaymentDetailPage component
@@ -67,7 +68,7 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
     >
       {/* 1. Payment Overview Section */}
       <DetailSection title="Payment Overview" icon={<DollarSign className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <DetailField
             label="Amount"
             value={formatCurrency(payment.amount)}
@@ -76,7 +77,7 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
           <DetailField
             label="Payment Method"
             value={
-              <span className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-neutral-100 text-neutral-700 border border-neutral-200">
+              <span className="inline-flex items-center rounded-md border border-neutral-200 bg-neutral-100 px-3 py-1 text-sm font-medium text-neutral-700">
                 {payment.payment_method || "Not specified"}
               </span>
             }
@@ -96,7 +97,7 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
       {/* 2. Related Booking Section */}
       {payment.booking && (
         <DetailSection title="Related Booking" icon={<Calendar className="h-5 w-5" />}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <DetailField
               label="Booking Reference"
               value={
@@ -143,7 +144,7 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
               <img
                 src={payment.proof_url}
                 alt="Payment proof"
-                className="w-full h-auto rounded-md border border-neutral-200"
+                className="h-auto w-full rounded-md border border-neutral-200"
               />
             </div>
             <div className="flex gap-2">
@@ -151,14 +152,14 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
                 href={payment.proof_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50"
+                className="inline-flex items-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
               >
                 Open in New Tab
               </a>
               <a
                 href={payment.proof_url}
                 download
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50"
+                className="inline-flex items-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
               >
                 Download
               </a>
@@ -171,7 +172,7 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
       {payment.notes && (
         <DetailSection title="Transaction Notes" icon={<FileText className="h-5 w-5" />}>
           <div className="prose prose-sm max-w-none">
-            <p className="text-sm text-neutral-700 whitespace-pre-wrap">{payment.notes}</p>
+            <p className="text-sm whitespace-pre-wrap text-neutral-700">{payment.notes}</p>
           </div>
         </DetailSection>
       )}

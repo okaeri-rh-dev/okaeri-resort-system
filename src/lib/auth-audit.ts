@@ -1,8 +1,9 @@
 // src/lib/auth-audit.ts
 
-import { auth } from "./auth";
-import { logAuditEventWithIP } from "./audit-logger-workers";
 import { AuditCategory, AuditSeverity } from "@/types/audit.types";
+
+import { logAuditEventWithIP } from "./audit-logger-workers";
+import { auth } from "./auth";
 
 /**
  * Authentication wrapper module with IP-captured audit logging

@@ -6,7 +6,7 @@
  */
 
 import { createMockSupabaseClient } from "../helpers/mock-supabase";
-import { testUnits, testBookingResponse, testBookingUnits, testPayment } from "../utils/fixtures";
+import { testBookingResponse, testBookingUnits, testPayment, testUnits } from "../utils/fixtures";
 
 export interface UnitManagementMockOptions {
   /** Booking data to return */

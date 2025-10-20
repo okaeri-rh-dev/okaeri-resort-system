@@ -1,10 +1,12 @@
 // src/components/entity-detail/__tests__/DetailAuditSection.test.tsx
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { DetailAuditSection } from "../DetailAuditSection";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { DetailAuditSection } from "../DetailAuditSection";
 
 // Mock the useMediaQuery hook
 vi.mock("@/hooks/useMediaQuery", () => ({

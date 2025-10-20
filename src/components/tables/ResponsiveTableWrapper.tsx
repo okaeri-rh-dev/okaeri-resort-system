@@ -1,4 +1,5 @@
 import React from "react";
+
 import { cn } from "@/lib/utils";
 
 /**
@@ -101,9 +102,9 @@ export const ResponsiveDataGrid: React.FC<{
             key={index}
             className={cn(
               // Mobile: Card styling
-              "bg-white rounded-lg border p-4",
+              "rounded-lg border bg-white p-4",
               // Desktop: Table row styling
-              "md:bg-transparent md:rounded-none md:border-0 md:border-b",
+              "md:rounded-none md:border-0 md:border-b md:bg-transparent",
               "md:[display:table-row] md:p-0",
               "md:hover:bg-gray-50"
             )}
@@ -123,8 +124,8 @@ export const ResponsivePerformanceComparison = () => {
   if (process.env.NODE_ENV !== "development") return null;
 
   return (
-    <div className="fixed bottom-4 right-4 bg-black/80 text-white p-4 rounded-lg text-xs max-w-xs">
-      <h3 className="font-bold mb-2">Responsive Performance Mode</h3>
+    <div className="fixed right-4 bottom-4 max-w-xs rounded-lg bg-black/80 p-4 text-xs text-white">
+      <h3 className="mb-2 font-bold">Responsive Performance Mode</h3>
       <div className="space-y-1">
         <div className="flex justify-between">
           <span>Method:</span>
@@ -143,7 +144,7 @@ export const ResponsivePerformanceComparison = () => {
           <span className="font-mono text-green-400">Optimal</span>
         </div>
       </div>
-      <div className="mt-2 pt-2 border-t border-white/20 text-[10px] opacity-75">
+      <div className="mt-2 border-t border-white/20 pt-2 text-[10px] opacity-75">
         Pure CSS = Zero JavaScript overhead
       </div>
     </div>

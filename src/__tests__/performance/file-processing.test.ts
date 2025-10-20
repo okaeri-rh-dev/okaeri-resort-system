@@ -5,7 +5,8 @@
  * and upload operations.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import { compressImage } from "../../utils/file-compression";
 
 // Mock browser-image-compression library

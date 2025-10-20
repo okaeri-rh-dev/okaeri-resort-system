@@ -1,9 +1,11 @@
 import { ReactNode } from "react";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 import { AlertCircle, RefreshCw } from "lucide-react";
+
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface DataFetchingWrapperProps<T> {
   data: T | undefined;
@@ -87,7 +89,7 @@ function DefaultError({ error, onRetry }: { error?: Error | null; onRetry?: () =
         {error?.message || "An unexpected error occurred while loading data."}
         {onRetry && (
           <Button onClick={onRetry} variant="outline" size="sm" className="mt-4">
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="mr-2 h-4 w-4" />
             Try Again
           </Button>
         )}
@@ -101,9 +103,9 @@ function DefaultError({ error, onRetry }: { error?: Error | null; onRetry?: () =
  */
 function DefaultEmpty() {
   return (
-    <div className="text-center py-12">
-      <p className="text-gray-500 text-lg">No data available</p>
-      <p className="text-gray-400 text-sm mt-2">Try adjusting your filters or search criteria</p>
+    <div className="py-12 text-center">
+      <p className="text-lg text-gray-500">No data available</p>
+      <p className="mt-2 text-sm text-gray-400">Try adjusting your filters or search criteria</p>
     </div>
   );
 }
@@ -144,12 +146,12 @@ export function ListDataWrapper<T>({
       loadingComponent={
         <div className={className}>
           {Array.from({ length: loadingCount }, (_, i) => (
-            <Skeleton key={i} className="h-16 w-full mb-2" />
+            <Skeleton key={i} className="mb-2 h-16 w-full" />
           ))}
         </div>
       }
       emptyComponent={
-        <div className="text-center py-8">
+        <div className="py-8 text-center">
           <p className="text-gray-500">{emptyMessage}</p>
         </div>
       }
@@ -193,7 +195,7 @@ export function PaginatedDataWrapper<T>({
       <ListDataWrapper items={items} {...listProps} />
 
       {items && items.length > 0 && totalPages > 1 && (
-        <div className="flex justify-between items-center mt-4">
+        <div className="mt-4 flex items-center justify-between">
           <Button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={!canGoPrevious}

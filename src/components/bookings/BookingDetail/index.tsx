@@ -1,19 +1,20 @@
 // src/components/bookings/BookingDetail/index.tsx
 
+import { Calendar, DollarSign, FileText, Home, User } from "lucide-react";
+
 import {
+  DetailAuditSection,
+  DetailField,
   DetailPageLayout,
   DetailSection,
-  DetailField,
-  RelatedEntityLink,
-  DetailAuditSection,
   formatCurrency,
   formatFullDate,
-  formatTableDate,
   formatPhoneNumber,
+  formatTableDate,
+  RelatedEntityLink,
 } from "@/components/entity-detail";
 import { StatusBadge } from "@/components/tables/utils";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, User, Home, DollarSign, FileText } from "lucide-react";
 import type { Booking } from "@/types";
 
 /**
@@ -63,7 +64,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
     >
       {/* 1. Booking Overview Section */}
       <DetailSection title="Booking Overview" icon={<Calendar className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <DetailField
             label="Check-in Date"
             value={formatTableDate(booking.check_in)}
@@ -89,7 +90,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
 
       {/* 2. Guest Information Section */}
       <DetailSection title="Guest Information" icon={<User className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <DetailField
             label="Guest Name"
             value={
@@ -156,7 +157,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
 
       {/* 4. Payment Details Section */}
       <DetailSection title="Payment Details" icon={<DollarSign className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <DetailField
             label="Payment Method"
             value={booking.payment_method || "Not specified"}
@@ -173,7 +174,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
       {booking.special_requests && (
         <DetailSection title="Special Requests" icon={<FileText className="h-5 w-5" />}>
           <div className="prose prose-sm max-w-none">
-            <p className="text-sm text-neutral-700 whitespace-pre-wrap">
+            <p className="text-sm whitespace-pre-wrap text-neutral-700">
               {booking.special_requests}
             </p>
           </div>

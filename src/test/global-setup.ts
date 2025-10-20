@@ -5,7 +5,9 @@
  */
 
 import { execSync } from "child_process";
+
 import { createClient } from "@supabase/supabase-js";
+
 import type { Database } from "@/types/database.types";
 
 // Load environment variables for database connection

@@ -1,25 +1,26 @@
 // src/components/expenses/ExpenseEdit/index.tsx
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useParams, useLoaderData, useNavigate } from "@tanstack/react-router";
-import { CalendarDays, Save, X } from "lucide-react";
+import { useLoaderData, useNavigate, useParams } from "@tanstack/react-router";
 import { format } from "date-fns";
+import { CalendarDays, Save, X } from "lucide-react";
+import { useForm } from "react-hook-form";
 
-import { expenseEditSchema, type ExpenseEditInput } from "@/lib/validation/entity-schemas";
-import { useEntityEdit } from "@/hooks/entity";
 import { DetailPageLayout } from "@/components/entity-detail";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -27,12 +28,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
+import { useEntityEdit } from "@/hooks/entity";
 import { cn } from "@/lib/utils";
-
+import { expenseEditSchema, type ExpenseEditInput } from "@/lib/validation/entity-schemas";
 import type { Expense, Unit } from "@/types/entity-detail.types";
 
 export interface ExpenseEditPageProps {
@@ -113,7 +112,7 @@ export function ExpenseEditPage() {
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="amount"
@@ -230,7 +229,7 @@ export function ExpenseEditPage() {
                           <SelectItem key={unit.unit_id} value={unit.unit_id}>
                             <div className="flex flex-col">
                               <span className="font-medium">{unit.unit_name}</span>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-muted-foreground text-xs">
                                 {unit.unit_code}
                               </span>
                             </div>
@@ -300,11 +299,11 @@ export function ExpenseEditPage() {
               onClick={handleCancel}
               disabled={updateExpense.isPending}
             >
-              <X className="h-4 w-4 mr-2" />
+              <X className="mr-2 h-4 w-4" />
               Cancel
             </Button>
             <Button type="submit" disabled={updateExpense.isPending}>
-              <Save className="h-4 w-4 mr-2" />
+              <Save className="mr-2 h-4 w-4" />
               {updateExpense.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </div>

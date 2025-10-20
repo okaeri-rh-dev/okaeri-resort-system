@@ -1,13 +1,16 @@
 // src/hooks/entity/__tests__/useEntityEdit.test.ts
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEntityEdit } from "../useEntityEdit";
-import { db } from "@/lib/supabase";
-import { logAuditEvent } from "@/lib/audit-logger";
 import type { ReactNode } from "react";
+
 import type { PostgrestSingleResponse } from "@supabase/supabase-js";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { logAuditEvent } from "@/lib/audit-logger";
+import { db } from "@/lib/supabase";
+
+import { useEntityEdit } from "../useEntityEdit";
 
 // Helper to create Postgrest success response
 function createSuccessResponse<T>(data: T): PostgrestSingleResponse<T> {

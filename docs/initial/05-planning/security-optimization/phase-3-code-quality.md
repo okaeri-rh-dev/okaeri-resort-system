@@ -285,7 +285,8 @@ export function DataTableWithErrorBoundary<T>({
 
 ```typescript
 // File: /src/components/guests/GuestQuickForm.tsx - FIX
-import { useEffect, useRef } from "react";
+// File: /src/hooks/useSearch.ts - FIX
+import { useEffect, useEffect, useRef, useRef } from "react";
 
 export function GuestQuickForm() {
   const debounceTimerRef = useRef<NodeJS.Timeout>();
@@ -319,9 +320,6 @@ export function GuestQuickForm() {
     };
   }, []);
 }
-
-// File: /src/hooks/useSearch.ts - FIX
-import { useEffect, useRef } from "react";
 
 export function useSearch() {
   const debounceTimer = useRef<NodeJS.Timeout>();

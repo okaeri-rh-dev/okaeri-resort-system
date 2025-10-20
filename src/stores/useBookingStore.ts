@@ -1,21 +1,23 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase, db, handleSupabaseError, storage } from "@/lib/supabase";
+
 import { adaptBookingFromDB } from "@/lib/database-adapters";
+import { db, handleSupabaseError, storage, supabase } from "@/lib/supabase";
 import type {
   Booking,
   BookingFilters,
+  BookingFormData,
   BookingStatus,
   PaymentStatus,
-  BookingFormData,
   TableState,
 } from "@/types";
 import type {
-  UnitAvailabilityResponse,
   // CalendarDayResponse, // ❌ DISABLED: Used by commented-out useAvailabilityCalendar
   BlackoutResponse,
+  UnitAvailabilityResponse,
 } from "@/types/supabase";
+
 // import { useWorkflowStore } from "./useWorkflowStore"; // Phase 3-4
 
 // ============================================

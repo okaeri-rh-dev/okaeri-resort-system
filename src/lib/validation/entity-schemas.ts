@@ -1,6 +1,7 @@
 // src/lib/validation/entity-schemas.ts
 
 import { z } from "zod";
+
 import { sanitizeText } from "@/lib/security/sanitize";
 
 // ============================================

@@ -1,9 +1,10 @@
 // src/hooks/entity/useEntityAudit.ts
 
 import { useQuery } from "@tanstack/react-query";
-import type { AuditFilters } from "@/types/entity-detail.types";
-import { supabase } from "@/lib/supabase";
+
 import { queryKeys } from "@/lib/query-keys";
+import { supabase } from "@/lib/supabase";
+import type { AuditFilters } from "@/types/entity-detail.types";
 
 /**
  * Generic hook for fetching audit logs filtered by entity

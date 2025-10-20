@@ -1,6 +1,9 @@
-import { CalendarDays, Users } from "lucide-react";
 import { format } from "date-fns";
+import { CalendarDays, Users } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   FormControl,
   FormDescription,
@@ -9,10 +12,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { NumberInput } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
@@ -22,11 +22,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-
-import { formatCurrency } from "@/lib/validations";
 import { cn } from "@/lib/utils";
-import type { StepProps } from "../types";
+import { formatCurrency } from "@/lib/validations";
 import type { Unit } from "@/types";
+
+import type { StepProps } from "../types";
 
 interface UnitSelectionProps extends StepProps {
   units?: Unit[];
@@ -50,11 +50,11 @@ export function UnitSelection({
         name="unit_id"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base sm:text-sm font-medium">Select Cabin</FormLabel>
+            <FormLabel className="text-base font-medium sm:text-sm">Select Cabin</FormLabel>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
                 <SelectTrigger
-                  className="h-12 sm:h-10 text-base sm:text-sm touch-manipulation"
+                  className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm"
                   disabled={units.length === 0}
                 >
                   <SelectValue placeholder="Choose accommodation" />
@@ -65,7 +65,7 @@ export function UnitSelection({
                   <SelectItem key={unit.unit_id} value={unit.unit_id}>
                     <div className="flex flex-col">
                       <span className="font-medium">{unit.unit_name}</span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-muted-foreground text-xs">
                         {unit.unit_type} • {formatCurrency(unit.base_rate)}/night • Max{" "}
                         {unit.max_occupancy} guests
                       </span>
@@ -79,20 +79,20 @@ export function UnitSelection({
         )}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <FormField
           control={form.control}
           name="check_in"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel className="text-base sm:text-sm font-medium">Check-in Date</FormLabel>
+              <FormLabel className="text-base font-medium sm:text-sm">Check-in Date</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
                       variant="outline"
                       className={cn(
-                        "h-12 sm:h-10 text-base sm:text-sm justify-start text-left font-normal touch-manipulation",
+                        "h-12 touch-manipulation justify-start text-left text-base font-normal sm:h-10 sm:text-sm",
                         !field.value && "text-muted-foreground"
                       )}
                     >
@@ -126,14 +126,14 @@ export function UnitSelection({
           name="check_out"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel className="text-base sm:text-sm font-medium">Check-out Date</FormLabel>
+              <FormLabel className="text-base font-medium sm:text-sm">Check-out Date</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
                       variant="outline"
                       className={cn(
-                        "h-12 sm:h-10 text-base sm:text-sm justify-start text-left font-normal touch-manipulation",
+                        "h-12 touch-manipulation justify-start text-left text-base font-normal sm:h-10 sm:text-sm",
                         !field.value && "text-muted-foreground"
                       )}
                     >
@@ -171,13 +171,13 @@ export function UnitSelection({
         name="num_guests"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base sm:text-sm font-medium">Number of Guests</FormLabel>
+            <FormLabel className="text-base font-medium sm:text-sm">Number of Guests</FormLabel>
             <FormControl>
               <NumberInput
                 min={1}
                 max={selectedUnit?.max_occupancy || 20}
                 allowDecimals={false}
-                className="h-12 sm:h-10 text-base sm:text-sm touch-manipulation"
+                className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm"
                 startIcon={<Users className="h-5 w-5 sm:h-4 sm:w-4" />}
                 value={field.value}
                 onChange={(value) => field.onChange(value)}
@@ -192,7 +192,7 @@ export function UnitSelection({
                 Base occupancy: {selectedUnit.base_occupancy} guests (included) • Max:{" "}
                 {selectedUnit.max_occupancy} guests
                 {selectedUnit.max_occupancy > selectedUnit.base_occupancy && (
-                  <span className="block text-xs mt-1">
+                  <span className="mt-1 block text-xs">
                     Extra person rate: {formatCurrency(selectedUnit.extra_person_rate)} per person
                     per night
                   </span>

@@ -1,26 +1,28 @@
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+
+import { Link, useLocation } from "@tanstack/react-router";
 import {
+  Bell,
   Building2,
   Calendar,
   ChevronRight,
   Home,
+  LogOut,
   Menu,
   Receipt,
   ReceiptText,
-  Users,
-  X,
-  LogOut,
   Search,
-  Bell,
   Settings,
   Shield,
+  Users,
+  X,
 } from "lucide-react";
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "@tanstack/react-router";
+
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { auth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 interface NavItem {
   label: string;
@@ -90,33 +92,33 @@ export function MainLayout({ children }: MainLayoutProps) {
         to={item.href}
         onClick={onClick}
         className={cn(
-          "flex items-center gap-3 rounded-lg px-4 py-3 transition-colors touch-manipulation",
+          "flex touch-manipulation items-center gap-3 rounded-lg px-4 py-3 transition-colors",
           "hover:bg-accent hover:text-accent-foreground",
-          "focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-          "min-h-[44px] text-base md:text-sm md:min-h-[36px] md:px-3 md:py-2",
+          "focus:bg-accent focus:text-accent-foreground focus:ring-primary focus:ring-2 focus:ring-offset-2 focus:outline-none",
+          "min-h-[44px] text-base md:min-h-[36px] md:px-3 md:py-2 md:text-sm",
           isActive && "bg-accent text-accent-foreground font-medium"
         )}
       >
-        <Icon className="h-6 w-6 md:h-5 md:w-5 flex-shrink-0" />
+        <Icon className="h-6 w-6 flex-shrink-0 md:h-5 md:w-5" />
         <span className="flex-1">{item.label}</span>
         {item.badge && (
           <span className="bg-primary text-primary-foreground ml-auto flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-semibold md:h-5 md:min-w-5 md:text-[10px]">
             {item.badge}
           </span>
         )}
-        {isActive && <ChevronRight className="ml-2 h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />}
+        {isActive && <ChevronRight className="ml-2 h-5 w-5 flex-shrink-0 md:h-4 md:w-4" />}
       </Link>
     );
   };
 
   return (
-    <div className="bg-background min-h-screen flex flex-col md:flex-row">
+    <div className="bg-background flex min-h-screen flex-col md:flex-row">
       {/* Desktop Sidebar */}
       <aside className="bg-card hidden w-64 border-r md:flex lg:w-72">
         <div className="flex w-full flex-col">
           {/* Logo */}
           <div className="border-b p-4 lg:p-6">
-            <h1 className="text-xl lg:text-2xl font-bold">Okaeri Resort</h1>
+            <h1 className="text-xl font-bold lg:text-2xl">Okaeri Resort</h1>
             <p className="text-muted-foreground mt-1 text-xs lg:text-sm">Management System</p>
           </div>
 
@@ -129,7 +131,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             {/* Audit Trail Link - Owner/Manager Only */}
             {showAuditLink && (
               <>
-                <div className="border-t my-2 pt-2" />
+                <div className="my-2 border-t pt-2" />
                 <NavLink
                   item={{
                     label: "Audit Trail",
@@ -147,9 +149,9 @@ export function MainLayout({ children }: MainLayoutProps) {
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
-              className="w-full justify-start text-muted-foreground hover:text-foreground mb-2 h-9"
+              className="text-muted-foreground hover:text-foreground mb-2 h-9 w-full justify-start"
             >
-              <LogOut className="h-4 w-4 mr-2" />
+              <LogOut className="mr-2 h-4 w-4" />
               Sign Out
             </Button>
             <div className="text-muted-foreground text-xs">
@@ -161,7 +163,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       </aside>
 
       {/* Mobile Header */}
-      <header className="bg-card border-b md:hidden sticky top-0 z-50">
+      <header className="bg-card sticky top-0 z-50 border-b md:hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center space-x-3">
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -175,7 +177,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-80 p-0 max-w-[85vw]">
+              <SheetContent side="left" className="w-80 max-w-[85vw] p-0">
                 <div className="flex h-full flex-col">
                   {/* Mobile Menu Header */}
                   <div className="border-b p-6">
@@ -209,7 +211,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                     {/* Audit Trail Link - Owner/Manager Only */}
                     {showAuditLink && (
                       <>
-                        <div className="border-t my-2 pt-2" />
+                        <div className="my-2 border-t pt-2" />
                         <NavLink
                           item={{
                             label: "Audit Trail",
@@ -228,13 +230,13 @@ export function MainLayout({ children }: MainLayoutProps) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full justify-start text-muted-foreground hover:text-foreground h-11 touch-manipulation"
+                        className="text-muted-foreground hover:text-foreground h-11 w-full touch-manipulation justify-start"
                         onClick={() => {
                           setMobileMenuOpen(false);
                           // Navigate to settings if needed
                         }}
                       >
-                        <Settings className="h-4 w-4 mr-3" />
+                        <Settings className="mr-3 h-4 w-4" />
                         Settings
                       </Button>
                       <Button
@@ -244,13 +246,13 @@ export function MainLayout({ children }: MainLayoutProps) {
                           setMobileMenuOpen(false);
                           handleSignOut();
                         }}
-                        className="w-full justify-start text-muted-foreground hover:text-foreground h-11 touch-manipulation"
+                        className="text-muted-foreground hover:text-foreground h-11 w-full touch-manipulation justify-start"
                       >
-                        <LogOut className="h-4 w-4 mr-3" />
+                        <LogOut className="mr-3 h-4 w-4" />
                         Sign Out
                       </Button>
                     </div>
-                    <div className="text-muted-foreground text-xs mt-4 pt-4 border-t">
+                    <div className="text-muted-foreground mt-4 border-t pt-4 text-xs">
                       <p>© 2024 Okaeri Resort</p>
                       <p className="mt-1">Version 1.0.0</p>
                     </div>
@@ -268,7 +270,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-11 w-11 touch-manipulation relative"
+              className="relative h-11 w-11 touch-manipulation"
               aria-label="Search"
             >
               <Search className="h-5 w-5" />
@@ -276,12 +278,12 @@ export function MainLayout({ children }: MainLayoutProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-11 w-11 touch-manipulation relative"
+              className="relative h-11 w-11 touch-manipulation"
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
               {/* Notification badge */}
-              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-600 text-xs text-white flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs text-white">
                 3
               </span>
             </Button>
@@ -292,7 +294,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       {/* Main Content */}
       <main className="flex-1 overflow-hidden md:overflow-auto">
         <div className="h-full overflow-auto">
-          <div className="container mx-auto p-4 pb-20 md:p-6 md:pb-6 max-w-none">{children}</div>
+          <div className="container mx-auto max-w-none p-4 pb-20 md:p-6 md:pb-6">{children}</div>
         </div>
       </main>
     </div>

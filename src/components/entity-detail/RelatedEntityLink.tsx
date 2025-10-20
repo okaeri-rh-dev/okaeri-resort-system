@@ -1,8 +1,9 @@
 // src/components/entity-detail/RelatedEntityLink.tsx
 
 import { Link } from "@tanstack/react-router";
+import { CreditCard, FileText, Home, Receipt, User } from "lucide-react";
+
 import { cn } from "@/lib/utils";
-import { FileText, Home, User, CreditCard, Receipt } from "lucide-react";
 import type { EntityType } from "@/types/entity-detail.types";
 
 /**
@@ -83,13 +84,13 @@ export function RelatedEntityLink({ type, id, label, badge, className }: Related
       to={routeTo as any}
       params={{ [paramKey]: id } as any}
       className={cn(
-        "inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 hover:underline font-medium transition-colors",
+        "inline-flex items-center gap-2 font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline",
         className
       )}
     >
       <Icon className="h-4 w-4" />
       <span>{label}</span>
-      {badge && <span className="text-xs font-mono text-neutral-500">({badge})</span>}
+      {badge && <span className="font-mono text-xs text-neutral-500">({badge})</span>}
     </Link>
   );
 }

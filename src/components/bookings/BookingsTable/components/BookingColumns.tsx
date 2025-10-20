@@ -1,3 +1,8 @@
+import { useMemo } from "react";
+
+import { Link, useNavigate } from "@tanstack/react-router";
+import { createColumnHelper } from "@tanstack/react-table";
+
 import {
   ActionMenu,
   formatCurrency,
@@ -6,11 +11,8 @@ import {
   SortableHeader,
   StatusBadge,
 } from "@/components/tables/utils";
-import type { Booking, BookingStatus } from "@/types";
-import { createColumnHelper } from "@tanstack/react-table";
-import { useMemo } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
 import { Badge } from "@/components/ui/badge";
+import type { Booking, BookingStatus } from "@/types";
 
 const columnHelper = createColumnHelper<Booking>();
 
@@ -36,7 +38,7 @@ export const useBookingColumns = ({
             <Link
               to="/guests"
               search={{ search: row.original.guest_name }}
-              className="font-medium text-blue-600 hover:underline transition-colors"
+              className="font-medium text-blue-600 transition-colors hover:underline"
             >
               {row.original.guest_name}
             </Link>
@@ -54,13 +56,13 @@ export const useBookingColumns = ({
           const units = row.original.booking_units || [];
 
           if (units.length === 0) {
-            return <span className="text-neutral-400 text-xs">No units</span>;
+            return <span className="text-xs text-neutral-400">No units</span>;
           }
 
           return (
             <div className="flex flex-wrap gap-1">
               {units.map((bu) => (
-                <Badge key={bu.booking_unit_id} variant="secondary" className="text-xs font-mono">
+                <Badge key={bu.booking_unit_id} variant="secondary" className="font-mono text-xs">
                   {bu.unit?.unit_code || bu.unit?.unit_name || `Unit ${bu.unit_id.slice(0, 4)}`}
                 </Badge>
               ))}
@@ -121,7 +123,7 @@ export const useBookingColumns = ({
           <Link
             to="/bookings/$bookingId"
             params={{ bookingId: row.original.booking_id }}
-            className="font-mono text-sm font-medium text-blue-600 hover:underline transition-colors"
+            className="font-mono text-sm font-medium text-blue-600 transition-colors hover:underline"
           >
             {row.getValue("booking_reference")}
           </Link>

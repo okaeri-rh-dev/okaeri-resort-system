@@ -1,7 +1,8 @@
 // src/components/entity-detail/__tests__/DetailField.test.tsx
 
-import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+
 import { DetailField } from "../DetailField";
 
 describe("DetailField", () => {
@@ -205,7 +206,7 @@ describe("DetailField", () => {
       render(
         <DetailField
           label="Total Amount"
-          value={<span className="font-mono font-bold text-lg">₱5,000.00</span>}
+          value={<span className="font-mono text-lg font-bold">₱5,000.00</span>}
         />
       );
 
@@ -248,7 +249,7 @@ describe("DetailField", () => {
           value={
             <span
               data-testid="status-badge"
-              className="px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs"
+              className="rounded-full bg-green-100 px-2 py-1 text-xs text-green-800"
             >
               Active
             </span>

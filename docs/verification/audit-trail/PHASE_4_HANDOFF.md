@@ -261,12 +261,13 @@ All Phase 4 requirements have been completed. No items deferred to future phases
 If migrating from VITE_OWNER_EMAILS approach:
 
 ```typescript
+// NEW (app_roles table)
+import { getUserAuditRole } from "@/lib/audit-roles";
+
 // OLD (environment variables)
 const ownerEmails = import.meta.env.VITE_OWNER_EMAILS?.split(",");
 const isOwner = ownerEmails.includes(userEmail);
 
-// NEW (app_roles table)
-import { getUserAuditRole } from "@/lib/audit-roles";
 const role = await getUserAuditRole();
 const isOwner = role === "owner" || role === "admin";
 ```
@@ -274,13 +275,14 @@ const isOwner = role === "owner" || role === "admin";
 ### Route Guards Update
 
 ```typescript
+// After
+import { canAccessAuditTrail } from "@/lib/audit-roles";
+
 // Before
 if (!import.meta.env.VITE_OWNER_EMAILS?.includes(user.email)) {
   throw redirect({ to: "/" });
 }
 
-// After
-import { canAccessAuditTrail } from "@/lib/audit-roles";
 if (!(await canAccessAuditTrail())) {
   throw redirect({ to: "/" });
 }

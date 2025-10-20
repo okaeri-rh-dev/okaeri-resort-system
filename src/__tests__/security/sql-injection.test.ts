@@ -4,7 +4,8 @@
  * Tests Supabase RLS policies and input escaping
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { supabase } from "@/lib/supabase";
 
 describe("SQL Injection Prevention Tests", () => {

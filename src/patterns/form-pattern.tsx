@@ -1,9 +1,11 @@
 import { ReactNode } from "react";
-import { UseFormReturn, FieldValues } from "react-hook-form";
+
+import { FieldValues, UseFormReturn } from "react-hook-form";
+
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { sanitizeFormData } from "@/lib/security/sanitize";
+import { cn } from "@/lib/utils";
 
 interface FormWrapperProps<T extends FieldValues> {
   form: UseFormReturn<T>;
@@ -85,18 +87,18 @@ export function StepFormWrapper<T extends FieldValues>({
     <FormWrapper form={form} onSubmit={onSubmit} className={className}>
       {showProgress && (
         <div className="mb-6">
-          <div className="flex justify-between mb-2">
+          <div className="mb-2 flex justify-between">
             {Array.from({ length: totalSteps }, (_, i) => (
               <div
                 key={i}
                 className={cn(
-                  "flex-1 h-2 mx-1 rounded",
+                  "mx-1 h-2 flex-1 rounded",
                   i + 1 <= currentStep ? "bg-primary" : "bg-gray-200"
                 )}
               />
             ))}
           </div>
-          <p className="text-sm text-gray-600 text-center">
+          <p className="text-center text-sm text-gray-600">
             Step {currentStep} of {totalSteps}
           </p>
         </div>
@@ -104,15 +106,15 @@ export function StepFormWrapper<T extends FieldValues>({
 
       <Card className="p-6">{children}</Card>
 
-      <div className="flex justify-between mt-6">
+      <div className="mt-6 flex justify-between">
         <button
           type="button"
           onClick={onPrevious}
           disabled={isFirstStep}
           className={cn(
-            "px-4 py-2 rounded transition-colors",
+            "rounded px-4 py-2 transition-colors",
             isFirstStep
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+              ? "cursor-not-allowed bg-gray-100 text-gray-400"
               : "bg-gray-200 text-gray-700 hover:bg-gray-300"
           )}
         >
@@ -122,7 +124,7 @@ export function StepFormWrapper<T extends FieldValues>({
         {isLastStep ? (
           <button
             type="submit"
-            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
+            className="bg-primary hover:bg-primary/90 rounded px-4 py-2 text-white transition-colors"
           >
             Submit
           </button>
@@ -130,7 +132,7 @@ export function StepFormWrapper<T extends FieldValues>({
           <button
             type="button"
             onClick={onNext}
-            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
+            className="bg-primary hover:bg-primary/90 rounded px-4 py-2 text-white transition-colors"
           >
             Next
           </button>

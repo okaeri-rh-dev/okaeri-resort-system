@@ -161,7 +161,7 @@ WHERE email = 'your-admin@resort.com';
 **Step 4**: Use TypeScript helpers to manage roles:
 
 ```typescript
-import { grantRole, revokeRole, AuditRole } from "@/lib/audit-roles";
+import { AuditRole, grantRole, revokeRole } from "@/lib/audit-roles";
 
 // Grant owner role
 await grantRole(userId, AuditRole.OWNER, "Resort owner - full access");

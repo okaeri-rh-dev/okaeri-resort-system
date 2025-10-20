@@ -12,9 +12,10 @@
  * - Unit availability filters
  */
 
-import type { Booking, BookingStatus, PaymentStatus, Unit, Guest } from "@/types";
+import { addDays, endOfDay, isAfter, isBefore, isWithinInterval, startOfDay } from "date-fns";
+
 import type { AdvancedFilter, WorkflowFilter } from "@/stores/useSearchStore";
-import { addDays, startOfDay, endOfDay, isWithinInterval, isBefore, isAfter } from "date-fns";
+import type { Booking, BookingStatus, Guest, PaymentStatus, Unit } from "@/types";
 
 // ============================================
 // FILTER BUILDER TYPES

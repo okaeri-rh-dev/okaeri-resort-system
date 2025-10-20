@@ -1,15 +1,16 @@
 // src/lib/audit-logger.ts
 
-import { db, supabase } from "./supabase";
 import {
   AuditCategory,
-  AuditSeverity,
   AuditEventType,
+  AuditSeverity,
   type AuditEventContext,
   type AuditEventTypeValue,
 } from "@/types/audit.types";
-import { redactSensitiveData, isValidAuditTable, auditDebugLog } from "./audit-constants";
-import { getUserAuditRole as getUserRole, canAccessAuditTrail as canAccess } from "./audit-roles";
+
+import { auditDebugLog, isValidAuditTable, redactSensitiveData } from "./audit-constants";
+import { canAccessAuditTrail as canAccess, getUserAuditRole as getUserRole } from "./audit-roles";
+import { db, supabase } from "./supabase";
 
 // ============================================
 // MAIN AUDIT LOGGING FUNCTION

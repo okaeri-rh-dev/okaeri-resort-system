@@ -192,6 +192,7 @@ export function EmptyState({ message = "No data found" }) {
 ```tsx
 // src/components/ErrorBoundary.tsx
 import { Component, ReactNode } from "react";
+
 import { AlertCircle } from "lucide-react";
 
 interface Props {

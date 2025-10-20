@@ -12,10 +12,12 @@
  */
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+
+import { AlertCircle, CheckCircle, ChevronRight } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronRight, AlertCircle, CheckCircle } from "lucide-react";
 import type { Booking, BookingStatus } from "@/types";
 
 interface BookingWorkflowPanelProps {

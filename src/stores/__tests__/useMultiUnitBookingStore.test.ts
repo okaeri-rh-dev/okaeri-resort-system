@@ -15,10 +15,12 @@
  * Target: ≥95% code coverage
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, act, waitFor } from "@testing-library/react";
-import { useMultiUnitBookingStore } from "../useMultiUnitBookingStore";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import type { BookingUnit, MultiUnitBooking } from "@/types";
+
+import { useMultiUnitBookingStore } from "../useMultiUnitBookingStore";
 
 // Mock date-helpers
 vi.mock("@/utils/date-helpers", () => ({

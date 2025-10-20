@@ -232,8 +232,8 @@ await env.RATE_LIMIT_KV.put(`idempotency:${idempotencyKey}`, JSON.stringify(resu
 ### 5. Input Validation
 
 ```typescript
-import { z } from "zod";
 import DOMPurify from "dompurify";
+import { z } from "zod";
 
 const guestBookingSchema = z.object({
   guest_name: z

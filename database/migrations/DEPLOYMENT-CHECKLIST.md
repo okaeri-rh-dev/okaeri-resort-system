@@ -1,7 +1,7 @@
 # Production Deployment Checklist
 
-**Deployment Date:** ******\_\_\_******
-**Engineer:** ******\_\_\_******
+**Deployment Date:** **\*\***\_\_\_**\*\***
+**Engineer:** **\*\***\_\_\_**\*\***
 **Commit Range:** `f3da057` → `bdc7547` (HEAD)
 **Migrations:** 016, 017
 
@@ -21,7 +21,7 @@
 - [ ] Navigate to Supabase Dashboard → Database → Backups
 - [ ] Create manual backup: `pre-migration-016-017-{date}`
 - [ ] Verify backup completion
-- [ ] Document backup ID: ******\_\_\_******
+- [ ] Document backup ID: **\*\***\_\_\_**\*\***
 
 ### Team Readiness
 
@@ -52,7 +52,7 @@
   - [ ] `is_manager` → STABLE ✅
   - [ ] `is_admin` → STABLE ✅
 
-**Time Completed:** ******\_\_\_******
+**Time Completed:** **\*\***\_\_\_**\*\***
 
 ### Step 2: Apply Migration 017
 
@@ -66,7 +66,7 @@
   - [ ] `audit_logs_archive` → SELECT, INSERT granted
   - [ ] `app_roles` → SELECT granted
 
-**Time Completed:** ******\_\_\_******
+**Time Completed:** **\*\***\_\_\_**\*\***
 
 ---
 
@@ -169,7 +169,7 @@ console.log("❌ Error:", error);
 - [ ] Test booking edit works
 - [ ] Audit logs recording properly
 
-**Status:** ******\_\_\_******
+**Status:** **\*\***\_\_\_**\*\***
 
 ### Hour 6
 
@@ -178,7 +178,7 @@ console.log("❌ Error:", error);
 - [ ] Monitoring dashboards green
 - [ ] Error rate < 1%
 
-**Status:** ******\_\_\_******
+**Status:** **\*\***\_\_\_**\*\***
 
 ### Hour 24
 
@@ -187,7 +187,7 @@ console.log("❌ Error:", error);
 - [ ] Validate audit log consistency
 - [ ] Review user feedback (if any)
 
-**Status:** ******\_\_\_******
+**Status:** **\*\***\_\_\_**\*\***
 
 ### Hour 48
 
@@ -196,7 +196,7 @@ console.log("❌ Error:", error);
 - [ ] Document any issues encountered
 - [ ] Update stakeholders with status
 
-**Status:** ******\_\_\_******
+**Status:** **\*\***\_\_\_**\*\***
 
 ---
 
@@ -274,12 +274,12 @@ COMMIT;
 ### Rollback Step 3: Restore from Backup (Last Resort)
 
 - [ ] Navigate to Supabase Dashboard → Database → Backups
-- [ ] Select backup ID: ******\_\_\_******
+- [ ] Select backup ID: **\*\***\_\_\_**\*\***
 - [ ] Click "Restore"
 - [ ] Confirm restoration
 - [ ] Verify database state
 
-**Rollback Time:** ******\_\_\_******
+**Rollback Time:** **\*\***\_\_\_**\*\***
 
 ---
 
@@ -319,9 +319,9 @@ Mark deployment as successful when ALL of these are true:
 ✅ Error rate < 1% (48h)
 ✅ No data integrity issues
 
-**Deployment Status:** ******\_\_\_******
-**Sign-off:** ******\_\_\_****** (Engineer)
-**Date/Time:** ******\_\_\_******
+**Deployment Status:** **\*\***\_\_\_**\*\***
+**Sign-off:** **\*\***\_\_\_**\*\*** (Engineer)
+**Date/Time:** **\*\***\_\_\_**\*\***
 
 ---
 

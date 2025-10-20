@@ -351,8 +351,8 @@ if (error) {
 
    ```typescript
    // ❌ BAD - Node.js APIs not available
-   import fs from "fs";
    import crypto from "crypto";
+   import fs from "fs";
 
    // ✅ GOOD - Use Web APIs
    const crypto = globalThis.crypto;

@@ -3,8 +3,9 @@
  * Provides occupancy and revenue reports with CSV export functionality
  */
 
+import { eachDayOfInterval, endOfMonth, format, isWithinInterval, startOfMonth } from "date-fns";
+
 import type { Booking, Unit } from "@/types";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval } from "date-fns";
 
 // ============================================
 // TYPES

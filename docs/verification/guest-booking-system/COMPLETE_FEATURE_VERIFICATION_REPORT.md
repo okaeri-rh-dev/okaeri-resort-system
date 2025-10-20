@@ -267,10 +267,12 @@ All failures are in **unrelated files**:
 
 ```typescript
 // GuestBookingForm.tsx imports
-import { formatCurrency } from "@/lib/validations"; // ✅ Reused
-import { calculatePricing } from "@/utils/pricing"; // ✅ Reused
 import DOMPurify from "dompurify"; // ✅ Standard library
+
+import { formatCurrency } from "@/lib/validations"; // ✅ Reused
+
 import { compressAndValidateFile } from "@/utils/file-compression"; // ✅ New utility
+import { calculatePricing } from "@/utils/pricing"; // ✅ Reused
 ```
 
 **Analysis**:

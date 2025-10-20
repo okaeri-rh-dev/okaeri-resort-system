@@ -11,6 +11,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+
 import type { Database } from "@/types/database.types";
 
 // ✅ Use dedicated test database or local Supabase instance

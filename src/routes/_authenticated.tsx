@@ -1,6 +1,7 @@
-import { createFileRoute, redirect, Outlet } from "@tanstack/react-router";
-import { MainLayout } from "@/layouts/MainLayout";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { MainLayout } from "@/layouts/MainLayout";
 import { auth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -20,14 +21,14 @@ export const Route = createFileRoute("/_authenticated")({
   errorComponent: ({ reset }) => (
     <ErrorBoundary level="app">
       <MainLayout>
-        <div className="flex items-center justify-center min-h-96">
+        <div className="flex min-h-96 items-center justify-center">
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-red-600 mb-4">Authentication Error</h2>
-            <p className="text-gray-600 mb-4">There was a problem with your authentication.</p>
+            <h2 className="mb-4 text-xl font-semibold text-red-600">Authentication Error</h2>
+            <p className="mb-4 text-gray-600">There was a problem with your authentication.</p>
             <div className="space-x-4">
               <button
                 onClick={reset}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
               >
                 Try Again
               </button>
@@ -36,7 +37,7 @@ export const Route = createFileRoute("/_authenticated")({
                   auth.signOut();
                   window.location.href = "/login";
                 }}
-                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
               >
                 Sign Out
               </button>

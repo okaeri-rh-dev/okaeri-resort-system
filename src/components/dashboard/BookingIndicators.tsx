@@ -1,7 +1,8 @@
+import React from "react";
+
 import { getBookingStatusColor, getBookingStatusPriority } from "@/hooks/useCalendarBookings";
 import { cn } from "@/lib/utils";
 import type { Booking } from "@/types";
-import React from "react";
 
 interface BookingIndicatorsProps {
   bookings: Booking[];
@@ -32,13 +33,13 @@ export const BookingIndicators = React.memo(function BookingIndicators({
   const remainingCount = uniqueBookings.length - maxVisible;
 
   return (
-    <div className={cn("flex flex-row gap-0.5 w-full", className)}>
+    <div className={cn("flex w-full flex-row gap-0.5", className)}>
       {visibleBookings.map((booking) => (
         <div
           key={booking.booking_id}
           className={cn(
-            "inline-flex items-center px-1 py-0.5 text-[9px] sm:text-[10px] font-semibold rounded-sm border",
-            "font-mono tracking-tight truncate max-w-full",
+            "inline-flex items-center rounded-sm border px-1 py-0.5 text-[9px] font-semibold sm:text-[10px]",
+            "max-w-full truncate font-mono tracking-tight",
             getBookingStatusColor(booking.booking_status ?? "Pending")
           )}
         >
@@ -48,7 +49,7 @@ export const BookingIndicators = React.memo(function BookingIndicators({
         </div>
       ))}
       {remainingCount > 0 && (
-        <div className="inline-flex items-center px-1 py-0.5 text-[9px] sm:text-[10px] font-medium rounded-sm bg-neutral-100 text-neutral-600 border border-neutral-200">
+        <div className="inline-flex items-center rounded-sm border border-neutral-200 bg-neutral-100 px-1 py-0.5 text-[9px] font-medium text-neutral-600 sm:text-[10px]">
           +{remainingCount}
         </div>
       )}
@@ -69,8 +70,8 @@ export const BookingCountBadge = React.memo(function BookingCountBadge({
   return (
     <div
       className={cn(
-        "absolute top-0.5 right-0.5 size-4 flex items-center justify-center",
-        "bg-blue-600 text-white text-[9px] font-bold rounded-full",
+        "absolute top-0.5 right-0.5 flex size-4 items-center justify-center",
+        "rounded-full bg-blue-600 text-[9px] font-bold text-white",
         "shadow-sm",
         className
       )}

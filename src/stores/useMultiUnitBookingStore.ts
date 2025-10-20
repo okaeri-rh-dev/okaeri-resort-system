@@ -11,11 +11,11 @@
  * @module useMultiUnitBookingStore
  */
 
+import { enableMapSet, type Draft } from "immer";
 import { create } from "zustand";
 import { devtools, persist, subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import { enableMapSet } from "immer";
-import type { Draft } from "immer";
+
 import type { MultiUnitBookingStore, OptimisticEntry } from "@/types";
 import { dateDifference, isWeekend } from "@/utils/date-helpers";
 

@@ -228,8 +228,8 @@ npx wrangler secret put SUPABASE_ANON_KEY
 ```typescript
 // src/lib/audit-logger-workers.ts
 
-import { supabase } from "./supabase";
 import type { AuditEventContext } from "../../database.types";
+import { supabase } from "./supabase";
 
 /**
  * Log audit event with IP capture via Cloudflare Workers
@@ -300,8 +300,8 @@ export async function logAuditEventWithIP(
 ```typescript
 // src/lib/auth-helpers.ts
 
-import { logAuditEventWithIP } from "./audit-logger-workers";
 import { AuditCategory, AuditSeverity } from "../../database.types";
+import { logAuditEventWithIP } from "./audit-logger-workers";
 
 export async function handleLogin(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -343,8 +343,8 @@ export async function handleLogin(email: string, password: string) {
 ```typescript
 // src/lib/payment-helpers.ts
 
-import { logAuditEventWithIP } from "./audit-logger-workers";
 import { AuditCategory, AuditSeverity } from "../../database.types";
+import { logAuditEventWithIP } from "./audit-logger-workers";
 
 export async function processRefund(paymentId: string, amount: number, reason: string) {
   // Process refund
@@ -377,8 +377,8 @@ export async function processRefund(paymentId: string, amount: number, reason: s
 ```typescript
 // src/lib/booking-helpers.ts
 
-import { logAuditEvent } from "./audit-logger"; // Client-side logger (NO IP)
 import { AuditCategory, AuditSeverity } from "../../database.types";
+import { logAuditEvent } from "./audit-logger"; // Client-side logger (NO IP)
 
 export async function createBooking(bookingData: BookingFormData) {
   // Create booking

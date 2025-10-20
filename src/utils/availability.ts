@@ -7,7 +7,7 @@
  * @module AvailabilityUtils
  */
 
-import type { Unit, Booking } from "@/types";
+import type { Booking, Unit } from "@/types";
 
 // ============================================
 // TYPE DEFINITIONS
