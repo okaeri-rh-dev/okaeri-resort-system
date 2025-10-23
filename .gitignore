@@ -146,6 +146,8 @@ Thumbs.db
 .tmp/
 *.tmp
 *.temp
+tmp/*
+temp/*
 
 # Backup files
 *.bak
