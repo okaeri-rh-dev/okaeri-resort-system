@@ -207,7 +207,7 @@ Each chunk follows the household-hub pattern with exactly 4 files:
 
 **Duration**: 90 minutes
 **Source Docs**: `03-frontend-components.md` lines 1-200
-**Dependencies**: 004 (requires API for validation)
+**Dependencies**: 004 (requires `/api/guest-booking/rates` endpoint for static rate display)
 
 **Scope**:
 
@@ -550,7 +550,7 @@ Each chunk follows the household-hub pattern with exactly 4 files:
 
 #### Chunk 016: E2E and Performance Tests
 
-**Duration**: 120 minutes
+**Duration**: 145 minutes
 **Source Docs**: `07-testing-strategy.md` lines 301-600
 **Dependencies**: 015 (requires test fixtures)
 
@@ -576,7 +576,7 @@ Each chunk follows the household-hub pattern with exactly 4 files:
 - E2E guest booking flow passes
 - E2E admin assignment flow passes
 - Concurrency test prevents double-booking
-- Performance within 10% of baseline
+- Performance regression within acceptable thresholds (15-30% per metric, see 07-testing-strategy.md lines 1041-1048)
 - Load test handles 10 concurrent bookings
 - Rollback dry-run successful (<1 hour)
 - All tests pass: `npm run test:all`
@@ -596,7 +596,7 @@ Each chunk follows the household-hub pattern with exactly 4 files:
 - Database migration on production
 - Monitoring dashboard setup (Grafana Cloud / UptimeRobot)
 - Alert configuration (queue length, assignment time, errors)
-- Admin training session (1 hour)
+- Admin training session (2 hours - comprehensive workflow training)
 - Rollback procedure documentation
 - Post-deployment verification
 
@@ -727,15 +727,15 @@ Phase 4: Testing & Launch
 
 ## Time Estimates
 
-| Phase                       | Chunks        | Total Time    |
-| --------------------------- | ------------- | ------------- |
-| Phase 1: Database & Backend | 001-005       | ~8.5 hours    |
-| Phase 2: Guest Flow         | 006-010       | ~7.5 hours    |
-| Phase 3: Admin Interface    | 011-014       | ~6.5 hours    |
-| Phase 4: Testing & Launch   | 015-017       | ~5.5 hours    |
-| **Total**                   | **17 chunks** | **~28 hours** |
+| Phase                       | Chunks        | Total Time      |
+| --------------------------- | ------------- | --------------- |
+| Phase 1: Database & Backend | 001-005       | ~8.5 hours      |
+| Phase 2: Guest Flow         | 006-010       | ~7.5 hours      |
+| Phase 3: Admin Interface    | 011-014       | ~6.5 hours      |
+| Phase 4: Testing & Launch   | 015-017       | ~7.0 hours      |
+| **Total**                   | **17 chunks** | **~29.5 hours** |
 
-_Note: These are focused implementation times. Include buffer for debugging and integration._
+_Note: These are focused implementation times. Include buffer for debugging and integration. Chunk 017's 90-minute deployment estimate does not include the 2-hour admin training session._
 
 ---
 
