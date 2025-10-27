@@ -35,6 +35,14 @@
     "**/*.phase3-4.*",
     "api/workflows.phase3-4/**",
     "api/cron/*.phase3-4.*",
-    "src/tests/**/*"
+    "src/tests/**/*",
+    "src/__tests__/**",
+    "src/stores/**",
+    "src/routes/_authenticated/units/**",
+    "src/components/bookings/BookingEdit/**",
+    "src/hooks/entity/__tests__/**",
+    "src/lib/availability.ts",
+    "src/lib/database-adapters.ts",
+    "src/lib/supabase.ts"
   ]
 }

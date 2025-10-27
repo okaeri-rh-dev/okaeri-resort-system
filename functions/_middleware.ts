@@ -235,6 +235,10 @@ function isPublicPath(pathname: string): boolean {
     "/api/units",
     "/api/pricing/quote",
     "/api/health",
+    "/api/guest-booking/multi-unit",
+    "/api/guest-booking/rates",
+    "/api/guest-booking/discount-rules",
+    "/api/guest-booking/preview-pricing",
   ];
 
   return publicPaths.some((path) => pathname.startsWith(path));
