@@ -1,10 +1,30 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.5";
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
   public: {
     Tables: {
@@ -48,7 +68,7 @@ export type Database = {
           created_at: string | null;
           description: string | null;
           event_type: string | null;
-          ip_address: unknown | null;
+          ip_address: unknown;
           metadata: Json | null;
           new_data: Json | null;
           old_data: Json | null;
@@ -71,7 +91,7 @@ export type Database = {
           created_at?: string | null;
           description?: string | null;
           event_type?: string | null;
-          ip_address?: unknown | null;
+          ip_address?: unknown;
           metadata?: Json | null;
           new_data?: Json | null;
           old_data?: Json | null;
@@ -94,7 +114,7 @@ export type Database = {
           created_at?: string | null;
           description?: string | null;
           event_type?: string | null;
-          ip_address?: unknown | null;
+          ip_address?: unknown;
           metadata?: Json | null;
           new_data?: Json | null;
           old_data?: Json | null;
@@ -120,7 +140,7 @@ export type Database = {
           created_at: string | null;
           description: string | null;
           event_type: string | null;
-          ip_address: unknown | null;
+          ip_address: unknown;
           metadata: Json | null;
           new_data: Json | null;
           old_data: Json | null;
@@ -143,7 +163,7 @@ export type Database = {
           created_at?: string | null;
           description?: string | null;
           event_type?: string | null;
-          ip_address?: unknown | null;
+          ip_address?: unknown;
           metadata?: Json | null;
           new_data?: Json | null;
           old_data?: Json | null;
@@ -166,7 +186,7 @@ export type Database = {
           created_at?: string | null;
           description?: string | null;
           event_type?: string | null;
-          ip_address?: unknown | null;
+          ip_address?: unknown;
           metadata?: Json | null;
           new_data?: Json | null;
           old_data?: Json | null;
@@ -226,117 +246,8 @@ export type Database = {
           },
         ];
       };
-      booking_unit_availability: {
-        Row: {
-          availability_id: string;
-          booking_id: string;
-          booking_status: string;
-          check_in: string;
-          check_out: string;
-          created_at: string | null;
-          unit_id: string;
-          updated_at: string | null;
-        };
-        Insert: {
-          availability_id?: string;
-          booking_id: string;
-          booking_status: string;
-          check_in: string;
-          check_out: string;
-          created_at?: string | null;
-          unit_id: string;
-          updated_at?: string | null;
-        };
-        Update: {
-          availability_id?: string;
-          booking_id?: string;
-          booking_status?: string;
-          check_in?: string;
-          check_out?: string;
-          created_at?: string | null;
-          unit_id?: string;
-          updated_at?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "booking_unit_availability_booking_id_fkey";
-            columns: ["booking_id"];
-            isOneToOne: false;
-            referencedRelation: "bookings";
-            referencedColumns: ["booking_id"];
-          },
-          {
-            foreignKeyName: "booking_unit_availability_unit_id_fkey";
-            columns: ["unit_id"];
-            isOneToOne: false;
-            referencedRelation: "units";
-            referencedColumns: ["unit_id"];
-          },
-        ];
-      };
-      booking_units: {
-        Row: {
-          assigned_guests: number | null;
-          booking_id: string;
-          booking_unit_id: string;
-          created_at: string | null;
-          extra_person_charge: number | null;
-          guest_names: string[] | null;
-          subtotal: number;
-          unit_id: string;
-          unit_notes: string | null;
-          unit_price: number;
-          updated_at: string | null;
-          weekend_surcharge: number | null;
-        };
-        Insert: {
-          assigned_guests?: number | null;
-          booking_id: string;
-          booking_unit_id?: string;
-          created_at?: string | null;
-          extra_person_charge?: number | null;
-          guest_names?: string[] | null;
-          subtotal: number;
-          unit_id: string;
-          unit_notes?: string | null;
-          unit_price: number;
-          updated_at?: string | null;
-          weekend_surcharge?: number | null;
-        };
-        Update: {
-          assigned_guests?: number | null;
-          booking_id?: string;
-          booking_unit_id?: string;
-          created_at?: string | null;
-          extra_person_charge?: number | null;
-          guest_names?: string[] | null;
-          subtotal?: number;
-          unit_id?: string;
-          unit_notes?: string | null;
-          unit_price?: number;
-          updated_at?: string | null;
-          weekend_surcharge?: number | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "booking_units_booking_id_fkey";
-            columns: ["booking_id"];
-            isOneToOne: false;
-            referencedRelation: "bookings";
-            referencedColumns: ["booking_id"];
-          },
-          {
-            foreignKeyName: "booking_units_unit_id_fkey";
-            columns: ["unit_id"];
-            isOneToOne: false;
-            referencedRelation: "units";
-            referencedColumns: ["unit_id"];
-          },
-        ];
-      };
       bookings: {
         Row: {
-          base_amount: number | null;
           booking_id: string;
           booking_reference: string;
           booking_status: string | null;
@@ -345,6 +256,8 @@ export type Database = {
           contact_number: string;
           created_at: string | null;
           discount_amount: number | null;
+          discount_percent: number | null;
+          downpayment_required: number | null;
           email: string;
           guest_id: string | null;
           guest_name: string;
@@ -355,17 +268,17 @@ export type Database = {
           payment_method: string | null;
           payment_proof_url: string | null;
           payment_status: string | null;
+          pricing_snapshot: Json | null;
+          requested_unit_count: number | null;
           special_requests: string | null;
-          tax_amount: number | null;
           total_amount: number;
-          total_surcharges: number | null;
-          unit_count: number | null;
+          unit_assignment_status: string | null;
+          unit_id: string;
           updated_at: string | null;
           upload_expires_at: string | null;
           upload_status: string | null;
         };
         Insert: {
-          base_amount?: number | null;
           booking_id?: string;
           booking_reference: string;
           booking_status?: string | null;
@@ -374,6 +287,8 @@ export type Database = {
           contact_number: string;
           created_at?: string | null;
           discount_amount?: number | null;
+          discount_percent?: number | null;
+          downpayment_required?: number | null;
           email: string;
           guest_id?: string | null;
           guest_name: string;
@@ -384,17 +299,17 @@ export type Database = {
           payment_method?: string | null;
           payment_proof_url?: string | null;
           payment_status?: string | null;
+          pricing_snapshot?: Json | null;
+          requested_unit_count?: number | null;
           special_requests?: string | null;
-          tax_amount?: number | null;
           total_amount: number;
-          total_surcharges?: number | null;
-          unit_count?: number | null;
+          unit_assignment_status?: string | null;
+          unit_id: string;
           updated_at?: string | null;
           upload_expires_at?: string | null;
           upload_status?: string | null;
         };
         Update: {
-          base_amount?: number | null;
           booking_id?: string;
           booking_reference?: string;
           booking_status?: string | null;
@@ -403,6 +318,8 @@ export type Database = {
           contact_number?: string;
           created_at?: string | null;
           discount_amount?: number | null;
+          discount_percent?: number | null;
+          downpayment_required?: number | null;
           email?: string;
           guest_id?: string | null;
           guest_name?: string;
@@ -413,11 +330,12 @@ export type Database = {
           payment_method?: string | null;
           payment_proof_url?: string | null;
           payment_status?: string | null;
+          pricing_snapshot?: Json | null;
+          requested_unit_count?: number | null;
           special_requests?: string | null;
-          tax_amount?: number | null;
           total_amount?: number;
-          total_surcharges?: number | null;
-          unit_count?: number | null;
+          unit_assignment_status?: string | null;
+          unit_id?: string;
           updated_at?: string | null;
           upload_expires_at?: string | null;
           upload_status?: string | null;
@@ -429,6 +347,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "guests";
             referencedColumns: ["guest_id"];
+          },
+          {
+            foreignKeyName: "bookings_unit_id_fkey";
+            columns: ["unit_id"];
+            isOneToOne: false;
+            referencedRelation: "units";
+            referencedColumns: ["unit_id"];
           },
         ];
       };
@@ -507,6 +432,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      discount_rules: {
+        Row: {
+          conditions: Json;
+          created_at: string | null;
+          description: string | null;
+          discount_type: string;
+          discount_value: number;
+          id: string;
+          is_active: boolean | null;
+          max_discount: number | null;
+          name: string;
+          priority: number | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          conditions: Json;
+          created_at?: string | null;
+          description?: string | null;
+          discount_type?: string;
+          discount_value: number;
+          id?: string;
+          is_active?: boolean | null;
+          max_discount?: number | null;
+          name: string;
+          priority?: number | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          conditions?: Json;
+          created_at?: string | null;
+          description?: string | null;
+          discount_type?: string;
+          discount_value?: number;
+          id?: string;
+          is_active?: boolean | null;
+          max_discount?: number | null;
+          name?: string;
+          priority?: number | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       expenses: {
         Row: {
           amount: number;
@@ -543,45 +510,35 @@ export type Database = {
         };
         Relationships: [];
       };
-      guest_assignments: {
+      guest_booking_unit_requests: {
         Row: {
-          assignment_id: string;
-          booking_unit_id: string;
+          booking_id: string;
           created_at: string | null;
-          guest_id: string;
-          is_primary: boolean | null;
-          room_preferences: string | null;
+          guests_per_unit: number;
+          id: string;
+          updated_at: string | null;
         };
         Insert: {
-          assignment_id?: string;
-          booking_unit_id: string;
+          booking_id: string;
           created_at?: string | null;
-          guest_id: string;
-          is_primary?: boolean | null;
-          room_preferences?: string | null;
+          guests_per_unit: number;
+          id?: string;
+          updated_at?: string | null;
         };
         Update: {
-          assignment_id?: string;
-          booking_unit_id?: string;
+          booking_id?: string;
           created_at?: string | null;
-          guest_id?: string;
-          is_primary?: boolean | null;
-          room_preferences?: string | null;
+          guests_per_unit?: number;
+          id?: string;
+          updated_at?: string | null;
         };
         Relationships: [
           {
-            foreignKeyName: "guest_assignments_booking_unit_id_fkey";
-            columns: ["booking_unit_id"];
+            foreignKeyName: "guest_booking_unit_requests_booking_id_fkey";
+            columns: ["booking_id"];
             isOneToOne: false;
-            referencedRelation: "booking_units";
-            referencedColumns: ["booking_unit_id"];
-          },
-          {
-            foreignKeyName: "guest_assignments_guest_id_fkey";
-            columns: ["guest_id"];
-            isOneToOne: false;
-            referencedRelation: "guests";
-            referencedColumns: ["guest_id"];
+            referencedRelation: "bookings";
+            referencedColumns: ["booking_id"];
           },
         ];
       };
@@ -617,6 +574,35 @@ export type Database = {
           updated_at?: string | null;
         };
         Relationships: [];
+      };
+      idempotency_keys: {
+        Row: {
+          booking_id: string;
+          created_at: string | null;
+          expires_at: string | null;
+          key: string;
+        };
+        Insert: {
+          booking_id: string;
+          created_at?: string | null;
+          expires_at?: string | null;
+          key: string;
+        };
+        Update: {
+          booking_id?: string;
+          created_at?: string | null;
+          expires_at?: string | null;
+          key?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "idempotency_keys_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["booking_id"];
+          },
+        ];
       };
       maintenance_logs: {
         Row: {
@@ -709,6 +695,45 @@ export type Database = {
           },
         ];
       };
+      pricing_config: {
+        Row: {
+          base_occupancy: number;
+          base_rate: number;
+          created_at: string | null;
+          currency: string;
+          downpayment_percent: number;
+          extra_person_rate: number;
+          id: string;
+          max_capacity_per_unit: number;
+          updated_at: string | null;
+          weekend_rate: number;
+        };
+        Insert: {
+          base_occupancy?: number;
+          base_rate: number;
+          created_at?: string | null;
+          currency?: string;
+          downpayment_percent?: number;
+          extra_person_rate?: number;
+          id?: string;
+          max_capacity_per_unit?: number;
+          updated_at?: string | null;
+          weekend_rate: number;
+        };
+        Update: {
+          base_occupancy?: number;
+          base_rate?: number;
+          created_at?: string | null;
+          currency?: string;
+          downpayment_percent?: number;
+          extra_person_rate?: number;
+          id?: string;
+          max_capacity_per_unit?: number;
+          updated_at?: string | null;
+          weekend_rate?: number;
+        };
+        Relationships: [];
+      };
       units: {
         Row: {
           amenities: Json | null;
@@ -772,11 +797,11 @@ export type Database = {
       audit_index_stats: {
         Row: {
           index_size: string | null;
-          indexname: unknown | null;
+          indexname: unknown;
           rows_fetched: number | null;
           rows_read: number | null;
-          schemaname: unknown | null;
-          tablename: unknown | null;
+          schemaname: unknown;
+          tablename: unknown;
           times_used: number | null;
         };
         Relationships: [];
@@ -788,35 +813,6 @@ export type Database = {
           details: string | null;
         };
         Relationships: [];
-      };
-      public_unit_availability: {
-        Row: {
-          booking_status: string | null;
-          check_in: string | null;
-          check_out: string | null;
-          unit_id: string | null;
-        };
-        Insert: {
-          booking_status?: string | null;
-          check_in?: string | null;
-          check_out?: string | null;
-          unit_id?: string | null;
-        };
-        Update: {
-          booking_status?: string | null;
-          check_in?: string | null;
-          check_out?: string | null;
-          unit_id?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "booking_unit_availability_unit_id_fkey";
-            columns: ["unit_id"];
-            isOneToOne: false;
-            referencedRelation: "units";
-            referencedColumns: ["unit_id"];
-          },
-        ];
       };
     };
     Functions: {
@@ -838,284 +834,45 @@ export type Database = {
           tables_affected: string[];
         }[];
       };
+      assign_units_to_booking: {
+        Args: { p_booking_id: string; p_unit_ids: string[] };
+        Returns: undefined;
+      };
       attach_audit_trigger: {
         Args: { target_table: string };
         Returns: undefined;
       };
-      can_view_all_audit_logs: {
-        Args: Record<PropertyKey, never>;
-        Returns: boolean;
+      calculate_booking_pricing: {
+        Args: { p_check_in: string; p_check_out: string; p_unit_requests: Json };
+        Returns: Json;
       };
-      check_multi_unit_availability: {
-        Args: {
-          p_check_in: string;
-          p_check_out: string;
-          p_exclude_booking_id?: string;
-          p_unit_ids: string[];
-        };
-        Returns: {
-          conflicting_bookings: number;
-          is_available: boolean;
-          next_available_date: string;
-          unit_id: string;
-        }[];
-      };
+      can_view_all_audit_logs: { Args: never; Returns: boolean };
       check_unit_availability: {
         Args: { p_check_in: string; p_check_out: string; p_unit_id: string };
         Returns: boolean;
       };
-      create_multi_unit_booking: {
-        Args: { p_booking_data: Json; p_guest_id?: string; p_units: Json[] };
-        Returns: string;
+      cleanup_expired_idempotency_keys: { Args: never; Returns: number };
+      cleanup_expired_payment_proofs: {
+        Args: never;
+        Returns: {
+          file_path: string;
+        }[];
+      };
+      create_guest_booking: {
+        Args: {
+          p_booking_data: Json;
+          p_guest_data: Json;
+          p_idempotency_key: string;
+          p_unit_requests: Json;
+        };
+        Returns: Json;
       };
       detach_audit_trigger: {
         Args: { target_table: string };
         Returns: undefined;
       };
-      gbt_bit_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_bool_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_bool_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_bpchar_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_bytea_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_cash_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_cash_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_date_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_date_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_decompress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_enum_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_enum_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_float4_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_float4_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_float8_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_float8_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_inet_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_int2_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_int2_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_int4_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_int4_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_int8_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_int8_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_intv_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_intv_decompress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_intv_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_macad_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_macad_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_macad8_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_macad8_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_numeric_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_oid_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_oid_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_text_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_time_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_time_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_timetz_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_ts_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_ts_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_tstz_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_uuid_compress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_uuid_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_var_decompress: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbt_var_fetch: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbtreekey_var_in: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbtreekey_var_out: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbtreekey16_in: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbtreekey16_out: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbtreekey2_in: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbtreekey2_out: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbtreekey32_in: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbtreekey32_out: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbtreekey4_in: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbtreekey4_out: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbtreekey8_in: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      gbtreekey8_out: {
-        Args: { "": unknown };
-        Returns: unknown;
-      };
-      generate_booking_reference: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      get_booking_units: {
-        Args: { p_booking_id: string };
-        Returns: {
-          assigned_guests: number;
-          subtotal: number;
-          unit_code: string;
-          unit_id: string;
-          unit_name: string;
-          unit_price: number;
-          unit_type: string;
-        }[];
-      };
-      get_current_audit_role: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
+      generate_booking_reference: { Args: never; Returns: string };
+      get_current_audit_role: { Args: never; Returns: string };
       get_public_aggregate_availability: {
         Args: { p_end_date: string; p_start_date: string };
         Returns: {
@@ -1132,30 +889,14 @@ export type Database = {
         };
         Returns: undefined;
       };
-      is_admin: {
-        Args: { check_user_id: string };
-        Returns: boolean;
-      };
-      is_admin_or_owner: {
-        Args: { check_user_id: string };
-        Returns: boolean;
-      };
-      is_audit_admin: {
-        Args: Record<PropertyKey, never>;
-        Returns: boolean;
-      };
-      is_audit_manager: {
-        Args: Record<PropertyKey, never>;
-        Returns: boolean;
-      };
-      is_audit_owner: {
-        Args: Record<PropertyKey, never>;
-        Returns: boolean;
-      };
-      is_manager: {
-        Args: { check_user_id: string };
-        Returns: boolean;
-      };
+      has_any_role: { Args: { check_user_id: string }; Returns: boolean };
+      is_admin: { Args: { check_user_id: string }; Returns: boolean };
+      is_admin_or_owner: { Args: { check_user_id: string }; Returns: boolean };
+      is_audit_admin: { Args: never; Returns: boolean };
+      is_audit_manager: { Args: never; Returns: boolean };
+      is_audit_owner: { Args: never; Returns: boolean };
+      is_manager: { Args: { check_user_id: string }; Returns: boolean };
+      is_staff: { Args: { check_user_id: string }; Returns: boolean };
       monthly_archive_until: {
         Args: { dry_run?: boolean; final_cutoff_date: string };
         Returns: {
@@ -1297,6 +1038,9 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
