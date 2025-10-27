@@ -164,6 +164,9 @@ playwright-report/
 playwright-results.json
 test-results.xml
 
+# Temporary test queries (generated during database testing)
+test-queries/
+
 # Build artifacts
 *.meta.json.gz
 html.meta.json.gz
