@@ -45,6 +45,7 @@ export const multiUnitBookingSchema = z
     turnstile_token: z.string().min(1, "CAPTCHA token required"),
     terms_accepted: z.boolean().refine((val) => val === true, "Must accept terms"),
     idempotency_key: z.string().uuid().optional(),
+    payment_proof_url: z.string().min(1, "Payment proof is required").optional(), // Chunk 008: Payment proof upload
   })
   .refine((data) => new Date(data.check_out) > new Date(data.check_in), {
     message: "Check-out must be after check-in",

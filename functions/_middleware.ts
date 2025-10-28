@@ -239,6 +239,7 @@ function isPublicPath(pathname: string): boolean {
     "/api/guest-booking/rates",
     "/api/guest-booking/discount-rules",
     "/api/guest-booking/preview-pricing",
+    "/api/guest-booking/upload-url", // Payment proof upload (Chunk 008)
   ];
 
   return publicPaths.some((path) => pathname.startsWith(path));

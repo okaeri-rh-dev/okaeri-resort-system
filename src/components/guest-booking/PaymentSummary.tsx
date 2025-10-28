@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { previewPricing } from "@/lib/api/guest-booking-client";
 import type { PricingPreview, UnitRequest } from "@/types/guest-booking-multi-unit";
 
-interface PaymentSummaryProps {
+export interface PaymentSummaryProps {
   unitRequests: UnitRequest[];
   checkIn: Date | undefined;
   checkOut: Date | undefined;
