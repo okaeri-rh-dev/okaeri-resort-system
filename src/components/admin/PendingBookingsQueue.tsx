@@ -14,7 +14,6 @@
 import { useState } from "react";
 
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 import { Search, SlidersHorizontal } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -69,7 +68,6 @@ interface QueueFilters {
 // ============================================
 
 export function PendingBookingsQueue() {
-  const navigate = useNavigate();
   const [filters, setFilters] = useState<QueueFilters>({
     searchQuery: "",
     urgencyLevel: "all",
@@ -327,14 +325,18 @@ export function PendingBookingsQueue() {
                     <TableCell className="text-right">
                       <Button
                         size="sm"
-                        onClick={() =>
-                          navigate({
-                            to: "/bookings/$bookingId/assign-units",
-                            params: { bookingId: booking.booking_id },
-                          })
-                        }
+                        onClick={() => {
+                          // If payment verified, go to assignment; otherwise, verify payment first
+                          if (booking.payment_status === "Verified") {
+                            // Navigate to unit assignment (route will be created in chunk 013)
+                            window.location.href = `/admin/assign-units/${booking.booking_id}`;
+                          } else {
+                            // Navigate to payment verification
+                            window.location.href = `/admin/verify-payment/${booking.booking_id}`;
+                          }
+                        }}
                       >
-                        Assign Units
+                        {booking.payment_status === "Verified" ? "Assign Units" : "Verify Payment"}
                       </Button>
                     </TableCell>
                   </TableRow>

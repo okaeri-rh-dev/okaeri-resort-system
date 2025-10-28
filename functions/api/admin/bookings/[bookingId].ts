@@ -1,0 +1,295 @@
+/**
+ * Admin Booking Detail API Endpoint
+ * GET /api/admin/bookings/{bookingId}
+ *
+ * Fetches detailed information about a specific booking by ID.
+ * Requires admin authentication via Bearer token.
+ */
+
+import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
+import { createClient } from "@supabase/supabase-js";
+
+interface Env {
+  SUPABASE_URL: string;
+  SUPABASE_SERVICE_ROLE_KEY: string;
+}
+
+interface BookingDetailResponse {
+  booking_id: string;
+  booking_reference: string;
+  guest_name: string;
+  guest_contact: string;
+  check_in_date: string;
+  check_out_date: string;
+  total_amount: number;
+  payment_status: string;
+  payment_proof_path: string | null;
+  requested_unit_count: number;
+  created_at: string;
+}
+
+interface ErrorResponse {
+  error: string;
+  details?: string;
+}
+
+/**
+ * CORS headers for cross-origin requests
+ */
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+/**
+ * Handles OPTIONS preflight requests
+ */
+function handleOptions(): Response {
+  return new Response(null, {
+    headers: corsHeaders,
+    status: 204,
+  });
+}
+
+/**
+ * Creates error response with consistent structure
+ */
+function errorResponse(message: string, status: number, details?: string): Response {
+  const body: ErrorResponse = {
+    error: message,
+    ...(details && { details }),
+  };
+
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+/**
+ * Creates success response with booking data
+ */
+function successResponse(booking: BookingDetailResponse): Response {
+  return new Response(JSON.stringify(booking), {
+    status: 200,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+/**
+ * Extracts and validates Bearer token from Authorization header
+ */
+function extractBearerToken(request: CloudflareRequest): string | null {
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader) {
+    return null;
+  }
+
+  const parts = authHeader.split(" ");
+  if (parts.length !== 2 || parts[0] !== "Bearer") {
+    return null;
+  }
+
+  return parts[1];
+}
+
+/**
+ * Verifies user is authenticated and has admin role
+ */
+async function verifyAdminAuth(
+  token: string,
+  supabaseUrl: string,
+  serviceRoleKey: string
+): Promise<{ isValid: boolean; error?: string }> {
+  try {
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+
+    // Verify JWT and get user
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      return {
+        isValid: false,
+        error: "Invalid or expired token",
+      };
+    }
+
+    // Check admin role from metadata
+    const userRole = user.user_metadata?.role || user.app_metadata?.role || "guest";
+
+    if (userRole !== "admin") {
+      return {
+        isValid: false,
+        error: "Admin access required",
+      };
+    }
+
+    return { isValid: true };
+  } catch (err) {
+    console.error("Auth verification error:", err);
+    return {
+      isValid: false,
+      error: "Authentication verification failed",
+    };
+  }
+}
+
+/**
+ * Fetches booking details from database
+ */
+async function fetchBookingById(
+  bookingId: string,
+  supabaseUrl: string,
+  serviceRoleKey: string
+): Promise<{ booking: BookingDetailResponse | null; error?: string }> {
+  try {
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    const { data, error } = await supabase
+      .from("bookings")
+      .select(
+        `
+        booking_id,
+        booking_reference,
+        guest_name,
+        guest_contact,
+        check_in_date,
+        check_out_date,
+        total_amount,
+        payment_status,
+        payment_proof_path,
+        requested_unit_count,
+        created_at
+      `
+      )
+      .eq("booking_id", bookingId)
+      .single();
+
+    if (error) {
+      console.error("Database query error:", error);
+      return {
+        booking: null,
+        error: error.code === "PGRST116" ? "Booking not found" : error.message,
+      };
+    }
+
+    if (!data) {
+      return {
+        booking: null,
+        error: "Booking not found",
+      };
+    }
+
+    return { booking: data as BookingDetailResponse };
+  } catch (err) {
+    console.error("Fetch booking error:", err);
+    return {
+      booking: null,
+      error: "Failed to fetch booking details",
+    };
+  }
+}
+
+/**
+ * Main request handler
+ */
+export async function onRequest(context: {
+  request: CloudflareRequest;
+  env: Env;
+  params: Record<string, string>;
+}): Promise<Response> {
+  const { request, env, params } = context;
+
+  try {
+    // Handle OPTIONS preflight
+    if (request.method === "OPTIONS") {
+      return handleOptions();
+    }
+
+    // Only allow GET requests
+    if (request.method !== "GET") {
+      return errorResponse("Method not allowed", 405);
+    }
+
+    // Validate environment variables
+    if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("Missing required environment variables");
+      return errorResponse("Server configuration error", 500, "Missing Supabase credentials");
+    }
+
+    // Extract booking ID from route parameter
+    const bookingId = params.bookingId;
+    if (!bookingId) {
+      return errorResponse("Booking ID is required", 400);
+    }
+
+    // Validate booking ID format (UUID)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(bookingId)) {
+      return errorResponse("Invalid booking ID format", 400);
+    }
+
+    // Extract and validate Bearer token
+    const token = extractBearerToken(request);
+    if (!token) {
+      return errorResponse(
+        "Authentication required",
+        401,
+        "Missing or invalid Authorization header"
+      );
+    }
+
+    // Verify admin authentication
+    const authResult = await verifyAdminAuth(
+      token,
+      env.SUPABASE_URL,
+      env.SUPABASE_SERVICE_ROLE_KEY
+    );
+
+    if (!authResult.isValid) {
+      const status = authResult.error?.includes("Admin") ? 403 : 401;
+      return errorResponse(authResult.error || "Authentication failed", status);
+    }
+
+    // Fetch booking details
+    const { booking, error } = await fetchBookingById(
+      bookingId,
+      env.SUPABASE_URL,
+      env.SUPABASE_SERVICE_ROLE_KEY
+    );
+
+    if (error) {
+      const status = error === "Booking not found" ? 404 : 500;
+      return errorResponse(error, status);
+    }
+
+    if (!booking) {
+      return errorResponse("Booking not found", 404);
+    }
+
+    // Return booking details
+    return successResponse(booking);
+  } catch (err) {
+    console.error("Unexpected error in booking detail endpoint:", err);
+    return errorResponse(
+      "Internal server error",
+      500,
+      err instanceof Error ? err.message : "Unknown error"
+    );
+  }
+}
