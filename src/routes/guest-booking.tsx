@@ -1,10 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { GuestBookingForm } from "@/components/guest-booking/GuestBookingForm";
-// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MultiUnitGuestBookingForm } from "@/components/guest-booking";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-// import { InfoIcon } from "lucide-react";
 
 export const Route = createFileRoute("/guest-booking")({
   component: GuestBookingPage,
@@ -30,36 +27,15 @@ function GuestBookingPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="mb-2 text-3xl font-bold">Book Your Stay</h1>
-          <p className="text-muted-foreground">Complete the form below to make a reservation</p>
+          <h1 className="mb-2 text-4xl font-bold">Book Your Stay</h1>
+          <p className="text-muted-foreground mt-2">
+            Complete the form below to request a booking. We'll confirm unit assignment within 24
+            hours.
+          </p>
         </div>
 
-        {/* Info Banner */}
-        {/* <Card className="max-w-2xl mx-auto mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <InfoIcon className="h-5 w-5" />
-              Booking Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm">
-              <li>• No account required - book as a guest</li>
-              <li>• Upload your payment proof securely</li>
-              <li>• Receive instant booking confirmation via email</li>
-              <li>• Track your booking status with the reference number</li>
-              <li>• Payment verification usually within 24 hours</li>
-            </ul>
-          </CardContent>
-        </Card> */}
-
-        {/* Booking Form */}
-        <GuestBookingForm
-          onSuccess={(bookingReference) => {
-            // Optionally redirect to success page or status check
-            console.log("Booking created:", bookingReference);
-          }}
-        />
+        {/* Multi-Unit Booking Form */}
+        <MultiUnitGuestBookingForm />
       </div>
     </div>
   );

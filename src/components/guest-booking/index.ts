@@ -20,3 +20,9 @@ export type { PaymentProofUploadProps } from "./PaymentProofUpload";
 
 export { PaymentSummary } from "./PaymentSummary";
 export type { PaymentSummaryProps } from "./PaymentSummary";
+
+export { MultiUnitGuestBookingForm } from "./MultiUnitGuestBookingForm";
+
+export { FormStepIndicator } from "./FormStepIndicator";
+
+export { BookingReviewStep } from "./BookingReviewStep";

@@ -15,9 +15,12 @@ import {
 
 export interface PaymentProofUploadProps {
   bookingReference: string; // For file path naming
-  onUploadComplete: (filePath: string) => void;
+  onUploadComplete?: (filePath: string) => void; // Made optional for React Hook Form compatibility
   onUploadError?: (error: string) => void;
   disabled?: boolean;
+  // React Hook Form integration props
+  value?: string | null; // Current file path value
+  onChange?: (value: string | null) => void; // Callback when value changes
 }
 
 /**
@@ -29,20 +32,25 @@ export interface PaymentProofUploadProps {
  * - Client-side image compression
  * - Upload progress tracking
  * - Signed URL integration
+ * - React Hook Form compatible (value/onChange props)
  *
  * @param bookingReference - Temporary booking reference for file naming
  * @param onUploadComplete - Callback when upload succeeds (receives file_path)
  * @param onUploadError - Optional callback when upload fails
  * @param disabled - Disable upload while form is submitting
+ * @param value - Current file path (for React Hook Form controlled component)
+ * @param onChange - Callback when file path changes (for React Hook Form)
  */
 export function PaymentProofUpload({
   bookingReference,
   onUploadComplete,
   onUploadError,
   disabled,
+  value,
+  onChange,
 }: PaymentProofUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadedFilePath, setUploadedFilePath] = useState<string | null>(null);
+  const [uploadedFilePath, setUploadedFilePath] = useState<string | null>(value || null);
   const [isValidating, setIsValidating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -198,7 +206,8 @@ export function PaymentProofUpload({
 
       // Step 3: Success - store file path
       setUploadedFilePath(file_path);
-      onUploadComplete(file_path);
+      onUploadComplete?.(file_path);
+      onChange?.(file_path); // Notify React Hook Form
     } catch (err) {
       console.error("[UPLOAD] Upload error:", err);
       const errorMessage = err instanceof Error ? err.message : "Upload failed";
@@ -220,6 +229,7 @@ export function PaymentProofUpload({
     setUploadedFilePath(null);
     setError(null);
     setCompressionInfo(null);
+    onChange?.(null); // Notify React Hook Form of removal
   };
 
   // Render uploaded file preview
