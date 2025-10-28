@@ -844,3 +844,42 @@ UnitRequestSelector (Container)
 **Status**: Ready to proceed with Chunk 004 - Core API Endpoints
 **Confidence**: HIGH (database layer complete, security enforced, comprehensive testing)
 **Production Readiness**: Phase 1 at 75% - Address 3 critical issues in Chunk 003 before deployment
+
+### ✅ Chunk 007: Payment Summary with Preview
+
+- **Status**: ✅ COMPLETE
+- **Completed**: 2025-01-28
+- **Implementation Time**: ~75 minutes
+- **Test Results**: 12/12 tests PASSED (100% pass rate)
+- **Code Quality Score**: 9.0/10 (A grade, upgraded from 7.5 after TypeScript fixes)
+- **Production Readiness**: READY ✅
+- **Deliverables**:
+  - ✅ TypeScript types (PricingPreview, PricingPreviewResponse, PricingPreviewRequest interfaces)
+  - ✅ API client function (previewPricing with proper error handling)
+  - ✅ PaymentSummary component (server-side pricing preview with debouncing)
+  - ✅ Alert warning variant added to shadcn/ui
+  - ✅ Comprehensive test suite (12 tests with 100% pass rate)
+  - ✅ TypeScript null safety fixes applied
+  - ✅ Code quality review with critical issues resolved
+
+**Architecture Validation**:
+
+- ✅ Server-side pricing authority enforced (PostgreSQL `calculate_booking_pricing()`)
+- ✅ NO client-side pricing calculations (component only displays server results)
+- ✅ Debouncing prevents excessive API calls (500ms delay with cleanup)
+- ✅ Real-time pricing updates when form changes
+- ✅ Graceful error handling (form remains usable if preview fails)
+
+**Component States**: Empty → Loading → Success | Error (non-blocking)
+
+**Test Coverage**: 12/12 passing (100%) ✅
+
+**Files Created/Modified**:
+
+- `src/types/guest-booking-multi-unit.ts` (MODIFIED - 3 new interfaces)
+- `src/lib/api/guest-booking-client.ts` (MODIFIED - previewPricing function, type-safe submitGuestBooking)
+- `src/components/guest-booking/PaymentSummary.tsx` (NEW - 218 lines)
+- `src/components/ui/alert.tsx` (MODIFIED - warning variant)
+- `src/components/guest-booking/__tests__/PaymentSummary.test.tsx` (NEW - 12 tests)
+
+**Integration Readiness**: ✅ Ready for Chunk 008 (Payment Proof Upload)

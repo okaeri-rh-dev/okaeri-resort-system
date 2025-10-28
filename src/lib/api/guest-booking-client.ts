@@ -21,6 +21,20 @@
  * ```
  */
 
+import type {
+  ErrorResponse,
+  MultiUnitBookingRequest,
+  MultiUnitBookingResponse,
+  PricingPreviewRequest,
+  PricingPreviewResponse,
+} from "@/types/guest-booking-multi-unit";
+
+/**
+ * API base URL for guest booking endpoints
+ * Uses environment variable if available, fallback to relative path
+ */
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api/guest-booking";
+
 /**
  * SessionStorage key for idempotency key persistence
  * Survives page refreshes but clears when tab/window closes
@@ -138,7 +152,9 @@ export function setIdempotencyKey(key: string): void {
  * @returns API response with booking details
  * @throws Error on network failure or server error
  */
-export async function submitGuestBooking(bookingData: any): Promise<any> {
+export async function submitGuestBooking(
+  bookingData: MultiUnitBookingRequest
+): Promise<MultiUnitBookingResponse> {
   // Get or create idempotency key
   const idempotencyKey = getOrCreateIdempotencyKey();
 
@@ -157,8 +173,8 @@ export async function submitGuestBooking(bookingData: any): Promise<any> {
     }),
   });
 
-  // Parse response
-  const result: any = await response.json();
+  // Parse response with union type for success/error responses
+  const result: MultiUnitBookingResponse | ErrorResponse = await response.json();
 
   // Clear key only on successful submission
   // Errors preserve key for retry
@@ -168,10 +184,11 @@ export async function submitGuestBooking(bookingData: any): Promise<any> {
 
   // Throw on error (caller handles retry logic)
   if (!response.ok) {
-    throw new Error(result.message || result.error || "Booking submission failed");
+    const errorResult = result as ErrorResponse;
+    throw new Error(errorResult.error || "Booking submission failed");
   }
 
-  return result;
+  return result as MultiUnitBookingResponse;
 }
 
 /**
@@ -306,4 +323,46 @@ export function calculateNights(checkIn: Date, checkOut: Date): number {
   const checkOutTime = checkOut.getTime();
   const diffMs = checkOutTime - checkInTime;
   return Math.floor(diffMs / msPerDay);
+}
+
+/**
+ * Fetch pricing preview from server
+ * POST /api/guest-booking/preview-pricing
+ *
+ * IMPORTANT: This endpoint calls PostgreSQL calculate_booking_pricing() function.
+ * It is NOT a client-side calculation - it's a server-side preview wrapper for UX.
+ *
+ * Source: 02-api-specification.md lines 645-698
+ *
+ * @param request Pricing preview request with dates and unit requests
+ * @throws Error if API call fails or returns non-success
+ * @returns PricingPreviewResponse with breakdown
+ */
+export async function previewPricing(
+  request: PricingPreviewRequest
+): Promise<PricingPreviewResponse> {
+  try {
+    const response = await fetch(`${API_BASE}/preview-pricing`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch pricing preview: ${response.status} ${response.statusText}`);
+    }
+
+    const data: PricingPreviewResponse = await response.json();
+
+    if (!data.success) {
+      throw new Error("API returned success: false");
+    }
+
+    return data;
+  } catch (error) {
+    console.error("[API] previewPricing error:", error);
+    throw error;
+  }
 }

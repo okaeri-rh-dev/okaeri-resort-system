@@ -109,6 +109,48 @@ export interface PricingConfig {
   currency: string;
 }
 
+/**
+ * Pricing preview response from server
+ * Returned by /api/guest-booking/preview-pricing endpoint
+ * Source: 02-api-specification.md lines 676-691
+ */
+export interface PricingPreview {
+  nights: number; // Number of nights in stay
+  total_units: number; // Total units requested
+  total_guests: number; // Total guests across all units
+  base_total: number; // Base rate × nights × units
+  weekend_surcharge: number; // Extra charge for weekend nights (Fri/Sat)
+  extra_person_fees: number; // Fees for guests above base_occupancy
+  subtotal: number; // base_total + surcharges + fees
+  discount?: {
+    // Optional discount (best-of policy)
+    percent: number; // Discount percentage (e.g., 5)
+    amount: number; // Discount amount in currency
+    rule_name: string; // Discount rule name (e.g., "7-Night Discount")
+  };
+  total: number; // Final total after discount
+  downpayment_required: number; // Required downpayment amount
+  downpayment_percent: number; // Downpayment percentage (default: 50)
+}
+
+/**
+ * API response shape for preview endpoint
+ */
+export interface PricingPreviewResponse {
+  success: boolean;
+  pricing: PricingPreview;
+  _note?: string; // Server note (e.g., "PREVIEW ONLY")
+}
+
+/**
+ * Request payload for preview endpoint
+ */
+export interface PricingPreviewRequest {
+  unit_requests: UnitRequest[];
+  check_in: string; // ISO 8601 datetime string
+  check_out: string; // ISO 8601 datetime string
+}
+
 // ============================================
 // Error Codes
 // ============================================
