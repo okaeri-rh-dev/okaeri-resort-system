@@ -4,6 +4,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 
 import "./index.css";
+import "./styles/print.css";
 
 // Performance monitoring for production
 if (import.meta.env.PROD) {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 
@@ -37,6 +38,7 @@ const STEPS = [
 ];
 
 export function MultiUnitGuestBookingForm() {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -147,7 +149,7 @@ export function MultiUnitGuestBookingForm() {
         }
       }
 
-      // Store booking data for confirmation page
+      // Store booking data for confirmation page (backup in case of issues)
       sessionStorage.setItem(
         "lastBookingConfirmation",
         JSON.stringify({
@@ -157,9 +159,15 @@ export function MultiUnitGuestBookingForm() {
         })
       );
 
-      // Navigate to confirmation page (will be created in chunk 010)
-      // For now, redirect with booking reference in query params
-      window.location.href = `/bookings?ref=${encodeURIComponent(result.booking?.booking_reference || "")}&success=true`;
+      // Navigate to confirmation page using TanStack Router
+      if (result.booking?.booking_reference) {
+        navigate({
+          to: "/booking-confirmation/$bookingReference",
+          params: { bookingReference: result.booking.booking_reference },
+        });
+      } else {
+        throw new Error("Booking reference not returned from API");
+      }
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "An unexpected error occurred");
     } finally {

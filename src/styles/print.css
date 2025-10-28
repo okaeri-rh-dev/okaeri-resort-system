@@ -1,0 +1,111 @@
+/**
+ * Print-specific styles for booking confirmation
+ * Optimizes page for printing/PDF generation
+ */
+
+@media print {
+  /* Hide interactive elements */
+  button,
+  nav,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Reset page */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+    color: black;
+    background: white;
+  }
+
+  /* Page setup */
+  @page {
+    margin: 1cm;
+  }
+
+  /* Prevent page breaks in important sections */
+  .booking-reference,
+  .payment-instructions,
+  .booking-summary {
+    page-break-inside: avoid;
+  }
+
+  /* Booking reference - make very prominent */
+  .booking-reference {
+    border: 2px solid black !important;
+    padding: 1rem !important;
+    margin: 1rem 0 !important;
+    text-align: center;
+  }
+
+  .booking-reference p {
+    font-size: 24pt !important;
+    font-weight: bold !important;
+    margin: 0.5rem 0 !important;
+  }
+
+  /* Cards - simplify borders */
+  .card {
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin: 1rem 0;
+    background: white !important;
+  }
+
+  /* Remove shadows and backgrounds */
+  .shadow,
+  .bg-muted,
+  .bg-primary {
+    box-shadow: none !important;
+    background: white !important;
+  }
+
+  /* Ensure text is readable */
+  .text-muted-foreground,
+  .text-primary {
+    color: #333 !important;
+  }
+
+  /* Tables and lists */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  th,
+  td {
+    border: 1px solid #ddd;
+    padding: 0.5rem;
+  }
+
+  /* Links - show URL */
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 10pt;
+  }
+
+  /* Icons - hide in print */
+  svg {
+    display: none;
+  }
+
+  /* Compact spacing */
+  h1 {
+    font-size: 20pt;
+    margin-bottom: 1rem;
+  }
+
+  h2,
+  h3 {
+    font-size: 14pt;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+  }
+}
