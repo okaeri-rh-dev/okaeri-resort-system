@@ -1,7 +1,7 @@
 # Post-Deployment Verification & Monitoring
 
-**Last Updated**: 2025-01-27
-**Chunks Covered**: 001-005 (Phase 1 complete)
+**Last Updated**: 2025-10-28
+**Chunks Covered**: 001-012 (Phases 1-3 partial complete)
 **Recommended Review**: Weekly for first month, then monthly
 
 ---
@@ -10,8 +10,13 @@
 
 This document covers verification, monitoring, and ongoing maintenance after deploying the multi-unit guest booking system to production.
 
-**Deployment Status**: Phase 1 backend infrastructure deployed
-**Current Features**: Database schema, API endpoints, idempotency, rate limiting, automated cleanup
+**Deployment Status**:
+
+- Phase 1 (Backend Infrastructure): ✅ Deployed
+- Phase 2 (Guest Booking Flow): ✅ Deployed
+- Phase 3 (Admin Interface): 🔄 Partial (Payment Verification deployed)
+
+**Current Features**: Database schema, API endpoints, idempotency, rate limiting, automated cleanup, guest booking UI, payment proof upload, booking confirmation, admin payment verification
 
 ---
 
@@ -49,6 +54,76 @@ curl -X POST $PROD_URL/api/guest-booking/preview-pricing \
 ```
 
 **Status**: ⬜ All endpoints return expected data
+
+---
+
+### Step 1a: Frontend Routes Verification (Chunks 006-012)
+
+**Verify guest booking UI is accessible**:
+
+```bash
+# Test main booking form
+curl -I $PROD_URL/guest-booking
+# Expected: HTTP/2 200
+
+# Test confirmation route (with example booking reference)
+curl -I $PROD_URL/booking-confirmation/BK-2025-123456
+# Expected: HTTP/2 200 (or 404 if booking doesn't exist yet)
+
+# Test admin payment verification route
+curl -I $PROD_URL/admin/verify-payment/BOOKING_ID
+# Expected: HTTP/2 200 (requires authentication)
+```
+
+**Manual browser checks**:
+
+- [ ] `/guest-booking` loads form with DateRangePicker
+- [ ] Form shows 5-step wizard (FormStepIndicator)
+- [ ] PaymentProofUpload shows drop zone
+- [ ] Turnstile CAPTCHA renders
+- [ ] `/booking-confirmation/$bookingReference` displays confirmation page
+- [ ] Print button triggers print styles
+- [ ] `/admin/verify-payment/$bookingId` shows payment viewer (admin only)
+
+**Status**: ⬜ All frontend routes accessible
+
+---
+
+### Step 1b: Storage Bucket Verification (Chunk 008)
+
+**Verify Supabase Storage is configured**:
+
+```bash
+# Check bucket exists
+psql $DATABASE_URL -c "
+  SELECT id, name, public
+  FROM storage.buckets
+  WHERE id = 'booking-files';
+"
+# Expected: 1 row (booking-files, private)
+
+# Check RLS policies
+psql $DATABASE_URL -c "
+  SELECT policyname, cmd
+  FROM pg_policies
+  WHERE tablename = 'objects'
+    AND policyname LIKE '%signed%' OR policyname LIKE '%authenticated%'
+  ORDER BY policyname;
+"
+# Expected: 3 policies (Allow signed uploads, Allow authenticated reads, Block direct deletion)
+
+# Test upload URL generation
+curl -X POST $PROD_URL/api/guest-booking/upload-url \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filename": "test-payment-proof.jpg",
+    "contentType": "image/jpeg",
+    "fileSizeBytes": 1024000
+  }' | jq '.uploadUrl'
+# Expected: Signed URL starting with https://
+```
+
+**Status**: ⬜ Storage bucket and upload API functional
 
 ---
 
@@ -228,6 +303,123 @@ curl -X POST $PROD_URL/api/guest-booking/multi-unit \
 - Error rate > 5% → Investigate immediately
 - CPU time > 50ms → Optimize slow functions
 - Requests suddenly spike → Possible bot attack
+
+---
+
+### Frontend Performance Monitoring (Chunks 006-012)
+
+**Track key frontend metrics**:
+
+1. **Guest Booking Flow**:
+   - Form completion rate (started vs submitted)
+   - Step abandonment rate (which steps users drop off)
+   - Turnstile success rate
+   - Payment proof upload success rate
+   - Average time to complete booking
+
+2. **Performance Metrics**:
+   - Time to Interactive (TTI) < 3s
+   - First Contentful Paint (FCP) < 1.5s
+   - Cumulative Layout Shift (CLS) < 0.1
+   - Largest Contentful Paint (LCP) < 2.5s
+
+3. **Client-Side Error Tracking**:
+
+   ```javascript
+   // Track unhandled errors
+   window.addEventListener("error", (event) => {
+     // Send to monitoring service (e.g., Sentry, LogRocket)
+     console.error("Frontend error:", event.error);
+   });
+
+   // Track promise rejections
+   window.addEventListener("unhandledrejection", (event) => {
+     console.error("Unhandled promise rejection:", event.reason);
+   });
+   ```
+
+**Recommended Alerts**:
+
+- Form completion rate < 50% → Investigate UX issues
+- Turnstile failure rate > 10% → Check CAPTCHA configuration
+- Upload success rate < 90% → Check storage bucket/API
+- TTI > 5s → Optimize bundle size or lazy loading
+- Client errors > 5% of sessions → Investigate error patterns
+
+**Monthly Review Items**:
+
+- [ ] Review Lighthouse scores (Core Web Vitals)
+- [ ] Analyze form abandonment funnel
+- [ ] Check browser compatibility (Chrome, Firefox, Safari)
+- [ ] Test mobile responsiveness on different devices
+- [ ] Review print styles (booking confirmation)
+
+---
+
+### Storage & Upload Monitoring (Chunk 008)
+
+**Track file upload metrics**:
+
+```bash
+# Check storage usage
+psql $DATABASE_URL -c "
+  SELECT
+    COUNT(*) as total_files,
+    SUM(metadata->>'size')::bigint / 1024 / 1024 as total_mb,
+    AVG((metadata->>'size')::bigint) / 1024 as avg_file_kb
+  FROM storage.objects
+  WHERE bucket_id = 'booking-files'
+    AND created_at > NOW() - INTERVAL '30 days';
+"
+```
+
+**Weekly storage audit**:
+
+- [ ] Total files < 1000 (cleanup cron working)
+- [ ] Total storage < 800MB (within 1GB free tier limit)
+- [ ] Average file size < 2MB (compression working)
+- [ ] No orphaned files (payment proofs linked to bookings)
+
+**Recommended Alerts**:
+
+- Storage usage > 800MB → Plan for paid tier or optimize compression
+- Upload failure rate > 10% → Check signed URL generation
+- Orphaned files > 50 → Verify cleanup cron execution
+- Average file size > 3MB → Investigate compression settings
+
+---
+
+### Admin Workflow Monitoring (Chunk 012)
+
+**Track admin payment verification metrics**:
+
+```bash
+# Check payment verification response times
+psql $DATABASE_URL -c "
+  SELECT
+    COUNT(*) as total_verifications,
+    COUNT(*) FILTER (WHERE payment_status = 'Verified') as verified,
+    COUNT(*) FILTER (WHERE payment_status = 'Rejected') as rejected,
+    AVG(EXTRACT(EPOCH FROM (updated_at - created_at))) / 3600 as avg_hours_to_verify
+  FROM bookings
+  WHERE payment_status IN ('Verified', 'Rejected')
+    AND updated_at > NOW() - INTERVAL '7 days';
+"
+```
+
+**Daily admin metrics**:
+
+- Pending payments in queue
+- Average verification time (target: < 24 hours)
+- Rejection rate (should be < 5%)
+- Admin actions logged in audit trail
+
+**Recommended Alerts**:
+
+- Pending payments > 10 for more than 48 hours → Notify admin team
+- Verification time > 48 hours → Investigate admin workflow bottleneck
+- Rejection rate > 15% → Review payment instructions clarity
+- PDF viewer errors > 5% → Check pdfjs-dist configuration
 
 ---
 
@@ -722,20 +914,31 @@ npx wrangler kv:key delete "ratelimit:OLD_KEY" --namespace-id=YOUR_KV_ID
 - Security layers active
 - Automated cleanup running
 
-**Phase 2 (Chunks 006-010)**: ⏸️ **PENDING**
+**Phase 2 (Chunks 006-010)**: ✅ **DEPLOYED**
 
-- Frontend components (coming soon)
-- Booking flow UI
-- Admin assignment workflow
+- Frontend components operational
+- 5-step booking form with validation
+- Payment proof upload with compression
+- Booking confirmation with print support
+- TanStack Router integration
 
-**Phase 3 (Chunks 011-017)**: ⏸️ **PLANNED**
+**Phase 3 (Chunks 011-012)**: 🔄 **PARTIAL**
 
-- Advanced features
-- E2E testing
-- Performance optimization
+- Admin payment verification UI (✅ deployed)
+- PDF/image viewer with zoom/pan (✅ deployed)
+- Unit assignment workflow (⏸️ pending - chunk 013)
+- Admin API endpoints (✅ deployed)
+
+**Phase 3-4 (Chunks 013-017)**: ⏸️ **PLANNED**
+
+- Unit assignment drag-and-drop (chunk 013)
+- Admin API endpoints (chunk 014)
+- Integration tests (chunk 015)
+- E2E & performance tests (chunk 016)
+- Production deployment & monitoring (chunk 017)
 
 ---
 
 **Document Status**: Living document, updated with each chunk completion
-**Current Coverage**: Chunks 001-005 (Phase 1 complete)
-**Next Update**: Chunk 006 will add frontend monitoring guidance
+**Current Coverage**: Chunks 001-012 (Phases 1-2 complete, Phase 3 partial)
+**Next Update**: Chunk 013 will add unit assignment monitoring guidance

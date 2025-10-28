@@ -1,16 +1,20 @@
 # Pre-Deployment Checklist
 
-**Last Updated**: 2025-01-27
-**Chunks Covered**: 001-005 (Phase 1 complete)
+**Last Updated**: 2025-10-28
+**Chunks Covered**: 001-012 (Phases 1-3 partial complete)
 **Status**: 🟢 Ready for staging deployment
 
 ---
 
 ## Overview
 
-This checklist ensures all prerequisites are met before deploying the multi-unit guest booking system to production. Complete all sections marked for your current progress (Chunks 001-005).
+This checklist ensures all prerequisites are met before deploying the multi-unit guest booking system to production. Complete all sections marked for your current progress (Chunks 001-012).
 
-**Deployment Readiness**: Phase 1 backend infrastructure is complete and production-ready.
+**Deployment Readiness**:
+
+- Phase 1 (Backend Infrastructure): ✅ Complete
+- Phase 2 (Guest Booking Flow): ✅ Complete
+- Phase 3 (Admin Interface): 🔄 Partial (Payment Verification complete)
 
 ---
 
@@ -28,11 +32,13 @@ This checklist ensures all prerequisites are met before deploying the multi-unit
   - Service role key obtained from Supabase dashboard
   - Connection pooling enabled (default in Supabase)
 
-- [ ] **Storage bucket created** (for payment proofs)
-  - Bucket name: `payment-proofs`
+- [ ] **Storage bucket created** (for payment proofs - required for Chunk 008)
+  - Bucket name: `booking-files` (updated from `payment-proofs`)
   - Public access: Disabled (private bucket)
   - File size limit: 5MB per file
   - Allowed MIME types: image/jpeg, image/png, application/pdf
+  - RLS policies configured (see Section 9a below)
+  - CORS configured for localhost + production domain
 
 - [ ] **API keys obtained**
   - Anon key (public, safe to expose)
@@ -124,6 +130,38 @@ This checklist ensures all prerequisites are met before deploying the multi-unit
   npm run prepare  # Sets up pre-commit hooks
   ```
 
+### Frontend Dependencies (Chunks 006-012)
+
+- [ ] **React Hook Form installed**
+
+  ```bash
+  npm list react-hook-form  # Should show v7.x or higher
+  ```
+
+- [ ] **PDF viewer dependencies installed** (required for Chunk 012)
+
+  ```bash
+  npm list react-pdf react-zoom-pan-pinch pdfjs-dist
+  # react-pdf@^7.7.3
+  # react-zoom-pan-pinch@^3.6.1
+  # pdfjs-dist@^3.11.174
+  ```
+
+- [ ] **shadcn/ui components verified**
+
+  ```bash
+  # Check critical components exist
+  ls src/components/ui/calendar.tsx
+  ls src/components/ui/popover.tsx
+  ls src/components/ui/alert.tsx
+  ls src/components/ui/card.tsx
+  ```
+
+- [ ] **PDF worker file exists**
+  ```bash
+  ls public/pdf.worker.js  # 1MB file from pdfjs-dist
+  ```
+
 ---
 
 ## 3. Database Preparation
@@ -188,7 +226,52 @@ This checklist ensures all prerequisites are met before deploying the multi-unit
 
 ---
 
-## 4. Secrets & Environment Variables
+## 4. Supabase Storage Setup (Chunk 008)
+
+### Storage Bucket Configuration
+
+- [ ] **`booking-files` bucket created**
+
+  ```sql
+  -- In Supabase SQL Editor
+  INSERT INTO storage.buckets (id, name, public)
+  VALUES ('booking-files', 'booking-files', false);
+  ```
+
+- [ ] **RLS policies created**
+
+  ```sql
+  -- Allow signed uploads (from upload-url API)
+  CREATE POLICY "Allow signed uploads"
+    ON storage.objects FOR INSERT
+    TO anon
+    WITH CHECK (
+      bucket_id = 'booking-files' AND
+      (storage.foldername(name))[1] = 'payment-proofs'
+    );
+
+  -- Allow authenticated reads (admin dashboard)
+  CREATE POLICY "Allow authenticated reads"
+    ON storage.objects FOR SELECT
+    TO authenticated
+    USING (bucket_id = 'booking-files');
+
+  -- Block direct deletion (use cleanup cron only)
+  CREATE POLICY "Block direct deletion"
+    ON storage.objects FOR DELETE
+    TO authenticated
+    USING (false);
+  ```
+
+- [ ] **CORS configured**
+  - In Supabase dashboard: Storage > Configuration > CORS
+  - Allowed origins: `http://localhost:5173`, `https://okaeri-resort-system.pages.dev`
+  - Allowed methods: `GET`, `POST`, `PUT`, `DELETE`
+  - Allowed headers: `*`
+
+---
+
+## 5. Secrets & Environment Variables
 
 ### Production Environment File
 
@@ -208,8 +291,12 @@ VITE_APP_URL=https://okaeri-resort-system.pages.dev
 VITE_OWNER_EMAILS=your-email@example.com
 VITE_AUDIT_DEBUG=false
 
-# Turnstile Configuration (Public)
+# Turnstile Configuration (Public) - Required for Chunk 009
 VITE_TURNSTILE_SITE_KEY=0x4AAAAAAB...
+
+# Feature Flags (Frontend)
+VITE_ENABLE_GUEST_BOOKING=true
+VITE_ENABLE_ADMIN_DASHBOARD=true
 
 # SECRETS (Never commit these, set via Wrangler)
 # SUPABASE_SERVICE_ROLE_KEY=sb_secret_...
@@ -263,7 +350,63 @@ VITE_TURNSTILE_SITE_KEY=0x4AAAAAAB...
 
 ---
 
-## 5. Code Quality Gates
+## 6. Frontend Component Verification (Chunks 006-012)
+
+### Guest Booking Components (Phase 2)
+
+- [ ] **Date and Unit Selection** (Chunk 006)
+
+  ```bash
+  ls src/components/guest-booking/DateRangePicker.tsx
+  ls src/components/guest-booking/UnitRequestCard.tsx
+  ls src/components/guest-booking/UnitRequestSelector.tsx
+  ```
+
+- [ ] **Payment Summary** (Chunk 007)
+
+  ```bash
+  ls src/components/guest-booking/PaymentSummary.tsx
+  ```
+
+- [ ] **Payment Proof Upload** (Chunk 008)
+
+  ```bash
+  ls src/components/guest-booking/PaymentProofUpload.tsx
+  ls src/lib/file-validation-client.ts
+  ls functions/api/guest-booking/upload-url.ts
+  ```
+
+- [ ] **Form Validation** (Chunk 009)
+
+  ```bash
+  ls src/lib/validation/booking-schema.ts
+  ls src/components/guest-booking/FormStepIndicator.tsx
+  ls src/components/guest-booking/BookingReviewStep.tsx
+  ls src/components/guest-booking/MultiUnitGuestBookingForm.tsx
+  ```
+
+- [ ] **Booking Confirmation** (Chunk 010)
+  ```bash
+  ls src/routes/booking-confirmation/\$bookingReference.tsx
+  ls src/components/booking-confirmation/BookingReferenceDisplay.tsx
+  ls src/components/booking-confirmation/PaymentInstructions.tsx
+  ls src/styles/print.css
+  ```
+
+### Admin Components (Phase 3)
+
+- [ ] **Payment Verification UI** (Chunk 012)
+  ```bash
+  ls src/components/admin/PaymentProofViewer.tsx
+  ls src/lib/storage-utils.ts
+  ls functions/api/admin/verify-payment.ts
+  ls functions/api/admin/bookings/[bookingId].ts
+  ls src/routes/admin.verify-payment.\$bookingId.tsx
+  ```
+
+---
+
+## 7. Code Quality Gates
 
 ### TypeScript Compilation
 
@@ -307,7 +450,7 @@ VITE_TURNSTILE_SITE_KEY=0x4AAAAAAB...
 
 ---
 
-## 6. Security Verification
+## 8. Security Verification
 
 ### Secrets Not Committed
 
@@ -340,7 +483,7 @@ VITE_TURNSTILE_SITE_KEY=0x4AAAAAAB...
 
 ---
 
-## 7. Infrastructure Limits (Free Tier Compliance)
+## 9. Infrastructure Limits (Free Tier Compliance)
 
 ### Cloudflare Workers
 
@@ -367,7 +510,7 @@ VITE_TURNSTILE_SITE_KEY=0x4AAAAAAB...
 
 ---
 
-## 8. Backup & Rollback Preparation
+## 10. Backup & Rollback Preparation
 
 ### Database Backup
 
@@ -395,7 +538,7 @@ VITE_TURNSTILE_SITE_KEY=0x4AAAAAAB...
 
 ---
 
-## 9. Documentation Review
+## 11. Documentation Review
 
 ### Deployment Procedures
 
@@ -411,7 +554,7 @@ VITE_TURNSTILE_SITE_KEY=0x4AAAAAAB...
 
 ---
 
-## 10. Stakeholder Communication
+## 12. Stakeholder Communication
 
 ### Deployment Window
 
@@ -499,5 +642,5 @@ After completing this checklist, proceed to:
 ---
 
 **Document Status**: Living document, updated with each chunk completion
-**Current Coverage**: Chunks 001-005 (Phase 1 complete)
-**Next Update**: Chunk 006 will add frontend build prerequisites
+**Current Coverage**: Chunks 001-012 (Phases 1-2 complete, Phase 3 partial)
+**Next Update**: Chunk 013 will add unit assignment workflow prerequisites

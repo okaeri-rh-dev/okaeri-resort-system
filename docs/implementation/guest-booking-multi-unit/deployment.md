@@ -1,8 +1,8 @@
 # Deployment Procedure
 
-**Last Updated**: 2025-01-27
-**Chunks Covered**: 001-005 (Phase 1 complete)
-**Estimated Time**: 60-90 minutes
+**Last Updated**: 2025-10-28
+**Chunks Covered**: 001-012 (Phases 1-3 partial complete)
+**Estimated Time**: 90-120 minutes
 **Difficulty**: Intermediate
 
 ---
@@ -18,11 +18,12 @@ This document provides step-by-step instructions for deploying the multi-unit gu
 ## Deployment Phases
 
 1. **Phase 1**: Database Migration (20-30 minutes)
-2. **Phase 2**: Cloudflare Configuration (15-20 minutes)
-3. **Phase 3**: Workers Deployment (10-15 minutes)
-4. **Phase 4**: Smoke Tests (15-20 minutes)
+2. **Phase 2**: Supabase Storage Setup (10-15 minutes)
+3. **Phase 3**: Cloudflare Configuration (15-20 minutes)
+4. **Phase 4**: Frontend & Workers Deployment (20-25 minutes)
+5. **Phase 5**: Smoke Tests (25-30 minutes)
 
-**Total Estimated Time**: 60-90 minutes
+**Total Estimated Time**: 90-120 minutes
 
 ---
 
@@ -306,9 +307,109 @@ psql $DATABASE_URL -c "SELECT rule_name, discount_percent, is_active FROM discou
 
 ---
 
-## Phase 2: Cloudflare Configuration
+## Phase 2: Supabase Storage Setup (Chunk 008)
 
-### Step 2.1: Create KV Namespace
+### Step 2.1: Create Storage Bucket
+
+**Purpose**: Set up private bucket for payment proof uploads
+
+```bash
+# Open Supabase Dashboard
+# Navigate to: Storage > Create a new bucket
+
+# Or via SQL Editor:
+psql $DATABASE_URL -c "
+  INSERT INTO storage.buckets (id, name, public)
+  VALUES ('booking-files', 'booking-files', false)
+  ON CONFLICT (id) DO NOTHING;
+"
+```
+
+**Verify Bucket Creation**:
+
+```bash
+psql $DATABASE_URL -c "
+  SELECT id, name, public FROM storage.buckets WHERE id = 'booking-files';
+"
+```
+
+**Expected Output**:
+
+```
+     id      |     name      | public
+-------------+---------------+--------
+ booking-files | booking-files | f
+(1 row)
+```
+
+**Checkpoint**: ✅ Bucket exists and is private (public = false)
+
+---
+
+### Step 2.2: Configure RLS Policies
+
+**Purpose**: Allow signed uploads from API, authenticated reads for admin
+
+```bash
+psql $DATABASE_URL << 'EOF'
+-- Policy 1: Allow signed uploads (from upload-url API)
+CREATE POLICY "Allow signed uploads"
+  ON storage.objects FOR INSERT
+  TO anon
+  WITH CHECK (
+    bucket_id = 'booking-files' AND
+    (storage.foldername(name))[1] = 'payment-proofs'
+  );
+
+-- Policy 2: Allow authenticated reads (admin dashboard)
+CREATE POLICY "Allow authenticated reads"
+  ON storage.objects FOR SELECT
+  TO authenticated
+  USING (bucket_id = 'booking-files');
+
+-- Policy 3: Block direct deletion (cleanup cron only)
+CREATE POLICY "Block direct deletion"
+  ON storage.objects FOR DELETE
+  TO authenticated
+  USING (false);
+EOF
+```
+
+**Verify Policies**:
+
+```bash
+psql $DATABASE_URL -c "
+  SELECT policyname, cmd, qual
+  FROM pg_policies
+  WHERE tablename = 'objects'
+    AND policyname LIKE '%signed%' OR policyname LIKE '%authenticated%';
+"
+```
+
+**Checkpoint**: ✅ 3 RLS policies created
+
+---
+
+### Step 2.3: Configure CORS
+
+**Via Supabase Dashboard**:
+
+1. Open Supabase Dashboard
+2. Navigate to: **Storage** > **Configuration** > **CORS**
+3. Add allowed origins:
+   - `http://localhost:5173` (development)
+   - `https://okaeri-resort-system.pages.dev` (production)
+4. Allowed methods: `GET, POST, PUT, DELETE, HEAD, OPTIONS`
+5. Allowed headers: `*`
+6. Max age: `3600`
+
+**Checkpoint**: ✅ CORS configured for frontend domains
+
+---
+
+## Phase 3: Cloudflare Configuration
+
+### Step 3.1: Create KV Namespace
 
 **Skip if already created in pre-deployment**
 
@@ -336,7 +437,7 @@ id = "YOUR_ACTUAL_ID_FROM_OUTPUT"  # Replace with actual ID
 
 ---
 
-### Step 2.2: Set Environment Variables
+### Step 3.2: Set Environment Variables
 
 **Set Cloudflare Pages environment variables** via dashboard:
 
@@ -358,7 +459,7 @@ id = "YOUR_ACTUAL_ID_FROM_OUTPUT"  # Replace with actual ID
 
 ---
 
-### Step 2.3: Set Secrets (via Wrangler CLI)
+### Step 3.3: Set Secrets (via Wrangler CLI)
 
 **Set sensitive secrets** (never commit these):
 
@@ -396,7 +497,7 @@ npx wrangler secret list --env production
 
 ---
 
-### Step 2.4: Configure Cron Triggers
+### Step 3.4: Configure Cron Triggers
 
 **Verify wrangler.toml** has cron triggers:
 
@@ -414,11 +515,11 @@ crons = [
 
 ---
 
-## Phase 3: Workers Deployment
+## Phase 4: Frontend & Workers Deployment
 
-### Step 3.1: Build Project
+### Step 4.1: Build Project
 
-**Build both frontend and Workers functions**:
+**Build both frontend (with chunks 006-012 components) and Workers**
 
 ```bash
 # Clean previous build
@@ -460,13 +561,15 @@ ls -la dist/functions/
 - `dist/assets/` (CSS and JS bundles)
 - `dist/functions/_worker.ts`
 - `dist/functions/api/guest-booking/` (API endpoints)
+- `dist/functions/api/admin/` (Admin API endpoints - chunks 012)
 - `dist/functions/scheduled/` (Cron workers)
+- `dist/public/pdf.worker.js` (PDF viewer worker - chunk 012)
 
 **Checkpoint**: ✅ Build succeeds, dist/ populated
 
 ---
 
-### Step 3.2: Deploy to Cloudflare Pages
+### Step 4.2: Deploy to Cloudflare Pages
 
 **Deploy to production**:
 
@@ -503,7 +606,7 @@ URL:         https://okaeri-resort-system.pages.dev
 
 ---
 
-### Step 3.3: Verify Cron Triggers in Dashboard
+### Step 4.3: Verify Cron Triggers in Dashboard
 
 1. Open Cloudflare dashboard
 2. Navigate to: **Workers & Pages** > **okaeri-resort-system** > **Triggers**
@@ -521,7 +624,7 @@ URL:         https://okaeri-resort-system.pages.dev
 
 ---
 
-### Step 3.4: Bind KV Namespace to Worker (Dashboard)
+### Step 4.4: Bind KV Namespace to Worker (Dashboard)
 
 **Verify KV binding** via dashboard:
 
@@ -547,9 +650,9 @@ URL:         https://okaeri-resort-system.pages.dev
 
 ---
 
-## Phase 4: Smoke Tests
+## Phase 5: Smoke Tests
 
-### Step 4.1: Test Health Endpoint
+### Step 5.1: Test Health Endpoint
 
 **Verify Workers are running**:
 
@@ -569,7 +672,7 @@ content-type: application/json
 
 ---
 
-### Step 4.2: Test Rates Endpoint
+### Step 5.2: Test Rates Endpoint
 
 **Get pricing configuration**:
 
@@ -593,7 +696,7 @@ curl -s https://okaeri-resort-system.pages.dev/api/guest-booking/rates | jq
 
 ---
 
-### Step 4.3: Test Discount Rules Endpoint
+### Step 5.3: Test Discount Rules Endpoint
 
 **Get active discounts**:
 
@@ -622,7 +725,7 @@ curl -s https://okaeri-resort-system.pages.dev/api/guest-booking/discount-rules 
 
 ---
 
-### Step 4.4: Test Pricing Preview Endpoint
+### Step 5.4: Test Pricing Preview Endpoint
 
 **Calculate pricing for sample booking**:
 
@@ -661,7 +764,7 @@ curl -X POST https://okaeri-resort-system.pages.dev/api/guest-booking/preview-pr
 
 ---
 
-### Step 4.5: Test Rate Limiting
+### Step 5.5: Test Rate Limiting
 
 **Verify rate limiting blocks 6th request**:
 
@@ -692,7 +795,7 @@ Request 6: HTTP 429 (Rate limit exceeded)
 
 ---
 
-### Step 4.6: Test Turnstile Verification
+### Step 5.6: Test Turnstile Verification
 
 **Verify invalid token is rejected**:
 
@@ -715,7 +818,103 @@ curl -X POST https://okaeri-resort-system.pages.dev/api/guest-booking/multi-unit
 
 ---
 
-### Step 4.7: Manually Trigger Cron (Optional)
+### Step 5.7: Test Frontend Routes (Chunks 006-012)
+
+**Test guest booking flow UI**:
+
+```bash
+# Open browser to production URL
+open https://okaeri-resort-system.pages.dev/guest-booking
+
+# Manual checklist:
+# 1. DateRangePicker loads and calendar opens
+# 2. UnitRequestSelector allows adding/removing units (max 10)
+# 3. PaymentSummary displays pricing preview
+# 4. PaymentProofUpload shows drop zone
+# 5. FormStepIndicator shows 5 steps
+# 6. BookingReviewStep shows Turnstile CAPTCHA
+# 7. Form submission creates booking
+# 8. Redirects to /booking-confirmation/$bookingReference
+# 9. Confirmation page displays booking details
+# 10. Print button triggers @media print styles
+```
+
+**Checkpoint**: ✅ All 10 frontend UI elements functional
+
+---
+
+### Step 5.8: Test Storage Upload (Chunk 008)
+
+**Test payment proof upload**:
+
+```bash
+# Test upload URL generation
+curl -X POST https://okaeri-resort-system.pages.dev/api/guest-booking/upload-url \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filename": "payment-proof-test.jpg",
+    "contentType": "image/jpeg",
+    "fileSizeBytes": 1048576
+  }'
+
+# Expected response:
+# {
+#   "uploadUrl": "https://YOUR_PROJECT.supabase.co/storage/v1/object/upload/sign/...",
+#   "fileUrl": "payment-proofs/BK-TEMP-..."
+# }
+```
+
+**Verify file uploaded**:
+
+```bash
+psql $DATABASE_URL -c "
+  SELECT name, bucket_id, created_at
+  FROM storage.objects
+  WHERE bucket_id = 'booking-files'
+  ORDER BY created_at DESC
+  LIMIT 5;
+"
+```
+
+**Checkpoint**: ✅ Upload URL generated, file uploaded to storage
+
+---
+
+### Step 5.9: Test Admin Payment Verification (Chunk 012)
+
+**Test admin endpoints** (requires JWT authentication):
+
+```bash
+# Get pending booking details
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  https://okaeri-resort-system.pages.dev/api/admin/bookings/BOOKING_ID
+
+# Verify payment
+curl -X POST -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  https://okaeri-resort-system.pages.dev/api/admin/verify-payment \
+  -H "Content-Type: application/json" \
+  -d '{
+    "booking_id": "BOOKING_ID",
+    "action": "verify",
+    "admin_notes": "Payment verified via test"
+  }'
+```
+
+**Verify in database**:
+
+```bash
+psql $DATABASE_URL -c "
+  SELECT booking_reference, payment_status, updated_at
+  FROM bookings
+  WHERE id = 'BOOKING_ID';
+"
+```
+
+**Checkpoint**: ✅ Admin can verify/reject payments
+
+---
+
+### Step 5.10: Manually Trigger Cron (Optional)
 
 **Test cron execution** via dashboard:
 
@@ -864,5 +1063,5 @@ npx wrangler kv:namespace list
 ---
 
 **Document Status**: Living document, updated with each chunk completion
-**Current Coverage**: Chunks 001-005 (Phase 1 complete)
-**Next Update**: Chunk 006 will add frontend deployment steps
+**Current Coverage**: Chunks 001-012 (Phases 1-2 complete, Phase 3 partial)
+**Next Update**: Chunk 013 will add unit assignment deployment steps
