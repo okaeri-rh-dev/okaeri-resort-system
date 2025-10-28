@@ -3,7 +3,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
 import DOMPurify from "dompurify";
 import { Calendar, CreditCard, Mail, Phone, Upload, Users } from "lucide-react";
@@ -95,6 +95,7 @@ interface GuestBookingFormProps {
 }
 
 export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [bookingReference, setBookingReference] = useState<string | null>(null);
@@ -268,7 +269,12 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
 
             <div className="flex gap-4">
               <Button
-                onClick={() => (window.location.href = `/check-booking?ref=${bookingReference}`)}
+                onClick={() =>
+                  navigate({
+                    to: "/check-booking",
+                    search: { ref: bookingReference || "" },
+                  })
+                }
               >
                 Check Booking Status
               </Button>

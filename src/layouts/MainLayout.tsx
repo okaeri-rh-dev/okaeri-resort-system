@@ -7,6 +7,7 @@ import {
   Calendar,
   ChevronRight,
   Home,
+  ListChecks,
   LogOut,
   Menu,
   Receipt,
@@ -38,6 +39,7 @@ const navItems: NavItem[] = [
   { label: "Guests", icon: Users, href: "/guests" },
   { label: "Payments", icon: Receipt, href: "/payments" },
   { label: "Expenses", icon: ReceiptText, href: "/expenses" },
+  { label: "Booking Queue", icon: ListChecks, href: "/pending-bookings" },
 ];
 
 interface MainLayoutProps {
