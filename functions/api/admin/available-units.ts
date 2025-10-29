@@ -1,8 +1,8 @@
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
-import { logAuditEvent } from "../../../src/lib/audit-logger";
 import type { Database } from "../../../src/types/database.types";
+import { logAuditEventWorker } from "../../lib/audit-logger-workers";
 
 interface Env {
   SUPABASE_URL: string;
@@ -230,20 +230,24 @@ export async function onRequest(context: {
     }
 
     // Audit logging for admin access
-    await logAuditEvent({
-      tableName: "units",
-      recordId: undefined,
-      description: `Admin querying available units for date range ${checkInDate} to ${checkOutDate}`,
-      category: "units",
-      severity: "INFO",
-      metadata: {
+    await logAuditEventWorker(
+      supabase,
+      {
         action: "admin.available_units.query",
-        check_in_date: checkInDate,
-        check_out_date: checkOutDate,
-        ip_address: request.headers.get("cf-connecting-ip"),
-        user_agent: request.headers.get("user-agent"),
+        entity_type: "units",
+        entity_id: undefined,
+        user_id: user.id,
+        severity: "INFO",
+        description: `Admin querying available units for date range ${checkInDate} to ${checkOutDate}`,
+        metadata: {
+          check_in_date: checkInDate,
+          check_out_date: checkOutDate,
+          ip_address: request.headers.get("cf-connecting-ip"),
+          user_agent: request.headers.get("user-agent"),
+        },
       },
-    });
+      request
+    );
 
     // Query all units with Available status
     const { data: allUnits, error: unitsError } = await supabase

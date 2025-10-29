@@ -1,8 +1,8 @@
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
-import { logAuditEvent } from "../../../src/lib/audit-logger";
 import type { Database } from "../../../src/types/database.types";
+import { logAuditEventWorker } from "../../lib/audit-logger-workers";
 
 interface Env {
   SUPABASE_URL: string;
@@ -270,12 +270,17 @@ export async function onRequest(context: {
     const token = authHeader.substring(7);
 
     // Initialize Supabase client with service role key
-    const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
+    const supabase = createClient<Database>(
+      env.SUPABASE_URL,
+      env.SUPABASE_SERVICE_ROLE_KEY,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
       },
-    });
+      request
+    );
 
     // Verify JWT token and get user
     const {
@@ -311,20 +316,24 @@ export async function onRequest(context: {
     }
 
     // Audit logging for unit assignment attempt
-    await logAuditEvent({
-      tableName: "bookings",
-      recordId: booking_id,
-      description: `Admin attempting to assign ${unit_ids.length} units to booking`,
-      category: "booking",
-      severity: "INFO",
-      metadata: {
+    await logAuditEventWorker(
+      supabase,
+      {
         action: "admin.units.assign_attempt",
-        unit_ids: unit_ids,
-        unit_count: unit_ids.length,
-        ip_address: request.headers.get("cf-connecting-ip"),
-        user_agent: request.headers.get("user-agent"),
+        entity_type: "booking",
+        entity_id: booking_id,
+        user_id: user.id,
+        severity: "INFO",
+        description: `Admin attempting to assign ${unit_ids.length} units to booking`,
+        metadata: {
+          unit_ids: unit_ids,
+          unit_count: unit_ids.length,
+          ip_address: request.headers.get("cf-connecting-ip"),
+          user_agent: request.headers.get("user-agent"),
+        },
       },
-    });
+      request
+    );
 
     // Call PostgreSQL function via Supabase RPC
     const { data: rpcResult, error: rpcError } = await supabase.rpc("assign_units_to_booking", {
@@ -339,14 +348,14 @@ export async function onRequest(context: {
       const { status, message, details } = parseRpcError(rpcError);
 
       // Audit logging for failed assignment
-      await logAuditEvent({
-        tableName: "bookings",
-        recordId: booking_id,
-        description: `Admin unit assignment failed: ${message}`,
-        category: "booking",
+      await logAuditEventWorker(supabase, {
+        action: "admin.units.assign_failed",
+        entity_type: "booking",
+        entity_id: booking_id,
+        user_id: user.id,
         severity: "WARNING",
+        description: `Admin unit assignment failed: ${message}`,
         metadata: {
-          action: "admin.units.assign_failed",
           error: message,
           details: details,
           unit_ids: unit_ids,
@@ -366,22 +375,28 @@ export async function onRequest(context: {
     }
 
     // Audit logging for successful assignment
-    await logAuditEvent({
-      tableName: "bookings",
-      recordId: booking_id,
-      description: `Admin successfully assigned ${unit_ids.length} units to booking`,
-      category: "booking",
-      severity: "INFO",
-      oldData: { status: "Pending", units: [] },
-      newData: { status: "Confirmed", units: unit_ids },
-      metadata: {
+    await logAuditEventWorker(
+      supabase,
+      {
         action: "admin.units.assign_success",
-        unit_ids: unit_ids,
-        unit_count: unit_ids.length,
-        ip_address: request.headers.get("cf-connecting-ip"),
-        user_agent: request.headers.get("user-agent"),
+        entity_type: "booking",
+        entity_id: booking_id,
+        user_id: user.id,
+        severity: "INFO",
+        description: `Admin successfully assigned ${unit_ids.length} units to booking`,
+        changes: {
+          before: { status: "Pending", units: [] },
+          after: { status: "Confirmed", units: unit_ids },
+        },
+        metadata: {
+          unit_ids: unit_ids,
+          unit_count: unit_ids.length,
+          ip_address: request.headers.get("cf-connecting-ip"),
+          user_agent: request.headers.get("user-agent"),
+        },
       },
-    });
+      request
+    );
 
     // Prepare successful response
     const response: AssignUnitsResponse = {
@@ -401,18 +416,22 @@ export async function onRequest(context: {
     console.error("[assign-units] Unexpected error:", error);
 
     // Audit logging for unexpected errors
-    await logAuditEvent({
-      tableName: "bookings",
-      recordId: undefined,
-      description: `Admin unit assignment error: ${error instanceof Error ? error.message : "Unknown error"}`,
-      category: "booking",
-      severity: "CRITICAL",
-      metadata: {
+    await logAuditEventWorker(
+      supabase,
+      {
         action: "admin.units.assign_error",
-        error: error instanceof Error ? error.message : "Unknown error",
-        ip_address: request.headers.get("cf-connecting-ip"),
+        entity_type: "booking",
+        entity_id: undefined,
+        user_id: user?.id,
+        severity: "CRITICAL",
+        description: `Admin unit assignment error: ${error instanceof Error ? error.message : "Unknown error"}`,
+        metadata: {
+          error: error instanceof Error ? error.message : "Unknown error",
+          ip_address: request.headers.get("cf-connecting-ip"),
+        },
       },
-    });
+      request
+    );
 
     const errorResponse: ErrorResponse = {
       success: false,

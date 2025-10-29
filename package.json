@@ -16,7 +16,7 @@
     "dev": "vite",
     "dev:cf": "concurrently \"npm:dev:vite\" \"npm:dev:wrangler\" --kill-others",
     "dev:vite": "vite --clearScreen false",
-    "dev:wrangler": "wrangler pages dev public --port 8788 --local",
+    "dev:wrangler": "wrangler pages dev . --compatibility-date=2025-09-29 --compatibility-flags=nodejs_compat --port 8788 --local",
     "format": "prettier --write .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -28,10 +28,12 @@
     "test:all": "npm run test:coverage && npm run test:e2e",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:integration": "vitest run --project=integration",
     "test:performance": "vitest run --grep performance",
     "test:run": "vitest run",
     "test:security": "vitest run --grep security",
     "test:ui": "vitest --ui",
+    "test:unit": "vitest run --project=unit",
     "test:watch": "vitest watch",
     "type-check": "tsc --noEmit",
     "verify": "npm run type-check && npm run lint && npm run test:run",
@@ -132,6 +134,7 @@
     "vitest-axe": "^0.1.0"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "^4.32.0"
+    "@rollup/rollup-linux-x64-gnu": "^4.32.0",
+    "canvas": "^3.2.0"
   }
 }
