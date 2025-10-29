@@ -69,21 +69,42 @@ describe("UnitRequestCard", () => {
   describe("Guest Count Interaction", () => {
     it("calls onGuestsChange when value changes to valid number", async () => {
       const user = userEvent.setup();
-      const onGuestsChange = vi.fn();
+      let currentValue = 2; // Track state like parent would
+      const onGuestsChange = vi.fn((newValue: number) => {
+        currentValue = newValue; // Update local state
+      });
 
-      render(<UnitRequestCard {...defaultProps} onGuestsChange={onGuestsChange} />);
+      const { rerender } = render(
+        <UnitRequestCard
+          {...defaultProps}
+          guestsPerUnit={currentValue}
+          onGuestsChange={onGuestsChange}
+        />
+      );
 
-      const input = screen.getByLabelText(/number of guests/i);
+      const input = screen.getByLabelText(/number of guests/i) as HTMLInputElement;
 
-      // NumberInput fires onChange on each keystroke
+      // Clear first and re-render with empty state
       await user.clear(input);
+
+      // Type a valid number
       await user.type(input, "5");
 
-      // NumberInput calls onChange with parsed number value (should be called with 5)
-      // It may be called multiple times during typing, verify last call
+      // Re-render with updated value to simulate parent state update
+      rerender(
+        <UnitRequestCard
+          {...defaultProps}
+          guestsPerUnit={currentValue}
+          onGuestsChange={onGuestsChange}
+        />
+      );
+
+      // NumberInput calls onChange with parsed number value
+      // handleGuestsChange filters: only values >= 1 and <= maxCapacity propagate
+      // After typing "5", onChange should be called with 5
       expect(onGuestsChange).toHaveBeenCalled();
-      const lastCall = onGuestsChange.mock.calls[onGuestsChange.mock.calls.length - 1];
-      expect(lastCall[0]).toBe(5);
+      expect(onGuestsChange).toHaveBeenCalledWith(5);
+      expect(currentValue).toBe(5);
     });
 
     it("prevents invalid values below minimum (< 1)", async () => {
@@ -145,19 +166,25 @@ describe("UnitRequestCard", () => {
       expect(onGuestsChange).toHaveBeenCalledWith(7);
     });
 
-    it("does not call onGuestsChange for null values", () => {
+    it("does not call onGuestsChange for null values", async () => {
+      // This test verifies that handleGuestsChange filters out null values
+      // In real usage, NumberInput may call onChange(null) when input is cleared or invalid
+      // The component should not propagate null to the parent onGuestsChange callback
+
+      const user = userEvent.setup();
       const onGuestsChange = vi.fn();
 
-      render(<UnitRequestCard {...defaultProps} onGuestsChange={onGuestsChange} />);
+      render(
+        <UnitRequestCard {...defaultProps} guestsPerUnit={5} onGuestsChange={onGuestsChange} />
+      );
 
-      // Simulate NumberInput passing null (invalid input)
-      const { handleGuestsChange } = (UnitRequestCard as any).type({
-        ...defaultProps,
-        onGuestsChange,
-      });
+      const input = screen.getByLabelText(/number of guests/i);
 
-      // This tests the internal handleGuestsChange function
-      // In real usage, NumberInput prevents null from reaching onChange
+      // Clear the input - NumberInput will call onChange(null)
+      await user.clear(input);
+
+      // handleGuestsChange should filter out null, so onGuestsChange should NOT be called
+      expect(onGuestsChange).not.toHaveBeenCalled();
     });
   });
 

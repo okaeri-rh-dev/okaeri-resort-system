@@ -29,11 +29,14 @@ import type {
   PricingPreviewResponse,
 } from "@/types/guest-booking-multi-unit";
 
+import { getEnvWithDefault } from "../env";
+
 /**
  * API base URL for guest booking endpoints
  * Uses environment variable if available, fallback to relative path
+ * Works in both Vite and Workers contexts
  */
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api/guest-booking";
+const API_BASE = getEnvWithDefault("VITE_API_BASE_URL", "/api/guest-booking");
 
 /**
  * SessionStorage key for idempotency key persistence

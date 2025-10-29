@@ -80,15 +80,16 @@ export const UnitRequestCard: React.FC<UnitRequestCardProps> = ({
    * Handle guest count change with validation
    * Only calls onGuestsChange if value is within valid range
    */
-  const handleGuestsChange = (value: number | null) => {
-    // Ignore null values (invalid input)
-    if (value === null) return;
-
-    // Validate range (should be handled by NumberInput, but double-check)
-    if (value < 1 || value > maxCapacityPerUnit) return;
-
-    onGuestsChange(value);
-  };
+  const handleGuestsChange = React.useCallback(
+    (value: number | null) => {
+      // Only propagate valid non-null values within range
+      // This ensures onChange is called when typing completes a valid number
+      if (value !== null && value >= 1 && value <= maxCapacityPerUnit) {
+        onGuestsChange(value);
+      }
+    },
+    [maxCapacityPerUnit, onGuestsChange]
+  );
 
   return (
     <Card

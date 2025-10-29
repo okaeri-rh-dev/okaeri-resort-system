@@ -8,14 +8,27 @@
  * - guests_per_unit > 0: Basic validation
  *
  * Source: 07-testing-strategy.md lines 467-691
+ *
+ * Updated: Uses test helpers to create parent bookings before booking_units inserts.
+ * This fixes foreign key constraint violations in the unified multi-unit architecture.
  */
+
+import { randomUUID } from "crypto";
 
 import { createClient } from "@supabase/supabase-js";
 import { afterEach, beforeAll, describe, expect, test } from "vitest";
 
+import {
+  cleanupTestBookings,
+  cleanupTestUnits,
+  createTestBooking,
+  createTestUnit,
+} from "./helpers";
+
 describe("Database Constraint Tests", () => {
   let supabase: ReturnType<typeof createClient>;
   const testBookingIds: string[] = [];
+  const testUnitIds: string[] = [];
 
   beforeAll(() => {
     // Initialize Supabase client with service role key for testing
@@ -23,10 +36,14 @@ describe("Database Constraint Tests", () => {
   });
 
   afterEach(async () => {
-    // Clean up test data
+    // Clean up test data (bookings first due to foreign keys, then units)
     if (testBookingIds.length > 0) {
-      await supabase.from("bookings").delete().in("booking_id", testBookingIds);
+      await cleanupTestBookings(supabase, testBookingIds);
       testBookingIds.length = 0;
+    }
+    if (testUnitIds.length > 0) {
+      await cleanupTestUnits(supabase, testUnitIds);
+      testUnitIds.length = 0;
     }
   });
 
@@ -98,6 +115,11 @@ describe("Database Constraint Tests", () => {
 
   describe("all_or_nothing_assignment constraint", () => {
     test("prevents partial unit assignment", async () => {
+      // Create units first (needed for foreign key constraint)
+      const unit1_id = await createTestUnit(supabase);
+      const unit2_id = await createTestUnit(supabase);
+      testUnitIds.push(unit1_id, unit2_id);
+
       // Create booking requesting 3 units
       const { data: booking } = await supabase
         .from("bookings")
@@ -128,14 +150,14 @@ describe("Database Constraint Tests", () => {
       await supabase.from("booking_units").insert([
         {
           booking_id: booking!.booking_id,
-          unit_id: "test-unit-1",
+          unit_id: unit1_id,
           check_in_date: "2025-03-10",
           check_out_date: "2025-03-15",
           status: "confirmed",
         },
         {
           booking_id: booking!.booking_id,
-          unit_id: "test-unit-2",
+          unit_id: unit2_id,
           check_in_date: "2025-03-10",
           check_out_date: "2025-03-15",
           status: "confirmed",
@@ -154,6 +176,12 @@ describe("Database Constraint Tests", () => {
     });
 
     test("allows complete unit assignment", async () => {
+      // Create units first (needed for foreign key constraint)
+      const unit1_id = await createTestUnit(supabase);
+      const unit2_id = await createTestUnit(supabase);
+      const unit3_id = await createTestUnit(supabase);
+      testUnitIds.push(unit1_id, unit2_id, unit3_id);
+
       // Create booking requesting 3 units
       const { data: booking } = await supabase
         .from("bookings")
@@ -184,21 +212,21 @@ describe("Database Constraint Tests", () => {
       await supabase.from("booking_units").insert([
         {
           booking_id: booking!.booking_id,
-          unit_id: "test-unit-10",
+          unit_id: unit1_id,
           check_in_date: "2025-03-20",
           check_out_date: "2025-03-25",
           status: "confirmed",
         },
         {
           booking_id: booking!.booking_id,
-          unit_id: "test-unit-11",
+          unit_id: unit2_id,
           check_in_date: "2025-03-20",
           check_out_date: "2025-03-25",
           status: "confirmed",
         },
         {
           booking_id: booking!.booking_id,
-          unit_id: "test-unit-12",
+          unit_id: unit3_id,
           check_in_date: "2025-03-20",
           check_out_date: "2025-03-25",
           status: "confirmed",
@@ -217,15 +245,22 @@ describe("Database Constraint Tests", () => {
 
   describe("no_double_booking EXCLUDE constraint", () => {
     test("prevents overlapping bookings for same unit", async () => {
-      const unitId = "test-unit-overlap-1";
+      const unitId = randomUUID();
       const dates = {
         check_in: "2025-04-01",
         check_out: "2025-04-05",
       };
 
-      // First booking
+      // Create first parent booking
+      const booking1_id = await createTestBooking(supabase, {
+        check_in_date: dates.check_in,
+        check_out_date: dates.check_out,
+      });
+      testBookingIds.push(booking1_id);
+
+      // First booking_unit
       const { error: error1 } = await supabase.from("booking_units").insert({
-        booking_id: "booking-overlap-1",
+        booking_id: booking1_id,
         unit_id: unitId,
         check_in_date: dates.check_in,
         check_out_date: dates.check_out,
@@ -234,9 +269,16 @@ describe("Database Constraint Tests", () => {
 
       expect(error1).toBeNull();
 
-      // Second booking (overlapping dates)
+      // Create second parent booking
+      const booking2_id = await createTestBooking(supabase, {
+        check_in_date: "2025-04-03",
+        check_out_date: "2025-04-07",
+      });
+      testBookingIds.push(booking2_id);
+
+      // Second booking_unit (overlapping dates)
       const { error: error2 } = await supabase.from("booking_units").insert({
-        booking_id: "booking-overlap-2",
+        booking_id: booking2_id,
         unit_id: unitId,
         check_in_date: "2025-04-03", // Overlaps with first booking
         check_out_date: "2025-04-07",
@@ -249,11 +291,18 @@ describe("Database Constraint Tests", () => {
     });
 
     test("allows consecutive bookings for same unit", async () => {
-      const unitId = "test-unit-consecutive-1";
+      const unitId = randomUUID();
 
-      // First booking
+      // Create first parent booking
+      const booking1_id = await createTestBooking(supabase, {
+        check_in_date: "2025-05-01",
+        check_out_date: "2025-05-05",
+      });
+      testBookingIds.push(booking1_id);
+
+      // First booking_unit
       const { error: error1 } = await supabase.from("booking_units").insert({
-        booking_id: "booking-consecutive-1",
+        booking_id: booking1_id,
         unit_id: unitId,
         check_in_date: "2025-05-01",
         check_out_date: "2025-05-05",
@@ -262,9 +311,16 @@ describe("Database Constraint Tests", () => {
 
       expect(error1).toBeNull();
 
-      // Second booking (consecutive, no overlap)
+      // Create second parent booking
+      const booking2_id = await createTestBooking(supabase, {
+        check_in_date: "2025-05-05",
+        check_out_date: "2025-05-10",
+      });
+      testBookingIds.push(booking2_id);
+
+      // Second booking_unit (consecutive, no overlap)
       const { error: error2 } = await supabase.from("booking_units").insert({
-        booking_id: "booking-consecutive-2",
+        booking_id: booking2_id,
         unit_id: unitId,
         check_in_date: "2025-05-05", // Starts when first ends
         check_out_date: "2025-05-10",

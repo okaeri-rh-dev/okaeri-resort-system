@@ -1,5 +1,7 @@
 import { Resend } from "resend";
 
+import { getEnv } from "./env";
+
 interface BookingConfirmationData {
   to: string;
   bookingReference: string;
@@ -17,10 +19,17 @@ interface UploadConfirmationData {
 
 /**
  * Create Resend client
- * Can accept API key directly (for Cloudflare Functions) or use env var
+ *
+ * Works in multiple contexts:
+ * - Browser/Vite: Uses import.meta.env via compatibility layer
+ * - Cloudflare Workers: Uses apiKey parameter
+ * - Node.js: Uses process.env via compatibility layer
+ *
+ * @param apiKey - Optional API key (for Cloudflare Workers)
+ * @returns Resend client instance
  */
 export function createResendClient(apiKey?: string): Resend {
-  const key = apiKey || import.meta.env.RESEND_API_KEY;
+  const key = apiKey || getEnv("RESEND_API_KEY");
   if (!key) {
     throw new Error("Missing RESEND_API_KEY");
   }

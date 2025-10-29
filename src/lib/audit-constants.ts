@@ -13,6 +13,22 @@
 import { AuditCategory, AuditSeverity, type AuditAction } from "@/types/audit.types";
 
 // ============================================
+// OWNER EMAIL UTILITIES
+// ============================================
+
+/**
+ * @deprecated Use getUserAuditRole() from audit-roles.ts instead
+ * Owner emails are now managed in the app_roles table, not environment variables.
+ * This section has been removed as part of Phase 4 migration.
+ */
+
+// ============================================
+// DEBUG CONFIGURATION
+// ============================================
+
+import { isEnvEnabled } from "./env";
+
+// ============================================
 // SENSITIVE FIELDS CONFIGURATION
 // ============================================
 
@@ -253,21 +269,17 @@ export const AUDIT_CACHE_CONFIG = {
   REFETCH_ON_WINDOW_FOCUS: false, // Don't refetch on tab focus
 } as const;
 
-// ============================================
-// OWNER EMAIL UTILITIES
-// ============================================
-
-/**
- * @deprecated Use getUserAuditRole() from audit-roles.ts instead
- * Owner emails are now managed in the app_roles table, not environment variables.
- * This section has been removed as part of Phase 4 migration.
- */
-
 /**
  * Debug flag for audit system
+ * Uses the environment compatibility layer to work in both Vite and Workers contexts
  */
-export const AUDIT_DEBUG = import.meta.env.VITE_AUDIT_DEBUG === "true";
+export const AUDIT_DEBUG = isEnvEnabled("VITE_AUDIT_DEBUG");
 
+/**
+ * Log debug message if audit debugging is enabled
+ * @param message - Debug message
+ * @param data - Optional data to log
+ */
 export function auditDebugLog(message: string, data?: unknown): void {
   if (AUDIT_DEBUG) {
     console.log(`[AUDIT DEBUG] ${message}`, data);

@@ -2,21 +2,23 @@ import { createClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database.types";
 
+import { requireEnv } from "./env";
+
 /**
  * Creates Supabase admin client for backend operations
- * Can accept env object (for Cloudflare Functions) or use process.env
+ *
+ * Works in multiple contexts:
+ * - Browser/Vite: Uses import.meta.env via compatibility layer
+ * - Cloudflare Workers: Uses env object passed as parameter
+ * - Node.js: Uses process.env via compatibility layer
+ *
+ * @param env - Optional environment object (for Cloudflare Workers)
+ * @returns Supabase admin client with service role key
  */
 export function createSupabaseAdmin(env?: Record<string, string>) {
-  const supabaseUrl = env?.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
-  const serviceRoleKey =
-    env?.SUPABASE_SERVICE_ROLE_KEY || import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl) {
-    throw new Error("Missing VITE_SUPABASE_URL");
-  }
-  if (!serviceRoleKey) {
-    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
-  }
+  // Try env parameter first (for Workers), then fall back to compatibility layer
+  const supabaseUrl = env?.VITE_SUPABASE_URL || requireEnv("VITE_SUPABASE_URL");
+  const serviceRoleKey = env?.SUPABASE_SERVICE_ROLE_KEY || requireEnv("SUPABASE_SERVICE_ROLE_KEY");
 
   return createClient<Database>(supabaseUrl, serviceRoleKey, {
     auth: {

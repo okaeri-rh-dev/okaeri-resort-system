@@ -258,13 +258,21 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
     const inputRef = React.useRef<HTMLInputElement>(null);
 
     // Sync external value with internal state
+    // Only run when external value/defaultValue changes, not when internalValue changes
     React.useEffect(() => {
       if (value !== undefined) {
         setInternalValue(value === null ? "" : value.toString());
-      } else if (defaultValue !== undefined && internalValue === "") {
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value]);
+
+    // Initialize with defaultValue only once
+    React.useEffect(() => {
+      if (defaultValue !== undefined && internalValue === "") {
         setInternalValue(defaultValue === null ? "" : defaultValue.toString());
       }
-    }, [value, defaultValue, internalValue]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const parseValue = (val: string): number | null => {
       if (val === "" || val === "-" || val === ".") return null;

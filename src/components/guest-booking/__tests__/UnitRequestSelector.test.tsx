@@ -78,8 +78,10 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} />);
 
       // CardSkeleton should be visible during loading
-      // Note: CardSkeleton uses role="status" for loading indicator
-      expect(screen.getByRole("status")).toBeInTheDocument();
+      // Note: Multiple CardSkeletons are rendered, so use getAllByRole
+      const skeletons = screen.getAllByRole("status");
+      expect(skeletons.length).toBeGreaterThan(0);
+      expect(skeletons[0]).toBeInTheDocument();
     });
 
     it("hides skeleton after rates loaded", async () => {
@@ -316,10 +318,13 @@ describe("UnitRequestSelector", () => {
 
     it("updates guest count when card input changes", async () => {
       const user = userEvent.setup();
-      const onChange = vi.fn();
+      let currentValue = [...mockMultipleUnits];
+      const onChange = vi.fn((newValue: typeof mockMultipleUnits) => {
+        currentValue = newValue;
+      });
 
-      render(
-        <UnitRequestSelector {...defaultProps} value={mockMultipleUnits} onChange={onChange} />
+      const { rerender } = render(
+        <UnitRequestSelector {...defaultProps} value={currentValue} onChange={onChange} />
       );
 
       await waitFor(() => {
@@ -332,9 +337,13 @@ describe("UnitRequestSelector", () => {
       await user.clear(guestInputs[0]);
       await user.type(guestInputs[0], "5");
 
-      // NumberInput may call onChange multiple times (for each keystroke)
-      // Verify onChange was called at least once
-      expect(onChange).toHaveBeenCalled();
+      // Wait for onChange to be called
+      await waitFor(() => {
+        expect(onChange).toHaveBeenCalled();
+      });
+
+      // Re-render with updated value to simulate parent state update
+      rerender(<UnitRequestSelector {...defaultProps} value={currentValue} onChange={onChange} />);
 
       // Verify the last call has the updated value
       const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1];
@@ -367,7 +376,6 @@ describe("UnitRequestSelector", () => {
     });
 
     it("updates totals when units added", async () => {
-      const user = userEvent.setup();
       const onChange = vi.fn();
 
       const { rerender } = render(
@@ -580,7 +588,6 @@ describe("UnitRequestSelector", () => {
     });
 
     it("prevents adding units beyond maxTotalUnits", async () => {
-      const user = userEvent.setup();
       const onChange = vi.fn();
       const maxedUnits = Array.from({ length: 10 }, () => ({ guests_per_unit: 2 }));
 

@@ -3,13 +3,12 @@ import { createClient } from "@supabase/supabase-js";
 import type { AuditEventContext, AuditLogFilters } from "@/types/audit.types";
 import type { Database, Json } from "@/types/database.types";
 
-// Environment variables validation
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+import { requireEnv } from "./env";
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Missing Supabase environment variables. Please check your .env.local file.");
-}
+// Environment variables validation using compatibility layer
+// This works in both Vite (browser) and Cloudflare Workers contexts
+const supabaseUrl = requireEnv("VITE_SUPABASE_URL");
+const supabaseAnonKey = requireEnv("VITE_SUPABASE_ANON_KEY");
 
 // Re-export Database type for backwards compatibility
 export type { Database } from "@/types/database.types";
