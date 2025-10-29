@@ -1,0 +1,16 @@
+{
+  "idempotency_key": "test-single-unit-550e8400-e29b-41d4-a716-446655440001",
+  "guest_name": "Test Guest Single",
+  "email": "single@test.example.com",
+  "phone_number": "+639171234567",
+  "check_in": "2025-03-15T14:00:00Z",
+  "check_out": "2025-03-22T11:00:00Z",
+  "unit_requests": [
+    {
+      "guests_per_unit": 2
+    }
+  ],
+  "special_requests": "Test single unit booking",
+  "turnstile_token": "1x00000000000000000000AA",
+  "terms_accepted": true
+}

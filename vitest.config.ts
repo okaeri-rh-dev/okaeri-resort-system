@@ -58,7 +58,7 @@ export default defineConfig(({ mode }) => {
       },
 
       // Test execution configuration
-      include: ["src/**/*.{test,spec}.{ts,tsx}"],
+      include: ["src/**/*.{test,spec}.{ts,tsx}", "__tests__/**/*.{test,spec}.{ts,tsx}"],
       exclude: ["node_modules", "dist", ".idea", ".git", ".cache"],
       testTimeout: 10000,
       hookTimeout: 10000,

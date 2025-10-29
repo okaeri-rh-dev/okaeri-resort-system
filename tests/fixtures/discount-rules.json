@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Week Stay Discount",
+    "description": "5% off for 7+ nights",
+    "conditions": [{ "type": "min_nights", "value": 7 }],
+    "discount_type": "percentage",
+    "discount_value": 5.0,
+    "priority": 1,
+    "is_active": true
+  },
+  {
+    "name": "Two Week Discount",
+    "description": "10% off for 14+ nights",
+    "conditions": [{ "type": "min_nights", "value": 14 }],
+    "discount_type": "percentage",
+    "discount_value": 10.0,
+    "priority": 2,
+    "is_active": true
+  },
+  {
+    "name": "Three Week Discount",
+    "description": "15% off for 21+ nights",
+    "conditions": [{ "type": "min_nights", "value": 21 }],
+    "discount_type": "percentage",
+    "discount_value": 15.0,
+    "priority": 3,
+    "is_active": true
+  },
+  {
+    "name": "Monthly Stay Discount",
+    "description": "20% off for 28+ nights",
+    "conditions": [{ "type": "min_nights", "value": 28 }],
+    "discount_type": "percentage",
+    "discount_value": 20.0,
+    "priority": 4,
+    "is_active": true
+  }
+]

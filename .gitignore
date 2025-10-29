@@ -233,3 +233,8 @@ bundle-stats.html
 # Database backups (contains production data)
 backups/
 *.sql.backup*
+
+# Test fixtures (generated/large files)
+tests/fixtures/images/*.jpg
+tests/fixtures/images/*.png
+tests/fixtures/pdfs/*.pdf

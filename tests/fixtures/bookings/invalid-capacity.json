@@ -1,0 +1,14 @@
+{
+  "guest_name": "Invalid Capacity",
+  "email": "capacity@test.example.com",
+  "phone_number": "+639201234567",
+  "check_in": "2025-05-01T14:00:00Z",
+  "check_out": "2025-05-08T11:00:00Z",
+  "unit_requests": [
+    {
+      "guests_per_unit": 25
+    }
+  ],
+  "turnstile_token": "1x00000000000000000000AA",
+  "terms_accepted": true
+}

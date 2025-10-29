@@ -1,0 +1,22 @@
+{
+  "idempotency_key": "test-multi-unit-550e8400-e29b-41d4-a716-446655440002",
+  "guest_name": "Test Guest Multi",
+  "email": "multi@test.example.com",
+  "phone_number": "+639181234567",
+  "check_in": "2025-04-01T14:00:00Z",
+  "check_out": "2025-04-15T11:00:00Z",
+  "unit_requests": [
+    {
+      "guests_per_unit": 2
+    },
+    {
+      "guests_per_unit": 3
+    },
+    {
+      "guests_per_unit": 2
+    }
+  ],
+  "special_requests": "Test multi-unit booking with 3 units",
+  "turnstile_token": "1x00000000000000000000AA",
+  "terms_accepted": true
+}
