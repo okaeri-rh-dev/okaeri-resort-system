@@ -88,10 +88,10 @@ async function isAdmin(
 /**
  * Parse RPC error messages for user-friendly responses
  */
-function parseRpcError(error: any): { status: number; message: string; details?: string } {
+function parseRpcError(error: RpcError): { status: number; message: string; details?: string } {
   const errorMessage = error?.message || "";
-  const errorDetails = error?.details || "";
-  const errorHint = error?.hint || "";
+  const _errorDetails = error?.details || "";
+  const _errorHint = error?.hint || "";
 
   // Check for specific error patterns
   if (errorMessage.includes("Payment must be verified")) {

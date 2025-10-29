@@ -430,7 +430,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
         size: 80,
       }),
     ],
-    [onViewGuest, onEditGuest]
+    [onViewGuest, onEditGuest, handleDelete]
   );
 
   // Create table instance

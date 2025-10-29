@@ -62,7 +62,7 @@ export default {
    * @param env - Environment variables (secrets)
    * @param ctx - Execution context (waitUntil, passThroughOnException)
    */
-  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+  async scheduled(event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     const startTime = Date.now();
 
     console.log(
@@ -133,7 +133,7 @@ export default {
    * @param ctx - Execution context
    * @returns Response
    */
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
     // Health check endpoint for monitoring
     if (new URL(request.url).pathname === "/health") {
       return new Response(

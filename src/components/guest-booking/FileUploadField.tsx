@@ -37,34 +37,37 @@ export function FileUploadField({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  const validateFile = (file: File): boolean => {
-    setError(null);
+  const validateFile = useCallback(
+    (file: File): boolean => {
+      setError(null);
 
-    // Check file size
-    if (file.size > maxSize) {
-      setError(`File is too large. Maximum size is ${formatFileSize(maxSize)}`);
-      return false;
-    }
-
-    // Check file type
-    const acceptedTypes = accept.split(",").flatMap((type) => {
-      if (type === "image/*") {
-        return ["image/jpeg", "image/png", "image/jpg", "image/webp"];
-      } else if (type === "application/pdf") {
-        return ["application/pdf"];
+      // Check file size
+      if (file.size > maxSize) {
+        setError(`File is too large. Maximum size is ${formatFileSize(maxSize)}`);
+        return false;
       }
-      return [type.trim()];
-    });
 
-    if (
-      !acceptedTypes.some((type) => file.type === type || file.name.endsWith(type.split("/")[1]))
-    ) {
-      setError("Invalid file type. Please upload a JPG, PNG, or PDF file.");
-      return false;
-    }
+      // Check file type
+      const acceptedTypes = accept.split(",").flatMap((type) => {
+        if (type === "image/*") {
+          return ["image/jpeg", "image/png", "image/jpg", "image/webp"];
+        } else if (type === "application/pdf") {
+          return ["application/pdf"];
+        }
+        return [type.trim()];
+      });
 
-    return true;
-  };
+      if (
+        !acceptedTypes.some((type) => file.type === type || file.name.endsWith(type.split("/")[1]))
+      ) {
+        setError("Invalid file type. Please upload a JPG, PNG, or PDF file.");
+        return false;
+      }
+
+      return true;
+    },
+    [maxSize, accept]
+  );
 
   const handleFileChange = useCallback(
     (file: File | null) => {
@@ -91,7 +94,7 @@ export function FileUploadField({
         setError(null);
       }
     },
-    [onChange, maxSize]
+    [onChange, validateFile]
   );
 
   const handleDrop = useCallback(

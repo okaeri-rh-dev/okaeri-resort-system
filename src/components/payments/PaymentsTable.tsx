@@ -267,7 +267,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
         size: 80,
       }),
     ],
-    [onViewPayment, onEditPayment, deletePayment, verifyPayment]
+    [onViewPayment, onEditPayment, deletePayment, verifyPayment, handleDelete, handleVerify]
   );
 
   // Transform payments data to match Payment interface

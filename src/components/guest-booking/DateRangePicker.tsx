@@ -76,6 +76,18 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   const [isOpen, setIsOpen] = React.useState(false);
 
   /**
+   * Validate dates on mount and when dates change
+   */
+  React.useEffect(() => {
+    if (checkIn && checkOut) {
+      const validationError = validateDateRange(checkIn, checkOut);
+      setError(validationError);
+    } else {
+      setError(null);
+    }
+  }, [checkIn, checkOut]);
+
+  /**
    * Handle date range change from calendar
    */
   const handleDateChange = (range: DateRange | undefined) => {
@@ -144,6 +156,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
               className
             )}
             aria-label="Select check-in and check-out dates"
+            aria-invalid={!!error}
             aria-describedby={
               error ? "date-range-error" : isValidSelection ? "date-range-success" : undefined
             }
@@ -153,7 +166,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
           </Button>
         </PopoverTrigger>
 
-        <PopoverContent className="w-auto p-0" align="start" sideOffset={8}>
+        <PopoverContent className="w-auto p-0" align="start" sideOffset={8} role="application">
           <Calendar
             mode="range"
             selected={{

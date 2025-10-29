@@ -10,13 +10,15 @@ import { createClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database.types";
 
+import { seedPricingConfig } from "./seeds/pricing-config";
+
 // Load environment variables for database connection
 const TEST_SUPABASE_URL =
   process.env.TEST_SUPABASE_URL || process.env.VITE_SUPABASE_URL || "http://127.0.0.1:54321";
 const TEST_SERVICE_KEY =
   process.env.TEST_SUPABASE_SERVICE_ROLE_KEY ||
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz"; // Default local Supabase service key
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU"; // Default local Supabase service key
 
 /**
  * Restart Supabase local instance
@@ -121,7 +123,16 @@ export default async function globalSetup() {
   console.log("VITEST GLOBAL SETUP - Database Availability Check");
   console.log("=".repeat(80) + "\n");
 
-  await checkDatabaseAvailability();
+  const dbAvailable = await checkDatabaseAvailability();
+
+  // Seed test data if database is available
+  if (dbAvailable) {
+    try {
+      await seedPricingConfig();
+    } catch (error) {
+      console.warn("⚠️  Failed to seed test data, tests may fail:", error);
+    }
+  }
 
   console.log("\n" + "=".repeat(80));
   console.log("STARTING TEST EXECUTION");

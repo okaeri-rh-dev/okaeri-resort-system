@@ -28,7 +28,7 @@ const supabase = createClient(
 );
 
 describe("Guest Booking API Integration", () => {
-  let testBookingIds: string[] = [];
+  const testBookingIds: string[] = [];
 
   afterAll(async () => {
     // Cleanup test data

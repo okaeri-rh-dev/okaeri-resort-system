@@ -70,7 +70,7 @@ export function MultiUnitGuestBookingForm() {
     const fields = STEP_FIELDS[stepKey];
 
     // Handle case where step has no validation fields
-    if (!fields || fields.length === 0) {
+    if (!fields || fields.length < 1) {
       console.debug(`Step ${step} has no validation fields`);
       return true;
     }
@@ -142,8 +142,7 @@ export function MultiUnitGuestBookingForm() {
         }
 
         if (response.status === 409 && result.is_duplicate) {
-          // Idempotent duplicate - continue with cached result
-          console.log("Duplicate submission detected, using cached result");
+          // Idempotent duplicate - continue with cached result (silent)
         } else {
           throw new Error(result.error || result.message || "Booking failed");
         }

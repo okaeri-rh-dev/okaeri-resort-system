@@ -126,7 +126,7 @@ export function usePriceChangeDetection(
   onPriceChange?: (newAmount: number, oldAmount: number, delta: number) => void
 ) {
   const { getTotalAmount } = useMultiUnitBookingStore();
-  const previousAmount = useMemo(() => getTotalAmount(), []);
+  const previousAmount = useMemo(() => getTotalAmount(), [getTotalAmount]);
 
   useEffect(() => {
     const currentAmount = getTotalAmount();

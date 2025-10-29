@@ -108,7 +108,7 @@ export function useExpensesTable({ onViewExpense, onEditExpense }: ExpensesTable
   // Get columns
   const columns = useMemo(
     () => getColumns({ onViewExpense, onEditExpense, onDelete: handleDelete }),
-    [onViewExpense, onEditExpense]
+    [onViewExpense, onEditExpense, handleDelete]
   );
 
   // Create table

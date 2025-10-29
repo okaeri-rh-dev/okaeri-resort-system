@@ -166,25 +166,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
   const isLoadingUnits = isLoadingAllUnits || isCheckingAvailability;
   const unitsError = availabilityError;
 
-  // Debug logging
-  console.log("=== UNITS AVAILABILITY DEBUG ===");
-  console.log("Query State:", {
-    checkIn,
-    checkOut,
-    checkInStr,
-    checkOutStr,
-    allUnitsCount: allUnits.length,
-    isLoadingAllUnits,
-    isCheckingAvailability,
-    availabilityResultsCount: availabilityResults?.length ?? 0,
-    filteredUnitsCount: units.length,
-    error: unitsError,
-    enabled: !!checkIn && !!checkOut && unitIds.length > 0,
-  });
-  console.log("All Units:", allUnits);
-  console.log("Availability Results:", availabilityResults);
-  console.log("Filtered Available Units:", units);
-  console.log("==================================");
+  // Debug logging removed - use React DevTools for debugging state
 
   // ============================================
   // HANDLERS
@@ -524,7 +506,9 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                         checkOut={checkOut}
                         onAddUnit={handleAddUnit}
                         onRemoveUnit={handleRemoveUnit}
-                        onViewDetails={(unitId) => console.log("View details:", unitId)}
+                        onViewDetails={(_unitId) => {
+                          /* TODO: Implement unit details modal */
+                        }}
                         isLoading={isLoadingUnits}
                         maxUnits={3}
                         enableFilters={false}
