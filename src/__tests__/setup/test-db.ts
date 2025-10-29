@@ -296,7 +296,7 @@ export async function waitForDatabase(maxAttempts: number = 5): Promise<boolean>
         console.log("Test database is ready");
         return true;
       }
-    } catch (e) {
+    } catch (_e) {
       // eslint-disable-next-line no-console
       console.log(`Database not ready (attempt ${i + 1}/${maxAttempts})`);
       await new Promise((r) => setTimeout(r, 1000)); // Wait 1 second
@@ -340,7 +340,7 @@ export async function shouldRunDatabaseTests(): Promise<boolean> {
         console.log("Test database is ready");
         return true;
       }
-    } catch (e) {
+    } catch (_e) {
       // eslint-disable-next-line no-console
       console.log(`Database not ready (attempt ${i + 1}/2)`);
       await new Promise((r) => setTimeout(r, 1000)); // Wait 1 second

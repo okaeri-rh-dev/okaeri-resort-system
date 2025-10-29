@@ -201,12 +201,12 @@ export function PaymentUploadForm({
 
           toast.success("Payment proof uploaded successfully!");
           onSuccess?.(data);
-        } catch (error) {
+        } catch (_error) {
           toast.error("Failed to upload payment proof. Please try again.");
           setUploadProgress(null);
         }
       });
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to upload payment proof. Please try again.");
       setUploadProgress(null);
     }

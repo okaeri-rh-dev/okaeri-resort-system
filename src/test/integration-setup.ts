@@ -121,7 +121,7 @@ export async function stopWorkers(): Promise<void> {
         try {
           // On Unix systems, kill process group
           process.kill(-wranglerProcess.pid, "SIGTERM");
-        } catch (error) {
+        } catch (_error) {
           // Fallback: kill just the main process
           wranglerProcess.kill("SIGTERM");
         }

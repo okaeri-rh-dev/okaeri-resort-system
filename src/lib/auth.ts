@@ -196,7 +196,7 @@ class AuthService {
 
       // Perform secure cleanup
       secureCleanup();
-    } catch (error) {
+    } catch (_error) {
       // Ensure cleanup happens even on error
       secureCleanup();
       throw new Error("Sign out failed. Please try again.");
