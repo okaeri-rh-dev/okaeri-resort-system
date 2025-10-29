@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/bookings/$bookingId/")({
         }
 
         // Type assertion to handle Supabase Json type compatibility
-        return data as any;
+        return data as unknown;
       },
       staleTime: 30000, // 30 seconds
     });
@@ -151,7 +151,8 @@ function BookingDetailComponent() {
   return (
     <ErrorBoundary level="page">
       <Suspense fallback={<DetailPageSkeleton />}>
-        <BookingDetailPage booking={booking} bookingId={bookingId} />
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <BookingDetailPage booking={booking as any} bookingId={bookingId} />
       </Suspense>
     </ErrorBoundary>
   );

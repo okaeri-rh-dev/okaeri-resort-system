@@ -200,14 +200,15 @@ export async function submitGuestBooking(
  * @param error - Error from submitGuestBooking()
  * @returns true if error indicates duplicate submission
  */
-export function isIdempotencyError(error: any): boolean {
+export function isIdempotencyError(error: unknown): boolean {
   if (typeof error === "object" && error !== null) {
-    const errorCode = error.code || error.error;
+    const err = error as Record<string, unknown>;
+    const errorCode = err.code || err.error;
     return (
       errorCode === "DUPLICATE_SUBMISSION" ||
       errorCode === "IDEMPOTENCY_CONFLICT" ||
-      (typeof error.message === "string" &&
-        (error.message.includes("duplicate") || error.message.includes("idempotency")))
+      (typeof err.message === "string" &&
+        (err.message.includes("duplicate") || err.message.includes("idempotency")))
     );
   }
 
@@ -254,7 +255,7 @@ export function generateFallbackUUID(): string {
  * @returns Promise<PricingConfig> - Pricing configuration object
  * @throws Error on network failure or server error
  */
-export async function fetchRates(): Promise<any> {
+export async function fetchRates(): Promise<unknown> {
   const response = await fetch("/api/guest-booking/rates", {
     method: "GET",
     headers: {
@@ -263,12 +264,14 @@ export async function fetchRates(): Promise<any> {
   });
 
   if (!response.ok) {
-    const error: any = await response.json();
-    throw new Error(error.message || error.error || "Failed to fetch rates");
+    const error: unknown = await response.json();
+    const err = error as Record<string, unknown>;
+    throw new Error((err.message as string) || (err.error as string) || "Failed to fetch rates");
   }
 
-  const result: any = await response.json();
-  return result.data;
+  const result: unknown = await response.json();
+  const res = result as Record<string, unknown>;
+  return res.data;
 }
 
 /**

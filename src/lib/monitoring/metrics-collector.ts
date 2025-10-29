@@ -9,7 +9,7 @@ export interface Metric {
   name: string;
   value: number;
   timestamp: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface DailyMetrics {
@@ -190,7 +190,7 @@ export class MetricsCollector {
   /**
    * Track a custom event
    */
-  async trackEvent(eventName: string, metadata?: Record<string, any>): Promise<void> {
+  async trackEvent(eventName: string, metadata?: Record<string, unknown>): Promise<void> {
     const event = {
       name: eventName,
       timestamp: new Date().toISOString(),
@@ -263,14 +263,14 @@ export function createMetricsCollector(env: { RATE_LIMIT_KV: KVNamespace }): Met
 export async function trackApplicationMetric(
   collector: MetricsCollector,
   type: "booking" | "upload" | "email" | "error" | "status_check",
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): Promise<void> {
   // Increment the main counter
   await collector.increment(type === "error" ? "failures" : `${type}s`);
 
   // Track bandwidth for uploads
   if (type === "upload" && metadata?.size) {
-    const sizeMB = Math.ceil(metadata.size / (1024 * 1024));
+    const sizeMB = Math.ceil(Number(metadata.size) / (1024 * 1024));
     await collector.increment("bandwidth_mb", sizeMB);
   }
 

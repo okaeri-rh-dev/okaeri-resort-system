@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 class MockKVNamespace {
   private store = new Map<string, string>();
 
-  async get(key: string, typeOrOptions?: any): Promise<any> {
+  async get(key: string, typeOrOptions?: any): Promise<unknown> {
     const value = this.store.get(key) || null;
     if (!value) return null;
 
@@ -38,7 +38,7 @@ class MockKVNamespace {
     _options?: KVNamespaceListOptions
   ): Promise<KVNamespaceListResult<Metadata>> {
     return {
-      keys: Array.from(this.store.keys()).map((name) => ({ name, metadata: undefined as any })),
+      keys: Array.from(this.store.keys()).map((name) => ({ name, metadata: undefined as unknown })),
       list_complete: true,
       cacheStatus: null,
     } as KVNamespaceListResult<Metadata>;
@@ -49,8 +49,8 @@ class MockKVNamespace {
   ): Promise<KVNamespaceGetWithMetadataResult<Value, Metadata>> {
     const value = this.store.get(key) || null;
     return {
-      value: value as any,
-      metadata: null as any,
+      value: value as unknown,
+      metadata: null as unknown,
       cacheStatus: null,
     };
   }
@@ -109,7 +109,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         },
       };
 
-      (global.fetch as any).mockResolvedValueOnce({
+      (global.fetch as unknown).mockResolvedValueOnce({
         ok: true,
         status: 200,
         json: async () => mockResponse,
@@ -124,7 +124,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         body: JSON.stringify(bookingData),
       });
 
-      const result = (await response.json()) as any;
+      const result = (await response.json()) as unknown;
 
       expect(response.ok).toBe(true);
       expect(result.success).toBe(true);
@@ -158,7 +158,7 @@ describe("Guest Booking Flow E2E Tests", () => {
       };
 
       // First request
-      (global.fetch as any).mockResolvedValueOnce({
+      (global.fetch as unknown).mockResolvedValueOnce({
         ok: true,
         status: 200,
         json: async () => mockResponse,
@@ -174,7 +174,7 @@ describe("Guest Booking Flow E2E Tests", () => {
       });
 
       // Second request with same idempotency key
-      (global.fetch as any).mockResolvedValueOnce({
+      (global.fetch as unknown).mockResolvedValueOnce({
         ok: true,
         status: 200,
         json: async () => mockResponse,
@@ -189,8 +189,8 @@ describe("Guest Booking Flow E2E Tests", () => {
         body: JSON.stringify(bookingData),
       });
 
-      const result1 = (await response1.json()) as any;
-      const result2 = (await response2.json()) as any;
+      const result1 = (await response1.json()) as unknown;
+      const result2 = (await response2.json()) as unknown;
 
       // Both responses should return the same booking
       expect(result1.booking.id).toBe(result2.booking.id);
@@ -212,7 +212,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         file_size: 2048000,
       };
 
-      (global.fetch as any).mockResolvedValueOnce({
+      (global.fetch as unknown).mockResolvedValueOnce({
         ok: false,
         status: 403,
         json: async () => ({
@@ -229,7 +229,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         body: JSON.stringify(bookingData),
       });
 
-      const result = (await response.json()) as any;
+      const result = (await response.json()) as unknown;
 
       expect(response.ok).toBe(false);
       expect(response.status).toBe(403);
@@ -253,7 +253,7 @@ describe("Guest Booking Flow E2E Tests", () => {
 
       // Simulate 5 successful requests (rate limit)
       for (let i = 0; i < 5; i++) {
-        (global.fetch as any).mockResolvedValueOnce({
+        (global.fetch as unknown).mockResolvedValueOnce({
           ok: true,
           status: 200,
           json: async () => ({ success: true }),
@@ -267,7 +267,7 @@ describe("Guest Booking Flow E2E Tests", () => {
       }
 
       // 6th request should be rate limited
-      (global.fetch as any).mockResolvedValueOnce({
+      (global.fetch as unknown).mockResolvedValueOnce({
         ok: false,
         status: 429,
         json: async () => ({
@@ -283,7 +283,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         body: JSON.stringify(bookingData),
       });
 
-      const result = (await response.json()) as any;
+      const result = (await response.json()) as unknown;
 
       expect(response.status).toBe(429);
       expect(result.error).toBe("RATE_LIMITED");
@@ -317,7 +317,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         file_size: 1024000,
       };
 
-      (global.fetch as any).mockResolvedValueOnce({
+      (global.fetch as unknown).mockResolvedValueOnce({
         ok: true,
         status: 200,
         json: async () => ({
@@ -334,7 +334,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         body: JSON.stringify(confirmData),
       });
 
-      const result = (await response.json()) as any;
+      const result = (await response.json()) as unknown;
 
       expect(response.ok).toBe(true);
       expect(result.success).toBe(true);
@@ -348,7 +348,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         file_size: 2048000,
       };
 
-      (global.fetch as any).mockResolvedValueOnce({
+      (global.fetch as unknown).mockResolvedValueOnce({
         ok: false,
         status: 400,
         json: async () => ({
@@ -365,7 +365,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         body: JSON.stringify(confirmData),
       });
 
-      const result = (await response.json()) as any;
+      const result = (await response.json()) as unknown;
 
       expect(response.ok).toBe(false);
       expect(response.status).toBe(400);
@@ -380,7 +380,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         email: "john.doe@example.com",
       };
 
-      (global.fetch as any).mockResolvedValueOnce({
+      (global.fetch as unknown).mockResolvedValueOnce({
         ok: true,
         status: 200,
         json: async () => ({
@@ -401,7 +401,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         method: "GET",
       });
 
-      const result = (await response.json()) as any;
+      const result = (await response.json()) as unknown;
 
       expect(response.ok).toBe(true);
       expect(result.success).toBe(true);
@@ -410,7 +410,7 @@ describe("Guest Booking Flow E2E Tests", () => {
     });
 
     it("should require both reference and email for status check", async () => {
-      (global.fetch as any).mockResolvedValueOnce({
+      (global.fetch as unknown).mockResolvedValueOnce({
         ok: false,
         status: 400,
         json: async () => ({
@@ -423,7 +423,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         method: "GET",
       });
 
-      const result = (await response.json()) as any;
+      const result = (await response.json()) as unknown;
 
       expect(response.ok).toBe(false);
       expect(response.status).toBe(400);
@@ -438,7 +438,7 @@ describe("Guest Booking Flow E2E Tests", () => {
 
       // Simulate 20 requests to trigger progressive CAPTCHA
       for (let i = 0; i < 20; i++) {
-        (global.fetch as any).mockResolvedValueOnce({
+        (global.fetch as unknown).mockResolvedValueOnce({
           ok: true,
           status: 200,
           json: async () => ({ success: true }),
@@ -451,7 +451,7 @@ describe("Guest Booking Flow E2E Tests", () => {
       }
 
       // 21st request should require CAPTCHA
-      (global.fetch as any).mockResolvedValueOnce({
+      (global.fetch as unknown).mockResolvedValueOnce({
         ok: false,
         status: 429,
         json: async () => ({
@@ -467,7 +467,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         method: "GET",
       });
 
-      const result = (await response.json()) as any;
+      const result = (await response.json()) as unknown;
 
       expect(response.status).toBe(429);
       expect(result.requiresCaptcha).toBe(true);
@@ -480,7 +480,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         turnstile_token: "valid-captcha-token",
       };
 
-      (global.fetch as any).mockResolvedValueOnce({
+      (global.fetch as unknown).mockResolvedValueOnce({
         ok: true,
         status: 200,
         json: async () => ({
@@ -497,7 +497,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         method: "GET",
       });
 
-      const result = (await response.json()) as any;
+      const result = (await response.json()) as unknown;
 
       expect(response.ok).toBe(true);
       expect(result.success).toBe(true);
@@ -530,7 +530,7 @@ describe("Guest Booking Flow E2E Tests", () => {
       };
 
       // First booking succeeds
-      (global.fetch as any).mockResolvedValueOnce({
+      (global.fetch as unknown).mockResolvedValueOnce({
         ok: true,
         status: 200,
         json: async () => ({
@@ -548,7 +548,7 @@ describe("Guest Booking Flow E2E Tests", () => {
       expect(response1.ok).toBe(true);
 
       // Second booking fails due to conflict
-      (global.fetch as any).mockResolvedValueOnce({
+      (global.fetch as unknown).mockResolvedValueOnce({
         ok: false,
         status: 409,
         json: async () => ({
@@ -563,7 +563,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         body: JSON.stringify(booking2),
       });
 
-      const result2 = (await response2.json()) as any;
+      const result2 = (await response2.json()) as unknown;
 
       expect(response2.ok).toBe(false);
       expect(response2.status).toBe(409);
@@ -599,7 +599,7 @@ describe("Guest Booking Flow E2E Tests", () => {
 
       // Mock responses for concurrent requests
       let firstResponseResolved = false;
-      (global.fetch as any).mockImplementation(() => {
+      (global.fetch as unknown).mockImplementation(() => {
         return new Promise((resolve) => {
           // Simulate slight delay to make requests truly concurrent
           setTimeout(() => {
@@ -653,7 +653,7 @@ describe("Guest Booking Flow E2E Tests", () => {
 
   describe("Error Handling", () => {
     it("should handle network errors gracefully", async () => {
-      (global.fetch as any).mockRejectedValueOnce(new Error("Network error"));
+      (global.fetch as unknown).mockRejectedValueOnce(new Error("Network error"));
 
       try {
         await fetch(`${baseUrl}/api/guest-booking`, {
@@ -673,7 +673,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         // Missing required fields
       };
 
-      (global.fetch as any).mockResolvedValueOnce({
+      (global.fetch as unknown).mockResolvedValueOnce({
         ok: false,
         status: 400,
         json: async () => ({
@@ -689,7 +689,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         body: JSON.stringify(incompleteBooking),
       });
 
-      const result = (await response.json()) as any;
+      const result = (await response.json()) as unknown;
 
       expect(response.ok).toBe(false);
       expect(response.status).toBe(400);
@@ -704,7 +704,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         file_size: 1024000,
       };
 
-      (global.fetch as any).mockResolvedValueOnce({
+      (global.fetch as unknown).mockResolvedValueOnce({
         ok: false,
         status: 410,
         json: async () => ({
@@ -719,7 +719,7 @@ describe("Guest Booking Flow E2E Tests", () => {
         body: JSON.stringify(confirmData),
       });
 
-      const result = (await response.json()) as any;
+      const result = (await response.json()) as unknown;
 
       expect(response.status).toBe(410);
       expect(result.error).toBe("UPLOAD_EXPIRED");

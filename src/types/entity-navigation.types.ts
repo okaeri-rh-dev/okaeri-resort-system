@@ -39,7 +39,7 @@ export type NavigationTarget = {
 export type EntityNavigationProps<T extends EntityType> = {
   type: T;
   id: string;
-  search?: Record<string, any>;
+  search?: Record<string, unknown>;
 };
 
 // ============================================

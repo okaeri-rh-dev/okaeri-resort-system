@@ -75,8 +75,8 @@ export const ResponsiveTableWrapper: React.FC<ResponsiveTableWrapperProps> = ({
  * One DOM structure = Even better performance
  */
 export const ResponsiveDataGrid: React.FC<{
-  items: any[];
-  renderItem: (item: any, index: number) => React.ReactNode;
+  items: unknown[];
+  renderItem: (item: unknown, index: number) => React.ReactNode;
   className?: string;
 }> = ({ items, renderItem, className }) => {
   return (

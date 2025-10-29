@@ -129,7 +129,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       },
       { status: 200, headers: corsHeaders }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[PREVIEW] Unexpected error:", error);
     return Response.json(
       {

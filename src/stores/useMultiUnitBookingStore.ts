@@ -16,11 +16,31 @@ import { create } from "zustand";
 import { devtools, persist, subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 
+import { logger } from "@/lib/logger";
+import { hasBooleanProperty, hasProperty, hasStringProperty } from "@/lib/type-guards";
 import type { MultiUnitBookingStore, OptimisticEntry } from "@/types";
 import { dateDifference, isWeekend } from "@/utils/date-helpers";
 
 // Enable Immer MapSet plugin for Map and Set support
 enableMapSet();
+
+// ============================================
+// TYPE GUARDS
+// ============================================
+
+interface AvailabilityResult {
+  unit_id: string;
+  is_available: boolean;
+}
+
+function isAvailabilityResult(value: unknown): value is AvailabilityResult {
+  return (
+    hasProperty(value, "unit_id") &&
+    hasProperty(value, "is_available") &&
+    hasStringProperty(value, "unit_id") &&
+    hasBooleanProperty(value, "is_available")
+  );
+}
 
 // ============================================
 // CONSTANTS
@@ -471,18 +491,24 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
             const results: Array<{ unit_id: string; is_available: boolean }> = [];
 
             try {
-              const data = checkFn
-                ? await checkFn()
-                : await (async () => {
-                    const response = await fetch(
-                      `/api/availability/multi-unit?unit_ids=${unitIds.join(",")}&check_in=${checkIn}&check_out=${checkOut}`
-                    );
-                    if (!response.ok) throw new Error("Availability check failed");
-                    const json = (await response.json()) as { data: { results: any[] } };
-                    return json.data.results;
-                  })();
+              const data: unknown[] = (
+                checkFn
+                  ? await checkFn()
+                  : await (async () => {
+                      const response = await fetch(
+                        `/api/availability/multi-unit?unit_ids=${unitIds.join(",")}&check_in=${checkIn}&check_out=${checkOut}`
+                      );
+                      if (!response.ok) throw new Error("Availability check failed");
+                      const json = (await response.json()) as { data: { results: unknown[] } };
+                      return json.data.results;
+                    })()
+              ) as unknown[];
 
-              data.forEach((result: any) => {
+              data.forEach((result: unknown) => {
+                if (!isAvailabilityResult(result)) {
+                  logger.warn("Invalid availability result format", { result });
+                  return;
+                }
                 const cacheKey = `${result.unit_id}-${checkIn}-${checkOut}`;
                 set((state: Draft<MultiUnitBookingStore>) => {
                   state.availabilityCache.set(cacheKey, {
@@ -534,19 +560,26 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
 
               if (!response.ok) throw new Error("Availability check failed");
 
-              const data = (await response.json()) as { data: { results: any[] } };
+              const data = (await response.json()) as { data: { results: unknown[] } };
 
-              data.data.results.forEach((result: any) => {
+              data.data.results.forEach((result: unknown) => {
+                if (!isAvailabilityResult(result)) {
+                  logger.warn("Invalid availability result format", { result });
+                  return;
+                }
                 results.set(result.unit_id, result.is_available);
 
                 set((state: Draft<MultiUnitBookingStore>) => {
                   const unit = state.selectedUnits.find((u) => u.unit_id === result.unit_id);
                   if (unit) {
+                    const resultWithConflicts = result as AvailabilityResult & {
+                      conflicting_bookings?: number;
+                    };
                     unit.availability = {
                       is_available: result.is_available,
                       checking: false,
                       last_checked: new Date().toISOString(),
-                      conflicts: result.conflicting_bookings,
+                      conflicts: resultWithConflicts.conflicting_bookings,
                     };
                   }
                 });
@@ -679,7 +712,7 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
 
                 case "user-prompt":
                   // Store both for UI to handle
-                  console.log("Conflict detected:", {
+                  logger.info("Conflict detected:", {
                     optimistic: optimisticEntry.booking,
                     server: serverData,
                   });
@@ -712,7 +745,7 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
                 if (processFn) {
                   await processFn(item);
                 } else {
-                  console.log("Processing offline operation:", item);
+                  logger.info("Processing offline operation:", { operation: item });
                 }
 
                 // Remove from queue on success

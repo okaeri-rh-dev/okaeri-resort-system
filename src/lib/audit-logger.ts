@@ -72,6 +72,7 @@ export async function logAuditEvent(
 
     // Warn if critical category without IP capture
     const CRITICAL_CATEGORIES = ["authentication", "payment"] as const;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (CRITICAL_CATEGORIES.includes(context.category as any)) {
       console.warn(
         `[Audit] Critical event ${context.category} logged without IP. ` +
@@ -138,8 +139,8 @@ export async function logAuditEvent(
       category: context.category,
       severity: context.severity || AuditSeverity.INFO,
       metadata, // Extra context only, NOT dedicated column values
-      oldData: redactedOldData as any, // Type cast needed due to Json union types
-      newData: redactedNewData as any, // Type cast needed due to Json union types
+      oldData: redactedOldData as unknown, // Type cast needed due to Json union types
+      newData: redactedNewData as unknown, // Type cast needed due to Json union types
     });
 
     if (error) {

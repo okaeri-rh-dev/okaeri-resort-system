@@ -16,8 +16,8 @@
 
 import { vi } from "vitest";
 
-export type MockData = Record<string, any>;
-export type RpcFunction = (params: any) => any;
+export type MockData = Record<string, unknown>;
+export type RpcFunction = (params: Record<string, unknown>) => unknown;
 
 /**
  * Table-specific primary key mappings
@@ -36,15 +36,15 @@ const TABLE_PRIMARY_KEYS: Record<string, string> = {
  * Builder class for creating Supabase client mocks
  */
 export class SupabaseMockBuilder {
-  private tableData: Map<string, any[]> = new Map();
-  private tableErrors: Map<string, any> = new Map();
+  private tableData: Map<string, MockData[]> = new Map();
+  private tableErrors: Map<string, unknown> = new Map();
   private rpcFunctions: Map<string, RpcFunction> = new Map();
-  private rpcErrors: Map<string, any> = new Map();
+  private rpcErrors: Map<string, unknown> = new Map();
 
   /**
    * Add mock data for a table
    */
-  table(tableName: string, data: any[] | null, error: any = null): this {
+  table(tableName: string, data: MockData[] | null, error: unknown = null): this {
     if (data !== null) {
       this.tableData.set(tableName, data);
     }
@@ -57,7 +57,7 @@ export class SupabaseMockBuilder {
   /**
    * Add mock RPC function
    */
-  rpc(functionName: string, handler: RpcFunction | any[], error: any = null): this {
+  rpc(functionName: string, handler: RpcFunction | unknown[], error: unknown = null): this {
     if (typeof handler === "function") {
       this.rpcFunctions.set(functionName, handler);
     } else {
@@ -87,14 +87,15 @@ export class SupabaseMockBuilder {
         return {
           select: vi.fn((_columns = "*") => {
             const selectResult = {
-              eq: vi.fn((column: string, value: any) => {
-                const filtered = data.filter((item: any) => item[column] === value);
+              eq: vi.fn((column: string, value: unknown) => {
+                const filtered = data.filter((item: MockData) => item[column] === value);
 
                 // Create recursive eq result that supports chaining multiple .eq() calls
-                const createEqResult = (currentData: any[]): any => ({
-                  eq: vi.fn((nextColumn: string, nextValue: any) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const createEqResult = (currentData: MockData[]): unknown => ({
+                  eq: vi.fn((nextColumn: string, nextValue: unknown) => {
                     const furtherFiltered = currentData.filter(
-                      (item: any) => item[nextColumn] === nextValue
+                      (item: MockData) => item[nextColumn] === nextValue
                     );
                     return createEqResult(furtherFiltered);
                   }),
@@ -121,18 +122,18 @@ export class SupabaseMockBuilder {
                 return createEqResult(filtered);
               }),
 
-              in: vi.fn((column: string, values: any[]) => {
-                const filtered = data.filter((item: any) => values.includes(item[column]));
+              in: vi.fn((column: string, values: unknown[]) => {
+                const filtered = data.filter((item: MockData) => values.includes(item[column]));
                 return {
                   data: filtered,
                   error,
                 };
               }),
 
-              gte: vi.fn((column: string, value: any) => ({
-                lte: vi.fn((column2: string, value2: any) => ({
+              gte: vi.fn((column: string, value: unknown) => ({
+                lte: vi.fn((column2: string, value2: unknown) => ({
                   data: data.filter(
-                    (item: any) => item[column] >= value && item[column2] <= value2
+                    (item: MockData) => item[column] >= value && item[column2] <= value2
                   ),
                   error,
                 })),
@@ -158,7 +159,7 @@ export class SupabaseMockBuilder {
             return selectResult;
           }),
 
-          insert: vi.fn((insertData: any) => {
+          insert: vi.fn((insertData: MockData | MockData[]) => {
             // Get table-specific primary key field name, or default to 'id'
             const primaryKeyField = TABLE_PRIMARY_KEYS[table] || "id";
             const generateId = (index?: number) =>
@@ -182,8 +183,8 @@ export class SupabaseMockBuilder {
             };
           }),
 
-          update: vi.fn((updateData: any) => ({
-            eq: vi.fn((_column: string, _value: any) => ({
+          update: vi.fn((updateData: MockData) => ({
+            eq: vi.fn((_column: string, _value: unknown) => ({
               select: vi.fn(() => ({
                 single: vi.fn(() => ({
                   data: { ...updateData, updated_at: new Date().toISOString() },
@@ -206,7 +207,7 @@ export class SupabaseMockBuilder {
         };
       }),
 
-      rpc: vi.fn((functionName: string, params?: any) => {
+      rpc: vi.fn((functionName: string, params?: Record<string, unknown>) => {
         const error = rpcErrors.get(functionName);
         if (error) {
           return Promise.resolve({ data: null, error });
@@ -256,11 +257,11 @@ export class SupabaseMockBuilder {
  * Convenience function to create a basic mock client
  */
 export function createMockSupabaseClient(config?: {
-  tables?: Record<string, any[]>;
-  rpcs?: Record<string, RpcFunction | any[]>;
+  tables?: Record<string, MockData[]>;
+  rpcs?: Record<string, RpcFunction | unknown[]>;
   errors?: {
-    tables?: Record<string, any>;
-    rpcs?: Record<string, any>;
+    tables?: Record<string, unknown>;
+    rpcs?: Record<string, unknown>;
   };
 }) {
   const builder = new SupabaseMockBuilder();

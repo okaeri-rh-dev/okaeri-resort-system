@@ -76,7 +76,15 @@ function PaymentNotVerifiedGuard({
     <div className="container mx-auto space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/admin/queue" } as any)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() =>
+            navigate({
+              to: "/admin/queue", // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any)
+          }
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Queue
         </Button>
@@ -103,13 +111,24 @@ function PaymentNotVerifiedGuard({
           </p>
           <div className="flex gap-3">
             <Button
-              onClick={() => navigate({ to: `/admin/verify-payment/${bookingId}` } as any)}
+              onClick={() =>
+                navigate({
+                  to: `/admin/verify-payment/${bookingId}`, // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } as any)
+              }
               className="bg-yellow-600 hover:bg-yellow-700"
             >
               <CheckCircle2 className="mr-2 h-4 w-4" />
               Verify Payment
             </Button>
-            <Button variant="outline" onClick={() => navigate({ to: "/admin/queue" } as any)}>
+            <Button
+              variant="outline"
+              onClick={() =>
+                navigate({
+                  to: "/admin/queue", // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } as any)
+              }
+            >
               Back to Queue
             </Button>
           </div>
@@ -136,7 +155,15 @@ function AlreadyAssignedGuard({
     <div className="container mx-auto space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/admin/queue" } as any)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() =>
+            navigate({
+              to: "/admin/queue", // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any)
+          }
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Queue
         </Button>
@@ -163,12 +190,23 @@ function AlreadyAssignedGuard({
           </p>
           <div className="flex gap-3">
             <Button
-              onClick={() => navigate({ to: `/bookings/${bookingId}` } as any)}
+              onClick={() =>
+                navigate({
+                  to: `/bookings/${bookingId}`, // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } as any)
+              }
               className="bg-blue-600 hover:bg-blue-700"
             >
               View Booking Details
             </Button>
-            <Button variant="outline" onClick={() => navigate({ to: "/admin/queue" } as any)}>
+            <Button
+              variant="outline"
+              onClick={() =>
+                navigate({
+                  to: "/admin/queue", // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } as any)
+              }
+            >
               Back to Queue
             </Button>
           </div>
@@ -213,7 +251,15 @@ function ErrorState({ error, bookingId }: { error: Error | null; bookingId: stri
   return (
     <div className="container mx-auto space-y-6 p-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/admin/queue" } as any)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() =>
+            navigate({
+              to: "/admin/queue", // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any)
+          }
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Queue
         </Button>
@@ -241,7 +287,15 @@ function ErrorState({ error, bookingId }: { error: Error | null; bookingId: stri
             <Button onClick={() => window.location.reload()} variant="outline">
               Retry
             </Button>
-            <Button onClick={() => navigate({ to: "/admin/queue" } as any)}>Back to Queue</Button>
+            <Button
+              onClick={() =>
+                navigate({
+                  to: "/admin/queue", // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } as any)
+              }
+            >
+              Back to Queue
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -337,7 +391,15 @@ function AssignUnitsPage() {
     <div className="container mx-auto space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/admin/queue" } as any)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() =>
+            navigate({
+              to: "/admin/queue", // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any)
+          }
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Queue
         </Button>

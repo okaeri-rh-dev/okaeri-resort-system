@@ -9,13 +9,14 @@
  * Phase 2C: Unit Management Operations
  */
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import { sanitizeTextWorker } from "../../../../../src/lib/security/sanitize-worker";
 import { calculateExtraPersonFee, calculateWeekendNights } from "../../../../../src/utils/pricing";
 import { logUnitAdded } from "../../../../lib/audit-logger-workers";
 import { requireRole } from "../../../../lib/rbac";
+import type { AuthenticatedRequest } from "../../../../lib/types";
 
 interface Env {
   SUPABASE_URL: string;
@@ -250,7 +251,7 @@ export const onRequestPost = async (context: {
     await adjustPaymentForUnitChange(supabase, bookingId, data.subtotal, "unit_added");
 
     // 8. Audit logging
-    const userId = (request as any).user?.id || undefined;
+    const userId = (request as AuthenticatedRequest).user?.id;
     await logUnitAdded(supabase, bookingId, newBookingUnit, userId, request);
 
     // 9. Fetch updated booking
@@ -308,11 +309,11 @@ export const onRequestPost = async (context: {
  * From spec lines 1368-1423
  */
 async function adjustPaymentForUnitChange(
-  supabase: any,
+  supabase: SupabaseClient,
   bookingId: string,
   deltaAmount: number,
   reason: string
-) {
+): Promise<void> {
   // Get existing payment
   const { data: payment } = await supabase
     .from("payments")

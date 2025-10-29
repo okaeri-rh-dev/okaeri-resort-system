@@ -100,7 +100,7 @@ export interface AddUnitResponse {
     booking_id: string;
     booking_reference: string;
     total_amount: number;
-    units: Array<any>;
+    units: Array<unknown>;
   };
 }
 
@@ -114,7 +114,7 @@ export interface RemoveUnitResponse {
     booking_id: string;
     booking_reference: string;
     total_amount: number;
-    units: Array<any>;
+    units: Array<unknown>;
     refund_amount?: number;
   };
 }
@@ -170,7 +170,7 @@ export interface ApiErrorResponse {
   error: string;
   message: string;
   code?: number;
-  details?: any;
+  details?: unknown;
 }
 
 /**
@@ -200,7 +200,7 @@ export interface BusinessErrorResponse {
     message: string;
     details?: {
       unavailable_units?: string[];
-      [key: string]: any;
+      [key: string]: unknown;
     };
   };
 }

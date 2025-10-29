@@ -12,6 +12,7 @@
  * See: wrangler.toml [triggers] section for cron configuration
  */
 
+import { createLogger } from "./lib/logger";
 import { cleanupIdempotency } from "./scheduled/cleanup-idempotency";
 import { cleanupPaymentProofs } from "./scheduled/cleanup-payment-proofs";
 
@@ -64,30 +65,30 @@ export default {
    */
   async scheduled(event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     const startTime = Date.now();
+    const logger = createLogger(env);
 
-    console.log(
-      `[CRON] Starting scheduled task: ${event.cron} ` +
-        `(scheduled at: ${new Date(event.scheduledTime).toISOString()})`
-    );
+    logger.info(`[CRON] Starting scheduled task: ${event.cron}`, {
+      scheduledAt: new Date(event.scheduledTime).toISOString(),
+    });
 
     try {
       // Route cron schedule to appropriate cleanup function
       switch (event.cron) {
         case "0 2 * * *":
           // Daily at 2:00 AM UTC: Cleanup idempotency keys
-          console.log("[CRON] Executing: cleanup_expired_idempotency_keys");
+          logger.info("[CRON] Executing: cleanup_expired_idempotency_keys");
           await cleanupIdempotency(env);
           break;
 
         case "0 3 * * 0":
           // Weekly Sunday at 3:00 AM UTC: Cleanup payment proofs
-          console.log("[CRON] Executing: cleanup_expired_payment_proofs");
+          logger.info("[CRON] Executing: cleanup_expired_payment_proofs");
           await cleanupPaymentProofs(env);
           break;
 
         default:
           // Unknown cron schedule - log warning
-          console.warn(
+          logger.warn(
             `[WARN] Unknown cron schedule: ${event.cron}. ` +
               `Expected: "0 2 * * *" (daily idempotency) or "0 3 * * 0" (weekly proofs). ` +
               `Check wrangler.toml [triggers] configuration.`
@@ -96,11 +97,10 @@ export default {
       }
 
       const duration = Date.now() - startTime;
-      console.log(
-        `[CRON] Completed: ${event.cron} ` +
-          `(duration: ${duration}ms, ` +
-          `finished at: ${new Date().toISOString()})`
-      );
+      logger.info(`[CRON] Completed: ${event.cron}`, {
+        duration,
+        finishedAt: new Date().toISOString(),
+      });
     } catch (error) {
       const duration = Date.now() - startTime;
 

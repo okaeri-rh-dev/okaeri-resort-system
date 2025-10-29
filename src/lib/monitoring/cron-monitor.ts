@@ -19,7 +19,7 @@ interface CronJobExecution {
   duration?: number;
   status: "running" | "success" | "failed" | "timeout";
   error?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 interface CronJobStats {
@@ -136,7 +136,7 @@ export class CronMonitor {
   async recordComplete(
     executionId: string,
     success: boolean,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, unknown>,
     error?: string
   ): Promise<void> {
     const execution = this.runningJobs.get(executionId);

@@ -96,7 +96,7 @@ export const useMultiUnitAvailability = (
       });
       if (!response.ok) throw new Error("Availability check failed");
 
-      const data = (await response.json()) as { data: { results: any[] } };
+      const data = (await response.json()) as { data: { results: unknown[] } };
       return data.data.results;
     },
     enabled: options.enabled !== false && unitIds.length > 0 && !!checkIn && !!checkOut,

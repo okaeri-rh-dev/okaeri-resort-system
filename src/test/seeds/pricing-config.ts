@@ -64,6 +64,7 @@ export async function seedPricingConfig(): Promise<void> {
   });
 
   try {
+    // eslint-disable-next-line no-console
     console.log("🌱 Seeding pricing_config table...");
 
     // Upsert pricing config (insert or update if exists)
@@ -80,9 +81,13 @@ export async function seedPricingConfig(): Promise<void> {
       throw error;
     }
 
+    // eslint-disable-next-line no-console
     console.log("✅ Successfully seeded pricing_config table");
+    // eslint-disable-next-line no-console
     console.log("   Base Rate: ₱" + TEST_PRICING_CONFIG.base_rate);
+    // eslint-disable-next-line no-console
     console.log("   Weekend Rate: ₱" + TEST_PRICING_CONFIG.weekend_rate);
+    // eslint-disable-next-line no-console
     console.log("   Extra Person Rate: ₱" + TEST_PRICING_CONFIG.extra_person_rate);
   } catch (error) {
     console.error("❌ Error seeding pricing_config:", error);
@@ -115,6 +120,7 @@ export async function cleanupPricingConfig(): Promise<void> {
   });
 
   try {
+    // eslint-disable-next-line no-console
     console.log("🧹 Cleaning up pricing_config test data...");
 
     const { error } = await supabase
@@ -125,6 +131,7 @@ export async function cleanupPricingConfig(): Promise<void> {
     if (error) {
       console.warn("⚠️  Failed to cleanup pricing_config:", error.message);
     } else {
+      // eslint-disable-next-line no-console
       console.log("✅ Successfully cleaned up pricing_config test data");
     }
   } catch (error) {
@@ -168,6 +175,7 @@ export async function verifyPricingConfig(): Promise<boolean> {
       return false;
     }
 
+    // eslint-disable-next-line no-console
     console.log("✅ Pricing config verified:", {
       base_rate: data.base_rate,
       weekend_rate: data.weekend_rate,

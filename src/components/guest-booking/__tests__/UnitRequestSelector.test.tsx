@@ -71,6 +71,7 @@ describe("UnitRequestSelector", () => {
   describe("Loading State", () => {
     it("renders loading skeleton initially", async () => {
       const { fetchRates } = await import("@/lib/api/guest-booking-client");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (fetchRates as any).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve(mockPricingConfig), 100))
       );
@@ -132,6 +133,7 @@ describe("UnitRequestSelector", () => {
 
     it("formats currency values correctly with peso sign and commas", async () => {
       const { fetchRates } = await import("@/lib/api/guest-booking-client");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (fetchRates as any).mockResolvedValueOnce({
         ...mockPricingConfig,
         base_rate: 15000,
@@ -477,6 +479,7 @@ describe("UnitRequestSelector", () => {
   describe("Error Handling", () => {
     it("displays error alert when fetch fails", async () => {
       const { fetchRates } = await import("@/lib/api/guest-booking-client");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (fetchRates as any).mockRejectedValueOnce(new Error("Network error"));
 
       render(<UnitRequestSelector {...defaultProps} />);
@@ -489,6 +492,7 @@ describe("UnitRequestSelector", () => {
 
     it("shows generic error message on unknown error", async () => {
       const { fetchRates } = await import("@/lib/api/guest-booking-client");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (fetchRates as any).mockRejectedValueOnce("Unknown error");
 
       render(<UnitRequestSelector {...defaultProps} />);
@@ -500,6 +504,7 @@ describe("UnitRequestSelector", () => {
 
     it("does not render unit cards when fetch fails", async () => {
       const { fetchRates } = await import("@/lib/api/guest-booking-client");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (fetchRates as any).mockRejectedValueOnce(new Error("API error"));
 
       render(<UnitRequestSelector {...defaultProps} value={mockMultipleUnits} />);
@@ -569,6 +574,7 @@ describe("UnitRequestSelector", () => {
   describe("Edge Cases", () => {
     it("handles empty pricing config gracefully", async () => {
       const { fetchRates } = await import("@/lib/api/guest-booking-client");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (fetchRates as any).mockResolvedValueOnce(null);
 
       render(<UnitRequestSelector {...defaultProps} />);

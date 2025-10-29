@@ -92,7 +92,7 @@ export interface DiscountRule {
   conditions: Array<{
     type: "min_nights" | "date_range" | "advance_booking" | "unit_count";
     operator?: "gte" | "lte" | "between";
-    value: any;
+    value: unknown;
   }>;
   discount_type: "percentage" | "fixed" | "per_night";
   discount_value: number;

@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import type { AuthChangeEvent, AuthSession } from "@/types/supabase";
 
 import { supabase } from "./supabase";
@@ -169,7 +170,7 @@ class AuthService {
       this.scheduleSessionRefresh();
 
       return data;
-    } catch (error) {
+    } catch (_error) {
       // Ensure consistent error messages
       throw new Error("Authentication failed. Please check your credentials.");
     }
@@ -389,7 +390,7 @@ class AuthService {
   /**
    * Sanitize authentication errors
    */
-  sanitizeAuthError(_error: any): string {
+  sanitizeAuthError(_error: unknown): string {
     return sanitizeAuthError();
   }
 
@@ -398,7 +399,7 @@ class AuthService {
    */
   logAuthError(error: Error): void {
     if (process.env.NODE_ENV === "development") {
-      console.log("Auth Error:", error);
+      logger.info("Auth Error:", { message: error.message, name: error.name, stack: error.stack });
     }
   }
 

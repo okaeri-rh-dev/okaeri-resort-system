@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 
+import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
 // ============================================
@@ -28,11 +29,13 @@ export const useDeviceCapabilities = (): DeviceInfo => {
         /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
       // Check for low-end device indicators
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const deviceMemory = (navigator as any).deviceMemory;
       const hardwareConcurrency = navigator.hardwareConcurrency || 1;
       const isLowEndDevice = deviceMemory ? deviceMemory < 4 : hardwareConcurrency < 4;
 
       // Check connection type
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const connection = (navigator as any).connection;
       const connectionType = connection?.effectiveType;
 
@@ -489,7 +492,7 @@ export const useLoadingPerformance = () => {
 
             // Log performance in development
             if (process.env.NODE_ENV === "development") {
-              console.log("Loading Performance:", newMetrics);
+              logger.info("Loading Performance:", newMetrics);
             }
 
             return newMetrics;

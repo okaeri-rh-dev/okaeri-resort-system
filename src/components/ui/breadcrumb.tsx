@@ -3,6 +3,7 @@ import * as React from "react";
 import { ChevronRight, Home, MoreHorizontal } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
+import { isObject } from "@/lib/type-guards";
 // import { Link, useLocation } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +13,7 @@ const Breadcrumb = React.forwardRef<
     separator?: React.ReactNode;
     className?: string;
   }
->(({ className, separator, ...props }, ref) => (
+>(({ className, separator: _separator, ...props }, ref) => (
   <nav
     ref={ref}
     aria-label="breadcrumb"
@@ -60,7 +61,8 @@ const BreadcrumbLink = React.forwardRef<
           "hover:text-ocean-600 dark:hover:text-ocean-400 focus-visible:ring-ocean-500 -mx-1 -my-0.5 rounded-sm px-1 py-0.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
           className
         )}
-        {...(props as any)}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        {...(isObject(props) ? (props as any) : {})}
       />
     );
   }
@@ -189,11 +191,11 @@ const ResortBreadcrumb = () => {
 
         {pathSegments
           .slice(pathSegments.length > 3 ? -2 : 0)
-          .map((segment: any, index: number, visibleSegments: any[]) => {
+          .map((segment: unknown, index: number, visibleSegments: unknown[]) => {
             const actualIndex = pathSegments.length > 3 ? pathSegments.length - 2 + index : index;
             const isLast = index === visibleSegments.length - 1;
             const path = getBreadcrumbPath(actualIndex);
-            const title = getPageTitle(segment, actualIndex, pathSegments);
+            const title = getPageTitle(String(segment), actualIndex, pathSegments);
 
             return (
               <React.Fragment key={actualIndex}>

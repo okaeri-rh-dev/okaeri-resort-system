@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+import { logger } from "@/lib/logger";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Booking, Guest } from "@/types";
 
@@ -544,7 +545,7 @@ export const useExportGuests = () => {
           philippineFormat: true,
           includeTimestamp: true,
           onSuccess: (filename) => {
-            console.log(`Successfully exported ${data?.length || 0} guests to ${filename}`);
+            logger.info(`Successfully exported ${data?.length || 0} guests to ${filename}`);
           },
           onError: (error) => {
             console.error("Guest export failed:", error);

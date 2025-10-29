@@ -41,11 +41,11 @@ describe("Phase 2 Security Validation Suite", () => {
                 error: { message: "Row Level Security policy violated", code: "RLS_VIOLATION" },
               }),
             }),
-          } as any);
+          } as unknown);
 
           // Attempt to query without authentication
           const { data: _data, error } = await supabase
-            .from(table as any)
+            .from(table as unknown)
             .select("*")
             .limit(1);
 
@@ -93,7 +93,7 @@ describe("Phase 2 Security Validation Suite", () => {
               code: "STORAGE_RLS",
             },
           }),
-        } as any);
+        } as unknown);
 
         // Attempt to list files without authentication
         const { data: _data, error } = await supabase.storage.from(bucket).list();
@@ -315,7 +315,7 @@ describe("Phase 2 Security Validation Suite", () => {
     test("Authentication errors should not leak information", async () => {
       try {
         await auth.signIn("test@test.com", "wrong");
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Should show generic error, not "user not found" or "wrong password"
         expect(error.message).toBe("Invalid email or password");
         expect(error.message).not.toContain("user not found");
@@ -329,7 +329,7 @@ describe("Phase 2 Security Validation Suite", () => {
           new File(["test"], "test.txt", { type: "text/plain" }),
           "booking-123"
         );
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Should throw validation error for wrong file type
         expect(error.message).toContain("not allowed");
       }

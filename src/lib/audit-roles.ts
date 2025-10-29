@@ -395,7 +395,7 @@ export async function deactivateRole(
  * const result = await listAllRoles();
  * if (result.success && result.data) {
  *   result.data.forEach(role => {
- *     console.log(`${role.email}: ${role.role}`);
+ *     logger.info(`${role.email}: ${role.role}`);
  *   });
  * }
  */

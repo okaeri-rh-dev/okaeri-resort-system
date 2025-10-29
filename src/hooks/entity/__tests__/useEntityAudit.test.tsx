@@ -41,7 +41,7 @@ describe("useEntityAudit", () => {
   };
 
   // Helper to create mock query chain
-  const createMockQueryChain = (data: any[], error: any = null) => {
+  const createMockQueryChain = (data: unknown[], error: unknown = null) => {
     const mockChain = {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -50,7 +50,7 @@ describe("useEntityAudit", () => {
       order: vi.fn().mockReturnThis(),
       limit: vi.fn().mockResolvedValue({ data, error }),
     };
-    vi.mocked(supabase.from).mockReturnValue(mockChain as any);
+    vi.mocked(supabase.from).mockReturnValue(mockChain as unknown);
     return mockChain;
   };
 

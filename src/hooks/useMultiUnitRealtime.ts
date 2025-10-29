@@ -17,6 +17,7 @@ import type {
 } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 
+import { logger } from "@/lib/logger";
 import { supabase } from "@/lib/supabase";
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import type { BookingUnit, MultiUnitBooking } from "@/types";
@@ -188,6 +189,7 @@ export function useBookingUnitsSubscription(
           try {
             switch (payload.eventType) {
               case "INSERT":
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 onInsert?.(payload as any);
                 queryClient.invalidateQueries({
                   queryKey: ["multi-unit-bookings", bookingId],
@@ -196,6 +198,7 @@ export function useBookingUnitsSubscription(
                 break;
 
               case "UPDATE":
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 onUpdate?.(payload as any);
                 queryClient.invalidateQueries({
                   queryKey: ["multi-unit-bookings", bookingId],
@@ -203,6 +206,7 @@ export function useBookingUnitsSubscription(
                 break;
 
               case "DELETE":
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 onDelete?.(payload as any);
                 queryClient.invalidateQueries({
                   queryKey: ["multi-unit-bookings", bookingId],
@@ -408,7 +412,7 @@ export function useMultiUnitStoreSync(bookingId?: string, options: { enabled?: b
 export function useMultiUnitPresence(bookingId: string, options: { enabled?: boolean } = {}) {
   const { enabled = true } = options;
   const channelRef = useRef<RealtimeChannel | null>(null);
-  const [presenceState, setPresenceState] = useState<Record<string, any>>({});
+  const [presenceState, setPresenceState] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     if (!enabled || !bookingId) return;
@@ -424,10 +428,10 @@ export function useMultiUnitPresence(bookingId: string, options: { enabled?: boo
         setPresenceState(state);
       })
       .on("presence", { event: "join" }, ({ newPresences }) => {
-        console.log("[Presence] User joined:", newPresences);
+        logger.info("[Presence] User joined:", { presence: newPresences });
       })
       .on("presence", { event: "leave" }, ({ leftPresences }) => {
-        console.log("[Presence] User left:", leftPresences);
+        logger.info("[Presence] User left:", { presence: leftPresences });
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {

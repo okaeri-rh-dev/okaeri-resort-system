@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { logger } from "@/lib/logger";
 import type { Unit } from "@/types";
 
 // Lazy load heavy components
@@ -40,7 +41,7 @@ function SettingsPage() {
 
   const handleViewUnit = (unit: Unit) => {
     // Future: Could open a detailed view
-    console.log("View unit:", unit);
+    logger.info("View unit:", { unit });
   };
 
   return (

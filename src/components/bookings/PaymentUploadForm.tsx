@@ -43,7 +43,7 @@ import { useUploadPaymentProof } from "@/stores/useBookingStore";
 interface PaymentUploadFormProps {
   bookingId: string;
   bookingAmount: number;
-  onSuccess?: (data: any) => void;
+  onSuccess?: (data: Record<string, unknown>) => void;
   onCancel?: () => void;
   className?: string;
 }
@@ -156,6 +156,7 @@ export function PaymentUploadForm({
   const removeFile = () => {
     setSelectedFile(null);
     setFilePreview(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     form.setValue("payment_proof", undefined as any, { shouldValidate: true });
     if (fileInputRef.current) {
       fileInputRef.current.value = "";

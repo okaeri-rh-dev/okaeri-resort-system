@@ -359,7 +359,7 @@ export const useUpdateExpense = () => {
 
       // Map date to expense_date if it exists in updates
       const { date, ...restUpdates } = updates;
-      const dbUpdates: any = {
+      const dbUpdates: Record<string, unknown> = {
         ...restUpdates,
         receipt_url,
       };
@@ -367,9 +367,10 @@ export const useUpdateExpense = () => {
         dbUpdates.expense_date = date;
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await supabase
         .from("expenses")
-        .update(dbUpdates)
+        .update(dbUpdates as any)
         .eq("expense_id", expenseId)
         .select()
         .single();

@@ -41,7 +41,7 @@ describe("Middleware JWT Authentication", () => {
       next: vi.fn(async () => new Response(JSON.stringify({ success: true }), { status: 200 })),
     };
 
-    const response = await onRequest(context as any);
+    const response = await onRequest(context as unknown);
 
     expect(response.status).toBe(200);
   });
@@ -56,7 +56,7 @@ describe("Middleware JWT Authentication", () => {
       next: vi.fn(async () => new Response(JSON.stringify({ success: true }), { status: 200 })),
     };
 
-    const response = await onRequest(context as any);
+    const response = await onRequest(context as unknown);
 
     expect(response.status).toBe(200);
   });
@@ -71,7 +71,7 @@ describe("Middleware JWT Authentication", () => {
       next: vi.fn(async () => new Response(JSON.stringify({ status: "ok" }), { status: 200 })),
     };
 
-    const response = await onRequest(context as any);
+    const response = await onRequest(context as unknown);
 
     expect(response.status).toBe(200);
   });
@@ -88,7 +88,7 @@ describe("Middleware JWT Authentication", () => {
       next: vi.fn(),
     };
 
-    const response = await onRequest(context as any);
+    const response = await onRequest(context as unknown);
 
     expect(response.status).toBe(401);
     const data = (await response.json()) as ApiErrorResponse;
@@ -108,7 +108,7 @@ describe("Middleware JWT Authentication", () => {
       next: vi.fn(async () => new Response(JSON.stringify({ success: true }), { status: 200 })),
     };
 
-    await onRequest(context as any);
+    await onRequest(context as unknown);
 
     // With valid JWT, middleware should call next()
     expect(context.next).toHaveBeenCalled();
@@ -127,7 +127,7 @@ describe("Middleware JWT Authentication", () => {
       next: vi.fn(),
     };
 
-    const response = await onRequest(context as any);
+    const response = await onRequest(context as unknown);
 
     expect(response.status).toBe(401);
     const data = (await response.json()) as ApiErrorResponse;
@@ -147,7 +147,7 @@ describe("Middleware JWT Authentication", () => {
       next: vi.fn(),
     };
 
-    const response = await onRequest(context as any);
+    const response = await onRequest(context as unknown);
 
     expect(response.status).toBe(401);
   });
@@ -165,7 +165,7 @@ describe("Middleware JWT Authentication", () => {
       next: vi.fn(),
     };
 
-    const response = await onRequest(context as any);
+    const response = await onRequest(context as unknown);
 
     expect(response.status).toBe(401);
   });
@@ -182,7 +182,7 @@ describe("Middleware JWT Authentication", () => {
       next: vi.fn(),
     };
 
-    const response = await onRequest(context as any);
+    const response = await onRequest(context as unknown);
 
     expect(response.status).toBe(204);
     expect(response.headers.get("Access-Control-Allow-Methods")).toBeDefined();
@@ -200,7 +200,7 @@ describe("Middleware JWT Authentication", () => {
       next: vi.fn(async () => new Response(JSON.stringify({ status: "ok" }), { status: 200 })),
     };
 
-    const response = await onRequest(context as any);
+    const response = await onRequest(context as unknown);
 
     expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
     expect(response.headers.get("X-Frame-Options")).toBeDefined();
@@ -217,7 +217,7 @@ describe("Middleware JWT Authentication", () => {
       next: vi.fn(async () => new Response(JSON.stringify({ status: "ok" }), { status: 200 })),
     };
 
-    const response = await onRequest(context as any);
+    const response = await onRequest(context as unknown);
 
     expect(response.headers.has("X-Request-ID")).toBe(true);
   });
@@ -232,7 +232,7 @@ describe("Middleware JWT Authentication", () => {
       next: vi.fn(async () => new Response("OK", { status: 200 })),
     };
 
-    await onRequest(context as any);
+    await onRequest(context as unknown);
 
     // Should call next() without processing
     expect(context.next).toHaveBeenCalled();

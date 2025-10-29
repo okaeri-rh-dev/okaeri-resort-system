@@ -10,6 +10,7 @@
  * - Pagination and cache configuration
  */
 
+import { logger } from "@/lib/logger";
 import { AuditCategory, AuditSeverity, type AuditAction } from "@/types/audit.types";
 
 // ============================================
@@ -282,6 +283,6 @@ export const AUDIT_DEBUG = isEnvEnabled("VITE_AUDIT_DEBUG");
  */
 export function auditDebugLog(message: string, data?: unknown): void {
   if (AUDIT_DEBUG) {
-    console.log(`[AUDIT DEBUG] ${message}`, data);
+    logger.info(`[AUDIT DEBUG] ${message}`, { data });
   }
 }

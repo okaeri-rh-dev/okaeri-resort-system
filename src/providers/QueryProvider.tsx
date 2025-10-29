@@ -3,6 +3,8 @@ import React from "react";
 import { QueryClient, QueryClientProvider, type QueryKey } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
+import { logger } from "@/lib/logger";
+
 // ============================================
 // QUERY CLIENT CONFIGURATION
 // ============================================
@@ -232,7 +234,7 @@ export const offlineSupport = {
 
     window.addEventListener("offline", () => {
       // Could show a notification here
-      console.log("App is offline - data may be stale");
+      logger.info("App is offline - data may be stale");
     });
   },
 
@@ -257,7 +259,7 @@ export const offlineSupport = {
       try {
         // Note: In a real app, you'd need to properly serialize/deserialize functions
         // This is a simplified example
-        console.log("Processing queued mutation from", new Date(item.timestamp));
+        logger.info("Processing queued mutation from", { timestamp: new Date(item.timestamp) });
       } catch (error) {
         console.error("Failed to process queued mutation:", error);
       }

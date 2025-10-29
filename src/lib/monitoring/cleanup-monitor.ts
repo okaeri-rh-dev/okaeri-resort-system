@@ -7,6 +7,7 @@
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
+import { logger } from "@/lib/logger";
 import { AuditCategory, AuditSeverity } from "@/types/audit.types";
 
 import { logAuditEvent } from "../audit-logger";
@@ -443,5 +444,5 @@ export async function runScheduledCleanup(env: {
   );
 
   const result = await monitor.executeCleanup("scheduled");
-  console.log(`Cleanup completed: ${result.filesDeleted} files, ${result.bytesReclaimed} bytes`);
+  logger.info(`Cleanup completed: ${result.filesDeleted} files, ${result.bytesReclaimed} bytes`);
 }

@@ -29,10 +29,11 @@ async function waitForWorkersReady(): Promise<boolean> {
       });
 
       if (response.ok) {
+        // eslint-disable-next-line no-console
         console.log("✅ Cloudflare Workers ready at", WORKERS_URL);
         return true;
       }
-    } catch (error) {
+    } catch (_error) {
       // Expected during startup - continue polling
     }
 
@@ -46,6 +47,7 @@ async function waitForWorkersReady(): Promise<boolean> {
  * Start Cloudflare Workers using Wrangler
  */
 export async function startWorkers(): Promise<void> {
+  // eslint-disable-next-line no-console
   console.log("🚀 Starting Cloudflare Workers for integration tests...");
 
   return new Promise((resolve, reject) => {
@@ -62,6 +64,7 @@ export async function startWorkers(): Promise<void> {
     wranglerProcess.stdout?.on("data", (data) => {
       const output = data.toString();
       if (output.includes("Ready on") || output.includes("Listening")) {
+        // eslint-disable-next-line no-console
         console.log("📡 Wrangler:", output.trim());
       }
     });
@@ -97,6 +100,7 @@ export async function startWorkers(): Promise<void> {
  */
 export async function stopWorkers(): Promise<void> {
   if (wranglerProcess) {
+    // eslint-disable-next-line no-console
     console.log("🛑 Stopping Cloudflare Workers...");
 
     return new Promise((resolve) => {
@@ -106,6 +110,7 @@ export async function stopWorkers(): Promise<void> {
       }
 
       wranglerProcess.on("exit", () => {
+        // eslint-disable-next-line no-console
         console.log("✅ Cloudflare Workers stopped");
         wranglerProcess = null;
         resolve();

@@ -6,20 +6,21 @@
 
 import { vi } from "vitest";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface MockSupabaseResponse<T = any> {
   data: T | null;
-  error: any;
+  error: unknown;
 }
 
 /**
  * Global mock data store that can be updated by tests
  */
-export let globalMockData: Record<string, any> = {};
+export let globalMockData: Record<string, unknown> = {};
 
 /**
  * Update global mock data (use this in tests to customize mock behavior)
  */
-export function setMockData(data: Record<string, any>) {
+export function setMockData(data: Record<string, unknown>) {
   globalMockData = { ...data };
 }
 
@@ -33,7 +34,7 @@ export function resetMockData() {
 /**
  * Create a mock Supabase client with configurable responses
  */
-export const createMockSupabaseClient = (mockData?: Record<string, any>) => {
+export const createMockSupabaseClient = (mockData?: Record<string, unknown>) => {
   // Helper to get data dynamically (reads globalMockData on each call)
   const getData = () => mockData || globalMockData;
 
@@ -47,9 +48,9 @@ export const createMockSupabaseClient = (mockData?: Record<string, any>) => {
       return {
         select: vi.fn((_columns = "*") => {
           const selectChain = {
-            eq: vi.fn((column: string, value: any) => {
+            eq: vi.fn((column: string, value: unknown) => {
               const filtered = Array.isArray(tableData)
-                ? tableData.filter((item: any) => item[column] === value)
+                ? tableData.filter((item: Record<string, unknown>) => item[column] === value)
                 : [];
 
               return {
@@ -61,9 +62,9 @@ export const createMockSupabaseClient = (mockData?: Record<string, any>) => {
                 error: hasError || null,
               };
             }),
-            in: vi.fn((column: string, values: any[]) => {
+            in: vi.fn((column: string, values: unknown[]) => {
               const filtered = Array.isArray(tableData)
-                ? tableData.filter((item: any) => values.includes(item[column]))
+                ? tableData.filter((item: Record<string, unknown>) => values.includes(item[column]))
                 : [];
 
               return {
@@ -84,7 +85,7 @@ export const createMockSupabaseClient = (mockData?: Record<string, any>) => {
           return selectChain;
         }),
 
-        insert: vi.fn((insertData: any) => ({
+        insert: vi.fn((insertData: Record<string, unknown> | Record<string, unknown>[]) => ({
           select: vi.fn(() => ({
             single: vi.fn(() => ({
               data: Array.isArray(insertData)
@@ -101,7 +102,7 @@ export const createMockSupabaseClient = (mockData?: Record<string, any>) => {
           error: hasError || null,
         })),
 
-        update: vi.fn((updateData: any) => ({
+        update: vi.fn((updateData: Record<string, unknown>) => ({
           eq: vi.fn(() => ({
             select: vi.fn(() => ({
               single: vi.fn(() => ({
@@ -125,7 +126,7 @@ export const createMockSupabaseClient = (mockData?: Record<string, any>) => {
       };
     }),
 
-    rpc: vi.fn((functionName: string, params?: any) => {
+    rpc: vi.fn((functionName: string, params?: Record<string, unknown>) => {
       // Read data dynamically on each call
       const data = getData();
 

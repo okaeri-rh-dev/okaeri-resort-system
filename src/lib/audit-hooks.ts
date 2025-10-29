@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { logger } from "@/lib/logger";
 import type {
   AuditEventContext,
   AuditLog,
@@ -54,6 +55,7 @@ export const auditKeys = {
 export function useAuditLogs(filters?: AuditLogFilters) {
   return useQuery<AuditLogQueryResult, Error>({
     queryKey: auditKeys.list(filters),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     queryFn: () => db.auditLogs.all(filters as any), // Type cast needed due to Supabase query builder limitations
     staleTime: AUDIT_CACHE_CONFIG.STALE_TIME,
     gcTime: AUDIT_CACHE_CONFIG.CACHE_TIME,
@@ -205,7 +207,7 @@ export function useArchiveAuditLogs() {
   return useMutation<{ count: number; error?: string }, Error, string>({
     mutationFn: (beforeDate: string) => db.auditLogs.archiveOld(beforeDate),
     onSuccess: (result) => {
-      console.log(`Archived ${result.count} old audit logs`);
+      logger.info(`Archived ${result.count} old audit logs`);
       // Invalidate all audit log queries
       queryClient.invalidateQueries({ queryKey: auditKeys.all });
     },
@@ -228,6 +230,7 @@ export function useExportAuditLogs() {
   return useMutation<void, Error, { filters?: AuditLogFilters; filename?: string }>({
     mutationFn: async ({ filters, filename }) => {
       // Fetch logs with filters
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = await db.auditLogs.all({
         ...filters,
         limit: 10000, // Export up to 10k logs

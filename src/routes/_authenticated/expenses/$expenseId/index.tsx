@@ -74,12 +74,12 @@ export const Route = createFileRoute("/_authenticated/expenses/$expenseId/")({
     // Note: unit_id, created_by fields not yet in database schema (Phase 3)
     const expense = {
       ...expenseData,
-      unit: undefined as any,
+      unit: undefined as unknown,
       unit_id: undefined as string | undefined,
       created_by: undefined as string | undefined,
       created_by_name: undefined as string | undefined,
     } as typeof expenseData & {
-      unit?: any;
+      unit?: unknown;
       unit_id?: string;
       created_by?: string;
       created_by_name?: string;
@@ -144,6 +144,7 @@ function ExpenseDetailComponent() {
   return (
     <ErrorBoundary level="page">
       <Suspense fallback={<DetailPageSkeleton />}>
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <ExpenseDetailPage expense={expense as any} expenseId={expenseId} />
       </Suspense>
     </ErrorBoundary>

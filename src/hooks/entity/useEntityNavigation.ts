@@ -36,7 +36,7 @@ export function useEntityNavigation() {
     navigateToDetail: <T extends EntityType>(
       entityType: T,
       entityId: string,
-      search?: Record<string, any>
+      search?: Record<string, unknown>
     ) => {
       const routes: Record<EntityType, any> = {
         booking: { to: "/bookings/$bookingId", params: { bookingId: entityId } },

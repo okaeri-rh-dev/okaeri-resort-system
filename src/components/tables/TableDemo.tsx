@@ -2,6 +2,7 @@ import React, { useState } from "react";
 
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { logger } from "@/lib/logger";
 import type { Guest, Unit } from "@/types";
 
 // Import our table components
@@ -20,20 +21,20 @@ export const TableDemo: React.FC = () => {
 
   const handleViewUnit = (unit: Unit) => {
     setSelectedUnit(unit);
-    console.log("View unit:", unit);
+    logger.info("View unit:", { unit });
   };
 
   const handleEditUnit = (unit: Unit) => {
-    console.log("Edit unit:", unit);
+    logger.info("Edit unit:", { unit });
   };
 
   const handleViewGuest = (guest: Guest) => {
     setSelectedGuest(guest);
-    console.log("View guest:", guest);
+    logger.info("View guest:", { guest });
   };
 
   const handleEditGuest = (guest: Guest) => {
-    console.log("Edit guest:", guest);
+    logger.info("Edit guest:", { guest });
   };
 
   return (

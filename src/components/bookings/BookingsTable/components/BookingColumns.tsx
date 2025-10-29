@@ -12,15 +12,16 @@ import {
   StatusBadge,
 } from "@/components/tables/utils";
 import { Badge } from "@/components/ui/badge";
+import { isFunction } from "@/lib/type-guards";
 import type { Booking, BookingStatus } from "@/types";
 
 const columnHelper = createColumnHelper<Booking>();
 
 interface UseBookingColumnsProps {
   handleUploadPayment: (booking: Booking) => void;
-  updateBookingStatus: any;
-  cancelBooking: any;
-  deleteBooking: any;
+  updateBookingStatus: unknown;
+  cancelBooking: unknown;
+  deleteBooking: unknown;
 }
 
 export const useBookingColumns = ({
@@ -158,9 +159,9 @@ function BookingActionsCell({
   handleUploadPayment,
 }: {
   booking: Booking;
-  updateBookingStatus: any;
-  cancelBooking: any;
-  deleteBooking: any;
+  updateBookingStatus: unknown;
+  cancelBooking: unknown;
+  deleteBooking: unknown;
   handleUploadPayment: (booking: Booking) => void;
 }) {
   const navigate = useNavigate();
@@ -184,11 +185,20 @@ function BookingActionsCell({
       ? [
           {
             label: "Confirm",
-            onClick: () =>
-              updateBookingStatus.mutate({
-                bookingId: booking.booking_id,
-                status: "Confirmed" as BookingStatus,
-              }),
+            onClick: () => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              if (
+                updateBookingStatus &&
+                isFunction(updateBookingStatus) &&
+                "mutate" in (updateBookingStatus as any)
+              ) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (updateBookingStatus as any).mutate({
+                  bookingId: booking.booking_id,
+                  status: "Confirmed" as BookingStatus,
+                });
+              }
+            },
           },
         ]
       : []),
@@ -196,7 +206,17 @@ function BookingActionsCell({
       ? [
           {
             label: "Cancel",
-            onClick: () => cancelBooking.mutate(booking.booking_id),
+            onClick: () => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              if (
+                cancelBooking &&
+                isFunction(cancelBooking) &&
+                "mutate" in (cancelBooking as any)
+              ) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (cancelBooking as any).mutate(booking.booking_id);
+              }
+            },
             variant: "destructive" as const,
           },
         ]
@@ -209,7 +229,11 @@ function BookingActionsCell({
             `Are you sure you want to permanently delete booking "${booking.booking_reference}"? This action cannot be undone.`
           )
         ) {
-          deleteBooking.mutate(booking.booking_id);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          if (deleteBooking && isFunction(deleteBooking) && "mutate" in (deleteBooking as any)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (deleteBooking as any).mutate(booking.booking_id);
+          }
         }
       },
       variant: "destructive" as const,

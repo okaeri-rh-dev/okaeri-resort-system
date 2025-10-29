@@ -110,8 +110,8 @@ export async function validateFileContent(file: File): Promise<boolean> {
  * @example
  * ```typescript
  * const result = await compressImage(file);
- * console.log(`Compressed ${result.compressionRatio.toFixed(0)}%`);
- * console.log(`${formatFileSize(result.originalSize)} → ${formatFileSize(result.compressedSize)}`);
+ * logger.info(`Compressed ${result.compressionRatio.toFixed(0)}%`);
+ * logger.info(`${formatFileSize(result.originalSize)} → ${formatFileSize(result.compressedSize)}`);
  * ```
  */
 export async function compressImage(file: File): Promise<CompressedFileResult> {

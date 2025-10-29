@@ -304,6 +304,7 @@ export const useBookings = () => {
       const mergedData =
         data?.map((dbBooking) => {
           const optimisticEntry = optimisticBookings.get(dbBooking.booking_id);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const booking = adaptBookingFromDB(dbBooking as any); // Type cast needed for DB -> App conversion
           return optimisticEntry ? { ...booking, ...optimisticEntry.booking } : booking;
         }) || [];
@@ -1149,7 +1150,7 @@ export const useUpdateBookingStatusWithWorkflow = () => {
       status: BookingStatus;
       resortId?: string;
       triggeredBy?: 'user' | 'system' | 'automation';
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
     }) => {
       // Get current booking to determine fromStatus
       const { data: currentBooking } = await db.bookings.byId(bookingId);

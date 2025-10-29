@@ -14,6 +14,7 @@ import { z } from "zod";
 
 import { logPaymentRefunded } from "../../../../lib/audit-logger-workers";
 import { requireRole } from "../../../../lib/rbac";
+import type { AuthenticatedRequest } from "../../../../lib/types";
 
 interface Env {
   SUPABASE_URL: string;
@@ -199,7 +200,7 @@ export const onRequestPost = async (context: {
       .single();
 
     // 6. Audit logging
-    const userId = (request as any).user?.id || undefined;
+    const userId = (request as AuthenticatedRequest).user?.id;
     await logPaymentRefunded(supabase, payment, data.amount, data.reason, userId, request);
 
     const processingTime = Date.now() - startTime;

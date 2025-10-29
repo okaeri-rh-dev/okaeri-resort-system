@@ -69,7 +69,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(200);
     const data = (await response.json()) as AddUnitResponse;
@@ -93,7 +93,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ApiErrorResponse;
@@ -119,7 +119,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    await onRequestPost(context as any);
+    await onRequestPost(context as unknown);
 
     expect(sanitizeTextWorker).toHaveBeenCalled();
   });
@@ -135,7 +135,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     });
 
     const context = createMockContext(request, mockEnv, { id: "invalid-id" });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ApiErrorResponse;
@@ -160,7 +160,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ApiErrorResponse;
@@ -185,7 +185,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
   });
@@ -208,7 +208,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ApiErrorResponse;
@@ -247,7 +247,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(404);
     const data = (await response.json()) as ApiErrorResponse;
@@ -287,7 +287,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(409);
     const data = (await response.json()) as ApiErrorResponse;
@@ -327,7 +327,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(409);
   });
@@ -368,7 +368,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(409);
     const data = (await response.json()) as ApiErrorResponse;
@@ -389,7 +389,7 @@ describe("POST /api/bookings/:id/units/add", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.headers.get("Access-Control-Allow-Origin")).toBeDefined();
   });

@@ -270,13 +270,14 @@ export const FilterPopover: React.FC<FilterPopoverProps> = ({
     if (!React.isValidElement(element)) return false;
 
     // Direct Calendar component
-    if (element.type?.toString().includes("Calendar") || (element.props as any)?.mode) {
+    const props = element.props as any;
+    if (element.type?.toString().includes("Calendar") || props?.mode) {
       return true;
     }
 
     // Check children recursively
-    if ((element.props as any)?.children) {
-      const children = React.Children.toArray((element.props as any).children);
+    if (props?.children) {
+      const children = React.Children.toArray(props.children);
       return children.some((child) => containsCalendar(child));
     }
 
@@ -344,7 +345,7 @@ export const FilterPopover: React.FC<FilterPopoverProps> = ({
 // ============================================
 
 interface TablePaginationProps {
-  table: TanStackTable<any>;
+  table: TanStackTable<unknown>;
   totalItems?: number;
 }
 
@@ -428,7 +429,11 @@ export const TablePagination: React.FC<TablePaginationProps> = ({ table, totalIt
  * This is kept for backward compatibility but should be replaced
  * @deprecated Use exportToCSV from '@/utils/reports' for production
  */
-export const exportToCSV = (data: any[], filename: string, headers?: string[]) => {
+export const exportToCSV = (
+  data: Record<string, unknown>[],
+  filename: string,
+  headers?: string[]
+) => {
   // Import the secure, Philippine-compliant version
   import("@/utils/reports")
     .then(({ exportToCSV: secureExport }) => {
@@ -452,11 +457,11 @@ export const exportToCSV = (data: any[], filename: string, headers?: string[]) =
  * Basic CSV export fallback - NOT SECURE FOR PRODUCTION
  * Only use as emergency fallback
  */
-const basicCSVExport = (data: any[], filename: string, headers?: string[]) => {
+const basicCSVExport = (data: Record<string, unknown>[], filename: string, headers?: string[]) => {
   const actualHeaders = headers || (data.length > 0 ? Object.keys(data[0]) : []);
 
   // Security warning for formula injection
-  const sanitizeForCSV = (value: any): string => {
+  const sanitizeForCSV = (value: unknown): string => {
     if (value == null) return "";
     let str = String(value);
 

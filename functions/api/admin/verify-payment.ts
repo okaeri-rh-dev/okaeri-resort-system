@@ -143,7 +143,7 @@ export async function onRequest(context: {
     let body: RequestBody;
     try {
       body = (await request.json()) as RequestBody;
-    } catch (error) {
+    } catch (_error) {
       return new Response(
         JSON.stringify({
           error: "Bad Request",

@@ -19,7 +19,7 @@ export async function onRequest(context: EventContext<Env, any, Record<string, u
       // Try to list one key to verify KV is accessible
       await env.RATE_LIMIT_KV.list({ limit: 1 });
       checks.kv = true;
-    } catch (error) {
+    } catch (_error) {
       checks.kv = false;
     }
   }

@@ -84,8 +84,9 @@ export function getEnv(key: keyof Env): string | undefined {
 
   // Workers globalThis context (if env is passed via context)
   // This is used when Workers receive env via the context parameter
-  if (typeof globalThis !== "undefined" && (globalThis as any).env) {
-    return (globalThis as any).env[key] as string | undefined;
+  const globalWithEnv = globalThis as { env?: Record<string, string> };
+  if (typeof globalThis !== "undefined" && globalWithEnv.env) {
+    return globalWithEnv.env[key] as string | undefined;
   }
 
   return undefined;
@@ -180,10 +181,11 @@ export function isNodeContext(): boolean {
  * This is a best-guess heuristic
  */
 export function isWorkersContext(): boolean {
+  const globalWithEnv = globalThis as { env?: Record<string, string> };
   return (
     !isViteContext() &&
     typeof globalThis !== "undefined" &&
-    ((globalThis as any).env !== undefined ||
+    (globalWithEnv.env !== undefined ||
       (typeof process !== "undefined" && process.env?.NODE_ENV === "test"))
   );
 }

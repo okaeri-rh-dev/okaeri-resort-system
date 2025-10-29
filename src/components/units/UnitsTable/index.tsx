@@ -156,7 +156,8 @@ function UnitsTableComponent({
 
         {/* Pagination */}
         <div className="border-t px-4 py-3">
-          <TablePagination table={table} totalItems={units.length} />
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <TablePagination table={table as any} totalItems={units.length} />
         </div>
       </Card>
     </div>

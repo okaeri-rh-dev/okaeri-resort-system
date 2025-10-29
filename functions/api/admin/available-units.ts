@@ -9,11 +9,6 @@ interface Env {
   SUPABASE_SERVICE_ROLE_KEY: string;
 }
 
-interface AvailableUnitsQuery {
-  check_in_date: string;
-  check_out_date: string;
-}
-
 interface AvailableUnit {
   unit_id: string; // Changed from id to match UI expectations
   unit_number: string;

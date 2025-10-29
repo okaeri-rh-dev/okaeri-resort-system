@@ -15,6 +15,7 @@ import { z } from "zod";
 import { sanitizeTextWorker } from "../../../../../src/lib/security/sanitize-worker";
 import { logPaymentRecorded } from "../../../../lib/audit-logger-workers";
 import { requireRole } from "../../../../lib/rbac";
+import type { AuthenticatedRequest } from "../../../../lib/types";
 
 interface Env {
   SUPABASE_URL: string;
@@ -201,7 +202,7 @@ export const onRequestPost = async (context: {
       .eq("booking_id", bookingId);
 
     // 5. Audit logging
-    const userId = (request as any).user?.id || undefined;
+    const userId = (request as AuthenticatedRequest).user?.id;
     await logPaymentRecorded(supabase, payment, userId, request);
 
     const processingTime = Date.now() - startTime;

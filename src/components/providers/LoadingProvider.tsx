@@ -6,6 +6,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { LinkProps, Link as RouterLink, useRouter } from "@tanstack/react-router";
 
 import { PageTransitionSkeleton } from "@/components/skeletons";
+import { logger } from "@/lib/logger";
 
 // ============================================
 // LOADING STATE CONTEXT
@@ -170,7 +171,7 @@ export const usePerformanceMonitoring = () => {
 
         // Log performance for analytics
         if (process.env.NODE_ENV === "development") {
-          console.log("Navigation Performance:", newMetrics);
+          logger.info("Navigation Performance:", { metrics: newMetrics });
         }
 
         return newMetrics;
@@ -201,6 +202,7 @@ export const useAdaptiveLoading = () => {
   useEffect(() => {
     // Check for Network Information API support
     if ("connection" in navigator) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const connection = (navigator as any).connection;
 
       const updateNetworkInfo = () => {

@@ -76,7 +76,7 @@ function decodeEncodedAttacks(input: string): string {
   // URL encoding (%3C = <, %3E = >)
   try {
     decoded = decodeURIComponent(decoded);
-  } catch (e) {
+  } catch (_e) {
     // If decoding fails, continue with original
   }
 
@@ -320,7 +320,7 @@ export function sanitizeName(name: string | null | undefined): string {
  * @param config - Configuration for special field handling
  * @returns Sanitized form data
  */
-export function sanitizeFormData<T extends Record<string, any>>(
+export function sanitizeFormData<T extends Record<string, unknown>>(
   data: T,
   config: {
     richTextFields?: string[];
@@ -340,7 +340,7 @@ export function sanitizeFormData<T extends Record<string, any>>(
     skipFields = [],
   } = config;
 
-  const sanitized: Record<string, any> = {};
+  const sanitized: Record<string, unknown> = {};
 
   Object.entries(data).forEach(([key, value]) => {
     // Skip specified fields
@@ -379,7 +379,8 @@ export function sanitizeFormData<T extends Record<string, any>>(
     }
     // Handle nested objects recursively
     else if (typeof value === "object" && !Array.isArray(value) && !(value instanceof Date)) {
-      sanitized[key] = sanitizeFormData(value, config);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      sanitized[key] = sanitizeFormData(value as any, config);
     }
     // Handle arrays of strings
     else if (Array.isArray(value)) {

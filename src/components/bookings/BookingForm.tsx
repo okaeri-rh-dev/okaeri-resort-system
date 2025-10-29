@@ -34,6 +34,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { RESORT_OPERATION_HOURS } from "@/config/settings";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
+import { hasProperty, isObject } from "@/lib/type-guards";
 import { cn } from "@/lib/utils";
 import {
   bookingStep1Schema,
@@ -187,10 +188,25 @@ export function BookingForm({
     } catch (error) {
       // Set form errors based on validation
       if (error instanceof Error && "errors" in error) {
-        const zodError = error as any;
-        zodError.errors?.forEach((err: any) => {
-          form.setError(err.path[0], { message: err.message });
-        });
+        const zodError = error as unknown;
+        if (
+          isObject(zodError) &&
+          hasProperty(zodError, "errors") &&
+          Array.isArray(zodError.errors)
+        ) {
+          zodError.errors.forEach((err: unknown) => {
+            if (
+              isObject(err) &&
+              hasProperty(err, "path") &&
+              hasProperty(err, "message") &&
+              Array.isArray(err.path)
+            ) {
+              const errorMsg = err instanceof Error ? err.message : String(err.message);
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              form.setError(String(err.path[0]) as any, { message: errorMsg });
+            }
+          });
+        }
       }
       return false;
     }

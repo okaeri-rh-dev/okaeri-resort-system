@@ -480,7 +480,7 @@ export const useExportPayments = () => {
 // UTILITY FUNCTIONS
 // ============================================
 
-function convertToCSV(data: any[]): string {
+function convertToCSV(data: unknown[]): string {
   if (data.length === 0) return "";
 
   const headers = [
@@ -495,17 +495,21 @@ function convertToCSV(data: any[]): string {
     "Notes",
   ];
 
-  const rows = data.map((payment) => [
-    payment.payment_date,
-    payment.booking?.booking_reference || "",
-    payment.booking?.guest_name || "",
-    "N/A", // Unit info not available in payment export (bookings now use booking_units junction table)
-    payment.amount,
-    payment.payment_method || "",
-    payment.payment_status || "",
-    payment.reference_number || "",
-    payment.notes || "",
-  ]);
+  const rows = data.map((payment: unknown) => {
+    const p = payment as Record<string, unknown>;
+    const booking = p.booking as Record<string, unknown> | undefined;
+    return [
+      p.payment_date,
+      booking?.booking_reference || "",
+      booking?.guest_name || "",
+      "N/A", // Unit info not available in payment export (bookings now use booking_units junction table)
+      p.amount,
+      p.payment_method || "",
+      p.payment_status || "",
+      p.reference_number || "",
+      p.notes || "",
+    ];
+  });
 
   return [
     headers.join(","),

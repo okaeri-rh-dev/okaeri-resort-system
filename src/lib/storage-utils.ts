@@ -10,6 +10,8 @@
  * Source: docs/implementation/guest-booking-multi-unit/04-admin-interface.md lines 201-350
  */
 
+import { logger } from "@/lib/logger";
+
 import { supabase } from "./supabase";
 
 // ============================================
@@ -45,7 +47,7 @@ export interface SignedUrlResult {
  * if (error) {
  *   console.error('Failed to generate URL:', error);
  * } else {
- *   console.log('URL expires at:', expiresAt);
+ *   logger.info('URL expires at:', expiresAt);
  *   // Use URL in <img src={url} /> or <embed src={url} />
  * }
  */
@@ -126,14 +128,14 @@ export async function renewSignedUrl(
   filePath: string,
   expirySeconds: number = SIGNED_URL_EXPIRY_SECONDS
 ): Promise<SignedUrlResult> {
-  console.log("Renewing signed URL for:", filePath);
+  logger.info("Renewing signed URL for:", { filePath });
 
   const result = await generateSignedUrl(filePath, expirySeconds);
 
   if (result.error) {
     console.error("Failed to renew signed URL:", result.error);
   } else {
-    console.log("Signed URL renewed, expires at:", result.expiresAt);
+    logger.info("Signed URL renewed, expires at:", { expiresAt: result.expiresAt });
   }
 
   return result;

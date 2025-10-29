@@ -51,7 +51,7 @@ export async function cleanupTestData(options?: { includeTestFixtures?: boolean 
         .from("audit_logs")
         .delete()
         .neq("audit_id", "00000000-0000-0000-0000-000000000000");
-    } catch (e) {
+    } catch (_e) {
       // Table may not exist yet
     }
 
@@ -89,6 +89,7 @@ export async function cleanupTestData(options?: { includeTestFixtures?: boolean 
       if (!unitsError && testUnits && testUnits.length > 0) {
         const unitIds = testUnits.map((u) => u.unit_id);
         await testSupabaseAdmin.from("units").delete().in("unit_id", unitIds);
+        // eslint-disable-next-line no-console
         console.log(`Cleaned up ${unitIds.length} test units`);
       }
 
@@ -101,10 +102,12 @@ export async function cleanupTestData(options?: { includeTestFixtures?: boolean 
       if (!guestsError && testGuests && testGuests.length > 0) {
         const guestIds = testGuests.map((g) => g.guest_id);
         await testSupabaseAdmin.from("guests").delete().in("guest_id", guestIds);
+        // eslint-disable-next-line no-console
         console.log(`Cleaned up ${guestIds.length} test guests`);
       }
     }
 
+    // eslint-disable-next-line no-console
     console.log("Test data cleanup completed");
   } catch (error) {
     console.error("Test cleanup error:", error);
@@ -115,7 +118,7 @@ export async function cleanupTestData(options?: { includeTestFixtures?: boolean 
 /**
  * Create test unit fixture
  */
-export async function createTestUnit(overrides: Partial<any> = {}) {
+export async function createTestUnit(overrides: Partial<unknown> = {}) {
   const { data, error } = await testSupabaseAdmin
     .from("units")
     .insert({
@@ -145,7 +148,7 @@ export async function createTestUnit(overrides: Partial<any> = {}) {
 /**
  * Create test guest fixture
  */
-export async function createTestGuest(overrides: Partial<any> = {}) {
+export async function createTestGuest(overrides: Partial<unknown> = {}) {
   const timestamp = Date.now();
   const { data, error } = await testSupabaseAdmin
     .from("guests")
@@ -170,7 +173,7 @@ export async function createTestGuest(overrides: Partial<any> = {}) {
  * Create test booking fixture
  * Uses the unified multi-unit pattern (via create_multi_unit_booking function)
  */
-export async function createTestBooking(overrides: Partial<any> = {}) {
+export async function createTestBooking(overrides: Partial<unknown> = {}) {
   // Ensure we have a test guest and unit
   const guest = overrides.guest || (await createTestGuest());
   const unit = overrides.unit || (await createTestUnit());
@@ -289,10 +292,12 @@ export async function waitForDatabase(maxAttempts: number = 5): Promise<boolean>
       const { error } = await testSupabase.from("units").select("unit_id").limit(1);
 
       if (!error) {
+        // eslint-disable-next-line no-console
         console.log("Test database is ready");
         return true;
       }
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.log(`Database not ready (attempt ${i + 1}/${maxAttempts})`);
       await new Promise((r) => setTimeout(r, 1000)); // Wait 1 second
     }
@@ -331,10 +336,12 @@ export async function shouldRunDatabaseTests(): Promise<boolean> {
       const { error } = await testSupabaseAdmin.from("units").select("unit_id").limit(1);
 
       if (!error) {
+        // eslint-disable-next-line no-console
         console.log("Test database is ready");
         return true;
       }
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.log(`Database not ready (attempt ${i + 1}/2)`);
       await new Promise((r) => setTimeout(r, 1000)); // Wait 1 second
     }

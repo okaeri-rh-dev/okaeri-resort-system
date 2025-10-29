@@ -109,7 +109,7 @@ export function createBookingMocks(options: BookingMockOptions = {}) {
       /**
        * Check availability for multiple units
        */
-      check_multi_unit_availability: (params: any) => {
+      check_multi_unit_availability: (params: Record<string, unknown>) => {
         // If custom results provided, use them
         if (availabilityResults) {
           return availabilityResults;
@@ -135,7 +135,7 @@ export function createBookingMocks(options: BookingMockOptions = {}) {
       /**
        * Create multi-unit booking
        */
-      create_multi_unit_booking: (_params: any) => {
+      create_multi_unit_booking: (_params: Record<string, unknown>) => {
         // Return the booking ID that was created
         return createdBookingId;
       },

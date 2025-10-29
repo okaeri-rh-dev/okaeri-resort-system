@@ -15,6 +15,8 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+import { createLogger } from "../lib/logger";
+
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
@@ -31,8 +33,9 @@ export async function cleanupIdempotency(env: Env): Promise<void> {
   const MAX_RETRIES = 3;
   const RETRY_DELAY_MS = 2000; // 2 seconds base delay (fits within Cloudflare 30s Worker limit)
   const ALERT_THRESHOLD = 1000; // Alert if >1000 keys deleted
+  const logger = createLogger(env);
 
-  console.log("[CRON] Starting idempotency key cleanup");
+  logger.info("[CRON] Starting idempotency key cleanup");
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -59,7 +62,7 @@ export async function cleanupIdempotency(env: Env): Promise<void> {
       // - Double-booking attempts (bot attacks)
       // - System bugs creating excessive keys
       if (deletedCount > ALERT_THRESHOLD) {
-        console.warn(
+        logger.warn(
           `[ALERT] High idempotency key cleanup: ${deletedCount} keys deleted. ` +
             `Expected: <${ALERT_THRESHOLD}. ` +
             `Investigate for: ` +
@@ -71,15 +74,12 @@ export async function cleanupIdempotency(env: Env): Promise<void> {
       }
 
       // Log successful cleanup
-      console.log(`[CRON] Idempotency cleanup completed: ${deletedCount} expired keys removed`);
+      logger.info(`[CRON] Idempotency cleanup completed: ${deletedCount} expired keys removed`);
 
       // Success - exit retry loop
       return;
     } catch (error) {
-      console.error(
-        `[ERROR] Idempotency cleanup failed (attempt ${attempt}/${MAX_RETRIES}):`,
-        error instanceof Error ? error.message : String(error)
-      );
+      logger.error(`[ERROR] Idempotency cleanup failed (attempt ${attempt}/${MAX_RETRIES})`, error);
 
       // If final retry failed, log critical error and throw
       if (attempt === MAX_RETRIES) {
@@ -100,7 +100,7 @@ export async function cleanupIdempotency(env: Env): Promise<void> {
       // Wait before retry with exponential backoff
       // Attempt 1: 60s, Attempt 2: 120s, Attempt 3: 180s
       const delayMs = RETRY_DELAY_MS * attempt;
-      console.log(`[RETRY] Waiting ${delayMs / 1000}s before retry ${attempt + 1}...`);
+      logger.info(`[RETRY] Waiting ${delayMs / 1000}s before retry ${attempt + 1}...`);
 
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }

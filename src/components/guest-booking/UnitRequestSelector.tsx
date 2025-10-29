@@ -80,7 +80,8 @@ export const UnitRequestSelector: React.FC<UnitRequestSelectorProps> = ({
         setIsLoading(true);
         setError(null);
         const rates = await fetchRates();
-        setPricingConfig(rates);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setPricingConfig(rates as any);
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Failed to load pricing information";

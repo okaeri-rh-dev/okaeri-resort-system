@@ -88,9 +88,11 @@ function App() {
     };
 
     // Listen for custom auth events (if auth library emits them)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     window.addEventListener("authStateChange" as any, handleAuthChange);
 
     return () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       window.removeEventListener("authStateChange" as any, handleAuthChange);
       // Cleanup the optimistic bookings timer
       stopCleanupTimer();

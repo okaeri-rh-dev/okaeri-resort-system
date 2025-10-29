@@ -101,7 +101,7 @@ export function fuzzyMatch(query: string, text: string, threshold: number = 0.6)
  */
 export function fuzzySearchScore(
   query: string,
-  item: any,
+  item: unknown,
   fields: SearchField[],
   typoTolerance: number = 0.3
 ): number {
@@ -339,7 +339,7 @@ export function applyBookingFilters(
 /**
  * Evaluate a single filter condition
  */
-function evaluateFilter(fieldValue: any, operator: string, filterValue: any): boolean {
+function evaluateFilter(fieldValue: unknown, operator: string, filterValue: unknown): boolean {
   switch (operator) {
     case "equals":
       return fieldValue === filterValue;
@@ -455,7 +455,7 @@ export function processSearchResults<T>(
 /**
  * Exact search scoring (no fuzzy matching)
  */
-function exactSearchScore(query: string, item: any, fields: SearchField[]): number {
+function exactSearchScore(query: string, item: unknown, fields: SearchField[]): number {
   if (!query) return 0;
 
   const queryLower = query.toLowerCase();
@@ -485,7 +485,7 @@ function exactSearchScore(query: string, item: any, fields: SearchField[]): numb
 /**
  * Get list of fields that matched the query
  */
-function getMatchedFields(query: string, item: any, fields: SearchField[]): string[] {
+function getMatchedFields(query: string, item: unknown, fields: SearchField[]): string[] {
   const matched: string[] = [];
   const queryLower = query.toLowerCase();
 
@@ -505,7 +505,11 @@ function getMatchedFields(query: string, item: any, fields: SearchField[]): stri
 /**
  * Get highlighted snippets for each matched field
  */
-function getHighlights(query: string, item: any, fields: SearchField[]): Record<string, string[]> {
+function getHighlights(
+  query: string,
+  item: unknown,
+  fields: SearchField[]
+): Record<string, string[]> {
   const highlights: Record<string, string[]> = {};
 
   for (const field of fields) {
@@ -525,6 +529,7 @@ function getHighlights(query: string, item: any, fields: SearchField[]): Record<
 /**
  * Detect item type based on properties
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function detectItemType(item: any): "booking" | "guest" | "unit" {
   if ("booking_id" in item && "booking_reference" in item) {
     return "booking";
@@ -636,20 +641,22 @@ export function generateSuggestions(
 /**
  * Get nested value from object using dot notation
  */
-export function getNestedValue(obj: any, path: string): any {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getNestedValue(obj: unknown, path: string): any {
   return path.split(".").reduce((current, key) => current?.[key], obj);
 }
 
 /**
  * Debounce function for search input
  */
-export function debounce<T extends (...args: any[]) => any>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function debounce<T extends (...args: unknown[]) => any>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout | null = null;
 
-  return function (this: any, ...args: Parameters<T>) {
+  return function (this: unknown, ...args: Parameters<T>) {
     if (timeout) clearTimeout(timeout);
 
     timeout = setTimeout(() => {
@@ -661,13 +668,14 @@ export function debounce<T extends (...args: any[]) => any>(
 /**
  * Throttle function for scroll-based search
  */
-export function throttle<T extends (...args: any[]) => any>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function throttle<T extends (...args: unknown[]) => any>(
   func: T,
   limit: number
 ): (...args: Parameters<T>) => void {
   let inThrottle: boolean = false;
 
-  return function (this: any, ...args: Parameters<T>) {
+  return function (this: unknown, ...args: Parameters<T>) {
     if (!inThrottle) {
       func.apply(this, args);
       inThrottle = true;

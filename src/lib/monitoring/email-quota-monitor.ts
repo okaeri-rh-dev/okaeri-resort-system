@@ -28,7 +28,7 @@ interface EmailEvent {
   timestamp: Date;
   deliveryTime?: number;
   error?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 interface EmailTemplate {
@@ -244,7 +244,7 @@ export class EmailQuotaMonitor {
     this.events
       .filter((e) => e.timestamp >= todayStart)
       .forEach((event) => {
-        const template = event.metadata?.template || "default";
+        const template = String(event.metadata?.template || "default");
         if (!templateMap.has(template)) {
           templateMap.set(template, {
             name: template,

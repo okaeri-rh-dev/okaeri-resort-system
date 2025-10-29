@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useResponsiveView } from "@/hooks";
+import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import type { Guest } from "@/types";
 
@@ -257,7 +258,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
     try {
       await deleteGuest.mutateAsync(guest.guest_id);
       // Using toast from the component would require importing it
-      console.log("Guest deleted successfully");
+      logger.info("Guest deleted successfully");
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to delete guest");
     }
@@ -572,7 +573,8 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
         </div>
 
         {/* Mobile pagination */}
-        <TablePagination table={table} totalItems={guests.length} />
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <TablePagination table={table as any} totalItems={guests.length} />
       </div>
     );
   }
@@ -739,7 +741,8 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
       </ResponsiveTable>
 
       {/* Desktop pagination */}
-      <TablePagination table={table} totalItems={guests.length} />
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <TablePagination table={table as any} totalItems={guests.length} />
 
       {/* Edit Guest Dialog */}
       {editingGuest && (

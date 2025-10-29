@@ -25,7 +25,7 @@ describe("POST /api/pricing/quote", () => {
           if (table === "units") {
             return {
               select: vi.fn(() => ({
-                eq: vi.fn((_column: string, value: any) => ({
+                eq: vi.fn((_column: string, value: unknown) => ({
                   single: vi.fn(() => {
                     const unit = testUnits.find((u) => u.unit_id === value);
                     return {
@@ -59,7 +59,7 @@ describe("POST /api/pricing/quote", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(200);
     const data = (await response.json()) as PricingQuoteResponse;
@@ -84,7 +84,7 @@ describe("POST /api/pricing/quote", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(200);
     const data = (await response.json()) as PricingQuoteResponse;
@@ -104,7 +104,7 @@ describe("POST /api/pricing/quote", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     const data = (await response.json()) as PricingQuoteResponse;
     const unit = data.units[0];
@@ -125,7 +125,7 @@ describe("POST /api/pricing/quote", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     const data = (await response.json()) as PricingQuoteResponse;
     const unit = data.units[0];
@@ -151,7 +151,7 @@ describe("POST /api/pricing/quote", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(200);
     const data = (await response.json()) as PricingQuoteResponse;
@@ -170,7 +170,7 @@ describe("POST /api/pricing/quote", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     const data = (await response.json()) as PricingQuoteResponse;
     expect(data.nights).toBe(3);
@@ -193,7 +193,7 @@ describe("POST /api/pricing/quote", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ApiErrorResponse;
@@ -212,7 +212,7 @@ describe("POST /api/pricing/quote", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ApiErrorResponse;
@@ -231,7 +231,7 @@ describe("POST /api/pricing/quote", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ApiErrorResponse;
@@ -248,7 +248,7 @@ describe("POST /api/pricing/quote", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ApiErrorResponse;
@@ -266,7 +266,7 @@ describe("POST /api/pricing/quote", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ApiErrorResponse;
@@ -287,7 +287,7 @@ describe("POST /api/pricing/quote", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     const data = (await response.json()) as PricingQuoteResponse;
     expect(data.units[0].extra_person_charge).toBe(0);
@@ -304,7 +304,7 @@ describe("POST /api/pricing/quote", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     const data = (await response.json()) as PricingQuoteResponse;
     expect(data.nights).toBe(1);
@@ -318,7 +318,7 @@ describe("POST /api/pricing/quote", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.headers.has("X-Processing-Time")).toBe(true);
     const processingTime = response.headers.get("X-Processing-Time");
@@ -332,7 +332,7 @@ describe("POST /api/pricing/quote", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.headers.has("Cache-Control")).toBe(true);
     expect(response.headers.get("Cache-Control")).toContain("max-age=300");

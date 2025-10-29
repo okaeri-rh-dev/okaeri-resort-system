@@ -318,7 +318,7 @@ export function isAuthUser(user: unknown): user is AuthUser {
 // ============================================
 export function toUnitType(value: string): UnitType {
   const validTypes: UnitType[] = ["Standard", "Deluxe", "Suite", "Villa"];
-  return validTypes.includes(value as any) ? (value as UnitType) : "Standard";
+  return validTypes.includes(value as UnitType) ? (value as UnitType) : "Standard";
 }
 
 export function toBookingStatus(value: string): BookingStatus {
@@ -329,20 +329,20 @@ export function toBookingStatus(value: string): BookingStatus {
     "CheckedOut",
     "Cancelled",
   ];
-  return validStatuses.includes(value as any) ? (value as BookingStatus) : "Pending";
+  return validStatuses.includes(value as BookingStatus) ? (value as BookingStatus) : "Pending";
 }
 
 export function toPaymentStatus(value: string): PaymentStatus {
   const validStatuses: PaymentStatus[] = ["Pending", "Partial", "Completed", "Refunded"];
-  return validStatuses.includes(value as any) ? (value as PaymentStatus) : "Pending";
+  return validStatuses.includes(value as PaymentStatus) ? (value as PaymentStatus) : "Pending";
 }
 
 export function toPaymentMethod(value: string): PaymentMethod {
   const validMethods: PaymentMethod[] = ["Cash", "GCash", "BankTransfer", "Card"];
-  return validMethods.includes(value as any) ? (value as PaymentMethod) : "Cash";
+  return validMethods.includes(value as PaymentMethod) ? (value as PaymentMethod) : "Cash";
 }
 
 export function toBlackoutType(value: string): BlackoutType {
   const validTypes: BlackoutType[] = ["Maintenance", "Renovation", "Seasonal", "Manual"];
-  return validTypes.includes(value as any) ? (value as BlackoutType) : "Manual";
+  return validTypes.includes(value as BlackoutType) ? (value as BlackoutType) : "Manual";
 }

@@ -47,7 +47,7 @@ function createErrorResponse<T>(error: {
 }
 
 // Mock factories for complete database rows
-const createMockBooking = (overrides: Record<string, any> = {}) => ({
+const createMockBooking = (overrides: Record<string, unknown> = {}) => ({
   booking_id: "booking-123",
   booking_reference: "BKG-2024-001",
   booking_status: "Confirmed",
@@ -80,7 +80,7 @@ const createMockBooking = (overrides: Record<string, any> = {}) => ({
   ...overrides,
 });
 
-const createMockUnit = (overrides: Record<string, any> = {}) => ({
+const createMockUnit = (overrides: Record<string, unknown> = {}) => ({
   unit_id: "unit-123",
   unit_code: "DEL-1",
   unit_name: "Deluxe Room 1",
@@ -101,7 +101,7 @@ const createMockUnit = (overrides: Record<string, any> = {}) => ({
   ...overrides,
 });
 
-const createMockGuest = (overrides: Record<string, any> = {}) => ({
+const createMockGuest = (overrides: Record<string, unknown> = {}) => ({
   guest_id: "guest-123",
   guest_name: "Test Guest",
   email: "test@example.com",
@@ -115,7 +115,7 @@ const createMockGuest = (overrides: Record<string, any> = {}) => ({
   ...overrides,
 });
 
-const createMockPayment = (overrides: Record<string, any> = {}) => ({
+const createMockPayment = (overrides: Record<string, unknown> = {}) => ({
   payment_id: "payment-123",
   booking_id: "booking-123",
   amount: 4500,
@@ -129,7 +129,7 @@ const createMockPayment = (overrides: Record<string, any> = {}) => ({
   ...overrides,
 });
 
-const createMockExpense = (overrides: Record<string, any> = {}) => ({
+const createMockExpense = (overrides: Record<string, unknown> = {}) => ({
   expense_id: "expense-123",
   description: "Test Expense",
   amount: 2500,
@@ -276,11 +276,11 @@ describe("useEntityEdit", () => {
       queryClient.setQueryData(["booking", entityId], initialData);
 
       // Delay the API response
-      let resolvePromise: any;
-      const delayedPromise = new Promise<any>((resolve) => {
+      let resolvePromise: unknown;
+      const delayedPromise = new Promise<unknown>((resolve) => {
         resolvePromise = resolve;
       });
-      vi.mocked(db.bookings.update).mockReturnValue(delayedPromise as any);
+      vi.mocked(db.bookings.update).mockReturnValue(delayedPromise as unknown);
 
       // Resolve after 100ms
       setTimeout(() => {

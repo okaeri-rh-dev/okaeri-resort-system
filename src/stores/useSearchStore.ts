@@ -46,7 +46,7 @@ export interface AdvancedFilter {
   name: string;
   type: "date_range" | "status" | "amount_range" | "workflow" | "guest" | "unit" | "custom";
   operator: "equals" | "contains" | "between" | "in" | "not_in" | "greater_than" | "less_than";
-  value: any;
+  value: unknown;
   isActive: boolean;
 }
 

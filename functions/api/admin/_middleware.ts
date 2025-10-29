@@ -170,7 +170,8 @@ export async function onRequest(context: {
   };
 
   // Store in context for downstream handlers
-  (request as any).adminContext = adminContext;
+  // Note: Extending Request interface not possible in Workers, use header or context
+  (request as Request & { adminContext?: AdminContext }).adminContext = adminContext;
 
   // ============================================================================
   // STEP 6: Continue to Next Handler

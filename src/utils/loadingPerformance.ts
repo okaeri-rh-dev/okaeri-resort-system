@@ -1,6 +1,9 @@
 // Import React for hooks
 import React from "react";
 
+import { logger } from "@/lib/logger";
+import { isLayoutShift } from "@/lib/type-guards";
+
 // ============================================
 // LOADING PERFORMANCE MONITORING UTILITIES
 // ============================================
@@ -263,8 +266,8 @@ PERFORMANCE RECOMMENDATIONS:
             } else if (entry.entryType === "first-contentful-paint") {
               this.currentMeasurement.firstContentfulPaint = entry.startTime;
             } else if (entry.entryType === "layout-shift") {
-              const layoutShift = entry as any;
-              if (!layoutShift.hadRecentInput) {
+              const layoutShift = entry as unknown;
+              if (isLayoutShift(layoutShift) && !layoutShift.hadRecentInput) {
                 this.currentMeasurement.cumulativeLayoutShift =
                   (this.currentMeasurement.cumulativeLayoutShift || 0) + layoutShift.value;
               }
@@ -290,7 +293,10 @@ PERFORMANCE RECOMMENDATIONS:
   }
 
   private getDeviceInfo() {
-    const nav = navigator as any;
+    const nav = navigator as unknown as {
+      deviceMemory?: number;
+      connection?: { effectiveType?: string };
+    };
     return {
       userAgent: navigator.userAgent,
       memory: nav.deviceMemory,
@@ -383,15 +389,15 @@ export const useLoadingPerformance = (componentName: string) => {
 
 export const runLoadingPerformanceTests = async () => {
   const results = {
-    skeletonRenderTests: [] as any[],
-    dataLoadingTests: [] as any[],
-    memoryUsageTests: [] as any[],
+    skeletonRenderTests: [] as unknown[],
+    dataLoadingTests: [] as unknown[],
+    memoryUsageTests: [] as unknown[],
   };
 
-  console.log("Running loading performance tests...");
+  logger.info("Running loading performance tests...");
 
   // Test 1: Skeleton rendering performance
-  console.log("Testing skeleton rendering performance...");
+  logger.info("Testing skeleton rendering performance...");
   const skeletonTests = [
     { component: "BookingsTableSkeleton", rows: 10 },
     { component: "UnitsTableSkeleton", rows: 10 },
@@ -417,9 +423,10 @@ export const runLoadingPerformanceTests = async () => {
   }
 
   // Test 2: Memory usage during loading
-  console.log("Testing memory usage...");
+  logger.info("Testing memory usage...");
   if ("memory" in performance) {
-    const memoryBefore = (performance as any).memory.usedJSHeapSize;
+    const perfWithMemory = performance as unknown as { memory: { usedJSHeapSize: number } };
+    const memoryBefore = perfWithMemory.memory.usedJSHeapSize;
 
     // Simulate creating many skeleton components
     const elements = [];
@@ -427,7 +434,7 @@ export const runLoadingPerformanceTests = async () => {
       elements.push({ id: i, skeleton: "simulated" });
     }
 
-    const memoryAfter = (performance as any).memory.usedJSHeapSize;
+    const memoryAfter = perfWithMemory.memory.usedJSHeapSize;
     results.memoryUsageTests.push({
       memoryIncrease: memoryAfter - memoryBefore,
       elementsCreated: elements.length,
@@ -436,7 +443,7 @@ export const runLoadingPerformanceTests = async () => {
   }
 
   // Test 3: Network simulation tests
-  console.log("Testing network condition adaptations...");
+  logger.info("Testing network condition adaptations...");
   const networkConditions = ["slow-2g", "2g", "3g", "4g"];
 
   for (const condition of networkConditions) {
@@ -455,7 +462,7 @@ export const runLoadingPerformanceTests = async () => {
     });
   }
 
-  console.log("Performance tests completed:", results);
+  logger.info("Performance tests completed:", results);
   return results;
 };
 
@@ -515,10 +522,13 @@ export const setupDevelopmentMonitoring = () => {
   if (process.env.NODE_ENV !== "development") return;
 
   // Add global performance monitoring
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).__loadingPerformanceMonitor = globalPerformanceMonitor;
 
   // Add console commands for developers
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).__getLoadingStats = () => {
+    // eslint-disable-next-line no-console
     console.table(
       ["BookingsTable", "UnitsTable", "GuestsTable", "DashboardStats"].map((component) => ({
         Component: component,
@@ -527,14 +537,16 @@ export const setupDevelopmentMonitoring = () => {
     );
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).__generateLoadingReport = () => {
-    console.log(globalPerformanceMonitor.generateReport());
+    logger.info(globalPerformanceMonitor.generateReport());
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).__runLoadingTests = runLoadingPerformanceTests;
 
-  console.log("Loading performance monitoring enabled. Available commands:");
-  console.log("- __getLoadingStats(): View component loading statistics");
-  console.log("- __generateLoadingReport(): Generate detailed performance report");
-  console.log("- __runLoadingTests(): Run performance test suite");
+  logger.info("Loading performance monitoring enabled. Available commands:");
+  logger.info("- __getLoadingStats(): View component loading statistics");
+  logger.info("- __generateLoadingReport(): Generate detailed performance report");
+  logger.info("- __runLoadingTests(): Run performance test suite");
 };

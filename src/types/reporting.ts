@@ -365,7 +365,7 @@ export interface ReportResponse {
   id: string;
   type: ReportType;
   status: ReportStatus;
-  data?: any;
+  data?: unknown;
   generatedAt: string;
   config: ReportConfig;
   downloadUrl?: string;
@@ -376,7 +376,7 @@ export type ReportStatus = "pending" | "generating" | "completed" | "failed" | "
 
 export interface ReportCache {
   key: string;
-  data: any;
+  data: unknown;
   generatedAt: string;
   expiresAt: string;
   config: ReportConfig;
@@ -419,7 +419,7 @@ export interface DashboardWidget {
   id: string;
   type: "metric" | "chart" | "table" | "summary";
   title: string;
-  data: any;
+  data: unknown;
   refreshInterval?: number; // in seconds
   size: "small" | "medium" | "large" | "full";
   position: { x: number; y: number };
@@ -437,7 +437,7 @@ export interface MetricWidget {
 
 export interface ChartWidget {
   chartType: "line" | "bar" | "pie" | "area" | "donut";
-  data: any[];
+  data: unknown[];
   xAxis?: string;
   yAxis?: string;
   series?: string[];

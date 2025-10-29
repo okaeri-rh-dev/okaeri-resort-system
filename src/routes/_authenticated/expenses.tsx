@@ -30,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/expenses")({
 function ExpensesPage() {
   const navigate = useNavigate();
   const params = useParams({ strict: false });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isDetailView = !!(params as any).expenseId;
   const [showExpenseForm, setShowExpenseForm] = useState(false);
 

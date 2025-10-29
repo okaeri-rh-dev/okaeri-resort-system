@@ -6,6 +6,7 @@ import { Calendar, Hash, Mail, Phone, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { hasProperty, isObject } from "@/lib/type-guards";
 import { formatCurrency } from "@/lib/validations";
 import type { Guest } from "@/types";
 
@@ -124,30 +125,44 @@ export const GuestDetailModal: React.FC<GuestDetailModalProps> = ({
               <div>
                 <h3 className="mb-3 font-semibold">Recent Bookings</h3>
                 <div className="space-y-2">
-                  {[].slice(0, 3).map((booking: any, index: number) => (
-                    <div key={index} className="rounded-md border p-3">
-                      <div className="flex items-start justify-between text-sm">
-                        <div>
-                          <p className="flex items-center gap-2 font-medium">
-                            <Hash className="h-3 w-3" />
-                            {booking.reference}
-                          </p>
-                          <p className="text-muted-foreground mt-1 text-xs">
-                            {format(new Date(booking.check_in), "PP")} -
-                            {format(new Date(booking.check_out), "PP")}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <Badge variant="outline" className="text-xs">
-                            {booking.status}
-                          </Badge>
-                          <p className="mt-1 text-sm font-medium">
-                            {formatCurrency(booking.total)}
-                          </p>
+                  {[].slice(0, 3).map((booking: unknown, index: number) => {
+                    // Type guard for booking object
+                    if (!isObject(booking)) return null;
+
+                    return (
+                      <div key={index} className="rounded-md border p-3">
+                        <div className="flex items-start justify-between text-sm">
+                          <div>
+                            <p className="flex items-center gap-2 font-medium">
+                              <Hash className="h-3 w-3" />
+                              {hasProperty(booking, "reference")
+                                ? String(booking.reference)
+                                : "N/A"}
+                            </p>
+                            <p className="text-muted-foreground mt-1 text-xs">
+                              {hasProperty(booking, "check_in")
+                                ? format(new Date(String(booking.check_in)), "PP")
+                                : "N/A"}{" "}
+                              -
+                              {hasProperty(booking, "check_out")
+                                ? format(new Date(String(booking.check_out)), "PP")
+                                : "N/A"}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant="outline" className="text-xs">
+                              {hasProperty(booking, "status") ? String(booking.status) : "N/A"}
+                            </Badge>
+                            <p className="mt-1 text-sm font-medium">
+                              {hasProperty(booking, "total") && typeof booking.total === "number"
+                                ? formatCurrency(booking.total)
+                                : "N/A"}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </>

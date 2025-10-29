@@ -37,7 +37,7 @@ export interface ValidationError {
   code: string;
   message: string;
   severity: "error" | "critical";
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ValidationWarning {
@@ -45,7 +45,7 @@ export interface ValidationWarning {
   code: string;
   message: string;
   recommendation?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ValidationRule<T> {
@@ -371,6 +371,7 @@ export const sanitizeGuestData = (guestData: Partial<Guest>): Guest => {
   const textFields = ["notes", "address", "company"] as const;
   textFields.forEach((field) => {
     if (field in sanitized && typeof sanitized[field as keyof Guest] === "string") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (sanitized as any)[field] = sanitizeText((sanitized as any)[field]);
     }
   });

@@ -47,7 +47,7 @@ export interface DiscountRule {
 export interface DiscountCondition {
   type: "min_nights" | "advance_booking" | "unit_type" | "guest_type" | "date_range" | "custom";
   operator: "gte" | "lte" | "eq" | "in" | "between";
-  value: any;
+  value: unknown;
   description: string;
 }
 
@@ -535,16 +535,17 @@ const evaluateDiscountCondition = (
 
     case "unit_type":
       return condition.operator === "eq"
-        ? unit.unit_type === condition.value
-        : condition.operator === "in" && condition.value.includes(unit.unit_type);
+        ? unit.unit_type === (condition.value as string)
+        : condition.operator === "in" && (condition.value as string[]).includes(unit.unit_type);
 
     case "guest_type":
-      return options.guestType === condition.value;
+      return options.guestType === (condition.value as string);
 
     case "date_range": {
       const checkInDate = formatDateForSeason(options.checkIn);
       if (condition.operator === "between") {
-        return isDateInSeasonalRange(checkInDate, condition.value.start, condition.value.end);
+        const dateRange = condition.value as { start: string; end: string };
+        return isDateInSeasonalRange(checkInDate, dateRange.start, dateRange.end);
       }
       return false;
     }
@@ -562,12 +563,13 @@ const evaluateDiscountCondition = (
  * @param target - Target value
  * @returns Comparison result
  */
-const evaluateOperator = (value: any, operator: string, target: any): boolean => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const evaluateOperator = (value: unknown, operator: string, target: any): boolean => {
   switch (operator) {
     case "gte":
-      return value >= target;
+      return (value as number) >= target;
     case "lte":
-      return value <= target;
+      return (value as number) <= target;
     case "eq":
       return value === target;
     case "in":

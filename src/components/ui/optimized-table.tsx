@@ -263,7 +263,9 @@ export function useTableSort<T>(
     if (!sortColumn) return data;
 
     return [...data].sort((a, b) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const aValue = (a as any)[sortColumn];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const bValue = (b as any)[sortColumn];
 
       if (aValue === bValue) return 0;

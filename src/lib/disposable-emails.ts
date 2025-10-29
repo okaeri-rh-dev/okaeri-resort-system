@@ -3,6 +3,8 @@
  * Prevents registration with temporary email services
  */
 
+import { hasProperty, isObject } from "@/lib/type-guards";
+
 // Common disposable email domains (subset for performance)
 // Full list can be loaded from external source in production
 const DISPOSABLE_DOMAINS = new Set([
@@ -138,8 +140,9 @@ export async function isDisposableEmailAsync(email: string, apiKey?: string): Pr
       );
 
       if (response.ok) {
-        const data: any = await response.json();
-        const isDisposable = data.disposable === true;
+        const data: unknown = await response.json();
+        const isDisposable =
+          isObject(data) && hasProperty(data, "disposable") ? data.disposable === true : false;
 
         // Cache the result
         domainCache.set(domain, { isDisposable, checkedAt: Date.now() });

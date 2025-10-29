@@ -15,6 +15,7 @@ import {
   // refreshAvailabilityCache, // ❌ DISABLED: Function not deployed yet (Phase 4)
   // getCachePerformanceMetrics, // ❌ DISABLED: Function not deployed yet (Phase 4)
 } from "@/lib/availability";
+import { logger } from "@/lib/logger";
 import { supabase } from "@/lib/supabase";
 
 // Performance targets
@@ -32,7 +33,7 @@ interface PerformanceResult {
   target: number;
   passed: boolean;
   error?: string;
-  details?: any;
+  details?: unknown;
 }
 
 interface ValidationReport {
@@ -300,7 +301,7 @@ async function testDatabasePerformance(): Promise<PerformanceResult> {
  * TODO Phase 4: Uncomment after deploying availability cache migration
  */
 /*
-async function getCacheMetrics(): Promise<any> {
+async function getCacheMetrics(): Promise<unknown> {
   try {
     return await getCachePerformanceMetrics();
   } catch (error) {
@@ -378,7 +379,7 @@ function generateRecommendations(results: PerformanceResult[]): string[] {
  * Run comprehensive performance validation
  */
 export async function validatePerformance(): Promise<ValidationReport> {
-  console.log("🚀 Starting availability system performance validation...");
+  logger.info("🚀 Starting availability system performance validation...");
 
   const results: PerformanceResult[] = [];
 
@@ -394,12 +395,12 @@ export async function validatePerformance(): Promise<ValidationReport> {
 
   for (const test of tests) {
     try {
-      console.log(`Running ${test.name}...`);
+      logger.info(`Running ${test.name}...`);
       const result = await test();
       results.push(result);
 
       const status = result.passed ? "✅" : "❌";
-      console.log(
+      logger.info(
         `${status} ${result.test}: ${result.duration.toFixed(1)}ms (target: ${result.target}ms)`
       );
     } catch (error) {
@@ -442,19 +443,19 @@ export async function validatePerformance(): Promise<ValidationReport> {
   };
 
   // Log summary
-  console.log("\n📊 Performance Validation Summary:");
-  console.log(`Total Tests: ${report.summary.totalTests}`);
-  console.log(`Passed: ${report.summary.passedTests}`);
-  console.log(`Failed: ${report.summary.failedTests}`);
-  console.log(`Average Duration: ${report.summary.averageDuration.toFixed(1)}ms`);
+  logger.info("\n📊 Performance Validation Summary:");
+  logger.info(`Total Tests: ${report.summary.totalTests}`);
+  logger.info(`Passed: ${report.summary.passedTests}`);
+  logger.info(`Failed: ${report.summary.failedTests}`);
+  logger.info(`Average Duration: ${report.summary.averageDuration.toFixed(1)}ms`);
 
   // ❌ Phase 4: Cache metrics disabled
   // if (cacheMetrics) {
-  //   console.log(`Cache Hit Ratio: ${cacheMetrics.cacheHitRatio}%`);
+  //   logger.info(`Cache Hit Ratio: ${cacheMetrics.cacheHitRatio}%`);
   // }
 
-  console.log("\n💡 Recommendations:");
-  recommendations.forEach((rec) => console.log(`  ${rec}`));
+  logger.info("\n💡 Recommendations:");
+  recommendations.forEach((rec) => logger.info(`  ${rec}`));
 
   return report;
 }
@@ -463,7 +464,7 @@ export async function validatePerformance(): Promise<ValidationReport> {
  * Run continuous performance monitoring
  */
 export async function startPerformanceMonitoring(intervalMinutes: number = 5): Promise<() => void> {
-  console.log(
+  logger.info(
     `🔄 Starting continuous performance monitoring (every ${intervalMinutes} minutes)...`
   );
 
@@ -491,7 +492,7 @@ export async function startPerformanceMonitoring(intervalMinutes: number = 5): P
   // Return cleanup function
   return () => {
     clearInterval(interval);
-    console.log("🛑 Performance monitoring stopped.");
+    logger.info("🛑 Performance monitoring stopped.");
   };
 }
 

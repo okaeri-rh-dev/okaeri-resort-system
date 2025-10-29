@@ -37,7 +37,7 @@ export const queryKeys = {
    * Format: [type, 'list', filters]
    * Example: ['booking', 'list', { status: 'Confirmed' }]
    */
-  entitiesFiltered: <T extends EntityType>(type: T, filters: Record<string, any>) =>
+  entitiesFiltered: <T extends EntityType>(type: T, filters: Record<string, unknown>) =>
     [type, "list", filters] as const,
 
   /**

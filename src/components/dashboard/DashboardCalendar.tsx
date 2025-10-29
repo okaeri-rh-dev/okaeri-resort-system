@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCalendarBookings } from "@/hooks/useCalendarBookings";
+import { hasProperty, isObject } from "@/lib/type-guards";
 import { cn } from "@/lib/utils";
 import type { Booking } from "@/types";
 
@@ -30,9 +31,9 @@ function getDayBackgroundClass(bookingCount: number): string {
 // Extracted DayButton component for better performance
 interface DayButtonProps {
   day: { date: Date };
-  modifiers?: any;
+  modifiers?: unknown;
   bookingsByDate: { [key: string]: Booking[] };
-  [key: string]: any; // For other props passed by Calendar
+  [key: string]: unknown; // For other props passed by Calendar
 }
 
 const DayButton = React.memo(function DayButton({
@@ -47,7 +48,8 @@ const DayButton = React.memo(function DayButton({
   const isToday = format(date, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
   const isWeekend = getDay(date) === 0 || getDay(date) === 6; // Sunday = 0, Saturday = 6
   const bookingCountClass = getDayBackgroundClass(dayBookings.length);
-  const isOutsideMonth = modifiers?.outside;
+  const isOutsideMonth =
+    isObject(modifiers) && hasProperty(modifiers, "outside") ? Boolean(modifiers.outside) : false;
 
   return (
     <BookingTooltip bookings={dayBookings} date={date}>
@@ -126,6 +128,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
 
   // Create the DayButton component callback at the top level to follow React hooks rules
   const dayButtonComponent = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (props: any) => <DayButton {...props} bookingsByDate={bookingsByDate} />,
     [bookingsByDate]
   );

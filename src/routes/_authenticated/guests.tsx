@@ -24,6 +24,7 @@ export const Route = createFileRoute("/_authenticated/guests")({
 function GuestsPage() {
   const navigate = useNavigate();
   const params = useParams({ strict: false });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isDetailView = !!(params as any).guestId;
 
   // Navigate to dedicated detail and edit routes instead of using modals

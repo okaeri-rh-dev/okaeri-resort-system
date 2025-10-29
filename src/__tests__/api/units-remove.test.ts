@@ -52,7 +52,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(200);
     const data = (await response.json()) as RemoveUnitResponse;
@@ -73,7 +73,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     const data = (await response.json()) as RemoveUnitResponse;
     expect(data.data.refund_amount).toBeDefined();
@@ -93,7 +93,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     );
 
     const context = createMockContext(request, mockEnv, { id: "invalid-id" });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ApiErrorResponse;
@@ -117,7 +117,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
   });
@@ -156,7 +156,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ApiErrorResponse;
@@ -192,7 +192,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(404);
     const data = (await response.json()) as ApiErrorResponse;
@@ -241,7 +241,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(404);
     const data = (await response.json()) as ApiErrorResponse;
@@ -282,7 +282,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(409);
     const data = (await response.json()) as ApiErrorResponse;
@@ -323,7 +323,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(409);
   });
@@ -342,7 +342,7 @@ describe("POST /api/bookings/:id/units/remove", () => {
     const context = createMockContext(request, mockEnv, {
       id: testBookingResponse.booking_id,
     });
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.headers.has("X-Processing-Time")).toBe(true);
   });

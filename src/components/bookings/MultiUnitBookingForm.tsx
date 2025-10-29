@@ -54,6 +54,7 @@ import {
   useCreateMultiUnitBooking,
   useMultiUnitAvailability,
 } from "@/hooks/useMultiUnitBookingQueries";
+import { hasProperty, isObject } from "@/lib/type-guards";
 import { cn } from "@/lib/utils";
 import {
   multiUnitBookingSchema,
@@ -158,8 +159,12 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
     if (!availabilityResults) return [];
 
     return allUnits.filter((unit) => {
-      const availability = availabilityResults.find((r) => r.unit_id === unit.unit_id);
-      return availability?.is_available === true;
+      const availability = availabilityResults.find(
+        (r: unknown) => isObject(r) && hasProperty(r, "unit_id") && r.unit_id === unit.unit_id
+      );
+      return isObject(availability) && hasProperty(availability, "is_available")
+        ? Boolean(availability.is_available)
+        : false;
     });
   }, [allUnits, availabilityResults]);
 

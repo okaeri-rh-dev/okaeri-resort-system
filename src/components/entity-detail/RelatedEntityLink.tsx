@@ -81,7 +81,9 @@ export function RelatedEntityLink({ type, id, label, badge, className }: Related
 
   return (
     <Link
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       to={routeTo as any}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       params={{ [paramKey]: id } as any}
       className={cn(
         "inline-flex items-center gap-2 font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline",

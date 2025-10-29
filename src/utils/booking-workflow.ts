@@ -34,7 +34,7 @@ export interface WorkflowAction {
 export interface ActionRequirement {
   type: "payment" | "date" | "status" | "custom";
   condition: string;
-  value?: any;
+  value?: unknown;
   isMet: boolean;
   errorMessage?: string;
 }
@@ -74,7 +74,7 @@ export interface WorkflowEvent {
   toStatus: BookingStatus;
   triggeredBy: "user" | "system" | "automation";
   timestamp: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // ============================================
@@ -610,7 +610,7 @@ export const createWorkflowEvent = (
   fromStatus: BookingStatus,
   toStatus: BookingStatus,
   triggeredBy: WorkflowEvent["triggeredBy"],
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): WorkflowEvent => {
   return {
     eventId: `${booking.booking_id}_${eventType}_${Date.now()}`,
@@ -637,7 +637,7 @@ export const executeStatusTransition = (
   booking: Booking,
   toStatus: BookingStatus,
   triggeredBy: WorkflowEvent["triggeredBy"],
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): {
   success: boolean;
   updatedBooking?: Booking;

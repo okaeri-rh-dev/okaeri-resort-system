@@ -78,7 +78,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(201);
     const data = (await response.json()) as MultiUnitBookingResponse;
@@ -104,7 +104,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(201);
     const data = (await response.json()) as MultiUnitBookingResponse;
@@ -125,7 +125,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context1 = createMockContext(request1, mockEnv);
-    const response1 = await onRequestPost(context1 as any);
+    const response1 = await onRequestPost(context1 as unknown);
 
     expect(response1.status).toBe(201);
     const data1 = (await response1.json()) as MultiUnitBookingResponse;
@@ -140,7 +140,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context2 = createMockContext(request2, mockEnv);
-    const response2 = await onRequestPost(context2 as any);
+    const response2 = await onRequestPost(context2 as unknown);
 
     expect(response2.status).toBe(200); // Not 201!
     expect(response2.headers.get("X-Idempotency-Replay")).toBe("true");
@@ -157,7 +157,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.headers.has("X-Processing-Time")).toBe(true);
     expect(response.headers.get("X-Processing-Time")).toMatch(/\d+ms/);
@@ -171,7 +171,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.headers.get("Access-Control-Allow-Origin")).toBeDefined();
     expect(response.headers.get("Access-Control-Allow-Methods")).toContain("POST");
@@ -185,7 +185,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     const data = (await response.json()) as MultiUnitBookingResponse;
     expect(data.data.booking_units).toBeDefined();
@@ -205,7 +205,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ValidationErrorResponse;
@@ -223,7 +223,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ValidationErrorResponse;
@@ -245,7 +245,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ValidationErrorResponse;
@@ -264,7 +264,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ValidationErrorResponse;
@@ -282,7 +282,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ValidationErrorResponse;
@@ -304,7 +304,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ValidationErrorResponse;
@@ -325,7 +325,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ValidationErrorResponse;
@@ -365,7 +365,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(409);
     const data = (await response.json()) as BusinessErrorResponse;
@@ -388,7 +388,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    await onRequestPost(context as any);
+    await onRequestPost(context as unknown);
 
     // Verify sanitization was called
     expect(sanitizeTextWorker).toHaveBeenCalled();
@@ -410,7 +410,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    await onRequestPost(context as any);
+    await onRequestPost(context as unknown);
 
     expect(sanitizeNameWorker).toHaveBeenCalled();
   });
@@ -425,7 +425,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    await onRequestPost(context as any);
+    await onRequestPost(context as unknown);
 
     expect(sanitizeEmailWorker).toHaveBeenCalled();
   });
@@ -461,7 +461,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestPost(context as any);
+    const response = await onRequestPost(context as unknown);
 
     expect(response.status).toBe(500);
     const data = (await response.json()) as BusinessErrorResponse;

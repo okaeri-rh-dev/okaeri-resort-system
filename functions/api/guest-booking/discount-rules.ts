@@ -14,6 +14,23 @@ interface Env {
   SUPABASE_SERVICE_ROLE_KEY: string;
 }
 
+// Discount rule condition type
+interface DiscountCondition {
+  type: string;
+  value?: number | string;
+}
+
+// Discount rule structure
+interface DiscountRule {
+  id: string;
+  name: string;
+  description?: string;
+  conditions: DiscountCondition[];
+  discount_type: string;
+  discount_value: number;
+  priority: number;
+}
+
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { env } = context;
 
@@ -46,15 +63,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     }
 
     // Find duration discount for display message
-    const durationDiscount = data?.find((rule) =>
-      rule.conditions.some((c: any) => c.type === "min_nights")
+    const durationDiscount = (data as DiscountRule[] | null)?.find((rule) =>
+      rule.conditions.some((c) => c.type === "min_nights")
     );
 
     let displayMessage = null;
     if (durationDiscount) {
-      const minNights = durationDiscount.conditions.find(
-        (c: any) => c.type === "min_nights"
-      )?.value;
+      const minNights = durationDiscount.conditions.find((c) => c.type === "min_nights")?.value;
       displayMessage = `Book ${minNights}+ nights and save ${durationDiscount.discount_value}%!`;
     }
 
@@ -66,7 +81,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       },
       { status: 200, headers: corsHeaders }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[DISCOUNTS] Unexpected error:", error);
     return Response.json(
       { success: false, error: "Failed to fetch discount rules" },

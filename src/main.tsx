@@ -6,6 +6,8 @@ import App from "./App";
 import "./index.css";
 import "./styles/print.css";
 
+import { logger } from "@/lib/logger";
+
 // Performance monitoring for production
 if (import.meta.env.PROD) {
   // Basic error tracking
@@ -28,7 +30,7 @@ if (import.meta.env.PROD) {
         )[0] as PerformanceNavigationTiming;
         if (perfData) {
           const loadTime = perfData.loadEventEnd - perfData.fetchStart;
-          console.log(`Page load time: ${loadTime}ms`);
+          logger.info(`Page load time: ${loadTime}ms`);
           // In future phases, send to analytics
         }
       }, 0);

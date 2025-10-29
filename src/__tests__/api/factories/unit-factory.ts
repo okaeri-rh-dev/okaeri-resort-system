@@ -91,7 +91,7 @@ export function createUnitManagementMocks(options: UnitManagementMockOptions = {
       /**
        * Check availability for units
        */
-      check_multi_unit_availability: (params: any) => {
+      check_multi_unit_availability: (params: Record<string, unknown>) => {
         // If custom results provided, use them
         if (availabilityResults) {
           return availabilityResults;

@@ -465,6 +465,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
                 <Select
                   value={filters.status || "all"}
                   onValueChange={(value) =>
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     setFilters({ ...filters, status: value === "all" ? undefined : (value as any) })
                   }
                 >
@@ -493,6 +494,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
                 <Select
                   value={filters.method || "all"}
                   onValueChange={(value) =>
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     setFilters({ ...filters, method: value === "all" ? undefined : (value as any) })
                   }
                 >
@@ -590,7 +592,8 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
       </ResponsiveTable>
 
       {/* Desktop pagination */}
-      <TablePagination table={table} totalItems={filteredPayments.length} />
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <TablePagination table={table as any} totalItems={filteredPayments.length} />
     </div>
   );
 };

@@ -17,7 +17,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { logger } from "@/lib/logger";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
+import { hasProperty, isObject } from "@/lib/type-guards";
 import {
   multiUnitBookingSchema,
   STEP_FIELDS,
@@ -71,7 +73,7 @@ export function MultiUnitGuestBookingForm() {
 
     // Handle case where step has no validation fields
     if (!fields || fields.length < 1) {
-      console.debug(`Step ${step} has no validation fields`);
+      logger.debug(`Step ${step} has no validation fields`);
       return true;
     }
 
@@ -130,7 +132,7 @@ export function MultiUnitGuestBookingForm() {
         body: JSON.stringify(payload),
       });
 
-      const result: any = await response.json();
+      const result: unknown = await response.json();
 
       if (!response.ok) {
         // Handle specific error cases
@@ -141,10 +143,30 @@ export function MultiUnitGuestBookingForm() {
           );
         }
 
-        if (response.status === 409 && result.is_duplicate) {
+        if (
+          response.status === 409 &&
+          isObject(result) &&
+          hasProperty(result, "is_duplicate") &&
+          result.is_duplicate
+        ) {
           // Idempotent duplicate - continue with cached result (silent)
         } else {
-          throw new Error(result.error || result.message || "Booking failed");
+          let errorMsg = "Booking failed";
+          if (isObject(result)) {
+            if (hasProperty(result, "error")) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const errorValue = (result as any).error;
+              if (isObject(errorValue) && hasProperty(errorValue, "message")) {
+                errorMsg = String(errorValue.message);
+              } else {
+                errorMsg = String(errorValue);
+              }
+            } else if (hasProperty(result, "message")) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              errorMsg = String((result as any).message);
+            }
+          }
+          throw new Error(errorMsg);
         }
       }
 
@@ -152,17 +174,28 @@ export function MultiUnitGuestBookingForm() {
       sessionStorage.setItem(
         "lastBookingConfirmation",
         JSON.stringify({
-          bookingReference: result.booking?.booking_reference,
+          bookingReference:
+            isObject(result) &&
+            hasProperty(result, "booking") &&
+            isObject(result.booking) &&
+            hasProperty(result.booking, "booking_reference")
+              ? result.booking.booking_reference
+              : null,
           bookingData: result,
           timestamp: Date.now(),
         })
       );
 
       // Navigate to confirmation page using TanStack Router
-      if (result.booking?.booking_reference) {
+      if (
+        isObject(result) &&
+        hasProperty(result, "booking") &&
+        isObject(result.booking) &&
+        hasProperty(result.booking, "booking_reference")
+      ) {
         navigate({
           to: "/booking-confirmation/$bookingReference",
-          params: { bookingReference: result.booking.booking_reference },
+          params: { bookingReference: String(result.booking.booking_reference) },
         });
       } else {
         throw new Error("Booking reference not returned from API");

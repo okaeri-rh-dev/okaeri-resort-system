@@ -224,7 +224,7 @@ describe("SQL Injection Prevention Tests", () => {
         error: null,
       });
 
-      const result = await supabase.rpc("check_unit_availability" as any, maliciousParams);
+      const result = await supabase.rpc("check_unit_availability" as unknown, maliciousParams);
 
       expect(result.error).toBeNull();
       expect(supabase.rpc).toHaveBeenCalledWith("check_unit_availability", maliciousParams);
@@ -335,7 +335,7 @@ describe("SQL Injection Prevention Tests", () => {
         }),
       });
 
-      const result = await supabase.from("bookings" as any).select("*");
+      const result = await supabase.from("bookings" as unknown).select("*");
 
       // Error should exist but sanitized
       expect(result.error).toBeTruthy();

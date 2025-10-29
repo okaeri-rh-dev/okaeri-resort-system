@@ -48,7 +48,7 @@ interface UIStore {
 
   // Modal states
   activeModal: ModalType;
-  modalData: any;
+  modalData: unknown;
 
   // Toast notifications
   toasts: Toast[];

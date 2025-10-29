@@ -43,7 +43,7 @@ export function createMockRequest(
       ...options.headers,
     },
     body: options.body,
-  }) as any;
+  }) as unknown;
 
   // Add mock user context if Authorization header is present
   // This simulates what the middleware does after JWT verification
@@ -72,7 +72,7 @@ export function createMockContext(
     request,
     env,
     params,
-    waitUntil: (promise: Promise<any>) => {
+    waitUntil: (promise: Promise<unknown>) => {
       // In tests, just let it resolve
       promise.catch((err) => console.error("waitUntil error:", err));
     },
@@ -93,7 +93,7 @@ function base64UrlEncode(data: string): string {
  * Matches the signing/verification logic in functions/_middleware.ts
  */
 export async function generateTestJWT(
-  payload: Record<string, any> = {},
+  payload: Record<string, unknown> = {},
   secret: string = "test-jwt-secret-key-for-hmac-256-signing"
 ): Promise<string> {
   const header = { alg: "HS256", typ: "JWT" };
@@ -258,7 +258,7 @@ export function verifySecurityHeaders(response: Response): void {
  * Includes CORS, security, and processing headers that the middleware adds
  */
 export function createMockResponseWithHeaders(
-  body: any,
+  body: unknown,
   options: {
     status?: number;
     processingTime?: string;

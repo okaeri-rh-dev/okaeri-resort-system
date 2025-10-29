@@ -27,20 +27,24 @@ const TEST_SERVICE_KEY =
  */
 async function restartSupabase(): Promise<boolean> {
   try {
+    // eslint-disable-next-line no-console
     console.log("🔄 Attempting to restart Supabase...");
 
     // Stop Supabase
     try {
+      // eslint-disable-next-line no-console
       console.log("   Stopping Supabase...");
       execSync("npx supabase stop", { stdio: "inherit" });
-    } catch (stopError) {
+    } catch (_stopError) {
       console.warn("   Warning: supabase stop failed, continuing anyway...");
     }
 
     // Start Supabase
+    // eslint-disable-next-line no-console
     console.log("   Starting Supabase...");
     execSync("npx supabase start", { stdio: "inherit" });
 
+    // eslint-disable-next-line no-console
     console.log("✅ Supabase restarted successfully");
 
     // Wait a bit for services to be fully ready
@@ -60,6 +64,7 @@ async function checkDatabaseAvailability(): Promise<boolean> {
   // Skip if not using local database
   if (!TEST_SUPABASE_URL || TEST_SUPABASE_URL === "http://localhost:54321") {
     if (!TEST_SERVICE_KEY) {
+      // eslint-disable-next-line no-console
       console.log("⏭️  Skipping database availability check - no service key configured");
       return false;
     }
@@ -69,16 +74,19 @@ async function checkDatabaseAvailability(): Promise<boolean> {
   const testSupabaseAdmin = createClient<Database>(TEST_SUPABASE_URL, TEST_SERVICE_KEY);
 
   // Try to connect to database (2 attempts)
+  // eslint-disable-next-line no-console
   console.log("🔍 Checking database availability...");
   for (let i = 0; i < 2; i++) {
     try {
       const { error } = await testSupabaseAdmin.from("units").select("unit_id").limit(1);
 
       if (!error) {
+        // eslint-disable-next-line no-console
         console.log("✅ Test database is ready");
         return true;
       }
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.log(`   Database not ready (attempt ${i + 1}/2)`);
       await new Promise((r) => setTimeout(r, 1000)); // Wait 1 second
     }
@@ -87,6 +95,7 @@ async function checkDatabaseAvailability(): Promise<boolean> {
   console.warn("⚠️  Test database not available after 2 attempts");
 
   // Try to restart Supabase
+  // eslint-disable-next-line no-console
   console.log("🔄 Attempting to restart Supabase...");
   const restartSuccess = await restartSupabase();
 
@@ -96,16 +105,19 @@ async function checkDatabaseAvailability(): Promise<boolean> {
   }
 
   // After restart, check again if database is available
+  // eslint-disable-next-line no-console
   console.log("🔍 Verifying database connection after restart...");
   for (let i = 0; i < 3; i++) {
     try {
       const { error } = await testSupabaseAdmin.from("units").select("unit_id").limit(1);
 
       if (!error) {
+        // eslint-disable-next-line no-console
         console.log("✅ Test database is ready after restart");
         return true;
       }
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.log(`   Database not ready after restart (attempt ${i + 1}/3)`);
       await new Promise((r) => setTimeout(r, 2000)); // Wait 2 seconds
     }
@@ -119,8 +131,11 @@ async function checkDatabaseAvailability(): Promise<boolean> {
  * Global setup function - runs once before all tests
  */
 export default async function globalSetup() {
+  // eslint-disable-next-line no-console
   console.log("\n" + "=".repeat(80));
+  // eslint-disable-next-line no-console
   console.log("VITEST GLOBAL SETUP - Database Availability Check");
+  // eslint-disable-next-line no-console
   console.log("=".repeat(80) + "\n");
 
   const dbAvailable = await checkDatabaseAvailability();
@@ -134,7 +149,10 @@ export default async function globalSetup() {
     }
   }
 
+  // eslint-disable-next-line no-console
   console.log("\n" + "=".repeat(80));
+  // eslint-disable-next-line no-console
   console.log("STARTING TEST EXECUTION");
+  // eslint-disable-next-line no-console
   console.log("=".repeat(80) + "\n");
 }

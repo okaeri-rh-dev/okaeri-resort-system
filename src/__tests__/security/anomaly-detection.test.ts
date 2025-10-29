@@ -56,7 +56,7 @@ describe("Anomaly Detection", () => {
         },
       ];
 
-      (supabase.from as any).mockReturnValue({
+      (supabase.from as unknown).mockReturnValue({
         select: vi.fn().mockReturnValue({
           or: vi.fn().mockReturnValue({
             gte: vi.fn().mockReturnValue({
@@ -99,7 +99,7 @@ describe("Anomaly Detection", () => {
         },
       ];
 
-      (supabase.from as any).mockReturnValue({
+      (supabase.from as unknown).mockReturnValue({
         select: vi.fn().mockReturnValue({
           or: vi.fn().mockReturnValue({
             gte: vi.fn().mockReturnValue({
@@ -149,7 +149,7 @@ describe("Anomaly Detection", () => {
         },
       ];
 
-      (supabase.from as any).mockReturnValue({
+      (supabase.from as unknown).mockReturnValue({
         select: vi.fn().mockReturnValue({
           or: vi.fn().mockReturnValue({
             gte: vi.fn().mockReturnValue({
@@ -208,7 +208,7 @@ describe("Anomaly Detection", () => {
         },
       ];
 
-      (supabase.from as any).mockReturnValue({
+      (supabase.from as unknown).mockReturnValue({
         select: vi.fn().mockReturnValue({
           or: vi.fn().mockReturnValue({
             gte: vi.fn().mockReturnValue({
@@ -245,7 +245,7 @@ describe("Anomaly Detection", () => {
         },
       ];
 
-      (supabase.from as any).mockReturnValue({
+      (supabase.from as unknown).mockReturnValue({
         select: vi.fn().mockReturnValue({
           or: vi.fn().mockReturnValue({
             gte: vi.fn().mockReturnValue({
@@ -279,7 +279,7 @@ describe("Anomaly Detection", () => {
         created_at: new Date().toISOString(),
       });
 
-      (supabase.from as any).mockReturnValue({
+      (supabase.from as unknown).mockReturnValue({
         select: vi.fn().mockReturnValue({
           or: vi.fn().mockReturnValue({
             gte: vi.fn().mockReturnValue({
@@ -313,7 +313,7 @@ describe("Anomaly Detection", () => {
         created_at: new Date().toISOString(),
       });
 
-      (supabase.from as any).mockReturnValue({
+      (supabase.from as unknown).mockReturnValue({
         select: vi.fn().mockReturnValue({
           or: vi.fn().mockReturnValue({
             gte: vi.fn().mockReturnValue({
@@ -344,7 +344,7 @@ describe("Anomaly Detection", () => {
         created_at: new Date().toISOString(),
       });
 
-      (supabase.from as any).mockReturnValue({
+      (supabase.from as unknown).mockReturnValue({
         select: vi.fn().mockReturnValue({
           or: vi.fn().mockReturnValue({
             gte: vi.fn().mockReturnValue({
@@ -375,7 +375,7 @@ describe("Anomaly Detection", () => {
         },
       ];
 
-      (supabase.from as any).mockReturnValue({
+      (supabase.from as unknown).mockReturnValue({
         select: vi.fn().mockReturnValue({
           or: vi.fn().mockReturnValue({
             gte: vi.fn().mockReturnValue({
@@ -406,7 +406,7 @@ describe("Anomaly Detection", () => {
         },
       ];
 
-      (supabase.from as any).mockReturnValue({
+      (supabase.from as unknown).mockReturnValue({
         select: vi.fn().mockReturnValue({
           or: vi.fn().mockReturnValue({
             gte: vi.fn().mockReturnValue({
@@ -430,7 +430,7 @@ describe("Anomaly Detection", () => {
     it("should log security events with correct metadata", async () => {
       const insertMock = vi.fn().mockResolvedValue({ error: null });
 
-      (supabase.from as any).mockReturnValue({
+      (supabase.from as unknown).mockReturnValue({
         insert: insertMock,
       });
 
@@ -459,7 +459,7 @@ describe("Anomaly Detection", () => {
     it("should set critical severity for suspicious patterns", async () => {
       const insertMock = vi.fn().mockResolvedValue({ error: null });
 
-      (supabase.from as any).mockReturnValue({
+      (supabase.from as unknown).mockReturnValue({
         insert: insertMock,
       });
 

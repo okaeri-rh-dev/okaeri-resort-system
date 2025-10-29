@@ -5,6 +5,7 @@
  * unified notification and escalation mechanisms.
  */
 
+import { logger } from "@/lib/logger";
 import { AuditCategory, AuditSeverity } from "@/types/audit.types";
 
 import { logAuditEvent } from "../audit-logger";
@@ -17,7 +18,7 @@ export interface Alert {
   level: AlertLevel;
   title: string;
   message: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   timestamp: Date;
   acknowledged: boolean;
   resolvedAt?: Date;
@@ -35,7 +36,7 @@ export interface AlertChannel {
   name: string;
   type: "console" | "audit" | "email" | "webhook";
   enabled: boolean;
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
 }
 
 export class AlertSystem {
@@ -315,6 +316,7 @@ export class AlertSystem {
             ? "info"
             : "log";
 
+    // eslint-disable-next-line no-console
     console[method](
       `[${alert.level.toUpperCase()}] ${alert.source}: ${alert.message}`,
       alert.metadata
@@ -345,17 +347,18 @@ export class AlertSystem {
     });
   }
 
-  private async sendEmail(alert: Alert, _config?: Record<string, any>): Promise<void> {
+  private async sendEmail(alert: Alert, _config?: Record<string, unknown>): Promise<void> {
     // Email implementation would go here
     // This would use Resend or another email service
-    console.log("Email alert not implemented:", alert.message);
+    logger.info("Email alert not implemented:", { message: alert.message });
   }
 
-  private async sendWebhook(alert: Alert, config?: Record<string, any>): Promise<void> {
+  private async sendWebhook(alert: Alert, config?: Record<string, unknown>): Promise<void> {
     if (!config?.url) return;
 
     try {
-      await fetch(config.url, {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await fetch(config.url as any, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

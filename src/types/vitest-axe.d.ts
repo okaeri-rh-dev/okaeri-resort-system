@@ -10,7 +10,7 @@ declare module "vitest" {
     toHaveNoViolations(): T;
   }
   interface AsymmetricMatchersContaining {
-    toHaveNoViolations(): any;
+    toHaveNoViolations(): unknown;
   }
 }
 
@@ -20,7 +20,7 @@ declare global {
       toHaveNoViolations(): T;
     }
     interface AsymmetricMatchersContaining {
-      toHaveNoViolations(): any;
+      toHaveNoViolations(): unknown;
     }
   }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { logger } from "@/lib/logger";
 import { debounce } from "@/utils";
 
 /**
@@ -30,7 +31,8 @@ export const useResponsiveView = (breakpoint: string = "768px") => {
     const mediaQuery = window.matchMedia(`(min-width: ${breakpoint})`);
 
     // Handler only fires when crossing the breakpoint
-    const handleBreakpointChange = debounce((e: MediaQueryListEvent) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleBreakpointChange = debounce((e: any) => {
       setIsMobile(!e.matches);
     }, 300); // Debounce to prevent rapid toggling
 
@@ -142,7 +144,7 @@ export const useResponsivePerformanceMonitor = () => {
 
       // Log to console in development
       if (process.env.NODE_ENV === "development") {
-        console.log("[ResponsiveView] Breakpoint crossed", {
+        logger.info("[ResponsiveView] Breakpoint crossed", {
           timestamp: new Date().toISOString(),
           isMobile: !mediaQuery.matches,
         });

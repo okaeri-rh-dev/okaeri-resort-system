@@ -30,6 +30,22 @@ interface BookingDetailResponse {
   created_at: string;
 }
 
+interface BookingDatabaseRecord {
+  booking_id: string;
+  booking_reference: string;
+  guest_name: string;
+  contact_number: string;
+  check_in: string;
+  check_out: string;
+  total_amount: number;
+  payment_status: string | null;
+  unit_assignment_status: string | null;
+  payment_proof_path: string | null;
+  requested_unit_count: number | null;
+  created_at: string | null;
+  guest_booking_unit_requests?: Array<{ id: string; guests_per_unit: number }>;
+}
+
 interface ErrorResponse {
   error: string;
   details?: string;
@@ -200,25 +216,26 @@ async function fetchBookingById(
     }
 
     // Transform response to match route expectations
+    const dbRecord = data as unknown as BookingDatabaseRecord;
     const transformedBooking: BookingDetailResponse = {
-      booking_id: data.booking_id,
-      booking_reference: data.booking_reference,
-      guest_name: data.guest_name,
-      guest_contact: data.contact_number,
-      check_in_date: data.check_in,
-      check_out_date: data.check_out,
-      total_amount: data.total_amount,
-      payment_status: data.payment_status || "Pending",
-      unit_assignment_status: data.unit_assignment_status || "pending",
-      payment_proof_path: data.payment_proof_path,
-      requested_unit_count: data.requested_unit_count || 0,
-      unit_requests: Array.isArray((data as any).guest_booking_unit_requests)
-        ? (data as any).guest_booking_unit_requests.map((req: any) => ({
+      booking_id: dbRecord.booking_id,
+      booking_reference: dbRecord.booking_reference,
+      guest_name: dbRecord.guest_name,
+      guest_contact: dbRecord.contact_number,
+      check_in_date: dbRecord.check_in,
+      check_out_date: dbRecord.check_out,
+      total_amount: dbRecord.total_amount,
+      payment_status: dbRecord.payment_status || "Pending",
+      unit_assignment_status: dbRecord.unit_assignment_status || "pending",
+      payment_proof_path: dbRecord.payment_proof_path,
+      requested_unit_count: dbRecord.requested_unit_count || 0,
+      unit_requests: Array.isArray(dbRecord.guest_booking_unit_requests)
+        ? dbRecord.guest_booking_unit_requests.map((req) => ({
             id: req.id,
             guests_per_unit: req.guests_per_unit,
           }))
         : [],
-      created_at: data.created_at || new Date().toISOString(),
+      created_at: dbRecord.created_at || new Date().toISOString(),
     };
 
     return { booking: transformedBooking };

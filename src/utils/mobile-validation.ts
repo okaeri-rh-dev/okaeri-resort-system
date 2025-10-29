@@ -6,6 +6,8 @@
  * for Philippine resort staff usage patterns
  */
 
+import { logger } from "@/lib/logger";
+
 // Standard mobile device breakpoints for testing
 export const DEVICE_BREAKPOINTS = {
   MOBILE_SMALL: 360, // Samsung Galaxy S8, common Android
@@ -108,7 +110,7 @@ export function testResponsiveBreakpoints(callback: (width: number) => void) {
     // Run callback with current width
     callback(width);
 
-    console.log(`✓ Tested ${name}: ${width}px`);
+    logger.info(`✓ Tested ${name}: ${width}px`);
   });
 
   // Restore original width
@@ -430,22 +432,26 @@ export function generateMobileValidationReport(): {
  * Run mobile validation tests in browser console
  */
 export function runMobileTests() {
+  // eslint-disable-next-line no-console
   console.group("🔍 Mobile Responsive Validation");
 
   const report = generateMobileValidationReport();
 
-  console.log("📱 Overall Mobile Score:", `${report.overallScore.toFixed(1)}%`);
-  console.log("🎯 Touch Targets:", `${report.touchTargets.length} violations`);
-  console.log("⌨️ Keyboard Navigation:", `${report.keyboardNavigation.issues.length} issues`);
-  console.log("📝 Forms Score:", `${report.forms.overallScore.toFixed(1)}%`);
-  console.log("📊 Tables:", `${report.tables.tables.length} found`);
+  logger.info(`📱 Overall Mobile Score: ${report.overallScore.toFixed(1)}%`);
+  logger.info(`🎯 Touch Targets: ${report.touchTargets.length} violations`);
+  logger.info(`⌨️ Keyboard Navigation: ${report.keyboardNavigation.issues.length} issues`);
+  logger.info(`📝 Forms Score: ${report.forms.overallScore.toFixed(1)}%`);
+  logger.info(`📊 Tables: ${report.tables.tables.length} found`);
 
   if (report.recommendations.length > 0) {
+    // eslint-disable-next-line no-console
     console.group("💡 Recommendations");
-    report.recommendations.forEach((rec) => console.log(`• ${rec}`));
+    report.recommendations.forEach((rec) => logger.info(`• ${rec}`));
+    // eslint-disable-next-line no-console
     console.groupEnd();
   }
 
+  // eslint-disable-next-line no-console
   console.groupEnd();
 
   return report;
@@ -453,7 +459,9 @@ export function runMobileTests() {
 
 // Make available globally for testing
 if (typeof window !== "undefined") {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).runMobileTests = runMobileTests;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).mobileValidation = {
     scanTouchTargets,
     testResponsiveBreakpoints,

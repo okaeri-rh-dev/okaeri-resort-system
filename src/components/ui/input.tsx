@@ -242,7 +242,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
       className,
       min,
       max,
-      step = 1,
+      step: _step = 1,
       allowDecimals = false,
       enforceMinMax = true,
       onChange,

@@ -343,7 +343,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       status: 201,
       headers: corsHeaders,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[BOOKING] Unexpected error:", error);
     return Response.json(
       {

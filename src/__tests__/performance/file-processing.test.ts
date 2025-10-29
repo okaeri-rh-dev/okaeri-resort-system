@@ -24,7 +24,7 @@ vi.mock("browser-image-compression", () => ({
 class MockWorker {
   onmessage: ((event: MessageEvent) => void) | null = null;
 
-  postMessage(data: any): void {
+  postMessage(data: Record<string, unknown>): void {
     // Simulate compression with delay
     setTimeout(() => {
       if (this.onmessage) {
@@ -148,7 +148,7 @@ describe("File Processing Performance Tests", () => {
       // Expecting < 500ms for 5 files processed concurrently
       expect(totalTime).toBeLessThan(500);
       expect(results).toHaveLength(5);
-      results.forEach((result: any) => {
+      results.forEach((result: unknown) => {
         expect(result).toBeInstanceOf(File);
       });
     }, 30000);
@@ -204,7 +204,7 @@ describe("File Processing Performance Tests", () => {
       // Mock XMLHttpRequest for upload progress
       const mockXHR = {
         upload: {
-          addEventListener: (event: string, handler: (e: any) => void) => {
+          addEventListener: (event: string, handler: (e: unknown) => void) => {
             if (event === "progress") {
               // Simulate progress events
               setTimeout(() => handler({ loaded: 512000, total: 2097152 }), 100);

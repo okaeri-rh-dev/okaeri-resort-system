@@ -23,6 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { validateStatusResponse, type StatusResponse } from "@/lib/schema-transform";
+import { hasProperty, isObject } from "@/lib/type-guards";
 import { formatCurrency } from "@/lib/validations";
 
 const searchSchema = z.object({
@@ -69,8 +70,12 @@ function CheckBookingPage() {
       }
 
       if (!response.ok) {
-        const errorData: any = await response.json();
-        throw new Error(errorData.message || "Failed to fetch booking details");
+        const errorData: unknown = await response.json();
+        const errorMessage =
+          isObject(errorData) && hasProperty(errorData, "message")
+            ? String(errorData.message)
+            : "Failed to fetch booking details";
+        throw new Error(errorMessage);
       }
 
       const bookingData = await response.json();

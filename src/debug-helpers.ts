@@ -37,12 +37,19 @@ if (import.meta.env.DEV) {
         data: { session },
         error,
       } = await supabase.auth.getSession();
+      // eslint-disable-next-line no-console
       console.log("=== SESSION CHECK ===");
+      // eslint-disable-next-line no-console
       console.log("Session exists:", !!session);
+      // eslint-disable-next-line no-console
       console.log("User ID:", session?.user?.id);
+      // eslint-disable-next-line no-console
       console.log("User email:", session?.user?.email);
+      // eslint-disable-next-line no-console
       console.log("Token preview:", session?.access_token?.substring(0, 30) + "...");
+      // eslint-disable-next-line no-console
       console.log("Expires at:", session?.expires_at ? new Date(session.expires_at * 1000) : "N/A");
+      // eslint-disable-next-line no-console
       console.log("Error:", error);
       return { session, error };
     },
@@ -52,13 +59,18 @@ if (import.meta.env.DEV) {
      * Usage: await window.debug.testQuery('units')
      */
     async testQuery(table: string = "units") {
+      // eslint-disable-next-line no-console
       console.log(`=== TESTING ${table.toUpperCase()} QUERY ===`);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await supabase
         .from(table as any)
         .select("*")
         .limit(5);
+      // eslint-disable-next-line no-console
       console.log(`Results: ${data?.length || 0} rows`);
+      // eslint-disable-next-line no-console
       console.log("Data:", data);
+      // eslint-disable-next-line no-console
       console.log("Error:", error);
       return { data, error };
     },
@@ -68,6 +80,7 @@ if (import.meta.env.DEV) {
      * Usage: await window.debug.testInsert()
      */
     async testInsert() {
+      // eslint-disable-next-line no-console
       console.log("=== TESTING INSERT ===");
 
       const testData = {
@@ -84,13 +97,17 @@ if (import.meta.env.DEV) {
       // Try insert
       const { data, error } = await supabase.from("units").insert(testData).select().single();
 
+      // eslint-disable-next-line no-console
       console.log("Insert result:", data);
+      // eslint-disable-next-line no-console
       console.log("Error:", error);
 
       // Auto cleanup
       if (data) {
+        // eslint-disable-next-line no-console
         console.log("Cleaning up test data...");
         await supabase.from("units").delete().eq("unit_id", data.unit_id);
+        // eslint-disable-next-line no-console
         console.log("✅ Test data cleaned up");
       }
 
@@ -102,6 +119,7 @@ if (import.meta.env.DEV) {
      * Usage: window.debug.checkRLS()
      */
     async checkRLS() {
+      // eslint-disable-next-line no-console
       console.log("=== RLS POLICY CHECK ===");
       const session = await this.checkSession();
 
@@ -113,12 +131,14 @@ if (import.meta.env.DEV) {
       const tables = ["units", "bookings", "guests", "payments", "expenses"];
 
       for (const table of tables) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { count, error } = await supabase
           .from(table as any)
           .select("*", { count: "exact", head: true });
         if (error) {
           console.error(`❌ ${table}: ${error.message}`);
         } else {
+          // eslint-disable-next-line no-console
           console.log(`✅ ${table}: Access granted (${count || 0} rows)`);
         }
       }
@@ -129,9 +149,11 @@ if (import.meta.env.DEV) {
      * Usage: await window.debug.refreshAndTest()
      */
     async refreshAndTest() {
+      // eslint-disable-next-line no-console
       console.log("=== REFRESH & TEST ===");
 
       // Refresh session
+      // eslint-disable-next-line no-console
       console.log("1. Refreshing session...");
       const {
         data: { session },
@@ -143,9 +165,11 @@ if (import.meta.env.DEV) {
         return;
       }
 
+      // eslint-disable-next-line no-console
       console.log("✅ Session refreshed:", session?.user?.id);
 
       // Test query
+      // eslint-disable-next-line no-console
       console.log("2. Testing query...");
       await this.testQuery("units");
     },
@@ -155,17 +179,24 @@ if (import.meta.env.DEV) {
      * Usage: window.debug.checkEnv()
      */
     checkEnv() {
+      // eslint-disable-next-line no-console
       console.log("=== ENVIRONMENT CHECK ===");
+      // eslint-disable-next-line no-console
       console.log("Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
+      // eslint-disable-next-line no-console
       console.log("Has anon key:", !!import.meta.env.VITE_SUPABASE_ANON_KEY);
+      // eslint-disable-next-line no-console
       console.log("Key length:", import.meta.env.VITE_SUPABASE_ANON_KEY?.length);
+      // eslint-disable-next-line no-console
       console.log("Key prefix:", import.meta.env.VITE_SUPABASE_ANON_KEY?.substring(0, 20) + "...");
 
       // Decode JWT to check role
       try {
         const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
         const payload = JSON.parse(atob(key.split(".")[1]));
+        // eslint-disable-next-line no-console
         console.log("JWT role:", payload.role);
+        // eslint-disable-next-line no-console
         console.log("JWT issuer:", payload.iss);
 
         if (payload.role !== "anon") {
@@ -173,6 +204,7 @@ if (import.meta.env.DEV) {
             '⚠️ WARNING: Key role is not "anon"! This should be the anon key, not service role.'
           );
         } else {
+          // eslint-disable-next-line no-console
           console.log("✅ Correct key type (anon)");
         }
       } catch (e) {
@@ -185,10 +217,12 @@ if (import.meta.env.DEV) {
      * Usage: await window.debug.diagnose()
      */
     async diagnose() {
+      // eslint-disable-next-line no-console
       console.log("=== FULL DIAGNOSTIC ===");
       this.checkEnv();
       await this.checkSession();
       await this.checkRLS();
+      // eslint-disable-next-line no-console
       console.log("=== DIAGNOSTIC COMPLETE ===");
     },
 
@@ -196,6 +230,7 @@ if (import.meta.env.DEV) {
      * Help text
      */
     help() {
+      // eslint-disable-next-line no-console
       console.log(`
 === DEBUG HELPERS ===
 
@@ -220,14 +255,17 @@ Example:
   };
 
   // Expose to window
-  (window as any).debug = debug;
+  (window as Window & typeof globalThis).debug = debug;
 
   // Show welcome message
+  // eslint-disable-next-line no-console
   console.log(
     "%c🛠️ Debug Helpers Loaded",
     "background: #3b82f6; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;"
   );
+  // eslint-disable-next-line no-console
   console.log("Type window.debug.help() for available commands");
+  // eslint-disable-next-line no-console
   console.log("Quick start: await window.debug.diagnose()");
 }
 
@@ -240,9 +278,9 @@ declare global {
     debug: {
       supabase: typeof supabase;
       auth: typeof auth;
-      checkSession: () => Promise<any>;
-      testQuery: (table?: string) => Promise<any>;
-      testInsert: () => Promise<any>;
+      checkSession: () => Promise<unknown>;
+      testQuery: (table?: string) => Promise<unknown>;
+      testInsert: () => Promise<unknown>;
       checkRLS: () => Promise<void>;
       refreshAndTest: () => Promise<void>;
       checkEnv: () => void;

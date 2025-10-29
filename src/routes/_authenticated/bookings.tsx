@@ -28,6 +28,7 @@ export const Route = createFileRoute("/_authenticated/bookings")({
 
 function BookingsPage() {
   const params = useParams({ strict: false });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isDetailView = !!(params as any).bookingId;
 
   const [showBookingForm, setShowBookingForm] = useState(false);

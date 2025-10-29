@@ -642,7 +642,7 @@ function getDefaultFields(item: any): string[] {
   return fields;
 }
 
-function getNestedValue(obj: any, path: string): any {
+function getNestedValue(obj: unknown, path: string): any {
   return path.split(".").reduce((current, key) => current?.[key], obj);
 }
 
@@ -653,7 +653,7 @@ function escapeCSV(value: string): string {
   return value;
 }
 
-function formatCSVValue(value: any, dateFormat?: string): string {
+function formatCSVValue(value: unknown, dateFormat?: string): string {
   if (value == null) return "";
 
   if (value instanceof Date) {
@@ -671,7 +671,7 @@ function formatCSVValue(value: any, dateFormat?: string): string {
   return String(value);
 }
 
-function formatTextValue(value: any, dateFormat?: string): string {
+function formatTextValue(value: unknown, dateFormat?: string): string {
   if (value == null) return "N/A";
 
   if (value instanceof Date) {

@@ -246,12 +246,12 @@ describe("XSS Prevention Tests", () => {
 
   describe("Integration with React Components", () => {
     // Mock a simple form component that uses sanitization
-    const TestForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
+    const TestForm = ({ onSubmit }: { onSubmit: (data: Record<string, unknown>) => void }) => {
       const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const formData = new FormData(e.target as HTMLFormElement);
         const data = Object.fromEntries(formData);
-        const sanitized = sanitizeBookingFormData(data as any);
+        const sanitized = sanitizeBookingFormData(data as unknown);
         onSubmit(sanitized);
       };
 

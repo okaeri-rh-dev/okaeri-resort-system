@@ -32,6 +32,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import { createLogger } from "../../../lib/logger";
 
 interface Env {
   SUPABASE_URL: string;
@@ -72,7 +73,7 @@ interface ErrorResponse {
 export async function onRequest(context: {
   request: Request;
   env: Env;
-  waitUntil: (promise: Promise<any>) => void;
+  waitUntil: (promise: Promise<unknown>) => void;
 }) {
   const { request, env, waitUntil } = context;
 
@@ -297,7 +298,8 @@ export async function onRequest(context: {
     waitUntil(
       (async () => {
         try {
-          console.log("[Availability API] Calendar viewed", {
+          const logger = createLogger(env);
+          logger.info("[Availability API] Calendar viewed", {
             start_date: startDate,
             end_date: endDate,
             days_queried: daysDiff,

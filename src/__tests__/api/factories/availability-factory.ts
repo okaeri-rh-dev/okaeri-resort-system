@@ -62,7 +62,7 @@ export function createAvailabilityMocks(options: AvailabilityMockOptions = {}) {
       units,
     },
     rpcs: {
-      check_multi_unit_availability: (params: any) => {
+      check_multi_unit_availability: (params: Record<string, unknown>) => {
         // If custom results provided, use them
         if (availabilityResults) {
           return availabilityResults;

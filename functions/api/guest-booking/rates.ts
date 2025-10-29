@@ -71,7 +71,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       },
       { status: 200, headers: corsHeaders }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[RATES] Unexpected error:", error);
     return Response.json(
       { success: false, error: "Failed to fetch configuration" },

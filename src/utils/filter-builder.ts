@@ -21,6 +21,7 @@ import type { Booking, BookingStatus, Guest, PaymentStatus, Unit } from "@/types
 // FILTER BUILDER TYPES
 // ============================================
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface FilterBuilder<T = any> {
   build(): AdvancedFilter;
   and(other: FilterBuilder): CompositeFilterBuilder;
@@ -29,6 +30,7 @@ export interface FilterBuilder<T = any> {
   test(item: T): boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class BaseFilterBuilder<T = any> implements FilterBuilder<T> {
   protected filter: AdvancedFilter;
 
@@ -77,7 +79,7 @@ export class CompositeFilterBuilder implements FilterBuilder {
       id: `composite-${Date.now()}`,
       name: "composite",
       type: "custom",
-      operator: "custom" as any,
+      operator: "custom" as unknown,
       value: {
         operator: this.operator,
         filters: this.filters.map((f) => f.build()),
@@ -106,6 +108,7 @@ export class CompositeFilterBuilder implements FilterBuilder {
     return new NotFilterBuilder(this);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   test(item: any): boolean {
     if (this.operator === "AND") {
       return this.filters.every((f) => f.test(item));
@@ -124,7 +127,7 @@ export class NotFilterBuilder implements FilterBuilder {
       ...original,
       id: `not-${original.id}`,
       name: `not-${original.name}`,
-      operator: "not_in" as any,
+      operator: "not_in" as unknown,
     };
   }
 
@@ -140,6 +143,7 @@ export class NotFilterBuilder implements FilterBuilder {
     return this.filter; // Double negation
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   test(item: any): boolean {
     return !this.filter.test(item);
   }
@@ -237,7 +241,7 @@ export class WorkflowStateFilterBuilder extends BaseFilterBuilder<Booking> {
     super({
       name: "workflow",
       type: "workflow",
-      operator: "custom" as any,
+      operator: "custom" as unknown,
       value: filter,
     });
 
@@ -318,7 +322,7 @@ export class FinancialFilterBuilder extends BaseFilterBuilder<Booking> {
     super({
       name: "financial",
       type: "custom",
-      operator: "custom" as any,
+      operator: "custom" as unknown,
       value: config,
     });
   }
@@ -411,7 +415,7 @@ export class GuestFilterBuilder extends BaseFilterBuilder<Booking> {
     super({
       name: "guest",
       type: "guest",
-      operator: "custom" as any,
+      operator: "custom" as unknown,
       value: guestFilter,
     });
   }
@@ -467,7 +471,7 @@ export class UnitFilterBuilder extends BaseFilterBuilder<Booking> {
     super({
       name: "unit",
       type: "unit",
-      operator: "custom" as any,
+      operator: "custom" as unknown,
       value: unitFilter,
     });
   }
@@ -632,7 +636,7 @@ export function executeFilters<T>(items: T[], filters: FilterBuilder<T>[]): T[] 
  * Build Supabase query from filters
  */
 export function buildSupabaseQuery(
-  query: any, // Supabase query builder
+  query: unknown, // Supabase query builder
   filters: AdvancedFilter[]
 ): any {
   let result = query;

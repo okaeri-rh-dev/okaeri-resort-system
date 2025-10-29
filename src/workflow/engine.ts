@@ -25,7 +25,7 @@ export type WorkflowState = {
 
 export type WorkflowAction = {
   type: string;
-  payload?: any;
+  payload?: unknown;
 };
 
 // Stub function for imports that expect it

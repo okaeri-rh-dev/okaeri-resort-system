@@ -19,6 +19,7 @@ import {
   sanitizeTextWorker,
 } from "../../../src/lib/security/sanitize-worker";
 import { logBookingCreated } from "../../lib/audit-logger-workers";
+import type { AuthenticatedRequest } from "../../lib/types";
 
 interface Env {
   SUPABASE_URL: string;
@@ -76,7 +77,7 @@ type MultiUnitBookingRequest = z.infer<typeof multiUnitBookingSchema>;
 export const onRequestPost = async (context: {
   request: Request;
   env: Env;
-  waitUntil: (promise: Promise<any>) => void;
+  waitUntil: (promise: Promise<unknown>) => void;
 }): Promise<Response> => {
   const { request, env, waitUntil } = context;
   const startTime = Date.now();
@@ -176,7 +177,7 @@ export const onRequestPost = async (context: {
     const booking = await createMultiUnitBooking(env, sanitizedData);
 
     // Get user ID from request context (if authenticated)
-    const userId = (request as any).user?.id || undefined;
+    const userId = (request as AuthenticatedRequest).user?.id;
 
     // Create Supabase client for audit logging
     const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {

@@ -30,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/units")({
 function UnitsPage() {
   const navigate = useNavigate();
   const params = useParams({ strict: false });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isDetailView = !!(params as any).unitId;
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 

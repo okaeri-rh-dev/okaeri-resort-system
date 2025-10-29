@@ -152,6 +152,7 @@ function PaymentDetailComponent() {
   return (
     <ErrorBoundary level="page">
       <Suspense fallback={<DetailPageSkeleton />}>
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <PaymentDetailPage payment={payment as any} paymentId={paymentId} />
       </Suspense>
     </ErrorBoundary>

@@ -341,19 +341,21 @@ export async function logSecurityEvent(event: {
   type: "rate_limit_exceeded" | "captcha_failed" | "suspicious_pattern" | "file_validation_failed";
   ip: string;
   userAgent: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }): Promise<void> {
   try {
     // Calculate threat level - align with database enum values
     const threatLevel = event.type === "suspicious_pattern" ? "CRITICAL" : "WARNING";
 
     // Log to audit system with proper type-safe insert
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await supabase.from("audit_logs").insert({
       action: `security_${event.type}`,
       table_name: "security_events", // Required field
       severity: threatLevel as "WARNING" | "CRITICAL",
-      ip_address: event.ip as unknown, // Database uses unknown type for ip_address
+      ip_address: String(event.ip), // Database uses Json type for ip_address
       description: `Security event: ${event.type.replace(/_/g, " ")}`,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       metadata: {
         ...event.metadata,
         user_agent: event.userAgent,

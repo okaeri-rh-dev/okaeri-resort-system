@@ -1,5 +1,6 @@
 // src/lib/audit-logger-workers.ts
 
+import { logger } from "@/lib/logger";
 import type { AuditEventContext } from "@/types/audit.types";
 
 import { supabase } from "./supabase";
@@ -92,7 +93,7 @@ export async function logAuditEventWithIP(
       typeof result === "object" && result !== null && "audit_id" in result
         ? (result as { audit_id?: unknown }).audit_id
         : undefined;
-    console.log("[Audit Workers] Logged with IP:", auditId);
+    logger.info("[Audit Workers] Logged with IP:", { auditId });
     return { success: true };
   } catch (error) {
     console.error("[Audit Workers] Exception:", error);

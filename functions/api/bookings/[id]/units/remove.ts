@@ -9,11 +9,12 @@
  * Phase 2C: Unit Management Operations
  */
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import { logUnitRemoved } from "../../../../lib/audit-logger-workers";
 import { requireRole } from "../../../../lib/rbac";
+import type { AuthenticatedRequest } from "../../../../lib/types";
 
 interface Env {
   SUPABASE_URL: string;
@@ -181,7 +182,7 @@ export const onRequestPost = async (context: {
     );
 
     // 6. Audit logging
-    const userId = (request as any).user?.id || undefined;
+    const userId = (request as AuthenticatedRequest).user?.id;
     await logUnitRemoved(supabase, bookingId, data.unit_id, userId, request);
 
     // 7. Fetch updated booking
@@ -240,7 +241,7 @@ export const onRequestPost = async (context: {
  * From spec lines 1368-1423
  */
 async function processRefundForRemovedUnit(
-  supabase: any,
+  supabase: SupabaseClient,
   bookingId: string,
   unitSubtotal: number,
   reason: string

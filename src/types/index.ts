@@ -264,8 +264,8 @@ export interface FileUploadResponse {
 // TABLE COLUMN TYPES (For TanStack Table)
 // ============================================
 export interface TableState {
-  sorting: any[];
-  columnFilters: any[];
+  sorting: unknown[];
+  columnFilters: unknown[];
   columnVisibility: Record<string, boolean>;
   rowSelection: Record<string, boolean>;
   pagination: {

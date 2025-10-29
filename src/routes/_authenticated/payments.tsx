@@ -30,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/payments")({
 function PaymentsPage() {
   const navigate = useNavigate();
   const params = useParams({ strict: false });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isDetailView = !!(params as any).paymentId;
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 

@@ -72,6 +72,7 @@ export const BookingPageWithWorkflow: React.FC = () => {
 
   const handleBookingUpdate = (updatedBooking: Booking) => {
     // Handle booking updates from workflow panel
+    // eslint-disable-next-line no-console
     console.log("Booking updated:", updatedBooking);
     refetch();
   };

@@ -137,7 +137,7 @@ vi.mock("@/lib/supabase", () => ({
     },
     rpc: vi.fn((functionName: string, _params?: any) => {
       // Return appropriate mock based on function name
-      const mockResults: Record<string, any> = {
+      const mockResults: Record<string, unknown> = {
         check_unit_availability: { data: true, error: null },
         generate_booking_reference: { data: "BK-TEST-001", error: null },
         check_multi_unit_availability: {
@@ -192,7 +192,7 @@ global.performance.getEntriesByName = vi.fn(
 // Console error suppression for expected errors in tests
 const originalError = console.error;
 beforeAll(() => {
-  console.error = (...args: any[]) => {
+  console.error = (...args: unknown[]) => {
     if (
       typeof args[0] === "string" &&
       (args[0].includes("Warning: ReactDOM.render") ||
@@ -224,7 +224,7 @@ vi.setSystemTime(mockDate);
 
 // Export test utilities
 export const testUtils = {
-  mockSupabaseResponse: (data: any, error: any = null) => {
+  mockSupabaseResponse: (data: unknown, error: unknown = null) => {
     return { data, error };
   },
 

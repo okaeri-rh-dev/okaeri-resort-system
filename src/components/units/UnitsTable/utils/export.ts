@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import type { Unit } from "@/types";
 
 /**
@@ -7,6 +8,7 @@ export async function exportUnitsToCSV(units: Unit[]) {
   try {
     // Try to use enhanced export if available (currently not implemented)
     const utilsModule = await import("@/components/tables/utils").catch(() => null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const exportEnhanced = utilsModule ? (utilsModule as any).exportEnhanced : null;
 
     if (exportEnhanced && typeof exportEnhanced === "function") {
@@ -42,10 +44,10 @@ export async function exportUnitsToCSV(units: Unit[]) {
           philippineFormat: true,
           includeTimestamp: true,
           onSuccess: (filename: string) => {
-            console.log(`Successfully exported units to ${filename}`);
+            logger.info(`Successfully exported units to ${filename}`);
           },
           onError: (error: Error) => {
-            console.error("Export failed:", error);
+            logger.error("Export failed", error);
             throw error;
           },
         }
@@ -55,7 +57,7 @@ export async function exportUnitsToCSV(units: Unit[]) {
       basicCSVExport(units);
     }
   } catch (error) {
-    console.error("Enhanced export failed, using fallback:", error);
+    logger.error("Enhanced export failed, using fallback", error);
     basicCSVExport(units);
   }
 }
@@ -129,7 +131,7 @@ export function exportSelectedUnits(units: Unit[], selectedIndices: number[]) {
   const selectedUnits = selectedIndices.map((index) => units[index]).filter(Boolean);
 
   if (selectedUnits.length === 0) {
-    console.warn("No units selected for export");
+    logger.warn("No units selected for export");
     return;
   }
 

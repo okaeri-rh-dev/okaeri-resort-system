@@ -117,7 +117,7 @@ export interface OptimisticEntry {
 export interface OfflineOperation {
   id: string;
   operation: "create" | "update" | "delete";
-  data: any;
+  data: unknown;
   timestamp: number;
   retryCount: number;
   maxRetries?: number;
@@ -204,7 +204,7 @@ export interface MultiUnitBookingActions {
     unitIds: string[],
     checkIn: string,
     checkOut: string,
-    checkFn?: () => Promise<any>
+    checkFn?: () => Promise<unknown>
   ) => Promise<Array<{ unit_id: string; is_available: boolean }>>;
 
   clearAvailabilityCache: (unitId?: string) => void;
@@ -224,7 +224,7 @@ export interface MultiUnitBookingActions {
   // ========== OFFLINE SUPPORT ACTIONS ==========
 
   addToOfflineQueue: (operation: Omit<OfflineOperation, "id" | "timestamp" | "retryCount">) => void;
-  processOfflineQueue: (processFn?: (item: OfflineOperation) => Promise<any>) => Promise<void>;
+  processOfflineQueue: (processFn?: (item: OfflineOperation) => Promise<unknown>) => Promise<void>;
   setOnlineStatus: (isOnline: boolean) => void;
   clearOfflineQueue: () => void;
 

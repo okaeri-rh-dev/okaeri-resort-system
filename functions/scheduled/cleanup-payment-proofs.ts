@@ -20,6 +20,8 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+import { createLogger } from "../lib/logger";
+
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
@@ -43,8 +45,9 @@ export async function cleanupPaymentProofs(env: Env): Promise<void> {
   const RETRY_DELAY_MS = 2000; // 2 seconds base delay (fits within Cloudflare 30s Worker limit)
   const ALERT_THRESHOLD_COUNT = 50; // Alert if >50 files deleted
   const ALERT_THRESHOLD_BYTES = 104857600; // Alert if >100MB freed
+  const logger = createLogger(env);
 
-  console.log("[CRON] Starting payment proof cleanup");
+  logger.info("[CRON] Starting payment proof cleanup");
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -76,23 +79,23 @@ export async function cleanupPaymentProofs(env: Env): Promise<void> {
       // PostgreSQL function only cleared database references
       // Now we need to delete the actual files
       if (file_paths && file_paths.length > 0) {
-        console.log(`[STORAGE] Deleting ${file_paths.length} files from Supabase Storage...`);
+        logger.info(`[STORAGE] Deleting ${file_paths.length} files from Supabase Storage...`);
 
-        const { data: storageData, error: storageError } = await supabase.storage
+        const { error: storageError } = await supabase.storage
           .from("payment-proofs")
           .remove(file_paths);
 
         if (storageError) {
           // Log warning but don't fail entire cleanup
           // Orphaned files will be caught in next cleanup cycle
-          console.warn(
+          logger.warn(
             `[WARN] Storage deletion failed: ${storageError.message}. ` +
               `Affected files: ${file_paths.length}. ` +
               `Files marked for deletion but remain in storage (orphaned). ` +
               `Next cleanup cycle will attempt deletion again.`
           );
         } else {
-          console.log(`[STORAGE] Successfully deleted ${file_paths.length} files from storage`);
+          logger.info(`[STORAGE] Successfully deleted ${file_paths.length} files from storage`);
         }
       }
 
@@ -102,7 +105,7 @@ export async function cleanupPaymentProofs(env: Env): Promise<void> {
       // - Retention policy changes
       // - Data quality issues (incorrect statuses)
       if (deleted_count > ALERT_THRESHOLD_COUNT) {
-        console.warn(
+        logger.warn(
           `[ALERT] High payment proof cleanup: ${deleted_count} files deleted. ` +
             `Expected: <${ALERT_THRESHOLD_COUNT} per week. ` +
             `Investigate for: ` +
@@ -116,7 +119,7 @@ export async function cleanupPaymentProofs(env: Env): Promise<void> {
       // Alert if high storage freed (indicates large files or volume)
       if (storage_freed_bytes > ALERT_THRESHOLD_BYTES) {
         const freedMB = (storage_freed_bytes / 1024 / 1024).toFixed(2);
-        console.warn(
+        logger.warn(
           `[ALERT] High storage freed: ${freedMB} MB. ` +
             `Expected: <${ALERT_THRESHOLD_BYTES / 1024 / 1024} MB per week. ` +
             `Verify: ` +
@@ -128,7 +131,7 @@ export async function cleanupPaymentProofs(env: Env): Promise<void> {
 
       // Log successful cleanup
       const freedMB = (storage_freed_bytes / 1024 / 1024).toFixed(2);
-      console.log(
+      logger.info(
         `[CRON] Payment proof cleanup completed: ` +
           `${deleted_count} files deleted, ` +
           `${freedMB} MB freed`
@@ -137,9 +140,9 @@ export async function cleanupPaymentProofs(env: Env): Promise<void> {
       // Success - exit retry loop
       return;
     } catch (error) {
-      console.error(
-        `[ERROR] Payment proof cleanup failed (attempt ${attempt}/${MAX_RETRIES}):`,
-        error instanceof Error ? error.message : String(error)
+      logger.error(
+        `[ERROR] Payment proof cleanup failed (attempt ${attempt}/${MAX_RETRIES})`,
+        error
       );
 
       // If final retry failed, log critical error and throw
@@ -162,7 +165,7 @@ export async function cleanupPaymentProofs(env: Env): Promise<void> {
       // Wait before retry with exponential backoff
       // Attempt 1: 60s, Attempt 2: 120s, Attempt 3: 180s
       const delayMs = RETRY_DELAY_MS * attempt;
-      console.log(`[RETRY] Waiting ${delayMs / 1000}s before retry ${attempt + 1}...`);
+      logger.info(`[RETRY] Waiting ${delayMs / 1000}s before retry ${attempt + 1}...`);
 
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }

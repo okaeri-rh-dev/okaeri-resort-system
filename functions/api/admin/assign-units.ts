@@ -180,12 +180,23 @@ export async function onRequest(context: {
     });
   }
 
+  // Initialize Supabase client at function scope
+  const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  // Track user for error handling
+  let userId: string | undefined;
+
   try {
     // Parse request body
     let requestBody: AssignUnitsRequest;
     try {
       requestBody = (await request.json()) as AssignUnitsRequest;
-    } catch (parseError) {
+    } catch (_parseError) {
       const errorResponse: ErrorResponse = {
         success: false,
         error: "Invalid request body",
@@ -269,19 +280,6 @@ export async function onRequest(context: {
 
     const token = authHeader.substring(7);
 
-    // Initialize Supabase client with service role key
-    const supabase = createClient<Database>(
-      env.SUPABASE_URL,
-      env.SUPABASE_SERVICE_ROLE_KEY,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      },
-      request
-    );
-
     // Verify JWT token and get user
     const {
       data: { user },
@@ -300,6 +298,9 @@ export async function onRequest(context: {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Store userId for error handling
+    userId = user.id;
 
     // Check if user is admin
     const isUserAdmin = await isAdmin(supabase, user.id);
@@ -336,7 +337,7 @@ export async function onRequest(context: {
     );
 
     // Call PostgreSQL function via Supabase RPC
-    const { data: rpcResult, error: rpcError } = await supabase.rpc("assign_units_to_booking", {
+    const { error: rpcError } = await supabase.rpc("assign_units_to_booking", {
       p_booking_id: booking_id,
       p_unit_ids: unit_ids,
     });
@@ -422,7 +423,7 @@ export async function onRequest(context: {
         action: "admin.units.assign_error",
         entity_type: "booking",
         entity_id: undefined,
-        user_id: user?.id,
+        user_id: userId,
         severity: "CRITICAL",
         description: `Admin unit assignment error: ${error instanceof Error ? error.message : "Unknown error"}`,
         metadata: {

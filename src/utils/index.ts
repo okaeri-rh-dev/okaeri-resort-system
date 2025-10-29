@@ -8,6 +8,8 @@
  * @version 2.0.0
  */
 
+import { logger } from "@/lib/logger";
+
 // ============================================
 // AVAILABILITY UTILITIES
 // ============================================
@@ -233,9 +235,9 @@ export {
  * @returns Complete validation context
  */
 export const createValidationContext = (options: {
-  existingBookings?: any[];
-  existingGuests?: any[];
-  units?: any[];
+  existingBookings?: unknown[];
+  existingGuests?: unknown[];
+  units?: unknown[];
   userRole?: string;
   operatingMode?: "strict" | "lenient";
 }) => {
@@ -337,7 +339,7 @@ export const safeJsonParse = <T>(jsonString: string, fallback: T): T => {
  * @param wait - Wait time in milliseconds
  * @returns Debounced function
  */
-export const debounce = <T extends (...args: any[]) => any>(
+export const debounce = <T extends (...args: unknown[]) => any>(
   func: T,
   wait: number
 ): ((...args: Parameters<T>) => void) => {
@@ -356,7 +358,7 @@ export const debounce = <T extends (...args: any[]) => any>(
  * @param limit - Limit in milliseconds
  * @returns Throttled function
  */
-export const throttle = <T extends (...args: any[]) => any>(
+export const throttle = <T extends (...args: unknown[]) => any>(
   func: T,
   limit: number
 ): ((...args: Parameters<T>) => void) => {
@@ -442,7 +444,7 @@ export const UTILS_METADATA = {
  * Logs utility library initialization
  */
 export const initializeUtils = (): void => {
-  console.log(`📊 Okaeri Resort System Utils v${UTILS_METADATA.version} initialized`);
-  console.log(`📅 Build Date: ${UTILS_METADATA.buildDate}`);
-  console.log(`🏨 Modules: ${UTILS_METADATA.modules.join(", ")}`);
+  logger.info(`📊 Okaeri Resort System Utils v${UTILS_METADATA.version} initialized`);
+  logger.info(`📅 Build Date: ${UTILS_METADATA.buildDate}`);
+  logger.info(`🏨 Modules: ${UTILS_METADATA.modules.join(", ")}`);
 };

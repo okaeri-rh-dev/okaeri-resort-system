@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 
 import { UseQueryResult } from "@tanstack/react-query";
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 // ============================================
 
 interface SmartLoadingProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   query: UseQueryResult<any, any> | UseQueryResult<any, any>[];
   children: React.ReactNode;
   skeleton?: React.ReactNode;

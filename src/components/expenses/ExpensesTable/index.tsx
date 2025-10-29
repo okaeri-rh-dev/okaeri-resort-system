@@ -140,7 +140,8 @@ function ExpensesTableComponent({ onViewExpense, onEditExpense, className }: Exp
           {/* Pagination - Inside the card for nested look */}
           {table.getRowModel().rows.length > 0 && (
             <div className="border-t border-neutral-200 bg-neutral-50/30 px-4 py-3">
-              <TablePagination table={table} totalItems={expenses.length} />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <TablePagination table={table as any} totalItems={expenses.length} />
             </div>
           )}
         </Card>

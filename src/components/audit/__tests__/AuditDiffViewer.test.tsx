@@ -422,6 +422,7 @@ describe("AuditDiffViewer", () => {
     it("handles non-object JSON data gracefully", () => {
       const log = createMockLog({
         action: "INSERT",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         new_data: "string value" as any, // Invalid type - will be filtered by type guard
       });
       render(<AuditDiffViewer log={log} open={true} onOpenChange={vi.fn()} />);
@@ -442,6 +443,7 @@ describe("AuditDiffViewer", () => {
 
     it("does not crash with undefined changed_fields", () => {
       const log = createMockLog({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         changed_fields: undefined as any,
         action: "UPDATE",
         old_data: { status: "pending" },

@@ -29,13 +29,13 @@ export interface AuditLogEntry {
   severity?: AuditSeverity; // Default: 'INFO'
   description?: string; // Human-readable description
   changes?: {
-    before: any; // State before mutation (null for creates)
-    after: any; // State after mutation (null for deletes)
+    before: Record<string, unknown> | null; // State before mutation (null for creates)
+    after: Record<string, unknown> | null; // State after mutation (null for deletes)
   };
   metadata?: {
     ip_address?: string; // Client IP from Cloudflare
     user_agent?: string; // User agent string
-    [key: string]: any; // Additional metadata
+    [key: string]: unknown; // Additional metadata
   };
 }
 
@@ -186,7 +186,7 @@ export function sanitizeForAudit<T>(data: T): Partial<T> {
 
   // Handle objects
   if (typeof data === "object") {
-    const sanitized: any = {};
+    const sanitized: Record<string, unknown> = {};
 
     for (const [key, value] of Object.entries(data)) {
       // Skip sensitive fields
@@ -221,7 +221,7 @@ export function sanitizeForAudit<T>(data: T): Partial<T> {
  */
 export async function logBookingCreated(
   supabase: SupabaseClient,
-  booking: any,
+  booking: Record<string, unknown>,
   userId: string | undefined,
   request?: Request
 ): Promise<void> {
@@ -259,7 +259,7 @@ export async function logBookingCreated(
 export async function logUnitAdded(
   supabase: SupabaseClient,
   bookingId: string,
-  unit: any,
+  unit: Record<string, unknown>,
   userId: string | undefined,
   request?: Request
 ): Promise<void> {
@@ -329,7 +329,7 @@ export async function logUnitRemoved(
  */
 export async function logPaymentRecorded(
   supabase: SupabaseClient,
-  payment: any,
+  payment: Record<string, unknown>,
   userId: string | undefined,
   request?: Request
 ): Promise<void> {
@@ -367,7 +367,7 @@ export async function logPaymentRecorded(
  */
 export async function logPaymentRefunded(
   supabase: SupabaseClient,
-  payment: any,
+  payment: Record<string, unknown>,
   refundAmount: number,
   reason: string,
   userId: string | undefined,
@@ -410,7 +410,7 @@ export async function logOperationFailed(
   supabase: SupabaseClient,
   action: string,
   error: string,
-  metadata: Record<string, any> = {},
+  metadata: Record<string, unknown> = {},
   request?: Request
 ): Promise<void> {
   await logAuditEventWorker(

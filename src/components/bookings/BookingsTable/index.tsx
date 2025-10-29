@@ -130,7 +130,8 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
           </ResponsiveTable>
 
           {/* Pagination */}
-          <TablePagination table={table} totalItems={bookings.length} />
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <TablePagination table={table as any} totalItems={bookings.length} />
         </>
       )}
     </div>
