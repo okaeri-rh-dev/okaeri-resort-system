@@ -46,7 +46,6 @@ describe("Audit Roles", () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: "admin",
         error: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const role = await getUserAuditRole();
@@ -63,7 +62,6 @@ describe("Audit Roles", () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: "none",
         error: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const role = await getUserAuditRole();
@@ -74,7 +72,6 @@ describe("Audit Roles", () => {
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
         data: { user: null },
         error: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const role = await getUserAuditRole();
@@ -90,7 +87,6 @@ describe("Audit Roles", () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: null,
         error: { message: "Database error" },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const role = await getUserAuditRole();
@@ -108,7 +104,6 @@ describe("Audit Roles", () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: "manager",
         error: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const result = await hasAuditRole(AuditRole.MANAGER);
@@ -124,7 +119,6 @@ describe("Audit Roles", () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: "admin",
         error: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const result = await hasAuditRole(AuditRole.STAFF);
@@ -140,7 +134,6 @@ describe("Audit Roles", () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: "staff",
         error: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const result = await hasAuditRole(AuditRole.OWNER);
@@ -156,7 +149,6 @@ describe("Audit Roles", () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: "none",
         error: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const result = await hasAuditRole(AuditRole.STAFF);
@@ -174,7 +166,6 @@ describe("Audit Roles", () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: "staff",
         error: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const result = await canAccessAuditTrail();
@@ -190,7 +181,6 @@ describe("Audit Roles", () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: "none",
         error: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const result = await canAccessAuditTrail();
@@ -209,7 +199,6 @@ describe("Audit Roles", () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: "admin",
         error: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       // Mock successful insert
@@ -218,7 +207,6 @@ describe("Audit Roles", () => {
           error: null,
         }),
       };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.mocked(supabase.from).mockReturnValue(fromMock as any);
 
       const result = await grantRole("user-456", "user@test.com", AuditRole.MANAGER, "New manager");
@@ -244,7 +232,6 @@ describe("Audit Roles", () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: "manager",
         error: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const result = await grantRole("user-456", "user@test.com", AuditRole.STAFF, "New staff");
@@ -262,7 +249,6 @@ describe("Audit Roles", () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: "admin",
         error: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const fromMock = {
@@ -270,7 +256,6 @@ describe("Audit Roles", () => {
           error: { code: "23505", message: "Duplicate key" },
         }),
       };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.mocked(supabase.from).mockReturnValue(fromMock as any);
 
       const result = await grantRole("user-456", "user@test.com", AuditRole.MANAGER);
@@ -290,7 +275,6 @@ describe("Audit Roles", () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: "admin",
         error: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const fromMock = {
@@ -300,7 +284,6 @@ describe("Audit Roles", () => {
           }),
         }),
       };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.mocked(supabase.from).mockReturnValue(fromMock as any);
 
       const result = await revokeRole("user-456");
@@ -318,7 +301,6 @@ describe("Audit Roles", () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: "admin",
         error: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const result = await revokeRole("admin-123");

@@ -65,7 +65,6 @@ export function useEntityEdit<T extends EntityType, TData = any>(
       const previousData = queryClient.getQueryData(queryKeys.entity(entityType, entityId));
 
       // Type-safe update based on entity type
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (async () => {
         switch (entityType) {
           case "booking":

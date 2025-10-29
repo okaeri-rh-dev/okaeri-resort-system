@@ -367,7 +367,6 @@ export const useUpdateExpense = () => {
         dbUpdates.expense_date = date;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await supabase
         .from("expenses")
         .update(dbUpdates as any)

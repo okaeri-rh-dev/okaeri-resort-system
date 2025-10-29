@@ -120,7 +120,6 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         });
         toast.success("Payment updated successfully");
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await createPayment.mutateAsync({
           data: paymentData as any,
           receiptFile: receiptFile || undefined,

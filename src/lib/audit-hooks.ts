@@ -230,7 +230,6 @@ export function useExportAuditLogs() {
   return useMutation<void, Error, { filters?: AuditLogFilters; filename?: string }>({
     mutationFn: async ({ filters, filename }) => {
       // Fetch logs with filters
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = await db.auditLogs.all({
         ...filters,
         limit: 10000, // Export up to 10k logs

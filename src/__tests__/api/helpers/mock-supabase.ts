@@ -91,7 +91,6 @@ export class SupabaseMockBuilder {
                 const filtered = data.filter((item: MockData) => item[column] === value);
 
                 // Create recursive eq result that supports chaining multiple .eq() calls
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const createEqResult = (currentData: MockData[]): unknown => ({
                   eq: vi.fn((nextColumn: string, nextValue: unknown) => {
                     const furtherFiltered = currentData.filter(

@@ -158,7 +158,6 @@ describe("DetailField", () => {
     });
 
     it("renders false as value", () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       render(<DetailField label="Active" value={false as any} />);
 
       // false is rendered as empty by React, but the structure is there

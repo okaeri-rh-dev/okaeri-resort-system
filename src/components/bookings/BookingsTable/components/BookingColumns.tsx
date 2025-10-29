@@ -186,13 +186,11 @@ function BookingActionsCell({
           {
             label: "Confirm",
             onClick: () => {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               if (
                 updateBookingStatus &&
                 isFunction(updateBookingStatus) &&
                 "mutate" in (updateBookingStatus as any)
               ) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (updateBookingStatus as any).mutate({
                   bookingId: booking.booking_id,
                   status: "Confirmed" as BookingStatus,
@@ -207,7 +205,6 @@ function BookingActionsCell({
           {
             label: "Cancel",
             onClick: () => {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               if (
                 cancelBooking &&
                 isFunction(cancelBooking) &&

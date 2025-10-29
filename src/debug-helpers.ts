@@ -61,7 +61,6 @@ if (import.meta.env.DEV) {
     async testQuery(table: string = "units") {
       // eslint-disable-next-line no-console
       console.log(`=== TESTING ${table.toUpperCase()} QUERY ===`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await supabase
         .from(table as any)
         .select("*")
@@ -131,7 +130,6 @@ if (import.meta.env.DEV) {
       const tables = ["units", "bookings", "guests", "payments", "expenses"];
 
       for (const table of tables) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { count, error } = await supabase
           .from(table as any)
           .select("*", { count: "exact", head: true });
