@@ -1,6 +1,7 @@
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
+import { logAuditEvent } from "../../../src/lib/audit-logger";
 import type { Database } from "../../../src/types/database.types";
 
 interface Env {
@@ -228,18 +229,21 @@ export async function onRequest(context: {
       });
     }
 
-    // TODO: Add audit logging for admin access
-    // await logAuditEvent({
-    //   action: 'admin.available_units.query',
-    //   entity_type: 'units',
-    //   user_id: user.id,
-    //   metadata: {
-    //     check_in_date: checkInDate,
-    //     check_out_date: checkOutDate,
-    //     ip_address: request.headers.get('cf-connecting-ip'),
-    //     user_agent: request.headers.get('user-agent'),
-    //   },
-    // });
+    // Audit logging for admin access
+    await logAuditEvent({
+      tableName: "units",
+      recordId: undefined,
+      description: `Admin querying available units for date range ${checkInDate} to ${checkOutDate}`,
+      category: "units",
+      severity: "INFO",
+      metadata: {
+        action: "admin.available_units.query",
+        check_in_date: checkInDate,
+        check_out_date: checkOutDate,
+        ip_address: request.headers.get("cf-connecting-ip"),
+        user_agent: request.headers.get("user-agent"),
+      },
+    });
 
     // Query all units with Available status
     const { data: allUnits, error: unitsError } = await supabase
