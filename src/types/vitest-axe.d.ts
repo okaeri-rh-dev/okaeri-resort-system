@@ -1,4 +1,3 @@
-/// <reference types="vitest-axe" />
 import "vitest-axe";
 
 /**

@@ -148,7 +148,12 @@ const CardSkeleton: React.FC<CardSkeletonProps> = ({
   className,
 }) => {
   return (
-    <div className={cn("space-y-4 rounded-lg border border-neutral-200 bg-white p-4", className)}>
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label="Loading content"
+      className={cn("space-y-4 rounded-lg border border-neutral-200 bg-white p-4", className)}
+    >
       {hasHeader && (
         <div className="space-y-2">
           <Skeleton className="h-5 w-2/3" />

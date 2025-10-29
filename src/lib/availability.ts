@@ -121,7 +121,7 @@ export async function checkUnitAvailability(
       conflictingBookings: result?.conflicting_bookings || 0,
       blackoutPeriods: 0, // check_multi_unit_availability doesn't return this
       unitStatus: result?.is_available ? "Available" : "Unavailable",
-      nextAvailableDate: result?.next_available_date,
+      nextAvailableDate: result?.next_available_date ?? undefined,
     };
   } catch (error) {
     console.error("Error checking unit availability:", error);

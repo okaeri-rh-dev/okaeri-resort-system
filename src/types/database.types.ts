@@ -273,7 +273,9 @@ export type Database = {
           special_requests: string | null;
           total_amount: number;
           unit_assignment_status: string | null;
-          unit_id: string;
+          unit_count: number | null;
+          base_amount: number | null;
+          total_surcharges: number | null;
           updated_at: string | null;
           upload_expires_at: string | null;
           upload_status: string | null;
@@ -304,7 +306,9 @@ export type Database = {
           special_requests?: string | null;
           total_amount: number;
           unit_assignment_status?: string | null;
-          unit_id: string;
+          unit_count?: number | null;
+          base_amount?: number | null;
+          total_surcharges?: number | null;
           updated_at?: string | null;
           upload_expires_at?: string | null;
           upload_status?: string | null;
@@ -335,7 +339,9 @@ export type Database = {
           special_requests?: string | null;
           total_amount?: number;
           unit_assignment_status?: string | null;
-          unit_id?: string;
+          unit_count?: number | null;
+          base_amount?: number | null;
+          total_surcharges?: number | null;
           updated_at?: string | null;
           upload_expires_at?: string | null;
           upload_status?: string | null;
@@ -347,13 +353,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "guests";
             referencedColumns: ["guest_id"];
-          },
-          {
-            foreignKeyName: "bookings_unit_id_fkey";
-            columns: ["unit_id"];
-            isOneToOne: false;
-            referencedRelation: "units";
-            referencedColumns: ["unit_id"];
           },
         ];
       };
@@ -431,6 +430,114 @@ export type Database = {
           upload_status?: string | null;
         };
         Relationships: [];
+      };
+      booking_units: {
+        Row: {
+          assigned_guests: number | null;
+          booking_id: string;
+          booking_unit_id: string;
+          created_at: string | null;
+          extra_person_charge: number;
+          guest_names: string[] | null;
+          subtotal: number;
+          unit_id: string;
+          unit_notes: string | null;
+          unit_price: number;
+          updated_at: string | null;
+          weekend_surcharge: number;
+        };
+        Insert: {
+          assigned_guests?: number | null;
+          booking_id: string;
+          booking_unit_id?: string;
+          created_at?: string | null;
+          extra_person_charge?: number;
+          guest_names?: string[] | null;
+          subtotal: number;
+          unit_id: string;
+          unit_notes?: string | null;
+          unit_price: number;
+          updated_at?: string | null;
+          weekend_surcharge?: number;
+        };
+        Update: {
+          assigned_guests?: number | null;
+          booking_id?: string;
+          booking_unit_id?: string;
+          created_at?: string | null;
+          extra_person_charge?: number;
+          guest_names?: string[] | null;
+          subtotal?: number;
+          unit_id?: string;
+          unit_notes?: string | null;
+          unit_price?: number;
+          updated_at?: string | null;
+          weekend_surcharge?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_units_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["booking_id"];
+          },
+          {
+            foreignKeyName: "booking_units_unit_id_fkey";
+            columns: ["unit_id"];
+            isOneToOne: false;
+            referencedRelation: "units";
+            referencedColumns: ["unit_id"];
+          },
+        ];
+      };
+      booking_unit_availability: {
+        Row: {
+          availability_id: string;
+          booking_id: string;
+          booking_status: string;
+          check_in: string;
+          check_out: string;
+          created_at: string | null;
+          unit_id: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          availability_id?: string;
+          booking_id: string;
+          booking_status: string;
+          check_in: string;
+          check_out: string;
+          created_at?: string | null;
+          unit_id: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          availability_id?: string;
+          booking_id?: string;
+          booking_status?: string;
+          check_in?: string;
+          check_out?: string;
+          created_at?: string | null;
+          unit_id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_unit_availability_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["booking_id"];
+          },
+          {
+            foreignKeyName: "booking_unit_availability_unit_id_fkey";
+            columns: ["unit_id"];
+            isOneToOne: false;
+            referencedRelation: "units";
+            referencedColumns: ["unit_id"];
+          },
+        ];
       };
       discount_rules: {
         Row: {
@@ -850,6 +957,20 @@ export type Database = {
       check_unit_availability: {
         Args: { p_check_in: string; p_check_out: string; p_unit_id: string };
         Returns: boolean;
+      };
+      check_multi_unit_availability: {
+        Args: {
+          p_check_in: string;
+          p_check_out: string;
+          p_exclude_booking_id?: string;
+          p_unit_ids: string[];
+        };
+        Returns: {
+          conflicting_bookings: number;
+          is_available: boolean;
+          next_available_date: string | null;
+          unit_id: string;
+        }[];
       };
       cleanup_expired_idempotency_keys: { Args: never; Returns: number };
       cleanup_expired_payment_proofs: {

@@ -29,13 +29,11 @@ interface BookingDetail {
   created_at: string;
 }
 
-// @ts-expect-error - Route not yet in router config, will be added after route tree regeneration
 export const Route = createFileRoute("/admin/verify-payment/$bookingId")({
   component: PaymentVerificationPage,
 });
 
 function PaymentVerificationPage() {
-  // @ts-expect-error - bookingId will be available at runtime
   const { bookingId } = Route.useParams();
 
   // Fetch booking details

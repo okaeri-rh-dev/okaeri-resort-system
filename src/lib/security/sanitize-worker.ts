@@ -24,6 +24,7 @@ export function sanitizeTextWorker(input: string | null | undefined): string {
   let cleaned = String(input);
 
   // Remove null bytes and other control characters (except newlines and tabs)
+  // eslint-disable-next-line no-control-regex -- Intentionally removing control characters for XSS prevention
   cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
 
   // Remove HTML tags
@@ -69,6 +70,7 @@ export function sanitizeNameWorker(name: string | null | undefined): string {
   let cleaned = String(name);
 
   // Remove null bytes and control characters
+  // eslint-disable-next-line no-control-regex -- Intentionally removing control characters for XSS prevention
   cleaned = cleaned.replace(/[\x00-\x1F\x7F]/g, "");
 
   // Remove HTML tags

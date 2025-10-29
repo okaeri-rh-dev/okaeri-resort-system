@@ -34,7 +34,11 @@ export default defineConfig(({ mode }) => {
       globalSetup: ["./src/test/global-setup.ts"],
       setupFiles: ["./src/test/setup.ts"],
       // Make env variables available to tests
-      env: testEnv,
+      env: {
+        ...testEnv,
+        // Workers API base URL for integration tests
+        VITE_API_URL: "http://localhost:8788",
+      },
 
       // Coverage configuration
       coverage: {

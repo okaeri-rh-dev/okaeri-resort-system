@@ -303,11 +303,10 @@ export interface ApiResponse<T> {
 }
 
 // Specific API response types
-export interface MultiUnitBookingsApiResponse extends ApiResponse<MultiUnitBooking[]> {}
-export interface MultiUnitAvailabilityApiResponse
-  extends ApiResponse<MultiUnitAvailabilityResult[]> {}
-export interface MultiUnitPricingApiResponse extends ApiResponse<MultiUnitPricingQuote> {}
-export interface MultiUnitBookingApiResponse extends ApiResponse<MultiUnitBooking> {}
+export type MultiUnitBookingsApiResponse = ApiResponse<MultiUnitBooking[]>;
+export type MultiUnitAvailabilityApiResponse = ApiResponse<MultiUnitAvailabilityResult[]>;
+export type MultiUnitPricingApiResponse = ApiResponse<MultiUnitPricingQuote>;
+export type MultiUnitBookingApiResponse = ApiResponse<MultiUnitBooking>;
 
 // ============================================
 // TYPE GUARDS

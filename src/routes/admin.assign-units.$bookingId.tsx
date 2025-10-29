@@ -51,7 +51,6 @@ interface BookingDetail {
 // Route Definition
 // ============================================
 
-// @ts-expect-error - Route not yet in router config, will be added after route tree regeneration
 export const Route = createFileRoute("/admin/assign-units/$bookingId")({
   component: AssignUnitsPage,
 });
@@ -257,7 +256,6 @@ function ErrorState({ error, bookingId }: { error: Error | null; bookingId: stri
 function AssignUnitsPage() {
   const navigate = useNavigate();
 
-  // @ts-expect-error - bookingId will be available at runtime
   const { bookingId } = Route.useParams();
 
   // Fetch booking details with TanStack Query
@@ -309,7 +307,7 @@ function AssignUnitsPage() {
 
   // Loading guard
   if (isLoading) {
-    return <LoadingState bookingReference={booking?.booking_reference} />;
+    return <LoadingState bookingReference={undefined} />;
   }
 
   // Not found guard

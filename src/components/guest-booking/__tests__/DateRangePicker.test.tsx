@@ -53,7 +53,7 @@ vi.mock("@/lib/api/guest-booking-client", () => ({
 
 // Mock date-fns format to simplify testing
 vi.mock("date-fns", () => ({
-  format: vi.fn((date: Date, formatStr: string) => {
+  format: vi.fn((date: Date, _formatStr: string) => {
     const month = date.toLocaleString("en-US", { month: "short" });
     const day = String(date.getDate()).padStart(2, "0");
     const year = date.getFullYear();
@@ -188,9 +188,10 @@ describe("DateRangePicker", () => {
 
       // Simulate selecting dates programmatically
       // (User interaction with calendar is complex, test callback behavior)
-      const { validateDateRange } = require("@/lib/api/guest-booking-client");
+      // validateDateRange is already mocked at the top of the file (line 28)
 
       // Verify validation passes for valid range
+      const { validateDateRange } = await import("@/lib/api/guest-booking-client");
       const error = validateDateRange(checkIn, checkOut);
       expect(error).toBeNull();
     });
