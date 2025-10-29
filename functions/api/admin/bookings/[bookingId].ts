@@ -23,8 +23,10 @@ interface BookingDetailResponse {
   check_out_date: string;
   total_amount: number;
   payment_status: string;
+  unit_assignment_status: string; // Added for route compatibility
   payment_proof_path: string | null;
   requested_unit_count: number;
+  unit_requests: Array<{ id: string; guests_per_unit: number }>; // Added for route compatibility
   created_at: string;
 }
 
@@ -167,14 +169,16 @@ async function fetchBookingById(
         booking_id,
         booking_reference,
         guest_name,
-        guest_contact,
-        check_in_date,
-        check_out_date,
+        contact_number,
+        check_in,
+        check_out,
         total_amount,
         payment_status,
+        unit_assignment_status,
         payment_proof_path,
         requested_unit_count,
-        created_at
+        created_at,
+        guest_booking_unit_requests!inner(id, guests_per_unit)
       `
       )
       .eq("booking_id", bookingId)
@@ -195,7 +199,29 @@ async function fetchBookingById(
       };
     }
 
-    return { booking: data as BookingDetailResponse };
+    // Transform response to match route expectations
+    const transformedBooking: BookingDetailResponse = {
+      booking_id: data.booking_id,
+      booking_reference: data.booking_reference,
+      guest_name: data.guest_name,
+      guest_contact: data.contact_number,
+      check_in_date: data.check_in,
+      check_out_date: data.check_out,
+      total_amount: data.total_amount,
+      payment_status: data.payment_status || "Pending",
+      unit_assignment_status: data.unit_assignment_status || "pending",
+      payment_proof_path: data.payment_proof_path,
+      requested_unit_count: data.requested_unit_count || 0,
+      unit_requests: Array.isArray((data as any).guest_booking_unit_requests)
+        ? (data as any).guest_booking_unit_requests.map((req: any) => ({
+            id: req.id,
+            guests_per_unit: req.guests_per_unit,
+          }))
+        : [],
+      created_at: data.created_at || new Date().toISOString(),
+    };
+
+    return { booking: transformedBooking };
   } catch (err) {
     console.error("Fetch booking error:", err);
     return {
