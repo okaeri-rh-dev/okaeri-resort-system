@@ -29,7 +29,7 @@ import type { Unit, UnitType } from "@/types";
 
 interface UnitFormProps {
   unit?: Unit; // For editing existing unit
-  onSuccess?: (unit: any) => void;
+  onSuccess?: (unit: Unit) => void;
   onCancel?: () => void;
   className?: string;
 }

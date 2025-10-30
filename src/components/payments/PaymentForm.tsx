@@ -121,7 +121,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         toast.success("Payment updated successfully");
       } else {
         await createPayment.mutateAsync({
-          data: paymentData as any,
+          data: paymentData,
           receiptFile: receiptFile || undefined,
         });
         toast.success("Payment recorded successfully");

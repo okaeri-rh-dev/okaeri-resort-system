@@ -11,13 +11,14 @@ import { sanitizeBookingFormData } from "@/lib/security/sanitize";
 import { completeBookingSchema, type CompleteBookingData } from "@/lib/validations";
 import { useUpdateBooking } from "@/stores/useBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
+import type { Booking } from "@/types";
 
 import type { FormStep } from "../types";
 
 interface UseBookingFormProps {
   initialData?: Partial<CompleteBookingData>;
   bookingId?: string;
-  onSuccess?: (booking: any) => void;
+  onSuccess?: (booking: Booking) => void;
 }
 
 export function useBookingForm({ initialData, bookingId, onSuccess }: UseBookingFormProps) {
@@ -73,7 +74,7 @@ export function useBookingForm({ initialData, bookingId, onSuccess }: UseBooking
         throw new Error(error.message || "Failed to create booking");
       }
 
-      const result = (await response.json()) as { success: boolean; data: any };
+      const result = (await response.json()) as { success: boolean; data: Booking };
       return result.data; // Returns the created booking
     },
     onSuccess: () => {
