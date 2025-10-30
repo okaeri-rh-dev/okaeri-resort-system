@@ -209,7 +209,7 @@ export class MetricsCollector {
   /**
    * Get recent events
    */
-  async getRecentEvents(eventName?: string, limit: number = 100): Promise<any[]> {
+  async getRecentEvents(eventName?: string, limit: number = 100): Promise<unknown[]> {
     const prefix = eventName ? `event:${eventName}:` : "event:";
     const list = await this.kv.list({ prefix, limit });
 

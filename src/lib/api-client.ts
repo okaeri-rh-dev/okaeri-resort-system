@@ -46,7 +46,10 @@ export async function apiRequest(path: string, options: RequestInit = {}): Promi
 /**
  * Type-safe API request with JSON parsing
  */
-export async function apiRequestJson<T = any>(path: string, options: RequestInit = {}): Promise<T> {
+export async function apiRequestJson<T = unknown>(
+  path: string,
+  options: RequestInit = {}
+): Promise<T> {
   const response = await apiRequest(path, options);
 
   if (!response.ok) {

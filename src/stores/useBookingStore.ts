@@ -1238,7 +1238,7 @@ export const useBookingWithWorkflow = (
         throw new Error(`Failed to fetch workflow state: ${response.statusText}`);
       }
 
-      const data = (await response.json()) as unknown as { workflowState: any };
+      const data = (await response.json()) as unknown as { workflowState: unknown };
       return data.workflowState;
     },
     enabled: !!bookingId && !!bookingQuery.data,

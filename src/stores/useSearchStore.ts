@@ -64,7 +64,7 @@ export interface SearchPreset {
   usageCount: number;
 }
 
-export interface SearchResult<T = any> {
+export interface SearchResult<T = unknown> {
   item: T;
   score: number; // Relevance score
   highlights?: Record<string, string[]>; // Field name -> highlighted snippets

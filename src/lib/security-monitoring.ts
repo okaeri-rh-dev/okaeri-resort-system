@@ -359,7 +359,7 @@ export async function logSecurityEvent(event: {
         user_agent: event.userAgent,
         threat_type: event.type,
         timestamp: new Date().toISOString(),
-      } as any,
+      },
       source: "app",
     });
   } catch (error) {

@@ -25,7 +25,7 @@ import { analyzeBookingPeriod, getPhilippineTime } from "./date-helpers";
 // TYPE DEFINITIONS
 // ============================================
 
-export interface ValidationResult<T = any> {
+export interface ValidationResult<T = unknown> {
   isValid: boolean;
   errors: ValidationError[];
   warnings: ValidationWarning[];

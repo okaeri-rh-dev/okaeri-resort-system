@@ -233,7 +233,7 @@ export function useExportAuditLogs() {
       const result = await db.auditLogs.all({
         ...filters,
         limit: 10000, // Export up to 10k logs
-      } as any); // Type cast needed due to Supabase query builder limitations
+      });
 
       // Convert to CSV
       const csv = convertLogsToCSV(result.data as AuditLog[]); // Type assertion for data array

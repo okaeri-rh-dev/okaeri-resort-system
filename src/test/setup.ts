@@ -135,7 +135,7 @@ vi.mock("@/lib/supabase", () => ({
         error: null,
       })),
     },
-    rpc: vi.fn((functionName: string, _params?: any) => {
+    rpc: vi.fn((functionName: string, _params?: unknown) => {
       // Return appropriate mock based on function name
       const mockResults: Record<string, unknown> = {
         check_unit_availability: { data: true, error: null },

@@ -227,7 +227,7 @@ export async function getSignedUrl(
 /**
  * List files in a specific path
  */
-export async function listFiles(bucket: string, path: string): Promise<any[]> {
+export async function listFiles(bucket: string, path: string): Promise<unknown[]> {
   const { data, error } = await supabase.storage.from(bucket).list(path, {
     limit: 100,
     offset: 0,
