@@ -12,6 +12,20 @@ import { initializeTheme } from "@/stores/useUIStore";
 
 import "@/styles/calendar.css";
 
+// Custom event type for auth state changes
+interface AuthStateChangeEvent extends CustomEvent {
+  detail: {
+    isAuthenticated: boolean;
+  };
+}
+
+// Extend WindowEventMap to include custom events
+declare global {
+  interface WindowEventMap {
+    authStateChange: AuthStateChangeEvent;
+  }
+}
+
 // Create a new query client instance
 const queryClient = new QueryClient();
 
@@ -74,7 +88,7 @@ function App() {
     startCleanupTimer();
 
     // Listen for auth state changes
-    const handleAuthChange = (event: CustomEvent) => {
+    const handleAuthChange = (event: AuthStateChangeEvent) => {
       const newAuthState = event.detail.isAuthenticated;
       setIsAuthenticated(newAuthState);
 
@@ -88,12 +102,10 @@ function App() {
     };
 
     // Listen for custom auth events (if auth library emits them)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    window.addEventListener("authStateChange" as any, handleAuthChange);
+    window.addEventListener("authStateChange", handleAuthChange);
 
     return () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      window.removeEventListener("authStateChange" as any, handleAuthChange);
+      window.removeEventListener("authStateChange", handleAuthChange);
       // Cleanup the optimistic bookings timer
       stopCleanupTimer();
     };

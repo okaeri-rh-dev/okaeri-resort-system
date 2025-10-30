@@ -457,12 +457,26 @@ export function runMobileTests() {
   return report;
 }
 
+// Extend Window interface for mobile validation utilities
+declare global {
+  interface Window {
+    runMobileTests?: typeof runMobileTests;
+    mobileValidation?: {
+      scanTouchTargets: typeof scanTouchTargets;
+      testResponsiveBreakpoints: typeof testResponsiveBreakpoints;
+      validateContrast: typeof validateContrast;
+      testKeyboardNavigation: typeof testKeyboardNavigation;
+      validateMobileForms: typeof validateMobileForms;
+      validateMobileTables: typeof validateMobileTables;
+      generateMobileValidationReport: typeof generateMobileValidationReport;
+    };
+  }
+}
+
 // Make available globally for testing
 if (typeof window !== "undefined") {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).runMobileTests = runMobileTests;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).mobileValidation = {
+  window.runMobileTests = runMobileTests;
+  window.mobileValidation = {
     scanTouchTargets,
     testResponsiveBreakpoints,
     validateContrast,

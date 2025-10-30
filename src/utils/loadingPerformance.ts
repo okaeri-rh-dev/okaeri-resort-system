@@ -518,16 +518,24 @@ async function simulateNetworkLoad(condition: string): Promise<number> {
 // DEVELOPER UTILITIES
 // ============================================
 
+// Extend Window interface for development utilities
+declare global {
+  interface Window {
+    __loadingPerformanceMonitor?: LoadingPerformanceMonitor;
+    __getLoadingStats?: () => void;
+    __generateLoadingReport?: () => void;
+    __runLoadingTests?: typeof runLoadingPerformanceTests;
+  }
+}
+
 export const setupDevelopmentMonitoring = () => {
   if (process.env.NODE_ENV !== "development") return;
 
   // Add global performance monitoring
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).__loadingPerformanceMonitor = globalPerformanceMonitor;
+  window.__loadingPerformanceMonitor = globalPerformanceMonitor;
 
   // Add console commands for developers
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).__getLoadingStats = () => {
+  window.__getLoadingStats = () => {
     // eslint-disable-next-line no-console
     console.table(
       ["BookingsTable", "UnitsTable", "GuestsTable", "DashboardStats"].map((component) => ({
@@ -537,13 +545,11 @@ export const setupDevelopmentMonitoring = () => {
     );
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).__generateLoadingReport = () => {
+  window.__generateLoadingReport = () => {
     logger.info(globalPerformanceMonitor.generateReport());
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).__runLoadingTests = runLoadingPerformanceTests;
+  window.__runLoadingTests = runLoadingPerformanceTests;
 
   logger.info("Loading performance monitoring enabled. Available commands:");
   logger.info("- __getLoadingStats(): View component loading statistics");
