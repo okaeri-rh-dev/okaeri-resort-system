@@ -91,7 +91,7 @@ function decodeEncodedAttacks(input: string): string {
     if (doubleDecoded !== decoded) {
       decoded = doubleDecoded;
     }
-  } catch (e) {
+  } catch (_e) {
     // If double decoding fails, continue
   }
 

@@ -277,7 +277,7 @@ class AuthService {
         // Schedule next refresh with random interval
         const interval = getRandomRefreshInterval();
         this.refreshTimeout = setTimeout(scheduleNextRefresh, interval);
-      } catch (error) {
+      } catch (_error) {
         this.handleSessionExpired();
       }
     };
@@ -606,7 +606,7 @@ export const hasRole = async (_requiredRole: string): Promise<boolean> => {
     // For Phase 1, all authenticated users are considered admins
     // In Phase 2, implement proper role checking from user metadata
     return !!user;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 };

@@ -752,7 +752,7 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
                 set((state: Draft<MultiUnitBookingStore>) => {
                   state.offlineQueue = state.offlineQueue.filter((q) => q.id !== item.id);
                 });
-              } catch (error) {
+              } catch (_error) {
                 // Increment retry count
                 set((state: Draft<MultiUnitBookingStore>) => {
                   const queueItem = state.offlineQueue.find((q) => q.id === item.id);

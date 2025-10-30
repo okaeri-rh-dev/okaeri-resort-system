@@ -116,7 +116,7 @@ async function checkDatabaseAvailability(): Promise<boolean> {
         console.log("✅ Test database is ready after restart");
         return true;
       }
-    } catch (e) {
+    } catch (_e) {
       // eslint-disable-next-line no-console
       console.log(`   Database not ready after restart (attempt ${i + 1}/3)`);
       await new Promise((r) => setTimeout(r, 2000)); // Wait 2 seconds
