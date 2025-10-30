@@ -6,8 +6,24 @@ import { toast } from "sonner";
 import { logAuditEvent } from "@/lib/audit-logger";
 import { queryKeys } from "@/lib/query-keys";
 import { db } from "@/lib/supabase";
+import type { Booking, Expense, Guest, Payment, Unit } from "@/types";
 import { AuditCategory, AuditSeverity } from "@/types/audit.types";
 import type { EntityType } from "@/types/entity-detail.types";
+
+/**
+ * Mapped type for entity update data
+ */
+type EntityUpdateData<T extends EntityType> = T extends "booking"
+  ? Partial<Booking>
+  : T extends "unit"
+    ? Partial<Unit>
+    : T extends "guest"
+      ? Partial<Guest>
+      : T extends "payment"
+        ? Partial<Payment>
+        : T extends "expense"
+          ? Partial<Expense>
+          : never;
 
 /**
  * Options for useEntityEdit hook
@@ -52,15 +68,15 @@ const ENTITY_TO_AUDIT_CATEGORY: Record<EntityType, AuditCategory> = {
  * }
  * ```
  */
-export function useEntityEdit<T extends EntityType, TData = any>(
+export function useEntityEdit<T extends EntityType>(
   entityType: T,
   entityId: string,
-  options?: UseEntityEditOptions<TData>
+  options?: UseEntityEditOptions<EntityUpdateData<T>>
 ) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (updateData: TData) => {
+    mutationFn: async (updateData: EntityUpdateData<T>) => {
       // Get current data for audit trail
       const previousData = queryClient.getQueryData(queryKeys.entity(entityType, entityId));
 
@@ -68,15 +84,15 @@ export function useEntityEdit<T extends EntityType, TData = any>(
       const { data, error } = await (async () => {
         switch (entityType) {
           case "booking":
-            return db.bookings.update(entityId, updateData as any);
+            return db.bookings.update(entityId, updateData as Partial<Booking>);
           case "unit":
-            return db.units.update(entityId, updateData as any);
+            return db.units.update(entityId, updateData as Partial<Unit>);
           case "guest":
-            return db.guests.update(entityId, updateData as any);
+            return db.guests.update(entityId, updateData as Partial<Guest>);
           case "payment":
-            return db.payments.update(entityId, updateData as any);
+            return db.payments.update(entityId, updateData as Partial<Payment>);
           case "expense":
-            return db.expenses.update(entityId, updateData as any);
+            return db.expenses.update(entityId, updateData as Partial<Expense>);
           default:
             throw new Error(`Unknown entity type: ${entityType}`);
         }
@@ -114,9 +130,9 @@ export function useEntityEdit<T extends EntityType, TData = any>(
       const previousData = queryClient.getQueryData(queryKeys.entity(entityType, entityId));
 
       // Optimistically update the cache
-      queryClient.setQueryData(queryKeys.entity(entityType, entityId), (old: any) => ({
-        ...old,
-        ...newData,
+      queryClient.setQueryData(queryKeys.entity(entityType, entityId), (old: unknown) => ({
+        ...(old as Record<string, unknown>),
+        ...(newData as Record<string, unknown>),
       }));
 
       // Return context with snapshot for rollback
@@ -140,7 +156,7 @@ export function useEntityEdit<T extends EntityType, TData = any>(
     },
 
     // Refetch on success to ensure consistency
-    onSuccess: (data: any) => {
+    onSuccess: (data) => {
       // Invalidate individual entity cache
       queryClient.invalidateQueries({ queryKey: queryKeys.entity(entityType, entityId) });
 
@@ -151,7 +167,7 @@ export function useEntityEdit<T extends EntityType, TData = any>(
       toast.success(`${entityType} updated successfully`);
 
       // Call custom success handler
-      options?.onSuccess?.(data as TData);
+      options?.onSuccess?.(data as EntityUpdateData<T>);
     },
   });
 }
