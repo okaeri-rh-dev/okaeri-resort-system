@@ -128,8 +128,9 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
 
   // Create the DayButton component callback at the top level to follow React hooks rules
   const dayButtonComponent = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (props: any) => <DayButton {...props} bookingsByDate={bookingsByDate} />,
+    (props: Omit<DayButtonProps, "bookingsByDate">) => (
+      <DayButton {...props} bookingsByDate={bookingsByDate} />
+    ),
     [bookingsByDate]
   );
 

@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 class MockKVNamespace {
   private store = new Map<string, string>();
 
-  async get(key: string, typeOrOptions?: any): Promise<unknown> {
+  async get(key: string, typeOrOptions?: string | { type?: string }): Promise<unknown> {
     const value = this.store.get(key) || null;
     if (!value) return null;
 

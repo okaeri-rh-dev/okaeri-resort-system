@@ -162,7 +162,7 @@ describe("File Processing Performance Tests", () => {
       vi.doMock("heic2any", () => {
         heicLibraryLoaded = true;
         return {
-          default: async (_options: any) => {
+          default: async (_options: unknown) => {
             return new Blob(["converted"], { type: "image/jpeg" });
           },
         };
