@@ -563,7 +563,8 @@ const evaluateDiscountCondition = (
  * @param target - Target value
  * @returns Comparison result
  */
-const evaluateOperator = (value: unknown, operator: string, target: unknown): boolean => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const evaluateOperator = (value: unknown, operator: string, target: any): boolean => {
   switch (operator) {
     case "gte":
       return (value as number) >= target;

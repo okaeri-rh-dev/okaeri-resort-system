@@ -44,7 +44,8 @@ export function useDetailPageState() {
   const setActiveTab = useCallback(
     (tab: TabValue) => {
       navigate({
-        search: (prev: Record<string, unknown>) => ({ ...prev, tab }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        search: (prev: any) => ({ ...prev, tab }),
         replace: true, // Don't add to history
       });
     },
