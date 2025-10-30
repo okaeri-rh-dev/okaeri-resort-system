@@ -67,7 +67,7 @@ interface UIStore {
   setGlobalError: (error: string | null) => void;
 
   // Actions - Modals
-  openModal: (modal: ModalType, data?: any) => void;
+  openModal: (modal: ModalType, data?: unknown) => void;
   closeModal: () => void;
 
   // Actions - Toasts
