@@ -47,10 +47,11 @@ import {
 } from "@/lib/validations";
 import { useCreateBooking, useUpdateBooking } from "@/stores/useBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
+import type { Booking } from "@/types";
 import { formDateToUTC } from "@/utils/date-helpers";
 
 interface BookingFormProps {
-  onSuccess?: (booking: any) => void;
+  onSuccess?: (booking: Booking) => void;
   onCancel?: () => void;
   initialData?: Partial<CompleteBookingData>;
   bookingId?: string; // If provided, form is in edit mode

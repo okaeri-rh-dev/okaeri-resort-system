@@ -1,10 +1,10 @@
 import type { UseFormReturn } from "react-hook-form";
 
 import type { CompleteBookingData } from "@/lib/validations";
-import type { Unit } from "@/types";
+import type { Booking, Unit } from "@/types";
 
 export interface BookingFormProps {
-  onSuccess?: (booking: any) => void;
+  onSuccess?: (booking: Booking) => void;
   onCancel?: () => void;
   initialData?: Partial<CompleteBookingData>;
   bookingId?: string; // If provided, form is in edit mode

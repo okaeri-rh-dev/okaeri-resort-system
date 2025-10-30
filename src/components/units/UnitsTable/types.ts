@@ -2,6 +2,8 @@
  * Type definitions for UnitsTable component
  */
 
+import type { Unit } from "@/types";
+
 export interface UnitsTableProps {
   /**
    * Callback when Add Unit button is clicked
@@ -50,7 +52,7 @@ export interface UnitsTableProps {
   /**
    * Callback when a unit is updated
    */
-  onUnitUpdate?: (unitId: string, updates: any) => void;
+  onUnitUpdate?: (unitId: string, updates: Partial<Unit>) => void;
 
   /**
    * Callback when a unit is deleted
@@ -60,10 +62,10 @@ export interface UnitsTableProps {
   /**
    * Callback when viewing unit details
    */
-  onViewUnit?: (unit: any) => void;
+  onViewUnit?: (unit: Unit) => void;
 
   /**
    * Callback when editing a unit
    */
-  onEditUnit?: (unit: any) => void;
+  onEditUnit?: (unit: Unit) => void;
 }
