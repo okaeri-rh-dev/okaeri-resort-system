@@ -644,7 +644,9 @@ function getDefaultFields(item: unknown): string[] {
 }
 
 function getNestedValue(obj: unknown, path: string): unknown {
-  return path.split(".").reduce((current: any, key) => current?.[key], obj);
+  return path
+    .split(".")
+    .reduce((current: unknown, key) => (current as Record<string, unknown>)?.[key], obj);
 }
 
 function escapeCSV(value: string): string {
