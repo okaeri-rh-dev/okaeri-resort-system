@@ -28,9 +28,9 @@ import type { BookingUnit, MultiUnitBooking } from "@/types";
 
 export interface RealtimeSubscriptionOptions {
   enabled?: boolean;
-  onInsert?: (payload: RealtimePostgresChangesPayload<MultiUnitBooking>) => void;
-  onUpdate?: (payload: RealtimePostgresChangesPayload<MultiUnitBooking>) => void;
-  onDelete?: (payload: RealtimePostgresChangesPayload<MultiUnitBooking>) => void;
+  onInsert?: (payload: RealtimePostgresChangesPayload<MultiUnitBooking | BookingUnit>) => void;
+  onUpdate?: (payload: RealtimePostgresChangesPayload<MultiUnitBooking | BookingUnit>) => void;
+  onDelete?: (payload: RealtimePostgresChangesPayload<MultiUnitBooking | BookingUnit>) => void;
   onError?: (error: Error) => void;
 }
 
@@ -189,8 +189,7 @@ export function useBookingUnitsSubscription(
           try {
             switch (payload.eventType) {
               case "INSERT":
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                onInsert?.(payload as any);
+                onInsert?.(payload);
                 queryClient.invalidateQueries({
                   queryKey: ["multi-unit-bookings", bookingId],
                 });
@@ -198,16 +197,14 @@ export function useBookingUnitsSubscription(
                 break;
 
               case "UPDATE":
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                onUpdate?.(payload as any);
+                onUpdate?.(payload);
                 queryClient.invalidateQueries({
                   queryKey: ["multi-unit-bookings", bookingId],
                 });
                 break;
 
               case "DELETE":
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                onDelete?.(payload as any);
+                onDelete?.(payload);
                 queryClient.invalidateQueries({
                   queryKey: ["multi-unit-bookings", bookingId],
                 });
@@ -477,7 +474,7 @@ export function useMultiUnitPresence(bookingId: string, options: { enabled?: boo
 export function useMultiUnitBroadcast(bookingId: string, options: { enabled?: boolean } = {}) {
   const { enabled = true } = options;
   const channelRef = useRef<RealtimeChannel | null>(null);
-  const [broadcasts, setBroadcasts] = useState<any[]>([]);
+  const [broadcasts, setBroadcasts] = useState<unknown[]>([]);
 
   useEffect(() => {
     if (!enabled || !bookingId) return;
@@ -499,7 +496,7 @@ export function useMultiUnitBroadcast(bookingId: string, options: { enabled?: bo
     };
   }, [enabled, bookingId]);
 
-  const broadcast = useCallback(async (event: string, payload: any) => {
+  const broadcast = useCallback(async (event: string, payload: unknown) => {
     if (channelRef.current) {
       await channelRef.current.send({
         type: "broadcast",

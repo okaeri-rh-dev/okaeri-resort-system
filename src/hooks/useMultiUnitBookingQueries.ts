@@ -29,7 +29,7 @@ import type {
 /**
  * Fetch multi-unit bookings with optimistic updates merged
  */
-export const useMultiUnitBookings = (filters?: any) => {
+export const useMultiUnitBookings = (filters?: Record<string, unknown>) => {
   const optimisticQueue = useMultiUnitBookingStore((state) => state.optimisticQueue);
 
   return useQuery({
@@ -149,7 +149,7 @@ export const useCreateMultiUnitBooking = () => {
     useMultiUnitBookingStore();
 
   return useMutation({
-    mutationFn: async (bookingData: any) => {
+    mutationFn: async (bookingData: Partial<MultiUnitBooking>) => {
       if (!isOnline) {
         addToOfflineQueue({ operation: "create", data: bookingData, maxRetries: 3 });
         return bookingData;
@@ -462,7 +462,7 @@ export const useRecordMultiUnitPayment = (bookingId: string) => {
 
       if (!response.ok) throw new Error("Failed to record payment");
 
-      const data = (await response.json()) as { data: any };
+      const data = (await response.json()) as { data: unknown };
       return data.data;
     },
     onSuccess: () => {
@@ -498,7 +498,7 @@ export const useRefundMultiUnitPayment = (bookingId: string) => {
 
       if (!response.ok) throw new Error("Failed to process refund");
 
-      const data = (await response.json()) as { data: any };
+      const data = (await response.json()) as { data: unknown };
       return data.data;
     },
     onSuccess: () => {
