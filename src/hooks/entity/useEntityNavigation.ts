@@ -5,6 +5,15 @@ import { useNavigate } from "@tanstack/react-router";
 import type { EntityType } from "@/types/entity-detail.types";
 
 /**
+ * Route configuration for entity navigation
+ */
+interface RouteConfig {
+  to: string;
+  params: Record<string, string>;
+  search?: Record<string, unknown>;
+}
+
+/**
  * Type-safe programmatic navigation helper for entities
  *
  * Provides three navigation methods:
@@ -38,7 +47,7 @@ export function useEntityNavigation() {
       entityId: string,
       search?: Record<string, unknown>
     ) => {
-      const routes: Record<EntityType, any> = {
+      const routes: Record<EntityType, RouteConfig> = {
         booking: { to: "/bookings/$bookingId", params: { bookingId: entityId } },
         unit: { to: "/units/$unitId", params: { unitId: entityId } },
         guest: { to: "/guests/$guestId", params: { guestId: entityId } },
@@ -54,7 +63,7 @@ export function useEntityNavigation() {
      * Navigate to entity edit page
      */
     navigateToEdit: <T extends EntityType>(entityType: T, entityId: string) => {
-      const routes: Record<EntityType, any> = {
+      const routes: Record<EntityType, RouteConfig> = {
         booking: { to: "/bookings/$bookingId/edit", params: { bookingId: entityId } },
         unit: { to: "/units/$unitId/edit", params: { unitId: entityId } },
         guest: { to: "/guests/$guestId/edit", params: { guestId: entityId } },

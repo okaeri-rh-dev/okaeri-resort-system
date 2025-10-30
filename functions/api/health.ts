@@ -9,7 +9,7 @@ interface Env {
   ENVIRONMENT?: string;
 }
 
-export async function onRequest(context: EventContext<Env, any, Record<string, unknown>>) {
+export async function onRequest(context: EventContext<Env, never, Record<string, unknown>>) {
   const { env } = context;
   const checks: Record<string, boolean> = {};
 

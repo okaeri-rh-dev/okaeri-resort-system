@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 // ============================================
 
 interface SmartLoadingProps {
-  query: UseQueryResult<any, any> | UseQueryResult<any, any>[];
+  query: UseQueryResult<unknown, unknown> | UseQueryResult<unknown, unknown>[];
   children: React.ReactNode;
   skeleton?: React.ReactNode;
   skeletonType?: "table" | "cards" | "form" | "text" | "custom";
@@ -154,8 +154,8 @@ const DefaultSkeleton: React.FC<DefaultSkeletonProps> = ({ type, reducedAnimatio
 // ============================================
 
 interface BookingsLoadingProps {
-  bookingsQuery: UseQueryResult<any, any>;
-  unitsQuery?: UseQueryResult<any, any>;
+  bookingsQuery: UseQueryResult<unknown, unknown>;
+  unitsQuery?: UseQueryResult<unknown, unknown>;
   children: React.ReactNode;
   isMobile?: boolean;
   className?: string;
@@ -210,7 +210,7 @@ export const BookingsLoading: React.FC<BookingsLoadingProps> = ({
 };
 
 interface UnitsLoadingProps {
-  unitsQuery: UseQueryResult<any, any>;
+  unitsQuery: UseQueryResult<unknown, unknown>;
   children: React.ReactNode;
   viewMode?: "list" | "grid";
   className?: string;
@@ -285,7 +285,7 @@ export const UnitsLoading: React.FC<UnitsLoadingProps> = ({
 };
 
 interface GuestsLoadingProps {
-  guestsQuery: UseQueryResult<any, any>;
+  guestsQuery: UseQueryResult<unknown, unknown>;
   children: React.ReactNode;
   isMobile?: boolean;
   className?: string;
@@ -358,7 +358,7 @@ export const GuestsLoading: React.FC<GuestsLoadingProps> = ({
 // ============================================
 
 interface DashboardLoadingProps {
-  statsQueries: UseQueryResult<any, any>[];
+  statsQueries: UseQueryResult<unknown, unknown>[];
   children: React.ReactNode;
   className?: string;
 }

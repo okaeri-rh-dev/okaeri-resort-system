@@ -13,6 +13,16 @@
 import { auth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
+// Type-safe table names from database schema
+type TableName =
+  | "units"
+  | "bookings"
+  | "guests"
+  | "payments"
+  | "expenses"
+  | "audit_logs"
+  | "cron_logs";
+
 // Only expose debug helpers in development
 if (import.meta.env.DEV) {
   const debug = {
@@ -58,13 +68,10 @@ if (import.meta.env.DEV) {
      * Test database query
      * Usage: await window.debug.testQuery('units')
      */
-    async testQuery(table: string = "units") {
+    async testQuery(table: TableName = "units") {
       // eslint-disable-next-line no-console
       console.log(`=== TESTING ${table.toUpperCase()} QUERY ===`);
-      const { data, error } = await supabase
-        .from(table as any)
-        .select("*")
-        .limit(5);
+      const { data, error } = await supabase.from(table).select("*").limit(5);
       // eslint-disable-next-line no-console
       console.log(`Results: ${data?.length || 0} rows`);
       // eslint-disable-next-line no-console
@@ -127,11 +134,11 @@ if (import.meta.env.DEV) {
         return;
       }
 
-      const tables = ["units", "bookings", "guests", "payments", "expenses"];
+      const tables: TableName[] = ["units", "bookings", "guests", "payments", "expenses"];
 
       for (const table of tables) {
         const { count, error } = await supabase
-          .from(table as any)
+          .from(table)
           .select("*", { count: "exact", head: true });
         if (error) {
           console.error(`❌ ${table}: ${error.message}`);
@@ -277,7 +284,7 @@ declare global {
       supabase: typeof supabase;
       auth: typeof auth;
       checkSession: () => Promise<unknown>;
-      testQuery: (table?: string) => Promise<unknown>;
+      testQuery: (table?: TableName) => Promise<unknown>;
       testInsert: () => Promise<unknown>;
       checkRLS: () => Promise<void>;
       refreshAndTest: () => Promise<void>;

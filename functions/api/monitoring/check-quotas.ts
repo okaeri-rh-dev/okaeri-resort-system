@@ -21,7 +21,7 @@ interface Alert {
   percentage: number;
 }
 
-export async function onRequest(context: EventContext<Env, any, Record<string, unknown>>) {
+export async function onRequest(context: EventContext<Env, never, Record<string, unknown>>) {
   const { env, request } = context;
 
   // Allow both GET (for manual checks) and POST (for cron)
