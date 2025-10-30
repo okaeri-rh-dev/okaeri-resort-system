@@ -339,7 +339,7 @@ export const safeJsonParse = <T>(jsonString: string, fallback: T): T => {
  * @param wait - Wait time in milliseconds
  * @returns Debounced function
  */
-export const debounce = <T extends (...args: unknown[]) => any>(
+export const debounce = <T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): ((...args: Parameters<T>) => void) => {
@@ -358,7 +358,7 @@ export const debounce = <T extends (...args: unknown[]) => any>(
  * @param limit - Limit in milliseconds
  * @returns Throttled function
  */
-export const throttle = <T extends (...args: unknown[]) => any>(
+export const throttle = <T extends (...args: unknown[]) => unknown>(
   func: T,
   limit: number
 ): ((...args: Parameters<T>) => void) => {

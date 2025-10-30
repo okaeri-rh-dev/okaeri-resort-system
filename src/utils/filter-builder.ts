@@ -638,7 +638,7 @@ export function executeFilters<T>(items: T[], filters: FilterBuilder<T>[]): T[] 
 export function buildSupabaseQuery(
   query: unknown, // Supabase query builder
   filters: AdvancedFilter[]
-): any {
+): unknown {
   let result = query;
 
   for (const filter of filters) {

@@ -6,7 +6,7 @@ import "vitest-axe";
  */
 
 declare module "vitest" {
-  interface Assertion<T = any> {
+  interface Assertion<T = unknown> {
     toHaveNoViolations(): T;
   }
   interface AsymmetricMatchersContaining {
@@ -16,7 +16,7 @@ declare module "vitest" {
 
 declare global {
   namespace Vi {
-    interface Assertion<T = any> {
+    interface Assertion<T = unknown> {
       toHaveNoViolations(): T;
     }
     interface AsymmetricMatchersContaining {

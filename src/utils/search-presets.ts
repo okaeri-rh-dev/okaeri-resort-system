@@ -515,8 +515,8 @@ export function importPresets(jsonString: string): SearchPreset[] {
       throw new Error("Invalid preset configuration format");
     }
 
-    return data.presets.map((preset: any) => ({
-      ...preset,
+    return data.presets.map((preset: unknown) => ({
+      ...(preset as Record<string, unknown>),
       id: `imported-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       createdAt: new Date().toISOString(),
       usageCount: 0,
@@ -629,12 +629,13 @@ export function generateSearchReport(
 // HELPER FUNCTIONS
 // ============================================
 
-function getDefaultFields(item: any): string[] {
+function getDefaultFields(item: unknown): string[] {
   if (!item) return [];
 
   const fields: string[] = [];
-  for (const key in item) {
-    if (typeof item[key] !== "object" || item[key] === null) {
+  const itemRecord = item as Record<string, unknown>;
+  for (const key in itemRecord) {
+    if (typeof itemRecord[key] !== "object" || itemRecord[key] === null) {
       fields.push(key);
     }
   }
@@ -642,8 +643,8 @@ function getDefaultFields(item: any): string[] {
   return fields;
 }
 
-function getNestedValue(obj: unknown, path: string): any {
-  return path.split(".").reduce((current, key) => current?.[key], obj);
+function getNestedValue(obj: unknown, path: string): unknown {
+  return path.split(".").reduce((current: any, key) => current?.[key], obj);
 }
 
 function escapeCSV(value: string): string {
