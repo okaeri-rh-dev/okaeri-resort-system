@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import {
   getCoreRowModel,
@@ -84,17 +84,20 @@ export function useExpensesTable({ onViewExpense, onEditExpense }: ExpensesTable
   }, [expenses, searchQuery, filters]);
 
   // Handle delete
-  const handleDelete = async (expense: Expense) => {
-    if (!confirm(`Are you sure you want to delete this expense: ${expense.description}?`)) {
-      return;
-    }
+  const handleDelete = useCallback(
+    async (expense: Expense) => {
+      if (!confirm(`Are you sure you want to delete this expense: ${expense.description}?`)) {
+        return;
+      }
 
-    try {
-      await deleteExpense.mutateAsync(expense.expense_id);
-    } catch (error) {
-      console.error("Failed to delete expense:", error);
-    }
-  };
+      try {
+        await deleteExpense.mutateAsync(expense.expense_id);
+      } catch (error) {
+        console.error("Failed to delete expense:", error);
+      }
+    },
+    [deleteExpense]
+  );
 
   // Handle export
   const handleExport = async () => {

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 
 import { Link } from "@tanstack/react-router";
 import {
@@ -246,23 +246,26 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
     window.open(`tel:${guest.phone_number}`, "_blank");
   };
 
-  const handleDelete = async (guest: Guest) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete guest "${guest.guest_name}"? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
+  const handleDelete = useCallback(
+    async (guest: Guest) => {
+      if (
+        !confirm(
+          `Are you sure you want to delete guest "${guest.guest_name}"? This action cannot be undone.`
+        )
+      ) {
+        return;
+      }
 
-    try {
-      await deleteGuest.mutateAsync(guest.guest_id);
-      // Using toast from the component would require importing it
-      logger.info("Guest deleted successfully");
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to delete guest");
-    }
-  };
+      try {
+        await deleteGuest.mutateAsync(guest.guest_id);
+        // Using toast from the component would require importing it
+        logger.info("Guest deleted successfully");
+      } catch (error) {
+        alert(error instanceof Error ? error.message : "Failed to delete guest");
+      }
+    },
+    [deleteGuest]
+  );
 
   // Export action
   const handleExport = () => {
@@ -431,7 +434,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
         size: 80,
       }),
     ],
-    [onViewGuest, onEditGuest, handleDelete]
+    [onViewGuest, handleDelete]
   );
 
   // Create table instance

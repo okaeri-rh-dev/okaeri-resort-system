@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 
 import { Link } from "@tanstack/react-router";
 import {
@@ -91,27 +91,35 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
     ? payments.filter((p) => p.booking_id === bookingId)
     : payments;
 
-  const handleDelete = async (payment: Payment) => {
-    if (
-      !confirm(`Are you sure you want to delete this payment of ${formatCurrency(payment.amount)}?`)
-    ) {
-      return;
-    }
+  const handleDelete = useCallback(
+    async (payment: Payment) => {
+      if (
+        !confirm(
+          `Are you sure you want to delete this payment of ${formatCurrency(payment.amount)}?`
+        )
+      ) {
+        return;
+      }
 
-    try {
-      await deletePayment.mutateAsync(payment.payment_id);
-    } catch (error) {
-      console.error("Failed to delete payment:", error);
-    }
-  };
+      try {
+        await deletePayment.mutateAsync(payment.payment_id);
+      } catch (error) {
+        console.error("Failed to delete payment:", error);
+      }
+    },
+    [deletePayment]
+  );
 
-  const handleVerify = async (payment: Payment) => {
-    try {
-      await verifyPayment.mutateAsync(payment.payment_id);
-    } catch (error) {
-      console.error("Failed to verify payment:", error);
-    }
-  };
+  const handleVerify = useCallback(
+    async (payment: Payment) => {
+      try {
+        await verifyPayment.mutateAsync(payment.payment_id);
+      } catch (error) {
+        console.error("Failed to verify payment:", error);
+      }
+    },
+    [verifyPayment]
+  );
 
   const handleExport = () => {
     exportPayments.mutate(undefined);
@@ -267,7 +275,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
         size: 80,
       }),
     ],
-    [onViewPayment, onEditPayment, deletePayment, verifyPayment, handleDelete, handleVerify]
+    [onViewPayment, onEditPayment, handleDelete, handleVerify]
   );
 
   // Transform payments data to match Payment interface
