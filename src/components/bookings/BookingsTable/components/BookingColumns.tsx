@@ -17,11 +17,16 @@ import type { Booking, BookingStatus } from "@/types";
 
 const columnHelper = createColumnHelper<Booking>();
 
+// Type for TanStack Query mutation objects
+interface MutationObject<TVariables = unknown> {
+  mutate: (variables: TVariables) => void;
+}
+
 interface UseBookingColumnsProps {
   handleUploadPayment: (booking: Booking) => void;
-  updateBookingStatus: unknown;
-  cancelBooking: unknown;
-  deleteBooking: unknown;
+  updateBookingStatus: MutationObject<{ bookingId: string; status: BookingStatus }> | undefined;
+  cancelBooking: MutationObject<string> | undefined;
+  deleteBooking: MutationObject<string> | undefined;
 }
 
 export const useBookingColumns = ({
@@ -186,12 +191,8 @@ function BookingActionsCell({
           {
             label: "Confirm",
             onClick: () => {
-              if (
-                updateBookingStatus &&
-                isFunction(updateBookingStatus) &&
-                "mutate" in (updateBookingStatus as any)
-              ) {
-                (updateBookingStatus as any).mutate({
+              if (updateBookingStatus) {
+                updateBookingStatus.mutate({
                   bookingId: booking.booking_id,
                   status: "Confirmed" as BookingStatus,
                 });
@@ -205,13 +206,8 @@ function BookingActionsCell({
           {
             label: "Cancel",
             onClick: () => {
-              if (
-                cancelBooking &&
-                isFunction(cancelBooking) &&
-                "mutate" in (cancelBooking as any)
-              ) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (cancelBooking as any).mutate(booking.booking_id);
+              if (cancelBooking) {
+                cancelBooking.mutate(booking.booking_id);
               }
             },
             variant: "destructive" as const,
@@ -226,10 +222,8 @@ function BookingActionsCell({
             `Are you sure you want to permanently delete booking "${booking.booking_reference}"? This action cannot be undone.`
           )
         ) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          if (deleteBooking && isFunction(deleteBooking) && "mutate" in (deleteBooking as any)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (deleteBooking as any).mutate(booking.booking_id);
+          if (deleteBooking) {
+            deleteBooking.mutate(booking.booking_id);
           }
         }
       },
