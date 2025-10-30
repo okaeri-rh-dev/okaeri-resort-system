@@ -12,21 +12,21 @@ import {
   StatusBadge,
 } from "@/components/tables/utils";
 import { Badge } from "@/components/ui/badge";
-import { isFunction } from "@/lib/type-guards";
 import type { Booking, BookingStatus } from "@/types";
 
 const columnHelper = createColumnHelper<Booking>();
 
-// Type for TanStack Query mutation objects
+// Type for TanStack Query mutation objects (simplified from UseMutationResult)
 interface MutationObject<TVariables = unknown> {
   mutate: (variables: TVariables) => void;
+  [key: string]: unknown; // Allow other mutation properties
 }
 
 interface UseBookingColumnsProps {
   handleUploadPayment: (booking: Booking) => void;
-  updateBookingStatus: MutationObject<{ bookingId: string; status: BookingStatus }> | undefined;
-  cancelBooking: MutationObject<string> | undefined;
-  deleteBooking: MutationObject<string> | undefined;
+  updateBookingStatus?: MutationObject<{ bookingId: string; status: BookingStatus }>;
+  cancelBooking?: MutationObject<string>;
+  deleteBooking?: MutationObject<string>;
 }
 
 export const useBookingColumns = ({
@@ -191,12 +191,10 @@ function BookingActionsCell({
           {
             label: "Confirm",
             onClick: () => {
-              if (updateBookingStatus) {
-                updateBookingStatus.mutate({
-                  bookingId: booking.booking_id,
-                  status: "Confirmed" as BookingStatus,
-                });
-              }
+              updateBookingStatus?.mutate({
+                bookingId: booking.booking_id,
+                status: "Confirmed" as BookingStatus,
+              });
             },
           },
         ]
@@ -206,9 +204,7 @@ function BookingActionsCell({
           {
             label: "Cancel",
             onClick: () => {
-              if (cancelBooking) {
-                cancelBooking.mutate(booking.booking_id);
-              }
+              cancelBooking?.mutate(booking.booking_id);
             },
             variant: "destructive" as const,
           },
@@ -222,9 +218,7 @@ function BookingActionsCell({
             `Are you sure you want to permanently delete booking "${booking.booking_reference}"? This action cannot be undone.`
           )
         ) {
-          if (deleteBooking) {
-            deleteBooking.mutate(booking.booking_id);
-          }
+          deleteBooking?.mutate(booking.booking_id);
         }
       },
       variant: "destructive" as const,
