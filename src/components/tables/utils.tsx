@@ -155,7 +155,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 // ============================================
 
 interface SortableHeaderProps {
-  header: Header<any, unknown>;
+  header: Header<unknown, unknown>;
   children: React.ReactNode;
   className?: string;
 }
@@ -270,7 +270,7 @@ export const FilterPopover: React.FC<FilterPopoverProps> = ({
     if (!React.isValidElement(element)) return false;
 
     // Direct Calendar component
-    const props = element.props as any;
+    const props = element.props as Record<string, unknown>;
     if (element.type?.toString().includes("Calendar") || props?.mode) {
       return true;
     }

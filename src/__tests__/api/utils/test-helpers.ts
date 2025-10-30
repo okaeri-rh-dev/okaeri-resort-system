@@ -161,7 +161,7 @@ export function generateIdempotencyKey(prefix = "test"): string {
 /**
  * Parse JSON response body
  */
-export async function parseResponse<T = any>(response: Response): Promise<T> {
+export async function parseResponse<T = unknown>(response: Response): Promise<T> {
   const text = await response.text();
   try {
     return JSON.parse(text) as T;
@@ -173,7 +173,7 @@ export async function parseResponse<T = any>(response: Response): Promise<T> {
 /**
  * Assert response status and return parsed body
  */
-export async function expectResponseStatus<T = any>(
+export async function expectResponseStatus<T = unknown>(
   response: Response,
   expectedStatus: number
 ): Promise<T> {

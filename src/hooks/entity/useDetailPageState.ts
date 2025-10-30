@@ -44,9 +44,9 @@ export function useDetailPageState() {
   const setActiveTab = useCallback(
     (tab: TabValue) => {
       navigate({
-        search: (prev: any) => ({ ...prev, tab }),
+        search: (prev: Record<string, unknown>) => ({ ...prev, tab }),
         replace: true, // Don't add to history
-      } as any);
+      });
     },
     [navigate]
   );
