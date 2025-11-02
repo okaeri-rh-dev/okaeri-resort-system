@@ -21,6 +21,9 @@ describe("Server-Side Pricing - Property-Based Tests", () => {
         fc.date({ min: new Date("2025-01-01"), max: new Date("2025-12-31") }),
         fc.integer({ min: 1, max: 30 }), // nights
         async (numUnits, guests, checkIn, nights) => {
+          // Skip invalid dates
+          if (isNaN(checkIn.getTime())) return true;
+
           const checkOut = new Date(checkIn);
           checkOut.setDate(checkOut.getDate() + nights);
 
@@ -52,6 +55,9 @@ describe("Server-Side Pricing - Property-Based Tests", () => {
         fc.date({ min: new Date("2025-01-01"), max: new Date("2025-12-31") }),
         fc.integer({ min: 1, max: 30 }),
         async (numUnits, guests, checkIn, nights) => {
+          // Skip invalid dates
+          if (isNaN(checkIn.getTime())) return true;
+
           const checkOut = new Date(checkIn);
           checkOut.setDate(checkOut.getDate() + nights);
 
@@ -84,6 +90,9 @@ describe("Server-Side Pricing - Property-Based Tests", () => {
         fc.date({ min: new Date("2025-01-01"), max: new Date("2025-12-31") }),
         fc.integer({ min: 7, max: 30 }), // Long enough for discount
         async (numUnits, guests, checkIn, nights) => {
+          // Skip invalid dates
+          if (isNaN(checkIn.getTime())) return true;
+
           const checkOut = new Date(checkIn);
           checkOut.setDate(checkOut.getDate() + nights);
 
@@ -116,6 +125,9 @@ describe("Server-Side Pricing - Property-Based Tests", () => {
         fc.date({ min: new Date("2025-01-01"), max: new Date("2025-12-31") }),
         fc.integer({ min: 1, max: 5 }), // shorter stay (avoid discount range)
         async (numUnits, guests, checkIn, shortNights) => {
+          // Skip invalid dates
+          if (isNaN(checkIn.getTime())) return true;
+
           const longNights = shortNights + 1;
           const shortCheckOut = new Date(checkIn);
           shortCheckOut.setDate(shortCheckOut.getDate() + shortNights);

@@ -67,6 +67,12 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
     form.setValue("weekend_rate", watchedBaseRate || 0);
   }, [watchedBaseRate, form]);
 
+  useEffect(() => {
+    if (watchedBaseOccupancy > watchedMaxOccupancy) {
+      form.setValue("max_occupancy", watchedBaseOccupancy || 1);
+    }
+  }, [form, watchedBaseOccupancy, watchedMaxOccupancy]);
+
   const onSubmit = async (data: UnitFormData) => {
     try {
       const unitData = {
@@ -125,7 +131,11 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                     <FormItem>
                       <FormLabel>Cabin Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Ocean View Standard A" {...field} />
+                        <Input
+                          placeholder="e.g., Ocean View Standard A"
+                          {...field}
+                          autoComplete="off"
+                        />
                       </FormControl>
                       <FormDescription>Descriptive name for the cabin</FormDescription>
                       <FormMessage />

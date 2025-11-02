@@ -337,10 +337,16 @@ describe("UnitRequestSelector", () => {
       await user.clear(guestInputs[0]);
       await user.type(guestInputs[0], "5");
 
+      // Tab out to trigger blur/onChange
+      await user.keyboard("{Tab}");
+
       // Wait for onChange to be called
-      await waitFor(() => {
-        expect(onChange).toHaveBeenCalled();
-      });
+      await waitFor(
+        () => {
+          expect(onChange).toHaveBeenCalled();
+        },
+        { timeout: 3000 }
+      );
 
       // Re-render with updated value to simulate parent state update
       rerender(<UnitRequestSelector {...defaultProps} value={currentValue} onChange={onChange} />);

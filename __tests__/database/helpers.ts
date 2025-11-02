@@ -42,16 +42,18 @@ type BookingUnitInsert = Database["public"]["Tables"]["booking_units"]["Insert"]
 const DEFAULT_BOOKING: Partial<BookingInsert> = {
   guest_name: "Test Guest",
   email: "test@example.com",
-  phone_number: "+639171234567",
-  check_in_date: "2025-03-01",
-  check_out_date: "2025-03-05",
+  contact_number: "+639171234567",
+  check_in: "2025-03-01",
+  check_out: "2025-03-05",
   payment_status: "Pending",
   unit_assignment_status: "pending",
   is_multi_unit: true,
   requested_unit_count: 1,
   booking_status: "Confirmed",
   total_amount: 5000.0,
-  notes: "Test booking for constraint tests",
+  // Generate short booking reference (max 20 chars)
+  booking_reference: `T${Date.now().toString().slice(-8)}`,
+  num_guests: 2,
 };
 
 /**
@@ -83,9 +85,15 @@ export async function createTestBooking(
     // Ensure required fields are present
     guest_name: overrides?.guest_name || DEFAULT_BOOKING.guest_name!,
     email: overrides?.email || DEFAULT_BOOKING.email!,
-    phone_number: overrides?.phone_number || DEFAULT_BOOKING.phone_number!,
-    check_in_date: overrides?.check_in_date || DEFAULT_BOOKING.check_in_date!,
-    check_out_date: overrides?.check_out_date || DEFAULT_BOOKING.check_out_date!,
+    contact_number: overrides?.contact_number || DEFAULT_BOOKING.contact_number!,
+    check_in: overrides?.check_in || DEFAULT_BOOKING.check_in!,
+    check_out: overrides?.check_out || DEFAULT_BOOKING.check_out!,
+    // Generate unique booking reference (timestamp + random)
+    booking_reference:
+      overrides?.booking_reference ||
+      `T${Date.now().toString().slice(-6)}${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+    num_guests: overrides?.num_guests || DEFAULT_BOOKING.num_guests!,
+    total_amount: overrides?.total_amount || DEFAULT_BOOKING.total_amount!,
   };
 
   const { data: booking, error } = await supabase
@@ -149,10 +157,11 @@ export async function createBookingWithUnits(
       return {
         booking_id,
         unit_id,
-        check_in_date: unit.check_in_date || bookingOverrides?.check_in_date || "2025-03-01",
-        check_out_date: unit.check_out_date || bookingOverrides?.check_out_date || "2025-03-05",
-        status: unit.status || "confirmed",
-        guests_per_unit: unit.guests_per_unit || 2,
+        unit_price: unit.unit_price || 1500.0,
+        subtotal: unit.subtotal || 1500.0,
+        weekend_surcharge: unit.weekend_surcharge || 0,
+        extra_person_charge: unit.extra_person_charge || 0,
+        assigned_guests: unit.assigned_guests || 2,
         ...unit,
       } as BookingUnitInsert;
     });
@@ -266,10 +275,14 @@ export async function createTestUnit(
 ): Promise<string> {
   const unitData = {
     unit_name: overrides?.unit_name || `Test Unit ${randomUUID().slice(0, 8)}`,
+    unit_code: overrides?.unit_code || `U${randomUUID().slice(0, 6).toUpperCase()}`,
     unit_type: overrides?.unit_type || "Standard",
     max_occupancy: overrides?.max_occupancy || 4,
+    base_occupancy: overrides?.base_occupancy || 2,
     base_rate: overrides?.base_rate || 1250.0,
-    status: overrides?.status || "Available",
+    weekend_rate: overrides?.weekend_rate || 1500.0,
+    extra_person_rate: overrides?.extra_person_rate || 300.0,
+    unit_status: overrides?.unit_status || "Available",
     ...overrides,
   };
 

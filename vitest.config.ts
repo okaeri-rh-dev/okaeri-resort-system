@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => {
       environment: "happy-dom",
       globals: true,
       globalSetup: ["./src/test/global-setup.ts"],
-      setupFiles: ["./src/test/setup.ts"],
+      setupFiles: ["./src/test/setup.ts", "./__tests__/setup/msw-setup.ts"],
       // Make env variables available to tests
       env: {
         ...testEnv,

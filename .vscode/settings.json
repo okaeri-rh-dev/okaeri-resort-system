@@ -2,8 +2,7 @@
   // Editor Configuration
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit",
-    "source.organizeImports": "explicit"
+    "source.fixAll.eslint": "explicit"
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.tabSize": 2,
@@ -45,14 +44,10 @@
   // Prettier Configuration
   "prettier.enable": true,
   "prettier.requireConfig": true,
-  "prettier.singleQuote": true,
-  "prettier.trailingComma": "es5",
-  "prettier.semi": true,
-  "prettier.printWidth": 100,
-  "prettier.tabWidth": 2,
-  "prettier.useTabs": false,
-  "prettier.bracketSpacing": true,
-  "prettier.arrowParens": "avoid",
+  "prettier.prettierPath": "./node_modules/prettier",
+  "prettier.resolveGlobalModules": false,
+  "prettier.useEditorConfig": false,
+  "prettier.configPath": ".prettierrc.json",
 
   // Tailwind CSS Configuration
   "tailwindCSS.experimental.classRegex": [

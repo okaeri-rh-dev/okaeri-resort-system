@@ -282,10 +282,8 @@ describe("Authentication Security Tests", () => {
       // Test in development
       process.env.NODE_ENV = "development";
       auth.logAuthError(new Error("Sensitive error details"));
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Auth Error:"),
-        expect.any(Error)
-      );
+      // Logger now formats as JSON string with timestamp
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Auth Error:"));
 
       process.env.NODE_ENV = originalEnv;
       consoleLogSpy.mockRestore();

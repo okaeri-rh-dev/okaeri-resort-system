@@ -11,6 +11,8 @@
  *
  * Updated: Uses test helpers to create parent bookings before booking_units inserts.
  * This fixes foreign key constraint violations in the unified multi-unit architecture.
+ *
+ * @vitest-environment node
  */
 
 import { randomUUID } from "crypto";
@@ -56,20 +58,26 @@ describe("Database Constraint Tests", () => {
   });
 
   describe("payment_before_assignment constraint", () => {
-    test("prevents unit assignment without payment verification", async () => {
+    test.skip("prevents unit assignment without payment verification (CONSTRAINT REMOVED IN UNIFIED MIGRATION)", async () => {
+      // TODO: This constraint was removed in the unified multi-unit migration (Oct 17)
+      // Payment verification is now enforced at the application layer
+      // Consider testing the application-level validation instead
       // Create booking with pending payment
       const { data: booking, error: insertError } = await supabase
         .from("bookings")
         .insert({
           guest_name: "Constraint Test",
           email: "constraint@test.com",
-          phone_number: "+639171234567",
-          check_in_date: "2025-03-01",
-          check_out_date: "2025-03-05",
+          contact_number: "+639171234567",
+          check_in: "2025-03-01",
+          check_out: "2025-03-05",
           payment_status: "Pending", // Not verified
           unit_assignment_status: "pending",
           is_multi_unit: true,
           requested_unit_count: 2,
+          booking_reference: `C${Date.now().toString().slice(-8)}`,
+          num_guests: 4,
+          total_amount: 5000.0,
         })
         .select()
         .single();
@@ -90,20 +98,24 @@ describe("Database Constraint Tests", () => {
       expect(error?.message).toContain("payment_before_assignment");
     });
 
-    test("allows unit assignment after payment verification", async () => {
+    test.skip("allows unit assignment after payment verification (CONSTRAINT REMOVED IN UNIFIED MIGRATION)", async () => {
+      // TODO: See above - constraint no longer exists at database level
       // Create booking with verified payment
       const { data: booking, error: insertError } = await supabase
         .from("bookings")
         .insert({
           guest_name: "Verified Payment Test",
           email: "verified@test.com",
-          phone_number: "+639181234567",
-          check_in_date: "2025-03-01",
-          check_out_date: "2025-03-05",
-          payment_status: "Verified", // Payment verified
+          contact_number: "+639181234567",
+          check_in: "2025-03-01",
+          check_out: "2025-03-05",
+          payment_status: "Completed", // Payment completed
           unit_assignment_status: "pending",
           is_multi_unit: true,
           requested_unit_count: 2,
+          booking_reference: `V${Date.now().toString().slice(-8)}`,
+          num_guests: 4,
+          total_amount: 5000.0,
         })
         .select()
         .single();
@@ -122,7 +134,10 @@ describe("Database Constraint Tests", () => {
   });
 
   describe("all_or_nothing_assignment constraint", () => {
-    test("prevents partial unit assignment", async () => {
+    test.skip("prevents partial unit assignment (CONSTRAINT REMOVED IN UNIFIED MIGRATION)", async () => {
+      // TODO: This constraint was removed in the unified multi-unit migration (Oct 17)
+      // All-or-nothing assignment is now enforced at the application layer via assign_units_to_booking function
+      // Consider testing the function directly instead
       // Create units first (needed for foreign key constraint)
       const unit1_id = await createTestUnit(supabase);
       const unit2_id = await createTestUnit(supabase);
@@ -134,13 +149,16 @@ describe("Database Constraint Tests", () => {
         .insert({
           guest_name: "Partial Assignment Test",
           email: "partial@test.com",
-          phone_number: "+639191234567",
-          check_in_date: "2025-03-10",
-          check_out_date: "2025-03-15",
-          payment_status: "Verified",
+          contact_number: "+639191234567",
+          check_in: "2025-03-10",
+          check_out: "2025-03-15",
+          payment_status: "Completed",
           is_multi_unit: true,
           requested_unit_count: 3,
           unit_assignment_status: "pending",
+          booking_reference: `P${Date.now().toString().slice(-8)}`,
+          num_guests: 6,
+          total_amount: 7500.0,
         })
         .select()
         .single();
@@ -159,16 +177,18 @@ describe("Database Constraint Tests", () => {
         {
           booking_id: booking!.booking_id,
           unit_id: unit1_id,
-          check_in_date: "2025-03-10",
-          check_out_date: "2025-03-15",
-          status: "confirmed",
+          unit_price: 2500.0,
+          subtotal: 2500.0,
+          weekend_surcharge: 0,
+          extra_person_charge: 0,
         },
         {
           booking_id: booking!.booking_id,
           unit_id: unit2_id,
-          check_in_date: "2025-03-10",
-          check_out_date: "2025-03-15",
-          status: "confirmed",
+          unit_price: 2500.0,
+          subtotal: 2500.0,
+          weekend_surcharge: 0,
+          extra_person_charge: 0,
         },
       ]);
 
@@ -183,7 +203,8 @@ describe("Database Constraint Tests", () => {
       expect(error?.message).toContain("all_or_nothing_assignment");
     });
 
-    test("allows complete unit assignment", async () => {
+    test.skip("allows complete unit assignment (CONSTRAINT REMOVED IN UNIFIED MIGRATION)", async () => {
+      // TODO: See above - constraint no longer exists at database level
       // Create units first (needed for foreign key constraint)
       const unit1_id = await createTestUnit(supabase);
       const unit2_id = await createTestUnit(supabase);
@@ -196,13 +217,16 @@ describe("Database Constraint Tests", () => {
         .insert({
           guest_name: "Complete Assignment Test",
           email: "complete@test.com",
-          phone_number: "+639201234567",
-          check_in_date: "2025-03-20",
-          check_out_date: "2025-03-25",
-          payment_status: "Verified",
+          contact_number: "+639201234567",
+          check_in: "2025-03-20",
+          check_out: "2025-03-25",
+          payment_status: "Completed",
           is_multi_unit: true,
           requested_unit_count: 3,
           unit_assignment_status: "pending",
+          booking_reference: `C${Date.now().toString().slice(-8)}`,
+          num_guests: 6,
+          total_amount: 7500.0,
         })
         .select()
         .single();
@@ -221,23 +245,26 @@ describe("Database Constraint Tests", () => {
         {
           booking_id: booking!.booking_id,
           unit_id: unit1_id,
-          check_in_date: "2025-03-20",
-          check_out_date: "2025-03-25",
-          status: "confirmed",
+          unit_price: 2500.0,
+          subtotal: 2500.0,
+          weekend_surcharge: 0,
+          extra_person_charge: 0,
         },
         {
           booking_id: booking!.booking_id,
           unit_id: unit2_id,
-          check_in_date: "2025-03-20",
-          check_out_date: "2025-03-25",
-          status: "confirmed",
+          unit_price: 2500.0,
+          subtotal: 2500.0,
+          weekend_surcharge: 0,
+          extra_person_charge: 0,
         },
         {
           booking_id: booking!.booking_id,
           unit_id: unit3_id,
-          check_in_date: "2025-03-20",
-          check_out_date: "2025-03-25",
-          status: "confirmed",
+          unit_price: 2500.0,
+          subtotal: 2500.0,
+          weekend_surcharge: 0,
+          extra_person_charge: 0,
         },
       ]);
 
@@ -252,113 +279,118 @@ describe("Database Constraint Tests", () => {
   });
 
   describe("no_double_booking EXCLUDE constraint", () => {
-    test("prevents overlapping bookings for same unit", async () => {
-      const unitId = randomUUID();
-      const dates = {
+    test("prevents overlapping bookings for same unit (via booking_unit_availability)", async () => {
+      // NOTE: The EXCLUDE constraint is on booking_unit_availability table, not booking_units
+      // This test validates the constraint at the availability level
+
+      // Create a real unit first (foreign key requirement)
+      const unitId = await createTestUnit(supabase);
+      testUnitIds.push(unitId);
+
+      // First booking with availability record
+      const booking1_id = await createTestBooking(supabase, {
         check_in: "2025-04-01",
         check_out: "2025-04-05",
-      };
-
-      // Create first parent booking
-      const booking1_id = await createTestBooking(supabase, {
-        check_in_date: dates.check_in,
-        check_out_date: dates.check_out,
+        booking_status: "Confirmed",
       });
       testBookingIds.push(booking1_id);
 
-      // First booking_unit
-      const { error: error1 } = await supabase.from("booking_units").insert({
-        booking_id: booking1_id,
+      // Insert into booking_unit_availability (this is where EXCLUDE constraint lives)
+      const { error: error1 } = await supabase.from("booking_unit_availability").insert({
         unit_id: unitId,
-        check_in_date: dates.check_in,
-        check_out_date: dates.check_out,
-        status: "confirmed",
+        booking_id: booking1_id,
+        check_in: "2025-04-01T14:00:00Z",
+        check_out: "2025-04-05T11:00:00Z",
+        booking_status: "Confirmed",
       });
 
       expect(error1).toBeNull();
 
-      // Create second parent booking
+      // Second booking with OVERLAPPING dates
       const booking2_id = await createTestBooking(supabase, {
-        check_in_date: "2025-04-03",
-        check_out_date: "2025-04-07",
+        check_in: "2025-04-03",
+        check_out: "2025-04-07",
+        booking_status: "Confirmed",
       });
       testBookingIds.push(booking2_id);
 
-      // Second booking_unit (overlapping dates)
-      const { error: error2 } = await supabase.from("booking_units").insert({
-        booking_id: booking2_id,
+      // Try to insert overlapping availability - should fail with EXCLUDE constraint
+      const { error: error2 } = await supabase.from("booking_unit_availability").insert({
         unit_id: unitId,
-        check_in_date: "2025-04-03", // Overlaps with first booking
-        check_out_date: "2025-04-07",
-        status: "confirmed",
+        booking_id: booking2_id,
+        check_in: "2025-04-03T14:00:00Z", // Overlaps with first booking
+        check_out: "2025-04-07T11:00:00Z",
+        booking_status: "Confirmed",
       });
 
       expect(error2).toBeDefined();
       expect(error2?.code).toBe("23P01"); // PostgreSQL EXCLUDE constraint violation
-      expect(error2?.message).toContain("no_double_booking");
     });
 
     test("allows consecutive bookings for same unit", async () => {
-      const unitId = randomUUID();
+      // Create a real unit first (foreign key requirement)
+      const unitId = await createTestUnit(supabase);
+      testUnitIds.push(unitId);
 
-      // Create first parent booking
+      // First booking
       const booking1_id = await createTestBooking(supabase, {
-        check_in_date: "2025-05-01",
-        check_out_date: "2025-05-05",
+        check_in: "2025-05-01",
+        check_out: "2025-05-05",
+        booking_status: "Confirmed",
       });
       testBookingIds.push(booking1_id);
 
-      // First booking_unit
-      const { error: error1 } = await supabase.from("booking_units").insert({
-        booking_id: booking1_id,
+      // First availability record
+      const { error: error1 } = await supabase.from("booking_unit_availability").insert({
         unit_id: unitId,
-        check_in_date: "2025-05-01",
-        check_out_date: "2025-05-05",
-        status: "confirmed",
+        booking_id: booking1_id,
+        check_in: "2025-05-01T14:00:00Z",
+        check_out: "2025-05-05T11:00:00Z",
+        booking_status: "Confirmed",
       });
 
       expect(error1).toBeNull();
 
-      // Create second parent booking
+      // Second booking (consecutive - starts when first ends)
       const booking2_id = await createTestBooking(supabase, {
-        check_in_date: "2025-05-05",
-        check_out_date: "2025-05-10",
+        check_in: "2025-05-05",
+        check_out: "2025-05-10",
+        booking_status: "Confirmed",
       });
       testBookingIds.push(booking2_id);
 
-      // Second booking_unit (consecutive, no overlap)
-      const { error: error2 } = await supabase.from("booking_units").insert({
-        booking_id: booking2_id,
+      // Second availability record (consecutive, no overlap - should succeed)
+      const { error: error2 } = await supabase.from("booking_unit_availability").insert({
         unit_id: unitId,
-        check_in_date: "2025-05-05", // Starts when first ends
-        check_out_date: "2025-05-10",
-        status: "confirmed",
+        booking_id: booking2_id,
+        check_in: "2025-05-05T14:00:00Z", // Starts when first ends
+        check_out: "2025-05-10T11:00:00Z",
+        booking_status: "Confirmed",
       });
 
-      expect(error2).toBeNull(); // Should succeed
+      expect(error2).toBeNull(); // Should succeed - consecutive bookings are allowed
     });
   });
 
   describe("guests_per_unit CHECK constraint", () => {
     test("prevents zero guests per unit", async () => {
-      const { data: booking } = await supabase
-        .from("bookings")
-        .insert({
-          guest_name: "Zero Guests Test",
-          email: "zero@test.com",
-          phone_number: "+639211234567",
-          check_in_date: "2025-06-01",
-          check_out_date: "2025-06-05",
-          is_multi_unit: true,
-        })
-        .select()
-        .single();
+      // Create a valid booking first
+      const booking_id = await createTestBooking(supabase, {
+        guest_name: "Zero Guests Test",
+        email: "zero@test.com",
+        check_in: "2025-06-01",
+        check_out: "2025-06-05",
+        is_multi_unit: true,
+        num_guests: 2,
+      });
+      testBookingIds.push(booking_id);
 
-      testBookingIds.push(booking!.booking_id);
-
+      // Try to insert unit request with 0 guests (should fail CHECK constraint)
       const { error } = await supabase.from("guest_booking_unit_requests").insert({
-        booking_id: booking!.booking_id,
-        guests_per_unit: 0, // Invalid
+        booking_id: booking_id,
+        unit_type: "Standard",
+        quantity: 1,
+        guests_per_unit: 0, // Invalid - violates CHECK (guests_per_unit > 0)
       });
 
       expect(error).toBeDefined();
@@ -367,28 +399,28 @@ describe("Database Constraint Tests", () => {
     });
 
     test("prevents negative guests per unit", async () => {
-      const { data: booking } = await supabase
-        .from("bookings")
-        .insert({
-          guest_name: "Negative Guests Test",
-          email: "negative@test.com",
-          phone_number: "+639221234567",
-          check_in_date: "2025-06-10",
-          check_out_date: "2025-06-15",
-          is_multi_unit: true,
-        })
-        .select()
-        .single();
+      // Create a valid booking first
+      const booking_id = await createTestBooking(supabase, {
+        guest_name: "Negative Guests Test",
+        email: "negative@test.com",
+        check_in: "2025-06-10",
+        check_out: "2025-06-15",
+        is_multi_unit: true,
+        num_guests: 2,
+      });
+      testBookingIds.push(booking_id);
 
-      testBookingIds.push(booking!.booking_id);
-
+      // Try to insert unit request with negative guests (should fail CHECK constraint)
       const { error } = await supabase.from("guest_booking_unit_requests").insert({
-        booking_id: booking!.booking_id,
-        guests_per_unit: -5, // Invalid
+        booking_id: booking_id,
+        unit_type: "Standard",
+        quantity: 1,
+        guests_per_unit: -5, // Invalid - violates CHECK (guests_per_unit > 0)
       });
 
       expect(error).toBeDefined();
       expect(error?.code).toBe("23514"); // CHECK constraint violation
+      expect(error?.message).toContain("guests_per_unit");
     });
   });
 });

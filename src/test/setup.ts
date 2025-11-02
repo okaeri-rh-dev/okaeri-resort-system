@@ -18,20 +18,22 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-// Mock window.matchMedia
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: vi.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(), // deprecated
-    removeListener: vi.fn(), // deprecated
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
+// Mock window.matchMedia (only in browser-like environments)
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: vi.fn().mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(), // deprecated
+      removeListener: vi.fn(), // deprecated
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+}
 
 // Mock IntersectionObserver
 global.IntersectionObserver = vi.fn().mockImplementation(() => ({
@@ -52,14 +54,17 @@ global.ResizeObserver = vi.fn().mockImplementation(() => ({
 }));
 
 // Polyfill for hasPointerCapture (required for Radix UI components in jsdom)
-if (!Element.prototype.hasPointerCapture) {
-  Element.prototype.hasPointerCapture = vi.fn(() => false);
-}
-if (!Element.prototype.setPointerCapture) {
-  Element.prototype.setPointerCapture = vi.fn();
-}
-if (!Element.prototype.releasePointerCapture) {
-  Element.prototype.releasePointerCapture = vi.fn();
+// Only apply in browser-like environments
+if (typeof Element !== "undefined") {
+  if (!Element.prototype.hasPointerCapture) {
+    Element.prototype.hasPointerCapture = vi.fn(() => false);
+  }
+  if (!Element.prototype.setPointerCapture) {
+    Element.prototype.setPointerCapture = vi.fn();
+  }
+  if (!Element.prototype.releasePointerCapture) {
+    Element.prototype.releasePointerCapture = vi.fn();
+  }
 }
 
 // Create enhanced Supabase mock with chainable methods
