@@ -35,6 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { supabase } from "@/lib/supabase";
 import { formatUrgencyLevel, type UrgencyLevel } from "@/lib/urgency-scoring";
 import { formatCurrency, formatDate, formatRelativeTime } from "@/lib/utils";
 
@@ -82,9 +83,16 @@ export function PendingBookingsQueue() {
   } = useQuery({
     queryKey: ["pending-multi-unit-bookings"],
     queryFn: async () => {
+      // Get current session token for authentication
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch("/api/admin/pending-bookings", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          ...(session?.access_token && {
+            Authorization: `Bearer ${session.access_token}`,
+          }),
         },
       });
 

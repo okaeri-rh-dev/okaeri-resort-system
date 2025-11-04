@@ -25,13 +25,8 @@ export const Route = createFileRoute("/pending-bookings")({
       });
     }
 
-    // Check admin role (adjust based on your auth implementation)
-    const userRole = session.user?.user_metadata?.role || session.user?.app_metadata?.role;
-    if (userRole !== "admin") {
-      throw redirect({
-        to: "/dashboard",
-      });
-    }
+    // Phase 1: All authenticated users have admin access
+    // Phase 2: TODO - Implement role-based access with hasRole('admin')
   },
 });
 

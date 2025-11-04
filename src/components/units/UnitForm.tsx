@@ -155,6 +155,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                           className="uppercase"
                           {...field}
                           onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                          autoComplete="off"
                         />
                       </FormControl>
                       <FormDescription>
