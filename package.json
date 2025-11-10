@@ -132,7 +132,8 @@
     "vite": "^7.1.2",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4",
-    "vitest-axe": "^0.1.0"
+    "vitest-axe": "^0.1.0",
+    "wrangler": "^4.46.0"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "^4.32.0",
