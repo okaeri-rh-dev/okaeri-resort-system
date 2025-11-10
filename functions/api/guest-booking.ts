@@ -12,7 +12,8 @@ import {
 } from "@/lib/supabase-admin";
 import { getClientIp, verifyTurnstile } from "@/lib/turnstile";
 import { generateBookingReference } from "@/utils/booking-reference";
-import { calculatePricing } from "@/utils/pricing";
+
+import { calculateBookingPrice } from "../lib/pricing";
 
 // Environment type for Cloudflare
 interface Env {
@@ -212,18 +213,43 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       );
     }
 
-    // Calculate pricing
+    // Get pricing configuration for fallback values
+    const { data: pricingConfig } = await supabaseAdmin
+      .from("pricing_config")
+      .select("*")
+      .eq("id", "default")
+      .single();
+
+    // Calculate pricing with seasonal rates
     const checkIn = new Date(data.check_in);
     const checkOut = new Date(data.check_out);
 
-    const pricing = calculatePricing(unit, {
+    const pricingBreakdown = await calculateBookingPrice(supabaseAdmin, {
       checkIn,
       checkOut,
       guestCount: data.num_guests,
-      includeTaxes: true,
+      baseRate: unit.base_rate || pricingConfig?.base_rate || 3000,
+      weekendRate: unit.weekend_rate || pricingConfig?.weekend_rate || 3500,
+      extraPersonRate: unit.extra_person_rate || pricingConfig?.extra_person_rate || 500,
+      baseOccupancy: unit.base_occupancy || pricingConfig?.base_occupancy || 2,
     });
 
-    const totalAmount = pricing.totalAmount;
+    const totalAmount = pricingBreakdown.total;
+    const downpaymentAmount = pricingBreakdown.downpayment;
+
+    // Determine if seasonal rates were applied
+    const hasSeasonalRates = pricingBreakdown.nightlyBreakdown.some(
+      (night) => night.seasonalMultiplier !== 1.0
+    );
+    const seasonNames = hasSeasonalRates
+      ? [
+          ...new Set(
+            pricingBreakdown.nightlyBreakdown
+              .filter((night) => night.seasonName)
+              .map((night) => night.seasonName)
+          ),
+        ]
+      : [];
 
     // Find or create guest
     const guestId = await findOrCreateGuest(supabaseAdmin, {
@@ -235,7 +261,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     // Generate booking reference
     const bookingReference = generateBookingReference();
 
-    // Create booking record
+    // Create booking record with pricing metadata
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
       .insert({
@@ -255,6 +281,29 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
         is_guest_booking: true, // Identifies guest bookings
         upload_status: "pending", // Set initial upload status
         upload_expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour from now
+        pricing_metadata: {
+          // Store full pricing breakdown for audit and display
+          nights: pricingBreakdown.nights,
+          subtotal: pricingBreakdown.subtotal,
+          extraPersons: pricingBreakdown.extraPersons,
+          extraPersonTotal: pricingBreakdown.extraPersonTotal,
+          total: pricingBreakdown.total,
+          downpayment: pricingBreakdown.downpayment,
+          balance: pricingBreakdown.balance,
+          currency: pricingBreakdown.currency,
+          hasSeasonalRates,
+          seasonNames,
+          // Store nightly breakdown for transparency
+          nightlyBreakdown: pricingBreakdown.nightlyBreakdown.map((night) => ({
+            date: night.date,
+            isWeekend: night.isWeekend,
+            baseRate: night.baseRate,
+            seasonalMultiplier: night.seasonalMultiplier,
+            finalRate: night.finalRate,
+            seasonName: night.seasonName,
+          })),
+          calculatedAt: new Date().toISOString(),
+        },
       })
       .select()
       .single();
