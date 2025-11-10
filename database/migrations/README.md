@@ -1,9 +1,53 @@
-# Database Migrations - Phase 2 Critical Fixes
+# Database Migrations - Legacy Reference
+
+## ⚠️ MIGRATION WORKFLOW UPDATE (Nov 4, 2025)
+
+**All new migrations should use the Supabase CLI workflow:**
+
+```bash
+# Create a new migration
+supabase migration new <descriptive_name>
+
+# Apply all pending migrations
+supabase db reset
+
+# Or push to remote
+supabase db push
+```
+
+**Migration files are now stored in:** `supabase/migrations/` with timestamp prefixes (e.g., `20251104184719_migration_name.sql`)
+
+This directory (`database/migrations/`) contains legacy migrations that have been integrated into the Supabase workflow or are kept for reference.
+
+---
 
 ## Overview
 These migrations fix critical misalignments between the database schema and TypeScript implementation discovered during Phase 2 validation.
 
 ## Migrations Included
+
+### 021-multi-unit-guest-booking-schema.sql ✅
+**Status**: Integrated into Supabase CLI workflow as `20251104184719_multi_unit_guest_booking_schema.sql`
+**Applied**: Nov 4, 2025 (Local database)
+
+**Purpose**: Multi-unit guest booking system with pricing engine
+- Creates `pricing_config` singleton table (₱3,000 base, ₱3,500 weekend rates)
+- Creates `guest_booking_unit_requests` table for multi-unit booking requests
+- Creates `discount_rules` table with 4 default duration discounts (5%, 10%, 15%, 20%)
+- Creates `idempotency_keys` table for duplicate prevention
+- Extends `bookings` table with 9 new columns (multi-unit support, discount tracking)
+- Adds PostgreSQL functions:
+  - `calculate_booking_pricing()` - Pricing engine with discount evaluation
+  - `create_guest_booking()` - Atomic booking creation
+  - `assign_units_to_booking()` - All-or-nothing unit assignment
+  - `cleanup_expired_idempotency_keys()` - Daily cleanup (cron)
+  - `cleanup_expired_payment_proofs()` - Weekly cleanup (cron)
+- Enables Row Level Security on all new tables
+- Creates 11 performance indexes
+
+**Breaking Changes**: None (additive migration)
+
+---
 
 ### 001-fix-payment-status.sql
 **Purpose**: Aligns payment status values between database and code

@@ -2,6 +2,16 @@
 -- Multi-Unit Guest Booking Schema Migration
 -- Chunk 001: Database Schema Setup
 -- ============================================
+--
+-- MIGRATION STATUS: ✅ Integrated into Supabase CLI workflow
+-- Applied to: Local database (Nov 4, 2025)
+-- Supabase Location: supabase/migrations/20251104184719_multi_unit_guest_booking_schema.sql
+--
+-- This file is kept for reference. Future schema changes should use:
+--   supabase migration new <name>
+--   supabase db reset (to apply all migrations)
+--
+-- ============================================
 
 BEGIN;
 
