@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { format } from "date-fns";
 
 import type { AuditEventContext, AuditLogFilters } from "@/types/audit.types";
 import type { Database, Json } from "@/types/database.types";
@@ -223,6 +224,25 @@ export const db = {
     update: (id: string, data: Database["public"]["Tables"]["expenses"]["Update"]) =>
       supabase.from("expenses").update(data).eq("expense_id", id).select().single(),
     delete: (id: string) => supabase.from("expenses").delete().eq("expense_id", id),
+  },
+
+  // Pricing configuration management
+  pricingConfig: {
+    /**
+     * Get current pricing configuration (singleton row with id='default')
+     * Used by guest booking form and admin pricing management
+     */
+    get: () => supabase.from("pricing_config").select("*").eq("id", "default").single(),
+
+    /**
+     * Update pricing configuration
+     * Only one row exists (id='default'), enforced by database constraint
+     *
+     * @param data - Pricing configuration updates
+     * @returns Updated pricing configuration
+     */
+    update: (data: Database["public"]["Tables"]["pricing_config"]["Update"]) =>
+      supabase.from("pricing_config").update(data).eq("id", "default").select().single(),
   },
 
   // Blackout period management
@@ -789,6 +809,94 @@ export const db = {
         .eq("table_name", tableName)
         .contains("record_pk", recordPk)
         .order("created_at", { ascending: true }); // Chronological order for history
+
+      if (error) throw error;
+      return data || [];
+    },
+  },
+
+  // Seasonal rates helpers
+  seasonalRates: {
+    all: () => supabase.from("seasonal_rates").select("*").order("priority", { ascending: false }),
+
+    active: () =>
+      supabase
+        .from("seasonal_rates")
+        .select("*")
+        .eq("is_active", true)
+        .order("priority", { ascending: false }),
+
+    byId: (id: string) => supabase.from("seasonal_rates").select("*").eq("id", id).single(),
+
+    bySeasonId: (seasonId: string) =>
+      supabase.from("seasonal_rates").select("*").eq("season_id", seasonId).single(),
+
+    create: (data: Database["public"]["Tables"]["seasonal_rates"]["Insert"]) =>
+      supabase.from("seasonal_rates").insert(data).select().single(),
+
+    update: (id: string, data: Database["public"]["Tables"]["seasonal_rates"]["Update"]) =>
+      supabase.from("seasonal_rates").update(data).eq("id", id).select().single(),
+
+    delete: (id: string) => supabase.from("seasonal_rates").delete().eq("id", id),
+
+    // Bulk operations for saving all changes at once
+    bulkUpsert: async (rates: Database["public"]["Tables"]["seasonal_rates"]["Insert"][]) => {
+      // Delete all existing rates first
+      const { error: deleteError } = await supabase
+        .from("seasonal_rates")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000");
+      if (deleteError) throw deleteError;
+
+      // Insert all new rates
+      if (rates.length > 0) {
+        const { data, error } = await supabase.from("seasonal_rates").insert(rates).select();
+        if (error) throw error;
+        return data;
+      }
+      return [];
+    },
+
+    // Get seasonal rate for a specific date
+    // Note: Uses database function 'get_seasonal_rate_for_date' when available
+    // Falls back to client-side filtering for now
+    forDate: async (date: Date) => {
+      const monthDay = format(date, "MM-dd");
+
+      // Get all active seasonal rates and filter client-side
+      const { data, error } = await supabase
+        .from("seasonal_rates")
+        .select("*")
+        .eq("is_active", true)
+        .order("priority", { ascending: false });
+
+      if (error) throw error;
+      if (!data) return null;
+
+      // Find matching rate (handles year-crossing seasons)
+      const matchingRate = data.find((rate) => {
+        const start = rate.start_date;
+        const end = rate.end_date;
+
+        // Case 1: Season doesn't cross year boundary
+        if (start <= end) {
+          return monthDay >= start && monthDay <= end;
+        }
+        // Case 2: Season crosses year boundary (e.g., Dec 20 to Jan 02)
+        return monthDay >= start || monthDay <= end;
+      });
+
+      return matchingRate || null;
+    },
+
+    // Get all seasonal rates that overlap with a date range
+    forDateRange: async () => {
+      // Get all active rates - date range filtering can be added later if needed
+      const { data, error } = await supabase
+        .from("seasonal_rates")
+        .select("*")
+        .eq("is_active", true)
+        .order("priority", { ascending: false });
 
       if (error) throw error;
       return data || [];

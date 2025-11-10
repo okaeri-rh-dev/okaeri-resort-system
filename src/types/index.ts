@@ -83,6 +83,22 @@ export interface Booking {
   internal_notes?: string | null;
   is_multi_unit?: boolean | null;
   unit_count?: number | null;
+  pricing_metadata?: {
+    hasSeasonalRates?: boolean;
+    seasonNames?: string[];
+    nights?: number;
+    subtotal?: number;
+    extraPersonTotal?: number;
+    total?: number;
+    downpayment?: number;
+    balance?: number;
+    nightlyBreakdown?: Array<{
+      date: string;
+      rate: number;
+      season?: string;
+      multiplier?: number;
+    }>;
+  } | null;
   created_at: string | null;
   updated_at: string | null;
   // Relations (NEW: junction table pattern)

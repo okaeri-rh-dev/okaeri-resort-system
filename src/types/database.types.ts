@@ -841,6 +841,51 @@ export type Database = {
         };
         Relationships: [];
       };
+      seasonal_rates: {
+        Row: {
+          id: string;
+          season_id: string;
+          name: string;
+          start_date: string;
+          end_date: string;
+          multiplier: number;
+          priority: number;
+          is_active: boolean;
+          description: string | null;
+          color: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          season_id: string;
+          name: string;
+          start_date: string;
+          end_date: string;
+          multiplier: number;
+          priority?: number;
+          is_active?: boolean;
+          description?: string | null;
+          color?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          season_id?: string;
+          name?: string;
+          start_date?: string;
+          end_date?: string;
+          multiplier?: number;
+          priority?: number;
+          is_active?: boolean;
+          description?: string | null;
+          color?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       units: {
         Row: {
           amenities: Json | null;
