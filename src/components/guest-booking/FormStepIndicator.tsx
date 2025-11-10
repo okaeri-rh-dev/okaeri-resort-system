@@ -21,9 +21,46 @@ export function FormStepIndicator({
   completedSteps,
   onStepClick,
 }: FormStepIndicatorProps) {
+  const currentStepData = steps[currentStep - 1];
+  const progressPercentage = (currentStep / steps.length) * 100;
+
   return (
-    <nav aria-label="Progress" className="mb-8">
-      <ol role="list" className="space-y-4 md:flex md:space-y-0 md:space-x-8">
+    <nav aria-label="Progress">
+      {/* Mobile: Compact Progress Bar */}
+      <div className="mb-6 md:hidden">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-foreground text-sm font-semibold">
+            Step {currentStep} of {steps.length}
+          </span>
+          <span className="text-muted-foreground ml-2 max-w-[60%] truncate text-sm font-medium">
+            {currentStepData?.label}
+          </span>
+        </div>
+
+        {/* Progress bar */}
+        <div className="h-2 overflow-hidden rounded-full bg-neutral-200">
+          <div
+            className="bg-primary h-full transition-all duration-200 ease-out"
+            style={{ width: `${progressPercentage}%` }}
+            role="progressbar"
+            aria-valuenow={currentStep}
+            aria-valuemin={1}
+            aria-valuemax={steps.length}
+            aria-label={`Step ${currentStep} of ${steps.length}: ${currentStepData?.label}`}
+          />
+        </div>
+
+        {/* Optional: Show completion count */}
+        {completedSteps.size > 0 && (
+          <div className="mt-2 flex items-center gap-1.5">
+            <Check className="text-primary h-3.5 w-3.5" aria-hidden="true" />
+            <span className="text-muted-foreground text-xs">{completedSteps.size} completed</span>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop: Full Stepper (Existing Design - Unchanged) */}
+      <ol role="list" className="mb-8 hidden md:flex md:space-y-0 md:space-x-8">
         {steps.map((step) => {
           const isCompleted = completedSteps.has(step.number);
           const isCurrent = currentStep === step.number;
@@ -36,10 +73,10 @@ export function FormStepIndicator({
                 onClick={() => isClickable && onStepClick?.(step.number)}
                 disabled={!isClickable}
                 className={cn(
-                  "group flex w-full flex-col border-l-4 py-2 pl-4 md:border-t-4 md:border-l-0 md:pt-4 md:pb-0 md:pl-0",
+                  "group flex w-full flex-col border-t-4 pt-4 pb-0 pl-0 transition-colors",
                   {
                     "border-primary hover:border-primary/80": isCurrent,
-                    "border-primary": isCompleted,
+                    "border-primary": isCompleted && !isCurrent,
                     "border-muted-foreground/30": !isCurrent && !isCompleted,
                     "cursor-pointer": isClickable,
                     "cursor-not-allowed": !isClickable,
@@ -68,7 +105,7 @@ export function FormStepIndicator({
                   <span className="ml-4 text-sm font-medium">{step.label}</span>
                 </span>
                 {step.description && (
-                  <span className="text-muted-foreground mt-1 ml-14 text-sm md:mt-2 md:ml-0">
+                  <span className="text-muted-foreground mt-2 ml-0 text-sm">
                     {step.description}
                   </span>
                 )}
