@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { createColumnHelper } from "@tanstack/react-table";
 
+import { PricingStatusIcon } from "@/components/pricing/PricingStatusBadge";
 import {
   ActionMenu,
   formatCurrency,
@@ -109,6 +110,33 @@ export const useBookingColumns = ({
           </div>
         ),
         size: 120,
+      }),
+
+      columnHelper.accessor("pricing_metadata", {
+        header: "Season",
+        cell: ({ getValue }) => {
+          const metadata = getValue();
+          if (!metadata?.hasSeasonalRates || !metadata?.seasonNames?.length) {
+            return <span className="text-xs text-neutral-400">Regular</span>;
+          }
+
+          // Get the most prominent season (usually the first one)
+          const primarySeason = metadata.seasonNames[0];
+          const seasonNotice = `Seasonal rates applied (${primarySeason})`;
+
+          return (
+            <div className="flex items-center gap-1">
+              <PricingStatusIcon notice={seasonNotice} />
+              <span
+                className="max-w-[100px] truncate text-xs text-neutral-600"
+                title={primarySeason}
+              >
+                {primarySeason}
+              </span>
+            </div>
+          );
+        },
+        size: 110,
       }),
 
       columnHelper.accessor("booking_status", {

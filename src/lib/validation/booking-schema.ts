@@ -55,10 +55,10 @@ export const multiUnitBookingSchema = z
 
     // Booking Dates
     check_in: z
-      .string({
+      .date({
         required_error: "Check-in date is required",
+        invalid_type_error: "Invalid date format",
       })
-      .datetime("Invalid date format")
       .refine(
         (date) => {
           const checkIn = new Date(date);
@@ -71,11 +71,10 @@ export const multiUnitBookingSchema = z
         }
       ),
 
-    check_out: z
-      .string({
-        required_error: "Check-out date is required",
-      })
-      .datetime("Invalid date format"),
+    check_out: z.date({
+      required_error: "Check-out date is required",
+      invalid_type_error: "Invalid date format",
+    }),
 
     // Unit Requests (Array-based model)
     unit_requests: z
@@ -114,9 +113,7 @@ export const multiUnitBookingSchema = z
   .refine(
     (data) => {
       // Check-out must be after check-in
-      const checkIn = new Date(data.check_in);
-      const checkOut = new Date(data.check_out);
-      return checkOut > checkIn;
+      return data.check_out > data.check_in;
     },
     {
       message: "Check-out date must be after check-in date",
@@ -126,9 +123,7 @@ export const multiUnitBookingSchema = z
   .refine(
     (data) => {
       // Minimum 1 night stay
-      const checkIn = new Date(data.check_in);
-      const checkOut = new Date(data.check_out);
-      const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime());
+      const diffTime = Math.abs(data.check_out.getTime() - data.check_in.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       return diffDays >= 1;
     },

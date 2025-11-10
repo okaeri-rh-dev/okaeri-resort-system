@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 
+import { format } from "date-fns";
 import { AlertTriangle, Info } from "lucide-react";
 
+import { PricingStatusBadge } from "@/components/pricing/PricingStatusBadge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { previewPricing } from "@/lib/api/guest-booking-client";
-import type { PricingPreview, UnitRequest } from "@/types/guest-booking-multi-unit";
+import { usePricingCalculation } from "@/hooks/usePricingCalculation";
+import type { UnitRequest } from "@/types/guest-booking-multi-unit";
 
 export interface PaymentSummaryProps {
   unitRequests: UnitRequest[];
@@ -17,45 +19,66 @@ export interface PaymentSummaryProps {
 }
 
 export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSummaryProps) {
-  const [pricing, setPricing] = useState<PricingPreview | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [pricingNotice, setPricingNotice] = useState<string | null>(null);
+  const [pricingData, setPricingData] = useState<any>(null);
+
+  // Initialize pricing calculation hook
+  const calculatePricing = usePricingCalculation({
+    onSuccess: (data) => {
+      setPricingNotice(data.notice);
+      setPricingData(data.pricing);
+    },
+    onError: () => {
+      setPricingNotice(null);
+      setPricingData(null);
+    },
+  });
 
   useEffect(() => {
     // Clear pricing if required fields are missing
     if (unitRequests.length === 0 || !checkIn || !checkOut) {
-      setPricing(null);
+      setPricingData(null);
+      setPricingNotice(null);
       return;
     }
 
-    // Capture dates to satisfy TypeScript null safety
-    const checkInDate = checkIn;
-    const checkOutDate = checkOut;
+    // Format dates for API
+    const checkInStr = format(checkIn, "yyyy-MM-dd");
+    const checkOutStr = format(checkOut, "yyyy-MM-dd");
 
     // Debounce API call by 500ms
     const timer = setTimeout(() => {
-      // Defensive guard (should never hit, but satisfies TypeScript)
-      if (!checkInDate || !checkOutDate) return;
+      // Map unit requests to pricing API format
+      const unitRequestsForApi = unitRequests.map((req) => ({
+        unit_id: req.unit_id || "", // Will use first available unit if not specified
+        guest_count: req.guests_per_unit,
+      }));
 
-      async function fetchPricing() {
-        setLoading(true);
-        setError(null);
-        try {
-          const response = await previewPricing({
-            unit_requests: unitRequests,
-            check_in: checkInDate.toISOString(),
-            check_out: checkOutDate.toISOString(),
-          });
-          setPricing(response.pricing);
-        } catch (err) {
-          console.error("[PaymentSummary] Pricing preview error:", err);
-          setError("Unable to calculate pricing. Please try again.");
-          setPricing(null);
-        } finally {
-          setLoading(false);
-        }
+      // Calculate total guest count for single unit pricing fallback
+      const totalGuests = unitRequests.reduce((sum, req) => sum + req.guests_per_unit, 0);
+
+      // Call pricing API
+      if (unitRequests.length > 1 || unitRequests[0]?.unit_id) {
+        // Multi-unit booking or unit specified
+        calculatePricing.mutate({
+          check_in_date: checkInStr,
+          check_out_date: checkOutStr,
+          unit_requests: unitRequestsForApi,
+        });
+      } else {
+        // Single unit, no specific unit (use custom pricing)
+        calculatePricing.mutate({
+          check_in_date: checkInStr,
+          check_out_date: checkOutStr,
+          guest_count: totalGuests,
+          custom_pricing: {
+            base_rate: 3000, // Default from pricing config
+            weekend_rate: 3500,
+            extra_person_rate: 500,
+            base_occupancy: 2,
+          },
+        });
       }
-      fetchPricing();
     }, 500);
 
     // Cleanup function to clear timer
@@ -73,7 +96,7 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
   }
 
   // Loading state: Calculating pricing
-  if (loading) {
+  if (calculatePricing.isPending) {
     return (
       <Card>
         <CardHeader>
@@ -101,19 +124,40 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
   }
 
   // Error state: Failed to calculate pricing
-  if (error) {
+  if (calculatePricing.isError) {
     return (
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>{error}</AlertDescription>
+        <AlertDescription>Unable to calculate pricing. Please try again.</AlertDescription>
       </Alert>
     );
   }
 
   // Success state: Display pricing breakdown
-  if (!pricing) {
+  if (!pricingData) {
     return null;
   }
+
+  // Extract pricing data (handles both single and multi-unit responses)
+  const isMultiUnit = "units" in pricingData;
+  const pricing = isMultiUnit
+    ? {
+        nights: pricingData.nights,
+        total: pricingData.total,
+        downpayment: pricingData.downpayment,
+        total_units: pricingData.units.length,
+        total_guests: pricingData.units.reduce(
+          (sum: number, u: any) => sum + u.pricing.extraPersons + 2,
+          0
+        ),
+      }
+    : {
+        nights: pricingData.nights,
+        total: pricingData.total,
+        downpayment: pricingData.downpayment,
+        total_units: 1,
+        total_guests: pricingData.extraPersons + 2,
+      };
 
   return (
     <div className="space-y-4">
@@ -149,54 +193,6 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
 
           <Separator />
 
-          {/* Pricing Components */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Base Total:</span>
-              <span className="font-medium">₱{pricing.base_total.toLocaleString()}</span>
-            </div>
-            {pricing.weekend_surcharge > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Weekend Surcharge:</span>
-                <span className="font-medium">₱{pricing.weekend_surcharge.toLocaleString()}</span>
-              </div>
-            )}
-            {pricing.extra_person_fees > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Extra Person Fees:</span>
-                <span className="font-medium">₱{pricing.extra_person_fees.toLocaleString()}</span>
-              </div>
-            )}
-          </div>
-
-          <Separator />
-
-          {/* Subtotal */}
-          <div className="flex justify-between text-sm font-medium">
-            <span>Subtotal:</span>
-            <span>₱{pricing.subtotal.toLocaleString()}</span>
-          </div>
-
-          {/* Discount (if applicable) */}
-          {pricing.discount && (
-            <>
-              <div className="flex justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">
-                    Discount ({pricing.discount.percent}%):
-                  </span>
-                  <Badge variant="secondary" className="text-xs">
-                    {pricing.discount.rule_name}
-                  </Badge>
-                </div>
-                <span className="font-medium text-green-600">
-                  -₱{pricing.discount.amount.toLocaleString()}
-                </span>
-              </div>
-              <Separator />
-            </>
-          )}
-
           {/* Total */}
           <div className="flex justify-between text-lg font-bold">
             <span>Total:</span>
@@ -204,10 +200,21 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
           </div>
 
           {/* Downpayment Required */}
-          <div className="flex justify-between text-lg font-bold">
-            <span>Downpayment Required ({pricing.downpayment_percent}%):</span>
-            <span className="text-primary">₱{pricing.downpayment_required.toLocaleString()}</span>
+          <div className="flex justify-between text-base font-semibold">
+            <span>Downpayment Required (50%):</span>
+            <span className="text-primary">₱{pricing.downpayment.toLocaleString()}</span>
           </div>
+
+          {/* Seasonal Rates Notice */}
+          {pricingNotice && (
+            <div className="pt-2">
+              <PricingStatusBadge
+                notice={pricingNotice}
+                isLoading={calculatePricing.isPending}
+                size="sm"
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 

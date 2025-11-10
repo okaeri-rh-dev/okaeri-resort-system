@@ -1,9 +1,16 @@
 import { lazy, Suspense, useState } from "react";
 
-import { createFileRoute, Outlet, useNavigate, useParams } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  useMatches,
+  useNavigate,
+  useParams,
+} from "@tanstack/react-router";
 import { z } from "zod";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PricingInfoCard } from "@/components/pricing/PricingInfoCard";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Unit } from "@/types";
@@ -30,8 +37,7 @@ export const Route = createFileRoute("/_authenticated/units")({
 function UnitsPage() {
   const navigate = useNavigate();
   const params = useParams({ strict: false });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isDetailView = !!(params as any).unitId;
+  const matches = useMatches();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   // Navigate to dedicated detail and edit routes instead of using modals
@@ -47,8 +53,12 @@ function UnitsPage() {
     setShowCreateDialog(false);
   };
 
-  // If we're viewing a specific unit detail, render the child route
-  if (isDetailView) {
+  // Check if we have any child routes active (unit detail, pricing, etc.)
+  // If matches.length > 2, we have: root -> _authenticated -> units -> [child route]
+  const hasChildRoute = matches.length > 3;
+
+  // If we're viewing any child route, render the outlet
+  if (hasChildRoute) {
     return (
       <ErrorBoundary level="page">
         <Outlet />
@@ -68,6 +78,11 @@ function UnitsPage() {
           </div>
           <Button onClick={() => setShowCreateDialog(true)}>Add Cabin</Button>
         </div>
+
+        {/* Pricing Configuration Card */}
+        <ErrorBoundary level="component">
+          <PricingInfoCard onEdit={() => navigate({ to: "/units/pricing" })} />
+        </ErrorBoundary>
 
         <ErrorBoundary level="component">
           <Suspense

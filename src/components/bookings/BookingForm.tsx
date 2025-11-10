@@ -6,6 +6,7 @@ import { CalendarDays, CheckCircle, CreditCard, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { PricingStatusBadge } from "@/components/pricing/PricingStatusBadge";
 import { BookingFormSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,8 +32,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { RESORT_OPERATION_HOURS } from "@/config/settings";
+import { usePricingCalculation } from "@/hooks/usePricingCalculation";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
 import { hasProperty, isObject } from "@/lib/type-guards";
 import { cn } from "@/lib/utils";
@@ -53,7 +56,9 @@ import { formDateToUTC } from "@/utils/date-helpers";
 interface BookingFormProps {
   onSuccess?: (booking: Booking) => void;
   onCancel?: () => void;
-  initialData?: Partial<CompleteBookingData>;
+  initialData?: Partial<CompleteBookingData> & {
+    total_amount?: number; // Add total_amount for edit mode pricing
+  };
   bookingId?: string; // If provided, form is in edit mode
   className?: string;
 }
@@ -77,11 +82,33 @@ export function BookingForm({
   const [currentStep, setCurrentStep] = useState<FormStep>(1);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [calculatedTotal, setCalculatedTotal] = useState<number>(0);
+  const [downpaymentAmount, setDownpaymentAmount] = useState<number>(0);
+  const [pricingNotice, setPricingNotice] = useState<string | null>(null);
+  const [recalculatePricing, setRecalculatePricing] = useState<boolean>(false);
+  const originalTotal = initialData?.total_amount || 0;
 
   const isEditMode = !!bookingId;
   const createBookingMutation = useCreateBooking();
   const updateBookingMutation = useUpdateBooking();
   const { data: units, isLoading: unitsLoading } = useUnits();
+
+  // Initialize pricing calculation hook
+  const calculatePricing = usePricingCalculation({
+    onSuccess: (data) => {
+      setCalculatedTotal(data.pricing.total);
+      setDownpaymentAmount(data.pricing.downpayment);
+      setPricingNotice(data.notice);
+    },
+    onError: (error) => {
+      toast.error("Failed to calculate pricing", {
+        description: error.message,
+      });
+      // Fallback to zero if pricing calculation fails
+      setCalculatedTotal(0);
+      setDownpaymentAmount(0);
+      setPricingNotice(null);
+    },
+  });
 
   const form = useForm<CompleteBookingData>({
     resolver: zodResolver(completeBookingSchema),
@@ -114,45 +141,48 @@ export function BookingForm({
 
   const selectedUnit = units?.find((unit) => unit.unit_id === unitId);
 
-  // Memoize expensive total calculation
-  const calculatedTotalMemoized = useMemo(() => {
-    if (!selectedUnit || !checkIn || !checkOut) return 0;
+  // Calculate pricing via API when relevant fields change
+  useEffect(() => {
+    // In edit mode, only calculate if recalculatePricing is enabled
+    if (isEditMode && !recalculatePricing) {
+      // Use original total when not recalculating
+      setCalculatedTotal(originalTotal);
+      setDownpaymentAmount(originalTotal * 0.5); // Default 50% downpayment
+      setPricingNotice(null);
+      return;
+    }
 
-    // Use date-fns for efficient date calculations
+    if (!selectedUnit || !checkIn || !checkOut) {
+      setCalculatedTotal(0);
+      setDownpaymentAmount(0);
+      setPricingNotice(null);
+      return;
+    }
+
+    // Validate dates
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
     const nights = differenceInDays(checkOutDate, checkInDate);
 
-    if (nights <= 0) return 0;
+    if (nights <= 0) {
+      setCalculatedTotal(0);
+      setDownpaymentAmount(0);
+      setPricingNotice(null);
+      return;
+    }
 
-    // Efficiently calculate weekend nights using date-fns
-    const allDates = eachDayOfInterval({
-      start: checkInDate,
-      end: new Date(checkOutDate.getTime() - 24 * 60 * 60 * 1000), // Exclude checkout day
+    // Format dates for API
+    const checkInStr = format(checkInDate, "yyyy-MM-dd");
+    const checkOutStr = format(checkOutDate, "yyyy-MM-dd");
+
+    // Call pricing API
+    calculatePricing.mutate({
+      check_in_date: checkInStr,
+      check_out_date: checkOutStr,
+      guest_count: numGuests || 1,
+      unit_id: selectedUnit.unit_id,
     });
-
-    const weekendNights = allDates.filter((date) => {
-      const day = date.getDay();
-      return day === 5 || day === 6; // Friday or Saturday
-    }).length;
-
-    const weekdayNights = nights - weekendNights;
-
-    // Calculate base total
-    const baseTotal =
-      weekdayNights * selectedUnit.base_rate + weekendNights * selectedUnit.weekend_rate;
-
-    // Calculate extra person charges
-    const extraPersons = Math.max(0, (numGuests || 0) - selectedUnit.base_occupancy);
-    const extraPersonCharge = extraPersons * selectedUnit.extra_person_rate * nights;
-
-    return baseTotal + extraPersonCharge;
-  }, [selectedUnit, checkIn, checkOut, numGuests]);
-
-  // Update state only when memoized value changes
-  useEffect(() => {
-    setCalculatedTotal(calculatedTotalMemoized);
-  }, [calculatedTotalMemoized]);
+  }, [selectedUnit?.unit_id, checkIn, checkOut, numGuests, recalculatePricing, isEditMode]);
 
   const validateStep = async (step: FormStep): Promise<boolean> => {
     const values = form.getValues();
@@ -468,6 +498,49 @@ export function BookingForm({
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-2">
+              {isEditMode && (
+                <>
+                  <div className="bg-muted/50 flex items-center justify-between rounded-md p-2">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="recalculate-pricing"
+                        checked={recalculatePricing}
+                        onCheckedChange={setRecalculatePricing}
+                      />
+                      <label
+                        htmlFor="recalculate-pricing"
+                        className="cursor-pointer text-sm font-medium"
+                      >
+                        Recalculate with current rates
+                      </label>
+                    </div>
+                  </div>
+                  {recalculatePricing && originalTotal !== calculatedTotal && (
+                    <div className="rounded-md bg-yellow-50 p-2 dark:bg-yellow-900/20">
+                      <div className="space-y-1 text-xs text-yellow-800 dark:text-yellow-200">
+                        <div className="flex justify-between">
+                          <span>Original Price:</span>
+                          <span className="font-medium line-through">
+                            {formatCurrency(originalTotal)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>New Price:</span>
+                          <span className="font-medium text-green-700 dark:text-green-400">
+                            {formatCurrency(calculatedTotal)}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs italic">
+                          {calculatedTotal > originalTotal
+                            ? `Price increased by ${formatCurrency(calculatedTotal - originalTotal)}`
+                            : `Price reduced by ${formatCurrency(originalTotal - calculatedTotal)}`}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <Separator />
+                </>
+              )}
               <div className="flex justify-between">
                 <span>Unit:</span>
                 <span className="font-medium">{selectedUnit.unit_name}</span>
@@ -484,8 +557,26 @@ export function BookingForm({
               <Separator />
               <div className="flex justify-between text-lg font-semibold">
                 <span>Total:</span>
-                <span>{formatCurrency(calculatedTotal)}</span>
+                <span>
+                  {calculatePricing.isPending && recalculatePricing ? (
+                    <span className="text-muted-foreground text-sm">Calculating...</span>
+                  ) : (
+                    formatCurrency(calculatedTotal)
+                  )}
+                </span>
               </div>
+              {downpaymentAmount > 0 && (
+                <div className="text-muted-foreground flex justify-between text-sm">
+                  <span>Downpayment Required:</span>
+                  <span>{formatCurrency(downpaymentAmount)}</span>
+                </div>
+              )}
+              <PricingStatusBadge
+                notice={pricingNotice}
+                isLoading={calculatePricing.isPending}
+                className="mt-2"
+                size="sm"
+              />
             </div>
             <Button
               type="button"
@@ -740,10 +831,48 @@ export function BookingForm({
 
           <Separator />
 
+          {isEditMode && recalculatePricing && originalTotal !== calculatedTotal && (
+            <>
+              <div className="rounded-md bg-yellow-50 p-3 dark:bg-yellow-900/20">
+                <div className="space-y-1 text-sm text-yellow-800 dark:text-yellow-200">
+                  <div className="mb-2 font-medium">Pricing Updated</div>
+                  <div className="flex justify-between">
+                    <span>Original Booking Price:</span>
+                    <span className="font-mono line-through">{formatCurrency(originalTotal)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>New Price (Current Rates):</span>
+                    <span className="font-mono font-semibold text-green-700 dark:text-green-400">
+                      {formatCurrency(calculatedTotal)}
+                    </span>
+                  </div>
+                  <div className="mt-2 text-xs italic">
+                    {calculatedTotal > originalTotal
+                      ? `Price increased by ${formatCurrency(calculatedTotal - originalTotal)} due to seasonal rate changes`
+                      : `Price reduced by ${formatCurrency(originalTotal - calculatedTotal)} with current rates`}
+                  </div>
+                </div>
+              </div>
+              <Separator />
+            </>
+          )}
+
           <div className="flex items-center justify-between text-lg font-semibold">
             <span>Total Amount:</span>
             <span>{formatCurrency(calculatedTotal)}</span>
           </div>
+          {downpaymentAmount > 0 && (
+            <div className="text-muted-foreground flex items-center justify-between text-sm">
+              <span>Downpayment Required:</span>
+              <span>{formatCurrency(downpaymentAmount)}</span>
+            </div>
+          )}
+          <PricingStatusBadge
+            notice={pricingNotice}
+            isLoading={calculatePricing.isPending && recalculatePricing}
+            className="mt-3"
+            size="md"
+          />
         </CardContent>
       </Card>
     </div>

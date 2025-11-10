@@ -25,6 +25,7 @@ import type {
   ErrorResponse,
   MultiUnitBookingRequest,
   MultiUnitBookingResponse,
+  PricingConfig,
   PricingPreviewRequest,
   PricingPreviewResponse,
 } from "@/types/guest-booking-multi-unit";
@@ -255,7 +256,7 @@ export function generateFallbackUUID(): string {
  * @returns Promise<PricingConfig> - Pricing configuration object
  * @throws Error on network failure or server error
  */
-export async function fetchRates(): Promise<unknown> {
+export async function fetchRates(): Promise<PricingConfig> {
   const response = await fetch("/api/guest-booking/rates", {
     method: "GET",
     headers: {
@@ -270,8 +271,13 @@ export async function fetchRates(): Promise<unknown> {
   }
 
   const result: unknown = await response.json();
-  const res = result as Record<string, unknown>;
-  return res.data;
+  const res = result as { success: boolean; rates: PricingConfig };
+
+  if (!res.success || !res.rates) {
+    throw new Error("Invalid response structure from rates API");
+  }
+
+  return res.rates;
 }
 
 /**

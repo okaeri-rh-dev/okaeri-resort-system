@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { ArrowLeft, ArrowRight, CalendarDays, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
@@ -16,10 +18,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { logger } from "@/lib/logger";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
 import { hasProperty, isObject } from "@/lib/type-guards";
+import { cn } from "@/lib/utils";
 import {
   multiUnitBookingSchema,
   STEP_FIELDS,
@@ -54,8 +58,8 @@ export function MultiUnitGuestBookingForm() {
       guest_name: "",
       email: "",
       phone_number: "",
-      check_in: "",
-      check_out: "",
+      check_in: new Date(),
+      check_out: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
       unit_requests: [{ guests_per_unit: 2 }],
       special_requests: "",
       payment_proof_url: null,
@@ -66,6 +70,22 @@ export function MultiUnitGuestBookingForm() {
   });
 
   const watchedValues = form.watch();
+
+  // Auto-adjust check-out date when check-in changes
+  useEffect(() => {
+    const checkIn = watchedValues.check_in;
+    const checkOut = watchedValues.check_out;
+
+    if (checkIn && checkOut && checkOut <= checkIn) {
+      // Set check-out to the day after check-in
+      const newCheckOut = new Date(checkIn);
+      newCheckOut.setDate(newCheckOut.getDate() + 1);
+      form.setValue("check_out", newCheckOut, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }, [watchedValues.check_in, watchedValues.check_out, form]);
 
   const validateStep = async (step: number): Promise<boolean> => {
     const stepKey = step as keyof typeof STEP_FIELDS;
@@ -117,8 +137,11 @@ export function MultiUnitGuestBookingForm() {
 
       const sanitized = sanitizeBookingFormData(data);
 
+      // Convert Date objects to ISO strings for API
       const payload = {
         ...sanitized,
+        check_in: data.check_in.toISOString(),
+        check_out: data.check_out.toISOString(),
         turnstile_token: turnstileToken,
         idempotency_key: idempotencyKey,
       };
@@ -237,15 +260,34 @@ export function MultiUnitGuestBookingForm() {
                   control={form.control}
                   name="check_in"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Check-In Date & Time</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="datetime-local"
-                          {...field}
-                          min={new Date().toISOString().slice(0, 16)}
-                        />
-                      </FormControl>
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Check-In Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? format(field.value, "PPP") : "Pick a date"}
+                              <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[340px] p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                            initialFocus
+                            className="touch-manipulation"
+                          />
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -255,15 +297,36 @@ export function MultiUnitGuestBookingForm() {
                   control={form.control}
                   name="check_out"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Check-Out Date & Time</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="datetime-local"
-                          {...field}
-                          min={watchedValues.check_in || new Date().toISOString().slice(0, 16)}
-                        />
-                      </FormControl>
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Check-Out Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? format(field.value, "PPP") : "Pick a date"}
+                              <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[340px] p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              !watchedValues.check_in || date <= watchedValues.check_in
+                            }
+                            initialFocus
+                            className="touch-manipulation"
+                          />
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
