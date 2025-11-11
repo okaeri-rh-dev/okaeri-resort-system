@@ -61,6 +61,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     const rateLimitResult = await checkKVRateLimit(env.RATE_LIMIT_KV, rateLimitKey, {
       limit: 20,
       windowSeconds: 3600,
+      environment: env.ENVIRONMENT, // Development bypass enabled
     });
 
     // Check if CAPTCHA is required (after 20 attempts)

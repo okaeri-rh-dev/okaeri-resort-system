@@ -21,11 +21,29 @@ export async function verifyTurnstile(
     remoteip?: string;
     expectedHostname?: string;
     expectedAction?: string;
+    environment?: string; // "development" | "production"
+    skipInDev?: boolean; // Skip in development (default: true)
   }
 ): Promise<boolean> {
+  // Development mode bypass
+  const isDevelopment = options?.environment === "development";
+  const skipInDev = options?.skipInDev !== false; // Default: true
+
+  if (isDevelopment && skipInDev) {
+    console.log("[Turnstile] Development mode: skipping verification");
+    return true;
+  }
+
+  // Also detect mock token explicitly
+  if (token === "dev-mock-token" && isDevelopment) {
+    console.log("[Turnstile] Mock token detected in development: skipping verification");
+    return true;
+  }
+
+  // Existing bypass for missing key
   if (!secretKey) {
     console.warn("TURNSTILE_SECRET_KEY not configured, skipping verification");
-    return true; // Skip in development
+    return true;
   }
 
   try {

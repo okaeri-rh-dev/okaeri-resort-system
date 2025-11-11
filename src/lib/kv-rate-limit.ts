@@ -9,6 +9,8 @@
 interface RateLimitOptions {
   limit: number; // Max requests allowed per window
   windowSeconds: number; // Time window in seconds
+  environment?: string; // Optional: "development" | "production"
+  skipInDev?: boolean; // Optional: Skip rate limiting in development (default: true)
 }
 
 interface RateLimitResult {
@@ -22,7 +24,18 @@ export async function checkKVRateLimit(
   identifier: string,
   options: RateLimitOptions
 ): Promise<RateLimitResult> {
-  const { limit, windowSeconds } = options;
+  const { limit, windowSeconds, environment, skipInDev = true } = options;
+
+  // Development mode bypass: Skip rate limiting if environment is "development"
+  const isDevelopment = environment === "development";
+  if (isDevelopment && skipInDev) {
+    return {
+      allowed: true,
+      remaining: 999, // Indicate unlimited in dev
+      retryAfter: 0,
+    };
+  }
+
   const now = Math.floor(Date.now() / 1000);
 
   // Coarse window approach: divide time into fixed windows
@@ -126,5 +139,12 @@ export function getClientIp(request: Request): string {
 // Usage example in Cloudflare Function:
 // const result = await checkKVRateLimit(env.RATE_LIMIT_KV, clientIp, {
 //   limit: 5,
-//   windowSeconds: 3600 // 1 hour window = 24 writes max per IP/day
+//   windowSeconds: 3600, // 1 hour window = 24 writes max per IP/day
+//   environment: env.ENVIRONMENT, // "development" or "production"
+//   skipInDev: true // Optional: Skip rate limiting in development (default: true)
 // });
+//
+// Development bypass:
+// - Automatically bypasses rate limiting when environment === "development"
+// - Returns { allowed: true, remaining: 999, retryAfter: 0 }
+// - Set skipInDev: false to test rate limiting in development

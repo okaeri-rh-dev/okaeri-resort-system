@@ -91,7 +91,14 @@ export const multiUnitBookingSchema = z
       .optional()
       .transform((val) => val?.trim() || undefined),
 
-    payment_proof_url: z.string().url("Invalid payment proof URL").optional().nullable(),
+    payment_proof_url: z
+      .string()
+      .optional()
+      .nullable()
+      .refine(
+        (val) => !val || val === "" || z.string().url().safeParse(val).success,
+        "Invalid payment proof URL"
+      ),
 
     // Security and Compliance
     turnstile_token: z
@@ -131,6 +138,26 @@ export const multiUnitBookingSchema = z
       message: "Minimum stay is 1 night",
       path: ["check_out"],
     }
+  )
+  .refine(
+    (data) => {
+      // Detect environment - works in both browser (Vite) and Workers
+      const isDev =
+        typeof import.meta !== "undefined" && import.meta.env ? import.meta.env.DEV : false; // Default to production if can't detect
+
+      // In production, payment_proof_url is required
+      if (!isDev) {
+        // Check if payment_proof_url has a valid value (not null, not empty string)
+        if (!data.payment_proof_url || data.payment_proof_url === "") {
+          return false;
+        }
+      }
+      return true;
+    },
+    {
+      message: "Payment proof is required for booking confirmation",
+      path: ["payment_proof_url"],
+    }
   );
 
 export type MultiUnitBookingRequest = z.infer<typeof multiUnitBookingSchema>;
@@ -145,3 +172,15 @@ export const STEP_FIELDS = {
   4: ["payment_proof_url"] as const, // Payment proof step (optional)
   5: ["terms_accepted", "turnstile_token"] as const, // Review step
 } as const;
+
+/**
+ * Check if payment proof is required based on environment
+ */
+export function isPaymentProofRequired(): boolean {
+  // Check if we're in a browser environment with Vite
+  if (typeof import.meta !== "undefined" && import.meta.env) {
+    return import.meta.env.PROD;
+  }
+  // Workers/Node context - default to required (production behavior)
+  return true;
+}

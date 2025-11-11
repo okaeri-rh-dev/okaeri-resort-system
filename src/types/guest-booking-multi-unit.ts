@@ -32,7 +32,12 @@ export const multiUnitBookingSchema = z
     check_in: z
       .string()
       .datetime()
-      .refine((date) => new Date(date) > new Date(), "Check-in must be in future"),
+      .refine((date) => {
+        const checkIn = new Date(date);
+        const now = new Date();
+        now.setHours(0, 0, 0, 0); // Compare dates only, not times
+        return checkIn >= now;
+      }, "Check-in must be today or in the future"),
     check_out: z.string().datetime(),
 
     // Array: each entry = 1 unit (NO quantity field)

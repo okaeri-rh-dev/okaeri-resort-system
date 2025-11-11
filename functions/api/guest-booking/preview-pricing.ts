@@ -48,6 +48,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const rateLimit = await checkKVRateLimit(env.RATE_LIMIT_KV, clientIp, {
       limit: 20,
       windowSeconds: 3600,
+      environment: env.ENVIRONMENT, // Development bypass enabled
     });
 
     if (!rateLimit.allowed) {

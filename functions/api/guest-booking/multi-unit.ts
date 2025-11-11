@@ -90,6 +90,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       remoteip: clientIp,
       expectedHostname: "okaeri-resort-system.pages.dev",
       expectedAction: "guest-booking-multi-unit",
+      environment: env.ENVIRONMENT || "production", // Pass environment for dev bypass
+      skipInDev: true, // Enable development mode bypass
     });
 
     if (!turnstileValid) {
@@ -107,6 +109,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const rateLimit = await checkKVRateLimit(env.RATE_LIMIT_KV, clientIp, {
       limit: 5,
       windowSeconds: 3600,
+      environment: env.ENVIRONMENT, // Development bypass enabled
     });
 
     if (!rateLimit.allowed) {
@@ -266,8 +269,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       },
       p_booking_data: {
         booking_reference: bookingReference,
-        check_in_date: data.check_in,
-        check_out_date: data.check_out,
+        check_in: data.check_in, // Fixed: was check_in_date
+        check_out: data.check_out, // Fixed: was check_out_date
         num_guests: totalGuests,
         total_amount: pricing.total,
         discount_percent: pricing.discount?.percent || null,

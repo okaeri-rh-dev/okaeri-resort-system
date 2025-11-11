@@ -357,6 +357,7 @@ export function PaymentProofUpload({
                 <Upload className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
                 <p className="mb-2 text-sm font-medium">
                   Drop payment proof here or click to browse
+                  {import.meta.env.PROD && <span className="ml-1 text-red-500">*</span>}
                 </p>
                 <p className="text-muted-foreground text-xs">JPEG, PNG, or PDF (max 5MB)</p>
                 <input
@@ -375,8 +376,11 @@ export function PaymentProofUpload({
           {!selectedFile && !error && (
             <Alert>
               <AlertDescription className="text-xs">
-                Upload a screenshot or photo of your payment (bank transfer, GCash, etc.). Images
-                are automatically compressed for faster upload.
+                Upload a screenshot or photo of your payment (bank transfer, GCash, etc.).
+                {import.meta.env.DEV
+                  ? " Optional in development mode."
+                  : " Required for booking confirmation."}{" "}
+                Images are automatically compressed for faster upload.
               </AlertDescription>
             </Alert>
           )}

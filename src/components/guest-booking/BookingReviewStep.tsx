@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Turnstile } from "@marsidev/react-turnstile";
 import { AlertCircle, Calendar, Mail, Phone, User, Users } from "lucide-react";
@@ -31,6 +31,19 @@ export function BookingReviewStep({
 }: BookingReviewStepProps) {
   const [turnstileError, setTurnstileError] = useState(false);
   const [turnstileExpired, setTurnstileExpired] = useState(false);
+
+  // Development mode: Skip Turnstile if VITE_SKIP_TURNSTILE is true or no site key
+  const isDev = import.meta.env.DEV;
+  const skipTurnstile = import.meta.env.VITE_SKIP_TURNSTILE === "true";
+  const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
+  const shouldSkipTurnstile = isDev && (skipTurnstile || !siteKey);
+
+  // Auto-provide mock token in development when skipping (using useEffect to avoid render loops)
+  useEffect(() => {
+    if (shouldSkipTurnstile && !turnstileToken) {
+      onTurnstileSuccess("dev-mock-token");
+    }
+  }, [shouldSkipTurnstile, turnstileToken, onTurnstileSuccess]);
 
   const totalUnits = formData.unit_requests?.length || 0;
   const totalGuests =
@@ -200,9 +213,24 @@ export function BookingReviewStep({
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center space-y-4">
-            {!turnstileError ? (
+            {shouldSkipTurnstile ? (
+              // Development mode - Turnstile disabled
+              <Alert className="border-amber-500/50 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-50">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Development Mode:</strong> Security verification is disabled.
+                  {skipTurnstile
+                    ? " (VITE_SKIP_TURNSTILE=true)"
+                    : " (VITE_TURNSTILE_SITE_KEY not set)"}
+                  <br />
+                  <span className="text-xs">
+                    This would normally require CAPTCHA verification in production.
+                  </span>
+                </AlertDescription>
+              </Alert>
+            ) : !turnstileError ? (
               <Turnstile
-                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || ""}
+                siteKey={siteKey || ""}
                 onSuccess={(token) => {
                   setTurnstileError(false);
                   setTurnstileExpired(false);
@@ -228,7 +256,7 @@ export function BookingReviewStep({
               </Alert>
             )}
 
-            {turnstileToken && !turnstileError && !turnstileExpired && (
+            {turnstileToken && !turnstileError && !turnstileExpired && !shouldSkipTurnstile && (
               <p className="text-muted-foreground text-sm">✓ Verification complete</p>
             )}
 

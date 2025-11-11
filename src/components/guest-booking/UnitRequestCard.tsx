@@ -79,13 +79,18 @@ export const UnitRequestCard: React.FC<UnitRequestCardProps> = ({
   /**
    * Handle guest count change with validation
    * Only calls onGuestsChange if value is within valid range
+   * Using React.startTransition to defer state updates and prevent
+   * "Cannot update component while rendering another component" error
    */
   const handleGuestsChange = React.useCallback(
     (value: number | null) => {
       // Only propagate valid non-null values within range
       // This ensures onChange is called when typing completes a valid number
       if (value !== null && value >= 1 && value <= maxCapacityPerUnit) {
-        onGuestsChange(value);
+        // Defer state update to avoid setState during render
+        React.startTransition(() => {
+          onGuestsChange(value);
+        });
       }
     },
     [maxCapacityPerUnit, onGuestsChange]

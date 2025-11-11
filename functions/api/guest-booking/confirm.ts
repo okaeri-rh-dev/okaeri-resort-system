@@ -58,6 +58,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     const rateLimitResult = await checkKVRateLimit(env.RATE_LIMIT_KV, clientIp, {
       limit: 10,
       windowSeconds: 3600,
+      environment: env.ENVIRONMENT, // Development bypass enabled
     });
 
     if (!rateLimitResult.allowed) {

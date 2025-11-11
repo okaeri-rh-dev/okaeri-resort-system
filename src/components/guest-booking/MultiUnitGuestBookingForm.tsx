@@ -35,11 +35,17 @@ import { FormStepIndicator } from "./FormStepIndicator";
 import { PaymentProofUpload } from "./PaymentProofUpload";
 import { UnitRequestSelector } from "./UnitRequestSelector";
 
+const isDevelopment = import.meta.env.DEV;
+
 const STEPS = [
   { number: 1, label: "Dates", description: "Select your stay dates" },
   { number: 2, label: "Units", description: "Choose units and guests" },
   { number: 3, label: "Contact", description: "Your information" },
-  { number: 4, label: "Payment Proof", description: "Upload payment (optional)" },
+  {
+    number: 4,
+    label: "Payment Proof",
+    description: isDevelopment ? "Upload payment (optional)" : "Upload payment (required)",
+  },
   { number: 5, label: "Review", description: "Confirm and submit" },
 ];
 
@@ -49,8 +55,16 @@ export function MultiUnitGuestBookingForm() {
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(() => {
+    // Initialize with dev mock token if bypass is enabled
+    const isDev = import.meta.env.DEV;
+    const skipTurnstile = import.meta.env.VITE_SKIP_TURNSTILE === "true";
+    return isDev && skipTurnstile ? "dev-mock-token" : null;
+  });
   const [idempotencyKey] = useState(() => crypto.randomUUID());
+
+  const isDev = import.meta.env.DEV;
+  const skipTurnstile = import.meta.env.VITE_SKIP_TURNSTILE === "true";
 
   const form = useForm<MultiUnitBookingRequest>({
     resolver: zodResolver(multiUnitBookingSchema),
@@ -62,14 +76,34 @@ export function MultiUnitGuestBookingForm() {
       check_out: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
       unit_requests: [{ guests_per_unit: 2 }],
       special_requests: "",
-      payment_proof_url: null,
+      payment_proof_url: undefined,
       terms_accepted: false,
       idempotency_key: idempotencyKey,
+      turnstile_token: isDev && skipTurnstile ? "dev-mock-token" : "", // ← Added: Register token field with form
     },
     mode: "onChange",
   });
 
   const watchedValues = form.watch();
+
+  // Destructure formState to enable proper subscription
+  const { isValid, isDirty, errors, isValidating, isSubmitting: formIsSubmitting } = form.formState;
+
+  // Debug: Log initial form state
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.log("=== FORM INITIALIZATION DEBUG ===");
+      console.log("Form initialized with values:", form.getValues());
+      console.log("Initial isValid state:", isValid);
+      console.log("Environment vars:", {
+        DEV: import.meta.env.DEV,
+        VITE_SKIP_TURNSTILE: import.meta.env.VITE_SKIP_TURNSTILE,
+        skipTurnstile,
+        isDev,
+      });
+      console.log("================================");
+    }
+  }, []);
 
   // Auto-adjust check-out date when check-in changes
   useEffect(() => {
@@ -86,6 +120,37 @@ export function MultiUnitGuestBookingForm() {
       });
     }
   }, [watchedValues.check_in, watchedValues.check_out, form]);
+
+  // Debug: Test raw Zod validation
+  const testZodValidation = () => {
+    if (!import.meta.env.DEV) return;
+
+    const currentValues = form.getValues();
+    const result = multiUnitBookingSchema.safeParse(currentValues);
+
+    console.log("=== RAW ZOD VALIDATION TEST ===");
+    console.log("Current form values:", currentValues);
+    console.log("Zod validation success:", result.success);
+    if (!result.success) {
+      console.log("Zod errors:", result.error.format());
+      console.log("Flattened errors:", result.error.flatten());
+    } else {
+      console.log("All validations passed!");
+    }
+    console.log("================================");
+
+    return result;
+  };
+
+  // Sync turnstile token state with form field
+  useEffect(() => {
+    if (turnstileToken) {
+      form.setValue("turnstile_token", turnstileToken, {
+        shouldValidate: true, // Trigger validation
+        shouldDirty: true, // Mark as changed
+      });
+    }
+  }, [turnstileToken, form]);
 
   const validateStep = async (step: number): Promise<boolean> => {
     const stepKey = step as keyof typeof STEP_FIELDS;
@@ -142,6 +207,8 @@ export function MultiUnitGuestBookingForm() {
         ...sanitized,
         check_in: data.check_in.toISOString(),
         check_out: data.check_out.toISOString(),
+        // Convert null to undefined for payment_proof_url (API expects undefined, not null)
+        payment_proof_url: data.payment_proof_url || undefined,
         turnstile_token: turnstileToken,
         idempotency_key: idempotencyKey,
       };
@@ -439,16 +506,30 @@ export function MultiUnitGuestBookingForm() {
               <div>
                 <h2 className="text-2xl font-bold">Upload Payment Proof</h2>
                 <p className="text-muted-foreground">
-                  Upload your payment receipt (optional - you can do this later)
+                  {isDevelopment
+                    ? "Upload your payment receipt (optional - you can do this later)"
+                    : "Upload your payment receipt (required for booking confirmation)"}
                 </p>
               </div>
+
+              {/* Development mode indicator */}
+              {isDevelopment && (
+                <Alert className="border-yellow-400 bg-yellow-50">
+                  <AlertDescription className="text-yellow-800">
+                    🔧 Development Mode: Payment proof is optional for testing. In production, this
+                    will be required.
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <FormField
                 control={form.control}
                 name="payment_proof_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Payment Receipt</FormLabel>
+                    <FormLabel>
+                      Payment Receipt {isDevelopment ? "(Optional)" : "(Required)"}
+                    </FormLabel>
                     <FormControl>
                       <PaymentProofUpload
                         value={field.value}
@@ -476,7 +557,15 @@ export function MultiUnitGuestBookingForm() {
               <BookingReviewStep
                 formData={watchedValues}
                 termsAccepted={watchedValues.terms_accepted}
-                onTermsChange={(checked) => form.setValue("terms_accepted", checked)}
+                onTermsChange={(checked) => {
+                  // Ensure boolean type and trigger validation
+                  const boolValue = checked === true;
+                  form.setValue("terms_accepted", boolValue, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                    shouldTouch: true,
+                  });
+                }}
                 turnstileToken={turnstileToken}
                 onTurnstileSuccess={setTurnstileToken}
               />
@@ -501,24 +590,102 @@ export function MultiUnitGuestBookingForm() {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             ) : (
-              <Button
-                type="submit"
-                disabled={
-                  isSubmitting ||
-                  !turnstileToken ||
-                  !form.formState.isValid ||
-                  !watchedValues.terms_accepted
-                }
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  "Submit Booking"
+              <>
+                {/* Comprehensive Debug Panel - remove after fixing */}
+                {import.meta.env.DEV && (
+                  <div className="mb-4 rounded bg-gray-100 p-3 text-xs text-gray-500">
+                    <div className="mb-2 font-bold">🔍 Debug Panel</div>
+
+                    {/* Environment Info */}
+                    <div className="mb-2">
+                      <strong>Environment:</strong>
+                      <br />
+                      DEV: {String(import.meta.env.DEV)}
+                      <br />
+                      SKIP_TURNSTILE: {String(import.meta.env.VITE_SKIP_TURNSTILE)}
+                      <br />
+                      skipTurnstile var: {String(skipTurnstile)}
+                      <br />
+                      isDev var: {String(isDev)}
+                    </div>
+
+                    {/* Form State */}
+                    <div className="mb-2">
+                      <strong>Form State:</strong>
+                      <br />
+                      isValid: {String(isValid)}
+                      <br />
+                      isDirty: {String(isDirty)}
+                      <br />
+                      isValidating: {String(isValidating)}
+                    </div>
+
+                    {/* Critical Fields */}
+                    <div className="mb-2">
+                      <strong>Critical Values:</strong>
+                      <br />
+                      turnstile_token: "{form.getValues("turnstile_token")}" (length:{" "}
+                      {form.getValues("turnstile_token")?.length || 0})<br />
+                      payment_proof: {JSON.stringify(form.getValues("payment_proof_url"))}
+                      <br />
+                      special_requests: "{form.getValues("special_requests")}" (type:{" "}
+                      {typeof form.getValues("special_requests")})<br />
+                      terms_accepted: {String(form.getValues("terms_accepted"))}
+                      <br />
+                      idempotency_key: {form.getValues("idempotency_key")?.slice(0, 8)}...
+                    </div>
+
+                    {/* All Errors */}
+                    <div className="mb-2">
+                      <strong>Errors:</strong>
+                      <br />
+                      {Object.keys(errors).length > 0
+                        ? JSON.stringify(errors, null, 2)
+                        : "No visible errors"}
+                    </div>
+
+                    {/* Manual Validation Buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          form.trigger().then((validationResult) => {
+                            console.log("Manual validation result:", validationResult);
+                            console.log("All errors:", errors);
+                            console.log("All values:", form.getValues());
+                          });
+                        }}
+                        className="mt-2 rounded bg-blue-500 px-2 py-1 text-xs text-white"
+                      >
+                        Force Validate & Log
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={testZodValidation}
+                        className="mt-2 rounded bg-green-500 px-2 py-1 text-xs text-white"
+                      >
+                        Test Raw Zod
+                      </button>
+                    </div>
+                  </div>
                 )}
-              </Button>
+                <Button
+                  type="submit"
+                  disabled={
+                    isSubmitting || !turnstileToken || !isValid || !watchedValues.terms_accepted
+                  }
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit Booking"
+                  )}
+                </Button>
+              </>
             )}
           </div>
         </form>

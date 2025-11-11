@@ -48,35 +48,37 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
 
     // Debounce API call by 500ms
     const timer = setTimeout(() => {
-      // Map unit requests to pricing API format
-      const unitRequestsForApi = unitRequests.map((req) => ({
-        unit_id: req.unit_id || "", // Will use first available unit if not specified
-        guest_count: req.guests_per_unit,
-      }));
-
-      // Calculate total guest count for single unit pricing fallback
+      // Calculate total guest count
       const totalGuests = unitRequests.reduce((sum, req) => sum + req.guests_per_unit, 0);
 
-      // Call pricing API
-      if (unitRequests.length > 1 || unitRequests[0]?.unit_id) {
-        // Multi-unit booking or unit specified
+      // Build pricing request based on what data we have
+      if (unitRequests.length > 1) {
+        // Multi-unit booking - map requests properly (don't send empty strings for unit_id)
+        const unitRequestsForApi = unitRequests.map((req) => ({
+          ...(req.unit_id ? { unit_id: req.unit_id } : {}), // Only include unit_id if present
+          guest_count: req.guests_per_unit,
+        }));
+
         calculatePricing.mutate({
           check_in_date: checkInStr,
           check_out_date: checkOutStr,
+          guest_count: totalGuests, // Include total at top level
           unit_requests: unitRequestsForApi,
         });
-      } else {
-        // Single unit, no specific unit (use custom pricing)
+      } else if (unitRequests[0]?.unit_id) {
+        // Single unit with specific unit ID
         calculatePricing.mutate({
           check_in_date: checkInStr,
           check_out_date: checkOutStr,
           guest_count: totalGuests,
-          custom_pricing: {
-            base_rate: 3000, // Default from pricing config
-            weekend_rate: 3500,
-            extra_person_rate: 500,
-            base_occupancy: 2,
-          },
+          unit_id: unitRequests[0].unit_id,
+        });
+      } else {
+        // Single unit, no specific unit - use simple guest count pricing
+        calculatePricing.mutate({
+          check_in_date: checkInStr,
+          check_out_date: checkOutStr,
+          guest_count: totalGuests,
         });
       }
     }, 500);

@@ -21,7 +21,7 @@ const pricingCalculateRequestSchema = z
       return checkIn >= new Date(new Date().setHours(0, 0, 0, 0));
     }, "Check-in date must be today or in the future"),
     check_out_date: z.string(),
-    guest_count: z.number().int().min(1).max(50),
+    guest_count: z.number().int().min(1).max(50).optional(), // Optional - can be calculated from unit_requests
     unit_id: z.string().uuid().optional(),
     // For custom pricing (e.g., when unit doesn't exist yet)
     custom_pricing: z
@@ -32,11 +32,11 @@ const pricingCalculateRequestSchema = z
         base_occupancy: z.number().int().min(1),
       })
       .optional(),
-    // For multi-unit bookings
+    // For multi-unit bookings (guest bookings without specific unit assignment)
     unit_requests: z
       .array(
         z.object({
-          unit_id: z.string().uuid(),
+          unit_id: z.string().uuid().optional(), // Optional for guest bookings (admin assigns later)
           guest_count: z.number().int().min(1),
         })
       )
@@ -45,9 +45,15 @@ const pricingCalculateRequestSchema = z
   .refine((data) => new Date(data.check_out_date) > new Date(data.check_in_date), {
     message: "Check-out date must be after check-in date",
   })
-  .refine((data) => data.unit_id || data.custom_pricing || data.unit_requests, {
-    message: "Must provide either unit_id, custom_pricing, or unit_requests",
-  });
+  .refine(
+    (data) => {
+      // Must have either: unit_id, custom_pricing, unit_requests, or guest_count for base pricing
+      return data.unit_id || data.custom_pricing || data.unit_requests || data.guest_count;
+    },
+    {
+      message: "Must provide either unit_id, custom_pricing, unit_requests, or guest_count",
+    }
+  );
 
 // CORS headers
 const corsHeaders = {
@@ -135,26 +141,28 @@ export async function onRequest(context: {
     const data = validationResult.data;
 
     // Extract auth token (optional for public guest booking)
-    const authHeader = request.headers.get("Authorization");
+    const authHeader = request.headers?.get("Authorization");
     const token = authHeader?.replace("Bearer ", "");
 
-    // Rate limiting
-    const identifier = token || request.headers.get("cf-connecting-ip") || "anonymous";
-    const rateLimitOk = await checkRateLimit(
-      env.KV_RATE_LIMIT,
-      identifier,
-      token ? 60 : 10, // Authenticated: 60/min, Guest: 10/min
-      1
-    );
-
-    if (!rateLimitOk) {
-      return new Response(
-        JSON.stringify({
-          error: "RATE_LIMIT_EXCEEDED",
-          message: "Too many pricing requests. Please try again later.",
-        }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    // Rate limiting (check if KV namespace exists)
+    if (env.KV_RATE_LIMIT) {
+      const identifier = token || request.headers?.get("cf-connecting-ip") || "anonymous";
+      const rateLimitOk = await checkRateLimit(
+        env.KV_RATE_LIMIT,
+        identifier,
+        token ? 60 : 10, // Authenticated: 60/min, Guest: 10/min
+        1
       );
+
+      if (!rateLimitOk) {
+        return new Response(
+          JSON.stringify({
+            error: "RATE_LIMIT_EXCEEDED",
+            message: "Too many pricing requests. Please try again later.",
+          }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Check cache for single unit requests
@@ -196,38 +204,48 @@ export async function onRequest(context: {
     let notice = null;
 
     if (data.unit_requests) {
-      // Multi-unit booking
-      const pricingPromises = data.unit_requests.map(async (unitRequest) => {
-        const { data: unit, error } = await supabase
-          .from("units")
-          .select("*")
-          .eq("id", unitRequest.unit_id)
-          .single();
+      // Multi-unit booking (with or without specific unit IDs)
 
-        if (error || !unit) {
-          throw new Error(`Unit ${unitRequest.unit_id} not found`);
+      // Get default pricing config for guest bookings without unit IDs
+      const { data: pricingConfig } = await supabase
+        .from("pricing_config")
+        .select("*")
+        .eq("id", "default")
+        .single();
+
+      const pricingPromises = data.unit_requests.map(async (unitRequest) => {
+        let unitData = null;
+        let unitName = "Unit (To be assigned)";
+
+        // If unit_id is provided, fetch specific unit
+        if (unitRequest.unit_id) {
+          const { data: unit, error } = await supabase
+            .from("units")
+            .select("*")
+            .eq("id", unitRequest.unit_id)
+            .single();
+
+          if (error || !unit) {
+            throw new Error(`Unit ${unitRequest.unit_id} not found`);
+          }
+          unitData = unit;
+          unitName = unit.name;
         }
 
-        // Get pricing config
-        const { data: pricingConfig } = await supabase
-          .from("pricing_config")
-          .select("*")
-          .eq("id", "default")
-          .single();
-
+        // Use unit-specific pricing or fall back to default config
         const pricing = await calculateBookingPrice(supabase, {
           checkIn: new Date(data.check_in_date),
           checkOut: new Date(data.check_out_date),
           guestCount: unitRequest.guest_count,
-          baseRate: unit.base_rate || pricingConfig?.base_rate || 3000,
-          weekendRate: unit.weekend_rate || pricingConfig?.weekend_rate || 3500,
-          extraPersonRate: unit.extra_person_rate || pricingConfig?.extra_person_rate || 500,
-          baseOccupancy: unit.base_occupancy || pricingConfig?.base_occupancy || 2,
+          baseRate: unitData?.base_rate || pricingConfig?.base_rate || 3000,
+          weekendRate: unitData?.weekend_rate || pricingConfig?.weekend_rate || 3500,
+          extraPersonRate: unitData?.extra_person_rate || pricingConfig?.extra_person_rate || 500,
+          baseOccupancy: unitData?.base_occupancy || pricingConfig?.base_occupancy || 2,
         });
 
         return {
-          unit_id: unitRequest.unit_id,
-          unit_name: unit.name,
+          unit_id: unitRequest.unit_id || null,
+          unit_name: unitName,
           pricing,
         };
       });
@@ -327,6 +345,48 @@ export async function onRequest(context: {
       if (hasSeasonalRates) {
         notice = "Seasonal rates applied";
       }
+    } else if (data.guest_count) {
+      // Guest booking with only guest count (no specific units)
+      // Use default pricing configuration
+      const { data: pricingConfig } = await supabase
+        .from("pricing_config")
+        .select("*")
+        .eq("id", "default")
+        .single();
+
+      pricingResult = await calculateBookingPrice(supabase, {
+        checkIn: new Date(data.check_in_date),
+        checkOut: new Date(data.check_out_date),
+        guestCount: data.guest_count,
+        baseRate: pricingConfig?.base_rate || 3000,
+        weekendRate: pricingConfig?.weekend_rate || 3500,
+        extraPersonRate: pricingConfig?.extra_person_rate || 500,
+        baseOccupancy: pricingConfig?.base_occupancy || 2,
+      });
+
+      const hasSeasonalRates = pricingResult.nightlyBreakdown.some(
+        (night) => night.seasonalMultiplier !== 1.0
+      );
+
+      if (hasSeasonalRates) {
+        const seasonNames = new Set(
+          pricingResult.nightlyBreakdown
+            .filter((night) => night.seasonName)
+            .map((night) => night.seasonName)
+        );
+        notice = `Seasonal rates applied${
+          seasonNames.size > 0 ? ` (${Array.from(seasonNames).join(", ")})` : ""
+        }`;
+      }
+    } else {
+      // No valid pricing parameters provided
+      return new Response(
+        JSON.stringify({
+          error: "INVALID_REQUEST",
+          message: "Must provide unit_id, custom_pricing, unit_requests, or guest_count",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Cache single unit results for 1 hour

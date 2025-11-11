@@ -234,6 +234,7 @@ function isPublicPath(pathname: string): boolean {
     "/api/availability/multi-unit",
     "/api/units",
     "/api/pricing/quote",
+    "/api/pricing/calculate", // Guest booking pricing calculation
     "/api/health",
     "/api/guest-booking/multi-unit",
     "/api/guest-booking/rates",
