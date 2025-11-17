@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { differenceInDays, eachDayOfInterval, format } from "date-fns";
-import { CalendarDays, CheckCircle, CreditCard, Users } from "lucide-react";
+import { CheckCircle, CreditCard, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -10,7 +10,6 @@ import { PricingStatusBadge } from "@/components/pricing/PricingStatusBadge";
 import { BookingFormSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -22,8 +21,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input, NumberInput } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
+import { ResponsiveDatePicker } from "@/components/ui/responsive-date-picker";
 import {
   Select,
   SelectContent,
@@ -387,32 +386,14 @@ export function BookingForm({
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel className="text-base font-medium sm:text-sm">Check-in Date</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                      <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-[340px] p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) => date < new Date()}
-                    initialFocus
-                    className="touch-manipulation"
-                  />
-                </PopoverContent>
-              </Popover>
+              <FormControl>
+                <ResponsiveDatePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={(date) => date < new Date()}
+                  placeholder="Pick a date"
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -424,32 +405,14 @@ export function BookingForm({
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel className="text-base font-medium sm:text-sm">Check-out Date</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                      <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-[340px] p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) => date <= checkIn}
-                    initialFocus
-                    className="touch-manipulation"
-                  />
-                </PopoverContent>
-              </Popover>
+              <FormControl>
+                <ResponsiveDatePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={(date) => date <= checkIn}
+                  placeholder="Pick a date"
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

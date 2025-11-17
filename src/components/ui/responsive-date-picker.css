@@ -1,0 +1,159 @@
+/* Mobile-specific calendar styles for ResponsiveDatePicker */
+
+/* Apply styles only to calendars with the mobile-calendar class */
+.mobile-calendar {
+  /* Override the default cell size for mobile */
+  --cell-size: 2.75rem; /* Optimized for touch (44px min touch target) */
+}
+
+/* For very small screens (< 360px width) */
+@media (max-width: 360px) {
+  .mobile-calendar {
+    --cell-size: 2.5rem; /* Slightly smaller for tiny screens */
+  }
+
+  /* Reduce font size for month labels on tiny screens */
+  .mobile-calendar .rdp-caption_label {
+    font-size: 0.875rem;
+  }
+}
+
+/* Enhanced touch targets for mobile calendar */
+.mobile-calendar .rdp-button {
+  /* Ensure minimum 44px touch target as per WCAG 2.5.5 */
+  min-height: 44px;
+  min-width: 44px;
+
+  /* Better touch feedback */
+  transition: background-color 0.15s ease;
+}
+
+/* Active state for better touch feedback */
+.mobile-calendar .rdp-button:active {
+  transform: scale(0.98);
+  background-color: hsl(var(--accent));
+}
+
+/* Month navigation buttons - larger for mobile */
+.mobile-calendar .rdp-button_previous,
+.mobile-calendar .rdp-button_next {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Weekday headers - better spacing on mobile */
+.mobile-calendar .rdp-weekday {
+  padding: 0.5rem 0;
+}
+
+/* Selected date - more prominent on mobile */
+.mobile-calendar [data-selected-single="true"] {
+  box-shadow: 0 0 0 2px hsl(var(--primary));
+}
+
+/* Range selection - clearer visual feedback */
+.mobile-calendar [data-range-start="true"],
+.mobile-calendar [data-range-end="true"] {
+  position: relative;
+  z-index: 1;
+}
+
+/* Today marker - more visible on mobile */
+.mobile-calendar [data-today="true"]:not([data-selected]) {
+  font-weight: 600;
+  position: relative;
+}
+
+.mobile-calendar [data-today="true"]:not([data-selected])::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background-color: hsl(var(--primary));
+  border-radius: 50%;
+}
+
+/* Sheet content adjustments for safe areas (iPhone notch, etc.) */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 1rem);
+}
+
+/* Smooth scrolling for sheet content */
+[data-radix-dialog-content] {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent scroll bounce on iOS */
+.mobile-calendar {
+  overscroll-behavior: contain;
+}
+
+/* Focus styles for accessibility */
+.mobile-calendar .rdp-button:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: calc(var(--radius) - 2px);
+}
+
+/* Disabled dates - clearer visual indication */
+.mobile-calendar .rdp-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Month grid - ensure proper spacing */
+.mobile-calendar .rdp-month_grid {
+  margin-top: 0.5rem;
+}
+
+/* Caption (month/year) - better mobile layout */
+.mobile-calendar .rdp-month_caption {
+  padding: 0 3rem; /* Space for nav buttons */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 3rem;
+}
+
+/* Dropdown selectors (if using dropdown caption layout) */
+.mobile-calendar .rdp-dropdown {
+  font-size: 1rem;
+  padding: 0.5rem;
+  border-radius: calc(var(--radius) - 2px);
+}
+
+/* Loading state for calendar (if needed) */
+.mobile-calendar[data-loading="true"] {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Animation for sheet opening - smooth entrance */
+@keyframes sheet-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Apply entrance animation to mobile sheet */
+[data-state="open"] .mobile-calendar {
+  animation: sheet-slide-up 0.3s ease-out;
+}
+
+/* Range selection visual continuity */
+.mobile-calendar [data-range-middle="true"] {
+  background-color: hsl(var(--accent) / 0.5);
+}
+
+/* Hover states (for devices that support it) */
+@media (hover: hover) {
+  .mobile-calendar .rdp-button:not(:disabled):hover {
+    background-color: hsl(var(--accent));
+  }
+}

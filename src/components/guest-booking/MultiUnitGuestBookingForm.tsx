@@ -3,12 +3,11 @@ import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { ArrowLeft, ArrowRight, CalendarDays, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
@@ -18,7 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ResponsiveDatePicker } from "@/components/ui/responsive-date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { logger } from "@/lib/logger";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
@@ -329,32 +328,14 @@ export function MultiUnitGuestBookingForm() {
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Check-In Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? format(field.value, "PPP") : "Pick a date"}
-                              <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[340px] p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                            initialFocus
-                            className="touch-manipulation"
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <FormControl>
+                        <ResponsiveDatePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                          placeholder="Pick a date"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -366,34 +347,16 @@ export function MultiUnitGuestBookingForm() {
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Check-Out Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? format(field.value, "PPP") : "Pick a date"}
-                              <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[340px] p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              !watchedValues.check_in || date <= watchedValues.check_in
-                            }
-                            initialFocus
-                            className="touch-manipulation"
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <FormControl>
+                        <ResponsiveDatePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={(date) =>
+                            !watchedValues.check_in || date <= watchedValues.check_in
+                          }
+                          placeholder="Pick a date"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

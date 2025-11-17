@@ -1,12 +1,9 @@
 import * as React from "react";
 
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
 import { DateRange } from "react-day-picker";
 
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ResponsiveDateRangePicker } from "@/components/ui/responsive-date-picker";
 import { calculateNights, validateDateRange } from "@/lib/api/guest-booking-client";
 import { cn } from "@/lib/utils";
 
@@ -72,9 +69,6 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   // Local state for validation error
   const [error, setError] = React.useState<string | null>(null);
 
-  // Track popover open state
-  const [isOpen, setIsOpen] = React.useState(false);
-
   /**
    * Validate dates on mount and when dates change
    */
@@ -99,11 +93,6 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     if (range?.from && range?.to) {
       const validationError = validateDateRange(range.from, range.to);
       setError(validationError);
-
-      // Close popover on valid selection
-      if (!validationError) {
-        setIsOpen(false);
-      }
     } else {
       // Clear error if incomplete selection
       setError(null);
@@ -114,21 +103,6 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
    * Calculate night count for display
    */
   const nights = checkIn && checkOut ? calculateNights(checkIn, checkOut) : 0;
-
-  /**
-   * Format button text
-   */
-  const getButtonText = () => {
-    if (!checkIn) {
-      return "Pick check-in and check-out dates";
-    }
-
-    if (!checkOut) {
-      return `${format(checkIn, "MMM dd, yyyy")} - Select check-out`;
-    }
-
-    return `${format(checkIn, "MMM dd, yyyy")} - ${format(checkOut, "MMM dd, yyyy")}`;
-  };
 
   /**
    * Disable past dates in calendar
@@ -144,47 +118,22 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
   return (
     <div className="space-y-2">
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            disabled={disabled}
-            className={cn(
-              "w-full justify-start text-left font-normal",
-              !checkIn && "text-muted-foreground",
-              error && "border-destructive focus-visible:ring-destructive",
-              className
-            )}
-            aria-label="Select check-in and check-out dates"
-            aria-invalid={!!error}
-            aria-describedby={
-              error ? "date-range-error" : isValidSelection ? "date-range-success" : undefined
-            }
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" aria-hidden="true" />
-            <span>{getButtonText()}</span>
-          </Button>
-        </PopoverTrigger>
-
-        <PopoverContent className="w-auto p-0" align="start" sideOffset={8} role="application">
-          <Calendar
-            mode="range"
-            selected={{
-              from: checkIn,
-              to: checkOut,
-            }}
-            onSelect={handleDateChange}
-            disabled={disabledDates}
-            numberOfMonths={2}
-            defaultMonth={checkIn || new Date()}
-            className="rounded-md border-0"
-            classNames={{
-              months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-              month: "space-y-4",
-            }}
-          />
-        </PopoverContent>
-      </Popover>
+      <ResponsiveDateRangePicker
+        value={{
+          from: checkIn,
+          to: checkOut,
+        }}
+        onChange={handleDateChange}
+        disabled={disabledDates}
+        placeholder="Pick check-in and check-out dates"
+        buttonClassName={cn(
+          "w-full",
+          error && "border-destructive focus-visible:ring-destructive",
+          className
+        )}
+        numberOfMonths={2}
+        formatStr="MMM dd, yyyy"
+      />
 
       {/* Error message display */}
       {error && (
