@@ -834,8 +834,8 @@ After applying fixes, re-run ALL checkpoint tests from the beginning.
 
 Record completion:
 
-- **Date/Time**: ********\_********
-- **Total Time Taken**: ****\_**** minutes
+- **Date/Time**: **\*\*\*\***\_**\*\*\*\***
+- **Total Time Taken**: \***\*\_\*\*** minutes
 - **Issues Encountered**: (list any)
 - **Notes**: (any observations)
 
@@ -887,9 +887,9 @@ You are now ready for **Chunk 004: Core API Endpoints**.
 | Manual Checks (4)     | 4      | \_\_\_\_ | \_\_\_\_ | [ ] Complete                |
 | **TOTAL**             | **21** | \_\_\_\_ | \_\_\_\_ | [ ] **READY FOR CHUNK 004** |
 
-**Completion Date**: ********\_********
+**Completion Date**: **\*\*\*\***\_**\*\*\*\***
 
-**Verified By**: ********\_********
+**Verified By**: **\*\*\*\***\_**\*\*\*\***
 
 ---
 

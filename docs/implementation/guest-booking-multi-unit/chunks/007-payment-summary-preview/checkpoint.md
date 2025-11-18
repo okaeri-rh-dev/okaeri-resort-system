@@ -690,9 +690,9 @@ File: `docs/implementation/guest-booking-multi-unit/chunks/008-payment-proof-upl
 - Testing: **\_** min
 - Debugging: **\_** min
 
-**Issues Encountered**: **************\_\_\_**************
+**Issues Encountered**: **\*\***\*\***\*\***\_\_\_**\*\***\*\***\*\***
 
-**Notes**: **************\_\_\_**************
+**Notes**: **\*\***\*\***\*\***\_\_\_**\*\***\*\***\*\***
 
 ---
 

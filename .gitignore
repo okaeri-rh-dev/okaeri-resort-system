@@ -238,3 +238,5 @@ backups/
 tests/fixtures/images/*.jpg
 tests/fixtures/images/*.png
 tests/fixtures/pdfs/*.pdf
+
+.tanstack/tmp

@@ -818,9 +818,9 @@ All of the following must be true:
 
 **Chunk 013 Completion Status**: ✅ Complete
 
-**Date Completed**: ******\_\_\_******
+**Date Completed**: **\*\***\_\_\_**\*\***
 
-**Time Taken**: ******\_\_\_****** (Target: 120 minutes)
+**Time Taken**: **\*\***\_\_\_**\*\*** (Target: 120 minutes)
 
 **Issues Encountered**:
 

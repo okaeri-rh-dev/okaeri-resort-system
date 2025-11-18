@@ -492,7 +492,7 @@ If quick fixes don't resolve the issue, see `troubleshooting.md` for:
 **Issues Encountered**:
 
 - [ ] None
-- [ ] **********************\_\_********************** (resolved)
+- [ ] ****\*\*****\*\*****\*\*****\_\_****\*\*****\*\*****\*\***** (resolved)
 
 **Notes**:
 

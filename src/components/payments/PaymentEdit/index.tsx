@@ -35,8 +35,8 @@ export interface PaymentEditPageProps {
 }
 
 export function PaymentEditPage() {
-  const { paymentId } = useParams({ from: "/_authenticated/payments/$paymentId/edit" });
-  const { payment } = useLoaderData({ from: "/_authenticated/payments/$paymentId/edit" });
+  const { paymentId } = useParams({ from: "/admin/payments/$paymentId/edit" });
+  const { payment } = useLoaderData({ from: "/admin/payments/$paymentId/edit" });
   const navigate = useNavigate();
 
   // Check if payment is verified (limits editing)
@@ -58,7 +58,7 @@ export function PaymentEditPage() {
   // Setup mutation with navigation on success
   const updatePayment = useEntityEdit("payment", paymentId, {
     onSuccess: () => {
-      navigate({ to: "/payments" });
+      navigate({ to: "/admin/payments" });
     },
   });
 
@@ -69,7 +69,7 @@ export function PaymentEditPage() {
 
   // Cancel handler
   const handleCancel = () => {
-    navigate({ to: "/payments" });
+    navigate({ to: "/admin/payments" });
   };
 
   return (
@@ -77,7 +77,7 @@ export function PaymentEditPage() {
       title="Edit Payment"
       subtitle={`Payment #${payment.payment_id.slice(0, 8)}`}
       breadcrumbs={[
-        { label: "Payments", to: "/payments" },
+        { label: "Payments", to: "/admin/payments" },
         { label: `Payment #${payment.payment_id.slice(0, 8)}` },
         { label: "Edit" },
       ]}

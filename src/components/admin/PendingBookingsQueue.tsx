@@ -336,11 +336,11 @@ export function PendingBookingsQueue() {
                         onClick={() => {
                           // If payment verified, go to assignment; otherwise, verify payment first
                           if (booking.payment_status === "Verified") {
-                            // Navigate to unit assignment (route will be created in chunk 013)
-                            window.location.href = `/admin/assign-units/${booking.booking_id}`;
+                            // Navigate to unit assignment
+                            window.location.href = `/admin/bookings/${booking.booking_id}/assign-units`;
                           } else {
                             // Navigate to payment verification
-                            window.location.href = `/admin/verify-payment/${booking.booking_id}`;
+                            window.location.href = `/admin/payments/verify/${booking.booking_id}`;
                           }
                         }}
                       >

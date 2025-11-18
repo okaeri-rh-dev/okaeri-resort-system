@@ -40,8 +40,8 @@ export interface BookingEditPageProps {
 }
 
 export function BookingEditPage() {
-  const { bookingId } = useParams({ from: "/_authenticated/bookings/$bookingId/edit" });
-  const { booking, units } = useLoaderData({ from: "/_authenticated/bookings/$bookingId/edit" });
+  const { bookingId } = useParams({ from: "/admin/bookings/$bookingId/edit" });
+  const { booking, units } = useLoaderData({ from: "/admin/bookings/$bookingId/edit" });
   const navigate = useNavigate();
 
   // Initialize form with default values from booking
@@ -86,7 +86,7 @@ export function BookingEditPage() {
       title="Edit Booking"
       subtitle={`Booking #${booking.booking_reference}`}
       breadcrumbs={[
-        { label: "Bookings", to: "/bookings" },
+        { label: "Bookings", to: "/admin/bookings" },
         {
           label: booking.booking_reference,
           to: `/bookings/${bookingId}`,

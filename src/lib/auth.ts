@@ -16,14 +16,14 @@ import { supabase } from "./supabase";
 // Validated routes for redirect security
 const VALID_ROUTES = [
   "/login",
-  "/dashboard",
-  "/bookings",
-  "/units",
-  "/guests",
-  "/expenses",
-  "/payments",
-  "/availability",
-  "/settings",
+  "/admin/dashboard",
+  "/admin/bookings",
+  "/admin/units",
+  "/admin/guests",
+  "/admin/expenses",
+  "/admin/payments",
+  "/admin/availability",
+  "/admin/settings",
 ];
 
 // Session refresh timing configuration

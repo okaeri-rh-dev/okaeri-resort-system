@@ -40,8 +40,8 @@ export interface ExpenseEditPageProps {
 }
 
 export function ExpenseEditPage() {
-  const { expenseId } = useParams({ from: "/_authenticated/expenses/$expenseId/edit" });
-  const { expense, units } = useLoaderData({ from: "/_authenticated/expenses/$expenseId/edit" });
+  const { expenseId } = useParams({ from: "/admin/expenses/$expenseId/edit" });
+  const { expense, units } = useLoaderData({ from: "/admin/expenses/$expenseId/edit" });
   const navigate = useNavigate();
 
   // Initialize form with default values from expense
@@ -61,7 +61,7 @@ export function ExpenseEditPage() {
   // Setup mutation with navigation on success
   const updateExpense = useEntityEdit("expense", expenseId, {
     onSuccess: () => {
-      navigate({ to: "/expenses" });
+      navigate({ to: "/admin/expenses" });
     },
   });
 
@@ -72,7 +72,7 @@ export function ExpenseEditPage() {
 
   // Cancel handler
   const handleCancel = () => {
-    navigate({ to: "/expenses" });
+    navigate({ to: "/admin/expenses" });
   };
 
   return (
@@ -80,7 +80,7 @@ export function ExpenseEditPage() {
       title="Edit Expense"
       subtitle={expense.description}
       breadcrumbs={[
-        { label: "Expenses", to: "/expenses" },
+        { label: "Expenses", to: "/admin/expenses" },
         { label: expense.description },
         { label: "Edit" },
       ]}

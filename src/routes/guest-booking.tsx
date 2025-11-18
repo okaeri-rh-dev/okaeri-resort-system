@@ -1,42 +1,19 @@
-import { createFileRoute } from "@tanstack/react-router";
+/**
+ * Legacy Guest Booking Route - Redirects to /booking
+ *
+ * Kept for backward compatibility with existing links and bookmarks.
+ *
+ * @route /guest-booking → /booking
+ */
 
-import { MultiUnitGuestBookingForm } from "@/components/guest-booking";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/guest-booking")({
-  component: GuestBookingPage,
+  beforeLoad: () => {
+    // Redirect to new booking location
+    throw redirect({
+      to: "/booking",
+      replace: true,
+    });
+  },
 });
-
-function GuestBookingPage() {
-  const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
-
-  if (!turnstileSiteKey) {
-    return (
-      <div className="container mx-auto py-8">
-        <Alert variant="destructive">
-          <AlertDescription>
-            CAPTCHA configuration is missing. Please contact support.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  return (
-    <div className="from-primary/5 to-background min-h-screen bg-gradient-to-b">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="mb-2 text-4xl font-bold">Book Your Stay</h1>
-          <p className="text-muted-foreground mt-2">
-            Complete the form below to request a booking. We'll confirm unit assignment within 24
-            hours.
-          </p>
-        </div>
-
-        {/* Multi-Unit Booking Form */}
-        <MultiUnitGuestBookingForm />
-      </div>
-    </div>
-  );
-}

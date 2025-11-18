@@ -108,8 +108,8 @@ Record your verification results:
 ```markdown
 ## Prerequisites Verification Results
 
-Date: ******\_\_\_******
-Verified by: ******\_\_\_******
+Date: **\*\***\_\_\_**\*\***
+Verified by: **\*\***\_\_\_**\*\***
 
 - [ ] Check 1: Database tables exist (PASS/FAIL)
 - [ ] Check 2: EXCLUDE constraint configured (PASS/FAIL)

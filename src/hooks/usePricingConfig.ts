@@ -185,9 +185,9 @@ export function useUpdatePricingConfig(options?: {
         options.onSuccess(data);
       }
 
-      // Navigate back to units page if requested
+      // Navigate back to admin units page if requested
       if (options?.navigateOnSuccess) {
-        navigate({ to: "/units" });
+        navigate({ to: "/admin/units" });
       }
     },
   });

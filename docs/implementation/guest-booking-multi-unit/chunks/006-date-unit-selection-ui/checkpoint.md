@@ -568,9 +568,9 @@ File: `docs/implementation/guest-booking-multi-unit/chunks/007-payment-summary-p
 - Testing: **\_** min
 - Debugging: **\_** min
 
-**Issues Encountered**: **************\_\_\_**************
+**Issues Encountered**: **\*\***\*\***\*\***\_\_\_**\*\***\*\***\*\***
 
-**Notes**: **************\_\_\_**************
+**Notes**: **\*\***\*\***\*\***\_\_\_**\*\***\*\***\*\***
 
 ---
 

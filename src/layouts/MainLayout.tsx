@@ -15,6 +15,7 @@ import {
   Search,
   Settings,
   Shield,
+  UserCog,
   Users,
   X,
 } from "lucide-react";
@@ -33,13 +34,13 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Dashboard", icon: Home, href: "/dashboard" },
-  { label: "Bookings", icon: Calendar, href: "/bookings" },
-  { label: "Units", icon: Building2, href: "/units" },
-  { label: "Guests", icon: Users, href: "/guests" },
-  { label: "Payments", icon: Receipt, href: "/payments" },
-  { label: "Expenses", icon: ReceiptText, href: "/expenses" },
-  { label: "Booking Queue", icon: ListChecks, href: "/pending-bookings" },
+  { label: "Dashboard", icon: Home, href: "/admin/dashboard" },
+  { label: "Bookings", icon: Calendar, href: "/admin/bookings" },
+  { label: "Units", icon: Building2, href: "/admin/units" },
+  { label: "Guests", icon: Users, href: "/admin/guests" },
+  { label: "Payments", icon: Receipt, href: "/admin/payments" },
+  { label: "Expenses", icon: ReceiptText, href: "/admin/expenses" },
+  { label: "Booking Queue", icon: ListChecks, href: "/admin/bookings/queue" },
 ];
 
 interface MainLayoutProps {
@@ -49,6 +50,7 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showAuditLink, setShowAuditLink] = useState(false);
+  const [showRolesLink, setShowRolesLink] = useState(false);
   const location = useLocation();
 
   // Check if user can access audit logs
@@ -72,6 +74,27 @@ export function MainLayout({ children }: MainLayoutProps) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Check if user can access roles management (admin-only)
+  useEffect(() => {
+    const checkRolesAccess = async () => {
+      // Lazy load role functions to reduce main bundle size
+      const { isAdmin } = await import("@/lib/audit-roles");
+      const canAccess = await isAdmin();
+      setShowRolesLink(canAccess);
+    };
+
+    checkRolesAccess();
+
+    // Listen for auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      checkRolesAccess();
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const handleSignOut = async () => {
     try {
       await auth.signOut();
@@ -85,8 +108,8 @@ export function MainLayout({ children }: MainLayoutProps) {
   const NavLink = ({ item, onClick }: { item: NavItem; onClick?: () => void }) => {
     const isActive =
       location.pathname === item.href ||
-      (item.href === "/dashboard" &&
-        (location.pathname === "/dashboard" || location.pathname === "/"));
+      (item.href === "/admin/dashboard" &&
+        (location.pathname === "/admin/dashboard" || location.pathname === "/admin"));
     const Icon = item.icon;
 
     return (
@@ -138,10 +161,21 @@ export function MainLayout({ children }: MainLayoutProps) {
                   item={{
                     label: "Audit Trail",
                     icon: Shield,
-                    href: "/audit-logs",
+                    href: "/admin/audit-logs",
                   }}
                 />
               </>
+            )}
+
+            {/* User Roles Link - Admin Only */}
+            {showRolesLink && (
+              <NavLink
+                item={{
+                  label: "User Roles",
+                  icon: UserCog,
+                  href: "/admin/roles",
+                }}
+              />
             )}
           </nav>
 
@@ -218,11 +252,23 @@ export function MainLayout({ children }: MainLayoutProps) {
                           item={{
                             label: "Audit Trail",
                             icon: Shield,
-                            href: "/audit-logs",
+                            href: "/admin/audit-logs",
                           }}
                           onClick={() => setMobileMenuOpen(false)}
                         />
                       </>
+                    )}
+
+                    {/* User Roles Link - Admin Only */}
+                    {showRolesLink && (
+                      <NavLink
+                        item={{
+                          label: "User Roles",
+                          icon: UserCog,
+                          href: "/admin/roles",
+                        }}
+                        onClick={() => setMobileMenuOpen(false)}
+                      />
                     )}
                   </nav>
 

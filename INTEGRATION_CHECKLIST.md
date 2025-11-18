@@ -306,9 +306,9 @@ npm run preview
 
 When all checklist items are complete:
 
-- [ ] Developer Sign-off: ********\_******** Date: **\_\_\_**
-- [ ] QA Sign-off: ********\_******** Date: **\_\_\_**
-- [ ] Product Sign-off: ********\_******** Date: **\_\_\_**
+- [ ] Developer Sign-off: **\*\*\*\***\_**\*\*\*\*** Date: **\_\_\_**
+- [ ] QA Sign-off: **\*\*\*\***\_**\*\*\*\*** Date: **\_\_\_**
+- [ ] Product Sign-off: **\*\*\*\***\_**\*\*\*\*** Date: **\_\_\_**
 
 ---
 

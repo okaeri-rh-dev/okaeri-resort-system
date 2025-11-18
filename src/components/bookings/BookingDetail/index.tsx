@@ -55,7 +55,10 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
     <DetailPageLayout
       title={`Booking #${booking.booking_reference}`}
       subtitle={`Created ${formatFullDate(booking.created_at || new Date().toISOString())}`}
-      breadcrumbs={[{ label: "Bookings", to: "/bookings" }, { label: booking.booking_reference }]}
+      breadcrumbs={[
+        { label: "Bookings", to: "/admin/bookings" },
+        { label: booking.booking_reference },
+      ]}
       status={<StatusBadge status={booking.booking_status || "Pending"} />}
       editRoute={{
         to: "/bookings/$bookingId/edit",

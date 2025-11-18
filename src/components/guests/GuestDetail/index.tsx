@@ -61,7 +61,7 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
     <DetailPageLayout
       title={guest.guest_name}
       subtitle={`Member since ${formatFullDate(guest.created_at || new Date().toISOString())}`}
-      breadcrumbs={[{ label: "Guests", to: "/guests" }, { label: guest.guest_name }]}
+      breadcrumbs={[{ label: "Guests", to: "/admin/guests" }, { label: guest.guest_name }]}
       editRoute={{
         to: "/guests/$guestId/edit",
         params: { guestId },

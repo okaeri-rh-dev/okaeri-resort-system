@@ -59,7 +59,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
       title={`${unit.unit_name} (${unit.unit_code})`}
       subtitle={unit.unit_type}
       breadcrumbs={[
-        { label: "Units", to: "/units" },
+        { label: "Units", to: "/admin/units" },
         { label: `${unit.unit_name} (${unit.unit_code})` },
       ]}
       status={<StatusBadge status={unit.unit_status || "Available"} />}

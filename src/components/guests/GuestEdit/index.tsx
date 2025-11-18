@@ -27,8 +27,8 @@ export interface GuestEditPageProps {
 }
 
 export function GuestEditPage() {
-  const { guestId } = useParams({ from: "/_authenticated/guests/$guestId/edit" });
-  const { guest } = useLoaderData({ from: "/_authenticated/guests/$guestId/edit" });
+  const { guestId } = useParams({ from: "/admin/guests/$guestId/edit" });
+  const { guest } = useLoaderData({ from: "/admin/guests/$guestId/edit" });
   const navigate = useNavigate();
 
   // Initialize form with default values from guest
@@ -65,7 +65,7 @@ export function GuestEditPage() {
       title="Edit Guest"
       subtitle={guest.guest_name}
       breadcrumbs={[
-        { label: "Guests", to: "/guests" },
+        { label: "Guests", to: "/admin/guests" },
         { label: guest.guest_name, to: `/guests/${guestId}` },
         { label: "Edit" },
       ]}

@@ -34,8 +34,8 @@ export interface UnitEditPageProps {
 }
 
 export function UnitEditPage() {
-  const { unitId } = useParams({ from: "/_authenticated/units/$unitId/edit" });
-  const { unit } = useLoaderData({ from: "/_authenticated/units/$unitId/edit" });
+  const { unitId } = useParams({ from: "/admin/units/$unitId/edit" });
+  const { unit } = useLoaderData({ from: "/admin/units/$unitId/edit" });
   const navigate = useNavigate();
 
   // Initialize form with default values from unit
@@ -76,7 +76,7 @@ export function UnitEditPage() {
       title="Edit Unit"
       subtitle={`${unit.unit_name} (${unit.unit_code})`}
       breadcrumbs={[
-        { label: "Units", to: "/units" },
+        { label: "Units", to: "/admin/units" },
         { label: unit.unit_name, to: `/units/${unitId}` },
         { label: "Edit" },
       ]}

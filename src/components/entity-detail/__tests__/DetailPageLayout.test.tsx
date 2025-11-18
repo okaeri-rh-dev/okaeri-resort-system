@@ -57,7 +57,7 @@ describe("DetailPageLayout", () => {
     it("renders breadcrumb navigation", () => {
       const breadcrumbs = [
         { label: "Home", to: "/" },
-        { label: "Bookings", to: "/bookings" },
+        { label: "Bookings", to: "/admin/bookings" },
         { label: "BK-001" },
       ];
 
@@ -74,7 +74,7 @@ describe("DetailPageLayout", () => {
 
     it("handles breadcrumbs without to (current page)", () => {
       const breadcrumbs = [
-        { label: "Bookings", to: "/bookings" },
+        { label: "Bookings", to: "/admin/bookings" },
         { label: "Current Page" }, // No to - current page
       ];
 
@@ -223,7 +223,7 @@ describe("DetailPageLayout", () => {
 
   describe("Complex layouts", () => {
     it("handles all props together", () => {
-      const breadcrumbs = [{ label: "Bookings", to: "/bookings" }, { label: "BK-001" }];
+      const breadcrumbs = [{ label: "Bookings", to: "/admin/bookings" }, { label: "BK-001" }];
 
       render(
         <DetailPageLayout

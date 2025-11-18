@@ -57,7 +57,7 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
       title={`Payment #${displayPaymentId}`}
       subtitle={`Date: ${formatFullDate(payment.payment_date || payment.created_at || new Date().toISOString())}`}
       breadcrumbs={[
-        { label: "Payments", to: "/payments" },
+        { label: "Payments", to: "/admin/payments" },
         { label: `Payment #${displayPaymentId}` },
       ]}
       status={<StatusBadge status={payment.payment_status || "Pending"} />}

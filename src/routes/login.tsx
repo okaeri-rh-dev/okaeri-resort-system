@@ -5,10 +5,10 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const Route = createFileRoute("/login")({
   beforeLoad: ({ context }) => {
-    // If already authenticated, redirect to dashboard
+    // If already authenticated, redirect to admin dashboard
     if (context.isAuthenticated) {
       throw redirect({
-        to: "/",
+        to: "/admin/dashboard",
       });
     }
   },
