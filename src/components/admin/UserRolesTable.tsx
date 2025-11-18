@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 
-import { MoreHorizontal, Search, UserX } from "lucide-react";
+import { History, MoreHorizontal, Search, UserX } from "lucide-react";
 
+import { RoleChangeHistory } from "@/components/admin/RoleChangeHistory";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +44,8 @@ interface UserRolesTableProps {
 
 export function UserRolesTable({ onUpdateRole, onDeactivateRole }: UserRolesTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showHistory, setShowHistory] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
   const { data: roles, isLoading, error } = useAllRoles();
 
   // Filter roles based on search query
@@ -54,6 +57,12 @@ export function UserRolesTable({ onUpdateRole, onDeactivateRole }: UserRolesTabl
       (role.notes && role.notes.toLowerCase().includes(query))
     );
   });
+
+  // Handle viewing role history
+  const handleViewHistory = (role: AppRole) => {
+    setSelectedRole(role);
+    setShowHistory(true);
+  };
 
   if (error) {
     return (
@@ -154,17 +163,24 @@ export function UserRolesTable({ onUpdateRole, onDeactivateRole }: UserRolesTabl
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleViewHistory(role)}>
+                          <History className="mr-2 h-4 w-4" />
+                          View Change History
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onUpdateRole(role)}>
                           Update Role
                         </DropdownMenuItem>
                         {role.is_active && (
-                          <DropdownMenuItem
-                            onClick={() => onDeactivateRole(role)}
-                            className="text-destructive"
-                          >
-                            <UserX className="mr-2 h-4 w-4" />
-                            Deactivate
-                          </DropdownMenuItem>
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => onDeactivateRole(role)}
+                              className="text-destructive"
+                            >
+                              <UserX className="mr-2 h-4 w-4" />
+                              Deactivate
+                            </DropdownMenuItem>
+                          </>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -194,6 +210,14 @@ export function UserRolesTable({ onUpdateRole, onDeactivateRole }: UserRolesTabl
           Showing {filteredRoles.length} {filteredRoles.length === 1 ? "user" : "users"}
         </p>
       )}
+
+      {/* Role Change History Dialog */}
+      <RoleChangeHistory
+        open={showHistory}
+        onOpenChange={setShowHistory}
+        userId={selectedRole?.user_id || null}
+        userEmail={selectedRole?.email || ""}
+      />
     </div>
   );
 }
@@ -203,15 +227,19 @@ export function UserRolesTable({ onUpdateRole, onDeactivateRole }: UserRolesTabl
 // ============================================
 
 function RoleBadge({ role }: { role: string }) {
-  const badgeColor = getRoleBadgeColor(role as any);
   const displayName = getRoleDisplayName(role as any);
 
-  // Convert bg-color to text-color for badge text
-  const textColor = badgeColor.replace("bg-", "text-");
+  // Professional enterprise color scheme with high contrast
+  const badgeStyles: Record<string, string> = {
+    admin: "bg-red-500 text-white border-red-500",
+    owner: "bg-purple-500 text-white border-purple-500",
+    manager: "bg-blue-500 text-white border-blue-500",
+    staff: "bg-green-500 text-white border-green-500",
+  };
+
+  const styleClass = badgeStyles[role] || "bg-gray-500 text-white border-gray-500";
 
   return (
-    <Badge variant="outline" className={`${badgeColor} bg-opacity-10 ${textColor} font-medium`}>
-      {displayName}
-    </Badge>
+    <Badge className={`${styleClass} px-2.5 py-0.5 text-xs font-semibold`}>{displayName}</Badge>
   );
 }

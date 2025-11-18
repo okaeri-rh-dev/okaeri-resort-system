@@ -1,11 +1,12 @@
 // src/components/admin/GrantRoleDialog.tsx
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { ExternalLink, Loader2, Search } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -112,6 +113,51 @@ export function GrantRoleDialog({ open, onOpenChange }: GrantRoleDialogProps) {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Helper Alert */}
+            <Alert>
+              <Search className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                <strong>Find User ID:</strong> Open your{" "}
+                <a
+                  href={`${import.meta.env.VITE_SUPABASE_URL}/project/default/editor`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary inline-flex items-center gap-1 hover:underline"
+                >
+                  Supabase Dashboard
+                  <ExternalLink className="h-3 w-3" />
+                </a>{" "}
+                and run:{" "}
+                <code className="bg-muted rounded px-1 py-0.5 text-xs">
+                  SELECT id, email FROM auth.users WHERE email ILIKE '%search%'
+                </code>
+              </AlertDescription>
+            </Alert>
+
+            {/* Email */}
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Address</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="user@example.com"
+                      {...field}
+                      autoComplete="email"
+                      className="text-sm"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    User's email address from your authentication system
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* User ID */}
             <FormField
               control={form.control}
@@ -127,30 +173,7 @@ export function GrantRoleDialog({ open, onOpenChange }: GrantRoleDialogProps) {
                     />
                   </FormControl>
                   <FormDescription>
-                    Get from Supabase: <code className="text-xs">SELECT id FROM auth.users</code>
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Email */}
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="user@example.com"
-                      {...field}
-                      autoComplete="email"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Must match the email in auth.users (for denormalization)
+                    Paste the UUID from auth.users table (must match the email above)
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

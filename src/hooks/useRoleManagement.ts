@@ -13,6 +13,8 @@ import {
   type AppRole,
 } from "@/lib/audit-roles";
 import { logger } from "@/lib/logger";
+import { supabase } from "@/lib/supabase";
+import type { AuditLog } from "@/types/audit.types";
 
 // ============================================
 // QUERY KEYS
@@ -25,6 +27,7 @@ export const roleKeys = {
   details: () => [...roleKeys.all, "detail"] as const,
   detail: (id: string) => [...roleKeys.details(), id] as const,
   stats: () => [...roleKeys.all, "stats"] as const,
+  history: (userId: string) => [...roleKeys.all, "history", userId] as const,
 };
 
 // ============================================
@@ -84,6 +87,42 @@ export function useRoleStats() {
       return result.data || { admin: 0, owner: 0, manager: 0, staff: 0 };
     },
     staleTime: 60 * 1000, // 1 minute
+    retry: 1,
+  });
+}
+
+/**
+ * Fetch role change history for a specific user
+ * Queries audit_logs table for all role-related events
+ * Admin-only - will fail if user is not admin
+ *
+ * @param userId - UUID of the user whose history to fetch
+ * @returns Query result with audit log entries
+ */
+export function useRoleHistory(userId: string | null) {
+  return useQuery({
+    queryKey: roleKeys.history(userId || ""),
+    queryFn: async () => {
+      if (!userId) return [];
+
+      // Query audit_logs for role changes
+      const { data, error } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .eq("table_name", "app_roles")
+        .eq("record_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) {
+        logger.error("Failed to fetch role history", { error, userId });
+        throw new Error(error.message);
+      }
+
+      return (data || []) as AuditLog[];
+    },
+    enabled: !!userId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
     retry: 1,
   });
 }
