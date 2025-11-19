@@ -43,7 +43,7 @@ export const useBookingColumns = ({
         cell: ({ row }) => (
           <div className="space-y-1">
             <Link
-              to="/guests"
+              to="/admin/guests"
               search={{ search: row.original.guest_name }}
               className="font-medium text-blue-600 transition-colors hover:underline"
             >
@@ -155,7 +155,7 @@ export const useBookingColumns = ({
         header: ({ header }) => <SortableHeader header={header}>Reference</SortableHeader>,
         cell: ({ row }) => (
           <Link
-            to="/bookings/$bookingId"
+            to="/admin/bookings/$bookingId"
             params={{ bookingId: row.original.booking_id }}
             className="font-mono text-sm font-medium text-blue-600 transition-colors hover:underline"
           >
@@ -203,7 +203,10 @@ function BookingActionsCell({
     {
       label: "Edit Booking",
       onClick: () => {
-        navigate({ to: "/bookings/$bookingId/edit", params: { bookingId: booking.booking_id } });
+        navigate({
+          to: "/admin/bookings/$bookingId/edit",
+          params: { bookingId: booking.booking_id },
+        });
       },
     },
     ...(booking.payment_status !== "Completed"

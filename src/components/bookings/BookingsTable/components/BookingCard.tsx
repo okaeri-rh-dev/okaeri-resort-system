@@ -51,7 +51,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onUploadPayme
 
       <div className="flex gap-2">
         <Link
-          to="/bookings/$bookingId"
+          to="/admin/bookings/$bookingId"
           params={{ bookingId: booking.booking_id }}
           className="flex-1"
         >
@@ -61,7 +61,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onUploadPayme
           </Button>
         </Link>
         <Link
-          to="/bookings/$bookingId/edit"
+          to="/admin/bookings/$bookingId/edit"
           params={{ bookingId: booking.booking_id }}
           className="flex-1"
         >

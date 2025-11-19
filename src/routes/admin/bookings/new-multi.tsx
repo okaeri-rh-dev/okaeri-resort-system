@@ -22,11 +22,11 @@ function MultiUnitBookingPage() {
   const navigate = useNavigate();
 
   const handleSuccess = (bookingId: string) => {
-    navigate({ to: "/bookings/$bookingId", params: { bookingId } });
+    navigate({ to: "/admin/bookings/$bookingId", params: { bookingId } });
   };
 
   const handleCancel = () => {
-    navigate({ to: "/bookings" });
+    navigate({ to: "/admin/bookings" });
   };
 
   return (

@@ -33,7 +33,7 @@ function GuestsPage() {
   };
 
   const handleEditGuest = (guest: Guest) => {
-    navigate({ to: "/guests/$guestId/edit", params: { guestId: guest.guest_id } });
+    navigate({ to: "/admin/guests/$guestId/edit", params: { guestId: guest.guest_id } });
   };
 
   // If we're viewing a specific guest detail, render the child route

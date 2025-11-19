@@ -304,7 +304,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
       if (onSuccess) {
         onSuccess(result.booking_id);
       } else {
-        navigate({ to: "/bookings/$bookingId", params: { bookingId: result.booking_id } });
+        navigate({ to: "/admin/bookings/$bookingId", params: { bookingId: result.booking_id } });
       }
     } catch (error) {
       console.error("Booking creation failed:", error);

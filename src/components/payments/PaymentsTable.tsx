@@ -147,7 +147,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
           return (
             <div className="space-y-1">
               <Link
-                to="/bookings/$bookingId"
+                to="/admin/bookings/$bookingId"
                 params={{ bookingId }}
                 className="font-mono text-blue-600 transition-colors hover:underline"
                 preload="intent"

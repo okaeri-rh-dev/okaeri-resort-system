@@ -67,7 +67,7 @@ export function BookingEditPage() {
   // Setup mutation with navigation on success
   const updateBooking = useEntityEdit("booking", bookingId, {
     onSuccess: () => {
-      navigate({ to: "/bookings/$bookingId", params: { bookingId } });
+      navigate({ to: "/admin/bookings/$bookingId", params: { bookingId } });
     },
   });
 
@@ -78,7 +78,7 @@ export function BookingEditPage() {
 
   // Cancel handler
   const handleCancel = () => {
-    navigate({ to: "/bookings/$bookingId", params: { bookingId } });
+    navigate({ to: "/admin/bookings/$bookingId", params: { bookingId } });
   };
 
   return (

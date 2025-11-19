@@ -46,7 +46,7 @@ function UnitsPage() {
   };
 
   const handleEditUnit = (unit: Unit) => {
-    navigate({ to: "/units/$unitId/edit", params: { unitId: unit.unit_id } });
+    navigate({ to: "/admin/units/$unitId/edit", params: { unitId: unit.unit_id } });
   };
 
   const handleCreateSuccess = () => {
@@ -110,7 +110,10 @@ function UnitsPage() {
                   </div>
                 }
               >
-                <UnitForm onSuccess={handleCreateSuccess} />
+                <UnitForm
+                  onSuccess={handleCreateSuccess}
+                  onCancel={() => setShowCreateDialog(false)}
+                />
               </Suspense>
             </ErrorBoundary>
           </DialogContent>

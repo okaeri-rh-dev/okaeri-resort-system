@@ -36,11 +36,11 @@ function ExpensesPage() {
 
   // Navigate to dedicated detail and edit routes instead of using modals
   const handleEditExpense = (expense: Expense) => {
-    navigate({ to: "/expenses/$expenseId/edit", params: { expenseId: expense.expense_id } });
+    navigate({ to: "/admin/expenses/$expenseId/edit", params: { expenseId: expense.expense_id } });
   };
 
   const handleViewExpense = (expense: Expense) => {
-    navigate({ to: "/expenses/$expenseId", params: { expenseId: expense.expense_id } });
+    navigate({ to: "/admin/expenses/$expenseId", params: { expenseId: expense.expense_id } });
   };
 
   // If we're viewing a specific expense detail, render the child route

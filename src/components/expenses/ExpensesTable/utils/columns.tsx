@@ -82,7 +82,7 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
 
         return (
           <Link
-            to="/expenses/$expenseId"
+            to="/admin/expenses/$expenseId"
             params={{ expenseId: row.original.expense_id }}
             className="text-blue-600 transition-colors hover:underline"
             title={description}

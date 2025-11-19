@@ -283,7 +283,7 @@ export function MultiUnitGuestBookingForm() {
         hasProperty(result.booking, "booking_reference")
       ) {
         navigate({
-          to: "/booking-confirmation/$bookingReference",
+          to: "/booking/confirmation/$bookingReference",
           params: { bookingReference: String(result.booking.booking_reference) },
         });
       } else {

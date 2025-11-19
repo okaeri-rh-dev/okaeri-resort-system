@@ -36,11 +36,11 @@ function PaymentsPage() {
 
   // Navigate to dedicated detail and edit routes instead of using modals
   const handleEditPayment = (payment: Payment) => {
-    navigate({ to: "/payments/$paymentId/edit", params: { paymentId: payment.payment_id } });
+    navigate({ to: "/admin/payments/$paymentId/edit", params: { paymentId: payment.payment_id } });
   };
 
   const handleViewPayment = (payment: Payment) => {
-    navigate({ to: "/payments/$paymentId", params: { paymentId: payment.payment_id } });
+    navigate({ to: "/admin/payments/$paymentId", params: { paymentId: payment.payment_id } });
   };
 
   // If we're viewing a specific payment detail, render the child route

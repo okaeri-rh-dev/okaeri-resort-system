@@ -122,8 +122,14 @@ describe("Authentication Security Tests", () => {
 
   describe("Route Protection and Validation", () => {
     it("should validate routes from whitelist before redirect", () => {
-      // Use exact routes from VALID_ROUTES in auth.ts
-      const validRoutes = ["/login", "/dashboard", "/bookings", "/units", "/guests"];
+      // Use exact routes from VALID_ROUTES in auth.ts (updated for /admin namespace)
+      const validRoutes = [
+        "/login",
+        "/admin/dashboard",
+        "/admin/bookings",
+        "/admin/units",
+        "/admin/guests",
+      ];
       const invalidRoutes = [
         "javascript:alert(1)",
         "data:text/html,<script>alert(1)</script>",
@@ -164,8 +170,8 @@ describe("Authentication Security Tests", () => {
     });
 
     it("should handle returnUrl parameter safely", () => {
-      // Safe returnUrl
-      const safeUrl = "/dashboard?tab=bookings";
+      // Safe returnUrl (updated for /admin namespace)
+      const safeUrl = "/admin/dashboard?tab=bookings";
       auth.handleRedirect(safeUrl);
       expect(mockLocation.replace).toHaveBeenCalledWith(safeUrl);
 
