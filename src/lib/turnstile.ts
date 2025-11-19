@@ -30,13 +30,13 @@ export async function verifyTurnstile(
   const skipInDev = options?.skipInDev !== false; // Default: true
 
   if (isDevelopment && skipInDev) {
-    console.log("[Turnstile] Development mode: skipping verification");
+    // Development mode: skipping verification (debug log removed)
     return true;
   }
 
   // Also detect mock token explicitly
   if (token === "dev-mock-token" && isDevelopment) {
-    console.log("[Turnstile] Mock token detected in development: skipping verification");
+    // Mock token detected in development: skipping verification (debug log removed)
     return true;
   }
 

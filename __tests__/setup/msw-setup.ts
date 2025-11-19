@@ -26,7 +26,7 @@ beforeAll(() => {
       );
     },
   });
-  console.log("🔧 MSW server started for API mocking");
+  // MSW server started for API mocking
 });
 
 // Reset handlers and caches after each test
@@ -39,5 +39,5 @@ afterEach(() => {
 // Clean up after all tests
 afterAll(() => {
   server.close();
-  console.log("✅ MSW server closed");
+  // MSW server closed
 });

@@ -36,7 +36,6 @@ export const Route = createFileRoute("/admin/units")({
 
 function UnitsPage() {
   const navigate = useNavigate();
-  const params = useParams({ strict: false });
   const matches = useMatches();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 

@@ -208,7 +208,7 @@ export function SeasonalRatesForm({ rates = [], onSave, isLoading }: SeasonalRat
       toast.success("Changes saved", {
         description: "All seasonal rate changes have been saved successfully.",
       });
-    } catch (error) {
+    } catch (_error) {
       toast.error("Error saving changes", {
         description: "Failed to save seasonal rates. Please try again.",
       });

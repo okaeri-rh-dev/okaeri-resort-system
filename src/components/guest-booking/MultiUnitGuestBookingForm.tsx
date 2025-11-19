@@ -88,20 +88,9 @@ export function MultiUnitGuestBookingForm() {
   // Destructure formState to enable proper subscription
   const { isValid, isDirty, errors, isValidating, isSubmitting: formIsSubmitting } = form.formState;
 
-  // Debug: Log initial form state
+  // Form initialization tracking (debug logs removed for production)
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      console.log("=== FORM INITIALIZATION DEBUG ===");
-      console.log("Form initialized with values:", form.getValues());
-      console.log("Initial isValid state:", isValid);
-      console.log("Environment vars:", {
-        DEV: import.meta.env.DEV,
-        VITE_SKIP_TURNSTILE: import.meta.env.VITE_SKIP_TURNSTILE,
-        skipTurnstile,
-        isDev,
-      });
-      console.log("================================");
-    }
+    // Form state initialization - debug mode disabled to prevent data leakage
   }, []);
 
   // Extract form.setValue into useEffectEvent to remove form from dependencies
@@ -122,23 +111,14 @@ export function MultiUnitGuestBookingForm() {
     adjustCheckOutDate(watchedValues.check_in, watchedValues.check_out);
   }, [watchedValues.check_in, watchedValues.check_out]);
 
-  // Debug: Test raw Zod validation
+  // Zod validation utility (debug logs removed for production)
   const testZodValidation = () => {
     if (!import.meta.env.DEV) return;
 
     const currentValues = form.getValues();
     const result = multiUnitBookingSchema.safeParse(currentValues);
 
-    console.log("=== RAW ZOD VALIDATION TEST ===");
-    console.log("Current form values:", currentValues);
-    console.log("Zod validation success:", result.success);
-    if (!result.success) {
-      console.log("Zod errors:", result.error.format());
-      console.log("Flattened errors:", result.error.flatten());
-    } else {
-      console.log("All validations passed!");
-    }
-    console.log("================================");
+    // Debug logs removed to prevent sensitive data leakage
 
     return result;
   };
@@ -614,15 +594,13 @@ export function MultiUnitGuestBookingForm() {
                       <button
                         type="button"
                         onClick={() => {
-                          form.trigger().then((validationResult) => {
-                            console.log("Manual validation result:", validationResult);
-                            console.log("All errors:", errors);
-                            console.log("All values:", form.getValues());
+                          form.trigger().then(() => {
+                            // Validation triggered - logs removed for production
                           });
                         }}
                         className="mt-2 rounded bg-blue-500 px-2 py-1 text-xs text-white"
                       >
-                        Force Validate & Log
+                        Force Validate
                       </button>
 
                       <button

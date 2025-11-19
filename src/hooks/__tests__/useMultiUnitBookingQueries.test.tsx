@@ -52,8 +52,6 @@
  * - 8 other test files successfully migrated to MSW with similar patterns
  */
 
-/* eslint-disable vitest/no-disabled-tests */
-
 import { ReactNode } from "react";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

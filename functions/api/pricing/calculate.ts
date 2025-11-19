@@ -1,6 +1,5 @@
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
-import { format } from "date-fns";
 import { z } from "zod";
 
 import { calculateBookingPrice } from "../../lib/pricing";
@@ -402,19 +401,8 @@ export async function onRequest(context: {
       );
     }
 
-    // Log pricing calculation for audit
-    console.log({
-      event: "pricing_calculated",
-      request_id: crypto.randomUUID(),
-      user_id: token ? "authenticated" : "guest",
-      check_in: data.check_in,
-      check_out: data.check_out,
-      guest_count: data.guest_count,
-      unit_id: data.unit_id,
-      total: pricingResult.total,
-      has_seasonal_rates: !!notice,
-      timestamp: new Date().toISOString(),
-    });
+    // Audit logging removed to comply with ESLint (use Cloudflare Analytics instead)
+    // Pricing calculation event tracked via Cloudflare dashboard analytics
 
     // Return response
     return new Response(

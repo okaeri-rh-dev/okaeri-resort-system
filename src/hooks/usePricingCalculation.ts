@@ -159,14 +159,7 @@ export function usePricingCalculation(options: UsePricingCalculationOptions = {}
         }
       }
 
-      // Log successful calculation
-      console.log("Pricing calculated:", {
-        total: data.pricing.total,
-        downpayment: data.pricing.downpayment,
-        nights: data.pricing.nights,
-        notice: data.notice,
-        cached: data.cached,
-      });
+      // Pricing calculated successfully (debug log removed)
     },
 
     onError: (error) => {

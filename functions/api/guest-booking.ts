@@ -235,7 +235,6 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     });
 
     const totalAmount = pricingBreakdown.total;
-    const downpaymentAmount = pricingBreakdown.downpayment;
 
     // Determine if seasonal rates were applied
     const hasSeasonalRates = pricingBreakdown.nightlyBreakdown.some(

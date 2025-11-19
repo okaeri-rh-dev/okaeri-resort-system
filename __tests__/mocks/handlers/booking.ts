@@ -259,7 +259,7 @@ export const bookingHandlers = [
       }
 
       return HttpResponse.json({ success: true, booking }, { status: 201 });
-    } catch (error) {
+    } catch (_error) {
       return HttpResponse.json(
         {
           success: false,
@@ -309,7 +309,7 @@ export const bookingHandlers = [
         },
         { status: 200 }
       );
-    } catch (error) {
+    } catch (_error) {
       return HttpResponse.json(
         {
           success: false,
