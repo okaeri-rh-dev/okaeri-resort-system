@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper, type Header } from "@tanstack/react-table";
 import { Edit2, Eye, MoreHorizontal, Receipt, Trash2 } from "lucide-react";
 
 import { formatCurrency, formatTableDate, SortableHeader } from "@/components/tables/utils";
@@ -38,9 +38,9 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
   return [
     // Date column
     columnHelper.accessor("date", {
-      header: ({ header }) => (
+      header: ({ header }: { header: Header<Expense, unknown> }) => (
         <SortableHeader
-          header={header as any}
+          header={header}
           className="text-xs font-medium tracking-wide text-neutral-700 uppercase"
         >
           Date
@@ -54,9 +54,9 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
 
     // Category column
     columnHelper.accessor("category", {
-      header: ({ header }) => (
+      header: ({ header }: { header: Header<Expense, unknown> }) => (
         <SortableHeader
-          header={header as any}
+          header={header}
           className="text-xs font-medium tracking-wide text-neutral-700 uppercase"
         >
           Category
@@ -68,9 +68,9 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
 
     // Description column
     columnHelper.accessor("description", {
-      header: ({ header }) => (
+      header: ({ header }: { header: Header<Expense, unknown> }) => (
         <SortableHeader
-          header={header as any}
+          header={header}
           className="text-xs font-medium tracking-wide text-neutral-700 uppercase"
         >
           Description
@@ -97,9 +97,9 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
 
     // Amount column
     columnHelper.accessor("amount", {
-      header: ({ header }) => (
+      header: ({ header }: { header: Header<Expense, unknown> }) => (
         <SortableHeader
-          header={header as any}
+          header={header}
           className="text-right text-xs font-medium tracking-wide text-neutral-700 uppercase"
         >
           Amount

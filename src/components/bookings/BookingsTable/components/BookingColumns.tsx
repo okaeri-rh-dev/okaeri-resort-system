@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import { Link, useNavigate } from "@tanstack/react-router";
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper, type Header } from "@tanstack/react-table";
 
 import { PricingStatusIcon } from "@/components/pricing/PricingStatusBadge";
 import {
@@ -39,7 +39,9 @@ export const useBookingColumns = ({
   return useMemo(
     () => [
       columnHelper.accessor("guest_name", {
-        header: ({ header }) => <SortableHeader header={header as any}>Guest</SortableHeader>,
+        header: ({ header }: { header: Header<Booking, unknown> }) => (
+          <SortableHeader header={header}>Guest</SortableHeader>
+        ),
         cell: ({ row }) => (
           <div className="space-y-1">
             <Link
@@ -80,7 +82,9 @@ export const useBookingColumns = ({
       }),
 
       columnHelper.accessor("check_in", {
-        header: ({ header }) => <SortableHeader header={header as any}>Dates</SortableHeader>,
+        header: ({ header }: { header: Header<Booking, unknown> }) => (
+          <SortableHeader header={header}>Dates</SortableHeader>
+        ),
         cell: ({ getValue, row }) => (
           <div className="space-y-0.5">
             <div className="text-sm font-medium">{formatTableDate(getValue())}</div>
@@ -99,8 +103,8 @@ export const useBookingColumns = ({
       }),
 
       columnHelper.accessor("total_amount", {
-        header: ({ header }) => (
-          <SortableHeader header={header as any} className="text-right">
+        header: ({ header }: { header: Header<Booking, unknown> }) => (
+          <SortableHeader header={header} className="text-right">
             Amount
           </SortableHeader>
         ),
@@ -152,7 +156,9 @@ export const useBookingColumns = ({
       }),
 
       columnHelper.accessor("booking_reference", {
-        header: ({ header }) => <SortableHeader header={header as any}>Reference</SortableHeader>,
+        header: ({ header }: { header: Header<Booking, unknown> }) => (
+          <SortableHeader header={header}>Reference</SortableHeader>
+        ),
         cell: ({ row }) => (
           <Link
             to="/admin/bookings/$bookingId"
