@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
@@ -104,11 +104,8 @@ export function MultiUnitGuestBookingForm() {
     }
   }, []);
 
-  // Auto-adjust check-out date when check-in changes
-  useEffect(() => {
-    const checkIn = watchedValues.check_in;
-    const checkOut = watchedValues.check_out;
-
+  // Extract form.setValue into useEffectEvent to remove form from dependencies
+  const adjustCheckOutDate = useEffectEvent((checkIn: Date, checkOut: Date) => {
     if (checkIn && checkOut && checkOut <= checkIn) {
       // Set check-out to the day after check-in
       const newCheckOut = new Date(checkIn);
@@ -118,7 +115,12 @@ export function MultiUnitGuestBookingForm() {
         shouldDirty: true,
       });
     }
-  }, [watchedValues.check_in, watchedValues.check_out, form]);
+  });
+
+  // Auto-adjust check-out date when check-in changes
+  useEffect(() => {
+    adjustCheckOutDate(watchedValues.check_in, watchedValues.check_out);
+  }, [watchedValues.check_in, watchedValues.check_out]);
 
   // Debug: Test raw Zod validation
   const testZodValidation = () => {

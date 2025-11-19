@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useEffectEvent } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "@tanstack/react-router";
@@ -66,11 +66,16 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
   const watchedBaseOccupancy = form.watch("base_occupancy");
   const watchedMaxOccupancy = form.watch("max_occupancy");
 
+  // Extract form.setValue into useEffectEvent to remove form from dependencies
+  const adjustMaxOccupancy = useEffectEvent((baseOccupancy: number) => {
+    form.setValue("max_occupancy", baseOccupancy || 1);
+  });
+
   useEffect(() => {
     if (watchedBaseOccupancy > watchedMaxOccupancy) {
-      form.setValue("max_occupancy", watchedBaseOccupancy || 1);
+      adjustMaxOccupancy(watchedBaseOccupancy);
     }
-  }, [form, watchedBaseOccupancy, watchedMaxOccupancy]);
+  }, [watchedBaseOccupancy, watchedMaxOccupancy]);
 
   const onSubmit = async (data: UnitFormData) => {
     try {

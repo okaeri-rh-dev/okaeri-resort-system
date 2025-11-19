@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useEffectEvent } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Calculator, DollarSign, Home, Info, Users } from "lucide-react";
@@ -77,20 +78,25 @@ export function PricingConfigForm({ onSuccess, onCancel, className }: PricingCon
     },
   });
 
-  // Load current pricing into form when data arrives
-  React.useEffect(() => {
-    if (currentPricing) {
+  // Extract form.reset into useEffectEvent to remove form from dependencies
+  const resetForm = useEffectEvent((pricing: typeof currentPricing) => {
+    if (pricing) {
       form.reset({
-        base_rate: currentPricing.base_rate,
-        weekend_rate: currentPricing.weekend_rate,
-        extra_person_rate: currentPricing.extra_person_rate,
-        base_occupancy: currentPricing.base_occupancy,
-        max_capacity_per_unit: currentPricing.max_capacity_per_unit,
-        downpayment_percent: currentPricing.downpayment_percent,
-        currency: currentPricing.currency as "PHP",
+        base_rate: pricing.base_rate,
+        weekend_rate: pricing.weekend_rate,
+        extra_person_rate: pricing.extra_person_rate,
+        base_occupancy: pricing.base_occupancy,
+        max_capacity_per_unit: pricing.max_capacity_per_unit,
+        downpayment_percent: pricing.downpayment_percent,
+        currency: pricing.currency as "PHP",
       });
     }
-  }, [currentPricing, form]);
+  });
+
+  // Load current pricing into form when data arrives
+  React.useEffect(() => {
+    resetForm(currentPricing);
+  }, [currentPricing]);
 
   // Watch form values for real-time preview
   const watchedValues = form.watch();

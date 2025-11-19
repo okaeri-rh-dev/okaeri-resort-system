@@ -67,18 +67,15 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   className,
 }) => {
   // Local state for validation error
-  const [error, setError] = React.useState<string | null>(null);
-
   /**
-   * Validate dates on mount and when dates change
+   * Derive error state from dates using useMemo (React Compiler optimization)
+   * Replaces useEffect+setState pattern to prevent unnecessary re-renders
    */
-  React.useEffect(() => {
+  const error = React.useMemo(() => {
     if (checkIn && checkOut) {
-      const validationError = validateDateRange(checkIn, checkOut);
-      setError(validationError);
-    } else {
-      setError(null);
+      return validateDateRange(checkIn, checkOut);
     }
+    return null;
   }, [checkIn, checkOut]);
 
   /**
