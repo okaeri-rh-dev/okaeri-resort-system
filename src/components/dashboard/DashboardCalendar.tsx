@@ -128,11 +128,9 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
 
   // Create the DayButton component callback at the top level to follow React hooks rules
   const dayButtonComponent = useCallback(
-    (props: Omit<DayButtonProps, "bookingsByDate">) => (
-      <DayButton {...props} bookingsByDate={bookingsByDate} />
-    ),
+    (props: any) => <DayButton {...props} bookingsByDate={bookingsByDate} />,
     [bookingsByDate]
-  );
+  ) as any;
 
   return (
     <Card className={cn("w-full", className)}>

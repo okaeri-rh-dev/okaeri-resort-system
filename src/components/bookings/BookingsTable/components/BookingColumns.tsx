@@ -25,9 +25,9 @@ interface MutationObject<TVariables = unknown> {
 
 interface UseBookingColumnsProps {
   handleUploadPayment: (booking: Booking) => void;
-  updateBookingStatus?: MutationObject<{ bookingId: string; status: BookingStatus }>;
-  cancelBooking?: MutationObject<string>;
-  deleteBooking?: MutationObject<string>;
+  updateBookingStatus: MutationObject<{ bookingId: string; status: BookingStatus }>;
+  cancelBooking: MutationObject<string>;
+  deleteBooking: MutationObject<string>;
 }
 
 export const useBookingColumns = ({
@@ -39,7 +39,7 @@ export const useBookingColumns = ({
   return useMemo(
     () => [
       columnHelper.accessor("guest_name", {
-        header: ({ header }) => <SortableHeader header={header}>Guest</SortableHeader>,
+        header: ({ header }) => <SortableHeader header={header as any}>Guest</SortableHeader>,
         cell: ({ row }) => (
           <div className="space-y-1">
             <Link
@@ -80,7 +80,7 @@ export const useBookingColumns = ({
       }),
 
       columnHelper.accessor("check_in", {
-        header: ({ header }) => <SortableHeader header={header}>Dates</SortableHeader>,
+        header: ({ header }) => <SortableHeader header={header as any}>Dates</SortableHeader>,
         cell: ({ getValue, row }) => (
           <div className="space-y-0.5">
             <div className="text-sm font-medium">{formatTableDate(getValue())}</div>
@@ -100,7 +100,7 @@ export const useBookingColumns = ({
 
       columnHelper.accessor("total_amount", {
         header: ({ header }) => (
-          <SortableHeader header={header} className="text-right">
+          <SortableHeader header={header as any} className="text-right">
             Amount
           </SortableHeader>
         ),
@@ -152,7 +152,7 @@ export const useBookingColumns = ({
       }),
 
       columnHelper.accessor("booking_reference", {
-        header: ({ header }) => <SortableHeader header={header}>Reference</SortableHeader>,
+        header: ({ header }) => <SortableHeader header={header as any}>Reference</SortableHeader>,
         cell: ({ row }) => (
           <Link
             to="/admin/bookings/$bookingId"
@@ -222,7 +222,9 @@ function BookingActionsCell({
           {
             label: "Confirm",
             onClick: () => {
-              updateBookingStatus?.mutate({
+              (
+                updateBookingStatus as MutationObject<{ bookingId: string; status: BookingStatus }>
+              ).mutate({
                 bookingId: booking.booking_id,
                 status: "Confirmed" as BookingStatus,
               });
@@ -235,7 +237,7 @@ function BookingActionsCell({
           {
             label: "Cancel",
             onClick: () => {
-              cancelBooking?.mutate(booking.booking_id);
+              (cancelBooking as MutationObject<string>).mutate(booking.booking_id);
             },
             variant: "destructive" as const,
           },
@@ -249,7 +251,7 @@ function BookingActionsCell({
             `Are you sure you want to permanently delete booking "${booking.booking_reference}"? This action cannot be undone.`
           )
         ) {
-          deleteBooking?.mutate(booking.booking_id);
+          (deleteBooking as MutationObject<string>).mutate(booking.booking_id);
         }
       },
       variant: "destructive" as const,

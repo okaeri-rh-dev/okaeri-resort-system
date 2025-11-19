@@ -270,7 +270,6 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
       if (defaultValue !== undefined && internalValue === "") {
         setInternalValue(defaultValue === null ? "" : defaultValue.toString());
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const parseValue = (val: string): number | null => {

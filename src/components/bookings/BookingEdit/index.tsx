@@ -73,7 +73,12 @@ export function BookingEditPage() {
 
   // Form submission handler
   const onSubmit: SubmitHandler<BookingEditInput> = (data) => {
-    updateBooking.mutate(data);
+    // Transform Date objects to ISO strings for database
+    updateBooking.mutate({
+      ...data,
+      check_in: data.check_in.toISOString(),
+      check_out: data.check_out.toISOString(),
+    });
   };
 
   // Cancel handler

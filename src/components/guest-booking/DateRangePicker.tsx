@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { format } from "date-fns";
+// Removed unused import: format
 import { DateRange } from "react-day-picker";
 
 import { ResponsiveDateRangePicker } from "@/components/ui/responsive-date-picker";
@@ -63,7 +63,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   checkOut,
   onCheckInChange,
   onCheckOutChange,
-  disabled = false,
+  disabled: _disabled = false,
   className,
 }) => {
   // Local state for validation error
@@ -86,14 +86,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     onCheckInChange(range?.from);
     onCheckOutChange(range?.to);
 
-    // Validate if both dates are selected
-    if (range?.from && range?.to) {
-      const validationError = validateDateRange(range.from, range.to);
-      setError(validationError);
-    } else {
-      // Clear error if incomplete selection
-      setError(null);
-    }
+    // Error is automatically computed via useMemo above
   };
 
   /**

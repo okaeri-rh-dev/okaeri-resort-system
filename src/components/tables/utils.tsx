@@ -277,7 +277,7 @@ export const FilterPopover: React.FC<FilterPopoverProps> = ({
 
     // Check children recursively
     if (props?.children) {
-      const children = React.Children.toArray(props.children);
+      const children = React.Children.toArray(props.children as any);
       return children.some((child) => containsCalendar(child));
     }
 

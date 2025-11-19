@@ -48,7 +48,7 @@ export function UnitEditPage() {
 
   // Initialize form with default values from unit
   const form = useForm<UnitEditWithoutPricingInput>({
-    resolver: zodResolver(unitEditWithoutPricingSchema),
+    resolver: zodResolver(unitEditWithoutPricingSchema) as any,
     defaultValues: {
       unit_name: unit.unit_name || "",
       unit_code: unit.unit_code || "",
@@ -66,7 +66,7 @@ export function UnitEditPage() {
   // Setup mutation with navigation on success
   const updateUnit = useEntityEdit("unit", unitId, {
     onSuccess: () => {
-      navigate({ to: "/units/$unitId", params: { unitId } });
+      navigate({ to: "/admin/units/$unitId", params: { unitId } });
     },
   });
 
@@ -90,7 +90,7 @@ export function UnitEditPage() {
 
   // Cancel handler
   const handleCancel = () => {
-    navigate({ to: "/units/$unitId", params: { unitId } });
+    navigate({ to: "/admin/units/$unitId", params: { unitId } });
   };
 
   return (
@@ -104,7 +104,7 @@ export function UnitEditPage() {
       ]}
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit) as any} className="space-y-6">
           {/* Basic Information Section */}
           <Card>
             <CardHeader>
@@ -113,7 +113,7 @@ export function UnitEditPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
-                  control={form.control}
+                  control={form.control as any}
                   name="unit_name"
                   render={({ field }) => (
                     <FormItem>
@@ -127,7 +127,7 @@ export function UnitEditPage() {
                 />
 
                 <FormField
-                  control={form.control}
+                  control={form.control as any}
                   name="unit_code"
                   render={({ field }) => (
                     <FormItem>
@@ -144,7 +144,7 @@ export function UnitEditPage() {
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
-                  control={form.control}
+                  control={form.control as any}
                   name="unit_type"
                   render={({ field }) => (
                     <FormItem>
@@ -168,7 +168,7 @@ export function UnitEditPage() {
                 />
 
                 <FormField
-                  control={form.control}
+                  control={form.control as any}
                   name="max_occupancy"
                   render={({ field }) => (
                     <FormItem>

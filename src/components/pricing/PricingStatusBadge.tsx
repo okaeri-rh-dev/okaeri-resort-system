@@ -135,6 +135,8 @@ export function PricingStatusIcon({
       : "text-muted-foreground";
 
   return (
-    <Icon className={cn("h-4 w-4", colorClass, className)} title={notice || "Regular pricing"} />
+    <span title={notice || "Regular pricing"}>
+      <Icon className={cn("h-4 w-4", colorClass, className)} />
+    </span>
   );
 }

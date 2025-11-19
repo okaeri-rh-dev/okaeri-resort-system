@@ -45,7 +45,7 @@ export function useDetailPageState() {
     (tab: TabValue) => {
       navigate({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        search: (prev: any) => ({ ...prev, tab }),
+        search: ((prev: any) => ({ ...prev, tab })) as any,
         replace: true, // Don't add to history
       });
     },

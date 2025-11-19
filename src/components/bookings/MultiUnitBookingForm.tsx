@@ -284,12 +284,12 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
         },
         check_in: data.check_in.toISOString(),
         check_out: data.check_out.toISOString(),
-        units: selectedUnits.map((unit) => ({
+        booking_units: selectedUnits.map((unit) => ({
           unit_id: unit.unit_id,
           num_guests: unit.guest_assignment?.num_guests || unit.base_occupancy,
           guest_assignment: unit.guest_assignment,
           unit_notes: unit.guest_assignment?.special_requests,
-        })),
+        })) as any,
         payment: {
           method: data.payment_method,
           amount: data.payment_amount || getTotalAmount(),
@@ -299,17 +299,19 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
         internal_notes: data.internal_notes,
         source: "web",
         idempotency_key: idempotencyKey,
-      });
+      } as any);
 
       toast.success("Booking created successfully!");
       clearDraftBooking();
       form.reset();
 
       // Navigate to booking detail page
-      if (onSuccess) {
-        onSuccess(result.booking_id);
-      } else {
-        navigate({ to: "/admin/bookings/$bookingId", params: { bookingId: result.booking_id } });
+      if (result.booking_id) {
+        if (onSuccess) {
+          onSuccess(result.booking_id);
+        } else {
+          navigate({ to: "/admin/bookings/$bookingId", params: { bookingId: result.booking_id } });
+        }
       }
     } catch (error) {
       console.error("Booking creation failed:", error);

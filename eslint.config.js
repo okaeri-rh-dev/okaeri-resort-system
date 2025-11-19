@@ -90,4 +90,14 @@ export default tseslint.config([
       "no-console": "off",
     },
   },
+
+  // Test helper files (mocks, handlers, setup files)
+  {
+    files: ["__tests__/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "no-console": "off",
+    },
+  },
 ]);

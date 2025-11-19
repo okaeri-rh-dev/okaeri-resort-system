@@ -133,10 +133,8 @@ export function usePricingCalculation(options: UsePricingCalculationOptions = {}
 
       // Cache successful response if cache key provided
       if (useCache && cacheKey && isSuccessResponse(data)) {
-        queryClient.setQueryData(["pricing", "cache", cacheKey], data, {
-          // Cache for 5 minutes
-          staleTime: 5 * 60 * 1000,
-        });
+        // Cache for 5 minutes (staleTime is set in query options)
+        queryClient.setQueryData(["pricing", "cache", cacheKey], data);
       }
 
       return data as PricingCalculateResponse;
@@ -205,8 +203,8 @@ export function useAutoPricingCalculation(
 
   // Generate cache key from request parameters
   const cacheKey = request
-    ? `${request.unit_id || "custom"}:${request.check_in_date}:${
-        request.check_out_date
+    ? `${request.unit_id || "custom"}:${request.check_in}:${
+        request.check_out
       }:${request.guest_count}`
     : undefined;
 
@@ -222,7 +220,7 @@ export function useAutoPricingCalculation(
     if (request) {
       handlePricingRequest(request);
     }
-  }, [request?.check_in_date, request?.check_out_date, request?.guest_count, request?.unit_id]);
+  }, [request?.check_in, request?.check_out, request?.guest_count, request?.unit_id]);
 
   return {
     ...calculatePricing,
@@ -234,12 +232,12 @@ export function useAutoPricingCalculation(
  * Helper function to validate pricing request
  */
 function isValidRequest(request: PricingCalculateRequest): boolean {
-  if (!request.check_in_date || !request.check_out_date) {
+  if (!request.check_in || !request.check_out) {
     return false;
   }
 
-  const checkIn = new Date(request.check_in_date);
-  const checkOut = new Date(request.check_out_date);
+  const checkIn = new Date(request.check_in);
+  const checkOut = new Date(request.check_out);
 
   if (checkOut <= checkIn) {
     return false;

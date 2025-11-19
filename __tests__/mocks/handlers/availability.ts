@@ -6,8 +6,9 @@
 
 import { http, HttpResponse } from "msw";
 
-// Mock API response for availability
-const mockAvailabilityResponse = {
+// Mock API response for availability (unused - kept for reference)
+// @ts-expect-error - Kept for reference
+const _mockAvailabilityResponse = {
   totalUnits: 3,
   dateRange: {
     start: "2025-01-01",

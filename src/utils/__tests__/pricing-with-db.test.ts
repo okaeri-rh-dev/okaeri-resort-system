@@ -129,6 +129,7 @@ describe("calculateBookingPrice", () => {
     it("applies Christmas seasonal rate (2.0x multiplier)", async () => {
       // Mock Christmas seasonal rate
       vi.mocked(db.seasonalRates.forDate).mockResolvedValue({
+        id: "test-christmas-id",
         season_id: "christmas_new_year",
         name: "Christmas & New Year",
         start_date: "12-20",
@@ -169,6 +170,7 @@ describe("calculateBookingPrice", () => {
 
     it("applies low season discount (0.8x multiplier)", async () => {
       vi.mocked(db.seasonalRates.forDate).mockResolvedValue({
+        id: "test-low-season-id",
         season_id: "low_season",
         name: "Low Season (Rainy)",
         start_date: "06-01",
@@ -204,6 +206,7 @@ describe("calculateBookingPrice", () => {
 
     it("applies peak summer rate (1.5x multiplier)", async () => {
       vi.mocked(db.seasonalRates.forDate).mockResolvedValue({
+        id: "test-peak-summer-id",
         season_id: "peak_summer",
         name: "Peak Summer Season",
         start_date: "03-01",
@@ -239,6 +242,7 @@ describe("calculateBookingPrice", () => {
 
     it("calculates extra persons correctly with seasonal rates", async () => {
       vi.mocked(db.seasonalRates.forDate).mockResolvedValue({
+        id: "test-christmas-extra-persons-id",
         season_id: "christmas_new_year",
         name: "Christmas & New Year",
         start_date: "12-20",
@@ -301,6 +305,7 @@ describe("calculateBookingPrice", () => {
 
     it("includes season names in breakdown when applicable", async () => {
       vi.mocked(db.seasonalRates.forDate).mockResolvedValue({
+        id: "test-peak-summer-breakdown-id",
         season_id: "peak_summer",
         name: "Peak Summer Season",
         start_date: "03-01",
@@ -424,6 +429,7 @@ describe("calculateBookingPrice", () => {
 
     it("returns correct multiplier when seasonal rate exists", async () => {
       vi.mocked(db.seasonalRates.forDate).mockResolvedValue({
+        id: "test-christmas-multiplier-id",
         season_id: "christmas_new_year",
         name: "Christmas & New Year",
         start_date: "12-20",

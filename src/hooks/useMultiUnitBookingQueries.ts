@@ -188,7 +188,7 @@ export const useCreateMultiUnitBooking = () => {
         ...newBooking,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      };
+      } as MultiUnitBooking;
 
       addOptimisticBooking(optimisticBooking);
 

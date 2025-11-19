@@ -40,7 +40,7 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
     columnHelper.accessor("date", {
       header: ({ header }) => (
         <SortableHeader
-          header={header}
+          header={header as any}
           className="text-xs font-medium tracking-wide text-neutral-700 uppercase"
         >
           Date
@@ -56,7 +56,7 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
     columnHelper.accessor("category", {
       header: ({ header }) => (
         <SortableHeader
-          header={header}
+          header={header as any}
           className="text-xs font-medium tracking-wide text-neutral-700 uppercase"
         >
           Category
@@ -70,7 +70,7 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
     columnHelper.accessor("description", {
       header: ({ header }) => (
         <SortableHeader
-          header={header}
+          header={header as any}
           className="text-xs font-medium tracking-wide text-neutral-700 uppercase"
         >
           Description
@@ -99,7 +99,7 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
     columnHelper.accessor("amount", {
       header: ({ header }) => (
         <SortableHeader
-          header={header}
+          header={header as any}
           className="text-right text-xs font-medium tracking-wide text-neutral-700 uppercase"
         >
           Amount

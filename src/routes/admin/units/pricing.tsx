@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 
 import { PricingConfigForm } from "@/components/pricing/PricingConfigForm";
-import { SeasonalRatesForm } from "@/components/pricing/SeasonalRatesForm";
+import { SeasonalRatesForm, type SeasonalRate } from "@/components/pricing/SeasonalRatesForm";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSaveSeasonalRates, useSeasonalRates } from "@/hooks/useSeasonalRates";
@@ -34,7 +34,7 @@ function PricingConfigPage() {
   // Mutation for saving seasonal rates
   const saveSeasonalRatesMutation = useSaveSeasonalRates();
 
-  const handleSaveSeasonalRates = async (rates: any[]) => {
+  const handleSaveSeasonalRates = async (rates: SeasonalRate[]) => {
     await saveSeasonalRatesMutation.mutateAsync(rates);
   };
 
@@ -76,6 +76,7 @@ function PricingConfigPage() {
             rates={(seasonalRates || []).map((rate) => ({
               ...rate,
               description: rate.description || undefined,
+              color: rate.color || undefined,
             }))}
             onSave={handleSaveSeasonalRates}
             isLoading={isLoadingRates || saveSeasonalRatesMutation.isPending}

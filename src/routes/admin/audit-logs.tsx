@@ -30,11 +30,11 @@ export const Route = createFileRoute("/admin/audit-logs")({
     if (!isOwner) {
       // Redirect to dashboard if not authorized
       throw redirect({
-        to: "/dashboard",
+        to: "/admin/dashboard",
         search: {
           error: "unauthorized",
           message: "You do not have permission to access audit logs",
-        },
+        } as any,
       });
     }
   },

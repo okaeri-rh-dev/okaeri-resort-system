@@ -1,12 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 
-import {
-  createFileRoute,
-  Outlet,
-  useMatches,
-  useNavigate,
-  useParams,
-} from "@tanstack/react-router";
+import { createFileRoute, Outlet, useMatches, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -41,7 +35,7 @@ function UnitsPage() {
 
   // Navigate to dedicated detail and edit routes instead of using modals
   const handleViewUnit = (unit: Unit) => {
-    navigate({ to: "/units/$unitId", params: { unitId: unit.unit_id } });
+    navigate({ to: "/admin/units/$unitId", params: { unitId: unit.unit_id } });
   };
 
   const handleEditUnit = (unit: Unit) => {

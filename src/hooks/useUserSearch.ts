@@ -16,6 +16,8 @@ export interface AuthUser {
   raw_user_meta_data?: {
     full_name?: string;
     name?: string;
+    // External metadata from Supabase Auth - dynamic structure
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
   };
   created_at: string;
@@ -71,7 +73,7 @@ export function useUserSearch(searchQuery: string, debounceMs: number = 300) {
 
       // Query auth.users table via admin API
       // Note: This requires proper RLS policies or service role access
-      const { data, error } = await supabase.rpc("search_users_for_roles", {
+      const { data, error } = await (supabase as any).rpc("search_users_for_roles", {
         search_query: query,
       });
 
@@ -119,7 +121,7 @@ export function useUserById(userId: string | null) {
     queryFn: async () => {
       if (!userId) return null;
 
-      const { data, error } = await supabase.rpc("get_user_by_id", {
+      const { data, error } = await (supabase as any).rpc("get_user_by_id", {
         user_id: userId,
       });
 

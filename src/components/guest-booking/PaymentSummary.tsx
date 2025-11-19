@@ -5,11 +5,12 @@ import { AlertTriangle, Info } from "lucide-react";
 
 import { PricingStatusBadge } from "@/components/pricing/PricingStatusBadge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
+// Removed unused import: Badge
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePricingCalculation } from "@/hooks/usePricingCalculation";
+import type { MultiUnitPricingResult, PricingResult } from "@/types/api/pricing";
 import type { UnitRequest } from "@/types/guest-booking-multi-unit";
 
 export interface PaymentSummaryProps {
@@ -20,7 +21,9 @@ export interface PaymentSummaryProps {
 
 export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSummaryProps) {
   const [pricingNotice, setPricingNotice] = useState<string | null>(null);
-  const [pricingData, setPricingData] = useState<any>(null);
+  const [pricingData, setPricingData] = useState<PricingResult | MultiUnitPricingResult | null>(
+    null
+  );
 
   // Initialize pricing calculation hook
   const calculatePricing = usePricingCalculation({
@@ -54,7 +57,7 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
       // Build pricing request based on what data we have
       if (unitRequests.length > 1) {
         // Multi-unit booking - map requests properly (don't send empty strings for unit_id)
-        const unitRequestsForApi = unitRequests.map((req) => ({
+        const unitRequestsForApi = unitRequests.map((req: any) => ({
           ...(req.unit_id ? { unit_id: req.unit_id } : {}), // Only include unit_id if present
           guest_count: req.guests_per_unit,
         }));
@@ -63,15 +66,15 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
           check_in: checkInStr,
           check_out: checkOutStr,
           guest_count: totalGuests, // Include total at top level
-          unit_requests: unitRequestsForApi,
+          unit_requests: unitRequestsForApi as any,
         });
-      } else if (unitRequests[0]?.unit_id) {
+      } else if ((unitRequests[0] as any)?.unit_id) {
         // Single unit with specific unit ID
         calculatePricing.mutate({
           check_in: checkInStr,
           check_out: checkOutStr,
           guest_count: totalGuests,
-          unit_id: unitRequests[0].unit_id,
+          unit_id: (unitRequests[0] as any).unit_id,
         });
       } else {
         // Single unit, no specific unit - use simple guest count pricing
@@ -149,7 +152,7 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
         downpayment: pricingData.downpayment,
         total_units: pricingData.units.length,
         total_guests: pricingData.units.reduce(
-          (sum: number, u: any) => sum + u.pricing.extraPersons + 2,
+          (sum: number, u) => sum + u.pricing.extraPersons + 2,
           0
         ),
       }

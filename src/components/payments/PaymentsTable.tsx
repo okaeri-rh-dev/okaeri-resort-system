@@ -130,7 +130,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
     () => [
       columnHelper.accessor("payment_date", {
         id: "payment_date",
-        header: ({ header }) => <SortableHeader header={header}>Date</SortableHeader>,
+        header: ({ header }) => <SortableHeader header={header as any}>Date</SortableHeader>,
         cell: ({ getValue }) => formatTableDate(getValue() || ""),
         size: 100,
       }),
@@ -163,7 +163,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
 
       columnHelper.accessor("amount", {
         id: "amount",
-        header: ({ header }) => <SortableHeader header={header}>Amount</SortableHeader>,
+        header: ({ header }) => <SortableHeader header={header as any}>Amount</SortableHeader>,
         cell: ({ getValue }) => (
           <span className="font-mono font-semibold text-neutral-900">
             {formatCurrency(getValue())}

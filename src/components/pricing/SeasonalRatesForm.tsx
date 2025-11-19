@@ -1,8 +1,8 @@
 import * as React from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
-import { Calendar, Edit2, Plus, Save, Trash2, TrendingDown, TrendingUp, X } from "lucide-react";
+// Removed unused imports: format, X, Label
+import { Calendar, Edit2, Plus, Save, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -29,7 +29,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -114,7 +113,11 @@ interface SeasonalRatesFormProps {
   isLoading?: boolean;
 }
 
-export function SeasonalRatesForm({ rates = [], onSave, isLoading }: SeasonalRatesFormProps) {
+export function SeasonalRatesForm({
+  rates = [],
+  onSave,
+  isLoading: _isLoading,
+}: SeasonalRatesFormProps) {
   const [localRates, setLocalRates] = React.useState<SeasonalRate[]>(rates);
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [editingRate, setEditingRate] = React.useState<SeasonalRate | null>(null);

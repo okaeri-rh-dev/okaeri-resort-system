@@ -313,7 +313,7 @@ export type MultiUnitBookingApiResponse = ApiResponse<MultiUnitBooking>;
 // ============================================
 
 export function isMultiUnitBooking(booking: unknown): booking is MultiUnitBooking {
-  return (
+  return !!(
     booking &&
     typeof booking === "object" &&
     "booking_units" in booking &&
@@ -323,7 +323,7 @@ export function isMultiUnitBooking(booking: unknown): booking is MultiUnitBookin
 }
 
 export function isBookingUnit(unit: unknown): unit is BookingUnit {
-  return (
+  return !!(
     unit &&
     typeof unit === "object" &&
     "unit_id" in unit &&
@@ -333,7 +333,7 @@ export function isBookingUnit(unit: unknown): unit is BookingUnit {
 }
 
 export function isOptimisticEntry(entry: unknown): entry is OptimisticEntry {
-  return (
+  return !!(
     entry &&
     typeof entry === "object" &&
     "booking" in entry &&

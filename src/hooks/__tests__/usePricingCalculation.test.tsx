@@ -129,8 +129,8 @@ describe("usePricingCalculation", () => {
   };
 
   const validRequest: PricingCalculateRequest = {
-    check_in_date: "2024-12-20",
-    check_out_date: "2024-12-23",
+    check_in: "2024-12-20",
+    check_out: "2024-12-23",
     guest_count: 2,
     unit_id: "550e8400-e29b-41d4-a716-446655440001",
   };
@@ -216,8 +216,8 @@ describe("usePricingCalculation", () => {
 
       result.current.mutate({
         ...validRequest,
-        check_in_date: "2024-12-25",
-        check_out_date: "2024-12-28",
+        check_in: "2024-12-25",
+        check_out: "2024-12-28",
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -633,8 +633,9 @@ describe("usePricingCalculation", () => {
   describe("Edge Cases", () => {
     it("should handle multi-unit pricing requests", async () => {
       const multiUnitRequest: PricingCalculateRequest = {
-        check_in_date: "2024-12-20",
-        check_out_date: "2024-12-23",
+        check_in: "2024-12-20",
+        check_out: "2024-12-23",
+        guest_count: 5, // Total guests across all units
         unit_requests: [
           { unit_id: "550e8400-e29b-41d4-a716-446655440001", guest_count: 2 },
           { unit_id: "550e8400-e29b-41d4-a716-446655440002", guest_count: 3 },
@@ -657,8 +658,8 @@ describe("usePricingCalculation", () => {
 
     it("should handle custom pricing requests", async () => {
       const customPricingRequest: PricingCalculateRequest = {
-        check_in_date: "2024-12-20",
-        check_out_date: "2024-12-23",
+        check_in: "2024-12-20",
+        check_out: "2024-12-23",
         guest_count: 2,
         custom_pricing: {
           base_rate: 2500,

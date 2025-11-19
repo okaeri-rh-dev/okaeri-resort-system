@@ -53,7 +53,7 @@ import type { Booking } from "@/types";
 import { formDateToUTC } from "@/utils/date-helpers";
 
 interface BookingFormProps {
-  onSuccess?: (booking: Booking) => void;
+  onSuccess?: (booking: Partial<Booking>) => void;
   onCancel?: () => void;
   initialData?: Partial<CompleteBookingData> & {
     total_amount?: number; // Add total_amount for edit mode pricing

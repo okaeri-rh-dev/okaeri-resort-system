@@ -29,7 +29,7 @@ function GuestsPage() {
 
   // Navigate to dedicated detail and edit routes instead of using modals
   const handleViewGuest = (guest: Guest) => {
-    navigate({ to: "/guests/$guestId", params: { guestId: guest.guest_id } });
+    navigate({ to: "/admin/guests/$guestId", params: { guestId: guest.guest_id } });
   };
 
   const handleEditGuest = (guest: Guest) => {

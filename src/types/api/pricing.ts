@@ -147,6 +147,8 @@ export interface PricingErrorResponse {
     | "METHOD_NOT_ALLOWED";
   message: string;
   errors?: Record<string, string[]>;
+  // Debug information can contain any type of data
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   debug?: any;
 }
 

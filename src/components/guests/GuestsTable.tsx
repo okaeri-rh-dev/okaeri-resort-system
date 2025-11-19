@@ -296,11 +296,11 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
       }),
 
       columnHelper.accessor("guest_name", {
-        header: ({ header }) => <SortableHeader header={header}>Guest Name</SortableHeader>,
+        header: ({ header }) => <SortableHeader header={header as any}>Guest Name</SortableHeader>,
         cell: ({ getValue, row }) => (
           <div className="space-y-1">
             <Link
-              to="/guests/$guestId"
+              to="/admin/guests/$guestId"
               params={{ guestId: row.original.guest_id }}
               className="font-medium text-blue-600 transition-colors hover:underline"
               preload="intent"
@@ -331,7 +331,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
 
       columnHelper.accessor("total_bookings", {
         header: ({ header }) => (
-          <SortableHeader header={header} className="text-center">
+          <SortableHeader header={header as any} className="text-center">
             Bookings
           </SortableHeader>
         ),
@@ -346,7 +346,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
 
       columnHelper.accessor("total_spent", {
         header: ({ header }) => (
-          <SortableHeader header={header} className="text-right">
+          <SortableHeader header={header as any} className="text-right">
             Total Spent
           </SortableHeader>
         ),

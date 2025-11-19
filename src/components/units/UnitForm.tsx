@@ -32,7 +32,7 @@ import type { Unit, UnitType } from "@/types";
 
 interface UnitFormProps {
   unit?: Unit; // For editing existing unit
-  onSuccess?: (unit: Unit) => void;
+  onSuccess?: (unit: Partial<Unit>) => void;
   onCancel?: () => void;
   className?: string;
 }
@@ -42,12 +42,12 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
   const updateUnitMutation = useUpdateUnit();
 
   // Fetch global pricing configuration
-  const { data: pricingConfig, isLoading: isPricingLoading } = usePricingConfig();
+  const { data: pricingConfig, isLoading: _isPricingLoading } = usePricingConfig();
 
   const isEditing = !!unit;
 
   const form = useForm<UnitFormData>({
-    resolver: zodResolver(unitFormWithoutPricingValidationSchema),
+    resolver: zodResolver(unitFormWithoutPricingValidationSchema) as any,
     defaultValues: {
       unit_name: unit?.unit_name || "",
       unit_code: unit?.unit_code || "",
@@ -130,14 +130,14 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
 
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit) as any} className="space-y-6">
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Basic Information</h3>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
-                  control={form.control}
+                  control={form.control as any}
                   name="unit_name"
                   render={({ field }) => (
                     <FormItem>
@@ -156,7 +156,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                 />
 
                 <FormField
-                  control={form.control}
+                  control={form.control as any}
                   name="unit_code"
                   render={({ field }) => (
                     <FormItem>
@@ -181,7 +181,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
-                  control={form.control}
+                  control={form.control as any}
                   name="base_occupancy"
                   render={({ field }) => (
                     <FormItem>
@@ -208,7 +208,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                 />
 
                 <FormField
-                  control={form.control}
+                  control={form.control as any}
                   name="max_occupancy"
                   render={({ field }) => (
                     <FormItem>

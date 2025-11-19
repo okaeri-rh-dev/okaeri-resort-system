@@ -73,11 +73,11 @@ export function BookingReviewStep({
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <p className="text-muted-foreground text-sm">Check-in</p>
-              <p className="font-medium">{formatDate(formData.check_in)}</p>
+              <p className="font-medium">{formatDate(formData.check_in?.toISOString())}</p>
             </div>
             <div>
               <p className="text-muted-foreground text-sm">Check-out</p>
-              <p className="font-medium">{formatDate(formData.check_out)}</p>
+              <p className="font-medium">{formatDate(formData.check_out?.toISOString())}</p>
             </div>
           </div>
 

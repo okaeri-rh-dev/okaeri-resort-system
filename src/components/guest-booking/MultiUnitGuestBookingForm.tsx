@@ -2,7 +2,7 @@ import { useEffect, useEffectEvent, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
-import { format } from "date-fns";
+// Removed unused imports: format, cn
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 
@@ -22,7 +22,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { logger } from "@/lib/logger";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
 import { hasProperty, isObject } from "@/lib/type-guards";
-import { cn } from "@/lib/utils";
 import {
   multiUnitBookingSchema,
   STEP_FIELDS,
@@ -86,7 +85,13 @@ export function MultiUnitGuestBookingForm() {
   const watchedValues = form.watch();
 
   // Destructure formState to enable proper subscription
-  const { isValid, isDirty, errors, isValidating, isSubmitting: formIsSubmitting } = form.formState;
+  const {
+    isValid,
+    isDirty,
+    errors,
+    isValidating,
+    isSubmitting: _formIsSubmitting,
+  } = form.formState;
 
   // Form initialization tracking (debug logs removed for production)
   useEffect(() => {

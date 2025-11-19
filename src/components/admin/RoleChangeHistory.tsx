@@ -92,7 +92,7 @@ export function RoleChangeHistory({
             <div className="space-y-0">
               {history.map((entry, index) => (
                 <RoleChangeEntry
-                  key={entry.id}
+                  key={entry.audit_id}
                   entry={entry}
                   isLast={index === history.length - 1}
                 />
@@ -205,7 +205,7 @@ function RoleChangeEntry({ entry, isLast }: { entry: AuditLog; isLast: boolean }
 
       {/* Timestamp */}
       <p className="text-muted-foreground mb-1 font-mono text-xs">
-        {formatDate(new Date(timestamp))}
+        {timestamp ? formatDate(new Date(timestamp)) : "Unknown date"}
       </p>
 
       {/* Change description */}
@@ -231,6 +231,7 @@ function RoleChangeEntry({ entry, isLast }: { entry: AuditLog; isLast: boolean }
 // ============================================
 
 function RoleBadgeInline({ role }: { role: string }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const displayName = getRoleDisplayName(role as any);
 
   const badgeStyles: Record<string, string> = {

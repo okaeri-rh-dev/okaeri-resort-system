@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { createColumnHelper } from "@tanstack/react-table";
 
-import { ActionMenu, formatCurrency, SortableHeader, StatusBadge } from "@/components/tables/utils";
+import { ActionMenu, SortableHeader, StatusBadge } from "@/components/tables/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Unit, UnitStatus } from "@/types";
 
@@ -54,7 +54,7 @@ export function useUnitColumns({
 
       // Unit code column
       columnHelper.accessor("unit_code", {
-        header: ({ header }) => <SortableHeader header={header}>Code</SortableHeader>,
+        header: ({ header }) => <SortableHeader header={header as any}>Code</SortableHeader>,
         cell: ({ getValue }) => (
           <div className="font-mono text-sm font-medium text-blue-600">{getValue()}</div>
         ),
@@ -63,7 +63,7 @@ export function useUnitColumns({
 
       // Unit name column with inline editing
       columnHelper.accessor("unit_name", {
-        header: ({ header }) => <SortableHeader header={header}>Name</SortableHeader>,
+        header: ({ header }) => <SortableHeader header={header as any}>Name</SortableHeader>,
         cell: ({ getValue, row }) => {
           if (isEditMode) {
             return (
@@ -79,7 +79,7 @@ export function useUnitColumns({
           }
           return (
             <Link
-              to="/units/$unitId"
+              to="/admin/units/$unitId"
               params={{ unitId: row.original.unit_id }}
               className="font-medium text-blue-600 transition-colors hover:underline"
               preload="intent"
@@ -137,7 +137,7 @@ export function useUnitColumns({
 
       // Status column with inline editing
       columnHelper.accessor("unit_status", {
-        header: ({ header }) => <SortableHeader header={header}>Status</SortableHeader>,
+        header: ({ header }) => <SortableHeader header={header as any}>Status</SortableHeader>,
         cell: ({ getValue, row }) => {
           const statusOptions: Array<{ value: UnitStatus; label: string }> = [
             { value: "Available", label: "Available" },

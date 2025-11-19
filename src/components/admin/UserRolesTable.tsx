@@ -26,7 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAllRoles } from "@/hooks/useRoleManagement";
-import { getRoleBadgeColor, getRoleDisplayName, type AppRole } from "@/lib/audit-roles";
+import { getRoleDisplayName, type AppRole } from "@/lib/audit-roles";
 import { formatDate } from "@/lib/utils";
 
 // ============================================
@@ -227,6 +227,7 @@ export function UserRolesTable({ onUpdateRole, onDeactivateRole }: UserRolesTabl
 // ============================================
 
 function RoleBadge({ role }: { role: string }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const displayName = getRoleDisplayName(role as any);
 
   // Professional enterprise color scheme with high contrast

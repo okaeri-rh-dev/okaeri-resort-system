@@ -369,7 +369,7 @@ describe.skip("useMultiUnitBookingQueries Integration Tests - SKIPPED: Needs MSW
       result.current.mutate({
         guest_name: "Test",
         total_amount: 1000,
-      });
+      } as any);
 
       // Wait for mutation to complete with error
       await waitFor(

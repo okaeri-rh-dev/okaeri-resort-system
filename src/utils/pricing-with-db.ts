@@ -98,7 +98,7 @@ export async function calculateBookingPrice(params: {
 /**
  * Get the seasonal multiplier for a specific date
  */
-async function getSeasonalMultiplier(date: Date): Promise<number> {
+export async function getSeasonalMultiplier(date: Date): Promise<number> {
   try {
     const seasonalRate = await db.seasonalRates.forDate(date);
     return seasonalRate?.multiplier || 1.0;
