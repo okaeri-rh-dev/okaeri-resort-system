@@ -1,6 +1,7 @@
 // src/components/units/UnitDetail/index.tsx
 
-import { Calendar, DollarSign, Home, Sparkles, TrendingUp } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Calendar, DollarSign, Home, Info, Sparkles, TrendingUp } from "lucide-react";
 
 import {
   DetailAuditSection,
@@ -13,6 +14,9 @@ import {
   RelatedEntityLink,
 } from "@/components/entity-detail";
 import { StatusBadge } from "@/components/tables/utils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { usePricingConfig } from "@/hooks/usePricingConfig";
 import type { Booking, Unit } from "@/types";
 
 /**
@@ -37,7 +41,7 @@ interface UnitDetailPageProps {
  *
  * Displays comprehensive unit information in a professional enterprise layout:
  * - Unit specifications (code, type, occupancy, status)
- * - Pricing information with monospace formatting
+ * - Global pricing reference (unit-level pricing removed)
  * - Amenities list
  * - Current/upcoming bookings with related entity links
  * - Revenue statistics and occupancy metrics
@@ -54,6 +58,9 @@ interface UnitDetailPageProps {
  * The route file handles useParams() and useLoaderData() calls.
  */
 export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
+  // Fetch global pricing configuration
+  const { data: pricingConfig } = usePricingConfig();
+
   return (
     <DetailPageLayout
       title={`${unit.unit_name} (${unit.unit_code})`}
@@ -91,34 +98,56 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
 
       {/* 2. Pricing Information Section */}
       <DetailSection title="Pricing Information" icon={<DollarSign className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <DetailField
-            label="Base Rate (per night)"
-            value={formatCurrency(unit.base_rate)}
-            valueClassName="font-mono font-semibold text-lg text-neutral-900"
-          />
-          {unit.weekend_rate && unit.weekend_rate !== unit.base_rate && (
-            <DetailField
-              label="Weekend Rate (per night)"
-              value={formatCurrency(unit.weekend_rate)}
-              valueClassName="font-mono font-semibold text-lg text-neutral-900"
-            />
-          )}
-          {unit.extra_person_rate && unit.extra_person_rate > 0 && (
-            <DetailField
-              label="Extra Person Rate"
-              value={formatCurrency(unit.extra_person_rate)}
-              valueClassName="font-mono font-medium text-neutral-900"
-            />
-          )}
-          {unit.cleaning_fee && unit.cleaning_fee > 0 && (
-            <DetailField
-              label="Cleaning Fee"
-              value={formatCurrency(unit.cleaning_fee)}
-              valueClassName="font-mono font-medium text-neutral-900"
-            />
-          )}
-        </div>
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <div className="space-y-3">
+              <p className="font-medium">This cabin uses global pricing configuration.</p>
+              <p className="text-muted-foreground text-sm">
+                All cabins automatically inherit rates from your resort-wide pricing settings to
+                ensure consistent pricing across all units.
+              </p>
+
+              {pricingConfig && (
+                <div className="mt-4 space-y-2 rounded-md border border-neutral-200 bg-neutral-50 p-4">
+                  <p className="text-sm font-medium text-neutral-700">Current Global Rates:</p>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                    <div>
+                      <p className="text-xs text-neutral-500">Base Rate (Weekdays)</p>
+                      <p className="font-mono text-base font-semibold text-neutral-900">
+                        {formatCurrency(pricingConfig.base_rate)}
+                      </p>
+                      <p className="text-xs text-neutral-500">per night</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-neutral-500">Weekend Rate</p>
+                      <p className="font-mono text-base font-semibold text-neutral-900">
+                        {formatCurrency(pricingConfig.weekend_rate)}
+                      </p>
+                      <p className="text-xs text-neutral-500">Fri-Sat per night</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-neutral-500">Extra Person Rate</p>
+                      <p className="font-mono text-base font-semibold text-neutral-900">
+                        {formatCurrency(pricingConfig.extra_person_rate)}
+                      </p>
+                      <p className="text-xs text-neutral-500">per person per night</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-2">
+                <Link to="/admin/units/pricing">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <DollarSign className="h-4 w-4" />
+                    Manage Global Pricing Settings
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
       </DetailSection>
 
       {/* 3. Amenities Section (Conditional) */}

@@ -305,8 +305,8 @@ BEGIN
     INSERT INTO bookings (
         guest_id,
         booking_reference,
-        check_in_date,
-        check_out_date,
+        check_in,
+        check_out,
         num_guests,
         total_amount,
         discount_percent,
@@ -323,8 +323,8 @@ BEGIN
     ) VALUES (
         v_guest_id,
         p_booking_data->>'booking_reference',
-        (p_booking_data->>'check_in_date')::TIMESTAMPTZ,
-        (p_booking_data->>'check_out_date')::TIMESTAMPTZ,
+        (p_booking_data->>'check_in')::TIMESTAMPTZ,
+        (p_booking_data->>'check_out')::TIMESTAMPTZ,
         (p_booking_data->>'num_guests')::INTEGER,
         (p_booking_data->>'total_amount')::DECIMAL,
         (p_booking_data->>'discount_percent')::DECIMAL,

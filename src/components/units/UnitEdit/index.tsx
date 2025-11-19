@@ -1,11 +1,12 @@
 // src/components/units/UnitEdit/index.tsx
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useLoaderData, useNavigate, useParams } from "@tanstack/react-router";
-import { Save, X } from "lucide-react";
+import { Link, useLoaderData, useNavigate, useParams } from "@tanstack/react-router";
+import { DollarSign, Info, Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { DetailPageLayout } from "@/components/entity-detail";
+import { DetailPageLayout, formatCurrency } from "@/components/entity-detail";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -26,7 +27,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEntityEdit } from "@/hooks/entity";
-import { unitEditSchema, type UnitEditInput } from "@/lib/validation/entity-schemas";
+import { usePricingConfig } from "@/hooks/usePricingConfig";
+import {
+  unitEditWithoutPricingSchema,
+  type UnitEditWithoutPricingInput,
+} from "@/lib/validation/entity-schemas";
 import type { Unit } from "@/types/entity-detail.types";
 
 export interface UnitEditPageProps {
@@ -38,17 +43,21 @@ export function UnitEditPage() {
   const { unit } = useLoaderData({ from: "/admin/units/$unitId/edit" });
   const navigate = useNavigate();
 
+  // Fetch global pricing configuration
+  const { data: pricingConfig } = usePricingConfig();
+
   // Initialize form with default values from unit
-  const form = useForm<UnitEditInput>({
-    resolver: zodResolver(unitEditSchema),
+  const form = useForm<UnitEditWithoutPricingInput>({
+    resolver: zodResolver(unitEditWithoutPricingSchema),
     defaultValues: {
       unit_name: unit.unit_name || "",
       unit_code: unit.unit_code || "",
       unit_type: unit.unit_type || "",
       max_occupancy: unit.max_occupancy || 1,
-      base_rate: unit.base_rate || 0,
-      weekend_rate: unit.weekend_rate || 0,
-      extra_person_rate: unit.extra_person_rate || 0,
+      // Pricing fields removed from form - will be auto-populated from global config
+      base_rate: 0,
+      weekend_rate: 0,
+      extra_person_rate: 0,
       cleaning_fee: 0, // Not in DB schema - will be added in Phase 3
       amenities: (unit.amenities as string[]) || undefined,
     },
@@ -61,9 +70,22 @@ export function UnitEditPage() {
     },
   });
 
-  // Form submission handler
-  const onSubmit = (data: UnitEditInput) => {
-    updateUnit.mutate(data);
+  // Form submission handler with global pricing auto-population
+  const onSubmit = (data: UnitEditWithoutPricingInput) => {
+    if (!pricingConfig) {
+      console.error("Pricing config not loaded");
+      return;
+    }
+
+    // Auto-populate pricing from global config before submission
+    const dataWithPricing = {
+      ...data,
+      base_rate: pricingConfig.base_rate,
+      weekend_rate: pricingConfig.weekend_rate,
+      extra_person_rate: pricingConfig.extra_person_rate,
+    };
+
+    updateUnit.mutate(dataWithPricing);
   };
 
   // Cancel handler
@@ -169,112 +191,61 @@ export function UnitEditPage() {
             </CardContent>
           </Card>
 
-          {/* Pricing Section */}
+          {/* Pricing Section - Now Global */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Pricing</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="base_rate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Base Rate</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min={0}
-                          placeholder="0.00"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormDescription>₱ Philippine Peso per night</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <CardContent>
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  <div className="space-y-3">
+                    <p className="font-medium">This cabin uses global pricing configuration.</p>
+                    <p className="text-muted-foreground text-sm">
+                      All cabins automatically inherit rates from your resort-wide pricing settings.
+                      When you save this unit, pricing will be synced with the global configuration.
+                    </p>
 
-                <FormField
-                  control={form.control}
-                  name="weekend_rate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Weekend Rate (Optional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min={0}
-                          placeholder="0.00"
-                          {...field}
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)
-                          }
-                        />
-                      </FormControl>
-                      <FormDescription>₱ Special rate for weekends</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                    {pricingConfig && (
+                      <div className="mt-4 space-y-2 rounded-md border border-neutral-200 bg-neutral-50 p-4">
+                        <p className="text-sm font-medium text-neutral-700">
+                          Current Global Rates:
+                        </p>
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                          <div>
+                            <p className="text-xs text-neutral-500">Base Rate</p>
+                            <p className="font-mono text-base font-semibold text-neutral-900">
+                              {formatCurrency(pricingConfig.base_rate)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-neutral-500">Weekend Rate</p>
+                            <p className="font-mono text-base font-semibold text-neutral-900">
+                              {formatCurrency(pricingConfig.weekend_rate)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-neutral-500">Extra Person</p>
+                            <p className="font-mono text-base font-semibold text-neutral-900">
+                              {formatCurrency(pricingConfig.extra_person_rate)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="extra_person_rate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Extra Person Rate (Optional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min={0}
-                          placeholder="0.00"
-                          {...field}
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)
-                          }
-                        />
-                      </FormControl>
-                      <FormDescription>₱ Additional charge per extra guest</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="cleaning_fee"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cleaning Fee (Optional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min={0}
-                          placeholder="0.00"
-                          {...field}
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)
-                          }
-                        />
-                      </FormControl>
-                      <FormDescription>₱ One-time cleaning charge</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                    <div className="pt-2">
+                      <Link to="/admin/units/pricing">
+                        <Button variant="link" size="sm" className="h-auto gap-2 p-0">
+                          <DollarSign className="h-3 w-3" />
+                          Manage Global Pricing Settings →
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </Card>
 

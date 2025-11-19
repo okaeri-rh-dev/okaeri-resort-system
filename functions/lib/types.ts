@@ -99,8 +99,8 @@ export interface AuditMetadata extends Record<string, unknown> {
  * Multi-unit booking request payload
  */
 export interface MultiUnitBookingRequest {
-  check_in_date: string;
-  check_out_date: string;
+  check_in: string;
+  check_out: string;
   unit_ids: string[];
   guest_id?: string;
   guest_name?: string;
@@ -118,8 +118,8 @@ export interface MultiUnitBookingRequest {
 export interface BookingUnitAssignment {
   booking_id: string;
   unit_id: string;
-  check_in_date: string;
-  check_out_date: string;
+  check_in: string;
+  check_out: string;
   nights: number;
   nightly_rate: number;
   subtotal: number;
@@ -260,8 +260,8 @@ export interface SeasonalRate {
  * Availability check request
  */
 export interface AvailabilityRequest {
-  check_in_date: string;
-  check_out_date: string;
+  check_in: string;
+  check_out: string;
   unit_ids?: string[];
   guest_count?: number;
 }

@@ -197,7 +197,7 @@ export async function checkPaymentProofCleanupHealth(env: Env): Promise<{
     // Query bookings with payment proofs
     const { data, error } = await supabase
       .from("bookings")
-      .select("payment_proof_url, booking_status, check_out_date, updated_at")
+      .select("payment_proof_url, booking_status, check_out, updated_at")
       .not("payment_proof_url", "is", null);
 
     if (error) {
@@ -213,7 +213,7 @@ export async function checkPaymentProofCleanupHealth(env: Env): Promise<{
     // Count expired proofs based on retention rules
     const expiredProofs = data.filter((booking) => {
       if (booking.booking_status === "Completed") {
-        const checkOutDate = new Date(booking.check_out_date);
+        const checkOutDate = new Date(booking.check_out);
         const expiryDate = new Date(checkOutDate);
         expiryDate.setDate(expiryDate.getDate() + 90);
         return now > expiryDate;

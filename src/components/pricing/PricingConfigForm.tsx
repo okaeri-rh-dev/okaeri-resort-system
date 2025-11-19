@@ -1,9 +1,10 @@
 import * as React from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calculator, DollarSign, Home, Users } from "lucide-react";
+import { Calculator, DollarSign, Home, Info, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -140,6 +141,19 @@ export function PricingConfigForm({ onSuccess, onCancel, className }: PricingCon
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className={className}>
+        {/* Global Pricing Notice */}
+        <Alert className="mb-6 border-blue-200 bg-blue-50">
+          <Info className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-900">
+            <p className="font-semibold">Global Pricing Configuration</p>
+            <p className="mt-1 text-sm">
+              These settings automatically apply to <strong>all cabins</strong> in your resort. When
+              you update rates here, all cabin pricing will be synchronized instantly. Individual
+              cabin pricing has been centralized for consistent guest experience.
+            </p>
+          </AlertDescription>
+        </Alert>
+
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Left Column: Form Fields */}
           <div className="space-y-6 lg:col-span-2">

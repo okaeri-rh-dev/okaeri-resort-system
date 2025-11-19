@@ -20,8 +20,8 @@ interface BookingDetail {
   booking_reference: string;
   guest_name: string;
   guest_contact: string;
-  check_in_date: string;
-  check_out_date: string;
+  check_in: string;
+  check_out: string;
   total_amount: number;
   payment_status: "Pending" | "Verified" | "Rejected";
   payment_proof_path: string | null;
@@ -115,7 +115,7 @@ function PaymentVerificationPage() {
           </div>
           <div>
             <div className="text-muted-foreground text-sm">Check-in</div>
-            <div className="font-medium">{formatDate(new Date(booking.check_in_date))}</div>
+            <div className="font-medium">{formatDate(new Date(booking.check_in))}</div>
           </div>
           <div>
             <div className="text-muted-foreground text-sm">Units Requested</div>

@@ -72,6 +72,31 @@ export const unitEditSchema = z.object({
 
 export type UnitEditInput = z.infer<typeof unitEditSchema>;
 
+// Unit edit schema WITHOUT pricing validation (for global pricing mode)
+// Used when pricing fields are hidden and auto-populated from global config
+export const unitEditWithoutPricingSchema = z.object({
+  unit_name: z.string().min(1, "Unit name is required").max(100, "Name too long"),
+  unit_code: z
+    .string()
+    .min(1, "Unit code is required")
+    .max(20, "Code too long")
+    .transform((val) => val.toUpperCase()),
+  unit_type: z.string().min(1, "Unit type is required").max(50, "Type too long"),
+  max_occupancy: z
+    .number({ required_error: "Max occupancy is required" })
+    .int()
+    .min(1, "At least 1 guest capacity")
+    .max(20, "Maximum 20 guests"),
+  // Pricing fields are optional since they're auto-populated from global config
+  base_rate: z.number().optional().default(0),
+  weekend_rate: z.number().optional().default(0),
+  extra_person_rate: z.number().optional().default(0),
+  cleaning_fee: z.number().positive("Cleaning fee must be positive").optional(),
+  amenities: z.array(z.string()).optional(),
+});
+
+export type UnitEditWithoutPricingInput = z.infer<typeof unitEditWithoutPricingSchema>;
+
 // ============================================
 // GUEST EDIT SCHEMA
 // ============================================

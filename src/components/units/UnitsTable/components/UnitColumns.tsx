@@ -102,58 +102,7 @@ export function useUnitColumns({
         size: 120,
       }),
 
-      // Base rate column with inline editing
-      columnHelper.accessor("base_rate", {
-        header: ({ header }) => <SortableHeader header={header}>Base Rate</SortableHeader>,
-        cell: ({ getValue, row }) => {
-          if (isEditMode) {
-            return (
-              <InlineEdit
-                value={getValue()}
-                onSave={(value) =>
-                  onUpdateUnit(row.original.unit_id, { base_rate: value as number })
-                }
-                type="number"
-                placeholder="0.00"
-                className="text-right"
-              />
-            );
-          }
-          return (
-            <div className="text-right font-mono text-sm text-green-600">
-              {formatCurrency(getValue())}
-            </div>
-          );
-        },
-        size: 120,
-      }),
-
-      // Extra person rate column with inline editing
-      columnHelper.accessor("extra_person_rate", {
-        header: "Extra Person",
-        cell: ({ getValue, row }) => {
-          const value = getValue() || 0;
-          if (isEditMode) {
-            return (
-              <InlineEdit
-                value={value}
-                onSave={(value) =>
-                  onUpdateUnit(row.original.unit_id, { extra_person_rate: value as number })
-                }
-                type="number"
-                placeholder="0.00"
-                className="text-right"
-              />
-            );
-          }
-          return (
-            <div className="text-right font-mono text-sm text-orange-600">
-              {formatCurrency(value)}
-            </div>
-          );
-        },
-        size: 120,
-      }),
+      // Pricing columns removed - now managed globally via Settings > Pricing Configuration
 
       // // Unit type column with inline editing
       // columnHelper.accessor("unit_type", {

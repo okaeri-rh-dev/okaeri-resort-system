@@ -10,10 +10,10 @@
  */
 export interface PricingCalculateRequest {
   /** Check-in date in YYYY-MM-DD format */
-  check_in_date: string;
+  check_in: string;
 
   /** Check-out date in YYYY-MM-DD format */
-  check_out_date: string;
+  check_out: string;
 
   /** Number of guests for the booking */
   guest_count: number;

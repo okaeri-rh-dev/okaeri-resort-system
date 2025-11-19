@@ -109,7 +109,7 @@ export const bookingDetailsSchema = z.object({
     .uuid("Invalid unit ID format")
     .refine((val) => !val.includes("'") && !val.includes('"'), "Invalid unit ID"),
 
-  check_in_date: z
+  check_in: z
     .string()
     .datetime()
     .refine((date) => {
@@ -126,7 +126,7 @@ export const bookingDetailsSchema = z.object({
       return checkIn <= maxDate;
     }, "Check-in date cannot be more than 2 years in the future"),
 
-  check_out_date: z.string().datetime(),
+  check_out: z.string().datetime(),
 
   guest_count: z
     .number()

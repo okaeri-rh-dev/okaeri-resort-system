@@ -176,8 +176,8 @@ export function BookingForm({
 
     // Call pricing API
     calculatePricing.mutate({
-      check_in_date: checkInStr,
-      check_out_date: checkOutStr,
+      check_in: checkInStr,
+      check_out: checkOutStr,
       guest_count: numGuests || 1,
       unit_id: selectedUnit.unit_id,
     });

@@ -36,8 +36,8 @@ interface BookingDetail {
   booking_reference: string;
   guest_name: string;
   guest_contact: string;
-  check_in_date: string;
-  check_out_date: string;
+  check_in: string;
+  check_out: string;
   total_amount: number;
   payment_status: "Pending" | "Verified" | "Completed" | "Rejected"; // Added Completed to match DB function
   unit_assignment_status: "pending" | "assigned" | "partial";
@@ -422,11 +422,11 @@ function AssignUnitsPage() {
           </div>
           <div>
             <div className="text-muted-foreground text-sm">Check-in</div>
-            <div className="font-medium">{formatDate(new Date(booking.check_in_date))}</div>
+            <div className="font-medium">{formatDate(new Date(booking.check_in))}</div>
           </div>
           <div>
             <div className="text-muted-foreground text-sm">Check-out</div>
-            <div className="font-medium">{formatDate(new Date(booking.check_out_date))}</div>
+            <div className="font-medium">{formatDate(new Date(booking.check_out))}</div>
           </div>
           <div>
             <div className="text-muted-foreground text-sm">Total Amount</div>
@@ -447,8 +447,8 @@ function AssignUnitsPage() {
       {/* Unit Assignment Interface */}
       <UnitAssignmentInterface
         bookingId={bookingId}
-        checkInDate={booking.check_in_date}
-        checkOutDate={booking.check_out_date}
+        checkInDate={booking.check_in}
+        checkOutDate={booking.check_out}
         unitRequests={booking.unit_requests || []}
         onAssignmentSuccess={handleAssignmentSuccess}
       />

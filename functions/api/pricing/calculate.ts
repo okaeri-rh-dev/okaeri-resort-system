@@ -16,11 +16,11 @@ interface Env {
 // Request validation schema
 const pricingCalculateRequestSchema = z
   .object({
-    check_in_date: z.string().refine((date) => {
+    check_in: z.string().refine((date) => {
       const checkIn = new Date(date);
       return checkIn >= new Date(new Date().setHours(0, 0, 0, 0));
     }, "Check-in date must be today or in the future"),
-    check_out_date: z.string(),
+    check_out: z.string(),
     guest_count: z.number().int().min(1).max(50).optional(), // Optional - can be calculated from unit_requests
     unit_id: z.string().uuid().optional(),
     // For custom pricing (e.g., when unit doesn't exist yet)
@@ -42,7 +42,7 @@ const pricingCalculateRequestSchema = z
       )
       .optional(),
   })
-  .refine((data) => new Date(data.check_out_date) > new Date(data.check_in_date), {
+  .refine((data) => new Date(data.check_out) > new Date(data.check_in), {
     message: "Check-out date must be after check-in date",
   })
   .refine(
@@ -94,12 +94,12 @@ async function checkRateLimit(
 
 // Cache key generator
 function getCacheKey(params: {
-  check_in_date: string;
-  check_out_date: string;
+  check_in: string;
+  check_out: string;
   guest_count: number;
   unit_id?: string;
 }): string {
-  return `pricing:${params.unit_id || "custom"}:${params.check_in_date}:${params.check_out_date}:${params.guest_count}`;
+  return `pricing:${params.unit_id || "custom"}:${params.check_in}:${params.check_out}:${params.guest_count}`;
 }
 
 export async function onRequest(context: {
@@ -171,8 +171,8 @@ export async function onRequest(context: {
 
     if (data.unit_id && !data.unit_requests) {
       cacheKey = getCacheKey({
-        check_in_date: data.check_in_date,
-        check_out_date: data.check_out_date,
+        check_in: data.check_in,
+        check_out: data.check_out,
         guest_count: data.guest_count,
         unit_id: data.unit_id,
       });
@@ -234,8 +234,8 @@ export async function onRequest(context: {
 
         // Use unit-specific pricing or fall back to default config
         const pricing = await calculateBookingPrice(supabase, {
-          checkIn: new Date(data.check_in_date),
-          checkOut: new Date(data.check_out_date),
+          checkIn: new Date(data.check_in),
+          checkOut: new Date(data.check_out),
           guestCount: unitRequest.guest_count,
           baseRate: unitData?.base_rate || pricingConfig?.base_rate || 3000,
           weekendRate: unitData?.weekend_rate || pricingConfig?.weekend_rate || 3500,
@@ -407,8 +407,8 @@ export async function onRequest(context: {
       event: "pricing_calculated",
       request_id: crypto.randomUUID(),
       user_id: token ? "authenticated" : "guest",
-      check_in: data.check_in_date,
-      check_out: data.check_out_date,
+      check_in: data.check_in,
+      check_out: data.check_out,
       guest_count: data.guest_count,
       unit_id: data.unit_id,
       total: pricingResult.total,

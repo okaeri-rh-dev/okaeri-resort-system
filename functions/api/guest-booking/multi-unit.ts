@@ -262,13 +262,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const totalGuests = data.unit_requests.reduce((sum, r) => sum + r.guests_per_unit, 0);
 
     const { data: result, error: createError } = await supabase.rpc("create_guest_booking", {
-      p_guest_data: {
+      p_turnstile_token: data.turnstile_token || "dev-mock-token",
+      p_booking_data: {
+        booking_reference: bookingReference,
         guest_name: sanitizedData.guest_name,
         email: data.email,
         phone_number: data.phone_number,
-      },
-      p_booking_data: {
-        booking_reference: bookingReference,
         check_in: data.check_in, // Fixed: was check_in_date
         check_out: data.check_out, // Fixed: was check_out_date
         num_guests: totalGuests,
@@ -280,7 +279,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         special_requests: sanitizedData.special_requests || null,
       },
       p_unit_requests: unitRequestsJson,
-      p_idempotency_key: idempotencyKey,
+      p_guest_data: null, // Guest data is included in p_booking_data for simplified interface
     });
 
     if (createError || !result) {

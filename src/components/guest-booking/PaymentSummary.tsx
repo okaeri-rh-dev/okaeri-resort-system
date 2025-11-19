@@ -60,24 +60,24 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
         }));
 
         calculatePricing.mutate({
-          check_in_date: checkInStr,
-          check_out_date: checkOutStr,
+          check_in: checkInStr,
+          check_out: checkOutStr,
           guest_count: totalGuests, // Include total at top level
           unit_requests: unitRequestsForApi,
         });
       } else if (unitRequests[0]?.unit_id) {
         // Single unit with specific unit ID
         calculatePricing.mutate({
-          check_in_date: checkInStr,
-          check_out_date: checkOutStr,
+          check_in: checkInStr,
+          check_out: checkOutStr,
           guest_count: totalGuests,
           unit_id: unitRequests[0].unit_id,
         });
       } else {
         // Single unit, no specific unit - use simple guest count pricing
         calculatePricing.mutate({
-          check_in_date: checkInStr,
-          check_out_date: checkOutStr,
+          check_in: checkInStr,
+          check_out: checkOutStr,
           guest_count: totalGuests,
         });
       }

@@ -150,6 +150,21 @@ export const unitFormWithRateValidationSchema = unitFormSchema
     path: ["base_occupancy"],
   });
 
+// Unit form schema WITHOUT pricing validation (for global pricing mode)
+// Used when pricing fields are hidden and auto-populated from global config
+export const unitFormWithoutPricingValidationSchema = unitFormSchema
+  .omit({ base_rate: true, weekend_rate: true, extra_person_rate: true })
+  .extend({
+    // Make pricing fields optional since they're auto-populated from global config
+    base_rate: z.number().optional().default(0),
+    weekend_rate: z.number().optional().default(0),
+    extra_person_rate: z.number().optional().default(0),
+  })
+  .refine((data) => data.base_occupancy <= data.max_occupancy, {
+    message: "Base occupancy cannot exceed maximum occupancy",
+    path: ["base_occupancy"],
+  });
+
 // ============================================
 // BOOKING VALIDATION SCHEMAS
 // ============================================

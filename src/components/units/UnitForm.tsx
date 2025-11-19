@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Users } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Building2, Info, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -18,10 +20,11 @@ import {
 } from "@/components/ui/form";
 import { Input, NumberInput } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { cn } from "@/lib/utils";
 import {
   formatCurrency,
-  unitFormWithRateValidationSchema,
+  unitFormWithoutPricingValidationSchema,
   type UnitFormData,
 } from "@/lib/validations";
 import { useCreateUnit, useUpdateUnit } from "@/stores/useUnitStore";
@@ -38,34 +41,30 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
   const createUnitMutation = useCreateUnit();
   const updateUnitMutation = useUpdateUnit();
 
+  // Fetch global pricing configuration
+  const { data: pricingConfig, isLoading: isPricingLoading } = usePricingConfig();
+
   const isEditing = !!unit;
 
   const form = useForm<UnitFormData>({
-    resolver: zodResolver(unitFormWithRateValidationSchema),
+    resolver: zodResolver(unitFormWithoutPricingValidationSchema),
     defaultValues: {
       unit_name: unit?.unit_name || "",
       unit_code: unit?.unit_code || "",
       unit_type: (unit?.unit_type as unknown as UnitType) || "Standard",
       base_occupancy: unit?.base_occupancy || 2,
       max_occupancy: unit?.max_occupancy || 2,
-      base_rate: unit?.base_rate || 0,
-      weekend_rate: unit?.weekend_rate || unit?.base_rate || 0,
-      extra_person_rate: unit?.extra_person_rate || 0,
+      // Pricing fields removed - will be auto-populated from global config
+      base_rate: 0,
+      weekend_rate: 0,
+      extra_person_rate: 0,
     },
     mode: "onBlur",
     reValidateMode: "onBlur",
   });
 
-  const watchedBaseRate = form.watch("base_rate");
-  // Weekend rate removed from UI, will use base_rate
-  const watchedExtraPersonRate = form.watch("extra_person_rate");
   const watchedBaseOccupancy = form.watch("base_occupancy");
   const watchedMaxOccupancy = form.watch("max_occupancy");
-
-  // Sync weekend_rate with base_rate since weekend_rate field is hidden from UI
-  useEffect(() => {
-    form.setValue("weekend_rate", watchedBaseRate || 0);
-  }, [watchedBaseRate, form]);
 
   useEffect(() => {
     if (watchedBaseOccupancy > watchedMaxOccupancy) {
@@ -75,9 +74,17 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
 
   const onSubmit = async (data: UnitFormData) => {
     try {
+      if (!pricingConfig) {
+        toast.error("Unable to load pricing configuration. Please try again.");
+        return;
+      }
+
+      // Auto-populate pricing from global config (hidden from user)
       const unitData = {
         ...data,
-        weekend_rate: data.base_rate, // Automatically set weekend_rate to base_rate
+        base_rate: pricingConfig.base_rate, // Use global base rate
+        weekend_rate: pricingConfig.weekend_rate, // Use global weekend rate
+        extra_person_rate: pricingConfig.extra_person_rate, // Use global extra person rate
         unit_type: "Standard" as const,
       };
 
@@ -226,126 +233,50 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
 
             <Separator />
 
-            {/* Pricing */}
+            {/* Pricing Information */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Pricing</h3>
-              </div>
+              <h3 className="text-lg font-semibold">Pricing</h3>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="base_rate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Base Rate (Weekdays)</FormLabel>
-                      <FormControl>
-                        <NumberInput
-                          min={100}
-                          max={1000000}
-                          allowDecimals={true}
-                          className="pl-10"
-                          placeholder="2500.00"
-                          startIcon={<span className="text-sm font-medium">₱</span>}
-                          value={field.value}
-                          onChange={(value) => field.onChange(value)}
-                          onBlur={(value) => {
-                            field.onChange(value || 100); // Set minimum on blur
-                            field.onBlur();
-                          }}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Rate per night (Sunday - Thursday)
-                        {watchedBaseRate > 0 && (
-                          <span className="mt-1 block text-xs">
-                            {formatCurrency(watchedBaseRate)} per night
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  <div className="space-y-2">
+                    <p className="font-medium">This cabin uses global pricing configuration.</p>
+                    <p className="text-muted-foreground text-sm">
+                      All cabins automatically inherit rates from your resort-wide pricing settings.
+                    </p>
+                    {pricingConfig && (
+                      <div className="mt-3 space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Base Rate:</span>
+                          <span className="font-mono font-medium">
+                            {formatCurrency(pricingConfig.base_rate)}
                           </span>
-                        )}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Extra Person Rate */}
-              <FormField
-                control={form.control}
-                name="extra_person_rate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Extra Person Rate</FormLabel>
-                    <FormControl>
-                      <NumberInput
-                        min={0}
-                        max={50000}
-                        allowDecimals={true}
-                        className="pl-10"
-                        placeholder="500.00"
-                        startIcon={<span className="text-sm font-medium">₱</span>}
-                        value={field.value}
-                        onChange={(value) => field.onChange(value)}
-                        onBlur={(value) => {
-                          field.onChange(value || 0); // Set minimum on blur
-                          field.onBlur();
-                        }}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Additional charge per person exceeding base occupancy
-                      {watchedExtraPersonRate > 0 &&
-                        watchedBaseOccupancy > 0 &&
-                        watchedMaxOccupancy > watchedBaseOccupancy && (
-                          <span className="mt-1 block text-xs">
-                            {formatCurrency(watchedExtraPersonRate)} per extra person per night (up
-                            to {watchedMaxOccupancy - watchedBaseOccupancy} extra guests)
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Weekend Rate:</span>
+                          <span className="font-mono font-medium">
+                            {formatCurrency(pricingConfig.weekend_rate)}
                           </span>
-                        )}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Rate Summary */}
-              {watchedBaseRate > 0 && (
-                <div className="bg-muted rounded-lg p-4">
-                  <h4 className="mb-2 font-medium">Rate Summary</h4>
-                  <div className="text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Nightly Rate:</span>
-                      <p className="text-lg font-medium">{formatCurrency(watchedBaseRate)}</p>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Extra Person Rate:</span>
+                          <span className="font-mono font-medium">
+                            {formatCurrency(pricingConfig.extra_person_rate)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <div className="mt-3 border-t pt-3">
+                      <Link to="/admin/units/pricing">
+                        <Button variant="link" size="sm" className="h-auto p-0">
+                          Manage Global Pricing Settings →
+                        </Button>
+                      </Link>
                     </div>
                   </div>
-                  {watchedBaseOccupancy > 0 && watchedMaxOccupancy > 0 && (
-                    <div className="mt-3 border-t pt-3">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Capacity:</span>
-                          <p className="font-medium">
-                            {watchedBaseOccupancy}/{watchedMaxOccupancy} guests
-                          </p>
-                        </div>
-                        {watchedExtraPersonRate > 0 &&
-                          watchedMaxOccupancy > watchedBaseOccupancy && (
-                            <div>
-                              <span className="text-muted-foreground">Extra Person:</span>
-                              <p className="font-medium">
-                                +{formatCurrency(watchedExtraPersonRate)}/night
-                              </p>
-                            </div>
-                          )}
-                      </div>
-                    </div>
-                  )}
-                  {watchedBaseOccupancy > watchedMaxOccupancy && (
-                    <p className="mt-2 text-xs text-red-600">
-                      ⚠️ Base occupancy cannot exceed maximum occupancy
-                    </p>
-                  )}
-                </div>
-              )}
+                </AlertDescription>
+              </Alert>
             </div>
 
             {/* Action Buttons */}
