@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 
 import { Link, useLocation } from "@tanstack/react-router";
 import {
@@ -53,42 +53,32 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [showRolesLink, setShowRolesLink] = useState(false);
   const location = useLocation();
 
-  // Check if user can access audit logs
-  useEffect(() => {
-    const checkAuditAccess = async () => {
-      // Lazy load audit functions to reduce main bundle size
-      const { isCurrentUserOwner } = await import("@/lib/audit-logger");
-      const canAccess = await isCurrentUserOwner();
-      setShowAuditLink(canAccess);
-    };
+  // Extract async permission checks into useEffectEvent to avoid recreation
+  const checkAuditAccess = useEffectEvent(async () => {
+    // Lazy load audit functions to reduce main bundle size
+    const { isCurrentUserOwner } = await import("@/lib/audit-logger");
+    const canAccess = await isCurrentUserOwner();
+    setShowAuditLink(canAccess);
+  });
 
+  const checkRolesAccess = useEffectEvent(async () => {
+    // Lazy load role functions to reduce main bundle size
+    const { isAdmin } = await import("@/lib/audit-roles");
+    const canAccess = await isAdmin();
+    setShowRolesLink(canAccess);
+  });
+
+  // Check permissions on mount and auth state changes
+  useEffect(() => {
+    // Initial checks
     checkAuditAccess();
-
-    // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      checkAuditAccess();
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Check if user can access roles management (admin-only)
-  useEffect(() => {
-    const checkRolesAccess = async () => {
-      // Lazy load role functions to reduce main bundle size
-      const { isAdmin } = await import("@/lib/audit-roles");
-      const canAccess = await isAdmin();
-      setShowRolesLink(canAccess);
-    };
-
     checkRolesAccess();
 
     // Listen for auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(() => {
+      checkAuditAccess();
       checkRolesAccess();
     });
 

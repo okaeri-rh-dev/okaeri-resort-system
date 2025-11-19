@@ -1,5 +1,5 @@
-// Import React for useEffect
-import React from "react";
+// Import React for useEffect and useEffectEvent
+import React, { useEffectEvent } from "react";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -217,10 +217,17 @@ export function useAutoPricingCalculation(
       }:${request.guest_count}`
     : undefined;
 
+  // Extract mutation call into useEffectEvent to prevent dependency issues
+  const handlePricingRequest = useEffectEvent((req: PricingCalculateRequest) => {
+    if (isValidRequest(req)) {
+      calculatePricing.mutate(req);
+    }
+  });
+
   // Auto-calculate when request changes
   React.useEffect(() => {
-    if (request && isValidRequest(request)) {
-      calculatePricing.mutate(request);
+    if (request) {
+      handlePricingRequest(request);
     }
   }, [request?.check_in_date, request?.check_out_date, request?.guest_count, request?.unit_id]);
 

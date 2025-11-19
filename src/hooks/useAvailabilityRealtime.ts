@@ -7,7 +7,7 @@
  * @module useAvailabilityRealtime
  */
 
-import { useCallback } from "react";
+import { useEffectEvent } from "react";
 
 import { toast } from "sonner";
 
@@ -60,8 +60,8 @@ export function useAvailabilityRealtime(
 ) {
   const { selectedUnits, clearAvailabilityCache } = useMultiUnitBookingStore();
 
-  // Handle concurrent bookings
-  const handleAvailabilityChange = useCallback(() => {
+  // Handle concurrent bookings - use useEffectEvent to access latest values without causing re-subscriptions
+  const handleAvailabilityChange = useEffectEvent(() => {
     // Clear cache to force re-check
     clearAvailabilityCache?.();
 
@@ -71,7 +71,7 @@ export function useAvailabilityRealtime(
         description: "Unit availability has changed. Please verify your selection.",
       });
     }
-  }, [selectedUnits, clearAvailabilityCache]);
+  });
 
   return useMultiUnitAvailabilitySubscription({
     ...options,
@@ -99,13 +99,14 @@ export function useUnitAvailabilityRealtime(
   unitIds: string[],
   options?: Omit<RealtimeSubscriptionOptions, "enabled">
 ) {
-  const handleUnitBookedByOthers = useCallback(() => {
+  // Use useEffectEvent to avoid re-subscription when unitIds changes
+  const handleUnitBookedByOthers = useEffectEvent(() => {
     if (unitIds.length > 0) {
       toast.error("Unit no longer available", {
         description: "A unit you selected was just booked by another user.",
       });
     }
-  }, [unitIds]);
+  });
 
   return useMultiUnitAvailabilitySubscription({
     ...options,

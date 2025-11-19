@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useEffectEvent, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { differenceInDays, eachDayOfInterval, format } from "date-fns";
+import { differenceInDays, format } from "date-fns";
 import { CheckCircle, CreditCard, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -140,46 +140,68 @@ export function BookingForm({
 
   const selectedUnit = units?.find((unit) => unit.unit_id === unitId);
 
+  // Extract pricing calculation into useEffectEvent to prevent dependency issues
+  const handlePricingCalculation = useEffectEvent(
+    (params: {
+      unit: typeof selectedUnit;
+      checkIn: Date;
+      checkOut: Date;
+      numGuests: number;
+      isEditMode: boolean;
+      recalculatePricing: boolean;
+      originalTotal: number;
+    }) => {
+      // In edit mode, only calculate if recalculatePricing is enabled
+      if (params.isEditMode && !params.recalculatePricing) {
+        setCalculatedTotal(params.originalTotal);
+        setDownpaymentAmount(params.originalTotal * 0.5);
+        setPricingNotice(null);
+        return;
+      }
+
+      if (!params.unit || !params.checkIn || !params.checkOut) {
+        setCalculatedTotal(0);
+        setDownpaymentAmount(0);
+        setPricingNotice(null);
+        return;
+      }
+
+      // Validate dates
+      const checkInDate = new Date(params.checkIn);
+      const checkOutDate = new Date(params.checkOut);
+      const nights = differenceInDays(checkOutDate, checkInDate);
+
+      if (nights <= 0) {
+        setCalculatedTotal(0);
+        setDownpaymentAmount(0);
+        setPricingNotice(null);
+        return;
+      }
+
+      // Format dates for API
+      const checkInStr = format(checkInDate, "yyyy-MM-dd");
+      const checkOutStr = format(checkOutDate, "yyyy-MM-dd");
+
+      // Call pricing API
+      calculatePricing.mutate({
+        check_in: checkInStr,
+        check_out: checkOutStr,
+        guest_count: params.numGuests || 1,
+        unit_id: params.unit.unit_id,
+      });
+    }
+  );
+
   // Calculate pricing via API when relevant fields change
   useEffect(() => {
-    // In edit mode, only calculate if recalculatePricing is enabled
-    if (isEditMode && !recalculatePricing) {
-      // Use original total when not recalculating
-      setCalculatedTotal(originalTotal);
-      setDownpaymentAmount(originalTotal * 0.5); // Default 50% downpayment
-      setPricingNotice(null);
-      return;
-    }
-
-    if (!selectedUnit || !checkIn || !checkOut) {
-      setCalculatedTotal(0);
-      setDownpaymentAmount(0);
-      setPricingNotice(null);
-      return;
-    }
-
-    // Validate dates
-    const checkInDate = new Date(checkIn);
-    const checkOutDate = new Date(checkOut);
-    const nights = differenceInDays(checkOutDate, checkInDate);
-
-    if (nights <= 0) {
-      setCalculatedTotal(0);
-      setDownpaymentAmount(0);
-      setPricingNotice(null);
-      return;
-    }
-
-    // Format dates for API
-    const checkInStr = format(checkInDate, "yyyy-MM-dd");
-    const checkOutStr = format(checkOutDate, "yyyy-MM-dd");
-
-    // Call pricing API
-    calculatePricing.mutate({
-      check_in: checkInStr,
-      check_out: checkOutStr,
-      guest_count: numGuests || 1,
-      unit_id: selectedUnit.unit_id,
+    handlePricingCalculation({
+      unit: selectedUnit,
+      checkIn,
+      checkOut,
+      numGuests,
+      isEditMode,
+      recalculatePricing,
+      originalTotal,
     });
   }, [selectedUnit?.unit_id, checkIn, checkOut, numGuests, recalculatePricing, isEditMode]);
 

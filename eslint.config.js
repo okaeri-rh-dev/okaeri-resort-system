@@ -46,8 +46,8 @@ export default tseslint.config([
       "react-refresh": reactRefresh,
     },
     rules: {
-      // React hooks rules
-      ...reactHooks.configs.recommended.rules,
+      // React hooks rules (v6 recommended-latest with React Compiler diagnostics)
+      ...reactHooks.configs["recommended-latest"].rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
 
       // TypeScript rules - relaxed
