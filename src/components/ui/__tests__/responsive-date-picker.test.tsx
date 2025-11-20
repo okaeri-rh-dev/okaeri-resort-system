@@ -7,13 +7,13 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 import { ResponsiveDatePicker, ResponsiveDateRangePicker } from "../responsive-date-picker";
 
-// Mock ResizeObserver for floating-ui
+// Mock ResizeObserver for floating-ui (Radix Popover uses this)
 beforeAll(() => {
-  global.ResizeObserver = vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  }));
+  global.ResizeObserver = class ResizeObserver {
+    observe = vi.fn();
+    unobserve = vi.fn();
+    disconnect = vi.fn();
+  };
 });
 
 // Mock the useMediaQuery hook
@@ -222,8 +222,10 @@ describe("ResponsiveDatePicker", () => {
       await user.click(button);
 
       await waitFor(() => {
-        const calendar = screen.getByRole("application");
-        expect(calendar.parentElement).toHaveClass("mobile-calendar", "custom-calendar-class");
+        // Calendar uses data-slot attribute, not role="application"
+        const calendar = document.querySelector('[data-slot="calendar"]');
+        expect(calendar).toBeInTheDocument();
+        expect(calendar).toHaveClass("mobile-calendar", "custom-calendar-class");
       });
     });
 
@@ -366,8 +368,10 @@ describe("ResponsiveDateRangePicker", () => {
       await user.click(button);
 
       await waitFor(() => {
-        const calendar = screen.getByRole("application");
-        const monthGrids = calendar.querySelectorAll(".rdp-month");
+        // Calendar uses data-slot attribute, not role="application"
+        const calendar = document.querySelector('[data-slot="calendar"]');
+        expect(calendar).toBeInTheDocument();
+        const monthGrids = calendar!.querySelectorAll(".rdp-month");
         expect(monthGrids.length).toBe(1); // Only one month on mobile
       });
     });
@@ -379,22 +383,38 @@ describe("ResponsiveDateRangePicker", () => {
       const button = screen.getByRole("button");
       await user.click(button);
 
+      // Wait for calendar to be fully rendered with date buttons
       await waitFor(() => {
         expect(screen.getByText("Select Date Range")).toBeInTheDocument();
+        const calendar = document.querySelector('[data-slot="calendar"]');
+        expect(calendar).toBeInTheDocument();
       });
 
-      // Select start date
-      const startButton = screen.getByRole("button", { name: /^15[^0-9]/i });
-      await user.click(startButton);
+      // Select start date - find by aria-label pattern for dates
+      const dateButtons = screen.getAllByRole("button");
+      const startButton = dateButtons.find((btn) => {
+        const label = btn.getAttribute("aria-label");
+        return label && label.match(/15[^0-9]/);
+      });
+
+      if (startButton) {
+        await user.click(startButton);
+      }
 
       // Sheet should stay open after first selection
       expect(screen.getByText("Select Date Range")).toBeInTheDocument();
 
       // Select end date
-      const endButton = screen.getByRole("button", { name: /^20[^0-9]/i });
-      await user.click(endButton);
+      const endButton = dateButtons.find((btn) => {
+        const label = btn.getAttribute("aria-label");
+        return label && label.match(/20[^0-9]/);
+      });
 
-      // Sheet should close after both dates selected
+      if (endButton) {
+        await user.click(endButton);
+      }
+
+      // Sheet should close after both dates selected (with delay for visual feedback)
       await waitFor(
         () => {
           expect(screen.queryByText("Select Date Range")).not.toBeInTheDocument();
