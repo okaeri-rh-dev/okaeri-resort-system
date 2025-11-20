@@ -5,25 +5,24 @@ import { db } from "@/lib/supabase";
 import { calculateBookingPrice, getSeasonalMultiplier } from "../pricing-with-db";
 
 // Mock the database client
-const mockPricingConfigGet = vi.fn().mockResolvedValue({
-  data: {
-    id: "default",
-    base_rate: 3000,
-    weekend_rate: 3500,
-    extra_person_rate: 500,
-    base_occupancy: 2,
-    downpayment_percentage: 0.5,
-  },
-  error: null,
-});
-
+// Note: mockPricingConfigGet is defined inside the factory to avoid Vitest hoisting issues
 vi.mock("@/lib/supabase", () => ({
   db: {
     seasonalRates: {
       forDate: vi.fn(),
     },
     pricingConfig: {
-      get: mockPricingConfigGet,
+      get: vi.fn().mockResolvedValue({
+        data: {
+          id: "default",
+          base_rate: 3000,
+          weekend_rate: 3500,
+          extra_person_rate: 500,
+          base_occupancy: 2,
+          downpayment_percentage: 0.5,
+        },
+        error: null,
+      }),
     },
   },
 }));
@@ -33,7 +32,7 @@ describe("calculateBookingPrice", () => {
     vi.clearAllMocks();
 
     // Re-setup pricing config mock after clearing
-    mockPricingConfigGet.mockResolvedValue({
+    vi.mocked(db.pricingConfig.get).mockResolvedValue({
       data: {
         id: "default",
         base_rate: 3000,
