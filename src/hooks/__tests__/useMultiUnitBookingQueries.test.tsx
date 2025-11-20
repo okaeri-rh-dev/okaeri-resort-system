@@ -56,8 +56,10 @@ import { ReactNode } from "react";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { http, HttpResponse } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { server } from "@/__tests__/mocks/server";
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import type { BookingUnit, MultiUnitBooking } from "@/types";
 
@@ -93,14 +95,21 @@ const createWrapper = () => {
   );
 };
 
-// Mock fetch globally
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
+// Mock Supabase auth
+vi.mock("@/lib/supabase", () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: { access_token: "mock-token" } },
+        error: null,
+      }),
+    },
+  },
+}));
 
-describe.skip("useMultiUnitBookingQueries Integration Tests - SKIPPED: Needs MSW refactoring (see file header)", () => {
+describe("useMultiUnitBookingQueries Integration Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFetch.mockReset();
 
     // Reset store state
     const { result } = renderHook(() => useMultiUnitBookingStore());
