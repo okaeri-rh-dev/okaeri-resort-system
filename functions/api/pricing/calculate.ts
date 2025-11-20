@@ -15,11 +15,11 @@ interface Env {
 // Request validation schema
 const pricingCalculateRequestSchema = z
   .object({
-    check_in: z.string().refine((date) => {
+    check_in_date: z.string().refine((date) => {
       const checkIn = new Date(date);
       return checkIn >= new Date(new Date().setHours(0, 0, 0, 0));
     }, "Check-in date must be today or in the future"),
-    check_out: z.string(),
+    check_out_date: z.string(),
     guest_count: z.number().int().min(1).max(50).optional(), // Optional - can be calculated from unit_requests
     unit_id: z.string().uuid().optional(),
     // For custom pricing (e.g., when unit doesn't exist yet)
@@ -41,7 +41,7 @@ const pricingCalculateRequestSchema = z
       )
       .optional(),
   })
-  .refine((data) => new Date(data.check_out) > new Date(data.check_in), {
+  .refine((data) => new Date(data.check_out_date) > new Date(data.check_in_date), {
     message: "Check-out date must be after check-in date",
   })
   .refine(
@@ -233,8 +233,8 @@ export async function onRequest(context: {
 
         // Use unit-specific pricing or fall back to default config
         const pricing = await calculateBookingPrice(supabase, {
-          checkIn: new Date(data.check_in),
-          checkOut: new Date(data.check_out),
+          checkIn: new Date(data.check_in_date),
+          checkOut: new Date(data.check_out_date),
           guestCount: unitRequest.guest_count,
           baseRate: unitData?.base_rate || pricingConfig?.base_rate || 3000,
           weekendRate: unitData?.weekend_rate || pricingConfig?.weekend_rate || 3500,

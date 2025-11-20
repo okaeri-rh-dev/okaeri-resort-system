@@ -59,7 +59,21 @@ vi.mock("@supabase/supabase-js", () => ({
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
+          lte: vi.fn().mockReturnThis(),
+          gte: vi.fn().mockReturnThis(),
           order: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: {
+              season_id: "christmas_new_year",
+              name: "Christmas & New Year",
+              start_date: "12-20",
+              end_date: "01-02",
+              multiplier: 2.0,
+              priority: 20,
+              is_active: true,
+            },
+            error: null,
+          }),
           then: vi.fn().mockResolvedValue({
             data: [
               {
@@ -363,7 +377,7 @@ describe("Pricing Calculate API", () => {
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
     expect(data.pricing.units).toHaveLength(2);
-    expect(data.pricing.total).toBe(41000); // 20000 + 20000 + 1000 extra
+    expect(data.pricing.total).toBe(43000); // 20000 + 23000 (2 extra persons × 500 × 3 nights)
   });
 
   it("should validate date ranges", async () => {
