@@ -402,6 +402,31 @@ Files excluded from TypeScript compilation during Phase 2:
 - Performance tests for availability calculations
 - Security tests for data validation and XSS prevention
 
+### Database Test Setup
+
+Database and performance tests require a local Supabase instance:
+
+1. **Start Supabase locally** (if not already running):
+
+   ```bash
+   supabase start
+   ```
+
+2. **Environment variables** (already configured in `vitest.config.ts`):
+   - `TEST_SUPABASE_URL` - defaults to `http://127.0.0.1:54321`
+   - `TEST_SUPABASE_SERVICE_ROLE_KEY` - defaults to local Supabase key
+   - Tests automatically use fallbacks from `.env.local`
+
+3. **Test files requiring database**:
+   - `src/__tests__/database/multi-unit-booking.test.ts` (11 passing, 1 skipped)
+   - `src/__tests__/performance/multi-unit-availability.test.ts` (10 passing)
+   - These files use `@vitest-environment node` to bypass CORS
+
+4. **Notes**:
+   - Tests run in Node environment (not happy-dom) for direct database access
+   - Database tests use `beforeEach` cleanup to ensure test isolation
+   - One test is intentionally skipped pending schema update for Pending booking overlaps
+
 ### Running Specific Tests
 
 ```bash

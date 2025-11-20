@@ -8,6 +8,8 @@
  * - get_booking_units query <50ms
  *
  * These tests measure actual database query performance
+ *
+ * @vitest-environment node
  */
 
 import { performance } from "perf_hooks";
@@ -101,6 +103,13 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
     }
   });
 
+  beforeEach(async () => {
+    if (!shouldRun) return;
+
+    // Clean up bookings before each test (but keep units/guests for reuse)
+    await cleanupTestData();
+  });
+
   afterAll(async () => {
     if (!shouldRun) return;
 
@@ -109,7 +118,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
   });
 
   describe("Availability Checking Performance", () => {
-    it.skipIf(!shouldRun)("should check availability for 10 units in <100ms", async () => {
+    it("should check availability for 10 units in <100ms", async () => {
       const unitBatch = testUnitIds.slice(0, 10);
 
       const startTime = performance.now();
@@ -128,7 +137,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
       console.log(`✓ 10-unit availability check: ${duration.toFixed(2)}ms`);
     });
 
-    it.skipIf(!shouldRun)("should check availability for 20 units in <150ms", async () => {
+    it("should check availability for 20 units in <150ms", async () => {
       const startTime = performance.now();
       const { data, error } = await supabase.rpc("check_multi_unit_availability", {
         p_unit_ids: testUnitIds,
@@ -145,7 +154,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
       console.log(`✓ 20-unit availability check: ${duration.toFixed(2)}ms`);
     });
 
-    it.skipIf(!shouldRun)("should perform repeated availability checks consistently", async () => {
+    it("should perform repeated availability checks consistently", async () => {
       const iterations = 10;
       const durations: number[] = [];
 
@@ -172,7 +181,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
   });
 
   describe("Booking Creation Performance", () => {
-    it.skipIf(!shouldRun)("should create booking with 2 units in <200ms", async () => {
+    it("should create booking with 2 units in <200ms", async () => {
       const bookingData = {
         booking_reference: `BK-2U-${Date.now().toString().slice(-6)}`, // Max 20 chars
         guest_name: "2 Unit Test",
@@ -220,7 +229,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
       console.log(`✓ 2-unit booking creation: ${duration.toFixed(2)}ms`);
     });
 
-    it.skipIf(!shouldRun)("should create booking with 5 units in <200ms", async () => {
+    it("should create booking with 5 units in <200ms", async () => {
       const bookingData = {
         booking_reference: `BK-5U-${Date.now().toString().slice(-6)}`, // Max 20 chars
         guest_name: "5 Unit Test",
@@ -258,7 +267,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
       console.log(`✓ 5-unit booking creation: ${duration.toFixed(2)}ms`);
     });
 
-    it.skipIf(!shouldRun)("should create booking with 10 units in <300ms", async () => {
+    it("should create booking with 10 units in <300ms", async () => {
       const bookingData = {
         booking_reference: `BK-10U-${Date.now().toString().slice(-6)}`, // Max 20 chars
         guest_name: "10 Unit Test",
@@ -298,7 +307,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
   });
 
   describe("get_booking_units Performance", () => {
-    it.skipIf(!shouldRun)("should fetch booking units in <50ms", async () => {
+    it("should fetch booking units in <50ms", async () => {
       // Create test booking
       const { data: bookingId, error: createError } = await supabase.rpc(
         "create_multi_unit_booking",
@@ -348,7 +357,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
   });
 
   describe("Concurrent Operations", () => {
-    it.skipIf(!shouldRun)("should handle concurrent availability checks efficiently", async () => {
+    it("should handle concurrent availability checks efficiently", async () => {
       const concurrentChecks = 5;
       const startTime = performance.now();
 
@@ -370,7 +379,7 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
       console.log(`✓ ${concurrentChecks} concurrent checks: ${duration.toFixed(2)}ms`);
     });
 
-    it.skipIf(!shouldRun)("should handle concurrent bookings for different units", async () => {
+    it("should handle concurrent bookings for different units", async () => {
       const concurrentBookings = 3;
       const startTime = performance.now();
 
@@ -413,33 +422,30 @@ describe("Multi-Unit Availability Performance Benchmarks", () => {
   });
 
   describe("Index Performance", () => {
-    it.skipIf(!shouldRun)(
-      "should use indexes for availability lookups (EXPLAIN ANALYZE)",
-      async () => {
-        // This test verifies that indexes are being used
-        // In a real setup, you'd use EXPLAIN ANALYZE to verify index usage
-        const { data, error } = await supabase.rpc("check_multi_unit_availability", {
-          p_unit_ids: [testUnitIds[0]],
-          p_check_in: "2025-12-20T06:00:00Z",
-          p_check_out: "2025-12-25T04:00:00Z",
-        });
+    it("should use indexes for availability lookups (EXPLAIN ANALYZE)", async () => {
+      // This test verifies that indexes are being used
+      // In a real setup, you'd use EXPLAIN ANALYZE to verify index usage
+      const { data, error } = await supabase.rpc("check_multi_unit_availability", {
+        p_unit_ids: [testUnitIds[0]],
+        p_check_in: "2025-12-20T06:00:00Z",
+        p_check_out: "2025-12-25T04:00:00Z",
+      });
 
-        expect(error).toBeNull();
-        expect(data).toHaveLength(1);
+      expect(error).toBeNull();
+      expect(data).toHaveLength(1);
 
-        // If indexes are working, this should be very fast (<10ms)
-        const startTime = performance.now();
-        await supabase.rpc("check_multi_unit_availability", {
-          p_unit_ids: [testUnitIds[0]],
-          p_check_in: "2025-12-20T06:00:00Z",
-          p_check_out: "2025-12-25T04:00:00Z",
-        });
-        const endTime = performance.now();
+      // If indexes are working, this should be very fast (<10ms)
+      const startTime = performance.now();
+      await supabase.rpc("check_multi_unit_availability", {
+        p_unit_ids: [testUnitIds[0]],
+        p_check_in: "2025-12-20T06:00:00Z",
+        p_check_out: "2025-12-25T04:00:00Z",
+      });
+      const endTime = performance.now();
 
-        const duration = endTime - startTime;
-        expect(duration).toBeLessThan(30); // Fast single-unit check indicates good indexing
-        console.log(`✓ Indexed availability check: ${duration.toFixed(2)}ms`);
-      }
-    );
+      const duration = endTime - startTime;
+      expect(duration).toBeLessThan(30); // Fast single-unit check indicates good indexing
+      console.log(`✓ Indexed availability check: ${duration.toFixed(2)}ms`);
+    });
   });
 });

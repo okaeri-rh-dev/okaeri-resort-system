@@ -323,10 +323,14 @@ export async function setupTestDatabase() {
 
 // Export a helper to check if tests should run
 export async function shouldRunDatabaseTests(): Promise<boolean> {
-  if (!TEST_SUPABASE_URL || TEST_SUPABASE_URL === "http://localhost:54321") {
-    if (!TEST_SERVICE_KEY) {
-      return false;
-    }
+  // Check if URL is localhost (handles both localhost and 127.0.0.1)
+  const isLocalhost =
+    !TEST_SUPABASE_URL ||
+    TEST_SUPABASE_URL.includes("localhost:54321") ||
+    TEST_SUPABASE_URL.includes("127.0.0.1:54321");
+
+  if (isLocalhost && !TEST_SERVICE_KEY) {
+    return false;
   }
 
   // Use admin client for availability check (bypasses RLS)
