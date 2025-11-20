@@ -148,9 +148,7 @@ describe("PaymentSummary", () => {
     expect(screen.getByText(/admin assigns specific units/i)).toBeInTheDocument();
   });
 
-  // TODO: Fix error handling test - mockFetch doesn't override default success mock
-  // The component correctly shows error states in production, but test isolation needs work
-  it.skip("handles API errors gracefully", async () => {
+  it("handles API errors gracefully", async () => {
     // Create a fresh QueryClient with no retries for this test
     const queryClient = new QueryClient({
       defaultOptions: {
@@ -162,25 +160,24 @@ describe("PaymentSummary", () => {
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
-    // Mock fetch to return error
-    mockFetch.mockImplementationOnce(() =>
-      Promise.resolve({
-        ok: false,
-        status: 500,
-        json: async () => ({
-          success: false,
-          error: "CALCULATION_ERROR",
-          message: "Failed to calculate pricing",
-        }),
-      })
-    );
+    // Reset the mock and set up error response
+    // mockReset() clears the default beforeEach mock so mockResolvedValueOnce works
+    mockFetch.mockReset();
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({
+        success: false,
+        error: "CALCULATION_ERROR",
+        message: "Failed to calculate pricing",
+      }),
+    });
 
     render(<PaymentSummary unitRequests={unitRequests} checkIn={checkIn} checkOut={checkOut} />, {
       wrapper: TestWrapper,
     });
 
     // Wait for debounce (500ms) + API call + error state render
-    // Increased timeout to account for debounce and async processing
     await waitFor(
       () => {
         expect(screen.getByText(/unable to calculate pricing/i)).toBeInTheDocument();
