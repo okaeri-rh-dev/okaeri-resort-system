@@ -10,6 +10,7 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnFiltersState,
+  type Header,
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
@@ -130,7 +131,9 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
     () => [
       columnHelper.accessor("payment_date", {
         id: "payment_date",
-        header: ({ header }) => <SortableHeader header={header as any}>Date</SortableHeader>,
+        header: ({ header }: { header: Header<Payment, unknown> }) => (
+          <SortableHeader header={header}>Date</SortableHeader>
+        ),
         cell: ({ getValue }) => formatTableDate(getValue() || ""),
         size: 100,
       }),
@@ -163,7 +166,9 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
 
       columnHelper.accessor("amount", {
         id: "amount",
-        header: ({ header }) => <SortableHeader header={header as any}>Amount</SortableHeader>,
+        header: ({ header }: { header: Header<Payment, unknown> }) => (
+          <SortableHeader header={header}>Amount</SortableHeader>
+        ),
         cell: ({ getValue }) => (
           <span className="font-mono font-semibold text-neutral-900">
             {formatCurrency(getValue())}

@@ -12,6 +12,7 @@ import {
   useReactTable,
   type ColumnFiltersState,
   type ExpandedState,
+  type Header,
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
@@ -296,7 +297,9 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
       }),
 
       columnHelper.accessor("guest_name", {
-        header: ({ header }) => <SortableHeader header={header as any}>Guest Name</SortableHeader>,
+        header: ({ header }: { header: Header<Guest, unknown> }) => (
+          <SortableHeader header={header}>Guest Name</SortableHeader>
+        ),
         cell: ({ getValue, row }) => (
           <div className="space-y-1">
             <Link
@@ -330,8 +333,8 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
       }),
 
       columnHelper.accessor("total_bookings", {
-        header: ({ header }) => (
-          <SortableHeader header={header as any} className="text-center">
+        header: ({ header }: { header: Header<Guest, unknown> }) => (
+          <SortableHeader header={header} className="text-center">
             Bookings
           </SortableHeader>
         ),
@@ -345,8 +348,8 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
       }),
 
       columnHelper.accessor("total_spent", {
-        header: ({ header }) => (
-          <SortableHeader header={header as any} className="text-right">
+        header: ({ header }: { header: Header<Guest, unknown> }) => (
+          <SortableHeader header={header} className="text-right">
             Total Spent
           </SortableHeader>
         ),

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import { Link } from "@tanstack/react-router";
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper, type Header } from "@tanstack/react-table";
 
 import { ActionMenu, SortableHeader, StatusBadge } from "@/components/tables/utils";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -54,7 +54,9 @@ export function useUnitColumns({
 
       // Unit code column
       columnHelper.accessor("unit_code", {
-        header: ({ header }) => <SortableHeader header={header as any}>Code</SortableHeader>,
+        header: ({ header }: { header: Header<Unit, unknown> }) => (
+          <SortableHeader header={header}>Code</SortableHeader>
+        ),
         cell: ({ getValue }) => (
           <div className="font-mono text-sm font-medium text-blue-600">{getValue()}</div>
         ),
@@ -63,7 +65,9 @@ export function useUnitColumns({
 
       // Unit name column with inline editing
       columnHelper.accessor("unit_name", {
-        header: ({ header }) => <SortableHeader header={header as any}>Name</SortableHeader>,
+        header: ({ header }: { header: Header<Unit, unknown> }) => (
+          <SortableHeader header={header}>Name</SortableHeader>
+        ),
         cell: ({ getValue, row }) => {
           if (isEditMode) {
             return (
@@ -137,7 +141,9 @@ export function useUnitColumns({
 
       // Status column with inline editing
       columnHelper.accessor("unit_status", {
-        header: ({ header }) => <SortableHeader header={header as any}>Status</SortableHeader>,
+        header: ({ header }: { header: Header<Unit, unknown> }) => (
+          <SortableHeader header={header}>Status</SortableHeader>
+        ),
         cell: ({ getValue, row }) => {
           const statusOptions: Array<{ value: UnitStatus; label: string }> = [
             { value: "Available", label: "Available" },
