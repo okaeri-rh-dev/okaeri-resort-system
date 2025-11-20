@@ -129,6 +129,7 @@ describe("File Processing Performance Tests", () => {
     });
 
     it.skip("should handle multiple concurrent compressions efficiently", async () => {
+      // Skip: Performance benchmark times out in CI - requires local environment tuning
       const files = Array.from(
         { length: 5 },
         (_, i) => new File([new ArrayBuffer(1024 * 1024)], `test${i}.jpg`, { type: "image/jpeg" })

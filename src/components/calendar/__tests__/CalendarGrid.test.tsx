@@ -12,7 +12,7 @@
  * - Edge cases: Month boundaries, leap years, past dates
  */
 
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -192,9 +192,7 @@ describe("CalendarGrid", () => {
   });
 
   describe("Interactive Features", () => {
-    it.skip("should call onDateClick when adjacent month date is clicked", async () => {
-      // Skip: userEvent.click() hangs with fake timers - requires real user interaction
-      const user = userEvent.setup();
+    it("should call onDateClick when adjacent month date is clicked", () => {
       const onDateClick = vi.fn();
 
       render(
@@ -205,20 +203,19 @@ describe("CalendarGrid", () => {
         />
       );
 
-      // Find a December date (previous month overflow)
+      // Find a February date (next month overflow) - these are at the end of the grid
+      // January 2025 has 31 days starting on Wednesday, so grid has 3 December + 31 January + overflow February
       const allCells = screen.getAllByRole("gridcell");
-      const decemberCell = allCells[0]; // First cell should be from December
+      const februaryCell = allCells[allCells.length - 1]; // Last cell should be from February
 
-      await user.click(decemberCell);
+      fireEvent.click(februaryCell);
 
       // Should have called onDateClick with the clicked date
       expect(onDateClick).toHaveBeenCalledTimes(1);
       expect(onDateClick).toHaveBeenCalledWith(expect.any(Date));
     });
 
-    it.skip("should not call onDateClick for current month dates", async () => {
-      // Skip: userEvent.click() hangs with fake timers - requires real user interaction
-      const user = userEvent.setup();
+    it("should not call onDateClick for current month dates", () => {
       const onDateClick = vi.fn();
 
       render(
@@ -230,15 +227,13 @@ describe("CalendarGrid", () => {
       );
 
       const currentMonthCell = screen.getByLabelText(/January 15, 2025/i);
-      await user.click(currentMonthCell);
+      fireEvent.click(currentMonthCell);
 
       // Should not call onDateClick for current month
       expect(onDateClick).not.toHaveBeenCalled();
     });
 
-    it.skip("should not call onDateClick for past dates", async () => {
-      // Skip: userEvent.click() hangs with fake timers - requires real user interaction
-      const user = userEvent.setup();
+    it("should not call onDateClick for past dates", () => {
       const onDateClick = vi.fn();
 
       vi.setSystemTime(new Date("2025-01-20T12:00:00Z"));
@@ -252,7 +247,7 @@ describe("CalendarGrid", () => {
       );
 
       const pastCell = screen.getByLabelText(/January 1, 2025/i);
-      await user.click(pastCell);
+      fireEvent.click(pastCell);
 
       // Should not navigate to past dates
       expect(onDateClick).not.toHaveBeenCalled();
