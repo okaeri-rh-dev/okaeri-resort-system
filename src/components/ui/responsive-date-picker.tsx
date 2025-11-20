@@ -83,7 +83,7 @@ export function ResponsiveDatePicker({
       )}
     >
       {value ? format(value, formatStr) : <span>{placeholder}</span>}
-      <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" />
+      <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" aria-hidden="true" />
     </Button>
   );
 
@@ -163,6 +163,8 @@ export interface ResponsiveDateRangePickerProps {
   "aria-label"?: string;
   /** ID of element describing the button (for errors/success messages) */
   "aria-describedby"?: string;
+  /** Disable the button (prevents opening calendar) */
+  buttonDisabled?: boolean;
 }
 
 export function ResponsiveDateRangePicker({
@@ -178,6 +180,7 @@ export function ResponsiveDateRangePicker({
   buttonVariant = "outline",
   "aria-label": ariaLabel,
   "aria-describedby": ariaDescribedby,
+  buttonDisabled = false,
 }: ResponsiveDateRangePickerProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [open, setOpen] = React.useState(false);
@@ -201,14 +204,18 @@ export function ResponsiveDateRangePicker({
       variant={buttonVariant}
       className={cn(
         "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
-        !value && "text-muted-foreground",
+        !value?.from && "text-muted-foreground",
         buttonClassName
       )}
       aria-label={ariaLabel}
       aria-describedby={ariaDescribedby}
+      disabled={buttonDisabled}
     >
       <span className="truncate">{displayText}</span>
-      <CalendarDays className="ml-auto h-5 w-5 flex-shrink-0 opacity-50 sm:h-4 sm:w-4" />
+      <CalendarDays
+        className="ml-auto h-5 w-5 flex-shrink-0 opacity-50 sm:h-4 sm:w-4"
+        aria-hidden="true"
+      />
     </Button>
   );
 

@@ -63,7 +63,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   checkOut,
   onCheckInChange,
   onCheckOutChange,
-  disabled: _disabled = false,
+  disabled = false,
   className,
 }) => {
   // Local state for validation error
@@ -132,6 +132,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         formatStr="MMM dd, yyyy"
         aria-label="Pick check-in and check-out dates"
         aria-describedby={ariaDescribedby}
+        buttonDisabled={disabled}
       />
 
       {/* Error message display */}
