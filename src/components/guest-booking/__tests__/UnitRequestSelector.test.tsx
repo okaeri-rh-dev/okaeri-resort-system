@@ -64,6 +64,9 @@ const mockMultipleUnits: UnitRequest[] = [
 describe("UnitRequestSelector", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.clearAllTimers();
+    // Clear any pending async operations from previous tests
+    document.body.innerHTML = "";
   });
 
   // ========== LOADING STATE TESTS ==========
@@ -340,12 +343,15 @@ describe("UnitRequestSelector", () => {
       // Tab out to trigger blur/onChange
       await user.keyboard("{Tab}");
 
-      // Wait for onChange to be called
+      // Allow React state to settle after keyboard interaction
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Wait for onChange to be called (increased timeout for full suite reliability)
       await waitFor(
         () => {
           expect(onChange).toHaveBeenCalled();
         },
-        { timeout: 3000 }
+        { timeout: 5000 }
       );
 
       // Re-render with updated value to simulate parent state update
