@@ -106,6 +106,13 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   // Check if selection is valid and complete
   const isValidSelection = checkIn && checkOut && !error;
 
+  // Build aria-describedby based on what's visible
+  const ariaDescribedby = error
+    ? "date-range-error"
+    : isValidSelection
+      ? "date-range-success"
+      : undefined;
+
   return (
     <div className="space-y-2">
       <ResponsiveDateRangePicker
@@ -123,6 +130,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         )}
         numberOfMonths={2}
         formatStr="MMM dd, yyyy"
+        aria-label="Pick check-in and check-out dates"
+        aria-describedby={ariaDescribedby}
       />
 
       {/* Error message display */}

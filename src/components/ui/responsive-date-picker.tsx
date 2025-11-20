@@ -159,6 +159,10 @@ export interface ResponsiveDateRangePickerProps {
   numberOfMonths?: number;
   formatStr?: string;
   buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  /** Accessibility label for the button */
+  "aria-label"?: string;
+  /** ID of element describing the button (for errors/success messages) */
+  "aria-describedby"?: string;
 }
 
 export function ResponsiveDateRangePicker({
@@ -172,6 +176,8 @@ export function ResponsiveDateRangePicker({
   numberOfMonths = 2,
   formatStr = "LLL dd, y",
   buttonVariant = "outline",
+  "aria-label": ariaLabel,
+  "aria-describedby": ariaDescribedby,
 }: ResponsiveDateRangePickerProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [open, setOpen] = React.useState(false);
@@ -198,6 +204,8 @@ export function ResponsiveDateRangePicker({
         !value && "text-muted-foreground",
         buttonClassName
       )}
+      aria-label={ariaLabel}
+      aria-describedby={ariaDescribedby}
     >
       <span className="truncate">{displayText}</span>
       <CalendarDays className="ml-auto h-5 w-5 flex-shrink-0 opacity-50 sm:h-4 sm:w-4" />
