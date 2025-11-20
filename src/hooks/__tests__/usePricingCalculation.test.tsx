@@ -38,7 +38,8 @@ vi.mock("sonner", () => ({
 }));
 
 // Mock fetch globally
-global.fetch = vi.fn();
+const mockFetch = vi.fn();
+global.fetch = mockFetch as any;
 
 describe("usePricingCalculation", () => {
   let queryClient: QueryClient;
@@ -153,7 +154,7 @@ describe("usePricingCalculation", () => {
     vi.clearAllMocks();
 
     // Setup default fetch mock
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+    mockFetch.mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => mockSuccessResponse,
@@ -175,7 +176,7 @@ describe("usePricingCalculation", () => {
       });
 
       expect(result.current.data).toEqual(mockSuccessResponse);
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/pricing/calculate"),
         expect.objectContaining({
           method: "POST",
@@ -195,7 +196,7 @@ describe("usePricingCalculation", () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           headers: expect.objectContaining({
@@ -206,7 +207,7 @@ describe("usePricingCalculation", () => {
     });
 
     it("should calculate pricing with seasonal rates", async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => mockSeasonalResponse,
@@ -249,7 +250,7 @@ describe("usePricingCalculation", () => {
         },
       };
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 400,
         json: async () => errorResponse,
@@ -289,7 +290,7 @@ describe("usePricingCalculation", () => {
     });
 
     it("should show info toast for seasonal rates when showToasts is enabled", async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => mockSeasonalResponse,
@@ -311,7 +312,7 @@ describe("usePricingCalculation", () => {
     });
 
     it("should show error toast when request fails and showToasts is enabled", async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 400,
         json: async () => ({
@@ -388,7 +389,7 @@ describe("usePricingCalculation", () => {
 
       // Should return cached data without calling fetch
       expect(result.current.data?.cached).toBe(true);
-      expect(global.fetch).not.toHaveBeenCalled();
+      expect(mockFetch).not.toHaveBeenCalled();
     });
 
     it("should fetch fresh data if cache is stale (> 5 minutes)", async () => {
@@ -411,7 +412,7 @@ describe("usePricingCalculation", () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       // Should call fetch for fresh data
-      expect(global.fetch).toHaveBeenCalled();
+      expect(mockFetch).toHaveBeenCalled();
       expect(result.current.data?.calculated_at).not.toBe(staleTimestamp);
     });
 
@@ -430,7 +431,7 @@ describe("usePricingCalculation", () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       // Should always call fetch
-      expect(global.fetch).toHaveBeenCalled();
+      expect(mockFetch).toHaveBeenCalled();
     });
   });
 
@@ -446,7 +447,7 @@ describe("usePricingCalculation", () => {
         },
       };
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 400,
         json: async () => errorResponse,
@@ -472,7 +473,7 @@ describe("usePricingCalculation", () => {
         retry_after: 60,
       };
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 429,
         json: async () => errorResponse,
@@ -496,7 +497,7 @@ describe("usePricingCalculation", () => {
         message: "Unit not found",
       };
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 404,
         json: async () => errorResponse,
@@ -514,7 +515,7 @@ describe("usePricingCalculation", () => {
     });
 
     it("should not retry on validation errors", async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 400,
         json: async () => ({
@@ -531,11 +532,11 @@ describe("usePricingCalculation", () => {
       await waitFor(() => expect(result.current.isError).toBe(true));
 
       // Should only call once (no retries)
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
     it("should not retry on rate limit errors", async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 429,
         json: async () => ({
@@ -552,12 +553,12 @@ describe("usePricingCalculation", () => {
       await waitFor(() => expect(result.current.isError).toBe(true));
 
       // Should only call once (no retries)
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
     it("should retry up to 2 times for other errors", async () => {
       let callCount = 0;
-      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      mockFetch.mockImplementation(async () => {
         callCount++;
         if (callCount < 3) {
           return {
@@ -584,7 +585,7 @@ describe("usePricingCalculation", () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       // Should call 3 times (initial + 2 retries)
-      expect(global.fetch).toHaveBeenCalledTimes(3);
+      expect(mockFetch).toHaveBeenCalledTimes(3);
     });
   });
 
@@ -648,7 +649,7 @@ describe("usePricingCalculation", () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           body: JSON.stringify(multiUnitRequest),
@@ -675,7 +676,7 @@ describe("usePricingCalculation", () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           body: JSON.stringify(customPricingRequest),
@@ -684,7 +685,7 @@ describe("usePricingCalculation", () => {
     });
 
     it("should handle network errors gracefully", async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("Network error"));
+      mockFetch.mockRejectedValue(new Error("Network error"));
 
       const { result } = renderHook(() => usePricingCalculation(), { wrapper });
 

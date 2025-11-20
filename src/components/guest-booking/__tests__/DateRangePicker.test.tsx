@@ -95,7 +95,7 @@ describe("DateRangePicker", () => {
   describe("Rendering", () => {
     it("renders button with placeholder when no dates selected", () => {
       render(<DateRangePicker {...defaultProps} />);
-      const button = screen.getByRole("button", { name: /select check-in and check-out dates/i });
+      const button = screen.getByRole("button", { name: /pick check-in and check-out dates/i });
       expect(button).toBeInTheDocument();
       expect(button).toHaveTextContent(/pick check-in and check-out dates/i);
     });
@@ -390,8 +390,8 @@ describe("DateRangePicker", () => {
     it("has proper aria-label for button", () => {
       render(<DateRangePicker {...defaultProps} />);
 
-      const button = screen.getByRole("button", { name: /select check-in and check-out dates/i });
-      expect(button).toHaveAttribute("aria-label", "Select check-in and check-out dates");
+      const button = screen.getByRole("button", { name: /pick check-in and check-out dates/i });
+      expect(button).toHaveAttribute("aria-label", "Pick check-in and check-out dates");
     });
 
     it("associates error message with button via aria-describedby", () => {
