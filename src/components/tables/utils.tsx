@@ -154,13 +154,17 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 // TABLE HEADER COMPONENTS
 // ============================================
 
-interface SortableHeaderProps {
-  header: Header<unknown, unknown>;
+interface SortableHeaderProps<TData = unknown, TValue = unknown> {
+  header: Header<TData, TValue>;
   children: React.ReactNode;
   className?: string;
 }
 
-export const SortableHeader: React.FC<SortableHeaderProps> = ({ header, children, className }) => {
+export const SortableHeader = <TData, TValue>({
+  header,
+  children,
+  className,
+}: SortableHeaderProps<TData, TValue>) => {
   // Safety check for header and column existence
   if (!header || !header.column || !header.column.getCanSort()) {
     return <div className={cn("font-medium text-neutral-700", className)}>{children}</div>;
