@@ -432,7 +432,7 @@ describe("usePricingCalculation", () => {
         message: "Validation failed",
         errors: {
           guest_count: ["Must be at least 1"],
-          check_in_date: ["Invalid date format"],
+          check_in: ["Invalid date format"],
         },
       };
 
