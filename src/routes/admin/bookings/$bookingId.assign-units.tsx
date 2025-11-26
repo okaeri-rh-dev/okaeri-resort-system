@@ -20,6 +20,7 @@ import { UnitAssignmentInterface } from "@/components/admin/UnitAssignmentInterf
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuthToken } from "@/hooks/useAuthToken";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 // ============================================
@@ -113,7 +114,7 @@ function PaymentNotVerifiedGuard({
             <Button
               onClick={() =>
                 navigate({
-                  to: `/admin/payments/verify/${bookingId}`, // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  to: `/admin/verify-payment/${bookingId}`, // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } as any)
               }
               className="bg-yellow-600 hover:bg-yellow-700"
@@ -309,8 +310,8 @@ function ErrorState({ error, bookingId }: { error: Error | null; bookingId: stri
 
 function AssignUnitsPage() {
   const navigate = useNavigate();
-
   const { bookingId } = Route.useParams();
+  const { token: authToken, isLoading: isAuthLoading, error: authError } = useAuthToken();
 
   // Fetch booking details with TanStack Query
   const {
@@ -319,10 +320,15 @@ function AssignUnitsPage() {
     error,
   } = useQuery<BookingDetail>({
     queryKey: ["booking", bookingId],
+    enabled: !!authToken, // Only fetch when authenticated
     queryFn: async () => {
+      if (!authToken) {
+        throw new Error("Not authenticated. Please sign in again.");
+      }
+
       const response = await fetch(`/api/admin/bookings/${bookingId}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          Authorization: `Bearer ${authToken}`,
           "Content-Type": "application/json",
         },
       });
@@ -358,6 +364,16 @@ function AssignUnitsPage() {
   // ============================================
   // Render Guards
   // ============================================
+
+  // Auth loading guard
+  if (isAuthLoading) {
+    return <LoadingState bookingReference={undefined} />;
+  }
+
+  // Auth error guard
+  if (authError) {
+    return <ErrorState error={authError} bookingId={bookingId} />;
+  }
 
   // Loading guard
   if (isLoading) {

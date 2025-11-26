@@ -30,6 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuthToken } from "@/hooks/useAuthToken";
 import { generateSignedUrl, renewSignedUrl, shouldRenewSignedUrl } from "@/lib/storage-utils";
 
 // Configure PDF.js worker
@@ -55,6 +56,7 @@ export function PaymentProofViewer({
   onStatusChange,
 }: PaymentProofViewerProps) {
   const queryClient = useQueryClient();
+  const { token: authToken, isLoading: isAuthLoading, error: authError } = useAuthToken();
 
   // State management
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
@@ -126,7 +128,10 @@ export function PaymentProofViewer({
   // Mutation for verify/reject actions
   const verifyMutation = useMutation({
     mutationFn: async (payload: VerifyPaymentPayload) => {
-      const authToken = localStorage.getItem("auth_token");
+      if (!authToken) {
+        throw new Error("Not authenticated. Please sign in again.");
+      }
+
       const response = await fetch("/api/admin/verify-payment", {
         method: "POST",
         headers: {
@@ -362,6 +367,43 @@ export function PaymentProofViewer({
   };
 
   // Main render
+  // Show auth loading state
+  if (isAuthLoading) {
+    return (
+      <Card className="border-neutral-200">
+        <CardHeader>
+          <CardTitle>Payment Proof</CardTitle>
+          <CardDescription>Authenticating...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertDescription>Loading authentication...</AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show auth error
+  if (authError) {
+    return (
+      <Card className="border-neutral-200">
+        <CardHeader>
+          <CardTitle>Payment Proof</CardTitle>
+          <CardDescription>Authentication Error</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert className="border-red-200 bg-red-50">
+            <XCircle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-800">
+              {authError.message || "Failed to authenticate. Please sign in again."}
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!paymentProofPath) {
     return (
       <Card className="border-neutral-200">

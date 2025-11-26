@@ -23,6 +23,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useAuthToken } from "@/hooks/useAuthToken";
 import { cn } from "@/lib/utils";
 
 // ============================================
@@ -71,6 +72,7 @@ export function UnitAssignmentInterface({
   onAssignmentSuccess,
 }: UnitAssignmentInterfaceProps) {
   const queryClient = useQueryClient();
+  const { token: authToken, isLoading: isAuthLoading, error: authError } = useAuthToken();
   const [selectedUnits, setSelectedUnits] = useState<Set<string>>(new Set());
   const [assignmentError, setAssignmentError] = useState<string | null>(null);
 
@@ -85,11 +87,15 @@ export function UnitAssignmentInterface({
   } = useQuery({
     queryKey: ["available-units", checkInDate, checkOutDate],
     queryFn: async () => {
+      if (!authToken) {
+        throw new Error("Not authenticated. Please sign in again.");
+      }
+
       const response = await fetch(
         `/api/admin/available-units?check_in_date=${encodeURIComponent(checkInDate)}&check_out_date=${encodeURIComponent(checkOutDate)}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            Authorization: `Bearer ${authToken}`,
             "Content-Type": "application/json",
           },
         }
@@ -115,10 +121,14 @@ export function UnitAssignmentInterface({
 
   const assignMutation = useMutation({
     mutationFn: async (unitIds: string[]) => {
+      if (!authToken) {
+        throw new Error("Not authenticated. Please sign in again.");
+      }
+
       const response = await fetch("/api/admin/assign-units", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          Authorization: `Bearer ${authToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -267,6 +277,36 @@ export function UnitAssignmentInterface({
   // ============================================
   // Render States
   // ============================================
+
+  // Auth loading state
+  if (isAuthLoading) {
+    return (
+      <Card className="border-neutral-200">
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="flex items-center gap-3 text-neutral-600">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span className="text-sm font-medium">Authenticating...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Auth error state
+  if (authError) {
+    return (
+      <Card className="border-neutral-200">
+        <CardContent className="py-8">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              {authError.message || "Authentication failed. Please sign in again."}
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isLoadingUnits) {
     return (
