@@ -48,7 +48,7 @@ curl -X POST $PROD_URL/api/guest-booking/preview-pricing \
   -d '{
     "check_in": "2025-06-01",
     "check_out": "2025-06-08",
-    "unit_requests": [{"guests_per_unit": 2}]
+    "unit_requests": [{"guest_count": 2}]
   }' | jq '.final_total'
 # Expected: Numeric value (e.g., 13300)
 ```
@@ -263,7 +263,7 @@ for i in {1..6}; do
   STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
     -X POST $PROD_URL/api/guest-booking/preview-pricing \
     -H "Content-Type: application/json" \
-    -d '{"check_in": "2025-06-01", "check_out": "2025-06-02", "unit_requests": [{"guests_per_unit": 2}]}')
+    -d '{"check_in": "2025-06-01", "check_out": "2025-06-02", "unit_requests": [{"guest_count": 2}]}')
   echo "Request $i: $STATUS"
   sleep 1
 done
@@ -420,6 +420,46 @@ psql $DATABASE_URL -c "
 - Verification time > 48 hours → Investigate admin workflow bottleneck
 - Rejection rate > 15% → Review payment instructions clarity
 - PDF viewer errors > 5% → Check pdfjs-dist configuration
+
+---
+
+### Admin Authentication Monitoring
+
+**Track admin token management with `useAuthToken` hook**:
+
+The application uses a centralized authentication hook (`src/hooks/useAuthToken.ts`) that manages JWT tokens via Supabase session management instead of localStorage. This provides:
+
+- Automatic token refresh when auth state changes
+- Centralized error handling for authentication failures
+- Loading states for initial session fetch
+- Automatic cleanup of auth state subscriptions
+
+**Monitoring Metrics**:
+
+```typescript
+// Monitor these patterns in production logs:
+// 1. Token refresh frequency
+// 2. Session expiration events
+// 3. Auth errors (network failures, invalid tokens)
+// 4. Loading state duration (should be < 500ms)
+
+// Example health check:
+const { token, isLoading, error } = useAuthToken();
+console.log("Admin auth status:", {
+  hasToken: !!token,
+  isLoading,
+  error: error?.message,
+});
+```
+
+**Recommended Alerts**:
+
+- Auth token refresh failures > 5% → Check Supabase auth service status
+- Admin session expiry < 1 hour → Investigate token TTL configuration
+- Auth loading state > 1 second → Check network latency to Supabase
+- Auth errors > 10/day → Review Supabase auth logs and quotas
+
+**Status**: ⬜ Admin authentication working smoothly with centralized token management
 
 ---
 

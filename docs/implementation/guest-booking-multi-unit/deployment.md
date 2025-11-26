@@ -736,8 +736,8 @@ curl -X POST https://okaeri-resort-system.pages.dev/api/guest-booking/preview-pr
     "check_in": "2025-06-01",
     "check_out": "2025-06-08",
     "unit_requests": [
-      {"guests_per_unit": 2},
-      {"guests_per_unit": 4}
+      {"guest_count": 2},
+      {"guest_count": 4}
     ]
   }' | jq
 ```

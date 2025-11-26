@@ -401,7 +401,7 @@ VITE_ENABLE_ADMIN_DASHBOARD=true
   ls src/lib/storage-utils.ts
   ls functions/api/admin/verify-payment.ts
   ls functions/api/admin/bookings/[bookingId].ts
-  ls src/routes/admin.verify-payment.\$bookingId.tsx
+  ls src/routes/admin/verify-payment.\$bookingId.tsx
   ```
 
 ---
@@ -435,6 +435,39 @@ VITE_ENABLE_ADMIN_DASHBOARD=true
   ```bash
   npm run test:run  # All tests passing
   ```
+
+- [ ] **Database tests setup** (for local testing)
+
+  Database and performance tests require a local Supabase instance:
+
+  ```bash
+  # 1. Start Supabase locally (if not already running)
+  supabase start
+
+  # 2. Verify Supabase is running
+  supabase status
+  # Should show:
+  # - API URL: http://127.0.0.1:54321
+  # - DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+  # 3. Run database tests
+  npx vitest run src/__tests__/database/
+  # Expected: 11 passing, 1 skipped (multi-unit-booking.test.ts)
+
+  # 4. Run performance tests
+  npx vitest run src/__tests__/performance/
+  # Expected: 10 passing (multi-unit-availability.test.ts)
+  ```
+
+  **Environment variables** (auto-configured in `vitest.config.ts`):
+  - `TEST_SUPABASE_URL` - defaults to `http://127.0.0.1:54321`
+  - `TEST_SUPABASE_SERVICE_ROLE_KEY` - uses local Supabase key
+  - Tests automatically fallback to `.env.local` if not set
+
+  **Notes**:
+  - Database tests use `@vitest-environment node` for direct DB access
+  - Tests include `beforeEach` cleanup for isolation
+  - One test intentionally skipped pending schema update
 
 - [ ] **Build succeeds**
 
