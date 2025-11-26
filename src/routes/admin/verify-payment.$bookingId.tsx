@@ -1,7 +1,7 @@
 /**
  * Admin Payment Verification Route
  *
- * Route: /admin/payments/verify/$bookingId
+ * Route: /admin/verify-payment/$bookingId
  * Displays payment proof viewer for booking
  */
 
@@ -12,6 +12,7 @@ import { ArrowLeft } from "lucide-react";
 import { PaymentProofViewer } from "@/components/admin/PaymentProofViewer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuthToken } from "@/hooks/useAuthToken";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 // Type for booking detail response
@@ -29,12 +30,13 @@ interface BookingDetail {
   created_at: string;
 }
 
-export const Route = createFileRoute("/admin/payments/verify/$bookingId")({
+export const Route = createFileRoute("/admin/verify-payment/$bookingId")({
   component: PaymentVerificationPage,
 });
 
 function PaymentVerificationPage() {
   const { bookingId } = Route.useParams();
+  const { token: authToken, isLoading: isAuthLoading, error: authError } = useAuthToken();
 
   // Fetch booking details
   const {
@@ -43,10 +45,15 @@ function PaymentVerificationPage() {
     error,
   } = useQuery<BookingDetail>({
     queryKey: ["booking", bookingId],
+    enabled: !!authToken, // Only fetch when authenticated
     queryFn: async () => {
+      if (!authToken) {
+        throw new Error("Not authenticated. Please sign in again.");
+      }
+
       const response = await fetch(`/api/admin/bookings/${bookingId}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          Authorization: `Bearer ${authToken}`,
         },
       });
 
@@ -66,6 +73,26 @@ function PaymentVerificationPage() {
       window.location.href = "/admin/bookings/queue";
     }
   };
+
+  // Auth loading state
+  if (isAuthLoading) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="text-center">Authenticating...</div>
+      </div>
+    );
+  }
+
+  // Auth error state
+  if (authError) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="text-destructive text-center">
+          Authentication error: {authError.message || "Please sign in again."}
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

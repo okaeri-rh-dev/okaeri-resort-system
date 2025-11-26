@@ -333,18 +333,23 @@ export function PendingBookingsQueue() {
                     <TableCell className="text-right">
                       <Button
                         size="sm"
+                        title={
+                          booking.payment_status === "Verified"
+                            ? "Proceed to assign specific units for this booking"
+                            : "Review payment proof and verify or reject payment"
+                        }
                         onClick={() => {
-                          // If payment verified, go to assignment; otherwise, verify payment first
+                          // If payment verified, go to assignment; otherwise, review payment first
                           if (booking.payment_status === "Verified") {
                             // Navigate to unit assignment
                             window.location.href = `/admin/bookings/${booking.booking_id}/assign-units`;
                           } else {
-                            // Navigate to payment verification
-                            window.location.href = `/admin/payments/verify/${booking.booking_id}`;
+                            // Navigate to payment review page
+                            window.location.href = `/admin/verify-payment/${booking.booking_id}`;
                           }
                         }}
                       >
-                        {booking.payment_status === "Verified" ? "Assign Units" : "Verify Payment"}
+                        {booking.payment_status === "Verified" ? "Assign Units" : "Review Payment"}
                       </Button>
                     </TableCell>
                   </TableRow>
