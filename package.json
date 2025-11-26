@@ -18,6 +18,7 @@
     "dev:vite": "vite --clearScreen false",
     "dev:wrangler": "wrangler pages dev . --compatibility-date=2025-09-29 --compatibility-flags=nodejs_compat --port 8788 --local",
     "format": "prettier --write .",
+    "health-check": "bash scripts/health-check.sh",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepare": "husky",
