@@ -19,12 +19,12 @@ interface BookingDetailResponse {
   booking_reference: string;
   guest_name: string;
   guest_contact: string;
-  check_in_date: string;
-  check_out_date: string;
+  check_in: string;
+  check_out: string;
   total_amount: number;
   payment_status: string;
   unit_assignment_status: string; // Added for route compatibility
-  payment_proof_path: string | null;
+  payment_proof_url: string | null;
   requested_unit_count: number;
   unit_requests: Array<{ id: string; guests_per_unit: number }>; // Added for route compatibility
   created_at: string;
@@ -40,7 +40,7 @@ interface BookingDatabaseRecord {
   total_amount: number;
   payment_status: string | null;
   unit_assignment_status: string | null;
-  payment_proof_path: string | null;
+  payment_proof_url: string | null;
   requested_unit_count: number | null;
   created_at: string | null;
   guest_booking_unit_requests?: Array<{ id: string; guests_per_unit: number }>;
@@ -119,7 +119,10 @@ function extractBearerToken(request: CloudflareRequest): string | null {
 }
 
 /**
- * Verifies user is authenticated and has admin role
+ * Verifies user is authenticated
+ *
+ * Phase 1: All authenticated users have admin access (current behavior)
+ * Phase 2: TODO - Will check for actual admin role via profiles table
  */
 async function verifyAdminAuth(
   token: string,
@@ -147,15 +150,18 @@ async function verifyAdminAuth(
       };
     }
 
-    // Check admin role from metadata
-    const userRole = user.user_metadata?.role || user.app_metadata?.role || "guest";
-
-    if (userRole !== "admin") {
-      return {
-        isValid: false,
-        error: "Admin access required",
-      };
-    }
+    // Phase 1: All authenticated users have admin access
+    // This matches the behavior documented in _middleware.ts
+    // Phase 2: TODO - Uncomment the code below to enforce admin role
+    //
+    // const userRole = user.user_metadata?.role || user.app_metadata?.role || "guest";
+    //
+    // if (userRole !== "admin") {
+    //   return {
+    //     isValid: false,
+    //     error: "Admin access required",
+    //   };
+    // }
 
     return { isValid: true };
   } catch (err) {
@@ -191,10 +197,10 @@ async function fetchBookingById(
         total_amount,
         payment_status,
         unit_assignment_status,
-        payment_proof_path,
+        payment_proof_url,
         requested_unit_count,
         created_at,
-        guest_booking_unit_requests!inner(id, guests_per_unit)
+        guest_booking_unit_requests(id, guests_per_unit)
       `
       )
       .eq("booking_id", bookingId)
@@ -222,12 +228,12 @@ async function fetchBookingById(
       booking_reference: dbRecord.booking_reference,
       guest_name: dbRecord.guest_name,
       guest_contact: dbRecord.contact_number,
-      check_in_date: dbRecord.check_in,
-      check_out_date: dbRecord.check_out,
+      check_in: dbRecord.check_in,
+      check_out: dbRecord.check_out,
       total_amount: dbRecord.total_amount,
       payment_status: dbRecord.payment_status || "Pending",
       unit_assignment_status: dbRecord.unit_assignment_status || "pending",
-      payment_proof_path: dbRecord.payment_proof_path,
+      payment_proof_url: dbRecord.payment_proof_url,
       requested_unit_count: dbRecord.requested_unit_count || 0,
       unit_requests: Array.isArray(dbRecord.guest_booking_unit_requests)
         ? dbRecord.guest_booking_unit_requests.map((req) => ({
