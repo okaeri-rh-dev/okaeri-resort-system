@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
@@ -320,7 +320,6 @@ describe("UnitRequestSelector", () => {
     });
 
     it("updates guest count when card input changes", async () => {
-      const user = userEvent.setup();
       let currentValue = [...mockMultipleUnits];
       const onChange = vi.fn((newValue: typeof mockMultipleUnits) => {
         currentValue = newValue;
@@ -336,22 +335,20 @@ describe("UnitRequestSelector", () => {
 
       const guestInputs = screen.getAllByLabelText(/number of guests/i);
 
-      // Change Unit #1 guest count to 5
-      await user.clear(guestInputs[0]);
-      await user.type(guestInputs[0], "5");
+      // Use fireEvent.change for synchronous input update, then blur to trigger validation
+      // This avoids timing issues with userEvent and React.startTransition
+      await act(async () => {
+        fireEvent.change(guestInputs[0], { target: { value: "5" } });
+        // Trigger blur to ensure value is committed
+        fireEvent.blur(guestInputs[0]);
+      });
 
-      // Tab out to trigger blur/onChange
-      await user.keyboard("{Tab}");
-
-      // Allow React state to settle after keyboard interaction
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      // Wait for onChange to be called (increased timeout for full suite reliability)
+      // Wait for onChange to be called with the transition flushed
       await waitFor(
         () => {
           expect(onChange).toHaveBeenCalled();
         },
-        { timeout: 5000 }
+        { timeout: 3000 }
       );
 
       // Re-render with updated value to simulate parent state update

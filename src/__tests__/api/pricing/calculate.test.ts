@@ -204,8 +204,8 @@ describe("Pricing Calculate API", () => {
       method: "POST",
       headers: new Map(),
       json: vi.fn().mockResolvedValue({
-        check_in_date: "2024-12-20",
-        // Missing check_out_date
+        check_in: "2024-12-20",
+        // Missing check_out
         guest_count: 4,
       }),
     };
@@ -229,8 +229,8 @@ describe("Pricing Calculate API", () => {
       method: "POST",
       headers: new Map(),
       json: vi.fn().mockResolvedValue({
-        check_in_date: tomorrow.toISOString().split("T")[0],
-        check_out_date: dayAfter.toISOString().split("T")[0],
+        check_in: tomorrow.toISOString().split("T")[0],
+        check_out: dayAfter.toISOString().split("T")[0],
         guest_count: 4,
         unit_id: "550e8400-e29b-41d4-a716-446655440001", // Valid UUID
       }),
@@ -261,8 +261,8 @@ describe("Pricing Calculate API", () => {
       method: "POST",
       headers: new Map(),
       json: vi.fn().mockResolvedValue({
-        check_in_date: tomorrow.toISOString().split("T")[0],
-        check_out_date: dayAfter.toISOString().split("T")[0],
+        check_in: tomorrow.toISOString().split("T")[0],
+        check_out: dayAfter.toISOString().split("T")[0],
         guest_count: 2,
         custom_pricing: {
           base_rate: 2500,
@@ -299,8 +299,8 @@ describe("Pricing Calculate API", () => {
       method: "POST",
       headers: new Map([["cf-connecting-ip", "192.168.1.1"]]),
       json: vi.fn().mockResolvedValue({
-        check_in_date: tomorrow.toISOString().split("T")[0],
-        check_out_date: dayAfter.toISOString().split("T")[0],
+        check_in: tomorrow.toISOString().split("T")[0],
+        check_out: dayAfter.toISOString().split("T")[0],
         guest_count: 4,
         unit_id: "550e8400-e29b-41d4-a716-446655440001",
       }),
@@ -336,8 +336,8 @@ describe("Pricing Calculate API", () => {
       method: "POST",
       headers: new Map(),
       json: vi.fn().mockResolvedValue({
-        check_in_date: tomorrow.toISOString().split("T")[0],
-        check_out_date: dayAfter.toISOString().split("T")[0],
+        check_in: tomorrow.toISOString().split("T")[0],
+        check_out: dayAfter.toISOString().split("T")[0],
         guest_count: 4,
         unit_id: "550e8400-e29b-41d4-a716-446655440001",
       }),
@@ -362,8 +362,8 @@ describe("Pricing Calculate API", () => {
       method: "POST",
       headers: new Map(),
       json: vi.fn().mockResolvedValue({
-        check_in_date: tomorrow.toISOString().split("T")[0],
-        check_out_date: dayAfter.toISOString().split("T")[0],
+        check_in: tomorrow.toISOString().split("T")[0],
+        check_out: dayAfter.toISOString().split("T")[0],
         unit_requests: [
           { unit_id: "550e8400-e29b-41d4-a716-446655440001", guest_count: 2 },
           { unit_id: "550e8400-e29b-41d4-a716-446655440002", guest_count: 4 },
@@ -385,8 +385,8 @@ describe("Pricing Calculate API", () => {
       method: "POST",
       headers: new Map(),
       json: vi.fn().mockResolvedValue({
-        check_in_date: "2024-12-23",
-        check_out_date: "2024-12-20", // Invalid: check-out before check-in
+        check_in: "2024-12-23",
+        check_out: "2024-12-20", // Invalid: check-out before check-in
         guest_count: 4,
         unit_id: "550e8400-e29b-41d4-a716-446655440001",
       }),
@@ -409,8 +409,8 @@ describe("Pricing Calculate API", () => {
       method: "POST",
       headers: new Map([["Authorization", "Bearer test-token"]]),
       json: vi.fn().mockResolvedValue({
-        check_in_date: tomorrow.toISOString().split("T")[0],
-        check_out_date: dayAfter.toISOString().split("T")[0],
+        check_in: tomorrow.toISOString().split("T")[0],
+        check_out: dayAfter.toISOString().split("T")[0],
         guest_count: 4,
         unit_id: "550e8400-e29b-41d4-a716-446655440001",
       }),

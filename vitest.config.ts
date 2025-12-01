@@ -88,14 +88,22 @@ export default defineConfig(({ mode }) => {
       watchExclude: ["**/node_modules/**", "**/dist/**"],
 
       // Thread configuration for performance
-      // Reduced from 4 to 2 threads to prevent database connection pool exhaustion
-      // Database tests create multiple connections per thread, causing TIME_WAIT accumulation
+      // Tests run in threads for within-file parallelism, but files run sequentially
+      // to prevent database connection pool exhaustion and data conflicts
       threads: true,
       maxThreads: 4,
       minThreads: 1,
 
-      // File-level parallelism control
-      fileParallelism: false, // Run test files sequentially to prevent database connection issues
+      // File-level parallelism: DISABLED
+      // Reason: Database tests share state and race conditions occur when running
+      // test files in parallel. The 77s execution time is acceptable for reliability.
+      //
+      // Future optimization options:
+      // 1. CI/CD: Use --shard flag to split tests across multiple runners
+      //    Example: vitest run --shard=1/4, vitest run --shard=2/4, etc.
+      // 2. Local: Run unit tests separately with --grep to exclude database tests
+      //    Example: npm run test:unit (excludes database tests)
+      fileParallelism: false,
     },
 
     // Resolve configuration for tests
