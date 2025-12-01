@@ -31,12 +31,13 @@ id = "98171af1c3bd4f718ff86c1f966c64a5"
 # Production environment variables
 [env.production.vars]
 ENVIRONMENT = "production"
-# SUPABASE_URL and SUPABASE_ANON_KEY should be set as secrets via:
+# Secrets should be set via Cloudflare Pages dashboard or wrangler:
 # npx wrangler secret put SUPABASE_URL
 # npx wrangler secret put SUPABASE_ANON_KEY
 # npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 # npx wrangler secret put TURNSTILE_SECRET_KEY
 # npx wrangler secret put RESEND_API_KEY
+# npx wrangler secret put CRON_SECRET  # For GitHub Actions scheduled cleanup
 
 # Preview environment configuration
 [env.preview]
@@ -87,49 +88,45 @@ ENVIRONMENT = "preview"
 # # Note: Secrets should be in .dev.vars file
 
 # =============================================================================
-# CRON TRIGGERS (Cloudflare Pages Functions)
+# CRON TRIGGERS - MIGRATED TO GITHUB ACTIONS
 # =============================================================================
-# Scheduled cleanup tasks for automated maintenance
-# Free tier: 3 cron triggers per day, using 2/3 (1 reserved for future expansion)
+# NOTE: Cloudflare Pages does NOT support [triggers] configuration.
+# Cron jobs have been migrated to GitHub Actions scheduled workflows.
 #
-# Implementation: Requires _worker.ts with scheduled() export
-# See: functions/_worker.ts for cron event routing
-# See: functions/scheduled/ for cleanup worker implementations
+# See: .github/workflows/scheduled-cleanup.yml
+# HTTP Endpoints: /api/cron/cleanup-idempotency, /api/cron/cleanup-payment-proofs
 #
-# Schedule Reference (cron syntax):
-# ┌─────────── minute (0-59)
-# │ ┌───────── hour (0-23)
-# │ │ ┌─────── day of month (1-31)
-# │ │ │ ┌───── month (1-12)
-# │ │ │ │ ┌─── day of week (0-7, 0 and 7 = Sunday)
-# │ │ │ │ │
-# * * * * *
+# Original schedules (now in GitHub Actions):
+# - Daily 2:00 AM UTC: Cleanup expired idempotency keys
+# - Weekly Sunday 3:00 AM UTC: Cleanup expired payment proofs
 #
-# Execution Times (UTC - convert for local timezone):
-# - 2:00 AM UTC = 10:00 AM PHT (Philippine Time)
-# - 3:00 AM UTC = 11:00 AM PHT (Philippine Time)
+# To run manually: GitHub Actions > Scheduled Cleanup Tasks > Run workflow
 # =============================================================================
 
-[triggers]
-crons = [
-  "0 2 * * *",   # Daily 2:00 AM UTC: Cleanup expired idempotency keys (48+ hours old)
-  "0 3 * * 0"    # Weekly Sunday 3:00 AM UTC: Cleanup expired payment proofs (90+ days completed, 30+ days cancelled)
-]
+# [triggers]  # NOT SUPPORTED by Cloudflare Pages
+# crons = [
+#   "0 2 * * *",   # Daily 2:00 AM UTC: Cleanup expired idempotency keys (48+ hours old)
+#   "0 3 * * 0"    # Weekly Sunday 3:00 AM UTC: Cleanup expired payment proofs (90+ days completed, 30+ days cancelled)
+# ]
 
 # =============================================================================
-# Cron Monitoring & Alerting
+# Cron Monitoring & Alerting (GitHub Actions)
 # =============================================================================
-# Monitor cron execution health via:
-# 1. Cloudflare Dashboard: Workers & Pages > Your Worker > Logs > Real-time Logs
-# 2. Manual trigger: Workers & Pages > Your Worker > Triggers > "Run Cron Trigger" button
-# 3. Wrangler CLI: wrangler pages deployment tail
+# Monitor scheduled cleanup execution via:
+# 1. GitHub Actions: Repository > Actions > Scheduled Cleanup Tasks
+# 2. Cloudflare Logs: Workers & Pages > Your Project > Functions > Logs
+# 3. Manual trigger: GitHub Actions > Scheduled Cleanup Tasks > Run workflow
 #
-# Alert Thresholds (logged in cron workers):
+# Alert Thresholds (logged in cleanup functions):
 # - Idempotency cleanup: >1000 keys deleted (investigate double-booking attempts)
 # - Payment proof cleanup: >50 files deleted per week (investigate bulk cancellations)
 #
+# Setup Requirements:
+# 1. GitHub Secret: CRON_SECRET (same value as Cloudflare Pages environment variable)
+# 2. Cloudflare Secret: CRON_SECRET (set via dashboard or wrangler secret put)
+#
 # Troubleshooting:
-# - Cron not executing: Check _worker.ts exports scheduled() function
-# - Execution errors: Check Supabase credentials (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+# - HTTP 401: Check CRON_SECRET matches in both GitHub and Cloudflare
+# - HTTP 500: Check Supabase credentials (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 # - Function not found: Verify migration 023 applied to database
 # =============================================================================
