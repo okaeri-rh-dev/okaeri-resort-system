@@ -26,7 +26,7 @@ This guide walks you through deploying the Okaeri Resort System to Cloudflare Pa
    - Navigate to "Workers & Pages" → "Create application" → "Pages"
    - Click "Connect to Git"
    - Authorize Cloudflare to access your GitHub account
-   - Select your `okaeri-resort-system` repository
+   - Select your `okaeri-resort` repository
 
 2. **Configure Build Settings**
 

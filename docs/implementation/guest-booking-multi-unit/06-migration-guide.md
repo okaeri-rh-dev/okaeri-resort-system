@@ -945,7 +945,7 @@ Cloudflare Scheduled Workers execute on a cron schedule without requiring HTTP e
 **File**: `wrangler.toml`
 
 ```toml
-name = "okaeri-resort-system"
+name = "okaeri-resort"
 main = "functions/_worker.js"
 compatibility_date = "2024-01-01"
 

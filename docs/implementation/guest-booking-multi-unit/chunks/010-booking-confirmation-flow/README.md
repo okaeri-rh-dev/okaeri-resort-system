@@ -386,7 +386,7 @@ You've just completed the entire guest-facing booking flow:
 ## Key Files Created/Modified
 
 ```
-okaeri-resort-system/
+okaeri-resort/
 ├── src/
 │   ├── components/
 │   │   └── booking-confirmation/

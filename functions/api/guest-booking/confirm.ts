@@ -24,8 +24,8 @@ const confirmSchema = z.object({
 // CORS headers helper
 function getCorsHeaders(origin?: string | null) {
   const allowedOrigins = [
-    "https://okaeri-resort-system.pages.dev",
-    /^https:\/\/[a-z0-9-]+\.okaeri-resort-system\.pages\.dev$/,
+    "https://okaeri-resort.pages.dev",
+    /^https:\/\/[a-z0-9-]+\.okaeri-resort\.pages\.dev$/,
   ];
 
   const isAllowed =
@@ -35,7 +35,7 @@ function getCorsHeaders(origin?: string | null) {
     );
 
   return {
-    "Access-Control-Allow-Origin": isAllowed ? origin : "https://okaeri-resort-system.pages.dev",
+    "Access-Control-Allow-Origin": isAllowed ? origin : "https://okaeri-resort.pages.dev",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   };

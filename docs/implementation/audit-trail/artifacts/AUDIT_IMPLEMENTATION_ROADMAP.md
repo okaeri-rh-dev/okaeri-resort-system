@@ -72,7 +72,7 @@ Just run Phase 1 migrations to get immediate audit coverage:
 
 ```bash
 # 1. Navigate to your project
-cd /path/to/okaeri-resort-system
+cd /path/to/okaeri-resort
 
 # 2. Create migration directory
 mkdir -p database/migrations/audit-system

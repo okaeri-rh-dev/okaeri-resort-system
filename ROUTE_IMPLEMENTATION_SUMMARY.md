@@ -6,7 +6,7 @@ Successfully implemented the TanStack Router route for the admin unit assignment
 
 ## File Created
 
-**Path**: `/Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/src/routes/admin.assign-units.$bookingId.tsx`
+**Path**: `/Users/jasonacido/repos/okaeri-dev/okaeri-resort/src/routes/admin.assign-units.$bookingId.tsx`
 
 **Size**: 13 KB
 

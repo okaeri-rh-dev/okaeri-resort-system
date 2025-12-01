@@ -58,13 +58,13 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 ```bash
 # Check via Cloudflare CLI (if installed)
-wrangler pages deployment list okaeri-resort-system
+wrangler pages deployment list okaeri-resort
 ```
 
 Or manually verify:
 
 1. Go to Cloudflare Dashboard
-2. Pages → okaeri-resort-system → Settings → Environment Variables
+2. Pages → okaeri-resort → Settings → Environment Variables
 3. Check for `SUPABASE_SERVICE_ROLE_KEY`
 
 If missing, add it:
@@ -97,7 +97,7 @@ After applying the fixes, test the endpoint:
 # You should now see the exact Supabase error message
 
 # 3. Check Cloudflare Workers logs
-# Cloudflare Dashboard → Pages → okaeri-resort-system → Functions → Logs
+# Cloudflare Dashboard → Pages → okaeri-resort → Functions → Logs
 
 # 4. Verify your role in app_roles table
 # Run this in Supabase SQL Editor:

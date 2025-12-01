@@ -22,7 +22,7 @@ Verify all required files exist.
 
 ```bash
 # Navigate to project root
-cd /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system
+cd /Users/jasonacido/repos/okaeri-dev/okaeri-resort
 
 # Check API endpoint files
 ls -1 functions/api/guest-booking.ts

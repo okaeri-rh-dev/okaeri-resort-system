@@ -145,8 +145,8 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/okaeri-resort-system.git
-cd okaeri-resort-system
+git clone https://github.com/yourusername/okaeri-resort.git
+cd okaeri-resort
 ```
 
 ### 2. Install Dependencies
@@ -203,7 +203,7 @@ The application will be available at `http://localhost:5173`
 ### Quick Overview
 
 ```
-okaeri-resort-system/
+okaeri-resort/
 │
 ├── 📱 src/                          # React application source code
 │   ├── components/                  # Feature-based UI components
@@ -435,7 +435,7 @@ We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md)
 For support, please:
 
 1. Check the [Troubleshooting Guide](./docs/TROUBLESHOOTING.md)
-2. Review existing [GitHub Issues](https://github.com/yourusername/okaeri-resort-system/issues)
+2. Review existing [GitHub Issues](https://github.com/yourusername/okaeri-resort/issues)
 3. Contact the development team
 
 ## 📄 License

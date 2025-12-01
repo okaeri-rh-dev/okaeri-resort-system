@@ -405,7 +405,7 @@ vercel
 # 1. Set up and deploy? Y
 # 2. Which scope? (Select your account)
 # 3. Link to existing project? N (first time) or Y (updates)
-# 4. Project name? okaeri-resort-system
+# 4. Project name? okaeri-resort
 # 5. Directory with code? ./ (current directory)
 # 6. Override settings? N
 ```
@@ -449,8 +449,8 @@ VITE_APP_NAME = Okaeri Resort Management System
 
 Your app is automatically available at:
 
-- `https://okaeri-resort-system.vercel.app`
-- `https://okaeri-resort-system-yourusername.vercel.app`
+- `https://okaeri-resort.vercel.app`
+- `https://okaeri-resort-yourusername.vercel.app`
 
 #### Using Custom Domain
 

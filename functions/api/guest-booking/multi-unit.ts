@@ -40,7 +40,7 @@ interface Env {
 function getCorsHeaders(origin?: string | null, allowedOriginsStr?: string) {
   const allowedOrigins = allowedOriginsStr
     ? allowedOriginsStr.split(",")
-    : ["http://localhost:5173", "https://okaeri-resort-system.pages.dev"];
+    : ["http://localhost:5173", "https://okaeri-resort.pages.dev"];
 
   const isAllowed = origin && allowedOrigins.includes(origin);
 
@@ -88,7 +88,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // 2. Verify Turnstile CAPTCHA
     const turnstileValid = await verifyTurnstile(data.turnstile_token, env.TURNSTILE_SECRET_KEY, {
       remoteip: clientIp,
-      expectedHostname: "okaeri-resort-system.pages.dev",
+      expectedHostname: "okaeri-resort.pages.dev",
       expectedAction: "guest-booking-multi-unit",
       environment: env.ENVIRONMENT || "production", // Pass environment for dev bypass
       skipInDev: true, // Enable development mode bypass

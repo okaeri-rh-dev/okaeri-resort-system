@@ -24,7 +24,7 @@ This document provides a detailed overview of the project's file organization, a
 ## 🎨 Visual Overview
 
 ```
-okaeri-resort-system/
+okaeri-resort/
 │
 ├── 📱 src/                          # React frontend application
 │   ├── components/                  # UI components (feature-based)

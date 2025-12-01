@@ -110,10 +110,10 @@ function getSecurityHeaders(env: Env): HeadersInit {
 function getCorsHeaders(origin: string | null, env: Env): HeadersInit {
   const allowedOrigins =
     env.ENVIRONMENT === "production"
-      ? ["https://okaeri-resort-system.pages.dev", "https://www.okaeri-resort-system.pages.dev"]
+      ? ["https://okaeri-resort.pages.dev", "https://www.okaeri-resort.pages.dev"]
       : [
-          "https://okaeri-resort-system.pages.dev",
-          "https://*.okaeri-resort-system.pages.dev", // Preview deployments
+          "https://okaeri-resort.pages.dev",
+          "https://*.okaeri-resort.pages.dev", // Preview deployments
           "http://localhost:8788",
           "http://localhost:5173",
           "http://127.0.0.1:5173",

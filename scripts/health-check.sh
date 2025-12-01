@@ -2,7 +2,7 @@
 # Weekly health check for Okaeri Resort System
 # Run: npm run health-check
 
-PROD_URL="https://okaeri-resort-system.pages.dev"
+PROD_URL="https://okaeri-resort.pages.dev"
 DATABASE_URL="postgresql://postgres:..."
 
 echo "=== Okaeri Resort System Health Check ==="

@@ -757,7 +757,7 @@ SELECT calculate_booking_pricing(
    - Verify request/response contracts
 
 6. **Ask for Help**
-   - GitHub Issues: https://github.com/okaeri-dev/okaeri-resort-system/issues
+   - GitHub Issues: https://github.com/okaeri-dev/okaeri-resort/issues
    - Provide:
      - Error message (full text)
      - Request payload (sanitize sensitive data)

@@ -629,7 +629,7 @@ preview_id = "your-preview-kv-id"
 
 ### Base URL
 
-- **Production**: `https://okaeri-resort-system.pages.dev/api`
+- **Production**: `https://okaeri-resort.pages.dev/api`
 - **Development**: `http://localhost:8788/api`
 
 ### Authentication
@@ -652,7 +652,7 @@ Idempotency-Key: <client-generated-uuid>
 
 ```bash
 # 1. Get pricing quote (public)
-curl -X POST https://okaeri-resort-system.pages.dev/api/pricing/quote \
+curl -X POST https://okaeri-resort.pages.dev/api/pricing/quote \
   -H "Content-Type: application/json" \
   -d '{
     "units": [
@@ -664,17 +664,17 @@ curl -X POST https://okaeri-resort-system.pages.dev/api/pricing/quote \
   }'
 
 # 2. Check availability (public)
-curl "https://okaeri-resort-system.pages.dev/api/availability/multi-unit?units[]=xxx&units[]=yyy&check_in=2025-12-20&check_out=2025-12-25"
+curl "https://okaeri-resort.pages.dev/api/availability/multi-unit?units[]=xxx&units[]=yyy&check_in=2025-12-20&check_out=2025-12-25"
 
 # 3. Create booking (auth required)
-curl -X POST https://okaeri-resort-system.pages.dev/api/bookings/multi-unit \
+curl -X POST https://okaeri-resort.pages.dev/api/bookings/multi-unit \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Idempotency-Key: $(uuidgen)" \
   -d '{ ... }'
 
 # 4. Record payment (staff auth)
-curl -X POST https://okaeri-resort-system.pages.dev/api/bookings/xxx/payments/record \
+curl -X POST https://okaeri-resort.pages.dev/api/bookings/xxx/payments/record \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $STAFF_TOKEN" \
   -d '{
@@ -734,10 +734,10 @@ npm run build
 
 ```bash
 # Health check
-curl https://okaeri-resort-system.pages.dev/api/health
+curl https://okaeri-resort.pages.dev/api/health
 
 # Test pricing endpoint
-curl -X POST https://okaeri-resort-system.pages.dev/api/pricing/quote \
+curl -X POST https://okaeri-resort.pages.dev/api/pricing/quote \
   -H "Content-Type: application/json" \
   -d '{"units":[...], "check_in":"...", "check_out":"..."}'
 ```

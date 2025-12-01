@@ -28,7 +28,7 @@ This document covers verification, monitoring, and ongoing maintenance after dep
 
 ```bash
 # Set your production URL
-export PROD_URL="https://okaeri-resort-system.pages.dev"
+export PROD_URL="https://okaeri-resort.pages.dev"
 
 # Test health endpoint
 curl -I $PROD_URL/health
@@ -194,7 +194,7 @@ npx wrangler kv:key list --namespace-id=YOUR_KV_ID --prefix=ratelimit
 **Verify cron triggers are active in Cloudflare dashboard**:
 
 1. Open Cloudflare dashboard
-2. Navigate to: **Workers & Pages** > **okaeri-resort-system** > **Triggers**
+2. Navigate to: **Workers & Pages** > **okaeri-resort** > **Triggers**
 3. Check **Cron Triggers** section
 
 **Expected**:
@@ -291,7 +291,7 @@ curl -X POST $PROD_URL/api/guest-booking/multi-unit \
 **Set up Worker analytics tracking**:
 
 1. Open Cloudflare dashboard
-2. Navigate to: **Workers & Pages** > **okaeri-resort-system** > **Metrics**
+2. Navigate to: **Workers & Pages** > **okaeri-resort** > **Metrics**
 3. Monitor:
    - **Requests/minute**: Should be < 100 for typical resort traffic
    - **Error rate**: Should be < 5%
@@ -621,7 +621,7 @@ npx wrangler pages deployment tail --env production | grep CRON
 # Weekly health check for Okaeri Resort System
 # Run: npm run health-check
 
-PROD_URL="https://okaeri-resort-system.pages.dev"
+PROD_URL="https://okaeri-resort.pages.dev"
 DATABASE_URL="postgresql://postgres:..."
 
 echo "=== Okaeri Resort System Health Check ==="

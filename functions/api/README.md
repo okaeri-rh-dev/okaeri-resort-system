@@ -81,8 +81,8 @@ if (!rateLimitResult.allowed) {
 ```typescript
 // Environment-aware CORS
 const allowedOrigins = [
-  "https://okaeri-resort-system.pages.dev",
-  /^https:\/\/[a-z0-9-]+\.okaeri-resort-system\.pages\.dev$/,  // Preview branches
+  "https://okaeri-resort.pages.dev",
+  /^https:\/\/[a-z0-9-]+\.okaeri-resort\.pages\.dev$/,  // Preview branches
 ]
 
 const corsHeaders = {

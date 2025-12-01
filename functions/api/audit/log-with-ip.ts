@@ -57,16 +57,16 @@ interface Context {
  * Validate and get CORS headers for the request origin
  *
  * Allows requests from:
- * - Production: okaeri-resort-system.pages.dev
- * - Preview branches: *.okaeri-resort-system.pages.dev
+ * - Production: okaeri-resort.pages.dev
+ * - Preview branches: *.okaeri-resort.pages.dev
  *
  * Security: Prevents unauthorized cross-origin requests
  */
 function getCorsHeaders(request: Request): Record<string, string> {
   const origin = request.headers.get("Origin");
   const allowedOrigins = [
-    "https://okaeri-resort-system.pages.dev", // Production
-    /^https:\/\/[a-z0-9-]+\.okaeri-resort-system\.pages\.dev$/, // Preview branches
+    "https://okaeri-resort.pages.dev", // Production
+    /^https:\/\/[a-z0-9-]+\.okaeri-resort\.pages\.dev$/, // Preview branches
   ];
 
   // Check if origin matches allowed patterns
@@ -77,7 +77,7 @@ function getCorsHeaders(request: Request): Record<string, string> {
     );
 
   return {
-    "Access-Control-Allow-Origin": isAllowed ? origin : "https://okaeri-resort-system.pages.dev",
+    "Access-Control-Allow-Origin": isAllowed ? origin : "https://okaeri-resort.pages.dev",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
   };

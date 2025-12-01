@@ -140,7 +140,7 @@ Phase 2: Guest Booking Flow (Next)
 ## Key Files Created/Modified
 
 ```
-okaeri-resort-system/
+okaeri-resort/
 ├── functions/
 │   ├── lib/                                # NEW SECTION
 │   │   ├── verify-turnstile.ts            # NEW - Turnstile verification

@@ -53,8 +53,8 @@ const guestBookingSchema = z.object({
 // CORS headers helper
 function getCorsHeaders(origin?: string | null) {
   const allowedOrigins = [
-    "https://okaeri-resort-system.pages.dev",
-    /^https:\/\/[a-z0-9-]+\.okaeri-resort-system\.pages\.dev$/,
+    "https://okaeri-resort.pages.dev",
+    /^https:\/\/[a-z0-9-]+\.okaeri-resort\.pages\.dev$/,
   ];
 
   const isAllowed =
@@ -64,7 +64,7 @@ function getCorsHeaders(origin?: string | null) {
     );
 
   return {
-    "Access-Control-Allow-Origin": isAllowed ? origin : "https://okaeri-resort-system.pages.dev",
+    "Access-Control-Allow-Origin": isAllowed ? origin : "https://okaeri-resort.pages.dev",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, X-Idempotency-Key",
   };
@@ -152,7 +152,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     // Verify Turnstile CAPTCHA
     const turnstileValid = await verifyTurnstile(data.turnstile_token, env.TURNSTILE_SECRET_KEY, {
       remoteip: clientIp,
-      expectedHostname: "okaeri-resort-system.pages.dev",
+      expectedHostname: "okaeri-resort.pages.dev",
       expectedAction: "guest-booking",
     });
 

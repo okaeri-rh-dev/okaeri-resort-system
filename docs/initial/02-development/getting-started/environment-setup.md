@@ -22,7 +22,7 @@ production deployment.
 2. **Create New Project**
    - Click "New Project"
    - Organization: Choose or create one
-   - Project Name: `okaeri-resort-system` (or your preferred name)
+   - Project Name: `okaeri-resort` (or your preferred name)
    - Database Password: Create a strong password (save this!)
    - Region: Choose closest to your location
    - Pricing Plan: Start with "Free" for Phase 1

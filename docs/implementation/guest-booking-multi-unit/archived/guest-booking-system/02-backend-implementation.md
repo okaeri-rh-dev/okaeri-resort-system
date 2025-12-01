@@ -47,7 +47,7 @@ NODE_ENV=production
 
 ```toml
 # wrangler.toml
-name = "okaeri-resort-system"
+name = "okaeri-resort"
 compatibility_date = "2025-09-29"
 pages_build_output_dir = "dist"
 

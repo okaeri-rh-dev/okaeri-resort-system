@@ -131,10 +131,10 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 ```bash
 # Test OPTIONS (should return 204)
-curl -X OPTIONS https://feature-audit-trail-system.okaeri-resort-system.pages.dev/api/audit/log-with-ip
+curl -X OPTIONS https://feature-audit-trail-system.okaeri-resort.pages.dev/api/audit/log-with-ip
 
 # Test POST with auth token (should return success)
-curl -X POST https://feature-audit-trail-system.okaeri-resort-system.pages.dev/api/audit/log-with-ip \
+curl -X POST https://feature-audit-trail-system.okaeri-resort.pages.dev/api/audit/log-with-ip \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{

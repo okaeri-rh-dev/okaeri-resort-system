@@ -926,7 +926,7 @@ Create a test suite file for future regression testing.
 
 ```bash
 # Create test file
-touch /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/__tests__/database/pricing-engine.test.sql
+touch /Users/jasonacido/repos/okaeri-dev/okaeri-resort/__tests__/database/pricing-engine.test.sql
 ```
 
 ### 6.2: Copy Successful Test Cases

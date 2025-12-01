@@ -318,7 +318,7 @@ npm run bundle:size
 ## File Structure Created
 
 ```
-okaeri-resort-system/
+okaeri-resort/
 ├── .github/
 │   └── workflows/
 │       ├── security-scan.yml

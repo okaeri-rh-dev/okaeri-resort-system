@@ -49,7 +49,7 @@ wrangler kv:namespace list
 [
   {
     "id": "abc123...",
-    "title": "okaeri-resort-system-RATE_LIMIT"
+    "title": "okaeri-resort-RATE_LIMIT"
   }
 ]
 ```
@@ -492,7 +492,7 @@ If quick fixes don't resolve the issue, see `troubleshooting.md` for:
 **Issues Encountered**:
 
 - [ ] None
-- [ ] ****\*\*****\*\*****\*\*****\_\_****\*\*****\*\*****\*\***** (resolved)
+- [ ] \***\*\*\*\*\***\*\*\***\*\*\*\*\***\_\_\***\*\*\*\*\***\*\*\***\*\*\*\*\*** (resolved)
 
 **Notes**:
 

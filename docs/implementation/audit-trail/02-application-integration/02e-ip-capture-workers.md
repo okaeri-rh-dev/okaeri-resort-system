@@ -205,7 +205,7 @@ Add to your Cloudflare Workers environment (via Cloudflare Dashboard or wrangler
 ```toml
 # wrangler.toml
 
-name = "okaeri-resort-system"
+name = "okaeri-resort"
 compatibility_date = "2025-01-01"
 
 [env.production.vars]

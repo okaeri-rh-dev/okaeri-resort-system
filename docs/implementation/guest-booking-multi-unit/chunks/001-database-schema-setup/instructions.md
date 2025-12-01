@@ -50,7 +50,7 @@ Create the migration file that will be executed.
 
 ```bash
 # Create migration file in database/migrations/
-touch /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system/database/migrations/021-multi-unit-guest-booking-schema.sql
+touch /Users/jasonacido/repos/okaeri-dev/okaeri-resort/database/migrations/021-multi-unit-guest-booking-schema.sql
 ```
 
 **What this file will contain**:
@@ -844,7 +844,7 @@ Update your TypeScript types to include new tables/columns.
 
 ```bash
 # Navigate to project root
-cd /Users/jasonacido/repos/okaeri-dev/okaeri-resort-system
+cd /Users/jasonacido/repos/okaeri-dev/okaeri-resort
 
 # Generate types from Supabase schema
 npx supabase gen types typescript --project-id <your-project-id> > src/types/database.types.ts

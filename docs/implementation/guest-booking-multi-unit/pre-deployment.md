@@ -24,7 +24,7 @@ This checklist ensures all prerequisites are met before deploying the multi-unit
 
 - [ ] **Production Supabase project created**
   - Project URL: `https://YOUR_PROJECT.supabase.co`
-  - Project name: "okaeri-resort-system-production"
+  - Project name: "okaeri-resort-production"
   - Region: Closest to target audience (e.g., Asia-Pacific for Philippines)
 
 - [ ] **Database accessible**
@@ -52,7 +52,7 @@ This checklist ensures all prerequisites are met before deploying the multi-unit
   - Payment method added (required for Workers, free tier available)
 
 - [ ] **Cloudflare Pages project created**
-  - Project name: `okaeri-resort-system`
+  - Project name: `okaeri-resort`
   - Production branch: `main`
   - Build command: `npm run build:full`
   - Build output directory: `dist`
@@ -63,7 +63,7 @@ This checklist ensures all prerequisites are met before deploying the multi-unit
   - Preview namespace also created (for testing)
 
 - [ ] **Turnstile site configured**
-  - Site URL: `https://okaeri-resort-system.pages.dev`
+  - Site URL: `https://okaeri-resort.pages.dev`
   - Site key (public): Obtained from Cloudflare dashboard
   - Secret key (private): Obtained from Cloudflare dashboard
   - Widget mode: Managed (recommended)
@@ -265,7 +265,7 @@ This checklist ensures all prerequisites are met before deploying the multi-unit
 
 - [ ] **CORS configured**
   - In Supabase dashboard: Storage > Configuration > CORS
-  - Allowed origins: `http://localhost:5173`, `https://okaeri-resort-system.pages.dev`
+  - Allowed origins: `http://localhost:5173`, `https://okaeri-resort.pages.dev`
   - Allowed methods: `GET`, `POST`, `PUT`, `DELETE`
   - Allowed headers: `*`
 
@@ -285,7 +285,7 @@ VITE_SUPABASE_ANON_KEY=YOUR_ANON_KEY
 # App Configuration
 VITE_APP_ENV=production
 VITE_APP_NAME=Okaeri Resort System
-VITE_APP_URL=https://okaeri-resort-system.pages.dev
+VITE_APP_URL=https://okaeri-resort.pages.dev
 
 # Audit Trail Configuration
 VITE_OWNER_EMAILS=your-email@example.com
@@ -651,7 +651,7 @@ npx wrangler kv:namespace create "RATE_LIMIT_KV" --env production
 
 - Development: Use test keys (`1x00000...`)
 - Production: Use real keys from Cloudflare dashboard
-- Domain must match: `okaeri-resort-system.pages.dev`
+- Domain must match: `okaeri-resort.pages.dev`
 
 ### Issue: "Build fails with TypeScript errors"
 

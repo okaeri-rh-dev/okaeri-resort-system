@@ -123,7 +123,7 @@ git
 ```bash
 # Clone repository
 git clone [repository-url]
-cd okaeri-resort-system
+cd okaeri-resort
 
 # Install dependencies
 npm install
@@ -191,7 +191,7 @@ Each phase builds upon the previous:
 ## 📁 Project Structure
 
 ```
-okaeri-resort-system/
+okaeri-resort/
 ├── src/                    # Frontend React application
 │   ├── components/         # Reusable UI components
 │   ├── pages/             # Page components

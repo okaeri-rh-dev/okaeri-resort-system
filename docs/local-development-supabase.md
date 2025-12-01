@@ -61,7 +61,7 @@ npx supabase --version
 Your project already has Supabase configured:
 
 ```
-okaeri-resort-system/
+okaeri-resort/
 ├── supabase/                       # Local Supabase configuration
 │   ├── config.toml                 # Services configuration
 │   ├── migrations/                 # Database migrations

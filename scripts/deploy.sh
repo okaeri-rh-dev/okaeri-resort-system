@@ -31,7 +31,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-PROJECT_NAME="okaeri-resort-system"
+PROJECT_NAME="okaeri-resort"
 ENVIRONMENT=${1:-production}
 SKIP_TESTS=false
 DRY_RUN=false

@@ -28,7 +28,7 @@ I need you to create implementation chunk [NUMBER]-[NAME] for the multi-unit gue
 
 **Current Context:**
 - Completed chunks: [list completed chunk numbers or "None"]
-- System state: [brief description, e.g., "Clean okaeri-resort-system with existing single-unit booking"]
+- System state: [brief description, e.g., "Clean okaeri-resort with existing single-unit booking"]
 - Prerequisites verified: [Yes/No with details]
 
 **Requirements:**
@@ -123,7 +123,7 @@ I need you to create implementation chunk 001-database-schema-setup for the mult
 
 **Current Context:**
 - Completed chunks: None (first chunk)
-- System state: Clean okaeri-resort-system with existing single-unit booking functionality. Database has bookings, units, guests, payments tables.
+- System state: Clean okaeri-resort with existing single-unit booking functionality. Database has bookings, units, guests, payments tables.
 - Prerequisites verified: Yes - Supabase configured, VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local, database accessible
 
 [Include full requirements section from template above]
@@ -348,7 +348,7 @@ I need you to create implementation chunk 001-database-schema-setup for the mult
 
 **Current Context:**
 - Completed chunks: None (first chunk)
-- System state: Clean okaeri-resort-system with existing single-unit booking functionality. Database has bookings, units, guests, payments tables. Running on Supabase PostgreSQL.
+- System state: Clean okaeri-resort with existing single-unit booking functionality. Database has bookings, units, guests, payments tables. Running on Supabase PostgreSQL.
 - Prerequisites verified: Yes - Supabase configured at supabase.com, VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local, database accessible via src/lib/supabase.ts, can query existing tables
 
 **Requirements:**

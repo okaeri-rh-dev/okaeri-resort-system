@@ -236,7 +236,7 @@ Verify `wrangler.toml` has cron configuration:
 
 ```toml
 # wrangler.toml
-name = "okaeri-resort-system"
+name = "okaeri-resort"
 main = "functions/_worker.js"
 compatibility_date = "2024-01-01"
 
@@ -315,12 +315,12 @@ du -sh dist/assets/*.js | sort -h
 
 ```bash
 # Deploy dist directory to Cloudflare Pages
-wrangler pages deploy dist --project-name=okaeri-resort-system
+wrangler pages deploy dist --project-name=okaeri-resort
 
 # Expected output:
 # ✔ Built successfully
 # ✔ Uploading files...
-# ✔ Deployed to https://okaeri-resort-system.pages.dev
+# ✔ Deployed to https://okaeri-resort.pages.dev
 
 # Test production URL
 curl -I https://your-production-domain.com

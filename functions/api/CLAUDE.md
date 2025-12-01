@@ -191,8 +191,8 @@ if (!rateLimit.allowed) {
 
 ```typescript
 const allowedOrigins = [
-  "https://okaeri-resort-system.pages.dev",
-  /^https:\/\/[a-z0-9-]+\.okaeri-resort-system\.pages\.dev$/,
+  "https://okaeri-resort.pages.dev",
+  /^https:\/\/[a-z0-9-]+\.okaeri-resort\.pages\.dev$/,
 ];
 
 const origin = request.headers.get("origin");

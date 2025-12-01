@@ -60,7 +60,7 @@ ls -lh backup-*.sql
 
 ```bash
 # Navigate to project root
-cd /path/to/okaeri-resort-system
+cd /path/to/okaeri-resort
 
 # Run migration
 psql $DATABASE_URL -f database/migrations/021-multi-unit-guest-booking-schema.sql
@@ -398,7 +398,7 @@ psql $DATABASE_URL -c "
 2. Navigate to: **Storage** > **Configuration** > **CORS**
 3. Add allowed origins:
    - `http://localhost:5173` (development)
-   - `https://okaeri-resort-system.pages.dev` (production)
+   - `https://okaeri-resort.pages.dev` (production)
 4. Allowed methods: `GET, POST, PUT, DELETE, HEAD, OPTIONS`
 5. Allowed headers: `*`
 6. Max age: `3600`
@@ -418,7 +418,7 @@ psql $DATABASE_URL -c "
 npx wrangler kv:namespace create "RATE_LIMIT_KV" --env production
 
 # Expected output:
-# 🌀 Creating namespace with title "okaeri-resort-system-RATE_LIMIT_KV"
+# 🌀 Creating namespace with title "okaeri-resort-RATE_LIMIT_KV"
 # ✨ Success! Add the following to your wrangler.toml:
 # [[env.production.kv_namespaces]]
 # binding = "RATE_LIMIT_KV"
@@ -442,18 +442,18 @@ id = "YOUR_ACTUAL_ID_FROM_OUTPUT"  # Replace with actual ID
 **Set Cloudflare Pages environment variables** via dashboard:
 
 1. Open Cloudflare dashboard
-2. Navigate to: **Workers & Pages** > **okaeri-resort-system** > **Settings** > **Environment Variables**
+2. Navigate to: **Workers & Pages** > **okaeri-resort** > **Settings** > **Environment Variables**
 3. Click **"Add variables"**
 4. Add the following **Production** variables:
 
-| Variable Name             | Value                                    | Type       |
-| ------------------------- | ---------------------------------------- | ---------- |
-| `VITE_SUPABASE_URL`       | `https://YOUR_PROJECT.supabase.co`       | Plain text |
-| `VITE_SUPABASE_ANON_KEY`  | `sb_publishable_...`                     | Plain text |
-| `VITE_APP_ENV`            | `production`                             | Plain text |
-| `VITE_APP_URL`            | `https://okaeri-resort-system.pages.dev` | Plain text |
-| `VITE_TURNSTILE_SITE_KEY` | `0x4AAAAAAB...`                          | Plain text |
-| `VITE_OWNER_EMAILS`       | `your-email@example.com`                 | Plain text |
+| Variable Name             | Value                              | Type       |
+| ------------------------- | ---------------------------------- | ---------- |
+| `VITE_SUPABASE_URL`       | `https://YOUR_PROJECT.supabase.co` | Plain text |
+| `VITE_SUPABASE_ANON_KEY`  | `sb_publishable_...`               | Plain text |
+| `VITE_APP_ENV`            | `production`                       | Plain text |
+| `VITE_APP_URL`            | `https://okaeri-resort.pages.dev`  | Plain text |
+| `VITE_TURNSTILE_SITE_KEY` | `0x4AAAAAAB...`                    | Plain text |
+| `VITE_OWNER_EMAILS`       | `your-email@example.com`           | Plain text |
 
 **Checkpoint**: ✅ 6 environment variables set in dashboard
 
@@ -584,7 +584,7 @@ npx wrangler pages deploy dist --env production
 
 ✨ Success! Uploaded 123 files (4.56 seconds)
 
-✨ Deployment complete! Take a peek over at https://abc12345.okaeri-resort-system.pages.dev
+✨ Deployment complete! Take a peek over at https://abc12345.okaeri-resort.pages.dev
 ```
 
 **Get Production URL**:
@@ -599,7 +599,7 @@ npx wrangler pages deployment list
 Created:     2025-01-27 14:45:23
 Environment: production
 Deployment:  abc12345-def67890
-URL:         https://okaeri-resort-system.pages.dev
+URL:         https://okaeri-resort.pages.dev
 ```
 
 **Checkpoint**: ✅ Deployment URL accessible
@@ -609,7 +609,7 @@ URL:         https://okaeri-resort-system.pages.dev
 ### Step 4.3: Verify Cron Triggers in Dashboard
 
 1. Open Cloudflare dashboard
-2. Navigate to: **Workers & Pages** > **okaeri-resort-system** > **Triggers**
+2. Navigate to: **Workers & Pages** > **okaeri-resort** > **Triggers**
 3. Scroll to **"Cron Triggers"** section
 
 **Expected**:
@@ -629,13 +629,13 @@ URL:         https://okaeri-resort-system.pages.dev
 **Verify KV binding** via dashboard:
 
 1. Open Cloudflare dashboard
-2. Navigate to: **Workers & Pages** > **okaeri-resort-system** > **Settings** > **Bindings**
+2. Navigate to: **Workers & Pages** > **okaeri-resort** > **Settings** > **Bindings**
 3. Look for **"KV Namespace Bindings"**
 
 **Expected**:
 
 - Binding name: `RATE_LIMIT_KV`
-- KV Namespace: `okaeri-resort-system-RATE_LIMIT_KV`
+- KV Namespace: `okaeri-resort-RATE_LIMIT_KV`
 - Environment: Production
 
 **If missing**, add manually:
@@ -657,7 +657,7 @@ URL:         https://okaeri-resort-system.pages.dev
 **Verify Workers are running**:
 
 ```bash
-curl -I https://okaeri-resort-system.pages.dev/health
+curl -I https://okaeri-resort.pages.dev/health
 ```
 
 **Expected Output**:
@@ -677,7 +677,7 @@ content-type: application/json
 **Get pricing configuration**:
 
 ```bash
-curl -s https://okaeri-resort-system.pages.dev/api/guest-booking/rates | jq
+curl -s https://okaeri-resort.pages.dev/api/guest-booking/rates | jq
 ```
 
 **Expected Output**:
@@ -701,7 +701,7 @@ curl -s https://okaeri-resort-system.pages.dev/api/guest-booking/rates | jq
 **Get active discounts**:
 
 ```bash
-curl -s https://okaeri-resort-system.pages.dev/api/guest-booking/discount-rules | jq
+curl -s https://okaeri-resort.pages.dev/api/guest-booking/discount-rules | jq
 ```
 
 **Expected Output**:
@@ -730,7 +730,7 @@ curl -s https://okaeri-resort-system.pages.dev/api/guest-booking/discount-rules 
 **Calculate pricing for sample booking**:
 
 ```bash
-curl -X POST https://okaeri-resort-system.pages.dev/api/guest-booking/preview-pricing \
+curl -X POST https://okaeri-resort.pages.dev/api/guest-booking/preview-pricing \
   -H "Content-Type: application/json" \
   -d '{
     "check_in": "2025-06-01",
@@ -772,7 +772,7 @@ curl -X POST https://okaeri-resort-system.pages.dev/api/guest-booking/preview-pr
 # Make 6 rapid requests
 for i in {1..6}; do
   STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
-    https://okaeri-resort-system.pages.dev/api/guest-booking/multi-unit \
+    https://okaeri-resort.pages.dev/api/guest-booking/multi-unit \
     -H "Content-Type: application/json" \
     -d '{"test": "rate_limit"}')
 
@@ -800,7 +800,7 @@ Request 6: HTTP 429 (Rate limit exceeded)
 **Verify invalid token is rejected**:
 
 ```bash
-curl -X POST https://okaeri-resort-system.pages.dev/api/guest-booking/multi-unit \
+curl -X POST https://okaeri-resort.pages.dev/api/guest-booking/multi-unit \
   -H "Content-Type: application/json" \
   -d '{
     "guest_name": "Test",
@@ -824,7 +824,7 @@ curl -X POST https://okaeri-resort-system.pages.dev/api/guest-booking/multi-unit
 
 ```bash
 # Open browser to production URL
-open https://okaeri-resort-system.pages.dev/guest-booking
+open https://okaeri-resort.pages.dev/guest-booking
 
 # Manual checklist:
 # 1. DateRangePicker loads and calendar opens
@@ -849,7 +849,7 @@ open https://okaeri-resort-system.pages.dev/guest-booking
 
 ```bash
 # Test upload URL generation
-curl -X POST https://okaeri-resort-system.pages.dev/api/guest-booking/upload-url \
+curl -X POST https://okaeri-resort.pages.dev/api/guest-booking/upload-url \
   -H "Content-Type: application/json" \
   -d '{
     "filename": "payment-proof-test.jpg",
@@ -887,11 +887,11 @@ psql $DATABASE_URL -c "
 ```bash
 # Get pending booking details
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  https://okaeri-resort-system.pages.dev/api/admin/bookings/BOOKING_ID
+  https://okaeri-resort.pages.dev/api/admin/bookings/BOOKING_ID
 
 # Verify payment
 curl -X POST -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  https://okaeri-resort-system.pages.dev/api/admin/verify-payment \
+  https://okaeri-resort.pages.dev/api/admin/verify-payment \
   -H "Content-Type: application/json" \
   -d '{
     "booking_id": "BOOKING_ID",
@@ -919,7 +919,7 @@ psql $DATABASE_URL -c "
 **Test cron execution** via dashboard:
 
 1. Open Cloudflare dashboard
-2. Navigate to: **Workers & Pages** > **okaeri-resort-system** > **Triggers**
+2. Navigate to: **Workers & Pages** > **okaeri-resort** > **Triggers**
 3. Click **"Run Cron Trigger"** next to `0 2 * * *`
 4. Check **Logs** tab for output
 

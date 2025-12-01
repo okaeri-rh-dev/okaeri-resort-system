@@ -29,7 +29,7 @@ npm run dev:cf
 ## 📁 Project Structure
 
 ```
-okaeri-resort-system/
+okaeri-resort/
 ├── functions/              # Cloudflare Functions
 │   ├── _middleware.ts      # Global middleware (auth, CORS, rate limiting)
 │   ├── api/                # API endpoints

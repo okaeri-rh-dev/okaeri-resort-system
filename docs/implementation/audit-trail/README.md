@@ -518,7 +518,7 @@ This system provides:
 
 ```bash
 # 1. Navigate to project root
-cd /path/to/okaeri-resort-system
+cd /path/to/okaeri-resort
 
 # 2. Run migration (creates automatic backup)
 ./scripts/audit-migrations/migrate-audit-system.sh

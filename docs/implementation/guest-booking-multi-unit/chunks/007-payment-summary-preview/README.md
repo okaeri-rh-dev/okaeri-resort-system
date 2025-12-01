@@ -174,7 +174,7 @@ Phase 2: Guest Booking Flow (In Progress)
 ## Key Files Created/Modified
 
 ```
-okaeri-resort-system/
+okaeri-resort/
 ├── src/
 │   ├── types/
 │   │   └── guest-booking-multi-unit.ts    # MODIFIED - Add PricingPreview interface

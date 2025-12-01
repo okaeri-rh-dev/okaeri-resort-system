@@ -393,7 +393,7 @@ cat wrangler.toml | grep ALLOWED_ORIGINS
 # Update to production domain
 
 # 6. Redeploy Pages
-wrangler pages deploy dist --project-name=okaeri-resort-system
+wrangler pages deploy dist --project-name=okaeri-resort
 ```
 
 ---

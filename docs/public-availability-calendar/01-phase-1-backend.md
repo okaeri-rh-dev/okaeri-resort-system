@@ -153,7 +153,7 @@ npx wrangler secret list
 ### 1.1 Connect to Supabase SQL Editor
 
 1. Navigate to [Supabase Dashboard](https://supabase.com/dashboard)
-2. Select your project: `okaeri-resort-system`
+2. Select your project: `okaeri-resort`
 3. Click **SQL Editor** in left sidebar
 4. Click **New Query**
 

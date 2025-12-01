@@ -140,7 +140,7 @@ export default {
         JSON.stringify({
           status: "ok",
           timestamp: new Date().toISOString(),
-          worker: "okaeri-resort-system",
+          worker: "okaeri-resort",
           environment: env.SUPABASE_URL ? "configured" : "missing-config",
         }),
         {
