@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                 placeholder="Enter your password"
                 required
               />
+            </div>
+
+            <div className="flex justify-end">
+              <Link to="/forgot-password" className="text-primary text-sm hover:underline">
+                Forgot password?
+              </Link>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
