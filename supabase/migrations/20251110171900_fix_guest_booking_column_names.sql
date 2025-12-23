@@ -179,6 +179,6 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Add comment explaining the fix
-COMMENT ON FUNCTION public.create_guest_booking IS
+-- Add comment explaining the fix (must specify full signature for overloaded functions)
+COMMENT ON FUNCTION public.create_guest_booking(TEXT, JSONB, JSONB, JSONB) IS
 'Creates a guest booking with multi-unit support. Fixed column names to use check_in/check_out instead of check_in_date/check_out_date to match the actual table schema.';
