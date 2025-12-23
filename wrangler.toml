@@ -19,7 +19,7 @@ local_protocol = "http"
 # KV Namespace for rate limiting
 [[env.production.kv_namespaces]]
 binding = "RATE_LIMIT_KV"
-id = "98171af1c3bd4f718ff86c1f966c64a5"
+id = "cb662ba13b324c35becf9da771b8dc9d"
 
 # KV Namespace for blocked IPs (optional - for DDoS protection)
 # NOTE: Commented out because this feature is not implemented yet
@@ -45,7 +45,7 @@ ENVIRONMENT = "production"
 # KV Namespace for rate limiting (sharing production namespace)
 [[env.preview.kv_namespaces]]
 binding = "RATE_LIMIT_KV"
-id = "98171af1c3bd4f718ff86c1f966c64a5"
+id = "cb662ba13b324c35becf9da771b8dc9d"
 
 # KV Namespace for blocked IPs (optional - for DDoS protection)
 # NOTE: Commented out because this feature is not implemented yet
