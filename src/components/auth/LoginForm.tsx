@@ -1,12 +1,15 @@
 import { useState } from "react";
 
+import { Turnstile } from "@marsidev/react-turnstile";
 import { Link } from "@tanstack/react-router";
+import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { signInWithAudit } from "@/lib/auth-audit";
+import { supabase } from "@/lib/supabase";
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -16,22 +19,71 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  // Development mode detection for Turnstile bypass
+  const isDev = import.meta.env.DEV;
+  const skipTurnstile = import.meta.env.VITE_SKIP_TURNSTILE === "true";
+  const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
+  const shouldSkipTurnstile = isDev && (skipTurnstile || !siteKey);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Require Turnstile token unless in dev mode with bypass
+    if (!turnstileToken && !shouldSkipTurnstile) {
+      toast.error("Please complete the security verification.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await signInWithAudit(email, password);
+      // Call the login API with Turnstile verification
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          turnstile_token: turnstileToken || "dev-mock-token",
+        }),
+      });
+
+      const data = (await response.json()) as {
+        session?: {
+          access_token: string;
+          refresh_token: string;
+        };
+        message?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      // Set session in Supabase client
+      if (data.session?.access_token && data.session?.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+      }
+
       toast.success("Logged in successfully!");
       onSuccess();
     } catch (error) {
-      toast.error("Login failed. Please check your credentials.");
+      const message =
+        error instanceof Error ? error.message : "Login failed. Please check your credentials.";
+      toast.error(message);
       console.error("Login error:", error);
     } finally {
       setLoading(false);
     }
   };
+
+  // Check if submit should be disabled
+  const isSubmitDisabled = loading || (!turnstileToken && !shouldSkipTurnstile);
 
   return (
     <div className="flex items-center justify-center bg-gray-50 p-4">
@@ -78,7 +130,31 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               </Link>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            {/* Turnstile Widget */}
+            <div className="flex justify-center">
+              {shouldSkipTurnstile ? (
+                <Alert className="border-amber-500/50 bg-amber-50 text-amber-900">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Development Mode:</strong> Security verification disabled.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Turnstile
+                  siteKey={siteKey || ""}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  onError={() => setTurnstileToken(null)}
+                  onExpire={() => setTurnstileToken(null)}
+                  options={{
+                    theme: "light",
+                    size: "normal",
+                    action: "admin-login",
+                  }}
+                />
+              )}
+            </div>
+
+            <Button type="submit" className="w-full" disabled={isSubmitDisabled}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>

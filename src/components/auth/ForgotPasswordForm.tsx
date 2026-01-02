@@ -1,16 +1,19 @@
 import { useState } from "react";
 
+import { Turnstile } from "@marsidev/react-turnstile";
 import { Link } from "@tanstack/react-router";
+import { AlertCircle } from "lucide-react";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { requestPasswordResetWithAudit } from "@/lib/auth-password-reset";
 
 /**
  * Forgot Password Form Component
  *
  * Allows users to request a password reset email.
+ * Now includes Turnstile verification for bot protection.
  *
  * Security: Always shows success message regardless of whether
  * the email exists to prevent email enumeration attacks.
@@ -19,13 +22,39 @@ export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  // Development mode detection for Turnstile bypass
+  const isDev = import.meta.env.DEV;
+  const skipTurnstile = import.meta.env.VITE_SKIP_TURNSTILE === "true";
+  const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
+  const shouldSkipTurnstile = isDev && (skipTurnstile || !siteKey);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      await requestPasswordResetWithAudit(email);
+      // Call the forgot-password API with Turnstile verification
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          turnstile_token: turnstileToken || "dev-mock-token",
+        }),
+      });
+
+      // Even if there's an error, we show success to prevent enumeration
+      // The API handles this server-side as well
+      if (!response.ok) {
+        const data = (await response.json()) as { error?: string };
+        // Only show error for Turnstile failures, not for email-related issues
+        if (data.error === "TURNSTILE_FAILED") {
+          console.error("Turnstile verification failed");
+          // Still show success to prevent enumeration
+        }
+      }
     } catch (error) {
       // Log error but don't expose to user (prevents enumeration)
       console.error("Reset error:", error);
@@ -35,6 +64,9 @@ export function ForgotPasswordForm() {
       setLoading(false);
     }
   };
+
+  // Check if submit should be disabled
+  const isSubmitDisabled = loading || (!turnstileToken && !shouldSkipTurnstile);
 
   // Success state - shown after form submission
   if (submitted) {
@@ -92,7 +124,31 @@ export function ForgotPasswordForm() {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          {/* Turnstile Widget */}
+          <div className="flex justify-center">
+            {shouldSkipTurnstile ? (
+              <Alert className="border-amber-500/50 bg-amber-50 text-amber-900">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Development Mode:</strong> Security verification disabled.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Turnstile
+                siteKey={siteKey || ""}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
+                onExpire={() => setTurnstileToken(null)}
+                options={{
+                  theme: "light",
+                  size: "normal",
+                  action: "admin-forgot-password",
+                }}
+              />
+            )}
+          </div>
+
+          <Button type="submit" className="w-full" disabled={isSubmitDisabled}>
             {loading ? "Sending..." : "Send Reset Link"}
           </Button>
 
