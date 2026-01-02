@@ -52,7 +52,7 @@ export const TableDemo: React.FC = () => {
       <Tabs defaultValue="bookings" className="space-y-4">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="bookings">Bookings</TabsTrigger>
-          <TabsTrigger value="units">Units</TabsTrigger>
+          <TabsTrigger value="units">Cabins</TabsTrigger>
           <TabsTrigger value="guests">Guests</TabsTrigger>
         </TabsList>
 
@@ -90,7 +90,7 @@ export const TableDemo: React.FC = () => {
           <Card className="p-6">
             <div className="space-y-4">
               <div className="space-y-2">
-                <h2 className="text-xl font-semibold text-neutral-900">Units Management</h2>
+                <h2 className="text-xl font-semibold text-neutral-900">Cabins Management</h2>
                 <p className="text-sm text-neutral-600">
                   Unit management with inline rate editing, bulk operations, status management, and
                   grid/list view toggle.

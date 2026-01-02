@@ -284,9 +284,9 @@ export function BookingForm({
     try {
       // Simulate availability check - replace with actual API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success("Unit is available for your selected dates!");
+      toast.success("Cabin is available for your selected dates!");
     } catch (_error) {
-      toast.error("Unit is not available for the selected dates");
+      toast.error("Cabin is not available for the selected dates");
     } finally {
       setIsCheckingAvailability(false);
     }

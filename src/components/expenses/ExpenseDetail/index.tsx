@@ -105,10 +105,10 @@ export function ExpenseDetailPage({ expense, expenseId }: ExpenseDetailPageProps
 
       {/* 3. Related Unit Section (Conditional) */}
       {expense.unit && expense.unit_id && (
-        <DetailSection title="Related Unit" icon={<Home className="h-5 w-5" />}>
+        <DetailSection title="Related Cabin" icon={<Home className="h-5 w-5" />}>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <DetailField
-              label="Unit"
+              label="Cabin"
               value={
                 <RelatedEntityLink
                   type="unit"
@@ -119,7 +119,7 @@ export function ExpenseDetailPage({ expense, expenseId }: ExpenseDetailPageProps
               }
             />
             <DetailField
-              label="Unit Type"
+              label="Cabin Type"
               value={expense.unit.unit_type}
               valueClassName="font-medium"
             />

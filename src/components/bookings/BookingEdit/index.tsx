@@ -252,7 +252,7 @@ export function BookingEditPage() {
           {/* Unit & Capacity Section */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Unit & Capacity</CardTitle>
+              <CardTitle className="text-lg">Cabin & Capacity</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <FormField
@@ -260,11 +260,11 @@ export function BookingEditPage() {
                 name="unit_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Unit</FormLabel>
+                    <FormLabel>Cabin</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a unit" />
+                          <SelectValue placeholder="Select a cabin" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>

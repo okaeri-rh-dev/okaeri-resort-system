@@ -37,7 +37,7 @@ const isDevelopment = import.meta.env.DEV;
 
 const STEPS = [
   { number: 1, label: "Dates", description: "Select your stay dates" },
-  { number: 2, label: "Units", description: "Choose units and guests" },
+  { number: 2, label: "Cabins", description: "Choose units and guests" },
   { number: 3, label: "Contact", description: "Your information" },
   {
     number: 4,
@@ -356,7 +356,7 @@ export function MultiUnitGuestBookingForm() {
           {currentStep === 2 && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold">Choose Units and Guests</h2>
+                <h2 className="text-2xl font-bold">Choose Cabins and Guests</h2>
                 <p className="text-muted-foreground">
                   Select how many units you need and guests per unit
                 </p>
@@ -367,7 +367,7 @@ export function MultiUnitGuestBookingForm() {
                 name="unit_requests"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Unit Requests</FormLabel>
+                    <FormLabel>Cabin Requests</FormLabel>
                     <FormControl>
                       <UnitRequestSelector value={field.value} onChange={field.onChange} />
                     </FormControl>

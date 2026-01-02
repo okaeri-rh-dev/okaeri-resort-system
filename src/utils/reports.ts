@@ -423,8 +423,8 @@ export function formatBookingsForExport(
 export function formatOccupancyForExport(report: OccupancyReport[]): Record<string, unknown>[] {
   return report.map((day) => ({
     Date: day.date,
-    "Total Units": day.totalUnits,
-    "Occupied Units": day.occupiedUnits,
+    "Total Cabins": day.totalUnits,
+    "Occupied Cabins": day.occupiedUnits,
     "Occupancy Rate (%)": day.occupancyRate.toFixed(1),
     "Daily Revenue": `₱${day.revenue.toFixed(2)}`,
   }));

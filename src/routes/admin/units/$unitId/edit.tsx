@@ -87,7 +87,7 @@ export const Route = createFileRoute("/admin/units/$unitId/edit")({
   notFoundComponent: () => (
     <div className="container mx-auto py-8">
       <div className="text-center">
-        <h1 className="mb-4 text-2xl font-bold text-gray-800">Unit Not Found</h1>
+        <h1 className="mb-4 text-2xl font-bold text-gray-800">Cabin Not Found</h1>
         <p className="mb-4 text-gray-600">
           The unit you are trying to edit does not exist or has been removed.
         </p>
@@ -95,7 +95,7 @@ export const Route = createFileRoute("/admin/units/$unitId/edit")({
           onClick={() => window.history.back()}
           className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
         >
-          Go Back to Units
+          Go Back to Cabins
         </button>
       </div>
     </div>

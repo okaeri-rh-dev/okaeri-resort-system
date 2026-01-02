@@ -65,7 +65,7 @@ function PrivacyPolicyPage() {
                     <ul className="ml-6 list-disc space-y-1">
                       <li>Check-in and check-out dates</li>
                       <li>Number of guests</li>
-                      <li>Unit preferences</li>
+                      <li>Cabin preferences</li>
                       <li>Special requests and requirements</li>
                     </ul>
                   </div>

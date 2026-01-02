@@ -362,7 +362,7 @@ export function UnitAssignmentInterface({
       <Card className="border-neutral-200 p-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
-            <p className="text-sm text-neutral-600">Total Units Requested</p>
+            <p className="text-sm text-neutral-600">Total Cabins Requested</p>
             <p className="font-mono text-2xl font-semibold text-neutral-900">{requiredCount}</p>
           </div>
           <div>
@@ -379,14 +379,14 @@ export function UnitAssignmentInterface({
 
         {/* Unit Breakdown */}
         <div className="mt-4 border-t border-neutral-200 pt-4">
-          <p className="mb-2 text-sm font-medium text-neutral-700">Individual Unit Breakdown:</p>
+          <p className="mb-2 text-sm font-medium text-neutral-700">Individual Cabin Breakdown:</p>
           <div className="flex flex-wrap gap-2">
             {unitRequests.map((req, index) => (
               <div
                 key={req.id}
                 className="inline-flex items-center gap-2 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-1.5"
               >
-                <span className="text-xs font-medium text-neutral-700">Unit {index + 1}:</span>
+                <span className="text-xs font-medium text-neutral-700">Cabin {index + 1}:</span>
                 <span className="font-mono text-xs font-semibold text-neutral-900">
                   {req.guests_per_unit} guest{req.guests_per_unit > 1 ? "s" : ""}
                 </span>
@@ -426,7 +426,7 @@ export function UnitAssignmentInterface({
       <Card className="overflow-hidden border-neutral-200 p-0">
         <CardHeader className="border-b border-neutral-200 bg-neutral-50 p-4">
           <CardTitle className="text-base font-semibold">
-            Available Units ({availableUnits.length})
+            Available Cabins ({availableUnits.length})
           </CardTitle>
           <CardDescription className="text-sm">
             Click to select units for assignment. All units must be selected before proceeding.
@@ -468,7 +468,7 @@ export function UnitAssignmentInterface({
                   {/* Unit Information */}
                   <div className="pr-8">
                     <p className="font-mono text-lg font-semibold text-neutral-900">
-                      Unit {unit.unit_number}
+                      Cabin {unit.unit_number}
                     </p>
                     <p className="mt-1 text-sm font-medium text-neutral-700">{unit.unit_type}</p>
 
@@ -524,7 +524,7 @@ export function UnitAssignmentInterface({
           {assignMutation.isPending ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Assigning Units...
+              Assigning Cabins...
             </>
           ) : (
             <>

@@ -61,14 +61,14 @@ describe("MultiUnitPricingSummary", () => {
     it("shows per-unit breakdown when multiple units", () => {
       render(<MultiUnitPricingSummary units={mockUnits} showBreakdown={true} />);
 
-      expect(screen.getByText(/Unit 1: Ocean View Suite/)).toBeInTheDocument();
-      expect(screen.getByText(/Unit 2: Garden Villa/)).toBeInTheDocument();
+      expect(screen.getByText(/Cabin 1: Ocean View Suite/)).toBeInTheDocument();
+      expect(screen.getByText(/Cabin 2: Garden Villa/)).toBeInTheDocument();
     });
 
     it("hides per-unit breakdown when showBreakdown is false", () => {
       render(<MultiUnitPricingSummary units={mockUnits} showBreakdown={false} />);
 
-      expect(screen.queryByText(/Unit 1:/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Cabin 1:/)).not.toBeInTheDocument();
     });
   });
 
@@ -142,7 +142,7 @@ describe("MultiUnitPricingSummary", () => {
 
       const totalRow = screen.getByText("TOTAL").parentElement;
       expect(totalRow).toHaveTextContent("₱7,500.00");
-      expect(screen.queryByText(/Unit 1:/)).not.toBeInTheDocument(); // No breakdown for single unit
+      expect(screen.queryByText(/Cabin 1:/)).not.toBeInTheDocument(); // No breakdown for single unit
     });
 
     it("handles empty units array", () => {

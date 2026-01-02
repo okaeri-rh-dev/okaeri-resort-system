@@ -183,7 +183,7 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
           {/* Stay Details */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Units:</span>
+              <span className="text-muted-foreground">Cabins:</span>
               <span className="font-medium">{pricing.total_units}</span>
             </div>
             <div className="flex justify-between text-sm">

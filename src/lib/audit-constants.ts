@@ -199,7 +199,7 @@ export function hasAuditTrigger(tableName: string): boolean {
  */
 export const TABLE_DISPLAY_NAMES: Record<AuditTableName, string> = {
   // Physical tables
-  units: "Units",
+  units: "Cabins",
   guests: "Guests",
   bookings: "Bookings",
   payments: "Payments",

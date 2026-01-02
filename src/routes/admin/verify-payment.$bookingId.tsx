@@ -145,7 +145,7 @@ function PaymentVerificationPage() {
             <div className="font-medium">{formatDate(new Date(booking.check_in))}</div>
           </div>
           <div>
-            <div className="text-muted-foreground text-sm">Units Requested</div>
+            <div className="text-muted-foreground text-sm">Cabins Requested</div>
             <div className="font-medium">{booking.requested_unit_count}</div>
           </div>
           <div>

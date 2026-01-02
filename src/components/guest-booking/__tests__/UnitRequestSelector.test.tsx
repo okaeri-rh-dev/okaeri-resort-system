@@ -208,9 +208,9 @@ describe("UnitRequestSelector", () => {
       });
 
       // Should render 3 unit cards
-      expect(screen.getByText("Unit #1")).toBeInTheDocument();
-      expect(screen.getByText("Unit #2")).toBeInTheDocument();
-      expect(screen.getByText("Unit #3")).toBeInTheDocument();
+      expect(screen.getByText("Cabin #1")).toBeInTheDocument();
+      expect(screen.getByText("Cabin #2")).toBeInTheDocument();
+      expect(screen.getByText("Cabin #3")).toBeInTheDocument();
     });
 
     it("renders correct number of cards matching value.length", async () => {
@@ -221,7 +221,7 @@ describe("UnitRequestSelector", () => {
       });
 
       // Count UnitRequestCard instances by looking for unit titles
-      const unitTitles = screen.getAllByText(/Unit #\d+/);
+      const unitTitles = screen.getAllByText(/Cabin #\d+/);
       expect(unitTitles).toHaveLength(mockMultipleUnits.length);
     });
 
@@ -233,9 +233,9 @@ describe("UnitRequestSelector", () => {
       });
 
       // Verify unit cards are rendered with correct indices
-      expect(screen.getByText("Unit #1")).toBeInTheDocument();
-      expect(screen.getByText("Unit #2")).toBeInTheDocument();
-      expect(screen.getByText("Unit #3")).toBeInTheDocument();
+      expect(screen.getByText("Cabin #1")).toBeInTheDocument();
+      expect(screen.getByText("Cabin #2")).toBeInTheDocument();
+      expect(screen.getByText("Cabin #3")).toBeInTheDocument();
 
       // Get all guest count inputs - NumberInput may render differently
       const guestInputs = screen.getAllByLabelText(/number of guests/i);
@@ -245,7 +245,7 @@ describe("UnitRequestSelector", () => {
 
   // ========== ADD/REMOVE TESTS ==========
 
-  describe("Add/Remove Units", () => {
+  describe("Add/Remove Cabins", () => {
     it("adds new unit with base occupancy on Add Unit click", async () => {
       const user = userEvent.setup();
       const onChange = vi.fn();
@@ -314,8 +314,8 @@ describe("UnitRequestSelector", () => {
         expect(screen.queryByRole("status")).not.toBeInTheDocument();
       });
 
-      // "Add Another Unit" button should not be rendered at max
-      const addAnotherButton = screen.queryByRole("button", { name: /add another unit/i });
+      // "Add Another Cabin" button should not be rendered at max
+      const addAnotherButton = screen.queryByRole("button", { name: /add another cabin/i });
       expect(addAnotherButton).not.toBeInTheDocument();
     });
 
@@ -441,11 +441,11 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} value={maxedUnits} maxTotalUnits={10} />);
 
       await waitFor(() => {
-        expect(screen.getByText(/maximum of 10 units per booking reached/i)).toBeInTheDocument();
+        expect(screen.getByText(/maximum of 10 cabins per booking reached/i)).toBeInTheDocument();
       });
     });
 
-    it('hides "Add Another Unit" button at max', async () => {
+    it('hides "Add Another Cabin" button at max', async () => {
       const maxedUnits = Array.from({ length: 10 }, () => ({ guests_per_unit: 2 }));
 
       render(<UnitRequestSelector {...defaultProps} value={maxedUnits} maxTotalUnits={10} />);
@@ -454,7 +454,7 @@ describe("UnitRequestSelector", () => {
         expect(screen.queryByRole("status")).not.toBeInTheDocument();
       });
 
-      const addAnotherButton = screen.queryByRole("button", { name: /add another unit/i });
+      const addAnotherButton = screen.queryByRole("button", { name: /add another cabin/i });
       expect(addAnotherButton).not.toBeInTheDocument();
     });
 
@@ -514,7 +514,7 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} value={mockMultipleUnits} />);
 
       await waitFor(() => {
-        expect(screen.queryByText(/Unit #1/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/Cabin #1/i)).not.toBeInTheDocument();
       });
     });
   });
@@ -613,8 +613,8 @@ describe("UnitRequestSelector", () => {
         expect(screen.queryByRole("status")).not.toBeInTheDocument();
       });
 
-      // No "Add Another Unit" button should exist
-      const addButton = screen.queryByRole("button", { name: /add another unit/i });
+      // No "Add Another Cabin" button should exist
+      const addButton = screen.queryByRole("button", { name: /add another cabin/i });
       expect(addButton).not.toBeInTheDocument();
 
       // onChange should not have been called

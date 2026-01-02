@@ -36,7 +36,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: "Dashboard", icon: Home, href: "/admin/dashboard" },
   { label: "Bookings", icon: Calendar, href: "/admin/bookings" },
-  { label: "Units", icon: Building2, href: "/admin/units" },
+  { label: "Cabins", icon: Building2, href: "/admin/units" },
   { label: "Guests", icon: Users, href: "/admin/guests" },
   { label: "Payments", icon: Receipt, href: "/admin/payments" },
   { label: "Expenses", icon: ReceiptText, href: "/admin/expenses" },

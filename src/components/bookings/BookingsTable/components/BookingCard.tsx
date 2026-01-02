@@ -32,7 +32,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onUploadPayme
 
       <div className="space-y-2">
         <MobileCardRow
-          label="Unit"
+          label="Cabin"
           value={
             booking.booking_units && booking.booking_units.length > 0
               ? booking.booking_units.length === 1

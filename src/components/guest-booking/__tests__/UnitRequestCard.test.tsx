@@ -38,11 +38,11 @@ describe("UnitRequestCard", () => {
   describe("Rendering", () => {
     it("renders unit number correctly from 0-based index", () => {
       render(<UnitRequestCard {...defaultProps} index={0} />);
-      expect(screen.getByText("Unit #1")).toBeInTheDocument();
+      expect(screen.getByText("Cabin #1")).toBeInTheDocument();
 
       const { rerender } = render(<UnitRequestCard {...defaultProps} index={2} />);
       rerender(<UnitRequestCard {...defaultProps} index={2} />);
-      expect(screen.getByText("Unit #3")).toBeInTheDocument();
+      expect(screen.getByText("Cabin #3")).toBeInTheDocument();
     });
 
     it("displays current guest count in input", () => {
@@ -392,14 +392,14 @@ describe("UnitRequestCard", () => {
   // ========== EDGE CASES ==========
 
   describe("Edge Cases", () => {
-    it("handles index 0 correctly (displays as Unit #1)", () => {
+    it("handles index 0 correctly (displays as Cabin #1)", () => {
       render(<UnitRequestCard {...defaultProps} index={0} />);
-      expect(screen.getByText("Unit #1")).toBeInTheDocument();
+      expect(screen.getByText("Cabin #1")).toBeInTheDocument();
     });
 
     it("handles large index numbers", () => {
       render(<UnitRequestCard {...defaultProps} index={99} />);
-      expect(screen.getByText("Unit #100")).toBeInTheDocument();
+      expect(screen.getByText("Cabin #100")).toBeInTheDocument();
     });
 
     it("handles edge case: guestsPerUnit equals maxCapacity", () => {

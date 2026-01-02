@@ -75,15 +75,15 @@ export function BookingSummaryCard({
 
         <Separator />
 
-        {/* Units and Guests */}
+        {/* Cabins and Guests */}
         <div>
           <div className="mb-3 flex items-center justify-between">
             <h4 className="flex items-center gap-2 font-semibold">
               <Users className="h-4 w-4" />
-              Units Requested
+              Cabins Requested
             </h4>
             <Badge variant="secondary">
-              {totalUnits} {totalUnits === 1 ? "unit" : "units"}, {totalGuests}{" "}
+              {totalUnits} {totalUnits === 1 ? "cabin" : "cabins"}, {totalGuests}{" "}
               {totalGuests === 1 ? "guest" : "guests"}
             </Badge>
           </div>
@@ -91,7 +91,7 @@ export function BookingSummaryCard({
           <div className="space-y-2">
             {unitRequests.map((req, index) => (
               <div key={index} className="bg-muted flex justify-between rounded-md p-3 text-sm">
-                <span>Unit {index + 1}</span>
+                <span>Cabin {index + 1}</span>
                 <span className="font-medium">
                   {req.guests_per_unit} {req.guests_per_unit === 1 ? "guest" : "guests"}
                 </span>

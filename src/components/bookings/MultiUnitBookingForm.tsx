@@ -221,7 +221,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
   const handleRemoveUnit = (unitId: string) => {
     removeUnit(unitId);
     recalculateTotalPricing(checkIn, checkOut);
-    toast.info("Unit removed from booking");
+    toast.info("Cabin removed from booking");
   };
 
   const handleNext = async () => {
@@ -526,10 +526,10 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                         enableFilters={false}
                       />
 
-                      {/* Selected Units Summary */}
+                      {/* Selected Cabins Summary */}
                       {selectedUnits.length > 0 && (
                         <div className="space-y-4">
-                          <h3 className="text-lg font-semibold">Selected Units</h3>
+                          <h3 className="text-lg font-semibold">Selected Cabins</h3>
                           <UnitCardList
                             units={selectedUnits}
                             onRemove={handleRemoveUnit}
@@ -611,7 +611,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                       <span>{format(form.watch("check_in"), "PPP")}</span>
                       <span className="text-muted-foreground">Check-out:</span>
                       <span>{format(form.watch("check_out"), "PPP")}</span>
-                      <span className="text-muted-foreground">Units:</span>
+                      <span className="text-muted-foreground">Cabins:</span>
                       <span>{selectedUnits.length}</span>
                     </div>
                   </div>

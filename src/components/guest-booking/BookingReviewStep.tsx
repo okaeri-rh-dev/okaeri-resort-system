@@ -87,7 +87,7 @@ export function BookingReviewStep({
             <div className="flex items-center gap-2">
               <Users className="text-muted-foreground h-5 w-5" />
               <div>
-                <p className="text-muted-foreground text-sm">Total Units</p>
+                <p className="text-muted-foreground text-sm">Total Cabins</p>
                 <p className="font-medium">{totalUnits}</p>
               </div>
             </div>
@@ -104,14 +104,14 @@ export function BookingReviewStep({
             <>
               <Separator />
               <div>
-                <p className="text-muted-foreground mb-2 text-sm">Units Requested</p>
+                <p className="text-muted-foreground mb-2 text-sm">Cabins Requested</p>
                 <div className="space-y-2">
                   {formData.unit_requests.map((req, index) => (
                     <div
                       key={index}
                       className="bg-muted flex items-center justify-between rounded-md p-2"
                     >
-                      <span className="text-sm">Unit {index + 1}</span>
+                      <span className="text-sm">Cabin {index + 1}</span>
                       <span className="text-sm font-medium">{req.guests_per_unit} guests</span>
                     </div>
                   ))}

@@ -166,11 +166,11 @@ export const UnitRequestSelector: React.FC<UnitRequestSelectorProps> = ({
         <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
         <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
           <p className="mb-1">
-            Add units and specify guests for each. Admin assigns specific units after booking
+            Add cabins and specify guests for each. Admin assigns specific cabins after booking
             confirmation.
           </p>
           <p className="font-medium">
-            Total: {totalUnits} unit{totalUnits !== 1 ? "s" : ""}, {totalGuests} guest
+            Total: {totalUnits} cabin{totalUnits !== 1 ? "s" : ""}, {totalGuests} guest
             {totalGuests !== 1 ? "s" : ""}
           </p>
         </AlertDescription>
@@ -266,7 +266,7 @@ export const UnitRequestSelector: React.FC<UnitRequestSelectorProps> = ({
       {value.length > 0 && !isMaxUnitsReached && (
         <Button onClick={handleAddRequest} disabled={disabled} variant="outline" className="w-full">
           <Plus className="mr-2 h-4 w-4" />
-          Add Another Unit
+          Add Another Cabin
         </Button>
       )}
 
@@ -275,7 +275,7 @@ export const UnitRequestSelector: React.FC<UnitRequestSelectorProps> = ({
         <Alert className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950">
           <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
           <AlertDescription className="text-sm text-yellow-800 dark:text-yellow-200">
-            Maximum of {maxTotalUnits} units per booking reached. Contact us directly for larger
+            Maximum of {maxTotalUnits} cabins per booking reached. Contact us directly for larger
             group bookings.
           </AlertDescription>
         </Alert>

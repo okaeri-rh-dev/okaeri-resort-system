@@ -95,10 +95,10 @@ export function UnitEditPage() {
 
   return (
     <DetailPageLayout
-      title="Edit Unit"
+      title="Edit Cabin"
       subtitle={`${unit.unit_name} (${unit.unit_code})`}
       breadcrumbs={[
-        { label: "Units", to: "/admin/units" },
+        { label: "Cabins", to: "/admin/units" },
         { label: unit.unit_name, to: `/units/${unitId}` },
         { label: "Edit" },
       ]}
@@ -117,7 +117,7 @@ export function UnitEditPage() {
                   name="unit_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Unit Name</FormLabel>
+                      <FormLabel>Cabin Name</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., Deluxe Villa 1" {...field} />
                       </FormControl>
@@ -131,7 +131,7 @@ export function UnitEditPage() {
                   name="unit_code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Unit Code</FormLabel>
+                      <FormLabel>Cabin Code</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., DV-001" {...field} />
                       </FormControl>
@@ -148,11 +148,11 @@ export function UnitEditPage() {
                   name="unit_type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Unit Type</FormLabel>
+                      <FormLabel>Cabin Type</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select unit type" />
+                            <SelectValue placeholder="Select cabin type" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>

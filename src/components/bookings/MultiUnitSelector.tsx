@@ -144,8 +144,8 @@ export function MultiUnitSelector({
             value={filters.unitType}
             onValueChange={(value) => setFilters((prev) => ({ ...prev, unitType: value }))}
           >
-            <SelectTrigger className="w-[180px]" aria-label="Filter by unit type">
-              <SelectValue placeholder="Unit Type" />
+            <SelectTrigger className="w-[180px]" aria-label="Filter by cabin type">
+              <SelectValue placeholder="Cabin Type" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>

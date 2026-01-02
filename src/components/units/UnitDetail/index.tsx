@@ -66,7 +66,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
       title={`${unit.unit_name} (${unit.unit_code})`}
       subtitle={unit.unit_type}
       breadcrumbs={[
-        { label: "Units", to: "/admin/units" },
+        { label: "Cabins", to: "/admin/units" },
         { label: `${unit.unit_name} (${unit.unit_code})` },
       ]}
       status={<StatusBadge status={unit.unit_status || "Available"} />}
@@ -76,14 +76,14 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
       }}
     >
       {/* 1. Unit Specifications Section */}
-      <DetailSection title="Unit Specifications" icon={<Home className="h-5 w-5" />}>
+      <DetailSection title="Cabin Specifications" icon={<Home className="h-5 w-5" />}>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <DetailField
-            label="Unit Code"
+            label="Cabin Code"
             value={unit.unit_code}
             valueClassName="font-mono font-medium"
           />
-          <DetailField label="Unit Type" value={unit.unit_type} valueClassName="font-medium" />
+          <DetailField label="Cabin Type" value={unit.unit_type} valueClassName="font-medium" />
           <DetailField
             label="Max Occupancy"
             value={`${unit.max_occupancy} guests`}

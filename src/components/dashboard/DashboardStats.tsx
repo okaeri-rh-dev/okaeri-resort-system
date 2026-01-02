@@ -41,9 +41,9 @@ export function DashboardStats() {
 
     return [
       {
-        title: "Available Units",
+        title: "Available Cabins",
         value: `${availableUnits}/${totalUnits}`,
-        description: "Units ready for booking",
+        description: "Cabins ready for booking",
         icon: Building2,
       },
       {

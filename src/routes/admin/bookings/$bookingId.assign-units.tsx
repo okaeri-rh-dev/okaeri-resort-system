@@ -90,7 +90,7 @@ function PaymentNotVerifiedGuard({
           Back to Queue
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Unit Assignment</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Cabin Assignment</h1>
           <p className="text-muted-foreground">Booking: {bookingReference}</p>
         </div>
       </div>
@@ -169,7 +169,7 @@ function AlreadyAssignedGuard({
           Back to Queue
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Unit Assignment</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Cabin Assignment</h1>
           <p className="text-muted-foreground">Booking: {bookingReference}</p>
         </div>
       </div>
@@ -180,13 +180,13 @@ function AlreadyAssignedGuard({
           <div className="flex items-start gap-3">
             <CheckCircle2 className="mt-1 h-5 w-5 text-blue-600" />
             <div>
-              <CardTitle className="text-blue-900">Units Already Assigned</CardTitle>
+              <CardTitle className="text-blue-900">Cabins Already Assigned</CardTitle>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-blue-900">
-            Units have already been assigned to this booking. You can view the booking details or
+            Cabins have already been assigned to this booking. You can view the booking details or
             return to the queue.
           </p>
           <div className="flex gap-3">
@@ -265,7 +265,7 @@ function ErrorState({ error, bookingId }: { error: Error | null; bookingId: stri
           Back to Queue
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Unit Assignment</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Cabin Assignment</h1>
           <p className="text-muted-foreground">Booking ID: {bookingId}</p>
         </div>
       </div>
@@ -353,7 +353,7 @@ function AssignUnitsPage() {
   const handleAssignmentSuccess = () => {
     // Show success message (using native alert for simplicity)
     alert(
-      `Units successfully assigned to booking ${booking?.booking_reference}!\n\nThe guest will receive a confirmation email shortly.`
+      `Cabins successfully assigned to booking ${booking?.booking_reference}!\n\nThe guest will receive a confirmation email shortly.`
     );
 
     // Navigate back to admin queue
@@ -420,7 +420,7 @@ function AssignUnitsPage() {
           Back to Queue
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Assign Units</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Assign Cabins</h1>
           <p className="text-muted-foreground">Booking: {booking.booking_reference}</p>
         </div>
       </div>

@@ -45,7 +45,7 @@ function AvailabilityPage() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList>
             <TabsTrigger value="calendar">Calendar View</TabsTrigger>
-            <TabsTrigger value="units">Units Overview</TabsTrigger>
+            <TabsTrigger value="units">Cabins Overview</TabsTrigger>
           </TabsList>
 
           <TabsContent value="calendar" className="space-y-4">

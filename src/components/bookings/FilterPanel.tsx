@@ -62,7 +62,7 @@ export function FilterPanel({
     <div className={isSheet ? "space-y-6 p-4" : "flex flex-wrap gap-4"} role="search">
       {isSheet && (
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold">Filter Units</h3>
+          <h3 className="text-lg font-semibold">Filter Cabins</h3>
           <p className="text-muted-foreground text-sm">
             Narrow down units by type, occupancy, and price range
           </p>
@@ -71,7 +71,7 @@ export function FilterPanel({
 
       {/* Unit Type Filter */}
       <div className={isSheet ? "space-y-2" : "w-[180px]"}>
-        {isSheet && <Label htmlFor="filter-unit-type">Unit Type</Label>}
+        {isSheet && <Label htmlFor="filter-unit-type">Cabin Type</Label>}
         <Select
           value={filters.unitType}
           onValueChange={(value) => handleFilterUpdate("unitType", value)}
@@ -81,7 +81,7 @@ export function FilterPanel({
             className={isSheet ? "h-12 w-full" : "w-[180px]"}
             aria-label="Filter by unit type"
           >
-            <SelectValue placeholder="Unit Type" />
+            <SelectValue placeholder="Cabin Type" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Types</SelectItem>

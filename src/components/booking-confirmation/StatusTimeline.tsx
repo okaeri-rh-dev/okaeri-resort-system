@@ -25,8 +25,8 @@ export function StatusTimeline() {
       icon: <Clock className="h-5 w-5" />,
     },
     {
-      label: "Unit Assignment",
-      description: "We'll assign units based on availability",
+      label: "Cabin Assignment",
+      description: "We'll assign cabins based on availability",
       status: "pending",
       icon: <Users className="h-5 w-5" />,
     },

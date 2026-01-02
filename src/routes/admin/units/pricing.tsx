@@ -46,7 +46,7 @@ function PricingConfigPage() {
         <Link to="/admin/units">
           <Button variant="ghost" size="sm" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Back to Units
+            Back to Cabins
           </Button>
         </Link>
 

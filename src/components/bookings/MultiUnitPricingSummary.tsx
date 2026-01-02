@@ -55,10 +55,10 @@ export function MultiUnitPricingSummary({
             <div key={unit.unit_id} className="space-y-1">
               <div
                 className="flex justify-between font-medium"
-                aria-label={`Unit ${index + 1} ${unit.unit_name} total`}
+                aria-label={`Cabin ${index + 1} ${unit.unit_name} total`}
               >
                 <span>
-                  Unit {index + 1}: {unit.unit_name}
+                  Cabin {index + 1}: {unit.unit_name}
                 </span>
                 <span className="font-mono">{formatCurrency(unit.pricing.unit_total)}</span>
               </div>

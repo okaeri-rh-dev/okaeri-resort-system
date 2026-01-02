@@ -113,11 +113,11 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
         </div>
       </DetailSection>
 
-      {/* 3. Unit Information Section */}
-      <DetailSection title="Unit Information" icon={<Home className="h-5 w-5" />}>
+      {/* 3. Cabin Information Section */}
+      <DetailSection title="Cabin Information" icon={<Home className="h-5 w-5" />}>
         <div className="space-y-4">
           <DetailField
-            label={`Unit${(booking.booking_units?.length || 0) > 1 ? "s" : ""}`}
+            label={`Cabin${(booking.booking_units?.length || 0) > 1 ? "s" : ""}`}
             value={
               booking.booking_units && booking.booking_units.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
@@ -150,7 +150,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
           />
           {booking.booking_units && booking.booking_units.length > 1 && (
             <DetailField
-              label="Total Units"
+              label="Total Cabins"
               value={booking.unit_count || booking.booking_units.length}
               valueClassName="font-medium"
             />

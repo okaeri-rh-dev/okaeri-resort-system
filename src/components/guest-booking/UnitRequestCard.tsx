@@ -105,7 +105,7 @@ export const UnitRequestCard: React.FC<UnitRequestCardProps> = ({
       <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-3">
         <CardTitle className="flex items-center gap-2 text-base font-semibold">
           <Home className="text-muted-foreground h-4 w-4" aria-hidden="true" />
-          <span>Unit #{index + 1}</span>
+          <span>Cabin #{index + 1}</span>
         </CardTitle>
 
         {/* Remove button - only show if canRemove is true */}
@@ -116,7 +116,7 @@ export const UnitRequestCard: React.FC<UnitRequestCardProps> = ({
             onClick={onRemove}
             disabled={disabled}
             className="text-muted-foreground hover:text-destructive h-8 w-8"
-            aria-label={`Remove Unit #${index + 1}`}
+            aria-label={`Remove Cabin #${index + 1}`}
           >
             <X className="h-4 w-4" />
           </Button>

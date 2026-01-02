@@ -292,7 +292,7 @@ export function PendingBookingsQueue() {
                 <TableHead>Reference</TableHead>
                 <TableHead>Guest</TableHead>
                 <TableHead>Check-in</TableHead>
-                <TableHead>Units</TableHead>
+                <TableHead>Cabins</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Payment</TableHead>
                 <TableHead>Pending</TableHead>
@@ -349,7 +349,7 @@ export function PendingBookingsQueue() {
                           }
                         }}
                       >
-                        {booking.payment_status === "Verified" ? "Assign Units" : "Review Payment"}
+                        {booking.payment_status === "Verified" ? "Assign Cabins" : "Review Payment"}
                       </Button>
                     </TableCell>
                   </TableRow>

@@ -77,7 +77,7 @@ describe("PaymentSummary", () => {
     });
 
     // Check stay details - component shows 1 unit for single-unit bookings
-    expect(screen.getByText(/Units:/)).toBeInTheDocument();
+    expect(screen.getByText(/Cabins:/)).toBeInTheDocument();
     expect(screen.getByText(/Guests:/)).toBeInTheDocument();
     expect(screen.getByText(/Nights:/)).toBeInTheDocument();
 

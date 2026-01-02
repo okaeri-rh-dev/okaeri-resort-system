@@ -72,7 +72,7 @@ describe("Public Calendar E2E Flow", () => {
       expect(screen.getByText(/Okaeri Availability/i)).toBeInTheDocument();
 
       // "3 Units" appears in legend too, so check it exists at least once
-      const unitElements = screen.getAllByText(/3 Units/i);
+      const unitElements = screen.getAllByText(/3 Cabins/i);
       expect(unitElements.length).toBeGreaterThan(0);
     });
 
