@@ -265,7 +265,7 @@ describe("UnitRequestSelector", () => {
       ]);
     });
 
-    it("adds another unit when Add Another Unit button clicked", async () => {
+    it("adds another cabin when Add Another Cabin button clicked", async () => {
       const user = userEvent.setup();
       const onChange = vi.fn();
 
@@ -275,7 +275,7 @@ describe("UnitRequestSelector", () => {
         expect(screen.queryByRole("status")).not.toBeInTheDocument();
       });
 
-      const addAnotherButton = screen.getByRole("button", { name: /add another unit/i });
+      const addAnotherButton = screen.getByRole("button", { name: /add another cabin/i });
       await user.click(addAnotherButton);
 
       expect(onChange).toHaveBeenCalledWith([
@@ -284,7 +284,7 @@ describe("UnitRequestSelector", () => {
       ]);
     });
 
-    it("removes correct unit when card remove button clicked", async () => {
+    it("removes correct cabin when card remove button clicked", async () => {
       const user = userEvent.setup();
       const onChange = vi.fn();
 
@@ -297,9 +297,9 @@ describe("UnitRequestSelector", () => {
       });
 
       // Get all remove buttons
-      const removeButtons = screen.getAllByLabelText(/remove unit/i);
+      const removeButtons = screen.getAllByLabelText(/remove cabin/i);
 
-      // Remove Unit #2 (index 1)
+      // Remove Cabin #2 (index 1)
       await user.click(removeButtons[1]);
 
       expect(onChange).toHaveBeenCalledWith([mockMultipleUnits[0], mockMultipleUnits[2]]);
@@ -367,11 +367,11 @@ describe("UnitRequestSelector", () => {
   // ========== TOTALS CALCULATION TESTS ==========
 
   describe("Totals Calculation", () => {
-    it("calculates total units correctly (array.length)", async () => {
+    it("calculates total cabins correctly (array.length)", async () => {
       render(<UnitRequestSelector {...defaultProps} value={mockMultipleUnits} />);
 
       await waitFor(() => {
-        expect(screen.getByText(/3 units/i)).toBeInTheDocument();
+        expect(screen.getByText(/3 cabins/i)).toBeInTheDocument();
       });
     });
 
@@ -384,7 +384,7 @@ describe("UnitRequestSelector", () => {
       });
     });
 
-    it("updates totals when units added", async () => {
+    it("updates totals when cabins added", async () => {
       const onChange = vi.fn();
 
       const { rerender } = render(
@@ -392,42 +392,42 @@ describe("UnitRequestSelector", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText(/1 unit, 2 guests/i)).toBeInTheDocument();
+        expect(screen.getByText(/1 cabin, 2 guests/i)).toBeInTheDocument();
       });
 
-      // Simulate adding a unit
+      // Simulate adding a cabin
       const newValue = [...mockSingleUnit, { guests_per_unit: 3 }];
       rerender(<UnitRequestSelector {...defaultProps} value={newValue} onChange={onChange} />);
 
       await waitFor(() => {
-        expect(screen.getByText(/2 units, 5 guests/i)).toBeInTheDocument();
+        expect(screen.getByText(/2 cabins, 5 guests/i)).toBeInTheDocument();
       });
     });
 
-    it("updates totals when units removed", async () => {
+    it("updates totals when cabins removed", async () => {
       const { rerender } = render(
         <UnitRequestSelector {...defaultProps} value={mockMultipleUnits} onChange={vi.fn()} />
       );
 
       await waitFor(() => {
-        expect(screen.getByText(/3 units, 9 guests/i)).toBeInTheDocument();
+        expect(screen.getByText(/3 cabins, 9 guests/i)).toBeInTheDocument();
       });
 
-      // Simulate removing a unit
+      // Simulate removing a cabin
       const newValue = mockMultipleUnits.slice(0, 2);
       rerender(<UnitRequestSelector {...defaultProps} value={newValue} onChange={vi.fn()} />);
 
       await waitFor(() => {
-        expect(screen.getByText(/2 units, 5 guests/i)).toBeInTheDocument();
+        expect(screen.getByText(/2 cabins, 5 guests/i)).toBeInTheDocument();
       });
     });
 
-    it("handles singular unit/guest labels correctly", async () => {
+    it("handles singular cabin/guest labels correctly", async () => {
       render(<UnitRequestSelector {...defaultProps} value={mockSingleUnit} />);
 
       await waitFor(() => {
-        // Singular: "1 unit, 2 guests"
-        expect(screen.getByText(/1 unit, 2 guests/i)).toBeInTheDocument();
+        // Singular: "1 cabin, 2 guests"
+        expect(screen.getByText(/1 cabin, 2 guests/i)).toBeInTheDocument();
       });
     });
   });
@@ -464,18 +464,18 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} value={units} maxTotalUnits={5} />);
 
       await waitFor(() => {
-        expect(screen.getByText(/maximum of 5 units per booking reached/i)).toBeInTheDocument();
+        expect(screen.getByText(/maximum of 5 cabins per booking reached/i)).toBeInTheDocument();
       });
     });
 
-    it("does not show warning below max units", async () => {
+    it("does not show warning below max cabins", async () => {
       render(
         <UnitRequestSelector {...defaultProps} value={mockMultipleUnits} maxTotalUnits={10} />
       );
 
       await waitFor(() => {
         expect(
-          screen.queryByText(/maximum of 10 units per booking reached/i)
+          screen.queryByText(/maximum of 10 cabins per booking reached/i)
         ).not.toBeInTheDocument();
       });
     });
@@ -567,7 +567,7 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} value={mockSingleUnit} />);
 
       await waitFor(() => {
-        const infoAlert = screen.getByText(/add units and specify guests/i).closest("[role]");
+        const infoAlert = screen.getByText(/add cabins and specify guests/i).closest("[role]");
         expect(infoAlert).toHaveAttribute("role", "alert");
       });
     });
@@ -587,16 +587,16 @@ describe("UnitRequestSelector", () => {
       });
     });
 
-    it("handles single unit with correct grammar", async () => {
+    it("handles single cabin with correct grammar", async () => {
       render(<UnitRequestSelector {...defaultProps} value={mockSingleUnit} />);
 
       await waitFor(() => {
-        // Should say "1 unit" (singular) not "1 units"
-        expect(screen.getByText(/1 unit, 2 guests/i)).toBeInTheDocument();
+        // Should say "1 cabin" (singular) not "1 cabins"
+        expect(screen.getByText(/1 cabin, 2 guests/i)).toBeInTheDocument();
       });
     });
 
-    it("prevents adding units beyond maxTotalUnits", async () => {
+    it("prevents adding cabins beyond maxTotalUnits", async () => {
       const onChange = vi.fn();
       const maxedUnits = Array.from({ length: 10 }, () => ({ guests_per_unit: 2 }));
 
@@ -621,15 +621,15 @@ describe("UnitRequestSelector", () => {
       expect(onChange).not.toHaveBeenCalled();
     });
 
-    it("shows only one remove button when single unit exists", async () => {
+    it("shows no remove button when single cabin exists", async () => {
       render(<UnitRequestSelector {...defaultProps} value={mockSingleUnit} />);
 
       await waitFor(() => {
         expect(screen.queryByRole("status")).not.toBeInTheDocument();
       });
 
-      // canRemove should be false for single unit (enforced by UnitRequestCard)
-      const removeButtons = screen.queryAllByLabelText(/remove unit/i);
+      // canRemove should be false for single cabin (enforced by UnitRequestCard)
+      const removeButtons = screen.queryAllByLabelText(/remove cabin/i);
       // UnitRequestCard with canRemove=false should not render remove button
       expect(removeButtons.length).toBe(0);
     });

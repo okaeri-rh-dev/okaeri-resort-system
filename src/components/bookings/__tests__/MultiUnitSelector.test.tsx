@@ -388,7 +388,7 @@ describe("MultiUnitSelector", () => {
 
       expect(screen.getByLabelText("Grid view")).toBeInTheDocument();
       expect(screen.getByLabelText("List view")).toBeInTheDocument();
-      expect(screen.getByLabelText("Filter by unit type")).toBeInTheDocument();
+      expect(screen.getByLabelText("Filter by cabin type")).toBeInTheDocument();
       // Container has aria-label but no role (role="list" removed for accessibility)
       expect(screen.getByLabelText("Available units")).toBeInTheDocument();
     });
@@ -417,7 +417,7 @@ describe("MultiUnitSelector", () => {
 
     it("disables filters when enableFilters is false", () => {
       render(<MultiUnitSelector {...defaultProps} enableFilters={false} />);
-      expect(screen.queryByLabelText("Filter by unit type")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Filter by cabin type")).not.toBeInTheDocument();
     });
 
     it("shows date range in unit cards", () => {

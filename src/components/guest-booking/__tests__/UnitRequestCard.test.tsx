@@ -292,13 +292,13 @@ describe("UnitRequestCard", () => {
   describe("Remove Button", () => {
     it("shows remove button when canRemove is true", () => {
       render(<UnitRequestCard {...defaultProps} canRemove={true} />);
-      const removeButton = screen.getByLabelText(/remove unit #1/i);
+      const removeButton = screen.getByLabelText(/remove cabin #1/i);
       expect(removeButton).toBeInTheDocument();
     });
 
     it("hides remove button when canRemove is false", () => {
       render(<UnitRequestCard {...defaultProps} canRemove={false} />);
-      const removeButton = screen.queryByLabelText(/remove unit #1/i);
+      const removeButton = screen.queryByLabelText(/remove cabin #1/i);
       expect(removeButton).not.toBeInTheDocument();
     });
 
@@ -308,15 +308,15 @@ describe("UnitRequestCard", () => {
 
       render(<UnitRequestCard {...defaultProps} onRemove={onRemove} canRemove={true} />);
 
-      const removeButton = screen.getByLabelText(/remove unit #1/i);
+      const removeButton = screen.getByLabelText(/remove cabin #1/i);
       await user.click(removeButton);
 
       expect(onRemove).toHaveBeenCalledTimes(1);
     });
 
-    it("includes correct unit number in remove button aria-label", () => {
+    it("includes correct cabin number in remove button aria-label", () => {
       render(<UnitRequestCard {...defaultProps} index={4} canRemove={true} />);
-      expect(screen.getByLabelText(/remove unit #5/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/remove cabin #5/i)).toBeInTheDocument();
     });
   });
 
@@ -331,7 +331,7 @@ describe("UnitRequestCard", () => {
 
     it("disables remove button when disabled prop is true", () => {
       render(<UnitRequestCard {...defaultProps} disabled={true} canRemove={true} />);
-      const removeButton = screen.getByLabelText(/remove unit #1/i) as HTMLButtonElement;
+      const removeButton = screen.getByLabelText(/remove cabin #1/i) as HTMLButtonElement;
       expect(removeButton).toBeDisabled();
     });
 
@@ -384,8 +384,8 @@ describe("UnitRequestCard", () => {
 
     it("has descriptive aria-label for remove button", () => {
       render(<UnitRequestCard {...defaultProps} index={3} canRemove={true} />);
-      const removeButton = screen.getByLabelText(/remove unit #4/i);
-      expect(removeButton).toHaveAttribute("aria-label", "Remove Unit #4");
+      const removeButton = screen.getByLabelText(/remove cabin #4/i);
+      expect(removeButton).toHaveAttribute("aria-label", "Remove Cabin #4");
     });
   });
 
