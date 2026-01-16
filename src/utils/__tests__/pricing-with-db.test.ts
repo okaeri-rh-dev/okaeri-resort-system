@@ -21,8 +21,14 @@ vi.mock("@/lib/supabase", () => ({
           base_occupancy: 2,
           downpayment_percent: 50, // Changed from downpayment_percentage to match code
           currency: "PHP", // Added missing currency field
+          created_at: null,
+          updated_at: null,
+          max_capacity_per_unit: 10,
         },
         error: null,
+        count: null,
+        status: 200,
+        statusText: "OK",
       }),
     },
   },
@@ -42,8 +48,14 @@ describe("calculateBookingPrice", () => {
         base_occupancy: 2,
         downpayment_percent: 50, // Changed to match code expectation (50%)
         currency: "PHP", // Added currency field
+        created_at: null,
+        updated_at: null,
+        max_capacity_per_unit: 10,
       },
       error: null,
+      count: null,
+      status: 200,
+      statusText: "OK",
     });
   });
 
