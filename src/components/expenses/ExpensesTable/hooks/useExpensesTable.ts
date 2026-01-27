@@ -15,6 +15,7 @@ import { useResponsiveView } from "@/hooks";
 import {
   useDeleteExpense,
   useExpenses,
+  useExpenseStats,
   useExpenseStore,
   useExportExpenses,
 } from "@/stores/useExpenseStore";
@@ -34,6 +35,10 @@ export function useExpensesTable({ onViewExpense, onEditExpense }: ExpensesTable
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
+  // Delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
+
   // Responsive detection
   const { isMobile } = useResponsiveView();
 
@@ -43,6 +48,10 @@ export function useExpensesTable({ onViewExpense, onEditExpense }: ExpensesTable
 
   // Data
   const { data: expenses = [], error, isLoading } = useExpenses();
+
+  // Get total count (unfiltered) for empty state differentiation
+  const { data: expenseStats } = useExpenseStats();
+  const totalUnfilteredCount = expenseStats?.totalCount ?? 0;
 
   // Filter expenses based on store filters
   const filteredExpenses = useMemo(() => {
@@ -83,21 +92,24 @@ export function useExpensesTable({ onViewExpense, onEditExpense }: ExpensesTable
     return filtered;
   }, [expenses, searchQuery, filters]);
 
-  // Handle delete
-  const handleDelete = useCallback(
-    async (expense: Expense) => {
-      if (!confirm(`Are you sure you want to delete this expense: ${expense.description}?`)) {
-        return;
-      }
+  // Handle delete - opens confirmation dialog
+  const handleDelete = useCallback((expense: Expense) => {
+    setExpenseToDelete(expense);
+    setDeleteDialogOpen(true);
+  }, []);
 
-      try {
-        await deleteExpense.mutateAsync(expense.expense_id);
-      } catch (error) {
-        console.error("Failed to delete expense:", error);
-      }
-    },
-    [deleteExpense]
-  );
+  // Confirm delete - executes the actual deletion
+  const confirmDelete = useCallback(async () => {
+    if (!expenseToDelete) return;
+
+    try {
+      await deleteExpense.mutateAsync(expenseToDelete.expense_id);
+      setDeleteDialogOpen(false);
+      setExpenseToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete expense:", error);
+    }
+  }, [deleteExpense, expenseToDelete]);
 
   // Handle export
   const handleExport = async () => {
@@ -140,6 +152,7 @@ export function useExpensesTable({ onViewExpense, onEditExpense }: ExpensesTable
   return {
     table,
     expenses: filteredExpenses,
+    totalUnfilteredCount,
     isLoading,
     error,
     isMobile,
@@ -150,6 +163,12 @@ export function useExpensesTable({ onViewExpense, onEditExpense }: ExpensesTable
     resetFilters,
     handleExport,
     handleDelete,
+    confirmDelete,
     exportExpenses,
+    // Delete dialog state
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    expenseToDelete,
+    isDeleting: deleteExpense.isPending,
   };
 }

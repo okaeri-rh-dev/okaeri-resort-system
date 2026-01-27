@@ -6,6 +6,7 @@ import { ResponsiveTable, TableEmptyState, TablePagination } from "@/components/
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+import { DeleteExpenseDialog } from "./components/DeleteExpenseDialog";
 import { ExpenseCard } from "./components/ExpenseCard";
 import { ExpenseFilters } from "./components/ExpenseFilters";
 import { useExpensesTable } from "./hooks/useExpensesTable";
@@ -15,6 +16,7 @@ function ExpensesTableComponent({ onViewExpense, onEditExpense, className }: Exp
   const {
     table,
     expenses,
+    totalUnfilteredCount,
     isLoading,
     error,
     isMobile,
@@ -25,8 +27,17 @@ function ExpensesTableComponent({ onViewExpense, onEditExpense, className }: Exp
     resetFilters,
     handleExport,
     handleDelete,
+    confirmDelete,
     exportExpenses,
+    // Delete dialog state
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    expenseToDelete,
+    isDeleting,
   } = useExpensesTable({ onViewExpense, onEditExpense });
+
+  // Determine empty state type
+  const isEmptyDatabase = totalUnfilteredCount === 0;
 
   if (isLoading) {
     return <ExpensesTableSkeleton />;
@@ -71,14 +82,23 @@ function ExpensesTableComponent({ onViewExpense, onEditExpense, className }: Exp
           ))}
           {expenses.length === 0 && (
             <Card className="border-neutral-200 p-8">
-              <TableEmptyState
-                title="No expenses found"
-                description="No expenses match your current filters."
-                action={{
-                  label: "Clear Filters",
-                  onClick: resetFilters,
-                }}
-              />
+              {isEmptyDatabase ? (
+                <TableEmptyState
+                  title="No expenses yet"
+                  description="Create your first expense to start tracking your business costs."
+                  variant="no-data"
+                />
+              ) : (
+                <TableEmptyState
+                  title="No expenses found"
+                  description="No expenses match your current filters. Try adjusting your search criteria."
+                  variant="no-results"
+                  action={{
+                    label: "Clear Filters",
+                    onClick: resetFilters,
+                  }}
+                />
+              )}
             </Card>
           )}
         </div>
@@ -125,14 +145,23 @@ function ExpensesTableComponent({ onViewExpense, onEditExpense, className }: Exp
 
             {table.getRowModel().rows.length === 0 && (
               <div className="p-8">
-                <TableEmptyState
-                  title="No expenses found"
-                  description="No expenses match your current filters."
-                  action={{
-                    label: "Clear Filters",
-                    onClick: resetFilters,
-                  }}
-                />
+                {isEmptyDatabase ? (
+                  <TableEmptyState
+                    title="No expenses yet"
+                    description="Create your first expense to start tracking your business costs."
+                    variant="no-data"
+                  />
+                ) : (
+                  <TableEmptyState
+                    title="No expenses found"
+                    description="No expenses match your current filters. Try adjusting your search criteria."
+                    variant="no-results"
+                    action={{
+                      label: "Clear Filters",
+                      onClick: resetFilters,
+                    }}
+                  />
+                )}
               </div>
             )}
           </ResponsiveTable>
@@ -146,6 +175,15 @@ function ExpensesTableComponent({ onViewExpense, onEditExpense, className }: Exp
           )}
         </Card>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteExpenseDialog
+        expense={expenseToDelete}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

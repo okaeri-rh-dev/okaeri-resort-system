@@ -65,7 +65,8 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
     defaultValues: {
       category: expense?.category || "",
       description: expense?.description || "",
-      amount: expense?.amount || 0,
+      // Use undefined for new expenses so the field appears empty
+      amount: expense?.amount ?? (undefined as unknown as number),
       expense_date: expense ? new Date(expense.date) : new Date(),
       notes: "",
     },

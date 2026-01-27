@@ -2,15 +2,7 @@ import React from "react";
 
 import { Header, Table as TanStackTable } from "@tanstack/react-table";
 import { format } from "date-fns";
-import {
-  ChevronDown,
-  ChevronsUpDown,
-  ChevronUp,
-  Download,
-  Filter,
-  MoreHorizontal,
-  X,
-} from "lucide-react";
+import { ChevronDown, ChevronsUpDown, ChevronUp, Filter, MoreHorizontal, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,13 +24,14 @@ import { utcToResortTime } from "@/utils/date-helpers";
 
 /**
  * Format Philippine peso currency with proper formatting
+ * Shows 2 decimal places to preserve precision (e.g., ₱4,500.50 not ₱4,501)
  */
 export const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat("en-PH", {
     style: "currency",
     currency: "PHP",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount);
 };
 
@@ -257,6 +250,8 @@ interface FilterPopoverProps {
   showActions?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Optional label to show the current filter value as a badge */
+  badgeLabel?: string;
 }
 
 export const FilterPopover: React.FC<FilterPopoverProps> = ({
@@ -268,6 +263,7 @@ export const FilterPopover: React.FC<FilterPopoverProps> = ({
   showActions = false,
   open,
   onOpenChange,
+  badgeLabel,
 }) => {
   // Check if content contains a Calendar component recursively
   const containsCalendar = (element: React.ReactNode): boolean => {
@@ -300,6 +296,11 @@ export const FilterPopover: React.FC<FilterPopoverProps> = ({
         >
           <Filter className="mr-1 h-3 w-3" />
           {children}
+          {badgeLabel && isActive && (
+            <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-xs font-normal">
+              {badgeLabel}
+            </Badge>
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -641,21 +642,104 @@ interface TableEmptyStateProps {
     label: string;
     onClick: () => void;
   };
+  /** Additional secondary action */
+  secondaryAction?: {
+    label: string;
+    onClick: () => void;
+  };
+  /** Type of empty state for contextual icons */
+  variant?: "no-data" | "no-results" | "error";
 }
 
-export const TableEmptyState: React.FC<TableEmptyStateProps> = ({ title, description, action }) => {
+export const TableEmptyState: React.FC<TableEmptyStateProps> = ({
+  title,
+  description,
+  action,
+  secondaryAction,
+  variant = "no-data",
+}) => {
+  // Contextual icon based on variant
+  const getIcon = () => {
+    switch (variant) {
+      case "no-results":
+        return (
+          <svg
+            className="h-6 w-6 text-neutral-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        );
+      case "error":
+        return (
+          <svg
+            className="h-6 w-6 text-red-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+        );
+      default: // no-data
+        return (
+          <svg
+            className="h-6 w-6 text-neutral-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+            />
+          </svg>
+        );
+    }
+  };
+
+  const getBgColor = () => {
+    return variant === "error" ? "bg-red-50" : "bg-neutral-100";
+  };
+
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100">
-        <Download className="h-6 w-6 text-neutral-400" />
+      <div
+        className={cn(
+          "mx-auto flex h-12 w-12 items-center justify-center rounded-full",
+          getBgColor()
+        )}
+      >
+        {getIcon()}
       </div>
       <h3 className="mt-4 text-sm font-medium text-neutral-900">{title}</h3>
       <p className="mt-1 text-sm text-neutral-600">{description}</p>
-      {action && (
-        <Button variant="outline" size="sm" onClick={action.onClick} className="mt-4">
-          {action.label}
-        </Button>
-      )}
+      <div className="mt-4 flex items-center gap-2">
+        {action && (
+          <Button variant="outline" size="sm" onClick={action.onClick}>
+            {action.label}
+          </Button>
+        )}
+        {secondaryAction && (
+          <Button variant="ghost" size="sm" onClick={secondaryAction.onClick}>
+            {secondaryAction.label}
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

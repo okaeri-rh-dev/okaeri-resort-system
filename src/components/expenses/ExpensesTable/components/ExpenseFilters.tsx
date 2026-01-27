@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 
 import { CalendarDays, DollarSign, Download } from "lucide-react";
 
@@ -37,27 +37,17 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
   isExporting = false,
   totalCount,
 }) => {
-  // Date range state management
-  const [dateRange, setDateRange] = useState<DateRange>({
+  // Date range - derive from filters, apply instantly
+  const dateRange: DateRange = {
     from: filters.dateFrom ? new Date(filters.dateFrom) : undefined,
     to: filters.dateTo ? new Date(filters.dateTo) : undefined,
-  });
-  const [tempDateRange, setTempDateRange] = useState<DateRange>({
-    from: undefined,
-    to: undefined,
-  });
-  const [dateFilterOpen, setDateFilterOpen] = useState(false);
+  };
 
-  // Amount range state management
-  const [amountRange, setAmountRange] = useState<AmountRange>({
+  // Amount range - derive from filters, apply instantly
+  const amountRange: AmountRange = {
     min: filters.minAmount,
     max: filters.maxAmount,
-  });
-  const [tempAmountRange, setTempAmountRange] = useState<AmountRange>({
-    min: undefined,
-    max: undefined,
-  });
-  const [amountFilterOpen, setAmountFilterOpen] = useState(false);
+  };
 
   const hasActiveFilters = Boolean(
     filters.category ||
@@ -111,43 +101,42 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
           Category
         </FilterPopover>
 
-        {/* Date Range Filter */}
+        {/* Date Range Filter - Applies instantly on selection */}
         <FilterPopover
           isActive={!!(filters.dateFrom || filters.dateTo)}
-          open={dateFilterOpen}
-          onOpenChange={(open) => {
-            setDateFilterOpen(open);
-            if (open) {
-              setTempDateRange(dateRange);
-            }
-          }}
-          showActions={true}
-          onApply={() => {
-            setDateRange(tempDateRange);
-            // If only "from" date is selected, use it for both from and to
-            const fromDate = tempDateRange?.from;
-            const toDate = tempDateRange?.to || fromDate;
-            setFilters({
-              ...filters,
-              dateFrom: fromDate?.toISOString().split("T")[0],
-              dateTo: toDate?.toISOString().split("T")[0],
-            });
-          }}
-          onClear={() => {
-            setTempDateRange({ from: undefined, to: undefined });
-          }}
           content={
             <div className="space-y-3">
-              <div className="text-sm font-medium">Date Range</div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Date Range</span>
+                {(filters.dateFrom || filters.dateTo) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs"
+                    onClick={() => {
+                      setFilters({
+                        ...filters,
+                        dateFrom: undefined,
+                        dateTo: undefined,
+                      });
+                    }}
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
               <Calendar
                 mode="range"
-                selected={tempDateRange}
+                selected={dateRange}
                 onSelect={(range) => {
-                  if (range) {
-                    setTempDateRange({ from: range.from, to: range.to });
-                  } else {
-                    setTempDateRange({ from: undefined, to: undefined });
-                  }
+                  // Apply filter instantly when date is selected
+                  const fromDate = range?.from;
+                  const toDate = range?.to || fromDate;
+                  setFilters({
+                    ...filters,
+                    dateFrom: fromDate?.toISOString().split("T")[0],
+                    dateTo: toDate?.toISOString().split("T")[0],
+                  });
                 }}
                 className="rounded-md border"
                 required={false}
@@ -159,54 +148,55 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
           Dates
         </FilterPopover>
 
-        {/* Amount Range Filter */}
+        {/* Amount Range Filter - Applies instantly on blur */}
         <FilterPopover
           isActive={!!(filters.minAmount || filters.maxAmount)}
-          open={amountFilterOpen}
-          onOpenChange={(open) => {
-            setAmountFilterOpen(open);
-            if (open) {
-              setTempAmountRange(amountRange);
-            }
-          }}
-          showActions={true}
-          onApply={() => {
-            setAmountRange(tempAmountRange);
-            setFilters({
-              ...filters,
-              minAmount: tempAmountRange.min,
-              maxAmount: tempAmountRange.max,
-            });
-          }}
-          onClear={() => {
-            setTempAmountRange({ min: undefined, max: undefined });
-          }}
           content={
             <div className="space-y-3">
-              <div className="text-sm font-medium">Amount Range</div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Amount Range</span>
+                {(filters.minAmount || filters.maxAmount) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs"
+                    onClick={() => {
+                      setFilters({
+                        ...filters,
+                        minAmount: undefined,
+                        maxAmount: undefined,
+                      });
+                    }}
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
               <div className="space-y-2">
                 <Input
                   type="number"
                   placeholder="Min amount (₱)"
-                  value={tempAmountRange.min || ""}
-                  onChange={(e) =>
-                    setTempAmountRange({
-                      ...tempAmountRange,
-                      min: e.target.value ? Number(e.target.value) : undefined,
-                    })
-                  }
+                  value={amountRange.min ?? ""}
+                  onChange={(e) => {
+                    // Apply filter instantly on change
+                    setFilters({
+                      ...filters,
+                      minAmount: e.target.value ? Number(e.target.value) : undefined,
+                    });
+                  }}
                   className="w-full"
                 />
                 <Input
                   type="number"
                   placeholder="Max amount (₱)"
-                  value={tempAmountRange.max || ""}
-                  onChange={(e) =>
-                    setTempAmountRange({
-                      ...tempAmountRange,
-                      max: e.target.value ? Number(e.target.value) : undefined,
-                    })
-                  }
+                  value={amountRange.max ?? ""}
+                  onChange={(e) => {
+                    // Apply filter instantly on change
+                    setFilters({
+                      ...filters,
+                      maxAmount: e.target.value ? Number(e.target.value) : undefined,
+                    });
+                  }}
                   className="w-full"
                 />
               </div>
@@ -219,15 +209,7 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
 
         {/* Clear Filters Button */}
         {hasActiveFilters && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              resetFilters();
-              setDateRange({ from: undefined, to: undefined });
-              setAmountRange({ min: undefined, max: undefined });
-            }}
-          >
+          <Button variant="outline" size="sm" onClick={resetFilters}>
             Clear Filters
           </Button>
         )}

@@ -5,7 +5,13 @@ import { z } from "zod";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { Expense } from "@/types";
 
 // Lazy load components for better performance
@@ -81,6 +87,9 @@ function ExpensesPage() {
           <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Expense</DialogTitle>
+              <DialogDescription>
+                Fill in the details below to record a new business expense.
+              </DialogDescription>
             </DialogHeader>
             <ErrorBoundary level="component">
               <Suspense
