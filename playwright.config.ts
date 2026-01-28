@@ -1,4 +1,15 @@
+import path from "path";
+import { fileURLToPath } from "url";
+
 import { defineConfig, devices } from "@playwright/test";
+import dotenv from "dotenv";
+
+/**
+ * Load test environment variables from .env.test
+ * This enables test credentials and configuration
+ */
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, ".env.test") });
 
 /**
  * Playwright E2E Test Configuration
@@ -53,8 +64,10 @@ export default defineConfig({
   ],
 
   // Run local dev server before starting tests
+  // NOTE: Using dev:cf to start Vite with Cloudflare Workers middleware
+  // This is required for API routes and serverless functions to work
   webServer: {
-    command: "npm run dev",
+    command: "npm run dev:cf",
     url: "http://localhost:5173",
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
