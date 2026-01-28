@@ -54,6 +54,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
   const isEditMode = !!expense;
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(expense?.receipt_url || null);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
@@ -158,7 +159,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category *</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select expense category" />
@@ -236,7 +237,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>Expense Date *</FormLabel>
-                <Popover>
+                <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
@@ -255,7 +256,10 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
                     <Calendar
                       mode="single"
                       selected={field.value}
-                      onSelect={field.onChange}
+                      onSelect={(date) => {
+                        field.onChange(date);
+                        setDatePickerOpen(false);
+                      }}
                       disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                       initialFocus
                     />

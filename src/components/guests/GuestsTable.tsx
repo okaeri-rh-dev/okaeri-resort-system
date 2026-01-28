@@ -341,7 +341,6 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
         cell: ({ getValue }) => (
           <div className="text-center">
             <div className="font-mono text-lg font-semibold text-neutral-900">{getValue()}</div>
-            <div className="text-xs text-neutral-600">total</div>
           </div>
         ),
         size: 100,

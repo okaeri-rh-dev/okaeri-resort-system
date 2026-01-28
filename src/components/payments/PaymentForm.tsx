@@ -61,6 +61,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const isEditMode = !!payment;
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(payment?.proof_url || null);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   const createPayment = useCreatePayment();
   const updatePayment = useUpdatePayment();
@@ -143,7 +144,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Booking</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a booking" />
@@ -202,7 +203,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Payment Method</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue />
@@ -228,7 +229,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Payment Date</FormLabel>
-              <Popover>
+              <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
@@ -247,7 +248,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   <Calendar
                     mode="single"
                     selected={field.value}
-                    onSelect={field.onChange}
+                    onSelect={(date) => {
+                      field.onChange(date);
+                      setDatePickerOpen(false);
+                    }}
                     disabled={(date) => date > new Date() || date < new Date("2024-01-01")}
                     initialFocus
                   />

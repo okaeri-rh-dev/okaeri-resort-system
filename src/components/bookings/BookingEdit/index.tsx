@@ -73,9 +73,12 @@ export function BookingEditPage() {
 
   // Form submission handler
   const onSubmit: SubmitHandler<BookingEditInput> = (data) => {
+    // Exclude unit_id - units are managed via booking_units junction table
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { unit_id, ...bookingData } = data;
     // Transform Date objects to ISO strings for database
     updateBooking.mutate({
-      ...data,
+      ...bookingData,
       check_in: data.check_in.toISOString(),
       check_out: data.check_out.toISOString(),
     });
