@@ -32,11 +32,11 @@ const entityIcons = {
  * Entity type to route mapping
  */
 const entityRoutes = {
-  booking: "/bookings/$bookingId",
-  unit: "/units/$unitId",
-  guest: "/guests/$guestId",
-  payment: "/payments/$paymentId",
-  expense: "/expenses/$expenseId",
+  booking: "/admin/bookings/$bookingId",
+  unit: "/admin/units/$unitId",
+  guest: "/admin/guests/$guestId",
+  payment: "/admin/payments/$paymentId",
+  expense: "/admin/expenses/$expenseId",
 } as const;
 
 /**

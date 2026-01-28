@@ -193,7 +193,8 @@ function AlreadyAssignedGuard({
             <Button
               onClick={() =>
                 navigate({
-                  to: `/bookings/${bookingId}`, // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  to: "/admin/bookings/$bookingId", // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  params: { bookingId },
                 } as any)
               }
               className="bg-blue-600 hover:bg-blue-700"

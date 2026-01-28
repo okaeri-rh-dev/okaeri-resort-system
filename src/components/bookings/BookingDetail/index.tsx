@@ -61,7 +61,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
       ]}
       status={<StatusBadge status={booking.booking_status || "Pending"} />}
       editRoute={{
-        to: "/bookings/$bookingId/edit",
+        to: "/admin/bookings/$bookingId/edit",
         params: { bookingId },
       }}
     >
