@@ -1,11 +1,18 @@
 import { lazy, Suspense, useState } from "react";
 
 import { createFileRoute, Link, Outlet, useMatches } from "@tanstack/react-router";
+import { Building2, ChevronDown, Plus, Users } from "lucide-react";
 import { z } from "zod";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Lazy load heavy components
 const BookingsTable = lazy(() =>
@@ -53,12 +60,43 @@ function BookingsPage() {
             <h1 className="text-3xl font-bold tracking-tight">Bookings</h1>
             <p className="text-muted-foreground">Manage all resort bookings and reservations</p>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={() => setShowBookingForm(true)}>New Booking</Button>
-            <Button asChild variant="outline">
-              <Link to="/admin/bookings/new-multi">New Multi-Unit Booking</Link>
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                New Booking
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuItem
+                onClick={() => setShowBookingForm(true)}
+                className="flex cursor-pointer flex-col items-start gap-1 p-3"
+              >
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  <span className="font-medium">Single Cabin Booking</span>
+                </div>
+                <span className="text-muted-foreground ml-6 text-xs">
+                  Book one cabin for a guest
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="cursor-pointer p-0">
+                <Link
+                  to="/admin/bookings/new-multi"
+                  className="flex flex-col items-start gap-1 p-3"
+                >
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    <span className="font-medium">Multi-Cabin Booking</span>
+                  </div>
+                  <span className="text-muted-foreground ml-6 text-xs">
+                    Book multiple cabins for groups or events
+                  </span>
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <ErrorBoundary level="component">
@@ -76,9 +114,7 @@ function BookingsPage() {
         {/* New Booking Dialog */}
         <Dialog open={showBookingForm} onOpenChange={setShowBookingForm}>
           <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Booking</DialogTitle>
-            </DialogHeader>
+            {/* DialogHeader removed - BookingForm has its own step-based header */}
             <ErrorBoundary level="component">
               <Suspense
                 fallback={

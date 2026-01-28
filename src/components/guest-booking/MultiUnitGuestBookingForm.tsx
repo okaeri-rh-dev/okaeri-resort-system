@@ -3,11 +3,20 @@ import { useEffect, useEffectEvent, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
 // Removed unused imports: format, cn
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  Building2,
+  CreditCard,
+  Loader2,
+  Smartphone,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -18,6 +27,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDatePicker } from "@/components/ui/responsive-date-picker";
+import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { logger } from "@/lib/logger";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
@@ -471,6 +481,76 @@ export function MultiUnitGuestBookingForm() {
                   </AlertDescription>
                 </Alert>
               )}
+
+              {/* Payment Instructions */}
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <CreditCard className="h-5 w-5" />
+                    Payment Methods
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-muted-foreground text-sm">
+                    Send your payment to any of the following accounts:
+                  </p>
+
+                  {/* GCash Section */}
+                  <div className="flex items-start gap-4">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2 font-medium">
+                        <Smartphone className="h-4 w-4 text-blue-600" />
+                        GCash
+                      </div>
+                      <div className="space-y-1 pl-6 text-sm">
+                        <p>
+                          <span className="text-muted-foreground">Number:</span> 0917-123-4567
+                        </p>
+                        <p>
+                          <span className="text-muted-foreground">Name:</span> Okaeri Resort
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-muted-foreground bg-muted flex h-24 w-24 items-center justify-center rounded-lg border-2 border-dashed text-xs">
+                      GCash QR
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* BDO Section */}
+                  <div className="flex items-start gap-4">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2 font-medium">
+                        <Building2 className="h-4 w-4 text-blue-800" />
+                        BDO Bank Transfer
+                      </div>
+                      <div className="space-y-1 pl-6 text-sm">
+                        <p>
+                          <span className="text-muted-foreground">Account Name:</span> Okaeri Resort
+                        </p>
+                        <p>
+                          <span className="text-muted-foreground">Account Number:</span>{" "}
+                          1234-5678-9012
+                        </p>
+                        <p>
+                          <span className="text-muted-foreground">Bank:</span> BDO Savings
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-muted-foreground bg-muted flex h-24 w-24 items-center justify-center rounded-lg border-2 border-dashed text-xs">
+                      BDO QR
+                    </div>
+                  </div>
+
+                  <Alert className="mt-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Use your booking reference number as the payment description/note.
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
+              </Card>
 
               <FormField
                 control={form.control}

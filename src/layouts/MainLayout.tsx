@@ -320,10 +320,6 @@ export function MainLayout({ children }: MainLayoutProps) {
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
-              {/* Notification badge */}
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs text-white">
-                3
-              </span>
             </Button>
           </div>
         </div>

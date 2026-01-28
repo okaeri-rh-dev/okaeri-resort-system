@@ -158,6 +158,8 @@ export const useBookingsTable = () => {
   return {
     table,
     bookings: filteredBookings,
+    totalCount: bookings.length,
+    filteredCount: filteredBookings.length,
     isLoading,
     error,
     isMobile,

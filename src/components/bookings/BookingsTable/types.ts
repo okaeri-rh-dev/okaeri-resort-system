@@ -17,6 +17,10 @@ export interface BookingFiltersProps {
   setSearchQuery: (query: string) => void;
   resetFilters: () => void;
   onExport: () => void;
+  /** Number of bookings after filtering */
+  resultCount?: number;
+  /** Total number of bookings before filtering */
+  totalCount?: number;
 }
 
 export interface DateRange {

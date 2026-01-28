@@ -14,6 +14,8 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
   const {
     table,
     bookings,
+    totalCount,
+    filteredCount,
     isLoading,
     error,
     isMobile,
@@ -50,6 +52,8 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
         setSearchQuery={setSearchQuery}
         resetFilters={resetFilters}
         onExport={handleExport}
+        resultCount={filteredCount}
+        totalCount={totalCount}
       />
 
       {/* Mobile view */}
@@ -65,12 +69,21 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
           ))}
           {bookings.length === 0 && (
             <TableEmptyState
-              title="No bookings found"
-              description="No bookings match your current filters."
-              action={{
-                label: "Clear Filters",
-                onClick: resetFilters,
-              }}
+              variant={totalCount === 0 ? "no-data" : "no-results"}
+              title={totalCount === 0 ? "No bookings yet" : "No bookings found"}
+              description={
+                totalCount === 0
+                  ? "Get started by creating your first booking."
+                  : "No bookings match your current filters. Try adjusting your search."
+              }
+              action={
+                totalCount === 0
+                  ? undefined
+                  : {
+                      label: "Clear Filters",
+                      onClick: resetFilters,
+                    }
+              }
             />
           )}
         </div>
@@ -118,12 +131,21 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
             {table.getRowModel().rows.length === 0 && (
               <div className="p-8">
                 <TableEmptyState
-                  title="No bookings found"
-                  description="No bookings match your current filters."
-                  action={{
-                    label: "Clear Filters",
-                    onClick: resetFilters,
-                  }}
+                  variant={totalCount === 0 ? "no-data" : "no-results"}
+                  title={totalCount === 0 ? "No bookings yet" : "No bookings found"}
+                  description={
+                    totalCount === 0
+                      ? "Get started by creating your first booking."
+                      : "No bookings match your current filters. Try adjusting your search."
+                  }
+                  action={
+                    totalCount === 0
+                      ? undefined
+                      : {
+                          label: "Clear Filters",
+                          onClick: resetFilters,
+                        }
+                  }
                 />
               </div>
             )}

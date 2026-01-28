@@ -224,6 +224,12 @@ export function useBookingForm({ initialData, bookingId, onSuccess }: UseBooking
   // Submit handler
   const handleSubmit = useCallback(
     async (data: CompleteBookingData) => {
+      // Defensive check: Prevent submission with ₱0 total (indicates pricing calculation failure)
+      if (calculatedTotal <= 0) {
+        toast.error("Unable to calculate pricing. Please ensure a unit is selected and try again.");
+        return;
+      }
+
       try {
         if (isEditMode) {
           // For edit mode, use the old update mutation with sanitized data

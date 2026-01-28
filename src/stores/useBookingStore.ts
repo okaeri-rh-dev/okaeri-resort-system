@@ -438,6 +438,7 @@ export const useCreateBooking = () => {
         internal_notes: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        booking_units: [], // Initialize empty array for optimistic update
       };
 
       addOptimistic(optimisticBooking);
