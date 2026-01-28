@@ -240,3 +240,6 @@ tests/fixtures/images/*.png
 tests/fixtures/pdfs/*.pdf
 
 .tanstack/tmp
+
+# Playwright MCP artifacts (screenshots, recordings)
+.playwright-mcp/
