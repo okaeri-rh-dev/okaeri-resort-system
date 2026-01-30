@@ -75,6 +75,7 @@ function PricingConfigPage() {
           <SeasonalRatesForm
             rates={(seasonalRates || []).map((rate) => ({
               ...rate,
+              is_active: rate.is_active ?? true,
               description: rate.description || undefined,
               color: rate.color || undefined,
             }))}
