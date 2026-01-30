@@ -109,11 +109,52 @@ export interface Booking {
 }
 
 // ============================================
+// ACCOUNT TYPES
+// ============================================
+export type AccountType = "Bank" | "E-Wallet" | "Cash";
+
+export interface Account {
+  account_id: string;
+  account_name: string;
+  account_code: string;
+  account_type: AccountType;
+  description?: string | null;
+  initial_balance: number;
+  is_active: boolean;
+  display_order: number;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface AccountWithBalance extends Account {
+  total_payments: number;
+  total_expenses: number;
+  transfers_in: number;
+  transfers_out: number;
+  current_balance: number;
+}
+
+export interface AccountTransfer {
+  transfer_id: string;
+  transfer_reference: string;
+  from_account_id: string;
+  to_account_id: string;
+  amount: number;
+  transfer_date: string;
+  notes?: string | null;
+  created_at: string | null;
+  // Relations
+  from_account?: Account;
+  to_account?: Account;
+}
+
+// ============================================
 // PAYMENT TYPES
 // ============================================
 export interface Payment {
   payment_id: string;
   booking_id: string | null;
+  account_id?: string | null; // Financial account that received this payment
   amount: number;
   payment_method?: string | null;
   payment_date: string | null;
@@ -122,10 +163,11 @@ export interface Payment {
   created_at: string | null;
   // Relations
   booking?: Booking;
+  account?: Account;
 }
 
 // ============================================
-// EXPENSE TYPES (Future use)
+// EXPENSE TYPES
 // ============================================
 export interface Expense {
   expense_id: string;
@@ -133,10 +175,13 @@ export interface Expense {
   description: string | null;
   amount: number;
   date: string; // This maps to expense_date in our schema
+  account_id?: string | null; // Financial account used to pay this expense
   receipt_url?: string | null;
   notes?: string | null;
   created_at: string;
   updated_at: string;
+  // Relations
+  account?: Account;
 }
 
 // ============================================

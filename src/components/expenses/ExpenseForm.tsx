@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { AccountSelector } from "@/components/accounts/AccountSelector";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -38,6 +39,7 @@ const expenseFormSchema = z.object({
   category: z.string().min(1, "Category is required"),
   description: z.string().min(1, "Description is required").max(500, "Description too long"),
   amount: z.number().min(0.01, "Amount must be greater than 0").max(1000000, "Amount too large"),
+  account_id: z.string().min(1, "Payment account is required"),
   expense_date: z.date(),
   notes: z.string().max(1000, "Notes too long").optional(),
 });
@@ -68,6 +70,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
       description: expense?.description || "",
       // Use undefined for new expenses so the field appears empty
       amount: expense?.amount ?? (undefined as unknown as number),
+      account_id: expense?.account_id || "",
       expense_date: expense ? new Date(expense.date) : new Date(),
       notes: "",
     },
@@ -118,6 +121,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
         category: sanitizedData.category,
         description: sanitizedData.description?.trim() || "",
         amount: sanitizedData.amount,
+        account_id: sanitizedData.account_id,
         date: data.expense_date.toISOString().split("T")[0], // YYYY-MM-DD format
         receipt_url: null, // Will be set by upload function
       };
@@ -197,6 +201,27 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
               <FormDescription>
                 Brief description of the expense (max 500 characters)
               </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Payment Account */}
+        <FormField
+          control={form.control}
+          name="account_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Paid From *</FormLabel>
+              <FormControl>
+                <AccountSelector
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select account"
+                  required
+                />
+              </FormControl>
+              <FormDescription>Which account was used to pay this expense?</FormDescription>
               <FormMessage />
             </FormItem>
           )}

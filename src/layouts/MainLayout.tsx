@@ -2,10 +2,12 @@ import { useEffect, useEffectEvent, useState } from "react";
 
 import { Link, useLocation } from "@tanstack/react-router";
 import {
+  ArrowLeftRight,
   Bell,
   Building2,
   Calendar,
   ChevronRight,
+  CreditCard,
   Home,
   ListChecks,
   LogOut,
@@ -40,6 +42,8 @@ const navItems: NavItem[] = [
   { label: "Guests", icon: Users, href: "/admin/guests" },
   { label: "Payments", icon: Receipt, href: "/admin/payments" },
   { label: "Expenses", icon: ReceiptText, href: "/admin/expenses" },
+  { label: "Accounts", icon: CreditCard, href: "/admin/accounts" },
+  { label: "Transfers", icon: ArrowLeftRight, href: "/admin/transfers" },
   { label: "Booking Queue", icon: ListChecks, href: "/admin/bookings/queue" },
 ];
 

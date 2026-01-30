@@ -28,6 +28,93 @@ export type Database = {
   };
   public: {
     Tables: {
+      account_transfers: {
+        Row: {
+          amount: number;
+          created_at: string | null;
+          from_account_id: string;
+          notes: string | null;
+          to_account_id: string;
+          transfer_date: string | null;
+          transfer_id: string;
+          transfer_reference: string;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string | null;
+          from_account_id: string;
+          notes?: string | null;
+          to_account_id: string;
+          transfer_date?: string | null;
+          transfer_id?: string;
+          transfer_reference: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string | null;
+          from_account_id?: string;
+          notes?: string | null;
+          to_account_id?: string;
+          transfer_date?: string | null;
+          transfer_id?: string;
+          transfer_reference?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "account_transfers_from_account_id_fkey";
+            columns: ["from_account_id"];
+            isOneToOne: false;
+            referencedRelation: "accounts";
+            referencedColumns: ["account_id"];
+          },
+          {
+            foreignKeyName: "account_transfers_to_account_id_fkey";
+            columns: ["to_account_id"];
+            isOneToOne: false;
+            referencedRelation: "accounts";
+            referencedColumns: ["account_id"];
+          },
+        ];
+      };
+      accounts: {
+        Row: {
+          account_code: string;
+          account_id: string;
+          account_name: string;
+          account_type: string;
+          created_at: string | null;
+          description: string | null;
+          display_order: number | null;
+          initial_balance: number | null;
+          is_active: boolean | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          account_code: string;
+          account_id?: string;
+          account_name: string;
+          account_type: string;
+          created_at?: string | null;
+          description?: string | null;
+          display_order?: number | null;
+          initial_balance?: number | null;
+          is_active?: boolean | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          account_code?: string;
+          account_id?: string;
+          account_name?: string;
+          account_type?: string;
+          created_at?: string | null;
+          description?: string | null;
+          display_order?: number | null;
+          initial_balance?: number | null;
+          is_active?: boolean | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       app_roles: {
         Row: {
           email: string;
@@ -246,8 +333,140 @@ export type Database = {
           },
         ];
       };
+      booking_unit_availability: {
+        Row: {
+          availability_id: string;
+          booking_id: string;
+          booking_status: string;
+          check_in: string;
+          check_out: string;
+          created_at: string | null;
+          unit_id: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          availability_id?: string;
+          booking_id: string;
+          booking_status: string;
+          check_in: string;
+          check_out: string;
+          created_at?: string | null;
+          unit_id: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          availability_id?: string;
+          booking_id?: string;
+          booking_status?: string;
+          check_in?: string;
+          check_out?: string;
+          created_at?: string | null;
+          unit_id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_unit_availability_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "booking_pricing_analytics";
+            referencedColumns: ["booking_id"];
+          },
+          {
+            foreignKeyName: "booking_unit_availability_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["booking_id"];
+          },
+          {
+            foreignKeyName: "booking_unit_availability_unit_id_fkey";
+            columns: ["unit_id"];
+            isOneToOne: false;
+            referencedRelation: "units";
+            referencedColumns: ["unit_id"];
+          },
+        ];
+      };
+      booking_units: {
+        Row: {
+          assigned_guests: number | null;
+          booking_id: string;
+          booking_unit_id: string;
+          check_in_date: string | null;
+          check_out_date: string | null;
+          created_at: string | null;
+          extra_person_charge: number | null;
+          guest_names: string[] | null;
+          status: string | null;
+          subtotal: number;
+          unit_id: string;
+          unit_notes: string | null;
+          unit_price: number;
+          updated_at: string | null;
+          weekend_surcharge: number | null;
+        };
+        Insert: {
+          assigned_guests?: number | null;
+          booking_id: string;
+          booking_unit_id?: string;
+          check_in_date?: string | null;
+          check_out_date?: string | null;
+          created_at?: string | null;
+          extra_person_charge?: number | null;
+          guest_names?: string[] | null;
+          status?: string | null;
+          subtotal: number;
+          unit_id: string;
+          unit_notes?: string | null;
+          unit_price: number;
+          updated_at?: string | null;
+          weekend_surcharge?: number | null;
+        };
+        Update: {
+          assigned_guests?: number | null;
+          booking_id?: string;
+          booking_unit_id?: string;
+          check_in_date?: string | null;
+          check_out_date?: string | null;
+          created_at?: string | null;
+          extra_person_charge?: number | null;
+          guest_names?: string[] | null;
+          status?: string | null;
+          subtotal?: number;
+          unit_id?: string;
+          unit_notes?: string | null;
+          unit_price?: number;
+          updated_at?: string | null;
+          weekend_surcharge?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_units_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "booking_pricing_analytics";
+            referencedColumns: ["booking_id"];
+          },
+          {
+            foreignKeyName: "booking_units_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["booking_id"];
+          },
+          {
+            foreignKeyName: "booking_units_unit_id_fkey";
+            columns: ["unit_id"];
+            isOneToOne: false;
+            referencedRelation: "units";
+            referencedColumns: ["unit_id"];
+          },
+        ];
+      };
       bookings: {
         Row: {
+          base_amount: number | null;
           booking_id: string;
           booking_reference: string;
           booking_status: string | null;
@@ -268,19 +487,21 @@ export type Database = {
           payment_method: string | null;
           payment_proof_url: string | null;
           payment_status: string | null;
+          pricing_metadata: Json | null;
           pricing_snapshot: Json | null;
           requested_unit_count: number | null;
           special_requests: string | null;
+          tax_amount: number | null;
           total_amount: number;
+          total_surcharges: number | null;
           unit_assignment_status: string | null;
           unit_count: number | null;
-          base_amount: number | null;
-          total_surcharges: number | null;
           updated_at: string | null;
           upload_expires_at: string | null;
           upload_status: string | null;
         };
         Insert: {
+          base_amount?: number | null;
           booking_id?: string;
           booking_reference: string;
           booking_status?: string | null;
@@ -301,19 +522,21 @@ export type Database = {
           payment_method?: string | null;
           payment_proof_url?: string | null;
           payment_status?: string | null;
+          pricing_metadata?: Json | null;
           pricing_snapshot?: Json | null;
           requested_unit_count?: number | null;
           special_requests?: string | null;
+          tax_amount?: number | null;
           total_amount: number;
+          total_surcharges?: number | null;
           unit_assignment_status?: string | null;
           unit_count?: number | null;
-          base_amount?: number | null;
-          total_surcharges?: number | null;
           updated_at?: string | null;
           upload_expires_at?: string | null;
           upload_status?: string | null;
         };
         Update: {
+          base_amount?: number | null;
           booking_id?: string;
           booking_reference?: string;
           booking_status?: string | null;
@@ -334,14 +557,15 @@ export type Database = {
           payment_method?: string | null;
           payment_proof_url?: string | null;
           payment_status?: string | null;
+          pricing_metadata?: Json | null;
           pricing_snapshot?: Json | null;
           requested_unit_count?: number | null;
           special_requests?: string | null;
+          tax_amount?: number | null;
           total_amount?: number;
+          total_surcharges?: number | null;
           unit_assignment_status?: string | null;
           unit_count?: number | null;
-          base_amount?: number | null;
-          total_surcharges?: number | null;
           updated_at?: string | null;
           upload_expires_at?: string | null;
           upload_status?: string | null;
@@ -431,114 +655,6 @@ export type Database = {
         };
         Relationships: [];
       };
-      booking_units: {
-        Row: {
-          assigned_guests: number | null;
-          booking_id: string;
-          booking_unit_id: string;
-          created_at: string | null;
-          extra_person_charge: number;
-          guest_names: string[] | null;
-          subtotal: number;
-          unit_id: string;
-          unit_notes: string | null;
-          unit_price: number;
-          updated_at: string | null;
-          weekend_surcharge: number;
-        };
-        Insert: {
-          assigned_guests?: number | null;
-          booking_id: string;
-          booking_unit_id?: string;
-          created_at?: string | null;
-          extra_person_charge?: number;
-          guest_names?: string[] | null;
-          subtotal: number;
-          unit_id: string;
-          unit_notes?: string | null;
-          unit_price: number;
-          updated_at?: string | null;
-          weekend_surcharge?: number;
-        };
-        Update: {
-          assigned_guests?: number | null;
-          booking_id?: string;
-          booking_unit_id?: string;
-          created_at?: string | null;
-          extra_person_charge?: number;
-          guest_names?: string[] | null;
-          subtotal?: number;
-          unit_id?: string;
-          unit_notes?: string | null;
-          unit_price?: number;
-          updated_at?: string | null;
-          weekend_surcharge?: number;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "booking_units_booking_id_fkey";
-            columns: ["booking_id"];
-            isOneToOne: false;
-            referencedRelation: "bookings";
-            referencedColumns: ["booking_id"];
-          },
-          {
-            foreignKeyName: "booking_units_unit_id_fkey";
-            columns: ["unit_id"];
-            isOneToOne: false;
-            referencedRelation: "units";
-            referencedColumns: ["unit_id"];
-          },
-        ];
-      };
-      booking_unit_availability: {
-        Row: {
-          availability_id: string;
-          booking_id: string;
-          booking_status: string;
-          check_in: string;
-          check_out: string;
-          created_at: string | null;
-          unit_id: string;
-          updated_at: string | null;
-        };
-        Insert: {
-          availability_id?: string;
-          booking_id: string;
-          booking_status: string;
-          check_in: string;
-          check_out: string;
-          created_at?: string | null;
-          unit_id: string;
-          updated_at?: string | null;
-        };
-        Update: {
-          availability_id?: string;
-          booking_id?: string;
-          booking_status?: string;
-          check_in?: string;
-          check_out?: string;
-          created_at?: string | null;
-          unit_id?: string;
-          updated_at?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "booking_unit_availability_booking_id_fkey";
-            columns: ["booking_id"];
-            isOneToOne: false;
-            referencedRelation: "bookings";
-            referencedColumns: ["booking_id"];
-          },
-          {
-            foreignKeyName: "booking_unit_availability_unit_id_fkey";
-            columns: ["unit_id"];
-            isOneToOne: false;
-            referencedRelation: "units";
-            referencedColumns: ["unit_id"];
-          },
-        ];
-      };
       discount_rules: {
         Row: {
           conditions: Json;
@@ -583,6 +699,7 @@ export type Database = {
       };
       expenses: {
         Row: {
+          account_id: string | null;
           amount: number;
           category: string;
           created_at: string | null;
@@ -594,6 +711,7 @@ export type Database = {
           updated_at: string | null;
         };
         Insert: {
+          account_id?: string | null;
           amount: number;
           category: string;
           created_at?: string | null;
@@ -605,6 +723,7 @@ export type Database = {
           updated_at?: string | null;
         };
         Update: {
+          account_id?: string | null;
           amount?: number;
           category?: string;
           created_at?: string | null;
@@ -615,7 +734,57 @@ export type Database = {
           receipt_url?: string | null;
           updated_at?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "expenses_account_id_fkey";
+            columns: ["account_id"];
+            isOneToOne: false;
+            referencedRelation: "accounts";
+            referencedColumns: ["account_id"];
+          },
+        ];
+      };
+      guest_assignments: {
+        Row: {
+          assignment_id: string;
+          booking_unit_id: string;
+          created_at: string | null;
+          guest_id: string;
+          is_primary: boolean | null;
+          room_preferences: string | null;
+        };
+        Insert: {
+          assignment_id?: string;
+          booking_unit_id: string;
+          created_at?: string | null;
+          guest_id: string;
+          is_primary?: boolean | null;
+          room_preferences?: string | null;
+        };
+        Update: {
+          assignment_id?: string;
+          booking_unit_id?: string;
+          created_at?: string | null;
+          guest_id?: string;
+          is_primary?: boolean | null;
+          room_preferences?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "guest_assignments_booking_unit_id_fkey";
+            columns: ["booking_unit_id"];
+            isOneToOne: false;
+            referencedRelation: "booking_units";
+            referencedColumns: ["booking_unit_id"];
+          },
+          {
+            foreignKeyName: "guest_assignments_guest_id_fkey";
+            columns: ["guest_id"];
+            isOneToOne: false;
+            referencedRelation: "guests";
+            referencedColumns: ["guest_id"];
+          },
+        ];
       };
       guest_booking_unit_requests: {
         Row: {
@@ -623,6 +792,9 @@ export type Database = {
           created_at: string | null;
           guests_per_unit: number;
           id: string;
+          quantity: number;
+          special_requests: string | null;
+          unit_type: string;
           updated_at: string | null;
         };
         Insert: {
@@ -630,6 +802,9 @@ export type Database = {
           created_at?: string | null;
           guests_per_unit: number;
           id?: string;
+          quantity: number;
+          special_requests?: string | null;
+          unit_type: string;
           updated_at?: string | null;
         };
         Update: {
@@ -637,9 +812,19 @@ export type Database = {
           created_at?: string | null;
           guests_per_unit?: number;
           id?: string;
+          quantity?: number;
+          special_requests?: string | null;
+          unit_type?: string;
           updated_at?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "guest_booking_unit_requests_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "booking_pricing_analytics";
+            referencedColumns: ["booking_id"];
+          },
           {
             foreignKeyName: "guest_booking_unit_requests_booking_id_fkey";
             columns: ["booking_id"];
@@ -706,6 +891,13 @@ export type Database = {
             foreignKeyName: "idempotency_keys_booking_id_fkey";
             columns: ["booking_id"];
             isOneToOne: false;
+            referencedRelation: "booking_pricing_analytics";
+            referencedColumns: ["booking_id"];
+          },
+          {
+            foreignKeyName: "idempotency_keys_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
             referencedRelation: "bookings";
             referencedColumns: ["booking_id"];
           },
@@ -763,6 +955,7 @@ export type Database = {
       };
       payments: {
         Row: {
+          account_id: string | null;
           amount: number;
           booking_id: string | null;
           created_at: string | null;
@@ -773,6 +966,7 @@ export type Database = {
           proof_url: string | null;
         };
         Insert: {
+          account_id?: string | null;
           amount: number;
           booking_id?: string | null;
           created_at?: string | null;
@@ -783,6 +977,7 @@ export type Database = {
           proof_url?: string | null;
         };
         Update: {
+          account_id?: string | null;
           amount?: number;
           booking_id?: string | null;
           created_at?: string | null;
@@ -793,6 +988,20 @@ export type Database = {
           proof_url?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "payments_account_id_fkey";
+            columns: ["account_id"];
+            isOneToOne: false;
+            referencedRelation: "accounts";
+            referencedColumns: ["account_id"];
+          },
+          {
+            foreignKeyName: "payments_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "booking_pricing_analytics";
+            referencedColumns: ["booking_id"];
+          },
           {
             foreignKeyName: "payments_booking_id_fkey";
             columns: ["booking_id"];
@@ -843,46 +1052,46 @@ export type Database = {
       };
       seasonal_rates: {
         Row: {
-          id: string;
-          season_id: string;
-          name: string;
-          start_date: string;
-          end_date: string;
-          multiplier: number;
-          priority: number;
-          is_active: boolean;
-          description: string | null;
           color: string | null;
-          created_at: string;
-          updated_at: string;
+          created_at: string | null;
+          description: string | null;
+          end_date: string;
+          id: string;
+          is_active: boolean | null;
+          multiplier: number;
+          name: string;
+          priority: number;
+          season_id: string;
+          start_date: string;
+          updated_at: string | null;
         };
         Insert: {
-          id?: string;
-          season_id: string;
-          name: string;
-          start_date: string;
-          end_date: string;
-          multiplier: number;
-          priority?: number;
-          is_active?: boolean;
-          description?: string | null;
           color?: string | null;
-          created_at?: string;
-          updated_at?: string;
+          created_at?: string | null;
+          description?: string | null;
+          end_date: string;
+          id?: string;
+          is_active?: boolean | null;
+          multiplier: number;
+          name: string;
+          priority?: number;
+          season_id: string;
+          start_date: string;
+          updated_at?: string | null;
         };
         Update: {
-          id?: string;
-          season_id?: string;
-          name?: string;
-          start_date?: string;
-          end_date?: string;
-          multiplier?: number;
-          priority?: number;
-          is_active?: boolean;
-          description?: string | null;
           color?: string | null;
-          created_at?: string;
-          updated_at?: string;
+          created_at?: string | null;
+          description?: string | null;
+          end_date?: string;
+          id?: string;
+          is_active?: boolean | null;
+          multiplier?: number;
+          name?: string;
+          priority?: number;
+          season_id?: string;
+          start_date?: string;
+          updated_at?: string | null;
         };
         Relationships: [];
       };
@@ -966,6 +1175,86 @@ export type Database = {
         };
         Relationships: [];
       };
+      booking_pricing_analytics: {
+        Row: {
+          booking_id: string | null;
+          booking_reference: string | null;
+          check_in: string | null;
+          check_out: string | null;
+          created_at: string | null;
+          currency: string | null;
+          downpayment_calculated: number | null;
+          extra_person_total: number | null;
+          has_seasonal_rates: boolean | null;
+          nights: number | null;
+          pricing_calculated_at: string | null;
+          season_names: Json | null;
+          subtotal: number | null;
+          total_amount: number | null;
+        };
+        Insert: {
+          booking_id?: string | null;
+          booking_reference?: string | null;
+          check_in?: string | null;
+          check_out?: string | null;
+          created_at?: string | null;
+          currency?: never;
+          downpayment_calculated?: never;
+          extra_person_total?: never;
+          has_seasonal_rates?: never;
+          nights?: never;
+          pricing_calculated_at?: never;
+          season_names?: never;
+          subtotal?: never;
+          total_amount?: number | null;
+        };
+        Update: {
+          booking_id?: string | null;
+          booking_reference?: string | null;
+          check_in?: string | null;
+          check_out?: string | null;
+          created_at?: string | null;
+          currency?: never;
+          downpayment_calculated?: never;
+          extra_person_total?: never;
+          has_seasonal_rates?: never;
+          nights?: never;
+          pricing_calculated_at?: never;
+          season_names?: never;
+          subtotal?: never;
+          total_amount?: number | null;
+        };
+        Relationships: [];
+      };
+      public_unit_availability: {
+        Row: {
+          booking_status: string | null;
+          check_in: string | null;
+          check_out: string | null;
+          unit_id: string | null;
+        };
+        Insert: {
+          booking_status?: string | null;
+          check_in?: string | null;
+          check_out?: string | null;
+          unit_id?: string | null;
+        };
+        Update: {
+          booking_status?: string | null;
+          check_in?: string | null;
+          check_out?: string | null;
+          unit_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_unit_availability_unit_id_fkey";
+            columns: ["unit_id"];
+            isOneToOne: false;
+            referencedRelation: "units";
+            referencedColumns: ["unit_id"];
+          },
+        ];
+      };
     };
     Functions: {
       archive_audit_logs: {
@@ -999,10 +1288,6 @@ export type Database = {
         Returns: Json;
       };
       can_view_all_audit_logs: { Args: never; Returns: boolean };
-      check_unit_availability: {
-        Args: { p_check_in: string; p_check_out: string; p_unit_id: string };
-        Returns: boolean;
-      };
       check_multi_unit_availability: {
         Args: {
           p_check_in: string;
@@ -1013,7 +1298,19 @@ export type Database = {
         Returns: {
           conflicting_bookings: number;
           is_available: boolean;
-          next_available_date: string | null;
+          next_available_date: string;
+          unit_id: string;
+        }[];
+      };
+      check_unit_availability: {
+        Args: { p_check_in: string; p_check_out: string; p_unit_id: string };
+        Returns: boolean;
+      };
+      check_units_available_for_booking: {
+        Args: { p_booking_id: string; p_unit_ids: string[] };
+        Returns: {
+          conflict_booking_id: string;
+          is_available: boolean;
           unit_id: string;
         }[];
       };
@@ -1024,26 +1321,81 @@ export type Database = {
           file_path: string;
         }[];
       };
-      create_guest_booking: {
-        Args: {
-          p_booking_data: Json;
-          p_guest_data: Json;
-          p_idempotency_key: string;
-          p_unit_requests: Json;
-        };
-        Returns: Json;
+      create_guest_booking:
+        | {
+            Args: {
+              p_booking_data: Json;
+              p_guest_data: Json;
+              p_idempotency_key: string;
+              p_unit_requests: Json;
+            };
+            Returns: Json;
+          }
+        | {
+            Args: {
+              p_booking_data: Json;
+              p_guest_data?: Json;
+              p_turnstile_token: string;
+              p_unit_requests: Json;
+            };
+            Returns: Json;
+          };
+      create_multi_unit_booking: {
+        Args: { p_booking_data: Json; p_guest_id?: string; p_units: Json[] };
+        Returns: string;
       };
       detach_audit_trigger: {
         Args: { target_table: string };
         Returns: undefined;
       };
       generate_booking_reference: { Args: never; Returns: string };
+      generate_transfer_reference: { Args: never; Returns: string };
+      get_account_balance: {
+        Args: { p_account_id: string; p_as_of_date?: string };
+        Returns: number;
+      };
+      get_all_account_balances: {
+        Args: { p_as_of_date?: string };
+        Returns: {
+          account_code: string;
+          account_id: string;
+          account_name: string;
+          account_type: string;
+          current_balance: number;
+          initial_balance: number;
+          total_expenses: number;
+          total_payments: number;
+          transfers_in: number;
+          transfers_out: number;
+        }[];
+      };
+      get_booking_units: {
+        Args: { p_booking_id: string };
+        Returns: {
+          assigned_guests: number;
+          subtotal: number;
+          unit_code: string;
+          unit_id: string;
+          unit_name: string;
+          unit_price: number;
+          unit_type: string;
+        }[];
+      };
       get_current_audit_role: { Args: never; Returns: string };
       get_public_aggregate_availability: {
         Args: { p_end_date: string; p_start_date: string };
         Returns: {
           available_count: number;
           date: string;
+        }[];
+      };
+      get_seasonal_rate_for_date: {
+        Args: { check_date: string };
+        Returns: {
+          multiplier: number;
+          name: string;
+          priority: number;
+          season_id: string;
         }[];
       };
       grant_audit_role: {

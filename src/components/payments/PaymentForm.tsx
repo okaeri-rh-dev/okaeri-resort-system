@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { AccountSelector } from "@/components/accounts/AccountSelector";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -37,6 +38,7 @@ import type { Payment } from "@/types";
 // Validation schema
 const paymentFormSchema = z.object({
   booking_id: z.string().min(1, "Booking is required"),
+  account_id: z.string().min(1, "Receiving account is required"),
   amount: z.number().min(0.01, "Amount must be greater than 0"),
   payment_method: z.enum(["Cash", "GCash", "BankTransfer", "Card", "Other"]),
   payment_date: z.date(),
@@ -74,6 +76,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
       booking_id: payment?.booking_id || bookingId || "",
+      account_id: payment?.account_id || "",
       amount: payment?.amount || 0,
       payment_method:
         (payment?.payment_method as "Cash" | "GCash" | "BankTransfer" | "Card" | "Other") || "Cash",
@@ -109,8 +112,12 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const onSubmit = async (data: PaymentFormData) => {
     try {
       const paymentData = {
-        ...data,
+        booking_id: data.booking_id,
+        account_id: data.account_id,
+        amount: data.amount,
+        payment_method: data.payment_method,
         payment_date: data.payment_date.toISOString(),
+        notes: data.notes,
       };
 
       if (isEditMode) {
@@ -169,6 +176,27 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   {selectedBooking.payment_status}
                 </FormDescription>
               )}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Receiving Account */}
+        <FormField
+          control={form.control}
+          name="account_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Receiving Account *</FormLabel>
+              <FormControl>
+                <AccountSelector
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select account"
+                  required
+                />
+              </FormControl>
+              <FormDescription>Which account received this payment?</FormDescription>
               <FormMessage />
             </FormItem>
           )}

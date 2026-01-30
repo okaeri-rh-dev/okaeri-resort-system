@@ -902,6 +902,203 @@ export const db = {
       return data || [];
     },
   },
+
+  // Financial Accounts management
+  accounts: {
+    /**
+     * Get all accounts
+     * @returns Promise with all accounts ordered by display_order
+     */
+    all: () =>
+      supabase
+        .from("accounts")
+        .select("*")
+        .order("display_order", { ascending: true })
+        .order("account_name", { ascending: true }),
+
+    /**
+     * Get active accounts only
+     * @returns Promise with active accounts ordered by display_order
+     */
+    active: () =>
+      supabase
+        .from("accounts")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true })
+        .order("account_name", { ascending: true }),
+
+    /**
+     * Get account by ID
+     * @param id - Account UUID
+     * @returns Promise with single account
+     */
+    byId: (id: string) => supabase.from("accounts").select("*").eq("account_id", id).single(),
+
+    /**
+     * Get account by code
+     * @param code - Account code (e.g., 'BDO-SAV', 'GCASH')
+     * @returns Promise with single account
+     */
+    byCode: (code: string) =>
+      supabase.from("accounts").select("*").eq("account_code", code).single(),
+
+    /**
+     * Create new account
+     * @param data - Account data
+     * @returns Promise with created account
+     */
+    create: (data: Database["public"]["Tables"]["accounts"]["Insert"]) =>
+      supabase.from("accounts").insert(data).select().single(),
+
+    /**
+     * Update account
+     * @param id - Account UUID
+     * @param data - Updated account data
+     * @returns Promise with updated account
+     */
+    update: (id: string, data: Database["public"]["Tables"]["accounts"]["Update"]) =>
+      supabase.from("accounts").update(data).eq("account_id", id).select().single(),
+
+    /**
+     * Soft delete account (set is_active to false)
+     * @param id - Account UUID
+     * @returns Promise with updated account
+     */
+    delete: (id: string) =>
+      supabase.from("accounts").update({ is_active: false }).eq("account_id", id).select().single(),
+
+    /**
+     * Get all account balances using the database function
+     * @param asOfDate - Optional date to calculate balances as of (defaults to now)
+     * @returns Promise with accounts and their calculated balances
+     */
+    getAllBalances: (asOfDate?: string) =>
+      supabase.rpc("get_all_account_balances", {
+        p_as_of_date: asOfDate || new Date().toISOString(),
+      }),
+
+    /**
+     * Get single account balance
+     * @param accountId - Account UUID
+     * @param asOfDate - Optional date to calculate balance as of
+     * @returns Promise with account balance
+     */
+    getBalance: (accountId: string, asOfDate?: string) =>
+      supabase.rpc("get_account_balance", {
+        p_account_id: accountId,
+        p_as_of_date: asOfDate || new Date().toISOString(),
+      }),
+  },
+
+  // Account Transfers management
+  transfers: {
+    /**
+     * Get all transfers with account relations
+     * @returns Promise with all transfers and their source/destination accounts
+     */
+    all: () =>
+      supabase
+        .from("account_transfers")
+        .select(
+          `
+        *,
+        from_account:accounts!account_transfers_from_account_id_fkey(
+          account_id,
+          account_name,
+          account_code,
+          account_type
+        ),
+        to_account:accounts!account_transfers_to_account_id_fkey(
+          account_id,
+          account_name,
+          account_code,
+          account_type
+        )
+      `
+        )
+        .order("transfer_date", { ascending: false }),
+
+    /**
+     * Get transfer by ID
+     * @param id - Transfer UUID
+     * @returns Promise with single transfer
+     */
+    byId: (id: string) =>
+      supabase
+        .from("account_transfers")
+        .select(
+          `
+        *,
+        from_account:accounts!account_transfers_from_account_id_fkey(*),
+        to_account:accounts!account_transfers_to_account_id_fkey(*)
+      `
+        )
+        .eq("transfer_id", id)
+        .single(),
+
+    /**
+     * Get transfers for a specific account (both incoming and outgoing)
+     * @param accountId - Account UUID
+     * @returns Promise with transfers involving the account
+     */
+    byAccount: (accountId: string) =>
+      supabase
+        .from("account_transfers")
+        .select(
+          `
+        *,
+        from_account:accounts!account_transfers_from_account_id_fkey(
+          account_id,
+          account_name,
+          account_code,
+          account_type
+        ),
+        to_account:accounts!account_transfers_to_account_id_fkey(
+          account_id,
+          account_name,
+          account_code,
+          account_type
+        )
+      `
+        )
+        .or(`from_account_id.eq.${accountId},to_account_id.eq.${accountId}`)
+        .order("transfer_date", { ascending: false }),
+
+    /**
+     * Create new transfer with auto-generated reference
+     * @param data - Transfer data (without transfer_reference)
+     * @returns Promise with created transfer
+     */
+    create: async (
+      data: Omit<Database["public"]["Tables"]["account_transfers"]["Insert"], "transfer_reference">
+    ) => {
+      // Generate transfer reference using database function
+      const { data: reference } = await supabase.rpc("generate_transfer_reference");
+
+      return supabase
+        .from("account_transfers")
+        .insert({
+          ...data,
+          transfer_reference: reference || `TRF-${Date.now()}`,
+        })
+        .select(
+          `
+          *,
+          from_account:accounts!account_transfers_from_account_id_fkey(*),
+          to_account:accounts!account_transfers_to_account_id_fkey(*)
+        `
+        )
+        .single();
+    },
+
+    /**
+     * Delete transfer (for corrections)
+     * @param id - Transfer UUID
+     * @returns Promise with deletion result
+     */
+    delete: (id: string) => supabase.from("account_transfers").delete().eq("transfer_id", id),
+  },
 };
 
 // Storage helper for file uploads
