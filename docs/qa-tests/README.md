@@ -68,14 +68,17 @@ docs/qa-tests/
 │   ├── financial-reports.md                     # OWN-002: Revenue & profit reports
 │   ├── expense-management.md                    # OWN-003: Expense CRUD
 │   ├── system-settings.md                       # OWN-004: System configuration
-│   └── data-export.md                           # OWN-005: Export functionality
+│   ├── data-export.md                           # OWN-005: Export functionality
+│   ├── accounts-management.md                   # OWN-006: Financial accounts CRUD
+│   └── account-transfers.md                     # OWN-007: Inter-account transfers
 │
 └── 05-integration/                              # Phase 5: Cross-role & E2E tests
     ├── complete-booking-lifecycle.md            # INT-001: Full booking flow
     ├── role-permission-boundaries.md            # INT-002: Permission enforcement
     ├── concurrent-booking-conflict.md           # INT-003: Race condition handling
     ├── payment-booking-sync.md                  # INT-004: Payment-booking sync
-    └── audit-trail-completeness.md              # INT-005: Audit logging verification
+    ├── audit-trail-completeness.md              # INT-005: Audit logging verification
+    └── account-balance-calculation.md           # INT-006: Financial balance accuracy
 ```
 
 ## Test Inventory Summary
@@ -85,9 +88,9 @@ docs/qa-tests/
 | 01-Anonymous | 3 tests | 25 min | Critical |
 | 02-Staff | 5 tests | 35 min | High |
 | 03-Admin | 6 tests | 60 min | Critical |
-| 04-Owner | 5 tests | 55 min | High |
-| 05-Integration | 5 tests | 95 min | Critical |
-| **Total** | **24 tests** | **~4.5 hrs** | |
+| 04-Owner | 7 tests | 82 min | High |
+| 05-Integration | 6 tests | 115 min | Critical |
+| **Total** | **27 tests** | **~5.3 hrs** | |
 
 ## Permission Matrix
 
@@ -103,6 +106,10 @@ docs/qa-tests/
 | Manage Units | ✗ | ✗ | ✓ | ✓ |
 | View Expenses | ✗ | ✗ | ✓ | ✓ |
 | Manage Expenses | ✗ | ✗ | ✗ | ✓ |
+| View Accounts | ✗ | ✗ | ✓ | ✓ |
+| Manage Accounts | ✗ | ✗ | ✗ | ✓ |
+| View Transfers | ✗ | ✗ | ✓ | ✓ |
+| Create Transfers | ✗ | ✗ | ✗ | ✓ |
 | View Audit Logs | ✗ | ✗ | ✓ (limited) | ✓ (full) |
 | System Settings | ✗ | ✗ | ✗ | ✓ |
 | User Role Management | ✗ | ✗ | ✓ | ✗ |
@@ -130,6 +137,8 @@ docs/qa-tests/
 | `/admin/guests` | Guest list & management | Staff (view) / Admin (edit) |
 | `/admin/payments` | Payment list & verification | Staff (view) / Admin (verify) |
 | `/admin/expenses` | Expense tracking | Admin (view) / Owner (manage) |
+| `/admin/accounts` | Financial accounts management | Admin (view) / Owner (manage) |
+| `/admin/transfers` | Inter-account transfers | Admin (view) / Owner (create) |
 | `/admin/units` | Unit management | Staff (view) / Admin (manage) |
 | `/admin/audit-logs` | Audit trail viewer | Admin |
 | `/admin/roles` | Role management | Admin only |
@@ -203,6 +212,8 @@ Before running tests, ensure:
 - [ ] At least 1 payment record exists (verified)
 - [ ] At least 1 payment record exists (pending)
 - [ ] At least 1 expense record exists
+- [ ] At least 3 financial accounts exist (Bank, E-Wallet, Cash types)
+- [ ] At least 1 account transfer exists
 
 ### Test Data Cleanup
 
