@@ -131,10 +131,10 @@ export function MainLayout({ children }: MainLayoutProps) {
   };
 
   return (
-    <div className="bg-background flex min-h-screen flex-col md:flex-row">
+    <div className="bg-background flex h-dvh flex-col overflow-hidden md:flex-row">
       {/* Desktop Sidebar */}
-      <aside className="bg-card hidden w-64 border-r md:flex lg:w-72">
-        <div className="flex w-full flex-col">
+      <aside className="bg-card hidden h-full w-64 flex-shrink-0 border-r md:flex lg:w-72">
+        <div className="flex h-full w-full flex-col overflow-hidden">
           {/* Logo */}
           <div className="border-b p-4 lg:p-6">
             <h1 className="text-xl font-bold lg:text-2xl">Okaeri Resort</h1>
@@ -142,7 +142,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 space-y-1 p-3 lg:p-4">
+          <nav className="flex-1 space-y-1 overflow-y-auto p-3 lg:p-4">
             {navItems.map((item) => (
               <NavLink key={item.href} item={item} />
             ))}
@@ -330,8 +330,8 @@ export function MainLayout({ children }: MainLayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-hidden md:overflow-auto">
-        <div className="h-full overflow-auto">
+      <main className="flex-1 overflow-hidden">
+        <div className="h-full overflow-y-auto">
           <div className="container mx-auto max-w-none p-4 pb-20 md:p-6 md:pb-6">{children}</div>
         </div>
       </main>
