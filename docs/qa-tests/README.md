@@ -2,7 +2,7 @@
 
 **Okaeri Resort Management System**
 **Version**: 1.0
-**Last Updated**: 2026-01-30
+**Last Updated**: 2026-02-02
 
 ## Overview
 
@@ -78,7 +78,10 @@ docs/qa-tests/
     ├── concurrent-booking-conflict.md           # INT-003: Race condition handling
     ├── payment-booking-sync.md                  # INT-004: Payment-booking sync
     ├── audit-trail-completeness.md              # INT-005: Audit logging verification
-    └── account-balance-calculation.md           # INT-006: Financial balance accuracy
+    ├── account-balance-calculation.md           # INT-006: Financial balance accuracy
+    ├── guest-booking-approval-flow.md           # INT-007: Guest booking → approval E2E
+    ├── guest-booking-rejection-flow.md          # INT-008: Guest booking → rejection E2E
+    └── guest-booking-calendar-sync.md           # INT-009: Calendar sync verification
 ```
 
 ## Test Inventory Summary
@@ -89,8 +92,8 @@ docs/qa-tests/
 | 02-Staff | 5 tests | 35 min | High |
 | 03-Admin | 6 tests | 60 min | Critical |
 | 04-Owner | 7 tests | 82 min | High |
-| 05-Integration | 6 tests | 115 min | Critical |
-| **Total** | **27 tests** | **~5.3 hrs** | |
+| 05-Integration | 9 tests | 173 min | Critical |
+| **Total** | **30 tests** | **~6.3 hrs** | |
 
 ## Permission Matrix
 
@@ -134,6 +137,9 @@ docs/qa-tests/
 |-------|-------------|--------------|
 | `/admin/dashboard` | Dashboard with analytics | Staff |
 | `/admin/bookings` | Booking list & management | Staff (view) / Admin (edit) |
+| `/admin/bookings/queue` | Pending bookings queue | Admin |
+| `/admin/bookings/{id}/assign-units` | Unit assignment for booking | Admin |
+| `/admin/verify-payment/{id}` | Payment verification page | Admin |
 | `/admin/guests` | Guest list & management | Staff (view) / Admin (edit) |
 | `/admin/payments` | Payment list & verification | Staff (view) / Admin (verify) |
 | `/admin/expenses` | Expense tracking | Admin (view) / Owner (manage) |
