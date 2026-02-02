@@ -152,12 +152,12 @@ export async function onRequest(context: {
       },
     });
 
-    // Generate unique file path
-    // Format: payment-proofs/{booking_reference}_{timestamp}.{extension}
+    // Generate unique file path within the bucket
+    // Format: {booking_reference}_{timestamp}.{extension}
     const fileExtension = file_name.split(".").pop() || "jpg";
     const timestamp = Date.now();
     const uniqueFileName = `${booking_reference}_${timestamp}.${fileExtension}`;
-    const filePath = `payment-proofs/${uniqueFileName}`;
+    const filePath = uniqueFileName;
 
     // Generate signed upload URL
     // This URL allows the client to upload directly to Supabase Storage
