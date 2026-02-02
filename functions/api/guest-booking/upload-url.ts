@@ -162,7 +162,7 @@ export async function onRequest(context: {
     // Generate signed upload URL
     // This URL allows the client to upload directly to Supabase Storage
     const { data, error } = await supabase.storage
-      .from("booking-files")
+      .from("payment-proofs")
       .createSignedUploadUrl(filePath, {
         upsert: false, // Don't allow overwriting existing files
       });
