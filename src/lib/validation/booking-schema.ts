@@ -96,8 +96,12 @@ export const multiUnitBookingSchema = z
       .optional()
       .nullable()
       .refine(
-        (val) => !val || val === "" || z.string().url().safeParse(val).success,
-        "Invalid payment proof URL"
+        (val) =>
+          !val ||
+          val === "" ||
+          z.string().url().safeParse(val).success || // Full URL (legacy)
+          /^[\w-]+_\d+\.(jpg|jpeg|png|pdf)$/i.test(val), // File path from upload (e.g., "TEMP-abc123_1234567890.jpg")
+        "Invalid payment proof"
       ),
 
     // Security and Compliance
