@@ -191,7 +191,23 @@ export function MultiUnitGuestBookingForm() {
     setSubmitError(null);
 
     try {
-      if (!turnstileToken) {
+      // FALLBACK: Sync token from native Turnstile widget if React state is empty
+      // This handles the case where token expires and user re-verifies, but
+      // the @marsidev/react-turnstile callback doesn't fire reliably
+      let effectiveToken = turnstileToken;
+      if (!effectiveToken && typeof window !== "undefined" && window.turnstile) {
+        const widgetToken = window.turnstile.getResponse();
+        if (widgetToken) {
+          setTurnstileToken(widgetToken);
+          form.setValue("turnstile_token", widgetToken, {
+            shouldValidate: true,
+            shouldDirty: true,
+          });
+          effectiveToken = widgetToken;
+        }
+      }
+
+      if (!effectiveToken) {
         setSubmitError("Please complete the security verification");
         return;
       }
@@ -205,7 +221,7 @@ export function MultiUnitGuestBookingForm() {
         check_out: data.check_out.toISOString(),
         // Convert null to undefined for payment_proof_url (API expects undefined, not null)
         payment_proof_url: data.payment_proof_url || undefined,
-        turnstile_token: turnstileToken,
+        turnstile_token: effectiveToken,
         idempotency_key: idempotencyKey,
       };
 
