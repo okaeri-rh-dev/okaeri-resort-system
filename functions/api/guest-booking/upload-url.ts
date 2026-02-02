@@ -14,11 +14,12 @@
  */
 
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
-import { createClient } from "@supabase/supabase-js";
+
+import { createSupabaseAdmin } from "@/lib/supabase-admin";
 
 interface Env {
   SUPABASE_URL: string;
-  SUPABASE_ANON_KEY: string;
+  SUPABASE_SERVICE_ROLE_KEY: string;
 }
 
 interface UploadUrlRequest {
@@ -144,8 +145,8 @@ export async function onRequest(context: {
       );
     }
 
-    // Initialize Supabase client
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+    // Initialize Supabase admin client (requires SERVICE_ROLE_KEY for storage operations)
+    const supabase = createSupabaseAdmin(env);
 
     // Generate unique file path
     // Format: payment-proofs/{booking_reference}_{timestamp}.{extension}
