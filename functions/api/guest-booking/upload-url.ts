@@ -168,7 +168,7 @@ export async function onRequest(context: {
       return new Response(
         JSON.stringify({
           success: false,
-          error: "Failed to generate upload URL. Please try again.",
+          error: `Storage error: ${error.message || "Failed to generate upload URL"}`,
         } as UploadUrlResponse),
         {
           status: 500,
@@ -192,10 +192,11 @@ export async function onRequest(context: {
     );
   } catch (error) {
     console.error("[UPLOAD_URL] Unexpected error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({
         success: false,
-        error: "Internal server error",
+        error: `Server error: ${errorMessage}`,
       } as UploadUrlResponse),
       {
         status: 500,
