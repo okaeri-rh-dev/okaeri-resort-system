@@ -10,6 +10,8 @@ import {
   type MultiUnitBookingResponse,
 } from "@/types/guest-booking-multi-unit";
 
+import { calculateBookingPrice } from "../../lib/pricing";
+
 /**
  * POST /api/guest-booking/multi-unit
  *
@@ -220,34 +222,82 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // Note: We do NOT validate availability (whether units are currently booked)
     // Admin handles availability during unit assignment
 
-    // 6. Call PostgreSQL pricing function (AUTHORITATIVE)
+    // 6. Calculate pricing using Workers pricing library
+    // Calculate for each unit and aggregate
+    const checkIn = new Date(data.check_in);
+    const checkOut = new Date(data.check_out);
+
     const unitRequestsJson = data.unit_requests.map((r) => ({
       guests_per_unit: r.guests_per_unit,
     }));
 
-    const { data: pricingResult, error: pricingError } = await supabase.rpc(
-      "calculate_booking_pricing",
-      {
-        p_unit_requests: unitRequestsJson,
-        p_check_in: data.check_in,
-        p_check_out: data.check_out,
-      }
-    );
+    try {
+      // Calculate pricing for each unit separately
+      const unitPricingResults = await Promise.all(
+        data.unit_requests.map((unitRequest) =>
+          calculateBookingPrice(supabase, {
+            checkIn,
+            checkOut,
+            guestCount: unitRequest.guests_per_unit,
+          })
+        )
+      );
 
-    if (pricingError || !pricingResult) {
+      // Aggregate pricing across all units
+      const aggregatedPricing = {
+        nights: unitPricingResults[0]?.nights || 0,
+        base_total: unitPricingResults.reduce((sum, p) => sum + p.subtotal, 0),
+        weekend_surcharge: unitPricingResults.reduce((sum, p) => {
+          // Calculate weekend surcharge from nightly breakdown
+          const weekendTotal = p.nightlyBreakdown
+            .filter((n) => n.isWeekend)
+            .reduce((s, n) => s + (n.finalRate - n.baseRate), 0);
+          return sum + weekendTotal;
+        }, 0),
+        extra_person_fees: unitPricingResults.reduce((sum, p) => sum + p.extraPersonTotal, 0),
+        subtotal: unitPricingResults.reduce((sum, p) => sum + p.subtotal + p.extraPersonTotal, 0),
+        total: unitPricingResults.reduce((sum, p) => sum + p.total, 0),
+        downpayment_required: unitPricingResults.reduce((sum, p) => sum + p.downpayment, 0),
+        currency: unitPricingResults[0]?.currency || "PHP",
+        // Discounts not implemented in pricing lib - will return null
+        discount: null as { percent: number; amount: number; rule_name: string } | null,
+        // Store breakdown per unit for transparency
+        unit_breakdown: unitPricingResults.map((p, i) => ({
+          unit_index: i + 1,
+          guests: data.unit_requests[i].guests_per_unit,
+          subtotal: p.subtotal,
+          extra_person_fees: p.extraPersonTotal,
+          total: p.total,
+          downpayment: p.downpayment,
+        })),
+      };
+
+      if (aggregatedPricing.total <= 0) {
+        console.error("[PRICING] Invalid total calculated:", aggregatedPricing.total);
+        return Response.json(
+          {
+            success: false,
+            error: "Pricing calculation failed",
+            error_code: ERROR_CODES.DATABASE_ERROR,
+            details: "Invalid total amount calculated",
+          },
+          { status: 500, headers: corsHeaders }
+        );
+      }
+
+      var pricing = aggregatedPricing;
+    } catch (pricingError: unknown) {
       console.error("[PRICING] Error:", pricingError);
       return Response.json(
         {
           success: false,
           error: "Pricing calculation failed",
           error_code: ERROR_CODES.DATABASE_ERROR,
-          details: pricingError?.message,
+          details: pricingError instanceof Error ? pricingError.message : "Unknown pricing error",
         },
         { status: 500, headers: corsHeaders }
       );
     }
-
-    const pricing = pricingResult;
 
     // 7. Sanitize inputs (Worker-compatible sanitization)
     const sanitizedData = {

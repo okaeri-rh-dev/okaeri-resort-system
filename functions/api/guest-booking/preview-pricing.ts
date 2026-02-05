@@ -4,6 +4,8 @@ import { createClient } from "@supabase/supabase-js";
 import { checkKVRateLimit, getClientIp } from "@/lib/kv-rate-limit";
 import { ERROR_CODES } from "@/types/guest-booking-multi-unit";
 
+import { calculateBookingPrice } from "../../lib/pricing";
+
 /**
  * POST /api/guest-booking/preview-pricing
  *
@@ -102,34 +104,68 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       },
     });
 
-    // Call PostgreSQL pricing function (AUTHORITATIVE)
-    const { data: pricing, error } = await supabase.rpc("calculate_booking_pricing", {
-      p_unit_requests: unit_requests,
-      p_check_in: check_in,
-      p_check_out: check_out,
-    });
+    // Calculate pricing using Workers pricing library
+    const checkIn = new Date(check_in);
+    const checkOut = new Date(check_out);
 
-    if (error) {
+    try {
+      // Calculate pricing for each unit separately
+      const unitPricingResults = await Promise.all(
+        unit_requests.map((unitRequest: { guests_per_unit: number }) =>
+          calculateBookingPrice(supabase, {
+            checkIn,
+            checkOut,
+            guestCount: unitRequest.guests_per_unit,
+          })
+        )
+      );
+
+      // Aggregate pricing across all units
+      const pricing = {
+        nights: unitPricingResults[0]?.nights || 0,
+        base_total: unitPricingResults.reduce((sum, p) => sum + p.subtotal, 0),
+        weekend_surcharge: unitPricingResults.reduce((sum, p) => {
+          const weekendTotal = p.nightlyBreakdown
+            .filter((n) => n.isWeekend)
+            .reduce((s, n) => s + (n.finalRate - n.baseRate), 0);
+          return sum + weekendTotal;
+        }, 0),
+        extra_person_fees: unitPricingResults.reduce((sum, p) => sum + p.extraPersonTotal, 0),
+        subtotal: unitPricingResults.reduce((sum, p) => sum + p.subtotal + p.extraPersonTotal, 0),
+        total: unitPricingResults.reduce((sum, p) => sum + p.total, 0),
+        downpayment_required: unitPricingResults.reduce((sum, p) => sum + p.downpayment, 0),
+        currency: unitPricingResults[0]?.currency || "PHP",
+        discount: null,
+        unit_breakdown: unitPricingResults.map((p, i) => ({
+          unit_index: i + 1,
+          guests: unit_requests[i].guests_per_unit,
+          subtotal: p.subtotal,
+          extra_person_fees: p.extraPersonTotal,
+          total: p.total,
+          downpayment: p.downpayment,
+        })),
+      };
+
+      return Response.json(
+        {
+          success: true,
+          pricing: pricing,
+          _note: "PREVIEW ONLY - Final pricing calculated at booking submission",
+        },
+        { status: 200, headers: corsHeaders }
+      );
+    } catch (error: unknown) {
       console.error("[PREVIEW] Pricing error:", error);
       return Response.json(
         {
           success: false,
           error: "Pricing calculation failed",
           error_code: ERROR_CODES.DATABASE_ERROR,
-          details: error.message,
+          details: error instanceof Error ? error.message : "Unknown pricing error",
         },
         { status: 500, headers: corsHeaders }
       );
     }
-
-    return Response.json(
-      {
-        success: true,
-        pricing: pricing,
-        _note: "PREVIEW ONLY - Final pricing calculated at booking submission",
-      },
-      { status: 200, headers: corsHeaders }
-    );
   } catch (error: unknown) {
     console.error("[PREVIEW] Unexpected error:", error);
     return Response.json(
