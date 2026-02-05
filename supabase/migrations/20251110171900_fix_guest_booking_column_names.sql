@@ -1,5 +1,8 @@
--- Fix column name mismatch in create_guest_booking function
--- The function was using check_in_date/check_out_date but the table has check_in/check_out
+-- Fix column name mismatches in create_guest_booking function
+-- 1. Bookings table: was using check_in_date/check_out_date but table has check_in/check_out
+-- 2. Guests table: was using name/contact_number but table has guest_name/phone_number
+-- 3. Bookings table: removed unit_id (doesn't exist), added guest_name/contact_number/email (required)
+-- 4. Bookings table: renamed notes to internal_notes, added is_guest_booking/is_multi_unit flags
 
 CREATE OR REPLACE FUNCTION public.create_guest_booking(
   p_turnstile_token TEXT,
@@ -47,9 +50,9 @@ BEGIN
     -- Create new guest record
     INSERT INTO public.guests (
       guest_id,
-      name,
+      guest_name,
       email,
-      contact_number,
+      phone_number,
       nationality,
       address,
       date_of_birth,
@@ -59,9 +62,9 @@ BEGIN
       updated_at
     ) VALUES (
       gen_random_uuid(),
-      p_guest_data->>'name',
+      p_guest_data->>'guest_name',
       p_guest_data->>'email',
-      p_guest_data->>'contact_number',
+      p_guest_data->>'phone_number',
       p_guest_data->>'nationality',
       p_guest_data->>'address',
       (p_guest_data->>'date_of_birth')::DATE,
@@ -81,9 +84,9 @@ BEGIN
     IF v_guest_id IS NULL THEN
       INSERT INTO public.guests (
         guest_id,
-        name,
+        guest_name,
         email,
-        contact_number,
+        phone_number,
         created_at,
         updated_at
       ) VALUES (
@@ -97,14 +100,16 @@ BEGIN
     END IF;
   END IF;
 
-  -- Insert booking with proper column names (check_in, check_out, not check_in_date, check_out_date)
+  -- Insert booking with proper column names matching actual schema
   INSERT INTO public.bookings (
     booking_id,
     booking_reference,
     guest_id,
-    unit_id,
-    check_in,  -- Fixed: was check_in_date
-    check_out, -- Fixed: was check_out_date
+    guest_name,
+    contact_number,
+    email,
+    check_in,
+    check_out,
     num_guests,
     special_requests,
     total_amount,
@@ -114,19 +119,25 @@ BEGIN
     updated_at,
     payment_method,
     payment_proof_url,
-    notes
+    internal_notes,
+    is_guest_booking,
+    is_multi_unit,
+    unit_count,
+    unit_assignment_status
   ) VALUES (
     gen_random_uuid(),
     p_booking_data->>'booking_reference',
     v_guest_id,
-    NULL, -- Unit will be assigned by admin later
-    (p_booking_data->>'check_in')::TIMESTAMPTZ,  -- Fixed: was check_in_date
-    (p_booking_data->>'check_out')::TIMESTAMPTZ, -- Fixed: was check_out_date
+    p_booking_data->>'guest_name',
+    p_booking_data->>'phone_number',
+    v_email,
+    (p_booking_data->>'check_in')::TIMESTAMPTZ,
+    (p_booking_data->>'check_out')::TIMESTAMPTZ,
     v_total_guests,
     p_booking_data->>'special_requests',
-    0, -- Total amount calculated separately
-    'pending',
-    'pending', -- Admin will confirm after review
+    COALESCE((p_booking_data->>'total_amount')::NUMERIC, 0),
+    'Pending',
+    'Pending',
     NOW(),
     NOW(),
     p_booking_data->>'payment_method',
@@ -136,7 +147,11 @@ BEGIN
       'unit_requests', p_unit_requests,
       'unit_count', v_unit_count,
       'created_at', NOW()
-    )::TEXT
+    )::TEXT,
+    TRUE,
+    v_unit_count > 1,
+    v_unit_count,
+    'pending'
   ) RETURNING booking_id INTO v_booking_id;
 
   -- Return success with booking details
@@ -181,4 +196,4 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Add comment explaining the fix (must specify full signature for overloaded functions)
 COMMENT ON FUNCTION public.create_guest_booking(TEXT, JSONB, JSONB, JSONB) IS
-'Creates a guest booking with multi-unit support. Fixed column names to use check_in/check_out instead of check_in_date/check_out_date to match the actual table schema.';
+'Creates a guest booking with multi-unit support. Fixed column names: check_in/check_out (not check_in_date/check_out_date) for bookings table, and guest_name/phone_number (not name/contact_number) for guests table.';
