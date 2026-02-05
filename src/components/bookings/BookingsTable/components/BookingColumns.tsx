@@ -1,19 +1,15 @@
 import { useMemo } from "react";
 
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { createColumnHelper, type Header } from "@tanstack/react-table";
 
 import { PricingStatusIcon } from "@/components/pricing/PricingStatusBadge";
-import {
-  ActionMenu,
-  formatCurrency,
-  formatPhoneNumber,
-  formatTableDate,
-  SortableHeader,
-  StatusBadge,
-} from "@/components/tables/utils";
+import { formatCurrency, formatPhoneNumber, formatTableDate } from "@/components/tables/formatters";
+import { SortableHeader, StatusBadge } from "@/components/tables/utils";
 import { Badge } from "@/components/ui/badge";
 import type { Booking, BookingStatus } from "@/types";
+
+import { BookingActionsCell } from "./BookingActionsCell";
 
 const columnHelper = createColumnHelper<Booking>();
 
@@ -188,81 +184,3 @@ export const useBookingColumns = ({
     [updateBookingStatus, cancelBooking, deleteBooking, handleUploadPayment]
   );
 };
-
-// Separate component to have access to router hooks
-function BookingActionsCell({
-  booking,
-  updateBookingStatus,
-  cancelBooking,
-  deleteBooking,
-  handleUploadPayment,
-}: {
-  booking: Booking;
-  updateBookingStatus: unknown;
-  cancelBooking: unknown;
-  deleteBooking: unknown;
-  handleUploadPayment: (booking: Booking) => void;
-}) {
-  const navigate = useNavigate();
-
-  const actions = [
-    {
-      label: "Edit Booking",
-      onClick: () => {
-        navigate({
-          to: "/admin/bookings/$bookingId/edit",
-          params: { bookingId: booking.booking_id },
-        });
-      },
-    },
-    ...(booking.payment_status !== "Completed"
-      ? [
-          {
-            label: "Upload Payment",
-            onClick: () => handleUploadPayment(booking),
-          },
-        ]
-      : []),
-    ...(booking.booking_status === "Pending"
-      ? [
-          {
-            label: "Confirm",
-            onClick: () => {
-              (
-                updateBookingStatus as MutationObject<{ bookingId: string; status: BookingStatus }>
-              ).mutate({
-                bookingId: booking.booking_id,
-                status: "Confirmed" as BookingStatus,
-              });
-            },
-          },
-        ]
-      : []),
-    ...(booking.booking_status !== "Cancelled"
-      ? [
-          {
-            label: "Cancel",
-            onClick: () => {
-              (cancelBooking as MutationObject<string>).mutate(booking.booking_id);
-            },
-            variant: "destructive" as const,
-          },
-        ]
-      : []),
-    {
-      label: "Delete",
-      onClick: () => {
-        if (
-          confirm(
-            `Are you sure you want to permanently delete booking "${booking.booking_reference}"? This action cannot be undone.`
-          )
-        ) {
-          (deleteBooking as MutationObject<string>).mutate(booking.booking_id);
-        }
-      },
-      variant: "destructive" as const,
-    },
-  ];
-
-  return <ActionMenu actions={actions} />;
-}

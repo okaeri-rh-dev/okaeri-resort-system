@@ -38,11 +38,10 @@ import {
 } from "@/stores/usePaymentStore";
 import type { Payment } from "@/types";
 
+import { formatCurrency, formatTableDate } from "../tables/formatters";
 import {
   ActionMenu,
   FilterPopover,
-  formatCurrency,
-  formatTableDate,
   MobileCard,
   MobileCardRow,
   ResponsiveTable,

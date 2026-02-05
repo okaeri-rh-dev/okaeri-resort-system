@@ -85,8 +85,9 @@ function RouteErrorFallback({ title }: { title?: string }) {
 
 /**
  * Higher-order component to wrap any component with error boundary
+ * Note: Kept as internal function to satisfy React Fast Refresh requirements
  */
-export function withRouteWrapper<P extends object>(
+function _withRouteWrapper<P extends object>(
   Component: React.ComponentType<P>,
   options?: Omit<RouteWrapperProps, "children">
 ) {

@@ -21,7 +21,7 @@ interface LoadingState {
 
 const LoadingContext = createContext<LoadingState | undefined>(undefined);
 
-export const useLoading = () => {
+const useLoading = () => {
   const context = useContext(LoadingContext);
   if (context === undefined) {
     throw new Error("useLoading must be used within a LoadingProvider");
@@ -93,7 +93,7 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
 /**
  * Hook to integrate TanStack Query loading states with our skeleton system
  */
-export const useQueryLoading = () => {
+const _useQueryLoading = () => {
   const { setGlobalLoading } = useLoading();
 
   const startLoading = (message?: string) => {
@@ -153,7 +153,7 @@ interface PerformanceMetrics {
   totalLoadTime: number;
 }
 
-export const usePerformanceMonitoring = () => {
+const _usePerformanceMonitoring = () => {
   const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
 
   const startNavigation = () => {
@@ -192,7 +192,7 @@ interface NetworkCondition {
   rtt: number;
 }
 
-export const useAdaptiveLoading = () => {
+const _useAdaptiveLoading = () => {
   const [networkCondition, setNetworkCondition] = useState<NetworkCondition>({
     effectiveType: undefined,
     downlink: 0,

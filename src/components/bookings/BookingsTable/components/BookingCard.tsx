@@ -3,13 +3,8 @@ import React from "react";
 import { Link } from "@tanstack/react-router";
 import { Edit, Eye, Upload, X } from "lucide-react";
 
-import {
-  formatCurrency,
-  formatTableDate,
-  MobileCard,
-  MobileCardRow,
-  StatusBadge,
-} from "@/components/tables/utils";
+import { formatCurrency, formatTableDate } from "@/components/tables/formatters";
+import { MobileCard, MobileCardRow, StatusBadge } from "@/components/tables/utils";
 import { Button } from "@/components/ui/button";
 
 import type { BookingCardProps } from "../types";

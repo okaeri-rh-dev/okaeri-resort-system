@@ -13,8 +13,16 @@ import { usePricingCalculation } from "@/hooks/usePricingCalculation";
 import type { MultiUnitPricingResult, PricingResult } from "@/types/api/pricing";
 import type { UnitRequest } from "@/types/guest-booking-multi-unit";
 
+/**
+ * Extended UnitRequest that may include a unit_id when provided by the form.
+ * The base UnitRequest only has guests_per_unit, but forms may pass unit_id.
+ */
+interface UnitRequestWithOptionalId extends UnitRequest {
+  unit_id?: string;
+}
+
 export interface PaymentSummaryProps {
-  unitRequests: UnitRequest[];
+  unitRequests: UnitRequestWithOptionalId[];
   checkIn: Date | undefined;
   checkOut: Date | undefined;
 }
@@ -57,24 +65,35 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
       // Build pricing request based on what data we have
       if (unitRequests.length > 1) {
         // Multi-unit booking - map requests properly (don't send empty strings for unit_id)
-        const unitRequestsForApi = unitRequests.map((req: any) => ({
-          ...(req.unit_id ? { unit_id: req.unit_id } : {}), // Only include unit_id if present
-          guest_count: req.guests_per_unit,
-        }));
+        const unitRequestsForApi = unitRequests
+          .filter((req): req is UnitRequestWithOptionalId & { unit_id: string } => !!req.unit_id)
+          .map((req) => ({
+            unit_id: req.unit_id,
+            guest_count: req.guests_per_unit,
+          }));
 
-        calculatePricing.mutate({
-          check_in: checkInStr,
-          check_out: checkOutStr,
-          guest_count: totalGuests, // Include total at top level
-          unit_requests: unitRequestsForApi as any,
-        });
-      } else if ((unitRequests[0] as any)?.unit_id) {
+        // If no unit IDs present, build without unit_requests
+        if (unitRequestsForApi.length > 0) {
+          calculatePricing.mutate({
+            check_in: checkInStr,
+            check_out: checkOutStr,
+            guest_count: totalGuests, // Include total at top level
+            unit_requests: unitRequestsForApi,
+          });
+        } else {
+          calculatePricing.mutate({
+            check_in: checkInStr,
+            check_out: checkOutStr,
+            guest_count: totalGuests,
+          });
+        }
+      } else if (unitRequests[0]?.unit_id) {
         // Single unit with specific unit ID
         calculatePricing.mutate({
           check_in: checkInStr,
           check_out: checkOutStr,
           guest_count: totalGuests,
-          unit_id: (unitRequests[0] as any).unit_id,
+          unit_id: unitRequests[0].unit_id,
         });
       } else {
         // Single unit, no specific unit - use simple guest count pricing

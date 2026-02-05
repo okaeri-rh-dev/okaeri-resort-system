@@ -166,5 +166,4 @@ export {
   CardContent,
   StatsCard,
   FeatureCard,
-  cardVariants,
 };

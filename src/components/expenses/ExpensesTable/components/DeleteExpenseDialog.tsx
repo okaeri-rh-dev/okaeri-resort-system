@@ -2,7 +2,7 @@ import React from "react";
 
 import { Trash2 } from "lucide-react";
 
-import { formatCurrency } from "@/components/tables/utils";
+import { formatCurrency } from "@/components/tables/formatters";
 import {
   AlertDialog,
   AlertDialogAction,

@@ -8,38 +8,30 @@
  * - Monitor workflow transitions
  */
 
-import { useCallback, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-import { db, handleSupabaseError, supabase } from "@/lib/supabase";
+import { handleSupabaseError, supabase } from "@/lib/supabase";
 import { useSearchStore } from "@/stores/useSearchStore";
-import { useWorkflowStore } from "@/stores/useWorkflowStore";
 import type { Booking, BookingStatus } from "@/types";
-import {
-  DateRangeFilterBuilder,
-  executeFilters,
-  FilterPresets,
-  StatusFilterBuilder,
-  WorkflowStateFilterBuilder,
-} from "@/utils/filter-builder";
-import { processSearchResults } from "@/utils/search-filter";
+import { executeFilters, FilterPresets } from "@/utils/filter-builder";
 
 // ============================================
 // TYPES
 // ============================================
 
+interface WorkflowStateInfo {
+  currentState: string;
+  pendingActions: string[];
+  overdueActions: string[];
+  automatedTriggers: string[];
+  lastTransition?: Date;
+  nextScheduledAction?: Date;
+  costEstimate?: number;
+}
+
 interface WorkflowSearchResult {
   booking: Booking;
-  workflowState?: {
-    currentState: string;
-    pendingActions: string[];
-    overdueActions: string[];
-    automatedTriggers: string[];
-    lastTransition?: Date;
-    nextScheduledAction?: Date;
-    costEstimate?: number;
-  };
+  workflowState?: WorkflowStateInfo;
   score: number;
   urgency: "high" | "medium" | "low";
   actionRequired: boolean;
@@ -67,7 +59,7 @@ export function useWorkflowSearch(searchTerm: string = "", options: WorkflowSear
   } = options;
 
   const { workflowFilter, activeFilters } = useSearchStore();
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
 
   return useQuery({
     queryKey: [
@@ -541,7 +533,10 @@ export function useWorkflowMetricsSearch(
 // HELPER FUNCTIONS
 // ============================================
 
-function calculateUrgency(booking: Booking, workflowState?: any): "high" | "medium" | "low" {
+function calculateUrgency(
+  booking: Booking,
+  workflowState?: WorkflowStateInfo
+): "high" | "medium" | "low" {
   const now = new Date();
   const checkIn = new Date(booking.check_in);
   const checkOut = new Date(booking.check_out);
@@ -575,7 +570,7 @@ function calculateUrgency(booking: Booking, workflowState?: any): "high" | "medi
   return "low";
 }
 
-function isActionRequired(booking: Booking, workflowState?: any): boolean {
+function isActionRequired(booking: Booking, workflowState?: WorkflowStateInfo): boolean {
   if (workflowState?.pendingActions?.length > 0) {
     return true;
   }
@@ -600,7 +595,7 @@ function isActionRequired(booking: Booking, workflowState?: any): boolean {
 
 function calculateWorkflowScore(
   booking: Booking,
-  workflowState?: any,
+  workflowState?: WorkflowStateInfo,
   searchTerm?: string
 ): number {
   let score = 0;

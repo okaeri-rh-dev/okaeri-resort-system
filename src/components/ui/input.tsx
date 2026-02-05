@@ -360,4 +360,4 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
 );
 NumberInput.displayName = "NumberInput";
 
-export { Input, CurrencyInput, SearchInput, PhoneInput, NumberInput, inputVariants };
+export { Input, CurrencyInput, SearchInput, PhoneInput, NumberInput };

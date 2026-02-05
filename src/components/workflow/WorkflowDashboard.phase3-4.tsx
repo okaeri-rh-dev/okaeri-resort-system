@@ -13,11 +13,9 @@ import {
   Activity,
   AlertCircle,
   AlertTriangle,
-  BarChart3,
   CheckCircle,
   Clock,
   DollarSign,
-  Filter,
   Play,
   RefreshCw,
   Settings,
@@ -38,12 +36,67 @@ import {
   useProcessWorkflowBatch,
 } from "@/stores/useBookingStore";
 import {
-  useProcessBatchWorkflows,
   useWorkflowCostMonitoring,
   useWorkflowExecutionHistory,
   useWorkflowStore,
   useWorkflowSummary,
 } from "@/stores/useWorkflowStore";
+
+// ============================================
+// DATA INTERFACES (for tab components)
+// ============================================
+
+interface WorkflowSummaryData {
+  totalBookings: number;
+  pendingWorkflows: number;
+  completedToday: number;
+  automationRate: number;
+}
+
+interface WorkflowMetricsData {
+  totalExecutions: number;
+  successfulExecutions: number;
+  failedExecutions: number;
+  averageExecutionTime: number;
+  totalCostSpent: number;
+  automatedTransitions: number;
+  manualTransitions: number;
+}
+
+interface BookingAttention {
+  booking_id: string;
+  booking_reference: string;
+  guest_name: string;
+  check_in: string;
+  check_out: string;
+  booking_status: string;
+  payment_status: string;
+}
+
+interface CostMonitoringData {
+  dailyCostUsage: number;
+  dailyLimit: number;
+  monthlyCostUsage: number;
+  monthlyLimit: number;
+}
+
+interface ExecutionMetricsData {
+  totalExecutions: number;
+  successfulExecutions: number;
+  failedExecutions: number;
+  averageExecutionTime: number;
+  totalCostSpent: number;
+  automatedTransitions: number;
+  manualTransitions: number;
+}
+
+interface ExecutionHistoryEvent {
+  eventId: string;
+  eventType: string;
+  timestamp: string;
+  bookingId: string;
+  description: string;
+}
 
 // ============================================
 // COMPONENT INTERFACES
@@ -66,10 +119,11 @@ interface MetricCardProps {
   status?: "success" | "warning" | "danger" | "info";
 }
 
-interface ExecutionRowProps {
-  execution: any;
-  onViewDetails: (executionId: string) => void;
-}
+// Unused interface - kept for future implementation
+// interface ExecutionRowProps {
+//   execution: WorkflowExecution;
+//   onViewDetails: (executionId: string) => void;
+// }
 
 // ============================================
 // MAIN DASHBOARD COMPONENT
@@ -235,14 +289,14 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
 // ============================================
 
 const OverviewTab: React.FC<{
-  workflowSummary: any;
-  workflowMetrics: any;
-  bookingsNeedingAttention: any;
-  costMonitoring: any;
-  executionMetrics: any;
+  workflowSummary: WorkflowSummaryData;
+  workflowMetrics: WorkflowMetricsData;
+  bookingsNeedingAttention: BookingAttention[];
+  costMonitoring: CostMonitoringData;
+  executionMetrics: ExecutionMetricsData;
 }> = ({
   workflowSummary,
-  workflowMetrics,
+  workflowMetrics: _workflowMetrics,
   bookingsNeedingAttention,
   costMonitoring,
   executionMetrics,
@@ -295,7 +349,7 @@ const OverviewTab: React.FC<{
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {bookingsNeedingAttention.slice(0, 5).map((booking: any) => (
+              {bookingsNeedingAttention.slice(0, 5).map((booking) => (
                 <BookingAttentionRow key={booking.booking_id} booking={booking} />
               ))}
               {bookingsNeedingAttention.length > 5 && (
@@ -365,8 +419,8 @@ const OverviewTab: React.FC<{
 };
 
 const MetricsTab: React.FC<{
-  executionMetrics: any;
-  costMonitoring: any;
+  executionMetrics: ExecutionMetricsData;
+  costMonitoring: CostMonitoringData;
 }> = ({ executionMetrics, costMonitoring }) => {
   return (
     <div className="space-y-6">
@@ -437,7 +491,7 @@ const MetricsTab: React.FC<{
 };
 
 const HistoryTab: React.FC<{
-  executionHistory: any[];
+  executionHistory: ExecutionHistoryEvent[];
   isLoading: boolean;
 }> = ({ executionHistory, isLoading }) => {
   if (isLoading) {
@@ -476,7 +530,7 @@ const HistoryTab: React.FC<{
   );
 };
 
-const SettingsTab: React.FC<{ resortId: string }> = ({ resortId }) => {
+const SettingsTab: React.FC<{ resortId: string }> = ({ resortId: _resortId }) => {
   return (
     <div className="space-y-6">
       <Card>
@@ -551,7 +605,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
   );
 };
 
-const BookingAttentionRow: React.FC<{ booking: any }> = ({ booking }) => {
+const BookingAttentionRow: React.FC<{ booking: BookingAttention }> = ({ booking }) => {
   const getAttentionReason = () => {
     const now = new Date();
     const checkIn = new Date(booking.check_in);
@@ -597,7 +651,7 @@ const BookingAttentionRow: React.FC<{ booking: any }> = ({ booking }) => {
   );
 };
 
-const ExecutionHistoryRow: React.FC<{ event: any }> = ({ event }) => {
+const ExecutionHistoryRow: React.FC<{ event: ExecutionHistoryEvent }> = ({ event }) => {
   const getEventIcon = () => {
     switch (event.eventType) {
       case "status_change":

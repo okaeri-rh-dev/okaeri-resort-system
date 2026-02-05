@@ -250,8 +250,9 @@ VirtualizedTable.displayName = "VirtualizedTable";
 
 /**
  * Hook for managing table sorting state
+ * Note: Kept as internal hook to satisfy React Fast Refresh requirements
  */
-export function useTableSort<T>(
+function _useTableSort<T>(
   data: T[],
   defaultSortColumn?: string,
   defaultSortDirection: "asc" | "desc" = "asc"
@@ -290,8 +291,9 @@ export function useTableSort<T>(
 
 /**
  * Hook for managing table pagination
+ * Note: Kept as internal hook to satisfy React Fast Refresh requirements
  */
-export function useTablePagination<T>(data: T[], itemsPerPage = 10) {
+function _useTablePagination<T>(data: T[], itemsPerPage = 10) {
   const [currentPage, setCurrentPage] = React.useState(1);
 
   const paginatedData = useMemo(() => {

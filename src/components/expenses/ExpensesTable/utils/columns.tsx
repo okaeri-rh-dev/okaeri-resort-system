@@ -2,7 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { createColumnHelper, type Header } from "@tanstack/react-table";
 import { Edit2, Eye, MoreHorizontal, Receipt, Trash2 } from "lucide-react";
 
-import { formatCurrency, formatTableDate, SortableHeader } from "@/components/tables/utils";
+import { formatCurrency, formatTableDate } from "@/components/tables/formatters";
+import { SortableHeader } from "@/components/tables/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,18 +22,6 @@ interface ColumnOptions {
   onEditExpense?: (expense: Expense) => void;
   onDelete: (expense: Expense) => void;
 }
-
-// Professional category badge with neutral colors
-const CategoryBadge = ({ category }: { category: string }) => {
-  return (
-    <Badge
-      variant="outline"
-      className="border-neutral-200 bg-neutral-50 text-xs font-medium text-neutral-700"
-    >
-      {category}
-    </Badge>
-  );
-};
 
 export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOptions) {
   return [
@@ -62,7 +51,14 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
           Category
         </SortableHeader>
       ),
-      cell: ({ getValue }) => <CategoryBadge category={getValue()} />,
+      cell: ({ getValue }) => (
+        <Badge
+          variant="outline"
+          className="border-neutral-200 bg-neutral-50 text-xs font-medium text-neutral-700"
+        >
+          {getValue()}
+        </Badge>
+      ),
       size: 180,
     }),
 

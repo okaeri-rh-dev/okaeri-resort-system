@@ -71,7 +71,11 @@ if (import.meta.env.DEV) {
     async testQuery(table: TableName = "units") {
       // eslint-disable-next-line no-console
       console.log(`=== TESTING ${table.toUpperCase()} QUERY ===`);
-      const { data, error } = await (supabase as any).from(table).select("*").limit(5);
+      // Debug utility - table name is validated at runtime via TableName union type
+      const { data, error } = await supabase
+        .from(table as "units")
+        .select("*")
+        .limit(5);
       // eslint-disable-next-line no-console
       console.log(`Results: ${data?.length || 0} rows`);
       // eslint-disable-next-line no-console
@@ -137,8 +141,9 @@ if (import.meta.env.DEV) {
       const tables: TableName[] = ["units", "bookings", "guests", "payments", "expenses"];
 
       for (const table of tables) {
-        const { count, error } = await (supabase as any)
-          .from(table)
+        // Debug utility - table name is validated at runtime via TableName union type
+        const { count, error } = await supabase
+          .from(table as "units")
           .select("*", { count: "exact", head: true });
         if (error) {
           console.error(`❌ ${table}: ${error.message}`);

@@ -15,6 +15,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import type {
+  AdminMultiUnitBookingCreate,
   BookingUnit,
   MultiUnitBooking,
   MultiUnitBookingApiResponse,
@@ -149,7 +150,7 @@ export const useCreateMultiUnitBooking = () => {
     useMultiUnitBookingStore();
 
   return useMutation({
-    mutationFn: async (bookingData: Partial<MultiUnitBooking>) => {
+    mutationFn: async (bookingData: Partial<MultiUnitBooking> | AdminMultiUnitBookingCreate) => {
       if (!isOnline) {
         addToOfflineQueue({ operation: "create", data: bookingData, maxRetries: 3 });
         return bookingData;

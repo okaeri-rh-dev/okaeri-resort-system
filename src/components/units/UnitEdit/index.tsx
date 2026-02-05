@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useLoaderData, useNavigate, useParams } from "@tanstack/react-router";
 import { DollarSign, Info, Save, X } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, type Control, type Resolver } from "react-hook-form";
 
 import { DetailPageLayout, formatCurrency } from "@/components/entity-detail";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -48,7 +48,7 @@ export function UnitEditPage() {
 
   // Initialize form with default values from unit
   const form = useForm<UnitEditWithoutPricingInput>({
-    resolver: zodResolver(unitEditWithoutPricingSchema) as any,
+    resolver: zodResolver(unitEditWithoutPricingSchema) as Resolver<UnitEditWithoutPricingInput>,
     defaultValues: {
       unit_name: unit.unit_name || "",
       unit_code: unit.unit_code || "",
@@ -104,7 +104,7 @@ export function UnitEditPage() {
       ]}
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit) as any} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Basic Information Section */}
           <Card>
             <CardHeader>
@@ -113,7 +113,7 @@ export function UnitEditPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
-                  control={form.control as any}
+                  control={form.control as Control<UnitEditWithoutPricingInput>}
                   name="unit_name"
                   render={({ field }) => (
                     <FormItem>
@@ -127,7 +127,7 @@ export function UnitEditPage() {
                 />
 
                 <FormField
-                  control={form.control as any}
+                  control={form.control as Control<UnitEditWithoutPricingInput>}
                   name="unit_code"
                   render={({ field }) => (
                     <FormItem>
@@ -144,7 +144,7 @@ export function UnitEditPage() {
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
-                  control={form.control as any}
+                  control={form.control as Control<UnitEditWithoutPricingInput>}
                   name="unit_type"
                   render={({ field }) => (
                     <FormItem>
@@ -168,7 +168,7 @@ export function UnitEditPage() {
                 />
 
                 <FormField
-                  control={form.control as any}
+                  control={form.control as Control<UnitEditWithoutPricingInput>}
                   name="max_occupancy"
                   render={({ field }) => (
                     <FormItem>

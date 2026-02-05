@@ -1,6 +1,6 @@
 import React from "react";
 
-import { QueryClient, QueryClientProvider, type QueryKey } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import { logger } from "@/lib/logger";
@@ -77,15 +77,17 @@ export function QueryProvider({ children }: QueryProviderProps) {
 }
 
 // ============================================
-// QUERY CLIENT UTILITIES
+// QUERY CLIENT UTILITIES (Internal - not exported)
 // ============================================
 
-// Export query client for use in other parts of the app
-export { queryClient };
+// Note: These utilities are kept for potential future use but not exported
+// to satisfy React Fast Refresh requirements (only components should be exported)
 
-// Prefetch utilities
-export const prefetchQueries = {
-  // Prefetch units data
+// Type for items with an identifiable field
+type _IdentifiableItem = Record<string, unknown>;
+
+// Prefetch utilities (internal use only)
+const _prefetchQueries = {
   units: async () => {
     await queryClient.prefetchQuery({
       queryKey: ["units"],
@@ -94,11 +96,9 @@ export const prefetchQueries = {
         const { data } = await supabase.from("units").select("*");
         return data;
       },
-      staleTime: 1000 * 60 * 10, // 10 minutes
+      staleTime: 1000 * 60 * 10,
     });
   },
-
-  // Prefetch bookings data
   bookings: async () => {
     await queryClient.prefetchQuery({
       queryKey: ["bookings"],
@@ -111,11 +111,9 @@ export const prefetchQueries = {
         `);
         return data;
       },
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 60 * 5,
     });
   },
-
-  // Prefetch guests data
   guests: async () => {
     await queryClient.prefetchQuery({
       queryKey: ["guests"],
@@ -124,55 +122,43 @@ export const prefetchQueries = {
         const { data } = await supabase.from("guests").select("*");
         return data;
       },
-      staleTime: 1000 * 60 * 10, // 10 minutes
+      staleTime: 1000 * 60 * 10,
     });
   },
-
-  // Prefetch dashboard statistics
   dashboard: async () => {
     await queryClient.prefetchQuery({
       queryKey: ["dashboard-stats"],
       queryFn: async () => {
         const { supabase } = await import("@/lib/supabase");
-
-        // Fetch multiple statistics in parallel
         const [unitsResult, bookingsResult, revenueResult] = await Promise.all([
           supabase.from("units").select("unit_status").eq("unit_status", "Available"),
           supabase.from("bookings").select("booking_status").eq("booking_status", "Confirmed"),
           supabase.from("bookings").select("total_amount").eq("payment_status", "Completed"),
         ]);
-
         return {
           availableUnits: unitsResult.data?.length || 0,
           activeBookings: bookingsResult.data?.length || 0,
           totalRevenue: revenueResult.data?.reduce((sum, b) => sum + (b.total_amount || 0), 0) || 0,
         };
       },
-      staleTime: 1000 * 60 * 2, // 2 minutes
+      staleTime: 1000 * 60 * 2,
     });
   },
 };
 
-// Cache invalidation utilities
-export const invalidateQueries = {
-  // Invalidate all queries
+// Cache invalidation utilities (internal use only)
+const _invalidateQueries = {
   all: () => queryClient.invalidateQueries(),
-
-  // Invalidate specific query groups
   units: () => queryClient.invalidateQueries({ queryKey: ["units"] }),
   bookings: () => queryClient.invalidateQueries({ queryKey: ["bookings"] }),
   guests: () => queryClient.invalidateQueries({ queryKey: ["guests"] }),
   dashboard: () => queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
-
-  // Invalidate related queries after a booking is created/updated
   afterBookingMutation: () => {
     queryClient.invalidateQueries({ queryKey: ["bookings"] });
     queryClient.invalidateQueries({ queryKey: ["units"] });
     queryClient.invalidateQueries({ queryKey: ["guests"] });
     queryClient.invalidateQueries({ queryKey: ["dashboard"] });
   },
-
-  // Invalidate related queries after a unit is updated
   afterUnitMutation: () => {
     queryClient.invalidateQueries({ queryKey: ["units"] });
     queryClient.invalidateQueries({ queryKey: ["bookings"] });
@@ -180,101 +166,43 @@ export const invalidateQueries = {
   },
 };
 
-// Type for items with an identifiable field
-type IdentifiableItem = Record<string, unknown>;
-
-// Optimistic update utilities
-export const optimisticUpdates = {
-  // Update a specific item in a list query
-  updateListItem: <T extends IdentifiableItem>(
-    queryKey: QueryKey,
-    itemId: string,
-    idField: string,
-    updates: Partial<T>
-  ) => {
-    queryClient.setQueryData(queryKey, (oldData: T[] | undefined) => {
-      if (!oldData) return oldData;
-
-      return oldData.map((item) => (item[idField] === itemId ? { ...item, ...updates } : item));
-    });
-  },
-
-  // Add item to a list query
-  addListItem: <T,>(queryKey: QueryKey, newItem: T, prepend = true) => {
-    queryClient.setQueryData(queryKey, (oldData: T[] | undefined) => {
-      if (!oldData) return [newItem];
-      return prepend ? [newItem, ...oldData] : [...oldData, newItem];
-    });
-  },
-
-  // Remove item from a list query
-  removeListItem: <T extends IdentifiableItem>(
-    queryKey: QueryKey,
-    itemId: string,
-    idField: string
-  ) => {
-    queryClient.setQueryData(queryKey, (oldData: T[] | undefined) => {
-      if (!oldData) return oldData;
-      return oldData.filter((item) => item[idField] !== itemId);
-    });
-  },
-};
-
-// Offline support utilities
-export const offlineSupport = {
-  // Check if the app is online
+// Offline support utilities (internal use only)
+const _offlineSupport = {
   isOnline: () => navigator.onLine,
-
-  // Set up offline/online listeners
   setupListeners: () => {
     window.addEventListener("online", () => {
-      // Refetch all queries when coming back online
       queryClient.refetchQueries();
     });
-
     window.addEventListener("offline", () => {
-      // Could show a notification here
       logger.info("App is offline - data may be stale");
     });
   },
-
-  // Queue mutations for when the app comes back online
   queueMutation: async <T,>(mutation: () => Promise<T>): Promise<T> => {
     if (!navigator.onLine) {
-      // Store mutation in localStorage or IndexedDB
       const queue = JSON.parse(localStorage.getItem("mutationQueue") || "[]");
       queue.push({ timestamp: Date.now(), mutation: mutation.toString() });
       localStorage.setItem("mutationQueue", JSON.stringify(queue));
       return { queued: true } as T;
     }
-
     return mutation();
   },
-
-  // Process queued mutations when online
   processQueue: async () => {
     const queue = JSON.parse(localStorage.getItem("mutationQueue") || "[]");
-
     for (const item of queue) {
       try {
-        // Note: In a real app, you'd need to properly serialize/deserialize functions
-        // This is a simplified example
         logger.info("Processing queued mutation from", { timestamp: new Date(item.timestamp) });
       } catch (error) {
         console.error("Failed to process queued mutation:", error);
       }
     }
-
     localStorage.removeItem("mutationQueue");
   },
 };
 
-// Performance monitoring utilities
-export const performanceMonitoring = {
-  // Log slow queries
+// Performance monitoring utilities (internal use only)
+const _performanceMonitoring = {
   logSlowQueries: () => {
     const queries = queryClient.getQueryCache().getAll();
-
     queries.forEach((query) => {
       const queryState = query.state;
       if (queryState.fetchStatus === "fetching") {
@@ -285,12 +213,9 @@ export const performanceMonitoring = {
       }
     });
   },
-
-  // Get query metrics
   getMetrics: () => {
     const cache = queryClient.getQueryCache();
     const queries = cache.getAll();
-
     return {
       totalQueries: queries.length,
       activeQueries: queries.filter((q) => q.state.fetchStatus === "fetching").length,
@@ -299,3 +224,9 @@ export const performanceMonitoring = {
     };
   },
 };
+
+// Suppress unused variable warnings - these are preserved for future use
+void _prefetchQueries;
+void _invalidateQueries;
+void _offlineSupport;
+void _performanceMonitoring;

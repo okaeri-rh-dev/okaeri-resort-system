@@ -62,7 +62,7 @@ import {
 } from "@/lib/validation/multi-unit-booking";
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
-import type { Unit } from "@/types";
+import type { AdminMultiUnitBookingCreate, Unit } from "@/types";
 
 import { MultiUnitPricingSummary } from "./MultiUnitPricingSummary";
 import { MultiUnitSelector } from "./MultiUnitSelector";
@@ -276,7 +276,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
       });
 
       // Create booking with idempotency key
-      const result = await createBooking.mutateAsync({
+      const bookingPayload: AdminMultiUnitBookingCreate = {
         primary_guest: {
           guest_name: data.guest_name,
           email: data.email,
@@ -289,7 +289,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
           num_guests: unit.guest_assignment?.num_guests || unit.base_occupancy,
           guest_assignment: unit.guest_assignment,
           unit_notes: unit.guest_assignment?.special_requests,
-        })) as any,
+        })),
         payment: {
           method: data.payment_method,
           amount: data.payment_amount || getTotalAmount(),
@@ -299,7 +299,8 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
         internal_notes: data.internal_notes,
         source: "web",
         idempotency_key: idempotencyKey,
-      } as any);
+      };
+      const result = await createBooking.mutateAsync(bookingPayload);
 
       toast.success("Booking created successfully!");
       clearDraftBooking();

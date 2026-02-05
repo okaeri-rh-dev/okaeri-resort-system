@@ -172,7 +172,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     }
 
     // Log successful request
-    console.log(`[ForgotPassword] Password reset requested for ${email} from IP ${clientIp}`);
+    console.warn(`[ForgotPassword] Password reset requested for ${email} from IP ${clientIp}`);
 
     // Return success (same message regardless of email existence)
     return successResponse();

@@ -180,7 +180,5 @@ export const UnitsTable = withErrorBoundary(UnitsTableComponent, {
   ),
 }) as React.ComponentType<UnitsTableProps>;
 
-// Re-export types and utilities
+// Types are exported directly from types file when needed externally
 export type { UnitsTableProps } from "./types";
-export { useUnitsTable } from "./hooks/useUnitsTable";
-export { exportUnitsToCSV } from "./utils/export";

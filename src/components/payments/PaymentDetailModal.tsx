@@ -1,6 +1,6 @@
 import { Calendar, Clock, CreditCard, DollarSign, FileText, Receipt, User } from "lucide-react";
 
-import { formatCurrency, formatTableDate } from "@/components/tables/utils";
+import { formatCurrency, formatTableDate } from "@/components/tables/formatters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";

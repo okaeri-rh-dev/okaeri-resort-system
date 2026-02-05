@@ -2,6 +2,7 @@ import React, { useCallback, useState } from "react";
 
 import { format, getDay } from "date-fns";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import type { DayButton as DayButtonType } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -128,9 +129,11 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
 
   // Create the DayButton component callback at the top level to follow React hooks rules
   const dayButtonComponent = useCallback(
-    (props: any) => <DayButton {...props} bookingsByDate={bookingsByDate} />,
+    (props: React.ComponentProps<typeof DayButtonType>) => (
+      <DayButton {...props} bookingsByDate={bookingsByDate} />
+    ),
     [bookingsByDate]
-  ) as any;
+  );
 
   return (
     <Card className={cn("w-full", className)}>

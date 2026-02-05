@@ -5,7 +5,7 @@
  * Mirrors the server-side pricing logic for E2E test assertions.
  */
 
-import { calculateNights, countWeekendNights, isWeekendNight } from "./booking-data";
+import { calculateNights, isWeekendNight } from "./booking-data";
 
 /**
  * Price breakdown structure returned by pricing calculations

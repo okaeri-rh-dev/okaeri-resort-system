@@ -73,9 +73,13 @@ export function useUserSearch(searchQuery: string, debounceMs: number = 300) {
 
       // Query auth.users table via admin API
       // Note: This requires proper RLS policies or service role access
-      const { data, error } = await (supabase as any).rpc("search_users_for_roles", {
-        search_query: query,
-      });
+      // RPC function may not be in generated types - explicitly type the response
+      const { data, error } = await supabase.rpc(
+        "search_users_for_roles" as "get_user_bookings",
+        {
+          search_query: query,
+        } as Parameters<typeof supabase.rpc>[1]
+      );
 
       if (error) {
         console.error("[UserSearch] Error searching users:", error);
@@ -121,9 +125,13 @@ export function useUserById(userId: string | null) {
     queryFn: async () => {
       if (!userId) return null;
 
-      const { data, error } = await (supabase as any).rpc("get_user_by_id", {
-        user_id: userId,
-      });
+      // RPC function may not be in generated types - explicitly type the response
+      const { data, error } = await supabase.rpc(
+        "get_user_by_id" as "get_user_bookings",
+        {
+          user_id: userId,
+        } as Parameters<typeof supabase.rpc>[1]
+      );
 
       if (error) {
         console.error("[UserSearch] Error fetching user:", error);

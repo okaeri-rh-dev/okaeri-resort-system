@@ -16,18 +16,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
-import type {
-  AutomatedTrigger,
-  Booking,
-  BookingStatus,
-  BusinessRule,
-  WorkflowAction,
-  WorkflowEvent,
-} from "@/types";
+import type { AutomatedTrigger, BookingStatus, WorkflowEvent } from "@/types";
 import type {
   ResortWorkflowConfig,
   ScheduledTask,
-  WorkflowBatchResult,
   WorkflowCostUsage,
   WorkflowResult,
   WorkflowState,
@@ -122,13 +114,32 @@ interface WorkflowMetrics {
   manualTransitions: number;
 }
 
+interface WorkflowCondition {
+  type: string;
+  field?: string;
+  operator?: string;
+  value?: unknown;
+}
+
+interface WorkflowAction {
+  type: string;
+  target?: string;
+  params?: Record<string, unknown>;
+}
+
+interface RetryConfig {
+  maxRetries?: number;
+  backoffMs?: number;
+  retryConditions?: string[];
+}
+
 interface CustomWorkflowDefinition {
   workflowId: string;
   name: string;
   description: string;
   isActive: boolean;
-  triggerConditions: any[];
-  actions: any[];
+  triggerConditions: WorkflowCondition[];
+  actions: WorkflowAction[];
   executionCount: number;
   lastExecuted?: Date;
 }
@@ -140,7 +151,7 @@ interface CustomWorkflowDefinition {
 export const useWorkflowStore = create<WorkflowStore>()(
   devtools(
     persist(
-      (set, get) => ({
+      (set, _get) => ({
         // Initial state
         activeExecutions: new Map(),
         executionHistory: [],
@@ -196,8 +207,9 @@ export const useWorkflowStore = create<WorkflowStore>()(
 
         addCostUsage: (usage) =>
           set((state) => {
-            const today = new Date().toDateString();
-            const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+            // Date tracking for future cost aggregation features
+            const _today = new Date().toDateString();
+            const _currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 
             return {
               dailyCostUsage: state.dailyCostUsage + usage.actualCostUSD,
@@ -316,8 +328,8 @@ export const useExecuteWorkflowTransition = () => {
     addExecutionHistory,
     addCostUsage,
     updateExecutionMetrics,
-    addOptimisticWorkflowState,
-    removeOptimisticWorkflowState,
+    addOptimisticWorkflowState: _addOptimisticWorkflowState,
+    removeOptimisticWorkflowState: _removeOptimisticWorkflowState,
   } = useWorkflowStore();
 
   return useMutation({
@@ -335,7 +347,7 @@ export const useExecuteWorkflowTransition = () => {
       toStatus: BookingStatus;
       resortId: string;
       triggeredBy?: "user" | "system" | "automation";
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
       dryRun?: boolean;
     }) => {
       const response = await fetch("/api/workflows/execute", {
@@ -376,7 +388,7 @@ export const useExecuteWorkflowTransition = () => {
       return { executionId };
     },
     onSuccess: (data, variables, context) => {
-      const { workflowResult, executionId } = data;
+      const { workflowResult, executionId: _executionId } = data;
 
       // Update execution state
       if (context?.executionId) {
@@ -527,8 +539,8 @@ export const useScheduleWorkflowTask = () => {
       trigger: AutomatedTrigger;
       taskType: "status_transition" | "notification" | "reminder" | "validation";
       scheduledTime?: string;
-      retryConfig?: any;
-      metadata?: Record<string, any>;
+      retryConfig?: RetryConfig;
+      metadata?: Record<string, unknown>;
     }) => {
       const response = await fetch("/api/workflows/schedule", {
         method: "POST",
@@ -576,7 +588,7 @@ export const useProcessBatchWorkflows = () => {
       triggerTypes?: string[];
       batchSize?: number;
       dryRun?: boolean;
-      filters?: any;
+      filters?: Record<string, unknown>;
     }) => {
       const response = await fetch("/api/workflows/batch", {
         method: "POST",
@@ -670,7 +682,7 @@ export const useWorkflowExecutionHistory = (resortId: string, filters: WorkflowF
 /**
  * Monitor workflow costs and generate alerts
  */
-export const useWorkflowCostMonitoring = (resortId: string) => {
+export const useWorkflowCostMonitoring = (_resortId: string) => {
   const { workflowConfig, dailyCostUsage, monthlyCostUsage, addCostAlert } = useWorkflowStore();
 
   // Check cost thresholds and generate alerts

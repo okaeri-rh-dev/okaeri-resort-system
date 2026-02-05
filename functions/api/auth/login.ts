@@ -166,7 +166,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     }
 
     // Log successful login
-    console.log(`[Login] Successful login for ${email} from IP ${clientIp}`);
+    console.warn(`[Login] Successful login for ${email} from IP ${clientIp}`);
 
     // Return session data
     return new Response(

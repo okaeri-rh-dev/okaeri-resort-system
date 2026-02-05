@@ -34,7 +34,7 @@ export const Route = createFileRoute("/admin/audit-logs")({
         search: {
           error: "unauthorized",
           message: "You do not have permission to access audit logs",
-        } as any,
+        } as Record<string, string>,
       });
     }
   },

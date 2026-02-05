@@ -23,7 +23,7 @@ export {
   formatDateTime,
   formatPhoneNumber,
   formatPercentage,
-} from "@/components/tables/utils";
+} from "@/components/tables/formatters";
 
 /**
  * Truncate text with ellipsis

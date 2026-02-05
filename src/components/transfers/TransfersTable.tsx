@@ -80,7 +80,7 @@ export const TransfersTable: React.FC<TransfersTableProps> = ({ accountId }) => 
     try {
       await deleteTransfer.mutateAsync(transfer.transfer_id);
       toast.success("Transfer deleted successfully");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to delete transfer");
     }
   };

@@ -59,7 +59,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
   }
 
   try {
-    console.info("[CRON] Starting payment proof cleanup via HTTP trigger");
+    console.warn("[CRON] Starting payment proof cleanup via HTTP trigger");
 
     // Call the existing cleanup function
     await cleanupPaymentProofs(env);

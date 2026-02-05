@@ -46,11 +46,9 @@ import {
   useGuests,
   useGuestStore,
 } from "../../stores/useGuestStore";
+import { formatCurrency, formatPhoneNumber, formatTableDate } from "../tables/formatters";
 import {
   ActionMenu,
-  formatCurrency,
-  formatPhoneNumber,
-  formatTableDate,
   MobileCard,
   ResponsiveTable,
   SortableHeader,

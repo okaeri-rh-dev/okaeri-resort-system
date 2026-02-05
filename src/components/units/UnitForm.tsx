@@ -3,7 +3,7 @@ import { useEffect, useEffectEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "@tanstack/react-router";
 import { Building2, Info, Users } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, type Control, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -47,7 +47,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
   const isEditing = !!unit;
 
   const form = useForm<UnitFormData>({
-    resolver: zodResolver(unitFormWithoutPricingValidationSchema) as any,
+    resolver: zodResolver(unitFormWithoutPricingValidationSchema) as Resolver<UnitFormData>,
     defaultValues: {
       unit_name: unit?.unit_name || "",
       unit_code: unit?.unit_code || "",
@@ -130,14 +130,14 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
 
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit) as any} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Basic Information</h3>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
-                  control={form.control as any}
+                  control={form.control as Control<UnitFormData>}
                   name="unit_name"
                   render={({ field }) => (
                     <FormItem>
@@ -156,7 +156,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                 />
 
                 <FormField
-                  control={form.control as any}
+                  control={form.control as Control<UnitFormData>}
                   name="unit_code"
                   render={({ field }) => (
                     <FormItem>
@@ -181,7 +181,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
-                  control={form.control as any}
+                  control={form.control as Control<UnitFormData>}
                   name="base_occupancy"
                   render={({ field }) => (
                     <FormItem>
@@ -208,7 +208,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
                 />
 
                 <FormField
-                  control={form.control as any}
+                  control={form.control as Control<UnitFormData>}
                   name="max_occupancy"
                   render={({ field }) => (
                     <FormItem>

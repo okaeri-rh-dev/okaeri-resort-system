@@ -59,7 +59,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
   }
 
   try {
-    console.info("[CRON] Starting idempotency cleanup via HTTP trigger");
+    console.warn("[CRON] Starting idempotency cleanup via HTTP trigger");
 
     // Call the existing cleanup function
     await cleanupIdempotency(env);

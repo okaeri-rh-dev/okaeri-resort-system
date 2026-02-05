@@ -231,6 +231,27 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       guests_per_unit: r.guests_per_unit,
     }));
 
+    // Declare pricing before try block since it's used after the block
+    let pricing: {
+      nights: number;
+      base_total: number;
+      weekend_surcharge: number;
+      extra_person_fees: number;
+      subtotal: number;
+      total: number;
+      downpayment_required: number;
+      currency: string;
+      discount: { percent: number; amount: number; rule_name: string } | null;
+      unit_breakdown: Array<{
+        unit_index: number;
+        guests: number;
+        subtotal: number;
+        extra_person_fees: number;
+        total: number;
+        downpayment: number;
+      }>;
+    };
+
     try {
       // Calculate pricing for each unit separately
       const unitPricingResults = await Promise.all(
@@ -285,7 +306,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         );
       }
 
-      var pricing = aggregatedPricing;
+      pricing = aggregatedPricing;
     } catch (pricingError: unknown) {
       console.error("[PRICING] Error:", pricingError);
       return Response.json(

@@ -100,6 +100,49 @@ export interface MultiUnitBooking {
 }
 
 // ============================================
+// ADMIN BOOKING CREATION TYPES
+// ============================================
+
+/**
+ * Unit assignment for admin booking creation
+ * Simplified structure for the admin multi-unit booking form
+ */
+export interface AdminBookingUnitCreate {
+  unit_id: string;
+  num_guests: number;
+  guest_assignment?: {
+    guest_ids?: string[];
+    num_guests: number;
+    special_requests?: string;
+  };
+  unit_notes?: string;
+}
+
+/**
+ * Admin multi-unit booking creation request
+ * Used by the admin panel to create bookings with multiple units
+ */
+export interface AdminMultiUnitBookingCreate {
+  primary_guest: {
+    guest_name: string;
+    email: string;
+    contact_number: string;
+  };
+  check_in: string;
+  check_out: string;
+  booking_units: AdminBookingUnitCreate[];
+  payment?: {
+    method: string;
+    amount: number;
+    proof_url?: string;
+  };
+  special_requests?: string;
+  internal_notes?: string;
+  source?: string;
+  idempotency_key?: string;
+}
+
+// ============================================
 // OPTIMISTIC UPDATE TYPES
 // ============================================
 

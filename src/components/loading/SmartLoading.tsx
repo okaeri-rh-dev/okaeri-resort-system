@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import { UseQueryResult } from "@tanstack/react-query";
 
-import { useAdaptiveLoading } from "@/components/providers/LoadingProvider";
+import { useAdaptiveLoading } from "@/components/providers/LoadingProvider.hooks";
 import {
   FormSkeleton,
   KPICardSkeleton,
@@ -97,7 +97,8 @@ export const SmartLoading: React.FC<SmartLoadingProps> = ({
           <div className="font-medium text-red-600">Error loading data</div>
           <div className="text-sm text-neutral-600">
             {errors.length > 0
-              ? (errors[0] as any)?.message || "An unexpected error occurred"
+              ? (errors[0] instanceof Error ? errors[0].message : String(errors[0])) ||
+                "An unexpected error occurred"
               : "Please try again later"}
           </div>
         </div>

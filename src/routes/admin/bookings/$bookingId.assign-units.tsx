@@ -193,9 +193,9 @@ function AlreadyAssignedGuard({
             <Button
               onClick={() =>
                 navigate({
-                  to: "/admin/bookings/$bookingId", // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  to: "/admin/bookings/$bookingId",
                   params: { bookingId },
-                } as any)
+                } as Parameters<typeof navigate>[0])
               }
               className="bg-blue-600 hover:bg-blue-700"
             >
@@ -205,8 +205,8 @@ function AlreadyAssignedGuard({
               variant="outline"
               onClick={() =>
                 navigate({
-                  to: "/admin/bookings/queue", // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } as any)
+                  to: "/admin/bookings/queue",
+                } as Parameters<typeof navigate>[0])
               }
             >
               Back to Queue

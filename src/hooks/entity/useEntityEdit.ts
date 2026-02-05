@@ -92,7 +92,7 @@ export function useEntityEdit<T extends EntityType>(
           case "payment":
             return db.payments.update(entityId, updateData as Partial<Payment>);
           case "expense":
-            return db.expenses.update(entityId, updateData as any);
+            return db.expenses.update(entityId, updateData as Partial<Expense>);
           default:
             throw new Error(`Unknown entity type: ${entityType}`);
         }

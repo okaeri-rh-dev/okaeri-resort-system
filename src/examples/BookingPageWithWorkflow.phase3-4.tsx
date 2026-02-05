@@ -22,10 +22,8 @@ import {
   CreditCard,
   ExternalLink,
   Mail,
-  MapPin,
   Phone,
   RefreshCw,
-  Settings,
   User,
 } from "lucide-react";
 
@@ -36,7 +34,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { WorkflowDashboard } from "@/components/workflow/WorkflowDashboard";
 import { WorkflowStatusBadge } from "@/components/workflow/WorkflowStatusBadge";
 // Store Hooks
 import {
@@ -44,9 +41,38 @@ import {
   useBookingWithWorkflow,
   useUpdateBookingStatusWithWorkflow,
 } from "@/stores/useBookingStore";
-import { useWorkflowStore, useWorkflowSummary } from "@/stores/useWorkflowStore";
+import { useWorkflowSummary } from "@/stores/useWorkflowStore";
 // Types
 import type { Booking, BookingStatus } from "@/types";
+
+// ============================================
+// LOCAL INTERFACES
+// ============================================
+
+interface RelatedBooking {
+  booking_id: string;
+  booking_reference: string;
+  guest_name: string;
+  booking_status: string;
+}
+
+interface AutomatedTrigger {
+  id: string;
+  isActive: boolean;
+  name?: string;
+}
+
+interface WorkflowStateData {
+  automatedTriggers?: AutomatedTrigger[];
+  nextActions?: unknown[];
+}
+
+interface WorkflowSummaryData {
+  totalBookings: number;
+  pendingWorkflows: number;
+  completedToday: number;
+  automationRate: number;
+}
 
 // ============================================
 // MAIN COMPONENT
@@ -219,27 +245,29 @@ export const BookingPageWithWorkflow: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {bookingsNeedingAttention.data.slice(0, 3).map((relatedBooking: any) => (
-                    <div
-                      key={relatedBooking.booking_id}
-                      className="flex items-center justify-between rounded border p-2"
-                    >
-                      <div>
-                        <p className="text-sm font-medium">{relatedBooking.guest_name}</p>
-                        <p className="text-muted-foreground text-xs">
-                          {relatedBooking.booking_reference}
-                        </p>
+                  {bookingsNeedingAttention.data
+                    .slice(0, 3)
+                    .map((relatedBooking: RelatedBooking) => (
+                      <div
+                        key={relatedBooking.booking_id}
+                        className="flex items-center justify-between rounded border p-2"
+                      >
+                        <div>
+                          <p className="text-sm font-medium">{relatedBooking.guest_name}</p>
+                          <p className="text-muted-foreground text-xs">
+                            {relatedBooking.booking_reference}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">{relatedBooking.booking_status}</Badge>
+                          <Button size="sm" variant="ghost" asChild>
+                            <a href={`/bookings/${relatedBooking.booking_id}`}>
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">{relatedBooking.booking_status}</Badge>
-                        <Button size="sm" variant="ghost" asChild>
-                          <a href={`/bookings/${relatedBooking.booking_id}`}>
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </CardContent>
             </Card>
@@ -363,9 +391,9 @@ const PaymentInformationCard: React.FC<{ booking: Booking }> = ({ booking }) => 
 
 const WorkflowAnalyticsCard: React.FC<{
   booking: Booking;
-  workflowState: any;
-  workflowSummary: any;
-}> = ({ booking, workflowState, workflowSummary }) => (
+  workflowState: WorkflowStateData;
+  workflowSummary: WorkflowSummaryData;
+}> = ({ booking: _booking, workflowState, workflowSummary }) => (
   <Card>
     <CardHeader>
       <CardTitle className="flex items-center gap-2">
@@ -378,7 +406,7 @@ const WorkflowAnalyticsCard: React.FC<{
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center">
             <p className="text-2xl font-bold">
-              {workflowState.automatedTriggers?.filter((t: any) => t.isActive).length || 0}
+              {workflowState.automatedTriggers?.filter((t) => t.isActive).length || 0}
             </p>
             <p className="text-muted-foreground text-sm">Active Triggers</p>
           </div>
