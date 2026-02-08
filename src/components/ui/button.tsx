@@ -23,4 +23,4 @@ function Button({ className, variant, size, asChild = false, ...props }: ButtonP
   );
 }
 
-export { Button };
+export { Button, buttonVariants };

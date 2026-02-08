@@ -39,6 +39,11 @@
     "test:ui": "vitest --ui",
     "test:unit": "vitest run src/components src/hooks src/lib src/stores src/utils",
     "test:watch": "vitest watch",
+    "test:load": "k6 run load-testing/scenarios/mixed-workload.ts",
+    "test:load:smoke": "k6 run --vus 1 --duration 30s load-testing/scenarios/mixed-workload.ts",
+    "test:load:stress": "k6 run --stage 10s:10,1m:50,30s:100,1m:100,30s:0 load-testing/scenarios/mixed-workload.ts",
+    "test:load:booking": "k6 run load-testing/scenarios/guest-booking.ts",
+    "test:load:availability": "k6 run load-testing/scenarios/availability-check.ts",
     "type-check": "tsc --noEmit",
     "verify": "npm run type-check && npm run lint && npm run test:run",
     "verify:fix": "npm run lint:fix && npm run format"

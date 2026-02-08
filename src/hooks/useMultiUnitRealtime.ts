@@ -8,19 +8,63 @@
  */
 
 // Add useState import
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type {
   REALTIME_SUBSCRIBE_STATES,
   RealtimeChannel,
   RealtimePostgresChangesPayload,
 } from "@supabase/supabase-js";
+import type { QueryClient, QueryKey } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { logger } from "@/lib/logger";
 import { supabase } from "@/lib/supabase";
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import type { BookingUnit, MultiUnitBooking } from "@/types";
+
+// ============================================
+// DEBOUNCED INVALIDATION HELPER
+// ============================================
+
+/**
+ * Creates a debounced query invalidator to prevent cache thrashing.
+ *
+ * Problem: At 50+ concurrent users, duplicate invalidations cause the cache
+ * to become useless as queries are constantly refetched.
+ *
+ * Solution: Debounce invalidations with a configurable delay (default 300ms).
+ * Multiple invalidations for the same query key within the debounce window
+ * are coalesced into a single invalidation.
+ *
+ * @param queryClient - TanStack Query client
+ * @param debounceMs - Debounce delay in milliseconds (default: 300)
+ */
+function createDebouncedInvalidator(
+  queryClient: QueryClient,
+  debounceMs: number = 300
+): (queryKey: QueryKey) => void {
+  const pending = new Map<string, ReturnType<typeof setTimeout>>();
+
+  return (queryKey: QueryKey) => {
+    const key = JSON.stringify(queryKey);
+
+    // Clear any existing pending invalidation for this key
+    const existingTimeout = pending.get(key);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    // Schedule new debounced invalidation
+    pending.set(
+      key,
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey });
+        pending.delete(key);
+      }, debounceMs)
+    );
+  };
+}
 
 // ============================================
 // TYPES
@@ -47,7 +91,8 @@ export interface RealtimeSubscriptionStatus {
 /**
  * Subscribe to multi-unit booking changes in real-time
  *
- * Automatically invalidates TanStack Query cache when changes occur
+ * Automatically invalidates TanStack Query cache when changes occur.
+ * Uses debounced invalidation to prevent cache thrashing at high concurrency.
  */
 export function useMultiUnitBookingSubscription(
   bookingId?: string,
@@ -61,6 +106,13 @@ export function useMultiUnitBookingSubscription(
     channelStatus: "CLOSED" as REALTIME_SUBSCRIBE_STATES,
     error: null,
   });
+
+  // Create debounced invalidator to prevent cache thrashing
+  // Memoized to maintain consistent reference across renders
+  const invalidateDebounced = useMemo(
+    () => createDebouncedInvalidator(queryClient, 300),
+    [queryClient]
+  );
 
   useEffect(() => {
     if (!enabled) return;
@@ -82,23 +134,23 @@ export function useMultiUnitBookingSubscription(
         (payload: RealtimePostgresChangesPayload<MultiUnitBooking>) => {
           try {
             // Handle different event types
+            // OPTIMIZED: Use debounced invalidation to prevent cache thrashing
             switch (payload.eventType) {
               case "INSERT":
                 onInsert?.(payload);
-                queryClient.invalidateQueries({ queryKey: ["multi-unit-bookings"] });
+                invalidateDebounced(["multi-unit-bookings"]);
                 break;
 
               case "UPDATE":
                 onUpdate?.(payload);
-                queryClient.invalidateQueries({
-                  queryKey: ["multi-unit-bookings", payload.new.booking_id],
-                });
-                queryClient.invalidateQueries({ queryKey: ["multi-unit-bookings"] });
+                // FIXED: Only invalidate the general query, not both specific AND general
+                // The specific query invalidation was causing duplicate refetches
+                invalidateDebounced(["multi-unit-bookings"]);
                 break;
 
               case "DELETE":
                 onDelete?.(payload);
-                queryClient.invalidateQueries({ queryKey: ["multi-unit-bookings"] });
+                invalidateDebounced(["multi-unit-bookings"]);
                 break;
             }
           } catch (error) {
@@ -133,7 +185,7 @@ export function useMultiUnitBookingSubscription(
         };
       }
     };
-  }, [enabled, bookingId, onInsert, onUpdate, onDelete, onError, queryClient]);
+  }, [enabled, bookingId, onInsert, onUpdate, onDelete, onError, queryClient, invalidateDebounced]);
 
   return {
     isSubscribed: statusRef.current.isSubscribed,
@@ -155,7 +207,8 @@ export function useMultiUnitBookingSubscription(
 /**
  * Subscribe to booking units changes in real-time
  *
- * Monitors changes to individual units within a booking
+ * Monitors changes to individual units within a booking.
+ * Uses debounced invalidation to prevent cache thrashing at high concurrency.
  */
 export function useBookingUnitsSubscription(
   bookingId?: string,
@@ -169,6 +222,12 @@ export function useBookingUnitsSubscription(
     channelStatus: "CLOSED" as REALTIME_SUBSCRIBE_STATES,
     error: null,
   });
+
+  // Create debounced invalidator to prevent cache thrashing
+  const invalidateDebounced = useMemo(
+    () => createDebouncedInvalidator(queryClient, 300),
+    [queryClient]
+  );
 
   useEffect(() => {
     if (!enabled) return;
@@ -187,28 +246,23 @@ export function useBookingUnitsSubscription(
         },
         (payload: RealtimePostgresChangesPayload<BookingUnit>) => {
           try {
+            // OPTIMIZED: Use debounced invalidation to prevent cache thrashing
             switch (payload.eventType) {
               case "INSERT":
                 onInsert?.(payload);
-                queryClient.invalidateQueries({
-                  queryKey: ["multi-unit-bookings", bookingId],
-                });
-                queryClient.invalidateQueries({ queryKey: ["multi-unit-availability"] });
+                invalidateDebounced(["multi-unit-bookings", bookingId]);
+                invalidateDebounced(["multi-unit-availability"]);
                 break;
 
               case "UPDATE":
                 onUpdate?.(payload);
-                queryClient.invalidateQueries({
-                  queryKey: ["multi-unit-bookings", bookingId],
-                });
+                invalidateDebounced(["multi-unit-bookings", bookingId]);
                 break;
 
               case "DELETE":
                 onDelete?.(payload);
-                queryClient.invalidateQueries({
-                  queryKey: ["multi-unit-bookings", bookingId],
-                });
-                queryClient.invalidateQueries({ queryKey: ["multi-unit-availability"] });
+                invalidateDebounced(["multi-unit-bookings", bookingId]);
+                invalidateDebounced(["multi-unit-availability"]);
                 break;
             }
           } catch (error) {
@@ -242,7 +296,7 @@ export function useBookingUnitsSubscription(
         };
       }
     };
-  }, [enabled, bookingId, onInsert, onUpdate, onDelete, onError, queryClient]);
+  }, [enabled, bookingId, onInsert, onUpdate, onDelete, onError, queryClient, invalidateDebounced]);
 
   return {
     isSubscribed: statusRef.current.isSubscribed,
@@ -296,12 +350,19 @@ export function useMultiUnitRealtimeSubscription(
 /**
  * Subscribe to availability changes affecting multi-unit bookings
  *
- * Monitors both bookings and blackout periods
+ * Monitors both bookings and blackout periods.
+ * Uses debounced invalidation to prevent cache thrashing at high concurrency.
  */
 export function useMultiUnitAvailabilitySubscription(options: RealtimeSubscriptionOptions = {}) {
   const { enabled = true, onError } = options;
   const queryClient = useQueryClient();
   const channelRef = useRef<RealtimeChannel | null>(null);
+
+  // Create debounced invalidator to prevent cache thrashing
+  const invalidateDebounced = useMemo(
+    () => createDebouncedInvalidator(queryClient, 300),
+    [queryClient]
+  );
 
   useEffect(() => {
     if (!enabled) return;
@@ -316,7 +377,8 @@ export function useMultiUnitAvailabilitySubscription(options: RealtimeSubscripti
           table: "multi_unit_bookings",
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["multi-unit-availability"] });
+          // OPTIMIZED: Use debounced invalidation
+          invalidateDebounced(["multi-unit-availability"]);
         }
       )
       .on(
@@ -327,7 +389,8 @@ export function useMultiUnitAvailabilitySubscription(options: RealtimeSubscripti
           table: "availability_blackouts",
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["multi-unit-availability"] });
+          // OPTIMIZED: Use debounced invalidation
+          invalidateDebounced(["multi-unit-availability"]);
         }
       )
       .subscribe((status) => {
@@ -345,7 +408,7 @@ export function useMultiUnitAvailabilitySubscription(options: RealtimeSubscripti
         channelRef.current = null;
       }
     };
-  }, [enabled, onError, queryClient]);
+  }, [enabled, onError, queryClient, invalidateDebounced]);
 
   return {
     unsubscribe: useCallback(() => {

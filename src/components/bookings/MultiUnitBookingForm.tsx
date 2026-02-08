@@ -306,8 +306,12 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
       clearDraftBooking();
       form.reset();
 
-      // Navigate to booking detail page
-      if (result.booking_id) {
+      // Navigate to booking detail page - use type guard for union type
+      if (
+        isObject(result) &&
+        hasProperty(result, "booking_id") &&
+        typeof result.booking_id === "string"
+      ) {
         if (onSuccess) {
           onSuccess(result.booking_id);
         } else {

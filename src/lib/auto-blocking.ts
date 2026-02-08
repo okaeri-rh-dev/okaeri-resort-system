@@ -1,9 +1,32 @@
 /**
  * Automatic Threat Response and IP Blocking
  * Manages automatic blocking based on threat scores and patterns
+ *
+ * Progressive blocking thresholds:
+ * - 3 violations → 1 hour block
+ * - 10 violations → 24 hour block
+ * - 50+ violations → 7 day block
  */
 
 import { logSecurityEvent, shouldAutoBlock } from "./security-monitoring";
+
+/**
+ * Block duration thresholds based on violation count
+ */
+export const PROGRESSIVE_BLOCK_THRESHOLDS = {
+  MINOR: {
+    violations: 3,
+    blockDurationSeconds: 60 * 60, // 1 hour
+  },
+  MODERATE: {
+    violations: 10,
+    blockDurationSeconds: 24 * 60 * 60, // 24 hours
+  },
+  SEVERE: {
+    violations: 50,
+    blockDurationSeconds: 7 * 24 * 60 * 60, // 7 days
+  },
+} as const;
 
 /**
  * Block an IP in Cloudflare KV
@@ -282,4 +305,131 @@ export async function cleanupExpiredBlocks(kv: KVNamespace): Promise<number> {
     console.error("Failed to cleanup expired blocks:", error);
     return 0;
   }
+}
+
+// ============================================
+// PROGRESSIVE BLOCKING BASED ON VIOLATIONS
+// ============================================
+
+/**
+ * Get the current violation count for an IP
+ *
+ * @param kv - KV namespace for rate limiting data
+ * @param ip - Client IP address
+ * @returns Current violation count (today + total)
+ */
+export async function getViolationCount(
+  kv: KVNamespace,
+  ip: string
+): Promise<{ today: number; total: number }> {
+  const today = new Date().toISOString().split("T")[0];
+  const dailyKey = `violations:${ip}:${today}`;
+  const totalKey = `violations:total:${ip}`;
+
+  const [dailyData, totalData] = await Promise.all([kv.get(dailyKey), kv.get(totalKey)]);
+
+  return {
+    today: parseInt(dailyData || "0"),
+    total: parseInt(totalData || "0"),
+  };
+}
+
+/**
+ * Increment violation count for an IP and apply progressive blocking
+ *
+ * This is the main entry point for rate limit violations.
+ * Call this when a rate limit is exceeded to track violations
+ * and automatically apply progressive blocking.
+ *
+ * @param kv - KV namespace for rate limiting data
+ * @param ip - Client IP address
+ * @param reason - Reason for the violation
+ * @returns Updated violation count and any block that was applied
+ */
+export async function incrementViolation(
+  kv: KVNamespace,
+  ip: string,
+  reason: string = "Rate limit exceeded"
+): Promise<{
+  todayCount: number;
+  totalCount: number;
+  blocked: boolean;
+  blockDuration?: number;
+}> {
+  const today = new Date().toISOString().split("T")[0];
+  const dailyKey = `violations:${ip}:${today}`;
+  const totalKey = `violations:total:${ip}`;
+
+  // Increment counters atomically (read-modify-write pattern)
+  const [dailyData, totalData] = await Promise.all([kv.get(dailyKey), kv.get(totalKey)]);
+
+  const newDailyCount = parseInt(dailyData || "0") + 1;
+  const newTotalCount = parseInt(totalData || "0") + 1;
+
+  // Update counters
+  await Promise.all([
+    kv.put(dailyKey, newDailyCount.toString(), {
+      expirationTtl: 86400, // 24 hours
+    }),
+    kv.put(totalKey, newTotalCount.toString(), {
+      expirationTtl: 86400 * 30, // 30 days
+    }),
+  ]);
+
+  // Apply progressive blocking based on thresholds
+  let blocked = false;
+  let blockDuration: number | undefined;
+
+  if (newTotalCount >= PROGRESSIVE_BLOCK_THRESHOLDS.SEVERE.violations) {
+    // 50+ total violations → 7 day block
+    blockDuration = PROGRESSIVE_BLOCK_THRESHOLDS.SEVERE.blockDurationSeconds;
+    await blockInKV(kv, ip, blockDuration, `${reason} (severe: ${newTotalCount} total violations)`);
+    blocked = true;
+  } else if (newDailyCount >= PROGRESSIVE_BLOCK_THRESHOLDS.MODERATE.violations) {
+    // 10+ in 24 hours → 24 hour block
+    blockDuration = PROGRESSIVE_BLOCK_THRESHOLDS.MODERATE.blockDurationSeconds;
+    await blockInKV(kv, ip, blockDuration, `${reason} (moderate: ${newDailyCount} violations today)`);
+    blocked = true;
+  } else if (newDailyCount >= PROGRESSIVE_BLOCK_THRESHOLDS.MINOR.violations) {
+    // 3+ violations → 1 hour block
+    blockDuration = PROGRESSIVE_BLOCK_THRESHOLDS.MINOR.blockDurationSeconds;
+    await blockInKV(kv, ip, blockDuration, `${reason} (minor: ${newDailyCount} violations)`);
+    blocked = true;
+  }
+
+  return {
+    todayCount: newDailyCount,
+    totalCount: newTotalCount,
+    blocked,
+    blockDuration,
+  };
+}
+
+/**
+ * Get comprehensive stats for an IP (for admin dashboards)
+ *
+ * @param kv - KV namespace for rate limiting data
+ * @param ip - Client IP address
+ * @returns Block status and violation counts
+ */
+export async function getIPStats(
+  kv: KVNamespace,
+  ip: string
+): Promise<{
+  blocked: boolean;
+  reason?: string;
+  expiresAt?: string;
+  violations: { today: number; total: number };
+}> {
+  const [blockStatus, violations] = await Promise.all([
+    isIPBlocked(kv, ip),
+    getViolationCount(kv, ip),
+  ]);
+
+  return {
+    blocked: blockStatus.blocked,
+    reason: blockStatus.reason,
+    expiresAt: blockStatus.expiresAt,
+    violations,
+  };
 }

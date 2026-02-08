@@ -73,13 +73,12 @@ export function useUserSearch(searchQuery: string, debounceMs: number = 300) {
 
       // Query auth.users table via admin API
       // Note: This requires proper RLS policies or service role access
-      // RPC function may not be in generated types - explicitly type the response
-      const { data, error } = await supabase.rpc(
-        "search_users_for_roles" as "get_user_bookings",
-        {
-          search_query: query,
-        } as Parameters<typeof supabase.rpc>[1]
-      );
+      // RPC function may not be in generated types - cast entire call
+      const rpcCall = supabase.rpc as unknown as (
+        fn: string,
+        args: Record<string, unknown>
+      ) => Promise<{ data: AuthUser[] | null; error: Error | null }>;
+      const { data, error } = await rpcCall("search_users_for_roles", { search_query: query });
 
       if (error) {
         console.error("[UserSearch] Error searching users:", error);
@@ -104,7 +103,7 @@ export function useUserSearch(searchQuery: string, debounceMs: number = 300) {
         })) as AuthUser[];
       }
 
-      return (data || []) as AuthUser[];
+      return data || [];
     },
     enabled: debouncedQuery.trim().length >= 2,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -125,20 +124,19 @@ export function useUserById(userId: string | null) {
     queryFn: async () => {
       if (!userId) return null;
 
-      // RPC function may not be in generated types - explicitly type the response
-      const { data, error } = await supabase.rpc(
-        "get_user_by_id" as "get_user_bookings",
-        {
-          user_id: userId,
-        } as Parameters<typeof supabase.rpc>[1]
-      );
+      // RPC function may not be in generated types - cast entire call
+      const rpcCall = supabase.rpc as unknown as (
+        fn: string,
+        args: Record<string, unknown>
+      ) => Promise<{ data: AuthUser | null; error: Error | null }>;
+      const { data, error } = await rpcCall("get_user_by_id", { user_id: userId });
 
       if (error) {
         console.error("[UserSearch] Error fetching user:", error);
         throw new Error(error.message);
       }
 
-      return data as AuthUser | null;
+      return data;
     },
     enabled: !!userId,
     staleTime: 10 * 60 * 1000, // 10 minutes

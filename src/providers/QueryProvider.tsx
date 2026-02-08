@@ -83,9 +83,6 @@ export function QueryProvider({ children }: QueryProviderProps) {
 // Note: These utilities are kept for potential future use but not exported
 // to satisfy React Fast Refresh requirements (only components should be exported)
 
-// Type for items with an identifiable field
-type _IdentifiableItem = Record<string, unknown>;
-
 // Prefetch utilities (internal use only)
 const _prefetchQueries = {
   units: async () => {

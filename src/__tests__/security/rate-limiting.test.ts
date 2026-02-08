@@ -39,12 +39,28 @@ describe("Rate Limiting", () => {
       const result = await checkKVRateLimit(mockKV, "test-ip", {
         limit: 5,
         windowSeconds: 3600,
+        trackViolations: false, // Disable violation tracking for this test
       });
 
       expect(result.allowed).toBe(false);
       expect(result.remaining).toBe(0);
       expect(result.retryAfter).toBeGreaterThan(0);
       expect(mockKV.put).not.toHaveBeenCalled();
+    });
+
+    it("should track violations when rate limit exceeded", async () => {
+      mockKV.get = vi.fn().mockResolvedValue("5"); // Already at limit
+
+      const result = await checkKVRateLimit(mockKV, "test-ip", {
+        limit: 5,
+        windowSeconds: 3600,
+        trackViolations: true, // Enable violation tracking
+      });
+
+      expect(result.allowed).toBe(false);
+      expect(result.violationTracked).toBe(true);
+      // Violations should be tracked via kv.put calls
+      expect(mockKV.put).toHaveBeenCalled();
     });
 
     it("should use coarse window strategy", async () => {

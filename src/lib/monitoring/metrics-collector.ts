@@ -33,8 +33,9 @@ export interface MetricSummary {
 export class MetricsCollector {
   private kv: KVNamespace;
   private batchBuffer: Map<string, number> = new Map();
-  private flushInterval: number = 60000; // Flush every minute
+  private flushInterval: number = 300000; // Flush every 5 minutes (was 60s - reduced for quota)
   private lastFlush: Date = new Date();
+  private flushThreshold: number = 100; // Batch up to 100 metrics before flush (was 10)
 
   constructor(kv: KVNamespace) {
     this.kv = kv;
@@ -42,86 +43,134 @@ export class MetricsCollector {
 
   /**
    * Increment a metric (batched to reduce KV writes)
+   *
+   * Uses aggressive batching to minimize KV writes within free tier limits.
+   * Metrics are aggregated into a single daily JSON object per flush.
    */
   async increment(metric: string, value: number = 1): Promise<void> {
     const current = this.batchBuffer.get(metric) || 0;
     this.batchBuffer.set(metric, current + value);
 
     // Auto-flush if buffer is getting large or time has passed
-    if (this.batchBuffer.size > 10 || Date.now() - this.lastFlush.getTime() > this.flushInterval) {
+    // Increased thresholds to reduce KV writes (1000/day limit)
+    if (
+      this.batchBuffer.size > this.flushThreshold ||
+      Date.now() - this.lastFlush.getTime() > this.flushInterval
+    ) {
       await this.flush();
     }
   }
 
   /**
    * Flush batched metrics to KV
+   *
+   * OPTIMIZED: Aggregates ALL metrics into a single JSON object per day.
+   * This reduces KV writes from N (one per metric) to 1 per flush.
+   *
+   * Before: Each flush = N KV writes (e.g., 10 metrics = 10 writes)
+   * After: Each flush = 1 KV write (all metrics in single JSON object)
+   *
+   * This is critical for staying within the 1000 writes/day free tier limit.
    */
   async flush(): Promise<void> {
     if (this.batchBuffer.size === 0) return;
 
     const today = new Date().toISOString().split("T")[0];
-    const promises: Promise<void>[] = [];
+    const aggregateKey = `metrics:daily:${today}`;
 
-    for (const [metric, value] of this.batchBuffer.entries()) {
-      const key = `metric:${metric}:${today}`;
-      promises.push(this.updateMetric(key, value));
-    }
-
-    await Promise.all(promises);
-    this.batchBuffer.clear();
-    this.lastFlush = new Date();
-  }
-
-  /**
-   * Update a metric value in KV
-   */
-  private async updateMetric(key: string, increment: number): Promise<void> {
     try {
-      const current = await this.kv.get(key);
-      const newValue = (parseInt(current || "0") + increment).toString();
+      // Read current aggregate (1 read)
+      const currentData = await this.kv.get(aggregateKey);
+      const aggregate: Record<string, number> = currentData ? JSON.parse(currentData) : {};
 
-      await this.kv.put(key, newValue, {
+      // Merge batched metrics into aggregate
+      for (const [metric, value] of this.batchBuffer.entries()) {
+        aggregate[metric] = (aggregate[metric] || 0) + value;
+      }
+
+      // Write single aggregated object (1 write instead of N)
+      await this.kv.put(aggregateKey, JSON.stringify(aggregate), {
         expirationTtl: 86400 * 30, // Keep for 30 days
       });
+
+      this.batchBuffer.clear();
+      this.lastFlush = new Date();
     } catch (error) {
-      console.error(`Failed to update metric ${key}:`, error);
+      console.error("Failed to flush metrics:", error);
+      // Don't clear buffer on error - retry on next flush
     }
   }
 
   /**
    * Get a specific metric value
+   *
+   * Reads from the aggregated daily metrics object.
    */
   async getMetric(metric: string, date?: string): Promise<number> {
     // Flush any pending updates first
     await this.flush();
 
     const dateStr = date || new Date().toISOString().split("T")[0];
-    const key = `metric:${metric}:${dateStr}`;
-    const value = await this.kv.get(key);
-    return parseInt(value || "0");
+    const aggregateKey = `metrics:daily:${dateStr}`;
+
+    try {
+      const data = await this.kv.get(aggregateKey);
+      if (!data) return 0;
+
+      const aggregate: Record<string, number> = JSON.parse(data);
+      return aggregate[metric] || 0;
+    } catch {
+      // Fallback to legacy key format for backwards compatibility
+      const legacyKey = `metric:${metric}:${dateStr}`;
+      const value = await this.kv.get(legacyKey);
+      return parseInt(value || "0");
+    }
   }
 
   /**
    * Get all daily metrics
+   *
+   * OPTIMIZED: Reads all metrics from a single KV read instead of 7 reads.
+   * Before: 7 KV reads (one per metric type)
+   * After: 1 KV read (all metrics in single JSON object)
    */
   async getDailyMetrics(date?: string): Promise<DailyMetrics> {
     await this.flush();
 
     const dateStr = date || new Date().toISOString().split("T")[0];
+    const aggregateKey = `metrics:daily:${dateStr}`;
 
-    return {
-      bookings: await this.getMetric("bookings", dateStr),
-      uploads: await this.getMetric("uploads", dateStr),
-      failures: await this.getMetric("failures", dateStr),
-      statusChecks: await this.getMetric("status_checks", dateStr),
-      emails: await this.getMetric("emails", dateStr),
-      kvWrites: await this.getMetric("kv_writes", dateStr),
-      bandwidthMB: await this.getMetric("bandwidth_mb", dateStr),
-    };
+    try {
+      const data = await this.kv.get(aggregateKey);
+      const aggregate: Record<string, number> = data ? JSON.parse(data) : {};
+
+      return {
+        bookings: aggregate.bookings || 0,
+        uploads: aggregate.uploads || 0,
+        failures: aggregate.failures || 0,
+        statusChecks: aggregate.status_checks || 0,
+        emails: aggregate.emails || 0,
+        kvWrites: aggregate.kv_writes || 0,
+        bandwidthMB: aggregate.bandwidth_mb || 0,
+      };
+    } catch {
+      // Fallback to individual reads for backwards compatibility
+      return {
+        bookings: await this.getMetric("bookings", dateStr),
+        uploads: await this.getMetric("uploads", dateStr),
+        failures: await this.getMetric("failures", dateStr),
+        statusChecks: await this.getMetric("status_checks", dateStr),
+        emails: await this.getMetric("emails", dateStr),
+        kvWrites: await this.getMetric("kv_writes", dateStr),
+        bandwidthMB: await this.getMetric("bandwidth_mb", dateStr),
+      };
+    }
   }
 
   /**
    * Get metrics for a date range
+   *
+   * OPTIMIZED: Reads each day's aggregate in a single KV read.
    */
   async getMetricsRange(
     metric: string,
@@ -133,11 +182,30 @@ export class MetricsCollector {
     const results: { date: string; value: number }[] = [];
     const current = new Date(startDate);
 
+    // Batch read all dates' aggregates
+    const datePromises: Promise<{ date: string; data: Record<string, number> | null }>[] = [];
+
     while (current <= endDate) {
       const dateStr = current.toISOString().split("T")[0];
-      const value = await this.getMetric(metric, dateStr);
-      results.push({ date: dateStr, value });
+      const aggregateKey = `metrics:daily:${dateStr}`;
+
+      datePromises.push(
+        this.kv.get(aggregateKey).then((data) => ({
+          date: dateStr,
+          data: data ? JSON.parse(data) : null,
+        }))
+      );
+
       current.setDate(current.getDate() + 1);
+    }
+
+    const dateResults = await Promise.all(datePromises);
+
+    for (const { date, data } of dateResults) {
+      results.push({
+        date,
+        value: data?.[metric] || 0,
+      });
     }
 
     return results;
@@ -227,6 +295,8 @@ export class MetricsCollector {
 
   /**
    * Clean up old metrics (to save KV space)
+   *
+   * Cleans up both legacy format (metric:*) and new aggregated format (metrics:daily:*)
    */
   async cleanup(daysToKeep: number = 30): Promise<number> {
     const cutoffDate = new Date();
@@ -234,9 +304,20 @@ export class MetricsCollector {
     const cutoffStr = cutoffDate.toISOString().split("T")[0];
 
     let deleted = 0;
-    const list = await this.kv.list({ prefix: "metric:", limit: 1000 });
 
-    for (const key of list.keys) {
+    // Clean up new aggregated format
+    const aggregateList = await this.kv.list({ prefix: "metrics:daily:", limit: 1000 });
+    for (const key of aggregateList.keys) {
+      const dateStr = key.name.replace("metrics:daily:", "");
+      if (dateStr < cutoffStr) {
+        await this.kv.delete(key.name);
+        deleted++;
+      }
+    }
+
+    // Clean up legacy format (for backwards compatibility)
+    const legacyList = await this.kv.list({ prefix: "metric:", limit: 1000 });
+    for (const key of legacyList.keys) {
       const parts = key.name.split(":");
       const dateStr = parts[parts.length - 1];
 

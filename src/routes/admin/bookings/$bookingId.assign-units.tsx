@@ -195,7 +195,7 @@ function AlreadyAssignedGuard({
                 navigate({
                   to: "/admin/bookings/$bookingId",
                   params: { bookingId },
-                } as Parameters<typeof navigate>[0])
+                } as unknown as Parameters<typeof navigate>[0])
               }
               className="bg-blue-600 hover:bg-blue-700"
             >

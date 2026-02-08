@@ -4,19 +4,29 @@
  *
  * Strategy: Use hourly time windows instead of per-request writes
  * Result: ~24 writes/day per unique IP vs ~N writes/day with sliding window
+ *
+ * Security Enhancement: When rate limit is exceeded, violations are tracked
+ * and progressive blocking is applied:
+ * - 3 violations → 1 hour block
+ * - 10 violations → 24 hour block
+ * - 50+ violations → 7 day block
  */
+
+import { incrementViolation } from "./auto-blocking";
 
 interface RateLimitOptions {
   limit: number; // Max requests allowed per window
   windowSeconds: number; // Time window in seconds
   environment?: string; // Optional: "development" | "production"
   skipInDev?: boolean; // Optional: Skip rate limiting in development (default: true)
+  trackViolations?: boolean; // Optional: Track violations for progressive blocking (default: true)
 }
 
 interface RateLimitResult {
   allowed: boolean;
   remaining: number;
   retryAfter: number; // Seconds until retry
+  violationTracked?: boolean; // If violation was tracked for progressive blocking
 }
 
 export async function checkKVRateLimit(
@@ -24,7 +34,7 @@ export async function checkKVRateLimit(
   identifier: string,
   options: RateLimitOptions
 ): Promise<RateLimitResult> {
-  const { limit, windowSeconds, environment, skipInDev = true } = options;
+  const { limit, windowSeconds, environment, skipInDev = true, trackViolations = true } = options;
 
   // Development mode bypass: Skip rate limiting if environment is "development"
   const isDevelopment = environment === "development";
@@ -51,10 +61,23 @@ export async function checkKVRateLimit(
     const windowEnd = (windowKey + 1) * windowSeconds;
     const retryAfter = windowEnd - now;
 
+    // Track violation for progressive blocking (non-blocking)
+    let violationTracked = false;
+    if (trackViolations) {
+      try {
+        await incrementViolation(kv, identifier, "Rate limit exceeded");
+        violationTracked = true;
+      } catch (error) {
+        // Don't fail the rate limit check if violation tracking fails
+        console.error("Failed to track violation:", error);
+      }
+    }
+
     return {
       allowed: false,
       remaining: 0,
       retryAfter: Math.max(retryAfter, 1),
+      violationTracked,
     };
   }
 

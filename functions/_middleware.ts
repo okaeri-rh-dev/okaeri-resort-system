@@ -6,8 +6,13 @@
  * - Comprehensive security headers (CSP, HSTS, X-Frame-Options, etc.)
  * - Environment-aware CORS configuration
  * - Request fingerprinting for rate limiting
+ * - Progressive IP auto-blocking based on violations
+ * - Anomaly detection for request spikes and path scanning
  * - A+ security rating on securityheaders.com
  */
+
+import { isIPBlocked } from "@/lib/auto-blocking";
+import { track404Error, trackRequest } from "@/lib/anomaly-detection";
 
 interface Env {
   RATE_LIMIT_KV: KVNamespace;
@@ -15,6 +20,7 @@ interface Env {
   TURNSTILE_SECRET_KEY?: string;
   SUPABASE_JWT_SECRET?: string;
   SUPABASE_URL?: string;
+  ALERT_WEBHOOK_URL?: string;
 }
 
 /**
@@ -280,6 +286,62 @@ export async function onRequest(
     });
   }
 
+  // Get client IP for security checks
+  const clientIp =
+    request.headers.get("CF-Connecting-IP") ||
+    request.headers.get("X-Forwarded-For")?.split(",")[0] ||
+    "unknown";
+  const userAgent = request.headers.get("User-Agent") || "unknown";
+
+  // ============================================
+  // SECURITY CHECK 1: IP Block Status
+  // ============================================
+  // Check if IP is blocked before processing request
+  if (env.RATE_LIMIT_KV) {
+    try {
+      const blockStatus = await isIPBlocked(env.RATE_LIMIT_KV, clientIp);
+      if (blockStatus.blocked) {
+        return new Response(
+          JSON.stringify({
+            error: "ACCESS_DENIED",
+            message: "Your IP has been temporarily blocked due to suspicious activity",
+            reason: blockStatus.reason,
+            expiresAt: blockStatus.expiresAt,
+            code: 403,
+          }),
+          {
+            status: 403,
+            headers: {
+              ...corsHeaders,
+              ...securityHeaders,
+              "Content-Type": "application/json",
+              "X-Request-ID": requestId,
+              "X-Blocked-IP": "true",
+            },
+          }
+        );
+      }
+    } catch (error) {
+      // Fail open - don't block on security check errors
+      console.error("IP block check error:", error);
+    }
+  }
+
+  // ============================================
+  // SECURITY CHECK 2: Anomaly Detection
+  // ============================================
+  // Track request patterns and detect anomalies (non-blocking)
+  if (env.RATE_LIMIT_KV) {
+    // Fire and forget - don't block on anomaly tracking
+    trackRequest(env.RATE_LIMIT_KV, clientIp, {
+      path: url.pathname,
+      userAgent,
+      alertWebhookUrl: env.ALERT_WEBHOOK_URL,
+    }).catch((error) => {
+      console.error("Anomaly tracking error:", error);
+    });
+  }
+
   // Authentication check for protected endpoints (Gap Resolution #8)
   if (!isPublicPath(url.pathname) && env.SUPABASE_JWT_SECRET) {
     const authHeader = request.headers.get("Authorization");
@@ -348,6 +410,19 @@ export async function onRequest(
       statusText: response.statusText,
       headers: new Headers(response.headers),
     });
+
+    // ============================================
+    // SECURITY CHECK 3: Track 404 Errors for Path Scanning
+    // ============================================
+    // Track 404 errors to detect path scanning attacks (non-blocking)
+    if (response.status === 404 && env.RATE_LIMIT_KV) {
+      track404Error(env.RATE_LIMIT_KV, clientIp, url.pathname, {
+        userAgent,
+        alertWebhookUrl: env.ALERT_WEBHOOK_URL,
+      }).catch((error) => {
+        console.error("404 tracking error:", error);
+      });
+    }
 
     // Apply security headers
     Object.entries(securityHeaders).forEach(([key, value]) => {
