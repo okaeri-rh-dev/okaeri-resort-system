@@ -10,16 +10,21 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo "${GREEN}🚀 Running pre-push checks in parallel...${NC}"
-echo "${YELLOW}🔍 ESLint (cached) + 🧪 Tests running concurrently...${NC}"
+echo "${YELLOW}🔍 ESLint (cached) + 🧪 Unit tests (8 threads) + 🗄️ DB tests${NC}"
 
-# Run ESLint and tests in parallel using concurrently
-# --kill-others-on-fail: Stop all if one fails
-# ESLint uses --cache for faster subsequent runs
+# Run all checks in parallel:
+# 1. ESLint with cache (~1s warm)
+# 2. Non-DB tests with higher parallelism (safe to parallelize)
+# 3. DB tests sequentially (require isolated database access)
+#
+# Non-DB and DB tests can run concurrently because they don't share state.
+# DB tests only need sequential execution among themselves.
 npx concurrently \
   --kill-others-on-fail \
-  --names "lint,test" \
-  --prefix-colors "yellow,cyan" \
+  --names "lint,unit,db" \
+  --prefix-colors "yellow,cyan,magenta" \
   "npx eslint . --ext .js,.jsx,.ts,.tsx --cache --cache-location .eslintcache" \
-  "npm run test -- --run"
+  "npx vitest run --exclude 'src/__tests__/database/**' --exclude '__tests__/database/**' --exclude 'src/__tests__/performance/multi-unit-availability.test.ts' --fileParallelism --poolOptions.threads.maxThreads=8" \
+  "npx vitest run src/__tests__/database __tests__/database src/__tests__/performance/multi-unit-availability.test.ts"
 
 echo "${GREEN}✅ All pre-push checks passed successfully!${NC}"
