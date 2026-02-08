@@ -2,7 +2,7 @@
 
 **Okaeri Resort Management System**
 **Version**: 1.0
-**Last Updated**: 2026-02-02
+**Last Updated**: 2026-02-08
 
 ## Overview
 
@@ -28,12 +28,12 @@ This comprehensive QA testing suite provides manual test cases organized by user
 
 See [`00-setup/test-credentials.md`](./00-setup/test-credentials.md) for login credentials.
 
-| Role | Email | Key Access |
-|------|-------|------------|
-| Owner | `owner@okaeri.ph` | Full access, financial reports, system settings |
-| Admin | `admin@okaeri.ph` | CRUD operations, payment verification, audit logs |
-| Staff | `staff@okaeri.ph` | View-only access |
-| Anonymous | N/A | Public pages only |
+| Role | Email | Password | Key Access |
+|------|-------|----------|------------|
+| Owner | `jasonacido+owner@gmail.com` | `12345678` | Full access, financial reports, system settings |
+| Admin | `jasonacido+admin@gmail.com` | `12345678` | CRUD operations, payment verification, audit logs |
+| Staff | `jasonacido+staff@gmail.com` | `12345678` | View-only access |
+| Anonymous | N/A | N/A | Public pages only |
 
 ## Test Organization
 
@@ -72,16 +72,24 @@ docs/qa-tests/
 │   ├── accounts-management.md                   # OWN-006: Financial accounts CRUD
 │   └── account-transfers.md                     # OWN-007: Inter-account transfers
 │
-└── 05-integration/                              # Phase 5: Cross-role & E2E tests
-    ├── complete-booking-lifecycle.md            # INT-001: Full booking flow
-    ├── role-permission-boundaries.md            # INT-002: Permission enforcement
-    ├── concurrent-booking-conflict.md           # INT-003: Race condition handling
-    ├── payment-booking-sync.md                  # INT-004: Payment-booking sync
-    ├── audit-trail-completeness.md              # INT-005: Audit logging verification
-    ├── account-balance-calculation.md           # INT-006: Financial balance accuracy
-    ├── guest-booking-approval-flow.md           # INT-007: Guest booking → approval E2E
-    ├── guest-booking-rejection-flow.md          # INT-008: Guest booking → rejection E2E
-    └── guest-booking-calendar-sync.md           # INT-009: Calendar sync verification
+├── 05-integration/                              # Phase 5: Cross-role & E2E tests
+│   ├── complete-booking-lifecycle.md            # INT-001: Full booking flow
+│   ├── role-permission-boundaries.md            # INT-002: Permission enforcement
+│   ├── concurrent-booking-conflict.md           # INT-003: Race condition handling
+│   ├── payment-booking-sync.md                  # INT-004: Payment-booking sync
+│   ├── audit-trail-completeness.md              # INT-005: Audit logging verification
+│   ├── account-balance-calculation.md           # INT-006: Financial balance accuracy
+│   ├── guest-booking-approval-flow.md           # INT-007: Guest booking → approval E2E
+│   ├── guest-booking-rejection-flow.md          # INT-008: Guest booking → rejection E2E
+│   └── guest-booking-calendar-sync.md           # INT-009: Calendar sync verification
+│
+└── 06-integration/                              # Phase 6: Complex Multi-User Integration
+    ├── calendar-sync.md                         # INT-CAL-001 to 003: Booking → Calendar sync
+    ├── payment-booking-sync.md                  # INT-PAY-001 to 002: Payment → Booking status
+    ├── financial-balance-sync.md                # INT-FIN-001 to 003: Transactions → Balances
+    ├── audit-trail-complete.md                  # INT-AUDIT-001 to 003: Audit completeness
+    ├── multi-user-sync.md                       # INT-MULTI-001 to 002: Cross-role sync
+    └── guest-booking-flow.md                    # INT-GUEST-001 to 002: Guest E2E flows
 ```
 
 ## Test Inventory Summary
@@ -93,7 +101,70 @@ docs/qa-tests/
 | 03-Admin | 6 tests | 60 min | Critical |
 | 04-Owner | 7 tests | 82 min | High |
 | 05-Integration | 9 tests | 173 min | Critical |
-| **Total** | **30 tests** | **~6.3 hrs** | |
+| 06-Integration (Complex) | 15 tests | 120 min | Critical |
+| **Total** | **45 tests** | **~8.3 hrs** | |
+
+### 06-Integration: Complex Multi-User Tests
+
+These advanced integration tests focus on cross-role data synchronization, real-time updates, and end-to-end workflows where actions by one user affect what another user sees.
+
+| Test ID | Category | Description | Priority |
+|---------|----------|-------------|----------|
+| INT-CAL-001 | Calendar Sync | Booking confirmation reflects in anonymous calendar | Critical |
+| INT-CAL-002 | Calendar Sync | Booking cancellation restores calendar availability | Critical |
+| INT-CAL-003 | Calendar Sync | Date modification updates calendar | High |
+| INT-PAY-001 | Payment Sync | Payment creates updates booking payment status | Critical |
+| INT-PAY-002 | Payment Sync | Payment deletion reverts booking payment status | High |
+| INT-FIN-001 | Financial Sync | Payment received updates account balance | Critical |
+| INT-FIN-002 | Financial Sync | Expense deducts from account balance | Critical |
+| INT-FIN-003 | Financial Sync | Transfer updates both account balances | Critical |
+| INT-AUDIT-001 | Audit Trail | Booking status changes logged | High |
+| INT-AUDIT-002 | Audit Trail | Financial operations logged | High |
+| INT-AUDIT-003 | Audit Trail | Payment events with severity levels | Medium |
+| INT-MULTI-001 | Multi-User | Staff sees Admin's booking changes | High |
+| INT-MULTI-002 | Multi-User | Concurrent booking conflict detection | Critical |
+| INT-GUEST-001 | Guest Flow | Guest booking → Admin queue → Calendar flow | Critical |
+| INT-GUEST-002 | Guest Flow | Booking rejection flow | High |
+
+### Two-Browser Approach for Integration Tests
+
+Most 06-integration tests require simultaneous sessions to verify cross-role synchronization:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Browser Session Setup for Integration Tests                │
+├─────────────────────────────────────────────────────────────┤
+│  Session A (Tab 1)        │  Session B (Tab 2/Incognito)    │
+│  ─────────────────────    │  ────────────────────────────   │
+│  • Admin/Owner role       │  • Anonymous/Staff role         │
+│  • Performs actions       │  • Verifies data visibility     │
+│  • Makes changes          │  • Checks sync/updates          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Setup Options:**
+1. **Two Tabs (Same Browser)**: Works for most tests, uses different logins
+2. **Tab + Incognito Window**: Better isolation for anonymous + authenticated tests
+3. **Two Different Browsers**: Best isolation for concurrent conflict tests
+
+### Execution Strategy for 06-Integration
+
+Execute tests in dependency order for optimal data reuse:
+
+| Order | Test IDs | Why This Order |
+|-------|----------|----------------|
+| 1 | INT-CAL-001 | Creates confirmed booking for subsequent tests |
+| 2 | INT-CAL-002 | Uses booking from CAL-001, cancels it |
+| 3 | INT-CAL-003 | Fresh booking with date modification |
+| 4 | INT-PAY-001 | Creates payments, tests status progression |
+| 5 | INT-PAY-002 | Uses payments from PAY-001, deletes them |
+| 6 | INT-FIN-001 | Tests account balance after payment |
+| 7 | INT-FIN-002 | Tests account balance after expense |
+| 8 | INT-FIN-003 | Tests transfer between accounts |
+| 9 | INT-AUDIT-001-003 | Run after other tests to verify audit trail |
+| 10 | INT-MULTI-001 | Cross-role sync verification |
+| 11 | INT-MULTI-002 | Concurrent conflict detection |
+| 12 | INT-GUEST-001-002 | Full E2E guest flows |
 
 ## Permission Matrix
 
@@ -161,7 +232,7 @@ For comprehensive testing, follow this order:
 4. One CRUD operation works
 5. Logout functions properly
 
-### Full Test Execution (~4.5 hrs)
+### Full Test Execution (~8.3 hrs)
 
 | Order | Phase | Focus |
 |-------|-------|-------|
@@ -170,6 +241,7 @@ For comprehensive testing, follow this order:
 | 3 | 03-Admin | CRUD operations work correctly |
 | 4 | 04-Owner | Full access and financial features |
 | 5 | 05-Integration | Cross-role workflows and data sync |
+| 6 | 06-Integration | Complex multi-user synchronization |
 
 ## Test Result Tracking
 
@@ -220,6 +292,17 @@ Before running tests, ensure:
 - [ ] At least 1 expense record exists
 - [ ] At least 3 financial accounts exist (Bank, E-Wallet, Cash types)
 - [ ] At least 1 account transfer exists
+
+### Additional Requirements for 06-Integration Tests
+
+Before running complex integration tests, also ensure:
+
+- [ ] At least 1 Pending booking available for confirmation testing
+- [ ] Unit with available dates in future (e.g., Feb/Mar 2026) for calendar sync tests
+- [ ] Cash account with positive balance for expense/transfer tests
+- [ ] GCash/Bank account available as transfer destination
+- [ ] Payment proof image ready for guest booking tests
+- [ ] Test email access for notification verification (optional)
 
 ### Test Data Cleanup
 
