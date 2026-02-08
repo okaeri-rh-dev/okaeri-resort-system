@@ -100,7 +100,7 @@ These credentials are for **testing purposes only**. Never use production creden
 | ----------------- | ----------------------------------------- |
 | Local Development | `http://localhost:5173/login`             |
 | Staging           | `https://staging.okaeri-resort.com/login` |
-| Production        | `https://okaeri-resort.com/login`         |
+| Production        | `https://okaeri-resort.pages.dev/login`   |
 
 ---
 

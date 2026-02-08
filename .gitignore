@@ -243,3 +243,7 @@ tests/fixtures/pdfs/*.pdf
 
 # Playwright MCP artifacts (screenshots, recordings)
 .playwright-mcp/
+
+# QA test screenshots (temporary testing artifacts)
+qa-test-*.png
+payment_proof_test.png
