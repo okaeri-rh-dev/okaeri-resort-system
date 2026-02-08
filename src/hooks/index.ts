@@ -7,6 +7,9 @@
 // Authentication Hooks
 export { useAuthToken } from "./useAuthToken";
 
+// Role & Permissions
+export { useUserRole } from "./useUserRole";
+
 // Performance & Responsive Design
 export {
   useResponsiveView,

@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useResponsiveView } from "@/hooks";
+import { useResponsiveView, useUserRole } from "@/hooks";
 import { cn } from "@/lib/utils";
 import {
   useDeletePayment,
@@ -77,6 +77,9 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
 
   // Use ultra-performant MediaQuery API for responsive detection
   const { isMobile } = useResponsiveView();
+
+  // Role-based permissions for actions
+  const { canEdit, canDelete, canVerifyPayments } = useUserRole();
 
   // Mutations
   const deletePayment = useDeletePayment();
@@ -246,15 +249,22 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
           const payment = row.original;
 
           const actions = [
+            // View Details - always visible
             {
               label: "View Details",
               onClick: () => onViewPayment?.(payment),
             },
-            {
-              label: "Edit Payment",
-              onClick: () => onEditPayment?.(payment),
-            },
-            ...(payment.booking?.payment_status !== "Completed"
+            // Edit Payment - requires canEdit permission
+            ...(canEdit
+              ? [
+                  {
+                    label: "Edit Payment",
+                    onClick: () => onEditPayment?.(payment),
+                  },
+                ]
+              : []),
+            // Verify Payment - requires canVerifyPayments permission
+            ...(canVerifyPayments && payment.booking?.payment_status !== "Completed"
               ? [
                   {
                     label: "Verify Payment",
@@ -262,16 +272,22 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
                   },
                 ]
               : []),
+            // Download Receipt - always visible (read-only action)
             {
               label: "Download Receipt",
               onClick: () => payment.proof_url && window.open(payment.proof_url, "_blank"),
               disabled: !payment.proof_url,
             },
-            {
-              label: "Delete",
-              onClick: () => handleDelete(payment),
-              className: "text-red-600 hover:text-red-700",
-            },
+            // Delete - requires canDelete permission (owner+)
+            ...(canDelete
+              ? [
+                  {
+                    label: "Delete",
+                    onClick: () => handleDelete(payment),
+                    className: "text-red-600 hover:text-red-700",
+                  },
+                ]
+              : []),
           ];
 
           return <ActionMenu actions={actions} />;
@@ -279,7 +295,15 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
         size: 80,
       }),
     ],
-    [onViewPayment, onEditPayment, handleDelete, handleVerify]
+    [
+      onViewPayment,
+      onEditPayment,
+      handleDelete,
+      handleVerify,
+      canEdit,
+      canDelete,
+      canVerifyPayments,
+    ]
   );
 
   // Transform payments data to match Payment interface
@@ -408,19 +432,21 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
                       Receipt
                     </Button>
                   )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      onEditPayment?.({
-                        ...payment,
-                        booking: payment.booking || undefined,
-                      } as Payment)
-                    }
-                  >
-                    <Edit className="mr-1 h-4 w-4" />
-                    Edit
-                  </Button>
+                  {canEdit && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        onEditPayment?.({
+                          ...payment,
+                          booking: payment.booking || undefined,
+                        } as Payment)
+                      }
+                    >
+                      <Edit className="mr-1 h-4 w-4" />
+                      Edit
+                    </Button>
+                  )}
                 </div>
               </div>
             </MobileCard>

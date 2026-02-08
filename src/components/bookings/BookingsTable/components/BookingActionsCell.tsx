@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 
 import { ActionMenu } from "@/components/tables/utils";
+import { useUserRole } from "@/hooks";
 import type { Booking, BookingStatus } from "@/types";
 
 // Type for TanStack Query mutation objects (simplified from UseMutationResult)
@@ -25,17 +26,25 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
   handleUploadPayment,
 }) => {
   const navigate = useNavigate();
+  const { canEdit, canDelete, canConfirmBookings } = useUserRole();
 
-  const actions = [
-    {
-      label: "Edit Booking",
-      onClick: () => {
-        navigate({
-          to: "/admin/bookings/$bookingId/edit",
-          params: { bookingId: booking.booking_id },
-        });
-      },
-    },
+  // Build all possible actions
+  const allActions = [
+    // Edit - requires canEdit permission
+    ...(canEdit
+      ? [
+          {
+            label: "Edit Booking",
+            onClick: () => {
+              navigate({
+                to: "/admin/bookings/$bookingId/edit",
+                params: { bookingId: booking.booking_id },
+              });
+            },
+          },
+        ]
+      : []),
+    // Upload Payment - always visible (staff can upload on behalf of guests)
     ...(booking.payment_status !== "Completed"
       ? [
           {
@@ -44,7 +53,8 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
           },
         ]
       : []),
-    ...(booking.booking_status === "Pending"
+    // Confirm - requires canConfirmBookings permission
+    ...(canConfirmBookings && booking.booking_status === "Pending"
       ? [
           {
             label: "Confirm",
@@ -57,7 +67,8 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
           },
         ]
       : []),
-    ...(booking.booking_status !== "Cancelled"
+    // Cancel - requires canEdit permission
+    ...(canEdit && booking.booking_status !== "Cancelled"
       ? [
           {
             label: "Cancel",
@@ -68,20 +79,30 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
           },
         ]
       : []),
-    {
-      label: "Delete",
-      onClick: () => {
-        if (
-          confirm(
-            `Are you sure you want to permanently delete booking "${booking.booking_reference}"? This action cannot be undone.`
-          )
-        ) {
-          deleteBooking.mutate(booking.booking_id);
-        }
-      },
-      variant: "destructive" as const,
-    },
+    // Delete - requires canDelete permission (owner+)
+    ...(canDelete
+      ? [
+          {
+            label: "Delete",
+            onClick: () => {
+              if (
+                confirm(
+                  `Are you sure you want to permanently delete booking "${booking.booking_reference}"? This action cannot be undone.`
+                )
+              ) {
+                deleteBooking.mutate(booking.booking_id);
+              }
+            },
+            variant: "destructive" as const,
+          },
+        ]
+      : []),
   ];
 
-  return <ActionMenu actions={actions} />;
+  // If no actions are available (shouldn't happen, but safety check)
+  if (allActions.length === 0) {
+    return null;
+  }
+
+  return <ActionMenu actions={allActions} />;
 };
