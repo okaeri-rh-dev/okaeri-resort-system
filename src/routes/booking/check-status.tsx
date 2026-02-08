@@ -66,6 +66,12 @@ function CheckBookingPage() {
 
       if (response.status === 404) {
         setNotFound(true);
+        toast.error("No booking found with the provided details");
+        return;
+      }
+
+      if (response.status === 429) {
+        toast.error("Too many requests. Please wait a moment and try again.");
         return;
       }
 
@@ -81,6 +87,7 @@ function CheckBookingPage() {
       const bookingData = await response.json();
       const validatedData = validateStatusResponse(bookingData);
       setBooking(validatedData);
+      toast.success("Booking found!");
     } catch (error: unknown) {
       console.error("Search error:", error);
       const errorMessage =

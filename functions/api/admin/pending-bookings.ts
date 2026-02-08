@@ -119,13 +119,27 @@ export async function onRequest(context: {
 
     if (queryError) {
       console.error("Database query error:", queryError);
+
+      // Check if this is a missing column/relation error (migration not applied)
+      const errorMessage = queryError.message || "";
+      const isMigrationError =
+        errorMessage.includes("column") ||
+        errorMessage.includes("does not exist") ||
+        errorMessage.includes("relation") ||
+        errorMessage.includes("guest_booking_unit_requests");
+
       return new Response(
         JSON.stringify({
-          error: "Failed to fetch bookings",
+          error: isMigrationError
+            ? "Multi-unit booking feature not yet configured"
+            : "Failed to fetch bookings",
           details: queryError.message,
+          hint: isMigrationError
+            ? "Database migration 021 (multi_unit_guest_booking_schema) may not be applied to production"
+            : undefined,
         }),
         {
-          status: 500,
+          status: isMigrationError ? 503 : 500, // 503 Service Unavailable for migration issues
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );

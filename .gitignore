@@ -246,4 +246,6 @@ tests/fixtures/pdfs/*.pdf
 
 # QA test screenshots (temporary testing artifacts)
 qa-test-*.png
+qa-*.png
 payment_proof_test.png
+docs/qa-tests/screenshots/

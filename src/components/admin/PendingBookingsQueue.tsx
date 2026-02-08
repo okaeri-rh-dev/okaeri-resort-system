@@ -97,7 +97,14 @@ export function PendingBookingsQueue() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch pending bookings");
+        // Parse the error response for more details
+        const errorData = (await response.json().catch(() => ({}))) as {
+          error?: string;
+          hint?: string;
+        };
+        const errorMessage = errorData.error || "Failed to fetch pending bookings";
+        const hint = errorData.hint || "";
+        throw new Error(hint ? `${errorMessage}. ${hint}` : errorMessage);
       }
 
       const data = (await response.json()) as { bookings: PendingBooking[] };
@@ -196,14 +203,27 @@ export function PendingBookingsQueue() {
   }
 
   if (error) {
+    const isMigrationError = error.message.includes("not yet configured");
     return (
       <Card>
         <CardHeader>
           <CardTitle>Pending Bookings Queue</CardTitle>
-          <CardDescription className="text-destructive">
-            Error loading bookings: {error.message}
+          <CardDescription
+            className={isMigrationError ? "text-muted-foreground" : "text-destructive"}
+          >
+            {isMigrationError
+              ? "Multi-unit booking feature is not yet available."
+              : `Error loading bookings: ${error.message}`}
           </CardDescription>
         </CardHeader>
+        {isMigrationError && (
+          <CardContent>
+            <p className="text-muted-foreground text-sm">
+              This feature requires a database migration. Contact the system administrator if you
+              believe this should be enabled.
+            </p>
+          </CardContent>
+        )}
       </Card>
     );
   }
