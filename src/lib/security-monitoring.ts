@@ -1,9 +1,41 @@
 /**
  * Security Monitoring and Anomaly Detection
  * Analyzes audit logs to detect suspicious patterns and threats
+ *
+ * NOTE: This module uses lazy-loaded Supabase client to support
+ * Cloudflare Workers where env vars are only available at runtime.
+ * The supabase client is imported dynamically to avoid module-load-time
+ * environment variable access errors.
  */
 
-import { supabase } from "./supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import type { Database } from "@/types/database.types";
+
+// Lazy-loaded supabase client - only created when actually needed
+// This fixes the Workers env var issue where import.meta.env is not available at module load
+let _supabase: SupabaseClient<Database> | null = null;
+let _supabaseInitFailed = false;
+
+async function getSupabaseAsync(): Promise<SupabaseClient<Database> | null> {
+  if (_supabase) return _supabase;
+  if (_supabaseInitFailed) return null;
+
+  try {
+    // Dynamic import to avoid module-load-time env var access
+    const module = await import("./supabase");
+    _supabase = module.supabase;
+    return _supabase;
+  } catch (error) {
+    // In Workers context, this will fail - return null to degrade gracefully
+    _supabaseInitFailed = true;
+    console.warn(
+      "[SecurityMonitoring] Supabase client not available - security monitoring disabled",
+      error
+    );
+    return null;
+  }
+}
 
 /**
  * Threat patterns that indicate suspicious activity
@@ -39,6 +71,18 @@ export async function detectAnomalies(
   const metadata: Record<string, unknown> = { ip, timeWindow: timeWindowMinutes };
 
   try {
+    const supabase = await getSupabaseAsync();
+    if (!supabase) {
+      // Supabase not available (e.g., Workers context) - return no anomaly
+      return {
+        isAnomaly: false,
+        patterns: [],
+        threatScore: 0,
+        recommendations: [],
+        metadata,
+      };
+    }
+
     // Query recent audit logs for this IP
     const startTime = new Date(Date.now() - timeWindowMinutes * 60 * 1000).toISOString();
 
@@ -287,6 +331,11 @@ export async function getTopThreatSources(
   }>
 > {
   try {
+    const supabase = await getSupabaseAsync();
+    if (!supabase) {
+      return [];
+    }
+
     const startTime = new Date(Date.now() - hoursBack * 60 * 60 * 1000).toISOString();
 
     // Query audit logs grouped by IP
@@ -344,6 +393,13 @@ export async function logSecurityEvent(event: {
   metadata?: Record<string, unknown>;
 }): Promise<void> {
   try {
+    const supabase = await getSupabaseAsync();
+    if (!supabase) {
+      // Supabase not available - just log to console in Workers context
+      console.log(`[SecurityEvent] ${event.type}:`, event.ip, event.metadata);
+      return;
+    }
+
     // Calculate threat level - align with database enum values
     const threatLevel = event.type === "suspicious_pattern" ? "CRITICAL" : "WARNING";
 
