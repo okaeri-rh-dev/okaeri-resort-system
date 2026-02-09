@@ -17,6 +17,16 @@ import {
 import { Download, Edit } from "lucide-react";
 
 import { withErrorBoundary } from "@/components/ErrorBoundary";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -74,6 +84,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
 
   // Use ultra-performant MediaQuery API for responsive detection
   const { isMobile } = useResponsiveView();
@@ -94,24 +105,21 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
     ? payments.filter((p) => p.booking_id === bookingId)
     : payments;
 
-  const handleDelete = useCallback(
-    async (payment: Payment) => {
-      if (
-        !confirm(
-          `Are you sure you want to delete this payment of ${formatCurrency(payment.amount)}?`
-        )
-      ) {
-        return;
-      }
+  const handleDelete = useCallback((payment: Payment) => {
+    setPaymentToDelete(payment);
+  }, []);
 
-      try {
-        await deletePayment.mutateAsync(payment.payment_id);
-      } catch (error) {
-        console.error("Failed to delete payment:", error);
-      }
-    },
-    [deletePayment]
-  );
+  const confirmDelete = useCallback(async () => {
+    if (!paymentToDelete) return;
+
+    try {
+      await deletePayment.mutateAsync(paymentToDelete.payment_id);
+    } catch (error) {
+      console.error("Failed to delete payment:", error);
+    } finally {
+      setPaymentToDelete(null);
+    }
+  }, [deletePayment, paymentToDelete]);
 
   const handleVerify = useCallback(
     async (payment: Payment) => {
@@ -632,6 +640,34 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
       {/* Desktop pagination */}
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <TablePagination table={table as any} totalItems={filteredPayments.length} />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!paymentToDelete}
+        onOpenChange={(open) => !open && setPaymentToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Payment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this payment of{" "}
+              <span className="font-semibold">
+                {paymentToDelete && formatCurrency(paymentToDelete.amount)}
+              </span>
+              ? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
