@@ -354,13 +354,66 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     });
 
     if (createError || !result) {
-      console.error("[BOOKING] Creation error:", createError);
+      // ============================================================
+      // BUG-003 FIX: Improved error handling for guest booking creation
+      // ============================================================
+      // Previously: Only logged generic error, hiding actual database error
+      // Now: Logs full error details and returns specific error code
+      // ============================================================
+
+      // Log comprehensive error details for debugging
+      console.error("[BOOKING] Creation error details:", {
+        error: createError,
+        errorMessage: createError?.message,
+        errorCode: createError?.code,
+        errorHint: createError?.hint,
+        errorDetails: createError?.details,
+        bookingReference: bookingReference,
+        guestName: sanitizedData.guest_name,
+        email: data.email,
+        checkIn: data.check_in,
+        checkOut: data.check_out,
+        unitCount: data.unit_requests.length,
+        totalGuests: totalGuests,
+        pricingTotal: pricing.total,
+      });
+
+      // Parse database error for specific error codes
+      const errorMessage = createError?.message || "Unknown database error";
+      const errorCode = createError?.code;
+
+      // Determine appropriate error response based on PostgreSQL error code
+      let errorType = ERROR_CODES.DATABASE_ERROR;
+      let userMessage = "Booking creation failed. Please try again.";
+
+      if (errorCode === "23505") {
+        // Unique violation - likely duplicate booking
+        errorType = ERROR_CODES.DUPLICATE_BOOKING;
+        userMessage = "A booking with similar details already exists.";
+      } else if (errorCode === "23503") {
+        // Foreign key violation - invalid reference
+        userMessage = "Invalid booking data. Please verify your selections.";
+      } else if (errorCode === "23502") {
+        // Not null violation - missing required field
+        userMessage = "Missing required booking information.";
+        console.error("[BOOKING] Missing field:", errorMessage);
+      } else if (errorCode === "P0001") {
+        // Raised exception from PL/pgSQL
+        userMessage = errorMessage.replace("Booking creation failed: ", "");
+      }
+
       return Response.json(
         {
           success: false,
-          error: "Booking creation failed",
-          error_code: ERROR_CODES.DATABASE_ERROR,
-          details: createError?.message,
+          error: userMessage,
+          error_code: errorType,
+          details: {
+            message: errorMessage,
+            code: errorCode,
+            hint: createError?.hint,
+            // Include booking reference for support inquiries
+            booking_reference: bookingReference,
+          },
         },
         { status: 500, headers: corsHeaders }
       );
@@ -417,13 +470,24 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       headers: corsHeaders,
     });
   } catch (error: unknown) {
-    console.error("[BOOKING] Unexpected error:", error);
+    // BUG-003 FIX: Improved error handling for unexpected errors
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    console.error("[BOOKING] Unexpected error:", {
+      message: errorMessage,
+      stack: errorStack,
+      error: error,
+    });
+
     return Response.json(
       {
         success: false,
-        error: "Booking creation failed",
+        error: "Booking creation failed. Please try again later.",
         error_code: ERROR_CODES.INTERNAL_ERROR,
-        details: error.message,
+        details: {
+          message: errorMessage,
+        },
       },
       { status: 500, headers: corsHeaders }
     );
