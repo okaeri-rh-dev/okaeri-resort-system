@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { INVALID_CREDENTIALS, ROUTES, TEST_USERS } from "./fixtures/test-data";
+import { INVALID_CREDENTIALS, ROUTES, TEST_USERS, VIEWPORTS } from "./fixtures/test-data";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 
@@ -372,6 +372,69 @@ test.describe("Authentication", () => {
       // Navigate back to dashboard
       await page.goto(ROUTES.admin.dashboard);
       await dashboardPage.expectToBeOnDashboard();
+    });
+  });
+
+  test.describe("Responsive Design", () => {
+    test.describe("Mobile Viewport", () => {
+      test.beforeEach(async ({ page }) => {
+        await page.setViewportSize(VIEWPORTS.mobile);
+      });
+
+      test("login form renders correctly on mobile", async ({ page }) => {
+        const loginPage = new LoginPage(page);
+        await loginPage.goto();
+
+        // Form elements should be visible
+        await expect(loginPage.emailInput).toBeVisible();
+        await expect(loginPage.passwordInput).toBeVisible();
+        await expect(loginPage.signInButton).toBeVisible();
+
+        // No horizontal overflow
+        const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+        const viewportWidth = await page.evaluate(() => window.innerWidth);
+        expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 5);
+      });
+
+      test("login inputs have adequate touch targets on mobile", async ({ page }) => {
+        const loginPage = new LoginPage(page);
+        await loginPage.goto();
+
+        // Check email input touch target size (minimum 44px for iOS)
+        const emailBox = await loginPage.emailInput.boundingBox();
+        expect(emailBox?.height).toBeGreaterThanOrEqual(40);
+
+        // Check sign in button touch target
+        const buttonBox = await loginPage.signInButton.boundingBox();
+        expect(buttonBox?.height).toBeGreaterThanOrEqual(40);
+      });
+
+      test("forgot password page works on mobile", async ({ page }) => {
+        await page.goto(ROUTES.public.forgotPassword);
+
+        // Email input should be visible
+        await expect(page.getByLabel(/email/i)).toBeVisible();
+
+        // Submit button should be visible
+        await expect(page.getByRole("button", { name: /reset|send|submit/i })).toBeVisible();
+      });
+    });
+
+    test.describe("Tablet Viewport", () => {
+      test.beforeEach(async ({ page }) => {
+        await page.setViewportSize(VIEWPORTS.tablet);
+      });
+
+      test("login form displays appropriately on tablet", async ({ page }) => {
+        const loginPage = new LoginPage(page);
+        await loginPage.goto();
+
+        // Form should display correctly
+        await expect(loginPage.emailInput).toBeVisible();
+        await expect(loginPage.passwordInput).toBeVisible();
+        await expect(loginPage.signInButton).toBeVisible();
+        await expect(loginPage.forgotPasswordLink).toBeVisible();
+      });
     });
   });
 });

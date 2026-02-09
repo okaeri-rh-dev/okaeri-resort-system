@@ -20,7 +20,7 @@ import {
   parsePHP,
   TEST_PRICING_CONFIGS,
 } from "./fixtures/pricing-data";
-import { ROUTES, TIMEOUTS } from "./fixtures/test-data";
+import { ROUTES, TIMEOUTS, VIEWPORTS } from "./fixtures/test-data";
 import { BookingDetailPage } from "./pages/BookingDetailPage";
 import { BookingFormPage } from "./pages/BookingFormPage";
 import { BookingsTablePage } from "./pages/BookingsTablePage";
@@ -701,6 +701,48 @@ test.describe("Pricing Integrity", () => {
       if (extraPersonRate > 0) {
         expect(price2).toBeGreaterThan(price1);
       }
+    });
+  });
+
+  test.describe("Responsive Design", () => {
+    test.describe("Mobile Viewport", () => {
+      test.beforeEach(async ({ page }) => {
+        await page.setViewportSize(VIEWPORTS.mobile);
+      });
+
+      test("booking form shows pricing correctly on mobile", async ({ page }) => {
+        const bookingForm = new BookingFormPage(page);
+        await bookingForm.goto();
+
+        const testData = createBookingTestData();
+
+        // Navigate through form to review step
+        await bookingForm.fillStep1({
+          checkIn: testData.dates.checkIn,
+          checkOut: testData.dates.checkOut,
+          guestCount: 2,
+        });
+        await bookingForm.goToNextStep(); // → Cabins
+        await bookingForm.goToNextStep(); // → Contact
+
+        await bookingForm.fillStep2({
+          name: testData.guest.name,
+          email: testData.guest.email,
+          phone: testData.guest.phone,
+        });
+        await bookingForm.goToNextStep(); // → Payment Proof
+        await bookingForm.goToNextStep(); // → Review
+
+        // Price should be visible on mobile review step
+        const priceElement = page.locator(
+          '[class*="total"], [class*="price"], [data-testid="total-amount"]'
+        );
+
+        if (await priceElement.first().isVisible()) {
+          const displayedPrice = await priceElement.first().textContent();
+          expect(displayedPrice).toMatch(/[\d,]+/);
+        }
+      });
     });
   });
 });

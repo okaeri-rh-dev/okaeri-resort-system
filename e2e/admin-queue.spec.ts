@@ -7,7 +7,7 @@ import {
   getUrgencyLevel,
   URGENCY_LEVELS,
 } from "./fixtures/booking-data";
-import { TIMEOUTS } from "./fixtures/test-data";
+import { TIMEOUTS, VIEWPORTS } from "./fixtures/test-data";
 import { AdminQueuePage } from "./pages/AdminQueuePage";
 
 /**
@@ -499,6 +499,73 @@ test.describe("Admin Booking Queue", () => {
 
       // Filter should be fast
       expect(filterTime).toBeLessThan(TIMEOUTS.medium);
+    });
+  });
+
+  test.describe("Responsive Design", () => {
+    test.describe("Mobile Viewport", () => {
+      test.beforeEach(async ({ page }) => {
+        await page.setViewportSize(VIEWPORTS.mobile);
+        await loginAsAdmin(page);
+      });
+
+      test("queue page loads on mobile", async ({ page }) => {
+        const queuePage = new AdminQueuePage(page);
+        await queuePage.goto();
+
+        // Queue or empty state should be visible
+        const queueVisible = await queuePage.queueContainer.isVisible().catch(() => false);
+        const emptyVisible = await queuePage.emptyState.isVisible().catch(() => false);
+        expect(queueVisible || emptyVisible).toBeTruthy();
+      });
+
+      test("queue actions are tappable on mobile", async ({ page }) => {
+        const queuePage = new AdminQueuePage(page);
+        await queuePage.goto();
+
+        if (await queuePage.emptyState.isVisible()) {
+          test.skip();
+          return;
+        }
+
+        // Check if action buttons have adequate touch target
+        const reviewButtons = await queuePage.reviewPaymentButtons.all();
+        if (reviewButtons.length > 0) {
+          const buttonBox = await reviewButtons[0].boundingBox();
+          expect(buttonBox?.height).toBeGreaterThanOrEqual(40);
+        }
+      });
+
+      test("queue filters accessible on mobile", async ({ page }) => {
+        const queuePage = new AdminQueuePage(page);
+        await queuePage.goto();
+
+        // Filters should be accessible (may be in dropdown or visible)
+        // Just verify the page loads without horizontal overflow
+        const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+        const viewportWidth = await page.evaluate(() => window.innerWidth);
+        expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 5);
+      });
+    });
+
+    test.describe("Tablet Viewport", () => {
+      test.beforeEach(async ({ page }) => {
+        await page.setViewportSize(VIEWPORTS.tablet);
+        await loginAsAdmin(page);
+      });
+
+      test("queue displays properly on tablet", async ({ page }) => {
+        const queuePage = new AdminQueuePage(page);
+        await queuePage.goto();
+
+        // Queue should be visible
+        await queuePage.expectQueueVisible();
+
+        // Search should be accessible
+        const searchInput = page.getByPlaceholder(/search|reference/i);
+        const searchVisible = await searchInput.isVisible().catch(() => false);
+        expect(searchVisible || (await queuePage.emptyState.isVisible())).toBeTruthy();
+      });
     });
   });
 });

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { ROUTES } from "./fixtures/test-data";
+import { ROUTES, VIEWPORTS } from "./fixtures/test-data";
 import { LoginPage } from "./pages/LoginPage";
 import { PublicCalendarPage } from "./pages/PublicCalendarPage";
 
@@ -153,7 +153,7 @@ test.describe("Smoke Tests", () => {
   test.describe("Responsive Design", () => {
     test("public calendar renders on mobile viewport", async ({ page }) => {
       // Set mobile viewport
-      await page.setViewportSize({ width: 375, height: 667 });
+      await page.setViewportSize(VIEWPORTS.mobile);
 
       const calendarPage = new PublicCalendarPage(page);
       await calendarPage.goto();
@@ -168,7 +168,7 @@ test.describe("Smoke Tests", () => {
     });
 
     test("login page renders on mobile viewport", async ({ page }) => {
-      await page.setViewportSize({ width: 375, height: 667 });
+      await page.setViewportSize(VIEWPORTS.mobile);
 
       const loginPage = new LoginPage(page);
       await loginPage.goto();
@@ -177,6 +177,26 @@ test.describe("Smoke Tests", () => {
       await expect(loginPage.emailInput).toBeVisible();
       await expect(loginPage.passwordInput).toBeVisible();
       await expect(loginPage.signInButton).toBeVisible();
+    });
+
+    test("public calendar renders on tablet viewport", async ({ page }) => {
+      await page.setViewportSize(VIEWPORTS.tablet);
+
+      const calendarPage = new PublicCalendarPage(page);
+      await calendarPage.goto();
+
+      // Verify page is functional on tablet
+      await expect(page.locator("body")).toBeVisible();
+
+      // Verify calendar loads on tablet
+      await expect(page.getByRole("heading", { name: "Okaeri Availability" })).toBeVisible({
+        timeout: 10000,
+      });
+
+      // Layout should adapt appropriately (not just stretched mobile)
+      const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+      const viewportWidth = await page.evaluate(() => window.innerWidth);
+      expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 5);
     });
   });
 

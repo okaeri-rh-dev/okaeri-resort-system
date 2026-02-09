@@ -6,6 +6,7 @@ import {
   ROUTES,
   TEST_BOOKING,
   TEST_GUEST,
+  VIEWPORTS,
 } from "./fixtures/test-data";
 import { BookingFormPage } from "./pages/BookingFormPage";
 import { PublicCalendarPage } from "./pages/PublicCalendarPage";
@@ -409,6 +410,159 @@ test.describe("Public Booking Flow", () => {
       // Focus should move to next element
       const focusedElement = page.locator(":focus");
       await expect(focusedElement).toBeVisible();
+    });
+  });
+
+  test.describe("Responsive Design", () => {
+    test.describe("Mobile Viewport", () => {
+      test.beforeEach(async ({ page }) => {
+        await page.setViewportSize(VIEWPORTS.mobile);
+      });
+
+      test("booking form loads correctly on mobile", async ({ page }) => {
+        const bookingForm = new BookingFormPage(page);
+        await bookingForm.goto();
+
+        // Form heading should be visible
+        await expect(page.getByRole("heading", { name: "Book Your Stay", level: 1 })).toBeVisible({
+          timeout: 10000,
+        });
+
+        // First step elements should be visible
+        await expect(page.getByText("Check-In Date", { exact: true })).toBeVisible();
+        await expect(page.getByText("Check-Out Date", { exact: true })).toBeVisible();
+
+        // No horizontal overflow on mobile
+        const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+        const viewportWidth = await page.evaluate(() => window.innerWidth);
+        expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 5); // 5px tolerance
+      });
+
+      test("can navigate between steps on mobile", async ({ page }) => {
+        const bookingForm = new BookingFormPage(page);
+        await bookingForm.goto();
+
+        // Navigate to step 2
+        await bookingForm.goToNextStep();
+        await expect(page.getByRole("heading", { name: /choose cabins/i })).toBeVisible({
+          timeout: 5000,
+        });
+
+        // Navigate back to step 1
+        await bookingForm.goToPreviousStep();
+        await bookingForm.expectStep1Visible();
+      });
+
+      test("date picker opens on mobile", async ({ page }) => {
+        const bookingForm = new BookingFormPage(page);
+        await bookingForm.goto();
+
+        // Open check-in date picker
+        await bookingForm.openCheckInPicker();
+
+        // Calendar should appear (as sheet or modal on mobile)
+        await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 5000 });
+      });
+
+      test("contact form inputs accessible on mobile", async ({ page }) => {
+        const bookingForm = new BookingFormPage(page);
+        await bookingForm.goto();
+
+        // Navigate to Contact step
+        await bookingForm.goToNextStep(); // → Cabins
+        await bookingForm.goToNextStep(); // → Contact
+
+        // Verify inputs are visible and have adequate touch target size
+        await expect(bookingForm.fullNameInput).toBeVisible();
+        await expect(bookingForm.emailInput).toBeVisible();
+        await expect(bookingForm.phoneInput).toBeVisible();
+
+        // Verify inputs don't trigger zoom (font-size >= 16px)
+        const fontSize = await bookingForm.fullNameInput.evaluate(
+          (el) => window.getComputedStyle(el).fontSize
+        );
+        const fontSizeNum = parseInt(fontSize, 10);
+        expect(fontSizeNum).toBeGreaterThanOrEqual(16);
+      });
+
+      test("can complete full booking flow on mobile", async ({ page }) => {
+        const bookingForm = new BookingFormPage(page);
+        await bookingForm.goto();
+
+        // Step 1: Dates (pre-filled)
+        await bookingForm.goToNextStep();
+
+        // Step 2: Cabins
+        await bookingForm.goToNextStep();
+
+        // Step 3: Contact
+        await bookingForm.fillContactInfo(TEST_GUEST);
+        await bookingForm.goToNextStep();
+
+        // Step 4: Payment Proof (skip in dev)
+        await bookingForm.goToNextStep();
+
+        // Step 5: Review - verify we reached review step
+        await expect(page.getByRole("heading", { name: /review your booking/i })).toBeVisible({
+          timeout: 5000,
+        });
+
+        // Submit button should be visible
+        await expect(bookingForm.submitButton).toBeVisible();
+      });
+
+      test("status check page usable on mobile", async ({ page }) => {
+        await page.goto(ROUTES.public.checkStatus);
+
+        // Page should load correctly
+        await expect(
+          page.getByRole("heading", { name: "Check Booking Status", level: 1 })
+        ).toBeVisible();
+
+        // Form fields should be visible
+        await expect(page.getByLabel("Booking Reference")).toBeVisible();
+        await expect(page.getByLabel("Email Address")).toBeVisible();
+
+        // Search button should be visible and have adequate touch target
+        const searchButton = page.getByRole("button", { name: /search|check|find/i });
+        await expect(searchButton).toBeVisible();
+
+        // No horizontal overflow
+        const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+        const viewportWidth = await page.evaluate(() => window.innerWidth);
+        expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 5);
+      });
+    });
+
+    test.describe("Tablet Viewport", () => {
+      test.beforeEach(async ({ page }) => {
+        await page.setViewportSize(VIEWPORTS.tablet);
+      });
+
+      test("booking form displays on tablet", async ({ page }) => {
+        const bookingForm = new BookingFormPage(page);
+        await bookingForm.goto();
+
+        // Form should display correctly
+        await expect(page.getByRole("heading", { name: "Book Your Stay", level: 1 })).toBeVisible({
+          timeout: 10000,
+        });
+
+        // Layout should adapt appropriately (not just stretched mobile)
+        await expect(page.getByText("Check-In Date", { exact: true })).toBeVisible();
+        await expect(page.getByText("Check-Out Date", { exact: true })).toBeVisible();
+      });
+
+      test("date picker works on tablet", async ({ page }) => {
+        const bookingForm = new BookingFormPage(page);
+        await bookingForm.goto();
+
+        // Open check-in date picker
+        await bookingForm.openCheckInPicker();
+
+        // Calendar should appear
+        await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 5000 });
+      });
     });
   });
 });

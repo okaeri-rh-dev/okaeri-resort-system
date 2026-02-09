@@ -130,9 +130,11 @@ Tool: mcp__playwright__browser_network_requests
 - Date pickers functional
 - Dropdowns open
 
-#### 4.7 Test responsive layouts (optional)
+#### 4.7 Test at all viewports
 
-For comprehensive audits, test at multiple viewports:
+For each page, test all three viewports to ensure responsive design:
+
+**Mobile (375x667):**
 
 ```
 Tool: mcp__playwright__browser_resize
@@ -140,7 +142,13 @@ width: 375
 height: 667
 ```
 
-Take snapshot, check for layout issues.
+- Take snapshot
+- Check for horizontal overflow
+- Verify touch targets visible (minimum 44x44px)
+- Check navigation accessibility (hamburger menu opens)
+- Verify inputs have 16px+ font (prevents iOS zoom)
+
+**Tablet (768x1024):**
 
 ```
 Tool: mcp__playwright__browser_resize
@@ -148,7 +156,12 @@ width: 768
 height: 1024
 ```
 
-Take snapshot, check for layout issues.
+- Take snapshot
+- Check layout adaptation (not just stretched mobile)
+- Verify tables/forms display properly
+- Check sidebars visible or accessible
+
+**Desktop (1280x720):**
 
 ```
 Tool: mcp__playwright__browser_resize
@@ -156,7 +169,7 @@ width: 1280
 height: 720
 ```
 
-Reset to desktop view.
+- Reset to desktop view for next page
 
 ### Step 5: Categorize Issues
 
@@ -182,10 +195,16 @@ Scope: {section}
 Pages Audited: {count}
 Time: {duration}
 
+Responsive Coverage:
+• Mobile (375x667): {pass/fail count}
+• Tablet (768x1024): {pass/fail count}
+• Desktop (1280x720): {pass/fail count}
+
 Summary:
 • Errors: {count}
 • Warnings: {count}
-• Info: {count}
+• Mobile Issues: {count}
+• Tablet Issues: {count}
 
 ───────────────────────────────────────────────────────────
 Page: {route}
@@ -268,6 +287,25 @@ For each approved fix:
 - [ ] Edit/delete actions present
 - [ ] Related entities load
 
+### Mobile Viewport (375x667)
+
+- [ ] Touch targets minimum 44x44px
+- [ ] No horizontal scroll on content
+- [ ] Navigation accessible (hamburger menu opens)
+- [ ] Form inputs have 16px+ font (prevents iOS zoom)
+- [ ] Tables adapt to cards or horizontal scroll
+- [ ] Date pickers open as sheets/modals
+- [ ] Submit buttons full-width or easily tappable
+- [ ] Text readable without zooming
+
+### Tablet Viewport (768x1024)
+
+- [ ] Layout adapts appropriately (not just stretched mobile)
+- [ ] Sidebars visible or accessible
+- [ ] Tables display properly
+- [ ] Forms have appropriate width
+- [ ] Navigation optimized for tablet
+
 ## Issue Detection Patterns
 
 ### Console Error Patterns
@@ -307,6 +345,27 @@ status: 500 (Server Error) → Backend bug
 - Form inputs without labels
 - Insufficient color contrast (if detectable)
 - Missing heading structure
+```
+
+### Mobile Layout Issues
+
+```
+// Overflow detection (check in snapshot)
+- Horizontal scrollbar visible on content
+- Text truncated without ellipsis
+- Buttons cut off or overlapping
+
+// Touch target issues
+- Buttons/links smaller than 44px
+- Touch targets overlapping or too close
+
+// Zoom trigger issues
+- Input font-size < 16px (triggers iOS zoom)
+- Form fields too small
+
+// Navigation issues
+- Mobile menu doesn't open
+- Navigation items inaccessible
 ```
 
 ## Fix Strategies by Issue Type

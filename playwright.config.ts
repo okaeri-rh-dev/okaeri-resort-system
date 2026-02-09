@@ -61,6 +61,11 @@ export default defineConfig({
       name: "Mobile Safari",
       use: { ...devices["iPhone 12"] },
     },
+    // Tablet viewport
+    {
+      name: "Tablet Safari",
+      use: { ...devices["iPad (gen 7)"] },
+    },
   ],
 
   // Run local dev server before starting tests

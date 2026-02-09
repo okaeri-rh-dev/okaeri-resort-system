@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { loginAsAdmin, loginAsOwner, loginAsStaff, type UserRole } from "./fixtures/auth";
-import { ROUTES, TIMEOUTS } from "./fixtures/test-data";
+import { ROUTES, TIMEOUTS, VIEWPORTS } from "./fixtures/test-data";
 import { AdminQueuePage } from "./pages/AdminQueuePage";
 import { BookingDetailPage } from "./pages/BookingDetailPage";
 import { BookingsTablePage } from "./pages/BookingsTablePage";
@@ -562,6 +562,40 @@ test.describe("Multi-Role Workflows", () => {
 
       // Owner should see audit but not roles management
       // (depends on implementation)
+    });
+  });
+
+  test.describe("Responsive Design", () => {
+    test.describe("Mobile Viewport", () => {
+      test.beforeEach(async ({ page }) => {
+        await page.setViewportSize(VIEWPORTS.mobile);
+      });
+
+      test("admin dashboard accessible on mobile", async ({ page }) => {
+        await loginAsAdmin(page);
+
+        const dashboard = new DashboardPage(page);
+        await dashboard.goto();
+
+        // Dashboard should load on mobile
+        await dashboard.expectToBeOnDashboard();
+
+        // No horizontal overflow
+        const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+        const viewportWidth = await page.evaluate(() => window.innerWidth);
+        expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 5);
+      });
+
+      test("mobile navigation works for different roles", async ({ page }) => {
+        await loginAsAdmin(page);
+
+        // Navigate to bookings
+        await page.goto(ROUTES.admin.bookings);
+
+        // Should be able to access bookings table
+        const bookingsTable = new BookingsTablePage(page);
+        await bookingsTable.expectTableVisible();
+      });
     });
   });
 });

@@ -7,7 +7,14 @@ import {
   generateTestEmail,
   GUEST_PROFILES,
 } from "./fixtures/booking-data";
-import { ROUTES, TEST_BOOKING, TEST_FILES, TEST_GUEST, TIMEOUTS } from "./fixtures/test-data";
+import {
+  ROUTES,
+  TEST_BOOKING,
+  TEST_FILES,
+  TEST_GUEST,
+  TIMEOUTS,
+  VIEWPORTS,
+} from "./fixtures/test-data";
 import { AdminQueuePage } from "./pages/AdminQueuePage";
 import { BookingDetailPage } from "./pages/BookingDetailPage";
 import { BookingFormPage } from "./pages/BookingFormPage";
@@ -514,6 +521,55 @@ test.describe("Booking Lifecycle", () => {
       // Should show not found or error
       await expect(page.getByText(/not found|no booking|invalid|error/i).first()).toBeVisible({
         timeout: TIMEOUTS.medium,
+      });
+    });
+  });
+
+  test.describe("Responsive Design", () => {
+    test.describe("Mobile Viewport", () => {
+      test.beforeEach(async ({ page }) => {
+        await page.setViewportSize(VIEWPORTS.mobile);
+      });
+
+      test("guest booking form works on mobile", async ({ page }) => {
+        const bookingForm = new BookingFormPage(page);
+        await bookingForm.goto();
+
+        // Form should load on mobile
+        await expect(page.getByRole("heading", { name: /book your stay/i })).toBeVisible({
+          timeout: 10000,
+        });
+
+        // Should be able to navigate through steps
+        await bookingForm.goToNextStep(); // → Cabins
+        await expect(page.getByRole("heading", { name: /choose cabins/i })).toBeVisible({
+          timeout: 5000,
+        });
+      });
+
+      test("public calendar accessible on mobile", async ({ page }) => {
+        const calendarPage = new PublicCalendarPage(page);
+        await calendarPage.goto();
+
+        // Calendar should be visible
+        await calendarPage.expectCalendarVisible();
+
+        // No horizontal overflow
+        const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+        const viewportWidth = await page.evaluate(() => window.innerWidth);
+        expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 5);
+      });
+
+      test("status check page works on mobile", async ({ page }) => {
+        await page.goto(ROUTES.public.checkStatus);
+
+        // Form should be visible
+        await expect(page.getByLabel("Booking Reference")).toBeVisible();
+        await expect(page.getByLabel("Email Address")).toBeVisible();
+
+        // Search button should be tappable
+        const searchButton = page.getByRole("button", { name: /search|check|find/i });
+        await expect(searchButton).toBeVisible();
       });
     });
   });
