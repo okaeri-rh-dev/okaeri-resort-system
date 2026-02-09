@@ -4,7 +4,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
+import { requireOwner } from "@/lib/route-guards";
 import { db } from "@/lib/supabase";
 
 // Lazy load the edit page component
@@ -15,14 +15,9 @@ const UnitEditPage = lazy(() =>
 );
 
 export const Route = createFileRoute("/admin/units/$unitId/edit")({
-  // Before load - check permissions
+  // Before load - check owner permission
   beforeLoad: async () => {
-    // Check if user has permission to edit units (Manager or higher)
-    const canEdit = await hasAuditRole(AuditRole.MANAGER);
-
-    if (!canEdit) {
-      throw new Error("You do not have permission to edit units. Manager role required.");
-    }
+    await requireOwner();
   },
 
   // Loader function to prefetch all necessary data

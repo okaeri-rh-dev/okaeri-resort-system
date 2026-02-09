@@ -4,6 +4,7 @@ import { createFileRoute, Outlet, useNavigate, useParams } from "@tanstack/react
 import { z } from "zod";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { requireManager } from "@/lib/route-guards";
 import type { Guest } from "@/types";
 
 // Lazy load components for better performance
@@ -17,6 +18,9 @@ const guestsSearchSchema = z.object({
 });
 
 export const Route = createFileRoute("/admin/guests")({
+  beforeLoad: async () => {
+    await requireManager();
+  },
   validateSearch: guestsSearchSchema,
   component: GuestsPage,
 });

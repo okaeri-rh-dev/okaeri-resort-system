@@ -6,6 +6,7 @@ import { SeasonalRatesForm, type SeasonalRate } from "@/components/pricing/Seaso
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSaveSeasonalRates, useSeasonalRates } from "@/hooks/useSeasonalRates";
+import { requireOwner } from "@/lib/route-guards";
 
 /**
  * Pricing Configuration Edit Route
@@ -21,9 +22,12 @@ import { useSaveSeasonalRates, useSeasonalRates } from "@/hooks/useSeasonalRates
  *
  * Access Control:
  * - Requires authentication (under /admin layout)
- * - Should be restricted to admin/manager roles via RLS
+ * - Restricted to owner/admin roles via route guard
  */
 export const Route = createFileRoute("/admin/units/pricing")({
+  beforeLoad: async () => {
+    await requireOwner();
+  },
   component: PricingConfigPage,
 });
 

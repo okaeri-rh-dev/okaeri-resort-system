@@ -6,6 +6,7 @@ import { z } from "zod";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { requireManager } from "@/lib/route-guards";
 import type { Payment } from "@/types";
 
 // Lazy load heavy components
@@ -23,6 +24,9 @@ const paymentsSearchSchema = z.object({
 });
 
 export const Route = createFileRoute("/admin/payments")({
+  beforeLoad: async () => {
+    await requireManager();
+  },
   validateSearch: paymentsSearchSchema,
   component: PaymentsPage,
 });

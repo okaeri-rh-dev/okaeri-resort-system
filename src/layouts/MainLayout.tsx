@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useState } from "react";
 
 import { Link, useLocation } from "@tanstack/react-router";
 import {
@@ -24,7 +24,9 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { AuditRole } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
+import { hasRoleLevel } from "@/lib/route-guards";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
@@ -33,18 +35,25 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   href: string;
   badge?: string;
+  /** Minimum role required to see this nav item (undefined = all authenticated users) */
+  requiredRole?: AuditRole;
 }
 
 const navItems: NavItem[] = [
   { label: "Dashboard", icon: Home, href: "/admin/dashboard" },
   { label: "Bookings", icon: Calendar, href: "/admin/bookings" },
-  { label: "Cabins", icon: Building2, href: "/admin/units" },
-  { label: "Guests", icon: Users, href: "/admin/guests" },
-  { label: "Payments", icon: Receipt, href: "/admin/payments" },
-  { label: "Expenses", icon: ReceiptText, href: "/admin/expenses" },
-  { label: "Accounts", icon: CreditCard, href: "/admin/accounts" },
-  { label: "Transfers", icon: ArrowLeftRight, href: "/admin/transfers" },
   { label: "Booking Queue", icon: ListChecks, href: "/admin/bookings/queue" },
+  { label: "Guests", icon: Users, href: "/admin/guests", requiredRole: AuditRole.MANAGER },
+  { label: "Payments", icon: Receipt, href: "/admin/payments", requiredRole: AuditRole.MANAGER },
+  { label: "Cabins", icon: Building2, href: "/admin/units", requiredRole: AuditRole.OWNER },
+  { label: "Expenses", icon: ReceiptText, href: "/admin/expenses", requiredRole: AuditRole.OWNER },
+  { label: "Accounts", icon: CreditCard, href: "/admin/accounts", requiredRole: AuditRole.OWNER },
+  {
+    label: "Transfers",
+    icon: ArrowLeftRight,
+    href: "/admin/transfers",
+    requiredRole: AuditRole.OWNER,
+  },
 ];
 
 interface MainLayoutProps {
@@ -53,11 +62,19 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userRole, setUserRole] = useState<AuditRole | null>(null);
   const [showAuditLink, setShowAuditLink] = useState(false);
   const [showRolesLink, setShowRolesLink] = useState(false);
   const location = useLocation();
 
   // Extract async permission checks into useEffectEvent to avoid recreation
+  const checkUserRole = useEffectEvent(async () => {
+    // Lazy load role functions to reduce main bundle size
+    const { getUserAuditRole } = await import("@/lib/audit-roles");
+    const role = await getUserAuditRole();
+    setUserRole(role);
+  });
+
   const checkAuditAccess = useEffectEvent(async () => {
     // Lazy load audit functions to reduce main bundle size
     const { isCurrentUserOwner } = await import("@/lib/audit-logger");
@@ -75,6 +92,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   // Check permissions on mount and auth state changes
   useEffect(() => {
     // Initial checks
+    checkUserRole();
     checkAuditAccess();
     checkRolesAccess();
 
@@ -82,12 +100,23 @@ export function MainLayout({ children }: MainLayoutProps) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(() => {
+      checkUserRole();
       checkAuditAccess();
       checkRolesAccess();
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Filter nav items based on user's role
+  const filteredNavItems = useMemo(() => {
+    return navItems.filter((item) => {
+      // No role requirement = accessible to all authenticated users
+      if (!item.requiredRole) return true;
+      // Check if user's role meets the required level
+      return hasRoleLevel(userRole, item.requiredRole);
+    });
+  }, [userRole]);
 
   const handleSignOut = async () => {
     try {
@@ -143,7 +172,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
           {/* Navigation */}
           <nav className="flex-1 space-y-1 overflow-y-auto p-3 lg:p-4">
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <NavLink key={item.href} item={item} />
             ))}
 
@@ -230,7 +259,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
                   {/* Mobile Navigation */}
                   <nav className="flex-1 space-y-2 p-4">
-                    {navItems.map((item) => (
+                    {filteredNavItems.map((item) => (
                       <NavLink
                         key={item.href}
                         item={item}

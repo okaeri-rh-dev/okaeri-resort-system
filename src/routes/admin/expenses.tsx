@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { requireOwner } from "@/lib/route-guards";
 import type { Expense } from "@/types";
 
 // Lazy load components for better performance
@@ -29,6 +30,9 @@ const expensesSearchSchema = z.object({
 });
 
 export const Route = createFileRoute("/admin/expenses")({
+  beforeLoad: async () => {
+    await requireOwner();
+  },
   validateSearch: expensesSearchSchema,
   component: ExpensesPage,
 });

@@ -5,6 +5,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
+import { requireOwner } from "@/lib/route-guards";
 import { db, supabase } from "@/lib/supabase";
 
 // Lazy load the detail page component
@@ -15,6 +16,11 @@ const UnitDetailPage = lazy(() =>
 );
 
 export const Route = createFileRoute("/admin/units/$unitId/")({
+  // Check owner permission before loading data
+  beforeLoad: async () => {
+    await requireOwner();
+  },
+
   // Loader function to prefetch all necessary data
   loader: async ({ params, context }) => {
     const { unitId } = params;

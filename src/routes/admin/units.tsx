@@ -7,6 +7,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PricingInfoCard } from "@/components/pricing/PricingInfoCard";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { requireOwner } from "@/lib/route-guards";
 import type { Unit } from "@/types";
 
 // Lazy load components for better performance
@@ -24,6 +25,9 @@ const unitsSearchSchema = z.object({
 });
 
 export const Route = createFileRoute("/admin/units")({
+  beforeLoad: async () => {
+    await requireOwner();
+  },
   validateSearch: unitsSearchSchema,
   component: UnitsPage,
 });
