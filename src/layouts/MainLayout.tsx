@@ -8,6 +8,7 @@ import {
   Calendar,
   ChevronRight,
   CreditCard,
+  FileText,
   Home,
   ListChecks,
   LogOut,
@@ -24,6 +25,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AuditRole } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
 import { hasRoleLevel } from "@/lib/route-guards";
@@ -54,6 +56,12 @@ const navItems: NavItem[] = [
     href: "/admin/transfers",
     requiredRole: AuditRole.OWNER,
   },
+  {
+    label: "Documents",
+    icon: FileText,
+    href: "/admin/documents",
+    requiredRole: AuditRole.OWNER,
+  },
 ];
 
 interface MainLayoutProps {
@@ -63,16 +71,21 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState<AuditRole | null>(null);
+  const [roleLoading, setRoleLoading] = useState(true);
   const [showAuditLink, setShowAuditLink] = useState(false);
   const [showRolesLink, setShowRolesLink] = useState(false);
   const location = useLocation();
 
   // Extract async permission checks into useEffectEvent to avoid recreation
   const checkUserRole = useEffectEvent(async () => {
-    // Lazy load role functions to reduce main bundle size
-    const { getUserAuditRole } = await import("@/lib/audit-roles");
-    const role = await getUserAuditRole();
-    setUserRole(role);
+    try {
+      // Lazy load role functions to reduce main bundle size
+      const { getUserAuditRole } = await import("@/lib/audit-roles");
+      const role = await getUserAuditRole();
+      setUserRole(role);
+    } finally {
+      setRoleLoading(false);
+    }
   });
 
   const checkAuditAccess = useEffectEvent(async () => {
@@ -128,6 +141,17 @@ export function MainLayout({ children }: MainLayoutProps) {
     }
   };
 
+  const NavSkeletonItems = () => (
+    <div className="space-y-1">
+      {Array.from({ length: 7 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3 rounded-lg px-4 py-3 md:px-3 md:py-2">
+          <Skeleton className="h-5 w-5 flex-shrink-0" />
+          <Skeleton className="h-4 flex-1" style={{ width: `${60 + (i % 3) * 20}%` }} />
+        </div>
+      ))}
+    </div>
+  );
+
   const NavLink = ({ item, onClick }: { item: NavItem; onClick?: () => void }) => {
     const isActive =
       location.pathname === item.href ||
@@ -172,33 +196,39 @@ export function MainLayout({ children }: MainLayoutProps) {
 
           {/* Navigation */}
           <nav className="flex-1 space-y-1 overflow-y-auto p-3 lg:p-4">
-            {filteredNavItems.map((item) => (
-              <NavLink key={item.href} item={item} />
-            ))}
-
-            {/* Audit Trail Link - Owner/Manager Only */}
-            {showAuditLink && (
+            {roleLoading ? (
+              <NavSkeletonItems />
+            ) : (
               <>
-                <div className="my-2 border-t pt-2" />
-                <NavLink
-                  item={{
-                    label: "Audit Trail",
-                    icon: Shield,
-                    href: "/admin/audit-logs",
-                  }}
-                />
-              </>
-            )}
+                {filteredNavItems.map((item) => (
+                  <NavLink key={item.href} item={item} />
+                ))}
 
-            {/* User Roles Link - Admin Only */}
-            {showRolesLink && (
-              <NavLink
-                item={{
-                  label: "User Roles",
-                  icon: UserCog,
-                  href: "/admin/roles",
-                }}
-              />
+                {/* Audit Trail Link - Owner/Manager Only */}
+                {showAuditLink && (
+                  <>
+                    <div className="my-2 border-t pt-2" />
+                    <NavLink
+                      item={{
+                        label: "Audit Trail",
+                        icon: Shield,
+                        href: "/admin/audit-logs",
+                      }}
+                    />
+                  </>
+                )}
+
+                {/* User Roles Link - Admin Only */}
+                {showRolesLink && (
+                  <NavLink
+                    item={{
+                      label: "User Roles",
+                      icon: UserCog,
+                      href: "/admin/roles",
+                    }}
+                  />
+                )}
+              </>
             )}
           </nav>
 
@@ -259,39 +289,45 @@ export function MainLayout({ children }: MainLayoutProps) {
 
                   {/* Mobile Navigation */}
                   <nav className="flex-1 space-y-2 p-4">
-                    {filteredNavItems.map((item) => (
-                      <NavLink
-                        key={item.href}
-                        item={item}
-                        onClick={() => setMobileMenuOpen(false)}
-                      />
-                    ))}
-
-                    {/* Audit Trail Link - Owner/Manager Only */}
-                    {showAuditLink && (
+                    {roleLoading ? (
+                      <NavSkeletonItems />
+                    ) : (
                       <>
-                        <div className="my-2 border-t pt-2" />
-                        <NavLink
-                          item={{
-                            label: "Audit Trail",
-                            icon: Shield,
-                            href: "/admin/audit-logs",
-                          }}
-                          onClick={() => setMobileMenuOpen(false)}
-                        />
-                      </>
-                    )}
+                        {filteredNavItems.map((item) => (
+                          <NavLink
+                            key={item.href}
+                            item={item}
+                            onClick={() => setMobileMenuOpen(false)}
+                          />
+                        ))}
 
-                    {/* User Roles Link - Admin Only */}
-                    {showRolesLink && (
-                      <NavLink
-                        item={{
-                          label: "User Roles",
-                          icon: UserCog,
-                          href: "/admin/roles",
-                        }}
-                        onClick={() => setMobileMenuOpen(false)}
-                      />
+                        {/* Audit Trail Link - Owner/Manager Only */}
+                        {showAuditLink && (
+                          <>
+                            <div className="my-2 border-t pt-2" />
+                            <NavLink
+                              item={{
+                                label: "Audit Trail",
+                                icon: Shield,
+                                href: "/admin/audit-logs",
+                              }}
+                              onClick={() => setMobileMenuOpen(false)}
+                            />
+                          </>
+                        )}
+
+                        {/* User Roles Link - Admin Only */}
+                        {showRolesLink && (
+                          <NavLink
+                            item={{
+                              label: "User Roles",
+                              icon: UserCog,
+                              href: "/admin/roles",
+                            }}
+                            onClick={() => setMobileMenuOpen(false)}
+                          />
+                        )}
+                      </>
                     )}
                   </nav>
 
