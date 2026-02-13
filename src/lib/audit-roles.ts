@@ -50,29 +50,22 @@ export async function getUserAuditRole(): Promise<AuditRole | null> {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
-      console.warn("[Audit] No authenticated user found — role check skipped");
-      return null;
-    }
+    if (!user) return null;
 
     // Use the SQL function for single source of truth
     const { data, error } = await supabase.rpc("get_current_audit_role");
 
     if (error) {
-      console.error("[Audit] RPC get_current_audit_role failed:", error.message, error.code);
+      console.error("[Audit] Failed to get user role:", error.message);
       return null;
     }
 
     // SQL function returns 'none' for no role
-    if (!data || data === "none") {
-      console.warn("[Audit] No active role found for user:", user.id, user.email);
-      return null;
-    }
+    if (!data || data === "none") return null;
 
-    console.warn("[Audit] Role resolved:", data, "for user:", user.email);
     return data as AuditRole;
   } catch (error) {
-    console.error("[Audit] Unexpected error getting user role:", error);
+    console.error("[Audit] Error getting user role:", error);
     return null;
   }
 }
