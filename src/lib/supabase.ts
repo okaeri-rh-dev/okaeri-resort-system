@@ -14,6 +14,30 @@ const supabaseAnonKey = requireEnv("VITE_SUPABASE_ANON_KEY");
 // Re-export Database type for backwards compatibility
 export type { Database } from "@/types/database.types";
 
+// Payment Methods types
+// Note: payment_methods table exists on remote but database.types.ts cannot be
+// regenerated yet due to seasonal_rates table mismatch. Using local type bridge.
+interface PaymentMethodInsert {
+  id?: string;
+  method_type: string;
+  provider_name: string;
+  display_name: string;
+  account_name?: string | null;
+  account_number?: string | null;
+  bank_name?: string | null;
+  qr_code_url?: string | null;
+  qr_code_storage_path?: string | null;
+  icon_name?: string | null;
+  icon_color?: string | null;
+  display_order?: number | null;
+  instructions?: string | null;
+  is_active?: boolean | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+type PaymentMethodUpdate = Partial<PaymentMethodInsert>;
+
 // Create Supabase client with proper typing
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -21,6 +45,9 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
   },
 });
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const paymentMethodsTable = () => supabase.from("payment_methods" as any) as any;
 
 // Type for PostgrestError from Supabase
 interface PostgrestError {
@@ -989,6 +1016,39 @@ export const db = {
         p_account_id: accountId,
         p_as_of_date: asOfDate || new Date().toISOString(),
       }),
+  },
+
+  // Payment Methods configuration (guest-facing payment info)
+  // Uses paymentMethodsTable() helper until database.types.ts can be regenerated
+  paymentMethods: {
+    /** Get all payment methods ordered by display_order (admin settings) */
+    all: () => paymentMethodsTable().select("*").order("display_order", { ascending: true }),
+
+    /** Get active payment methods only (guest pages) */
+    active: () =>
+      paymentMethodsTable()
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true }),
+
+    /** Get payment method by ID */
+    byId: (id: string) => paymentMethodsTable().select("*").eq("id", id).single(),
+
+    /** Create a new payment method */
+    create: (data: Omit<PaymentMethodInsert, "id" | "created_at" | "updated_at">) =>
+      paymentMethodsTable().insert(data).select().single(),
+
+    /** Update an existing payment method */
+    update: (id: string, data: PaymentMethodUpdate) =>
+      paymentMethodsTable().update(data).eq("id", id).select().single(),
+
+    /** Soft delete (deactivate) a payment method */
+    delete: (id: string) =>
+      paymentMethodsTable().update({ is_active: false }).eq("id", id).select().single(),
+
+    /** Reactivate a payment method */
+    reactivate: (id: string) =>
+      paymentMethodsTable().update({ is_active: true }).eq("id", id).select().single(),
   },
 
   // Account Transfers management
