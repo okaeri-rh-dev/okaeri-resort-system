@@ -126,6 +126,30 @@ export interface Account {
   updated_at: string | null;
 }
 
+// ============================================
+// PAYMENT METHOD CONFIG TYPES
+// ============================================
+export type PaymentMethodType = "e-wallet" | "bank-transfer" | "cash" | "other";
+
+export interface PaymentMethodConfig {
+  id: string;
+  method_type: PaymentMethodType;
+  provider_name: string;
+  display_name: string;
+  account_name: string | null;
+  account_number: string | null;
+  bank_name: string | null;
+  qr_code_url: string | null;
+  qr_code_storage_path: string | null;
+  icon_name: string;
+  icon_color: string;
+  display_order: number;
+  instructions: string | null;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 export interface AccountWithBalance extends Account {
   total_payments: number;
   total_expenses: number;
