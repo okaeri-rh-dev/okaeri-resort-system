@@ -62,16 +62,17 @@ Verify that owners can access and modify system-wide settings, including resort 
 | Modify check-out time        | Setting updates                  |           |
 | Save and verify              | New times shown in booking forms |           |
 
-### Step 5: Payment Settings
+### Step 5: Payment Methods Settings
 
-| Action                            | Expected Result              | Pass/Fail |
-| --------------------------------- | ---------------------------- | --------- |
-| View payment methods enabled      | GCash, Bank Transfer visible |           |
-| Toggle payment method off         | Method disabled              |           |
-| Toggle payment method on          | Method re-enabled            |           |
-| View partial payment percentage   | Current minimum shown        |           |
-| Modify minimum deposit percentage | Setting updates              |           |
-| Save changes                      | Payment settings saved       |           |
+> **Note**: Payment methods are managed via `/admin/settings` with **manager+** access (not owner-only).
+> For comprehensive CRUD testing of payment methods (add, edit, QR upload, deactivate/reactivate, guest-facing verification), see the dedicated test file:
+> **[`03-admin/payment-methods-settings.md`](../03-admin/payment-methods-settings.md)**
+
+| Action                                                | Expected Result                              | Pass/Fail |
+| ----------------------------------------------------- | -------------------------------------------- | --------- |
+| Navigate to `/admin/settings`                         | Settings page loads with Payment Methods tab |           |
+| Verify payment methods table shows configured methods | Table lists all methods with status badges   |           |
+| Verify active methods appear on guest booking page    | Only active methods shown at `/booking`      |           |
 
 ### Step 6: Notification Settings
 
@@ -116,12 +117,12 @@ Verify that owners can access and modify system-wide settings, including resort 
 
 After testing, restore original settings:
 
-| Setting         | Original Value     | Restored | Pass/Fail |
-| --------------- | ------------------ | -------- | --------- |
-| Resort Name     | ******\_\_\_****** |          |           |
-| Check-in Time   | ******\_\_\_****** |          |           |
-| Check-out Time  | ******\_\_\_****** |          |           |
-| Minimum Deposit | ******\_\_\_****** |          |           |
+| Setting         | Original Value         | Restored | Pass/Fail |
+| --------------- | ---------------------- | -------- | --------- |
+| Resort Name     | **\*\***\_\_\_**\*\*** |          |           |
+| Check-in Time   | **\*\***\_\_\_**\*\*** |          |           |
+| Check-out Time  | **\*\***\_\_\_**\*\*** |          |           |
+| Minimum Deposit | **\*\***\_\_\_**\*\*** |          |           |
 
 ## Expected Results
 
