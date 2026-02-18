@@ -62,6 +62,12 @@ const navItems: NavItem[] = [
     href: "/admin/documents",
     requiredRole: AuditRole.OWNER,
   },
+  {
+    label: "Settings",
+    icon: Settings,
+    href: "/admin/settings",
+    requiredRole: AuditRole.MANAGER,
+  },
 ];
 
 interface MainLayoutProps {
@@ -334,18 +340,14 @@ export function MainLayout({ children }: MainLayoutProps) {
                   {/* Mobile Menu Footer */}
                   <div className="border-t p-4">
                     <div className="space-y-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-muted-foreground hover:text-foreground h-11 w-full touch-manipulation justify-start"
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          // Navigate to settings if needed
-                        }}
+                      <Link
+                        to="/admin/settings"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="text-muted-foreground hover:text-foreground hover:bg-accent flex h-11 w-full touch-manipulation items-center justify-start rounded-md px-3 text-sm"
                       >
                         <Settings className="mr-3 h-4 w-4" />
                         Settings
-                      </Button>
+                      </Link>
                       <Button
                         variant="ghost"
                         size="sm"
