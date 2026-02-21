@@ -304,6 +304,20 @@ async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
     },
   });
 
+  // Fetch global pricing config (primary rate source, matching client & pricing quote API)
+  const { data: pricingConfig, error: pricingConfigError } = await supabase
+    .from("pricing_config")
+    .select("*")
+    .eq("id", "default")
+    .single();
+
+  if (pricingConfigError) {
+    console.warn(
+      "[PRICING] Failed to fetch pricing_config, using unit rates:",
+      pricingConfigError.message
+    );
+  }
+
   // Generate booking reference
   const { data: refData, error: refError } = await supabase.rpc("generate_booking_reference");
 
@@ -337,7 +351,8 @@ async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
         unitData,
         data.check_in,
         data.check_out,
-        unit.num_guests
+        unit.num_guests,
+        pricingConfig
       );
 
       // Log pricing details for debugging (use warn to comply with lint rules)
@@ -457,7 +472,13 @@ function calculateUnitPricing(
   unit: UnitData,
   checkIn: string,
   checkOut: string,
-  numGuests: number
+  numGuests: number,
+  pricingConfig?: {
+    base_rate: number;
+    weekend_rate: number;
+    extra_person_rate: number;
+    base_occupancy: number;
+  } | null
 ): {
   unit_price: number;
   weekend_surcharge: number;
@@ -473,20 +494,28 @@ function calculateUnitPricing(
 
   // ============================================================
   // BUG-001 FIX: Validate and default unit rates
+  // BUG-002 FIX: Use pricing_config as primary rate source
+  // (matching client MultiUnitBookingForm.tsx:203 and pricing quote API calculate.ts:238)
+  // Priority: pricing_config → unit rate → hardcoded default
   // ============================================================
-  // If any rate is null/undefined/0, use defaults and log a warning
   const baseRate =
-    unit.base_rate && unit.base_rate > 0 ? unit.base_rate : DEFAULT_PRICING.BASE_RATE;
+    pricingConfig?.base_rate ??
+    (unit.base_rate && unit.base_rate > 0 ? unit.base_rate : DEFAULT_PRICING.BASE_RATE);
+  // Weekend rate fallback matches client (MultiUnitBookingForm.tsx:204-208):
+  // pricingConfig.weekend_rate → unit.weekend_rate → baseRate (no surcharge)
   const weekendRate =
-    unit.weekend_rate && unit.weekend_rate > 0 ? unit.weekend_rate : DEFAULT_PRICING.WEEKEND_RATE;
+    pricingConfig?.weekend_rate ??
+    (unit.weekend_rate && unit.weekend_rate > 0 ? unit.weekend_rate : baseRate);
   const extraPersonRate =
-    unit.extra_person_rate && unit.extra_person_rate >= 0
+    pricingConfig?.extra_person_rate ??
+    (unit.extra_person_rate && unit.extra_person_rate >= 0
       ? unit.extra_person_rate
-      : DEFAULT_PRICING.EXTRA_PERSON_RATE;
+      : DEFAULT_PRICING.EXTRA_PERSON_RATE);
   const baseOccupancy =
-    unit.base_occupancy && unit.base_occupancy > 0
+    pricingConfig?.base_occupancy ??
+    (unit.base_occupancy && unit.base_occupancy > 0
       ? unit.base_occupancy
-      : DEFAULT_PRICING.BASE_OCCUPANCY;
+      : DEFAULT_PRICING.BASE_OCCUPANCY);
 
   // Track if defaults were used (for logging/debugging)
   const usedDefaults =
