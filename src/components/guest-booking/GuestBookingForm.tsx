@@ -114,6 +114,8 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
 
   const form = useForm<GuestBookingFormData>({
     resolver: zodResolver(guestBookingSchema),
+    mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       guest_name: "",
       email: "",

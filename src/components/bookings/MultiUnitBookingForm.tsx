@@ -103,6 +103,8 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
   // Form setup
   const form = useForm<MultiUnitBookingFormData>({
     resolver: zodResolver(multiUnitBookingSchema),
+    mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       check_in: new Date(),
       check_out: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow

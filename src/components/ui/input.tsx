@@ -278,13 +278,6 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
       return isNaN(parsed) ? null : parsed;
     };
 
-    const isValueValid = (val: number | null): boolean => {
-      if (val === null) return true; // Allow empty during typing
-      if (min !== undefined && val < min) return false;
-      if (max !== undefined && val > max) return false;
-      return true;
-    };
-
     const clampValue = (val: number | null): number | null => {
       if (val === null) return null;
       if (min !== undefined && val < min) return min;
@@ -317,8 +310,6 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
 
       setInternalValue(newValue);
       const parsed = parseValue(newValue);
-      const valid = isValueValid(parsed);
-      setIsValid(valid);
       onChange?.(parsed);
     };
 

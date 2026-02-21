@@ -74,6 +74,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
   const form = useForm<PaymentFormData>({
     resolver: zodResolver(paymentFormSchema),
+    mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       booking_id: payment?.booking_id || bookingId || "",
       account_id: payment?.account_id || "",

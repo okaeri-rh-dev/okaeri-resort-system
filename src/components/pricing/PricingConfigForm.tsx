@@ -67,6 +67,8 @@ export function PricingConfigForm({ onSuccess, onCancel, className }: PricingCon
   // Initialize form with React Hook Form + Zod
   const form = useForm<PricingConfigInput>({
     resolver: zodResolver(pricingConfigSchema),
+    mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       base_rate: 0,
       weekend_rate: 0,

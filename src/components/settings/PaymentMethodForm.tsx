@@ -95,6 +95,7 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
   const form = useForm<PaymentMethodFormData>({
     resolver: zodResolver(paymentMethodSchema),
     mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       method_type: (method?.method_type as PaymentMethodType) || undefined,
       provider_name: method?.provider_name || "",

@@ -13,6 +13,7 @@ export function useDocumentForm() {
   const form = useForm<DocumentFormValues>({
     resolver: zodResolver(documentFormSchema),
     mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: formData,
   });
 

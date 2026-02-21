@@ -50,6 +50,8 @@ export function ExpenseEditPage() {
   // Initialize form with default values from expense
   const form = useForm<ExpenseEditInput>({
     resolver: zodResolver(expenseEditSchema),
+    mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       description: expense.description || "",
       amount: expense.amount,
