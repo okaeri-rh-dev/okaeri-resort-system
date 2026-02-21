@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AuditRole,
   canAccessAuditTrail,
+  clearRoleCache,
   getRoleBadgeColor,
   getRoleDisplayName,
   getUserAuditRole,
@@ -30,6 +31,7 @@ vi.mock("../supabase", () => ({
 describe("Audit Roles", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearRoleCache();
   });
 
   afterEach(() => {

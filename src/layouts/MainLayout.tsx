@@ -26,7 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AuditRole } from "@/lib/audit-roles";
+import { AuditRole, clearRoleCache } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
 import { hasRoleLevel } from "@/lib/route-guards";
 import { supabase } from "@/lib/supabase";
@@ -82,46 +82,30 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [showRolesLink, setShowRolesLink] = useState(false);
   const location = useLocation();
 
-  // Extract async permission checks into useEffectEvent to avoid recreation
-  const checkUserRole = useEffectEvent(async () => {
+  // Single permission check — calls getUserAuditRole() once and derives all booleans
+  const checkPermissions = useEffectEvent(async () => {
     try {
-      // Lazy load role functions to reduce main bundle size
       const { getUserAuditRole } = await import("@/lib/audit-roles");
       const role = await getUserAuditRole();
       setUserRole(role);
+      // Owner or Admin can see audit trail
+      setShowAuditLink(role === AuditRole.OWNER || role === AuditRole.ADMIN);
+      // Only Admin can see user roles management
+      setShowRolesLink(role === AuditRole.ADMIN);
     } finally {
       setRoleLoading(false);
     }
   });
 
-  const checkAuditAccess = useEffectEvent(async () => {
-    // Lazy load audit functions to reduce main bundle size
-    const { isCurrentUserOwner } = await import("@/lib/audit-logger");
-    const canAccess = await isCurrentUserOwner();
-    setShowAuditLink(canAccess);
-  });
-
-  const checkRolesAccess = useEffectEvent(async () => {
-    // Lazy load role functions to reduce main bundle size
-    const { isAdmin } = await import("@/lib/audit-roles");
-    const canAccess = await isAdmin();
-    setShowRolesLink(canAccess);
-  });
-
   // Check permissions on mount and auth state changes
   useEffect(() => {
-    // Initial checks
-    checkUserRole();
-    checkAuditAccess();
-    checkRolesAccess();
+    checkPermissions();
 
-    // Listen for auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(() => {
-      checkUserRole();
-      checkAuditAccess();
-      checkRolesAccess();
+      clearRoleCache();
+      checkPermissions();
     });
 
     return () => subscription.unsubscribe();

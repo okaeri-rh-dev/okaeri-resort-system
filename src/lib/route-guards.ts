@@ -20,7 +20,7 @@
 
 import { redirect } from "@tanstack/react-router";
 
-import { AuditRole, getUserAuditRole, hasAuditRole } from "./audit-roles";
+import { AuditRole, getUserAuditRole } from "./audit-roles";
 import { logger } from "./logger";
 
 // ============================================
@@ -56,7 +56,7 @@ export async function requireRole(options: RouteGuardOptions): Promise<void> {
   const { requiredRole, redirectTo = "/admin/dashboard" } = options;
 
   const userRole = await getUserAuditRole();
-  const hasAccess = await hasAuditRole(requiredRole);
+  const hasAccess = hasRoleLevel(userRole, requiredRole);
 
   if (!hasAccess) {
     logger.warn("Unauthorized route access attempt", {

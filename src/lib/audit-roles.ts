@@ -29,12 +29,31 @@ const ROLE_HIERARCHY: Record<AuditRole | "none", number> = {
 };
 
 // ============================================
+// ROLE CACHE (60s TTL)
+// ============================================
+
+const ROLE_CACHE_TTL_MS = 60_000; // 60 seconds
+
+let roleCache: { role: AuditRole | null; timestamp: number } | null = null;
+
+/**
+ * Clear the cached role. Call this on:
+ * - Auth state changes (sign-in, sign-out)
+ * - Role mutations (grant, revoke, update, deactivate)
+ */
+export function clearRoleCache(): void {
+  roleCache = null;
+}
+
+// ============================================
 // READ FUNCTIONS
 // ============================================
 
 /**
  * Get current user's audit role
- * Uses the SQL function get_current_audit_role() for consistency
+ * Uses the SQL function get_current_audit_role() for consistency.
+ * Results are cached for 60s to avoid redundant network requests
+ * during navigation (route guards, layout checks, etc.).
  *
  * @returns AuditRole or null if no role assigned
  *
@@ -45,6 +64,11 @@ const ROLE_HIERARCHY: Record<AuditRole | "none", number> = {
  * }
  */
 export async function getUserAuditRole(): Promise<AuditRole | null> {
+  // Return cached value if still fresh
+  if (roleCache && Date.now() - roleCache.timestamp < ROLE_CACHE_TTL_MS) {
+    return roleCache.role;
+  }
+
   try {
     const {
       data: { user },
@@ -57,15 +81,20 @@ export async function getUserAuditRole(): Promise<AuditRole | null> {
 
     if (error) {
       console.error("[Audit] Failed to get user role:", error.message);
+      // Don't cache errors — transient failures shouldn't lock users out
       return null;
     }
 
     // SQL function returns 'none' for no role
-    if (!data || data === "none") return null;
+    const role = !data || data === "none" ? null : (data as AuditRole);
 
-    return data as AuditRole;
+    // Cache successful responses
+    roleCache = { role, timestamp: Date.now() };
+
+    return role;
   } catch (error) {
     console.error("[Audit] Error getting user role:", error);
+    // Don't cache errors
     return null;
   }
 }
@@ -201,7 +230,8 @@ export async function grantRole(
       return { success: false, error: error.message };
     }
 
-    // Role granted successfully
+    // Role granted successfully — clear cache so new permissions are reflected
+    clearRoleCache();
     return { success: true };
   } catch (error) {
     console.error("[Audit] Error granting role:", error);
@@ -255,7 +285,8 @@ export async function revokeRole(userId: string): Promise<{ success: boolean; er
       return { success: false, error: error.message };
     }
 
-    // Role revoked successfully
+    // Role revoked successfully — clear cache so new permissions are reflected
+    clearRoleCache();
     return { success: true };
   } catch (error) {
     console.error("[Audit] Error revoking role:", error);
@@ -315,7 +346,8 @@ export async function updateRole(
       return { success: false, error: error.message };
     }
 
-    // Role updated successfully
+    // Role updated successfully — clear cache so new permissions are reflected
+    clearRoleCache();
     return { success: true };
   } catch (error) {
     console.error("[Audit] Error updating role:", error);
@@ -373,7 +405,8 @@ export async function deactivateRole(
       return { success: false, error: error.message };
     }
 
-    // Role deactivated successfully
+    // Role deactivated successfully — clear cache so new permissions are reflected
+    clearRoleCache();
     return { success: true };
   } catch (error) {
     console.error("[Audit] Error deactivating role:", error);

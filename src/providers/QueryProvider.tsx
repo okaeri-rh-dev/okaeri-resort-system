@@ -1,62 +1,9 @@
 import React from "react";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
-import { logger } from "@/lib/logger";
-
-// ============================================
-// QUERY CLIENT CONFIGURATION
-// ============================================
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // Stale time: How long until a query is considered stale
-      staleTime: 1000 * 60 * 5, // 5 minutes default
-
-      // Cache time: How long to keep unused data in cache
-      gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
-
-      // Retry configuration
-      retry: (failureCount, error) => {
-        // Don't retry on 4xx errors
-        if (error instanceof Error) {
-          const message = error.message.toLowerCase();
-          if (
-            message.includes("unauthorized") ||
-            message.includes("forbidden") ||
-            message.includes("not found") ||
-            message.includes("bad request")
-          ) {
-            return false;
-          }
-        }
-
-        // Retry up to 3 times with exponential backoff
-        return failureCount < 3;
-      },
-
-      // Retry delay with exponential backoff
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-
-      // Refetch on window focus (great for keeping data fresh)
-      refetchOnWindowFocus: true,
-
-      // Refetch on reconnect
-      refetchOnReconnect: true,
-
-      // Network mode
-      networkMode: "online", // 'online' | 'always' | 'offlineFirst'
-    },
-    mutations: {
-      // Retry configuration for mutations
-      retry: false, // Usually don't want to retry mutations automatically
-
-      // Network mode
-      networkMode: "online",
-    },
-  },
-});
+import { queryClient } from "@/lib/query-client";
 
 // ============================================
 // QUERY PROVIDER COMPONENT
@@ -171,7 +118,7 @@ const _offlineSupport = {
       queryClient.refetchQueries();
     });
     window.addEventListener("offline", () => {
-      logger.info("App is offline - data may be stale");
+      console.warn("App is offline - data may be stale");
     });
   },
   queueMutation: async <T,>(mutation: () => Promise<T>): Promise<T> => {
@@ -187,7 +134,7 @@ const _offlineSupport = {
     const queue = JSON.parse(localStorage.getItem("mutationQueue") || "[]");
     for (const item of queue) {
       try {
-        logger.info("Processing queued mutation from", { timestamp: new Date(item.timestamp) });
+        console.warn("Processing queued mutation from", { timestamp: new Date(item.timestamp) });
       } catch (error) {
         console.error("Failed to process queued mutation:", error);
       }

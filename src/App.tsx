@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 
-import { QueryClient } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 
+import { clearRoleCache } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
+import { queryClient } from "@/lib/query-client";
 import { QueryProvider } from "@/providers/QueryProvider";
 import type { RouterContext } from "@/routes/__root";
 import { routeTree } from "@/routeTree.gen";
@@ -26,9 +27,6 @@ declare global {
   }
 }
 
-// Create a new query client instance
-const queryClient = new QueryClient();
-
 // Create the router instance
 const router = createRouter({
   routeTree,
@@ -37,7 +35,7 @@ const router = createRouter({
     isAuthenticated: false, // Initial value, will be updated
   } as RouterContext,
   defaultPreload: "intent",
-  defaultPreloadStaleTime: 0,
+  defaultPreloadStaleTime: 30_000, // 30s — keep preloaded data fresh on hover→click
 });
 
 // Register the router instance for type safety
@@ -91,6 +89,7 @@ function App() {
     const handleAuthChange = (event: AuthStateChangeEvent) => {
       const newAuthState = event.detail.isAuthenticated;
       setIsAuthenticated(newAuthState);
+      clearRoleCache();
 
       // Update router context
       router.update({
