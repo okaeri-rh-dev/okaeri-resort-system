@@ -205,25 +205,41 @@ RETURNS TRIGGER AS $$
 DECLARE
     v_old_data JSONB;
     v_new_data JSONB;
-    v_changes JSONB;
+    v_changed_fields TEXT[];
+    v_record_id TEXT;
+    v_record_data JSONB;
 BEGIN
     IF TG_OP = 'INSERT' THEN
         v_new_data := to_jsonb(NEW);
-        v_changes := jsonb_build_object('after', v_new_data);
+        v_record_data := v_new_data;
     ELSIF TG_OP = 'UPDATE' THEN
         v_old_data := to_jsonb(OLD);
         v_new_data := to_jsonb(NEW);
-        v_changes := jsonb_build_object('before', v_old_data, 'after', v_new_data);
+        v_record_data := v_new_data;
+        -- Compute changed fields
+        SELECT array_agg(key) INTO v_changed_fields
+        FROM jsonb_each(v_new_data) AS n(key, value)
+        WHERE v_old_data->key IS DISTINCT FROM n.value;
     ELSIF TG_OP = 'DELETE' THEN
         v_old_data := to_jsonb(OLD);
-        v_changes := jsonb_build_object('before', v_old_data);
+        v_record_data := v_old_data;
     END IF;
+
+    -- Extract record ID generically: try <table>_id, then id, then first UUID-looking key
+    v_record_id := COALESCE(
+        v_record_data ->> (TG_TABLE_NAME || '_id'),
+        v_record_data ->> (regexp_replace(TG_TABLE_NAME, 's$', '') || '_id'),
+        v_record_data ->> 'id',
+        v_record_data ->> 'log_id'
+    );
 
     INSERT INTO public.audit_logs (
         action,
         table_name,
         record_id,
-        changes,
+        old_data,
+        new_data,
+        changed_fields,
         user_id,
         category,
         severity,
@@ -231,12 +247,14 @@ BEGIN
     ) VALUES (
         TG_OP,
         TG_TABLE_NAME,
-        CASE WHEN TG_OP = 'DELETE' THEN (OLD).booking_id ELSE (NEW).booking_id END,
-        v_changes,
+        v_record_id,
+        v_old_data,
+        v_new_data,
+        v_changed_fields,
         auth.uid(),
         'DATA',
         'INFO',
-        'trigger'
+        'db'
     );
 
     IF TG_OP = 'DELETE' THEN
@@ -324,6 +342,8 @@ END;
 $$ LANGUAGE plpgsql SET search_path = '';
 
 -- 3.7 archive_audit_logs
+-- NOTE: audit_logs_archive shares the same schema as audit_logs (old_data, new_data, changed_fields)
+-- Direct column-to-column copy since both tables have matching schemas
 CREATE OR REPLACE FUNCTION public.archive_audit_logs(p_before_date TIMESTAMPTZ)
 RETURNS INTEGER AS $$
 DECLARE
@@ -335,32 +355,50 @@ BEGIN
         RETURNING *
     )
     INSERT INTO public.audit_logs_archive (
-        original_audit_id,
+        audit_id,
+        correlation_id,
         action,
         table_name,
         record_id,
-        changes,
+        record_pk,
+        event_type,
+        source,
         user_id,
+        user_email,
+        user_role,
+        old_data,
+        new_data,
+        changed_fields,
+        description,
         category,
         severity,
-        source,
-        original_timestamp,
-        archive_month,
-        archived_at
+        metadata,
+        ip_address,
+        user_agent,
+        created_at
     )
     SELECT
         audit_id,
+        correlation_id,
         action,
         table_name,
         record_id,
-        changes,
+        record_pk,
+        event_type,
+        source,
         user_id,
+        user_email,
+        user_role,
+        old_data,
+        new_data,
+        changed_fields,
+        description,
         category,
         severity,
-        source,
-        created_at,
-        DATE_TRUNC('month', created_at)::DATE,
-        NOW()
+        metadata,
+        ip_address,
+        user_agent,
+        created_at
     FROM moved;
 
     GET DIAGNOSTICS v_archived_count = ROW_COUNT;
@@ -410,32 +448,54 @@ DECLARE
 BEGIN
     WITH moved AS (
         DELETE FROM public.audit_logs_archive
-        WHERE archive_month = p_archive_month
+        WHERE DATE_TRUNC('month', created_at)::DATE = p_archive_month
         RETURNING *
     )
     INSERT INTO public.audit_logs (
         audit_id,
+        correlation_id,
         action,
         table_name,
         record_id,
-        changes,
+        record_pk,
+        event_type,
+        source,
         user_id,
+        user_email,
+        user_role,
+        old_data,
+        new_data,
+        changed_fields,
+        description,
         category,
         severity,
-        source,
+        metadata,
+        ip_address,
+        user_agent,
         created_at
     )
     SELECT
-        original_audit_id,
+        audit_id,
+        correlation_id,
         action,
         table_name,
         record_id,
-        changes,
+        record_pk,
+        event_type,
+        source,
         user_id,
+        user_email,
+        user_role,
+        old_data,
+        new_data,
+        changed_fields,
+        description,
         category,
         severity,
-        source,
-        original_timestamp
+        metadata,
+        ip_address,
+        user_agent,
+        created_at
     FROM moved;
 
     GET DIAGNOSTICS v_restored_count = ROW_COUNT;
