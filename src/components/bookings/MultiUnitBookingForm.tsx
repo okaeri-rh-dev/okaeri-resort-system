@@ -529,10 +529,13 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>Email Address (Optional)</FormLabel>
                         <FormControl>
                           <Input type="email" placeholder="john@example.com" {...field} />
                         </FormControl>
+                        <FormDescription>
+                          If provided, booking confirmation will be sent to this email
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -543,10 +546,11 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                     name="contact_number"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contact Number</FormLabel>
+                        <FormLabel>Phone Number (Optional)</FormLabel>
                         <FormControl>
                           <Input placeholder="+63 912 345 6789" {...field} />
                         </FormControl>
+                        <FormDescription>Philippine mobile numbers only</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -563,8 +567,12 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <span className="text-muted-foreground">Guest:</span>
                       <span className="font-medium">{form.watch("guest_name")}</span>
-                      <span className="text-muted-foreground">Email:</span>
-                      <span>{form.watch("email")}</span>
+                      {form.watch("email") && (
+                        <>
+                          <span className="text-muted-foreground">Email:</span>
+                          <span>{form.watch("email")}</span>
+                        </>
+                      )}
                       <span className="text-muted-foreground">Check-in:</span>
                       <span>{format(form.watch("check_in"), "PPP")}</span>
                       <span className="text-muted-foreground">Check-out:</span>

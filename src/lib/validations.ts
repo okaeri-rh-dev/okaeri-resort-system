@@ -5,10 +5,10 @@ import { z } from "zod";
 // ============================================
 
 // Philippine phone number validation
-const philippinePhoneRegex = /^(\+63|0)(9\d{9}|[2-8]\d{8})$/;
+export const philippinePhoneRegex = /^(\+63|0)(9\d{9}|[2-8]\d{8})$/;
 
 // Email validation (more strict)
-const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+export const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 // Custom validation messages
 const messages = {

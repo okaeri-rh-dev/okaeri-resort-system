@@ -383,14 +383,15 @@ describe("MultiUnitBookingForm", () => {
       const validPhoneFormats = [
         "+639123456789",
         "09123456789",
-        "+1 (555) 123-4567",
-        "555-123-4567",
+        "", // optional - empty string is valid
       ];
 
       const invalidPhoneFormats = [
         "123",
         "abc",
         "++123",
+        "+1 (555) 123-4567",
+        "555-123-4567",
         "too-many-characters-in-phone-number-9999999999999",
       ];
 

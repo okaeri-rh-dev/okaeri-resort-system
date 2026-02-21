@@ -8,6 +8,8 @@
 
 import { z } from "zod";
 
+import { emailRegex, philippinePhoneRegex } from "@/lib/validations";
+
 /**
  * Base Multi-Unit Booking Form Schema (without refinements)
  *
@@ -20,8 +22,10 @@ const baseMultiUnitBookingSchema = z.object({
 
   // Step 2: Primary Guest Information
   guest_name: z.string().min(2, "Guest name must be at least 2 characters").max(100),
-  email: z.string().email("Invalid email address"),
-  contact_number: z.string().regex(/^[+]?[0-9\s\-()]{10,20}$/, "Invalid phone number format"),
+  email: z.string().refine((val) => val === "" || emailRegex.test(val), "Invalid email address"),
+  contact_number: z
+    .string()
+    .refine((val) => val === "" || philippinePhoneRegex.test(val), "Invalid phone number format"),
 
   // Step 4: Payment
   payment_method: z.enum(["Cash", "GCash", "BankTransfer", "CreditCard"]),
