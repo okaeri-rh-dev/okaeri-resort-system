@@ -130,7 +130,7 @@ export interface AdminMultiUnitBookingCreate {
   };
   check_in: string;
   check_out: string;
-  booking_units: AdminBookingUnitCreate[];
+  units: AdminBookingUnitCreate[];
   payment?: {
     method: string;
     amount: number;

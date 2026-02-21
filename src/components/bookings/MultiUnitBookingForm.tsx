@@ -292,7 +292,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
         },
         check_in: data.check_in.toISOString(),
         check_out: data.check_out.toISOString(),
-        booking_units: selectedUnits.map((unit) => ({
+        units: selectedUnits.map((unit) => ({
           unit_id: unit.unit_id,
           num_guests: unit.guest_assignment?.num_guests || unit.base_occupancy,
           guest_assignment: unit.guest_assignment,
