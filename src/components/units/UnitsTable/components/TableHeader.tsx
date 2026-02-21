@@ -118,7 +118,7 @@ export function TableHeader({
         </div>
 
         {/* Action buttons */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {/* Column visibility */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -172,11 +172,11 @@ export function TableHeader({
 
       {/* Batch actions row - shown when items are selected */}
       {selectedCount > 0 && (
-        <div className="flex items-center justify-between rounded-lg bg-blue-50 p-3">
+        <div className="flex flex-col gap-2 rounded-lg bg-blue-50 p-3 sm:flex-row sm:items-center sm:justify-between">
           <span className="text-sm text-blue-700">
             {selectedCount} unit{selectedCount > 1 ? "s" : ""} selected
           </span>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {onBatchStatusUpdate && (
               <>
                 <Button
