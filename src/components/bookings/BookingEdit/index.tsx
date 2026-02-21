@@ -193,7 +193,6 @@ export function BookingEditPage() {
                             mode="single"
                             selected={field.value ? new Date(field.value) : undefined}
                             onSelect={(date) => field.onChange(date)}
-                            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                             initialFocus
                           />
                         </PopoverContent>

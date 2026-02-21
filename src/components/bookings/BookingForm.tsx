@@ -412,7 +412,6 @@ export function BookingForm({
                 <ResponsiveDatePicker
                   value={field.value}
                   onChange={field.onChange}
-                  disabled={(date) => date < new Date()}
                   placeholder="Pick a date"
                 />
               </FormControl>
