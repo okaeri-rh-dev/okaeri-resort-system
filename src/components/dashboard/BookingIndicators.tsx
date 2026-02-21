@@ -1,99 +1,86 @@
 import React, { useMemo } from "react";
 
-import { getBookingStatusColor, getBookingStatusPriority } from "@/hooks/useCalendarBookings";
+import { getBookingStatusPriority } from "@/hooks/useCalendarBookings";
 import { cn } from "@/lib/utils";
-import type { Booking, BookingUnitRecord } from "@/types";
+import type { Booking } from "@/types";
 
-interface UnitEntry {
-  booking: Booking;
-  bookingUnit: BookingUnitRecord | null;
-  key: string; // composite key: booking_id:unit_id
-}
+import { getStatusHintClasses, UNIT_SLOT_MAP, UNIT_SLOTS } from "./unit-calendar-config";
 
 interface BookingIndicatorsProps {
   bookings: Booking[];
-  maxVisible?: number;
   className?: string;
 }
 
 export const BookingIndicators = React.memo(function BookingIndicators({
   bookings,
-  maxVisible = 2,
   className,
 }: BookingIndicatorsProps) {
-  // Flatten bookings into per-unit entries so each unit gets its own chip
-  const unitEntries = useMemo(() => {
-    if (!bookings || bookings.length === 0) return [];
+  // Build a map: unitCode -> best booking (highest-priority status wins)
+  const slotBookings = useMemo(() => {
+    if (!bookings || bookings.length === 0) return null;
 
-    // Deduplicate bookings first (same booking appearing multiple times for multi-day stays)
-    const uniqueBookings = Array.from(new Map(bookings.map((b) => [b.booking_id, b])).values());
+    const map = new Map<string, Booking>();
 
-    const entries: UnitEntry[] = [];
-    const seen = new Set<string>();
-
-    for (const booking of uniqueBookings) {
+    for (const booking of bookings) {
       const units = booking.booking_units;
-      if (!units || units.length === 0) {
-        // Fallback entry for bookings with no units
-        const key = `${booking.booking_id}:no-unit`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          entries.push({ booking, bookingUnit: null, key });
-        }
-      } else {
-        for (const bu of units) {
-          const key = `${booking.booking_id}:${bu.unit_id}`;
-          if (!seen.has(key)) {
-            seen.add(key);
-            entries.push({ booking, bookingUnit: bu, key });
-          }
+      if (!units || units.length === 0) continue;
+
+      for (const bu of units) {
+        const code = bu.unit?.unit_code;
+        if (!code || !UNIT_SLOT_MAP.has(code)) continue;
+
+        const existing = map.get(code);
+        if (
+          !existing ||
+          getBookingStatusPriority(booking.booking_status ?? "Pending") <
+            getBookingStatusPriority(existing.booking_status ?? "Pending")
+        ) {
+          map.set(code, booking);
         }
       }
     }
 
-    // Sort by status priority, then by unit code alphabetically
-    entries.sort((a, b) => {
-      const priorityDiff =
-        getBookingStatusPriority(a.booking.booking_status ?? "Pending") -
-        getBookingStatusPriority(b.booking.booking_status ?? "Pending");
-      if (priorityDiff !== 0) return priorityDiff;
-
-      const codeA = a.bookingUnit?.unit?.unit_code ?? "";
-      const codeB = b.bookingUnit?.unit?.unit_code ?? "";
-      return codeA.localeCompare(codeB);
-    });
-
-    return entries;
+    return map.size > 0 ? map : null;
   }, [bookings]);
 
-  if (unitEntries.length === 0) {
-    return null;
-  }
-
-  const visibleEntries = unitEntries.slice(0, maxVisible);
-  const remainingCount = unitEntries.length - maxVisible;
+  if (!slotBookings) return null;
 
   return (
-    <div className={cn("flex w-full flex-row gap-0.5", className)}>
-      {visibleEntries.map((entry) => (
-        <div
-          key={entry.key}
-          className={cn(
-            "inline-flex items-center rounded-sm border px-1 py-0.5 text-[9px] font-semibold sm:text-[10px]",
-            "max-w-full truncate font-mono tracking-tight",
-            getBookingStatusColor(entry.booking.booking_status ?? "Pending")
-          )}
-        >
-          {entry.bookingUnit?.unit?.unit_code ||
-            entry.bookingUnit?.unit?.unit_name?.slice(0, 3) ||
-            "—"}
-        </div>
-      ))}
-      {remainingCount > 0 && (
-        <div className="inline-flex items-center rounded-sm border border-neutral-200 bg-neutral-100 px-1 py-0.5 text-[9px] font-medium text-neutral-600 sm:text-[10px]">
-          +{remainingCount}
-        </div>
-      )}
+    <div className={cn("flex w-full flex-col gap-0.5", className)}>
+      {UNIT_SLOTS.map((slot) => {
+        const booking = slotBookings.get(slot.unitCode);
+
+        if (!booking) {
+          // Invisible placeholder to maintain fixed positioning
+          return <div key={slot.unitCode} className="h-3 w-full sm:h-4" aria-hidden="true" />;
+        }
+
+        const statusHint = getStatusHintClasses(booking.booking_status ?? "Pending");
+
+        return (
+          <div key={slot.unitCode} className="w-full">
+            {/* Mobile: thin color bar only */}
+            <div
+              className={cn("h-3 w-full rounded-sm sm:hidden", slot.mobileBar, statusHint)}
+              aria-label={`${slot.unitCode}: ${booking.guest_name}`}
+            />
+            {/* Desktop: chip with unit code + guest name */}
+            <div
+              className={cn(
+                "hidden w-full items-center rounded-sm border px-1 py-0.5 sm:inline-flex",
+                "truncate text-[10px] leading-tight font-semibold",
+                slot.bg,
+                slot.text,
+                slot.border,
+                statusHint
+              )}
+            >
+              <span className="mr-1 font-mono">{slot.unitCode}</span>
+              <span className="truncate font-sans font-medium">{booking.guest_name}</span>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 });

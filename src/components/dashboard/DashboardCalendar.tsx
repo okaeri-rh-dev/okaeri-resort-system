@@ -21,12 +21,10 @@ interface DashboardCalendarProps {
   className?: string;
 }
 
-// Helper function to determine background color based on booking count
+// Uniform subtle tint for any day with bookings (avoids competing with unit chip colors)
 function getDayBackgroundClass(bookingCount: number): string {
   if (bookingCount === 0) return "";
-  if (bookingCount <= 2) return "bg-blue-50 hover:bg-blue-100/80";
-  if (bookingCount <= 4) return "bg-blue-100 hover:bg-blue-200/80";
-  return "bg-amber-50 hover:bg-amber-100"; // 5+ bookings (busy day)
+  return "bg-slate-50/60 hover:bg-slate-100/60";
 }
 
 // Extracted DayButton component for better performance
@@ -58,7 +56,7 @@ const DayButton = React.memo(function DayButton({
         {...props}
         variant="ghost"
         className={cn(
-          "relative h-16 w-full p-1 text-sm font-normal sm:h-20 md:h-24",
+          "relative h-20 w-full p-1 text-sm font-normal sm:h-24 md:h-28",
           "min-w-0", // Allow shrinking below content size
           "transition-all duration-150",
           // Base weekend styling (only if no bookings)
@@ -81,16 +79,12 @@ const DayButton = React.memo(function DayButton({
       >
         <div className="flex h-full flex-col items-start justify-start p-1">
           <span
-            className={cn(
-              "self-start text-xs font-medium sm:text-sm",
-              isToday && "text-blue-900",
-              dayBookings.length > 4 && "text-amber-700"
-            )}
+            className={cn("self-start text-xs font-medium sm:text-sm", isToday && "text-blue-900")}
           >
             {format(date, "d")}
           </span>
           {dayBookings.length > 0 && (
-            <BookingIndicators bookings={dayBookings} maxVisible={3} className="mt-1 w-full" />
+            <BookingIndicators bookings={dayBookings} className="mt-1 w-full" />
           )}
         </div>
       </Button>
@@ -218,14 +212,14 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
                 "text-slate-600 rounded-md w-full font-medium text-[11px] uppercase tracking-wider", // renamed from 'head_cell'
               week: "flex w-full mt-1", // renamed from 'row'
               day: cn(
-                "relative h-16 sm:h-20 md:h-24 flex-1 p-0 text-center text-sm",
+                "relative h-20 sm:h-24 md:h-28 flex-1 p-0 text-center text-sm",
                 "[&:has([aria-selected])]:bg-accent",
                 "first:[&:has([aria-selected])]:rounded-l-md",
                 "last:[&:has([aria-selected])]:rounded-r-md",
                 "focus-within:relative focus-within:z-20"
               ), // renamed from 'cell'
               day_button: cn(
-                "h-16 sm:h-20 md:h-24 w-full p-0 font-normal hover:bg-accent hover:text-accent-foreground",
+                "h-20 sm:h-24 md:h-28 w-full p-0 font-normal hover:bg-accent hover:text-accent-foreground",
                 "aria-selected:opacity-100"
               ), // renamed from 'day'
               selected:
