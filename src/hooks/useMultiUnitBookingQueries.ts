@@ -12,6 +12,13 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import {
+  afterBookingCreate,
+  afterBookingDelete,
+  afterBookingPaymentChange,
+  afterBookingUpdate,
+  invalidateMultiUnitBookings,
+} from "@/lib/query-invalidation";
 import { supabase } from "@/lib/supabase";
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import type {
@@ -206,8 +213,7 @@ export const useCreateMultiUnitBooking = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["multi-unit-bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["multi-unit-availability"] });
+      afterBookingCreate();
     },
   });
 };
@@ -268,8 +274,7 @@ export const useAddUnitToBooking = (bookingId: string) => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["multi-unit-bookings", bookingId] });
-      queryClient.invalidateQueries({ queryKey: ["multi-unit-availability"] });
+      afterBookingUpdate();
     },
   });
 };
@@ -330,8 +335,7 @@ export const useRemoveUnitFromBooking = (bookingId: string) => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["multi-unit-bookings", bookingId] });
-      queryClient.invalidateQueries({ queryKey: ["multi-unit-availability"] });
+      afterBookingUpdate();
     },
   });
 };
@@ -384,7 +388,7 @@ export const useUpdateMultiUnitBooking = (bookingId: string) => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["multi-unit-bookings", bookingId] });
+      afterBookingUpdate();
     },
   });
 };
@@ -423,11 +427,10 @@ export const useDeleteMultiUnitBooking = () => {
       return { bookingId };
     },
     onError: () => {
-      queryClient.invalidateQueries({ queryKey: ["multi-unit-bookings"] });
+      invalidateMultiUnitBookings();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["multi-unit-bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["multi-unit-availability"] });
+      afterBookingDelete();
     },
   });
 };
@@ -436,8 +439,6 @@ export const useDeleteMultiUnitBooking = () => {
  * Record payment for multi-unit booking
  */
 export const useRecordMultiUnitPayment = (bookingId: string) => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (paymentData: {
       amount: number;
@@ -467,8 +468,7 @@ export const useRecordMultiUnitPayment = (bookingId: string) => {
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["multi-unit-bookings", bookingId] });
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
+      afterBookingPaymentChange();
     },
   });
 };
@@ -477,8 +477,6 @@ export const useRecordMultiUnitPayment = (bookingId: string) => {
  * Process refund for multi-unit booking
  */
 export const useRefundMultiUnitPayment = (bookingId: string) => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (refundData: { amount: number; reason: string; notes?: string }) => {
       // Get current session token for authentication
@@ -503,8 +501,7 @@ export const useRefundMultiUnitPayment = (bookingId: string) => {
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["multi-unit-bookings", bookingId] });
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
+      afterBookingPaymentChange();
     },
   });
 };

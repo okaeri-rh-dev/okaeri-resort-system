@@ -3,6 +3,15 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { adaptBookingFromDB } from "@/lib/database-adapters";
+import {
+  afterBookingCancel,
+  afterBookingCreate,
+  afterBookingDelete,
+  afterBookingPaymentChange,
+  afterBookingStatusChange,
+  afterBookingUpdate,
+  invalidateBookings,
+} from "@/lib/query-invalidation";
 import { db, handleSupabaseError, storage, supabase } from "@/lib/supabase";
 import type {
   Booking,
@@ -465,8 +474,7 @@ export const useCreateBooking = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["guests"] });
+      afterBookingCreate();
     },
   });
 };
@@ -527,7 +535,7 @@ export const useUpdateBookingStatus = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      afterBookingStatusChange();
     },
   });
 };
@@ -579,7 +587,7 @@ export const useUpdatePaymentStatus = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      afterBookingPaymentChange();
     },
   });
 };
@@ -631,7 +639,7 @@ export const useUploadPaymentProof = () => {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      afterBookingPaymentChange();
     },
   });
 };
@@ -656,11 +664,7 @@ export const useCancelBooking = () => {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["units"] }); // Update unit availability
-      queryClient.invalidateQueries({ queryKey: ["unit-availability"] }); // Update optimized availability cache
-      queryClient.invalidateQueries({ queryKey: ["available-units"] });
-      queryClient.invalidateQueries({ queryKey: ["availability-calendar"] });
+      afterBookingCancel();
     },
   });
 };
@@ -727,9 +731,7 @@ export const useUpdateBooking = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["guests"] });
-      queryClient.invalidateQueries({ queryKey: ["availability"] });
+      afterBookingUpdate();
     },
   });
 };
@@ -751,12 +753,10 @@ export const useDeleteBooking = () => {
     },
     onError: () => {
       // Re-fetch to restore state
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      invalidateBookings();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["guests"] });
-      queryClient.invalidateQueries({ queryKey: ["availability"] });
+      afterBookingDelete();
     },
   });
 };

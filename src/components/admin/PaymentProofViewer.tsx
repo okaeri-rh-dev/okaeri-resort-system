@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 // Note: CSS imports removed as they cause build issues
 // import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 // import "react-pdf/dist/esm/Page/TextLayer.css";
@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuthToken } from "@/hooks/useAuthToken";
+import { afterBookingPaymentChange } from "@/lib/query-invalidation";
 import { generateSignedUrl, renewSignedUrl, shouldRenewSignedUrl } from "@/lib/storage-utils";
 
 // Configure PDF.js worker
@@ -55,7 +56,6 @@ export function PaymentProofViewer({
   currentPaymentStatus,
   onStatusChange,
 }: PaymentProofViewerProps) {
-  const queryClient = useQueryClient();
   const { token: authToken, isLoading: isAuthLoading, error: authError } = useAuthToken();
 
   // State management
@@ -149,8 +149,7 @@ export function PaymentProofViewer({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pending-multi-unit-bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["booking", bookingId] });
+      afterBookingPaymentChange();
       onStatusChange?.();
       setShowVerifyConfirm(false);
       setIsRejectDialogOpen(false);

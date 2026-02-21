@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+import { afterBookingPaymentChange, invalidatePayments } from "@/lib/query-invalidation";
 import { uploadPaymentProof } from "@/lib/storage-security";
 import { handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Payment, PaymentMethod, PaymentStatus } from "@/types";
@@ -311,8 +312,7 @@ export const useCreatePayment = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      afterBookingPaymentChange();
     },
   });
 };
@@ -377,8 +377,7 @@ export const useUpdatePayment = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      afterBookingPaymentChange();
     },
   });
 };
@@ -400,11 +399,10 @@ export const useDeletePayment = () => {
       return { paymentId };
     },
     onError: () => {
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
+      invalidatePayments();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      afterBookingPaymentChange();
     },
   });
 };
@@ -437,12 +435,11 @@ export const useVerifyPayment = () => {
 
       return { paymentId };
     },
-    onError: (_, paymentId) => {
-      queryClient.invalidateQueries({ queryKey: ["payments", paymentId] });
+    onError: () => {
+      invalidatePayments();
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      afterBookingPaymentChange();
     },
   });
 };

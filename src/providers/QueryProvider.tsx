@@ -90,25 +90,7 @@ const _prefetchQueries = {
   },
 };
 
-// Cache invalidation utilities (internal use only)
-const _invalidateQueries = {
-  all: () => queryClient.invalidateQueries(),
-  units: () => queryClient.invalidateQueries({ queryKey: ["units"] }),
-  bookings: () => queryClient.invalidateQueries({ queryKey: ["bookings"] }),
-  guests: () => queryClient.invalidateQueries({ queryKey: ["guests"] }),
-  dashboard: () => queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
-  afterBookingMutation: () => {
-    queryClient.invalidateQueries({ queryKey: ["bookings"] });
-    queryClient.invalidateQueries({ queryKey: ["units"] });
-    queryClient.invalidateQueries({ queryKey: ["guests"] });
-    queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-  },
-  afterUnitMutation: () => {
-    queryClient.invalidateQueries({ queryKey: ["units"] });
-    queryClient.invalidateQueries({ queryKey: ["bookings"] });
-    queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-  },
-};
+// Cache invalidation utilities moved to @/lib/query-invalidation.ts
 
 // Offline support utilities (internal use only)
 const _offlineSupport = {
@@ -171,6 +153,5 @@ const _performanceMonitoring = {
 
 // Suppress unused variable warnings - these are preserved for future use
 void _prefetchQueries;
-void _invalidateQueries;
 void _offlineSupport;
 void _performanceMonitoring;

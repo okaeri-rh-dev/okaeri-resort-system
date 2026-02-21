@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { logger } from "@/lib/logger";
+import { invalidateBookings, invalidateGuests } from "@/lib/query-invalidation";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Booking, Guest } from "@/types";
 
@@ -259,7 +260,7 @@ export const useCreateGuest = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["guests"] });
+      invalidateGuests();
     },
   });
 };
@@ -299,7 +300,7 @@ export const useUpdateGuest = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["guests"] });
+      invalidateGuests();
     },
   });
 };
@@ -334,18 +335,16 @@ export const useDeleteGuest = () => {
     },
     onError: () => {
       // Re-fetch to restore state
-      queryClient.invalidateQueries({ queryKey: ["guests"] });
+      invalidateGuests();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["guests"] });
+      invalidateGuests();
     },
   });
 };
 
 // Merge duplicate guests
 export const useMergeGuests = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       primaryGuestId,
@@ -385,8 +384,8 @@ export const useMergeGuests = () => {
       if (deleteError) throw new Error(handleSupabaseError(deleteError));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["guests"] });
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      invalidateGuests();
+      invalidateBookings();
     },
   });
 };

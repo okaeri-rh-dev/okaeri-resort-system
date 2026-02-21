@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { differenceInDays, eachDayOfInterval, isWeekend } from "date-fns";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { checkUnitAvailability } from "@/lib/availability";
+import { afterBookingCreate } from "@/lib/query-invalidation";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
 import { completeBookingSchema, type CompleteBookingData } from "@/lib/validations";
 import { useUpdateBooking } from "@/stores/useBookingStore";
@@ -28,7 +29,6 @@ export function useBookingForm({ initialData, bookingId, onSuccess }: UseBooking
   const [calculatedTotal, setCalculatedTotal] = useState<number>(0);
 
   const isEditMode = !!bookingId;
-  const queryClient = useQueryClient();
   const updateBookingMutation = useUpdateBooking();
   const { data: units, isLoading: unitsLoading } = useUnits();
   const { data: pricingConfig } = usePricingConfig();
@@ -80,10 +80,7 @@ export function useBookingForm({ initialData, bookingId, onSuccess }: UseBooking
       return result.data; // Returns the created booking
     },
     onSuccess: () => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["guests"] });
-      queryClient.invalidateQueries({ queryKey: ["units"] });
+      afterBookingCreate();
     },
   });
 

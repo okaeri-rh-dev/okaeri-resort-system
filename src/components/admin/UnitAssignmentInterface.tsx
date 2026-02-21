@@ -16,7 +16,7 @@
 
 import { useCallback, useState } from "react";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuthToken } from "@/hooks/useAuthToken";
+import { afterBookingUpdate } from "@/lib/query-invalidation";
 import { cn } from "@/lib/utils";
 
 // ============================================
@@ -81,7 +82,6 @@ export function UnitAssignmentInterface({
   unitRequests,
   onAssignmentSuccess,
 }: UnitAssignmentInterfaceProps) {
-  const queryClient = useQueryClient();
   const { token: authToken, isLoading: isAuthLoading, error: authError } = useAuthToken();
   const [selectedUnits, setSelectedUnits] = useState<Set<string>>(new Set());
   const [assignmentError, setAssignmentError] = useState<string | null>(null);
@@ -158,10 +158,7 @@ export function UnitAssignmentInterface({
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ["pending-multi-unit-bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["available-units"] });
-      queryClient.invalidateQueries({ queryKey: ["booking", bookingId] });
+      afterBookingUpdate();
 
       // Clear selection and errors
       setSelectedUnits(new Set());
