@@ -1,6 +1,7 @@
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import { useNavigate } from "@tanstack/react-router";
 // Removed unused imports: format, cn
 import { AlertCircle, ArrowLeft, ArrowRight, CreditCard, Loader2 } from "lucide-react";
@@ -62,6 +63,7 @@ export function MultiUnitGuestBookingForm() {
     return isDev && skipTurnstile ? "dev-mock-token" : null;
   });
   const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const turnstileRef = useRef<TurnstileInstance>(null);
 
   const isDev = import.meta.env.DEV;
   const skipTurnstile = import.meta.env.VITE_SKIP_TURNSTILE === "true";
@@ -296,6 +298,8 @@ export function MultiUnitGuestBookingForm() {
       }
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "An unexpected error occurred");
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -556,6 +560,7 @@ export function MultiUnitGuestBookingForm() {
                 }}
                 turnstileToken={turnstileToken}
                 onTurnstileSuccess={setTurnstileToken}
+                turnstileRef={turnstileRef}
               />
             </div>
           )}

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type RefObject } from "react";
 
-import { Turnstile } from "@marsidev/react-turnstile";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { AlertCircle, Calendar, Mail, Phone, User, Users } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -19,6 +19,7 @@ interface BookingReviewStepProps {
   turnstileToken: string | null;
   onTurnstileSuccess: (token: string) => void;
   onTurnstileError?: () => void;
+  turnstileRef?: RefObject<TurnstileInstance | null>;
 }
 
 export function BookingReviewStep({
@@ -28,6 +29,7 @@ export function BookingReviewStep({
   turnstileToken,
   onTurnstileSuccess,
   onTurnstileError,
+  turnstileRef,
 }: BookingReviewStepProps) {
   const [turnstileError, setTurnstileError] = useState(false);
   const [turnstileExpired, setTurnstileExpired] = useState(false);
@@ -230,6 +232,7 @@ export function BookingReviewStep({
               </Alert>
             ) : !turnstileError ? (
               <Turnstile
+                ref={turnstileRef}
                 siteKey={siteKey || ""}
                 onSuccess={(token) => {
                   setTurnstileError(false);

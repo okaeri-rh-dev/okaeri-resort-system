@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
-import { Turnstile } from "@marsidev/react-turnstile";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { Link } from "@tanstack/react-router";
 import { AlertCircle } from "lucide-react";
 
@@ -23,12 +23,19 @@ export function ForgotPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance>(null);
 
   // Development mode detection for Turnstile bypass
   const isDev = import.meta.env.DEV;
   const skipTurnstile = import.meta.env.VITE_SKIP_TURNSTILE === "true";
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
   const shouldSkipTurnstile = isDev && (skipTurnstile || !siteKey);
+
+  const handleTryAnotherEmail = () => {
+    setSubmitted(false);
+    turnstileRef.current?.reset();
+    setTurnstileToken(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,7 +90,7 @@ export function ForgotPasswordForm() {
             Didn't receive an email? Check your spam folder or try again in a few minutes.
           </p>
           <div className="flex flex-col gap-2 pt-4">
-            <Button variant="outline" onClick={() => setSubmitted(false)} className="w-full">
+            <Button variant="outline" onClick={handleTryAnotherEmail} className="w-full">
               Try Another Email
             </Button>
             <Link to="/login" className="w-full">
@@ -135,6 +142,7 @@ export function ForgotPasswordForm() {
               </Alert>
             ) : (
               <Turnstile
+                ref={turnstileRef}
                 siteKey={siteKey || ""}
                 onSuccess={(token) => setTurnstileToken(token)}
                 onError={() => setTurnstileToken(null)}

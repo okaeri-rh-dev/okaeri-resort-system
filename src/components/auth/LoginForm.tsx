@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
-import { Turnstile } from "@marsidev/react-turnstile";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { Link } from "@tanstack/react-router";
 import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance>(null);
 
   // Development mode detection for Turnstile bypass
   const isDev = import.meta.env.DEV;
@@ -77,6 +78,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         error instanceof Error ? error.message : "Login failed. Please check your credentials.";
       toast.error(message);
       console.error("Login error:", error);
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
     } finally {
       setLoading(false);
     }
@@ -141,6 +144,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                 </Alert>
               ) : (
                 <Turnstile
+                  ref={turnstileRef}
                   siteKey={siteKey || ""}
                   onSuccess={(token) => setTurnstileToken(token)}
                   onError={() => setTurnstileToken(null)}

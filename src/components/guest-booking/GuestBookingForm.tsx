@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Turnstile } from "@marsidev/react-turnstile";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
@@ -100,6 +100,7 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [bookingReference, setBookingReference] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance>(null);
 
   // Fetch units using TanStack Query
   const { data: units = [] } = useQuery({
@@ -242,6 +243,8 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
     } catch (error) {
       console.error("Booking error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to create booking");
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -283,6 +286,7 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
                 onClick={() => {
                   setBookingReference(null);
                   form.reset();
+                  turnstileRef.current?.reset();
                   setTurnstileToken(null);
                 }}
               >
@@ -579,6 +583,7 @@ export function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
             {/* Cloudflare Turnstile Widget */}
             <div className="mb-4 flex justify-center">
               <Turnstile
+                ref={turnstileRef}
                 siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || ""}
                 onSuccess={(token) => setTurnstileToken(token)}
                 onError={() => setTurnstileToken(null)}
