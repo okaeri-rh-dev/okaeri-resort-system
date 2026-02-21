@@ -220,14 +220,14 @@ export async function onRequest(context: {
           const { data: unit, error } = await supabase
             .from("units")
             .select("*")
-            .eq("id", unitRequest.unit_id)
+            .eq("unit_id", unitRequest.unit_id)
             .single();
 
           if (error || !unit) {
             throw new Error(`Unit ${unitRequest.unit_id} not found`);
           }
           unitData = unit;
-          unitName = unit.name;
+          unitName = unit.unit_name;
         }
 
         // Use global pricing config as primary source, fall back to unit-specific rates
@@ -282,7 +282,7 @@ export async function onRequest(context: {
       const { data: unit, error } = await supabase
         .from("units")
         .select("*")
-        .eq("id", data.unit_id)
+        .eq("unit_id", data.unit_id)
         .single();
 
       if (error || !unit) {

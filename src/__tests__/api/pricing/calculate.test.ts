@@ -26,8 +26,8 @@ vi.mock("@supabase/supabase-js", () => ({
           eq: vi.fn().mockReturnThis(),
           single: vi.fn().mockResolvedValue({
             data: {
-              id: "550e8400-e29b-41d4-a716-446655440001",
-              name: "Test Unit",
+              unit_id: "550e8400-e29b-41d4-a716-446655440001",
+              unit_name: "Test Unit",
               base_rate: 3000,
               weekend_rate: 3500,
               extra_person_rate: 500,
