@@ -645,7 +645,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
       </div>
 
       {/* Desktop filters */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center space-x-3">
           <TableSearch
             value={searchQuery}

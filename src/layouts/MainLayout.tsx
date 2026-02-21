@@ -134,7 +134,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const NavSkeletonItems = () => (
     <div className="space-y-1">
       {Array.from({ length: 7 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 rounded-lg px-4 py-3 md:px-3 md:py-2">
+        <div key={i} className="flex items-center gap-3 rounded-lg px-4 py-3 lg:px-3 lg:py-2">
           <Skeleton className="h-5 w-5 flex-shrink-0" />
           <Skeleton className="h-4 flex-1" style={{ width: `${60 + (i % 3) * 20}%` }} />
         </div>
@@ -157,26 +157,26 @@ export function MainLayout({ children }: MainLayoutProps) {
           "flex touch-manipulation items-center gap-3 rounded-lg px-4 py-3 transition-colors",
           "hover:bg-accent hover:text-accent-foreground",
           "focus:bg-accent focus:text-accent-foreground focus:ring-primary focus:ring-2 focus:ring-offset-2 focus:outline-none",
-          "min-h-[44px] text-base md:min-h-[36px] md:px-3 md:py-2 md:text-sm",
+          "min-h-[44px] text-base lg:min-h-[36px] lg:px-3 lg:py-2 lg:text-sm",
           isActive && "bg-accent text-accent-foreground font-medium"
         )}
       >
-        <Icon className="h-6 w-6 flex-shrink-0 md:h-5 md:w-5" />
+        <Icon className="h-6 w-6 flex-shrink-0 lg:h-5 lg:w-5" />
         <span className="flex-1">{item.label}</span>
         {item.badge && (
-          <span className="bg-primary text-primary-foreground ml-auto flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-semibold md:h-5 md:min-w-5 md:text-[10px]">
+          <span className="bg-primary text-primary-foreground ml-auto flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-semibold lg:h-5 lg:min-w-5 lg:text-[10px]">
             {item.badge}
           </span>
         )}
-        {isActive && <ChevronRight className="ml-2 h-5 w-5 flex-shrink-0 md:h-4 md:w-4" />}
+        {isActive && <ChevronRight className="ml-2 h-5 w-5 flex-shrink-0 lg:h-4 lg:w-4" />}
       </Link>
     );
   };
 
   return (
-    <div className="bg-background flex h-dvh flex-col overflow-hidden md:flex-row">
+    <div className="bg-background flex h-dvh flex-col overflow-hidden lg:flex-row">
       {/* Desktop Sidebar */}
-      <aside className="bg-card hidden h-full w-64 flex-shrink-0 border-r md:flex lg:w-72">
+      <aside className="bg-card hidden h-full w-64 flex-shrink-0 border-r lg:flex lg:w-72">
         <div className="flex h-full w-full flex-col overflow-hidden">
           {/* Logo */}
           <div className="border-b p-4 lg:p-6">
@@ -242,7 +242,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       </aside>
 
       {/* Mobile Header */}
-      <header className="bg-card sticky top-0 z-50 border-b md:hidden">
+      <header className="bg-card sticky top-0 z-50 border-b lg:hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center space-x-3">
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -383,7 +383,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       {/* Main Content */}
       <main className="flex-1 overflow-hidden">
         <div className="h-full overflow-y-auto">
-          <div className="container mx-auto max-w-none p-4 pb-20 md:p-6 md:pb-6">{children}</div>
+          <div className="container mx-auto max-w-none p-4 pb-20 md:pb-6 lg:p-6">{children}</div>
         </div>
       </main>
     </div>

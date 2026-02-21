@@ -16,7 +16,7 @@ import { debounce } from "@/utils";
  * - Debounced to prevent rapid toggling at breakpoint boundaries
  * - Single source of truth for responsive behavior
  */
-export const useResponsiveView = (breakpoint: string = "768px") => {
+export const useResponsiveView = (breakpoint: string = "1024px") => {
   // Initialize with current state (no flash of wrong content)
   const [isMobile, setIsMobile] = useState<boolean>(() => {
     // SSR safety
