@@ -197,10 +197,6 @@ export const bookingFormSchema = bookingFormBaseSchema
   .refine((data) => data.check_out > data.check_in, {
     message: messages.endAfterStart,
     path: ["check_out"],
-  })
-  .refine((data) => data.check_in >= new Date(new Date().setHours(0, 0, 0, 0)), {
-    message: "Check-in date cannot be in the past",
-    path: ["check_in"],
   });
 
 // Multi-step booking form schemas
@@ -211,15 +207,13 @@ const bookingStep1BaseSchema = z.object({
   num_guests: z.number().min(1, messages.minGuests).max(20),
 });
 
-export const bookingStep1Schema = bookingStep1BaseSchema
-  .refine((data) => data.check_out > data.check_in, {
+export const bookingStep1Schema = bookingStep1BaseSchema.refine(
+  (data) => data.check_out > data.check_in,
+  {
     message: messages.endAfterStart,
     path: ["check_out"],
-  })
-  .refine((data) => data.check_in >= new Date(new Date().setHours(0, 0, 0, 0)), {
-    message: "Check-in date cannot be in the past",
-    path: ["check_in"],
-  });
+  }
+);
 
 export const bookingStep2Schema = z.object({
   guest_name: nameSchema,
@@ -249,10 +243,6 @@ export const completeBookingSchema = bookingStep1BaseSchema
   .refine((data) => data.check_out > data.check_in, {
     message: messages.endAfterStart,
     path: ["check_out"],
-  })
-  .refine((data) => data.check_in >= new Date(new Date().setHours(0, 0, 0, 0)), {
-    message: "Check-in date cannot be in the past",
-    path: ["check_in"],
   });
 
 // ============================================

@@ -445,7 +445,8 @@ export async function getCachePerformanceMetrics(): Promise<{
  */
 export function validateDateRange(
   checkIn: string,
-  checkOut: string
+  checkOut: string,
+  options: { allowPastDates?: boolean } = {}
 ): {
   isValid: boolean;
   error?: string;
@@ -455,7 +456,7 @@ export function validateDateRange(
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  if (checkInDate < today) {
+  if (!options.allowPastDates && checkInDate < today) {
     return {
       isValid: false,
       error: "Check-in date cannot be in the past",

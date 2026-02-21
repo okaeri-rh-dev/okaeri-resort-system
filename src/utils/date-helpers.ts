@@ -386,7 +386,11 @@ export const countBusinessDays = (
  * @param checkOut - Check-out date
  * @returns Booking period analysis
  */
-export const analyzeBookingPeriod = (checkIn: Date, checkOut: Date): BookingPeriod => {
+export const analyzeBookingPeriod = (
+  checkIn: Date,
+  checkOut: Date,
+  options: { allowPastDates?: boolean } = {}
+): BookingPeriod => {
   const conflicts: string[] = [];
   let isValidPeriod = true;
 
@@ -424,10 +428,12 @@ export const analyzeBookingPeriod = (checkIn: Date, checkOut: Date): BookingPeri
     isValidPeriod = false;
   }
 
-  const now = getPhilippineTime();
-  if (checkIn < getPhilippineStartOfDay(now)) {
-    conflicts.push("Check-in date cannot be in the past");
-    isValidPeriod = false;
+  if (!options.allowPastDates) {
+    const now = getPhilippineTime();
+    if (checkIn < getPhilippineStartOfDay(now)) {
+      conflicts.push("Check-in date cannot be in the past");
+      isValidPeriod = false;
+    }
   }
 
   return {

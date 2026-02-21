@@ -45,14 +45,14 @@ export function useUnitAvailability(
   checkIn: string,
   checkOut: string,
   excludeBookingId?: string,
-  options: { enabled?: boolean; refetchInterval?: number } = {}
+  options: { enabled?: boolean; refetchInterval?: number; allowPastDates?: boolean } = {}
 ) {
-  const { enabled = true, refetchInterval = 30000 } = options;
+  const { enabled = true, refetchInterval = 30000, allowPastDates } = options;
 
   const dateValidation = useMemo(() => {
     if (!checkIn || !checkOut) return { isValid: false };
-    return validateDateRange(checkIn, checkOut);
-  }, [checkIn, checkOut]);
+    return validateDateRange(checkIn, checkOut, { allowPastDates });
+  }, [checkIn, checkOut, allowPastDates]);
 
   return useQuery({
     queryKey: ["unit-availability", unitId, checkIn, checkOut, excludeBookingId],
@@ -100,14 +100,14 @@ export function useAvailableUnits(
   checkIn: string,
   checkOut: string,
   filters: AvailabilityFilter = {},
-  options: { enabled?: boolean; limit?: number } = {}
+  options: { enabled?: boolean; limit?: number; allowPastDates?: boolean } = {}
 ) {
-  const { enabled = true, limit = 50 } = options;
+  const { enabled = true, limit = 50, allowPastDates } = options;
 
   const dateValidation = useMemo(() => {
     if (!checkIn || !checkOut) return { isValid: false };
-    return validateDateRange(checkIn, checkOut);
-  }, [checkIn, checkOut]);
+    return validateDateRange(checkIn, checkOut, { allowPastDates });
+  }, [checkIn, checkOut, allowPastDates]);
 
   return useQuery({
     queryKey: ["available-units", checkIn, checkOut, filters, limit],
@@ -124,14 +124,14 @@ export function useAvailableUnits(
 export function useAvailableUnitsByType(
   checkIn: string,
   checkOut: string,
-  options: { enabled?: boolean } = {}
+  options: { enabled?: boolean; allowPastDates?: boolean } = {}
 ) {
-  const { enabled = true } = options;
+  const { enabled = true, allowPastDates } = options;
 
   const dateValidation = useMemo(() => {
     if (!checkIn || !checkOut) return { isValid: false };
-    return validateDateRange(checkIn, checkOut);
-  }, [checkIn, checkOut]);
+    return validateDateRange(checkIn, checkOut, { allowPastDates });
+  }, [checkIn, checkOut, allowPastDates]);
 
   return useQuery({
     queryKey: ["available-units-by-type", checkIn, checkOut],
@@ -149,14 +149,14 @@ export function useBatchUnitAvailability(
   unitIds: string[],
   checkIn: string,
   checkOut: string,
-  options: { enabled?: boolean } = {}
+  options: { enabled?: boolean; allowPastDates?: boolean } = {}
 ) {
-  const { enabled = true } = options;
+  const { enabled = true, allowPastDates } = options;
 
   const dateValidation = useMemo(() => {
     if (!checkIn || !checkOut) return { isValid: false };
-    return validateDateRange(checkIn, checkOut);
-  }, [checkIn, checkOut]);
+    return validateDateRange(checkIn, checkOut, { allowPastDates });
+  }, [checkIn, checkOut, allowPastDates]);
 
   return useQuery({
     queryKey: ["batch-unit-availability", unitIds, checkIn, checkOut],
@@ -278,13 +278,18 @@ export function useCacheMetrics(options: { enabled?: boolean; refetchInterval?: 
 /**
  * Hook for validating date ranges with memoization
  */
-export function useDateValidation(checkIn: string, checkOut: string) {
+export function useDateValidation(
+  checkIn: string,
+  checkOut: string,
+  options: { allowPastDates?: boolean } = {}
+) {
+  const { allowPastDates } = options;
   return useMemo(() => {
     if (!checkIn || !checkOut) {
       return { isValid: false, error: "Please select both check-in and check-out dates" };
     }
-    return validateDateRange(checkIn, checkOut);
-  }, [checkIn, checkOut]);
+    return validateDateRange(checkIn, checkOut, { allowPastDates });
+  }, [checkIn, checkOut, allowPastDates]);
 }
 
 /**

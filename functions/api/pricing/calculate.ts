@@ -15,11 +15,10 @@ interface Env {
 // Request validation schema
 const pricingCalculateRequestSchema = z
   .object({
-    check_in: z.string().refine((date) => {
-      const checkIn = new Date(date);
-      return checkIn >= new Date(new Date().setHours(0, 0, 0, 0));
-    }, "Check-in date must be today or in the future"),
-    check_out: z.string(),
+    check_in: z.string().refine((date) => !isNaN(Date.parse(date)), "Invalid check-in date format"),
+    check_out: z
+      .string()
+      .refine((date) => !isNaN(Date.parse(date)), "Invalid check-out date format"),
     guest_count: z.number().int().min(1).max(50).optional(), // Optional - can be calculated from unit_requests
     unit_id: z.string().uuid().optional(),
     // For custom pricing (e.g., when unit doesn't exist yet)

@@ -417,7 +417,8 @@ export const normalizePhilippinePhoneNumber = (phoneNumber: string): string => {
 export const validateBookingConstraints = (
   bookingData: BookingFormData,
   context: ValidationContext = {},
-  constraints: BookingConstraints = DEFAULT_BOOKING_CONSTRAINTS
+  constraints: BookingConstraints = DEFAULT_BOOKING_CONSTRAINTS,
+  options: { allowPastDates?: boolean } = {}
 ): ValidationResult<BookingFormData> => {
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
@@ -427,7 +428,9 @@ export const validateBookingConstraints = (
   const now = getPhilippineTime();
 
   // Date range validation
-  const bookingPeriod = analyzeBookingPeriod(checkIn, checkOut);
+  const bookingPeriod = analyzeBookingPeriod(checkIn, checkOut, {
+    allowPastDates: options.allowPastDates,
+  });
   if (!bookingPeriod.isValidPeriod) {
     bookingPeriod.conflicts.forEach((error) => {
       errors.push({
@@ -439,10 +442,10 @@ export const validateBookingConstraints = (
     });
   }
 
-  // Advance booking validation
+  // Advance booking validation (skip for historical bookings)
   const hoursUntilCheckIn = (checkIn.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-  if (hoursUntilCheckIn < constraints.minAdvanceBookingHours) {
+  if (!options.allowPastDates && hoursUntilCheckIn < constraints.minAdvanceBookingHours) {
     errors.push({
       field: "check_in",
       code: "INSUFFICIENT_ADVANCE_BOOKING",

@@ -54,22 +54,10 @@ export const multiUnitBookingSchema = z
       .regex(philippinePhoneRegex, "Invalid Philippine phone number format"),
 
     // Booking Dates
-    check_in: z
-      .date({
-        required_error: "Check-in date is required",
-        invalid_type_error: "Invalid date format",
-      })
-      .refine(
-        (date) => {
-          const checkIn = new Date(date);
-          const now = new Date();
-          now.setHours(0, 0, 0, 0); // Compare dates only
-          return checkIn >= now;
-        },
-        {
-          message: "Check-in date must be today or in the future",
-        }
-      ),
+    check_in: z.date({
+      required_error: "Check-in date is required",
+      invalid_type_error: "Invalid date format",
+    }),
 
     check_out: z.date({
       required_error: "Check-out date is required",
