@@ -151,13 +151,14 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
   const unitIds = useMemo(() => allUnits.map((u) => u.unit_id), [allUnits]);
 
   // Step 3: Check which units are available for selected dates
-  const {
-    data: availabilityResults,
-    isLoading: isCheckingAvailability,
-    error: availabilityError,
-  } = useMultiUnitAvailability(unitIds, checkInStr, checkOutStr, {
-    enabled: !!checkIn && !!checkOut && unitIds.length > 0,
-  });
+  const { data: availabilityResults, isLoading: isCheckingAvailability } = useMultiUnitAvailability(
+    unitIds,
+    checkInStr,
+    checkOutStr,
+    {
+      enabled: !!checkIn && !!checkOut && unitIds.length > 0,
+    }
+  );
 
   // Step 4: Filter to only show available units
   const units = useMemo(() => {
@@ -174,7 +175,6 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
   }, [allUnits, availabilityResults]);
 
   const isLoadingUnits = isLoadingAllUnits || isCheckingAvailability;
-  const unitsError = availabilityError;
 
   // Debug logging removed - use React DevTools for debugging state
 
@@ -457,60 +457,6 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                         </FormItem>
                       )}
                     />
-                  </div>
-
-                  {/* Debug Info */}
-                  <div className="space-y-2 rounded-lg border-2 border-yellow-500 bg-yellow-50 p-4">
-                    <h3 className="font-bold text-yellow-900">🐛 Availability Check Debug</h3>
-                    <div className="space-y-1 text-sm text-yellow-900">
-                      <p>
-                        <strong>Dates Selected:</strong> {checkIn ? "✅" : "❌"} Check-in,{" "}
-                        {checkOut ? "✅" : "❌"} Check-out
-                      </p>
-                      <p>
-                        <strong>All Units from DB:</strong> {allUnits.length} units{" "}
-                        {isLoadingAllUnits && "(⏳ loading...)"}
-                      </p>
-                      <p>
-                        <strong>Availability Check:</strong>{" "}
-                        {isCheckingAvailability
-                          ? "⏳ Checking..."
-                          : availabilityResults
-                            ? `✅ ${availabilityResults.length} checked`
-                            : "❌ Not started"}
-                      </p>
-                      <p>
-                        <strong>Available for Dates:</strong> {units.length} units
-                      </p>
-                      {unitsError && (
-                        <p className="text-red-700">
-                          <strong>Error:</strong> {(unitsError as Error).message}
-                        </p>
-                      )}
-                      <p>
-                        <strong>Selected Units:</strong> {selectedUnits.length}
-                      </p>
-                      <details className="mt-2">
-                        <summary className="cursor-pointer font-semibold">
-                          View Availability Results
-                        </summary>
-                        <pre className="mt-2 max-h-40 overflow-auto rounded bg-white p-2 text-xs">
-                          {JSON.stringify(
-                            {
-                              allUnits: allUnits.map((u) => ({
-                                id: u.unit_id,
-                                name: u.unit_name,
-                                status: u.unit_status,
-                              })),
-                              availability: availabilityResults,
-                              filtered: units.map((u) => ({ id: u.unit_id, name: u.unit_name })),
-                            },
-                            null,
-                            2
-                          )}
-                        </pre>
-                      </details>
-                    </div>
                   </div>
 
                   {/* Unit Selection */}
