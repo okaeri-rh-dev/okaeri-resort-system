@@ -54,6 +54,7 @@ import {
   useCreateMultiUnitBooking,
   useMultiUnitAvailability,
 } from "@/hooks/useMultiUnitBookingQueries";
+import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { hasProperty, isObject } from "@/lib/type-guards";
 import { cn } from "@/lib/utils";
 import {
@@ -117,6 +118,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
   // Hooks
   const idempotencyKey = useIdempotencyKey();
   const createBooking = useCreateMultiUnitBooking();
+  const { data: pricingConfig, isLoading: isLoadingPricing } = usePricingConfig();
 
   // Watch form values for real-time availability
   const checkIn = form.watch("check_in");
@@ -174,7 +176,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
     });
   }, [allUnits, availabilityResults]);
 
-  const isLoadingUnits = isLoadingAllUnits || isCheckingAvailability;
+  const isLoadingUnits = isLoadingAllUnits || isCheckingAvailability || isLoadingPricing;
 
   // Debug logging removed - use React DevTools for debugging state
 
@@ -188,17 +190,21 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
       return;
     }
 
-    // Convert Unit to BookingUnit
+    // Convert Unit to BookingUnit using global pricing config
     const bookingUnit = {
       unit_id: unit.unit_id,
       unit_name: unit.unit_name,
       unit_code: unit.unit_code || "",
       unit_type: unit.unit_type,
       max_occupancy: unit.max_occupancy,
-      base_occupancy: unit.base_occupancy,
-      base_rate: unit.base_rate,
-      weekend_rate: unit.weekend_rate || unit.base_rate,
-      extra_person_rate: unit.extra_person_rate || 0,
+      base_occupancy: pricingConfig?.base_occupancy ?? unit.base_occupancy,
+      base_rate: pricingConfig?.base_rate ?? unit.base_rate,
+      weekend_rate:
+        pricingConfig?.weekend_rate ??
+        unit.weekend_rate ??
+        pricingConfig?.base_rate ??
+        unit.base_rate,
+      extra_person_rate: pricingConfig?.extra_person_rate ?? unit.extra_person_rate ?? 0,
       pricing: {
         nights: 0,
         base_total: 0,
@@ -475,6 +481,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                         isLoading={isLoadingUnits}
                         maxUnits={3}
                         enableFilters={false}
+                        pricingConfig={pricingConfig}
                       />
 
                       {/* Selected Cabins Summary */}
@@ -488,6 +495,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                               assignGuestsToUnit(unitId, [], count);
                               recalculateTotalPricing(checkIn, checkOut);
                             }}
+                            pricingConfig={pricingConfig}
                           />
                           <MultiUnitPricingSummary units={selectedUnits} />
                         </div>

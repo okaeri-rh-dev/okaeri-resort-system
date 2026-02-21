@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
+import type { PricingConfig } from "@/hooks/usePricingConfig";
 import { formatCurrency } from "@/lib/validations";
 import type { BookingUnit } from "@/types/multi-unit-booking";
 
@@ -31,6 +32,7 @@ export interface UnitCardListProps {
   onUpdateGuestCount: (unitId: string, count: number) => void;
   onAssignGuests?: (unitId: string) => void;
   editable?: boolean;
+  pricingConfig?: PricingConfig;
 }
 
 // ============================================
@@ -43,6 +45,7 @@ export function UnitCardList({
   onUpdateGuestCount,
   onAssignGuests,
   editable = true,
+  pricingConfig,
 }: UnitCardListProps) {
   if (units.length === 0) {
     return (
@@ -67,6 +70,7 @@ export function UnitCardList({
           onUpdateGuestCount={onUpdateGuestCount}
           onAssignGuests={onAssignGuests}
           editable={editable}
+          pricingConfig={pricingConfig}
         />
       ))}
     </div>
@@ -84,6 +88,7 @@ interface UnitCardItemProps {
   onUpdateGuestCount: (unitId: string, count: number) => void;
   onAssignGuests?: (unitId: string) => void;
   editable: boolean;
+  pricingConfig?: PricingConfig;
 }
 
 function UnitCardItem({
@@ -93,6 +98,7 @@ function UnitCardItem({
   onUpdateGuestCount,
   onAssignGuests,
   editable,
+  pricingConfig,
 }: UnitCardItemProps) {
   const guestCount = unit.guest_assignment?.num_guests || unit.base_occupancy;
 
@@ -205,7 +211,7 @@ function UnitCardItem({
             <div className="flex justify-between">
               <span>
                 Base ({unit.pricing.nights} night{unit.pricing.nights !== 1 ? "s" : ""} ×{" "}
-                {formatCurrency(unit.base_rate)})
+                {formatCurrency(pricingConfig?.base_rate ?? unit.base_rate)})
               </span>
               <span className="font-mono">{formatCurrency(unit.pricing.base_total)}</span>
             </div>
@@ -221,7 +227,7 @@ function UnitCardItem({
                   Extra persons (
                   {(unit.guest_assignment?.num_guests || unit.base_occupancy) - unit.base_occupancy}{" "}
                   × {unit.pricing.nights} night{unit.pricing.nights !== 1 ? "s" : ""} ×{" "}
-                  {formatCurrency(unit.extra_person_rate)})
+                  {formatCurrency(pricingConfig?.extra_person_rate ?? unit.extra_person_rate)})
                 </span>
                 <span className="font-mono">+{formatCurrency(unit.pricing.extra_person_fee)}</span>
               </div>

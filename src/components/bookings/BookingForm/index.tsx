@@ -45,6 +45,7 @@ function BookingFormComponent({
     isCheckingAvailability,
     isSubmitting,
     units,
+    pricingConfig,
     handleNext,
     handlePrevious,
     checkAvailability,
@@ -73,6 +74,7 @@ function BookingFormComponent({
             selectedUnit={selectedUnit}
             isCheckingAvailability={isCheckingAvailability}
             onCheckAvailability={checkAvailability}
+            pricingConfig={pricingConfig}
           />
         );
       case 2:

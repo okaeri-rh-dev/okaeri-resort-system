@@ -6,7 +6,7 @@ import { db, supabase } from "@/lib/supabase";
 import type { PricingConfigInput } from "@/lib/validation/pricing-schema";
 import type { Database } from "@/types/database.types";
 
-type PricingConfig = Database["public"]["Tables"]["pricing_config"]["Row"];
+export type PricingConfig = Database["public"]["Tables"]["pricing_config"]["Row"];
 
 /**
  * Query Hook: Fetch Current Pricing Configuration

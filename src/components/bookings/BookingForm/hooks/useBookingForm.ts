@@ -6,6 +6,7 @@ import { differenceInDays, eachDayOfInterval, isWeekend } from "date-fns";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { checkUnitAvailability } from "@/lib/availability";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
 import { completeBookingSchema, type CompleteBookingData } from "@/lib/validations";
@@ -30,6 +31,7 @@ export function useBookingForm({ initialData, bookingId, onSuccess }: UseBooking
   const queryClient = useQueryClient();
   const updateBookingMutation = useUpdateBooking();
   const { data: units, isLoading: unitsLoading } = useUnits();
+  const { data: pricingConfig } = usePricingConfig();
 
   // Create booking via multi-unit endpoint
   const createBookingMutation = useMutation({
@@ -127,28 +129,30 @@ export function useBookingForm({ initialData, bookingId, onSuccess }: UseBooking
       return;
     }
 
+    // Use global pricing config rates, fall back to per-unit rates
+    const baseRate = pricingConfig?.base_rate ?? selectedUnit.base_rate;
+    const weekendRate = pricingConfig?.weekend_rate ?? selectedUnit.weekend_rate;
+    const extraPersonRate = pricingConfig?.extra_person_rate ?? selectedUnit.extra_person_rate ?? 0;
+    const baseOccupancy = pricingConfig?.base_occupancy ?? selectedUnit.base_occupancy;
+
     // Calculate base rate for all nights
     let total = 0;
     const dateRange = eachDayOfInterval({ start: checkInDate, end: checkOutDate });
 
     dateRange.forEach((date) => {
       const isWeekendDay = isWeekend(date);
-      const rate =
-        isWeekendDay && selectedUnit.weekend_rate
-          ? selectedUnit.weekend_rate
-          : selectedUnit.base_rate;
+      const rate = isWeekendDay && weekendRate ? weekendRate : baseRate;
       total += rate;
     });
 
     // Add extra person charges if applicable
-    if (num_guests > selectedUnit.base_occupancy) {
-      const extraPersons = num_guests - selectedUnit.base_occupancy;
-      const extraPersonRate = selectedUnit.extra_person_rate || 0;
+    if (num_guests > baseOccupancy) {
+      const extraPersons = num_guests - baseOccupancy;
       total += extraPersons * extraPersonRate * nights;
     }
 
     setCalculatedTotal(total);
-  }, [selectedUnit, check_in, check_out, num_guests]);
+  }, [selectedUnit, check_in, check_out, num_guests, pricingConfig]);
 
   // Step validation
   const validateCurrentStep = useCallback(async () => {
@@ -294,6 +298,7 @@ export function useBookingForm({ initialData, bookingId, onSuccess }: UseBooking
 
     // Data
     units,
+    pricingConfig,
 
     // Actions
     handleNext,

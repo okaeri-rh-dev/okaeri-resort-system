@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import type { PricingConfig } from "@/hooks/usePricingConfig";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/validations";
 import type { Unit } from "@/types";
@@ -30,6 +31,7 @@ import type { StepProps } from "../types";
 
 interface UnitSelectionProps extends StepProps {
   units?: Unit[];
+  pricingConfig?: PricingConfig;
 }
 
 export function UnitSelection({
@@ -39,6 +41,7 @@ export function UnitSelection({
   isCheckingAvailability,
   onCheckAvailability,
   units = [],
+  pricingConfig,
 }: UnitSelectionProps) {
   const checkIn = form.watch("check_in");
   const checkOut = form.watch("check_out");
@@ -66,7 +69,8 @@ export function UnitSelection({
                     <div className="flex flex-col">
                       <span className="font-medium">{unit.unit_name}</span>
                       <span className="text-muted-foreground text-xs">
-                        {unit.unit_type} • {formatCurrency(unit.base_rate)}/night • Max{" "}
+                        {unit.unit_type} •{" "}
+                        {formatCurrency(pricingConfig?.base_rate ?? unit.base_rate)}/night • Max{" "}
                         {unit.max_occupancy} guests
                       </span>
                     </div>
@@ -189,12 +193,16 @@ export function UnitSelection({
             </FormControl>
             {selectedUnit && (
               <FormDescription>
-                Base occupancy: {selectedUnit.base_occupancy} guests (included) • Max:{" "}
-                {selectedUnit.max_occupancy} guests
-                {selectedUnit.max_occupancy > selectedUnit.base_occupancy && (
+                Base occupancy: {pricingConfig?.base_occupancy ?? selectedUnit.base_occupancy}{" "}
+                guests (included) • Max: {selectedUnit.max_occupancy} guests
+                {selectedUnit.max_occupancy >
+                  (pricingConfig?.base_occupancy ?? selectedUnit.base_occupancy) && (
                   <span className="mt-1 block text-xs">
-                    Extra person rate: {formatCurrency(selectedUnit.extra_person_rate)} per person
-                    per night
+                    Extra person rate:{" "}
+                    {formatCurrency(
+                      pricingConfig?.extra_person_rate ?? selectedUnit.extra_person_rate
+                    )}{" "}
+                    per person per night
                   </span>
                 )}
               </FormDescription>

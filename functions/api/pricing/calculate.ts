@@ -231,15 +231,15 @@ export async function onRequest(context: {
           unitName = unit.name;
         }
 
-        // Use unit-specific pricing or fall back to default config
+        // Use global pricing config as primary source, fall back to unit-specific rates
         const pricing = await calculateBookingPrice(supabase, {
           checkIn: new Date(data.check_in),
           checkOut: new Date(data.check_out),
           guestCount: unitRequest.guest_count,
-          baseRate: unitData?.base_rate || pricingConfig?.base_rate || 3000,
-          weekendRate: unitData?.weekend_rate || pricingConfig?.weekend_rate || 3500,
-          extraPersonRate: unitData?.extra_person_rate || pricingConfig?.extra_person_rate || 500,
-          baseOccupancy: unitData?.base_occupancy || pricingConfig?.base_occupancy || 2,
+          baseRate: pricingConfig?.base_rate ?? unitData?.base_rate ?? 3000,
+          weekendRate: pricingConfig?.weekend_rate ?? unitData?.weekend_rate ?? 3500,
+          extraPersonRate: pricingConfig?.extra_person_rate ?? unitData?.extra_person_rate ?? 500,
+          baseOccupancy: pricingConfig?.base_occupancy ?? unitData?.base_occupancy ?? 2,
         });
 
         return {
@@ -296,7 +296,7 @@ export async function onRequest(context: {
         );
       }
 
-      // Get pricing config as fallback
+      // Get global pricing config as primary source
       const { data: pricingConfig } = await supabase
         .from("pricing_config")
         .select("*")
@@ -307,10 +307,10 @@ export async function onRequest(context: {
         checkIn: new Date(data.check_in),
         checkOut: new Date(data.check_out),
         guestCount: data.guest_count,
-        baseRate: unit.base_rate || pricingConfig?.base_rate || 3000,
-        weekendRate: unit.weekend_rate || pricingConfig?.weekend_rate || 3500,
-        extraPersonRate: unit.extra_person_rate || pricingConfig?.extra_person_rate || 500,
-        baseOccupancy: unit.base_occupancy || pricingConfig?.base_occupancy || 2,
+        baseRate: pricingConfig?.base_rate ?? unit.base_rate ?? 3000,
+        weekendRate: pricingConfig?.weekend_rate ?? unit.weekend_rate ?? 3500,
+        extraPersonRate: pricingConfig?.extra_person_rate ?? unit.extra_person_rate ?? 500,
+        baseOccupancy: pricingConfig?.base_occupancy ?? unit.base_occupancy ?? 2,
       });
 
       // Check for seasonal rates

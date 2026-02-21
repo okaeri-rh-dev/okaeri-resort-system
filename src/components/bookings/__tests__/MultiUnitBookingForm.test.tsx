@@ -39,6 +39,26 @@ vi.mock("@/hooks/useAvailabilityRealtime", () => ({
   useAvailabilityRealtime: vi.fn(),
 }));
 
+vi.mock("@/hooks/usePricingConfig", () => ({
+  usePricingConfig: () => ({
+    data: {
+      id: "default",
+      base_rate: 3000,
+      weekend_rate: 3500,
+      extra_person_rate: 500,
+      base_occupancy: 2,
+      max_capacity_per_unit: 10,
+      downpayment_percent: 50,
+      currency: "PHP",
+      created_at: "2024-01-01",
+      updated_at: "2024-01-01",
+    },
+    isLoading: false,
+    error: null,
+  }),
+  usePricingConfigLoaded: () => true,
+}));
+
 vi.mock("@/hooks/useMultiUnitBookingQueries", () => ({
   useMultiUnitBookings: () => ({
     data: [],

@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { PricingConfig } from "@/hooks/usePricingConfig";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/validations";
 import type { Unit } from "@/types";
@@ -60,6 +61,9 @@ export interface MultiUnitSelectorProps {
   enableFilters?: boolean; // Default: true
   viewMode?: "grid" | "list"; // Default: 'grid'
 
+  // Global pricing config (overrides per-unit rates for display)
+  pricingConfig?: PricingConfig;
+
   // State
   isLoading?: boolean;
   error?: string | null;
@@ -79,6 +83,7 @@ export function MultiUnitSelector({
   maxUnits = 10,
   enableFilters = true,
   viewMode: initialViewMode = "grid",
+  pricingConfig,
   isLoading,
   error,
 }: MultiUnitSelectorProps) {
@@ -242,6 +247,7 @@ export function MultiUnitSelector({
               checkOut={checkOut}
               onAdd={() => onAddUnit(unit)}
               onRemove={() => onRemoveUnit(unit.unit_id)}
+              pricingConfig={pricingConfig}
             />
           ))}
         </div>
@@ -274,6 +280,7 @@ interface UnitCardProps {
   checkOut: Date | string;
   onAdd: () => void;
   onRemove: () => void;
+  pricingConfig?: PricingConfig;
 }
 
 function UnitCard({
@@ -284,8 +291,10 @@ function UnitCard({
   checkOut,
   onAdd,
   onRemove,
+  pricingConfig,
 }: UnitCardProps) {
   const isAvailable = unit.unit_status === "Available";
+  const displayRate = pricingConfig?.base_rate ?? unit.base_rate;
 
   return (
     <Card
@@ -295,7 +304,7 @@ function UnitCard({
         !isAvailable && "opacity-60"
       )}
       role="article"
-      aria-label={`${unit.unit_name}, ${formatCurrency(unit.base_rate)} per night, max ${unit.max_occupancy} guests${isSelected ? ", selected" : ""}`}
+      aria-label={`${unit.unit_name}, ${formatCurrency(displayRate)} per night, max ${unit.max_occupancy} guests${isSelected ? ", selected" : ""}`}
     >
       <CardContent className="p-4">
         {/* Unit Info */}
@@ -309,9 +318,7 @@ function UnitCard({
             )}
           </div>
           <p className="text-muted-foreground text-sm">Max {unit.max_occupancy} guests</p>
-          <p className="text-primary text-lg font-semibold">
-            {formatCurrency(unit.base_rate)}/night
-          </p>
+          <p className="text-primary text-lg font-semibold">{formatCurrency(displayRate)}/night</p>
 
           {/* Availability Badge */}
           <Badge variant={isAvailable ? "default" : "destructive"} className="font-normal">
