@@ -4,6 +4,7 @@
  */
 
 import { eachDayOfInterval, endOfMonth, format, isWithinInterval, startOfMonth } from "date-fns";
+import { toast } from "sonner";
 
 import type { Booking, Unit } from "@/types";
 
@@ -375,7 +376,7 @@ export function exportToCSVLegacy(data: Record<string, unknown>[], filename: str
     includeTimestamp: true,
     onError: (error) => {
       console.error("CSV Export Error:", error);
-      alert(`Export failed: ${error}`);
+      toast.error(`Export failed: ${error}`);
     },
   });
 }

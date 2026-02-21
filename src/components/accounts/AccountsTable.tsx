@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 
 import {
   ColumnDef,
@@ -22,6 +22,16 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,6 +84,8 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
   const [sorting, setSorting] = useState<SortingState>([{ id: "display_order", desc: false }]);
   const [globalFilter, setGlobalFilter] = useState("");
 
+  const [accountToDeactivate, setAccountToDeactivate] = useState<AccountWithBalance | null>(null);
+
   const { data: accounts = [], isLoading, isError, refetch } = useAccountBalances();
   const deleteAccount = useDeleteAccount();
   const reactivateAccount = useReactivateAccount();
@@ -81,22 +93,17 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
   // Filter accounts based on showInactive
   const filteredAccounts = showInactive ? accounts : accounts.filter((a) => a.is_active);
 
-  const handleDelete = async (account: AccountWithBalance) => {
-    if (
-      !confirm(
-        `Are you sure you want to deactivate "${account.account_name}"? This account will be hidden but can be reactivated later.`
-      )
-    ) {
-      return;
-    }
-
+  const confirmDeactivate = useCallback(async () => {
+    if (!accountToDeactivate) return;
     try {
-      await deleteAccount.mutateAsync(account.account_id);
+      await deleteAccount.mutateAsync(accountToDeactivate.account_id);
       toast.success("Account deactivated successfully");
     } catch (_error) {
       toast.error("Failed to deactivate account");
+    } finally {
+      setAccountToDeactivate(null);
     }
-  };
+  }, [deleteAccount, accountToDeactivate]);
 
   const handleReactivate = async (account: AccountWithBalance) => {
     try {
@@ -260,7 +267,7 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
               </DropdownMenuItem>
               {account.is_active ? (
                 <DropdownMenuItem
-                  onClick={() => handleDelete(account)}
+                  onClick={() => setAccountToDeactivate(account)}
                   className="text-destructive focus:text-destructive"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
@@ -453,6 +460,28 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* Deactivate Account Confirmation Dialog */}
+      <AlertDialog
+        open={!!accountToDeactivate}
+        onOpenChange={(open) => !open && setAccountToDeactivate(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deactivate Account</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to deactivate &quot;{accountToDeactivate?.account_name}&quot;?
+              This account will be hidden but can be reactivated later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeactivate} className="bg-red-600 hover:bg-red-700">
+              Deactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

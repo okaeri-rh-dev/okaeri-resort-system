@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 
 import {
   ColumnDef,
@@ -23,6 +23,16 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -60,6 +70,8 @@ export const TransfersTable: React.FC<TransfersTableProps> = ({ accountId }) => 
   const [sorting, setSorting] = useState<SortingState>([{ id: "transfer_date", desc: true }]);
   const [globalFilter, setGlobalFilter] = useState("");
 
+  const [transferToDelete, setTransferToDelete] = useState<AccountTransfer | null>(null);
+
   const { data: transfers = [], isLoading, isError, refetch } = useTransfers();
   const deleteTransfer = useDeleteTransfer();
 
@@ -68,22 +80,17 @@ export const TransfersTable: React.FC<TransfersTableProps> = ({ accountId }) => 
     ? transfers.filter((t) => t.from_account_id === accountId || t.to_account_id === accountId)
     : transfers;
 
-  const handleDelete = async (transfer: AccountTransfer) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete transfer ${transfer.transfer_reference}? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
-
+  const confirmDelete = useCallback(async () => {
+    if (!transferToDelete) return;
     try {
-      await deleteTransfer.mutateAsync(transfer.transfer_id);
+      await deleteTransfer.mutateAsync(transferToDelete.transfer_id);
       toast.success("Transfer deleted successfully");
     } catch (_error) {
       toast.error("Failed to delete transfer");
+    } finally {
+      setTransferToDelete(null);
     }
-  };
+  }, [deleteTransfer, transferToDelete]);
 
   const formatCurrency = (amount: number) => {
     return `₱${amount.toLocaleString("en-PH", {
@@ -207,7 +214,7 @@ export const TransfersTable: React.FC<TransfersTableProps> = ({ accountId }) => 
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => handleDelete(transfer)}
+                onClick={() => setTransferToDelete(transfer)}
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -360,6 +367,28 @@ export const TransfersTable: React.FC<TransfersTableProps> = ({ accountId }) => 
           </Button>
         </div>
       </div>
+
+      {/* Delete Transfer Confirmation Dialog */}
+      <AlertDialog
+        open={!!transferToDelete}
+        onOpenChange={(open) => !open && setTransferToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Transfer</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete transfer {transferToDelete?.transfer_reference}? This
+              action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

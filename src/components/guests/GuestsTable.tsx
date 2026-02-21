@@ -27,9 +27,20 @@ import {
   Mail,
   Phone,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { withErrorBoundary } from "@/components/ErrorBoundary";
 import { GuestsTableSkeleton } from "@/components/skeletons";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -227,6 +238,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
+  const [guestToDelete, setGuestToDelete] = useState<Guest | null>(null);
 
   // Use ultra-performant MediaQuery API for responsive detection
   const { isMobile } = useResponsiveView();
@@ -251,26 +263,18 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
     }
   };
 
-  const handleDelete = useCallback(
-    async (guest: Guest) => {
-      if (
-        !confirm(
-          `Are you sure you want to delete guest "${guest.guest_name}"? This action cannot be undone.`
-        )
-      ) {
-        return;
-      }
-
-      try {
-        await deleteGuest.mutateAsync(guest.guest_id);
-        // Using toast from the component would require importing it
-        logger.info("Guest deleted successfully");
-      } catch (error) {
-        alert(error instanceof Error ? error.message : "Failed to delete guest");
-      }
-    },
-    [deleteGuest]
-  );
+  const confirmDeleteGuest = useCallback(async () => {
+    if (!guestToDelete) return;
+    try {
+      await deleteGuest.mutateAsync(guestToDelete.guest_id);
+      toast.success("Guest deleted successfully");
+      logger.info("Guest deleted successfully");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete guest");
+    } finally {
+      setGuestToDelete(null);
+    }
+  }, [deleteGuest, guestToDelete]);
 
   // Export action
   const handleExport = () => {
@@ -430,7 +434,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
             },
             {
               label: "Delete Guest",
-              onClick: () => handleDelete(guest),
+              onClick: () => setGuestToDelete(guest),
               className: "text-red-600 hover:text-red-700",
             },
           ];
@@ -440,7 +444,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
         size: 80,
       }),
     ],
-    [onViewGuest, handleDelete]
+    [onViewGuest]
   );
 
   // Create table instance
@@ -762,6 +766,25 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
           onSuccess={() => setEditingGuest(null)}
         />
       )}
+
+      {/* Delete Guest Confirmation Dialog */}
+      <AlertDialog open={!!guestToDelete} onOpenChange={(open) => !open && setGuestToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Guest</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete guest &quot;{guestToDelete?.guest_name}&quot;? This
+              action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteGuest} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

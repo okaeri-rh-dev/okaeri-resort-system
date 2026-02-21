@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { Check, Copy } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,7 +21,7 @@ export function BookingReferenceDisplay({ reference }: BookingReferenceDisplayPr
       setCopied(true);
       setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
     } else {
-      alert("Failed to copy. Please copy manually: " + reference);
+      toast.error("Failed to copy. Please copy manually: " + reference);
     }
   };
 

@@ -1,6 +1,18 @@
+import { useCallback, useState } from "react";
+
 import { useNavigate } from "@tanstack/react-router";
 
 import { ActionMenu } from "@/components/tables/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useUserRole } from "@/hooks";
 import type { Booking, BookingStatus } from "@/types";
 
@@ -27,6 +39,12 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
 }) => {
   const navigate = useNavigate();
   const { canEdit, canDelete, canConfirmBookings } = useUserRole();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const confirmDelete = useCallback(() => {
+    deleteBooking.mutate(booking.booking_id);
+    setShowDeleteDialog(false);
+  }, [deleteBooking, booking.booking_id]);
 
   // Build all possible actions
   const allActions = [
@@ -84,15 +102,7 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
       ? [
           {
             label: "Delete",
-            onClick: () => {
-              if (
-                confirm(
-                  `Are you sure you want to permanently delete booking "${booking.booking_reference}"? This action cannot be undone.`
-                )
-              ) {
-                deleteBooking.mutate(booking.booking_id);
-              }
-            },
+            onClick: () => setShowDeleteDialog(true),
             variant: "destructive" as const,
           },
         ]
@@ -104,5 +114,27 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
     return null;
   }
 
-  return <ActionMenu actions={allActions} />;
+  return (
+    <>
+      <ActionMenu actions={allActions} />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Booking</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete booking &quot;
+              {booking.booking_reference}&quot;? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
 };

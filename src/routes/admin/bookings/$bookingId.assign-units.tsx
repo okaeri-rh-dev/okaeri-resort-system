@@ -15,6 +15,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { UnitAssignmentInterface } from "@/components/admin/UnitAssignmentInterface";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -352,9 +353,8 @@ function AssignUnitsPage() {
   // ============================================
 
   const handleAssignmentSuccess = () => {
-    // Show success message (using native alert for simplicity)
-    alert(
-      `Cabins successfully assigned to booking ${booking?.booking_reference}!\n\nThe guest will receive a confirmation email shortly.`
+    toast.success(
+      `Cabins successfully assigned to booking ${booking?.booking_reference}. The guest will receive a confirmation email shortly.`
     );
 
     // Navigate back to admin queue

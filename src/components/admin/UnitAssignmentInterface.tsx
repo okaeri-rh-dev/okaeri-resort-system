@@ -14,12 +14,22 @@
  * Source: docs/implementation/guest-booking-multi-unit/chunks/013-unit-assignment-system/
  */
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -75,6 +85,7 @@ export function UnitAssignmentInterface({
   const { token: authToken, isLoading: isAuthLoading, error: authError } = useAuthToken();
   const [selectedUnits, setSelectedUnits] = useState<Set<string>>(new Set());
   const [assignmentError, setAssignmentError] = useState<string | null>(null);
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
 
   // ============================================
   // Data Fetching - Available Units
@@ -255,15 +266,13 @@ export function UnitAssignmentInterface({
       return;
     }
 
-    // Native confirmation dialog
-    const confirmed = window.confirm(
-      `Confirm unit assignment?\n\nThis will assign ${selectedUnits.size} unit(s) to booking ${bookingId}.\n\nThis action cannot be undone.`
-    );
-
-    if (confirmed) {
-      assignMutation.mutate(Array.from(selectedUnits));
-    }
+    setShowAssignDialog(true);
   };
+
+  const confirmAssignment = useCallback(() => {
+    assignMutation.mutate(Array.from(selectedUnits));
+    setShowAssignDialog(false);
+  }, [assignMutation, selectedUnits]);
 
   // ============================================
   // Derived State
@@ -539,6 +548,23 @@ export function UnitAssignmentInterface({
           This action will immediately assign the selected units and send confirmation to the guest
         </p>
       </div>
+
+      {/* Assignment Confirmation Dialog */}
+      <AlertDialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Unit Assignment</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will assign {selectedUnits.size} unit(s) to booking {bookingId}. This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmAssignment}>Assign Units</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
