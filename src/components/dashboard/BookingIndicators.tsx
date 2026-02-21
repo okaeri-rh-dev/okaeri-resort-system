@@ -1,8 +1,14 @@
-import React from "react";
+import React, { useMemo } from "react";
 
 import { getBookingStatusColor, getBookingStatusPriority } from "@/hooks/useCalendarBookings";
 import { cn } from "@/lib/utils";
-import type { Booking } from "@/types";
+import type { Booking, BookingUnitRecord } from "@/types";
+
+interface UnitEntry {
+  booking: Booking;
+  bookingUnit: BookingUnitRecord | null;
+  key: string; // composite key: booking_id:unit_id
+}
 
 interface BookingIndicatorsProps {
   bookings: Booking[];
@@ -15,36 +21,71 @@ export const BookingIndicators = React.memo(function BookingIndicators({
   maxVisible = 2,
   className,
 }: BookingIndicatorsProps) {
-  if (!bookings || bookings.length === 0) {
+  // Flatten bookings into per-unit entries so each unit gets its own chip
+  const unitEntries = useMemo(() => {
+    if (!bookings || bookings.length === 0) return [];
+
+    // Deduplicate bookings first (same booking appearing multiple times for multi-day stays)
+    const uniqueBookings = Array.from(new Map(bookings.map((b) => [b.booking_id, b])).values());
+
+    const entries: UnitEntry[] = [];
+    const seen = new Set<string>();
+
+    for (const booking of uniqueBookings) {
+      const units = booking.booking_units;
+      if (!units || units.length === 0) {
+        // Fallback entry for bookings with no units
+        const key = `${booking.booking_id}:no-unit`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          entries.push({ booking, bookingUnit: null, key });
+        }
+      } else {
+        for (const bu of units) {
+          const key = `${booking.booking_id}:${bu.unit_id}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            entries.push({ booking, bookingUnit: bu, key });
+          }
+        }
+      }
+    }
+
+    // Sort by status priority, then by unit code alphabetically
+    entries.sort((a, b) => {
+      const priorityDiff =
+        getBookingStatusPriority(a.booking.booking_status ?? "Pending") -
+        getBookingStatusPriority(b.booking.booking_status ?? "Pending");
+      if (priorityDiff !== 0) return priorityDiff;
+
+      const codeA = a.bookingUnit?.unit?.unit_code ?? "";
+      const codeB = b.bookingUnit?.unit?.unit_code ?? "";
+      return codeA.localeCompare(codeB);
+    });
+
+    return entries;
+  }, [bookings]);
+
+  if (unitEntries.length === 0) {
     return null;
   }
 
-  // Remove duplicates (same booking appearing multiple times for multi-day stays)
-  const uniqueBookings = Array.from(new Map(bookings.map((b) => [b.booking_id, b])).values());
-
-  // Sort bookings by priority
-  const sortedBookings = uniqueBookings.sort(
-    (a, b) =>
-      getBookingStatusPriority(a.booking_status ?? "Pending") -
-      getBookingStatusPriority(b.booking_status ?? "Pending")
-  );
-
-  const visibleBookings = sortedBookings.slice(0, maxVisible);
-  const remainingCount = uniqueBookings.length - maxVisible;
+  const visibleEntries = unitEntries.slice(0, maxVisible);
+  const remainingCount = unitEntries.length - maxVisible;
 
   return (
     <div className={cn("flex w-full flex-row gap-0.5", className)}>
-      {visibleBookings.map((booking) => (
+      {visibleEntries.map((entry) => (
         <div
-          key={booking.booking_id}
+          key={entry.key}
           className={cn(
             "inline-flex items-center rounded-sm border px-1 py-0.5 text-[9px] font-semibold sm:text-[10px]",
             "max-w-full truncate font-mono tracking-tight",
-            getBookingStatusColor(booking.booking_status ?? "Pending")
+            getBookingStatusColor(entry.booking.booking_status ?? "Pending")
           )}
         >
-          {booking.booking_units?.[0]?.unit?.unit_code ||
-            booking.booking_units?.[0]?.unit?.unit_name?.slice(0, 3) ||
+          {entry.bookingUnit?.unit?.unit_code ||
+            entry.bookingUnit?.unit?.unit_name?.slice(0, 3) ||
             "—"}
         </div>
       ))}

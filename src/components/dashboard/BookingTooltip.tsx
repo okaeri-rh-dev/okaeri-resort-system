@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 
 import { format } from "date-fns";
 
@@ -20,6 +20,11 @@ export const BookingTooltip = React.memo(function BookingTooltip({
   children,
   maxVisible = 3,
 }: BookingTooltipProps) {
+  const totalUnits = useMemo(
+    () => bookings?.reduce((sum, b) => sum + (b.booking_units?.length ?? 0), 0) ?? 0,
+    [bookings]
+  );
+
   if (!bookings || bookings.length === 0) {
     return <>{children}</>;
   }
@@ -47,6 +52,7 @@ export const BookingTooltip = React.memo(function BookingTooltip({
               </span>
               <span className="text-xs font-medium text-neutral-600">
                 {bookings.length} booking{bookings.length !== 1 ? "s" : ""}
+                {totalUnits > bookings.length ? ` (${totalUnits} units)` : ""}
               </span>
             </div>
           </div>
@@ -89,14 +95,21 @@ const BookingTooltipItem = React.memo(function BookingTooltipItem({
 
   return (
     <div className="space-y-1.5 rounded border border-neutral-200 bg-white p-2">
-      {/* Unit and Status */}
+      {/* Unit(s) and Status */}
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs font-semibold text-neutral-900">
-            {booking.booking_units?.[0]?.unit?.unit_code ||
-              booking.booking_units?.[0]?.unit?.unit_name ||
-              "—"}
-          </span>
+        <div className="flex flex-wrap items-center gap-2">
+          {booking.booking_units && booking.booking_units.length > 0 ? (
+            booking.booking_units.map((bu) => (
+              <span
+                key={bu.booking_unit_id ?? bu.unit_id}
+                className="font-mono text-xs font-semibold text-neutral-900"
+              >
+                {bu.unit?.unit_code || bu.unit?.unit_name || "—"}
+              </span>
+            ))
+          ) : (
+            <span className="font-mono text-xs font-semibold text-neutral-900">—</span>
+          )}
           <span
             className={cn(
               "rounded border px-1.5 py-0.5 text-[10px] font-medium",
