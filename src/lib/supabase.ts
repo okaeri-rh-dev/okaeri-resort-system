@@ -930,6 +930,46 @@ export const db = {
     },
   },
 
+  // Discount rules helpers
+  // Note: priority ascending (lower number = higher priority), opposite of seasonalRates
+  discountRules: {
+    all: () => supabase.from("discount_rules").select("*").order("priority", { ascending: true }),
+
+    active: () =>
+      supabase
+        .from("discount_rules")
+        .select("*")
+        .eq("is_active", true)
+        .order("priority", { ascending: true }),
+
+    byId: (id: string) => supabase.from("discount_rules").select("*").eq("id", id).single(),
+
+    create: (data: Database["public"]["Tables"]["discount_rules"]["Insert"]) =>
+      supabase.from("discount_rules").insert(data).select().single(),
+
+    update: (id: string, data: Database["public"]["Tables"]["discount_rules"]["Update"]) =>
+      supabase.from("discount_rules").update(data).eq("id", id).select().single(),
+
+    delete: (id: string) => supabase.from("discount_rules").delete().eq("id", id),
+
+    bulkUpsert: async (rules: Database["public"]["Tables"]["discount_rules"]["Insert"][]) => {
+      // Delete all existing rules first
+      const { error: deleteError } = await supabase
+        .from("discount_rules")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000");
+      if (deleteError) throw deleteError;
+
+      // Insert all new rules
+      if (rules.length > 0) {
+        const { data, error } = await supabase.from("discount_rules").insert(rules).select();
+        if (error) throw error;
+        return data;
+      }
+      return [];
+    },
+  },
+
   // Financial Accounts management
   accounts: {
     /**

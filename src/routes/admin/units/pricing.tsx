@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 
+import { DiscountRulesForm, type DiscountRule } from "@/components/pricing/DiscountRulesForm";
 import { PricingConfigForm } from "@/components/pricing/PricingConfigForm";
 import { SeasonalRatesForm, type SeasonalRate } from "@/components/pricing/SeasonalRatesForm";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useDiscountRules, useSaveDiscountRules } from "@/hooks/useDiscountRules";
 import { useSaveSeasonalRates, useSeasonalRates } from "@/hooks/useSeasonalRates";
-import { requireOwner } from "@/lib/route-guards";
+import { requireManager } from "@/lib/route-guards";
 
 /**
  * Pricing Configuration Edit Route
@@ -22,11 +24,11 @@ import { requireOwner } from "@/lib/route-guards";
  *
  * Access Control:
  * - Requires authentication (under /admin layout)
- * - Restricted to owner/admin roles via route guard
+ * - Restricted to manager/owner/admin roles via route guard
  */
 export const Route = createFileRoute("/admin/units/pricing")({
   beforeLoad: async () => {
-    await requireOwner();
+    await requireManager();
   },
   component: PricingConfigPage,
 });
@@ -38,8 +40,18 @@ function PricingConfigPage() {
   // Mutation for saving seasonal rates
   const saveSeasonalRatesMutation = useSaveSeasonalRates();
 
+  // Fetch discount rules from Supabase
+  const { data: discountRules = [], isLoading: isLoadingDiscountRules } = useDiscountRules();
+
+  // Mutation for saving discount rules
+  const saveDiscountRulesMutation = useSaveDiscountRules();
+
   const handleSaveSeasonalRates = async (rates: SeasonalRate[]) => {
     await saveSeasonalRatesMutation.mutateAsync(rates);
+  };
+
+  const handleSaveDiscountRules = async (rules: DiscountRule[]) => {
+    await saveDiscountRulesMutation.mutateAsync(rules);
   };
 
   return (
@@ -58,17 +70,18 @@ function PricingConfigPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Pricing Configuration</h1>
           <p className="text-muted-foreground">
-            Manage rates, fees, capacity limits, seasonal pricing, and payment terms for your
-            resort.
+            Manage rates, fees, capacity limits, seasonal pricing, discount rules, and payment terms
+            for your resort.
           </p>
         </div>
       </div>
 
-      {/* Tabbed Interface for Base Pricing and Seasonal Rates */}
+      {/* Tabbed Interface for Base Pricing, Seasonal Rates, and Discount Rules */}
       <Tabs defaultValue="base" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="base">Base Pricing</TabsTrigger>
           <TabsTrigger value="seasonal">Seasonal Rates</TabsTrigger>
+          <TabsTrigger value="discounts">Discount Rules</TabsTrigger>
         </TabsList>
 
         <TabsContent value="base" className="mt-6">
@@ -85,6 +98,18 @@ function PricingConfigPage() {
             }))}
             onSave={handleSaveSeasonalRates}
             isLoading={isLoadingRates || saveSeasonalRatesMutation.isPending}
+          />
+        </TabsContent>
+
+        <TabsContent value="discounts" className="mt-6">
+          <DiscountRulesForm
+            rules={(discountRules || []).map((rule) => ({
+              ...rule,
+              is_active: rule.is_active ?? true,
+              priority: rule.priority ?? 0,
+            }))}
+            onSave={handleSaveDiscountRules}
+            isLoading={isLoadingDiscountRules || saveDiscountRulesMutation.isPending}
           />
         </TabsContent>
       </Tabs>
