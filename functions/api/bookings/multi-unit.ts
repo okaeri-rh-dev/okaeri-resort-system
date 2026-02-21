@@ -524,11 +524,9 @@ function calculateUnitPricing(
     const dayOfWeek = currentDate.getDay();
     const isWeekend = dayOfWeek === 5 || dayOfWeek === 6; // Friday or Saturday
 
+    unitPrice += baseRate;
     if (isWeekend && weekendRate > baseRate) {
-      unitPrice += weekendRate;
       weekendSurcharge += weekendRate - baseRate;
-    } else {
-      unitPrice += baseRate;
     }
   }
 
@@ -540,7 +538,7 @@ function calculateUnitPricing(
     unit_price: unitPrice,
     weekend_surcharge: weekendSurcharge,
     extra_person_charge: extraPersonCharge,
-    subtotal: unitPrice + extraPersonCharge,
+    subtotal: unitPrice + weekendSurcharge + extraPersonCharge,
     used_defaults: usedDefaults,
   };
 

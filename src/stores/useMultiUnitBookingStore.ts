@@ -264,11 +264,9 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
               currentDate.setDate(currentDate.getDate() + i);
               const isWeekendNight = isWeekend(currentDate);
 
+              baseTotal += unit.base_rate;
               if (isWeekendNight && unit.weekend_rate > unit.base_rate) {
-                baseTotal += unit.weekend_rate;
                 weekendSurcharge += unit.weekend_rate - unit.base_rate;
-              } else {
-                baseTotal += unit.base_rate;
               }
             }
 
@@ -281,7 +279,7 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
               base_total: baseTotal,
               weekend_surcharge: weekendSurcharge,
               extra_person_fee: extraPersonFee,
-              unit_total: baseTotal + extraPersonFee,
+              unit_total: baseTotal + weekendSurcharge + extraPersonFee,
             };
           },
 
