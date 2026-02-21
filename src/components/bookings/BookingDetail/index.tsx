@@ -104,12 +104,16 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
               )
             }
           />
-          <DetailField label="Email" value={booking.email} valueClassName="font-medium" />
-          <DetailField
-            label="Contact Number"
-            value={formatPhoneNumber(booking.contact_number)}
-            valueClassName="font-medium"
-          />
+          {booking.email && (
+            <DetailField label="Email" value={booking.email} valueClassName="font-medium" />
+          )}
+          {booking.contact_number && (
+            <DetailField
+              label="Contact Number"
+              value={formatPhoneNumber(booking.contact_number)}
+              valueClassName="font-medium"
+            />
+          )}
         </div>
       </DetailSection>
 

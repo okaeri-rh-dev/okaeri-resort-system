@@ -83,14 +83,18 @@ export function BookingReview({ form, calculatedTotal = 0, units = [] }: Booking
                   <span className="text-muted-foreground">Name:</span>
                   <span>{values.guest_name}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Email:</span>
-                  <span>{values.email}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Phone:</span>
-                  <span>{values.contact_number}</span>
-                </div>
+                {values.email && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Email:</span>
+                    <span>{values.email}</span>
+                  </div>
+                )}
+                {values.contact_number && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Phone:</span>
+                    <span>{values.contact_number}</span>
+                  </div>
+                )}
               </div>
             </div>
 

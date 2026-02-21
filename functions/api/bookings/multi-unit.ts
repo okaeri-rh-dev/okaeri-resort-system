@@ -33,8 +33,20 @@ const multiUnitBookingSchema = z
   .object({
     primary_guest: z.object({
       guest_name: z.string().min(2).max(100),
-      email: z.string().email(),
-      contact_number: z.string().regex(/^[+]?[0-9\s\-()]{10,20}$/),
+      email: z
+        .string()
+        .default("")
+        .refine(
+          (val) => val === "" || /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val),
+          "Invalid email address"
+        ),
+      contact_number: z
+        .string()
+        .default("")
+        .refine(
+          (val) => val === "" || /^[+]?[0-9\s\-()]{10,20}$/.test(val),
+          "Invalid contact number"
+        ),
       guest_id: z.string().uuid().optional(),
     }),
     check_in: z.string().datetime(),

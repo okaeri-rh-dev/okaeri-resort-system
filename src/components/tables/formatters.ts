@@ -71,6 +71,7 @@ export const formatDateTime = (dateString: string): string => {
  * Format phone number for display
  */
 export const formatPhoneNumber = (phone: string): string => {
+  if (!phone) return "";
   // Remove all non-digit characters
   const cleaned = phone.replace(/\D/g, "");
 

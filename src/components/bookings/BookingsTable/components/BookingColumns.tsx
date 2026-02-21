@@ -48,7 +48,9 @@ export const useBookingColumns = ({
               {row.original.guest_name}
             </Link>
             <div className="text-xs text-neutral-600">
-              {formatPhoneNumber(row.original.contact_number) || row.original.email}
+              {(row.original.contact_number && formatPhoneNumber(row.original.contact_number)) ||
+                row.original.email ||
+                ""}
             </div>
           </div>
         ),

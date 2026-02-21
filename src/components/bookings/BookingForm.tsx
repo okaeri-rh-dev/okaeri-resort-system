@@ -301,7 +301,10 @@ export function BookingForm({
         unit_id: data.unit_id,
         guest_name: sanitizedData.guest_name || data.guest_name,
         email: sanitizedData.email || data.email,
-        contact_number: formatPhoneNumber(sanitizedData.contact_number || data.contact_number),
+        contact_number:
+          sanitizedData.contact_number || data.contact_number
+            ? formatPhoneNumber(sanitizedData.contact_number || data.contact_number)
+            : "",
         num_guests: data.num_guests,
         check_in: formDateToUTC(data.check_in, RESORT_OPERATION_HOURS.checkInTime),
         check_out: formDateToUTC(data.check_out, RESORT_OPERATION_HOURS.checkOutTime),
@@ -602,7 +605,9 @@ export function BookingForm({
         name="email"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base font-medium sm:text-sm">Email Address</FormLabel>
+            <FormLabel className="text-base font-medium sm:text-sm">
+              Email Address (Optional)
+            </FormLabel>
             <FormControl>
               <Input
                 type="email"
@@ -613,7 +618,7 @@ export function BookingForm({
               />
             </FormControl>
             <FormDescription className="text-sm">
-              Booking confirmation will be sent to this email
+              If provided, booking confirmation will be sent to this email
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -625,7 +630,9 @@ export function BookingForm({
         name="contact_number"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base font-medium sm:text-sm">Phone Number</FormLabel>
+            <FormLabel className="text-base font-medium sm:text-sm">
+              Phone Number (Optional)
+            </FormLabel>
             <FormControl>
               <Input
                 type="tel"
@@ -739,8 +746,8 @@ export function BookingForm({
             <h4 className="font-medium">Guest Information</h4>
             <div className="mt-2 space-y-1">
               <p className="text-muted-foreground">{guestName}</p>
-              <p className="text-muted-foreground">{email}</p>
-              <p className="text-muted-foreground">{contactNumber}</p>
+              {email && <p className="text-muted-foreground">{email}</p>}
+              {contactNumber && <p className="text-muted-foreground">{contactNumber}</p>}
             </div>
           </div>
 

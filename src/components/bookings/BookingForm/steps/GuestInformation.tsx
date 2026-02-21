@@ -36,7 +36,9 @@ export function GuestInformation({ form }: StepProps) {
         name="email"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base font-medium sm:text-sm">Email Address</FormLabel>
+            <FormLabel className="text-base font-medium sm:text-sm">
+              Email Address (Optional)
+            </FormLabel>
             <FormControl>
               <Input
                 type="email"
@@ -47,7 +49,7 @@ export function GuestInformation({ form }: StepProps) {
               />
             </FormControl>
             <FormDescription className="text-sm">
-              Booking confirmation will be sent to this email
+              If provided, booking confirmation will be sent to this email
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -59,7 +61,9 @@ export function GuestInformation({ form }: StepProps) {
         name="contact_number"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-base font-medium sm:text-sm">Phone Number</FormLabel>
+            <FormLabel className="text-base font-medium sm:text-sm">
+              Phone Number (Optional)
+            </FormLabel>
             <FormControl>
               <Input
                 type="tel"

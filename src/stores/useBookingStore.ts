@@ -342,15 +342,20 @@ export const useCreateBooking = () => {
     mutationFn: async (bookingData: BookingFormData & { total_amount: number }) => {
       // Check if guest exists or create new
       let guestId = null;
-      const { data: existingGuest } = await db.guests.byEmail(bookingData.email);
 
-      if (existingGuest) {
-        guestId = existingGuest.guest_id;
-      } else {
+      if (bookingData.email) {
+        const { data: existingGuest } = await db.guests.byEmail(bookingData.email);
+
+        if (existingGuest) {
+          guestId = existingGuest.guest_id;
+        }
+      }
+
+      if (!guestId) {
         const { data: newGuest, error: guestError } = await db.guests.create({
           guest_name: bookingData.guest_name,
-          email: bookingData.email,
-          phone_number: bookingData.contact_number,
+          email: bookingData.email || "",
+          phone_number: bookingData.contact_number || "",
           total_bookings: 0,
           total_spent: 0,
         });

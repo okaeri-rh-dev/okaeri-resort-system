@@ -175,9 +175,11 @@ export const bookingFormBaseSchema = z.object({
 
   guest_name: nameSchema,
 
-  contact_number: phoneSchema,
+  contact_number: z
+    .string()
+    .refine((val) => val === "" || philippinePhoneRegex.test(val), messages.phone),
 
-  email: emailSchema,
+  email: z.string().refine((val) => val === "" || emailRegex.test(val), messages.email),
 
   num_guests: z.number().min(1, messages.minGuests).max(20, "Number of guests cannot exceed 20"),
 
@@ -219,7 +221,13 @@ export const bookingStep1Schema = bookingStep1BaseSchema
     path: ["check_in"],
   });
 
-export const bookingStep2Schema = guestSchema;
+export const bookingStep2Schema = z.object({
+  guest_name: nameSchema,
+  email: z.string().refine((val) => val === "" || emailRegex.test(val), messages.email),
+  phone_number: z
+    .string()
+    .refine((val) => val === "" || philippinePhoneRegex.test(val), messages.phone),
+});
 
 export const bookingStep3Schema = z.object({
   special_requests: z.string().max(500, messages.maxLength(500)).optional(),
@@ -231,8 +239,10 @@ export const completeBookingSchema = bookingStep1BaseSchema
   .merge(
     z.object({
       guest_name: nameSchema,
-      email: emailSchema,
-      contact_number: phoneSchema, // Use contact_number instead of phone_number
+      email: z.string().refine((val) => val === "" || emailRegex.test(val), messages.email),
+      contact_number: z
+        .string()
+        .refine((val) => val === "" || philippinePhoneRegex.test(val), messages.phone),
     })
   )
   .merge(bookingStep3Schema)
@@ -364,6 +374,7 @@ export const parseCurrency = (value: string): number => {
 
 // Format phone number for display
 export const formatPhoneNumber = (phone: string): string => {
+  if (!phone) return "";
   if (phone.startsWith("+63")) {
     return phone;
   }
