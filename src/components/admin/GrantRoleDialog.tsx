@@ -1,13 +1,23 @@
 // src/components/admin/GrantRoleDialog.tsx
 
+import { useEffect, useState } from "react";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ExternalLink, Loader2, Search } from "lucide-react";
+import { format } from "date-fns";
+import { ChevronDown, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +36,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -34,6 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { usePendingUsers, type PendingUser } from "@/hooks/usePendingUsers";
 import { useGrantRole } from "@/hooks/useRoleManagement";
 import { AuditRole, getRoleDisplayName } from "@/lib/audit-roles";
 
@@ -59,24 +71,45 @@ type GrantRoleFormData = z.infer<typeof grantRoleSchema>;
 interface GrantRoleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Pre-fill with a specific pending user */
+  prefilledUser?: PendingUser;
 }
 
 // ============================================
 // COMPONENT
 // ============================================
 
-export function GrantRoleDialog({ open, onOpenChange }: GrantRoleDialogProps) {
+export function GrantRoleDialog({ open, onOpenChange, prefilledUser }: GrantRoleDialogProps) {
   const grantRoleMutation = useGrantRole();
+  const { data: pendingUsers, isLoading: isLoadingUsers } = usePendingUsers();
+  const [userPickerOpen, setUserPickerOpen] = useState(false);
+  const [manualEntry, setManualEntry] = useState(false);
 
   const form = useForm<GrantRoleFormData>({
     resolver: zodResolver(grantRoleSchema),
     defaultValues: {
-      userId: "",
-      email: "",
+      userId: prefilledUser?.id || "",
+      email: prefilledUser?.email || "",
       role: AuditRole.STAFF,
       notes: "",
     },
   });
+
+  // Update form when prefilledUser changes
+  useEffect(() => {
+    if (prefilledUser) {
+      form.setValue("userId", prefilledUser.id);
+      form.setValue("email", prefilledUser.email);
+    }
+  }, [prefilledUser, form]);
+
+  const selectedUserId = form.watch("userId");
+
+  const handleSelectUser = (user: PendingUser) => {
+    form.setValue("userId", user.id);
+    form.setValue("email", user.email);
+    setUserPickerOpen(false);
+  };
 
   const onSubmit = async (data: GrantRoleFormData) => {
     try {
@@ -93,6 +126,7 @@ export function GrantRoleDialog({ open, onOpenChange }: GrantRoleDialogProps) {
 
       // Reset form and close dialog
       form.reset();
+      setManualEntry(false);
       onOpenChange(false);
     } catch (error) {
       toast.error("Failed to grant role", {
@@ -101,84 +135,163 @@ export function GrantRoleDialog({ open, onOpenChange }: GrantRoleDialogProps) {
     }
   };
 
+  const handleClose = () => {
+    form.reset();
+    setManualEntry(false);
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Grant User Role</DialogTitle>
           <DialogDescription>
-            Assign a role to a user. You must provide their UUID from the auth.users table.
+            Select a pending user or enter details manually to assign a role.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Helper Alert */}
-            <Alert>
-              <Search className="h-4 w-4" />
-              <AlertDescription className="text-xs">
-                <strong>Find User ID:</strong> Open your{" "}
-                <a
-                  href={`${import.meta.env.VITE_SUPABASE_URL}/project/default/editor`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary inline-flex items-center gap-1 hover:underline"
-                >
-                  Supabase Dashboard
-                  <ExternalLink className="h-3 w-3" />
-                </a>{" "}
-                and run:{" "}
-                <code className="bg-muted rounded px-1 py-0.5 text-xs">
-                  SELECT id, email FROM auth.users WHERE email ILIKE '%search%'
-                </code>
-              </AlertDescription>
-            </Alert>
+            {/* Pending Users Picker */}
+            {!manualEntry && (
+              <div className="space-y-2">
+                <FormLabel>Select User</FormLabel>
+                <Popover open={userPickerOpen} onOpenChange={setUserPickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={userPickerOpen}
+                      className="w-full justify-between"
+                    >
+                      {selectedUserId
+                        ? pendingUsers?.find((u) => u.id === selectedUserId)?.email ||
+                          form.getValues("email") ||
+                          "User selected"
+                        : "Select a pending user..."}
+                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-[var(--radix-popover-trigger-width)] p-0"
+                    align="start"
+                  >
+                    <Command>
+                      <CommandInput placeholder="Search users..." />
+                      <CommandList>
+                        <CommandEmpty>
+                          {isLoadingUsers ? "Loading..." : "No pending users found."}
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {pendingUsers?.map((user) => (
+                            <CommandItem
+                              key={user.id}
+                              value={`${user.email} ${user.full_name || ""}`}
+                              onSelect={() => handleSelectUser(user)}
+                            >
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-sm font-medium">{user.email}</span>
+                                <span className="text-muted-foreground text-xs">
+                                  {user.full_name || "No name"} &middot; Joined{" "}
+                                  {format(new Date(user.created_at), "MMM d, yyyy")}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <p className="text-muted-foreground text-xs">
+                  Can't find the user?{" "}
+                  <button
+                    type="button"
+                    onClick={() => setManualEntry(true)}
+                    className="text-primary hover:underline"
+                  >
+                    Enter details manually
+                  </button>
+                </p>
+              </div>
+            )}
 
-            {/* Email */}
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email Address</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="user@example.com"
-                      {...field}
-                      autoComplete="email"
-                      className="text-sm"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    User's email address from your authentication system
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Manual Entry Fields */}
+            {manualEntry && (
+              <>
+                {/* Email */}
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email Address</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="user@example.com"
+                          {...field}
+                          autoComplete="email"
+                          className="text-sm"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* User ID */}
-            <FormField
-              control={form.control}
-              name="userId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>User ID (UUID)</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="6e7aed61-41df-4949-ba63-47343e977ab8"
-                      {...field}
-                      className="font-mono text-sm"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Paste the UUID from auth.users table (must match the email above)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                {/* User ID */}
+                <FormField
+                  control={form.control}
+                  name="userId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>User ID (UUID)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="6e7aed61-41df-4949-ba63-47343e977ab8"
+                          {...field}
+                          className="font-mono text-sm"
+                        />
+                      </FormControl>
+                      <FormDescription>UUID from auth.users table</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <p className="text-muted-foreground text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setManualEntry(false)}
+                    className="text-primary hover:underline"
+                  >
+                    Back to user list
+                  </button>
+                </p>
+              </>
+            )}
+
+            {/* Read-only email display when selected from picker */}
+            {!manualEntry && selectedUserId && (
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        readOnly
+                        className="text-muted-foreground bg-muted text-sm"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Role Selection */}
             <FormField
@@ -240,10 +353,7 @@ export function GrantRoleDialog({ open, onOpenChange }: GrantRoleDialogProps) {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => {
-                  form.reset();
-                  onOpenChange(false);
-                }}
+                onClick={handleClose}
                 disabled={grantRoleMutation.isPending}
               >
                 Cancel

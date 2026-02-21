@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { requireStaff } from "@/lib/route-guards";
 
 // Lazy load heavy components
 const BookingsTable = lazy(() =>
@@ -30,6 +31,9 @@ const bookingsSearchSchema = z.object({
 
 export const Route = createFileRoute("/admin/bookings")({
   validateSearch: bookingsSearchSchema,
+  beforeLoad: async () => {
+    await requireStaff();
+  },
   component: BookingsPage,
 });
 

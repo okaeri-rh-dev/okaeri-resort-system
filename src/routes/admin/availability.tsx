@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { requireStaff } from "@/lib/route-guards";
 import { useBookings } from "@/stores/useBookingStore";
 
 // Lazy load heavy components
@@ -23,6 +24,9 @@ const availabilitySearchSchema = z.object({
 
 export const Route = createFileRoute("/admin/availability")({
   validateSearch: availabilitySearchSchema,
+  beforeLoad: async () => {
+    await requireStaff();
+  },
   component: AvailabilityPage,
 });
 

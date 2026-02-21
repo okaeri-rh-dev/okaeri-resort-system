@@ -18,9 +18,14 @@ export const Route = createFileRoute("/admin")({
       });
     }
 
-    // Optional: Return user data for child routes to access
-    // const user = await auth.getCurrentUser();
-    // return { user };
+    // Check if user has a role assigned
+    const { getUserAuditRole } = await import("@/lib/audit-roles");
+    const role = await getUserAuditRole();
+    if (role === null) {
+      throw redirect({ to: "/pending-approval" });
+    }
+
+    return { userRole: role };
   },
   component: AdminLayout,
   errorComponent: ({ reset }) => (

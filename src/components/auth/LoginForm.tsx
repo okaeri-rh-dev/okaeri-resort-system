@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { Link } from "@tanstack/react-router";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -13,9 +13,11 @@ import { supabase } from "@/lib/supabase";
 
 interface LoginFormProps {
   onSuccess: () => void;
+  registered?: boolean;
+  confirmed?: boolean;
 }
 
-export function LoginForm({ onSuccess }: LoginFormProps) {
+export function LoginForm({ onSuccess, registered, confirmed }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -96,6 +98,20 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           <p className="text-gray-600">Sign in to continue</p>
         </CardHeader>
         <CardContent>
+          {registered && (
+            <Alert className="mb-4 border-green-500/50 bg-green-50 text-green-900">
+              <CheckCircle2 className="h-4 w-4" />
+              <AlertDescription>
+                Account created! Please check your email to verify before signing in.
+              </AlertDescription>
+            </Alert>
+          )}
+          {confirmed && (
+            <Alert className="mb-4 border-green-500/50 bg-green-50 text-green-900">
+              <CheckCircle2 className="h-4 w-4" />
+              <AlertDescription>Email verified! You can now sign in.</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="mb-1 block text-sm font-medium">
@@ -161,6 +177,13 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             <Button type="submit" className="w-full" disabled={isSubmitDisabled}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
+
+            <div className="text-center text-sm">
+              Don't have an account?{" "}
+              <Link to="/sign-up" className="text-primary hover:underline">
+                Create one
+              </Link>
+            </div>
           </form>
         </CardContent>
       </Card>

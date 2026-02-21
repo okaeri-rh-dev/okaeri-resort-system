@@ -16,8 +16,10 @@ import { supabase } from "./supabase";
 // Validated routes for redirect security
 const VALID_ROUTES = [
   "/login",
+  "/sign-up",
   "/forgot-password",
   "/reset-password",
+  "/pending-approval",
   "/admin/dashboard",
   "/admin/bookings",
   "/admin/units",

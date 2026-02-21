@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { pendingUsersKeys } from "@/hooks/usePendingUsers";
 import {
   AuditRole,
   countUsersByRole,
@@ -163,8 +164,9 @@ export function useGrantRole() {
     onSuccess: (_data, variables) => {
       logger.info("Role granted successfully", { email: variables.email, role: variables.role });
 
-      // Invalidate all role queries
+      // Invalidate all role queries and pending users list
       queryClient.invalidateQueries({ queryKey: roleKeys.all });
+      queryClient.invalidateQueries({ queryKey: pendingUsersKeys.all });
     },
     onError: (error, variables) => {
       logger.error("Failed to grant role", {

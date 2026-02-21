@@ -53,7 +53,7 @@ export interface RouteGuardOptions {
  * }
  */
 export async function requireRole(options: RouteGuardOptions): Promise<void> {
-  const { requiredRole, redirectTo = "/admin/dashboard", message } = options;
+  const { requiredRole, redirectTo = "/admin/dashboard" } = options;
 
   const userRole = await getUserAuditRole();
   const hasAccess = await hasAuditRole(requiredRole);
@@ -67,10 +67,6 @@ export async function requireRole(options: RouteGuardOptions): Promise<void> {
 
     throw redirect({
       to: redirectTo,
-      search: {
-        error: "unauthorized",
-        message: message || `This page requires ${formatRoleName(requiredRole)} access or higher`,
-      },
     });
   }
 
@@ -151,21 +147,4 @@ export function hasRoleLevel(userRole: AuditRole | null, requiredRole: AuditRole
   };
 
   return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
-}
-
-// ============================================
-// UTILITY FUNCTIONS
-// ============================================
-
-/**
- * Format role name for display in error messages
- */
-function formatRoleName(role: AuditRole): string {
-  const names: Record<AuditRole, string> = {
-    [AuditRole.ADMIN]: "Administrator",
-    [AuditRole.OWNER]: "Owner",
-    [AuditRole.MANAGER]: "Manager",
-    [AuditRole.STAFF]: "Staff",
-  };
-  return names[role];
 }

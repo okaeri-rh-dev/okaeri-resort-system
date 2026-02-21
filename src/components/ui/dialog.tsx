@@ -1,9 +1,3 @@
-/**
- * Dialog Component
- * Built with Radix UI Dialog primitive and styled with Tailwind CSS
- * Supports dark mode, keyboard navigation, and proper accessibility
- */
-
 import * as React from "react";
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";

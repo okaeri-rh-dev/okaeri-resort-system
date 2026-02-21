@@ -8,10 +8,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { PendingBookingsQueue } from "@/components/admin/PendingBookingsQueue";
+import { requireStaff } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/admin/bookings/queue")({
+  beforeLoad: async () => {
+    await requireStaff();
+  },
   component: AdminQueuePage,
-  // Authentication is handled by the parent /admin route
 });
 
 function AdminQueuePage() {
