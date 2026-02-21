@@ -340,11 +340,15 @@ export const useCreateBooking = () => {
 
   return useMutation({
     mutationFn: async (bookingData: BookingFormData & { total_amount: number }) => {
+      // Normalize empty strings to null for optional contact fields
+      const normalizedEmail = bookingData.email?.trim() || null;
+      const normalizedPhone = bookingData.contact_number?.trim() || null;
+
       // Check if guest exists or create new
       let guestId = null;
 
-      if (bookingData.email) {
-        const { data: existingGuest } = await db.guests.byEmail(bookingData.email);
+      if (normalizedEmail) {
+        const { data: existingGuest } = await db.guests.byEmail(normalizedEmail);
 
         if (existingGuest) {
           guestId = existingGuest.guest_id;
@@ -354,8 +358,8 @@ export const useCreateBooking = () => {
       if (!guestId) {
         const { data: newGuest, error: guestError } = await db.guests.create({
           guest_name: bookingData.guest_name,
-          email: bookingData.email || "",
-          phone_number: bookingData.contact_number || "",
+          email: normalizedEmail,
+          phone_number: normalizedPhone,
           total_bookings: 0,
           total_spent: 0,
         });
@@ -372,8 +376,8 @@ export const useCreateBooking = () => {
         // unit_id removed - handled via booking_units junction table
         guest_id: guestId,
         guest_name: bookingData.guest_name,
-        contact_number: bookingData.contact_number,
-        email: bookingData.email,
+        contact_number: normalizedPhone,
+        email: normalizedEmail,
         num_guests: bookingData.num_guests,
         check_in:
           typeof bookingData.check_in === "string"

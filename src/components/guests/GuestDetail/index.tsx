@@ -73,23 +73,31 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
           <DetailField
             label="Email"
             value={
-              <a
-                href={`mailto:${guest.email}`}
-                className="font-medium text-blue-600 hover:underline"
-              >
-                {guest.email}
-              </a>
+              guest.email ? (
+                <a
+                  href={`mailto:${guest.email}`}
+                  className="font-medium text-blue-600 hover:underline"
+                >
+                  {guest.email}
+                </a>
+              ) : (
+                <span className="text-neutral-400">{"\u2014"}</span>
+              )
             }
           />
           <DetailField
             label="Phone"
             value={
-              <a
-                href={`tel:${guest.phone_number}`}
-                className="font-medium text-blue-600 hover:underline"
-              >
-                {formatPhoneNumber(guest.phone_number)}
-              </a>
+              guest.phone_number ? (
+                <a
+                  href={`tel:${guest.phone_number}`}
+                  className="font-medium text-blue-600 hover:underline"
+                >
+                  {formatPhoneNumber(guest.phone_number)}
+                </a>
+              ) : (
+                <span className="text-neutral-400">{"\u2014"}</span>
+              )
             }
           />
           {guest.address && (

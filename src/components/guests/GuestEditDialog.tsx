@@ -22,7 +22,7 @@ import type { Guest } from "@/types";
 // Validation schema
 const guestFormSchema = z.object({
   guest_name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
+  email: z.string().email("Invalid email address").optional().or(z.literal("")),
   phone_number: z.string().optional(),
 });
 
@@ -47,7 +47,7 @@ export const GuestEditDialog: React.FC<GuestEditDialogProps> = ({
     resolver: zodResolver(guestFormSchema),
     defaultValues: {
       guest_name: guest.guest_name,
-      email: guest.email,
+      email: guest.email || "",
       phone_number: guest.phone_number || "",
     },
   });
@@ -56,7 +56,11 @@ export const GuestEditDialog: React.FC<GuestEditDialogProps> = ({
     try {
       await updateGuest.mutateAsync({
         guestId: guest.guest_id,
-        updates: data,
+        updates: {
+          ...data,
+          email: data.email?.trim() || null,
+          phone_number: data.phone_number?.trim() || null,
+        },
       });
       toast.success("Guest information updated successfully");
       onSuccess?.();

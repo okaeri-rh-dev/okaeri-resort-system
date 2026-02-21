@@ -229,7 +229,7 @@ export const validateGuestInformation = (
   // Duplicate check
   if (context.existingGuests && guestData.email) {
     const duplicate = context.existingGuests.find(
-      (guest) => guest.email.toLowerCase() === guestData.email!.toLowerCase()
+      (guest) => guest.email && guest.email.toLowerCase() === guestData.email!.toLowerCase()
     );
 
     if (duplicate) {

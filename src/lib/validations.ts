@@ -101,8 +101,12 @@ export const unitCodeSchema = z
 
 export const guestSchema = z.object({
   guest_name: nameSchema,
-  email: emailSchema,
-  phone_number: phoneSchema,
+  email: z
+    .string()
+    .regex(emailRegex, "Please enter a valid email address")
+    .optional()
+    .or(z.literal("")),
+  phone_number: phoneSchema.optional().or(z.literal("")),
 });
 
 export const guestQuickFormSchema = guestSchema.extend({

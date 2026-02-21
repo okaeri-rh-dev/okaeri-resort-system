@@ -32,8 +32,8 @@ export interface Unit {
 export interface Guest {
   guest_id: string;
   guest_name: string;
-  email: string;
-  phone_number: string;
+  email: string | null;
+  phone_number: string | null;
   total_bookings: number | null;
   total_spent: number | null;
   created_at: string | null; // Database can return null
@@ -69,8 +69,8 @@ export interface Booking {
   booking_reference: string;
   guest_id?: string | null;
   guest_name: string;
-  contact_number: string;
-  email: string;
+  contact_number: string | null;
+  email: string | null;
   num_guests: number;
   check_in: string; // Date as ISO string
   check_out: string; // Date as ISO string

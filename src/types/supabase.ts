@@ -197,7 +197,7 @@ export interface GuestResponse {
   // Extends Database["public"]["Tables"]["guests"]["Row"]
   guest_id: string;
   guest_name: string;
-  email: string;
+  email: string | null;
   contact_number?: string | null;
   address?: string | null;
   nationality?: string | null;

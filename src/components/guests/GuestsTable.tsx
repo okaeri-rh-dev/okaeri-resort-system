@@ -152,8 +152,10 @@ const GuestCard: React.FC<GuestCardProps> = ({ guest, onView, onEdit, onEmail, o
       <div className="flex items-start justify-between">
         <div className="flex-1 space-y-1">
           <div className="font-medium text-neutral-900">{guest.guest_name}</div>
-          <div className="text-sm text-neutral-600">{guest.email}</div>
-          <div className="text-sm text-neutral-600">{formatPhoneNumber(guest.phone_number)}</div>
+          <div className="text-sm text-neutral-600">{guest.email || "\u2014"}</div>
+          <div className="text-sm text-neutral-600">
+            {guest.phone_number ? formatPhoneNumber(guest.phone_number) : "\u2014"}
+          </div>
         </div>
         <div className="space-y-1 text-right">
           <div className="font-mono font-semibold text-neutral-900">
@@ -238,11 +240,15 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
 
   // Contact actions
   const handleEmail = (guest: Guest) => {
-    window.open(`mailto:${guest.email}`, "_blank");
+    if (guest.email) {
+      window.open(`mailto:${guest.email}`, "_blank");
+    }
   };
 
   const handleCall = (guest: Guest) => {
-    window.open(`tel:${guest.phone_number}`, "_blank");
+    if (guest.phone_number) {
+      window.open(`tel:${guest.phone_number}`, "_blank");
+    }
   };
 
   const handleDelete = useCallback(
@@ -321,9 +327,9 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
         header: "Contact Info",
         cell: ({ getValue, row }) => (
           <div className="space-y-1">
-            <div className="text-sm break-all text-neutral-900">{getValue()}</div>
+            <div className="text-sm break-all text-neutral-900">{getValue() || "\u2014"}</div>
             <div className="text-sm text-neutral-600">
-              {formatPhoneNumber(row.original.phone_number)}
+              {row.original.phone_number ? formatPhoneNumber(row.original.phone_number) : "\u2014"}
             </div>
           </div>
         ),

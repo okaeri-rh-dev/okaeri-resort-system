@@ -51,8 +51,8 @@ export function filterBookings(bookings: Booking[], filters: BookingFilters): Bo
     filtered = filtered.filter(
       (b) =>
         b.guest_name.toLowerCase().includes(term) ||
-        b.email.toLowerCase().includes(term) ||
-        b.contact_number.includes(term) ||
+        (b.email && b.email.toLowerCase().includes(term)) ||
+        (b.contact_number && b.contact_number.includes(term)) ||
         b.booking_reference.toLowerCase().includes(term)
     );
   }
@@ -99,8 +99,8 @@ export function searchGuests(guests: Guest[], searchTerm: string): Guest[] {
   return guests.filter(
     (g) =>
       g.guest_name.toLowerCase().includes(term) ||
-      g.email.toLowerCase().includes(term) ||
-      g.phone_number.includes(term)
+      (g.email && g.email.toLowerCase().includes(term)) ||
+      (g.phone_number && g.phone_number.includes(term))
   );
 }
 

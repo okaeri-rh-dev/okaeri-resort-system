@@ -139,8 +139,8 @@ export function GuestQuickForm({
     try {
       const guestData = {
         guest_name: data.guest_name,
-        email: data.email,
-        phone_number: formatPhoneNumber(data.phone_number),
+        email: data.email?.trim() || null,
+        phone_number: data.phone_number ? formatPhoneNumber(data.phone_number) : null,
       };
 
       const newGuest = await createGuestMutation.mutateAsync(guestData);
@@ -174,11 +174,11 @@ export function GuestQuickForm({
                 </p>
                 <p className="flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  {existingGuest.guest.email}
+                  {existingGuest.guest.email || "No email"}
                 </p>
                 <p className="flex items-center gap-2">
                   <Phone className="h-4 w-4" />
-                  {existingGuest.guest.phone_number}
+                  {existingGuest.guest.phone_number || "No phone"}
                 </p>
               </div>
             </div>

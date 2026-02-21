@@ -138,8 +138,8 @@ export type UnitFormData = {
  */
 export type GuestFormData = {
   guest_name: string;
-  email: string;
-  contact_number: string;
+  email?: string | null;
+  contact_number?: string | null;
   address?: string;
   notes?: string;
 };

@@ -112,25 +112,31 @@ export async function findOrCreateGuest(
   supabaseAdmin: ReturnType<typeof createSupabaseAdmin>,
   guestData: {
     guest_name: string;
-    email: string;
-    phone_number: string;
+    email?: string | null;
+    phone_number?: string | null;
   }
 ): Promise<string> {
-  // First, try to find existing guest
-  const { data: existingGuest, error: findError } = await supabaseAdmin
-    .from("guests")
-    .select("guest_id")
-    .eq("email", guestData.email.toLowerCase())
-    .single();
+  // Normalize empty strings to null
+  const normalizedEmail = guestData.email?.trim() || null;
+  const normalizedPhone = guestData.phone_number?.trim() || null;
 
-  if (existingGuest) {
-    return existingGuest.guest_id;
-  }
+  // First, try to find existing guest by email (only if email is provided)
+  if (normalizedEmail) {
+    const { data: existingGuest, error: findError } = await supabaseAdmin
+      .from("guests")
+      .select("guest_id")
+      .eq("email", normalizedEmail.toLowerCase())
+      .single();
 
-  // If not found (PGRST116 error), create new guest
-  if (findError && findError.code !== "PGRST116") {
-    console.error("Error finding guest:", findError);
-    throw new Error("Failed to process guest information");
+    if (existingGuest) {
+      return existingGuest.guest_id;
+    }
+
+    // If not found (PGRST116 error), we'll create below
+    if (findError && findError.code !== "PGRST116") {
+      console.error("Error finding guest:", findError);
+      throw new Error("Failed to process guest information");
+    }
   }
 
   // Create new guest
@@ -138,8 +144,8 @@ export async function findOrCreateGuest(
     .from("guests")
     .insert({
       guest_name: guestData.guest_name,
-      email: guestData.email.toLowerCase(),
-      phone_number: guestData.phone_number,
+      email: normalizedEmail?.toLowerCase() ?? null,
+      phone_number: normalizedPhone,
     })
     .select("guest_id")
     .single();

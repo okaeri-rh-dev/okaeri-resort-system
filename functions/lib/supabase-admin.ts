@@ -65,19 +65,25 @@ export async function findOrCreateGuest(
   supabase: SupabaseClient,
   guestData: {
     guest_name: string;
-    email: string;
-    phone_number: string;
+    email?: string | null;
+    phone_number?: string | null;
   }
 ): Promise<string> {
-  // Try to find existing guest by email
-  const { data: existingGuest, error: findError } = await supabase
-    .from("guests")
-    .select("guest_id")
-    .eq("email", guestData.email)
-    .single();
+  // Normalize empty strings to null
+  const normalizedEmail = guestData.email?.trim() || null;
+  const normalizedPhone = guestData.phone_number?.trim() || null;
 
-  if (existingGuest && !findError) {
-    return existingGuest.guest_id;
+  // Try to find existing guest by email (only if email is provided)
+  if (normalizedEmail) {
+    const { data: existingGuest, error: findError } = await supabase
+      .from("guests")
+      .select("guest_id")
+      .eq("email", normalizedEmail)
+      .single();
+
+    if (existingGuest && !findError) {
+      return existingGuest.guest_id;
+    }
   }
 
   // Create new guest if not found
@@ -85,8 +91,8 @@ export async function findOrCreateGuest(
     .from("guests")
     .insert({
       guest_name: guestData.guest_name,
-      email: guestData.email,
-      phone_number: guestData.phone_number,
+      email: normalizedEmail?.toLowerCase() ?? null,
+      phone_number: normalizedPhone,
     })
     .select("guest_id")
     .single();

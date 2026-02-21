@@ -472,12 +472,12 @@ export type Database = {
           booking_status: string | null;
           check_in: string;
           check_out: string;
-          contact_number: string;
+          contact_number: string | null;
           created_at: string | null;
           discount_amount: number | null;
           discount_percent: number | null;
           downpayment_required: number | null;
-          email: string;
+          email: string | null;
           guest_id: string | null;
           guest_name: string;
           internal_notes: string | null;
@@ -507,12 +507,12 @@ export type Database = {
           booking_status?: string | null;
           check_in: string;
           check_out: string;
-          contact_number: string;
+          contact_number?: string | null;
           created_at?: string | null;
           discount_amount?: number | null;
           discount_percent?: number | null;
           downpayment_required?: number | null;
-          email: string;
+          email?: string | null;
           guest_id?: string | null;
           guest_name: string;
           internal_notes?: string | null;
@@ -542,12 +542,12 @@ export type Database = {
           booking_status?: string | null;
           check_in?: string;
           check_out?: string;
-          contact_number?: string;
+          contact_number?: string | null;
           created_at?: string | null;
           discount_amount?: number | null;
           discount_percent?: number | null;
           downpayment_required?: number | null;
-          email?: string;
+          email?: string | null;
           guest_id?: string | null;
           guest_name?: string;
           internal_notes?: string | null;
@@ -837,30 +837,30 @@ export type Database = {
       guests: {
         Row: {
           created_at: string | null;
-          email: string;
+          email: string | null;
           guest_id: string;
           guest_name: string;
-          phone_number: string;
+          phone_number: string | null;
           total_bookings: number | null;
           total_spent: number | null;
           updated_at: string | null;
         };
         Insert: {
           created_at?: string | null;
-          email: string;
+          email?: string | null;
           guest_id?: string;
           guest_name: string;
-          phone_number: string;
+          phone_number?: string | null;
           total_bookings?: number | null;
           total_spent?: number | null;
           updated_at?: string | null;
         };
         Update: {
           created_at?: string | null;
-          email?: string;
+          email?: string | null;
           guest_id?: string;
           guest_name?: string;
-          phone_number?: string;
+          phone_number?: string | null;
           total_bookings?: number | null;
           total_spent?: number | null;
           updated_at?: string | null;

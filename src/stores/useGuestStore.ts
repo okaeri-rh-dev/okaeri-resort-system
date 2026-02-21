@@ -510,8 +510,8 @@ export const useExportGuests = () => {
       const exportData =
         data?.map((guest) => ({
           guest_name: guest.guest_name,
-          email: guest.email,
-          phone_number: guest.phone_number, // Will be formatted to +63 format
+          email: guest.email || "",
+          phone_number: guest.phone_number || "", // Will be formatted to +63 format
           total_bookings: guest.total_bookings ?? 0,
           total_spent: guest.total_spent ?? 0, // Will be formatted as PHP currency
           loyalty_status: "Regular", // Default since property doesn't exist in Guest type
