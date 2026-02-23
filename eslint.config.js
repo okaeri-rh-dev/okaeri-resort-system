@@ -100,4 +100,12 @@ export default tseslint.config([
       "no-console": "off",
     },
   },
+
+  // Load testing scripts (k6) - allow console.log for test output
+  {
+    files: ["load-testing/**/*.ts"],
+    rules: {
+      "no-console": "off",
+    },
+  },
 ]);

@@ -396,7 +396,7 @@ export async function logSecurityEvent(event: {
     const supabase = await getSupabaseAsync();
     if (!supabase) {
       // Supabase not available - just log to console in Workers context
-      console.log(`[SecurityEvent] ${event.type}:`, event.ip, event.metadata);
+      console.warn(`[SecurityEvent] ${event.type}:`, event.ip, event.metadata);
       return;
     }
 
