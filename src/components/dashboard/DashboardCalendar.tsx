@@ -77,10 +77,8 @@ const DayButton = React.memo(function DayButton({
             : ""
         }`}
       >
-        <div className="flex h-full flex-col items-start justify-start p-1">
-          <span
-            className={cn("self-start text-xs font-medium sm:text-sm", isToday && "text-blue-900")}
-          >
+        <div className="flex h-full flex-col items-center justify-start">
+          <span className={cn("text-xs font-medium sm:text-sm", isToday && "text-blue-900")}>
             {format(date, "d")}
           </span>
           {dayBookings.length > 0 && (

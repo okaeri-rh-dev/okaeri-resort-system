@@ -7,7 +7,7 @@
  * Test Coverage:
  * - Null/empty returns
  * - Fixed 3-slot layout with invisible placeholders
- * - Mobile thin bars (sm:hidden) and desktop chips (sm:inline-flex)
+ * - Mobile thin bars (sm:hidden) and desktop chips (sm:flex)
  * - Status hint modifier classes on both mobile/desktop elements
  * - Priority resolution when multiple bookings target the same slot
  * - Multi-unit bookings filling multiple slots
@@ -234,11 +234,11 @@ describe("BookingIndicators", () => {
 
   // ─── Desktop rendering ───
   describe("Desktop rendering", () => {
-    it("should render a desktop chip with hidden sm:inline-flex classes", () => {
+    it("should render a desktop chip with hidden sm:flex classes", () => {
       const booking = makeBooking({ unitCodes: ["C1"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const desktopChip = container.querySelector(".sm\\:inline-flex");
+      const desktopChip = container.querySelector(".sm\\:flex");
       expect(desktopChip).toBeInTheDocument();
       expect(desktopChip).toHaveClass("hidden");
     });
@@ -247,7 +247,7 @@ describe("BookingIndicators", () => {
       const booking = makeBooking({ unitCodes: ["C1"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const chip = container.querySelector(".sm\\:inline-flex");
+      const chip = container.querySelector(".sm\\:flex");
       expect(chip).toHaveClass("bg-blue-100");
       expect(chip).toHaveClass("text-blue-800");
       expect(chip).toHaveClass("border-blue-300");
@@ -257,7 +257,7 @@ describe("BookingIndicators", () => {
       const booking = makeBooking({ unitCodes: ["C2"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const chip = container.querySelector(".sm\\:inline-flex");
+      const chip = container.querySelector(".sm\\:flex");
       expect(chip).toHaveClass("bg-emerald-100");
       expect(chip).toHaveClass("text-emerald-800");
       expect(chip).toHaveClass("border-emerald-300");
@@ -267,7 +267,7 @@ describe("BookingIndicators", () => {
       const booking = makeBooking({ unitCodes: ["C3"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const chip = container.querySelector(".sm\\:inline-flex");
+      const chip = container.querySelector(".sm\\:flex");
       expect(chip).toHaveClass("bg-amber-100");
       expect(chip).toHaveClass("text-amber-800");
       expect(chip).toHaveClass("border-amber-300");
@@ -295,7 +295,7 @@ describe("BookingIndicators", () => {
       const booking = makeBooking({ unitCodes: ["C1"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const chip = container.querySelector(".sm\\:inline-flex");
+      const chip = container.querySelector(".sm\\:flex");
       expect(chip).toHaveClass("border");
       expect(chip).toHaveClass("rounded-sm");
     });
@@ -308,7 +308,7 @@ describe("BookingIndicators", () => {
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const mobileBar = container.querySelector(".sm\\:hidden");
-      const chip = container.querySelector(".sm\\:inline-flex");
+      const chip = container.querySelector(".sm\\:flex");
 
       expect(mobileBar).not.toHaveClass("opacity-70");
       expect(mobileBar).not.toHaveClass("border-dashed");
@@ -338,7 +338,7 @@ describe("BookingIndicators", () => {
       const booking = makeBooking({ unitCodes: ["C1"], status: "Pending" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const chip = container.querySelector(".sm\\:inline-flex");
+      const chip = container.querySelector(".sm\\:flex");
       expect(chip).toHaveClass("opacity-70");
       expect(chip).toHaveClass("border-dashed");
     });
@@ -348,7 +348,7 @@ describe("BookingIndicators", () => {
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const mobileBar = container.querySelector(".sm\\:hidden");
-      const chip = container.querySelector(".sm\\:inline-flex");
+      const chip = container.querySelector(".sm\\:flex");
       expect(mobileBar).toHaveClass("opacity-50");
       expect(chip).toHaveClass("opacity-50");
     });
@@ -358,7 +358,7 @@ describe("BookingIndicators", () => {
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const mobileBar = container.querySelector(".sm\\:hidden");
-      const chip = container.querySelector(".sm\\:inline-flex");
+      const chip = container.querySelector(".sm\\:flex");
       expect(mobileBar).toHaveClass("opacity-30");
       expect(mobileBar).toHaveClass("line-through");
       expect(chip).toHaveClass("opacity-30");

@@ -7,6 +7,8 @@ import { formatCurrency, getBookingStatusPriority } from "@/hooks/useCalendarBoo
 import { cn } from "@/lib/utils";
 import type { Booking } from "@/types";
 
+import { UNIT_SLOT_MAP } from "./unit-calendar-config";
+
 interface BookingTooltipProps {
   bookings: Booking[];
   date: Date;
@@ -99,14 +101,23 @@ const BookingTooltipItem = React.memo(function BookingTooltipItem({
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           {booking.booking_units && booking.booking_units.length > 0 ? (
-            booking.booking_units.map((bu) => (
-              <span
-                key={bu.booking_unit_id ?? bu.unit_id}
-                className="font-mono text-xs font-semibold text-neutral-900"
-              >
-                {bu.unit?.unit_code || bu.unit?.unit_name || "—"}
-              </span>
-            ))
+            booking.booking_units.map((bu) => {
+              const unitCode = bu.unit?.unit_code;
+              const slotConfig = unitCode ? UNIT_SLOT_MAP.get(unitCode) : undefined;
+              return (
+                <span
+                  key={bu.booking_unit_id ?? bu.unit_id}
+                  className={cn(
+                    "rounded px-1.5 py-0.5 font-mono text-xs font-semibold",
+                    slotConfig
+                      ? cn(slotConfig.bg, slotConfig.text, slotConfig.border, "border")
+                      : "text-neutral-900"
+                  )}
+                >
+                  {unitCode || bu.unit?.unit_name || "—"}
+                </span>
+              );
+            })
           ) : (
             <span className="font-mono text-xs font-semibold text-neutral-900">—</span>
           )}
