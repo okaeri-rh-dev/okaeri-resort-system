@@ -3,10 +3,12 @@ import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { createColumnHelper, type Header } from "@tanstack/react-table";
 
+import { UNIT_SLOT_MAP } from "@/components/dashboard/unit-calendar-config";
 import { PricingStatusIcon } from "@/components/pricing/PricingStatusBadge";
 import { formatCurrency, formatPhoneNumber, formatTableDate } from "@/components/tables/formatters";
 import { SortableHeader, StatusBadge } from "@/components/tables/utils";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import type { Booking, BookingStatus } from "@/types";
 
 import { BookingActionsCell } from "./BookingActionsCell";
@@ -68,11 +70,24 @@ export const useBookingColumns = ({
 
           return (
             <div className="flex flex-wrap gap-1">
-              {units.map((bu) => (
-                <Badge key={bu.booking_unit_id} variant="secondary" className="font-mono text-xs">
-                  {bu.unit?.unit_code || bu.unit?.unit_name || `Unit ${bu.unit_id.slice(0, 4)}`}
-                </Badge>
-              ))}
+              {units.map((bu) => {
+                const unitCode = bu.unit?.unit_code;
+                const slotConfig = unitCode ? UNIT_SLOT_MAP.get(unitCode) : undefined;
+                return (
+                  <Badge
+                    key={bu.booking_unit_id}
+                    variant="outline"
+                    className={cn(
+                      "font-mono text-xs",
+                      slotConfig
+                        ? cn(slotConfig.bg, slotConfig.text, slotConfig.border)
+                        : "bg-secondary text-secondary-foreground border-transparent"
+                    )}
+                  >
+                    {unitCode || bu.unit?.unit_name || `Unit ${bu.unit_id.slice(0, 4)}`}
+                  </Badge>
+                );
+              })}
             </div>
           );
         },

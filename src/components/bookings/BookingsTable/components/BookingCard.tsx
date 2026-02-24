@@ -3,47 +3,79 @@ import React from "react";
 import { Link } from "@tanstack/react-router";
 import { Edit, Eye, Upload, X } from "lucide-react";
 
+import { UNIT_SLOT_MAP } from "@/components/dashboard/unit-calendar-config";
 import { formatCurrency, formatTableDate } from "@/components/tables/formatters";
-import { MobileCard, MobileCardRow, StatusBadge } from "@/components/tables/utils";
+import { MobileCard, StatusBadge } from "@/components/tables/utils";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 import type { BookingCardProps } from "../types";
 
 export const BookingCard: React.FC<BookingCardProps> = ({ booking, onUploadPayment, onCancel }) => {
+  const units = booking.booking_units || [];
+
   return (
     <MobileCard className="space-y-3">
+      {/* Row 1: Guest name + booking status */}
       <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <div className="font-mono text-sm font-medium text-blue-600">
-            {booking.booking_reference}
+        <div>
+          <div className="text-base font-semibold text-neutral-900">{booking.guest_name}</div>
+          <div className="font-mono text-xs text-neutral-400">{booking.booking_reference}</div>
+        </div>
+        <StatusBadge status={booking.booking_status ?? "Pending"} />
+      </div>
+
+      {/* Row 2: Dates emphasized */}
+      <div className="rounded-md bg-neutral-50 px-3 py-2">
+        <div className="text-sm font-semibold text-neutral-900">
+          {formatTableDate(booking.check_in)} — {formatTableDate(booking.check_out)}
+        </div>
+        <div className="text-xs text-neutral-500">{booking.num_guests} guests</div>
+      </div>
+
+      {/* Row 3: Color-coded unit chips */}
+      {units.length > 0 && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-neutral-600">Units</span>
+          <div className="flex flex-wrap gap-1">
+            {units.map((bu) => {
+              const unitCode = bu.unit?.unit_code;
+              const slotConfig = unitCode ? UNIT_SLOT_MAP.get(unitCode) : undefined;
+              return (
+                <Badge
+                  key={bu.booking_unit_id}
+                  variant="outline"
+                  className={cn(
+                    "font-mono text-xs",
+                    slotConfig
+                      ? cn(slotConfig.bg, slotConfig.text, slotConfig.border)
+                      : "bg-secondary text-secondary-foreground border-transparent"
+                  )}
+                >
+                  {unitCode || bu.unit?.unit_name || `Unit ${bu.unit_id.slice(0, 4)}`}
+                </Badge>
+              );
+            })}
           </div>
-          <div className="font-medium text-neutral-900">{booking.guest_name}</div>
         </div>
-        <div className="flex space-x-1">
-          <StatusBadge status={booking.booking_status ?? "Pending"} />
-          <StatusBadge status={booking.payment_status ?? "Pending"} />
+      )}
+
+      {/* Row 4: Amount + payment status */}
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-sm font-semibold">
+          {formatCurrency(booking.total_amount)}
+        </span>
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] text-neutral-500">Payment:</span>
+          <StatusBadge
+            status={booking.payment_status ?? "Pending"}
+            className="px-1.5 py-0 text-[10px]"
+          />
         </div>
       </div>
 
-      <div className="space-y-2">
-        <MobileCardRow
-          label="Cabin"
-          value={
-            booking.booking_units && booking.booking_units.length > 0
-              ? booking.booking_units.length === 1
-                ? booking.booking_units[0]?.unit?.unit_name || "N/A"
-                : `${booking.booking_units[0]?.unit?.unit_name || "N/A"} (+${booking.booking_units.length - 1} more)`
-              : "N/A"
-          }
-        />
-        <MobileCardRow
-          label="Dates"
-          value={`${formatTableDate(booking.check_in)} - ${formatTableDate(booking.check_out)}`}
-        />
-        <MobileCardRow label="Guests" value={`${booking.num_guests} guest(s)`} />
-        <MobileCardRow label="Amount" value={formatCurrency(booking.total_amount)} />
-      </div>
-
+      {/* Action buttons */}
       <div className="flex gap-2">
         <Link
           to="/admin/bookings/$bookingId"
