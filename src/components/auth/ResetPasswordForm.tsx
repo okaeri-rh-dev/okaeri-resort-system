@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,6 @@ import { PasswordStrengthIndicator } from "./PasswordStrengthIndicator";
  * Includes a password strength indicator for better UX.
  */
 export function ResetPasswordForm() {
-  const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -63,9 +62,9 @@ export function ResetPasswordForm() {
       setSuccess(true);
 
       // Sign out and redirect to login after 3 seconds
-      setTimeout(() => {
-        supabase.auth.signOut();
-        navigate({ to: "/login" });
+      setTimeout(async () => {
+        await supabase.auth.signOut();
+        window.location.href = "/login";
       }, 3000);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update password");
@@ -127,9 +126,9 @@ export function ResetPasswordForm() {
             a moment.
           </p>
           <div className="pt-4">
-            <Link to="/login" className="w-full">
-              <Button className="w-full">Go to Login Now</Button>
-            </Link>
+            <Button className="w-full" onClick={() => (window.location.href = "/login")}>
+              Go to Login Now
+            </Button>
           </div>
         </CardContent>
       </Card>

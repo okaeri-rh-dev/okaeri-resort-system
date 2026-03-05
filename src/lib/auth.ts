@@ -581,6 +581,16 @@ class AuthService {
         this.stopSessionRefresh();
         this.scheduleSessionRefresh();
       }
+
+      // Notify App.tsx so router context stays in sync (skip token refreshes
+      // to avoid unnecessary role cache invalidation)
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        window.dispatchEvent(
+          new CustomEvent("authStateChange", {
+            detail: { isAuthenticated: !!session },
+          })
+        );
+      }
     });
 
     return session;
