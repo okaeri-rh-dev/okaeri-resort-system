@@ -44,6 +44,7 @@ import {
   useExportPayments,
   usePayments,
   usePaymentStore,
+  useSoftDeletePayment,
   useVerifyPayment,
 } from "@/stores/usePaymentStore";
 import type { Payment } from "@/types";
@@ -85,15 +86,17 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
+  const [paymentToSoftDelete, setPaymentToSoftDelete] = useState<Payment | null>(null);
 
   // Use ultra-performant MediaQuery API for responsive detection
   const { isMobile } = useResponsiveView();
 
   // Role-based permissions for actions
-  const { canEdit, canDelete, canVerifyPayments } = useUserRole();
+  const { canEdit, canDelete, canSoftDelete, canVerifyPayments } = useUserRole();
 
   // Mutations
   const deletePayment = useDeletePayment();
+  const softDeletePayment = useSoftDeletePayment();
   const verifyPayment = useVerifyPayment();
   const exportPayments = useExportPayments();
 
@@ -120,6 +123,22 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
       setPaymentToDelete(null);
     }
   }, [deletePayment, paymentToDelete]);
+
+  const handleSoftDelete = useCallback((payment: Payment) => {
+    setPaymentToSoftDelete(payment);
+  }, []);
+
+  const confirmSoftDelete = useCallback(async () => {
+    if (!paymentToSoftDelete) return;
+
+    try {
+      await softDeletePayment.mutateAsync(paymentToSoftDelete.payment_id);
+    } catch (error) {
+      console.error("Failed to remove payment:", error);
+    } finally {
+      setPaymentToSoftDelete(null);
+    }
+  }, [softDeletePayment, paymentToSoftDelete]);
 
   const handleVerify = useCallback(
     async (payment: Payment) => {
@@ -286,7 +305,17 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
               onClick: () => payment.proof_url && window.open(payment.proof_url, "_blank"),
               disabled: !payment.proof_url,
             },
-            // Delete - requires canDelete permission (owner+)
+            // Remove (soft-delete) - requires canSoftDelete (manager+), hidden if canDelete (owner+ sees hard delete instead)
+            ...(canSoftDelete && !canDelete
+              ? [
+                  {
+                    label: "Remove",
+                    onClick: () => handleSoftDelete(payment),
+                    className: "text-orange-600 hover:text-orange-700",
+                  },
+                ]
+              : []),
+            // Delete (hard delete) - requires canDelete permission (owner+)
             ...(canDelete
               ? [
                   {
@@ -307,9 +336,11 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
       onViewPayment,
       onEditPayment,
       handleDelete,
+      handleSoftDelete,
       handleVerify,
       canEdit,
       canDelete,
+      canSoftDelete,
       canVerifyPayments,
     ]
   );
@@ -664,6 +695,34 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Soft-Delete (Remove) Confirmation Dialog */}
+      <AlertDialog
+        open={!!paymentToSoftDelete}
+        onOpenChange={(open) => !open && setPaymentToSoftDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Payment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this payment of{" "}
+              <span className="font-semibold">
+                {paymentToSoftDelete && formatCurrency(paymentToSoftDelete.amount)}
+              </span>
+              ? The payment record will be hidden but can be restored by an owner.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmSoftDelete}
+              className="bg-orange-600 hover:bg-orange-700 focus:ring-orange-600"
+            >
+              Remove
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

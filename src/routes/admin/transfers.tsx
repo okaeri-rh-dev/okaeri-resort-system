@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { requireOwner } from "@/lib/route-guards";
+import { requireManager } from "@/lib/route-guards";
 
 // Lazy load components for better performance
 const TransfersTable = lazy(() =>
@@ -31,7 +31,7 @@ const transfersSearchSchema = z.object({
 
 export const Route = createFileRoute("/admin/transfers")({
   beforeLoad: async () => {
-    await requireOwner();
+    await requireManager();
   },
   validateSearch: transfersSearchSchema,
   component: TransfersPage,

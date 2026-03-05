@@ -4,7 +4,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { requireOwner } from "@/lib/route-guards";
+import { requireManager } from "@/lib/route-guards";
 import { db } from "@/lib/supabase";
 
 // Lazy load the edit page component
@@ -17,7 +17,7 @@ const UnitEditPage = lazy(() =>
 export const Route = createFileRoute("/admin/units/$unitId/edit")({
   // Before load - check owner permission
   beforeLoad: async () => {
-    await requireOwner();
+    await requireManager();
   },
 
   // Loader function to prefetch all necessary data

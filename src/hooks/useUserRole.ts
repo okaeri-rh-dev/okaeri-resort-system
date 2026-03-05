@@ -73,6 +73,9 @@ export function useUserRole() {
   // Can verify/reject payments (manager+)
   const canVerifyPayments = isManager;
 
+  // Can soft-delete records (manager+) — sets status to 'Deleted' instead of removing
+  const canSoftDelete = isManager;
+
   return {
     // Role value
     role,
@@ -87,6 +90,7 @@ export function useUserRole() {
     // Action permission flags
     canEdit,
     canDelete,
+    canSoftDelete,
     canConfirmBookings,
     canVerifyPayments,
   };

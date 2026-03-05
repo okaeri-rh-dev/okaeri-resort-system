@@ -233,10 +233,10 @@ export const db = {
   },
 
   payments: {
-    all: () => supabase.from("payments").select("*"),
+    all: () => supabase.from("payments").select("*").neq("status", "Deleted"),
     byId: (id: string) => supabase.from("payments").select("*").eq("payment_id", id).single(),
     byBooking: (bookingId: string) =>
-      supabase.from("payments").select("*").eq("booking_id", bookingId),
+      supabase.from("payments").select("*").eq("booking_id", bookingId).neq("status", "Deleted"),
     create: (data: Database["public"]["Tables"]["payments"]["Insert"]) =>
       supabase.from("payments").insert(data).select().single(),
     update: (id: string, data: Database["public"]["Tables"]["payments"]["Update"]) =>

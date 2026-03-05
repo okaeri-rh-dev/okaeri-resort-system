@@ -964,6 +964,7 @@ export type Database = {
           payment_id: string;
           payment_method: string | null;
           proof_url: string | null;
+          status: string;
         };
         Insert: {
           account_id?: string | null;
@@ -975,6 +976,7 @@ export type Database = {
           payment_id?: string;
           payment_method?: string | null;
           proof_url?: string | null;
+          status?: string;
         };
         Update: {
           account_id?: string | null;
@@ -986,6 +988,7 @@ export type Database = {
           payment_id?: string;
           payment_method?: string | null;
           proof_url?: string | null;
+          status?: string;
         };
         Relationships: [
           {

@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { requireOwner } from "@/lib/route-guards";
+import { requireManager } from "@/lib/route-guards";
 import type { AccountWithBalance } from "@/types";
 
 // Lazy load components for better performance
@@ -34,7 +34,7 @@ const accountsSearchSchema = z.object({
 
 export const Route = createFileRoute("/admin/accounts")({
   beforeLoad: async () => {
-    await requireOwner();
+    await requireManager();
   },
   validateSearch: accountsSearchSchema,
   component: AccountsPage,

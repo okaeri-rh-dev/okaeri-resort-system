@@ -3,7 +3,7 @@ import { lazy, Suspense } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { requireOwner } from "@/lib/route-guards";
+import { requireManager } from "@/lib/route-guards";
 
 const DocumentGenerator = lazy(() =>
   import("@/components/documents/DocumentGenerator").then((m) => ({
@@ -13,7 +13,7 @@ const DocumentGenerator = lazy(() =>
 
 export const Route = createFileRoute("/admin/documents")({
   beforeLoad: async () => {
-    await requireOwner();
+    await requireManager();
   },
   component: DocumentsPage,
 });

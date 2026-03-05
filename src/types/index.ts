@@ -46,6 +46,7 @@ export interface Guest {
 export type BookingStatus = "Pending" | "Confirmed" | "CheckedIn" | "CheckedOut" | "Cancelled";
 export type PaymentStatus = "Pending" | "Partial" | "Completed" | "Refunded";
 export type PaymentMethod = "Cash" | "GCash" | "BankTransfer" | "Card" | "Other";
+export type PaymentRecordStatus = "Active" | "Deleted" | "Refunded";
 
 // Database booking unit junction table record
 export interface BookingUnitRecord {
@@ -184,6 +185,7 @@ export interface Payment {
   payment_date: string | null;
   proof_url?: string | null;
   notes?: string | null;
+  status?: PaymentRecordStatus; // Soft-delete status: Active, Deleted, Refunded
   created_at: string | null;
   // Relations
   booking?: Booking;

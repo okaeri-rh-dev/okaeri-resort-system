@@ -115,7 +115,10 @@ export const usePayments = () => {
   return useQuery({
     queryKey: ["payments", filters, searchQuery, sortBy, sortOrder],
     queryFn: async () => {
-      let query = supabase.from("payments").select(`
+      let query = supabase
+        .from("payments")
+        .select(
+          `
         *,
         booking:bookings(
           booking_id,
@@ -132,7 +135,9 @@ export const usePayments = () => {
           created_at,
           updated_at
         )
-      `);
+      `
+        )
+        .neq("status", "Deleted");
 
       // Apply filters
       // Note: payment_status is not a column in payments table
@@ -207,6 +212,7 @@ export const useBookingPayments = (bookingId: string) => {
         .from("payments")
         .select("*")
         .eq("booking_id", bookingId)
+        .neq("status", "Deleted")
         .order("payment_date", { ascending: false });
 
       if (error) throw new Error(handleSupabaseError(error));
@@ -397,6 +403,35 @@ export const useDeletePayment = () => {
       await queryClient.cancelQueries({ queryKey: ["payments"] });
       removeOptimistic(paymentId);
       return { paymentId };
+    },
+    onError: () => {
+      invalidatePayments();
+    },
+    onSuccess: () => {
+      afterBookingPaymentChange();
+    },
+  });
+};
+
+// Soft-delete payment (sets status to 'Deleted' instead of removing the row)
+export const useSoftDeletePayment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (paymentId: string) => {
+      const { error } = await supabase
+        .from("payments")
+        .update({ status: "Deleted" })
+        .eq("payment_id", paymentId);
+
+      if (error) throw new Error(handleSupabaseError(error));
+    },
+    onMutate: async (paymentId) => {
+      await queryClient.cancelQueries({ queryKey: ["payments"] });
+
+      // Store previous data for rollback
+      const previousPayments = queryClient.getQueryData(["payments"]);
+      return { previousPayments, paymentId };
     },
     onError: () => {
       invalidatePayments();
