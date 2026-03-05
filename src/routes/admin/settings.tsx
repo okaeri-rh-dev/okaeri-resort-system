@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { requireManager } from "@/lib/route-guards";
-import type { PaymentMethodConfig } from "@/types";
+import type { ExpenseCategoryConfig, PaymentMethodConfig } from "@/types";
 
 // Lazy load components for better performance
 const PaymentMethodsTable = lazy(() =>
@@ -27,6 +27,16 @@ const PaymentMethodForm = lazy(() =>
     default: m.PaymentMethodForm,
   }))
 );
+const ExpenseCategoriesTable = lazy(() =>
+  import("@/components/settings/ExpenseCategoriesTable").then((m) => ({
+    default: m.ExpenseCategoriesTable,
+  }))
+);
+const ExpenseCategoryForm = lazy(() =>
+  import("@/components/settings/ExpenseCategoryForm").then((m) => ({
+    default: m.ExpenseCategoryForm,
+  }))
+);
 
 export const Route = createFileRoute("/admin/settings")({
   beforeLoad: async () => {
@@ -35,9 +45,20 @@ export const Route = createFileRoute("/admin/settings")({
   component: SettingsPage,
 });
 
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center py-12">
+    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+  </div>
+);
+
 function SettingsPage() {
+  // Payment Methods state
   const [showForm, setShowForm] = useState(false);
   const [editingMethod, setEditingMethod] = useState<PaymentMethodConfig | null>(null);
+
+  // Expense Categories state
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<ExpenseCategoryConfig | null>(null);
 
   const handleEditMethod = (method: PaymentMethodConfig) => {
     setEditingMethod(method);
@@ -47,6 +68,16 @@ function SettingsPage() {
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingMethod(null);
+  };
+
+  const handleEditCategory = (category: ExpenseCategoryConfig) => {
+    setEditingCategory(category);
+    setShowCategoryForm(true);
+  };
+
+  const handleCloseCategoryForm = () => {
+    setShowCategoryForm(false);
+    setEditingCategory(null);
   };
 
   return (
@@ -62,6 +93,7 @@ function SettingsPage() {
         <Tabs defaultValue="payment-methods">
           <TabsList>
             <TabsTrigger value="payment-methods">Payment Methods</TabsTrigger>
+            <TabsTrigger value="expense-categories">Expense Categories</TabsTrigger>
           </TabsList>
 
           <TabsContent value="payment-methods" className="space-y-4">
@@ -81,14 +113,31 @@ function SettingsPage() {
 
             {/* Payment Methods Table */}
             <ErrorBoundary level="component">
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center py-12">
-                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<LoadingSpinner />}>
                 <PaymentMethodsTable onEditMethod={handleEditMethod} />
+              </Suspense>
+            </ErrorBoundary>
+          </TabsContent>
+
+          <TabsContent value="expense-categories" className="space-y-4">
+            {/* Section Header with Add Button */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold">Expense Categories</h2>
+                <p className="text-muted-foreground text-sm">
+                  Manage categories used for classifying expenses
+                </p>
+              </div>
+              <Button onClick={() => setShowCategoryForm(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Category
+              </Button>
+            </div>
+
+            {/* Expense Categories Table */}
+            <ErrorBoundary level="component">
+              <Suspense fallback={<LoadingSpinner />}>
+                <ExpenseCategoriesTable onEditCategory={handleEditCategory} />
               </Suspense>
             </ErrorBoundary>
           </TabsContent>
@@ -108,17 +157,36 @@ function SettingsPage() {
               </DialogDescription>
             </DialogHeader>
             <ErrorBoundary level="component">
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center py-12">
-                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<LoadingSpinner />}>
                 <PaymentMethodForm
                   method={editingMethod || undefined}
                   onSuccess={handleCloseForm}
                   onCancel={handleCloseForm}
+                />
+              </Suspense>
+            </ErrorBoundary>
+          </DialogContent>
+        </Dialog>
+
+        {/* Expense Category Form Dialog */}
+        <Dialog open={showCategoryForm} onOpenChange={handleCloseCategoryForm}>
+          <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editingCategory ? "Edit Expense Category" : "Add Expense Category"}
+              </DialogTitle>
+              <DialogDescription>
+                {editingCategory
+                  ? "Update the expense category details below."
+                  : "Add a new category for classifying expenses."}
+              </DialogDescription>
+            </DialogHeader>
+            <ErrorBoundary level="component">
+              <Suspense fallback={<LoadingSpinner />}>
+                <ExpenseCategoryForm
+                  category={editingCategory || undefined}
+                  onSuccess={handleCloseCategoryForm}
+                  onCancel={handleCloseCategoryForm}
                 />
               </Suspense>
             </ErrorBoundary>

@@ -32,9 +32,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useEntityEdit } from "@/hooks/entity";
+import { useActiveExpenseCategories } from "@/hooks/useExpenseCategories";
 import { cn } from "@/lib/utils";
 import { expenseEditSchema, type ExpenseEditInput } from "@/lib/validation/entity-schemas";
-import { EXPENSE_CATEGORIES } from "@/stores/useExpenseStore";
 import type { Expense } from "@/types/entity-detail.types";
 
 export interface ExpenseEditPageProps {
@@ -46,6 +46,7 @@ export function ExpenseEditPage() {
   const { expense } = useLoaderData({ from: "/admin/expenses/$expenseId/edit" });
   const navigate = useNavigate();
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const { data: categories = [] } = useActiveExpenseCategories();
 
   // Initialize form with default values from expense
   const form = useForm<ExpenseEditInput>({
@@ -131,11 +132,17 @@ export function ExpenseEditPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {EXPENSE_CATEGORIES.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
+                        {categories.length > 0 ? (
+                          categories.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.name}>
+                              {cat.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="" disabled>
+                            No categories available
                           </SelectItem>
-                        ))}
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />

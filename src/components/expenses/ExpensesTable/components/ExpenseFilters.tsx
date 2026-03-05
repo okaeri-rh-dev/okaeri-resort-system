@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useResponsiveView } from "@/hooks";
-import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/stores/useExpenseStore";
+import { useExpenseCategories } from "@/hooks/useExpenseCategories";
 
 import type { ExpenseFiltersProps } from "../types";
 
@@ -42,6 +42,7 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
 }) => {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const { isMobile } = useResponsiveView();
+  const { data: allCategories = [] } = useExpenseCategories();
 
   // Date range - derive from filters, apply instantly
   const dateRange: DateRange = {
@@ -85,7 +86,7 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
             onValueChange={(value: string) =>
               setFilters({
                 ...filters,
-                category: value === "all" ? undefined : (value as ExpenseCategory),
+                category: value === "all" ? undefined : value,
               })
             }
           >
@@ -94,9 +95,9 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {EXPENSE_CATEGORIES.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
+              {allCategories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.name}>
+                  {cat.name}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -9,6 +9,11 @@ import type { Expense } from "@/types";
 // ============================================
 // EXPENSE CATEGORIES
 // ============================================
+
+/**
+ * @deprecated Use `useActiveExpenseCategories()` from `@/hooks/useExpenseCategories` instead.
+ * Categories are now managed in the database via the expense_categories table.
+ */
 export const EXPENSE_CATEGORIES = [
   "Utilities",
   "Maintenance & Repairs",
@@ -22,13 +27,16 @@ export const EXPENSE_CATEGORIES = [
   "Other",
 ] as const;
 
+/**
+ * @deprecated Use `string` type instead. Categories are now database-driven.
+ */
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
 
 // ============================================
 // ZUSTAND STORE
 // ============================================
 export interface ExpenseFilters {
-  category?: ExpenseCategory;
+  category?: string;
   dateFrom?: string;
   dateTo?: string;
   minAmount?: number;

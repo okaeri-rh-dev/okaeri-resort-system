@@ -29,9 +29,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useActiveExpenseCategories } from "@/hooks/useExpenseCategories";
 import { sanitizeFormData } from "@/lib/security/sanitize";
 import { cn } from "@/lib/utils";
-import { EXPENSE_CATEGORIES, useCreateExpense, useUpdateExpense } from "@/stores/useExpenseStore";
+import { useCreateExpense, useUpdateExpense } from "@/stores/useExpenseStore";
 import type { Expense } from "@/types";
 
 // Validation schema
@@ -58,6 +59,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
   const [receiptPreview, setReceiptPreview] = useState<string | null>(expense?.receipt_url || null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
+  const { data: categories = [] } = useActiveExpenseCategories();
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
 
@@ -170,11 +172,17 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {EXPENSE_CATEGORIES.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
+                  {categories.length > 0 ? (
+                    categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>
+                      No categories available
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
               <FormDescription>

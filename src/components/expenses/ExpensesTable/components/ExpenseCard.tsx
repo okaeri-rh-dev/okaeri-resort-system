@@ -1,4 +1,4 @@
-import { Calendar, DollarSign, Edit2, Eye, Receipt, Trash2, type LucideIcon } from "lucide-react";
+import { Calendar, DollarSign, Edit2, Eye, Receipt, Trash2 } from "lucide-react";
 
 import { formatCurrency, formatTableDate } from "@/components/tables/formatters";
 import { Badge } from "@/components/ui/badge";
@@ -7,22 +7,8 @@ import { Card } from "@/components/ui/card";
 
 import type { ExpenseCardProps } from "../types";
 
-// Icon mapping for categories - using icons instead of colors for professional look
-const categoryIcons: Record<string, LucideIcon> = {
-  Utilities: Receipt,
-  "Maintenance & Repairs": Receipt,
-  "Supplies & Inventory": Receipt,
-  "Staff & Payroll": Receipt,
-  "Marketing & Advertising": Receipt,
-  "Food & Beverage": Receipt,
-  "Cleaning & Laundry": Receipt,
-  "Insurance & Permits": Receipt,
-  "Professional Services": Receipt,
-  Other: Receipt,
-};
-
 export function ExpenseCard({ expense, onView, onEdit, onDelete }: ExpenseCardProps) {
-  const CategoryIcon = categoryIcons[expense.category] || Receipt;
+  const CategoryIcon = Receipt;
 
   return (
     <Card className="overflow-hidden border-neutral-200 bg-white">

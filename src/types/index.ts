@@ -151,6 +151,18 @@ export interface PaymentMethodConfig {
   updated_at: string | null;
 }
 
+// ============================================
+// EXPENSE CATEGORY CONFIG TYPES
+// ============================================
+export interface ExpenseCategoryConfig {
+  id: string;
+  name: string;
+  display_order: number;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 export interface AccountWithBalance extends Account {
   total_payments: number;
   total_expenses: number;

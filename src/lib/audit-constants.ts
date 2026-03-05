@@ -149,6 +149,7 @@ export const PHYSICAL_AUDIT_TABLES = [
 export const AUDIT_PSEUDO_TABLES = [
   "system", // System-wide events (migrations, config changes, backups)
   "authentication", // Auth events (login, logout, failed attempts, password resets)
+  "expense_categories", // Expense category management events
 ] as const;
 
 /**
@@ -167,6 +168,7 @@ export const MANAGER_VISIBLE_TABLES = [
   "expenses",
   "system",
   "authentication",
+  "expense_categories",
 ] as const;
 
 /**
@@ -209,6 +211,7 @@ export const TABLE_DISPLAY_NAMES: Record<AuditTableName, string> = {
   // Pseudo tables
   system: "System",
   authentication: "Authentication",
+  expense_categories: "Expense Categories",
 };
 
 /**

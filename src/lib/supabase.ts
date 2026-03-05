@@ -38,6 +38,19 @@ interface PaymentMethodInsert {
 
 type PaymentMethodUpdate = Partial<PaymentMethodInsert>;
 
+// Expense Categories types
+// Same situation as payment_methods - using local type bridge
+interface ExpenseCategoryInsert {
+  id?: string;
+  name: string;
+  display_order?: number | null;
+  is_active?: boolean | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+type ExpenseCategoryUpdate = Partial<ExpenseCategoryInsert>;
+
 // Create Supabase client with proper typing
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -48,6 +61,9 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const paymentMethodsTable = () => supabase.from("payment_methods" as any) as any;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const expenseCategoriesTable = () => supabase.from("expense_categories" as any) as any;
 
 // Type for PostgrestError from Supabase
 interface PostgrestError {
@@ -1089,6 +1105,39 @@ export const db = {
     /** Reactivate a payment method */
     reactivate: (id: string) =>
       paymentMethodsTable().update({ is_active: true }).eq("id", id).select().single(),
+  },
+
+  // Expense Categories configuration (expense form dropdowns)
+  // Uses expenseCategoriesTable() helper until database.types.ts can be regenerated
+  expenseCategories: {
+    /** Get all expense categories ordered by display_order (admin settings) */
+    all: () => expenseCategoriesTable().select("*").order("display_order", { ascending: true }),
+
+    /** Get active expense categories only (expense form dropdowns) */
+    active: () =>
+      expenseCategoriesTable()
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true }),
+
+    /** Get expense category by ID */
+    byId: (id: string) => expenseCategoriesTable().select("*").eq("id", id).single(),
+
+    /** Create a new expense category */
+    create: (data: Omit<ExpenseCategoryInsert, "id" | "created_at" | "updated_at">) =>
+      expenseCategoriesTable().insert(data).select().single(),
+
+    /** Update an existing expense category */
+    update: (id: string, data: ExpenseCategoryUpdate) =>
+      expenseCategoriesTable().update(data).eq("id", id).select().single(),
+
+    /** Archive (soft delete) an expense category */
+    archive: (id: string) =>
+      expenseCategoriesTable().update({ is_active: false }).eq("id", id).select().single(),
+
+    /** Restore an archived expense category */
+    restore: (id: string) =>
+      expenseCategoriesTable().update({ is_active: true }).eq("id", id).select().single(),
   },
 
   // Account Transfers management
