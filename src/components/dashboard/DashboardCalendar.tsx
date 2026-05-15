@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 
 import { format, getDay } from "date-fns";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
@@ -96,7 +96,14 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
   className,
 }: DashboardCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const { bookingsByDate, monthlyBookingCount } = useCalendarBookings(bookings, currentMonth);
+  const visibleBookings = useMemo(
+    () => bookings?.filter((b) => b.booking_status !== "Cancelled"),
+    [bookings]
+  );
+  const { bookingsByDate, monthlyBookingCount } = useCalendarBookings(
+    visibleBookings,
+    currentMonth
+  );
 
   // Navigation handlers
   const handlePreviousMonth = () => {

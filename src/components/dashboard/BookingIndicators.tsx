@@ -4,7 +4,12 @@ import { getBookingStatusPriority } from "@/hooks/useCalendarBookings";
 import { cn } from "@/lib/utils";
 import type { Booking } from "@/types";
 
-import { getStatusHintClasses, UNIT_SLOT_MAP, UNIT_SLOTS } from "./unit-calendar-config";
+import {
+  getStatusHintClasses,
+  getStatusMobileBarClasses,
+  UNIT_SLOT_MAP,
+  UNIT_SLOTS,
+} from "./unit-calendar-config";
 
 interface BookingIndicatorsProps {
   bookings: Booking[];
@@ -55,13 +60,17 @@ export const BookingIndicators = React.memo(function BookingIndicators({
           return <div key={slot.unitCode} className="h-3 w-full sm:h-4" aria-hidden="true" />;
         }
 
-        const statusHint = getStatusHintClasses(booking.booking_status ?? "Pending");
+        const status = booking.booking_status ?? "Pending";
+        const isPending = status === "Pending";
+        const chipHint = getStatusHintClasses(status);
+        const barHint = getStatusMobileBarClasses(status);
+        const chipBorder = isPending ? slot.pendingBorder : slot.border;
 
         return (
           <div key={slot.unitCode} className="h-3 w-full sm:h-4">
             {/* Mobile: thin color bar only */}
             <div
-              className={cn("h-3 w-full rounded-sm sm:hidden", slot.mobileBar, statusHint)}
+              className={cn("h-3 w-full rounded-sm sm:hidden", slot.mobileBar, barHint)}
               aria-label={`${slot.unitCode}: ${booking.guest_name}`}
             />
             {/* Desktop: chip with unit code + guest name */}
@@ -71,8 +80,8 @@ export const BookingIndicators = React.memo(function BookingIndicators({
                 "truncate text-[10px] leading-tight font-semibold",
                 slot.bg,
                 slot.text,
-                slot.border,
-                statusHint
+                chipBorder,
+                chipHint
               )}
             >
               <span className="mr-1 font-mono">{slot.unitCode}</span>

@@ -310,9 +310,9 @@ describe("BookingIndicators", () => {
       const mobileBar = container.querySelector(".sm\\:hidden");
       const chip = container.querySelector(".sm\\:flex");
 
-      expect(mobileBar).not.toHaveClass("opacity-70");
+      expect(mobileBar).not.toHaveClass("bg-white");
       expect(mobileBar).not.toHaveClass("border-dashed");
-      expect(chip).not.toHaveClass("opacity-70");
+      expect(chip).not.toHaveClass("bg-white");
     });
 
     it("should apply no modifier classes for CheckedIn status", () => {
@@ -325,22 +325,26 @@ describe("BookingIndicators", () => {
       expect(mobileBar).not.toHaveClass("opacity-30");
     });
 
-    it("should apply opacity-70 and border-dashed for Pending on mobile bar", () => {
+    it("should apply opacity-70 and preserve unit color for Pending on mobile bar", () => {
       const booking = makeBooking({ unitCodes: ["C1"], status: "Pending" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const mobileBar = container.querySelector(".sm\\:hidden");
       expect(mobileBar).toHaveClass("opacity-70");
-      expect(mobileBar).toHaveClass("border-dashed");
+      expect(mobileBar).toHaveClass("bg-blue-400"); // unit color preserved
+      expect(mobileBar).not.toHaveClass("bg-white");
     });
 
-    it("should apply opacity-70 and border-dashed for Pending on desktop chip", () => {
+    it("should apply bg-white, border-2, dashed and darker border for Pending on desktop chip", () => {
       const booking = makeBooking({ unitCodes: ["C1"], status: "Pending" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const chip = container.querySelector(".sm\\:flex");
-      expect(chip).toHaveClass("opacity-70");
+      expect(chip).toHaveClass("bg-white");
+      expect(chip).toHaveClass("border-2");
       expect(chip).toHaveClass("border-dashed");
+      expect(chip).toHaveClass("border-blue-600"); // higher-contrast unit shade
+      expect(chip).not.toHaveClass("border-blue-300"); // baseline shade not applied
     });
 
     it("should apply opacity-50 for CheckedOut on both elements", () => {
@@ -353,14 +357,14 @@ describe("BookingIndicators", () => {
       expect(chip).toHaveClass("opacity-50");
     });
 
-    it("should apply opacity-30 and line-through for Cancelled on both elements", () => {
+    it("should apply opacity-30 (mobile bar) and opacity-30 + line-through (chip) for Cancelled", () => {
       const booking = makeBooking({ unitCodes: ["C3"], status: "Cancelled" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const mobileBar = container.querySelector(".sm\\:hidden");
       const chip = container.querySelector(".sm\\:flex");
       expect(mobileBar).toHaveClass("opacity-30");
-      expect(mobileBar).toHaveClass("line-through");
+      // line-through is omitted on the bar (no text to strike through)
       expect(chip).toHaveClass("opacity-30");
       expect(chip).toHaveClass("line-through");
     });
@@ -371,8 +375,10 @@ describe("BookingIndicators", () => {
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const mobileBar = container.querySelector(".sm\\:hidden");
+      const chip = container.querySelector(".sm\\:flex");
       expect(mobileBar).toHaveClass("opacity-70");
-      expect(mobileBar).toHaveClass("border-dashed");
+      expect(chip).toHaveClass("bg-white");
+      expect(chip).toHaveClass("border-dashed");
     });
   });
 

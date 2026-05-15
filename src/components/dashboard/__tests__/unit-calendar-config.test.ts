@@ -14,6 +14,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   getStatusHintClasses,
+  getStatusMobileBarClasses,
   UNIT_SLOT_MAP,
   UNIT_SLOTS,
   type UnitSlotConfig,
@@ -36,6 +37,7 @@ describe("unit-calendar-config", () => {
       expect(c1.text).toBe("text-blue-800");
       expect(c1.border).toBe("border-blue-300");
       expect(c1.mobileBar).toBe("bg-blue-400");
+      expect(c1.pendingBorder).toBe("border-blue-600");
     });
 
     it("should have C2 at index 1 with emerald colors", () => {
@@ -46,6 +48,7 @@ describe("unit-calendar-config", () => {
       expect(c2.text).toBe("text-emerald-800");
       expect(c2.border).toBe("border-emerald-300");
       expect(c2.mobileBar).toBe("bg-emerald-400");
+      expect(c2.pendingBorder).toBe("border-emerald-600");
     });
 
     it("should have C3 at index 2 with amber colors", () => {
@@ -56,6 +59,7 @@ describe("unit-calendar-config", () => {
       expect(c3.text).toBe("text-amber-800");
       expect(c3.border).toBe("border-amber-300");
       expect(c3.mobileBar).toBe("bg-amber-400");
+      expect(c3.pendingBorder).toBe("border-amber-600");
     });
 
     it("should have all required fields on every entry", () => {
@@ -66,6 +70,7 @@ describe("unit-calendar-config", () => {
         "text",
         "border",
         "mobileBar",
+        "pendingBorder",
       ];
 
       for (const slot of UNIT_SLOTS) {
@@ -154,8 +159,8 @@ describe("unit-calendar-config", () => {
       expect(getStatusHintClasses("CheckedIn")).toBe("");
     });
 
-    it('should return "opacity-70 border-dashed" for Pending', () => {
-      expect(getStatusHintClasses("Pending")).toBe("opacity-70 border-dashed");
+    it('should return "bg-white border-2 border-dashed" for Pending', () => {
+      expect(getStatusHintClasses("Pending")).toBe("bg-white border-2 border-dashed");
     });
 
     it('should return "opacity-50" for CheckedOut', () => {
@@ -171,6 +176,37 @@ describe("unit-calendar-config", () => {
       expect(getStatusHintClasses("")).toBe("");
       expect(getStatusHintClasses("confirmed")).toBe("");
       expect(getStatusHintClasses("pending")).toBe("");
+    });
+  });
+
+  // ─────────────────────────────────────────────
+  // getStatusMobileBarClasses
+  // ─────────────────────────────────────────────
+  describe("getStatusMobileBarClasses", () => {
+    it('should return "" for Confirmed', () => {
+      expect(getStatusMobileBarClasses("Confirmed")).toBe("");
+    });
+
+    it('should return "" for CheckedIn', () => {
+      expect(getStatusMobileBarClasses("CheckedIn")).toBe("");
+    });
+
+    it('should return "opacity-70" for Pending (preserves unit color on mobile)', () => {
+      expect(getStatusMobileBarClasses("Pending")).toBe("opacity-70");
+    });
+
+    it('should return "opacity-50" for CheckedOut', () => {
+      expect(getStatusMobileBarClasses("CheckedOut")).toBe("opacity-50");
+    });
+
+    it('should return "opacity-30" for Cancelled', () => {
+      expect(getStatusMobileBarClasses("Cancelled")).toBe("opacity-30");
+    });
+
+    it('should return "" for unknown status (including lowercase variants)', () => {
+      expect(getStatusMobileBarClasses("SomeUnknownStatus")).toBe("");
+      expect(getStatusMobileBarClasses("")).toBe("");
+      expect(getStatusMobileBarClasses("pending")).toBe("");
     });
   });
 });
