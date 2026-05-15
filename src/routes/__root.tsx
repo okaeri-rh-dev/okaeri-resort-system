@@ -3,6 +3,7 @@ import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { UpdateToast } from "@/components/pwa/UpdateToast";
 import { Toaster } from "@/components/ui/sonner";
 
 export interface RouterContext {
@@ -39,6 +40,7 @@ function RootComponent() {
       <div className="min-h-screen">
         <Outlet />
         <Toaster />
+        <UpdateToast />
         {import.meta.env.DEV && <TanStackRouterDevtools />}
       </div>
     </ErrorBoundary>

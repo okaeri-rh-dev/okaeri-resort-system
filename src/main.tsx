@@ -9,7 +9,7 @@ import "./styles/print.css";
 import { logger } from "@/lib/logger";
 import { useInstallPromptStore } from "@/stores/useInstallPromptStore";
 
-// PWA install-prompt wiring
+// PWA install-prompt wiring + multi-tab auto-reload on SW activation
 if (typeof window !== "undefined") {
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
@@ -23,6 +23,17 @@ if (typeof window !== "undefined") {
   // If we're running in standalone mode (already installed), reflect that
   if (window.matchMedia("(display-mode: standalone)").matches) {
     useInstallPromptStore.getState().markInstalled();
+  }
+
+  // When one tab activates a new SW, reload all other open tabs to prevent
+  // UI/API version skew. The activating tab is reloaded by updateServiceWorker(true).
+  let reloading = false;
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (reloading) return;
+      reloading = true;
+      window.location.reload();
+    });
   }
 }
 

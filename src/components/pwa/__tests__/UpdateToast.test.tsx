@@ -42,7 +42,7 @@ describe("<UpdateToast />", () => {
     });
     render(<UpdateToast />);
     expect(mockedToastMessage).toHaveBeenCalledOnce();
-    const [title, opts] = mockedToastMessage.mock.calls[0] as [
+    const call = mockedToastMessage.mock.calls[0] as unknown as [
       string,
       {
         duration: number;
@@ -50,6 +50,7 @@ describe("<UpdateToast />", () => {
         cancel: { label: string; onClick: () => void };
       },
     ];
+    const [title, opts] = call;
     expect(title).toMatch(/new version/i);
     expect(opts.duration).toBe(Infinity);
     expect(opts.action.label).toMatch(/reload/i);
@@ -64,11 +65,11 @@ describe("<UpdateToast />", () => {
       updateServiceWorker,
     });
     render(<UpdateToast />);
-    const [, opts] = mockedToastMessage.mock.calls[0] as [
+    const call = mockedToastMessage.mock.calls[0] as unknown as [
       string,
       { action: { onClick: () => void } },
     ];
-    opts.action.onClick();
+    call[1].action.onClick();
     expect(updateServiceWorker).toHaveBeenCalledWith(true);
   });
 });
