@@ -8,6 +8,7 @@ import {
   Calendar,
   ChevronRight,
   CreditCard,
+  Download,
   FileText,
   Home,
   ListChecks,
@@ -23,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 
+import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,6 +33,7 @@ import { auth } from "@/lib/auth";
 import { hasRoleLevel } from "@/lib/route-guards";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { useInstallPromptStore } from "@/stores/useInstallPromptStore";
 
 interface NavItem {
   label: string;
@@ -86,6 +89,11 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [showAuditLink, setShowAuditLink] = useState(false);
   const [showRolesLink, setShowRolesLink] = useState(false);
   const location = useLocation();
+
+  const installDismissalState = useInstallPromptStore((s) => s.dismissalState);
+  const resetInstallPrompt = useInstallPromptStore((s) => s.reset);
+  const showInstallEscape =
+    installDismissalState === "permanent" || installDismissalState === "snoozed";
 
   // Single permission check — calls getUserAuditRole() once and derives all booleans
   const checkPermissions = useEffectEvent(async () => {
@@ -229,6 +237,17 @@ export function MainLayout({ children }: MainLayoutProps) {
 
           {/* Footer */}
           <div className="border-t p-3 lg:p-4">
+            {showInstallEscape && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => resetInstallPrompt()}
+                className="text-muted-foreground hover:text-foreground mb-2 h-9 w-full justify-start"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Install app
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -337,6 +356,20 @@ export function MainLayout({ children }: MainLayoutProps) {
                         <Settings className="mr-3 h-4 w-4" />
                         Settings
                       </Link>
+                      {showInstallEscape && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            resetInstallPrompt();
+                          }}
+                          className="text-muted-foreground hover:text-foreground h-11 w-full touch-manipulation justify-start"
+                        >
+                          <Download className="mr-3 h-4 w-4" />
+                          Install app
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -388,6 +421,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       {/* Main Content */}
       <main className="flex-1 overflow-hidden">
         <div className="h-full overflow-y-auto">
+          <InstallBanner />
           <div className="container mx-auto max-w-none p-4 pb-20 md:pb-6 lg:p-6">{children}</div>
         </div>
       </main>
