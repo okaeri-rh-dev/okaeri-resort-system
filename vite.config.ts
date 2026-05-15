@@ -5,6 +5,7 @@ import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react-swc";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
+import { VitePWA } from "vite-plugin-pwa";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig(({ mode }) => ({
@@ -16,6 +17,34 @@ export default defineConfig(({ mode }) => ({
     react(),
     tsconfigPaths(),
     tailwindcss(),
+    VitePWA({
+      registerType: "prompt",
+      // Use existing public/manifest.json; do not generate one
+      manifest: false,
+      injectRegister: null,
+      workbox: {
+        // Precache hashed build assets only
+        globPatterns: ["**/*.{js,css,html,svg,png,ico,woff2}"],
+        // Never intercept SPA navigation
+        navigateFallback: null,
+        // Never cache API or Supabase traffic
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) =>
+              url.pathname.startsWith("/api/") ||
+              url.hostname.endsWith("supabase.co") ||
+              url.hostname.endsWith("supabase.in"),
+            handler: "NetworkOnly",
+          },
+        ],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: false, // user-driven activation via UpdateToast
+      },
+      devOptions: {
+        enabled: false, // never in dev to avoid surprise SWs during development
+      },
+    }),
     // Bundle analyzer - in production or analyze mode
     (mode === "production" || mode === "analyze") &&
       visualizer({
