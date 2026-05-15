@@ -65,21 +65,21 @@ describe("useInstallPromptStore", () => {
 
   it("rehydrates 'permanent' from localStorage on init", () => {
     localStorage.setItem(DISMISS_KEY, "true");
-    useInstallPromptStore.getState().reset();
+    useInstallPromptStore.getState().rehydrate();
     expect(useInstallPromptStore.getState().dismissalState).toBe("permanent");
   });
 
   it("rehydrates 'snoozed' when localStorage date is in the future", () => {
     const future = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     localStorage.setItem(SNOOZE_KEY, future);
-    useInstallPromptStore.getState().reset();
+    useInstallPromptStore.getState().rehydrate();
     expect(useInstallPromptStore.getState().dismissalState).toBe("snoozed");
   });
 
   it("treats expired snooze as 'visible' and clears the key", () => {
     const past = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     localStorage.setItem(SNOOZE_KEY, past);
-    useInstallPromptStore.getState().reset();
+    useInstallPromptStore.getState().rehydrate();
     expect(useInstallPromptStore.getState().dismissalState).toBe("visible");
     expect(localStorage.getItem(SNOOZE_KEY)).toBeNull();
   });
