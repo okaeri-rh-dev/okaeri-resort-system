@@ -224,6 +224,16 @@ vi.mock("dompurify", () => ({
   },
 }));
 
+// Default mock for vite-plugin-pwa's virtual module so component tests can render.
+// Individual tests can override this via vi.mock(...) at the top of the spec.
+vi.mock("virtual:pwa-register/react", () => ({
+  useRegisterSW: () => ({
+    needRefresh: [false, vi.fn()],
+    offlineReady: [false, vi.fn()],
+    updateServiceWorker: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 // Mock date for consistent testing
 const mockDate = new Date("2025-09-25T12:00:00.000Z");
 vi.setSystemTime(mockDate);
