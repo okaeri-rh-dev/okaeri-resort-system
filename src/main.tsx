@@ -7,6 +7,24 @@ import "./index.css";
 import "./styles/print.css";
 
 import { logger } from "@/lib/logger";
+import { useInstallPromptStore } from "@/stores/useInstallPromptStore";
+
+// PWA install-prompt wiring
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    useInstallPromptStore.getState().captureEvent(event as BeforeInstallPromptEvent);
+  });
+
+  window.addEventListener("appinstalled", () => {
+    useInstallPromptStore.getState().markInstalled();
+  });
+
+  // If we're running in standalone mode (already installed), reflect that
+  if (window.matchMedia("(display-mode: standalone)").matches) {
+    useInstallPromptStore.getState().markInstalled();
+  }
+}
 
 // Performance monitoring for production
 if (import.meta.env.PROD) {
