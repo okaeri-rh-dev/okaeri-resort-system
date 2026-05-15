@@ -110,6 +110,12 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
+        // The PWA plugin isn't loaded under Vitest, so the virtual module must
+        // be aliased to a stub. Runtime behavior is overridden by vi.mock in setup.ts.
+        "virtual:pwa-register/react": path.resolve(
+          __dirname,
+          "./src/test/__stubs__/pwa-register-react.ts"
+        ),
       },
     },
   };
