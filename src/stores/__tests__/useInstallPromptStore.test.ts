@@ -18,6 +18,9 @@ describe("useInstallPromptStore", () => {
   beforeEach(() => {
     localStorage.clear();
     useInstallPromptStore.getState().reset();
+    // reset() preserves the captured event by design (production escape-hatch
+    // semantics). Tests need to start with a clean event slate.
+    useInstallPromptStore.setState({ installPromptEvent: null });
   });
 
   afterEach(() => {
@@ -90,6 +93,16 @@ describe("useInstallPromptStore", () => {
     useInstallPromptStore.getState().reset();
     expect(localStorage.getItem(DISMISS_KEY)).toBeNull();
     expect(localStorage.getItem(SNOOZE_KEY)).toBeNull();
+    expect(useInstallPromptStore.getState().dismissalState).toBe("visible");
+  });
+
+  it("reset preserves the captured installPromptEvent (escape hatch must re-show banner)", () => {
+    const event = makePromptEvent();
+    useInstallPromptStore.getState().captureEvent(event);
+    useInstallPromptStore.getState().dismissPermanently();
+    expect(useInstallPromptStore.getState().installPromptEvent).toBe(event);
+    useInstallPromptStore.getState().reset();
+    expect(useInstallPromptStore.getState().installPromptEvent).toBe(event);
     expect(useInstallPromptStore.getState().dismissalState).toBe("visible");
   });
 

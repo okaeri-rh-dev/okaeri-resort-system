@@ -62,9 +62,9 @@ export const useInstallPromptStore = create<InstallPromptState>((set, get) => ({
   reset: () => {
     localStorage.removeItem(SNOOZE_KEY);
     localStorage.removeItem(DISMISS_KEY);
-    set({
-      installPromptEvent: null,
-      dismissalState: "visible",
-    });
+    // Keep installPromptEvent — beforeinstallprompt fires once per page load,
+    // and the escape hatch must be able to re-show the native prompt without
+    // requiring a navigation.
+    set({ dismissalState: "visible" });
   },
 }));

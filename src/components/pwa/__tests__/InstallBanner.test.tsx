@@ -17,6 +17,9 @@ describe("<InstallBanner />", () => {
   beforeEach(() => {
     localStorage.clear();
     useInstallPromptStore.getState().reset();
+    // reset() preserves the captured event by design (production escape-hatch
+    // semantics). Tests need to start with a clean event slate.
+    useInstallPromptStore.setState({ installPromptEvent: null });
   });
 
   afterEach(() => {
