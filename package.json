@@ -25,6 +25,7 @@
     "preview": "vite preview",
     "seed:roles:dev": "tsx scripts/seed-dev-roles.ts",
     "seed:roles:verify": "tsx scripts/verify-roles.ts",
+    "seed:test-users": "node scripts/seed-test-users.mjs",
     "test": "vitest",
     "test:all": "npm run test:coverage && npm run test:e2e",
     "test:coverage": "vitest run --coverage",
