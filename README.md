@@ -98,12 +98,16 @@ Okaeri Resort Management System is a modern, full-stack web application designed
 - Error tracking and logging
 
 #### 📱 **Progressive Web App (PWA)**
-- Offline functionality with service workers
+- Installable on desktop and mobile for authenticated staff/owners (home-screen icon, standalone display)
+- Sticky install banner with snooze (7 days) and permanent dismissal, plus a sidebar escape hatch to re-show it
+- iOS Safari fallback with manual "Share → Add to Home Screen" instructions (Apple doesn't expose `beforeinstallprompt`)
+- Service-worker precaching of hashed JS/CSS chunks and static assets for faster repeat loads
+- Multi-tab-safe update notification: in-app sonner toast appears when a new build is deployed; other open tabs auto-reload via `controllerchange` when one tab activates the new SW
+- **No** caching of `/api/**` or Supabase traffic — TanStack Query remains the sole client-side cache for dynamic data, which keeps booking/payment integrity ironclad
 - Mobile-optimized interface (mobile-first design)
-- Push notifications support
-- App-like experience with installation prompt
-- Cross-platform compatibility
-- Optimized for Philippine connectivity patterns
+- Cross-platform compatibility (Chrome, Edge, Android Chrome, iOS Safari; Firefox falls back to a regular web app)
+
+See [`docs/plans/2026-05-16-pwa-design.md`](docs/plans/2026-05-16-pwa-design.md) for the design rationale and [`docs/plans/2026-05-16-pwa-rollout-checklist.md`](docs/plans/2026-05-16-pwa-rollout-checklist.md) for the manual QA gate before promoting PWA changes to production.
 
 ## 🛠 Tech Stack
 
