@@ -91,6 +91,77 @@ const DayButton = React.memo(function DayButton({
   );
 });
 
+interface CalendarHeaderProps {
+  currentMonth: Date;
+  monthlyBookingCount: number;
+  onPrev: () => void;
+  onNext: () => void;
+  onToday: () => void;
+}
+
+function RowHeader({
+  currentMonth,
+  monthlyBookingCount,
+  onPrev,
+  onNext,
+  onToday,
+}: CalendarHeaderProps) {
+  return (
+    <CardHeader className="rounded-t-lg bg-gradient-to-r from-slate-50 to-blue-50/30 pb-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+            <CalendarDays className="size-5 text-blue-600" />
+            <span className="text-slate-800">Booking Calendar</span>
+          </CardTitle>
+          {monthlyBookingCount > 0 && (
+            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-sm font-medium text-slate-600">
+              {monthlyBookingCount} booking{monthlyBookingCount !== 1 ? "s" : ""} this month
+            </span>
+          )}
+        </div>
+
+        {/* Navigation Controls */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onToday}
+            className="h-8 px-2.5 text-xs font-medium"
+          >
+            Today
+          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onPrev}
+              className="h-8 w-8 p-0"
+              aria-label="Previous month"
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <div className="min-w-[140px] rounded-md border border-slate-200 bg-white px-3 py-1 text-center">
+              <span className="text-sm font-semibold text-slate-800">
+                {format(currentMonth, "MMMM yyyy")}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onNext}
+              className="h-8 w-8 p-0"
+              aria-label="Next month"
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </CardHeader>
+  );
+}
+
 export const DashboardCalendar = React.memo(function DashboardCalendar({
   bookings,
   isLoading,
@@ -138,58 +209,13 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
 
   return (
     <Card className={cn("w-full", className)}>
-      <CardHeader className="rounded-t-lg bg-gradient-to-r from-slate-50 to-blue-50/30 pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <CardTitle className="flex items-center gap-2 text-xl font-semibold">
-              <CalendarDays className="size-5 text-blue-600" />
-              <span className="text-slate-800">Booking Calendar</span>
-            </CardTitle>
-            {monthlyBookingCount > 0 && (
-              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-sm font-medium text-slate-600">
-                {monthlyBookingCount} booking{monthlyBookingCount !== 1 ? "s" : ""} this month
-              </span>
-            )}
-          </div>
-
-          {/* Navigation Controls */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleToday}
-              className="h-8 px-2.5 text-xs font-medium"
-            >
-              Today
-            </Button>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handlePreviousMonth}
-                className="h-8 w-8 p-0"
-                aria-label="Previous month"
-              >
-                <ChevronLeft className="size-4" />
-              </Button>
-              <div className="min-w-[140px] rounded-md border border-slate-200 bg-white px-3 py-1 text-center">
-                <span className="text-sm font-semibold text-slate-800">
-                  {format(currentMonth, "MMMM yyyy")}
-                </span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleNextMonth}
-                className="h-8 w-8 p-0"
-                aria-label="Next month"
-              >
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </CardHeader>
+      <RowHeader
+        currentMonth={currentMonth}
+        monthlyBookingCount={monthlyBookingCount}
+        onPrev={handlePreviousMonth}
+        onNext={handleNextMonth}
+        onToday={handleToday}
+      />
 
       <CardContent className="p-4 pt-0">
         {isLoading ? (
