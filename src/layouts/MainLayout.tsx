@@ -422,7 +422,9 @@ export function MainLayout({ children }: MainLayoutProps) {
       <main className="flex-1 overflow-hidden">
         <div className="h-full overflow-y-auto">
           <InstallBanner />
-          <div className="container mx-auto max-w-none p-4 pb-20 md:pb-6 lg:p-6">{children}</div>
+          <div className="container mx-auto max-w-none px-2 pt-2 pb-20 md:p-4 md:pb-6 lg:p-6">
+            {children}
+          </div>
         </div>
       </main>
     </div>

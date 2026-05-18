@@ -19,6 +19,7 @@ interface DashboardCalendarProps {
   bookings: Booking[] | undefined;
   isLoading?: boolean;
   className?: string;
+  headerVariant?: "row" | "stacked";
 }
 
 // Uniform subtle tint for any day with bookings (avoids competing with unit chip colors)
@@ -90,10 +91,145 @@ const DayButton = React.memo(function DayButton({
   );
 });
 
+interface CalendarHeaderProps {
+  currentMonth: Date;
+  monthlyBookingCount: number;
+  onPrev: () => void;
+  onNext: () => void;
+  onToday: () => void;
+}
+
+function RowHeader({
+  currentMonth,
+  monthlyBookingCount,
+  onPrev,
+  onNext,
+  onToday,
+}: CalendarHeaderProps) {
+  return (
+    <CardHeader className="rounded-t-lg bg-gradient-to-r from-slate-50 to-blue-50/30 pb-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+            <CalendarDays className="size-5 text-blue-600" />
+            <span className="text-slate-800">Booking Calendar</span>
+          </CardTitle>
+          {monthlyBookingCount > 0 && (
+            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-sm font-medium text-slate-600">
+              {monthlyBookingCount} booking{monthlyBookingCount !== 1 ? "s" : ""} this month
+            </span>
+          )}
+        </div>
+
+        {/* Navigation Controls */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onToday}
+            className="h-8 px-2.5 text-xs font-medium"
+          >
+            Today
+          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onPrev}
+              className="h-8 w-8 p-0"
+              aria-label="Previous month"
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <div className="min-w-[140px] rounded-md border border-slate-200 bg-white px-3 py-1 text-center">
+              <span className="text-sm font-semibold text-slate-800">
+                {format(currentMonth, "MMMM yyyy")}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onNext}
+              className="h-8 w-8 p-0"
+              aria-label="Next month"
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </CardHeader>
+  );
+}
+
+export function StackedHeader({
+  currentMonth,
+  monthlyBookingCount,
+  onPrev,
+  onNext,
+  onToday,
+}: CalendarHeaderProps) {
+  return (
+    <CardHeader className="space-y-2 rounded-t-lg bg-gradient-to-r from-slate-50 to-blue-50/30 pb-3">
+      {/* Row 1: identity + reset */}
+      <div className="flex items-center justify-between gap-2">
+        <CardTitle className="flex min-w-0 items-center gap-2 text-base font-semibold">
+          <CalendarDays className="size-5 shrink-0 text-blue-600" />
+          <span className="truncate text-slate-800">Booking Calendar</span>
+        </CardTitle>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onToday}
+          className="h-8 shrink-0 px-2.5 text-xs font-medium"
+        >
+          Today
+        </Button>
+      </div>
+
+      {/* Row 2: hero month navigation */}
+      <div className="flex items-center justify-between">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onPrev}
+          aria-label="Previous month"
+          className="h-11 w-11"
+        >
+          <ChevronLeft className="size-5" />
+        </Button>
+        <span
+          aria-live="polite"
+          className="px-3 text-base font-semibold text-slate-800 tabular-nums"
+        >
+          {format(currentMonth, "MMMM yyyy")}
+        </span>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onNext}
+          aria-label="Next month"
+          className="h-11 w-11"
+        >
+          <ChevronRight className="size-5" />
+        </Button>
+      </div>
+
+      {/* Row 3: subtle metadata */}
+      {monthlyBookingCount > 0 && (
+        <div className="text-xs text-slate-500">
+          {monthlyBookingCount} booking{monthlyBookingCount !== 1 ? "s" : ""} this month
+        </div>
+      )}
+    </CardHeader>
+  );
+}
+
 export const DashboardCalendar = React.memo(function DashboardCalendar({
   bookings,
   isLoading,
   className,
+  headerVariant = "row",
 }: DashboardCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const visibleBookings = useMemo(
@@ -135,61 +271,26 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
   );
 
   return (
-    <Card className={cn("w-full", className)}>
-      <CardHeader className="rounded-t-lg bg-gradient-to-r from-slate-50 to-blue-50/30 pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <CardTitle className="flex items-center gap-2 text-xl font-semibold">
-              <CalendarDays className="size-5 text-blue-600" />
-              <span className="text-slate-800">Booking Calendar</span>
-            </CardTitle>
-            {monthlyBookingCount > 0 && (
-              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-sm font-medium text-slate-600">
-                {monthlyBookingCount} booking{monthlyBookingCount !== 1 ? "s" : ""} this month
-              </span>
-            )}
-          </div>
+    <Card className={cn("w-full", headerVariant === "stacked" && "p-1", className)}>
+      {headerVariant === "stacked" ? (
+        <StackedHeader
+          currentMonth={currentMonth}
+          monthlyBookingCount={monthlyBookingCount}
+          onPrev={handlePreviousMonth}
+          onNext={handleNextMonth}
+          onToday={handleToday}
+        />
+      ) : (
+        <RowHeader
+          currentMonth={currentMonth}
+          monthlyBookingCount={monthlyBookingCount}
+          onPrev={handlePreviousMonth}
+          onNext={handleNextMonth}
+          onToday={handleToday}
+        />
+      )}
 
-          {/* Navigation Controls */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleToday}
-              className="h-8 px-2.5 text-xs font-medium"
-            >
-              Today
-            </Button>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handlePreviousMonth}
-                className="h-8 w-8 p-0"
-                aria-label="Previous month"
-              >
-                <ChevronLeft className="size-4" />
-              </Button>
-              <div className="min-w-[140px] rounded-md border border-slate-200 bg-white px-3 py-1 text-center">
-                <span className="text-sm font-semibold text-slate-800">
-                  {format(currentMonth, "MMMM yyyy")}
-                </span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleNextMonth}
-                className="h-8 w-8 p-0"
-                aria-label="Next month"
-              >
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="p-4 pt-0">
+      <CardContent className={cn("pt-0", headerVariant === "stacked" ? "p-0" : "p-4")}>
         {isLoading ? (
           <div className="flex h-[480px] items-center justify-center">
             <div className="text-sm text-neutral-600">Loading calendar...</div>
@@ -201,7 +302,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
             month={currentMonth}
             onMonthChange={setCurrentMonth}
             showOutsideDays={true}
-            className="w-full rounded-md border"
+            className={cn("w-full rounded-md border", headerVariant === "stacked" && "p-0")}
             classNames={{
               months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 w-full",
               month: "space-y-3 w-full",
@@ -211,7 +312,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
               nav_button: cn("h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"),
               nav_button_previous: "absolute left-1",
               nav_button_next: "absolute right-1",
-              month_grid: "w-full border-collapse space-y-1", // renamed from 'table'
+              month_grid: "w-full border-collapse space-y-1 [container-type:inline-size]", // renamed from 'table'
               weekdays: "flex w-full", // renamed from 'head_row'
               weekday:
                 "text-slate-600 rounded-md w-full font-medium text-[11px] uppercase tracking-wider", // renamed from 'head_cell'

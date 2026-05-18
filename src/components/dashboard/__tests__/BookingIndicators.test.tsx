@@ -7,8 +7,10 @@
  * Test Coverage:
  * - Null/empty returns
  * - Fixed 3-slot layout with invisible placeholders
- * - Mobile thin bars (sm:hidden) and desktop chips (sm:flex)
- * - Status hint modifier classes on both mobile/desktop elements
+ * - Unified chip render path (single element per occupied slot at all viewports)
+ * - Unit code hidden on mobile, visible from sm: up; aria-label always preserved
+ * - clamp() font-size inline style for container-query-driven scaling
+ * - Status hint modifier classes on the chip
  * - Priority resolution when multiple bookings target the same slot
  * - Multi-unit bookings filling multiple slots
  * - Edge cases (unknown codes, null units, className merging)
@@ -84,6 +86,11 @@ function makeBooking({
     updated_at: null,
     booking_units: bookingUnits,
   };
+}
+
+// Convenience selectors for the unified chip render path
+function getChips(container: HTMLElement): HTMLElement[] {
+  return Array.from(container.querySelectorAll<HTMLElement>("[aria-label]"));
 }
 
 // ─────────────────────────────────────────────
@@ -181,99 +188,79 @@ describe("BookingIndicators", () => {
     });
   });
 
-  // ─── Mobile rendering ───
-  describe("Mobile rendering", () => {
-    it("should render a mobile bar with sm:hidden class", () => {
-      const booking = makeBooking({ unitCodes: ["C1"], guestName: "Alice" });
+  // ─── Unified chip render path ───
+  describe("Unified chip render path", () => {
+    it("renders a single chip per occupied unit slot at any viewport", () => {
+      const booking = makeBooking({ unitCodes: ["C1"], guestName: "John Smith" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const mobileBar = container.querySelector(".sm\\:hidden");
-      expect(mobileBar).toBeInTheDocument();
+      // No mobile-only color bar (the old `sm:hidden` branch)
+      expect(container.querySelectorAll("[class*='sm:hidden']")).toHaveLength(0);
+      // No desktop-only chip variant (the old `hidden sm:flex` branch)
+      const hiddenSmFlexCount = Array.from(container.querySelectorAll<HTMLElement>("*")).filter(
+        (el) => /\bhidden\b/.test(el.className) && /\bsm:flex\b/.test(el.className)
+      ).length;
+      expect(hiddenSmFlexCount).toBe(0);
+
+      // One visible chip carries the guest name
+      expect(screen.getByText(/john smith/i)).toBeInTheDocument();
+      expect(getChips(container)).toHaveLength(1);
     });
 
-    it("should apply correct mobile bar color for C1 (blue)", () => {
-      const booking = makeBooking({ unitCodes: ["C1"] });
-      const { container } = render(<BookingIndicators bookings={[booking]} />);
-
-      const mobileBar = container.querySelector(".sm\\:hidden");
-      expect(mobileBar).toHaveClass("bg-blue-400");
-    });
-
-    it("should apply correct mobile bar color for C2 (emerald)", () => {
-      const booking = makeBooking({ unitCodes: ["C2"] });
-      const { container } = render(<BookingIndicators bookings={[booking]} />);
-
-      const mobileBar = container.querySelector(".sm\\:hidden");
-      expect(mobileBar).toHaveClass("bg-emerald-400");
-    });
-
-    it("should apply correct mobile bar color for C3 (amber)", () => {
-      const booking = makeBooking({ unitCodes: ["C3"] });
-      const { container } = render(<BookingIndicators bookings={[booking]} />);
-
-      const mobileBar = container.querySelector(".sm\\:hidden");
-      expect(mobileBar).toHaveClass("bg-amber-400");
-    });
-
-    it("should have aria-label with unit code and guest name", () => {
+    it("hides the unit code text on mobile but keeps it in the chip's aria-label", () => {
       const booking = makeBooking({ unitCodes: ["C1"], guestName: "Maria Santos" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const mobileBar = container.querySelector(".sm\\:hidden");
-      expect(mobileBar).toHaveAttribute("aria-label", "C1: Maria Santos");
+      const unitCodeSpan = container.querySelector(".font-mono");
+      expect(unitCodeSpan).toBeInTheDocument();
+      expect(unitCodeSpan).toHaveClass("hidden");
+      expect(unitCodeSpan).toHaveClass("sm:inline");
+
+      const [chip] = getChips(container);
+      expect(chip).toHaveAttribute("aria-label", "C1: Maria Santos");
     });
 
-    it("should render mobile bar with rounded-sm class", () => {
+    it("applies the clamp() font-size utility class on each chip", () => {
       const booking = makeBooking({ unitCodes: ["C1"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const mobileBar = container.querySelector(".sm\\:hidden");
-      expect(mobileBar).toHaveClass("rounded-sm");
+      const [chip] = getChips(container);
+      // Tailwind v4 arbitrary-value class drives container-query font scaling.
+      // We assert the class string directly (jsdom won't parse `cqi` at runtime).
+      expect(chip).toHaveClass("text-[clamp(7px,2cqi,10px)]");
     });
-  });
 
-  // ─── Desktop rendering ───
-  describe("Desktop rendering", () => {
-    it("should render a desktop chip with hidden sm:flex classes", () => {
+    it("applies correct per-unit chip bg/text/border for C1 (blue)", () => {
       const booking = makeBooking({ unitCodes: ["C1"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const desktopChip = container.querySelector(".sm\\:flex");
-      expect(desktopChip).toBeInTheDocument();
-      expect(desktopChip).toHaveClass("hidden");
-    });
-
-    it("should apply correct desktop bg/text/border for C1 (blue)", () => {
-      const booking = makeBooking({ unitCodes: ["C1"] });
-      const { container } = render(<BookingIndicators bookings={[booking]} />);
-
-      const chip = container.querySelector(".sm\\:flex");
+      const [chip] = getChips(container);
       expect(chip).toHaveClass("bg-blue-100");
       expect(chip).toHaveClass("text-blue-800");
       expect(chip).toHaveClass("border-blue-300");
     });
 
-    it("should apply correct desktop bg/text/border for C2 (emerald)", () => {
+    it("applies correct per-unit chip bg/text/border for C2 (emerald)", () => {
       const booking = makeBooking({ unitCodes: ["C2"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const chip = container.querySelector(".sm\\:flex");
+      const [chip] = getChips(container);
       expect(chip).toHaveClass("bg-emerald-100");
       expect(chip).toHaveClass("text-emerald-800");
       expect(chip).toHaveClass("border-emerald-300");
     });
 
-    it("should apply correct desktop bg/text/border for C3 (amber)", () => {
+    it("applies correct per-unit chip bg/text/border for C3 (amber)", () => {
       const booking = makeBooking({ unitCodes: ["C3"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const chip = container.querySelector(".sm\\:flex");
+      const [chip] = getChips(container);
       expect(chip).toHaveClass("bg-amber-100");
       expect(chip).toHaveClass("text-amber-800");
       expect(chip).toHaveClass("border-amber-300");
     });
 
-    it("should display unit code in a font-mono span", () => {
+    it("displays the unit code in a font-mono span", () => {
       const booking = makeBooking({ unitCodes: ["C2"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
@@ -282,7 +269,7 @@ describe("BookingIndicators", () => {
       expect(monoSpan).toHaveTextContent("C2");
     });
 
-    it("should display guest name in a truncated font-sans span", () => {
+    it("displays the guest name in a truncated font-sans span", () => {
       const booking = makeBooking({ unitCodes: ["C1"], guestName: "Juan dela Cruz" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
@@ -291,85 +278,66 @@ describe("BookingIndicators", () => {
       expect(nameSpan).toHaveTextContent("Juan dela Cruz");
     });
 
-    it("should have border and rounded-sm styling on the chip", () => {
+    it("renders the chip with border and rounded-sm styling", () => {
       const booking = makeBooking({ unitCodes: ["C1"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const chip = container.querySelector(".sm\\:flex");
+      const [chip] = getChips(container);
       expect(chip).toHaveClass("border");
       expect(chip).toHaveClass("rounded-sm");
     });
   });
 
-  // ─── Status hints ───
-  describe("Status hints on elements", () => {
-    it("should apply no modifier classes for Confirmed status", () => {
+  // ─── Status hints on the chip ───
+  describe("Status hints on the chip", () => {
+    it("applies no modifier classes for Confirmed status", () => {
       const booking = makeBooking({ unitCodes: ["C1"], status: "Confirmed" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const mobileBar = container.querySelector(".sm\\:hidden");
-      const chip = container.querySelector(".sm\\:flex");
-
-      expect(mobileBar).not.toHaveClass("bg-white");
-      expect(mobileBar).not.toHaveClass("border-dashed");
+      const [chip] = getChips(container);
       expect(chip).not.toHaveClass("bg-white");
+      expect(chip).not.toHaveClass("border-dashed");
+      expect(chip).not.toHaveClass("opacity-50");
+      expect(chip).not.toHaveClass("opacity-30");
+      expect(chip).not.toHaveClass("line-through");
     });
 
-    it("should apply no modifier classes for CheckedIn status", () => {
+    it("applies no opacity modifier for CheckedIn status", () => {
       const booking = makeBooking({ unitCodes: ["C1"], status: "CheckedIn" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const mobileBar = container.querySelector(".sm\\:hidden");
-      expect(mobileBar).not.toHaveClass("opacity-70");
-      expect(mobileBar).not.toHaveClass("opacity-50");
-      expect(mobileBar).not.toHaveClass("opacity-30");
+      const [chip] = getChips(container);
+      expect(chip).not.toHaveClass("opacity-50");
+      expect(chip).not.toHaveClass("opacity-30");
+      expect(chip).not.toHaveClass("border-dashed");
     });
 
-    it("should apply opacity-70 and amber bar color for Pending on mobile bar (regardless of unit)", () => {
+    it("applies bg-white, border-2, dashed and amber border/text for Pending (unit-agnostic)", () => {
       const booking = makeBooking({ unitCodes: ["C1"], status: "Pending" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const mobileBar = container.querySelector(".sm\\:hidden");
-      expect(mobileBar).toHaveClass("opacity-70");
-      // Pending overrides unit color → all Pending mobile bars are amber
-      expect(mobileBar).toHaveClass("bg-amber-400");
-      expect(mobileBar).not.toHaveClass("bg-blue-400");
-      expect(mobileBar).not.toHaveClass("bg-white");
-    });
-
-    it("should apply bg-white, border-2, dashed and amber border/text for Pending on desktop chip", () => {
-      const booking = makeBooking({ unitCodes: ["C1"], status: "Pending" });
-      const { container } = render(<BookingIndicators bookings={[booking]} />);
-
-      const chip = container.querySelector(".sm\\:flex");
+      const [chip] = getChips(container);
       expect(chip).toHaveClass("bg-white");
       expect(chip).toHaveClass("border-2");
       expect(chip).toHaveClass("border-dashed");
-      // Pending overrides unit color → all Pending chips use amber border + text
       expect(chip).toHaveClass("border-amber-600");
       expect(chip).toHaveClass("text-amber-800");
       expect(chip).not.toHaveClass("border-blue-300");
-      expect(chip).not.toHaveClass("border-blue-600");
       expect(chip).not.toHaveClass("text-blue-800");
     });
 
-    it("should apply amber Pending styling to a C2 booking (Pending color is unit-agnostic)", () => {
+    it("applies amber Pending styling to a C2 booking (Pending color is unit-agnostic)", () => {
       const booking = makeBooking({ unitCodes: ["C2"], status: "Pending" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const mobileBar = container.querySelector(".sm\\:hidden");
-      const chip = container.querySelector(".sm\\:flex");
-
-      expect(mobileBar).toHaveClass("bg-amber-400");
-      expect(mobileBar).not.toHaveClass("bg-emerald-400");
-
+      const [chip] = getChips(container);
       expect(chip).toHaveClass("border-amber-600");
       expect(chip).toHaveClass("text-amber-800");
-      expect(chip).not.toHaveClass("border-emerald-600");
+      expect(chip).not.toHaveClass("border-emerald-300");
       expect(chip).not.toHaveClass("text-emerald-800");
     });
 
-    it("should still display the booking's own unit code on a Pending chip (identity preserved)", () => {
+    it("still displays the booking's own unit code on a Pending chip (identity preserved)", () => {
       const c1Booking = makeBooking({ unitCodes: ["C1"], status: "Pending" });
       const c2Booking = makeBooking({ unitCodes: ["C2"], status: "Pending" });
 
@@ -380,36 +348,29 @@ describe("BookingIndicators", () => {
       expect(c2Container.querySelector(".font-mono")).toHaveTextContent("C2");
     });
 
-    it("should apply opacity-50 for CheckedOut on both elements", () => {
+    it("applies opacity-50 for CheckedOut", () => {
       const booking = makeBooking({ unitCodes: ["C2"], status: "CheckedOut" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const mobileBar = container.querySelector(".sm\\:hidden");
-      const chip = container.querySelector(".sm\\:flex");
-      expect(mobileBar).toHaveClass("opacity-50");
+      const [chip] = getChips(container);
       expect(chip).toHaveClass("opacity-50");
     });
 
-    it("should apply opacity-30 (mobile bar) and opacity-30 + line-through (chip) for Cancelled", () => {
+    it("applies opacity-30 and line-through for Cancelled", () => {
       const booking = makeBooking({ unitCodes: ["C3"], status: "Cancelled" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const mobileBar = container.querySelector(".sm\\:hidden");
-      const chip = container.querySelector(".sm\\:flex");
-      expect(mobileBar).toHaveClass("opacity-30");
-      // line-through is omitted on the bar (no text to strike through)
+      const [chip] = getChips(container);
       expect(chip).toHaveClass("opacity-30");
       expect(chip).toHaveClass("line-through");
     });
 
-    it("should apply Pending hint when booking_status is null (defaults to Pending)", () => {
+    it("applies Pending hint when booking_status is null (defaults to Pending)", () => {
       const booking = makeBooking({ unitCodes: ["C1"], status: "Confirmed" });
       booking.booking_status = null;
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const mobileBar = container.querySelector(".sm\\:hidden");
-      const chip = container.querySelector(".sm\\:flex");
-      expect(mobileBar).toHaveClass("opacity-70");
+      const [chip] = getChips(container);
       expect(chip).toHaveClass("bg-white");
       expect(chip).toHaveClass("border-dashed");
     });
@@ -439,15 +400,15 @@ describe("BookingIndicators", () => {
       expect(nameSpan).toHaveTextContent("Confirmed Guest");
     });
 
-    it("should render the winning booking's guest name in the aria-label", () => {
+    it("should reflect the winning booking's guest name in the chip's aria-label", () => {
       const bookings = [
         makeBooking({ guestName: "Low Priority", status: "Cancelled", unitCodes: ["C3"] }),
         makeBooking({ guestName: "High Priority", status: "CheckedIn", unitCodes: ["C3"] }),
       ];
       const { container } = render(<BookingIndicators bookings={bookings} />);
 
-      const mobileBar = container.querySelector(".sm\\:hidden");
-      expect(mobileBar).toHaveAttribute("aria-label", "C3: High Priority");
+      const [chip] = getChips(container);
+      expect(chip).toHaveAttribute("aria-label", "C3: High Priority");
     });
 
     it("should resolve priorities independently per slot", () => {
@@ -477,8 +438,7 @@ describe("BookingIndicators", () => {
       const booking = makeBooking({ guestName: "Multi Guest", unitCodes: ["C1", "C3"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const mobileBars = container.querySelectorAll(".sm\\:hidden");
-      expect(mobileBars).toHaveLength(2);
+      expect(getChips(container)).toHaveLength(2);
 
       // 1 placeholder for C2
       const placeholders = container.querySelectorAll('[aria-hidden="true"]');
@@ -489,8 +449,7 @@ describe("BookingIndicators", () => {
       const booking = makeBooking({ guestName: "Full House", unitCodes: ["C1", "C2", "C3"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const mobileBars = container.querySelectorAll(".sm\\:hidden");
-      expect(mobileBars).toHaveLength(3);
+      expect(getChips(container)).toHaveLength(3);
 
       const placeholders = container.querySelectorAll('[aria-hidden="true"]');
       expect(placeholders).toHaveLength(0);
@@ -510,10 +469,10 @@ describe("BookingIndicators", () => {
       const booking = makeBooking({ unitCodes: ["C1", "C3"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const mobileBars = container.querySelectorAll(".sm\\:hidden");
-      // First bar should be C1 (blue), second should be C3 (amber)
-      expect(mobileBars[0]).toHaveClass("bg-blue-400");
-      expect(mobileBars[1]).toHaveClass("bg-amber-400");
+      const chips = getChips(container);
+      // First chip should be C1 (blue), second should be C3 (amber)
+      expect(chips[0]).toHaveClass("bg-blue-100");
+      expect(chips[1]).toHaveClass("bg-amber-100");
     });
   });
 
@@ -523,10 +482,9 @@ describe("BookingIndicators", () => {
       const booking = makeBooking({ unitCodes: ["C1", "X99"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      // Only C1 should render a mobile bar
-      const mobileBars = container.querySelectorAll(".sm\\:hidden");
-      expect(mobileBars).toHaveLength(1);
-      expect(mobileBars[0]).toHaveClass("bg-blue-400");
+      const chips = getChips(container);
+      expect(chips).toHaveLength(1);
+      expect(chips[0]).toHaveClass("bg-blue-100");
     });
 
     it("should handle bu.unit being null/undefined", () => {
@@ -539,9 +497,9 @@ describe("BookingIndicators", () => {
       const booking = makeBooking({ unitCodes: ["INVALID", "C2", "ALSO_INVALID"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const mobileBars = container.querySelectorAll(".sm\\:hidden");
-      expect(mobileBars).toHaveLength(1);
-      expect(mobileBars[0]).toHaveClass("bg-emerald-400");
+      const chips = getChips(container);
+      expect(chips).toHaveLength(1);
+      expect(chips[0]).toHaveClass("bg-emerald-100");
     });
 
     it("should merge className prop onto the container", () => {
