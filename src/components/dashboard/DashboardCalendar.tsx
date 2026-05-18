@@ -312,7 +312,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
               nav_button: cn("h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"),
               nav_button_previous: "absolute left-1",
               nav_button_next: "absolute right-1",
-              month_grid: "w-full border-collapse space-y-1", // renamed from 'table'
+              month_grid: "w-full border-collapse space-y-1 [container-type:inline-size]", // renamed from 'table'
               weekdays: "flex w-full", // renamed from 'head_row'
               weekday:
                 "text-slate-600 rounded-md w-full font-medium text-[11px] uppercase tracking-wider", // renamed from 'head_cell'
