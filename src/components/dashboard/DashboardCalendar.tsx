@@ -162,11 +162,74 @@ function RowHeader({
   );
 }
 
+export function StackedHeader({
+  currentMonth,
+  monthlyBookingCount,
+  onPrev,
+  onNext,
+  onToday,
+}: CalendarHeaderProps) {
+  return (
+    <CardHeader className="space-y-2 rounded-t-lg bg-gradient-to-r from-slate-50 to-blue-50/30 pb-3">
+      {/* Row 1: identity + reset */}
+      <div className="flex items-center justify-between gap-2">
+        <CardTitle className="flex min-w-0 items-center gap-2 text-base font-semibold">
+          <CalendarDays className="size-5 shrink-0 text-blue-600" />
+          <span className="truncate text-slate-800">Booking Calendar</span>
+        </CardTitle>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onToday}
+          className="h-8 shrink-0 px-2.5 text-xs font-medium"
+        >
+          Today
+        </Button>
+      </div>
+
+      {/* Row 2: hero month navigation */}
+      <div className="flex items-center justify-between">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onPrev}
+          aria-label="Previous month"
+          className="h-11 w-11"
+        >
+          <ChevronLeft className="size-5" />
+        </Button>
+        <span
+          aria-live="polite"
+          className="px-3 text-base font-semibold text-slate-800 tabular-nums"
+        >
+          {format(currentMonth, "MMMM yyyy")}
+        </span>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onNext}
+          aria-label="Next month"
+          className="h-11 w-11"
+        >
+          <ChevronRight className="size-5" />
+        </Button>
+      </div>
+
+      {/* Row 3: subtle metadata */}
+      {monthlyBookingCount > 0 && (
+        <div className="text-xs text-slate-500">
+          {monthlyBookingCount} booking{monthlyBookingCount !== 1 ? "s" : ""} this month
+        </div>
+      )}
+    </CardHeader>
+  );
+}
+
 export const DashboardCalendar = React.memo(function DashboardCalendar({
   bookings,
   isLoading,
   className,
-  headerVariant: _headerVariant = "row",
+  headerVariant = "row",
 }: DashboardCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const visibleBookings = useMemo(
@@ -209,13 +272,23 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
 
   return (
     <Card className={cn("w-full", className)}>
-      <RowHeader
-        currentMonth={currentMonth}
-        monthlyBookingCount={monthlyBookingCount}
-        onPrev={handlePreviousMonth}
-        onNext={handleNextMonth}
-        onToday={handleToday}
-      />
+      {headerVariant === "stacked" ? (
+        <StackedHeader
+          currentMonth={currentMonth}
+          monthlyBookingCount={monthlyBookingCount}
+          onPrev={handlePreviousMonth}
+          onNext={handleNextMonth}
+          onToday={handleToday}
+        />
+      ) : (
+        <RowHeader
+          currentMonth={currentMonth}
+          monthlyBookingCount={monthlyBookingCount}
+          onPrev={handlePreviousMonth}
+          onNext={handleNextMonth}
+          onToday={handleToday}
+        />
+      )}
 
       <CardContent className="p-4 pt-0">
         {isLoading ? (
