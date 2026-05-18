@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest";
 import {
   getStatusHintClasses,
   getStatusMobileBarClasses,
+  PENDING_CHIP_COLORS,
   UNIT_SLOT_MAP,
   UNIT_SLOTS,
   type UnitSlotConfig,
@@ -37,7 +38,6 @@ describe("unit-calendar-config", () => {
       expect(c1.text).toBe("text-blue-800");
       expect(c1.border).toBe("border-blue-300");
       expect(c1.mobileBar).toBe("bg-blue-400");
-      expect(c1.pendingBorder).toBe("border-blue-600");
     });
 
     it("should have C2 at index 1 with emerald colors", () => {
@@ -48,7 +48,6 @@ describe("unit-calendar-config", () => {
       expect(c2.text).toBe("text-emerald-800");
       expect(c2.border).toBe("border-emerald-300");
       expect(c2.mobileBar).toBe("bg-emerald-400");
-      expect(c2.pendingBorder).toBe("border-emerald-600");
     });
 
     it("should have C3 at index 2 with amber colors", () => {
@@ -59,7 +58,6 @@ describe("unit-calendar-config", () => {
       expect(c3.text).toBe("text-amber-800");
       expect(c3.border).toBe("border-amber-300");
       expect(c3.mobileBar).toBe("bg-amber-400");
-      expect(c3.pendingBorder).toBe("border-amber-600");
     });
 
     it("should have all required fields on every entry", () => {
@@ -70,7 +68,6 @@ describe("unit-calendar-config", () => {
         "text",
         "border",
         "mobileBar",
-        "pendingBorder",
       ];
 
       for (const slot of UNIT_SLOTS) {
@@ -207,6 +204,23 @@ describe("unit-calendar-config", () => {
       expect(getStatusMobileBarClasses("SomeUnknownStatus")).toBe("");
       expect(getStatusMobileBarClasses("")).toBe("");
       expect(getStatusMobileBarClasses("pending")).toBe("");
+    });
+  });
+
+  // ─────────────────────────────────────────────
+  // PENDING_CHIP_COLORS
+  // ─────────────────────────────────────────────
+  describe("PENDING_CHIP_COLORS", () => {
+    it("should use amber colors for all Pending bookings regardless of unit", () => {
+      expect(PENDING_CHIP_COLORS.text).toBe("text-amber-800");
+      expect(PENDING_CHIP_COLORS.border).toBe("border-amber-600");
+      expect(PENDING_CHIP_COLORS.mobileBar).toBe("bg-amber-400");
+    });
+
+    it("should match the C3 slot's color family (Pending mirrors C3 look)", () => {
+      const c3 = UNIT_SLOTS[2];
+      expect(PENDING_CHIP_COLORS.text).toBe(c3.text);
+      expect(PENDING_CHIP_COLORS.mobileBar).toBe(c3.mobileBar);
     });
   });
 });

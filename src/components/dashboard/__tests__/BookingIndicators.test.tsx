@@ -325,17 +325,19 @@ describe("BookingIndicators", () => {
       expect(mobileBar).not.toHaveClass("opacity-30");
     });
 
-    it("should apply opacity-70 and preserve unit color for Pending on mobile bar", () => {
+    it("should apply opacity-70 and amber bar color for Pending on mobile bar (regardless of unit)", () => {
       const booking = makeBooking({ unitCodes: ["C1"], status: "Pending" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const mobileBar = container.querySelector(".sm\\:hidden");
       expect(mobileBar).toHaveClass("opacity-70");
-      expect(mobileBar).toHaveClass("bg-blue-400"); // unit color preserved
+      // Pending overrides unit color → all Pending mobile bars are amber
+      expect(mobileBar).toHaveClass("bg-amber-400");
+      expect(mobileBar).not.toHaveClass("bg-blue-400");
       expect(mobileBar).not.toHaveClass("bg-white");
     });
 
-    it("should apply bg-white, border-2, dashed and darker border for Pending on desktop chip", () => {
+    it("should apply bg-white, border-2, dashed and amber border/text for Pending on desktop chip", () => {
       const booking = makeBooking({ unitCodes: ["C1"], status: "Pending" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
@@ -343,8 +345,39 @@ describe("BookingIndicators", () => {
       expect(chip).toHaveClass("bg-white");
       expect(chip).toHaveClass("border-2");
       expect(chip).toHaveClass("border-dashed");
-      expect(chip).toHaveClass("border-blue-600"); // higher-contrast unit shade
-      expect(chip).not.toHaveClass("border-blue-300"); // baseline shade not applied
+      // Pending overrides unit color → all Pending chips use amber border + text
+      expect(chip).toHaveClass("border-amber-600");
+      expect(chip).toHaveClass("text-amber-800");
+      expect(chip).not.toHaveClass("border-blue-300");
+      expect(chip).not.toHaveClass("border-blue-600");
+      expect(chip).not.toHaveClass("text-blue-800");
+    });
+
+    it("should apply amber Pending styling to a C2 booking (Pending color is unit-agnostic)", () => {
+      const booking = makeBooking({ unitCodes: ["C2"], status: "Pending" });
+      const { container } = render(<BookingIndicators bookings={[booking]} />);
+
+      const mobileBar = container.querySelector(".sm\\:hidden");
+      const chip = container.querySelector(".sm\\:flex");
+
+      expect(mobileBar).toHaveClass("bg-amber-400");
+      expect(mobileBar).not.toHaveClass("bg-emerald-400");
+
+      expect(chip).toHaveClass("border-amber-600");
+      expect(chip).toHaveClass("text-amber-800");
+      expect(chip).not.toHaveClass("border-emerald-600");
+      expect(chip).not.toHaveClass("text-emerald-800");
+    });
+
+    it("should still display the booking's own unit code on a Pending chip (identity preserved)", () => {
+      const c1Booking = makeBooking({ unitCodes: ["C1"], status: "Pending" });
+      const c2Booking = makeBooking({ unitCodes: ["C2"], status: "Pending" });
+
+      const { container: c1Container } = render(<BookingIndicators bookings={[c1Booking]} />);
+      const { container: c2Container } = render(<BookingIndicators bookings={[c2Booking]} />);
+
+      expect(c1Container.querySelector(".font-mono")).toHaveTextContent("C1");
+      expect(c2Container.querySelector(".font-mono")).toHaveTextContent("C2");
     });
 
     it("should apply opacity-50 for CheckedOut on both elements", () => {

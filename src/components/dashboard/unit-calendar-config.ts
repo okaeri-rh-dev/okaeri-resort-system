@@ -11,8 +11,6 @@ export interface UnitSlotConfig {
   text: string;
   border: string;
   mobileBar: string;
-  /** Darker border shade applied to Pending chips for higher contrast on white bg */
-  pendingBorder: string;
 }
 
 export const UNIT_SLOTS: UnitSlotConfig[] = [
@@ -23,7 +21,6 @@ export const UNIT_SLOTS: UnitSlotConfig[] = [
     text: "text-blue-800",
     border: "border-blue-300",
     mobileBar: "bg-blue-400",
-    pendingBorder: "border-blue-600",
   },
   {
     unitCode: "C2",
@@ -32,7 +29,6 @@ export const UNIT_SLOTS: UnitSlotConfig[] = [
     text: "text-emerald-800",
     border: "border-emerald-300",
     mobileBar: "bg-emerald-400",
-    pendingBorder: "border-emerald-600",
   },
   {
     unitCode: "C3",
@@ -41,12 +37,26 @@ export const UNIT_SLOTS: UnitSlotConfig[] = [
     text: "text-amber-800",
     border: "border-amber-300",
     mobileBar: "bg-amber-400",
-    pendingBorder: "border-amber-600",
   },
 ];
 
 /** Map from unit code to slot config for O(1) lookup */
 export const UNIT_SLOT_MAP = new Map(UNIT_SLOTS.map((s) => [s.unitCode, s]));
+
+/**
+ * Color overrides applied to ALL Pending bookings regardless of unit, so
+ * tentative bookings read as a single cohesive status across the calendar.
+ * Unit identity for Pending chips lives in the rendered unit code letter,
+ * not in color.
+ */
+export const PENDING_CHIP_COLORS = {
+  /** Desktop chip text color */
+  text: "text-amber-800",
+  /** Desktop chip border color (pairs with border-2 border-dashed from getStatusHintClasses) */
+  border: "border-amber-600",
+  /** Mobile color-bar background */
+  mobileBar: "bg-amber-400",
+} as const;
 
 /** Returns Tailwind modifier classes for the desktop chip based on booking status */
 export function getStatusHintClasses(status: string): string {

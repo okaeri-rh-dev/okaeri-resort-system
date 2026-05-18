@@ -7,6 +7,7 @@ import type { Booking } from "@/types";
 import {
   getStatusHintClasses,
   getStatusMobileBarClasses,
+  PENDING_CHIP_COLORS,
   UNIT_SLOT_MAP,
   UNIT_SLOTS,
 } from "./unit-calendar-config";
@@ -64,13 +65,15 @@ export const BookingIndicators = React.memo(function BookingIndicators({
         const isPending = status === "Pending";
         const chipHint = getStatusHintClasses(status);
         const barHint = getStatusMobileBarClasses(status);
-        const chipBorder = isPending ? slot.pendingBorder : slot.border;
+        const chipBorder = isPending ? PENDING_CHIP_COLORS.border : slot.border;
+        const chipText = isPending ? PENDING_CHIP_COLORS.text : slot.text;
+        const barBg = isPending ? PENDING_CHIP_COLORS.mobileBar : slot.mobileBar;
 
         return (
           <div key={slot.unitCode} className="h-3 w-full sm:h-4">
             {/* Mobile: thin color bar only */}
             <div
-              className={cn("h-3 w-full rounded-sm sm:hidden", slot.mobileBar, barHint)}
+              className={cn("h-3 w-full rounded-sm sm:hidden", barBg, barHint)}
               aria-label={`${slot.unitCode}: ${booking.guest_name}`}
             />
             {/* Desktop: chip with unit code + guest name */}
@@ -79,7 +82,7 @@ export const BookingIndicators = React.memo(function BookingIndicators({
                 "hidden w-full items-center rounded-sm border px-1 py-0.5 sm:flex",
                 "truncate text-[10px] leading-tight font-semibold",
                 slot.bg,
-                slot.text,
+                chipText,
                 chipBorder,
                 chipHint
               )}
