@@ -220,12 +220,14 @@ describe("BookingIndicators", () => {
       expect(chip).toHaveAttribute("aria-label", "C1: Maria Santos");
     });
 
-    it("applies the clamp() font-size inline style on each chip", () => {
+    it("applies the clamp() font-size utility class on each chip", () => {
       const booking = makeBooking({ unitCodes: ["C1"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const [chip] = getChips(container);
-      expect(chip.style.fontSize).toBe("clamp(7px, 2cqi, 10px)");
+      // Tailwind v4 arbitrary-value class drives container-query font scaling.
+      // We assert the class string directly (jsdom won't parse `cqi` at runtime).
+      expect(chip).toHaveClass("text-[clamp(7px,2cqi,10px)]");
     });
 
     it("applies correct per-unit chip bg/text/border for C1 (blue)", () => {

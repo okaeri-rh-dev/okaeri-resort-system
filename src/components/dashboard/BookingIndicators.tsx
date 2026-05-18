@@ -6,7 +6,6 @@ import type { Booking } from "@/types";
 
 import {
   getStatusHintClasses,
-  getStatusMobileBarClasses,
   PENDING_CHIP_COLORS,
   UNIT_SLOT_MAP,
   UNIT_SLOTS,
@@ -64,31 +63,25 @@ export const BookingIndicators = React.memo(function BookingIndicators({
         const status = booking.booking_status ?? "Pending";
         const isPending = status === "Pending";
         const chipHint = getStatusHintClasses(status);
-        const barHint = getStatusMobileBarClasses(status);
         const chipBorder = isPending ? PENDING_CHIP_COLORS.border : slot.border;
         const chipText = isPending ? PENDING_CHIP_COLORS.text : slot.text;
-        const barBg = isPending ? PENDING_CHIP_COLORS.mobileBar : slot.mobileBar;
 
         return (
           <div key={slot.unitCode} className="h-3 w-full sm:h-4">
-            {/* Mobile: thin color bar only */}
-            <div
-              className={cn("h-3 w-full rounded-sm sm:hidden", barBg, barHint)}
-              aria-label={`${slot.unitCode}: ${booking.guest_name}`}
-            />
-            {/* Desktop: chip with unit code + guest name */}
             <div
               className={cn(
-                "hidden w-full items-center rounded-sm border px-1 py-0.5 sm:flex",
-                "truncate text-[10px] leading-tight font-semibold",
+                "flex w-full min-w-0 items-center rounded-sm border px-1 py-0.5",
+                "truncate leading-tight font-medium",
+                "text-[clamp(7px,2cqi,10px)]",
                 slot.bg,
                 chipText,
                 chipBorder,
                 chipHint
               )}
+              aria-label={`${slot.unitCode}: ${booking.guest_name}`}
             >
-              <span className="mr-1 font-mono">{slot.unitCode}</span>
-              <span className="truncate font-sans font-medium">{booking.guest_name}</span>
+              <span className="mr-1 hidden font-mono sm:inline">{slot.unitCode}</span>
+              <span className="truncate font-sans">{booking.guest_name}</span>
             </div>
           </div>
         );
