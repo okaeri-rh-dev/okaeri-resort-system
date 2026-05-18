@@ -45,12 +45,7 @@ export function MobileDashboard({ bookings, isLoading }: MobileDashboardProps) {
       </div>
 
       {/* Calendar (stacked header variant) */}
-      <DashboardCalendar
-        bookings={bookings}
-        isLoading={isLoading}
-        headerVariant="stacked"
-        className="[&_[data-slot=card-content]]:p-0 [&>[data-slot=card]]:p-1"
-      />
+      <DashboardCalendar bookings={bookings} isLoading={isLoading} headerVariant="stacked" />
 
       {/* Tomorrow's Schedule */}
       <Card>

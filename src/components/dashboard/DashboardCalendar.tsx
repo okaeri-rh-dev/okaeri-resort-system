@@ -271,7 +271,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
   );
 
   return (
-    <Card className={cn("w-full", className)}>
+    <Card className={cn("w-full", headerVariant === "stacked" && "p-1", className)}>
       {headerVariant === "stacked" ? (
         <StackedHeader
           currentMonth={currentMonth}
@@ -290,7 +290,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
         />
       )}
 
-      <CardContent className="p-4 pt-0">
+      <CardContent className={cn("pt-0", headerVariant === "stacked" ? "p-0" : "p-4")}>
         {isLoading ? (
           <div className="flex h-[480px] items-center justify-center">
             <div className="text-sm text-neutral-600">Loading calendar...</div>
@@ -302,7 +302,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
             month={currentMonth}
             onMonthChange={setCurrentMonth}
             showOutsideDays={true}
-            className="w-full rounded-md border"
+            className={cn("w-full rounded-md border", headerVariant === "stacked" && "p-0")}
             classNames={{
               months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 w-full",
               month: "space-y-3 w-full",
