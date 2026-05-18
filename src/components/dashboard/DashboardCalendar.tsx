@@ -19,6 +19,7 @@ interface DashboardCalendarProps {
   bookings: Booking[] | undefined;
   isLoading?: boolean;
   className?: string;
+  headerVariant?: "row" | "stacked";
 }
 
 // Uniform subtle tint for any day with bookings (avoids competing with unit chip colors)
@@ -94,6 +95,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
   bookings,
   isLoading,
   className,
+  headerVariant: _headerVariant = "row",
 }: DashboardCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const visibleBookings = useMemo(
