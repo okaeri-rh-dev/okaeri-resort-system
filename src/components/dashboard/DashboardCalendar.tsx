@@ -78,12 +78,12 @@ const DayButton = React.memo(function DayButton({
             : ""
         }`}
       >
-        <div className="flex h-full flex-col items-center justify-start">
+        <div className="flex h-full w-full min-w-0 flex-col items-center justify-start overflow-hidden">
           <span className={cn("text-xs font-medium sm:text-sm", isToday && "text-blue-900")}>
             {format(date, "d")}
           </span>
           {dayBookings.length > 0 && (
-            <BookingIndicators bookings={dayBookings} className="mt-1 w-full" />
+            <BookingIndicators bookings={dayBookings} className="mt-1 w-full min-w-0" />
           )}
         </div>
       </Button>
@@ -171,12 +171,43 @@ export function StackedHeader({
 }: CalendarHeaderProps) {
   return (
     <CardHeader className="space-y-2 rounded-t-lg bg-gradient-to-r from-slate-50 to-blue-50/30 pb-3">
-      {/* Row 1: identity + reset */}
+      {/* Row 1: hero month navigation */}
+      <div className="flex items-center justify-between">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onPrev}
+          aria-label="Previous month"
+          className="h-11 w-11 shrink-0"
+        >
+          <ChevronLeft className="size-5" />
+        </Button>
+        <span
+          aria-live="polite"
+          className="min-w-0 truncate px-3 text-base font-semibold text-slate-800 tabular-nums"
+        >
+          {format(currentMonth, "MMMM yyyy")}
+        </span>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onNext}
+          aria-label="Next month"
+          className="h-11 w-11 shrink-0"
+        >
+          <ChevronRight className="size-5" />
+        </Button>
+      </div>
+
+      {/* Row 2: metadata + reset action */}
       <div className="flex items-center justify-between gap-2">
-        <CardTitle className="flex min-w-0 items-center gap-2 text-base font-semibold">
-          <CalendarDays className="size-5 shrink-0 text-blue-600" />
-          <span className="truncate text-slate-800">Booking Calendar</span>
-        </CardTitle>
+        {monthlyBookingCount > 0 ? (
+          <span className="min-w-0 truncate text-xs text-slate-500">
+            {monthlyBookingCount} booking{monthlyBookingCount !== 1 ? "s" : ""} this month
+          </span>
+        ) : (
+          <span aria-hidden="true" />
+        )}
         <Button
           variant="outline"
           size="sm"
@@ -186,41 +217,6 @@ export function StackedHeader({
           Today
         </Button>
       </div>
-
-      {/* Row 2: hero month navigation */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onPrev}
-          aria-label="Previous month"
-          className="h-11 w-11"
-        >
-          <ChevronLeft className="size-5" />
-        </Button>
-        <span
-          aria-live="polite"
-          className="px-3 text-base font-semibold text-slate-800 tabular-nums"
-        >
-          {format(currentMonth, "MMMM yyyy")}
-        </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onNext}
-          aria-label="Next month"
-          className="h-11 w-11"
-        >
-          <ChevronRight className="size-5" />
-        </Button>
-      </div>
-
-      {/* Row 3: subtle metadata */}
-      {monthlyBookingCount > 0 && (
-        <div className="text-xs text-slate-500">
-          {monthlyBookingCount} booking{monthlyBookingCount !== 1 ? "s" : ""} this month
-        </div>
-      )}
     </CardHeader>
   );
 }
@@ -306,19 +302,21 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
             classNames={{
               months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 w-full",
               month: "space-y-3 w-full",
-              caption: "hidden", // Hide default caption since we have custom navigation
+              month_caption: "hidden", // Hide default caption since we have custom navigation (v9 slot)
+              caption: "hidden", // Back-compat alias for older react-day-picker
               caption_label: "text-sm font-medium",
               nav: "hidden", // Hide default nav since we have custom navigation
               nav_button: cn("h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"),
               nav_button_previous: "absolute left-1",
               nav_button_next: "absolute right-1",
-              month_grid: "w-full border-collapse space-y-1 [container-type:inline-size]", // renamed from 'table'
+              month_grid:
+                "w-full table-fixed border-collapse space-y-1 [container-type:inline-size]", // renamed from 'table'; table-fixed prevents the table from growing beyond its declared width
               weekdays: "flex w-full", // renamed from 'head_row'
               weekday:
-                "text-slate-600 rounded-md w-full font-medium text-[11px] uppercase tracking-wider", // renamed from 'head_cell'
+                "text-slate-600 rounded-md min-w-0 flex-1 font-medium text-[11px] uppercase tracking-wider", // renamed from 'head_cell'
               week: "flex w-full mt-1", // renamed from 'row'
               day: cn(
-                "relative h-20 sm:h-24 md:h-28 flex-1 p-0 text-center text-sm",
+                "relative h-20 sm:h-24 md:h-28 min-w-0 flex-1 p-0 text-center text-sm",
                 "[&:has([aria-selected])]:bg-accent",
                 "first:[&:has([aria-selected])]:rounded-l-md",
                 "last:[&:has([aria-selected])]:rounded-r-md",

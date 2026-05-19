@@ -12,9 +12,9 @@ describe("StackedHeader", () => {
     onToday: vi.fn(),
   };
 
-  it("renders the calendar title", () => {
+  it("does not render the 'Booking Calendar' title (reclaimed for vertical space)", () => {
     render(<StackedHeader {...baseProps} />);
-    expect(screen.getByText("Booking Calendar")).toBeInTheDocument();
+    expect(screen.queryByText("Booking Calendar")).not.toBeInTheDocument();
   });
 
   it("renders the Today button", () => {
