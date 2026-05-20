@@ -44,7 +44,15 @@ export const BookingTooltip = React.memo(function BookingTooltip({
   return (
     <HoverCard openDelay={150} closeDelay={100}>
       <HoverCardTrigger asChild>{children}</HoverCardTrigger>
-      <HoverCardContent className="isolate z-50 w-80 bg-white p-3 shadow-lg" align="center">
+      {/* collisionPadding=26 lands the popover ~12px from the viewport edge on
+          Sunday/Saturday at mobile widths. Smaller values still leave the popover
+          flush against the edge because Radix popper's shift falls ~14px short of
+          the requested padding when avoiding cross-axis collisions. */}
+      <HoverCardContent
+        className="isolate z-50 w-80 bg-white p-3 shadow-lg"
+        align="center"
+        collisionPadding={26}
+      >
         <div className="space-y-3">
           {/* Header */}
           <div className="border-b border-neutral-200 pb-2">
