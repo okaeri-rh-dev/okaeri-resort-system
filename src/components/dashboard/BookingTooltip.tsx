@@ -2,7 +2,12 @@ import React, { useMemo } from "react";
 
 import { format } from "date-fns";
 
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardPortal,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { formatCurrency, getBookingStatusPriority } from "@/hooks/useCalendarBookings";
 import { cn } from "@/lib/utils";
 import type { Booking } from "@/types";
@@ -44,46 +49,49 @@ export const BookingTooltip = React.memo(function BookingTooltip({
   return (
     <HoverCard openDelay={150} closeDelay={100}>
       <HoverCardTrigger asChild>{children}</HoverCardTrigger>
-      {/* collisionPadding=26 lands the popover ~12px from the viewport edge on
-          Sunday/Saturday at mobile widths. Smaller values still leave the popover
-          flush against the edge because Radix popper's shift falls ~14px short of
-          the requested padding when avoiding cross-axis collisions. */}
-      <HoverCardContent
-        className="isolate z-50 w-80 bg-white p-3 shadow-lg"
-        align="center"
-        collisionPadding={26}
-      >
-        <div className="space-y-3">
-          {/* Header */}
-          <div className="border-b border-neutral-200 pb-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-neutral-900">
-                {format(date, "MMMM d, yyyy")}
-              </span>
-              <span className="text-xs font-medium text-neutral-600">
-                {bookings.length} booking{bookings.length !== 1 ? "s" : ""}
-                {totalUnits > bookings.length ? ` (${totalUnits} units)` : ""}
-              </span>
+      {/* Portal so the popover escapes the calendar table's containing block.
+          The table has `container-type: inline-size` (for BookingIndicators' cqi
+          font-size) which implicitly applies `contain: layout`, making the table
+          a containing block for position:fixed descendants. Without the portal,
+          the popover's coordinates are table-relative and move with page scroll. */}
+      <HoverCardPortal>
+        <HoverCardContent
+          className="isolate z-50 w-80 bg-white p-3 shadow-lg"
+          align="center"
+          collisionPadding={12}
+        >
+          <div className="space-y-3">
+            {/* Header */}
+            <div className="border-b border-neutral-200 pb-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-neutral-900">
+                  {format(date, "MMMM d, yyyy")}
+                </span>
+                <span className="text-xs font-medium text-neutral-600">
+                  {bookings.length} booking{bookings.length !== 1 ? "s" : ""}
+                  {totalUnits > bookings.length ? ` (${totalUnits} units)` : ""}
+                </span>
+              </div>
             </div>
-          </div>
 
-          {/* Bookings list */}
-          <div className="space-y-2">
-            {visibleBookings.map((booking) => (
-              <BookingTooltipItem key={booking.booking_id} booking={booking} />
-            ))}
-          </div>
-
-          {/* More indicator */}
-          {remainingCount > 0 && (
-            <div className="border-t border-neutral-200 pt-2">
-              <span className="text-xs font-medium text-neutral-600">
-                +{remainingCount} more booking{remainingCount !== 1 ? "s" : ""}
-              </span>
+            {/* Bookings list */}
+            <div className="space-y-2">
+              {visibleBookings.map((booking) => (
+                <BookingTooltipItem key={booking.booking_id} booking={booking} />
+              ))}
             </div>
-          )}
-        </div>
-      </HoverCardContent>
+
+            {/* More indicator */}
+            {remainingCount > 0 && (
+              <div className="border-t border-neutral-200 pt-2">
+                <span className="text-xs font-medium text-neutral-600">
+                  +{remainingCount} more booking{remainingCount !== 1 ? "s" : ""}
+                </span>
+              </div>
+            )}
+          </div>
+        </HoverCardContent>
+      </HoverCardPortal>
     </HoverCard>
   );
 });
