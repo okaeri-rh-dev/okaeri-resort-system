@@ -11,6 +11,7 @@ import { BookingFormSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -121,6 +122,7 @@ export function BookingForm({
       contact_number: "",
       special_requests: "",
       payment_method: undefined,
+      is_walk_in: false,
       ...initialData,
     },
     mode: "onBlur",
@@ -311,6 +313,7 @@ export function BookingForm({
         total_amount: calculatedTotal,
         special_requests: sanitizedData.special_requests || data.special_requests,
         payment_method: data.payment_method,
+        is_walk_in: data.is_walk_in ?? false,
       };
 
       if (isEditMode) {
@@ -582,6 +585,29 @@ export function BookingForm({
 
   const renderStep2 = () => (
     <div className="space-y-6">
+      <FormField
+        control={form.control}
+        name="is_walk_in"
+        render={({ field }) => (
+          <FormItem className="bg-muted/40 flex flex-row items-start gap-3 rounded-md border p-4">
+            <FormControl>
+              <Checkbox
+                checked={field.value ?? false}
+                onCheckedChange={(checked) => field.onChange(checked === true)}
+                className="mt-1"
+              />
+            </FormControl>
+            <div className="space-y-1 leading-none">
+              <FormLabel className="text-base font-medium sm:text-sm">Walk-in booking</FormLabel>
+              <FormDescription className="text-sm">
+                Check this if the guest arrived on-site without a prior reservation. Reporting flag
+                only — does not change pricing, payment, or confirmation behavior.
+              </FormDescription>
+            </div>
+          </FormItem>
+        )}
+      />
+
       <FormField
         control={form.control}
         name="guest_name"

@@ -401,6 +401,7 @@ export const useCreateBooking = () => {
         payment_status: "Pending" as PaymentStatus,
         payment_method: bookingData.payment_method || null,
         special_requests: bookingData.special_requests || null,
+        is_walk_in: bookingData.is_walk_in ?? false,
       };
 
       const { data, error } = await supabase.from("bookings").insert(booking).select().single();

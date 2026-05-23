@@ -260,6 +260,7 @@ export interface BookingFormData {
   check_out: Date | string;
   special_requests?: string;
   payment_method?: PaymentMethod;
+  is_walk_in?: boolean;
 }
 
 export interface UnitFormData {

@@ -4,7 +4,6 @@ import { Link } from "@tanstack/react-router";
 import { createColumnHelper, type Header } from "@tanstack/react-table";
 
 import { UNIT_SLOT_MAP } from "@/components/dashboard/unit-calendar-config";
-import { PricingStatusIcon } from "@/components/pricing/PricingStatusBadge";
 import { formatCurrency, formatPhoneNumber, formatTableDate } from "@/components/tables/formatters";
 import { SortableHeader, StatusBadge } from "@/components/tables/utils";
 import { Badge } from "@/components/ui/badge";
@@ -42,23 +41,13 @@ export const useBookingColumns = ({
         ),
         cell: ({ row }) => (
           <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Link
-                to="/admin/guests"
-                search={{ search: row.original.guest_name }}
-                className="font-medium text-blue-600 transition-colors hover:underline"
-              >
-                {row.original.guest_name}
-              </Link>
-              {row.original.is_walk_in && (
-                <Badge
-                  variant="outline"
-                  className="border-amber-300 bg-amber-50 px-1.5 py-0 text-[10px] font-semibold text-amber-800"
-                >
-                  Walk-in
-                </Badge>
-              )}
-            </div>
+            <Link
+              to="/admin/guests"
+              search={{ search: row.original.guest_name }}
+              className="font-medium text-blue-600 transition-colors hover:underline"
+            >
+              {row.original.guest_name}
+            </Link>
             <div className="text-xs text-neutral-600">
               {(row.original.contact_number && formatPhoneNumber(row.original.contact_number)) ||
                 row.original.email ||
@@ -139,31 +128,18 @@ export const useBookingColumns = ({
         size: 120,
       }),
 
-      columnHelper.accessor("pricing_metadata", {
-        header: "Season",
-        cell: ({ getValue }) => {
-          const metadata = getValue();
-          if (!metadata?.hasSeasonalRates || !metadata?.seasonNames?.length) {
-            return <span className="text-xs text-neutral-400">Regular</span>;
-          }
-
-          // Get the most prominent season (usually the first one)
-          const primarySeason = metadata.seasonNames[0];
-          const seasonNotice = `Seasonal rates applied (${primarySeason})`;
-
-          return (
-            <div className="flex items-center gap-1">
-              <PricingStatusIcon notice={seasonNotice} />
-              <span
-                className="max-w-[100px] truncate text-xs text-neutral-600"
-                title={primarySeason}
-              >
-                {primarySeason}
-              </span>
-            </div>
-          );
-        },
-        size: 110,
+      columnHelper.accessor("is_walk_in", {
+        header: "Type",
+        cell: ({ getValue }) =>
+          getValue() ? (
+            <Badge
+              variant="outline"
+              className="border-amber-300 bg-amber-50 px-1.5 py-0 text-[10px] font-semibold text-amber-800"
+            >
+              Walk-in
+            </Badge>
+          ) : null,
+        size: 90,
       }),
 
       columnHelper.accessor("booking_status", {
