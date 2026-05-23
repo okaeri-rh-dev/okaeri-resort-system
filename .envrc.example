@@ -1,0 +1,25 @@
+# Supabase CLI credentials scoped to this repo only.
+#
+# Setup:
+#   1. cp .envrc.example .envrc
+#   2. Fill in the values below with your prod project's credentials.
+#   3. Run `direnv allow` once. direnv will auto-load these whenever
+#      you cd into this directory and unload them when you leave.
+#
+# These env vars override `~/.supabase/access-token`, so this repo's
+# Supabase CLI commands run against a different account than your
+# global login without conflict.
+
+# Personal access token for the Supabase account that owns prod.
+# Generate at: https://supabase.com/dashboard/account/tokens
+export SUPABASE_ACCESS_TOKEN="sbp_REPLACE_ME"
+
+# Prod database password.
+# Find at: Supabase dashboard -> your prod project -> Project Settings
+#          -> Database -> Database password (reset if lost).
+export SUPABASE_DB_PASSWORD="REPLACE_ME"
+
+# Optional: prod project reference (the subdomain in your prod
+# Supabase URL: https://<ref>.supabase.co). Lets scripts use $SUPABASE_PROJECT_REF
+# instead of hardcoding the ref.
+export SUPABASE_PROJECT_REF="REPLACE_ME"

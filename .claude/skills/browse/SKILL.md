@@ -157,6 +157,11 @@ Tool: mcp__playwright__browser_take_screenshot
 filename: "browse-{role}-{page}.png"
 ```
 
+Note: Screenshots are saved under the MCP `--output-dir` (`.playwright-mcp/`,
+gitignored). Do not prefix the filename with paths — the MCP server handles
+routing. Ad-hoc screenshots taken outside this skill should also rely on the
+same `--output-dir` so they never land at the repo root.
+
 ### Step 6: Report Current State
 
 Format the state report:
