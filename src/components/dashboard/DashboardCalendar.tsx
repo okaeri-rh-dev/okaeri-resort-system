@@ -33,6 +33,7 @@ interface DayButtonProps {
   day: { date: Date };
   modifiers?: unknown;
   bookingsByDate: { [key: string]: Booking[] };
+  compact?: boolean;
   [key: string]: unknown; // For other props passed by Calendar
 }
 
@@ -40,6 +41,7 @@ const DayButton = React.memo(function DayButton({
   day,
   modifiers,
   bookingsByDate,
+  compact = false,
   ...props
 }: DayButtonProps) {
   const date = day.date;
@@ -57,7 +59,8 @@ const DayButton = React.memo(function DayButton({
         {...props}
         variant="ghost"
         className={cn(
-          "relative h-20 w-full p-1 text-sm font-normal sm:h-24 md:h-28",
+          "relative h-20 w-full text-sm font-normal sm:h-24 md:h-28",
+          compact ? "p-0.5" : "p-1",
           "min-w-0", // Allow shrinking below content size
           "transition-all duration-150",
           // Base weekend styling (only if no bookings)
@@ -83,7 +86,11 @@ const DayButton = React.memo(function DayButton({
             {format(date, "d")}
           </span>
           {dayBookings.length > 0 && (
-            <BookingIndicators bookings={dayBookings} className="mt-1 w-full min-w-0" />
+            <BookingIndicators
+              bookings={dayBookings}
+              compact={compact}
+              className="mt-1 w-full min-w-0"
+            />
           )}
         </div>
       </Button>
@@ -162,16 +169,9 @@ function RowHeader({
   );
 }
 
-export function StackedHeader({
-  currentMonth,
-  monthlyBookingCount,
-  onPrev,
-  onNext,
-  onToday,
-}: CalendarHeaderProps) {
+export function StackedHeader({ currentMonth, onPrev, onNext }: CalendarHeaderProps) {
   return (
-    <CardHeader className="space-y-2 rounded-t-lg bg-gradient-to-r from-slate-50 to-blue-50/30 pb-3">
-      {/* Row 1: hero month navigation */}
+    <CardHeader className="rounded-t-lg bg-gradient-to-r from-slate-50 to-blue-50/30 px-3 py-2">
       <div className="flex items-center justify-between">
         <Button
           variant="ghost"
@@ -198,25 +198,6 @@ export function StackedHeader({
           <ChevronRight className="size-5" />
         </Button>
       </div>
-
-      {/* Row 2: metadata + reset action */}
-      <div className="flex items-center justify-between gap-2">
-        {monthlyBookingCount > 0 ? (
-          <span className="min-w-0 truncate text-xs text-slate-500">
-            {monthlyBookingCount} booking{monthlyBookingCount !== 1 ? "s" : ""} this month
-          </span>
-        ) : (
-          <span aria-hidden="true" />
-        )}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onToday}
-          className="h-8 shrink-0 px-2.5 text-xs font-medium"
-        >
-          Today
-        </Button>
-      </div>
     </CardHeader>
   );
 }
@@ -236,6 +217,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
     visibleBookings,
     currentMonth
   );
+  const compact = headerVariant === "stacked";
 
   // Navigation handlers
   const handlePreviousMonth = () => {
@@ -261,9 +243,9 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
   // Create the DayButton component callback at the top level to follow React hooks rules
   const dayButtonComponent = useCallback(
     (props: React.ComponentProps<typeof DayButtonType>) => (
-      <DayButton {...props} bookingsByDate={bookingsByDate} />
+      <DayButton {...props} bookingsByDate={bookingsByDate} compact={compact} />
     ),
-    [bookingsByDate]
+    [bookingsByDate, compact]
   );
 
   return (

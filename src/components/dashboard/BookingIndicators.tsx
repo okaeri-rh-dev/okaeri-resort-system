@@ -14,11 +14,13 @@ import {
 interface BookingIndicatorsProps {
   bookings: Booking[];
   className?: string;
+  compact?: boolean;
 }
 
 export const BookingIndicators = React.memo(function BookingIndicators({
   bookings,
   className,
+  compact = false,
 }: BookingIndicatorsProps) {
   // Build a map: unitCode -> best booking (highest-priority status wins)
   const slotBookings = useMemo(() => {
@@ -70,7 +72,8 @@ export const BookingIndicators = React.memo(function BookingIndicators({
           <div key={slot.unitCode} className="h-3 w-full sm:h-4">
             <div
               className={cn(
-                "flex w-full min-w-0 items-center rounded-sm border px-1 py-0.5",
+                "flex w-full min-w-0 items-center rounded-sm border py-0.5",
+                compact ? "px-0.5" : "px-1",
                 "truncate leading-tight font-medium",
                 "text-[clamp(7px,2cqi,10px)]",
                 slot.bg,

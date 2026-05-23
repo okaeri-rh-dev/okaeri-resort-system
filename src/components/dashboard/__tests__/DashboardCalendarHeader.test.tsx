@@ -17,9 +17,9 @@ describe("StackedHeader", () => {
     expect(screen.queryByText("Booking Calendar")).not.toBeInTheDocument();
   });
 
-  it("renders the Today button", () => {
+  it("does not render the Today button (reclaimed for vertical space)", () => {
     render(<StackedHeader {...baseProps} />);
-    expect(screen.getByRole("button", { name: /today/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /today/i })).not.toBeInTheDocument();
   });
 
   it("renders the month label as a polite live region", () => {
@@ -38,13 +38,8 @@ describe("StackedHeader", () => {
     expect(next.className).toMatch(/w-11/);
   });
 
-  it("renders booking count metadata when count > 0", () => {
+  it("does not render booking count metadata (redundant with visible chips)", () => {
     render(<StackedHeader {...baseProps} />);
-    expect(screen.getByText(/12 bookings this month/)).toBeInTheDocument();
-  });
-
-  it("hides booking count metadata when count is zero", () => {
-    render(<StackedHeader {...baseProps} monthlyBookingCount={0} />);
     expect(screen.queryByText(/bookings this month/)).not.toBeInTheDocument();
   });
 });
