@@ -10,6 +10,7 @@ import { DetailPageLayout } from "@/components/entity-detail";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -61,6 +62,7 @@ export function BookingEditPage() {
         (booking.payment_method as "Cash" | "GCash" | "BankTransfer" | "Card") || "Cash",
       payment_amount: undefined,
       special_requests: booking.special_requests || "",
+      is_walk_in: booking.is_walk_in ?? false,
     },
   });
 
@@ -110,6 +112,29 @@ export function BookingEditPage() {
               <CardTitle className="text-lg">Guest Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="is_walk_in"
+                render={({ field }) => (
+                  <FormItem className="bg-muted/40 flex flex-row items-start gap-3 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value ?? false}
+                        onCheckedChange={(checked) => field.onChange(checked === true)}
+                        className="mt-1"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Walk-in booking</FormLabel>
+                      <FormDescription>
+                        Check this if the guest arrived on-site without a prior reservation.
+                        Reporting flag only.
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="guest_name"

@@ -18,9 +18,19 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onUploadPayme
   return (
     <MobileCard className="space-y-3">
       {/* Row 1: Guest name + booking status */}
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="text-base font-semibold text-neutral-900">{booking.guest_name}</div>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-base font-semibold text-neutral-900">{booking.guest_name}</span>
+            {booking.is_walk_in && (
+              <Badge
+                variant="outline"
+                className="border-amber-300 bg-amber-50 px-1.5 py-0 text-[10px] font-semibold text-amber-800"
+              >
+                Walk-in
+              </Badge>
+            )}
+          </div>
           <div className="font-mono text-xs text-neutral-400">{booking.booking_reference}</div>
         </div>
         <StatusBadge status={booking.booking_status ?? "Pending"} />

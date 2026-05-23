@@ -1,3 +1,4 @@
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   FormControl,
   FormDescription,
@@ -13,6 +14,29 @@ import type { StepProps } from "../types";
 export function GuestInformation({ form }: StepProps) {
   return (
     <div className="space-y-6">
+      <FormField
+        control={form.control}
+        name="is_walk_in"
+        render={({ field }) => (
+          <FormItem className="bg-muted/40 flex flex-row items-start gap-3 rounded-md border p-4">
+            <FormControl>
+              <Checkbox
+                checked={field.value ?? false}
+                onCheckedChange={(checked) => field.onChange(checked === true)}
+                className="mt-1"
+              />
+            </FormControl>
+            <div className="space-y-1 leading-none">
+              <FormLabel className="text-base font-medium sm:text-sm">Walk-in booking</FormLabel>
+              <FormDescription className="text-sm">
+                Check this if the guest arrived on-site without a prior reservation. Reporting flag
+                only — does not change pricing, payment, or confirmation behavior.
+              </FormDescription>
+            </div>
+          </FormItem>
+        )}
+      />
+
       <FormField
         control={form.control}
         name="guest_name"

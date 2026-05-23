@@ -138,6 +138,7 @@ export interface AdminMultiUnitBookingCreate {
   };
   special_requests?: string;
   internal_notes?: string;
+  is_walk_in?: boolean;
   source?: string;
   idempotency_key?: string;
 }

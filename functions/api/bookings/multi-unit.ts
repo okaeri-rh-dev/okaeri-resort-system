@@ -74,6 +74,7 @@ const multiUnitBookingSchema = z
     }),
     special_requests: z.string().max(1000).optional(),
     internal_notes: z.string().max(1000).optional(),
+    is_walk_in: z.boolean().optional().default(false),
     source: z.enum(["web", "mobile", "admin"]).optional(),
   })
   .refine((data) => new Date(data.check_out) > new Date(data.check_in), {
@@ -412,6 +413,7 @@ async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
       num_guests: data.units.reduce((sum, u) => sum + u.num_guests, 0),
       special_requests: data.special_requests,
       internal_notes: data.internal_notes,
+      is_walk_in: data.is_walk_in,
       booking_status: "Pending",
       payment_status: "Pending",
     },

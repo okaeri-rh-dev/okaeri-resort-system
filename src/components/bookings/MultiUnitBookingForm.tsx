@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -114,6 +115,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
       payment_method: "GCash",
       special_requests: "",
       internal_notes: "",
+      is_walk_in: false,
     },
   });
 
@@ -305,6 +307,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
         },
         special_requests: data.special_requests,
         internal_notes: data.internal_notes,
+        is_walk_in: data.is_walk_in ?? false,
         source: "web",
         idempotency_key: idempotencyKey,
       };
@@ -507,6 +510,31 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
               {/* Step 2: Guest Information */}
               {step === 2 && (
                 <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="is_walk_in"
+                    render={({ field }) => (
+                      <FormItem className="bg-muted/40 flex flex-row items-start gap-3 rounded-md border p-4">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value ?? false}
+                            onCheckedChange={(checked) => field.onChange(checked === true)}
+                            className="mt-1"
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="text-base font-medium sm:text-sm">
+                            Walk-in booking
+                          </FormLabel>
+                          <FormDescription className="text-sm">
+                            Check this if the guest arrived on-site without a prior reservation.
+                            Reporting flag only.
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={form.control}
                     name="guest_name"

@@ -59,6 +59,7 @@ export function useBookingForm({ initialData, bookingId, onSuccess }: UseBooking
           amount: calculatedTotal,
         },
         special_requests: sanitizedData.special_requests || data.special_requests,
+        is_walk_in: data.is_walk_in ?? false,
         source: "web" as const,
       };
 
@@ -96,6 +97,7 @@ export function useBookingForm({ initialData, bookingId, onSuccess }: UseBooking
       contact_number: "",
       special_requests: "",
       payment_method: undefined,
+      is_walk_in: false,
       ...initialData,
     },
     mode: "onBlur",
@@ -248,6 +250,7 @@ export function useBookingForm({ initialData, bookingId, onSuccess }: UseBooking
             special_requests: sanitizedData.special_requests || data.special_requests,
             payment_method: data.payment_method,
             total_amount: calculatedTotal,
+            is_walk_in: data.is_walk_in ?? false,
           };
 
           await updateBookingMutation.mutateAsync({

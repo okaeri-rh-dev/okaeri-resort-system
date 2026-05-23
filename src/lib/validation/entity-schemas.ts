@@ -33,6 +33,7 @@ export const bookingEditSchema = z
       .string()
       .transform((val) => sanitizeText(val))
       .optional(),
+    is_walk_in: z.boolean(),
   })
   .refine((data) => data.check_out > data.check_in, {
     message: "Check-out must be after check-in",

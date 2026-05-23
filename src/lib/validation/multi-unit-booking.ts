@@ -35,6 +35,9 @@ const baseMultiUnitBookingSchema = z.object({
   // Optional fields
   special_requests: z.string().max(1000).optional(),
   internal_notes: z.string().max(1000).optional(),
+
+  // Reporting flags
+  is_walk_in: z.boolean(),
 });
 
 /**

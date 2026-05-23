@@ -483,6 +483,7 @@ export type Database = {
           internal_notes: string | null;
           is_guest_booking: boolean | null;
           is_multi_unit: boolean | null;
+          is_walk_in: boolean;
           num_guests: number;
           payment_method: string | null;
           payment_proof_url: string | null;
@@ -518,6 +519,7 @@ export type Database = {
           internal_notes?: string | null;
           is_guest_booking?: boolean | null;
           is_multi_unit?: boolean | null;
+          is_walk_in?: boolean;
           num_guests: number;
           payment_method?: string | null;
           payment_proof_url?: string | null;
@@ -553,6 +555,7 @@ export type Database = {
           internal_notes?: string | null;
           is_guest_booking?: boolean | null;
           is_multi_unit?: boolean | null;
+          is_walk_in?: boolean;
           num_guests?: number;
           payment_method?: string | null;
           payment_proof_url?: string | null;

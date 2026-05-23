@@ -42,13 +42,23 @@ export const useBookingColumns = ({
         ),
         cell: ({ row }) => (
           <div className="space-y-1">
-            <Link
-              to="/admin/guests"
-              search={{ search: row.original.guest_name }}
-              className="font-medium text-blue-600 transition-colors hover:underline"
-            >
-              {row.original.guest_name}
-            </Link>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Link
+                to="/admin/guests"
+                search={{ search: row.original.guest_name }}
+                className="font-medium text-blue-600 transition-colors hover:underline"
+              >
+                {row.original.guest_name}
+              </Link>
+              {row.original.is_walk_in && (
+                <Badge
+                  variant="outline"
+                  className="border-amber-300 bg-amber-50 px-1.5 py-0 text-[10px] font-semibold text-amber-800"
+                >
+                  Walk-in
+                </Badge>
+              )}
+            </div>
             <div className="text-xs text-neutral-600">
               {(row.original.contact_number && formatPhoneNumber(row.original.contact_number)) ||
                 row.original.email ||

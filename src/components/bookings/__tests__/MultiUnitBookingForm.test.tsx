@@ -239,6 +239,7 @@ describe("MultiUnitBookingForm", () => {
         email: "test@example.com",
         contact_number: "+639123456789",
         payment_method: "GCash" as const,
+        is_walk_in: false,
       });
       expect(fullSchemaResult.success).toBe(false);
       if (!fullSchemaResult.success) {
@@ -475,6 +476,7 @@ describe("MultiUnitBookingForm", () => {
         payment_proof_url: "https://example.com/proof.jpg",
         special_requests: "Early check-in requested",
         internal_notes: "VIP guest",
+        is_walk_in: false,
       };
 
       const result = multiUnitBookingSchema.safeParse(completeBookingData);

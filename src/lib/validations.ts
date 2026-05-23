@@ -190,6 +190,8 @@ export const bookingFormBaseSchema = z.object({
   special_requests: z.string().max(500, messages.maxLength(500)).optional(),
 
   payment_method: z.enum(["GCash", "BankTransfer", "Cash", "Card"] as const).optional(),
+
+  is_walk_in: z.boolean(),
 });
 
 // Booking form with date validation
@@ -241,6 +243,7 @@ export const completeBookingSchema = bookingStep1BaseSchema
       contact_number: z
         .string()
         .refine((val) => val === "" || philippinePhoneRegex.test(val), messages.phone),
+      is_walk_in: z.boolean(),
     })
   )
   .merge(bookingStep3Schema)

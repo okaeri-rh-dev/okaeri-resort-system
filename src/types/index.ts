@@ -83,6 +83,7 @@ export interface Booking {
   special_requests?: string | null;
   internal_notes?: string | null;
   is_multi_unit?: boolean | null;
+  is_walk_in?: boolean;
   unit_count?: number | null;
   pricing_metadata?: {
     hasSeasonalRates?: boolean;
@@ -301,6 +302,11 @@ export interface BookingFilters {
   date_from?: string;
   date_to?: string;
   search?: string;
+  /**
+   * Filter by walk-in flag.
+   * `true` = only walk-ins, `false` = only non-walk-ins, `undefined` = both.
+   */
+  is_walk_in?: boolean;
 }
 
 export interface UnitFilters {
