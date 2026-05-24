@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { addDays, format } from "date-fns";
 
 import { DashboardCalendar } from "@/components/dashboard/DashboardCalendar";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Booking } from "@/types";
@@ -10,9 +11,18 @@ import type { Booking } from "@/types";
 interface MobileDashboardProps {
   bookings: Booking[] | undefined;
   isLoading: boolean;
+  dataUpdatedAt: number;
+  isFetching: boolean;
+  onRefresh: () => void;
 }
 
-export function MobileDashboard({ bookings, isLoading }: MobileDashboardProps) {
+export function MobileDashboard({
+  bookings,
+  isLoading,
+  dataUpdatedAt,
+  isFetching,
+  onRefresh,
+}: MobileDashboardProps) {
   const today = new Date();
   const tomorrow = addDays(today, 1);
   const tomorrowKey = format(tomorrow, "yyyy-MM-dd");
@@ -40,9 +50,13 @@ export function MobileDashboard({ bookings, isLoading }: MobileDashboardProps) {
   return (
     <div className="space-y-4 overflow-x-hidden">
       {/* Compact page header */}
-      <div>
-        <h1 className="text-xl font-bold tracking-tight">Dashboard</h1>
-      </div>
+      <DashboardHeader
+        title="Dashboard"
+        variant="mobile"
+        dataUpdatedAt={dataUpdatedAt}
+        isFetching={isFetching}
+        onRefresh={onRefresh}
+      />
 
       {/* Calendar (stacked header variant) */}
       <DashboardCalendar bookings={bookings} isLoading={isLoading} headerVariant="stacked" />

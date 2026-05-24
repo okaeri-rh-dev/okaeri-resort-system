@@ -4,6 +4,7 @@ import { addDays, format } from "date-fns";
 
 import { BookingsTable } from "@/components/bookings/BookingsTable";
 import { DashboardCalendar } from "@/components/dashboard/DashboardCalendar";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,9 +13,18 @@ import type { Booking } from "@/types";
 interface DesktopDashboardProps {
   bookings: Booking[] | undefined;
   isLoading: boolean;
+  dataUpdatedAt: number;
+  isFetching: boolean;
+  onRefresh: () => void;
 }
 
-export function DesktopDashboard({ bookings, isLoading }: DesktopDashboardProps) {
+export function DesktopDashboard({
+  bookings,
+  isLoading,
+  dataUpdatedAt,
+  isFetching,
+  onRefresh,
+}: DesktopDashboardProps) {
   // Get upcoming check-ins and check-outs with memoization
   const today = new Date();
   const tomorrow = addDays(today, 1);
@@ -50,10 +60,14 @@ export function DesktopDashboard({ bookings, isLoading }: DesktopDashboardProps)
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome to Okaeri Resort Management System</p>
-      </div>
+      <DashboardHeader
+        title="Dashboard"
+        subtitle="Welcome to Okaeri Resort Management System"
+        variant="desktop"
+        dataUpdatedAt={dataUpdatedAt}
+        isFetching={isFetching}
+        onRefresh={onRefresh}
+      />
 
       {/* Stats Cards */}
       <DashboardStats />
