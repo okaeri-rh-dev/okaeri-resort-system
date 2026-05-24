@@ -178,23 +178,22 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           aria-label={`View booking ${booking.booking_reference}`}
           className="-mx-1 cursor-pointer space-y-1.5 rounded px-1 py-1 transition-colors focus-visible:bg-neutral-50 focus-visible:outline-none active:bg-neutral-100"
         >
-          {/* Facts strip: dates · nights · guests */}
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-neutral-700">
+          {/* Facts strip: dates on the left, nights · guests pushed right */}
+          <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-0.5 text-sm text-neutral-700">
             <span className="font-semibold text-neutral-900">
               {formatStayRange(booking.check_in, booking.check_out)}
             </span>
-            <span className="text-neutral-300" aria-hidden>
-              ·
-            </span>
-            <span>
-              {nights} {nights === 1 ? "night" : "nights"}
-            </span>
-            <span className="text-neutral-300" aria-hidden>
-              ·
-            </span>
-            <span>
-              {booking.num_guests} {booking.num_guests === 1 ? "guest" : "guests"}
-            </span>
+            <div className="flex items-center gap-x-2">
+              <span>
+                {nights} {nights === 1 ? "night" : "nights"}
+              </span>
+              <span className="text-neutral-300" aria-hidden>
+                ·
+              </span>
+              <span>
+                {booking.num_guests} {booking.num_guests === 1 ? "guest" : "guests"}
+              </span>
+            </div>
           </div>
 
           {/* Units · amount · payment dot */}
