@@ -176,5 +176,7 @@ export const useBookingsTable = () => {
     handleExport,
     handleUploadPayment,
     cancelBooking,
+    updateBookingStatus,
+    deleteBooking,
   };
 };

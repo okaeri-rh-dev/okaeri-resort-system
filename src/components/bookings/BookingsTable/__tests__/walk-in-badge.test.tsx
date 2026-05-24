@@ -10,12 +10,18 @@ import type { Booking } from "@/types";
 import { BookingCard } from "../components/BookingCard";
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, ...rest }: React.PropsWithChildren<Record<string, unknown>>) => (
-    <a data-testid="mock-link" {...rest}>
-      {children}
-    </a>
-  ),
+  useNavigate: () => vi.fn(),
 }));
+
+vi.mock("@/hooks", () => ({
+  useUserRole: () => ({
+    canEdit: true,
+    canDelete: true,
+    canConfirmBookings: true,
+  }),
+}));
+
+const noopMutation = { mutate: vi.fn() };
 
 const baseBooking: Booking = {
   booking_id: "11111111-1111-1111-1111-111111111111",
@@ -44,26 +50,25 @@ const baseBooking: Booking = {
   guest: null,
 };
 
+const renderCard = (overrides: Partial<Booking>) =>
+  render(
+    <BookingCard
+      booking={{ ...baseBooking, ...overrides }}
+      onUploadPayment={() => undefined}
+      onCancel={() => undefined}
+      updateBookingStatus={noopMutation}
+      deleteBooking={noopMutation}
+    />
+  );
+
 describe("BookingCard walk-in badge", () => {
   it("renders the Walk-in badge when is_walk_in is true", () => {
-    render(
-      <BookingCard
-        booking={{ ...baseBooking, is_walk_in: true }}
-        onUploadPayment={() => undefined}
-        onCancel={() => undefined}
-      />
-    );
+    renderCard({ is_walk_in: true });
     expect(screen.getByText("Walk-in")).toBeInTheDocument();
   });
 
   it("does not render the Walk-in badge when is_walk_in is false", () => {
-    render(
-      <BookingCard
-        booking={{ ...baseBooking, is_walk_in: false }}
-        onUploadPayment={() => undefined}
-        onCancel={() => undefined}
-      />
-    );
+    renderCard({ is_walk_in: false });
     expect(screen.queryByText("Walk-in")).not.toBeInTheDocument();
   });
 
@@ -71,7 +76,13 @@ describe("BookingCard walk-in badge", () => {
     const legacy = { ...baseBooking };
     delete (legacy as { is_walk_in?: boolean }).is_walk_in;
     render(
-      <BookingCard booking={legacy} onUploadPayment={() => undefined} onCancel={() => undefined} />
+      <BookingCard
+        booking={legacy}
+        onUploadPayment={() => undefined}
+        onCancel={() => undefined}
+        updateBookingStatus={noopMutation}
+        deleteBooking={noopMutation}
+      />
     );
     expect(screen.queryByText("Walk-in")).not.toBeInTheDocument();
   });

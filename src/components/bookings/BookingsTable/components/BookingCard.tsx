@@ -1,133 +1,268 @@
-import React from "react";
+import React, { useCallback, useState } from "react";
 
-import { Link } from "@tanstack/react-router";
-import { Edit, Eye, Upload, X } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { format } from "date-fns";
+import { Check, Upload } from "lucide-react";
 
 import { UNIT_SLOT_MAP } from "@/components/dashboard/unit-calendar-config";
-import { formatCurrency, formatTableDate } from "@/components/tables/formatters";
-import { MobileCard, StatusBadge } from "@/components/tables/utils";
+import { formatCurrency } from "@/components/tables/formatters";
+import { ActionMenu, MobileCard, StatusBadge } from "@/components/tables/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useUserRole } from "@/hooks";
 import { cn } from "@/lib/utils";
+import type { BookingStatus } from "@/types";
+import { utcToResortTime } from "@/utils/date-helpers";
 
 import type { BookingCardProps } from "../types";
 
-export const BookingCard: React.FC<BookingCardProps> = ({ booking, onUploadPayment, onCancel }) => {
+const formatStayRange = (checkIn: string, checkOut: string): string => {
+  try {
+    const inDate = utcToResortTime(checkIn);
+    const outDate = utcToResortTime(checkOut);
+    const sameMonth =
+      inDate.getFullYear() === outDate.getFullYear() && inDate.getMonth() === outDate.getMonth();
+    return sameMonth
+      ? `${format(inDate, "MMM d")} → ${format(outDate, "d")}`
+      : `${format(inDate, "MMM d")} → ${format(outDate, "MMM d")}`;
+  } catch {
+    return "Invalid Date";
+  }
+};
+
+const getNights = (checkIn: string, checkOut: string): number => {
+  try {
+    const inDate = utcToResortTime(checkIn);
+    const outDate = utcToResortTime(checkOut);
+    const ms = outDate.getTime() - inDate.getTime();
+    return Math.max(1, Math.round(ms / 86_400_000));
+  } catch {
+    return 0;
+  }
+};
+
+const PAYMENT_DOT: Record<string, { color: string; label: string }> = {
+  Completed: { color: "bg-emerald-500", label: "Paid" },
+  Pending: { color: "bg-amber-500", label: "Pending" },
+  Failed: { color: "bg-red-500", label: "Failed" },
+  Refunded: { color: "bg-red-500", label: "Refunded" },
+};
+
+const PaymentDot: React.FC<{ status: string | null | undefined }> = ({ status }) => {
+  const key = status ?? "Pending";
+  const config = PAYMENT_DOT[key] ?? { color: "bg-neutral-400", label: key };
+  return (
+    <span className="flex items-center gap-1.5 text-xs text-neutral-600">
+      <span className={cn("h-1.5 w-1.5 rounded-full", config.color)} aria-hidden />
+      {config.label}
+    </span>
+  );
+};
+
+export const BookingCard: React.FC<BookingCardProps> = ({
+  booking,
+  onUploadPayment,
+  onCancel,
+  updateBookingStatus,
+  deleteBooking,
+}) => {
+  const navigate = useNavigate();
+  const { canEdit, canDelete, canConfirmBookings } = useUserRole();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
   const units = booking.booking_units || [];
+  const nights = getNights(booking.check_in, booking.check_out);
+
+  const handleViewBooking = useCallback(() => {
+    navigate({
+      to: "/admin/bookings/$bookingId",
+      params: { bookingId: booking.booking_id },
+    });
+  }, [navigate, booking.booking_id]);
+
+  const handleEdit = useCallback(() => {
+    navigate({
+      to: "/admin/bookings/$bookingId/edit",
+      params: { bookingId: booking.booking_id },
+    });
+  }, [navigate, booking.booking_id]);
+
+  const handleConfirm = useCallback(() => {
+    updateBookingStatus.mutate({
+      bookingId: booking.booking_id,
+      status: "Confirmed" as BookingStatus,
+    });
+  }, [updateBookingStatus, booking.booking_id]);
+
+  const confirmDelete = useCallback(() => {
+    deleteBooking.mutate(booking.booking_id);
+    setShowDeleteDialog(false);
+  }, [deleteBooking, booking.booking_id]);
+
+  const isPending = booking.booking_status === "Pending";
+  const isCancelled = booking.booking_status === "Cancelled";
+  const paymentIncomplete = booking.payment_status !== "Completed";
+
+  const showConfirmPrimary = canConfirmBookings && isPending;
+  const showPaymentPrimary = !showConfirmPrimary && !isCancelled && paymentIncomplete;
+  const showActionZone = showConfirmPrimary || showPaymentPrimary;
+
+  const menuActions = [
+    ...(canEdit ? [{ label: "Edit Booking", onClick: handleEdit }] : []),
+    ...(paymentIncomplete && !isCancelled
+      ? [{ label: "Upload Payment", onClick: onUploadPayment }]
+      : []),
+    ...(canConfirmBookings && isPending ? [{ label: "Confirm", onClick: handleConfirm }] : []),
+    ...(canEdit && !isCancelled
+      ? [{ label: "Cancel", onClick: onCancel, variant: "destructive" as const }]
+      : []),
+    ...(canDelete
+      ? [
+          {
+            label: "Delete",
+            onClick: () => setShowDeleteDialog(true),
+            variant: "destructive" as const,
+          },
+        ]
+      : []),
+  ];
+
+  const handleInfoKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleViewBooking();
+    }
+  };
 
   return (
-    <MobileCard className="space-y-3">
-      {/* Row 1: Guest name + booking status */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-base font-semibold text-neutral-900">{booking.guest_name}</span>
-            {booking.is_walk_in && (
-              <Badge
-                variant="outline"
-                className="border-amber-300 bg-amber-50 px-1.5 py-0 text-[10px] font-semibold text-amber-800"
-              >
-                Walk-in
-              </Badge>
+    <>
+      <MobileCard className="space-y-2">
+        {/* Header: identity (left) + status/menu (right) */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-base font-semibold text-neutral-900">{booking.guest_name}</span>
+              {booking.is_walk_in && (
+                <Badge
+                  variant="outline"
+                  className="border-amber-300 bg-amber-50 px-1.5 py-0 text-[10px] font-semibold text-amber-800"
+                >
+                  Walk-in
+                </Badge>
+              )}
+            </div>
+            <div className="font-mono text-xs text-neutral-400">{booking.booking_reference}</div>
+          </div>
+          <div className="flex items-center gap-1">
+            <StatusBadge status={booking.booking_status ?? "Pending"} />
+            {menuActions.length > 0 && <ActionMenu actions={menuActions} />}
+          </div>
+        </div>
+
+        {/* Tappable info zone: dates + facts */}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleViewBooking}
+          onKeyDown={handleInfoKeyDown}
+          aria-label={`View booking ${booking.booking_reference}`}
+          className="-mx-1 cursor-pointer space-y-1.5 rounded px-1 py-1 transition-colors focus-visible:bg-neutral-50 focus-visible:outline-none active:bg-neutral-100"
+        >
+          {/* Facts strip: dates · nights · guests */}
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-neutral-700">
+            <span className="font-semibold text-neutral-900">
+              {formatStayRange(booking.check_in, booking.check_out)}
+            </span>
+            <span className="text-neutral-300" aria-hidden>
+              ·
+            </span>
+            <span>
+              {nights} {nights === 1 ? "night" : "nights"}
+            </span>
+            <span className="text-neutral-300" aria-hidden>
+              ·
+            </span>
+            <span>
+              {booking.num_guests} {booking.num_guests === 1 ? "guest" : "guests"}
+            </span>
+          </div>
+
+          {/* Units · amount · payment dot */}
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <div className="flex flex-wrap gap-1">
+              {units.map((bu) => {
+                const unitCode = bu.unit?.unit_code;
+                const slotConfig = unitCode ? UNIT_SLOT_MAP.get(unitCode) : undefined;
+                return (
+                  <Badge
+                    key={bu.booking_unit_id}
+                    variant="outline"
+                    className={cn(
+                      "font-mono text-xs",
+                      slotConfig
+                        ? cn(slotConfig.bg, slotConfig.text, slotConfig.border)
+                        : "bg-secondary text-secondary-foreground border-transparent"
+                    )}
+                  >
+                    {unitCode || bu.unit?.unit_name || `Unit ${bu.unit_id.slice(0, 4)}`}
+                  </Badge>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-sm font-semibold text-neutral-900">
+                {formatCurrency(booking.total_amount)}
+              </span>
+              <PaymentDot status={booking.payment_status} />
+            </div>
+          </div>
+        </div>
+
+        {/* Action zone: status-dependent primary button */}
+        {showActionZone && (
+          <div className="pt-1">
+            {showConfirmPrimary ? (
+              <Button onClick={handleConfirm} size="sm" className="w-full">
+                <Check className="mr-1.5 h-4 w-4" />
+                Confirm
+              </Button>
+            ) : (
+              <Button onClick={onUploadPayment} variant="outline" size="sm" className="w-full">
+                <Upload className="mr-1.5 h-4 w-4" />
+                Upload Payment
+              </Button>
             )}
           </div>
-          <div className="font-mono text-xs text-neutral-400">{booking.booking_reference}</div>
-        </div>
-        <StatusBadge status={booking.booking_status ?? "Pending"} />
-      </div>
-
-      {/* Row 2: Dates emphasized */}
-      <div className="rounded-md bg-neutral-50 px-3 py-2">
-        <div className="text-sm font-semibold text-neutral-900">
-          {formatTableDate(booking.check_in)} — {formatTableDate(booking.check_out)}
-        </div>
-        <div className="text-xs text-neutral-500">{booking.num_guests} guests</div>
-      </div>
-
-      {/* Row 3: Color-coded unit chips */}
-      {units.length > 0 && (
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-neutral-600">Units</span>
-          <div className="flex flex-wrap gap-1">
-            {units.map((bu) => {
-              const unitCode = bu.unit?.unit_code;
-              const slotConfig = unitCode ? UNIT_SLOT_MAP.get(unitCode) : undefined;
-              return (
-                <Badge
-                  key={bu.booking_unit_id}
-                  variant="outline"
-                  className={cn(
-                    "font-mono text-xs",
-                    slotConfig
-                      ? cn(slotConfig.bg, slotConfig.text, slotConfig.border)
-                      : "bg-secondary text-secondary-foreground border-transparent"
-                  )}
-                >
-                  {unitCode || bu.unit?.unit_name || `Unit ${bu.unit_id.slice(0, 4)}`}
-                </Badge>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Row 4: Amount + payment status */}
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-sm font-semibold">
-          {formatCurrency(booking.total_amount)}
-        </span>
-        <div className="flex items-center gap-1">
-          <span className="text-[10px] text-neutral-500">Payment:</span>
-          <StatusBadge
-            status={booking.payment_status ?? "Pending"}
-            className="px-1.5 py-0 text-[10px]"
-          />
-        </div>
-      </div>
-
-      {/* Action buttons */}
-      <div className="flex gap-2">
-        <Link
-          to="/admin/bookings/$bookingId"
-          params={{ bookingId: booking.booking_id }}
-          className="flex-1"
-        >
-          <Button variant="outline" size="sm" className="w-full">
-            <Eye className="mr-1 h-3 w-3" />
-            View
-          </Button>
-        </Link>
-        <Link
-          to="/admin/bookings/$bookingId/edit"
-          params={{ bookingId: booking.booking_id }}
-          className="flex-1"
-        >
-          <Button variant="outline" size="sm" className="w-full">
-            <Edit className="mr-1 h-3 w-3" />
-            Edit
-          </Button>
-        </Link>
-      </div>
-
-      <div className="flex gap-2">
-        {booking.payment_status !== "Completed" && (
-          <Button variant="outline" size="sm" onClick={onUploadPayment} className="flex-1">
-            <Upload className="mr-1 h-3 w-3" />
-            Payment
-          </Button>
         )}
-        {booking.booking_status !== "Cancelled" && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onCancel}
-            className="flex-1 text-red-600 hover:text-red-700"
-          >
-            <X className="mr-1 h-3 w-3" />
-            Cancel
-          </Button>
-        )}
-      </div>
-    </MobileCard>
+      </MobileCard>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Booking</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete booking &quot;
+              {booking.booking_reference}&quot;? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };

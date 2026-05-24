@@ -1,13 +1,19 @@
-import type { Booking, BookingFilters } from "@/types";
+import type { Booking, BookingFilters, BookingStatus } from "@/types";
 
 export interface BookingsTableProps {
   className?: string;
+}
+
+interface MutationLike<TVariables> {
+  mutate: (variables: TVariables) => void;
 }
 
 export interface BookingCardProps {
   booking: Booking;
   onUploadPayment: () => void;
   onCancel: () => void;
+  updateBookingStatus: MutationLike<{ bookingId: string; status: BookingStatus }>;
+  deleteBooking: MutationLike<string>;
 }
 
 export interface BookingFiltersProps {
