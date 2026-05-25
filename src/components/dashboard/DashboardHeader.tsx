@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { cn, formatRelativeTime } from "@/lib/utils";
+import { cn, formatRelativeTime, formatRelativeTimeShort } from "@/lib/utils";
 
 const STALE_AFTER_MS = 10 * 60 * 1000;
 const TICK_INTERVAL_MS = 30 * 1000;
@@ -34,16 +34,18 @@ export function DashboardHeader({
 
   const hasTimestamp = dataUpdatedAt > 0;
   const isStale = hasTimestamp && now - dataUpdatedAt > STALE_AFTER_MS;
-  const relativeLabel = hasTimestamp ? formatRelativeTime(new Date(dataUpdatedAt)) : "Loading…";
-  const updatedLabel = hasTimestamp ? `Updated ${relativeLabel}` : relativeLabel;
+  const desktopLabel = hasTimestamp
+    ? `Updated ${formatRelativeTime(new Date(dataUpdatedAt))}`
+    : "Loading…";
+  const mobileLabel = hasTimestamp ? formatRelativeTimeShort(new Date(dataUpdatedAt)) : "…";
 
   if (variant === "mobile") {
     return (
       <div className="flex items-center justify-between gap-3">
         <h1 className="min-w-0 truncate text-xl font-bold tracking-tight">{title}</h1>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1">
           <span className={cn("text-[11px]", isStale ? "text-amber-600" : "text-muted-foreground")}>
-            {relativeLabel}
+            {mobileLabel}
           </span>
           <Button
             variant="ghost"
@@ -68,7 +70,7 @@ export function DashboardHeader({
       </div>
       <div className="flex shrink-0 items-center gap-3">
         <span className={cn("text-sm", isStale ? "text-amber-600" : "text-muted-foreground")}>
-          {updatedLabel}
+          {desktopLabel}
         </span>
         <Button
           variant="outline"

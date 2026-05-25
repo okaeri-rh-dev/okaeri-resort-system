@@ -34,3 +34,37 @@ export function formatRelativeTime(date: string | Date): string {
     return "Invalid date";
   }
 }
+
+/**
+ * Compact relative time for tight UI (e.g. mobile chrome).
+ *
+ * Uses single-letter units except months (`mo`) to disambiguate from
+ * minutes. Sub-minute renders as `<1m` to match the semantic of
+ * date-fns' "less than a minute."
+ *
+ * @example
+ * formatRelativeTimeShort(new Date()) // "<1m"
+ * formatRelativeTimeShort(fiveMinutesAgo) // "5m"
+ * formatRelativeTimeShort(threeDaysAgo) // "3d"
+ */
+export function formatRelativeTimeShort(date: string | Date): string {
+  try {
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+    const seconds = Math.max(0, Math.floor((Date.now() - dateObj.getTime()) / 1000));
+    if (seconds < 60) return "<1m";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d`;
+    const weeks = Math.floor(days / 7);
+    if (days < 30) return `${weeks}w`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}mo`;
+    const years = Math.floor(days / 365);
+    return `${years}y`;
+  } catch {
+    return "—";
+  }
+}
