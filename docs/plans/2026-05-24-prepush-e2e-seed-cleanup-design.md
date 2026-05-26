@@ -254,6 +254,18 @@ No automated test of the orchestrator itself — overkill for a 4-line shell scr
 
 ---
 
+## Implementation notes (discovered during build)
+
+These are operational details that diverged from the initial design as the live schema was probed. Future fixture authors should know them.
+
+1. **`booking_reference` is `varchar(20)`.** Final fixture references: `E2E-PENDING`, `E2E-CONFIRMED`, `E2E-CONF-PAID`, `E2E-CANCELLED` — all within the 20-char limit. The `E2E_REF` const in `fixtures.ts` is the single source of truth; the Playwright spec imports it.
+2. **Insert bookings and booking_units one-at-a-time, not as a batch.** A multi-row `INSERT` triggers `update_guest_statistics` (or `update_booking_totals` for booking_units) once per row, but each invocation sees the same statement-snapshot SELECT and produces the same `UPDATE` payload — the second and later trigger calls compute empty `changed_fields`, which the `valid_changed_fields` CHECK rejects. Single-row inserts step the snapshot forward between rows. This is a latent bug in the audit trigger function and not in scope to fix here.
+3. **Cancelled fixture keeps `guest_id = NULL`.** A Cancelled booking is stats-neutral (`update_guest_statistics` filters out `Cancelled`/`NoShow`). Inserting it after other bookings for the same guest in one transaction produces a no-op UPDATE on `guests`, which then hits the same trigger trap as point 2. Nulling `guest_id` lets the booking still display correctly (`guest_name` is denormalized onto `bookings`) while sidestepping the cascade entirely.
+4. **Login route is `/login`** (not `/admin/login`). The Playwright spec uses the existing `LoginPage` POM via `ROUTES.public.login`.
+5. **`npm run dev` is not enough; Playwright uses `npm run dev:cf`.** The login form posts to `/api/auth/login`, which is a Cloudflare Workers function. A bare Vite dev server (`npm run dev`) returns 500 for that endpoint. The pre-push orchestrator relies on Playwright's `webServer` config to auto-start `dev:cf` if no server is on port 5173.
+6. **Card scoping**: anchor on the per-card "View booking `<ref>`" button (its aria-label is unique per booking) and use `.locator("..")` to get the MobileCard. The naive `page.locator("div").filter({ hasText: ref }).first()` matches the outer list container instead.
+7. **Auth user is fully managed by the orchestrator.** No `.env` configuration is required for `TEST_OWNER_*`. The seed creates `e2e-owner@e2e.local` with a hardcoded password via `auth.admin.createUser`; cleanup deletes it.
+
 ## Out of scope (deferred)
 
 - Running E2E on other device projects (firefox, webkit, Mobile Safari). Mobile Chrome alone catches the issues we care about.
