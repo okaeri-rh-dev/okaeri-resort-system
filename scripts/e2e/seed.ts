@@ -1,0 +1,128 @@
+import { E2E_BOOKINGS, E2E_GUEST, E2E_REFERENCE_PREFIX, E2E_UNIT, E2E_USER } from "./fixtures";
+import { getServiceRoleClient } from "./supabase-client";
+
+type Supabase = ReturnType<typeof getServiceRoleClient>;
+
+async function findUserIdByEmail(supabase: Supabase, email: string): Promise<string | null> {
+  const { data, error } = await supabase.auth.admin.listUsers();
+  if (error) throw new Error(`auth.listUsers failed: ${error.message}`);
+  return data.users.find((u) => u.email === email)?.id ?? null;
+}
+
+async function ensureE2EUser(supabase: Supabase): Promise<string> {
+  const existing = await findUserIdByEmail(supabase, E2E_USER.email);
+  if (existing) return existing;
+
+  const { data, error } = await supabase.auth.admin.createUser({
+    email: E2E_USER.email,
+    password: E2E_USER.password,
+    email_confirm: true,
+  });
+  if (error || !data.user) {
+    throw new Error(`auth.admin.createUser failed: ${error?.message ?? "no user returned"}`);
+  }
+  return data.user.id;
+}
+
+async function clearExistingE2E(supabase: Supabase): Promise<void> {
+  // Order matters for FK constraints. Delete-then-insert avoids upsert/audit
+  // trigger interactions that fire on UPDATE.
+  const { data: bookings } = await supabase
+    .from("bookings")
+    .select("booking_id")
+    .like("booking_reference", `${E2E_REFERENCE_PREFIX}%`);
+  const bookingIds = bookings?.map((b) => b.booking_id) ?? [];
+
+  if (bookingIds.length > 0) {
+    await supabase.from("booking_units").delete().in("booking_id", bookingIds);
+    await supabase.from("bookings").delete().in("booking_id", bookingIds);
+  }
+  await supabase.from("units").delete().eq("unit_id", E2E_UNIT.unit_id);
+  await supabase.from("guests").delete().eq("guest_id", E2E_GUEST.guest_id);
+}
+
+async function seed(): Promise<void> {
+  const supabase = getServiceRoleClient();
+
+  const userId = await ensureE2EUser(supabase);
+  const { error: roleError } = await supabase.from("app_roles").upsert(
+    {
+      user_id: userId,
+      email: E2E_USER.email,
+      role: E2E_USER.role,
+      is_active: true,
+      notes: "E2E test user — managed by scripts/e2e",
+    },
+    { onConflict: "user_id" }
+  );
+  if (roleError) throw new Error(`app_roles upsert failed: ${roleError.message}`);
+
+  await clearExistingE2E(supabase);
+
+  const { error: guestError } = await supabase.from("guests").insert(E2E_GUEST);
+  if (guestError) throw new Error(`guests insert failed: ${guestError.message}`);
+
+  const { error: unitError } = await supabase.from("units").insert(E2E_UNIT);
+  if (unitError) throw new Error(`units insert failed: ${unitError.message}`);
+
+  // Insert bookings one-at-a-time. A multi-row INSERT triggers
+  // update_guest_statistics once per row, but each trigger sees the same
+  // statement-snapshot SELECT and computes the same totals — the second
+  // and later triggers produce an UPDATE-with-no-changes on guests, which
+  // makes audit_guests_trigger's computed changed_fields empty and the
+  // valid_changed_fields CHECK fails. Single-row inserts avoid this.
+  // Cancelled bookings also keep guest_id NULL so the cascade skips them
+  // (their guest stats are no-ops anyway).
+  const insertedBookings: { booking_id: string; booking_reference: string }[] = [];
+  for (const b of E2E_BOOKINGS) {
+    const row = {
+      ...b,
+      guest_id: b.booking_status === "Cancelled" ? null : E2E_GUEST.guest_id,
+      guest_name: E2E_GUEST.guest_name,
+      contact_number: E2E_GUEST.phone_number,
+      email: E2E_GUEST.email,
+      is_walk_in: false,
+      is_multi_unit: false,
+    };
+    const { data, error } = await supabase
+      .from("bookings")
+      .insert(row)
+      .select("booking_id, booking_reference")
+      .single();
+    if (error || !data) {
+      throw new Error(
+        `bookings insert (${b.booking_reference}) failed: ${error?.message ?? "no row returned"}`
+      );
+    }
+    insertedBookings.push(data);
+  }
+
+  // Insert booking_units one-at-a-time for the same statement-snapshot
+  // reason as bookings — trigger_update_booking_totals cascades to the
+  // bookings audit trigger, which fails on no-diff UPDATEs.
+  for (const b of insertedBookings) {
+    const fixture = E2E_BOOKINGS.find((f) => f.booking_reference === b.booking_reference)!;
+    const { error: buError } = await supabase.from("booking_units").insert({
+      booking_id: b.booking_id,
+      unit_id: E2E_UNIT.unit_id,
+      subtotal: fixture.total_amount,
+      unit_price: fixture.total_amount,
+      assigned_guests: fixture.num_guests,
+      check_in_date: fixture.check_in,
+      check_out_date: fixture.check_out,
+      status: fixture.booking_status,
+    });
+    if (buError) {
+      throw new Error(`booking_units insert (${b.booking_reference}) failed: ${buError.message}`);
+    }
+  }
+
+  console.log(
+    `✓ Seeded 1 user (${E2E_USER.email}), 1 guest, 1 unit, ${insertedBookings.length} bookings (prefix ${E2E_REFERENCE_PREFIX}*).`
+  );
+}
+
+seed().catch((err) => {
+  console.error("✗ Seed failed:", err instanceof Error ? err.message : String(err));
+  process.exit(1);
+});

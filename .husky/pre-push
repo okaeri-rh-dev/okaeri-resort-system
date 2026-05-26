@@ -31,4 +31,12 @@ npx concurrently \
   "npx vitest run --exclude 'src/__tests__/database/**' --exclude '__tests__/database/**' --exclude 'src/__tests__/performance/multi-unit-availability.test.ts' --fileParallelism --poolOptions.threads.maxThreads=8" \
   "npx vitest run src/__tests__/database __tests__/database src/__tests__/performance/multi-unit-availability.test.ts || echo '${YELLOW}⚠️  DB tests had failures (non-blocking)${NC}'"
 
+echo "${GREEN}✅ Parallel pre-push checks passed.${NC}"
+
+# Sequential mobile booking card E2E (seed → playwright → cleanup, with trap).
+# Sequential because Playwright auto-starts its own dev server via webServer
+# config, which would contend with the parallel vitest workers above.
+echo "${GREEN}🎭 Running pre-push E2E (mobile booking card)...${NC}"
+npm run test:e2e:hooked
+
 echo "${GREEN}✅ All pre-push checks passed successfully!${NC}"
