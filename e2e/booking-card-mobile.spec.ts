@@ -70,5 +70,10 @@ test.describe("Mobile booking card", () => {
   test("info-zone tap navigates to booking detail route", async ({ page }) => {
     await page.getByRole("button", { name: `View booking ${E2E_REF.CONFIRMED}` }).click();
     await expect(page).toHaveURL(/\/admin\/bookings\/[0-9a-f-]{36}/);
+    // Detail page must actually render — guard against the loader silently throwing
+    // (e.g. a future schema mismatch like the payments.status filter we just removed).
+    await expect(
+      page.getByRole("navigation", { name: "Breadcrumb" }).getByText(E2E_REF.CONFIRMED)
+    ).toBeVisible();
   });
 });
