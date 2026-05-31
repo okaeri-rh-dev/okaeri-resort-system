@@ -129,14 +129,45 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 ---
 
+## Item 3 — `booking_units` has no audit trail (low priority)
+
+### Why it matters
+
+Surfaced during the Item 2 verification pass (2026-05-30). `audit_trigger_func` is wired to 6 tables — `bookings, expenses, guests, maintenance_logs, payments, units` — but **not** to `booking_units`. Every multi-unit booking write, cancellation, or unit-assignment change happens unaudited at the row level. The parent `bookings` row still gets audited (via `trigger_update_booking_totals` cascading an UPDATE that the audit trigger then logs), but the per-unit detail — which unit, what price, what status — is invisible to the audit log.
+
+Concrete consequence: if a staff member changes the unit assignment on a multi-unit booking from Unit A to Unit B, `audit_logs` will show an UPDATE on `bookings` with no field-level evidence of the unit swap. The swap lives only in `booking_units` and the live `booking_units` row reflects only the current state.
+
+### What's not known yet
+
+- Whether this is **deliberate** (someone consciously decided the per-unit churn was too noisy and the bookings-level cascade is "good enough") or **accidental** (the trigger just never got wired up when `booking_units` was introduced). Worth checking the multi-unit migration history (`20251104184719_multi_unit_guest_booking_schema.sql`) and any related design docs before adding the trigger.
+- Whether the same `valid_changed_fields` trap would bite a `booking_units` audit trigger. `trigger_update_booking_totals` modifies `bookings.total_amount`/`payment_status`, not `booking_units`, so we don't have the same statement-snapshot cascade source. But there may be others (e.g. status-update triggers).
+
+### Suggested approach (when picked up)
+
+1. Investigate intent first — git log / design doc archaeology to see if the omission was a choice.
+2. If accidental: add `CREATE TRIGGER audit_booking_units_trigger AFTER INSERT OR UPDATE OR DELETE ON public.booking_units FOR EACH ROW EXECUTE FUNCTION public.audit_trigger_func();` in a new migration. Item 2's fix already protects against no-op UPDATEs, so the trigger is safe to wire up.
+3. If deliberate: leave alone and document the decision in `docs/decisions/` so future-us doesn't keep re-discovering it.
+
+### Acceptance criteria
+
+- Decision recorded (either trigger added + tested, or decision documented as "no audit needed, here's why").
+
+### Out of scope here
+
+- Backfilling historical `booking_units` changes (impossible from current state — no audit data to reconstruct from).
+- Designing a `booking_units`-specific audit shape (the generic `audit_trigger_func` would log the whole row; that's likely sufficient).
+
+---
+
 ## Priority and ordering
 
-| Order | Item                             | Why                                                                                                                                                                           |
-| ----- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | Booking detail page fix (Item 1) | User-facing regression. The new mobile card navigation we just shipped surfaces it on every tap. Until this is fixed, every successful E2E navigation lands on a broken page. |
-| 2     | Audit trigger fix (Item 2)       | Latent. Current code paths work around it. Worth fixing before someone writes new batch-import code and gets bitten again.                                                    |
+| Order | Item                               | Why                                                                                                                                                                           |
+| ----- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | Booking detail page fix (Item 1)   | User-facing regression. The new mobile card navigation we just shipped surfaces it on every tap. Until this is fixed, every successful E2E navigation lands on a broken page. |
+| 2     | Audit trigger fix (Item 2)         | Latent. Current code paths work around it. Worth fixing before someone writes new batch-import code and gets bitten again.                                                    |
+| 3     | `booking_units` audit gap (Item 3) | Low priority and possibly deliberate. Investigate intent before adding anything. Safe to defer until someone actually wants per-unit audit detail.                            |
 
-The two items are independent — they can run in parallel sessions if desired.
+The three items are independent — they can run in parallel sessions if desired. Item 2's fix removes a constraint trap that would otherwise complicate adding the trigger Item 3 considers, so picking up Item 3 _after_ Item 2 ships is the natural order.
 
 ---
 
