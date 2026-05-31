@@ -159,15 +159,63 @@ Concrete consequence: if a staff member changes the unit assignment on a multi-u
 
 ---
 
+## Item 4 — `get_booking_units` RPC references removed column (low priority)
+
+### Why it matters
+
+Surfaced during the Item 2 verification pass (2026-05-30). Running `npm run verify` produces two test failures, both calling the `get_booking_units` RPC and both hitting the same PostgreSQL error:
+
+```
+code: '42703'
+message: 'column b.unit_id does not exist'
+hint: "Perhaps you meant to reference the column 'bu.unit_id' or the column 'u.unit_id'"
+```
+
+Failing tests:
+
+- `src/__tests__/database/multi-unit-booking.test.ts:547` — `get_booking_units > should return units for multi-unit booking`
+- `src/__tests__/performance/multi-unit-availability.test.ts:352` — `get_booking_units Performance > should fetch booking units in <50ms`
+
+Confirmed pre-existing on clean `main` (verified by stashing in-progress work and re-running). The Item 2 work did not cause these failures and does not exacerbate them.
+
+### What we already know
+
+- The live `get_booking_units` function body (per `SELECT prosrc FROM pg_proc WHERE proname='get_booking_units'`) contains `COALESCE(bu.unit_id, b.unit_id)` and `LEFT JOIN public.units u ON u.unit_id = COALESCE(bu.unit_id, b.unit_id)`. Both reference `b.unit_id`.
+- `bookings` no longer has a `unit_id` column — it was removed when the multi-unit schema landed in `20251008152700_multi_unit_schema.sql` and unit assignments moved into `booking_units`. So the function's COALESCE fallback is unreachable schema-wise.
+- A prior fix attempt exists: `supabase/migrations/20251018_fix_get_booking_units.sql`. Either it didn't fully drop the `b.unit_id` references, or a later migration re-introduced them. Worth diffing.
+- The two failing tests both assert `expect(error).toBeNull()` immediately after the RPC call, so they fail on the first 42703 — they don't get to exercise the row-shape assertions further down.
+- This is a **silent partial outage** at runtime too: any app code path that calls `db.bookings.byId(...)` (or anything else that triggers `get_booking_units`) gets a 42703 from PostgREST and presumably falls back to an empty list, which is exactly the failure pattern Item 1 was about for `payments.status`. Worth grepping for callers.
+
+### Suggested approach (when picked up)
+
+1. **Confirm intent.** Read `20251018_fix_get_booking_units.sql` to see what the previous fix removed; compare against the current `pg_proc` body. Decide whether `b.unit_id` references should drop entirely (post-multi-unit world) or whether the COALESCE was deliberate hedging that's no longer needed.
+2. **New migration** that does `CREATE OR REPLACE FUNCTION public.get_booking_units(...)` with the `b.unit_id` references removed. SELECT should pull `unit_id` straight from `bu.unit_id` (no COALESCE), and the units JOIN should use `u.unit_id = bu.unit_id`.
+3. **Run the same two tests** to confirm green; add no new tests (the existing ones already cover the function's contract).
+4. **Grep for callers** — `grep -rn "get_booking_units" src/ functions/` — and verify each caller's expectations. If any swallow the error silently, fix or surface.
+
+### Acceptance criteria
+
+- Both failing tests pass.
+- No app-side regressions in any page that consumes `get_booking_units`.
+- `npm run verify` clean (assuming Items 2 and 4 are the only outstanding test failures).
+
+### Out of scope here
+
+- Auditing other RPC functions for the same multi-unit transition bug. The `20251008152700_multi_unit_schema.sql` removal of `bookings.unit_id` may have left other broken references; a sweep is worthwhile but separate.
+- Adding a regression test for the broken RPC contract — the existing tests already serve that purpose; restoring them is enough.
+
+---
+
 ## Priority and ordering
 
-| Order | Item                               | Why                                                                                                                                                                           |
-| ----- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | Booking detail page fix (Item 1)   | User-facing regression. The new mobile card navigation we just shipped surfaces it on every tap. Until this is fixed, every successful E2E navigation lands on a broken page. |
-| 2     | Audit trigger fix (Item 2)         | Latent. Current code paths work around it. Worth fixing before someone writes new batch-import code and gets bitten again.                                                    |
-| 3     | `booking_units` audit gap (Item 3) | Low priority and possibly deliberate. Investigate intent before adding anything. Safe to defer until someone actually wants per-unit audit detail.                            |
+| Order | Item                                           | Why                                                                                                                                                                           |
+| ----- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | Booking detail page fix (Item 1)               | User-facing regression. The new mobile card navigation we just shipped surfaces it on every tap. Until this is fixed, every successful E2E navigation lands on a broken page. |
+| 2     | Audit trigger fix (Item 2)                     | Latent. Current code paths work around it. Worth fixing before someone writes new batch-import code and gets bitten again.                                                    |
+| 3     | `booking_units` audit gap (Item 3)             | Low priority and possibly deliberate. Investigate intent before adding anything. Safe to defer until someone actually wants per-unit audit detail.                            |
+| 4     | `get_booking_units` RPC broken column (Item 4) | Two pre-existing test failures plus a likely silent runtime degradation. Fix is small (one migration) once intent is confirmed. Worth doing before it masks a real bug.       |
 
-The three items are independent — they can run in parallel sessions if desired. Item 2's fix removes a constraint trap that would otherwise complicate adding the trigger Item 3 considers, so picking up Item 3 _after_ Item 2 ships is the natural order.
+These items are independent — they can run in parallel sessions if desired. Item 2's fix removes a constraint trap that would otherwise complicate adding the trigger Item 3 considers, so picking up Item 3 _after_ Item 2 ships is the natural order. Item 4 is independent of the others.
 
 ---
 

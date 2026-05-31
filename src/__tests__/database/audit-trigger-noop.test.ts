@@ -81,7 +81,6 @@ describe("audit_trigger_func() — no-op UPDATE handling", () => {
   beforeAll(async () => {
     shouldRun = await shouldRunDatabaseTests();
     if (!shouldRun) {
-      // eslint-disable-next-line no-console
       console.log("⏭️  Skipping audit-trigger-noop tests — test database not configured");
       return;
     }
@@ -100,7 +99,6 @@ describe("audit_trigger_func() — no-op UPDATE handling", () => {
   it("(psql) single-txn no-op UPDATE succeeds without raising and writes no audit row", () => {
     if (!shouldRun) return;
     if (!hasPsql) {
-      // eslint-disable-next-line no-console
       console.log("⏭️  Skipping no-op test — psql not on PATH");
       return;
     }
