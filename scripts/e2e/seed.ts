@@ -65,44 +65,30 @@ async function seed(): Promise<void> {
   const { error: unitError } = await supabase.from("units").insert(E2E_UNIT);
   if (unitError) throw new Error(`units insert failed: ${unitError.message}`);
 
-  // Insert bookings one-at-a-time. A multi-row INSERT triggers
-  // update_guest_statistics once per row, but each trigger sees the same
-  // statement-snapshot SELECT and computes the same totals — the second
-  // and later triggers produce an UPDATE-with-no-changes on guests, which
-  // makes audit_guests_trigger's computed changed_fields empty and the
-  // valid_changed_fields CHECK fails. Single-row inserts avoid this.
-  // Cancelled bookings also keep guest_id NULL so the cascade skips them
-  // (their guest stats are no-ops anyway).
-  const insertedBookings: { booking_id: string; booking_reference: string }[] = [];
-  for (const b of E2E_BOOKINGS) {
-    const row = {
-      ...b,
-      guest_id: b.booking_status === "Cancelled" ? null : E2E_GUEST.guest_id,
-      guest_name: E2E_GUEST.guest_name,
-      contact_number: E2E_GUEST.phone_number,
-      email: E2E_GUEST.email,
-      is_walk_in: false,
-      is_multi_unit: false,
-    };
-    const { data, error } = await supabase
-      .from("bookings")
-      .insert(row)
-      .select("booking_id, booking_reference")
-      .single();
-    if (error || !data) {
-      throw new Error(
-        `bookings insert (${b.booking_reference}) failed: ${error?.message ?? "no row returned"}`
-      );
-    }
-    insertedBookings.push(data);
+  // Cancelled bookings keep guest_id NULL so update_guest_statistics
+  // doesn't run for them (their guest stats would be no-ops anyway).
+  const bookingRows = E2E_BOOKINGS.map((b) => ({
+    ...b,
+    guest_id: b.booking_status === "Cancelled" ? null : E2E_GUEST.guest_id,
+    guest_name: E2E_GUEST.guest_name,
+    contact_number: E2E_GUEST.phone_number,
+    email: E2E_GUEST.email,
+    is_walk_in: false,
+    is_multi_unit: false,
+  }));
+
+  const { data: insertedBookings, error: bookingError } = await supabase
+    .from("bookings")
+    .insert(bookingRows)
+    .select("booking_id, booking_reference");
+
+  if (bookingError || !insertedBookings) {
+    throw new Error(`bookings insert failed: ${bookingError?.message ?? "no rows returned"}`);
   }
 
-  // Insert booking_units one-at-a-time for the same statement-snapshot
-  // reason as bookings — trigger_update_booking_totals cascades to the
-  // bookings audit trigger, which fails on no-diff UPDATEs.
-  for (const b of insertedBookings) {
+  const bookingUnitRows = insertedBookings.map((b) => {
     const fixture = E2E_BOOKINGS.find((f) => f.booking_reference === b.booking_reference)!;
-    const { error: buError } = await supabase.from("booking_units").insert({
+    return {
       booking_id: b.booking_id,
       unit_id: E2E_UNIT.unit_id,
       subtotal: fixture.total_amount,
@@ -111,10 +97,12 @@ async function seed(): Promise<void> {
       check_in_date: fixture.check_in,
       check_out_date: fixture.check_out,
       status: fixture.booking_status,
-    });
-    if (buError) {
-      throw new Error(`booking_units insert (${b.booking_reference}) failed: ${buError.message}`);
-    }
+    };
+  });
+
+  const { error: buError } = await supabase.from("booking_units").insert(bookingUnitRows);
+  if (buError) {
+    throw new Error(`booking_units insert failed: ${buError.message}`);
   }
 
   console.log(
