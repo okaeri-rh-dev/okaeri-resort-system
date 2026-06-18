@@ -14,12 +14,15 @@
 import { isIPBlocked } from "@/lib/auto-blocking";
 import { track404Error, trackRequest } from "@/lib/anomaly-detection";
 
+import { lookupUserRole } from "./lib/role-lookup";
+
 interface Env {
   RATE_LIMIT_KV: KVNamespace;
   ENVIRONMENT: "production" | "development";
   TURNSTILE_SECRET_KEY?: string;
   SUPABASE_JWT_SECRET?: string;
   SUPABASE_URL?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
   ALERT_WEBHOOK_URL?: string;
 }
 
@@ -343,7 +346,30 @@ export async function onRequest(
   }
 
   // Authentication check for protected endpoints (Gap Resolution #8)
-  if (!isPublicPath(url.pathname) && env.SUPABASE_JWT_SECRET) {
+  if (!isPublicPath(url.pathname)) {
+    // Fail-closed: missing JWT secret is misconfiguration, not a silent bypass.
+    // Previously, an unset SUPABASE_JWT_SECRET would skip this whole block,
+    // leaving request.user undefined and causing 401s downstream silently.
+    if (!env.SUPABASE_JWT_SECRET) {
+      console.error("SUPABASE_JWT_SECRET is not configured; rejecting protected request");
+      return new Response(
+        JSON.stringify({
+          error: "SERVER_MISCONFIGURED",
+          message: "Authentication is unavailable",
+          code: 500,
+        }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            ...securityHeaders,
+            "Content-Type": "application/json",
+            "X-Request-ID": requestId,
+          },
+        }
+      );
+    }
+
     const authHeader = request.headers.get("Authorization");
 
     if (!authHeader?.startsWith("Bearer ")) {
@@ -387,8 +413,10 @@ export async function onRequest(
       );
     }
 
-    // Extract role from JWT (user_metadata.role takes precedence, then role, default to 'user')
-    const userRole = (payload.user_metadata?.role || payload.role || "user") as string;
+    // Look up role from public.app_roles (single source of truth).
+    // The JWT's user_metadata.role is user-mutable via supabase.auth.updateUser
+    // and MUST NOT be trusted for authorization decisions.
+    const userRole = await lookupUserRole(payload.sub, env);
 
     // Attach user to request context for downstream use
     interface AuthenticatedRequest extends Request {
