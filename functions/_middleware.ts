@@ -11,8 +11,8 @@
  * - A+ security rating on securityheaders.com
  */
 
-import { isIPBlocked } from "@/lib/auto-blocking";
 import { track404Error, trackRequest } from "@/lib/anomaly-detection";
+import { isIPBlocked } from "@/lib/auto-blocking";
 
 import { lookupUserRole } from "./lib/role-lookup";
 
@@ -418,12 +418,20 @@ export async function onRequest(
     // and MUST NOT be trusted for authorization decisions.
     const userRole = await lookupUserRole(payload.sub, env);
 
-    // Attach user to request context for downstream use
+    // Allowlist only — do NOT spread payload. Spreading copies user_metadata
+    // verbatim, leaving user_metadata.role attacker-controlled even though the
+    // top-level role is overridden (user_metadata is user-mutable via
+    // supabase.auth.updateUser({ data: { role: 'admin' } })).
     interface AuthenticatedRequest extends Request {
-      user?: JWTPayload & { role: string };
+      user?: {
+        sub: string;
+        email?: string;
+        role: string;
+      };
     }
     (request as AuthenticatedRequest).user = {
-      ...payload,
+      sub: payload.sub,
+      email: payload.email,
       role: userRole,
     };
   }
