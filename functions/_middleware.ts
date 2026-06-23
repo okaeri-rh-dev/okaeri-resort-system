@@ -424,13 +424,13 @@ export async function onRequest(
     // supabase.auth.updateUser({ data: { role: 'admin' } })).
     interface AuthenticatedRequest extends Request {
       user?: {
-        sub: string;
+        id: string;
         email?: string;
         role: string;
       };
     }
     (request as AuthenticatedRequest).user = {
-      sub: payload.sub,
+      id: payload.sub,
       email: payload.email,
       role: userRole,
     };
