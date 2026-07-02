@@ -20,6 +20,8 @@ const VALID_ROUTES = [
   "/forgot-password",
   "/reset-password",
   "/pending-approval",
+  "/admin/login",
+  "/admin/pending-approval",
   "/admin/dashboard",
   "/admin/bookings",
   "/admin/units",
