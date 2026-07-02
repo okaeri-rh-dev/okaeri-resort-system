@@ -138,7 +138,7 @@ function safeRedirect(url: string): void {
     window.location.replace(url);
   } else {
     // Redirect to login for invalid routes
-    window.location.replace("/login");
+    window.location.replace("/admin/login");
   }
 }
 
@@ -300,7 +300,7 @@ class AuthService {
     this.stopSessionRefresh();
 
     // Validate redirect route
-    const loginRoute = "/login";
+    const loginRoute = "/admin/login";
     if (isValidRoute(loginRoute)) {
       // Clear sensitive data before redirect
       secureCleanup();
@@ -380,7 +380,7 @@ class AuthService {
     // Handle popstate events
     window.addEventListener("popstate", () => {
       window.history.pushState(null, "", window.location.href);
-      window.location.replace("/login");
+      window.location.replace("/admin/login");
     });
   }
 

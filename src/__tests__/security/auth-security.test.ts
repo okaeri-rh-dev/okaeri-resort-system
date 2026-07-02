@@ -164,7 +164,7 @@ describe("Authentication Security Tests", () => {
         auth.handleRedirect(redirect);
 
         // Should redirect to login instead of malicious URL
-        expect(mockLocation.replace).toHaveBeenCalledWith("/login");
+        expect(mockLocation.replace).toHaveBeenCalledWith("/admin/login");
         mockLocation.replace.mockClear();
       });
     });
@@ -180,7 +180,7 @@ describe("Authentication Security Tests", () => {
       // Unsafe returnUrl
       const unsafeUrl = "https://evil.com/phishing";
       auth.handleRedirect(unsafeUrl);
-      expect(mockLocation.replace).toHaveBeenCalledWith("/login");
+      expect(mockLocation.replace).toHaveBeenCalledWith("/admin/login");
     });
   });
 
@@ -313,7 +313,7 @@ describe("Authentication Security Tests", () => {
       await auth.checkSessionExpiry();
 
       expect(onExpiry).toHaveBeenCalled();
-      expect(mockLocation.replace).toHaveBeenCalledWith("/login");
+      expect(mockLocation.replace).toHaveBeenCalledWith("/admin/login");
     });
 
     it("should warn before session expires", async () => {
