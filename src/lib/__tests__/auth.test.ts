@@ -15,12 +15,18 @@ describe("auth redirect targets point in-scope", () => {
   let replaceSpy: ReturnType<typeof vi.fn>;
   beforeEach(() => {
     replaceSpy = vi.fn();
-    Object.defineProperty(window, "location", {
-      configurable: true,
-      value: { ...window.location, replace: replaceSpy, origin: "https://example.com" },
+    // Use stubGlobal so unstubAllGlobals fully restores window.location —
+    // vi.restoreAllMocks() does NOT undo an Object.defineProperty redefine.
+    vi.stubGlobal("location", {
+      ...window.location,
+      replace: replaceSpy,
+      origin: "https://example.com",
     });
   });
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
   it("sends an invalid redirect to /admin/login (not /login)", () => {
     auth.handleRedirect("/definitely-not-a-valid-route");
     expect(replaceSpy).toHaveBeenCalledWith("/admin/login");
