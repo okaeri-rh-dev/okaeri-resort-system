@@ -1,13 +1,6 @@
-import { z } from "zod";
-
+import { resolveSafeRedirect } from "@/components/auth/login-utils";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-
-export const loginSearchSchema = z.object({
-  redirect: z.string().optional(),
-  registered: z.boolean().optional(),
-  confirmed: z.boolean().optional(),
-});
 
 interface LoginScreenProps {
   redirectTo?: string;
@@ -17,18 +10,12 @@ interface LoginScreenProps {
 
 export function LoginScreen({ redirectTo, registered, confirmed }: LoginScreenProps) {
   const handleSuccess = () => {
-    if (redirectTo) {
-      try {
-        const url = new URL(redirectTo, window.location.origin);
-        if (url.origin === window.location.origin) {
-          window.location.href = url.href;
-          return;
-        }
-      } catch {
-        // Invalid URL — fall through to default
-      }
+    const target = resolveSafeRedirect(redirectTo, window.location.origin);
+    if (target) {
+      window.location.href = target;
+    } else {
+      window.location.reload();
     }
-    window.location.reload();
   };
 
   return (
