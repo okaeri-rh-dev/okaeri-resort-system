@@ -138,7 +138,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     try {
       await auth.signOut();
       // Refresh the page to trigger re-authentication check
-      window.location.href = "/login";
+      window.location.href = "/admin/login";
     } catch (error) {
       console.error("Sign out failed:", error);
     }

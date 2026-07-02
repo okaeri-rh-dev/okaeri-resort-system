@@ -34,7 +34,7 @@ export function PendingApprovalPage() {
     try {
       await auth.signOut();
     } finally {
-      window.location.href = "/login";
+      window.location.href = "/admin/login";
     }
   };
 

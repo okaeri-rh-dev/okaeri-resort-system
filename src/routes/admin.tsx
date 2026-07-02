@@ -10,7 +10,7 @@ export const Route = createFileRoute("/admin")({
     // This runs for ALL /admin/* routes
     if (!context.isAuthenticated) {
       throw redirect({
-        to: "/login",
+        to: "/admin/login",
         search: {
           // Store the attempted URL to redirect back after login
           redirect: location.href,
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/admin")({
     const { getUserAuditRole } = await import("@/lib/audit-roles");
     const role = await getUserAuditRole();
     if (role === null) {
-      throw redirect({ to: "/pending-approval" });
+      throw redirect({ to: "/admin/pending-approval" });
     }
 
     return { userRole: role };
@@ -45,7 +45,7 @@ export const Route = createFileRoute("/admin")({
               <button
                 onClick={() => {
                   auth.signOut();
-                  window.location.href = "/login";
+                  window.location.href = "/admin/login";
                 }}
                 className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
               >
