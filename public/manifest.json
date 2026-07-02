@@ -2,7 +2,8 @@
   "name": "Okaeri Resort Management System",
   "short_name": "Okaeri Resort",
   "description": "Professional resort management platform for Philippine businesses",
-  "start_url": "/",
+  "id": "/admin",
+  "start_url": "/admin",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0066cc",
@@ -39,25 +40,25 @@
       "name": "Bookings",
       "short_name": "Bookings",
       "description": "View and manage bookings",
-      "url": "/bookings",
+      "url": "/admin/bookings",
       "icons": [{"src": "/favicon-32x32.png", "sizes": "32x32"}]
     },
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "View resort statistics",
-      "url": "/dashboard",
+      "url": "/admin/dashboard",
       "icons": [{"src": "/favicon-32x32.png", "sizes": "32x32"}]
     },
     {
       "name": "New Booking",
       "short_name": "New Booking",
       "description": "Create a new booking",
-      "url": "/bookings?action=new",
+      "url": "/admin/bookings?action=new",
       "icons": [{"src": "/favicon-32x32.png", "sizes": "32x32"}]
     }
   ],
-  "scope": "/",
+  "scope": "/admin",
   "lang": "en-US",
   "dir": "ltr"
 }
