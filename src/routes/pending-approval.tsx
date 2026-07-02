@@ -23,7 +23,7 @@ export const Route = createFileRoute("/pending-approval")({
 function PendingApprovalRoute() {
   return (
     <ErrorBoundary level="page">
-      <PendingApprovalPage />
+      <PendingApprovalPage loginPath="/login" />
     </ErrorBoundary>
   );
 }

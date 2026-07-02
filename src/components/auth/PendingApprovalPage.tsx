@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getUserAuditRole } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
 
-export function PendingApprovalPage() {
+export function PendingApprovalPage({ loginPath = "/admin/login" }: { loginPath?: string } = {}) {
   const [checking, setChecking] = useState(false);
   const navigate = useNavigate();
 
@@ -34,7 +34,7 @@ export function PendingApprovalPage() {
     try {
       await auth.signOut();
     } finally {
-      window.location.href = "/admin/login";
+      window.location.href = loginPath;
     }
   };
 
