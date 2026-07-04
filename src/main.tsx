@@ -7,6 +7,7 @@ import "./index.css";
 import "./styles/print.css";
 
 import { logger } from "@/lib/logger";
+import { registerSwReload } from "@/lib/pwa-reload";
 import { useInstallPromptStore } from "@/stores/useInstallPromptStore";
 
 // PWA install-prompt wiring + multi-tab auto-reload on SW activation
@@ -25,16 +26,11 @@ if (typeof window !== "undefined") {
     useInstallPromptStore.getState().markInstalled();
   }
 
-  // When one tab activates a new SW, reload all other open tabs to prevent
-  // UI/API version skew. The activating tab is reloaded by updateServiceWorker(true).
-  let reloading = false;
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (reloading) return;
-      reloading = true;
-      window.location.reload();
-    });
-  }
+  // When a new SW takes control, reload open tabs so they run against the fresh
+  // precached assets. registerSwReload() gates the reload on tab visibility: a
+  // hidden tab defers until refocused, avoiding the blank-page-on-return caused by
+  // reloading a backgrounded (and possibly frozen) tab.
+  registerSwReload();
 }
 
 // Performance monitoring for production
