@@ -1,0 +1,90 @@
+name: infra-health
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 22 * * 0" # weekly, Sun 22:00 UTC — catches drift during idle weeks
+  workflow_dispatch:
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npx eslint . --ext .js,.jsx,.ts,.tsx
+      - name: Migration filename lint
+        run: |
+          bad=$(ls supabase/migrations | grep -Ev '^[0-9]{14}_' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::Non-standard migration filenames (supabase migration up will fail):"
+            echo "$bad"
+            exit 1
+          fi
+      - name: Unit tests (non-DB)
+        run: npx vitest run --exclude 'src/__tests__/database/**' --exclude '__tests__/database/**' --exclude 'src/__tests__/performance/multi-unit-availability.test.ts'
+
+  # ── Stage 2: DB + E2E against a fresh local Supabase stack ──
+  # Enabled 2026-07-05 after the migration-filename repair and E2E root-cause
+  # fixes (loopback exemption for IP auto-blocking, Playwright global-setup
+  # user seeding, viewport-aware DashboardPage).
+  e2e:
+    if: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest # deliberately unpinned: CLI-upgrade breakage should fail HERE, not mid-session
+      - run: npm ci
+      - name: Start local Supabase (applies all migrations — fails on bad history)
+        run: supabase start
+      # Machine-readable env extraction — never regex the human `supabase status`
+      # output (see CLAUDE.md "Supabase CLI output parsing").
+      - name: Provision env files from `supabase status -o env`
+        run: |
+          supabase status -o env | grep -E '^[A-Z0-9_]+=' > /tmp/sb.env
+          set -a; . /tmp/sb.env; set +a
+          # Vite app + vitest DB tests + scripts/e2e seed/cleanup
+          cat > .env.local <<EOF
+          VITE_SUPABASE_URL=$API_URL
+          VITE_SUPABASE_ANON_KEY=$ANON_KEY
+          SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY
+          TEST_SUPABASE_URL=$API_URL
+          TEST_SUPABASE_ANON_KEY=$ANON_KEY
+          TEST_SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY
+          EOF
+          # Cloudflare Pages functions via `wrangler pages dev` (dev:cf).
+          # ENVIRONMENT=development makes verifyTurnstile a no-op server-side.
+          cat > .dev.vars <<EOF
+          SUPABASE_URL=$API_URL
+          SUPABASE_ANON_KEY=$ANON_KEY
+          SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY
+          SUPABASE_JWT_SECRET=$JWT_SECRET
+          ENVIRONMENT=development
+          APP_VERSION=ci
+          EOF
+      - name: DB tests
+        run: npx vitest run src/__tests__/database __tests__/database src/__tests__/performance/multi-unit-availability.test.ts
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: E2E (seed -> playwright -> cleanup)
+        run: npm run test:e2e:hooked
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14

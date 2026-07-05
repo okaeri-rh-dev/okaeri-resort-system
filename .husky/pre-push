@@ -4,49 +4,24 @@
 set -e
 
 # Colors for output
-RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo "${GREEN}🚀 Running pre-push checks in parallel...${NC}"
-echo "${YELLOW}🔍 ESLint (cached) + 🧪 Unit tests (8 threads) + 🗄️ DB tests${NC}"
+echo "${GREEN}🚀 Running pre-push checks (lint + unit, ~1-2 min)...${NC}"
 
-# Run all checks in parallel:
-# 1. ESLint with cache (~1s warm) - BLOCKING
-# 2. Non-DB tests with higher parallelism - BLOCKING
-# 3. DB tests sequentially - NON-BLOCKING (warn only)
-#    DB tests may fail due to local Supabase schema drift.
-#    They should not block pushes since they test DB-level functions
-#    that are managed separately from application code.
-#
-# Non-DB and DB tests can run concurrently because they don't share state.
-# DB tests only need sequential execution among themselves.
+# Fast, blocking checks only. DB tests (need `supabase start`) and Playwright
+# E2E are intentionally NOT run here — they are covered by CI (infra-health
+# workflow) and can be run manually:
+#   npx vitest run src/__tests__/database __tests__/database src/__tests__/performance/multi-unit-availability.test.ts
+#   npm run test:e2e
+# NOTE: no `--success first` — exit code must reflect ALL lanes (the old flag
+# let a unit-test failure pass because cached lint exited first and green).
 npx concurrently \
   --kill-others-on-fail \
-  --names "lint,unit,db" \
-  --prefix-colors "yellow,cyan,magenta" \
-  --success "first" \
+  --names "lint,unit" \
+  --prefix-colors "yellow,cyan" \
   "npx eslint . --ext .js,.jsx,.ts,.tsx --cache --cache-location .eslintcache" \
-  "npx vitest run --exclude 'src/__tests__/database/**' --exclude '__tests__/database/**' --exclude 'src/__tests__/performance/multi-unit-availability.test.ts' --fileParallelism --poolOptions.threads.maxThreads=8" \
-  "npx vitest run src/__tests__/database __tests__/database src/__tests__/performance/multi-unit-availability.test.ts || echo '${YELLOW}⚠️  DB tests had failures (non-blocking)${NC}'"
+  "npx vitest run --exclude 'src/__tests__/database/**' --exclude '__tests__/database/**' --exclude 'src/__tests__/performance/multi-unit-availability.test.ts' --fileParallelism --poolOptions.threads.maxThreads=8"
 
-echo "${GREEN}✅ Parallel pre-push checks passed.${NC}"
-
-# ─────────────────────────────────────────────────────────────────────────────
-# TEMPORARY (disabled 2026-07-02): pre-push mobile booking-card E2E.
-# booking-card-mobile.spec.ts is currently failing in this environment and is
-# excluded here to unblock pushes. This appears UNRELATED to application code —
-# the spec was not modified and its login flow runs through the root /login
-# route, which is unchanged. Needs investigation (likely a local-Supabase /
-# E2E-seed environment issue; the orchestrator's preflight requires
-# `supabase start`). RE-ENABLE once the suite is green again by uncommenting the
-# two commands below and deleting this TEMPORARY block.
-# ─────────────────────────────────────────────────────────────────────────────
-# Sequential mobile booking card E2E (seed → playwright → cleanup, with trap).
-# Sequential because Playwright auto-starts its own dev server via webServer
-# config, which would contend with the parallel vitest workers above.
-# echo "${GREEN}🎭 Running pre-push E2E (mobile booking card)...${NC}"
-# npm run test:e2e:hooked
-
-echo "${GREEN}✅ All pre-push checks passed successfully!${NC}"
+echo "${GREEN}✅ Pre-push checks passed. DB/E2E suites run in CI and manually (see comments above).${NC}"
