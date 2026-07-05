@@ -138,6 +138,15 @@ Supabase PostgreSQL with optimized queries via `src/lib/supabase.ts`:
 - Application types: `src/types/index.ts`
 - Strict TypeScript configuration with progressive enhancement
 
+## Pushing to Remote
+
+- `.husky/pre-push` runs lint + the unit suite and can take several minutes. **Never run `git push` at the default 2-minute Bash timeout** — the hook gets killed (exit 143) and the push does NOT complete. Either:
+  1. Run with an explicit long timeout (`timeout: 600000`), or
+  2. Run with `run_in_background: true` and monitor until it exits.
+- After every push, verify it landed before reporting success: `git fetch origin && git rev-parse HEAD origin/main` — the two hashes must match. A started hook is not a completed push.
+- If the hook fails or hangs on pre-existing/unrelated failures: run `npm run verify` directly; if it passes, ASK the user before `git push --no-verify`. Never use `--no-verify` on your own.
+- DB tests (need `supabase start`) and Playwright E2E are not part of the hook; they run in CI (`.github/workflows/infra-health.yml`) and explicitly when relevant.
+
 ## Development Workflow
 
 ### File Organization Patterns
@@ -380,6 +389,32 @@ export async function onRequest(context) {
 }
 ```
 
+## Deployment Environment Variables & Secrets
+
+Secrets live in TWO places (Cloudflare Pages dashboard + Supabase dashboard) and drift silently. Verify with CLI first — never ask the user to hand-copy dashboard lists:
+
+```bash
+npx wrangler pages secret list --project-name okaeri-resort      # prod secret NAMES (Cloudflare Pages)
+npx wrangler pages deployment list --project-name okaeri-resort  # was there a deploy AFTER the secret change?
+grep -rhoE 'env\.[A-Z_]+' functions --include='*.ts' | sort -u   # vars the code actually requires
+```
+
+Supabase project ref: `gxgpdlvathotgqtszabo` (already linked via supabase CLI).
+
+### Gotchas (learned the hard way)
+
+- **SUPABASE_JWT_SECRET must be the LEGACY JWT secret** (Supabase dashboard > Settings > API > JWT Settings, HS256), NOT the new JWT signing keys. `_middleware.ts` verifies HS256; a signing-key value causes blanket 401 `Invalid or expired token` on every protected route (e.g. multi-unit booking) while direct-to-Supabase flows still work.
+- **If SUPABASE_JWT_SECRET is unset, middleware rejects ALL protected requests** — a missing secret looks identical to an expired token.
+- **Cloudflare Pages secrets take effect only on the NEXT deployment.** After any `wrangler pages secret put` or dashboard edit, redeploy: `git commit --allow-empty -m "chore: redeploy to pick up secret" && git push` (or dashboard > Retry deployment).
+
+### Secret-rotation checklist
+
+1. `git log --oneline -10 -- functions/` — rule out recent code changes before blaming secrets.
+2. `npx wrangler pages secret list --project-name okaeri-resort` — confirm the name exists in prod.
+3. Update the value: `npx wrangler pages secret put <NAME> --project-name okaeri-resort` (also update `.dev.vars` and, for CRON_SECRET, the GitHub Actions secret).
+4. Redeploy (empty commit or Retry deployment) — step 3 alone changes nothing live.
+5. Verify: probe the previously failing endpoint and expect 200, not 401.
+
 ## Phase-Based Development
 
 The codebase follows a phased development approach:
@@ -532,6 +567,21 @@ const booking = await createGuestBooking(sanitized);
 // 5. Send confirmation email
 await sendBookingConfirmation(booking);
 ```
+
+## Known Infrastructure Issues
+
+Check this list BEFORE debugging any test/CLI failure you did not cause. To confirm a failure is pre-existing: `git stash` (or checkout main) and re-run — if it still fails, it is infrastructure debt, not your regression.
+
+Rules:
+
+- Do NOT root-cause a listed issue mid-task. Cite the entry, use its documented workaround, and move on.
+- If you hit a NEW pre-existing failure, add an entry here in the SAME commit as any workaround/exclusion. Unlogged "temporary" exclusions are forbidden.
+- When an issue is fixed, delete its entry and re-enable whatever was disabled (grep for TEMPORARY, test.skip, test.fixme).
+
+Current entries:
+
+- **Supabase CLI output parsing** — helper scripts that regex `supabase status` human output break on CLI upgrades (bit household-hub at v2.105.0). Any new script must use `supabase status -o env` (machine-readable) instead. Known-good CLI version at last check: v2.101.0.
+- **Two migrations pending on remote** — `20260530000000_fix_audit_trigger_skip_noop_updates` and `20260605120000_fix_get_booking_units_post_hardening` are applied locally but NOT on the remote (verified against a remote schema dump 2026-07-05: the no-op-skip block is absent from the remote `audit_trigger_func`, and the remote `get_booking_units` is a functionally-equivalent but unhardened variant). `supabase migration list` correctly shows them as local-only. Do not `migration repair --status applied` them — that would be false bookkeeping. They are idempotent `CREATE OR REPLACE` and should go out with the next deliberate `supabase db push`.
 
 ## Important Notes
 
