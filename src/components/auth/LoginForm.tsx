@@ -174,7 +174,10 @@ export function LoginForm({ onSuccess, registered, confirmed }: LoginFormProps) 
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitDisabled}>
+            {/* size="lg" (h-10/40px): default h-9 (36px) is below the 40px
+                minimum mobile touch target asserted in e2e/auth.spec.ts and
+                shorter than the h-10 inputs above. */}
+            <Button type="submit" size="lg" className="w-full" disabled={isSubmitDisabled}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
 
