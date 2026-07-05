@@ -581,7 +581,6 @@ Rules:
 Current entries:
 
 - **Supabase CLI output parsing** — helper scripts that regex `supabase status` human output break on CLI upgrades (bit household-hub at v2.105.0). Any new script must use `supabase status -o env` (machine-readable) instead. Known-good CLI version at last check: v2.101.0.
-- **Two migrations pending on remote** — `20260530000000_fix_audit_trigger_skip_noop_updates` and `20260605120000_fix_get_booking_units_post_hardening` are applied locally but NOT on the remote (verified against a remote schema dump 2026-07-05: the no-op-skip block is absent from the remote `audit_trigger_func`, and the remote `get_booking_units` is a functionally-equivalent but unhardened variant). `supabase migration list` correctly shows them as local-only. Do not `migration repair --status applied` them — that would be false bookkeeping. They are idempotent `CREATE OR REPLACE` and should go out with the next deliberate `supabase db push`.
 
 ## Important Notes
 
