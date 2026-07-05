@@ -296,11 +296,20 @@ export async function onRequest(
     "unknown";
   const userAgent = request.headers.get("User-Agent") || "unknown";
 
+  // Loopback = local dev / E2E via `wrangler pages dev`. Exempt it from IP
+  // blocking and anomaly tracking: production requests always arrive through
+  // Cloudflare with CF-Connecting-IP set to the real client address (never
+  // loopback), so this branch is unreachable in production. Without it, one
+  // E2E run (>100 /api requests in 10 min from 127.0.0.1) trips REQUEST_SPIKE
+  // auto-blocking and every subsequent login 403s for an hour
+  // ("Your IP has been temporarily blocked due to suspicious activity").
+  const isLoopbackIp = clientIp === "127.0.0.1" || clientIp === "::1";
+
   // ============================================
   // SECURITY CHECK 1: IP Block Status
   // ============================================
   // Check if IP is blocked before processing request
-  if (env.RATE_LIMIT_KV) {
+  if (env.RATE_LIMIT_KV && !isLoopbackIp) {
     try {
       const blockStatus = await isIPBlocked(env.RATE_LIMIT_KV, clientIp);
       if (blockStatus.blocked) {
@@ -334,7 +343,7 @@ export async function onRequest(
   // SECURITY CHECK 2: Anomaly Detection
   // ============================================
   // Track request patterns and detect anomalies (non-blocking)
-  if (env.RATE_LIMIT_KV) {
+  if (env.RATE_LIMIT_KV && !isLoopbackIp) {
     // Fire and forget - don't block on anomaly tracking
     trackRequest(env.RATE_LIMIT_KV, clientIp, {
       path: url.pathname,

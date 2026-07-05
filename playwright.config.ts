@@ -17,6 +17,9 @@ dotenv.config({ path: path.resolve(__dirname, ".env.test") });
  */
 export default defineConfig({
   testDir: "./e2e",
+  // Seeds local-only test users (idempotent, skipped for remote Supabase URLs)
+  // so a clean checkout can run credentialed specs like e2e/auth.spec.ts.
+  globalSetup: "./e2e/global-setup.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

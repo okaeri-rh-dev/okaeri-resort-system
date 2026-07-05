@@ -84,12 +84,45 @@ export class DashboardPage {
   }
 
   /**
+   * True when the viewport uses the mobile dashboard variant (< md / 768px).
+   * The app renders MobileDashboard and DesktopDashboard side by side and
+   * toggles visibility with `md:hidden` / `hidden md:block`.
+   */
+  private isMobileDashboardViewport(): boolean {
+    return (this.page.viewportSize()?.width ?? 1280) < 768;
+  }
+
+  /**
+   * True when the sidebar nav is hidden behind the hamburger Sheet (< lg / 1024px).
+   */
+  private isCollapsedNavViewport(): boolean {
+    return (this.page.viewportSize()?.width ?? 1280) < 1024;
+  }
+
+  /**
+   * Click a nav link, opening the mobile navigation Sheet first when the
+   * sidebar is collapsed (< lg). The sidebar links stay in the DOM but are
+   * hidden on small viewports, so the desktop locator cannot be clicked there.
+   */
+  private async clickNavLink(name: RegExp) {
+    if (this.isCollapsedNavViewport()) {
+      await this.page.getByRole("button", { name: "Open navigation menu" }).click();
+      await this.page.getByRole("dialog").getByRole("link", { name }).first().click();
+    } else {
+      await this.page.getByRole("link", { name }).first().click();
+    }
+  }
+
+  /**
    * Wait for dashboard to fully load
    */
   async waitForPageLoad() {
     await this.page.waitForLoadState("networkidle");
-    // Wait for at least one KPI card to be visible
-    await this.page.waitForSelector("text=Available Cabins", {
+    // Wait for a marker of the active dashboard variant to be visible
+    const marker = this.isMobileDashboardViewport()
+      ? "text=Tomorrow's Schedule"
+      : "text=Available Cabins";
+    await this.page.waitForSelector(marker, {
       timeout: TIMEOUTS.navigation,
     });
   }
@@ -129,7 +162,7 @@ export class DashboardPage {
    * Navigate to bookings page
    */
   async goToBookings() {
-    await this.bookingsLink.click();
+    await this.clickNavLink(/bookings/i);
     await this.page.waitForURL(/\/admin\/bookings/);
   }
 
@@ -137,7 +170,7 @@ export class DashboardPage {
    * Navigate to units page
    */
   async goToUnits() {
-    await this.unitsLink.click();
+    await this.clickNavLink(/units|cabins/i);
     await this.page.waitForURL(/\/admin\/units/);
   }
 
@@ -145,7 +178,7 @@ export class DashboardPage {
    * Navigate to guests page
    */
   async goToGuests() {
-    await this.guestsLink.click();
+    await this.clickNavLink(/guests/i);
     await this.page.waitForURL(/\/admin\/guests/);
   }
 
@@ -153,7 +186,7 @@ export class DashboardPage {
    * Navigate to payments page
    */
   async goToPayments() {
-    await this.paymentsLink.click();
+    await this.clickNavLink(/payments/i);
     await this.page.waitForURL(/\/admin\/payments/);
   }
 
@@ -161,7 +194,7 @@ export class DashboardPage {
    * Navigate to expenses page
    */
   async goToExpenses() {
-    await this.expensesLink.click();
+    await this.clickNavLink(/expenses/i);
     await this.page.waitForURL(/\/admin\/expenses/);
   }
 
@@ -192,7 +225,14 @@ export class DashboardPage {
    * Verify dashboard shows expected data (basic smoke test)
    */
   async verifyDashboardLoaded() {
-    // Check that KPI section is visible
+    if (this.isMobileDashboardViewport()) {
+      // MobileDashboard variant: no KPI cards; assert its stable section.
+      // Both dashboard variants render this card; MobileDashboard comes first
+      // in the DOM and is the visible one below the md breakpoint.
+      await expect(this.page.getByText("Tomorrow's Schedule").first()).toBeVisible();
+      return;
+    }
+    // DesktopDashboard variant: KPI section is visible
     await expect(this.page.locator("text=Available Cabins")).toBeVisible();
     await expect(this.page.locator("text=Active Bookings")).toBeVisible();
   }
