@@ -3,7 +3,7 @@
  * Regression test for audit_trigger_func() no-op UPDATE handling.
  *
  * Locks in the behavior introduced by
- * supabase/migrations/20260530_fix_audit_trigger_skip_noop_updates.sql:
+ * supabase/migrations/20260530000000_fix_audit_trigger_skip_noop_updates.sql:
  *   - A genuinely no-op UPDATE on an audited table must succeed without
  *     raising the valid_changed_fields constraint violation, and must NOT
  *     produce an audit_logs row.
