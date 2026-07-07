@@ -78,7 +78,7 @@ export function DashboardStats() {
         return (
           <Card
             key={index}
-            className="kpi-card border border-neutral-200 shadow-sm transition-shadow hover:shadow-md"
+            className="border border-neutral-200 p-4 shadow-sm transition-shadow hover:shadow-md"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
               <CardTitle className="text-sm leading-tight font-medium text-neutral-700">

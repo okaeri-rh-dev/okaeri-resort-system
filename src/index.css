@@ -2,7 +2,6 @@
 
 /* Import enterprise mobile styles */
 @import "./styles/enterprise-tables.css";
-@import "./styles/mobile-enterprise.css";
 
 /* Tailwind v4 uses @theme directive for design tokens */
 @theme {
@@ -85,7 +84,29 @@
   * {
     @apply border-border;
   }
+  html {
+    /* Prevent iOS Safari from inflating text on orientation change */
+    -webkit-text-size-adjust: 100%;
+  }
   body {
     @apply bg-background text-foreground;
+    /* Remove the gray tap flash on Android Chrome */
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Bottom inset for fixed action bars in the installed PWA (home indicator / gesture bar) */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Honor the user's reduced-motion preference (previously lived in mobile-enterprise.css) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

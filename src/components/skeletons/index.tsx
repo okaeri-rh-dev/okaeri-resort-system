@@ -341,7 +341,7 @@ export const DashboardStatsSkeleton: React.FC<DashboardStatsSkeletonProps> = ({
         <KPICardSkeleton
           key={index}
           hasIcon={true}
-          className="kpi-card border border-neutral-200 shadow-sm"
+          className="border border-neutral-200 p-4 shadow-sm"
         />
       ))}
     </div>

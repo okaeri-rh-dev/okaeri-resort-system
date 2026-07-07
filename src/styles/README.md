@@ -8,9 +8,13 @@ The `/src/styles/` directory contains custom CSS stylesheets that complement the
 
 ```
 styles/
-├── enterprise-tables.css    # Enterprise table styling (5.2KB)
-└── mobile-enterprise.css    # Mobile-specific enterprise styles (11KB)
+└── enterprise-tables.css    # Enterprise table styling (5.2KB)
 ```
+
+> `mobile-enterprise.css` was removed (2026-07): its 44px touch-target / 16px input
+> standards now live directly in the shadcn primitives (`src/components/ui/`
+> `button.variants.ts`, `input.tsx`, `checkbox.tsx`, etc.) as mobile-first Tailwind
+> classes, and `.safe-area-bottom` moved to `src/index.css`.
 
 ## 📦 Style Modules
 
@@ -50,60 +54,6 @@ styles/
 .table-numeric {
   font-family: 'SF Mono', 'Monaco', monospace;
   font-variant-numeric: tabular-nums;
-}
-```
-
-### `mobile-enterprise.css` - Mobile Optimizations
-**Purpose**: Mobile-specific adjustments for enterprise UI
-
-**Responsive Breakpoints**:
-```css
-/* Mobile (< 640px) */
-@media (max-width: 639px) {
-  .mobile-table-stack {
-    display: block;
-  }
-
-  .mobile-card-view {
-    display: grid;
-    gap: 1rem;
-  }
-}
-
-/* Tablet (640px - 1024px) */
-@media (min-width: 640px) and (max-width: 1023px) {
-  .tablet-two-column {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-```
-
-**Mobile-Specific Styles**:
-```css
-/* Touch-friendly targets */
-.mobile-touch-target {
-  min-height: 44px;
-  min-width: 44px;
-}
-
-/* Larger text for mobile */
-.mobile-text-large {
-  font-size: 16px; /* Prevents zoom on iOS */
-}
-
-/* Swipeable cards */
-.swipe-container {
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Bottom sheet modal */
-.mobile-bottom-sheet {
-  position: fixed;
-  bottom: 0;
-  border-radius: 1rem 1rem 0 0;
-  max-height: 90vh;
 }
 ```
 
