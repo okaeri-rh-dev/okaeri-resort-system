@@ -16,7 +16,6 @@ import {
   Menu,
   Receipt,
   ReceiptText,
-  Search,
   Settings,
   Shield,
   UserCog,
@@ -26,7 +25,13 @@ import {
 
 import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AuditRole, clearRoleCache } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
@@ -280,20 +285,20 @@ export function MainLayout({ children }: MainLayoutProps) {
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-80 max-w-[85vw] p-0">
+              <SheetContent side="left" hideClose className="w-80 max-w-[85vw] p-0">
                 <div className="flex h-full flex-col">
                   {/* Mobile Menu Header */}
                   <div className="border-b p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h1 className="text-xl font-bold">Okaeri Resort</h1>
-                        <p className="text-muted-foreground mt-1 text-sm">Management System</p>
+                        <SheetTitle className="text-xl font-bold">Okaeri Resort</SheetTitle>
+                        <SheetDescription className="mt-1">Management System</SheetDescription>
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="h-9 w-9 touch-manipulation"
+                        className="h-11 w-11 touch-manipulation"
                         aria-label="Close navigation menu"
                       >
                         <X className="h-5 w-5" />
@@ -401,18 +406,12 @@ export function MainLayout({ children }: MainLayoutProps) {
             <Button
               variant="ghost"
               size="icon"
+              asChild
               className="relative h-11 w-11 touch-manipulation"
-              aria-label="Search"
             >
-              <Search className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative h-11 w-11 touch-manipulation"
-              aria-label="Notifications"
-            >
-              <Bell className="h-5 w-5" />
+              <Link to="/admin/bookings/queue" aria-label="Booking queue">
+                <Bell className="h-5 w-5" />
+              </Link>
             </Button>
           </div>
         </div>
