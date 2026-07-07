@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const inputVariants = cva(
-  "border-input bg-background ring-offset-background file:text-foreground placeholder:text-muted-foreground placeholder:italic placeholder:opacity-60 focus-visible:ring-ring flex w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+  "border-input bg-background ring-offset-background file:text-foreground placeholder:text-muted-foreground placeholder:italic placeholder:opacity-60 focus-visible:ring-ring flex w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 max-md:text-base",
   {
     variants: {
       variant: {
@@ -21,7 +21,7 @@ const inputVariants = cva(
       },
       size: {
         default: "h-10 px-3 py-2",
-        sm: "h-9 px-3 py-2 text-sm",
+        sm: "h-9 px-3 py-2 text-sm max-md:text-base",
         lg: "h-11 px-4 py-3",
         xl: "h-12 px-4 py-3 text-base",
       },
@@ -336,7 +336,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
         {...props}
         ref={inputRef}
         type="text" // Use text to avoid browser validation
-        inputMode="numeric" // Mobile numeric keyboard
+        inputMode={allowDecimals ? "decimal" : "numeric"} // Mobile keypad; iOS "numeric" has no "." key
         value={internalValue}
         onChange={handleInputChange}
         onBlur={handleInputBlur}
