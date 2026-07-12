@@ -238,3 +238,103 @@ describe("Middleware JWT Authentication", () => {
     expect(context.next).toHaveBeenCalled();
   });
 });
+
+describe("Middleware Cron Authentication", () => {
+  const CRON_PATH = "https://api.example.com/api/cron/cleanup-idempotency";
+
+  beforeEach(() => {
+    mockEnv.CRON_SECRET = "test-cron-secret";
+    mockEnv.SUPABASE_JWT_SECRET = "test-jwt-secret-key-for-hmac-256-signing";
+  });
+
+  it("should allow /api/cron/* with the correct CRON_SECRET (bug repro)", async () => {
+    const request = createMockRequest(CRON_PATH, {
+      method: "POST",
+      headers: { Authorization: "Bearer test-cron-secret" },
+    });
+
+    const context = {
+      ...createMockContext(request, mockEnv),
+      next: vi.fn(async () => new Response(JSON.stringify({ success: true }), { status: 200 })),
+    };
+
+    const response = await onRequest(context as unknown);
+
+    // Before the fix, the JWT gate rejected the CRON_SECRET as an invalid token
+    // (401 "Invalid or expired token") and next() was never reached.
+    expect(context.next).toHaveBeenCalled();
+    expect(response.status).toBe(200);
+  });
+
+  it("should reject /api/cron/* with a wrong CRON_SECRET", async () => {
+    const request = createMockRequest(CRON_PATH, {
+      method: "POST",
+      headers: { Authorization: "Bearer wrong-secret" },
+    });
+
+    const context = {
+      ...createMockContext(request, mockEnv),
+      next: vi.fn(),
+    };
+
+    const response = await onRequest(context as unknown);
+
+    expect(context.next).not.toHaveBeenCalled();
+    expect(response.status).toBe(401);
+    const data = (await response.json()) as ApiErrorResponse;
+    expect(data.error).toBe("UNAUTHORIZED");
+  });
+
+  it("should reject /api/cron/* with no Authorization header", async () => {
+    const request = createMockRequest(CRON_PATH, { method: "POST" });
+
+    const context = {
+      ...createMockContext(request, mockEnv),
+      next: vi.fn(),
+    };
+
+    const response = await onRequest(context as unknown);
+
+    expect(response.status).toBe(401);
+  });
+
+  it("should reject /api/cron/* authenticated with a valid Supabase JWT", async () => {
+    // A user JWT must NOT grant access to machine-to-machine cron endpoints,
+    // even though it would pass the JWT gate on other protected routes.
+    const request = createMockRequest(CRON_PATH, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${await generateTestJWT()}` },
+    });
+
+    const context = {
+      ...createMockContext(request, mockEnv),
+      next: vi.fn(),
+    };
+
+    const response = await onRequest(context as unknown);
+
+    expect(context.next).not.toHaveBeenCalled();
+    expect(response.status).toBe(401);
+  });
+
+  it("should fail closed with 500 when CRON_SECRET is not configured", async () => {
+    mockEnv.CRON_SECRET = "";
+
+    const request = createMockRequest(CRON_PATH, {
+      method: "POST",
+      headers: { Authorization: "Bearer anything" },
+    });
+
+    const context = {
+      ...createMockContext(request, mockEnv),
+      next: vi.fn(),
+    };
+
+    const response = await onRequest(context as unknown);
+
+    expect(context.next).not.toHaveBeenCalled();
+    expect(response.status).toBe(500);
+    const data = (await response.json()) as ApiErrorResponse;
+    expect(data.error).toBe("SERVER_MISCONFIGURED");
+  });
+});

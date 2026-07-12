@@ -24,6 +24,9 @@ interface Env {
   SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   ALERT_WEBHOOK_URL?: string;
+  // Shared secret for machine-to-machine cron endpoints (/api/cron/*),
+  // triggered by the GitHub Actions "Scheduled Cleanup Tasks" workflow.
+  CRON_SECRET?: string;
 }
 
 /**
@@ -258,6 +261,37 @@ function isPublicPath(pathname: string): boolean {
 }
 
 /**
+ * Verify a cron request's shared-secret Bearer token.
+ *
+ * Cron endpoints (/api/cron/*) are machine-to-machine — triggered by the GitHub
+ * Actions "Scheduled Cleanup Tasks" workflow — and authenticate with a shared
+ * CRON_SECRET, NOT a Supabase JWT. They are validated here because the JWT gate
+ * in onRequest() would otherwise reject the CRON_SECRET as an invalid token (it
+ * is not a signed JWT) before the endpoint's own auth check ever runs.
+ */
+function verifyCronSecret(
+  request: Request,
+  env: Env
+): { valid: boolean; status: 200 | 401 | 500; error: string } {
+  // Fail-closed: an unset secret is a misconfiguration, not an open door.
+  if (!env.CRON_SECRET) {
+    console.error("CRON_SECRET is not configured; rejecting cron request");
+    return { valid: false, status: 500, error: "Cron authentication is unavailable" };
+  }
+
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return { valid: false, status: 401, error: "Missing or invalid Authorization header" };
+  }
+
+  if (authHeader.substring(7) !== env.CRON_SECRET) {
+    return { valid: false, status: 401, error: "Invalid or expired token" };
+  }
+
+  return { valid: true, status: 200, error: "" };
+}
+
+/**
  * Main middleware function
  */
 export async function onRequest(
@@ -354,8 +388,33 @@ export async function onRequest(
     });
   }
 
-  // Authentication check for protected endpoints (Gap Resolution #8)
-  if (!isPublicPath(url.pathname)) {
+  // Cron endpoints (/api/cron/*) authenticate machine-to-machine with a shared
+  // CRON_SECRET, not a Supabase JWT. Validate here and skip the JWT gate below;
+  // the gate would otherwise reject the CRON_SECRET as an invalid token.
+  if (url.pathname.startsWith("/api/cron/")) {
+    const cronAuth = verifyCronSecret(request, env);
+    if (!cronAuth.valid) {
+      return new Response(
+        JSON.stringify({
+          error: cronAuth.status === 500 ? "SERVER_MISCONFIGURED" : "UNAUTHORIZED",
+          message: cronAuth.error,
+          code: cronAuth.status,
+        }),
+        {
+          status: cronAuth.status,
+          headers: {
+            ...corsHeaders,
+            ...securityHeaders,
+            "Content-Type": "application/json",
+            "X-Request-ID": requestId,
+          },
+        }
+      );
+    }
+    // Valid CRON_SECRET — fall through to next() with headers applied.
+
+    // Authentication check for protected endpoints (Gap Resolution #8)
+  } else if (!isPublicPath(url.pathname)) {
     // Fail-closed: missing JWT secret is misconfiguration, not a silent bypass.
     // Previously, an unset SUPABASE_JWT_SECRET would skip this whole block,
     // leaving request.user undefined and causing 401s downstream silently.
