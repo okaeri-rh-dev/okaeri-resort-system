@@ -1,0 +1,47 @@
+name: CI
+
+# Fast, deterministic quality gate: lint + type-check + non-DB unit tests.
+#
+# - Runs on every pull request to main (blocks merge once branch protection is
+#   enabled — see docs/whole-app-audit-2026-07-21.md, Decision 2).
+# - Reused by deploy-cloudflare.yml via `workflow_call`, so nothing reaches
+#   production without passing this gate first.
+#
+# Needs NO secrets: vitest.config.ts hard-codes local Supabase fallbacks and the
+# non-DB suite mocks the network (MSW), so it runs fully offline. Deeper DB +
+# Playwright E2E checks live in infra-health.yml (push to main + weekly).
+#
+# NOTE: `type-check` covers src/ only. The functions/ server layer is not yet
+# type-checked (no tsconfig; mixed @/ vs relative imports + a duplicated
+# supabase-admin need resolving first). Tracked as the next step in the audit doc.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_call:
+  workflow_dispatch:
+
+# Cancel superseded runs on the same ref (e.g. rapid PR pushes) to save minutes.
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, type-check, unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Type-check (src)
+        run: npm run type-check
+      - name: Unit tests (non-DB)
+        run: npm run test:no-db

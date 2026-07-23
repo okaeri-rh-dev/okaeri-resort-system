@@ -6,8 +6,15 @@ on:
   workflow_dispatch: # Allow manual triggering
 
 jobs:
+  # Blocking quality gate — lint + type-check + non-DB unit tests (ci.yml).
+  # Deploy is skipped entirely if this fails, so a red build never ships.
+  quality:
+    name: Quality gate
+    uses: ./.github/workflows/ci.yml
+
   deploy:
     name: Build and Deploy to Cloudflare Pages
+    needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
