@@ -59,14 +59,6 @@ export class CronMonitor {
    */
   private initializeDefaultJobs(): void {
     this.registerJob({
-      name: "cleanup-guest-bookings",
-      schedule: "0 * * * *", // Every hour
-      timeout: 60000, // 1 minute
-      critical: false,
-      description: "Cleanup orphaned guest booking files",
-    });
-
-    this.registerJob({
       name: "bandwidth-check",
       schedule: "0 */6 * * *", // Every 6 hours
       timeout: 30000,
