@@ -52,40 +52,6 @@ function isValidUUID(uuid: string): boolean {
 }
 
 /**
- * Checks if user has admin role
- */
-async function isAdmin(
-  supabase: ReturnType<typeof createClient<Database>>,
-  userId: string
-): Promise<boolean> {
-  try {
-    // Check user metadata first (fastest)
-    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
-
-    if (!userError && userData?.user?.user_metadata?.role === "admin") {
-      return true;
-    }
-
-    // Fallback to profiles table check
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
-
-    if (profileError) {
-      console.error("[assign-units] Error checking admin role:", profileError);
-      return false;
-    }
-
-    return profile?.role === "admin";
-  } catch (error) {
-    console.error("[assign-units] Unexpected error checking admin role:", error);
-    return false;
-  }
-}
-
-/**
  * Parse RPC error messages for user-friendly responses
  */
 function parseRpcError(error: RpcError): { status: number; message: string; details?: string } {
@@ -302,19 +268,8 @@ export async function onRequest(context: {
     // Store userId for error handling
     userId = user.id;
 
-    // Check if user is admin
-    const isUserAdmin = await isAdmin(supabase, user.id);
-    if (!isUserAdmin) {
-      const errorResponse: ErrorResponse = {
-        success: false,
-        error: "Forbidden",
-        details: "Admin access required",
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Authorization (staff-or-above, from app_roles) is enforced upstream by
+    // functions/api/admin/_middleware.ts — unit assignment is requireStaff.
 
     // Audit logging for unit assignment attempt
     await logAuditEventWorker(

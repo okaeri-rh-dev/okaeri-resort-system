@@ -3,7 +3,7 @@
  *
  * Admin endpoint to verify or reject payment proof submissions.
  *
- * @requires Authentication - Admin role required
+ * @requires Authentication - Manager role or above (from app_roles)
  * @param {string} booking_id - The booking ID to verify/reject
  * @param {'verify' | 'reject'} action - Action to perform
  * @param {string} [reason] - Required if action is 'reject'
@@ -19,9 +19,12 @@
 
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 
+import { lookupUserRole } from "../../lib/role-lookup";
+
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
+  RATE_LIMIT_KV?: KVNamespace;
 }
 
 interface RequestBody {
@@ -123,14 +126,16 @@ export async function onRequest(context: {
 
     const user = (await userResponse.json()) as SupabaseUser;
 
-    // Verify admin role
-    const userRole = (user.user_metadata?.role as string) || (user.app_metadata?.role as string);
+    // Authorize from app_roles (server-side), NOT client-mutable user_metadata /
+    // app_metadata. Payment verification requires manager-or-above, matching the
+    // frontend Payments guard (requireManager).
+    const appRole = await lookupUserRole(user.id, env);
 
-    if (userRole !== "admin") {
+    if (!["manager", "owner", "admin"].includes(appRole)) {
       return new Response(
         JSON.stringify({
           error: "Forbidden",
-          message: "Admin role required to verify payments",
+          message: "Manager access or higher is required to verify payments",
         }),
         {
           status: 403,

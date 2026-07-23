@@ -66,40 +66,6 @@ function validateDateRange(checkIn: string, checkOut: string): boolean {
   return checkOutDate > checkInDate;
 }
 
-/**
- * Checks if user has admin role
- */
-async function isAdmin(
-  supabase: ReturnType<typeof createClient<Database>>,
-  userId: string
-): Promise<boolean> {
-  try {
-    // Check user metadata first (fastest)
-    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
-
-    if (!userError && userData?.user?.user_metadata?.role === "admin") {
-      return true;
-    }
-
-    // Fallback to profiles table check
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
-
-    if (profileError) {
-      console.error("[available-units] Error checking admin role:", profileError);
-      return false;
-    }
-
-    return profile?.role === "admin";
-  } catch (error) {
-    console.error("[available-units] Unexpected error checking admin role:", error);
-    return false;
-  }
-}
-
 export async function onRequest(context: {
   request: CloudflareRequest;
   env: Env;
@@ -210,19 +176,8 @@ export async function onRequest(context: {
       });
     }
 
-    // Check if user is admin
-    const isUserAdmin = await isAdmin(supabase, user.id);
-    if (!isUserAdmin) {
-      const errorResponse: ErrorResponse = {
-        success: false,
-        error: "Forbidden",
-        details: "Admin access required",
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Authorization (staff-or-above, from app_roles) is enforced upstream by
+    // functions/api/admin/_middleware.ts — this booking-area query is requireStaff.
 
     // Audit logging for admin access
     await logAuditEventWorker(

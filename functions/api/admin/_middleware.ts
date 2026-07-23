@@ -1,18 +1,21 @@
 /**
- * Admin Authentication Middleware (Phase 1)
+ * Admin Authentication & Authorization Middleware
  *
- * Enforces JWT authentication for all /api/admin/* endpoints.
+ * Enforces JWT authentication + a role baseline for all /api/admin/* endpoints.
  * This middleware runs BEFORE all admin endpoint handlers.
  *
  * Security layers:
  * 1. JWT token extraction from Authorization header
  * 2. Supabase Auth user verification
- * 3. Phase 1: All authenticated users have admin access
- *    Phase 2: TODO - Implement role-based access control with profiles table
+ * 3. Authorization: requires an active public.app_roles role of staff or above
+ *    (staff/manager/owner/admin). Client-mutable user_metadata is never trusted.
+ *    Handlers enforce stricter levels where needed (verify-payment = manager+,
+ *    pending-users = owner/admin).
  *
  * Returns:
  * - 401 Unauthorized: Missing or invalid JWT token
- * - Passes to next handler: Authenticated user verified
+ * - 403 Forbidden: Authenticated but role is below staff (e.g. pending approval)
+ * - Passes to next handler: Authenticated + authorized, real role in adminContext
  *
  * Reference: docs/implementation/guest-booking-multi-unit/chunks/014-admin-api-endpoints/instructions.md lines 204-380
  */
@@ -20,10 +23,19 @@
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
+import { lookupUserRole } from "../../lib/role-lookup";
+
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
+  RATE_LIMIT_KV?: KVNamespace;
 }
+
+// Baseline for the entire /api/admin/* area: an approved staff member or above.
+// Individual handlers enforce stricter levels where required (verify-payment =
+// manager+, pending-users = owner/admin). Authorization is sourced from
+// public.app_roles via lookupUserRole — NEVER from client-mutable JWT claims.
+const ADMIN_AREA_ROLES = ["staff", "manager", "owner", "admin"];
 
 interface AdminContext {
   user_id: string;
@@ -125,41 +137,32 @@ export async function onRequest(context: {
   }
 
   // ============================================================================
-  // STEP 4: Phase 1 - All authenticated users have admin access
+  // STEP 4: Authorize via app_roles (server-side source of truth)
   // ============================================================================
 
-  // Phase 1: Skip role verification - all authenticated users are admins
-  // Phase 2: TODO - Implement role-based access control
-  //
-  // When implementing Phase 2, uncomment and update the following:
-  //
-  // const userRole = user.user_metadata?.role || user.app_metadata?.role;
-  //
-  // if (userRole !== "admin") {
-  //   const { data: profile, error: profileError } = await supabase
-  //     .from("profiles")
-  //     .select("role")
-  //     .eq("id", user.id)
-  //     .single();
-  //
-  //   if (profileError || !profile || profile.role !== "admin") {
-  //     return new Response(
-  //       JSON.stringify({
-  //         success: false,
-  //         error: "Forbidden - insufficient permissions",
-  //         error_code: "FORBIDDEN",
-  //         message: "Admin role required",
-  //       }),
-  //       {
-  //         status: 403,
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           ...corsHeaders,
-  //         },
-  //       }
-  //     );
-  //   }
-  // }
+  // Authorization is derived from public.app_roles, NOT from user_metadata /
+  // app_metadata (both are client-mutable via supabase.auth.updateUser). A user
+  // with no active role — e.g. a fresh self sign-up pending approval — resolves
+  // to "user" and is rejected. lookupUserRole fails closed to "user" on error.
+  const appRole = await lookupUserRole(user.id, env);
+
+  if (!ADMIN_AREA_ROLES.includes(appRole)) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Forbidden",
+        error_code: "FORBIDDEN",
+        message: "Staff access or higher is required",
+      }),
+      {
+        status: 403,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+      }
+    );
+  }
 
   // ============================================================================
   // STEP 5: Enrich Request Context for Downstream Handlers
@@ -169,7 +172,7 @@ export async function onRequest(context: {
   const adminContext: AdminContext = {
     user_id: user.id,
     email: user.email || "",
-    app_role: "admin", // Phase 1: All authenticated users are admins
+    app_role: appRole,
   };
 
   // Store in context for downstream handlers

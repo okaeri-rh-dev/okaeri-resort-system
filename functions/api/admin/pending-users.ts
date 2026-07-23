@@ -14,9 +14,12 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+import { lookupUserRole } from "../../lib/role-lookup";
+
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
+  RATE_LIMIT_KV?: KVNamespace;
 }
 
 // CORS headers helper (validates origin against allowlist)
@@ -53,6 +56,41 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
         persistSession: false,
       },
     });
+
+    // Authorize: this endpoint exposes registered-user PII (emails), so it is
+    // tightened to owner/admin (frontend roles page = requireAdmin) on top of the
+    // staff+ baseline in _middleware.ts. Source of truth is app_roles, never the
+    // client-mutable user_metadata. Fails closed (401/403) if the token is absent.
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const token = authHeader.slice(7);
+    const {
+      data: { user },
+      error: authErr,
+    } = await supabase.auth.getUser(token);
+
+    if (authErr || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const appRole = await lookupUserRole(user.id, env);
+    if (!["owner", "admin"].includes(appRole)) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden", message: "Owner or admin access required" }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     // Get all auth users (paginate to avoid default 50-user limit)
     // NOTE: If user count exceeds 1000, implement multi-page iteration
