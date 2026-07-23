@@ -5,7 +5,11 @@
 #
 # Schedules (UTC):
 # - Daily 2:00 AM: Cleanup expired idempotency keys (48+ hours old)
-# - Weekly Sunday 3:00 AM: Cleanup expired payment proofs (90/30 days retention)
+# - Weekly payment-proofs cleanup is DISABLED (schedule removed). The prod
+#   function cleanup_expired_payment_proofs() does not exist yet — a verbatim
+#   port fails/no-ops (schema mismatch: check_out vs check_out_date, real
+#   statuses Confirmed/Cancelled/Pending). See migration 20260715000000_*.sql
+#   and docs/whole-app-audit-2026-07-21.md. Re-add "0 3 * * 0" once ported.
 #
 # Manual trigger: GitHub Actions > Scheduled Cleanup Tasks > Run workflow
 
@@ -13,16 +17,17 @@ name: Scheduled Cleanup Tasks
 
 on:
   schedule:
-    # Daily at 2:00 AM UTC (10:00 AM PHT)
+    # Daily at 2:00 AM UTC (10:00 AM PHT) — idempotency-key cleanup only.
     - cron: "0 2 * * *"
-    # Weekly on Sunday at 3:00 AM UTC (11:00 AM PHT)
-    - cron: "0 3 * * 0"
+    # NOTE: weekly payment-proofs schedule ("0 3 * * 0") intentionally removed —
+    # see header. Re-add here when cleanup_expired_payment_proofs() lands on prod.
   workflow_dispatch:
     inputs:
       task:
         description: "Which cleanup task to run"
         required: true
-        default: "both"
+        # Default to the working task; payment-proofs is opt-in until ported.
+        default: "idempotency"
         type: choice
         options:
           - both
@@ -66,7 +71,8 @@ jobs:
   cleanup-payment-proofs:
     name: Cleanup Payment Proofs
     runs-on: ubuntu-latest
-    # Run weekly on Sunday at 3 AM UTC, or when manually triggered with 'both' or 'payment-proofs'
+    # DISABLED on schedule (weekly cron removed — prod function absent; see header).
+    # Runs only via manual workflow_dispatch with task 'payment-proofs' or 'both'.
     if: |
       github.event.schedule == '0 3 * * 0' ||
       (github.event_name == 'workflow_dispatch' && (github.event.inputs.task == 'both' || github.event.inputs.task == 'payment-proofs'))
