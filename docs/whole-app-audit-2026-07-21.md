@@ -185,3 +185,19 @@ Writing a correct `functions/tsconfig.json` is blocked on two real inconsistenci
 ### Salvaged from the deleted `*.yml.disabled` workflows (deferred, non-blocking)
 
 Worth resurrecting later as **non-blocking** PR checks (not deploy gates): a **bundle-size PR comment** (ties into P1 #11–12 and P3 bundle work), **Lighthouse CI** (`.lighthouserc.json` already exists), and **coverage upload** (the 70/80 thresholds in `vitest.config.ts` are currently a dead letter — P2). Their old component-size / console.log / TODO greps are noise — dropped deliberately.
+
+### 2026-07-23 — Audit step 2: stop the active bleeding (done)
+
+Three verified P1s fixed, each as its own commit; all validated on a clean-checkout gate (generate-routes → lint → type-check → `test:no-db`, 1450 passed) and pushed to `main`:
+
+- [x] **P1 #5 — `verify-payment` column bug.** `functions/api/admin/verify-payment.ts` GET + PATCH now filter `bookings?booking_id=eq.` (was `id=eq.`, a nonexistent column → PostgREST 400 → 500). Commit `01e51de`. **Caveat:** the query is now correct, but this endpoint is still behind the broken admin auth (P0 #1) — authorization is a separate fix.
+- [x] **P1 #6 — unauthenticated service-role deletion route.** Deleted `functions/cron/cleanup-guest-bookings.ts` (+ its orphaned README, emptying `functions/cron/`) and removed its dead `CronMonitor` registration in `cron-monitor.ts`. It sat outside the `/api/*` middleware (no auth/rate-limit/headers) and was unscheduled, so removal changed no live behavior. Commit `5274645`.
+- [x] **P1 #4 — weekly-failing cron.** Removed the `0 3 * * 0` payment-proofs schedule from `scheduled-cleanup.yml` (kept the daily idempotency cron) and defaulted manual dispatch to `idempotency`; the job stays manually dispatchable. Commit `8fbee85`.
+
+Deferrals from this step:
+
+- **Guest-booking cleanup is removed, not reimplemented.** There is now no automated cleanup of abandoned Pending guest bookings. If wanted, re-add as a secured `/api/cron/*` job (CRON_SECRET via middleware) + schedule + verified schema — same care as the payment-proofs port.
+- **payment-proofs port** still pending the retention-rule decision (Decision 3) — unchanged.
+- **Stale docs:** `functions/CLAUDE.md` (tree diagram) and `src/lib/monitoring/CLAUDE.md` (cron example) still name the deleted `cleanup-guest-bookings` — fold into the P2 doc-cleanup pass (DB-lane finding #9).
+
+**Remaining audit sequencing:** step 3 = close the P0 hole (admin RBAC + RLS, Decision 1); then step 4 (user-facing wins) and step 5 (cleanup). The deferred `functions/` type-check (P1 #8) is still the natural companion to the CI gate.
