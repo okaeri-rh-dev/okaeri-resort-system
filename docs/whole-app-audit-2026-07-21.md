@@ -201,3 +201,19 @@ Deferrals from this step:
 - **Stale docs:** `functions/CLAUDE.md` (tree diagram) and `src/lib/monitoring/CLAUDE.md` (cron example) still name the deleted `cleanup-guest-bookings` — fold into the P2 doc-cleanup pass (DB-lane finding #9).
 
 **Remaining audit sequencing:** step 3 = close the P0 hole (admin RBAC + RLS, Decision 1); then step 4 (user-facing wins) and step 5 (cleanup). The deferred `functions/` type-check (P1 #8) is still the natural companion to the CI gate.
+
+### 2026-07-23 — Audit step 3, part 1: admin API RBAC (done)
+
+Closed the **API-layer half of P0 #1**. Authorization now comes from `public.app_roles` via `lookupUserRole` (fail-closed), never from client-mutable `user_metadata`. Verified: lint + type-check + `test:no-db` green (1467 passed, +17 new RBAC tests). Deploy-safe: the frontend already gates the admin UI on `app_roles` (`getUserAuditRole` → `get_current_audit_role`), so no one who can currently use the admin UI is newly locked out.
+
+Role levels mirror the frontend route-guards (the app's expressed policy) rather than a blanket admin/owner lock, which would have broken legitimate staff/manager access:
+
+- [x] `_middleware.ts` — baseline: active `app_roles` role of **staff+** (deny `user`/unapproved); attaches the real role to `adminContext`. (/admin min = `requireStaff`)
+- [x] `verify-payment.ts` — **manager+** (Payments = `requireManager`); removed the `user_metadata.role` check.
+- [x] `assign-units.ts` + `available-units.ts` — deleted the broken `checkAdminRole` (user_metadata shortcut + wrong `profiles` source); rely on the staff+ baseline (bookings = `requireStaff`).
+- [x] `pending-users.ts` — tightened to **owner/admin** (exposes registered-user PII; roles page = `requireAdmin`); added a header guard so a missing token returns 401, not 500 (caught by a test).
+- [x] Tests: `src/__tests__/api/admin-{middleware,pending-users}-auth.test.ts` — 17 tests, incl. the regression that a JWT with `user_metadata.role="admin"` is still denied when `app_roles` says `user`.
+
+**Decision (role policy):** allowed-role sets mirror the frontend guards. If the org runs owner/admin-only (no staff/managers), tighten the constants — trivial, flagged for confirmation.
+
+**Still open — P0 is only half-closed:** this fixes the functions API layer. A low-privilege authenticated user can STILL bypass it by hitting Supabase directly with the anon key (coarse RLS = P0 #2). That is **part 2 (RLS hardening)** — a prod migration needing careful design + E2E testing, the remaining escalation path.
