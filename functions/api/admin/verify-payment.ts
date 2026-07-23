@@ -201,7 +201,7 @@ export async function onRequest(context: {
 
     // Fetch booking to verify existence and current status
     const bookingResponse = await fetch(
-      `${env.SUPABASE_URL}/rest/v1/bookings?id=eq.${body.booking_id}&select=*`,
+      `${env.SUPABASE_URL}/rest/v1/bookings?booking_id=eq.${body.booking_id}&select=*`,
       {
         headers: {
           apikey: env.SUPABASE_SERVICE_ROLE_KEY,
@@ -263,7 +263,7 @@ export async function onRequest(context: {
 
     // Update booking payment status
     const updateResponse = await fetch(
-      `${env.SUPABASE_URL}/rest/v1/bookings?id=eq.${body.booking_id}`,
+      `${env.SUPABASE_URL}/rest/v1/bookings?booking_id=eq.${body.booking_id}`,
       {
         method: "PATCH",
         headers: {
