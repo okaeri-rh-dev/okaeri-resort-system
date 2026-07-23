@@ -20,6 +20,7 @@
     "dev:wrangler": "wrangler pages dev . --compatibility-date=2025-09-29 --compatibility-flags=nodejs_compat --port 8788 --local",
     "e2e:dev": "playwright test e2e/booking-card-mobile.spec.ts --project=\"Mobile Chrome\"",
     "format": "prettier --write .",
+    "generate:routes": "node scripts/generate-routes.mjs",
     "health-check": "bash scripts/health-check.sh",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
