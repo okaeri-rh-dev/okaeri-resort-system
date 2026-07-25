@@ -217,3 +217,38 @@ Role levels mirror the frontend route-guards (the app's expressed policy) rather
 **Decision (role policy):** allowed-role sets mirror the frontend guards. If the org runs owner/admin-only (no staff/managers), tighten the constants — trivial, flagged for confirmation.
 
 **Still open — P0 is only half-closed:** this fixes the functions API layer. A low-privilege authenticated user can STILL bypass it by hitting Supabase directly with the anon key (coarse RLS = P0 #2). That is **part 2 (RLS hardening)** — a prod migration needing careful design + E2E testing, the remaining escalation path.
+
+### 2026-07-25 — Audit step 3, part 2 (RLS): BUILT + LOCALLY TESTED (pending prod push)
+
+**Status:** migration `20260725000000_rls_role_based_core_tables.sql` + rollback + `src/__tests__/database/rls-core-tables.test.ts` committed (`a0ddc8f`). Validated on a fresh local Supabase: **18 RLS tests pass** (SELECT/INSERT/DELETE × 6 tables × 5 roles) — the roleless "user" is denied everywhere, staff can read the booking-area tables, `staff` cannot delete payments, only owner+ touches expenses. The proposed matrix passed **with no adjustments**. Full local DB suite (42) green; test is idempotent; existing DB tests unaffected. **NOT yet applied to prod** — needs `supabase db push` (approved step); no workflow auto-applies it.
+
+_Original design below (unchanged):_
+
+**Confirmed current state (net across all migrations):** each of `bookings, guests, payments, expenses, units, maintenance_logs` still has coarse `view/insert/update/delete` policies **plus** a redundant `"Enable all for authenticated users"` FOR ALL policy, all `auth.role() = 'authenticated'`. The 2026-02 hardening only fixed `accounts`/`account_transfers`. RLS is permissive (OR'd), so the migration must **DROP every coarse policy** then add role-based ones — adding alone does nothing.
+
+**Key constraint:** the authenticated frontend uses the anon-key client for direct CRUD, so these policies are the app's _real_ access control. The functions API + public guest-booking use the service-role key (bypass RLS), so they are unaffected. Existing public/anon policies (e.g. `public_unit_availability` view, `payment_methods` "Anyone can view active") must be preserved.
+
+**Helpers available** (exact-match, SECURITY DEFINER): `is_staff`, `is_manager`, `is_admin` (one role each), `is_admin_or_owner` (admin/owner), `has_any_role` (staff+). Pattern to mirror: `booking_units_*` policies (20251008152700) use inline `role IN (...)` checks.
+
+**Proposed access matrix** (authenticated; mirrors the frontend route-guards; SELECT kept staff+ where the bookings area cross-reads the table):
+
+| Table            | SELECT | INSERT   | UPDATE   | DELETE   |
+| ---------------- | ------ | -------- | -------- | -------- |
+| bookings         | staff+ | staff+   | staff+   | manager+ |
+| guests           | staff+ | staff+   | manager+ | manager+ |
+| payments         | staff+ | manager+ | manager+ | manager+ |
+| units            | staff+ | owner+   | owner+   | owner+   |
+| expenses         | owner+ | owner+   | owner+   | owner+   |
+| maintenance_logs | staff+ | staff+   | staff+   | manager+ |
+
+(staff+ = `role IN ('admin','owner','manager','staff')`; manager+ = `role IN ('admin','owner','manager')`; owner+ = `role IN ('admin','owner')`.)
+
+**Risk:** SELECT tightening is the app-breaking-sensitive part — staff booking views join guest/unit/payment data, so those stay staff+. `expenses` SELECT is owner+ (only shown on the requireOwner Expenses page).
+
+**Execution plan (nothing touches prod until approved):**
+
+1. Write the migration (drop coarse + `Enable all`, add matrix policies) + a rollback pair.
+2. Test LOCALLY: `supabase start` (fresh), seed one user per role, assert allowed/denied CRUD per table+role. Iterate until the app's real access patterns pass.
+3. Present tested results → **explicit approval** → `supabase db push` to prod → probe.
+
+**Decision needed:** confirm the matrix (especially the staff+ SELECT breadth), or adjust, before I build + locally test.
