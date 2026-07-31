@@ -218,6 +218,14 @@ Role levels mirror the frontend route-guards (the app's expressed policy) rather
 
 **Still open — P0 is only half-closed:** this fixes the functions API layer. A low-privilege authenticated user can STILL bypass it by hitting Supabase directly with the anon key (coarse RLS = P0 #2). That is **part 2 (RLS hardening)** — a prod migration needing careful design + E2E testing, the remaining escalation path.
 
+### 2026-07-31 — Browser-level RLS smoke + payment-proof upload bug fix
+
+Added `e2e/rls-role-smoke.spec.ts` — an integration-level guard that drives the app's real role-reachable flows against the RLS policies: staff logs in → completes a payment-proof upload through the real UI (staff SELECT bookings + payments INSERT under RLS, asserted via a service-role check since the flow is silent), and owner opens Expenses (owner SELECT). Reuses the existing role seeding (`scripts/seed-test-users.mjs`) + auth fixtures. Run locally: `supabase start` + `npm run seed:e2e` + `npx playwright test e2e/rls-role-smoke.spec.ts --project=chromium`; skips cleanly if fixtures/creds are absent. Both tests pass.
+
+**Bug the smoke surfaced + fixed (`ab11f54`):** `useUploadPaymentProof` inserted non-existent `payments` columns (`payment_status`/`receipt_url`/`transaction_date`; the real columns are `status`/`proof_url`/`payment_date`), so **every payment-proof upload 400'd and silently recorded nothing** (no error toast). This was NOT the RLS change (a 400 payload error, not a 403 denial — the RLS is verified correct); the flow had been broken for all roles. Fixed the column names + a valid `status: 'Active'`. Also confirms the payments insert is not strictly typed (the bad payload type-checked) — only a runtime/E2E test caught it.
+
+**Follow-up:** this spec runs manually/locally, not in CI (infra-health runs only 1 of 13 Playwright specs — audit P1 #3). Wire it into a nightly/full E2E job so it doesn't rot.
+
 ### 2026-07-31 — Audit step 3, part 2 (RLS): APPLIED TO PROD ✅
 
 `supabase db push` applied `20260725000000` to prod (ref `gxgpdlvathotgqtszabo`) — it was the only pending migration (dry-run confirmed). **Verified live on prod:** `coarse_remaining = 0` (all `Authenticated users can…` / `Enable all` policies removed), each of the 6 core tables has exactly 4 role-based policies (24 total), and the corrected `bookings_delete_staff` / `payments_insert_staff` are present. **P0 #2 is closed** — a roleless/low-privilege authenticated user can no longer do full CRUD via the anon key. Rollback available at `supabase/rollbacks/20260725000000_*.sql` if any legitimate flow is found broken. Recommended final check: app smoke test (staff uploads a payment proof; owner views expenses).
