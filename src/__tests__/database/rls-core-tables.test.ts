@@ -178,6 +178,24 @@ describe("RLS role-based access on core tables", () => {
         }
       });
 
+      it("UPDATE permission matches the matrix", async () => {
+        if (!shouldRun) return;
+        const { pk, id } = seeded[table];
+        for (const role of ALL) {
+          // RLS denies UPDATE by filtering the row out (0 rows affected), not by
+          // erroring — so a returned row means the update was permitted.
+          const { data } = await clients[role]!.from(table)
+            .update(updatePatch(table))
+            .eq(pk, id)
+            .select();
+          const updated = (data?.length ?? 0) > 0;
+          expect(
+            updated,
+            `${role} UPDATE ${table} expected ${MATRIX[table].update.includes(role)}`
+          ).toBe(MATRIX[table].update.includes(role));
+        }
+      });
+
       it("DELETE permission matches the matrix", async () => {
         if (!shouldRun) return;
         const pk = seeded[table].pk;
@@ -265,6 +283,26 @@ async function createThrowaway(table: string): Promise<string> {
     }
     default:
       throw new Error(`no throwaway factory for ${table}`);
+  }
+}
+
+// Benign, real-column patches for UPDATE tests (applied to the seeded row).
+function updatePatch(table: string): Record<string, unknown> {
+  switch (table) {
+    case "bookings":
+      return { num_guests: 2 };
+    case "guests":
+      return { guest_name: "RLS upd" };
+    case "payments":
+      return { notes: "RLS upd" };
+    case "units":
+      return { unit_status: "Available" };
+    case "expenses":
+      return { notes: "RLS upd" };
+    case "maintenance_logs":
+      return { notes: "RLS upd" };
+    default:
+      return {};
   }
 }
 
