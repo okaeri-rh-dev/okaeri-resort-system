@@ -14,7 +14,7 @@ BEGIN;
 DROP POLICY IF EXISTS "bookings_select_staff" ON public.bookings;
 DROP POLICY IF EXISTS "bookings_insert_staff" ON public.bookings;
 DROP POLICY IF EXISTS "bookings_update_staff" ON public.bookings;
-DROP POLICY IF EXISTS "bookings_delete_manager" ON public.bookings;
+DROP POLICY IF EXISTS "bookings_delete_staff" ON public.bookings;
 
 DROP POLICY IF EXISTS "guests_select_staff" ON public.guests;
 DROP POLICY IF EXISTS "guests_insert_staff" ON public.guests;
@@ -22,7 +22,7 @@ DROP POLICY IF EXISTS "guests_update_manager" ON public.guests;
 DROP POLICY IF EXISTS "guests_delete_manager" ON public.guests;
 
 DROP POLICY IF EXISTS "payments_select_staff" ON public.payments;
-DROP POLICY IF EXISTS "payments_insert_manager" ON public.payments;
+DROP POLICY IF EXISTS "payments_insert_staff" ON public.payments;
 DROP POLICY IF EXISTS "payments_update_manager" ON public.payments;
 DROP POLICY IF EXISTS "payments_delete_manager" ON public.payments;
 

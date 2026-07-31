@@ -12,11 +12,15 @@
 -- kept at staff+ where the bookings area (requireStaff) cross-reads a table, so
 -- staff booking views do not break.
 --
--- Access matrix (authenticated users):
+-- Access matrix (authenticated users). Levels reflect the app's ACTUAL
+-- per-operation reachability (route guards + useUserRole flags + the direct
+-- anon-client writes each flow performs), verified 2026-07-31 — not just page
+-- guards. Notably staff can insert payments (payment-proof upload is "always
+-- visible") and can delete a booking via the create-error rollback path.
 --   table             SELECT    INSERT    UPDATE    DELETE
---   bookings          staff+    staff+    staff+    manager+
+--   bookings          staff+    staff+    staff+    staff+
 --   guests            staff+    staff+    manager+  manager+
---   payments          staff+    manager+  manager+  manager+
+--   payments          staff+    staff+    manager+  manager+
 --   units             staff+    owner+    owner+    owner+
 --   expenses          owner+    owner+    owner+    owner+
 --   maintenance_logs  staff+    staff+    staff+    manager+
@@ -83,8 +87,11 @@ CREATE POLICY "bookings_insert_staff" ON public.bookings
     FOR INSERT TO authenticated WITH CHECK (public.is_staff_or_above());
 CREATE POLICY "bookings_update_staff" ON public.bookings
     FOR UPDATE TO authenticated USING (public.is_staff_or_above()) WITH CHECK (public.is_staff_or_above());
-CREATE POLICY "bookings_delete_manager" ON public.bookings
-    FOR DELETE TO authenticated USING (public.is_manager_or_above());
+-- staff+: booking creation rolls back with a client-side DELETE on error
+-- (useBookingStore create path), so staff must be able to delete. The UI still
+-- gates the explicit Delete action to owner+ (useUserRole.canDelete).
+CREATE POLICY "bookings_delete_staff" ON public.bookings
+    FOR DELETE TO authenticated USING (public.is_staff_or_above());
 
 -- ============================================
 -- guests — SELECT/INSERT staff+, UPDATE/DELETE manager+
@@ -115,8 +122,10 @@ DROP POLICY IF EXISTS "Enable all for authenticated users" ON public.payments;
 
 CREATE POLICY "payments_select_staff" ON public.payments
     FOR SELECT TO authenticated USING (public.is_staff_or_above());
-CREATE POLICY "payments_insert_manager" ON public.payments
-    FOR INSERT TO authenticated WITH CHECK (public.is_manager_or_above());
+-- staff+: the "Upload Payment" action is always visible so staff can attach
+-- payment proofs on behalf of guests (useUploadPaymentProof inserts a payment).
+CREATE POLICY "payments_insert_staff" ON public.payments
+    FOR INSERT TO authenticated WITH CHECK (public.is_staff_or_above());
 CREATE POLICY "payments_update_manager" ON public.payments
     FOR UPDATE TO authenticated USING (public.is_manager_or_above()) WITH CHECK (public.is_manager_or_above());
 CREATE POLICY "payments_delete_manager" ON public.payments

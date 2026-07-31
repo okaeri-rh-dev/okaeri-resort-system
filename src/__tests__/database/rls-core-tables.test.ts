@@ -36,11 +36,15 @@ const OWNER_PLUS: Role[] = ["owner", "admin"];
 
 // Expected allowed-role sets per table + operation (the proposed matrix).
 const MATRIX: Record<string, Record<"select" | "insert" | "update" | "delete", Role[]>> = {
-  bookings: { select: STAFF_PLUS, insert: STAFF_PLUS, update: STAFF_PLUS, delete: MANAGER_PLUS },
+  // Levels reflect actual per-operation reachability (see migration header):
+  // staff can create/update bookings, delete via the create-error rollback, and
+  // upload payment proofs (payments INSERT). Payment edit/verify/delete and
+  // guest edit/delete are gated to their manager+ pages.
+  bookings: { select: STAFF_PLUS, insert: STAFF_PLUS, update: STAFF_PLUS, delete: STAFF_PLUS },
   guests: { select: STAFF_PLUS, insert: STAFF_PLUS, update: MANAGER_PLUS, delete: MANAGER_PLUS },
   payments: {
     select: STAFF_PLUS,
-    insert: MANAGER_PLUS,
+    insert: STAFF_PLUS,
     update: MANAGER_PLUS,
     delete: MANAGER_PLUS,
   },

@@ -220,7 +220,14 @@ Role levels mirror the frontend route-guards (the app's expressed policy) rather
 
 ### 2026-07-25 — Audit step 3, part 2 (RLS): BUILT + LOCALLY TESTED (pending prod push)
 
-**Status:** migration `20260725000000_rls_role_based_core_tables.sql` + rollback + `src/__tests__/database/rls-core-tables.test.ts` committed (`a0ddc8f`). Validated on a fresh local Supabase: **18 RLS tests pass** (SELECT/INSERT/DELETE × 6 tables × 5 roles) — the roleless "user" is denied everywhere, staff can read the booking-area tables, `staff` cannot delete payments, only owner+ touches expenses. The proposed matrix passed **with no adjustments**. Full local DB suite (42) green; test is idempotent; existing DB tests unaffected. **NOT yet applied to prod** — needs `supabase db push` (approved step); no workflow auto-applies it.
+**Status:** migration `20260725000000_rls_role_based_core_tables.sql` + rollback + `src/__tests__/database/rls-core-tables.test.ts` committed (`a0ddc8f`), then **corrected after an app-flow audit** (2026-07-31). Validated on a fresh local Supabase: **18 RLS tests pass** (SELECT/INSERT/DELETE × 6 tables × 5 roles); full local DB suite (42) green; test idempotent; existing DB tests unaffected. **NOT yet applied to prod** — needs `supabase db push` (approved step); no workflow auto-applies it.
+
+**App-flow audit correction (2026-07-31):** the first matrix was derived from page-level route guards, which don't match the app's real per-operation reachability. Tracing every direct anon-client write against the `useUserRole` permission model found **two cells too strict** — they'd have broken legitimate staff flows:
+
+- `payments INSERT`: manager+ → **staff+**. The "Upload Payment" action is "always visible (staff can upload on behalf of guests)" and inserts a payment (`useUploadPaymentProof`).
+- `bookings DELETE`: manager+ → **staff+**. Booking creation rolls back with a client-side `DELETE` on error (`useBookingStore` create path), and staff can create bookings. (The explicit Delete button is still UI-gated to owner+ via `useUserRole.canDelete`.)
+
+Everything else matched: payment edit/verify/delete and guest edit/delete are on their manager+ pages; units/expenses on owner+ pages; functions-API and public guest-booking use the service-role key (bypass RLS). Final matrix is in the migration header.
 
 _Original design below (unchanged):_
 
