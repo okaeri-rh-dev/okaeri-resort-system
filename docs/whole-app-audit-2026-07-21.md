@@ -218,7 +218,11 @@ Role levels mirror the frontend route-guards (the app's expressed policy) rather
 
 **Still open — P0 is only half-closed:** this fixes the functions API layer. A low-privilege authenticated user can STILL bypass it by hitting Supabase directly with the anon key (coarse RLS = P0 #2). That is **part 2 (RLS hardening)** — a prod migration needing careful design + E2E testing, the remaining escalation path.
 
-### 2026-07-25 — Audit step 3, part 2 (RLS): BUILT + LOCALLY TESTED (pending prod push)
+### 2026-07-31 — Audit step 3, part 2 (RLS): APPLIED TO PROD ✅
+
+`supabase db push` applied `20260725000000` to prod (ref `gxgpdlvathotgqtszabo`) — it was the only pending migration (dry-run confirmed). **Verified live on prod:** `coarse_remaining = 0` (all `Authenticated users can…` / `Enable all` policies removed), each of the 6 core tables has exactly 4 role-based policies (24 total), and the corrected `bookings_delete_staff` / `payments_insert_staff` are present. **P0 #2 is closed** — a roleless/low-privilege authenticated user can no longer do full CRUD via the anon key. Rollback available at `supabase/rollbacks/20260725000000_*.sql` if any legitimate flow is found broken. Recommended final check: app smoke test (staff uploads a payment proof; owner views expenses).
+
+### 2026-07-25 — Audit step 3, part 2 (RLS): BUILT + LOCALLY TESTED (now applied — see above)
 
 **Status:** migration `20260725000000_rls_role_based_core_tables.sql` + rollback + `src/__tests__/database/rls-core-tables.test.ts` committed (`a0ddc8f`), then **corrected after an app-flow audit** (2026-07-31). Validated on a fresh local Supabase: **18 RLS tests pass** (SELECT/INSERT/DELETE × 6 tables × 5 roles); full local DB suite (42) green; test idempotent; existing DB tests unaffected. **NOT yet applied to prod** — needs `supabase db push` (approved step); no workflow auto-applies it.
 
