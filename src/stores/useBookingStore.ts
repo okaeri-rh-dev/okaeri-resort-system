@@ -616,9 +616,11 @@ export const useUploadPaymentProof = () => {
         booking_id: bookingId,
         amount: booking?.total_amount ?? 0,
         payment_method: "Other", // Default since we don't have method info
-        payment_status: "Completed",
-        receipt_url: url,
-        transaction_date: new Date().toISOString(),
+        // Real payments columns are status/proof_url/payment_date — the previous
+        // payment_status/receipt_url/transaction_date do not exist and 400'd.
+        status: "Active",
+        proof_url: url,
+        payment_date: new Date().toISOString(),
       });
 
       if (paymentError) throw new Error(handleSupabaseError(paymentError));
