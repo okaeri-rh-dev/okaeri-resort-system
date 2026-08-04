@@ -1,6 +1,6 @@
 /**
  * React Hooks for High-Performance Availability Checking
- * Optimized for Neon PostgreSQL Serverless Environment
+ * Optimized for Supabase (PostgreSQL) Serverless Environment
  *
  * Features:
  * - Reactive availability checking with caching

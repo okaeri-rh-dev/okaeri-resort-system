@@ -384,7 +384,7 @@ const supabase = createClient(url, key, {
 - [x] Errors logged without exposing sensitive details to UI
 - [x] No password stored in component state after submission
 - [x] Loading state prevents multiple simultaneous requests
-- [x] HTTPS enforced in production (Vercel default)
+- [x] HTTPS enforced in production (Cloudflare Pages default)
 - [x] Session tokens managed by Supabase (httpOnly cookies)
 - [x] CSRF protection via Supabase Auth
 

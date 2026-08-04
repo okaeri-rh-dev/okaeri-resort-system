@@ -369,7 +369,7 @@ function generateRecommendations(results: PerformanceResult[]): string[] {
   // General recommendations
   if (failedTests.length > 2) {
     recommendations.push("⚠️ Multiple tests failed. Consider running ANALYZE on database tables.");
-    recommendations.push("⚠️ Check Neon PostgreSQL connection settings and pooling configuration.");
+    recommendations.push("⚠️ Check Supabase connection settings and pooling configuration.");
   }
 
   return recommendations;

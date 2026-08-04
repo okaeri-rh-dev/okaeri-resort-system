@@ -1,6 +1,6 @@
 /**
  * High-Performance Availability Checking System
- * Optimized for Neon PostgreSQL Serverless Environment
+ * Optimized for Supabase (PostgreSQL) Serverless Environment
  *
  * Features:
  * - Sub-100ms availability checks
