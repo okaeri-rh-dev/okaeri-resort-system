@@ -1,6 +1,6 @@
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 
-import { FieldValues, UseFormReturn } from "react-hook-form";
+import { type FieldValues, type UseFormReturn } from "react-hook-form";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Card } from "@/components/ui/card";

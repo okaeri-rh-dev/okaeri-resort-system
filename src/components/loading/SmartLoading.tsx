@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { UseQueryResult } from "@tanstack/react-query";
+import { type UseQueryResult } from "@tanstack/react-query";
 
 import { useAdaptiveLoading } from "@/components/providers/LoadingProvider.hooks";
 import {

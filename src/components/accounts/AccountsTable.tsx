@@ -1,14 +1,14 @@
 import React, { useCallback, useState } from "react";
 
 import {
-  ColumnDef,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  SortingState,
   useReactTable,
+  type ColumnDef,
+  type SortingState,
 } from "@tanstack/react-table";
 import {
   ArrowUpDown,

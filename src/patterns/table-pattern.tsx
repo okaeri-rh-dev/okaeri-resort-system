@@ -1,4 +1,4 @@
-import { memo, ReactNode, useCallback, useState } from "react";
+import { memo, useCallback, useState, type ReactNode } from "react";
 
 import { ChevronDown, ChevronUp, MoreHorizontal } from "lucide-react";
 

@@ -1,7 +1,7 @@
 import * as React from "react";
 
 // Removed unused import: format
-import { DateRange } from "react-day-picker";
+import { type DateRange } from "react-day-picker";
 
 import { ResponsiveDateRangePicker } from "@/components/ui/responsive-date-picker";
 import { calculateNights, validateDateRange } from "@/lib/api/guest-booking-client";

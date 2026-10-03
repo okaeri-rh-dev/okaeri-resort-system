@@ -1,4 +1,4 @@
-import { Component, ErrorInfo, ReactNode } from "react";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 
 import { AlertCircle, Home, RefreshCw } from "lucide-react";
 
@@ -27,7 +27,7 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({
       error,
       errorInfo,
@@ -50,7 +50,7 @@ export class ErrorBoundary extends Component<Props, State> {
     window.location.href = "/";
   };
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       const { level = "component", fallback } = this.props;
 

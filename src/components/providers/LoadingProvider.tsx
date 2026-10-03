@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 // ============================================
 // LINK LOADING WRAPPER
 // ============================================
-import { LinkProps, Link as RouterLink, useRouter } from "@tanstack/react-router";
+import { Link as RouterLink, useRouter, type LinkProps } from "@tanstack/react-router";
 
 import { PageTransitionSkeleton } from "@/components/skeletons";
 

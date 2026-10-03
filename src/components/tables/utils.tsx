@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Header, Table as TanStackTable } from "@tanstack/react-table";
+import { type Header, type Table as TanStackTable } from "@tanstack/react-table";
 import { ChevronDown, ChevronsUpDown, ChevronUp, Filter, MoreHorizontal, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";

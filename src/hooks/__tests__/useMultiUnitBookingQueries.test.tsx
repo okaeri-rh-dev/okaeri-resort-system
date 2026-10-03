@@ -51,7 +51,7 @@
  * 4. Or refactor hooks to accept auth token as parameter for easier testing
  */
 
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
