@@ -651,6 +651,9 @@ export const db = {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+      // Dynamic import: audit-roles imports this module
+      const { getUserAuditRole } = await import("./audit-roles");
+      const userRole = user ? await getUserAuditRole() : null;
 
       // Build audit log entry
       // IMPORTANT: Layer 2 always uses action='INSERT' and source='app'
@@ -667,7 +670,7 @@ export const db = {
         // User context
         user_id: user?.id || null,
         user_email: user?.email || null,
-        user_role: (user?.user_metadata?.role as string) || null,
+        user_role: userRole,
 
         // Data capture (optional for app events)
         old_data: (context.oldData as Json) || null,
