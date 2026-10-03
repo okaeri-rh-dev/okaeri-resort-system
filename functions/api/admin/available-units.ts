@@ -204,7 +204,7 @@ export async function onRequest(context: {
       .from("units")
       .select("*")
       .eq("unit_status", "Available")
-      .order("unit_number");
+      .order("unit_code");
 
     if (unitsError) {
       console.error("[available-units] Error fetching units:", unitsError);
@@ -248,13 +248,14 @@ export async function onRequest(context: {
     const availableUnits: AvailableUnit[] = (allUnits || [])
       .filter((unit) => !bookedUnitIds.has(unit.unit_id))
       .map((unit) => ({
-        unit_id: unit.unit_id, // Changed from id to match UI
-        unit_number: unit.unit_number,
+        unit_id: unit.unit_id,
+        unit_number: unit.unit_code,
         unit_type: unit.unit_type,
-        max_capacity: unit.max_capacity,
-        rate_per_night: unit.base_rate || unit.base_price || 0, // Changed from base_price with fallback
-        floor_level: unit.floor_level || null, // Added for UI
-        view_type: unit.view_type || null, // Added for UI
+        max_capacity: unit.max_occupancy,
+        rate_per_night: unit.base_rate,
+        // units has no floor or view columns; the UI hides these when null
+        floor_level: null,
+        view_type: null,
       }));
 
     // Prepare successful response
