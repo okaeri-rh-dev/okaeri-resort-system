@@ -32,6 +32,8 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import { verifyTurnstile } from "@/lib/turnstile";
+
 import { createLogger } from "../../../lib/logger";
 
 interface Env {
@@ -231,7 +233,6 @@ export async function onRequest(context: {
     const turnstileToken = url.searchParams.get("cf_turnstile_token");
 
     if (turnstileToken && env.TURNSTILE_SECRET_KEY) {
-      const { verifyTurnstile } = await import("../../../src/lib/turnstile");
       const clientIp = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
 
       const isValid = await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET_KEY, {
