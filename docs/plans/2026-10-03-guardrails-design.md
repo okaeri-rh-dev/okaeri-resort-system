@@ -140,15 +140,16 @@ Once 4.2 and 4.4 are enforced, rewrite two rules that do not match the code:
 
 ### Phase 0: Fix live bugs
 
-- [x] (`1378e07`) Owners get 403 on refund/record/add-unit/remove-unit: `functions/lib/rbac.ts:17` `UserRole` lacks `owner`, and the `requireRole` lists in `functions/api/bookings/[id]/{payments/refund,payments/record,units/add,units/remove}.ts` and `isStaffOrAbove`/`isManagerOrAbove` omit it
+- [x] (`1378e07`) `functions/lib/rbac.ts:17` `UserRole` lacked `owner`, so owners would get 403 on refund/record/add-unit/remove-unit. Correction 2026-10-04: these endpoints have no UI caller today (only the unused hooks in `useMultiUnitBookingQueries.ts`), so this was latent, not a live 403
 - [x] (`bf7c35f`) `functions/api/bookings/multi-unit.ts` uses the service-role key with no role check (any authenticated user, including role `user`, can create bookings): require staff+
 - [x] (`0ac2a91`) `functions/api/admin/available-units.ts:252-257` maps nonexistent columns (`unit_number`, `max_capacity`, `base_price`, `floor_level`, `view_type`); `.order("unit_number")` made every call return 500
 - [x] (`8192637`) `functions/api/admin/assign-units.ts:102` references undefined `errorHint` (ReferenceError on the error path)
-- [ ] Turnstile: wrong dynamic import path at `functions/api/public/v1/availability.ts:234`; fail-open on missing secret at `src/lib/turnstile.ts:44` (audit P1 #10)
-- [ ] Expense dates likely saved a day early: `ExpenseForm.tsx:127`, `ExpenseEdit.tsx:78`, filters in `useExpenseStore.ts:232,442` and `ExpenseFilters.tsx:144` (reproduce first)
-- [ ] `eslint.config.js` ignores `.claude/worktrees/**`
-- [ ] `available-units` overlap check filters `booking_units.status = 'confirmed'` only; the `assign_units_to_booking` SQL function treats `('confirmed', 'checked_in')` as occupying, so checked-in units are listed as available (found 2026-10-04)
-- [ ] `src/hooks/useMultiUnitBookingQueries.ts:357,410` call `/api/bookings/multi-unit/${bookingId}`, which has no route file (found 2026-10-04; confirm whether those hooks are reachable)
+- [x] (`2ae1aa9`) Turnstile: wrong dynamic import path at `functions/api/public/v1/availability.ts:234` (requests with a token failed to resolve the module)
+- [ ] Turnstile fail-open on missing secret (`src/lib/turnstile.ts:44`, audit P1 #10): fixed in `b179d22` on branch `fix/turnstile-fail-closed`, NOT merged. Blocked on confirming `TURNSTILE_SECRET_KEY` exists in Cloudflare Pages prod (`npx wrangler pages secret list --project-name okaeri-resort`; wrangler needs `npx wrangler login`). If the secret is missing, merging would block login, sign-up and guest booking
+- [x] (`4aa5d20`) Expense dates saved a day early (reproduced: picking Oct 4 in Asia/Manila stored `2026-10-03`): create, edit, filters, stats, CSV name. Lint rule scoped to expense files
+- [x] (`d113e0b`) `eslint.config.js` ignores `.claude/worktrees/**`
+- [x] (`ba8628b`) `available-units` overlap check filtered `booking_units.status = 'confirmed'` only; now `('confirmed', 'checked_in')` like `assign_units_to_booking`
+- [x] Checked 2026-10-04: not a live bug. `/api/bookings/multi-unit/${bookingId}` has no route, but its only callers (`useUpdateMultiUnitBooking`, `useDeleteMultiUnitBooking`) are unused, as are `useMultiUnitBookings` (GET has no handler), `useAddUnitToBooking`, `useRemoveUnitFromBooking`, `useRecordMultiUnitPayment`, `useRefundMultiUnitPayment`. Only `useCreateMultiUnitBooking` is used. Add these to the dead-code cleanup (audit Decision 4)
 
 ### Phase 1: Cheap wins
 
