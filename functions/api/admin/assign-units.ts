@@ -57,7 +57,7 @@ function isValidUUID(uuid: string): boolean {
 function parseRpcError(error: RpcError): { status: number; message: string; details?: string } {
   const errorMessage = error?.message || "";
   const _errorDetails = error?.details || "";
-  const _errorHint = error?.hint || "";
+  const errorHint = error?.hint || "";
 
   // Check for specific error patterns
   if (errorMessage.includes("Payment must be verified")) {
@@ -99,7 +99,7 @@ function parseRpcError(error: RpcError): { status: number; message: string; deta
     };
   }
 
-  if (errorHint?.includes("exclusion constraint")) {
+  if (errorHint.includes("exclusion constraint")) {
     return {
       status: 409,
       message: "Booking conflict",
