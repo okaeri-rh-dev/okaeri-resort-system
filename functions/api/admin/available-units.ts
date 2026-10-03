@@ -224,7 +224,7 @@ export async function onRequest(context: {
     const { data: bookedUnits, error: bookingsError } = await supabase
       .from("booking_units")
       .select("unit_id")
-      .eq("status", "confirmed")
+      .in("status", ["confirmed", "checked_in"]) // same occupying statuses as assign_units_to_booking
       .lt("check_in_date", checkOutDate) // Existing check-in BEFORE requested check-out
       .gt("check_out_date", checkInDate); // Existing check-out AFTER requested check-in
 

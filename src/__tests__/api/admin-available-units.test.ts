@@ -55,12 +55,24 @@ function unitsQuery() {
   return query;
 }
 
+type BookedRow = { unit_id: string; status: string };
+let bookedRows: BookedRow[] = [];
+
+// Overlapping booking_units rows for the requested dates; applies status filters.
 function bookingUnitsQuery() {
+  let rows = bookedRows;
   const query = {
     select: () => query,
-    eq: () => query,
+    eq: (column: string, value: string) => {
+      rows = rows.filter((row) => row[column as keyof BookedRow] === value);
+      return query;
+    },
+    in: (column: string, values: string[]) => {
+      rows = rows.filter((row) => values.includes(row[column as keyof BookedRow]));
+      return query;
+    },
     lt: () => query,
-    gt: async () => ({ data: [], error: null }),
+    gt: async () => ({ data: rows.map(({ unit_id }) => ({ unit_id })), error: null }),
   };
   return query;
 }
@@ -72,6 +84,7 @@ const fakeSupabase = {
 
 describe("GET /api/admin/available-units", () => {
   beforeEach(() => {
+    bookedRows = [];
     vi.resetModules();
     vi.doMock("@supabase/supabase-js", () => ({ createClient: vi.fn(() => fakeSupabase) }));
     vi.doMock("../../../functions/lib/audit-logger-workers", () => ({
@@ -79,17 +92,21 @@ describe("GET /api/admin/available-units", () => {
     }));
   });
 
-  it("returns units mapped from the real units columns", async () => {
+  async function getAvailableUnits(): Promise<Response> {
     const { onRequest } = await import("../../../functions/api/admin/available-units");
     const request = new Request(
       "https://api.example.com/api/admin/available-units?check_in_date=2026-12-20&check_out_date=2026-12-22",
       { headers: { Authorization: "Bearer test-token" } }
     );
 
-    const response = await onRequest({
+    return onRequest({
       request: request as never,
       env: { SUPABASE_URL: "http://localhost", SUPABASE_SERVICE_ROLE_KEY: "key" },
     });
+  }
+
+  it("returns units mapped from the real units columns", async () => {
+    const response = await getAvailableUnits();
 
     expect(response.status).toBe(200);
     const body = (await response.json()) as { units: unknown[] };
@@ -104,5 +121,27 @@ describe("GET /api/admin/available-units", () => {
         view_type: null,
       },
     ]);
+  });
+
+  it.each(["confirmed", "checked_in"])(
+    "excludes a unit with an overlapping %s booking",
+    async (status) => {
+      bookedRows = [{ unit_id: "unit-1", status }];
+
+      const response = await getAvailableUnits();
+
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as { units: unknown[] };
+      expect(body.units).toEqual([]);
+    }
+  );
+
+  it("keeps a unit whose overlapping booking was cancelled", async () => {
+    bookedRows = [{ unit_id: "unit-1", status: "cancelled" }];
+
+    const response = await getAvailableUnits();
+
+    const body = (await response.json()) as { units: unknown[] };
+    expect(body.units).toHaveLength(1);
   });
 });
