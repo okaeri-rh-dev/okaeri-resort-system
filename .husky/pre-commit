@@ -22,20 +22,17 @@ if command_exists winpty && test -t 1; then
   exec < /dev/tty
 fi
 
-# Phase 1: Run core checks in parallel
+# Phase 1: Run core checks in parallel; any failure blocks the commit
 # - lint-staged: Format staged files with Prettier (~1-2s)
-# - typecheck: TypeScript validation with Phase 2 threshold (main bottleneck)
-# - lint: ESLint with caching for fast warm runs (~1s warm)
-#
-# TypeScript check: Count errors and fail if > 100 (Phase 2 mode)
-# ESLint: Cache enabled for ~78% faster warm runs
+# - types: tsc must report zero errors (incremental, ~2s warm)
+# - lint: ESLint errors block; warnings do not (cached, ~1s warm)
 npx concurrently \
   --kill-others-on-fail \
   --names "format,types,lint" \
   --prefix-colors "cyan,yellow,magenta" \
   "npx lint-staged" \
-  "error_count=\$(npx tsc --noEmit 2>&1 | grep -c 'error TS' || echo '0'); if [ \"\$error_count\" -gt 100 ]; then echo '❌ TypeScript errors ('\$error_count') exceed Phase 2 threshold (100)'; exit 1; elif [ \"\$error_count\" -gt 0 ]; then echo '⚠️  TypeScript: '\$error_count' errors (within Phase 2 threshold)'; fi" \
-  "npx eslint . --ext .js,.jsx,.ts,.tsx --cache --cache-location .eslintcache --max-warnings 0 2>/dev/null || true"
+  "npx tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/tsc-precommit.tsbuildinfo" \
+  "npx eslint . --cache --cache-location .eslintcache"
 
 # Phase 2: Quick sequential checks (lightweight, ~1s total)
 echo ""
