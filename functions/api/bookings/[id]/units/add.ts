@@ -15,7 +15,7 @@ import { z } from "zod";
 import { sanitizeTextWorker } from "../../../../../src/lib/security/sanitize-worker";
 import { calculateExtraPersonFee, calculateWeekendNights } from "../../../../../src/utils/pricing";
 import { logUnitAdded } from "../../../../lib/audit-logger-workers";
-import { requireRole } from "../../../../lib/rbac";
+import { requireRole, STAFF_OR_ABOVE } from "../../../../lib/rbac";
 import type { AuthenticatedRequest } from "../../../../lib/types";
 
 interface Env {
@@ -63,7 +63,7 @@ export const onRequestPost = async (context: {
   try {
     // RBAC: Require staff role or above
     try {
-      requireRole(request, ["staff", "manager", "admin"]);
+      requireRole(request, STAFF_OR_ABOVE);
     } catch (error) {
       return Response.json(
         {

@@ -12,9 +12,12 @@
 // ============================================
 
 /**
- * User roles in the system (hierarchical)
+ * User roles in the system (hierarchical: admin > owner > manager > staff > user)
  */
-export type UserRole = "user" | "staff" | "manager" | "admin";
+export type UserRole = "user" | "staff" | "manager" | "owner" | "admin";
+
+export const STAFF_OR_ABOVE: UserRole[] = ["staff", "manager", "owner", "admin"];
+export const MANAGER_OR_ABOVE: UserRole[] = ["manager", "owner", "admin"];
 
 /**
  * User context attached to request by middleware
@@ -107,7 +110,7 @@ export function hasRole(request: Request, role: UserRole): boolean {
 }
 
 /**
- * Check if user is staff or above (staff, manager, admin)
+ * Check if user is staff or above (staff, manager, owner, admin)
  *
  * Staff members have basic operational permissions:
  * - View bookings
@@ -115,7 +118,7 @@ export function hasRole(request: Request, role: UserRole): boolean {
  * - Update booking details
  *
  * @param request - Request with user context
- * @returns True if user is staff, manager, or admin
+ * @returns True if user is staff, manager, owner, or admin
  *
  * @example
  * if (isStaffOrAbove(request)) {
@@ -124,11 +127,11 @@ export function hasRole(request: Request, role: UserRole): boolean {
  */
 export function isStaffOrAbove(request: Request): boolean {
   const user = (request as AuthenticatedRequest).user;
-  return ["staff", "manager", "admin"].includes(user?.role || "");
+  return STAFF_OR_ABOVE.includes(user?.role as UserRole);
 }
 
 /**
- * Check if user is manager or above (manager, admin)
+ * Check if user is manager or above (manager, owner, admin)
  *
  * Managers have elevated permissions:
  * - Process refunds
@@ -137,7 +140,7 @@ export function isStaffOrAbove(request: Request): boolean {
  * - Manage staff accounts
  *
  * @param request - Request with user context
- * @returns True if user is manager or admin
+ * @returns True if user is manager, owner, or admin
  *
  * @example
  * if (isManagerOrAbove(request)) {
@@ -146,7 +149,7 @@ export function isStaffOrAbove(request: Request): boolean {
  */
 export function isManagerOrAbove(request: Request): boolean {
   const user = (request as AuthenticatedRequest).user;
-  return ["manager", "admin"].includes(user?.role || "");
+  return MANAGER_OR_ABOVE.includes(user?.role as UserRole);
 }
 
 /**
@@ -271,7 +274,8 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
   user: 0,
   staff: 1,
   manager: 2,
-  admin: 3,
+  owner: 3,
+  admin: 4,
 };
 
 /**
@@ -296,7 +300,7 @@ export function hasRoleOrAbove(userRole: UserRole, requiredRole: UserRole): bool
  * @returns Array of roles at or above minRole
  *
  * @example
- * getRolesAbove('staff'); // ['staff', 'manager', 'admin']
+ * getRolesAbove('staff'); // ['staff', 'manager', 'owner', 'admin']
  * getRolesAbove('admin'); // ['admin']
  */
 export function getRolesAbove(minRole: UserRole): UserRole[] {

@@ -13,7 +13,7 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import { logPaymentRefunded } from "../../../../lib/audit-logger-workers";
-import { requireRole } from "../../../../lib/rbac";
+import { MANAGER_OR_ABOVE, requireRole } from "../../../../lib/rbac";
 import type { AuthenticatedRequest } from "../../../../lib/types";
 
 interface Env {
@@ -50,7 +50,7 @@ export const onRequestPost = async (context: {
   try {
     // RBAC: Require manager role or above (refunds are sensitive operations)
     try {
-      requireRole(request, ["manager", "admin"]);
+      requireRole(request, MANAGER_OR_ABOVE);
     } catch (error) {
       return Response.json(
         {
