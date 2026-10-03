@@ -14,6 +14,7 @@
 import { useState } from "react";
 
 import { AlertCircle, CheckCircle, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,7 @@ export function BookingWorkflowPanel({ booking, onBookingUpdate }: BookingWorkfl
       onBookingUpdate?.(updatedBooking);
     } catch (error) {
       console.error("Failed to update booking status:", error);
+      toast.error("Failed to update booking status. Please try again.");
     } finally {
       setIsUpdating(false);
     }

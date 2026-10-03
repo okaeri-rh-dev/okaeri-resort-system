@@ -64,6 +64,7 @@ export function ForgotPasswordForm() {
       }
     } catch (error) {
       // Log error but don't expose to user (prevents enumeration)
+      // eslint-disable-next-line no-restricted-syntax -- always show success so emails cannot be enumerated
       console.error("Reset error:", error);
     } finally {
       // ALWAYS show success - prevents email enumeration

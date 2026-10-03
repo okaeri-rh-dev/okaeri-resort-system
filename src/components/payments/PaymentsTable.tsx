@@ -15,6 +15,7 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 import { Download, Edit } from "lucide-react";
+import { toast } from "sonner";
 
 import { withErrorBoundary } from "@/components/ErrorBoundary";
 import {
@@ -119,6 +120,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
       await deletePayment.mutateAsync(paymentToDelete.payment_id);
     } catch (error) {
       console.error("Failed to delete payment:", error);
+      toast.error("Failed to delete payment. Please try again.");
     } finally {
       setPaymentToDelete(null);
     }
@@ -135,6 +137,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
       await softDeletePayment.mutateAsync(paymentToSoftDelete.payment_id);
     } catch (error) {
       console.error("Failed to remove payment:", error);
+      toast.error("Failed to remove payment. Please try again.");
     } finally {
       setPaymentToSoftDelete(null);
     }
@@ -146,6 +149,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
         await verifyPayment.mutateAsync(payment.payment_id);
       } catch (error) {
         console.error("Failed to verify payment:", error);
+        toast.error("Failed to verify payment. Please try again.");
       }
     },
     [verifyPayment]

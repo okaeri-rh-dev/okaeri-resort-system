@@ -14,6 +14,13 @@ const metadataRoleSelector = {
     "user_metadata is user-editable (supabase.auth.updateUser). Read roles from app_roles: lookupUserRole/requireRole on the server, getUserAuditRole in the app.",
 };
 
+const silentCatchSelector = {
+  selector:
+    "CatchClause > BlockStatement[body.length=1] > ExpressionStatement > CallExpression[callee.object.name='console'][callee.property.name='error']",
+  message:
+    "A catch that only logs hides the failure from the user (a broken payment upload went unnoticed this way). Show a toast, rethrow, or return an error state.",
+};
+
 const utcDateSliceSelector = {
   selector:
     "CallExpression[callee.property.name=/^(split|slice|substring)$/][callee.object.callee.property.name='toISOString']",
@@ -140,6 +147,15 @@ export default tseslint.config([
     },
   },
 
+  // UI handlers must surface failures, not just log them
+  {
+    files: ["src/components/**/*.{ts,tsx}", "src/routes/**/*.{ts,tsx}"],
+    ignores: ["**/*.phase3-4.*"],
+    rules: {
+      "no-restricted-syntax": ["error", metadataRoleSelector, silentCatchSelector],
+    },
+  },
+
   // Components and routes read data through hooks and stores (warn until existing imports move)
   {
     files: ["src/components/**/*.{ts,tsx}", "src/routes/**/*.{ts,tsx}"],
@@ -166,7 +182,12 @@ export default tseslint.config([
   {
     files: ["src/components/expenses/**/*.{ts,tsx}", "src/stores/useExpenseStore.ts"],
     rules: {
-      "no-restricted-syntax": ["error", metadataRoleSelector, utcDateSliceSelector],
+      "no-restricted-syntax": [
+        "error",
+        metadataRoleSelector,
+        silentCatchSelector,
+        utcDateSliceSelector,
+      ],
     },
   },
 

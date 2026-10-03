@@ -10,6 +10,7 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
+import { toast } from "sonner";
 
 import { useResponsiveView } from "@/hooks";
 import {
@@ -108,6 +109,7 @@ export function useExpensesTable({ onViewExpense, onEditExpense }: ExpensesTable
       setExpenseToDelete(null);
     } catch (error) {
       console.error("Failed to delete expense:", error);
+      toast.error("Failed to delete expense. Please try again.");
     }
   }, [deleteExpense, expenseToDelete]);
 
@@ -117,6 +119,7 @@ export function useExpensesTable({ onViewExpense, onEditExpense }: ExpensesTable
       await exportExpenses.mutateAsync(undefined);
     } catch (error) {
       console.error("Failed to export expenses:", error);
+      toast.error("Failed to export expenses. Please try again.");
     }
   };
 

@@ -11,6 +11,7 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
+import { toast } from "sonner";
 
 import {
   useBatchUpdateUnitsStatus,
@@ -83,6 +84,7 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
         await updateMutationRef.current.mutateAsync({ unitId, updates });
       } catch (error) {
         console.error("Failed to update unit:", error);
+        toast.error("Failed to update unit. Please try again.");
       }
     },
     [] // No dependencies - uses ref for mutation
@@ -105,6 +107,7 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
         });
       } catch (error) {
         console.error("Failed to delete unit:", error);
+        toast.error("Failed to delete unit. Please try again.");
       }
     },
     [] // No dependencies - uses ref for mutation
@@ -127,6 +130,7 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
         setRowSelection({}); // Clear selection after batch update
       } catch (error) {
         console.error("Failed to update units status:", error);
+        toast.error("Failed to update unit status. Please try again.");
       }
     },
     [rowSelection]
