@@ -153,14 +153,14 @@ Once 4.2 and 4.4 are enforced, rewrite two rules that do not match the code:
 
 ### Phase 1: Cheap wins
 
-- [ ] Pre-commit strict (4.7). Note: its tsc threshold never runs today: with 0 errors `grep -c` prints `0` and exits 1, so `|| echo '0'` yields `"0\n0"` and `[ -gt 100 ]` fails with "integer expression expected"
-- [ ] Cheap tsconfig flags and lint rules marked "error now" (4.3)
-- [ ] Metadata-role lint, `supabase-admin` import ban (4.2)
-- [ ] Timezone lint as warn (4.3)
-- [ ] Global `MutationCache` error toast; fix 9 silent catches (4.5)
-- [ ] Bash guard, per-file lint, and Stop hooks; verify the Stop loop guard with a deliberately failing file (4.6)
-- [ ] Shadow-module test (4.4)
-- [ ] Dependabot, non-blocking audit job, Node pin (4.7)
+- [x] (`ea20102`) Pre-commit strict (4.7): tsc (incremental) and eslint errors block. Before: tolerated up to 100 tsc errors and ignored eslint's exit code; verified it let a TS2322 error through, then blocked it after the change
+- [x] (`4690b22`) `noImplicitOverride` and `verbatimModuleSyntax` on (2 + 21 fixes). `noImplicitReturns` dropped (see Decisions). `await-thenable` / `no-unnecessary-type-assertion` moved to Phase 3 (they need type-aware linting)
+- [x] (`8372755`, `7b28dc2`) Metadata-role lint (error, repo-wide incl. `functions/`) after fixing the last read in `db.auditLogs.create`; `supabase-admin` runtime-import ban in `src/` (type imports allowed); direct `supabase` client import in components/routes as warn (11)
+- [ ] Timezone lint repo-wide: moved to Phase 3 (see Decisions). Expense files already at error since `4aa5d20`
+- [x] (`74f1891`) Silent mutation failures: 9 table/handler catches now toast; lint rule for components/routes rejects a catch whose only statement is `console.error`. Global `MutationCache` dropped (see Decisions)
+- [x] (`6decd93`) Bash guard, per-file lint, and Stop hooks in `.claude/settings.json`; guard covered by `src/__tests__/architecture/bash-guard.test.ts` (17 cases); Stop loop guard verified (blocks, lets the same tree through, re-blocks on a changed tree)
+- [x] (`b4e5d21`) Shadow-module test with the two known pairs allowlisted until the dead-code cleanup
+- [x] (`3bf66ba`) Dependabot (npm weekly grouped, actions monthly), non-blocking `npm audit --omit=dev --audit-level=high` job in `ci.yml`, `.nvmrc` 22 read by every workflow, `engines` = Vite's range
 
 ### Phase 2: Contracts
 
@@ -214,3 +214,12 @@ Accepted 2026-10-03 (recommended defaults):
 - **Doc-path check not added.** Why: 0 broken paths in the 3 current CLAUDE.md files. Revisit: if CLAUDE.md files grow again.
 - **pgTAP deferred; `supabase db lint` first.** Why: RLS is already covered by the Vitest role matrix; SQL-function bugs are the gap. Revisit: when RLS or SQL functions grow.
 - **`src/__tests__` type-checking deferred; `e2e/` first.** Why: 255 errors, mostly loose test helpers, no schema bugs found. Revisit: after Phase 2.
+
+Decided during Phase 1 (2026-10-04):
+
+- **`noImplicitReturns` dropped.** Why: all 8 hits are `useEffect` returning cleanup on one branch; satisfying it means adding `return undefined;` lines that guard nothing, and no shipped bug maps to it. Revisit: if a missing-return bug ships.
+- **Global `MutationCache` error toast dropped; per-site toasts plus a scoped lint rule instead.** Why: 18 of 24 components using `mutateAsync` already toast in their catch, so a global handler double-toasts; skipping mutations with their own `onError` would skip the stores, whose `onError` only rolls back. Revisit: if mutations move to hooks that never toast.
+- **Silent-catch rule scoped to `src/components` and `src/routes`.** Why: repo-wide it hits ~45 sites, most deliberate best-effort logging (middleware fail-soft, monitoring). Revisit: never repo-wide; extend to `src/hooks` if a hook swallows a user-facing failure.
+- **Repo-wide timezone lint deferred to Phase 3.** Why: `no-restricted-syntax` is now `error` repo-wide for the metadata-role rule, and severity is per rule, so the timezone selector cannot be `warn` beside it; the 44 sites each need judgement (some are UTC timestamps on purpose). Revisit: Phase 3 sweep, then add it at error.
+- **Turnstile fail-closed held on branch `fix/turnstile-fail-closed`.** Why: merging blocks login, sign-up and guest booking if `TURNSTILE_SECRET_KEY` is missing in prod, and wrangler is not logged in here to check. Revisit: after `npx wrangler login` and `npx wrangler pages secret list --project-name okaeri-resort`.
+- **Bash guard matches only at command start.** Why: matching anywhere blocked a commit message that mentioned `supabase db push`. Known limit: it does not parse quoting, so a blocked phrase after `&&` inside a quoted string is still blocked. Revisit: if false positives become frequent.
