@@ -40,10 +40,13 @@ export async function verifyTurnstile(
     return true;
   }
 
-  // Existing bypass for missing key
   if (!secretKey) {
-    console.warn("TURNSTILE_SECRET_KEY not configured, skipping verification");
-    return true;
+    if (isDevelopment) {
+      console.warn("TURNSTILE_SECRET_KEY not configured, skipping verification in development");
+      return true;
+    }
+    console.error("TURNSTILE_SECRET_KEY not configured, rejecting verification");
+    return false;
   }
 
   try {
