@@ -22,6 +22,17 @@ import type {
 } from "./types/responses";
 import { testUnits } from "./utils/fixtures";
 
+// The root middleware rejects unauthenticated callers before this handler runs,
+// and the handler itself requires staff or above.
+function createStaffRequest(init: RequestInit) {
+  const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    ...init,
+    headers: { Authorization: "Bearer test-token", ...(init.headers as Record<string, string>) },
+  }) as Request & { user: { role: string } };
+  request.user.role = "staff";
+  return request;
+}
+
 describe("POST /api/bookings/multi-unit", () => {
   const validBookingData = {
     primary_guest: {
@@ -72,7 +83,7 @@ describe("POST /api/bookings/multi-unit", () => {
   it("should create booking with 2 units successfully", async () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
 
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify(validBookingData),
     });
@@ -95,7 +106,7 @@ describe("POST /api/bookings/multi-unit", () => {
       .fill(null)
       .map(() => ({ unit_id: testUnits[0].unit_id, num_guests: 2 }));
 
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify({
         ...validBookingData,
@@ -116,7 +127,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const idempotencyKey = generateIdempotencyKey();
 
     // First request - should create booking
-    const request1 = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request1 = createStaffRequest({
       method: "POST",
       headers: {
         "Idempotency-Key": idempotencyKey,
@@ -131,7 +142,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const data1 = (await response1.json()) as MultiUnitBookingResponse;
 
     // Second request with same key - should return cached result
-    const request2 = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request2 = createStaffRequest({
       method: "POST",
       headers: {
         "Idempotency-Key": idempotencyKey,
@@ -151,7 +162,7 @@ describe("POST /api/bookings/multi-unit", () => {
 
   it("should include processing time header", async () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify(validBookingData),
     });
@@ -165,7 +176,7 @@ describe("POST /api/bookings/multi-unit", () => {
 
   it("should include CORS headers in response", async () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify(validBookingData),
     });
@@ -179,7 +190,7 @@ describe("POST /api/bookings/multi-unit", () => {
 
   it("should return booking with units array", async () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify(validBookingData),
     });
@@ -196,7 +207,7 @@ describe("POST /api/bookings/multi-unit", () => {
 
   it("should return 400 for empty units array", async () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify({
         ...validBookingData,
@@ -217,7 +228,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
     const { primary_guest, ...restData } = validBookingData;
 
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify(restData),
     });
@@ -233,7 +244,7 @@ describe("POST /api/bookings/multi-unit", () => {
 
   it("should return 400 for invalid email format", async () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify({
         ...validBookingData,
@@ -254,7 +265,7 @@ describe("POST /api/bookings/multi-unit", () => {
 
   it("should return 400 for check_out before check_in", async () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify({
         ...validBookingData,
@@ -273,7 +284,7 @@ describe("POST /api/bookings/multi-unit", () => {
 
   it("should return 400 for invalid unit_id format", async () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify({
         ...validBookingData,
@@ -295,7 +306,7 @@ describe("POST /api/bookings/multi-unit", () => {
       .fill(null)
       .map(() => ({ unit_id: testUnits[0].unit_id, num_guests: 2 }));
 
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify({
         ...validBookingData,
@@ -313,7 +324,7 @@ describe("POST /api/bookings/multi-unit", () => {
 
   it("should return 400 for invalid payment method", async () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify({
         ...validBookingData,
@@ -359,7 +370,7 @@ describe("POST /api/bookings/multi-unit", () => {
 
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
 
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify(validBookingData),
     });
@@ -379,7 +390,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
     const { sanitizeTextWorker } = await import("@/lib/security/sanitize-worker");
 
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify({
         ...validBookingData,
@@ -398,7 +409,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
     const { sanitizeNameWorker } = await import("@/lib/security/sanitize-worker");
 
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify({
         ...validBookingData,
@@ -419,7 +430,7 @@ describe("POST /api/bookings/multi-unit", () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
     const { sanitizeEmailWorker } = await import("@/lib/security/sanitize-worker");
 
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify(validBookingData),
     });
@@ -455,7 +466,7 @@ describe("POST /api/bookings/multi-unit", () => {
 
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
 
-    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+    const request = createStaffRequest({
       method: "POST",
       body: JSON.stringify(validBookingData),
     });

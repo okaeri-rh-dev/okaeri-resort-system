@@ -19,6 +19,7 @@ import {
   sanitizeTextWorker,
 } from "../../../src/lib/security/sanitize-worker";
 import { logBookingCreated } from "../../lib/audit-logger-workers";
+import { requireRole, STAFF_OR_ABOVE, UnauthorizedError } from "../../lib/rbac";
 import type { AuthenticatedRequest } from "../../lib/types";
 
 interface Env {
@@ -103,6 +104,25 @@ export const onRequestPost = async (context: {
   };
 
   try {
+    try {
+      requireRole(request, STAFF_OR_ABOVE);
+    } catch (error) {
+      const unauthenticated = error instanceof UnauthorizedError;
+      return Response.json(
+        {
+          success: false,
+          error: {
+            code: unauthenticated ? "UNAUTHORIZED" : "FORBIDDEN",
+            message: error instanceof Error ? error.message : "Access denied",
+          },
+        },
+        {
+          status: unauthenticated ? 401 : 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     // Parse and validate request
     const rawData = await request.json();
     const validationResult = multiUnitBookingSchema.safeParse(rawData);
