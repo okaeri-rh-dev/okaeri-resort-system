@@ -160,5 +160,8 @@
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "^4.32.0",
     "canvas": "^3.2.0"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
   }
 }
