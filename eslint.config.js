@@ -18,6 +18,7 @@ export default tseslint.config([
       "public/**/*",
       "scripts/**/*",
       ".wrangler/**/*", // Cloudflare Wrangler build artifacts
+      ".claude/worktrees/**/*", // agent worktrees are full repo copies
     ],
   },
 
