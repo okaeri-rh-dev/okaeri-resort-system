@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { useResponsiveView } from "@/hooks";
 import { useExpenseCategories } from "@/hooks/useExpenseCategories";
+import { toISODateString } from "@/lib/timezone";
 
 import type { ExpenseFiltersProps } from "../types";
 
@@ -141,8 +142,8 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
               const toDate = range?.to || fromDate;
               setFilters({
                 ...filters,
-                dateFrom: fromDate?.toISOString().split("T")[0],
-                dateTo: toDate?.toISOString().split("T")[0],
+                dateFrom: fromDate ? toISODateString(fromDate) : undefined,
+                dateTo: toDate ? toISODateString(toDate) : undefined,
               });
             }}
             className="rounded-md border"

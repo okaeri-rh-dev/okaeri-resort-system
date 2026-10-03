@@ -31,6 +31,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useActiveExpenseCategories } from "@/hooks/useExpenseCategories";
 import { sanitizeFormData } from "@/lib/security/sanitize";
+import { toISODateString } from "@/lib/timezone";
 import { cn } from "@/lib/utils";
 import { useCreateExpense, useUpdateExpense } from "@/stores/useExpenseStore";
 import type { Expense } from "@/types";
@@ -124,7 +125,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
         description: sanitizedData.description?.trim() || "",
         amount: sanitizedData.amount,
         account_id: sanitizedData.account_id,
-        date: data.expense_date.toISOString().split("T")[0], // YYYY-MM-DD format
+        date: toISODateString(data.expense_date),
         receipt_url: null, // Will be set by upload function
       };
 

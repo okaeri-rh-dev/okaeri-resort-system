@@ -4,6 +4,7 @@ import { devtools, persist } from "zustand/middleware";
 
 import { uploadReceipt } from "@/lib/storage-security";
 import { handleSupabaseError, supabase } from "@/lib/supabase";
+import { toISODateString } from "@/lib/timezone";
 import type { Expense } from "@/types";
 
 // ============================================
@@ -229,8 +230,8 @@ export const useExpenseStats = (dateRange?: { from: Date; to: Date }) => {
 
       if (dateRange) {
         query = query
-          .gte("date", dateRange.from.toISOString().split("T")[0])
-          .lte("date", dateRange.to.toISOString().split("T")[0]);
+          .gte("date", toISODateString(dateRange.from))
+          .lte("date", toISODateString(dateRange.to));
       }
 
       const { data, error } = await query;
@@ -439,8 +440,8 @@ export const useExportExpenses = () => {
 
       if (dateRange) {
         query = query
-          .gte("date", dateRange.from.toISOString().split("T")[0])
-          .lte("date", dateRange.to.toISOString().split("T")[0]);
+          .gte("date", toISODateString(dateRange.from))
+          .lte("date", toISODateString(dateRange.to));
       }
 
       const { data, error } = await query.order("expense_date", { ascending: false });
@@ -460,7 +461,7 @@ export const useExportExpenses = () => {
         updated_at: row.updated_at || "",
       }));
       const csv = convertToCSV(expenses);
-      downloadCSV(csv, `expenses-${new Date().toISOString().split("T")[0]}.csv`);
+      downloadCSV(csv, `expenses-${toISODateString(new Date())}.csv`);
     },
   });
 };

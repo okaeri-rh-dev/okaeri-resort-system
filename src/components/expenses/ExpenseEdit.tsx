@@ -33,6 +33,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useEntityEdit } from "@/hooks/entity";
 import { useActiveExpenseCategories } from "@/hooks/useExpenseCategories";
+import { toISODateString } from "@/lib/timezone";
 import { cn } from "@/lib/utils";
 import { expenseEditSchema, type ExpenseEditInput } from "@/lib/validation/entity-schemas";
 import type { Expense } from "@/types/entity-detail.types";
@@ -75,7 +76,7 @@ export function ExpenseEditPage() {
     // Transform Date object to YYYY-MM-DD string for database
     updateExpense.mutate({
       ...data,
-      date: data.expense_date.toISOString().split("T")[0],
+      date: toISODateString(data.expense_date),
     });
   };
 

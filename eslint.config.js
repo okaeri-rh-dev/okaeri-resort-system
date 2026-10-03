@@ -101,6 +101,24 @@ export default tseslint.config([
     },
   },
 
+  // Date-only values must use the local (Asia/Manila) calendar day. toISOString() is UTC,
+  // so a date picked at local midnight becomes the previous day. Scope widens in
+  // guardrails Phase 1 (docs/plans/2026-10-03-guardrails-design.md).
+  {
+    files: ["src/components/expenses/**/*.{ts,tsx}", "src/stores/useExpenseStore.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "CallExpression[callee.property.name=/^(split|slice|substring)$/][callee.object.callee.property.name='toISOString']",
+          message:
+            "toISOString() is UTC, so a local date before 08:00 Manila time becomes the previous day. Use toISODateString() from @/lib/timezone.",
+        },
+      ],
+    },
+  },
+
   // Load testing scripts (k6) - allow console.log for test output
   {
     files: ["load-testing/**/*.ts"],
