@@ -4,6 +4,23 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
+// Architecture rules: each maps to a shipped bug. See docs/plans/2026-10-03-guardrails-design.md.
+// no-restricted-syntax options do not merge across config blocks, so every block that sets it
+// must list all the selectors that apply to its files.
+const metadataRoleSelector = {
+  selector:
+    "MemberExpression[object.property.name=/^(user_metadata|app_metadata|raw_user_meta_data)$/][property.name='role']",
+  message:
+    "user_metadata is user-editable (supabase.auth.updateUser). Read roles from app_roles: lookupUserRole/requireRole on the server, getUserAuditRole in the app.",
+};
+
+const utcDateSliceSelector = {
+  selector:
+    "CallExpression[callee.property.name=/^(split|slice|substring)$/][callee.object.callee.property.name='toISOString']",
+  message:
+    "toISOString() is UTC, so a local date before 08:00 Manila time becomes the previous day. Use toISODateString() from @/lib/timezone.",
+};
+
 export default tseslint.config([
   // Global ignores
   {
@@ -72,6 +89,7 @@ export default tseslint.config([
       "no-unused-vars": "off", // Using TypeScript's version
       "prefer-const": "warn",
       "no-var": "error",
+      "no-restricted-syntax": ["error", metadataRoleSelector],
 
       // Code style - very relaxed
       "max-len": "off", // No line length limit
@@ -102,21 +120,53 @@ export default tseslint.config([
     },
   },
 
+  // The service-role client bypasses RLS and must never reach the browser bundle
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/lib/supabase-admin", "**/lib/supabase-admin"],
+              allowTypeImports: true,
+              message:
+                "supabase-admin uses the service-role key, which bypasses RLS. It belongs in functions/ only.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // Components and routes read data through hooks and stores (warn until existing imports move)
+  {
+    files: ["src/components/**/*.{ts,tsx}", "src/routes/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "warn",
+        {
+          patterns: [
+            {
+              group: ["@/lib/supabase", "**/lib/supabase"],
+              importNames: ["supabase"],
+              message:
+                "Query through a hook, store, or the typed db helpers so data access stays in one layer.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // Date-only values must use the local (Asia/Manila) calendar day. toISOString() is UTC,
   // so a date picked at local midnight becomes the previous day. Scope widens in
   // guardrails Phase 1 (docs/plans/2026-10-03-guardrails-design.md).
   {
     files: ["src/components/expenses/**/*.{ts,tsx}", "src/stores/useExpenseStore.ts"],
     rules: {
-      "no-restricted-syntax": [
-        "error",
-        {
-          selector:
-            "CallExpression[callee.property.name=/^(split|slice|substring)$/][callee.object.callee.property.name='toISOString']",
-          message:
-            "toISOString() is UTC, so a local date before 08:00 Manila time becomes the previous day. Use toISODateString() from @/lib/timezone.",
-        },
-      ],
+      "no-restricted-syntax": ["error", metadataRoleSelector, utcDateSliceSelector],
     },
   },
 
