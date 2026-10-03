@@ -140,17 +140,19 @@ Once 4.2 and 4.4 are enforced, rewrite two rules that do not match the code:
 
 ### Phase 0: Fix live bugs
 
-- [ ] Owners get 403 on refund/record/add-unit/remove-unit: `functions/lib/rbac.ts:17` `UserRole` lacks `owner`, and the `requireRole` lists in `functions/api/bookings/[id]/{payments/refund,payments/record,units/add,units/remove}.ts` and `isStaffOrAbove`/`isManagerOrAbove` omit it
-- [ ] `functions/api/bookings/multi-unit.ts` uses the service-role key with no role check (any authenticated user, including role `user`, can create bookings): require staff+
-- [ ] `functions/api/admin/available-units.ts:252-257` maps nonexistent columns (`unit_number`, `max_capacity`, `base_price`, `floor_level`, `view_type`)
-- [ ] `functions/api/admin/assign-units.ts:102` references undefined `errorHint` (ReferenceError on the error path)
+- [x] (`1378e07`) Owners get 403 on refund/record/add-unit/remove-unit: `functions/lib/rbac.ts:17` `UserRole` lacks `owner`, and the `requireRole` lists in `functions/api/bookings/[id]/{payments/refund,payments/record,units/add,units/remove}.ts` and `isStaffOrAbove`/`isManagerOrAbove` omit it
+- [x] (`bf7c35f`) `functions/api/bookings/multi-unit.ts` uses the service-role key with no role check (any authenticated user, including role `user`, can create bookings): require staff+
+- [x] (`0ac2a91`) `functions/api/admin/available-units.ts:252-257` maps nonexistent columns (`unit_number`, `max_capacity`, `base_price`, `floor_level`, `view_type`); `.order("unit_number")` made every call return 500
+- [x] (`8192637`) `functions/api/admin/assign-units.ts:102` references undefined `errorHint` (ReferenceError on the error path)
 - [ ] Turnstile: wrong dynamic import path at `functions/api/public/v1/availability.ts:234`; fail-open on missing secret at `src/lib/turnstile.ts:44` (audit P1 #10)
 - [ ] Expense dates likely saved a day early: `ExpenseForm.tsx:127`, `ExpenseEdit.tsx:78`, filters in `useExpenseStore.ts:232,442` and `ExpenseFilters.tsx:144` (reproduce first)
 - [ ] `eslint.config.js` ignores `.claude/worktrees/**`
+- [ ] `available-units` overlap check filters `booking_units.status = 'confirmed'` only; the `assign_units_to_booking` SQL function treats `('confirmed', 'checked_in')` as occupying, so checked-in units are listed as available (found 2026-10-04)
+- [ ] `src/hooks/useMultiUnitBookingQueries.ts:357,410` call `/api/bookings/multi-unit/${bookingId}`, which has no route file (found 2026-10-04; confirm whether those hooks are reachable)
 
 ### Phase 1: Cheap wins
 
-- [ ] Pre-commit strict (4.7)
+- [ ] Pre-commit strict (4.7). Note: its tsc threshold never runs today: with 0 errors `grep -c` prints `0` and exits 1, so `|| echo '0'` yields `"0\n0"` and `[ -gt 100 ]` fails with "integer expression expected"
 - [ ] Cheap tsconfig flags and lint rules marked "error now" (4.3)
 - [ ] Metadata-role lint, `supabase-admin` import ban (4.2)
 - [ ] Timezone lint as warn (4.3)
