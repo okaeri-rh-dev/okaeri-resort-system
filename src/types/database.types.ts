@@ -1396,20 +1396,15 @@ export type Database = {
           unit_id: string;
         }[];
       };
-      check_unit_availability:
-        | {
-            Args: { p_check_in: string; p_check_out: string; p_unit_id: string };
-            Returns: boolean;
-          }
-        | {
-            Args: {
-              p_check_in: string;
-              p_check_out: string;
-              p_exclude_booking_id?: string;
-              p_unit_id: string;
-            };
-            Returns: boolean;
-          };
+      check_unit_availability: {
+        Args: {
+          p_check_in: string;
+          p_check_out: string;
+          p_exclude_booking_id?: string;
+          p_unit_id: string;
+        };
+        Returns: boolean;
+      };
       check_units_available_for_booking: {
         Args: { p_booking_id: string; p_unit_ids: string[] };
         Returns: {
@@ -1542,7 +1537,6 @@ export type Database = {
       restore_logs_from_archive:
         | { Args: { p_archive_month: string }; Returns: number }
         | { Args: { end_date: string; start_date: string }; Returns: number };
-      revoke_audit_role: { Args: { p_user_id: string }; Returns: undefined };
     };
     Enums: {
       [_ in never]: never;
