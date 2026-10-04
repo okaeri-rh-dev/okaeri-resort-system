@@ -19,6 +19,8 @@ import { z } from "zod";
 import type { TablesUpdate } from "@/types/database.types";
 
 import { logAuditEventWorker } from "../../lib/audit-logger-workers";
+import { MANAGER_OR_ABOVE } from "../../lib/rbac";
+import { lookupUserRole } from "../../lib/role-lookup";
 import { createSupabaseAdmin } from "../../lib/supabase-admin";
 
 interface Env {
@@ -102,35 +104,9 @@ export const onRequestPut = async (context: { request: Request; env: Env }): Pro
       );
     }
 
-    // Check user role (must be admin, manager, or owner)
-    const { data: roleData, error: roleError } = await supabase
-      .from("app_roles")
-      .select("role, is_active")
-      .eq("user_id", user.id)
-      .single();
+    const role = await lookupUserRole(user.id, env);
 
-    if (roleError || !roleData) {
-      return Response.json(
-        {
-          error: "FORBIDDEN",
-          message: "No role assigned to user",
-        },
-        { status: 403, headers: corsHeaders }
-      );
-    }
-
-    if (!roleData.is_active) {
-      return Response.json(
-        {
-          error: "FORBIDDEN",
-          message: "User role is not active",
-        },
-        { status: 403, headers: corsHeaders }
-      );
-    }
-
-    const allowedRoles = ["admin", "manager", "owner"];
-    if (!allowedRoles.includes(roleData.role)) {
+    if (!MANAGER_OR_ABOVE.includes(role)) {
       return Response.json(
         {
           error: "FORBIDDEN",
@@ -244,7 +220,7 @@ export const onRequestPut = async (context: { request: Request; env: Env }): Pro
         user_id: user.id,
         description: "Pricing configuration updated",
         changes: { before: currentConfig, after: updatedConfig },
-        metadata: { role: roleData.role, duration_ms: Date.now() - startTime },
+        metadata: { role, duration_ms: Date.now() - startTime },
       },
       request
     );
