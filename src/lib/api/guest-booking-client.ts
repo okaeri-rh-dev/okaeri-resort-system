@@ -1,30 +1,11 @@
 /**
  * Guest Booking Client API - Frontend Helper
  *
- * Provides client-side idempotency key management and booking submission utilities
- * Implements the dual idempotency strategy:
- * - KV cache (10 minutes) for fast recent lookups
- * - PostgreSQL (48 hours) for long-term duplicate prevention
- *
- * Usage:
- * ```typescript
- * import { submitGuestBooking } from '@/lib/api/guest-booking-client';
- *
- * const handleSubmit = async (formData: BookingFormData) => {
- *   try {
- *     const result = await submitGuestBooking(formData);
- *     // Handle success - idempotency key automatically cleared
- *   } catch (error) {
- *     // Handle error - key preserved for retry
- *   }
- * };
- * ```
+ * Idempotency key storage, rate lookup, date-range validation, and pricing
+ * preview for the public multi-unit booking form.
  */
 
 import type {
-  ErrorResponse,
-  MultiUnitBookingRequest,
-  MultiUnitBookingResponse,
   PricingConfig,
   PricingPreviewRequest,
   PricingPreviewResponse,
@@ -141,58 +122,6 @@ export function setIdempotencyKey(key: string): void {
   }
 
   sessionStorage.setItem(IDEMPOTENCY_STORAGE_KEY, key);
-}
-
-/**
- * Submits guest booking with automatic idempotency protection
- *
- * Features:
- * - Automatically generates/retrieves idempotency key
- * - Passes key in both header (KV cache) and body (database)
- * - Clears key only on successful submission
- * - Preserves key on errors for retry
- *
- * @param bookingData - Booking form data (validated by caller)
- * @returns API response with booking details
- * @throws Error on network failure or server error
- */
-export async function submitGuestBooking(
-  bookingData: MultiUnitBookingRequest
-): Promise<MultiUnitBookingResponse> {
-  // Get or create idempotency key
-  const idempotencyKey = getOrCreateIdempotencyKey();
-
-  // Submit booking request
-  const response = await fetch("/api/guest-booking", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      // Pass in header for KV cache (fast lookup)
-      "X-Idempotency-Key": idempotencyKey,
-    },
-    body: JSON.stringify({
-      ...bookingData,
-      // Also pass in body for PostgreSQL (long-term duplicate prevention)
-      idempotency_key: idempotencyKey,
-    }),
-  });
-
-  // Parse response with union type for success/error responses
-  const result: MultiUnitBookingResponse | ErrorResponse = await response.json();
-
-  // Clear key only on successful submission
-  // Errors preserve key for retry
-  if (response.ok) {
-    clearIdempotencyKey();
-  }
-
-  // Throw on error (caller handles retry logic)
-  if (!response.ok) {
-    const errorResult = result as ErrorResponse;
-    throw new Error(errorResult.error || "Booking submission failed");
-  }
-
-  return result as MultiUnitBookingResponse;
 }
 
 /**
