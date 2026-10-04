@@ -194,8 +194,8 @@ Dead-code cleanup (audit Decision 4), 2026-10-04: `9080d01` search stack + phase
 SQL function errors from `supabase db lint` (local migrations, 2026-10-04). Prod may differ (schema drift); confirm before fixing:
 
 - [ ] `assign_units_to_booking` selects `bookings.check_in_date` / `check_out_date` (columns are `check_in` / `check_out`). Called by `/api/admin/assign-units`. **Prod (2026-10-04 probe): the function does not exist at all** (PGRST202; known drift from migration `20251104184719`), so admin unit assignment cannot work in production. Fix = new forward migration creating a corrected function, applied with approval
-- [x] `revoke_audit_role`: dropped by the same migration `20261004000000`. **Prod: not applied yet**
-- [x] (`b569ea9`) `check_unit_availability` 3-arg overload: dropped by migration `20261004000000` (3-arg calls now resolve to the 4-arg version; DB test added). **Prod: not applied yet, run `supabase db push`**
+- [x] `revoke_audit_role`: dropped by the same migration `20261004000000`, applied to prod 2026-10-04
+- [x] (`b569ea9`) `check_unit_availability` 3-arg overload: dropped by migration `20261004000000` (3-arg calls now resolve to the 4-arg version; DB test added). applied to prod 2026-10-04
 - [ ] `create_guest_booking` uses `bookings.check_in_date` and `guests.nationality`
 - [ ] `cleanup_expired_payment_proofs` uses `check_out_date` (known, audit P1 #4)
 - [ ] `attach_audit_trigger` / `detach_audit_trigger`: format-string syntax error
@@ -225,8 +225,8 @@ Found by the `satisfies` annotations (2026-10-04):
 
 - **Done:** Phase 0, Phase 1, and Phase 2 items `functions/` tsconfig, `gen:types`, `satisfies` payload rule, type drift + `db lint` CI steps; dead-code cleanup.
 - **Next:** Phase 2 `booking_status` narrowing + CHECK parity test (4.4).
-- **Waiting on the user:** `supabase db push` for migration `20261004000000` (drops two broken SQL functions); one admin pricing save to confirm a `pricing_config.updated` audit row appears in prod.
-- **Unverified:** the two non-blocking `infra-health` steps (type drift, `db lint`) have not yet run in CI; any server-side audit row on prod since `33314a3`.
+- **Verified on prod 2026-10-04:** migration `20261004000000` applied by the user (`check_unit_availability` 3-arg call returns `true`; `revoke_audit_role` gone); a pricing save wrote a `pricing_config.updated` audit row (`source: app`), the first server-side audit row in prod
+- **Unverified:** the two non-blocking `infra-health` steps (type drift, `db lint`) have not yet run in CI.
 - **Remaining Phase 2:** `UserRole` from DB type + service-role gating test, audit-trigger coverage test, pricing parity test, weekly prod drift check, `tsconfig.e2e.json`, split CI jobs, typing remaining `createClient` calls / raw PostgREST fetches.
 
 ## 6. Costs and risks
