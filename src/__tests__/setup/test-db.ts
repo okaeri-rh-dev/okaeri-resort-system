@@ -118,12 +118,15 @@ export async function cleanupTestData(options?: { includeTestFixtures?: boolean 
 /**
  * Create test unit fixture
  */
+const uniqueSuffix = () => crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+
 export async function createTestUnit(overrides: Partial<unknown> = {}) {
+  const suffix = uniqueSuffix();
   const { data, error } = await testSupabaseAdmin
     .from("units")
     .insert({
-      unit_name: overrides.unit_name || `Test Unit ${Date.now()}`,
-      unit_code: overrides.unit_code || `TEST-${Date.now().toString().slice(-4)}`,
+      unit_name: overrides.unit_name || `Test Unit ${suffix}`,
+      unit_code: overrides.unit_code || `T-${suffix}`,
       unit_type: overrides.unit_type || "Standard",
       base_rate: overrides.base_rate || 2000,
       weekend_rate: overrides.weekend_rate || 2500,
@@ -149,13 +152,14 @@ export async function createTestUnit(overrides: Partial<unknown> = {}) {
  * Create test guest fixture
  */
 export async function createTestGuest(overrides: Partial<unknown> = {}) {
-  const timestamp = Date.now();
+  const suffix = uniqueSuffix();
+  const phoneDigits = String(parseInt(suffix, 16) % 100000000).padStart(8, "0");
   const { data, error } = await testSupabaseAdmin
     .from("guests")
     .insert({
-      guest_name: overrides.guest_name || `Test Guest ${timestamp}`,
-      email: overrides.email || `test${timestamp}@example.com`,
-      phone_number: overrides.phone_number || `+6391${timestamp.toString().slice(-8)}`,
+      guest_name: overrides.guest_name || `Test Guest ${suffix}`,
+      email: overrides.email || `test-${suffix}@example.com`,
+      phone_number: overrides.phone_number || `+6391${phoneDigits}`,
       ...overrides,
     })
     .select()
@@ -174,9 +178,9 @@ export async function createTestGuest(overrides: Partial<unknown> = {}) {
  * Uses the unified multi-unit pattern (via create_multi_unit_booking function)
  */
 export async function createTestBooking(overrides: Partial<unknown> = {}) {
-  // Ensure we have a test guest and unit
-  const guest = overrides.guest || (await createTestGuest());
-  const unit = overrides.unit || (await createTestUnit());
+  const { guest: guestOverride, unit: unitOverride, ...bookingOverrides } = overrides;
+  const guest = guestOverride || (await createTestGuest());
+  const unit = unitOverride || (await createTestUnit());
 
   const checkIn = overrides.check_in || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 1 week from now
   const checkOut = overrides.check_out || new Date(checkIn.getTime() + 2 * 24 * 60 * 60 * 1000); // 2 days later
@@ -184,7 +188,7 @@ export async function createTestBooking(overrides: Partial<unknown> = {}) {
   // Use the database function to create booking with multi-unit pattern
   const { data: bookingId, error } = await testSupabaseAdmin.rpc("create_multi_unit_booking", {
     p_booking_data: {
-      booking_reference: overrides.booking_reference || `TEST-BK-${Date.now()}`,
+      booking_reference: overrides.booking_reference || `TB-${uniqueSuffix()}`,
       guest_name: guest.guest_name,
       email: guest.email,
       contact_number: guest.phone_number,
@@ -192,14 +196,14 @@ export async function createTestBooking(overrides: Partial<unknown> = {}) {
       check_out: checkOut.toISOString(),
       num_guests: overrides.num_guests || 2,
       booking_status: overrides.booking_status || "Confirmed",
-      payment_status: overrides.payment_status || "Paid",
+      payment_status: overrides.payment_status || "Pending",
       total_amount: overrides.total_amount || 5000,
-      ...overrides,
+      ...bookingOverrides,
     },
     p_units: [
       {
         unit_id: unit.unit_id,
-        unit_price: overrides.unit_price || 4000,
+        unit_price: overrides.unit_price || 5000,
         weekend_surcharge: overrides.weekend_surcharge || 0,
         extra_person_charge: overrides.extra_person_charge || 0,
         subtotal: overrides.subtotal || 5000,
@@ -247,7 +251,7 @@ export async function createTestMultiUnitBooking(unitCount: number = 2) {
   // Use the database function to create multi-unit booking
   const { data: bookingId, error } = await testSupabaseAdmin.rpc("create_multi_unit_booking", {
     p_booking_data: {
-      booking_reference: `TEST-MU-${Date.now()}`,
+      booking_reference: `TM-${uniqueSuffix()}`,
       guest_name: guest.guest_name,
       email: guest.email,
       contact_number: guest.phone_number,
@@ -255,7 +259,7 @@ export async function createTestMultiUnitBooking(unitCount: number = 2) {
       check_out: checkOut.toISOString(),
       num_guests: unitCount * 2,
       booking_status: "Confirmed",
-      payment_status: "Paid",
+      payment_status: "Pending",
     },
     p_units: units.map((unit) => ({
       unit_id: unit.unit_id,
@@ -276,7 +280,7 @@ export async function createTestMultiUnitBooking(unitCount: number = 2) {
   // Fetch the complete booking
   const { data: booking } = await testSupabaseAdmin
     .from("bookings")
-    .select("*, booking_units(*), unit:units(*)")
+    .select("*, booking_units(*, unit:units(*))")
     .eq("booking_id", bookingId)
     .single();
 

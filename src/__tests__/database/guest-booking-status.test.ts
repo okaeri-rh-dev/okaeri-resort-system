@@ -47,8 +47,6 @@ describe("POST /api/guest-booking/status against the real schema", () => {
       unit,
       booking_reference: bookingReference,
       email: guestEmail,
-      payment_status: "Pending",
-      unit_price: 5000,
     });
     await testSupabaseAdmin
       .from("bookings")
