@@ -162,6 +162,8 @@ Once 4.2 and 4.4 are enforced, rewrite two rules that do not match the code:
 - [x] (`b4e5d21`) Shadow-module test with the two known pairs allowlisted until the dead-code cleanup
 - [x] (`3bf66ba`) Dependabot (npm weekly grouped, actions monthly), non-blocking `npm audit --omit=dev --audit-level=high` job in `ci.yml`, `.nvmrc` 22 read by every workflow, `engines` = Vite's range
 
+- [x] (`bb6e672`, `476ffb7`) Production audit fixed with `npm audit fix --omit=dev` (8 advisories, all minor/patch bumps) and the audit job made blocking. Note: `--omit=dev` also prunes dev packages from `node_modules`; run `npm ci` afterwards
+
 ### Phase 2: Contracts
 
 - [ ] `gen:types` from local migrations, fix `seasonal_rates`, remove `as any` bridges (4.1)
@@ -223,3 +225,5 @@ Decided during Phase 1 (2026-10-04):
 - **Repo-wide timezone lint deferred to Phase 3.** Why: `no-restricted-syntax` is now `error` repo-wide for the metadata-role rule, and severity is per rule, so the timezone selector cannot be `warn` beside it; the 44 sites each need judgement (some are UTC timestamps on purpose). Revisit: Phase 3 sweep, then add it at error.
 - **Turnstile fail-closed merged after verifying the prod secret.** Why: merging without the secret would block login, sign-up and guest booking. Verified via `wrangler pages secret list` on 2026-10-04. Revisit: if the secret is ever rotated, set the new value before removing the old.
 - **Bash guard matches only at command start.** Why: matching anywhere blocked a commit message that mentioned `supabase db push`. Known limit: it does not parse quoting, so a blocked phrase after `&&` inside a quoted string is still blocked. Revisit: if false positives become frequent.
+- **Public availability `"full"` status is not a bug.** Why: `"full"` means fully available (`getAvailabilityStatus`, count 3); the calendar renders it green and labels days from `availableCount`, with `"booked"` for zero. The name is confusing but the guest-facing result is correct. Revisit: rename only with a versioned API change.
+- **Dev-dependency advisories left for Dependabot.** Why: the full `npm audit fix` hits a wrangler / `@cloudflare/workers-types` v5 peer conflict; dev tools do not ship to users. Revisit: when Dependabot opens the wrangler upgrade.
