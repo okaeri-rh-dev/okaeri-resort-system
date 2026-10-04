@@ -166,7 +166,7 @@ Once 4.2 and 4.4 are enforced, rewrite two rules that do not match the code:
 
 ### Phase 2: Contracts
 
-- [ ] `gen:types` from local migrations, fix `seasonal_rates`, remove `as any` bridges (4.1)
+- [x] (`c129d86`) `gen:types` (`scripts/gen-types.sh`, uses `--db-url`) regenerated from local migrations; `payment_methods` / `expense_categories` now typed, `as any` bridges removed; tsc stayed at 0. The generator omits 5 overloaded functions. No `seasonal_rates` mismatch appeared
 - [x] (`ead7847`, `2ac812b`) `functions/tsconfig.json`; 45 errors fixed; `npm run type-check` (CI), pre-commit and the Stop hook now check `functions/`. Verified a probe error in `functions/` fails `type-check` (exit 2)
 - [ ] Type all `createClient` calls; convert raw PostgREST fetches (4.1)
 - [ ] `satisfies TablesInsert` lint (4.1)
@@ -174,7 +174,8 @@ Once 4.2 and 4.4 are enforced, rewrite two rules that do not match the code:
 - [ ] `booking_status` narrowing + CHECK parity test (4.4)
 - [ ] Audit-trigger coverage test (4.4)
 - [ ] Pricing parity test (4.4)
-- [ ] `db lint` + type drift in `infra-health`; weekly prod drift check (4.1)
+- [x] (`94e3c6b`) Type drift + `supabase db lint` steps in `infra-health` (both non-blocking for now)
+- [ ] Weekly prod drift check (4.1)
 - [ ] `tsconfig.e2e.json` in CI (4.1)
 - [ ] Split CI jobs (4.7)
 
@@ -184,9 +185,21 @@ Bugs found and fixed while doing Phase 2 (2026-10-04):
 - [x] (`1deab24`) `src/lib/supabase-admin.ts` read `env.VITE_SUPABASE_URL`, which Pages Functions do not receive; now prefers `SUPABASE_URL`. Verified on prod: the status lookup returns 404 for an unknown reference instead of failing
 - [x] (`80657c9`) Status lookup embedded `unit:units(...)`, but `bookings.unit_id` was dropped in `20251017000000`; PostgREST returned PGRST200 so every real booking was "not found". Covered by `src/__tests__/database/guest-booking-status.test.ts` against local Supabase
 - [x] (`1aba6c8`) `/api/pricing/calculate` priced `unit_id` / `custom_pricing` requests with an undefined `guest_count`; now a validation error
-- [ ] Dead code with the same broken `unit:units(...)` embed: `QueryProvider._prefetchQueries.bookings`, the guest-detail loader's unused `["bookings", "guest", id]` prefetch, `src/stores/index.ts:252`, `src/hooks/useSearch.ts`. Delete in the dead-code cleanup
-- [ ] Legacy `GuestBookingForm` (not routed) posts to `/api/guest-booking` and `/confirm`, which are not public paths. Delete with the dead-code cleanup, or decide they are needed
-- [ ] `createTestBooking` in `src/__tests__/setup/test-db.ts` defaults violate current constraints (`payment_status: "Paid"`, `unit_price` 4000 vs `subtotal` 5000); fix the defaults
+- [x] (`8b02763`) Dead code with the same broken `unit:units(...)` embed deleted: `QueryProvider._prefetchQueries.bookings`, the guest-detail loader's unused `["bookings", "guest", id]` prefetch, `src/stores/index.ts:252`, `src/hooks/useSearch.ts`. Delete in the dead-code cleanup
+- [x] (`7fc6ad3`) Legacy `GuestBookingForm` and `/api/guest-booking` + `/confirm` deleted
+- [x] (`55a06f2`) `createTestBooking` in `src/__tests__/setup/test-db.ts` defaults violated current constraints (`payment_status: "Paid"`, `unit_price` 4000 vs `subtotal` 5000); fix the defaults
+
+Dead-code cleanup (audit Decision 4), 2026-10-04: `9080d01` search stack + phase3-4 files (6,787 lines), `1cf2db3` shadowed `BookingForm/` and `ExpenseEdit/`, `68ccc2a` `src/patterns`, `src/workflow`, `src/scripts`, `src/utils/validation.ts` (`src/pages` kept: the admin dashboard lazy-loads it). `database/` archive deferred: `scripts/run-migrations.sh`, `quick-migrate.sh` and `verify-deployment.sh` still read `database/migrations/`.
+
+SQL function errors from `supabase db lint` (local migrations, 2026-10-04). Prod may differ (schema drift); confirm before fixing:
+
+- [ ] `assign_units_to_booking` selects `bookings.check_in_date` / `check_out_date` (columns are `check_in` / `check_out`). Called by `/api/admin/assign-units`, so admin unit assignment fails if prod matches
+- [ ] `revoke_audit_role` sets `app_roles.updated_at` (no such column). No app caller found
+- [ ] `check_unit_availability` (3-arg overload) reads `bookings.unit_id` (dropped). Called by `useUnitStore.useCheckAvailability` and `functions/lib/supabase-admin.checkUnitAvailability`
+- [ ] `create_guest_booking` uses `bookings.check_in_date` and `guests.nationality`
+- [ ] `cleanup_expired_payment_proofs` uses `check_out_date` (known, audit P1 #4)
+- [ ] `attach_audit_trigger` / `detach_audit_trigger`: format-string syntax error
+- [ ] `archive_logs_older_than_months` / `monthly_archive_until`: `archive_audit_logs(timestamptz)` is ambiguous between two overloads
 
 ### Phase 3: Depth
 
