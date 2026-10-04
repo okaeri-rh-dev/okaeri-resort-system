@@ -51,13 +51,11 @@ jobs:
       - name: Unit tests (non-DB)
         run: npm run test:no-db
 
-  # Production dependencies only. Non-blocking until the current critical/high
-  # findings are fixed (guardrails design 4.7); then delete continue-on-error.
+  # Production dependencies only: a high or critical advisory blocks deploy.
   audit:
     name: npm audit (production deps)
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
