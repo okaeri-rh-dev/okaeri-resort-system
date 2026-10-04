@@ -167,7 +167,7 @@ Once 4.2 and 4.4 are enforced, rewrite two rules that do not match the code:
 ### Phase 2: Contracts
 
 - [ ] `gen:types` from local migrations, fix `seasonal_rates`, remove `as any` bridges (4.1)
-- [ ] `functions/tsconfig.json`, fix errors, add to `ci.yml` (4.1)
+- [x] (`ead7847`, `2ac812b`) `functions/tsconfig.json`; 45 errors fixed; `npm run type-check` (CI), pre-commit and the Stop hook now check `functions/`. Verified a probe error in `functions/` fails `type-check` (exit 2)
 - [ ] Type all `createClient` calls; convert raw PostgREST fetches (4.1)
 - [ ] `satisfies TablesInsert` lint (4.1)
 - [ ] `UserRole` from DB type; service-role gating test (4.2)
@@ -177,6 +177,16 @@ Once 4.2 and 4.4 are enforced, rewrite two rules that do not match the code:
 - [ ] `db lint` + type drift in `infra-health`; weekly prod drift check (4.1)
 - [ ] `tsconfig.e2e.json` in CI (4.1)
 - [ ] Split CI jobs (4.7)
+
+Bugs found and fixed while doing Phase 2 (2026-10-04):
+
+- [x] (`a5c6cc4`) Guests got 401 on `/api/guest-booking/status` (missing from `isPublicPath`), so `/booking/check-status` never worked. Made public after user approval; it has KV rate limiting and CAPTCHA after 20 attempts
+- [x] (`1deab24`) `src/lib/supabase-admin.ts` read `env.VITE_SUPABASE_URL`, which Pages Functions do not receive; now prefers `SUPABASE_URL`. Verified on prod: the status lookup returns 404 for an unknown reference instead of failing
+- [x] (`80657c9`) Status lookup embedded `unit:units(...)`, but `bookings.unit_id` was dropped in `20251017000000`; PostgREST returned PGRST200 so every real booking was "not found". Covered by `src/__tests__/database/guest-booking-status.test.ts` against local Supabase
+- [x] (`1aba6c8`) `/api/pricing/calculate` priced `unit_id` / `custom_pricing` requests with an undefined `guest_count`; now a validation error
+- [ ] Dead code with the same broken `unit:units(...)` embed: `QueryProvider._prefetchQueries.bookings`, the guest-detail loader's unused `["bookings", "guest", id]` prefetch, `src/stores/index.ts:252`, `src/hooks/useSearch.ts`. Delete in the dead-code cleanup
+- [ ] Legacy `GuestBookingForm` (not routed) posts to `/api/guest-booking` and `/confirm`, which are not public paths. Delete with the dead-code cleanup, or decide they are needed
+- [ ] `createTestBooking` in `src/__tests__/setup/test-db.ts` defaults violate current constraints (`payment_status: "Paid"`, `unit_price` 4000 vs `subtotal` 5000); fix the defaults
 
 ### Phase 3: Depth
 
