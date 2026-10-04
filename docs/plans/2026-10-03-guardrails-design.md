@@ -169,7 +169,7 @@ Once 4.2 and 4.4 are enforced, rewrite two rules that do not match the code:
 - [x] (`c129d86`) `gen:types` (`scripts/gen-types.sh`, uses `--db-url`) regenerated from local migrations; `payment_methods` / `expense_categories` now typed, `as any` bridges removed; tsc stayed at 0. The generator omits 5 overloaded functions. No `seasonal_rates` mismatch appeared
 - [x] (`ead7847`, `2ac812b`) `functions/tsconfig.json`; 45 errors fixed; `npm run type-check` (CI), pre-commit and the Stop hook now check `functions/`. Verified a probe error in `functions/` fails `type-check` (exit 2)
 - [ ] Type all `createClient` calls; convert raw PostgREST fetches (4.1)
-- [ ] `satisfies TablesInsert` lint (4.1)
+- [x] (`5538d2b`) `satisfies TablesInsert` lint: 46 payloads annotated by codemod; rule (first argument of `.from("t").insert/upsert/update`) is `error` outside tests. Annotating surfaced 4 more wrong-table/column writes (see below)
 - [ ] `UserRole` from DB type; service-role gating test (4.2)
 - [ ] `booking_status` narrowing + CHECK parity test (4.4)
 - [ ] Audit-trigger coverage test (4.4)
@@ -194,12 +194,20 @@ Dead-code cleanup (audit Decision 4), 2026-10-04: `9080d01` search stack + phase
 SQL function errors from `supabase db lint` (local migrations, 2026-10-04). Prod may differ (schema drift); confirm before fixing:
 
 - [ ] `assign_units_to_booking` selects `bookings.check_in_date` / `check_out_date` (columns are `check_in` / `check_out`). Called by `/api/admin/assign-units`. **Prod (2026-10-04 probe): the function does not exist at all** (PGRST202; known drift from migration `20251104184719`), so admin unit assignment cannot work in production. Fix = new forward migration creating a corrected function, applied with approval
-- [ ] `revoke_audit_role` sets `app_roles.updated_at` (no such column). No app caller found
-- [ ] `check_unit_availability` (3-arg overload) reads `bookings.unit_id` (dropped). Called by `useUnitStore.useCheckAvailability` and `functions/lib/supabase-admin.checkUnitAvailability`
+- [ ] `revoke_audit_role` sets `app_roles.updated_at` (no such column). **Prod: fails the same way (42703).** No app caller
+- [ ] `check_unit_availability` (3-arg overload) reads `bookings.unit_id` (dropped). **Prod: every 3-arg call fails with PGRST203** (ambiguous overloads). No live caller (`useCheckAvailability` and `functions/lib` helper are unused); live availability uses `check_multi_unit_availability`
 - [ ] `create_guest_booking` uses `bookings.check_in_date` and `guests.nationality`
 - [ ] `cleanup_expired_payment_proofs` uses `check_out_date` (known, audit P1 #4)
 - [ ] `attach_audit_trigger` / `detach_audit_trigger`: format-string syntax error
 - [ ] `archive_logs_older_than_months` / `monthly_archive_until`: `archive_audit_logs(timestamptz)` is ambiguous between two overloads
+
+**Online booking never worked in production (2026-10-04, read-only checks):** prod has 0 bookings with `is_guest_booking = true`; all bookings are staff-created. `/api/guest-booking/multi-unit` (the `/booking` page) calls `create_guest_booking`, which is absent in prod along with `guest_booking_unit_requests`, `calculate_booking_pricing` and `assign_units_to_booking` (drift from `20251104184719`). Restoring unit assignment alone has no data to act on. **Decision needed:** rebuild the online-booking backend, or hide `/booking` and the status page.
+
+Found by the `satisfies` annotations (2026-10-04):
+
+- [x] (`33314a3`) `logAuditEventWorker` wrote `entity_type`/`entity_id`/`changes` (absent) and event names as `action` (CHECK allows INSERT/UPDATE/DELETE): no server-side audit row was ever written. `update-config` had the same broken insert, so pricing changes were never audited. Now maps to `event_type`/`table_name`/`record_id`/`old_data`/`new_data`; DB test added; prod `audit_logs` has all 13 written columns
+- [x] (`ec5dce6`) `units/add`, `units/remove`, `payments/record`, `payments/refund` wrote `payment_adjustments` (no such table) and `payments.refunded_amount` (no such column) and had no UI caller: deleted with 7 unused hooks. The owner-role fix for them (`1378e07`) is moot; the RBAC tier tests remain
+- [x] (`ec5dce6`) uncalled `bandwidth-monitor.ts` updated `bookings.metadata` by `id`: deleted
 
 ### Phase 3: Depth
 
