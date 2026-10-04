@@ -78,6 +78,7 @@ jobs:
       - name: DB tests
         run: npx vitest run src/__tests__/database __tests__/database src/__tests__/performance/multi-unit-availability.test.ts
       # Non-blocking for now: the CLI is unpinned, so generator output can change between versions.
+      # If only the CLI changed: upgrade the local CLI, run `npm run gen:types`, and commit the result.
       - name: Type drift (database.generated.ts matches the migrations)
         continue-on-error: true
         run: npm run gen:types && git diff --exit-code src/types/database.generated.ts

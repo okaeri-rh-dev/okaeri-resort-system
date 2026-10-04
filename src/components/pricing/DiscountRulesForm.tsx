@@ -54,7 +54,7 @@ export interface DiscountRule {
   discount_type: string;
   discount_value: number;
   max_discount?: number | null;
-  conditions: Json;
+  conditions: NonNullable<Json>;
   priority: number;
   is_active: boolean;
 }
@@ -161,8 +161,8 @@ export function DiscountRulesForm({ rules = [], onSave, isLoading }: DiscountRul
   }, [rules]);
 
   // Build conditions JSONB from form values
-  const buildConditions = (type: string, value: number): Json => {
-    return [{ type, value }] as Json;
+  const buildConditions = (type: string, value: number): NonNullable<Json> => {
+    return [{ type, value }];
   };
 
   // Handle adding a new rule

@@ -10,12 +10,7 @@ export type Database = {
     };
     Functions: {
       graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
+        Args: { extensions?: Json; operationName?: string; query?: string; variables?: Json };
         Returns: Json;
       };
     };
@@ -660,7 +655,7 @@ export type Database = {
       };
       discount_rules: {
         Row: {
-          conditions: Json;
+          conditions: NonNullable<Json>;
           created_at: string | null;
           description: string | null;
           discount_type: string;
@@ -673,7 +668,7 @@ export type Database = {
           updated_at: string | null;
         };
         Insert: {
-          conditions: Json;
+          conditions: NonNullable<Json>;
           created_at?: string | null;
           description?: string | null;
           discount_type?: string;
@@ -686,7 +681,7 @@ export type Database = {
           updated_at?: string | null;
         };
         Update: {
-          conditions?: Json;
+          conditions?: NonNullable<Json>;
           created_at?: string | null;
           description?: string | null;
           discount_type?: string;
@@ -1373,15 +1368,12 @@ export type Database = {
         Args: { p_booking_id: string; p_unit_ids: string[] };
         Returns: undefined;
       };
-      attach_audit_trigger: {
-        Args: { p_table_name: string };
-        Returns: undefined;
-      };
+      attach_audit_trigger: { Args: { p_table_name: string }; Returns: undefined };
       calculate_booking_pricing: {
         Args: { p_check_in: string; p_check_out: string; p_unit_requests: Json };
         Returns: Json;
       };
-      can_view_all_audit_logs: { Args: never; Returns: boolean };
+      can_view_all_audit_logs: { Args: Record<PropertyKey, never>; Returns: boolean };
       check_multi_unit_availability: {
         Args: {
           p_check_in: string;
@@ -1413,9 +1405,9 @@ export type Database = {
           unit_id: string;
         }[];
       };
-      cleanup_expired_idempotency_keys: { Args: never; Returns: number };
+      cleanup_expired_idempotency_keys: { Args: Record<PropertyKey, never>; Returns: number };
       cleanup_expired_payment_proofs: {
-        Args: never;
+        Args: Record<PropertyKey, never>;
         Returns: {
           file_path: string;
         }[];
@@ -1443,12 +1435,9 @@ export type Database = {
         Args: { p_booking_data: Json; p_guest_id?: string; p_units: Json[] };
         Returns: string;
       };
-      detach_audit_trigger: {
-        Args: { p_table_name: string };
-        Returns: undefined;
-      };
-      generate_booking_reference: { Args: never; Returns: string };
-      generate_transfer_reference: { Args: never; Returns: string };
+      detach_audit_trigger: { Args: { p_table_name: string }; Returns: undefined };
+      generate_booking_reference: { Args: Record<PropertyKey, never>; Returns: string };
+      generate_transfer_reference: { Args: Record<PropertyKey, never>; Returns: string };
       get_account_balance: {
         Args: { p_account_id: string; p_as_of_date?: string };
         Returns: number;
@@ -1480,7 +1469,7 @@ export type Database = {
           unit_type: string;
         }[];
       };
-      get_current_audit_role: { Args: never; Returns: string };
+      get_current_audit_role: { Args: Record<PropertyKey, never>; Returns: string };
       get_public_aggregate_availability: {
         Args: { p_end_date: string; p_start_date: string };
         Returns: {
@@ -1509,14 +1498,11 @@ export type Database = {
       has_any_role: { Args: { check_user_id: string }; Returns: boolean };
       is_admin: { Args: { check_user_id?: string }; Returns: boolean };
       is_admin_or_owner: { Args: { check_user_id?: string }; Returns: boolean };
-      is_audit_admin: { Args: never; Returns: boolean };
-      is_audit_manager: { Args: never; Returns: boolean };
-      is_audit_owner: { Args: never; Returns: boolean };
+      is_audit_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      is_audit_manager: { Args: Record<PropertyKey, never>; Returns: boolean };
+      is_audit_owner: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_manager: { Args: { check_user_id?: string }; Returns: boolean };
-      is_manager_or_above: {
-        Args: { check_user_id?: string };
-        Returns: boolean;
-      };
+      is_manager_or_above: { Args: { check_user_id?: string }; Returns: boolean };
       is_staff: { Args: { check_user_id: string }; Returns: boolean };
       is_staff_or_above: { Args: { check_user_id?: string }; Returns: boolean };
       monthly_archive_until:
@@ -1561,9 +1547,7 @@ export type Tables<
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R;
@@ -1587,9 +1571,7 @@ export type TablesInsert<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I;
     }
@@ -1612,9 +1594,7 @@ export type TablesUpdate<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U;
     }
@@ -1637,9 +1617,7 @@ export type Enums<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
-}
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
@@ -1654,9 +1632,7 @@ export type CompositeTypes<
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
-}
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]

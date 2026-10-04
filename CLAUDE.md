@@ -46,8 +46,7 @@ Rules:
 Current entries:
 
 - **Supabase CLI output parsing** — helper scripts that regex `supabase status` human output break on CLI upgrades (bit household-hub at v2.105.0). Any new script must use `supabase status -o env` (machine-readable) instead. Known-good CLI version at last check: v2.101.0.
-- **Type drift step in `infra-health` always fails** (first CI run 2026-10-04, run 37197028971): CI installs the latest Supabase CLI on purpose, and newer CLIs generate different output (`NonNullable<Json>`, other formatting) than the local v2.109.1 that produced `src/types/database.generated.ts`. The step is `continue-on-error`, so the run shows green; read the step log, not the conclusion. Fix pending a decision (guardrails plan, Decisions & Deferrals).
-- **`supabase gen types --local` fails password auth** (CLI v2.109.1: `password authentication failed for user "postgres"`). Workaround: `npm run gen:types`, which passes `--db-url` from `supabase status -o env`.
+- **`supabase gen types --local` fails password auth** (CLI v2.109.1: `password authentication failed for user "postgres"`; v2.119.0 exits 1 with no message). Workaround: `npm run gen:types`, which passes `--db-url` from `supabase status -o env`.
 
 ## Important Notes
 
