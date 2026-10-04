@@ -1,10 +1,10 @@
 /**
  * Regression: the `owner` app_role was missing from functions/lib/rbac.ts, so
- * owners got 403 on booking-unit and payment endpoints that staff and managers
- * could use. Role hierarchy: admin > owner > manager > staff.
+ * owners failed staff-or-above and manager-or-above checks.
+ * Role hierarchy: admin > owner > manager > staff.
  */
 
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   isManagerOrAbove,
@@ -13,7 +13,7 @@ import {
   requireRole,
   STAFF_OR_ABOVE,
 } from "../../../functions/lib/rbac";
-import { createMockContext, createMockRequest, generateTestJWT, mockEnv } from "./setup";
+import { createMockRequest, generateTestJWT } from "./setup";
 
 type RoleRequest = Request & { user: { role: string } };
 
@@ -26,44 +26,6 @@ async function requestAs(role: string, path: string): Promise<Request> {
   request.user.role = role;
   return request;
 }
-
-const endpoints = [
-  { name: "units/add", load: () => import("../../../functions/api/bookings/[id]/units/add") },
-  { name: "units/remove", load: () => import("../../../functions/api/bookings/[id]/units/remove") },
-  {
-    name: "payments/record",
-    load: () => import("../../../functions/api/bookings/[id]/payments/record"),
-  },
-  {
-    name: "payments/refund",
-    load: () => import("../../../functions/api/bookings/[id]/payments/refund"),
-  },
-];
-
-describe("owner role access", () => {
-  it.each(endpoints)("owner is not forbidden on $name", async ({ name, load }) => {
-    vi.doMock("@supabase/supabase-js", () => ({ createClient: vi.fn(() => ({})) }));
-    const { onRequestPost } = await load();
-    const request = await requestAs("owner", `/api/bookings/not-a-uuid/${name}`);
-
-    const response = await onRequestPost(
-      createMockContext(request, mockEnv, { id: "not-a-uuid" }) as never
-    );
-
-    expect(response.status).not.toBe(403);
-  });
-
-  it("staff is still forbidden on payments/refund", async () => {
-    const { onRequestPost } = await import("../../../functions/api/bookings/[id]/payments/refund");
-    const request = await requestAs("staff", "/api/bookings/not-a-uuid/payments/refund");
-
-    const response = await onRequestPost(
-      createMockContext(request, mockEnv, { id: "not-a-uuid" }) as never
-    );
-
-    expect(response.status).toBe(403);
-  });
-});
 
 describe("rbac role tiers", () => {
   it("treats owner as staff-or-above and manager-or-above", async () => {

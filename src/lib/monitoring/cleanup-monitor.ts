@@ -9,6 +9,7 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 import { logger } from "@/lib/logger";
 import { AuditCategory, AuditSeverity } from "@/types/audit.types";
+import type { TablesUpdate } from "@/types/database.types";
 
 import { logAuditEvent } from "../audit-logger";
 import { getAlertSystem } from "./alert-system";
@@ -172,7 +173,7 @@ export class CleanupMonitor {
           .update({
             booking_status: "expired",
             upload_status: "expired",
-          })
+          } satisfies TablesUpdate<"bookings">)
           .in(
             "id",
             expiredBookings.map((b) => b.id)
