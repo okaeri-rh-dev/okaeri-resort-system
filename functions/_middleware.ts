@@ -253,6 +253,7 @@ function isPublicPath(pathname: string): boolean {
     "/api/guest-booking/discount-rules",
     "/api/guest-booking/preview-pricing",
     "/api/guest-booking/upload-url", // Payment proof upload (Chunk 008)
+    "/api/guest-booking/status", // Guest status lookup (own KV rate limit + CAPTCHA after 20)
     "/api/auth/login", // Admin login with Turnstile verification
     "/api/auth/forgot-password", // Password reset with Turnstile verification
   ];

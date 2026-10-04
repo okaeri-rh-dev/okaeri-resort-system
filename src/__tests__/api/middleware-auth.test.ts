@@ -61,6 +61,22 @@ describe("Middleware JWT Authentication", () => {
     expect(response.status).toBe(200);
   });
 
+  it("should allow the guest booking status lookup without JWT", async () => {
+    // The public /booking/check-status page posts here; guests are not logged in.
+    const request = createMockRequest("https://api.example.com/api/guest-booking/status", {
+      method: "POST",
+    });
+
+    const context = {
+      ...createMockContext(request, mockEnv),
+      next: vi.fn(async () => new Response(JSON.stringify({ success: true }), { status: 200 })),
+    };
+
+    const response = await onRequest(context as unknown);
+
+    expect(response.status).toBe(200);
+  });
+
   it("should allow public path /api/health without JWT", async () => {
     const request = createMockRequest("https://api.example.com/api/health", {
       method: "GET",
