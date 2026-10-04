@@ -40,31 +40,6 @@ export const Route = createFileRoute("/admin/guests/$guestId/")({
       staleTime: 30000, // 30 seconds
     });
 
-    // Prefetch all bookings by this guest
-    const bookingsPromise = queryClient.ensureQueryData({
-      queryKey: ["bookings", "guest", guestId],
-      queryFn: async () => {
-        const { data, error } = await supabase
-          .from("bookings")
-          .select(
-            `
-            *,
-            unit:units(unit_name, unit_code)
-          `
-          )
-          .eq("guest_id", guestId)
-          .order("check_in", { ascending: false });
-
-        if (error) {
-          console.error("[Guest Detail] Failed to fetch bookings:", error);
-          return [];
-        }
-
-        return data || [];
-      },
-      staleTime: 30000, // 30 seconds
-    });
-
     // Calculate guest statistics
     const guestStatsPromise = queryClient.ensureQueryData({
       queryKey: ["guest", guestId, "stats"],
@@ -126,9 +101,8 @@ export const Route = createFileRoute("/admin/guests/$guestId/")({
       : Promise.resolve([]);
 
     // Wait for all data to be loaded
-    const [guestData, bookings, guestStats, auditLogs] = await Promise.all([
+    const [guestData, guestStats, auditLogs] = await Promise.all([
       guestPromise,
-      bookingsPromise,
       guestStatsPromise,
       auditLogsPromise,
     ]);
@@ -145,7 +119,6 @@ export const Route = createFileRoute("/admin/guests/$guestId/")({
 
     return {
       guest,
-      bookings,
       guestStats,
       auditLogs,
       canViewAudit,
