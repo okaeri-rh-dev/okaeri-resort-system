@@ -166,7 +166,7 @@ Once 4.2 and 4.4 are enforced, rewrite two rules that do not match the code:
 
 ### Phase 2: Contracts
 
-- [x] (`c129d86`) `gen:types` (`scripts/gen-types.sh`, uses `--db-url`) regenerated from local migrations; `payment_methods` / `expense_categories` now typed, `as any` bridges removed; tsc stayed at 0. The generator omits 5 overloaded functions. No `seasonal_rates` mismatch appeared
+- [x] (`c129d86`) `gen:types` (`scripts/gen-types.sh`, uses `--db-url`) regenerated from local migrations; `payment_methods` / `expense_categories` now typed, `as any` bridges removed; tsc stayed at 0. No `seasonal_rates` mismatch appeared. (Correction 2026-10-04: overloaded functions ARE generated, as union types; an earlier grep for `name: {` missed that format)
 - [x] (`ead7847`, `2ac812b`) `functions/tsconfig.json`; 45 errors fixed; `npm run type-check` (CI), pre-commit and the Stop hook now check `functions/`. Verified a probe error in `functions/` fails `type-check` (exit 2)
 - [ ] Type all `createClient` calls; convert raw PostgREST fetches (4.1)
 - [x] (`5538d2b`) `satisfies TablesInsert` lint: 46 payloads annotated by codemod; rule (first argument of `.from("t").insert/upsert/update`) is `error` outside tests. Annotating surfaced 4 more wrong-table/column writes (see below)
@@ -194,14 +194,14 @@ Dead-code cleanup (audit Decision 4), 2026-10-04: `9080d01` search stack + phase
 SQL function errors from `supabase db lint` (local migrations, 2026-10-04). Prod may differ (schema drift); confirm before fixing:
 
 - [ ] `assign_units_to_booking` selects `bookings.check_in_date` / `check_out_date` (columns are `check_in` / `check_out`). Called by `/api/admin/assign-units`. **Prod (2026-10-04 probe): the function does not exist at all** (PGRST202; known drift from migration `20251104184719`), so admin unit assignment cannot work in production. Fix = new forward migration creating a corrected function, applied with approval
-- [ ] `revoke_audit_role` sets `app_roles.updated_at` (no such column). **Prod: fails the same way (42703).** No app caller
-- [ ] `check_unit_availability` (3-arg overload) reads `bookings.unit_id` (dropped). **Prod: every 3-arg call fails with PGRST203** (ambiguous overloads). No live caller (`useCheckAvailability` and `functions/lib` helper are unused); live availability uses `check_multi_unit_availability`
+- [x] `revoke_audit_role`: dropped by the same migration `20261004000000`. **Prod: not applied yet**
+- [x] (`b569ea9`) `check_unit_availability` 3-arg overload: dropped by migration `20261004000000` (3-arg calls now resolve to the 4-arg version; DB test added). **Prod: not applied yet, run `supabase db push`**
 - [ ] `create_guest_booking` uses `bookings.check_in_date` and `guests.nationality`
 - [ ] `cleanup_expired_payment_proofs` uses `check_out_date` (known, audit P1 #4)
 - [ ] `attach_audit_trigger` / `detach_audit_trigger`: format-string syntax error
 - [ ] `archive_logs_older_than_months` / `monthly_archive_until`: `archive_audit_logs(timestamptz)` is ambiguous between two overloads
 
-**Online booking never worked in production (2026-10-04, read-only checks):** prod has 0 bookings with `is_guest_booking = true`; all bookings are staff-created. `/api/guest-booking/multi-unit` (the `/booking` page) calls `create_guest_booking`, which is absent in prod along with `guest_booking_unit_requests`, `calculate_booking_pricing` and `assign_units_to_booking` (drift from `20251104184719`). Restoring unit assignment alone has no data to act on. **Decision needed:** rebuild the online-booking backend, or hide `/booking` and the status page.
+**Online booking never worked in production (2026-10-04, read-only checks):** prod has 0 bookings with `is_guest_booking = true`; all bookings are staff-created. `/api/guest-booking/multi-unit` (the `/booking` page) calls `create_guest_booking`, which is absent in prod along with `guest_booking_unit_requests`, `calculate_booking_pricing` and `assign_units_to_booking` (drift from `20251104184719`). Restoring unit assignment alone has no data to act on. **Decided 2026-10-04: leave `/booking` and the status page as they are** (not hidden, so the feature is not forgotten); polishing online booking is a future project. See Decisions & Deferrals.
 
 Found by the `satisfies` annotations (2026-10-04):
 
@@ -258,3 +258,5 @@ Decided during Phase 1 (2026-10-04):
 - **Bash guard matches only at command start.** Why: matching anywhere blocked a commit message that mentioned `supabase db push`. Known limit: it does not parse quoting, so a blocked phrase after `&&` inside a quoted string is still blocked. Revisit: if false positives become frequent.
 - **Public availability `"full"` status is not a bug.** Why: `"full"` means fully available (`getAvailabilityStatus`, count 3); the calendar renders it green and labels days from `availableCount`, with `"booked"` for zero. The name is confusing but the guest-facing result is correct. Revisit: rename only with a versioned API change.
 - **Dev-dependency advisories left for Dependabot.** Why: the full `npm audit fix` hits a wrangler / `@cloudflare/workers-types` v5 peer conflict; dev tools do not ship to users. Revisit: when Dependabot opens the wrangler upgrade.
+- **Online booking left visible, not hidden (2026-10-04, user).** Why: hiding it risks the feature being forgotten; it is a future polish project. Restoring it needs a forward migration for `create_guest_booking`, `guest_booking_unit_requests`, `calculate_booking_pricing` and `assign_units_to_booking` with corrected columns (see the drift memory). Revisit: when online booking is scheduled.
+- **Broken SQL functions dropped, not fixed (2026-10-04, user).** Why: no callers; the 4-arg `check_unit_availability` already does the job. Migration `20261004000000` with rollback; prod needs `supabase db push` by the user (the Bash guard blocks it for agents). Revisit: never.
