@@ -2,7 +2,6 @@
 // Stop: lint and type-check what changed on this branch before Claude reports done.
 // Blocks once per distinct working-tree state, so an unfixable failure cannot loop:
 // if nothing changed since the last block, the stop is let through.
-// Does not cover functions/ type errors until functions/ has a tsconfig (guardrails Phase 2).
 import { execFileSync, execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -57,6 +56,7 @@ const failures = [
     "--tsBuildInfoFile",
     "node_modules/.cache/tsc-stop-hook.tsbuildinfo",
   ]),
+  run("npx", ["tsc", "--noEmit", "--incremental", "-p", "functions/tsconfig.json"]),
 ]
   .filter(Boolean)
   .join("\n");
