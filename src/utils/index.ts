@@ -143,42 +143,6 @@ export {
 } from "./date-helpers";
 
 // ============================================
-// VALIDATION UTILITIES
-// ============================================
-export {
-  // Configuration
-  DEFAULT_BOOKING_CONSTRAINTS,
-  DEFAULT_PAYMENT_OPTIONS,
-  isCommonEmailDomain,
-  isValidEmail,
-  isValidName,
-  isValidPhilippinePhoneNumber,
-  normalizePhilippinePhoneNumber,
-  sanitizeGuestData,
-  // Booking validation
-  validateBookingConstraints,
-  validateBusinessRegistrationCompliance,
-  validateCompleteBooking,
-  // Compliance validation
-  validateDataPrivacyCompliance,
-  // Guest validation
-  validateGuestInformation,
-  // Payment validation
-  validatePayment,
-  type BookingConstraints,
-  type ComplianceAction,
-  type ComplianceViolation,
-  type PaymentValidationOptions,
-  type PhilippineComplianceResult,
-  type ValidationContext,
-  type ValidationError,
-  // Types
-  type ValidationResult,
-  type ValidationRule,
-  type ValidationWarning,
-} from "./validation";
-
-// ============================================
 // REPORTING UTILITIES (Phase 2)
 // ============================================
 export {
