@@ -5,6 +5,8 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { UserRole } from "./rbac";
+
 // ============================================
 // REQUEST/RESPONSE TYPES
 // ============================================
@@ -334,7 +336,7 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email?: string;
-    role?: string;
+    role?: UserRole;
   };
 }
 

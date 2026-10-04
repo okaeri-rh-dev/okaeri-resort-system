@@ -46,6 +46,7 @@ export interface Guest {
 // BOOKING TYPES
 // ============================================
 export { BOOKING_STATUSES, type BookingStatus } from "./booking-status";
+export { APP_ROLE_NAMES, type AppRoleName } from "./app-role";
 export type PaymentStatus = "Pending" | "Partial" | "Completed" | "Refunded";
 export type PaymentMethod = "Cash" | "GCash" | "BankTransfer" | "Card" | "Other";
 export type PaymentRecordStatus = "Active" | "Deleted" | "Refunded";

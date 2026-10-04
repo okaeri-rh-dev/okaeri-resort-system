@@ -16,9 +16,18 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+import { APP_ROLE_NAMES } from "@/types/app-role";
+import type { Database } from "@/types/database.types";
+
+import type { UserRole } from "./rbac";
+
 const ROLE_CACHE_TTL_SECONDS = 60;
 const ROLE_CACHE_PREFIX = "role:";
-const VALID_ROLES = new Set(["user", "staff", "manager", "admin", "owner"]);
+const VALID_ROLES = new Set<string>(["user", ...APP_ROLE_NAMES]);
+
+function isUserRole(value: unknown): value is UserRole {
+  return typeof value === "string" && VALID_ROLES.has(value);
+}
 
 interface RoleLookupEnv {
   SUPABASE_URL?: string;
@@ -29,7 +38,7 @@ interface RoleLookupEnv {
 export async function lookupUserRole(
   userId: string | undefined,
   env: RoleLookupEnv
-): Promise<string> {
+): Promise<UserRole> {
   if (!userId) return "user";
 
   const cacheKey = `${ROLE_CACHE_PREFIX}${userId}`;
@@ -37,7 +46,7 @@ export async function lookupUserRole(
   if (env.RATE_LIMIT_KV) {
     try {
       const cached = await env.RATE_LIMIT_KV.get(cacheKey);
-      if (cached && VALID_ROLES.has(cached)) {
+      if (isUserRole(cached)) {
         return cached;
       }
     } catch (err) {
@@ -51,7 +60,7 @@ export async function lookupUserRole(
   }
 
   try {
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
@@ -67,10 +76,7 @@ export async function lookupUserRole(
       return "user";
     }
 
-    const role =
-      data?.role && typeof data.role === "string" && VALID_ROLES.has(data.role)
-        ? data.role
-        : "user";
+    const role: UserRole = isUserRole(data?.role) ? data.role : "user";
 
     if (env.RATE_LIMIT_KV) {
       try {

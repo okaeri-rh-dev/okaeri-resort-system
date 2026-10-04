@@ -14,6 +14,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+import { OWNER_OR_ABOVE } from "../../lib/rbac";
 import { lookupUserRole } from "../../lib/role-lookup";
 
 interface Env {
@@ -82,7 +83,7 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
     }
 
     const appRole = await lookupUserRole(user.id, env);
-    if (!["owner", "admin"].includes(appRole)) {
+    if (!OWNER_OR_ABOVE.includes(appRole)) {
       return new Response(
         JSON.stringify({ error: "Forbidden", message: "Owner or admin access required" }),
         {

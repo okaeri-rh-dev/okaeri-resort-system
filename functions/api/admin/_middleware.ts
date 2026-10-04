@@ -23,6 +23,7 @@
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
+import { STAFF_OR_ABOVE, type UserRole } from "../../lib/rbac";
 import { lookupUserRole } from "../../lib/role-lookup";
 
 interface Env {
@@ -35,12 +36,12 @@ interface Env {
 // Individual handlers enforce stricter levels where required (verify-payment =
 // manager+, pending-users = owner/admin). Authorization is sourced from
 // public.app_roles via lookupUserRole — NEVER from client-mutable JWT claims.
-const ADMIN_AREA_ROLES = ["staff", "manager", "owner", "admin"];
+const ADMIN_AREA_ROLES = STAFF_OR_ABOVE;
 
 interface AdminContext {
   user_id: string;
   email: string;
-  app_role: string;
+  app_role: UserRole;
 }
 
 // ============================================

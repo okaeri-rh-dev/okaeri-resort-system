@@ -19,6 +19,7 @@
 
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 
+import { MANAGER_OR_ABOVE } from "../../lib/rbac";
 import { lookupUserRole } from "../../lib/role-lookup";
 
 interface Env {
@@ -131,7 +132,7 @@ export async function onRequest(context: {
     // frontend Payments guard (requireManager).
     const appRole = await lookupUserRole(user.id, env);
 
-    if (!["manager", "owner", "admin"].includes(appRole)) {
+    if (!MANAGER_OR_ABOVE.includes(appRole)) {
       return new Response(
         JSON.stringify({
           error: "Forbidden",

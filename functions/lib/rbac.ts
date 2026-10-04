@@ -7,17 +7,21 @@
  * @module RBAC
  */
 
+import type { AppRoleName } from "@/types/app-role";
+
 // ============================================
 // TYPE DEFINITIONS
 // ============================================
 
 /**
- * User roles in the system (hierarchical: admin > owner > manager > staff > user)
+ * An app_roles role, or "user" when the account has no active app_roles row
+ * (hierarchical: admin > owner > manager > staff > user)
  */
-export type UserRole = "user" | "staff" | "manager" | "owner" | "admin";
+export type UserRole = AppRoleName | "user";
 
 export const STAFF_OR_ABOVE: UserRole[] = ["staff", "manager", "owner", "admin"];
 export const MANAGER_OR_ABOVE: UserRole[] = ["manager", "owner", "admin"];
+export const OWNER_OR_ABOVE: UserRole[] = ["owner", "admin"];
 
 /**
  * User context attached to request by middleware

@@ -2,6 +2,7 @@
 // text columns narrowed to the values their CHECK constraints allow.
 // Import database types from this module, not from database.generated.ts.
 
+import type { AppRoleName } from "./app-role";
 import type { BookingStatus } from "./booking-status";
 import type { Database as GeneratedDatabase } from "./database.generated";
 
@@ -10,25 +11,33 @@ export { Constants } from "./database.generated";
 
 type GeneratedPublic = GeneratedDatabase["public"];
 
-type NarrowBookingStatus<Column> = Column extends string ? BookingStatus : Column;
-
-type WithBookingStatus<Shape> = {
-  [Key in keyof Shape]: Key extends "booking_status" ? NarrowBookingStatus<Shape[Key]> : Shape[Key];
+// bookings and app_roles have the CHECKs; the two availability relations copy
+// their status from bookings. bookings_conflict_backup is a snapshot with no
+// constraint and stays string.
+type NarrowedColumns = {
+  bookings: { booking_status: BookingStatus };
+  booking_unit_availability: { booking_status: BookingStatus };
+  public_unit_availability: { booking_status: BookingStatus };
+  app_roles: { role: AppRoleName };
 };
 
-type NarrowRelation<Relation> = {
+type NarrowString<Column, Narrowed> = Column extends string ? Narrowed : Column;
+
+type WithNarrowedColumns<Shape, Columns> = {
+  [Key in keyof Shape]: Key extends keyof Columns
+    ? NarrowString<Shape[Key], Columns[Key]>
+    : Shape[Key];
+};
+
+type NarrowRelation<Relation, Columns> = {
   [Part in keyof Relation]: Part extends "Row" | "Insert" | "Update"
-    ? WithBookingStatus<Relation[Part]>
+    ? WithNarrowedColumns<Relation[Part], Columns>
     : Relation[Part];
 };
 
-// bookings has the CHECK; the other two copy their status from bookings.
-// bookings_conflict_backup is a snapshot with no constraint and stays string.
-type BookingStatusRelations = "bookings" | "booking_unit_availability" | "public_unit_availability";
-
 type NarrowRelations<Relations> = {
-  [Name in keyof Relations]: Name extends BookingStatusRelations
-    ? NarrowRelation<Relations[Name]>
+  [Name in keyof Relations]: Name extends keyof NarrowedColumns
+    ? NarrowRelation<Relations[Name], NarrowedColumns[Name]>
     : Relations[Name];
 };
 

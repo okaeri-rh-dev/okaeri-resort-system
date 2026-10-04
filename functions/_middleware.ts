@@ -14,6 +14,7 @@
 import { track404Error, trackRequest } from "@/lib/anomaly-detection";
 import { isIPBlocked } from "@/lib/auto-blocking";
 
+import type { UserRole } from "./lib/rbac";
 import { lookupUserRole } from "./lib/role-lookup";
 
 interface Env {
@@ -495,7 +496,7 @@ export async function onRequest(
       user?: {
         id: string;
         email?: string;
-        role: string;
+        role: UserRole;
       };
     }
     (request as AuthenticatedRequest).user = {
