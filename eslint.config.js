@@ -35,6 +35,12 @@ const utcDateSliceSelector = {
     "toISOString() is UTC, so a local date before 08:00 Manila time becomes the previous day. Use toISODateString() from @/lib/timezone.",
 };
 
+const generatedDatabaseTypesPattern = {
+  group: ["**/database.generated"],
+  message:
+    "Import from @/types/database.types, which narrows CHECK-constrained columns such as booking_status.",
+};
+
 export default tseslint.config([
   // Global ignores
   {
@@ -134,14 +140,27 @@ export default tseslint.config([
     },
   },
 
+  {
+    files: ["**/*.{ts,tsx}"],
+    ignores: ["src/types/database.types.ts"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        { patterns: [generatedDatabaseTypesPattern] },
+      ],
+    },
+  },
+
   // The service-role client bypasses RLS and must never reach the browser bundle
   {
     files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/types/database.types.ts"],
     rules: {
       "@typescript-eslint/no-restricted-imports": [
         "error",
         {
           patterns: [
+            generatedDatabaseTypesPattern,
             {
               group: ["@/lib/supabase-admin", "**/lib/supabase-admin"],
               allowTypeImports: true,

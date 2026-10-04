@@ -10,7 +10,6 @@ The Monitoring Infrastructure provides comprehensive quota tracking, performance
 monitoring/
 ├── alert-system.ts           # Central alert management (10KB)
 ├── bandwidth-monitor.ts       # Bandwidth usage tracking (8.6KB)
-├── cleanup-monitor.ts         # Automated cleanup monitoring (13KB)
 ├── cron-monitor.ts           # Cron job health monitoring (14KB)
 ├── email-quota-monitor.ts    # Email quota tracking (13KB)
 ├── kv-quota-monitor.ts       # KV namespace quota tracking (9.8KB)
@@ -432,52 +431,6 @@ const health = await cronMonitor.getJobHealth('cleanup-old-logs')
 console.log('Success rate:', health.successRate)
 console.log('Avg duration:', health.avgDuration)
 console.log('Last run:', health.lastRun)
-```
-
-### Cleanup Monitor (`cleanup-monitor.ts`)
-
-Monitors and manages automated cleanup tasks.
-
-#### Cleanup Tasks
-
-1. **Audit Log Retention**
-   - Delete logs older than 90 days
-   - Archive critical logs
-   - Compression of old logs
-
-2. **File Storage Cleanup**
-   - Remove orphaned files
-   - Delete expired temp files
-   - Cleanup failed uploads
-
-3. **Database Cleanup**
-   - Archive completed bookings
-   - Remove soft-deleted records
-   - Vacuum and optimize
-
-#### Usage Example
-
-```typescript
-import { CleanupMonitor } from '@/lib/monitoring/cleanup-monitor'
-
-const cleanupMonitor = new CleanupMonitor()
-
-// Configure cleanup task
-await cleanupMonitor.configureTask({
-  id: 'audit-retention',
-  name: 'Audit Log Retention',
-  schedule: '0 2 * * 0', // Weekly at 2 AM Sunday
-  action: async () => {
-    const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
-    await db.auditLogs.deleteWhere({ createdAt: { lt: cutoff } })
-  },
-  dryRun: false,
-})
-
-// Execute cleanup
-const result = await cleanupMonitor.executeCleanup('audit-retention')
-console.log('Cleaned up:', result.recordsDeleted, 'records')
-console.log('Space freed:', result.spaceFreed, 'MB')
 ```
 
 ### Metrics Collector (`metrics-collector.ts`)

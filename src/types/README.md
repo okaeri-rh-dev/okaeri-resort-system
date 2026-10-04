@@ -514,20 +514,16 @@ Current type coverage statistics:
 
 ## 📚 Related Documentation
 
-- [Database Types](/database.types.ts) - Auto-generated Supabase types
+- [Database Types](./database.types.ts) - Generated Supabase types with narrowed columns
 - [Component Props](/src/components/README.md) - Component prop types
 - [Store Types](/src/stores/README.md) - State management types
 - [API Types](/api/README.md) - API request/response types
 
 ## 🔧 Type Generation
 
-Database types are auto-generated from Supabase:
-```bash
-# Generate types from Supabase
-npx supabase gen types typescript \
-  --project-id "your-project-id" \
-  > database.types.ts
-```
+`npm run gen:types` writes `database.generated.ts` from the local migrations (needs `supabase start`). Never edit it by hand.
+
+Import from `database.types.ts` instead: it re-exports the generated types with CHECK-constrained text columns narrowed (`booking_status` → `BookingStatus`). A lint rule blocks direct imports of the generated file, and `src/__tests__/architecture/booking-status-parity.test.ts` keeps `BOOKING_STATUSES` equal to the CHECK constraint.
 
 ## 🎯 Type Hierarchy
 

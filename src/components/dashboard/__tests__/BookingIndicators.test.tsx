@@ -21,7 +21,7 @@ import { render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import type { Booking, BookingUnitRecord, Unit } from "@/types";
+import type { Booking, BookingStatus, BookingUnitRecord, Unit } from "@/types";
 
 import { BookingCountBadge, BookingIndicators } from "../BookingIndicators";
 
@@ -44,7 +44,7 @@ function makeBooking({
 }: {
   id?: string;
   guestName?: string;
-  status?: string;
+  status?: BookingStatus;
   unitCodes?: (string | null)[];
 }): Booking {
   const bookingId = id ?? `booking-${++idCounter}`;

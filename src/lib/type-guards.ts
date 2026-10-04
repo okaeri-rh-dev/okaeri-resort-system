@@ -320,17 +320,6 @@ export type BlackoutType = "maintenance" | "holiday" | "custom";
 export const isBlackoutType = isStringUnion<BlackoutType>(["maintenance", "holiday", "custom"]);
 
 /**
- * Check if value is a BookingStatus
- */
-export type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
-export const isBookingStatus = isStringUnion<BookingStatus>([
-  "pending",
-  "confirmed",
-  "cancelled",
-  "completed",
-]);
-
-/**
  * Check if value is a PaymentStatus
  */
 export type PaymentStatus = "pending" | "completed" | "failed" | "refunded";

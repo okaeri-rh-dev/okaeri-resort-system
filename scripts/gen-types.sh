@@ -1,5 +1,5 @@
 #!/bin/sh
-# Regenerate src/types/database.types.ts from the local Supabase database
+# Regenerate src/types/database.generated.ts from the local Supabase database
 # (supabase start applies every migration, so this reflects supabase/migrations).
 # Uses --db-url because `supabase gen types --local` fails password auth on
 # CLI v2.109.1 (see CLAUDE.md, Known Infrastructure Issues).
@@ -11,5 +11,5 @@ if [ -z "$db_url" ]; then
   exit 1
 fi
 
-supabase gen types typescript --db-url "$db_url" > src/types/database.types.ts
-npx prettier --write src/types/database.types.ts > /dev/null
+supabase gen types typescript --db-url "$db_url" > src/types/database.generated.ts
+npx prettier --write src/types/database.generated.ts > /dev/null

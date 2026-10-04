@@ -335,7 +335,6 @@ lib/
 ├── 📊 monitoring/                   # Resource Monitoring (7 modules)
 │   ├── quota-monitor.ts             # KV, Email, Bandwidth tracking
 │   ├── alert-system.ts              # Threshold-based alerts
-│   ├── cleanup-monitor.ts           # Automated cleanup tasks
 │   ├── performance-monitor.ts       # Performance metrics
 │   └── README.md                    # Monitoring documentation
 │

@@ -4,7 +4,7 @@
  * Schedule: Weekly on Sunday at 3:00 AM UTC ("0 3 * * 0")
  * Purpose: Delete old payment proof files based on retention policy
  * Retention Rules:
- * - Completed bookings: 90 days after check-out date
+ * - Checked-out bookings: 90 days after check-out date
  * - Cancelled bookings: 30 days after cancellation (updated_at)
  *
  * Free Tier Impact:
@@ -19,6 +19,8 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+
+import type { Database } from "@/types/database.types";
 
 import { createLogger } from "../lib/logger";
 
@@ -188,7 +190,7 @@ export async function checkPaymentProofCleanupHealth(env: Env): Promise<{
   };
 }> {
   try {
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
@@ -213,14 +215,14 @@ export async function checkPaymentProofCleanupHealth(env: Env): Promise<{
 
     // Count expired proofs based on retention rules
     const expiredProofs = data.filter((booking) => {
-      if (booking.booking_status === "Completed") {
+      if (booking.booking_status === "CheckedOut") {
         const checkOutDate = new Date(booking.check_out);
         const expiryDate = new Date(checkOutDate);
         expiryDate.setDate(expiryDate.getDate() + 90);
         return now > expiryDate;
       }
 
-      if (booking.booking_status === "Cancelled") {
+      if (booking.booking_status === "Cancelled" && booking.updated_at) {
         const updatedAt = new Date(booking.updated_at);
         const expiryDate = new Date(updatedAt);
         expiryDate.setDate(expiryDate.getDate() + 30);

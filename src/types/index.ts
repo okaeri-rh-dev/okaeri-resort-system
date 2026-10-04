@@ -1,5 +1,7 @@
 // Core type definitions for Okaeri Resort System
 
+import type { BookingStatus } from "./booking-status";
+
 // ============================================
 // UNIT TYPES
 // ============================================
@@ -43,7 +45,7 @@ export interface Guest {
 // ============================================
 // BOOKING TYPES
 // ============================================
-export type BookingStatus = "Pending" | "Confirmed" | "CheckedIn" | "CheckedOut" | "Cancelled";
+export { BOOKING_STATUSES, type BookingStatus } from "./booking-status";
 export type PaymentStatus = "Pending" | "Partial" | "Completed" | "Refunded";
 export type PaymentMethod = "Cash" | "GCash" | "BankTransfer" | "Card" | "Other";
 export type PaymentRecordStatus = "Active" | "Deleted" | "Refunded";
@@ -76,7 +78,7 @@ export interface Booking {
   check_in: string; // Date as ISO string
   check_out: string; // Date as ISO string
   total_amount: number;
-  booking_status: string | null; // Database uses nullable strings, not enums
+  booking_status: BookingStatus | null;
   payment_status: string | null; // Database uses nullable strings, not enums
   payment_method?: string | null;
   payment_proof_url?: string | null;
