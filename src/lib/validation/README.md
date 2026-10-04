@@ -457,7 +457,6 @@ phone_number: z.string()
 ## 📚 Related Documentation
 
 - [Guest Booking Form](/src/components/guest-booking/README.md) - Client-side usage
-- [Booking Form](/src/components/bookings/BookingForm/README.md) - Multi-step validation
 - [API Endpoints](/functions/api/README.md) - Server-side validation
 - [Security Guidelines](/docs/security/README.md) - Input sanitization
 - [Testing](/src/__tests__/README.md) - Validation testing

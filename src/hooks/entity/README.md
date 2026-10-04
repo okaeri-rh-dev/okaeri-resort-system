@@ -533,7 +533,7 @@ npx vitest run src/hooks/entity/__tests__/ --watch
 2. Guests (`src/components/guests/GuestEdit/`)
 3. Units (`src/components/units/UnitEdit/`)
 4. Payments (`src/components/payments/PaymentEdit/`)
-5. Expenses (`src/components/expenses/ExpenseEdit/`)
+5. Expenses (`src/components/expenses/ExpenseEdit.tsx`)
 
 ### Benefits Delivered
 - ✅ Type-safe operations across all entities

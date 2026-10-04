@@ -722,7 +722,6 @@ describe('Booking Management Flow', () => {
 
 ## 📚 Related Documentation
 
-- [Booking Form](/src/components/bookings/BookingForm/README.md) - Multi-step booking creation
 - [Table Utilities](/src/components/tables/README.md) - Reusable table components
 - [Booking Store](/src/stores/useBookingStore.ts) - State management
 - [TanStack Table](https://tanstack.com/table/latest) - Table library documentation

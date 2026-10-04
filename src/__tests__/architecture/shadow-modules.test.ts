@@ -13,10 +13,6 @@ import { describe, expect, it } from "vitest";
 const srcRoot = join(__dirname, "..", "..");
 const routesDir = join(srcRoot, "routes");
 
-// Known pairs awaiting the dead-code cleanup (audit Decision 4). Remove an
-// entry when its dead directory is deleted; never add one.
-const knownShadowedDirs = ["components/bookings/BookingForm", "components/expenses/ExpenseEdit"];
-
 function findShadowedDirs(dir: string): string[] {
   const shadowed: string[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -34,14 +30,6 @@ function findShadowedDirs(dir: string): string[] {
 
 describe("shadow modules", () => {
   it("has no directory module hidden by a same-named file", () => {
-    const unexpected = findShadowedDirs(srcRoot).filter((dir) => !knownShadowedDirs.includes(dir));
-
-    expect(unexpected).toEqual([]);
-  });
-
-  it("keeps the known list accurate", () => {
-    const stillShadowed = new Set(findShadowedDirs(srcRoot));
-
-    expect(knownShadowedDirs.filter((dir) => !stillShadowed.has(dir))).toEqual([]);
+    expect(findShadowedDirs(srcRoot)).toEqual([]);
   });
 });
