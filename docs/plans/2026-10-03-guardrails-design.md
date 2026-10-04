@@ -193,7 +193,7 @@ Dead-code cleanup (audit Decision 4), 2026-10-04: `9080d01` search stack + phase
 
 SQL function errors from `supabase db lint` (local migrations, 2026-10-04). Prod may differ (schema drift); confirm before fixing:
 
-- [ ] `assign_units_to_booking` selects `bookings.check_in_date` / `check_out_date` (columns are `check_in` / `check_out`). Called by `/api/admin/assign-units`, so admin unit assignment fails if prod matches
+- [ ] `assign_units_to_booking` selects `bookings.check_in_date` / `check_out_date` (columns are `check_in` / `check_out`). Called by `/api/admin/assign-units`. **Prod (2026-10-04 probe): the function does not exist at all** (PGRST202; known drift from migration `20251104184719`), so admin unit assignment cannot work in production. Fix = new forward migration creating a corrected function, applied with approval
 - [ ] `revoke_audit_role` sets `app_roles.updated_at` (no such column). No app caller found
 - [ ] `check_unit_availability` (3-arg overload) reads `bookings.unit_id` (dropped). Called by `useUnitStore.useCheckAvailability` and `functions/lib/supabase-admin.checkUnitAvailability`
 - [ ] `create_guest_booking` uses `bookings.check_in_date` and `guests.nationality`
