@@ -77,6 +77,16 @@ jobs:
           EOF
       - name: DB tests
         run: npx vitest run src/__tests__/database __tests__/database src/__tests__/performance/multi-unit-availability.test.ts
+      # Non-blocking for now: the CLI is unpinned, so generator output can change between versions.
+      - name: Type drift (database.types.ts matches the migrations)
+        continue-on-error: true
+        run: npm run gen:types && git diff --exit-code src/types/database.types.ts
+      # Non-blocking until the SQL-function errors in the guardrails plan are fixed.
+      - name: SQL function lint (plpgsql_check)
+        continue-on-error: true
+        run: |
+          set -a; . /tmp/sb.env; set +a
+          supabase db lint --db-url "$DB_URL" --level error --fail-on error
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
       - name: E2E (seed -> playwright -> cleanup)
