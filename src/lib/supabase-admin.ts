@@ -15,9 +15,14 @@ import { requireEnv } from "./env";
  * @param env - Optional environment object (for Cloudflare Workers)
  * @returns Supabase admin client with service role key
  */
-export function createSupabaseAdmin(env?: Record<string, string>) {
-  // Try env parameter first (for Workers), then fall back to compatibility layer
-  const supabaseUrl = env?.VITE_SUPABASE_URL || requireEnv("VITE_SUPABASE_URL");
+export function createSupabaseAdmin(env?: {
+  SUPABASE_URL?: string;
+  VITE_SUPABASE_URL?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
+}) {
+  // Workers receive SUPABASE_URL; VITE_SUPABASE_URL and the compatibility layer cover Vite/Node
+  const supabaseUrl =
+    env?.SUPABASE_URL || env?.VITE_SUPABASE_URL || requireEnv("VITE_SUPABASE_URL");
   const serviceRoleKey = env?.SUPABASE_SERVICE_ROLE_KEY || requireEnv("SUPABASE_SERVICE_ROLE_KEY");
 
   return createClient<Database>(supabaseUrl, serviceRoleKey, {
