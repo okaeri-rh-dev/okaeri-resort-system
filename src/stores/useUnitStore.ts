@@ -4,6 +4,7 @@ import { devtools, persist } from "zustand/middleware";
 
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import type { AvailabilityCheck, Unit, UnitFilters, UnitStatus } from "@/types";
+import type { TablesUpdate } from "@/types/database.types";
 
 // ============================================
 // ZUSTAND STORE
@@ -353,7 +354,10 @@ export const useBatchUpdateUnitsStatus = () => {
     mutationFn: async ({ unitIds, status }: { unitIds: string[]; status: UnitStatus }) => {
       const { error } = await supabase
         .from("units")
-        .update({ unit_status: status, updated_at: new Date().toISOString() })
+        .update({
+          unit_status: status,
+          updated_at: new Date().toISOString(),
+        } satisfies TablesUpdate<"units">)
         .in("unit_id", unitIds);
 
       if (error) throw new Error(handleSupabaseError(error));

@@ -10,7 +10,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database } from "@/types/database.types";
+import type { Database, TablesInsert } from "@/types/database.types";
 
 // Lazy-loaded supabase client - only created when actually needed
 // This fixes the Workers env var issue where import.meta.env is not available at module load
@@ -417,7 +417,7 @@ export async function logSecurityEvent(event: {
         timestamp: new Date().toISOString(),
       },
       source: "app",
-    });
+    } satisfies TablesInsert<"audit_logs">);
   } catch (error) {
     console.error("Failed to log security event:", error);
   }

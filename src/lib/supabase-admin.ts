@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 
-import type { Database } from "@/types/database.types";
+import type { Database, TablesInsert } from "@/types/database.types";
 
 import { requireEnv } from "./env";
 
@@ -151,7 +151,7 @@ export async function findOrCreateGuest(
       guest_name: guestData.guest_name,
       email: normalizedEmail?.toLowerCase() ?? null,
       phone_number: normalizedPhone,
-    })
+    } satisfies TablesInsert<"guests">)
     .select("guest_id")
     .single();
 

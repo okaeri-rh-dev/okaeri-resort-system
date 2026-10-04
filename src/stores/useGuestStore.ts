@@ -6,6 +6,7 @@ import { logger } from "@/lib/logger";
 import { invalidateBookings, invalidateGuests } from "@/lib/query-invalidation";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Booking, Guest } from "@/types";
+import type { TablesUpdate } from "@/types/database.types";
 
 // ============================================
 // ZUSTAND STORE
@@ -356,7 +357,7 @@ export const useMergeGuests = () => {
       // Update all bookings to point to primary guest
       const { error: bookingError } = await supabase
         .from("bookings")
-        .update({ guest_id: primaryGuestId })
+        .update({ guest_id: primaryGuestId } satisfies TablesUpdate<"bookings">)
         .eq("guest_id", duplicateGuestId);
 
       if (bookingError) throw new Error(handleSupabaseError(bookingError));

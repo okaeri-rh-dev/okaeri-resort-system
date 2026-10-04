@@ -4,6 +4,7 @@ import { devtools, persist } from "zustand/middleware";
 
 import { handleSupabaseError, supabase } from "@/lib/supabase";
 import type { AccountTransfer } from "@/types";
+import type { TablesInsert } from "@/types/database.types";
 
 // ============================================
 // ZUSTAND STORE
@@ -253,7 +254,7 @@ export const useCreateTransfer = () => {
           amount: data.amount,
           transfer_date: data.transfer_date || new Date().toISOString(),
           notes: data.notes || null,
-        })
+        } satisfies TablesInsert<"account_transfers">)
         .select(
           `
           *,

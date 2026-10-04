@@ -21,6 +21,13 @@ const silentCatchSelector = {
     "A catch that only logs hides the failure from the user (a broken payment upload went unnoticed this way). Show a toast, rethrow, or return an error state.",
 };
 
+const untypedPayloadSelector = {
+  selector:
+    "CallExpression[callee.property.name=/^(insert|update|upsert)$/][callee.object.callee.property.name='from'] > ObjectExpression.arguments:first-child",
+  message:
+    'Add `satisfies TablesInsert<"table">` (or TablesUpdate) from @/types/database.types. The typed client does not reject unknown columns in a payload (ab11f54 inserted columns payments never had).',
+};
+
 const utcDateSliceSelector = {
   selector:
     "CallExpression[callee.property.name=/^(split|slice|substring)$/][callee.object.callee.property.name='toISOString']",
@@ -96,7 +103,7 @@ export default tseslint.config([
       "no-unused-vars": "off", // Using TypeScript's version
       "prefer-const": "warn",
       "no-var": "error",
-      "no-restricted-syntax": ["error", metadataRoleSelector],
+      "no-restricted-syntax": ["error", metadataRoleSelector, untypedPayloadSelector],
 
       // Code style - very relaxed
       "max-len": "off", // No line length limit
@@ -152,7 +159,12 @@ export default tseslint.config([
     files: ["src/components/**/*.{ts,tsx}", "src/routes/**/*.{ts,tsx}"],
     ignores: ["**/*.phase3-4.*"],
     rules: {
-      "no-restricted-syntax": ["error", metadataRoleSelector, silentCatchSelector],
+      "no-restricted-syntax": [
+        "error",
+        metadataRoleSelector,
+        untypedPayloadSelector,
+        silentCatchSelector,
+      ],
     },
   },
 
@@ -185,9 +197,23 @@ export default tseslint.config([
       "no-restricted-syntax": [
         "error",
         metadataRoleSelector,
+        untypedPayloadSelector,
         silentCatchSelector,
         utcDateSliceSelector,
       ],
+    },
+  },
+
+  // Tests insert deliberately invalid rows (constraint tests), so payloads stay unannotated
+  {
+    files: [
+      "**/__tests__/**/*.{ts,tsx}",
+      "**/*.test.{ts,tsx}",
+      "**/*.spec.{ts,tsx}",
+      "src/test/**/*.ts",
+    ],
+    rules: {
+      "no-restricted-syntax": ["error", metadataRoleSelector],
     },
   },
 

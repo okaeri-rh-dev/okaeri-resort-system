@@ -21,6 +21,7 @@ import type {
   PaymentStatus,
   TableState,
 } from "@/types";
+import type { TablesInsert } from "@/types/database.types";
 import type {
   // CalendarDayResponse, // ❌ DISABLED: Used by commented-out useAvailabilityCalendar
   BlackoutResponse,
@@ -417,7 +418,7 @@ export const useCreateBooking = () => {
           subtotal: bookingData.total_amount,
           weekend_surcharge: 0,
           extra_person_charge: 0,
-        });
+        } satisfies TablesInsert<"booking_units">);
 
         if (unitError) {
           // Rollback: delete the booking if junction table insert fails
@@ -621,7 +622,7 @@ export const useUploadPaymentProof = () => {
         status: "Active",
         proof_url: url,
         payment_date: new Date().toISOString(),
-      });
+      } satisfies TablesInsert<"payments">);
 
       if (paymentError) throw new Error(handleSupabaseError(paymentError));
 
@@ -700,7 +701,7 @@ export const useUpdateBooking = () => {
               guest_name: updates.guest_name,
               email: updates.email,
               phone_number: updates.contact_number || "",
-            })
+            } satisfies TablesInsert<"guests">)
             .select()
             .single();
 

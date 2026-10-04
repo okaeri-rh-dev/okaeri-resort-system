@@ -6,6 +6,7 @@ import { uploadReceipt } from "@/lib/storage-security";
 import { handleSupabaseError, supabase } from "@/lib/supabase";
 import { toISODateString } from "@/lib/timezone";
 import type { Expense } from "@/types";
+import type { TablesInsert } from "@/types/database.types";
 
 // ============================================
 // EXPENSE CATEGORIES
@@ -310,7 +311,7 @@ export const useCreateExpense = () => {
           description: restData.description || "",
           expense_date: date,
           receipt_url,
-        })
+        } satisfies TablesInsert<"expenses">)
         .select()
         .single();
 

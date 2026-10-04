@@ -12,6 +12,7 @@
  */
 
 import type { Unit, UnitType } from "@/types";
+import type { TablesInsert } from "@/types/database.types";
 import {
   toBlackoutType,
   toUnitType,
@@ -298,7 +299,7 @@ export async function createBlackoutPeriod(
         end_date: endDate,
         reason,
         created_by: createdBy,
-      })
+      } satisfies TablesInsert<"availability_blackouts">)
       .select()
       .single();
 

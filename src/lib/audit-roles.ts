@@ -1,6 +1,6 @@
 // src/lib/audit-roles.ts
 
-import type { Database } from "@/types/database.types";
+import type { Database, TablesInsert, TablesUpdate } from "@/types/database.types";
 
 import { supabase } from "./supabase";
 
@@ -217,7 +217,7 @@ export async function grantRole(
       granted_at: new Date().toISOString(),
       is_active: true,
       notes: notes || null,
-    });
+    } satisfies TablesInsert<"app_roles">);
 
     if (error) {
       // Handle duplicate key error
@@ -339,7 +339,7 @@ export async function updateRole(
         granted_by: updater.id,
         granted_at: new Date().toISOString(),
         notes: notes || null,
-      })
+      } satisfies TablesUpdate<"app_roles">)
       .eq("user_id", userId);
 
     if (error) {
@@ -398,7 +398,7 @@ export async function deactivateRole(
       .update({
         is_active: false,
         notes: notes || "Role deactivated",
-      })
+      } satisfies TablesUpdate<"app_roles">)
       .eq("user_id", userId);
 
     if (error) {

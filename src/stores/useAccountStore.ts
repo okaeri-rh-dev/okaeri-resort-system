@@ -4,6 +4,7 @@ import { devtools, persist } from "zustand/middleware";
 
 import { handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Account, AccountType, AccountWithBalance } from "@/types";
+import type { TablesInsert, TablesUpdate } from "@/types/database.types";
 
 // ============================================
 // ZUSTAND STORE
@@ -223,7 +224,7 @@ export const useCreateAccount = () => {
           initial_balance: data.initial_balance || 0,
           is_active: data.is_active ?? true,
           display_order: data.display_order || 0,
-        })
+        } satisfies TablesInsert<"accounts">)
         .select()
         .single();
 
@@ -308,7 +309,7 @@ export const useDeleteAccount = () => {
       // Soft delete by setting is_active to false
       const { error } = await supabase
         .from("accounts")
-        .update({ is_active: false })
+        .update({ is_active: false } satisfies TablesUpdate<"accounts">)
         .eq("account_id", accountId);
 
       if (error) throw new Error(handleSupabaseError(error));
@@ -335,7 +336,7 @@ export const useReactivateAccount = () => {
     mutationFn: async (accountId: string) => {
       const { data, error } = await supabase
         .from("accounts")
-        .update({ is_active: true })
+        .update({ is_active: true } satisfies TablesUpdate<"accounts">)
         .eq("account_id", accountId)
         .select()
         .single();

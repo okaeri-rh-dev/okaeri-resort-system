@@ -6,6 +6,7 @@ import { afterBookingPaymentChange, invalidatePayments } from "@/lib/query-inval
 import { uploadPaymentProof } from "@/lib/storage-security";
 import { handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Payment, PaymentMethod, PaymentStatus } from "@/types";
+import type { TablesInsert, TablesUpdate } from "@/types/database.types";
 
 // ============================================
 // ZUSTAND STORE
@@ -253,7 +254,7 @@ export const useCreatePayment = () => {
           payment_date: data.payment_date,
           proof_url: receipt_url,
           notes: data.notes || null,
-        })
+        } satisfies TablesInsert<"payments">)
         .select()
         .single();
 
@@ -292,7 +293,7 @@ export const useCreatePayment = () => {
         if (data.booking_id) {
           await supabase
             .from("bookings")
-            .update({ payment_status: paymentStatus })
+            .update({ payment_status: paymentStatus } satisfies TablesUpdate<"bookings">)
             .eq("booking_id", data.booking_id);
         }
       }
@@ -360,7 +361,7 @@ export const useUpdatePayment = () => {
         .update({
           ...updates,
           proof_url,
-        })
+        } satisfies TablesUpdate<"payments">)
         .eq("payment_id", paymentId)
         .select()
         .single();
@@ -421,7 +422,7 @@ export const useSoftDeletePayment = () => {
     mutationFn: async (paymentId: string) => {
       const { error } = await supabase
         .from("payments")
-        .update({ status: "Deleted" })
+        .update({ status: "Deleted" } satisfies TablesUpdate<"payments">)
         .eq("payment_id", paymentId);
 
       if (error) throw new Error(handleSupabaseError(error));
@@ -453,7 +454,7 @@ export const useVerifyPayment = () => {
         .from("payments")
         .update({
           notes: `Verified on ${new Date().toISOString()}`,
-        })
+        } satisfies TablesUpdate<"payments">)
         .eq("payment_id", paymentId)
         .select()
         .single();

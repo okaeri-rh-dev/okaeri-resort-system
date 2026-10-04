@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { format } from "date-fns";
 
 import type { AuditEventContext, AuditLogFilters } from "@/types/audit.types";
-import type { Database, Json } from "@/types/database.types";
+import type { Database, Json, TablesInsert, TablesUpdate } from "@/types/database.types";
 
 import { requireEnv } from "./env";
 
@@ -158,14 +158,17 @@ export const db = {
         .insert({
           ...data,
           booking_reference: reference || `BK-${Date.now()}`,
-        })
+        } satisfies TablesInsert<"bookings">)
         .select()
         .single();
     },
     update: (id: string, data: Database["public"]["Tables"]["bookings"]["Update"]) =>
       supabase.from("bookings").update(data).eq("booking_id", id).select().single(),
     cancel: (id: string) =>
-      supabase.from("bookings").update({ booking_status: "Cancelled" }).eq("booking_id", id),
+      supabase
+        .from("bookings")
+        .update({ booking_status: "Cancelled" } satisfies TablesUpdate<"bookings">)
+        .eq("booking_id", id),
 
     // Check availability via junction table (legacy method - use checkAvailabilityFast for better performance)
     checkAvailability: (unitId: string, checkIn: string, checkOut: string) =>
@@ -226,7 +229,7 @@ export const db = {
     create: (data: Database["public"]["Tables"]["guests"]["Insert"]) =>
       supabase
         .from("guests")
-        .insert({ ...data, total_bookings: 0, total_spent: 0 })
+        .insert({ ...data, total_bookings: 0, total_spent: 0 } satisfies TablesInsert<"guests">)
         .select()
         .single(),
     update: (id: string, data: Database["public"]["Tables"]["guests"]["Update"]) =>
@@ -391,7 +394,7 @@ export const db = {
     deactivate: (userId: string) =>
       supabase
         .from("app_roles")
-        .update({ is_active: false })
+        .update({ is_active: false } satisfies TablesUpdate<"app_roles">)
         .eq("user_id", userId)
         .select()
         .single(),
@@ -404,7 +407,7 @@ export const db = {
     reactivate: (userId: string) =>
       supabase
         .from("app_roles")
-        .update({ is_active: true })
+        .update({ is_active: true } satisfies TablesUpdate<"app_roles">)
         .eq("user_id", userId)
         .select()
         .single(),
@@ -1048,7 +1051,12 @@ export const db = {
      * @returns Promise with updated account
      */
     delete: (id: string) =>
-      supabase.from("accounts").update({ is_active: false }).eq("account_id", id).select().single(),
+      supabase
+        .from("accounts")
+        .update({ is_active: false } satisfies TablesUpdate<"accounts">)
+        .eq("account_id", id)
+        .select()
+        .single(),
 
     /**
      * Get all account balances using the database function
@@ -1227,7 +1235,7 @@ export const db = {
         .insert({
           ...data,
           transfer_reference: reference || `TRF-${Date.now()}`,
-        })
+        } satisfies TablesInsert<"account_transfers">)
         .select(
           `
           *,
