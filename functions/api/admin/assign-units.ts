@@ -56,7 +56,6 @@ function isValidUUID(uuid: string): boolean {
  */
 function parseRpcError(error: RpcError): { status: number; message: string; details?: string } {
   const errorMessage = error?.message || "";
-  const _errorDetails = error?.details || "";
   const errorHint = error?.hint || "";
 
   // Check for specific error patterns
@@ -284,8 +283,8 @@ export async function onRequest(context: {
         metadata: {
           unit_ids: unit_ids,
           unit_count: unit_ids.length,
-          ip_address: request.headers.get("cf-connecting-ip"),
-          user_agent: request.headers.get("user-agent"),
+          ip_address: request.headers.get("cf-connecting-ip") ?? undefined,
+          user_agent: request.headers.get("user-agent") ?? undefined,
         },
       },
       request
@@ -315,7 +314,7 @@ export async function onRequest(context: {
           error: message,
           details: details,
           unit_ids: unit_ids,
-          ip_address: request.headers.get("cf-connecting-ip"),
+          ip_address: request.headers.get("cf-connecting-ip") ?? undefined,
         },
       });
 
@@ -347,8 +346,8 @@ export async function onRequest(context: {
         metadata: {
           unit_ids: unit_ids,
           unit_count: unit_ids.length,
-          ip_address: request.headers.get("cf-connecting-ip"),
-          user_agent: request.headers.get("user-agent"),
+          ip_address: request.headers.get("cf-connecting-ip") ?? undefined,
+          user_agent: request.headers.get("user-agent") ?? undefined,
         },
       },
       request
@@ -383,7 +382,7 @@ export async function onRequest(context: {
         description: `Admin unit assignment error: ${error instanceof Error ? error.message : "Unknown error"}`,
         metadata: {
           error: error instanceof Error ? error.message : "Unknown error",
-          ip_address: request.headers.get("cf-connecting-ip"),
+          ip_address: request.headers.get("cf-connecting-ip") ?? undefined,
         },
       },
       request

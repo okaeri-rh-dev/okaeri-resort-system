@@ -216,7 +216,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
 /**
  * Generate user-friendly status message
  */
-function getStatusMessage(bookingStatus: string, paymentStatus: string): string {
+function getStatusMessage(bookingStatus: string | null, paymentStatus: string | null): string {
   if (bookingStatus === "Cancelled") {
     return "This booking has been cancelled. Please contact support for assistance.";
   }

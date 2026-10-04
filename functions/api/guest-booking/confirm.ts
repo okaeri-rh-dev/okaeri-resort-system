@@ -12,6 +12,7 @@ interface Env {
   SUPABASE_URL: string;
   RESEND_API_KEY: string;
   RATE_LIMIT_KV: KVNamespace;
+  ENVIRONMENT?: string;
 }
 
 // Request validation schema
@@ -181,7 +182,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       .single();
 
     // Send upload confirmation email (async)
-    if (booking) {
+    if (booking?.email) {
       const resend = createResendClient(env.RESEND_API_KEY);
       sendUploadConfirmation(resend, {
         to: booking.email,

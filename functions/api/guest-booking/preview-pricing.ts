@@ -6,6 +6,12 @@ import { ERROR_CODES } from "@/types/guest-booking-multi-unit";
 
 import { calculateBookingPrice } from "../../lib/pricing";
 
+interface PreviewPricingRequest {
+  unit_requests: Array<{ guests_per_unit: number }>;
+  check_in: string;
+  check_out: string;
+}
+
 /**
  * POST /api/guest-booking/preview-pricing
  *
@@ -21,6 +27,7 @@ interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   RATE_LIMIT_KV: KVNamespace;
+  ENVIRONMENT?: string;
 }
 
 // CORS helper
@@ -71,7 +78,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as Partial<PreviewPricingRequest>;
     const { unit_requests, check_in, check_out } = body;
 
     // Validate input
@@ -173,7 +180,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         success: false,
         error: "Pricing preview failed",
         error_code: ERROR_CODES.INTERNAL_ERROR,
-        details: error.message,
+        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500, headers: corsHeaders }
     );

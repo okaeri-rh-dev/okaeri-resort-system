@@ -197,7 +197,7 @@ export async function onRequestPost(context: Context): Promise<Response> {
       );
     }
 
-    const result = await supabaseResponse.json();
+    const result = (await supabaseResponse.json()) as Array<{ audit_id?: string }>;
 
     // Return success response
     return new Response(

@@ -202,12 +202,25 @@ export function sanitizeForAudit<T>(data: T): Partial<T> {
       }
     }
 
-    return sanitized;
+    return sanitized as Partial<T>;
   }
 
   // Return primitive values as-is
   return data as Partial<T>;
 }
+
+// Rows passed to the convenience loggers; only the fields they read are typed
+type AuditBooking = Record<string, unknown> & {
+  booking_id?: string;
+  booking_reference?: string;
+  booking_units?: unknown[];
+};
+type AuditBookingUnit = Record<string, unknown> & { booking_unit_id?: string; unit_id?: string };
+type AuditPayment = Record<string, unknown> & {
+  payment_id?: string;
+  amount?: number;
+  refunded_amount?: number;
+};
 
 /**
  * Create audit log for booking creation
@@ -221,7 +234,7 @@ export function sanitizeForAudit<T>(data: T): Partial<T> {
  */
 export async function logBookingCreated(
   supabase: SupabaseClient,
-  booking: Record<string, unknown>,
+  booking: AuditBooking,
   userId: string | undefined,
   request?: Request
 ): Promise<void> {
@@ -259,7 +272,7 @@ export async function logBookingCreated(
 export async function logUnitAdded(
   supabase: SupabaseClient,
   bookingId: string,
-  unit: Record<string, unknown>,
+  unit: AuditBookingUnit,
   userId: string | undefined,
   request?: Request
 ): Promise<void> {
@@ -329,7 +342,7 @@ export async function logUnitRemoved(
  */
 export async function logPaymentRecorded(
   supabase: SupabaseClient,
-  payment: Record<string, unknown>,
+  payment: AuditPayment,
   userId: string | undefined,
   request?: Request
 ): Promise<void> {
@@ -367,7 +380,7 @@ export async function logPaymentRecorded(
  */
 export async function logPaymentRefunded(
   supabase: SupabaseClient,
-  payment: Record<string, unknown>,
+  payment: AuditPayment,
   refundAmount: number,
   reason: string,
   userId: string | undefined,

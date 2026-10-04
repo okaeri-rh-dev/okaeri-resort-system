@@ -192,8 +192,8 @@ export async function onRequest(context: {
         metadata: {
           check_in_date: checkInDate,
           check_out_date: checkOutDate,
-          ip_address: request.headers.get("cf-connecting-ip"),
-          user_agent: request.headers.get("user-agent"),
+          ip_address: request.headers.get("cf-connecting-ip") ?? undefined,
+          user_agent: request.headers.get("user-agent") ?? undefined,
         },
       },
       request

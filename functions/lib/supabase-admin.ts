@@ -33,32 +33,6 @@ export function createSupabaseAdmin(env: Env): SupabaseClient {
 }
 
 /**
- * Generate signed upload URL for file storage
- */
-export async function generateSignedUploadUrl(
-  supabase: SupabaseClient,
-  bucket: string,
-  path: string,
-  expiresIn: number = 3600
-) {
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .createSignedUploadUrl(path, expiresIn);
-
-  if (error) {
-    throw error;
-  }
-
-  return {
-    path,
-    token: data.token,
-    bucket,
-    url: data.signedUrl,
-    expires_at: new Date(Date.now() + expiresIn * 1000).toISOString(),
-  };
-}
-
-/**
  * Find or create guest record
  */
 export async function findOrCreateGuest(

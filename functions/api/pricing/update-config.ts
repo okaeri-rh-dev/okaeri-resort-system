@@ -38,8 +38,6 @@ const pricingConfigUpdateSchema = z.object({
   currency: z.literal("PHP"),
 });
 
-type _PricingConfigUpdate = z.infer<typeof pricingConfigUpdateSchema>;
-
 /**
  * CORS Headers
  */

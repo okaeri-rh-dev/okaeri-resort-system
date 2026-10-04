@@ -36,6 +36,7 @@ interface Env {
   TURNSTILE_SECRET_KEY: string;
   ALLOWED_ORIGINS?: string;
   RATE_LIMIT_KV: KVNamespace;
+  ENVIRONMENT?: string;
 }
 
 // CORS helper
@@ -383,7 +384,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       const errorCode = createError?.code;
 
       // Determine appropriate error response based on PostgreSQL error code
-      let errorType = ERROR_CODES.DATABASE_ERROR;
+      let errorType: (typeof ERROR_CODES)[keyof typeof ERROR_CODES] = ERROR_CODES.DATABASE_ERROR;
       let userMessage = "Booking creation failed. Please try again.";
 
       if (errorCode === "23505") {

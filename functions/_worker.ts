@@ -48,6 +48,7 @@ interface Env {
 
   // KV Namespaces
   RATE_LIMIT_KV: KVNamespace;
+  ENVIRONMENT?: string;
 }
 
 /**
