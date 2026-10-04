@@ -171,7 +171,7 @@ Once 4.2 and 4.4 are enforced, rewrite two rules that do not match the code:
 - [ ] Type all `createClient` calls; convert raw PostgREST fetches (4.1)
 - [x] (`5538d2b`) `satisfies TablesInsert` lint: 46 payloads annotated by codemod; rule (first argument of `.from("t").insert/upsert/update`) is `error` outside tests. Annotating surfaced 4 more wrong-table/column writes (see below)
 - [ ] `UserRole` from DB type; service-role gating test (4.2)
-- [ ] `booking_status` narrowing + CHECK parity test (4.4)
+- [x] `booking_status` narrowing + CHECK parity test (4.4). `gen:types` now writes `database.generated.ts`; `database.types.ts` is a hand-written layer that narrows `booking_status` on `bookings`, `booking_unit_availability` and the `public_unit_availability` view (not `bookings_conflict_backup`), so all 39 existing imports got the narrow type. A lint rule blocks importing the generated file directly. `BOOKING_STATUSES` lives in `src/types/booking-status.ts`; `src/__tests__/architecture/booking-status-parity.test.ts` compares it with the latest `bookings_booking_status_check` in the migrations (checked: adding `'Hold'` to the CHECK fails the test). A probe confirmed that `=== "Completed"`, `.eq("booking_status", "pending")`, `.in(..., ["Hold"])` and `update({ booking_status: "expired" })` all fail tsc. Drift fixed: `Booking.booking_status` is now `BookingStatus | null`; the payment-proof health check compared to `"Completed"` (now `"CheckedOut"`, client typed); the uncalled `src/lib/monitoring/cleanup-monitor.ts` (filtered `"pending"`, wrote `"expired"`, selected a nonexistent `bookings.id`) deleted. The lowercase union in `src/lib/type-guards.ts` had no importers and was deleted
 - [ ] Audit-trigger coverage test (4.4)
 - [ ] Pricing parity test (4.4)
 - [x] (`94e3c6b`) Type drift + `supabase db lint` steps in `infra-health` (both non-blocking for now)
@@ -197,7 +197,7 @@ SQL function errors from `supabase db lint` (local migrations, 2026-10-04). Prod
 - [x] `revoke_audit_role`: dropped by the same migration `20261004000000`, applied to prod 2026-10-04
 - [x] (`b569ea9`) `check_unit_availability` 3-arg overload: dropped by migration `20261004000000` (3-arg calls now resolve to the 4-arg version; DB test added). applied to prod 2026-10-04
 - [ ] `create_guest_booking` uses `bookings.check_in_date` and `guests.nationality`
-- [ ] `cleanup_expired_payment_proofs` uses `check_out_date` (known, audit P1 #4)
+- [ ] `cleanup_expired_payment_proofs` uses `check_out_date` (known, audit P1 #4). It also never handles `Cancelled`, and its `TABLE(file_path)` return does not match what `functions/scheduled/cleanup-payment-proofs.ts` parses (`deleted_count`, `storage_freed_bytes`, `file_paths`); typing that RPC client shows the mismatch (TS2352). Fix the SQL and the cron together
 - [ ] `attach_audit_trigger` / `detach_audit_trigger`: format-string syntax error
 - [ ] `archive_logs_older_than_months` / `monthly_archive_until`: `archive_audit_logs(timestamptz)` is ambiguous between two overloads
 
@@ -224,10 +224,11 @@ Found by the `satisfies` annotations (2026-10-04):
 ## Resume state (2026-10-04)
 
 - **Done:** Phase 0, Phase 1, and Phase 2 items `functions/` tsconfig, `gen:types`, `satisfies` payload rule, type drift + `db lint` CI steps; dead-code cleanup.
-- **Next:** Phase 2 `booking_status` narrowing + CHECK parity test (4.4).
+- **Done 2026-10-04:** `booking_status` narrowing + CHECK parity test.
+- **Next:** Phase 2 `UserRole` from DB type + service-role gating test (4.2).
 - **Verified on prod 2026-10-04:** migration `20261004000000` applied by the user (`check_unit_availability` 3-arg call returns `true`; `revoke_audit_role` gone); a pricing save wrote a `pricing_config.updated` audit row (`source: app`), the first server-side audit row in prod
 - **Unverified:** the two non-blocking `infra-health` steps (type drift, `db lint`) have not yet run in CI.
-- **Remaining Phase 2:** `UserRole` from DB type + service-role gating test, audit-trigger coverage test, pricing parity test, weekly prod drift check, `tsconfig.e2e.json`, split CI jobs, typing remaining `createClient` calls / raw PostgREST fetches.
+- **Remaining Phase 2:** audit-trigger coverage test, pricing parity test, weekly prod drift check, `tsconfig.e2e.json`, split CI jobs, typing remaining `createClient` calls / raw PostgREST fetches.
 
 ## 6. Costs and risks
 
@@ -268,3 +269,9 @@ Decided during Phase 1 (2026-10-04):
 - **Dev-dependency advisories left for Dependabot.** Why: the full `npm audit fix` hits a wrangler / `@cloudflare/workers-types` v5 peer conflict; dev tools do not ship to users. Revisit: when Dependabot opens the wrangler upgrade.
 - **Online booking left visible, not hidden (2026-10-04, user).** Why: hiding it risks the feature being forgotten; it is a future polish project. Restoring it needs a forward migration for `create_guest_booking`, `guest_booking_unit_requests`, `calculate_booking_pricing` and `assign_units_to_booking` with corrected columns (see the drift memory). Revisit: when online booking is scheduled.
 - **Broken SQL functions dropped, not fixed (2026-10-04, user).** Why: no callers; the 4-arg `check_unit_availability` already does the job. Migration `20261004000000` with rollback; prod needs `supabase db push` by the user (the Bash guard blocks it for agents). Revisit: never.
+
+Decided during Phase 2 (2026-10-04):
+
+- **Generated types moved to `database.generated.ts`; `database.types.ts` is the narrowing layer.** Why: a new override module would need 39 imports changed, and any missed import would quietly keep `string`. With the rename, every existing import is narrowed and the CI drift step diffs the generated file. Revisit: if the narrowing layer grows past a few columns (then consider type-fest `MergeDeep`).
+- **`'Hold'` in the availability SQL functions left alone.** Why: bookings' CHECK rejects `'Hold'`, so `IN ('Confirmed', 'CheckedIn', 'Hold')` just never matches that value, and removing it needs a prod migration. Revisit: the next migration that touches those functions.
+- **Payment-proof cron: only the health-check client is typed.** Why: typing the RPC client exposes the SQL return-shape mismatch, which is fixed with the SQL function (P1 #4 item above); a cast would hide it. Revisit: with that item.
