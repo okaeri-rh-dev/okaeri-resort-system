@@ -51,7 +51,11 @@ const pricingCalculateRequestSchema = z
     {
       message: "Must provide either unit_id, custom_pricing, unit_requests, or guest_count",
     }
-  );
+  )
+  .refine((data) => data.unit_requests || data.guest_count !== undefined, {
+    message: "guest_count is required unless unit_requests are provided",
+    path: ["guest_count"],
+  });
 
 // CORS headers
 const corsHeaders = {
@@ -137,6 +141,8 @@ export async function onRequest(context: {
     }
 
     const data = validationResult.data;
+    // The schema requires guest_count whenever unit_requests is absent, so the 0 is unreachable
+    const guestCount = data.guest_count ?? 0;
 
     // Extract auth token (optional for public guest booking)
     const authHeader = request.headers?.get("Authorization");
@@ -171,7 +177,7 @@ export async function onRequest(context: {
       cacheKey = getCacheKey({
         check_in: data.check_in,
         check_out: data.check_out,
-        guest_count: data.guest_count,
+        guest_count: guestCount,
         unit_id: data.unit_id,
       });
 
@@ -305,7 +311,7 @@ export async function onRequest(context: {
       pricingResult = await calculateBookingPrice(supabase, {
         checkIn: new Date(data.check_in),
         checkOut: new Date(data.check_out),
-        guestCount: data.guest_count,
+        guestCount,
         baseRate: pricingConfig?.base_rate ?? unit.base_rate ?? 3000,
         weekendRate: pricingConfig?.weekend_rate ?? unit.weekend_rate ?? 3500,
         extraPersonRate: pricingConfig?.extra_person_rate ?? unit.extra_person_rate ?? 500,
@@ -332,7 +338,7 @@ export async function onRequest(context: {
       pricingResult = await calculateBookingPrice(supabase, {
         checkIn: new Date(data.check_in),
         checkOut: new Date(data.check_out),
-        guestCount: data.guest_count,
+        guestCount,
         ...data.custom_pricing,
       });
 
@@ -355,7 +361,7 @@ export async function onRequest(context: {
       pricingResult = await calculateBookingPrice(supabase, {
         checkIn: new Date(data.check_in),
         checkOut: new Date(data.check_out),
-        guestCount: data.guest_count,
+        guestCount,
         baseRate: pricingConfig?.base_rate || 3000,
         weekendRate: pricingConfig?.weekend_rate || 3500,
         extraPersonRate: pricingConfig?.extra_person_rate || 500,

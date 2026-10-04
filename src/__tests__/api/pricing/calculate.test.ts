@@ -218,6 +218,29 @@ describe("Pricing Calculate API", () => {
     expect(data.errors).toBeDefined();
   });
 
+  it("should reject unit pricing without a guest count", async () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayAfter = new Date();
+    dayAfter.setDate(dayAfter.getDate() + 4);
+
+    mockRequest = {
+      method: "POST",
+      headers: new Map(),
+      json: vi.fn().mockResolvedValue({
+        check_in: tomorrow.toISOString().split("T")[0],
+        check_out: dayAfter.toISOString().split("T")[0],
+        unit_id: "550e8400-e29b-41d4-a716-446655440001",
+      }),
+    };
+
+    const response = await onRequest({ request: mockRequest, env: mockEnv });
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("VALIDATION_ERROR");
+  });
+
   it("should calculate pricing for a single unit", async () => {
     // Use future dates to pass validation
     const tomorrow = new Date();
