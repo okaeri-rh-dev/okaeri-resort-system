@@ -700,6 +700,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      expense_categories: {
+        Row: {
+          created_at: string | null;
+          display_order: number | null;
+          id: string;
+          is_active: boolean | null;
+          name: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          display_order?: number | null;
+          id?: string;
+          is_active?: boolean | null;
+          name: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          display_order?: number | null;
+          id?: string;
+          is_active?: boolean | null;
+          name?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       expenses: {
         Row: {
           account_id: string | null;
@@ -955,6 +982,63 @@ export type Database = {
             referencedColumns: ["unit_id"];
           },
         ];
+      };
+      payment_methods: {
+        Row: {
+          account_name: string | null;
+          account_number: string | null;
+          bank_name: string | null;
+          created_at: string | null;
+          display_name: string;
+          display_order: number | null;
+          icon_color: string | null;
+          icon_name: string | null;
+          id: string;
+          instructions: string | null;
+          is_active: boolean | null;
+          method_type: string;
+          provider_name: string;
+          qr_code_storage_path: string | null;
+          qr_code_url: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          account_name?: string | null;
+          account_number?: string | null;
+          bank_name?: string | null;
+          created_at?: string | null;
+          display_name: string;
+          display_order?: number | null;
+          icon_color?: string | null;
+          icon_name?: string | null;
+          id?: string;
+          instructions?: string | null;
+          is_active?: boolean | null;
+          method_type: string;
+          provider_name: string;
+          qr_code_storage_path?: string | null;
+          qr_code_url?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          account_name?: string | null;
+          account_number?: string | null;
+          bank_name?: string | null;
+          created_at?: string | null;
+          display_name?: string;
+          display_order?: number | null;
+          icon_color?: string | null;
+          icon_name?: string | null;
+          id?: string;
+          instructions?: string | null;
+          is_active?: boolean | null;
+          method_type?: string;
+          provider_name?: string;
+          qr_code_storage_path?: string | null;
+          qr_code_url?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
       };
       payments: {
         Row: {
@@ -1263,30 +1347,34 @@ export type Database = {
       };
     };
     Functions: {
-      archive_audit_logs: {
-        Args: { cutoff_date: string; dry_run?: boolean };
-        Returns: {
-          archived_count: number;
-          newest_archived: string;
-          oldest_archived: string;
-          tables_affected: string[];
-        }[];
-      };
-      archive_logs_older_than_months: {
-        Args: { dry_run?: boolean; months_old: number };
-        Returns: {
-          archived_count: number;
-          newest_archived: string;
-          oldest_archived: string;
-          tables_affected: string[];
-        }[];
-      };
+      archive_audit_logs:
+        | {
+            Args: { cutoff_date: string; dry_run?: boolean };
+            Returns: {
+              archived_count: number;
+              newest_archived: string;
+              oldest_archived: string;
+              tables_affected: string[];
+            }[];
+          }
+        | { Args: { p_before_date: string }; Returns: number };
+      archive_logs_older_than_months:
+        | {
+            Args: { dry_run?: boolean; months_old: number };
+            Returns: {
+              archived_count: number;
+              newest_archived: string;
+              oldest_archived: string;
+              tables_affected: string[];
+            }[];
+          }
+        | { Args: { p_months?: number }; Returns: number };
       assign_units_to_booking: {
         Args: { p_booking_id: string; p_unit_ids: string[] };
         Returns: undefined;
       };
       attach_audit_trigger: {
-        Args: { target_table: string };
+        Args: { p_table_name: string };
         Returns: undefined;
       };
       calculate_booking_pricing: {
@@ -1308,10 +1396,20 @@ export type Database = {
           unit_id: string;
         }[];
       };
-      check_unit_availability: {
-        Args: { p_check_in: string; p_check_out: string; p_unit_id: string };
-        Returns: boolean;
-      };
+      check_unit_availability:
+        | {
+            Args: { p_check_in: string; p_check_out: string; p_unit_id: string };
+            Returns: boolean;
+          }
+        | {
+            Args: {
+              p_check_in: string;
+              p_check_out: string;
+              p_exclude_booking_id?: string;
+              p_unit_id: string;
+            };
+            Returns: boolean;
+          };
       check_units_available_for_booking: {
         Args: { p_booking_id: string; p_unit_ids: string[] };
         Returns: {
@@ -1351,7 +1449,7 @@ export type Database = {
         Returns: string;
       };
       detach_audit_trigger: {
-        Args: { target_table: string };
+        Args: { p_table_name: string };
         Returns: undefined;
       };
       generate_booking_reference: { Args: never; Returns: string };
@@ -1414,28 +1512,37 @@ export type Database = {
         Returns: undefined;
       };
       has_any_role: { Args: { check_user_id: string }; Returns: boolean };
-      is_admin: { Args: { check_user_id: string }; Returns: boolean };
-      is_admin_or_owner: { Args: { check_user_id: string }; Returns: boolean };
+      is_admin: { Args: { check_user_id?: string }; Returns: boolean };
+      is_admin_or_owner: { Args: { check_user_id?: string }; Returns: boolean };
       is_audit_admin: { Args: never; Returns: boolean };
       is_audit_manager: { Args: never; Returns: boolean };
       is_audit_owner: { Args: never; Returns: boolean };
-      is_manager: { Args: { check_user_id: string }; Returns: boolean };
+      is_manager: { Args: { check_user_id?: string }; Returns: boolean };
+      is_manager_or_above: {
+        Args: { check_user_id?: string };
+        Returns: boolean;
+      };
       is_staff: { Args: { check_user_id: string }; Returns: boolean };
-      monthly_archive_until: {
-        Args: { dry_run?: boolean; final_cutoff_date: string };
-        Returns: {
-          logs_archived: number;
-          month_archived: string;
-        }[];
-      };
-      restore_logs_from_archive: {
-        Args: { end_date: string; start_date: string };
-        Returns: number;
-      };
-      revoke_audit_role: {
-        Args: { target_user_id: string };
-        Returns: undefined;
-      };
+      is_staff_or_above: { Args: { check_user_id?: string }; Returns: boolean };
+      monthly_archive_until:
+        | {
+            Args: { dry_run?: boolean; final_cutoff_date: string };
+            Returns: {
+              logs_archived: number;
+              month_archived: string;
+            }[];
+          }
+        | {
+            Args: { p_until_date: string };
+            Returns: {
+              archive_month: string;
+              logs_archived: number;
+            }[];
+          };
+      restore_logs_from_archive:
+        | { Args: { p_archive_month: string }; Returns: number }
+        | { Args: { end_date: string; start_date: string }; Returns: number };
+      revoke_audit_role: { Args: { p_user_id: string }; Returns: undefined };
     };
     Enums: {
       [_ in never]: never;

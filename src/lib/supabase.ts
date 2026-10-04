@@ -15,8 +15,6 @@ const supabaseAnonKey = requireEnv("VITE_SUPABASE_ANON_KEY");
 export type { Database } from "@/types/database.types";
 
 // Payment Methods types
-// Note: payment_methods table exists on remote but database.types.ts cannot be
-// regenerated yet due to seasonal_rates table mismatch. Using local type bridge.
 interface PaymentMethodInsert {
   id?: string;
   method_type: string;
@@ -59,11 +57,9 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const paymentMethodsTable = () => supabase.from("payment_methods" as any) as any;
+const paymentMethodsTable = () => supabase.from("payment_methods");
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const expenseCategoriesTable = () => supabase.from("expense_categories" as any) as any;
+const expenseCategoriesTable = () => supabase.from("expense_categories");
 
 // Type for PostgrestError from Supabase
 interface PostgrestError {
@@ -1078,7 +1074,6 @@ export const db = {
   },
 
   // Payment Methods configuration (guest-facing payment info)
-  // Uses paymentMethodsTable() helper until database.types.ts can be regenerated
   paymentMethods: {
     /** Get all payment methods ordered by display_order (admin settings) */
     all: () => paymentMethodsTable().select("*").order("display_order", { ascending: true }),
@@ -1111,7 +1106,6 @@ export const db = {
   },
 
   // Expense Categories configuration (expense form dropdowns)
-  // Uses expenseCategoriesTable() helper until database.types.ts can be regenerated
   expenseCategories: {
     /** Get all expense categories ordered by display_order (admin settings) */
     all: () => expenseCategoriesTable().select("*").order("display_order", { ascending: true }),

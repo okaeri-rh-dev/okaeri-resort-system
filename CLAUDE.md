@@ -46,10 +46,11 @@ Rules:
 Current entries:
 
 - **Supabase CLI output parsing** — helper scripts that regex `supabase status` human output break on CLI upgrades (bit household-hub at v2.105.0). Any new script must use `supabase status -o env` (machine-readable) instead. Known-good CLI version at last check: v2.101.0.
+- **`supabase gen types --local` fails password auth** (CLI v2.109.1: `password authentication failed for user "postgres"`). Workaround: `npm run gen:types`, which passes `--db-url` from `supabase status -o env`.
 
 ## Important Notes
 
-- Run `npm run verify` before committing. The pre-commit hook is deliberately weaker (tsc tolerates up to 100 errors in Phase 2 mode; ESLint failures don't block) — passing the hook is NOT passing verify.
+- Run `npm run verify` before committing. The pre-commit hook blocks on type and lint errors but runs no tests — passing the hook is NOT passing verify.
 - Use the typed database helpers in `src/lib/supabase.ts` (`db.bookings.byId(...)`, `db.units.available()`, …) instead of raw Supabase queries where possible.
 - Sanitize all user input with DOMPurify, and log every data mutation to the audit trail (`logAuditEvent` — see `src/components/audit/CLAUDE.md` for the naming convention).
 - Stay within free-tier quotas (Cloudflare KV / email / bandwidth): check `/api/monitoring/check-quotas` before adding chatty features; public endpoints need rate limiting.
