@@ -221,6 +221,14 @@ Found by the `satisfies` annotations (2026-10-04):
 
 - [ ] Rewrite the two CLAUDE.md rules (4.8)
 
+## Resume state (2026-10-04)
+
+- **Done:** Phase 0, Phase 1, and Phase 2 items `functions/` tsconfig, `gen:types`, `satisfies` payload rule, type drift + `db lint` CI steps; dead-code cleanup.
+- **Next:** Phase 2 `booking_status` narrowing + CHECK parity test (4.4).
+- **Waiting on the user:** `supabase db push` for migration `20261004000000` (drops two broken SQL functions); one admin pricing save to confirm a `pricing_config.updated` audit row appears in prod.
+- **Unverified:** the two non-blocking `infra-health` steps (type drift, `db lint`) have not yet run in CI; any server-side audit row on prod since `33314a3`.
+- **Remaining Phase 2:** `UserRole` from DB type + service-role gating test, audit-trigger coverage test, pricing parity test, weekly prod drift check, `tsconfig.e2e.json`, split CI jobs, typing remaining `createClient` calls / raw PostgREST fetches.
+
 ## 6. Costs and risks
 
 - Type-aware lint is about 5x slower here (4s → 21s), so it stays out of the per-edit hook and pre-commit until measured again.
