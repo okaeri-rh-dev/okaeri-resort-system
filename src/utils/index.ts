@@ -179,26 +179,6 @@ export {
 } from "./validation";
 
 // ============================================
-// SEARCH & FILTER UTILITIES (Phase 2)
-// ============================================
-export {
-  // Search functions
-  filterBookings,
-  filterByPaymentStatus,
-  getActiveBookings,
-  getBookingsInDateRange,
-  getBookingsNeedingAttention,
-  getUpcomingCheckIns,
-  getUpcomingCheckOuts,
-  searchGuests,
-  searchUnits,
-  sortBookings,
-  sortUnits,
-  // Types
-  type BookingFilters,
-} from "./search";
-
-// ============================================
 // REPORTING UTILITIES (Phase 2)
 // ============================================
 export {

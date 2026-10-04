@@ -36,20 +36,5 @@ export {
   useAvailabilityPerformance,
 } from "./useAvailability";
 
-// Search hooks
-export {
-  useUnifiedSearch,
-  useBookingSearch,
-  useGuestSearch,
-  useUnitAvailabilitySearch,
-  useSearchSuggestions,
-  useSearchAnalytics,
-  useSearchExport,
-  useSavedSearches,
-} from "./useSearch";
-
 // Calendar hooks
 export { useCalendarBookings } from "./useCalendarBookings";
-
-// Workflow Hooks (Phase 3-4)
-// export { useWorkflowSearch } from './useWorkflowSearch.phase3-4';
