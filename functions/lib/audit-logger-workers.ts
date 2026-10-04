@@ -9,6 +9,8 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { Json, TablesInsert } from "@/types/database.types";
+
 // ============================================
 // TYPE DEFINITIONS
 // ============================================
@@ -16,7 +18,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 /**
  * Audit event severity levels
  */
-export type AuditSeverity = "INFO" | "WARNING" | "ERROR" | "CRITICAL";
+export type AuditSeverity = "INFO" | "WARNING" | "CRITICAL" | "DEBUG";
 
 /**
  * Audit event entry
@@ -124,18 +126,23 @@ export async function logAuditEventWorker(
     }
 
     // Insert audit log record
+    // Application events use action INSERT + source "app", like db.auditLogs.create;
+    // the event name goes in event_type (audit_logs_action_check allows only INSERT/UPDATE/DELETE)
     const { error } = await supabase.from("audit_logs").insert({
-      audit_id: crypto.randomUUID(),
-      action: entry.action,
-      entity_type: entry.entity_type,
-      entity_id: entry.entity_id || null,
-      user_id: entry.user_id || null,
-      severity: entry.severity || "INFO",
-      description: entry.description || null,
-      changes: entry.changes || null,
-      metadata,
-      created_at: new Date().toISOString(),
-    });
+      action: "INSERT",
+      source: "app",
+      event_type: entry.action,
+      table_name: entry.entity_type,
+      record_id: entry.entity_id ?? null,
+      user_id: entry.user_id ?? null,
+      severity: entry.severity ?? "INFO",
+      description: entry.description ?? null,
+      old_data: (entry.changes?.before ?? null) as Json,
+      new_data: (entry.changes?.after ?? null) as Json,
+      metadata: metadata as Json,
+      ip_address: metadata.ip_address ?? null,
+      user_agent: metadata.user_agent ?? null,
+    } satisfies TablesInsert<"audit_logs">);
 
     if (error) {
       // Log but don't throw - audit logging should never block operations
@@ -431,7 +438,7 @@ export async function logOperationFailed(
     {
       action: `${action}.failed`,
       entity_type: "system",
-      severity: "ERROR",
+      severity: "WARNING",
       description: `Operation failed: ${error}`,
       metadata: {
         ...metadata,

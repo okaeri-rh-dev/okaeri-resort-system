@@ -16,6 +16,9 @@
 
 import { z } from "zod";
 
+import type { TablesUpdate } from "@/types/database.types";
+
+import { logAuditEventWorker } from "../../lib/audit-logger-workers";
 import { createSupabaseAdmin } from "../../lib/supabase-admin";
 
 interface Env {
@@ -208,7 +211,7 @@ export const onRequestPut = async (context: { request: Request; env: Env }): Pro
         downpayment_percent: validated.downpayment_percent,
         currency: validated.currency,
         updated_at: new Date().toISOString(),
-      })
+      } satisfies TablesUpdate<"pricing_config">)
       .eq("id", "default")
       .select()
       .single();
@@ -232,22 +235,19 @@ export const onRequestPut = async (context: { request: Request; env: Env }): Pro
     }
 
     // Log to audit trail
-    await supabase.from("audit_logs").insert({
-      action: "pricing_config.updated",
-      entity_type: "pricing_config",
-      entity_id: "default",
-      user_id: user.id,
-      ip_address: clientIp,
-      user_agent: request.headers.get("user-agent") || null,
-      changes: {
-        before: currentConfig,
-        after: updatedConfig,
+    await logAuditEventWorker(
+      supabase,
+      {
+        action: "pricing_config.updated",
+        entity_type: "pricing_config",
+        entity_id: "default",
+        user_id: user.id,
+        description: "Pricing configuration updated",
+        changes: { before: currentConfig, after: updatedConfig },
+        metadata: { role: roleData.role, duration_ms: Date.now() - startTime },
       },
-      metadata: {
-        role: roleData.role,
-        duration_ms: Date.now() - startTime,
-      },
-    });
+      request
+    );
 
     // Return success response
     return Response.json(
