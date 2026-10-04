@@ -240,7 +240,7 @@ async function verifySupabaseJWT(token: string, secret: string): Promise<JWTPayl
 /**
  * Check if path requires authentication
  */
-function isPublicPath(pathname: string): boolean {
+export function isPublicPath(pathname: string): boolean {
   const publicPaths = [
     "/api/public/",
     "/api/availability/check",
