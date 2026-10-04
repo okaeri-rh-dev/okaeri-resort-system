@@ -150,7 +150,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
         special_requests,
         created_at,
         upload_status,
-        unit:units(unit_name, unit_type)
+        booking_units(unit:units(unit_name, unit_type))
       `
       )
       .eq("booking_reference", booking_reference)
@@ -172,6 +172,11 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       );
     }
 
+    // A booking can hold several units since the multi-unit migration
+    const units = (booking.booking_units ?? []).flatMap((bookingUnit) =>
+      bookingUnit.unit ? [bookingUnit.unit] : []
+    );
+
     // Prepare response with limited information
     const statusResponse = {
       booking_reference: booking.booking_reference,
@@ -181,8 +186,8 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       check_out: booking.check_out,
       total_amount: booking.total_amount,
       num_guests: booking.num_guests,
-      unit_name: booking.unit?.unit_name,
-      unit_type: booking.unit?.unit_type,
+      unit_name: units.map((unit) => unit.unit_name).join(", "),
+      unit_type: [...new Set(units.map((unit) => unit.unit_type))].join(", "),
       created_at: booking.created_at,
       upload_status: booking.upload_status || "pending",
       special_requests: booking.special_requests,
