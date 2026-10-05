@@ -289,26 +289,6 @@ export const useCheckAvailability = () => {
   });
 };
 
-// Calculate rate based on dates
-export const calculateRate = (unit: Unit, checkIn: Date, checkOut: Date): number => {
-  const oneDay = 24 * 60 * 60 * 1000;
-  const totalDays = Math.round(Math.abs((checkOut.getTime() - checkIn.getTime()) / oneDay));
-
-  let totalRate = 0;
-  const currentDate = new Date(checkIn);
-
-  for (let i = 0; i < totalDays; i++) {
-    const dayOfWeek = currentDate.getDay();
-    // Weekend: Friday (5) to Sunday (0)
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 5 || dayOfWeek === 6;
-
-    totalRate += isWeekend ? unit.weekend_rate : unit.base_rate;
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-
-  return totalRate;
-};
-
 // Real-time subscription for unit updates
 // NOTE: Disabled for Phase 1 - Real-time features scheduled for Phase 2
 // export const useUnitsSubscription = () => {

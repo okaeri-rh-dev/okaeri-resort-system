@@ -97,13 +97,12 @@ describe("calculateBookingPrice", () => {
       });
 
       expect(result.nights).toBe(3);
-      // Friday (weekday: 3000) + Saturday (weekend: 3500) + Sunday (weekend: 3500) = 10000
-      // isWeekend() from date-fns treats Sat-Sun as weekend (standard definition)
+      // Friday (weekend: 3500) + Saturday (weekend: 3500) + Sunday (weekday: 3000) = 10000
       expect(result.subtotal).toBe(10000);
       expect(result.nightlyBreakdown).toHaveLength(3);
-      expect(result.nightlyBreakdown[0].isWeekend).toBe(false); // Friday is weekday
-      expect(result.nightlyBreakdown[1].isWeekend).toBe(true); // Saturday is weekend
-      expect(result.nightlyBreakdown[2].isWeekend).toBe(true); // Sunday is weekend
+      expect(result.nightlyBreakdown[0].isWeekend).toBe(true);
+      expect(result.nightlyBreakdown[1].isWeekend).toBe(true);
+      expect(result.nightlyBreakdown[2].isWeekend).toBe(false);
     });
 
     it("calculates extra person fees correctly", async () => {
@@ -303,15 +302,13 @@ describe("calculateBookingPrice", () => {
 
       expect(result.nightlyBreakdown).toHaveLength(2);
 
-      // Friday (weekday in date-fns isWeekend())
       expect(result.nightlyBreakdown[0].date).toBe("2024-10-18");
-      expect(result.nightlyBreakdown[0].isWeekend).toBe(false); // Friday is weekday
-      expect(result.nightlyBreakdown[0].baseRate).toBe(3000); // Weekday rate
+      expect(result.nightlyBreakdown[0].isWeekend).toBe(true);
+      expect(result.nightlyBreakdown[0].baseRate).toBe(3500);
       expect(result.nightlyBreakdown[0].seasonalMultiplier).toBe(1.0);
-      expect(result.nightlyBreakdown[0].finalRate).toBe(3000); // Weekday rate
+      expect(result.nightlyBreakdown[0].finalRate).toBe(3500);
       expect(result.nightlyBreakdown[0].seasonName).toBeNull();
 
-      // Saturday (weekend in date-fns isWeekend())
       expect(result.nightlyBreakdown[1].date).toBe("2024-10-19");
       expect(result.nightlyBreakdown[1].isWeekend).toBe(true);
       expect(result.nightlyBreakdown[1].baseRate).toBe(3500); // Weekend rate

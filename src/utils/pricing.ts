@@ -8,6 +8,7 @@
  * @module PricingCalculations
  */
 
+import { isWeekendNight } from "@/lib/pricing/weekend-night";
 import type { Unit } from "@/types";
 
 // ============================================
@@ -340,7 +341,7 @@ export const calculateNightlyRates = (
 
   while (currentDate < checkOut) {
     const dayOfWeek = currentDate.toLocaleDateString("en-US", { weekday: "long" });
-    const isWeekend = currentDate.getDay() === 5 || currentDate.getDay() === 6; // Friday or Saturday
+    const isWeekend = isWeekendNight(currentDate);
 
     // Start with appropriate base rate
     let rate = isWeekend ? unit.weekend_rate : unit.base_rate;
@@ -797,10 +798,7 @@ export function calculateWeekendNights(checkIn: string | Date, checkOut: string 
   // Iterate through each night (check-in to check-out)
   const currentDate = new Date(start);
   while (currentDate < end) {
-    const dayOfWeek = currentDate.getDay();
-
-    // Friday (5) or Saturday (6) = weekend nights
-    if (dayOfWeek === 5 || dayOfWeek === 6) {
+    if (isWeekendNight(currentDate)) {
       weekendNights++;
     }
 

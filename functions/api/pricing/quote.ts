@@ -11,6 +11,8 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+import { isWeekendNight } from "../../../src/lib/pricing/weekend-night";
+
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
@@ -160,10 +162,7 @@ async function calculateMultiUnitPricing(
     for (let i = 0; i < nights; i++) {
       const currentDate = new Date(checkIn);
       currentDate.setDate(currentDate.getDate() + i);
-      const dayOfWeek = currentDate.getDay();
-
-      // Weekend: Friday (5) or Saturday (6)
-      const isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
+      const isWeekend = isWeekendNight(currentDate);
       const nightRate = isWeekend ? unitData.weekend_rate : unitData.base_rate;
 
       if (isWeekend && unitData.weekend_rate > unitData.base_rate) {

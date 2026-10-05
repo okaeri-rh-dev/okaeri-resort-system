@@ -17,9 +17,10 @@ import { devtools, persist, subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 
 import { logger } from "@/lib/logger";
+import { isWeekendNight } from "@/lib/pricing/weekend-night";
 import { hasBooleanProperty, hasProperty, hasStringProperty } from "@/lib/type-guards";
 import type { MultiUnitBookingStore, OptimisticEntry } from "@/types";
-import { dateDifference, isWeekend } from "@/utils/date-helpers";
+import { dateDifference } from "@/utils/date-helpers";
 
 // Enable Immer MapSet plugin for Map and Set support
 enableMapSet();
@@ -262,10 +263,8 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
             for (let i = 0; i < nights; i++) {
               const currentDate = new Date(checkInDate);
               currentDate.setDate(currentDate.getDate() + i);
-              const isWeekendNight = isWeekend(currentDate);
-
               baseTotal += unit.base_rate;
-              if (isWeekendNight && unit.weekend_rate > unit.base_rate) {
+              if (isWeekendNight(currentDate) && unit.weekend_rate > unit.base_rate) {
                 weekendSurcharge += unit.weekend_rate - unit.base_rate;
               }
             }

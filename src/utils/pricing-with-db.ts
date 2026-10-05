@@ -9,8 +9,9 @@
  * It uses the frontend Supabase client (with VITE_* environment variables).
  */
 
-import { addDays, eachDayOfInterval, format, isWeekend } from "date-fns";
+import { addDays, eachDayOfInterval, format } from "date-fns";
 
+import { isWeekendNight } from "@/lib/pricing/weekend-night";
 import { db } from "@/lib/supabase";
 import type { Database } from "@/types/database.types";
 
@@ -52,8 +53,8 @@ export async function calculateBookingPrice(params: {
   // Calculate nightly rates with seasonal adjustments
   const nightlyBreakdown = await Promise.all(
     nights.map(async (date) => {
-      const isWeekendNight = isWeekend(date);
-      const baseNightRate = isWeekendNight ? weekendRate : baseRate;
+      const weekendNight = isWeekendNight(date);
+      const baseNightRate = weekendNight ? weekendRate : baseRate;
 
       // Get seasonal multiplier for this date
       const seasonalMultiplier = await getSeasonalMultiplier(date);
@@ -62,7 +63,7 @@ export async function calculateBookingPrice(params: {
 
       return {
         date: format(date, "yyyy-MM-dd"),
-        isWeekend: isWeekendNight,
+        isWeekend: weekendNight,
         baseRate: baseNightRate,
         seasonalMultiplier,
         finalRate,
@@ -186,8 +187,8 @@ export async function calculateSingleNightPrice(
   extraPersonCharge: number;
   total: number;
 }> {
-  const isWeekendNight = isWeekend(date);
-  const nightBaseRate = isWeekendNight ? weekendRate : baseRate;
+  const weekendNight = isWeekendNight(date);
+  const nightBaseRate = weekendNight ? weekendRate : baseRate;
   const seasonalMultiplier = await getSeasonalMultiplier(date);
   const finalRate = nightBaseRate * seasonalMultiplier;
   const extraPersonCharge = extraPersons * extraPersonRate;
@@ -218,8 +219,8 @@ export async function previewPricingCalendar(
   const priceMap = new Map<string, { price: number; season: string | null }>();
 
   for (const date of dates) {
-    const isWeekendNight = isWeekend(date);
-    const baseRate = isWeekendNight ? pricingConfig.weekend_rate : pricingConfig.base_rate;
+    const weekendNight = isWeekendNight(date);
+    const baseRate = weekendNight ? pricingConfig.weekend_rate : pricingConfig.base_rate;
     const seasonalRate = await db.seasonalRates.forDate(date);
     const finalPrice = baseRate * (seasonalRate?.multiplier || 1.0);
 
