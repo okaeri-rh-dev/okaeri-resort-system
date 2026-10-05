@@ -225,13 +225,15 @@ Found by the `satisfies` annotations (2026-10-04):
 
 - [ ] Rewrite the two CLAUDE.md rules (4.8)
 
-## Resume state (2026-10-04)
+## Resume state (2026-10-05)
 
 - **Done:** Phase 0, Phase 1, and Phase 2 items `functions/` tsconfig, `gen:types`, `satisfies` payload rule, type drift + `db lint` CI steps; dead-code cleanup.
 - **Done 2026-10-04:** `booking_status` narrowing + CHECK parity test.
 - **Done 2026-10-05:** `UserRole` from DB type + service-role gating test (4.2).
 - **Done 2026-10-05:** audit-trigger coverage test + migration `20261005000000` (local only; prod push pending, user).
 - **Done 2026-10-05:** pricing parity test + Fri/Sat weekend rule on every path.
+- **Pending user go-ahead (2026-10-05):** push `52cb284` + `1f43e8e` (deploys the Fri/Sat weekend rule to the form and quote/guest pages); recommended yes. Then read-only prod checks: (a) bookings whose payment amount differs from the stored total on stays with a Friday or Sunday night (form/creation mismatch before `52cb284`), (b) active `seasonal_rates` rows (unblocks the seasonal deferral). Dead-code deletion of `/api/pricing/quote` + `useMultiUnitPricingQuote` + `useSyncUnitPricing` + `src/utils/pricing-with-db.ts` recommended as a separate commit.
+- **Not verified:** `20261005000000` on prod (user runs `supabase db push`, then check NOTICE lines for skipped tables and list `pg_trigger` rows for `audit_trigger_func`); the booking form price in a browser (only store logic is tested).
 - **Next:** weekly prod drift check (4.1).
 - **Verified on prod 2026-10-04:** migration `20261004000000` applied by the user (`check_unit_availability` 3-arg call returns `true`; `revoke_audit_role` gone); a pricing save wrote a `pricing_config.updated` audit row (`source: app`), the first server-side audit row in prod
 - **First CI run of the two non-blocking `infra-health` steps (2026-10-04, run 37197028971):** both exited 1 but show green (`continue-on-error`). `db lint` flags exactly the 7 functions listed above (the 2 dropped by `20261004000000` are gone). Type drift failed on CLI version, not schema (CI ran latest, local was v2.109.1); fixed by upgrading the local CLI, see Decisions & Deferrals.
