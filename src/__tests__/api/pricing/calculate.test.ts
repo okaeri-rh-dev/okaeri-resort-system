@@ -108,54 +108,6 @@ vi.mock("@supabase/supabase-js", () => ({
   })),
 }));
 
-// Mock pricing-with-db utility
-vi.mock("../../../utils/pricing-with-db", () => ({
-  calculateBookingPrice: vi.fn(async (params) => {
-    const nights = 3;
-    const baseTotal = params.baseRate * nights;
-    const extraPersonTotal =
-      Math.max(0, params.guestCount - params.baseOccupancy) * params.extraPersonRate * nights;
-    const total = baseTotal + extraPersonTotal;
-
-    return {
-      nights,
-      nightlyBreakdown: [
-        {
-          date: "2024-12-20",
-          isWeekend: true,
-          baseRate: params.weekendRate,
-          seasonalMultiplier: 2.0,
-          finalRate: params.weekendRate * 2.0,
-          seasonName: "Christmas & New Year",
-        },
-        {
-          date: "2024-12-21",
-          isWeekend: true,
-          baseRate: params.weekendRate,
-          seasonalMultiplier: 2.0,
-          finalRate: params.weekendRate * 2.0,
-          seasonName: "Christmas & New Year",
-        },
-        {
-          date: "2024-12-22",
-          isWeekend: false,
-          baseRate: params.baseRate,
-          seasonalMultiplier: 2.0,
-          finalRate: params.baseRate * 2.0,
-          seasonName: "Christmas & New Year",
-        },
-      ],
-      subtotal: 20000,
-      extraPersons: Math.max(0, params.guestCount - params.baseOccupancy),
-      extraPersonTotal,
-      total: 20000 + extraPersonTotal,
-      downpayment: (20000 + extraPersonTotal) * 0.5,
-      balance: (20000 + extraPersonTotal) * 0.5,
-      currency: "PHP",
-    };
-  }),
-}));
-
 describe("Pricing Calculate API", () => {
   let mockRequest: any;
 

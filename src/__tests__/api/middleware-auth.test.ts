@@ -31,8 +31,8 @@ describe("Middleware JWT Authentication", () => {
 
   // ========== PUBLIC PATH TESTS ==========
 
-  it("should allow public path /api/pricing/quote without JWT", async () => {
-    const request = createMockRequest("https://api.example.com/api/pricing/quote", {
+  it("should allow public path /api/pricing/calculate without JWT", async () => {
+    const request = createMockRequest("https://api.example.com/api/pricing/calculate", {
       method: "POST",
     });
 

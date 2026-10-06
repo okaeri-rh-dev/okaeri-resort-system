@@ -19,7 +19,6 @@ import type {
   AdminMultiUnitBookingCreate,
   MultiUnitBooking,
   MultiUnitBookingApiResponse,
-  MultiUnitPricingApiResponse,
 } from "@/types";
 
 // ============================================
@@ -63,38 +62,6 @@ export const useMultiUnitAvailability = (
     },
     enabled: options.enabled !== false && unitIds.length > 0 && !!checkIn && !!checkOut,
     staleTime: 300000, // 5 minutes
-  });
-};
-
-/**
- * Get pricing quote for multiple units
- */
-export const useMultiUnitPricingQuote = (
-  units: Array<{ unit_id: string; guests: number }>,
-  checkIn: string,
-  checkOut: string,
-  options: { enabled?: boolean } = {}
-) => {
-  return useQuery({
-    queryKey: ["multi-unit-pricing", units, checkIn, checkOut],
-    queryFn: async () => {
-      const response = await fetch("/api/pricing/quote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          units,
-          check_in: checkIn,
-          check_out: checkOut,
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to get pricing quote");
-
-      const data = (await response.json()) as MultiUnitPricingApiResponse;
-      return data.data;
-    },
-    enabled: options.enabled !== false && units.length > 0 && !!checkIn && !!checkOut,
-    staleTime: 300000, // 5 minutes (matches server cache)
   });
 };
 

@@ -2,7 +2,6 @@
  * Dynamic Pricing Calculation System for Cloudflare Workers
  *
  * ⚠️ WORKERS ONLY - This module is designed for Cloudflare Workers context.
- * For frontend pricing calculations, use src/utils/pricing-with-db.ts instead.
  *
  * This module provides pricing calculations with database integration
  * for seasonal rates, accepting a Supabase client instance.

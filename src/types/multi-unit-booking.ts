@@ -326,18 +326,6 @@ export interface MultiUnitAvailabilityResponse {
   };
 }
 
-export interface MultiUnitPricingQuote {
-  total_amount: number;
-  nights: number;
-  units: Array<{
-    unit_id: string;
-    base_amount: number;
-    weekend_surcharge: number;
-    extra_person_charge: number;
-    subtotal: number;
-  }>;
-}
-
 // Generic API response wrapper
 export interface ApiResponse<T> {
   success?: boolean;
@@ -349,7 +337,6 @@ export interface ApiResponse<T> {
 // Specific API response types
 export type MultiUnitBookingsApiResponse = ApiResponse<MultiUnitBooking[]>;
 export type MultiUnitAvailabilityApiResponse = ApiResponse<MultiUnitAvailabilityResult[]>;
-export type MultiUnitPricingApiResponse = ApiResponse<MultiUnitPricingQuote>;
 export type MultiUnitBookingApiResponse = ApiResponse<MultiUnitBooking>;
 
 // ============================================

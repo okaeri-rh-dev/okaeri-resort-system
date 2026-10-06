@@ -120,26 +120,6 @@ export interface RemoveUnitResponse {
 }
 
 // ============================================================
-// PRICING API RESPONSES
-// ============================================================
-
-/**
- * POST /api/pricing/quote
- * Success response for pricing calculation
- */
-export interface PricingQuoteResponse {
-  total_amount: number;
-  nights: number;
-  units: Array<{
-    unit_id: string;
-    base_amount: number;
-    weekend_surcharge: number;
-    extra_person_charge: number;
-    subtotal: number;
-  }>;
-}
-
-// ============================================================
 // PAYMENT API RESPONSES
 // ============================================================
 
@@ -216,11 +196,6 @@ export type BookingApiResponse =
   | MultiUnitBookingResponse
   | ValidationErrorResponse
   | BusinessErrorResponse;
-
-/**
- * Union type for pricing API responses (success or error)
- */
-export type PricingApiResponse = PricingQuoteResponse | ApiErrorResponse;
 
 /**
  * Union type for availability API responses (success or error)

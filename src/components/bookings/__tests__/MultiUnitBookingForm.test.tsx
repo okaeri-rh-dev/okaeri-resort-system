@@ -70,11 +70,6 @@ vi.mock("@/hooks/useMultiUnitBookingQueries", () => ({
     isLoading: false,
     error: null,
   }),
-  useMultiUnitPricingQuote: () => ({
-    data: null,
-    isLoading: false,
-    error: null,
-  }),
   useCreateMultiUnitBooking: () => ({
     mutateAsync: vi.fn().mockResolvedValue({ booking_id: "test-booking-123" }),
     isPending: false,
