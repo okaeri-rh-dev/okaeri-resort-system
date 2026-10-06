@@ -1,0 +1,124 @@
+# Known prod drift: lines from scripts/drift-check.sh that are expected to differ.
+# Generated 2026-10-06 after pushing 20261006000000. Delete lines once the drift is fixed;
+# the check fails on any line here that no longer differs.
+
+# prod-only hardening and body drift: prod has SET search_path TO '' on 5 functions and different bodies for the 1-arg
+# archive_audit_logs / restore_logs_from_archive overloads, applied outside migrations. Fix: a forward migration matching prod.
+local-only function archive_audit_logs(cutoff_date timestamp with time zone, dry_run boolean) returns TABLE(archived_count bigint, oldest_archived timestamp with time zone, newest_archived timestamp with time zone, tables_affected text[]) md5=996bfa1876b691fb7304f3cc931816dd
+local-only function archive_audit_logs(p_before_date timestamp with time zone) returns integer md5=f34c07b3ba3b39f71119c25ebd0be307
+local-only function archive_logs_older_than_months(months_old integer, dry_run boolean) returns TABLE(archived_count bigint, oldest_archived timestamp with time zone, newest_archived timestamp with time zone, tables_affected text[]) md5=b463769616f9507c6f6d3c7abfa3ac57
+local-only function get_account_balance(p_account_id uuid, p_as_of_date timestamp with time zone) returns numeric md5=a3c9636576f8ab02dbe1f583191255cc
+local-only function monthly_archive_until(final_cutoff_date timestamp with time zone, dry_run boolean) returns TABLE(month_archived date, logs_archived bigint) md5=83b93822157507fdb07b4f44e63d5a54
+local-only function restore_logs_from_archive(p_archive_month date) returns integer md5=0dd8bd814817d688a393a9c161dccf8a
+local-only function restore_logs_from_archive(start_date timestamp with time zone, end_date timestamp with time zone) returns bigint md5=8a7aeaad38d4b3e10dfa116da24b5551
+prod-only function archive_audit_logs(cutoff_date timestamp with time zone, dry_run boolean) returns TABLE(archived_count bigint, oldest_archived timestamp with time zone, newest_archived timestamp with time zone, tables_affected text[]) md5=d37aedbbad221c01a868f515aa28628c
+prod-only function archive_audit_logs(p_before_date timestamp with time zone) returns integer md5=d66312a4b1a27ebf7872900689d680d3
+prod-only function archive_logs_older_than_months(months_old integer, dry_run boolean) returns TABLE(archived_count bigint, oldest_archived timestamp with time zone, newest_archived timestamp with time zone, tables_affected text[]) md5=fd08735f5b9a64327493ef65b6f3734e
+prod-only function get_account_balance(p_account_id uuid, p_as_of_date timestamp with time zone) returns numeric md5=c6e7e07ef94f07ad4ecd7f3bd4553f12
+prod-only function monthly_archive_until(final_cutoff_date timestamp with time zone, dry_run boolean) returns TABLE(month_archived date, logs_archived bigint) md5=d33d7e885cd3ddffd9fe9231c0305cc8
+prod-only function restore_logs_from_archive(p_archive_month date) returns integer md5=68726ad1fd70d03f9ab550861ed8ffc7
+prod-only function restore_logs_from_archive(start_date timestamp with time zone, end_date timestamp with time zone) returns bigint md5=eee743e3de41543fb35b7a615186f56f
+
+# audit_logs_archive insert policy: roles=public in migrations (20251006093452), authenticated on prod.
+local-only policy audit_logs_archive.audit_logs_archive_insert_policy a roles=public md5=663636083cb0c137dbd994f4505e5127
+prod-only policy audit_logs_archive.audit_logs_archive_insert_policy a roles=authenticated md5=b706178b472b53695b474eedc8bb3fd3
+
+# Seasonal pricing (20251106000000, 20251107000000 recorded as applied, objects absent on prod). Deferred: see plan,
+# 'Admin seasonal-rates UI left as is'.
+local-only column booking_pricing_analytics.booking_id uuid
+local-only column booking_pricing_analytics.booking_reference character varying(20)
+local-only column booking_pricing_analytics.check_in timestamp with time zone
+local-only column booking_pricing_analytics.check_out timestamp with time zone
+local-only column booking_pricing_analytics.created_at timestamp with time zone
+local-only column booking_pricing_analytics.currency text
+local-only column booking_pricing_analytics.downpayment_calculated numeric
+local-only column booking_pricing_analytics.extra_person_total numeric
+local-only column booking_pricing_analytics.has_seasonal_rates boolean
+local-only column booking_pricing_analytics.nights integer
+local-only column booking_pricing_analytics.pricing_calculated_at text
+local-only column booking_pricing_analytics.season_names jsonb
+local-only column booking_pricing_analytics.subtotal numeric
+local-only column booking_pricing_analytics.total_amount numeric(10,2)
+local-only column bookings.pricing_metadata jsonb
+local-only column bookings.pricing_snapshot jsonb
+local-only column seasonal_rates.color text
+local-only column seasonal_rates.created_at timestamp with time zone default now()
+local-only column seasonal_rates.description text
+local-only column seasonal_rates.end_date text not null
+local-only column seasonal_rates.id uuid not null default gen_random_uuid()
+local-only column seasonal_rates.is_active boolean default true
+local-only column seasonal_rates.multiplier numeric(3,2) not null
+local-only column seasonal_rates.name text not null
+local-only column seasonal_rates.priority integer not null default 0
+local-only column seasonal_rates.season_id text not null
+local-only column seasonal_rates.start_date text not null
+local-only column seasonal_rates.updated_at timestamp with time zone default now()
+local-only constraint seasonal_rates.seasonal_rates_multiplier_check CHECK multiplier >= 0.5 AND multiplier <= 3.0
+local-only constraint seasonal_rates.seasonal_rates_pkey PRIMARY KEY (id)
+local-only constraint seasonal_rates.seasonal_rates_season_id_key UNIQUE (season_id)
+local-only function get_seasonal_rate_for_date(check_date date) returns TABLE(season_id text, name text, multiplier numeric, priority integer) md5=23fcf8eab36bc67ccdee301de6c753da
+local-only function update_updated_at_column() returns trigger md5=3bfa5e64985d89e65932564c89520d5b
+local-only index CREATE INDEX idx_bookings_has_seasonal_rates ON public.bookings USING btree (((pricing_metadata -> 'hasSeasonalRates'::text)))
+local-only index CREATE INDEX idx_bookings_season_names ON public.bookings USING gin (((pricing_metadata -> 'seasonNames'::text)))
+local-only index CREATE INDEX idx_seasonal_rates_active ON public.seasonal_rates USING btree (is_active)
+local-only index CREATE INDEX idx_seasonal_rates_dates ON public.seasonal_rates USING btree (start_date, end_date)
+local-only index CREATE INDEX idx_seasonal_rates_priority ON public.seasonal_rates USING btree (priority DESC)
+local-only index CREATE UNIQUE INDEX seasonal_rates_pkey ON public.seasonal_rates USING btree (id)
+local-only index CREATE UNIQUE INDEX seasonal_rates_season_id_key ON public.seasonal_rates USING btree (season_id)
+local-only policy seasonal_rates.Authenticated users can delete seasonal rates d roles=authenticated md5=eb28d87532d6edd9b635727493ef89f7
+local-only policy seasonal_rates.Authenticated users can insert seasonal rates a roles=authenticated md5=663636083cb0c137dbd994f4505e5127
+local-only policy seasonal_rates.Authenticated users can update seasonal rates w roles=authenticated md5=fe2e7aa3a94b94b876d7713f1517686d
+local-only policy seasonal_rates.Authenticated users can view seasonal rates r roles=authenticated md5=eb28d87532d6edd9b635727493ef89f7
+local-only relation booking_pricing_analytics kind=v rls=f
+local-only relation seasonal_rates kind=r rls=t
+local-only trigger CREATE TRIGGER audit_seasonal_rates_trigger AFTER INSERT OR DELETE OR UPDATE ON public.seasonal_rates FOR EACH ROW EXECUTE FUNCTION audit_trigger_func()
+local-only trigger CREATE TRIGGER update_seasonal_rates_updated_at BEFORE UPDATE ON public.seasonal_rates FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()
+local-only view booking_pricing_analytics md5=ceb110890f81b1ab97ce087ba71961c2
+
+# Online booking and unit assignment (20251028154441, 20251104184719, 20251108000000 recorded as applied, objects absent
+# on prod). Deferred: see plan, 'Online booking left visible, not hidden'.
+local-only column booking_units.check_in_date date
+local-only column booking_units.check_out_date date
+local-only column booking_units.status character varying(20) default 'confirmed'::character varying
+local-only column bookings.discount_percent numeric(5,2)
+local-only column bookings.downpayment_required numeric(10,2)
+local-only column bookings.requested_unit_count integer default 1
+local-only column bookings.unit_assignment_status character varying(20) default 'pending'::character varying
+local-only column guest_booking_unit_requests.booking_id uuid not null
+local-only column guest_booking_unit_requests.created_at timestamp with time zone default now()
+local-only column guest_booking_unit_requests.guests_per_unit integer not null
+local-only column guest_booking_unit_requests.id uuid not null default gen_random_uuid()
+local-only column guest_booking_unit_requests.quantity integer not null
+local-only column guest_booking_unit_requests.special_requests text
+local-only column guest_booking_unit_requests.unit_type character varying(50) not null
+local-only column guest_booking_unit_requests.updated_at timestamp with time zone default now()
+local-only constraint booking_units.booking_units_no_double_booking EXCLUDE USING gist (unit_id WITH =, daterange(check_in_date, check_out_date, '[)'::text) WITH &&) WHERE (((status)::text = ANY ((ARRAY['confirmed'::character varying, 'checked_in'::character varying])::text[])))
+local-only constraint bookings.payment_before_assignment CHECK unit_assignment_status <> 'assigned' OR payment_status = ANY ARRAY['Verified', 'Completed', 'Paid']
+local-only constraint guest_booking_unit_requests.guest_booking_unit_requests_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES bookings(booking_id) ON DELETE CASCADE
+local-only constraint guest_booking_unit_requests.guest_booking_unit_requests_guests_per_unit_check CHECK guests_per_unit > 0
+local-only constraint guest_booking_unit_requests.guest_booking_unit_requests_pkey PRIMARY KEY (id)
+local-only constraint guest_booking_unit_requests.guest_booking_unit_requests_quantity_check CHECK quantity > 0
+local-only function assign_units_to_booking(p_booking_id uuid, p_unit_ids uuid[]) returns void md5=3dbf3f4be261ef75d0e9bda857bf39f3
+local-only function calculate_booking_pricing(p_unit_requests jsonb, p_check_in date, p_check_out date) returns jsonb md5=75cebd34662be2e031fbef6ad4ab69c6
+local-only function check_units_available_for_booking(p_booking_id uuid, p_unit_ids uuid[]) returns TABLE(unit_id uuid, is_available boolean, conflict_booking_id uuid) md5=2eb42907b7fa9cbb624660808ecba1b4
+local-only function cleanup_expired_payment_proofs() returns TABLE(file_path text) md5=d02f4bfeac7e7ae3a8ecbeefda13dbd0
+local-only function create_guest_booking(p_guest_data jsonb, p_booking_data jsonb, p_unit_requests jsonb, p_idempotency_key uuid) returns jsonb md5=ccbcd2d0efa4af5dc7f501d8f8705d5c
+local-only function create_guest_booking(p_turnstile_token text, p_booking_data jsonb, p_unit_requests jsonb, p_guest_data jsonb) returns jsonb md5=7204ee6386a1854ff6dad988a08aef6d
+local-only index CREATE INDEX booking_units_no_double_booking ON public.booking_units USING gist (unit_id, daterange(check_in_date, check_out_date, '[)'::text)) WHERE ((status)::text = ANY ((ARRAY['confirmed'::character varying, 'checked_in'::character varying])::text[]))
+local-only index CREATE INDEX idx_booking_units_dates_status ON public.booking_units USING btree (unit_id, check_in_date, check_out_date, status) WHERE ((status)::text = ANY ((ARRAY['confirmed'::character varying, 'checked_in'::character varying])::text[]))
+local-only index CREATE INDEX idx_bookings_assignment_pending ON public.bookings USING btree (unit_assignment_status, created_at DESC) WHERE ((is_guest_booking = true) AND (is_multi_unit = true) AND ((unit_assignment_status)::text = 'pending'::text))
+local-only index CREATE INDEX idx_bookings_assignment_status ON public.bookings USING btree (unit_assignment_status, payment_status) WHERE ((unit_assignment_status)::text = 'pending'::text)
+local-only index CREATE INDEX idx_bookings_multi_unit ON public.bookings USING btree (is_multi_unit) WHERE (is_multi_unit = true)
+local-only index CREATE INDEX idx_guest_booking_requests_booking ON public.guest_booking_unit_requests USING btree (booking_id)
+local-only index CREATE INDEX idx_guest_booking_unit_requests_booking_id ON public.guest_booking_unit_requests USING btree (booking_id)
+local-only index CREATE UNIQUE INDEX guest_booking_unit_requests_pkey ON public.guest_booking_unit_requests USING btree (id)
+local-only policy booking_units.authenticated_users_insert_booking_units a roles=authenticated md5=249a934a6f1242b25f2098c017accd93
+local-only policy guest_booking_unit_requests.authenticated_users_read_unit_requests r roles=authenticated md5=eb28d87532d6edd9b635727493ef89f7
+local-only policy guest_booking_unit_requests.guest_booking_requests_insert_policy a roles=authenticated,service_role md5=1935a26a902396cbd009a466619d5032
+local-only policy guest_booking_unit_requests.guest_booking_requests_select_policy r roles=authenticated md5=34bf058956757491419b0cbb53c6a030
+local-only policy pricing_config.pricing_config_admin_policy * roles=authenticated md5=81a979dae2eb74bd7947a276066fba2e
+local-only relation guest_booking_unit_requests kind=r rls=t
+
+# Role helpers has_any_role / is_staff (20251018004757) absent on prod; no prod policy references them.
+local-only function has_any_role(check_user_id uuid) returns boolean md5=df42017d724ddfa6a54c88b13fcc334d
+local-only function is_staff(check_user_id uuid) returns boolean md5=e74bf58734416545b8da67e560a56ab9
