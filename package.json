@@ -18,6 +18,7 @@
     "dev:cf": "concurrently \"npm:dev:vite\" \"npm:dev:wrangler\" --kill-others",
     "dev:vite": "vite --clearScreen false",
     "dev:wrangler": "wrangler pages dev . --compatibility-date=2025-09-29 --compatibility-flags=nodejs_compat --port 8788 --local",
+    "drift:prod": "sh scripts/drift-check.sh",
     "e2e:dev": "playwright test e2e/booking-card-mobile.spec.ts --project=\"Mobile Chrome\"",
     "format": "prettier --write .",
     "gen:types": "sh scripts/gen-types.sh",

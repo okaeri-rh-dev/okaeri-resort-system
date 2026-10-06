@@ -30,6 +30,29 @@ jobs:
       - name: Unit tests (non-DB)
         run: npx vitest run --exclude 'src/__tests__/database/**' --exclude '__tests__/database/**' --exclude 'src/__tests__/performance/multi-unit-availability.test.ts'
 
+  # Weekly prod drift: prod's public-schema catalog vs the migrations (scripts/drift-check.sh).
+  # Not on push: a migration committed before `supabase db push` would fail it every time.
+  prod-drift:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start local Supabase (applies all migrations)
+        run: supabase start
+      - name: Compare prod catalog with the migrations
+        env:
+          SUPABASE_DRIFT_DB_URL: ${{ secrets.SUPABASE_DRIFT_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DRIFT_DB_URL" ]; then
+            echo "::error::SUPABASE_DRIFT_DB_URL secret is not set (drift_reader role, session pooler URL)"
+            exit 1
+          fi
+          sh scripts/drift-check.sh
+
   # ── Stage 2: DB + E2E against a fresh local Supabase stack ──
   # Enabled 2026-07-05 after the migration-filename repair and E2E root-cause
   # fixes (loopback exemption for IP auto-blocking, Playwright global-setup
