@@ -7,14 +7,7 @@ import {
   generateTestEmail,
   GUEST_PROFILES,
 } from "./fixtures/booking-data";
-import {
-  ROUTES,
-  TEST_BOOKING,
-  TEST_FILES,
-  TEST_GUEST,
-  TIMEOUTS,
-  VIEWPORTS,
-} from "./fixtures/test-data";
+import { ROUTES, TEST_GUEST, TIMEOUTS, VIEWPORTS } from "./fixtures/test-data";
 import { AdminQueuePage } from "./pages/AdminQueuePage";
 import { BookingDetailPage } from "./pages/BookingDetailPage";
 import { BookingFormPage } from "./pages/BookingFormPage";
@@ -37,7 +30,6 @@ test.describe("Booking Lifecycle", () => {
   /**
    * Test data that persists across related tests
    */
-  let submittedBookingRef: string;
 
   test.describe("1. Anonymous Booking Submission", () => {
     test("guest can access booking form without authentication", async ({ page }) => {

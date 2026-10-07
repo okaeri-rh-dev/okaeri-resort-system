@@ -4,23 +4,12 @@ import { loginAsAdmin } from "./fixtures/auth";
 import {
   addDays,
   BOOKING_DATES,
-  countWeekendNights,
   createBookingTestData,
   formatDate,
-  generateTestEmail,
-  GUEST_PROFILES,
   nextFriday,
 } from "./fixtures/booking-data";
-import {
-  calculateExpectedPrice,
-  createSeasonalConfig,
-  DEFAULT_PRICING,
-  formatPHP,
-  isPriceEqual,
-  parsePHP,
-  TEST_PRICING_CONFIGS,
-} from "./fixtures/pricing-data";
-import { ROUTES, TIMEOUTS, VIEWPORTS } from "./fixtures/test-data";
+import { createSeasonalConfig, isPriceEqual, parsePHP } from "./fixtures/pricing-data";
+import { ROUTES, VIEWPORTS } from "./fixtures/test-data";
 import { BookingDetailPage } from "./pages/BookingDetailPage";
 import { BookingFormPage } from "./pages/BookingFormPage";
 import { BookingsTablePage } from "./pages/BookingsTablePage";

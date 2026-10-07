@@ -1,13 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import {
-  getCheckInDate,
-  getCheckOutDate,
-  ROUTES,
-  TEST_BOOKING,
-  TEST_GUEST,
-  VIEWPORTS,
-} from "./fixtures/test-data";
+import { ROUTES, TEST_GUEST, VIEWPORTS } from "./fixtures/test-data";
 import { BookingFormPage } from "./pages/BookingFormPage";
 import { PublicCalendarPage } from "./pages/PublicCalendarPage";
 

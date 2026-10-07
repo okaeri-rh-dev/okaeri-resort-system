@@ -198,7 +198,7 @@ export class PaymentVerificationPage {
   /**
    * Download payment proof
    */
-  async downloadProof(): Promise<void> {
+  async downloadProof(): Promise<string | null> {
     const [download] = await Promise.all([
       this.page.waitForEvent("download"),
       this.downloadProofButton.click(),

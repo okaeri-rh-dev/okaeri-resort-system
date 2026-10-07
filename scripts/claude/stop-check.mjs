@@ -57,6 +57,7 @@ const failures = [
     "node_modules/.cache/tsc-stop-hook.tsbuildinfo",
   ]),
   run("npx", ["tsc", "--noEmit", "--incremental", "-p", "functions/tsconfig.json"]),
+  run("npx", ["tsc", "--noEmit", "--incremental", "-p", "tsconfig.e2e.json"]),
 ]
   .filter(Boolean)
   .join("\n");

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { loginAsAdmin, loginAsOwner, loginAsStaff, type UserRole } from "./fixtures/auth";
+import { loginAsAdmin, loginAsOwner, loginAsStaff } from "./fixtures/auth";
 import { ROUTES, TIMEOUTS, VIEWPORTS } from "./fixtures/test-data";
 import { AdminQueuePage } from "./pages/AdminQueuePage";
 import { BookingDetailPage } from "./pages/BookingDetailPage";
@@ -419,56 +419,6 @@ test.describe("Multi-Role Workflows", () => {
   });
 
   test.describe("Action Button Visibility by Role", () => {
-    const testRoleActionVisibility = async (
-      page: any,
-      role: UserRole,
-      expectedVisibility: {
-        verifyPayment: boolean;
-        assignUnits: boolean;
-        editBooking: boolean;
-        cancelBooking: boolean;
-      }
-    ) => {
-      // Login with role
-      switch (role) {
-        case "staff":
-          await loginAsStaff(page);
-          break;
-        case "admin":
-          await loginAsAdmin(page);
-          break;
-        case "owner":
-          await loginAsOwner(page);
-          break;
-      }
-
-      const bookingsTable = new BookingsTablePage(page);
-      await bookingsTable.goto();
-
-      const rowCount = await bookingsTable.getRowCount();
-      if (rowCount === 0) {
-        return; // Skip if no data
-      }
-
-      const refs = await bookingsTable.getBookingReferences();
-      if (refs.length === 0) {
-        return;
-      }
-
-      await bookingsTable.clickBookingRow(refs[0]);
-
-      const detailPage = new BookingDetailPage(page);
-      await detailPage.expectPageLoaded();
-
-      // Check edit button
-      const editVisible = await detailPage.editButton.isVisible().catch(() => false);
-      expect(editVisible).toBe(expectedVisibility.editBooking);
-
-      // Check cancel button (if booking is cancellable)
-      const cancelVisible = await detailPage.cancelButton.isVisible().catch(() => false);
-      // Cancel visibility depends on booking status, so we're flexible here
-    };
-
     test("staff sees limited action buttons", async ({ page }) => {
       await loginAsStaff(page);
 
@@ -530,10 +480,8 @@ test.describe("Multi-Role Workflows", () => {
 
       // Check sidebar/navigation
       const rolesLink = page.getByRole("link", { name: /roles|user management/i });
-      const auditLink = page.getByRole("link", { name: /audit/i });
 
       const rolesVisible = await rolesLink.isVisible().catch(() => false);
-      const auditVisible = await auditLink.isVisible().catch(() => false);
 
       // Staff should not see roles management
       expect(rolesVisible).toBeFalsy();
@@ -543,7 +491,6 @@ test.describe("Multi-Role Workflows", () => {
       await loginAsAdmin(page);
 
       // Admin should see all navigation options
-      const settingsLink = page.getByRole("link", { name: /settings|config/i });
       const bookingsLink = page.getByRole("link", { name: /bookings/i });
 
       const bookingsVisible = await bookingsLink.isVisible().catch(() => false);
@@ -552,16 +499,6 @@ test.describe("Multi-Role Workflows", () => {
 
     test("owner sees appropriate navigation options", async ({ page }) => {
       await loginAsOwner(page);
-
-      // Owner should see audit but not necessarily roles
-      const auditLink = page.getByRole("link", { name: /audit/i });
-      const rolesLink = page.getByRole("link", { name: /roles|user management/i });
-
-      const auditVisible = await auditLink.isVisible().catch(() => false);
-      const rolesVisible = await rolesLink.isVisible().catch(() => false);
-
-      // Owner should see audit but not roles management
-      // (depends on implementation)
     });
   });
 

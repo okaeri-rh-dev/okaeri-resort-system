@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { BOOKING_STATUS, ROUTES, TEST_USERS } from "./fixtures/test-data";
+import { ROUTES, TEST_USERS } from "./fixtures/test-data";
 import { BookingsTablePage } from "./pages/BookingsTablePage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -234,7 +234,6 @@ test.describe("Admin Bookings Management", () => {
       await bookingsTable.goto();
 
       // Export functionality should be available
-      const exportVisible = await bookingsTable.exportButton.isVisible().catch(() => false);
       // It's okay if export isn't visible - it may be in a menu
       expect(true).toBeTruthy();
     });

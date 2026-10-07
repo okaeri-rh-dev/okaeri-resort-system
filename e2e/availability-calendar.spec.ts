@@ -1,8 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { loginAsAdmin } from "./fixtures/auth";
-import { addDays, BOOKING_DATES, formatDate } from "./fixtures/booking-data";
-import { ROUTES, TIMEOUTS } from "./fixtures/test-data";
+import { ROUTES } from "./fixtures/test-data";
 import { BookingDetailPage } from "./pages/BookingDetailPage";
 import { BookingsTablePage } from "./pages/BookingsTablePage";
 import { PublicCalendarPage } from "./pages/PublicCalendarPage";
@@ -407,7 +406,6 @@ test.describe("Availability Calendar", () => {
       await calendarPage.goto();
 
       // Initial load
-      const initialAvailable = await calendarPage.getAvailableSlotsCount();
 
       // Refresh page
       await page.reload();

@@ -11,9 +11,7 @@ name: CI
 # non-DB suite mocks the network (MSW), so it runs fully offline. Deeper DB +
 # Playwright E2E checks live in infra-health.yml (push to main + weekly).
 #
-# NOTE: `type-check` covers src/ only. The functions/ server layer is not yet
-# type-checked (no tsconfig; mixed @/ vs relative imports + a duplicated
-# supabase-admin need resolving first). Tracked as the next step in the audit doc.
+# `type-check` covers src/, functions/ and e2e/ (src/__tests__ is still excluded).
 
 on:
   pull_request:

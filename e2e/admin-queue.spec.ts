@@ -1,12 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { loginAsAdmin } from "./fixtures/auth";
-import {
-  BOOKING_DATES,
-  calculateUrgencyScore,
-  getUrgencyLevel,
-  URGENCY_LEVELS,
-} from "./fixtures/booking-data";
+import { BOOKING_DATES, calculateUrgencyScore, getUrgencyLevel } from "./fixtures/booking-data";
 import { TIMEOUTS, VIEWPORTS } from "./fixtures/test-data";
 import { AdminQueuePage } from "./pages/AdminQueuePage";
 
@@ -52,7 +47,7 @@ test.describe("Admin Booking Queue", () => {
       expect(hasCritical || hasHigh || hasMedium || hasLow).toBeTruthy();
     });
 
-    test("check-in tomorrow results in critical urgency (75+)", async ({ page }) => {
+    test("check-in tomorrow results in critical urgency (75+)", async () => {
       // This test validates the urgency calculation logic
       const urgentDates = BOOKING_DATES.getUrgentStay();
       const score = calculateUrgencyScore(urgentDates.checkIn);
@@ -61,7 +56,7 @@ test.describe("Admin Booking Queue", () => {
       expect(getUrgencyLevel(score)).toBe("critical");
     });
 
-    test("check-in next week results in medium urgency", async ({ page }) => {
+    test("check-in next week results in medium urgency", async () => {
       const standardDates = BOOKING_DATES.getStandardStay();
       const score = calculateUrgencyScore(standardDates.checkIn);
 
@@ -70,7 +65,7 @@ test.describe("Admin Booking Queue", () => {
       expect(score).toBeLessThan(75);
     });
 
-    test("far future check-in results in low urgency", async ({ page }) => {
+    test("far future check-in results in low urgency", async () => {
       const farFutureDates = BOOKING_DATES.getFarFutureStay();
       const score = calculateUrgencyScore(farFutureDates.checkIn);
 
@@ -170,8 +165,6 @@ test.describe("Admin Booking Queue", () => {
         test.skip();
         return;
       }
-
-      const initialCount = await queuePage.getQueueCount();
 
       // Apply a filter
       await queuePage.filterByUrgency("critical");
@@ -296,8 +289,6 @@ test.describe("Admin Booking Queue", () => {
         test.skip();
         return;
       }
-
-      const initialCount = await queuePage.getQueueCount();
 
       // Search with specific term
       await queuePage.searchByReference("OKR-SPECIFIC-123");
@@ -443,8 +434,6 @@ test.describe("Admin Booking Queue", () => {
         test.skip();
         return;
       }
-
-      const initialCount = await queuePage.getQueueCount();
 
       // Apply multiple filters
       await queuePage.filterByUrgency("critical");
