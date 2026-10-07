@@ -12,6 +12,8 @@
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
+import type { Database } from "@/types/database.types";
+
 import { calculateUrgencyScore, getUrgencyLevel } from "../../../src/lib/urgency-scoring";
 
 interface Env {
@@ -67,7 +69,7 @@ export async function onRequest(context: {
     const token = authHeader.substring(7);
 
     // Create Supabase client with service role
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
         persistSession: false,
       },

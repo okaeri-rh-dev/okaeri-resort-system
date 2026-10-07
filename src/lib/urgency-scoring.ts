@@ -18,7 +18,7 @@ export type UrgencyLevel = "critical" | "high" | "medium" | "low";
 
 export interface UrgencyScoreParams {
   check_in_date: string;
-  created_at: string;
+  created_at: string | null;
   total_amount: number;
   requested_unit_count: number;
 }
@@ -93,8 +93,9 @@ export function calculateUrgencyScore(params: UrgencyScoreParams): number {
   // ============================================
   // Factor 2: Days Pending (max 20 points)
   // ============================================
-  const createdAt = new Date(created_at);
-  const daysPending = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+  const daysPending = created_at
+    ? (now.getTime() - new Date(created_at).getTime()) / (1000 * 60 * 60 * 24)
+    : 0;
 
   if (daysPending > 3) {
     score += 20;

@@ -60,6 +60,16 @@ describe("Urgency Scoring System", () => {
     expect(getUrgencyLevel(score)).toBe("low");
   });
 
+  it("scores a null created_at as just created, not pending since 1970", () => {
+    const score = calculateUrgencyScore({
+      check_in_date: "2025-11-10T15:00:00Z",
+      created_at: null,
+      total_amount: 12000,
+      requested_unit_count: 1,
+    });
+    expect(score).toBe(19);
+  });
+
   it("should return correct badge variant", () => {
     const criticalResult = getUrgencyResult({
       check_in_date: "2025-10-25T08:00:00Z",
