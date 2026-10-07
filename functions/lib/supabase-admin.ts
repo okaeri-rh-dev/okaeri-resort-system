@@ -7,7 +7,7 @@
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-import type { TablesInsert } from "@/types/database.types";
+import type { Database, TablesInsert } from "@/types/database.types";
 
 interface Env {
   SUPABASE_URL: string;
@@ -17,7 +17,7 @@ interface Env {
 /**
  * Create Supabase admin client with service role permissions
  */
-export function createSupabaseAdmin(env: Env): SupabaseClient {
+export function createSupabaseAdmin(env: Env): SupabaseClient<Database> {
   if (!env.SUPABASE_URL) {
     throw new Error("SUPABASE_URL is required");
   }
@@ -26,7 +26,7 @@ export function createSupabaseAdmin(env: Env): SupabaseClient {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY is required");
   }
 
-  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+  return createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -38,7 +38,7 @@ export function createSupabaseAdmin(env: Env): SupabaseClient {
  * Find or create guest record
  */
 export async function findOrCreateGuest(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   guestData: {
     guest_name: string;
     email?: string | null;
@@ -84,7 +84,7 @@ export async function findOrCreateGuest(
  * Check unit availability for date range
  */
 export async function checkUnitAvailability(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   unitId: string,
   checkIn: string,
   checkOut: string
