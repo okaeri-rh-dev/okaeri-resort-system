@@ -251,6 +251,7 @@ Found by the `satisfies` annotations (2026-10-04):
 ## Resume state (2026-10-07, Phase 3 started)
 
 - **Next (Phase 3, started 2026-10-07):** type-aware rules are in at warn (see the Phase 3 checklist for re-measured counts); Batch 1 done; next Batch 2 (`no-non-null-assertion`, 29). Timezone sites (44) not re-measured yet. `src/__tests__` type-check is now a scheduled Phase 3 item.
+- **Verified 2026-10-07:** pushed `4120465`..`b895514` (`HEAD` = `origin/main`). Deploy run 37615490268: lint (type-aware, 211 warnings, 0 errors), type-check, unit, audit and deploy all success; infra-health 37615489821 and Security Scan 37615489888 success.
 - **Still open from Phase 2 deferrals:** payment-proof cron RPC client untyped (fix with the SQL function); online-booking restore (now also carries the verify-payment `payment_status` mapping).
 - **Done 2026-10-07:** `tsconfig.e2e.json` in CI (`3e2d9a6`); `search_path` function fix (`ddc9d05`, pushed to prod by user, baseline now 98 lines); deploy unblocked (`ac54d63`, audit fix); CI split (`f452b9c`). All pushed (`origin/main` = `f452b9c`).
 - **Verified 2026-10-07:** deploy run 37596023305 green on all 4 split jobs + deploy (prod runs `f452b9c`); infra-health 37596022921 and Security Scan 37596023018 green.
