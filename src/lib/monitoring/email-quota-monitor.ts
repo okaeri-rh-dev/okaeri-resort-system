@@ -423,7 +423,7 @@ export class EmailQuotaMonitor {
 
     if (now - this.lastSendTime < minInterval) {
       // Wait before processing
-      setTimeout(() => this.processQueue(), minInterval);
+      setTimeout(() => void this.processQueue(), minInterval);
       return;
     }
 
@@ -438,7 +438,7 @@ export class EmailQuotaMonitor {
 
       // Process next in queue
       if (this.sendQueue.length > 0) {
-        setTimeout(() => this.processQueue(), minInterval);
+        setTimeout(() => void this.processQueue(), minInterval);
       }
     }
   }

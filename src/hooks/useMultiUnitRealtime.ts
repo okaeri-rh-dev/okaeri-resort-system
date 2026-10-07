@@ -15,8 +15,7 @@ import type {
   RealtimeChannel,
   RealtimePostgresChangesPayload,
 } from "@supabase/supabase-js";
-import type { QueryClient, QueryKey } from "@tanstack/react-query";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type QueryClient, type QueryKey } from "@tanstack/react-query";
 
 import { logger } from "@/lib/logger";
 import { supabase } from "@/lib/supabase";
@@ -493,10 +492,10 @@ export function useMultiUnitPresence(bookingId: string, options: { enabled?: boo
       .on("presence", { event: "leave" }, ({ leftPresences }) => {
         logger.info("[Presence] User left:", { presence: leftPresences });
       })
-      .subscribe(async (status) => {
+      .subscribe((status) => {
         if (status === "SUBSCRIBED") {
           // Track current user's presence
-          await channel.track({
+          void channel.track({
             user: "current_user", // Replace with actual user from auth
             online_at: new Date().toISOString(),
           });

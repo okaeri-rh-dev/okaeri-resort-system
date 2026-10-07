@@ -192,19 +192,20 @@ export function PaymentUploadForm({
       // Start upload progress simulation
       setUploadProgress({ loaded: 0, total: 100, percentage: 0 });
 
-      simulateProgress(async () => {
-        try {
-          await uploadMutation.mutateAsync({
-            bookingId: data.booking_id,
-            file: selectedFile,
-          });
-
-          toast.success("Payment proof uploaded successfully!");
-          onSuccess?.(data);
-        } catch (_error) {
-          toast.error("Failed to upload payment proof. Please try again.");
-          setUploadProgress(null);
-        }
+      simulateProgress(() => {
+        uploadMutation.mutate(
+          { bookingId: data.booking_id, file: selectedFile },
+          {
+            onSuccess: () => {
+              toast.success("Payment proof uploaded successfully!");
+              onSuccess?.(data);
+            },
+            onError: () => {
+              toast.error("Failed to upload payment proof. Please try again.");
+              setUploadProgress(null);
+            },
+          }
+        );
       });
     } catch (_error) {
       toast.error("Failed to upload payment proof. Please try again.");

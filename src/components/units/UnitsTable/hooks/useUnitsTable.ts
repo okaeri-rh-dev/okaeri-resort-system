@@ -79,13 +79,16 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
 
   // Handle unit updates
   const handleUpdateUnit = useCallback(
-    async (unitId: string, updates: Partial<Unit>) => {
-      try {
-        await updateMutationRef.current.mutateAsync({ unitId, updates });
-      } catch (error) {
-        console.error("Failed to update unit:", error);
-        toast.error("Failed to update unit. Please try again.");
-      }
+    (unitId: string, updates: Partial<Unit>) => {
+      updateMutationRef.current.mutate(
+        { unitId, updates },
+        {
+          onError: (error) => {
+            console.error("Failed to update unit:", error);
+            toast.error("Failed to update unit. Please try again.");
+          },
+        }
+      );
     },
     [] // No dependencies - uses ref for mutation
   );
@@ -96,19 +99,20 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
 
   // Handle unit deletion
   const handleDeleteUnit = useCallback(
-    async (unit: Unit) => {
-      try {
-        await deleteMutationRef.current.mutateAsync(unit.unit_id);
-        // Remove deleted unit from selection
-        setRowSelection((prev) => {
-          const newSelection = { ...prev };
-          delete newSelection[unit.unit_id];
-          return newSelection;
-        });
-      } catch (error) {
-        console.error("Failed to delete unit:", error);
-        toast.error("Failed to delete unit. Please try again.");
-      }
+    (unit: Unit) => {
+      deleteMutationRef.current.mutate(unit.unit_id, {
+        onSuccess: () => {
+          setRowSelection((prev) => {
+            const newSelection = { ...prev };
+            delete newSelection[unit.unit_id];
+            return newSelection;
+          });
+        },
+        onError: (error) => {
+          console.error("Failed to delete unit:", error);
+          toast.error("Failed to delete unit. Please try again.");
+        },
+      });
     },
     [] // No dependencies - uses ref for mutation
   );

@@ -121,7 +121,7 @@ export function PaymentProofViewer({
       }
     };
 
-    const interval = setInterval(checkAndRenew, 30000); // Check every 30 seconds
+    const interval = setInterval(() => void checkAndRenew(), 30000); // Check every 30 seconds
     return () => clearInterval(interval);
   }, [paymentProofPath, urlExpiry]);
 

@@ -468,26 +468,24 @@ export async function startPerformanceMonitoring(intervalMinutes: number = 5): P
     `🔄 Starting continuous performance monitoring (every ${intervalMinutes} minutes)...`
   );
 
-  const interval = setInterval(
-    async () => {
-      try {
-        const report = await validatePerformance();
+  const runCheck = async () => {
+    try {
+      const report = await validatePerformance();
 
-        // Log only if there are performance issues
-        if (!report.overallPassed) {
-          console.warn("⚠️ Performance issues detected:");
-          report.results
-            .filter((r) => !r.passed)
-            .forEach((r) =>
-              console.warn(`  - ${r.test}: ${r.duration.toFixed(1)}ms (${r.error || "too slow"})`)
-            );
-        }
-      } catch (error) {
-        console.error("Error in performance monitoring:", error);
+      // Log only if there are performance issues
+      if (!report.overallPassed) {
+        console.warn("⚠️ Performance issues detected:");
+        report.results
+          .filter((r) => !r.passed)
+          .forEach((r) =>
+            console.warn(`  - ${r.test}: ${r.duration.toFixed(1)}ms (${r.error || "too slow"})`)
+          );
       }
-    },
-    intervalMinutes * 60 * 1000
-  );
+    } catch (error) {
+      console.error("Error in performance monitoring:", error);
+    }
+  };
+  const interval = setInterval(() => void runCheck(), intervalMinutes * 60 * 1000);
 
   // Return cleanup function
   return () => {

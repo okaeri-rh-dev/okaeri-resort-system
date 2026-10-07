@@ -158,7 +158,7 @@ export default tseslint.config([
               },
             ],
             "@typescript-eslint/no-misused-promises": [
-              "warn",
+              "error",
               { checksVoidReturn: { attributes: false } },
             ],
             "@typescript-eslint/no-unnecessary-type-assertion": "warn",

@@ -282,7 +282,7 @@ class AuthService {
 
         // Schedule next refresh with random interval
         const interval = getRandomRefreshInterval();
-        this.refreshTimeout = setTimeout(scheduleNextRefresh, interval);
+        this.refreshTimeout = setTimeout(() => void scheduleNextRefresh(), interval);
       } catch (_error) {
         this.handleSessionExpired();
       }
@@ -290,7 +290,7 @@ class AuthService {
 
     // Start with random initial interval
     const initialInterval = getRandomRefreshInterval();
-    this.refreshTimeout = setTimeout(scheduleNextRefresh, initialInterval);
+    this.refreshTimeout = setTimeout(() => void scheduleNextRefresh(), initialInterval);
   }
 
   /**

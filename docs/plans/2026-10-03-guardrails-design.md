@@ -234,7 +234,7 @@ Found by the `satisfies` annotations (2026-10-04):
 
 - [ ] Type-aware rules as warn, then error (4.3). Re-measured 2026-10-07 with all 597 linted TS files in a program (0 fatal); lint 4.1s → 12.1s. Counts are prod / test:
   - [x] Rules added (`await-thenable` at error, 0 hits; the rest warn), `tsconfig.eslint.json` for the 82 files outside the three tsc programs (tests, root configs, `load-testing/`), `ESLINT_TYPE_AWARE=off` in the per-edit hook, Stop hook and pre-commit; pre-push lint uncached
-  - [ ] Batch 1: `no-misused-promises` 11 / 0 (8 files), then error
+  - [x] Batch 1: `no-misused-promises` 11 / 0 (8 files), now error. All 11 bodies already caught their errors except `ResetPasswordForm` (a rejected `signOut` skipped the `/login` redirect; now redirects in `finally`). `useUnitsTable` and `PaymentUploadForm` moved from `mutateAsync` + try/catch to `mutate` callbacks; the rest wrap the call in `void`
   - [ ] Batch 2: `no-non-null-assertion` 29 / tests off (2026-10-03: 36), then error
   - [ ] Batch 3: `no-floating-promises` 45 after allowlisting `invalidateQueries`/`refetchQueries`/`navigate` (163 without: 87 `invalidateQueries`, 31 `navigate`), then error
   - [ ] Batch 4: `no-unnecessary-type-assertion` 62 / 63 (autofix; review the diff), then error
@@ -250,7 +250,7 @@ Found by the `satisfies` annotations (2026-10-04):
 
 ## Resume state (2026-10-07, Phase 3 started)
 
-- **Next (Phase 3, started 2026-10-07):** type-aware rules are in at warn (see the Phase 3 checklist for re-measured counts); fix Batch 1 (`no-misused-promises`, 11) first. Timezone sites (44) not re-measured yet. `src/__tests__` type-check is now a scheduled Phase 3 item.
+- **Next (Phase 3, started 2026-10-07):** type-aware rules are in at warn (see the Phase 3 checklist for re-measured counts); Batch 1 done; next Batch 2 (`no-non-null-assertion`, 29). Timezone sites (44) not re-measured yet. `src/__tests__` type-check is now a scheduled Phase 3 item.
 - **Still open from Phase 2 deferrals:** payment-proof cron RPC client untyped (fix with the SQL function); online-booking restore (now also carries the verify-payment `payment_status` mapping).
 - **Done 2026-10-07:** `tsconfig.e2e.json` in CI (`3e2d9a6`); `search_path` function fix (`ddc9d05`, pushed to prod by user, baseline now 98 lines); deploy unblocked (`ac54d63`, audit fix); CI split (`f452b9c`). All pushed (`origin/main` = `f452b9c`).
 - **Verified 2026-10-07:** deploy run 37596023305 green on all 4 split jobs + deploy (prod runs `f452b9c`); infra-health 37596022921 and Security Scan 37596023018 green.

@@ -62,9 +62,10 @@ export function ResetPasswordForm() {
       setSuccess(true);
 
       // Sign out and redirect to login after 3 seconds
-      setTimeout(async () => {
-        await supabase.auth.signOut();
-        window.location.href = "/login";
+      setTimeout(() => {
+        void supabase.auth.signOut().finally(() => {
+          window.location.href = "/login";
+        });
       }, 3000);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update password");
