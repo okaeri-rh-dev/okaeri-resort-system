@@ -1,6 +1,8 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
+import type { Database } from "@/types/database.types";
+
 /**
  * GET /api/guest-booking/rates
  *
@@ -25,7 +27,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   };
 
   try {
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,

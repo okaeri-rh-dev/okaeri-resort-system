@@ -14,6 +14,8 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+import type { Database } from "@/types/database.types";
+
 import { OWNER_OR_ABOVE } from "../../lib/rbac";
 import { lookupUserRole } from "../../lib/role-lookup";
 
@@ -51,7 +53,7 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
   const corsHeaders = getCorsHeaders(request.headers.get("Origin"));
 
   try {
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,

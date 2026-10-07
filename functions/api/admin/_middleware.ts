@@ -23,6 +23,8 @@
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
+import type { Database } from "@/types/database.types";
+
 import { STAFF_OR_ABOVE, type UserRole } from "../../lib/rbac";
 import { lookupUserRole } from "../../lib/role-lookup";
 
@@ -107,7 +109,7 @@ export async function onRequest(context: {
   // STEP 3: Verify JWT Token with Supabase Auth
   // ============================================================================
 
-  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+  const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

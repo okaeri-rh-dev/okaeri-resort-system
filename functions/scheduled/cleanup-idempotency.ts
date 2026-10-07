@@ -15,6 +15,8 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+import type { Database } from "@/types/database.types";
+
 import { createLogger } from "../lib/logger";
 
 interface Env {
@@ -41,7 +43,7 @@ export async function cleanupIdempotency(env: Env): Promise<void> {
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       // Create Supabase admin client with service role key
-      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+      const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
         auth: {
           autoRefreshToken: false,
           persistSession: false,
@@ -122,7 +124,7 @@ export async function checkIdempotencyCleanupHealth(env: Env): Promise<{
   };
 }> {
   try {
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
@@ -141,7 +143,9 @@ export async function checkIdempotencyCleanupHealth(env: Env): Promise<{
 
     const now = new Date();
     const totalKeys = data.length;
-    const expiredKeys = data.filter((row) => new Date(row.expires_at) < now).length;
+    const expiredKeys = data.filter(
+      (row) => row.expires_at !== null && new Date(row.expires_at) < now
+    ).length;
     const activeKeys = totalKeys - expiredKeys;
 
     // Health checks

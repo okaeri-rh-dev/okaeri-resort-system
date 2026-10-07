@@ -32,6 +32,8 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+
+import type { Database } from "@/types/database.types";
 import { verifyTurnstile } from "@/lib/turnstile";
 
 import { createLogger } from "../../../lib/logger";
@@ -252,7 +254,7 @@ export async function onRequest(context: {
     // DATABASE FUNCTION CALL
     // ============================================================================
 
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+    const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
 
     const { data, error } = await supabase.rpc("get_public_aggregate_availability", {
       p_start_date: startDate,

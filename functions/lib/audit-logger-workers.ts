@@ -9,7 +9,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Json, TablesInsert } from "@/types/database.types";
+import type { Database, Json, TablesInsert } from "@/types/database.types";
 
 // ============================================
 // TYPE DEFINITIONS
@@ -113,7 +113,7 @@ const SENSITIVE_FIELDS = [
  * }, request);
  */
 export async function logAuditEventWorker(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   entry: AuditLogEntry,
   request?: Request
 ): Promise<void> {
@@ -240,7 +240,7 @@ type AuditPayment = Record<string, unknown> & {
  * @param request - Request object
  */
 export async function logBookingCreated(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   booking: AuditBooking,
   userId: string | undefined,
   request?: Request
@@ -277,7 +277,7 @@ export async function logBookingCreated(
  * @param request - Request object
  */
 export async function logUnitAdded(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   bookingId: string,
   unit: AuditBookingUnit,
   userId: string | undefined,
@@ -316,7 +316,7 @@ export async function logUnitAdded(
  * @param request - Request object
  */
 export async function logUnitRemoved(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   bookingId: string,
   unitId: string,
   userId: string | undefined,
@@ -348,7 +348,7 @@ export async function logUnitRemoved(
  * @param request - Request object
  */
 export async function logPaymentRecorded(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   payment: AuditPayment,
   userId: string | undefined,
   request?: Request
@@ -386,7 +386,7 @@ export async function logPaymentRecorded(
  * @param request - Request object
  */
 export async function logPaymentRefunded(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   payment: AuditPayment,
   refundAmount: number,
   reason: string,
@@ -427,7 +427,7 @@ export async function logPaymentRefunded(
  * @param request - Request object
  */
 export async function logOperationFailed(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   action: string,
   error: string,
   metadata: Record<string, unknown> = {},

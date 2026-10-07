@@ -11,6 +11,8 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+import type { Database } from "@/types/database.types";
+
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
@@ -120,7 +122,7 @@ export const onRequestGet = async (context: { request: Request; env: Env }): Pro
     // Call database function (from Phase 1)
     // Use Authorization header to authenticate as the logged-in user
     const authHeader = request.headers.get("Authorization");
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+    const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
       global: {
         headers: authHeader ? { Authorization: authHeader } : {},
       },
@@ -134,7 +136,7 @@ export const onRequestGet = async (context: { request: Request; env: Env }): Pro
       p_unit_ids: unitIds,
       p_check_in: checkInUTC,
       p_check_out: checkOutUTC,
-      p_exclude_booking_id: excludeBookingId || null,
+      p_exclude_booking_id: excludeBookingId || undefined,
     });
 
     if (error) {

@@ -9,6 +9,8 @@
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
+import type { Database } from "@/types/database.types";
+
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
@@ -130,7 +132,7 @@ async function verifyAdminAuth(
   serviceRoleKey: string
 ): Promise<{ isValid: boolean; error?: string }> {
   try {
-    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+    const supabase = createClient<Database>(supabaseUrl, serviceRoleKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
@@ -182,7 +184,7 @@ async function fetchBookingById(
   serviceRoleKey: string
 ): Promise<{ booking: BookingDetailResponse | null; error?: string }> {
   try {
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
+    const supabase = createClient<Database>(supabaseUrl, serviceRoleKey);
 
     const { data, error } = await supabase
       .from("bookings")

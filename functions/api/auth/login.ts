@@ -31,6 +31,7 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import { getClientIp, verifyTurnstile } from "@/lib/turnstile";
+import type { Database } from "@/types/database.types";
 
 interface Env {
   SUPABASE_URL: string;
@@ -133,7 +134,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     }
 
     // Create Supabase client for authentication
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,

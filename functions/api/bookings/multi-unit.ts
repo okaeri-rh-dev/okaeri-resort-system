@@ -12,6 +12,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
+import type { Database } from "@/types/database.types";
+
 import {
   sanitizeEmailWorker,
   sanitizeNameWorker,
@@ -214,7 +216,7 @@ export const onRequestPost = async (context: {
     const userId = (request as AuthenticatedRequest).user?.id;
 
     // Create Supabase client for audit logging
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
@@ -298,7 +300,7 @@ async function checkMultiUnitAvailability(
   checkIn: string,
   checkOut: string
 ): Promise<Array<{ unit_id: string; is_available: boolean }>> {
-  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+  const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -319,7 +321,7 @@ async function checkMultiUnitAvailability(
  * Create multi-unit booking using database function
  */
 async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
-  const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+  const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -439,7 +441,7 @@ async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
       payment_status: "Pending",
     },
     p_units: unitsWithPricing,
-    p_guest_id: data.primary_guest.guest_id || null,
+    p_guest_id: data.primary_guest.guest_id || undefined,
   });
 
   if (error) {
@@ -447,7 +449,7 @@ async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
   }
 
   // Fetch created booking with units
-  const { data: createdBooking } = await supabase
+  const { data: createdBooking, error: fetchError } = await supabase
     .from("bookings")
     .select(
       `
@@ -460,6 +462,8 @@ async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
     )
     .eq("booking_id", bookingId)
     .single();
+
+  if (fetchError) throw fetchError;
 
   return createdBooking;
 }

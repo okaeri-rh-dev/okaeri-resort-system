@@ -10,6 +10,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addDays, eachDayOfInterval, format } from "date-fns";
 
+import type { Database } from "@/types/database.types";
+
 import { isWeekendNight } from "../../src/lib/pricing/weekend-night";
 
 interface PricingConfig {
@@ -40,7 +42,7 @@ interface SeasonalRate {
  * Calculate the total price for a booking with seasonal adjustments
  */
 export async function calculateBookingPrice(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   params: {
     checkIn: Date;
     checkOut: Date;
@@ -121,7 +123,10 @@ export async function calculateBookingPrice(
 /**
  * Get the seasonal multiplier for a specific date
  */
-async function getSeasonalMultiplier(supabase: SupabaseClient, date: Date): Promise<number> {
+async function getSeasonalMultiplier(
+  supabase: SupabaseClient<Database>,
+  date: Date
+): Promise<number> {
   try {
     const seasonalRate = await getSeasonalRateForDate(supabase, date);
     return seasonalRate?.multiplier || 1.0;
@@ -134,7 +139,10 @@ async function getSeasonalMultiplier(supabase: SupabaseClient, date: Date): Prom
 /**
  * Get the season name for a specific date
  */
-async function getSeasonName(supabase: SupabaseClient, date: Date): Promise<string | null> {
+async function getSeasonName(
+  supabase: SupabaseClient<Database>,
+  date: Date
+): Promise<string | null> {
   try {
     const seasonalRate = await getSeasonalRateForDate(supabase, date);
     return seasonalRate?.name || null;
@@ -148,7 +156,7 @@ async function getSeasonName(supabase: SupabaseClient, date: Date): Promise<stri
  * Get seasonal rate for a specific date
  */
 async function getSeasonalRateForDate(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   date: Date
 ): Promise<SeasonalRate | null> {
   const dateStr = format(date, "yyyy-MM-dd");
@@ -171,7 +179,7 @@ async function getSeasonalRateForDate(
 /**
  * Fetch pricing configuration from database
  */
-async function fetchPricingConfig(supabase: SupabaseClient): Promise<PricingConfig> {
+async function fetchPricingConfig(supabase: SupabaseClient<Database>): Promise<PricingConfig> {
   const { data, error } = await supabase
     .from("pricing_config")
     .select("*")
@@ -201,7 +209,7 @@ async function fetchPricingConfig(supabase: SupabaseClient): Promise<PricingConf
  * Get all seasonal rates that apply to a date range
  */
 export async function getSeasonalRatesForDateRange(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   startDate: Date,
   endDate: Date
 ): Promise<{ date: string; season: string | null; multiplier: number }[]> {
@@ -225,7 +233,7 @@ export async function getSeasonalRatesForDateRange(
  * Calculate price for a single night with all adjustments
  */
 export async function calculateSingleNightPrice(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   date: Date,
   baseRate: number,
   weekendRate: number,
@@ -259,7 +267,7 @@ export async function calculateSingleNightPrice(
  * Preview pricing for a date range (useful for calendar display)
  */
 export async function previewPricingCalendar(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   year: number,
   month: number
 ): Promise<Map<string, { price: number; season: string | null }>> {

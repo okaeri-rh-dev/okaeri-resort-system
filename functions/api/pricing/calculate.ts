@@ -2,6 +2,8 @@ import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
+import type { Database } from "@/types/database.types";
+
 import { calculateBookingPrice } from "../../lib/pricing";
 
 // Environment types
@@ -201,7 +203,7 @@ export async function onRequest(context: {
     }
 
     // Initialize Supabase client
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
     // Handle different pricing scenarios
     let pricingResult;

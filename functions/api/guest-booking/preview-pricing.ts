@@ -2,6 +2,7 @@ import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
 import { checkKVRateLimit, getClientIp } from "@/lib/kv-rate-limit";
+import type { Database } from "@/types/database.types";
 import { ERROR_CODES } from "@/types/guest-booking-multi-unit";
 
 import { calculateBookingPrice } from "../../lib/pricing";
@@ -104,7 +105,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     }
 
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
