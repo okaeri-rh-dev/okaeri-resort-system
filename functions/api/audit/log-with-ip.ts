@@ -24,13 +24,16 @@
  * Response:
  * {
  *   success: true;
- *   audit_id: string;
  * }
  *
  * Environment Variables (set via wrangler secrets):
  * - SUPABASE_URL: Your Supabase project URL
  * - SUPABASE_ANON_KEY: Your Supabase anonymous key
  */
+
+import { createClient } from "@supabase/supabase-js";
+
+import type { Database, Json, TablesInsert } from "@/types/database.types";
 
 interface Env {
   SUPABASE_URL: string;
@@ -43,9 +46,9 @@ interface AuditLogRequest {
   description: string;
   category: string;
   severity?: "INFO" | "WARNING" | "CRITICAL" | "DEBUG";
-  metadata?: Record<string, unknown>;
-  oldData?: Record<string, unknown>;
-  newData?: Record<string, unknown>;
+  metadata?: { [key: string]: Json | undefined };
+  oldData?: { [key: string]: Json | undefined };
+  newData?: { [key: string]: Json | undefined };
 }
 
 interface Context {
@@ -168,27 +171,23 @@ export async function onRequestPost(context: Context): Promise<Response> {
       ip_address: clientIP,
       user_agent: userAgent,
       // Note: user_id and user_email will be set by BEFORE INSERT trigger from JWT
-    };
+    } satisfies TablesInsert<"audit_logs">;
 
-    // Insert into Supabase via REST API
-    const supabaseResponse = await fetch(`${env.SUPABASE_URL}/rest/v1/audit_logs`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        apikey: env.SUPABASE_ANON_KEY,
-        Prefer: "return=representation",
-      },
-      body: JSON.stringify(auditLogData),
+    // Insert as the caller so RLS and the user_id trigger see their JWT
+    const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    if (!supabaseResponse.ok) {
-      const errorText = await supabaseResponse.text();
-      console.error("[Worker] Supabase insert failed:", errorText);
+    // No .select(): returning the row needs SELECT on audit_logs, which staff and managers lack
+    const { error: insertError } = await supabase.from("audit_logs").insert(auditLogData);
+
+    if (insertError) {
+      console.error("[Worker] Supabase insert failed:", insertError);
       return new Response(
         JSON.stringify({
           error: "Failed to create audit log",
-          details: errorText,
+          details: insertError.message,
         }),
         {
           status: 500,
@@ -197,13 +196,10 @@ export async function onRequestPost(context: Context): Promise<Response> {
       );
     }
 
-    const result = (await supabaseResponse.json()) as Array<{ audit_id?: string }>;
-
     // Return success response
     return new Response(
       JSON.stringify({
         success: true,
-        audit_id: result[0]?.audit_id,
       }),
       {
         status: 200,
