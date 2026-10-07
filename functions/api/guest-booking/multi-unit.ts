@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { checkKVRateLimit } from "@/lib/kv-rate-limit";
 import { sanitizeNameWorker, sanitizeTextWorker } from "@/lib/security/sanitize-worker";
 import { getClientIp, verifyTurnstile } from "@/lib/turnstile";
+import type { Database, Json } from "@/types/database.types";
 import {
   ERROR_CODES,
   multiUnitBookingSchema,
@@ -30,6 +31,23 @@ import { calculateBookingPrice } from "../../lib/pricing";
  */
 
 // Environment type for Cloudflare Pages
+// Subset of the jsonb built by create_guest_booking (turnstile variant, 20251110171900)
+interface CreateGuestBookingResult {
+  booking: { booking_id: string; booking_reference: string };
+}
+
+function isCreateGuestBookingResult(result: Json): result is Json & CreateGuestBookingResult {
+  if (typeof result !== "object" || result === null || Array.isArray(result)) return false;
+  const { booking } = result;
+  return (
+    typeof booking === "object" &&
+    booking !== null &&
+    !Array.isArray(booking) &&
+    typeof booking.booking_id === "string" &&
+    typeof booking.booking_reference === "string"
+  );
+}
+
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
@@ -137,7 +155,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     // Initialize Supabase client
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
@@ -420,21 +438,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     }
 
-    // Check for duplicate
-    if (result.is_duplicate) {
-      return Response.json(
-        {
-          success: true,
-          is_duplicate: true,
-          booking: result.booking,
-          message: "Booking already created (duplicate detected)",
-        },
-        { status: 200, headers: corsHeaders }
-      );
+    if (!isCreateGuestBookingResult(result)) {
+      throw new Error("create_guest_booking returned an unexpected result");
     }
 
     // 9. Build response
-    const booking = result.booking;
+    const { booking } = result;
     const response: MultiUnitBookingResponse = {
       success: true,
       booking: {

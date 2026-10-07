@@ -1,6 +1,8 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
+import type { Database, Json } from "@/types/database.types";
+
 /**
  * GET /api/guest-booking/discount-rules
  *
@@ -14,21 +16,15 @@ interface Env {
   SUPABASE_SERVICE_ROLE_KEY: string;
 }
 
-// Discount rule condition type
-interface DiscountCondition {
-  type: string;
-  value?: number | string;
-}
-
-// Discount rule structure
-interface DiscountRule {
-  id: string;
-  name: string;
-  description?: string;
-  conditions: DiscountCondition[];
-  discount_type: string;
-  discount_value: number;
-  priority: number;
+function findMinNightsCondition(conditions: Json) {
+  if (!Array.isArray(conditions)) return undefined;
+  return conditions.find(
+    (condition): condition is { [key: string]: Json | undefined } =>
+      typeof condition === "object" &&
+      condition !== null &&
+      !Array.isArray(condition) &&
+      condition.type === "min_nights"
+  );
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -41,7 +37,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   };
 
   try {
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
@@ -63,20 +59,18 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     }
 
     // Find duration discount for display message
-    const durationDiscount = (data as DiscountRule[] | null)?.find((rule) =>
-      rule.conditions.some((c) => c.type === "min_nights")
-    );
+    const durationDiscount = data.find((rule) => findMinNightsCondition(rule.conditions));
 
     let displayMessage = null;
     if (durationDiscount) {
-      const minNights = durationDiscount.conditions.find((c) => c.type === "min_nights")?.value;
+      const minNights = findMinNightsCondition(durationDiscount.conditions)?.value;
       displayMessage = `Book ${minNights}+ nights and save ${durationDiscount.discount_value}%!`;
     }
 
     return Response.json(
       {
         success: true,
-        discount_rules: data || [],
+        discount_rules: data,
         display_message: displayMessage,
       },
       { status: 200, headers: corsHeaders }
