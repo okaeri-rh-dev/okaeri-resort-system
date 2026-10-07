@@ -19,8 +19,11 @@
 
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 
+import type { TablesInsert, TablesUpdate } from "@/types/database.types";
+
 import { MANAGER_OR_ABOVE } from "../../lib/rbac";
 import { lookupUserRole } from "../../lib/role-lookup";
+import { createSupabaseAdmin } from "../../lib/supabase-admin";
 
 interface Env {
   SUPABASE_URL: string;
@@ -39,15 +42,6 @@ interface SupabaseUser {
   email?: string;
   user_metadata?: Record<string, unknown>;
   app_metadata?: Record<string, unknown>;
-}
-
-interface Booking {
-  id: string;
-  payment_status: string;
-  guest_id: string;
-  unit_id: string;
-  check_in_date: string;
-  check_out_date: string;
 }
 
 export async function onRequest(context: {
@@ -205,21 +199,17 @@ export async function onRequest(context: {
       }
     }
 
-    // Fetch booking to verify existence and current status
-    const bookingResponse = await fetch(
-      `${env.SUPABASE_URL}/rest/v1/bookings?booking_id=eq.${body.booking_id}&select=*`,
-      {
-        headers: {
-          apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-          Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-          "Content-Type": "application/json",
-          Prefer: "return=representation",
-        },
-      }
-    );
+    const supabase = createSupabaseAdmin(env);
 
-    if (!bookingResponse.ok) {
-      console.error("Failed to fetch booking:", await bookingResponse.text());
+    // Fetch booking to verify existence and current status
+    const { data: booking, error: bookingError } = await supabase
+      .from("bookings")
+      .select("payment_status")
+      .eq("booking_id", body.booking_id)
+      .maybeSingle();
+
+    if (bookingError) {
+      console.error("Failed to fetch booking:", bookingError);
       return new Response(
         JSON.stringify({
           error: "Internal Server Error",
@@ -232,9 +222,7 @@ export async function onRequest(context: {
       );
     }
 
-    const bookings = (await bookingResponse.json()) as Booking[];
-
-    if (bookings.length === 0) {
+    if (!booking) {
       return new Response(
         JSON.stringify({
           error: "Not Found",
@@ -246,8 +234,6 @@ export async function onRequest(context: {
         }
       );
     }
-
-    const booking = bookings[0];
 
     // Check for idempotency - if payment already processed
     if (booking.payment_status !== "Pending") {
@@ -268,24 +254,13 @@ export async function onRequest(context: {
     const newPaymentStatus = body.action === "verify" ? "Verified" : "Rejected";
 
     // Update booking payment status
-    const updateResponse = await fetch(
-      `${env.SUPABASE_URL}/rest/v1/bookings?booking_id=eq.${body.booking_id}`,
-      {
-        method: "PATCH",
-        headers: {
-          apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-          Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-          "Content-Type": "application/json",
-          Prefer: "return=representation",
-        },
-        body: JSON.stringify({
-          payment_status: newPaymentStatus,
-        }),
-      }
-    );
+    const { error: updateError } = await supabase
+      .from("bookings")
+      .update({ payment_status: newPaymentStatus } satisfies TablesUpdate<"bookings">)
+      .eq("booking_id", body.booking_id);
 
-    if (!updateResponse.ok) {
-      console.error("Failed to update booking:", await updateResponse.text());
+    if (updateError) {
+      console.error("Failed to update booking:", updateError);
       return new Response(
         JSON.stringify({
           error: "Internal Server Error",
@@ -311,27 +286,24 @@ export async function onRequest(context: {
     try {
       const auditAction = body.action === "verify" ? "payment.verified" : "payment.rejected";
 
-      const auditResponse = await fetch(`${env.SUPABASE_URL}/rest/v1/audit_logs`, {
-        method: "POST",
-        headers: {
-          apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-          Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-          "Content-Type": "application/json",
-          Prefer: "return=minimal",
-        },
-        body: JSON.stringify({
-          action: auditAction,
-          entity_type: "booking",
-          entity_id: body.booking_id,
-          user_id: user.id,
-          metadata: auditMetadata,
-        }),
-      });
+      // App events use action INSERT + source "app", like logAuditEventWorker
+      const { error: auditInsertError } = await supabase.from("audit_logs").insert({
+        action: "INSERT",
+        source: "app",
+        event_type: auditAction,
+        table_name: "bookings",
+        record_id: body.booking_id,
+        user_id: user.id,
+        user_email: user.email ?? null,
+        old_data: { payment_status: booking.payment_status },
+        new_data: { payment_status: newPaymentStatus },
+        metadata: auditMetadata,
+      } satisfies TablesInsert<"audit_logs">);
 
-      if (auditResponse.ok) {
-        auditLogged = true;
+      if (auditInsertError) {
+        console.error("Failed to write audit log:", auditInsertError);
       } else {
-        console.error("Failed to write audit log:", await auditResponse.text());
+        auditLogged = true;
       }
     } catch (auditError) {
       console.error("Error writing audit log:", auditError);
