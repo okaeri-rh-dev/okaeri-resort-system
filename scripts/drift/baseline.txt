@@ -2,22 +2,12 @@
 # Generated 2026-10-06 after pushing 20261006000000. Delete lines once the drift is fixed;
 # the check fails on any line here that no longer differs.
 
-# prod-only hardening and body drift: prod has SET search_path TO '' on 5 functions and different bodies for the 1-arg
-# archive_audit_logs / restore_logs_from_archive overloads, applied outside migrations. Fix: a forward migration matching prod.
-local-only function archive_audit_logs(cutoff_date timestamp with time zone, dry_run boolean) returns TABLE(archived_count bigint, oldest_archived timestamp with time zone, newest_archived timestamp with time zone, tables_affected text[]) md5=996bfa1876b691fb7304f3cc931816dd
+# Body drift: the 1-arg archive_audit_logs / restore_logs_from_archive overloads differ on prod (changed outside
+# migrations; db lint also flags them as ambiguous with the 2-arg versions). Fix with that db lint item.
 local-only function archive_audit_logs(p_before_date timestamp with time zone) returns integer md5=f34c07b3ba3b39f71119c25ebd0be307
-local-only function archive_logs_older_than_months(months_old integer, dry_run boolean) returns TABLE(archived_count bigint, oldest_archived timestamp with time zone, newest_archived timestamp with time zone, tables_affected text[]) md5=b463769616f9507c6f6d3c7abfa3ac57
-local-only function get_account_balance(p_account_id uuid, p_as_of_date timestamp with time zone) returns numeric md5=a3c9636576f8ab02dbe1f583191255cc
-local-only function monthly_archive_until(final_cutoff_date timestamp with time zone, dry_run boolean) returns TABLE(month_archived date, logs_archived bigint) md5=83b93822157507fdb07b4f44e63d5a54
 local-only function restore_logs_from_archive(p_archive_month date) returns integer md5=0dd8bd814817d688a393a9c161dccf8a
-local-only function restore_logs_from_archive(start_date timestamp with time zone, end_date timestamp with time zone) returns bigint md5=8a7aeaad38d4b3e10dfa116da24b5551
-prod-only function archive_audit_logs(cutoff_date timestamp with time zone, dry_run boolean) returns TABLE(archived_count bigint, oldest_archived timestamp with time zone, newest_archived timestamp with time zone, tables_affected text[]) md5=d37aedbbad221c01a868f515aa28628c
 prod-only function archive_audit_logs(p_before_date timestamp with time zone) returns integer md5=d66312a4b1a27ebf7872900689d680d3
-prod-only function archive_logs_older_than_months(months_old integer, dry_run boolean) returns TABLE(archived_count bigint, oldest_archived timestamp with time zone, newest_archived timestamp with time zone, tables_affected text[]) md5=fd08735f5b9a64327493ef65b6f3734e
-prod-only function get_account_balance(p_account_id uuid, p_as_of_date timestamp with time zone) returns numeric md5=c6e7e07ef94f07ad4ecd7f3bd4553f12
-prod-only function monthly_archive_until(final_cutoff_date timestamp with time zone, dry_run boolean) returns TABLE(month_archived date, logs_archived bigint) md5=d33d7e885cd3ddffd9fe9231c0305cc8
 prod-only function restore_logs_from_archive(p_archive_month date) returns integer md5=68726ad1fd70d03f9ab550861ed8ffc7
-prod-only function restore_logs_from_archive(start_date timestamp with time zone, end_date timestamp with time zone) returns bigint md5=eee743e3de41543fb35b7a615186f56f
 
 # audit_logs_archive insert policy: roles=public in migrations (20251006093452), authenticated on prod.
 local-only policy audit_logs_archive.audit_logs_archive_insert_policy a roles=public md5=663636083cb0c137dbd994f4505e5127
