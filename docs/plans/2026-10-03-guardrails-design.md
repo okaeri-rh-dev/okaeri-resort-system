@@ -232,19 +232,25 @@ Found by the `satisfies` annotations (2026-10-04):
 
 ### Phase 3: Depth
 
-- [ ] Type-aware rules as warn, then error (4.3)
+- [ ] Type-aware rules as warn, then error (4.3). Re-measured 2026-10-07 with all 597 linted TS files in a program (0 fatal); lint 4.1s → 12.1s. Counts are prod / test:
+  - [x] Rules added (`await-thenable` at error, 0 hits; the rest warn), `tsconfig.eslint.json` for the 82 files outside the three tsc programs (tests, root configs, `load-testing/`), `ESLINT_TYPE_AWARE=off` in the per-edit hook, Stop hook and pre-commit; pre-push lint uncached
+  - [ ] Batch 1: `no-misused-promises` 11 / 0 (8 files), then error
+  - [ ] Batch 2: `no-non-null-assertion` 29 / tests off (2026-10-03: 36), then error
+  - [ ] Batch 3: `no-floating-promises` 45 after allowlisting `invalidateQueries`/`refetchQueries`/`navigate` (163 without: 87 `invalidateQueries`, 31 `navigate`), then error
+  - [ ] Batch 4: `no-unnecessary-type-assertion` 62 / 63 (autofix; review the diff), then error
 - [ ] Timezone rule to error after the 44 sites are fixed
 - [ ] Query-key plugin + migrate duplicate roots, one entity per commit
 - [ ] Knip after dead-code purge; audit job blocking after fix pass
+- [ ] Type-check tests (deferral due after Phase 2, scheduled 2026-10-07): `tsc -p tsconfig.eslint.json` has 316 errors, 174 in `src/__tests__` (was 255), rest in `__tests__/` and `load-testing/`; 120 are TS18046 (`unknown` from `response.json()`). Fix `src/__tests__` first, then add the program to `type-check`
 - [ ] Exit criterion: zero lint warnings; `--max-warnings 0` in CI and the Stop hook
 
 ### Phase 4: Docs
 
 - [ ] Rewrite the two CLAUDE.md rules (4.8)
 
-## Resume state (2026-10-07, end of Phase 2)
+## Resume state (2026-10-07, Phase 3 started)
 
-- **Next (Phase 3, nothing started):** first item "Type-aware rules as warn, then error (4.3)". Counts in 4.3 (`no-floating-promises` 161, `no-misused-promises` ~11, `no-non-null-assertion` 36) and the 44 timezone sites are from 2026-10-03 and not re-measured; re-count before planning batches. Lint time was 4s → 21s with type-aware rules, so they stay out of the per-edit hook. Also due now: the `src/__tests__` type-check deferral ("Revisit: after Phase 2").
+- **Next (Phase 3, started 2026-10-07):** type-aware rules are in at warn (see the Phase 3 checklist for re-measured counts); fix Batch 1 (`no-misused-promises`, 11) first. Timezone sites (44) not re-measured yet. `src/__tests__` type-check is now a scheduled Phase 3 item.
 - **Still open from Phase 2 deferrals:** payment-proof cron RPC client untyped (fix with the SQL function); online-booking restore (now also carries the verify-payment `payment_status` mapping).
 - **Done 2026-10-07:** `tsconfig.e2e.json` in CI (`3e2d9a6`); `search_path` function fix (`ddc9d05`, pushed to prod by user, baseline now 98 lines); deploy unblocked (`ac54d63`, audit fix); CI split (`f452b9c`). All pushed (`origin/main` = `f452b9c`).
 - **Verified 2026-10-07:** deploy run 37596023305 green on all 4 split jobs + deploy (prod runs `f452b9c`); infra-health 37596022921 and Security Scan 37596023018 green.
@@ -333,3 +339,11 @@ Decided during Phase 2 (2026-10-06):
 - **Prod `search_path` drift fixed by qualifying the bodies, not by copying prod (2026-10-07).** Why: the recommended "forward migration matching prod" would have copied a setting that breaks the functions. Revisit: n/a.
 - **verify-payment's `payment_status` mapping folded into the online-booking restore (2026-10-07, user).** Why: `'Verified'`/`'Rejected'` fail `bookings_payment_status_check` (local and prod), but `'Verified'` is what the whole chain uses: 4 UI checks (`PendingBookingsQueue`, `PaymentProofViewer`, `verify-payment.$bookingId`, the assign-units guard), `assign_units_to_booking` (accepts `Completed`/`Verified`) and `payment_before_assignment` (`Verified`/`Completed`/`Paid`), the last two local-only. On prod the chain already breaks earlier (the queue reads `guest_booking_unit_requests`, absent), so changing the mapping now is a partial restore. Rejected: `'Completed'` (wrong meaning for a downpayment), `'Partial'` across the chain now (a restore without the rest of it). Recommended mapping when restoring: verify → `'Partial'`, reject stays `'Pending'` with the reason in the audit row; then narrow `payment_status` in `database.types.ts`. Revisit: with the online-booking restore.
 - **Assertion-free e2e tests left as is.** Why: the owner-navigation, export-button and `expect(true)` tests need the intended role behaviour decided first; removing their unused variables did not change what they check. Revisit: when the e2e suite gets its CI pass (only part of it runs in CI).
+
+Decided during Phase 3 (2026-10-07):
+
+- **`no-floating-promises` allows `invalidateQueries`, `refetchQueries` and router `navigate` (`allowForKnownSafeCalls`).** Why: 118 of 163 hits; none reject by default, so 118 `void` prefixes would add noise and guard nothing. Revisit: if a mutation must wait for its invalidation (return the promise from `onSuccess` instead).
+- **Type-aware rules run in CI, `npm run lint`/`verify` and pre-push; not in the per-edit hook, Stop hook or pre-commit (`ESLINT_TYPE_AWARE=off`).** Why: 3x slower (4.1s → 12.1s), and ESLint's cache does not track cross-file type changes, so cached type-aware results go stale. Revisit: at the exit criterion (`--max-warnings 0` in the Stop hook needs the type-aware rules there, or a CI-only check).
+- **`tsconfig.eslint.json` for lint only, with `project` (not `projectService`).** Why: `projectService` picks the nearest `tsconfig.json`, which excludes the tests and cannot see `tsconfig.e2e.json`. A new file outside every program fails lint, which is the wanted guard. Revisit: if test type-checking makes it a real tsc program.
+- **`no-non-null-assertion` off in tests.** Why: plan scope was "outside tests"; 68 test hits are fixture access. Revisit: n/a.
+- **`src/__tests__` type-checking scheduled in Phase 3, not re-deferred.** Why: 174 errors, mostly one mechanical pattern, and the lint program already exists. Revisit: n/a.

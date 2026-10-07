@@ -17,7 +17,12 @@ try {
   execFileSync(
     "npx",
     ["eslint", "--cache", "--cache-location", ".eslintcache", "--no-warn-ignored", relativePath],
-    { cwd: projectDir, stdio: "pipe", encoding: "utf8" }
+    {
+      cwd: projectDir,
+      stdio: "pipe",
+      encoding: "utf8",
+      env: { ...process.env, ESLINT_TYPE_AWARE: "off" },
+    }
   );
 } catch (error) {
   console.error(`ESLint errors in ${relativePath}:\n${error.stdout ?? ""}${error.stderr ?? ""}`);

@@ -33,7 +33,12 @@ if (changed.length === 0) process.exit(0);
 
 const run = (command, args) => {
   try {
-    execFileSync(command, args, { cwd: projectDir, stdio: "pipe", encoding: "utf8" });
+    execFileSync(command, args, {
+      cwd: projectDir,
+      stdio: "pipe",
+      encoding: "utf8",
+      env: { ...process.env, ESLINT_TYPE_AWARE: "off" },
+    });
     return "";
   } catch (error) {
     return `${error.stdout ?? ""}${error.stderr ?? ""}`;

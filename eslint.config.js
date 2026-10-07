@@ -35,6 +35,10 @@ const utcDateSliceSelector = {
     "toISOString() is UTC, so a local date before 08:00 Manila time becomes the previous day. Use toISODateString() from @/lib/timezone.",
 };
 
+// Type-aware rules need a TS program per file (~4x slower), so the per-edit hook, Stop hook
+// and pre-commit set ESLINT_TYPE_AWARE=off. CI, `npm run lint` and pre-push run them.
+const typeAware = process.env.ESLINT_TYPE_AWARE !== "off";
+
 const generatedDatabaseTypesPattern = {
   group: ["**/database.generated"],
   message:
@@ -98,7 +102,7 @@ export default tseslint.config([
         },
       ],
       "@typescript-eslint/no-explicit-any": "warn", // Warn instead of error
-      "@typescript-eslint/no-non-null-assertion": "off", // Allow ! operator
+      "@typescript-eslint/no-non-null-assertion": "warn",
       "@typescript-eslint/no-empty-function": "off",
       "@typescript-eslint/ban-ts-comment": "off", // Allow @ts-ignore when needed
       "@typescript-eslint/no-inferrable-types": "off",
@@ -120,12 +124,56 @@ export default tseslint.config([
     },
   },
 
+  // Warn until each rule's fix batch lands, then error (guardrails Phase 3).
+  // tsconfig.eslint.json covers the tests and root configs that tsconfig.json excludes.
+  ...(typeAware
+    ? [
+        {
+          files: ["**/*.{ts,tsx}"],
+          languageOptions: {
+            parserOptions: {
+              project: [
+                "./tsconfig.eslint.json",
+                "./functions/tsconfig.json",
+                "./tsconfig.e2e.json",
+              ],
+              tsconfigRootDir: import.meta.dirname,
+            },
+          },
+          rules: {
+            "@typescript-eslint/await-thenable": "error",
+            "@typescript-eslint/no-floating-promises": [
+              "warn",
+              {
+                // Neither rejects: invalidate/refetch default to throwOnError false,
+                // and the router reports navigation errors itself.
+                allowForKnownSafeCalls: [
+                  {
+                    from: "package",
+                    package: "@tanstack/query-core",
+                    name: ["invalidateQueries", "refetchQueries"],
+                  },
+                  { from: "package", package: "@tanstack/router-core", name: "navigate" },
+                ],
+              },
+            ],
+            "@typescript-eslint/no-misused-promises": [
+              "warn",
+              { checksVoidReturn: { attributes: false } },
+            ],
+            "@typescript-eslint/no-unnecessary-type-assertion": "warn",
+          },
+        },
+      ]
+    : []),
+
   // Test files - even more relaxed
   {
     files: ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-non-null-assertion": "off",
       "no-console": "off",
     },
   },
@@ -137,6 +185,13 @@ export default tseslint.config([
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": "off",
       "no-console": "off",
+    },
+  },
+
+  {
+    files: ["**/__tests__/**/*.{ts,tsx}", "src/test/**/*.{ts,tsx}", "e2e/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-non-null-assertion": "off",
     },
   },
 
