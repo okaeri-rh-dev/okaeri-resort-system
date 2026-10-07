@@ -242,12 +242,13 @@ Found by the `satisfies` annotations (2026-10-04):
 
 - [ ] Rewrite the two CLAUDE.md rules (4.8)
 
-## Resume state (2026-10-07)
+## Resume state (2026-10-07, end of Phase 2)
 
+- **Next (Phase 3, nothing started):** first item "Type-aware rules as warn, then error (4.3)". Counts in 4.3 (`no-floating-promises` 161, `no-misused-promises` ~11, `no-non-null-assertion` 36) and the 44 timezone sites are from 2026-10-03 and not re-measured; re-count before planning batches. Lint time was 4s → 21s with type-aware rules, so they stay out of the per-edit hook. Also due now: the `src/__tests__` type-check deferral ("Revisit: after Phase 2").
+- **Still open from Phase 2 deferrals:** payment-proof cron RPC client untyped (fix with the SQL function); online-booking restore (now also carries the verify-payment `payment_status` mapping).
 - **Done 2026-10-07:** `tsconfig.e2e.json` in CI (`3e2d9a6`); `search_path` function fix (`ddc9d05`, pushed to prod by user, baseline now 98 lines); deploy unblocked (`ac54d63`, audit fix); CI split (`f452b9c`). All pushed (`origin/main` = `f452b9c`).
 - **Verified 2026-10-07:** deploy run 37596023305 green on all 4 split jobs + deploy (prod runs `f452b9c`); infra-health 37596022921 and Security Scan 37596023018 green.
 - **Done 2026-10-07 (later):** last Phase 2 item, typing `createClient` calls + raw PostgREST fetches (`32dec40`..`20f62ba`, see Phase 2 checklist). Stray `.bak` files deleted. verify-payment `payment_status` mapping folded into the online-booking restore (user). CI for `42ab595` green. **Phase 2 complete.**
-- **Was in progress:** last Phase 2 item, "Type all `createClient` calls; convert raw PostgREST fetches (4.1)". Live count 2026-10-07: 23 untyped `createClient(` calls in `functions/` (incl. the shared factory `functions/lib/supabase-admin.ts:29`), 10 already typed; 4 raw `rest/v1` fetches (`admin/verify-payment.ts:210,272,314`, `audit/log-with-ip.ts:174`). Two more untracked, gitignored `.bak` files in `functions/api/guest-booking/` (`preview-pricing.ts.bak`, `rates.ts.bak`) show up in greps; delete them.
 
 Earlier (2026-10-06):
 
@@ -258,7 +259,7 @@ Earlier (2026-10-06):
 - **Done 2026-10-05:** pricing parity test + Fri/Sat weekend rule on every path.
 - **Done 2026-10-06:** pushed `52cb284`..`10d85be` (verified `HEAD` = `origin/main`); prod checks for weekend mismatch and seasonal rates (see Phase 2); dead pricing code deleted (`7a349b2`, not pushed).
 - **Verified 2026-10-07:** `prod-drift` CI job green against prod; the booking form price in a browser (only store logic is tested).
-- **Next:** push, then confirm the split CI jobs and the deploy run both go green. After that: typing `createClient` calls / raw PostgREST fetches (last Phase 2 item). Open follow-ups: forward migration matching prod's `search_path` hardening (removes 14 baseline lines); delete `functions/api/guest-booking/multi-unit.ts.bak`.
+- **Next (superseded 2026-10-07):** push, then confirm the split CI jobs and the deploy run both go green. After that: typing `createClient` calls / raw PostgREST fetches (last Phase 2 item). Open follow-ups: forward migration matching prod's `search_path` hardening (removes 14 baseline lines); delete `functions/api/guest-booking/multi-unit.ts.bak`.
 - **Verified on prod 2026-10-04:** migration `20261004000000` applied by the user (`check_unit_availability` 3-arg call returns `true`; `revoke_audit_role` gone); a pricing save wrote a `pricing_config.updated` audit row (`source: app`), the first server-side audit row in prod
 - **First CI run of the two non-blocking `infra-health` steps (2026-10-04, run 37197028971):** both exited 1 but show green (`continue-on-error`). `db lint` flags exactly the 7 functions listed above (the 2 dropped by `20261004000000` are gone). Type drift failed on CLI version, not schema (CI ran latest, local was v2.109.1); fixed by upgrading the local CLI, see Decisions & Deferrals.
 - **Remaining Phase 2:** prod push of `20261005000000`, weekly prod drift check, `tsconfig.e2e.json`, split CI jobs, typing remaining `createClient` calls / raw PostgREST fetches.
