@@ -1,6 +1,7 @@
 name: CI
 
-# Fast, deterministic quality gate: lint + type-check + non-DB unit tests.
+# Fast, deterministic quality gate: lint, type-check, non-DB unit tests and the
+# production npm audit run as parallel jobs; deploy needs all of them.
 #
 # - Runs on every pull request to main (blocks merge once branch protection is
 #   enabled — see docs/whole-app-audit-2026-07-21.md, Decision 2).
@@ -25,8 +26,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quality:
-    name: Lint, type-check, unit tests
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -35,17 +36,44 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - name: Install dependencies
-        run: npm ci
-      # routeTree.gen.ts is gitignored and normally produced by the vite plugin.
-      # Generate it up front so lint, type-check, and tests all see it in a clean
-      # checkout (without it, tsc can't resolve @/routeTree.gen — see audit doc).
-      - name: Generate route tree
-        run: npm run generate:routes
+      - run: npm ci
+      # routeTree.gen.ts is gitignored and normally produced by the vite plugin;
+      # without it, lint, tsc and tests can't resolve @/routeTree.gen.
+      - run: npm run generate:routes
       - name: Lint
         run: npm run lint
-      - name: Type-check (src)
+
+  type-check:
+    name: Type-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # routeTree.gen.ts is gitignored and normally produced by the vite plugin;
+      # without it, lint, tsc and tests can't resolve @/routeTree.gen.
+      - run: npm run generate:routes
+      - name: Type-check (src, functions, e2e)
         run: npm run type-check
+
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # routeTree.gen.ts is gitignored and normally produced by the vite plugin;
+      # without it, lint, tsc and tests can't resolve @/routeTree.gen.
+      - run: npm run generate:routes
       - name: Unit tests (non-DB)
         run: npm run test:no-db
 
