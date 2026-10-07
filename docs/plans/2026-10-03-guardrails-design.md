@@ -234,7 +234,13 @@ Found by the `satisfies` annotations (2026-10-04):
 
 - [ ] Rewrite the two CLAUDE.md rules (4.8)
 
-## Resume state (2026-10-06)
+## Resume state (2026-10-07)
+
+- **Done 2026-10-07:** `tsconfig.e2e.json` in CI (`3e2d9a6`); `search_path` function fix (`ddc9d05`, pushed to prod by user, baseline now 98 lines); deploy unblocked (`ac54d63`, audit fix); CI split (`f452b9c`). All pushed (`origin/main` = `f452b9c`).
+- **Unverified at handoff:** deploy run 37596023305 (first run of the split `lint` / `type-check` / `unit` jobs; `audit` already passed) and infra-health run 37596022921 were still in progress. If deploy is green, tick "Split CI jobs" and note that prod now runs `f452b9c`.
+- **In progress:** last Phase 2 item, "Type all `createClient` calls; convert raw PostgREST fetches (4.1)". Live count 2026-10-07: 23 untyped `createClient(` calls in `functions/` (incl. the shared factory `functions/lib/supabase-admin.ts:29`), 10 already typed; 4 raw `rest/v1` fetches (`admin/verify-payment.ts:210,272,314`, `audit/log-with-ip.ts:174`). Two more untracked, gitignored `.bak` files in `functions/api/guest-booking/` (`preview-pricing.ts.bak`, `rates.ts.bak`) show up in greps; delete them.
+
+Earlier (2026-10-06):
 
 - **Done:** Phase 0, Phase 1, and Phase 2 items `functions/` tsconfig, `gen:types`, `satisfies` payload rule, type drift + `db lint` CI steps; dead-code cleanup.
 - **Done 2026-10-04:** `booking_status` narrowing + CHECK parity test.
