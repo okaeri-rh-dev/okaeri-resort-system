@@ -63,8 +63,18 @@ export function PaymentEditPage() {
   });
 
   // Form submission handler
-  const onSubmit = (data: PaymentEditInput) => {
-    updatePayment.mutate(data);
+  const onSubmit = ({
+    payment_amount,
+    payment_method,
+    payment_proof_url,
+    notes,
+  }: PaymentEditInput) => {
+    updatePayment.mutate({
+      amount: payment_amount,
+      payment_method,
+      proof_url: payment_proof_url || null,
+      notes,
+    });
   };
 
   // Cancel handler
