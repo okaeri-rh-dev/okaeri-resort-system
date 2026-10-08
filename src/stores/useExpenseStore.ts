@@ -1,9 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+import { expenseKeys } from "@/lib/query-keys";
 import { uploadReceipt } from "@/lib/storage-security";
-import { handleSupabaseError, supabase } from "@/lib/supabase";
+import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import { toISODateString } from "@/lib/timezone";
 import type { Expense } from "@/types";
 import type { TablesInsert } from "@/types/database.types";
@@ -136,12 +137,24 @@ export const useExpenseStore = create<ExpenseStore>()(
 // TANSTACK QUERY HOOKS
 // ============================================
 
+// One expense with `date` mapped from expense_date; the detail and edit routes and useEntityEdit share this cache entry
+export const expenseDetailQuery = (expenseId: string) =>
+  queryOptions({
+    queryKey: expenseKeys.detail(expenseId),
+    queryFn: async () => {
+      const { data, error } = await db.expenses.byId(expenseId);
+      if (error) throw new Error(`Failed to load expense: ${handleSupabaseError(error)}`);
+      return { ...data, date: data.expense_date };
+    },
+    staleTime: 30000,
+  });
+
 // Fetch all expenses
 export const useExpenses = () => {
   const { filters, searchQuery, sortBy, sortOrder } = useExpenseStore();
 
   return useQuery({
-    queryKey: ["expenses", filters, searchQuery, sortBy, sortOrder],
+    queryKey: expenseKeys.list({ filters, searchQuery, sortBy, sortOrder }),
     queryFn: async () => {
       let query = supabase.from("expenses").select("*");
 
@@ -204,28 +217,13 @@ export const useExpenses = () => {
 
 // Fetch single expense
 export const useExpense = (expenseId: string) => {
-  return useQuery({
-    queryKey: ["expenses", expenseId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("expenses")
-        .select("*")
-        .eq("expense_id", expenseId)
-        .single();
-
-      if (error) throw new Error(handleSupabaseError(error));
-      // Map expense_date to date for consistency
-      return { ...data, date: data.expense_date };
-    },
-    enabled: !!expenseId,
-    staleTime: 60000,
-  });
+  return useQuery({ ...expenseDetailQuery(expenseId), enabled: !!expenseId });
 };
 
 // Fetch expense statistics
 export const useExpenseStats = (dateRange?: { from: Date; to: Date }) => {
   return useQuery({
-    queryKey: ["expenses", "stats", dateRange],
+    queryKey: expenseKeys.stats(dateRange),
     queryFn: async () => {
       let query = supabase.from("expenses").select("amount, category, expense_date");
 
@@ -320,7 +318,7 @@ export const useCreateExpense = () => {
       return { ...newExpense, date: newExpense.expense_date };
     },
     onMutate: async ({ data }) => {
-      await queryClient.cancelQueries({ queryKey: ["expenses"] });
+      await queryClient.cancelQueries({ queryKey: expenseKeys.all });
 
       const optimisticExpense: Expense = {
         ...data,
@@ -339,7 +337,7 @@ export const useCreateExpense = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
     },
   });
 };
@@ -389,9 +387,9 @@ export const useUpdateExpense = () => {
       return { ...data, date: data.expense_date };
     },
     onMutate: async ({ expenseId, updates }) => {
-      await queryClient.cancelQueries({ queryKey: ["expenses"] });
+      await queryClient.cancelQueries({ queryKey: expenseKeys.all });
 
-      const previousExpense = queryClient.getQueryData<Expense>(["expenses", expenseId]);
+      const previousExpense = queryClient.getQueryData<Expense>(expenseKeys.detail(expenseId));
 
       updateOptimistic(expenseId, updates);
 
@@ -403,7 +401,7 @@ export const useUpdateExpense = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
     },
   });
 };
@@ -420,15 +418,15 @@ export const useDeleteExpense = () => {
       if (error) throw new Error(handleSupabaseError(error));
     },
     onMutate: async (expenseId) => {
-      await queryClient.cancelQueries({ queryKey: ["expenses"] });
+      await queryClient.cancelQueries({ queryKey: expenseKeys.all });
       removeOptimistic(expenseId);
       return { expenseId };
     },
     onError: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
     },
   });
 };

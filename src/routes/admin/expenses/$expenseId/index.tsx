@@ -1,12 +1,13 @@
 import { lazy, Suspense } from "react";
 
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
-import { db } from "@/lib/supabase";
+import { expenseDetailQuery } from "@/stores/useExpenseStore";
 
 // Lazy load the detail page component
 const ExpenseDetailPage = lazy(() =>
@@ -21,25 +22,7 @@ export const Route = createFileRoute("/admin/expenses/$expenseId/")({
     const { expenseId } = params;
     const { queryClient } = context;
 
-    // Prefetch expense data
-    const expensePromise = queryClient.ensureQueryData({
-      queryKey: ["expense", expenseId],
-      queryFn: async () => {
-        const { data, error } = await db.expenses.byId(expenseId);
-
-        if (error) {
-          console.error("[Expense Detail] Failed to fetch expense:", error);
-          throw new Error(`Failed to load expense: ${error.message}`);
-        }
-
-        if (!data) {
-          throw notFound();
-        }
-
-        return data;
-      },
-      staleTime: 30000, // 30 seconds
-    });
+    const expensePromise = queryClient.ensureQueryData(expenseDetailQuery(expenseId));
 
     // Check if user has permission to view audit logs
     const canViewAudit = await hasAuditRole(AuditRole.MANAGER);
@@ -49,26 +32,9 @@ export const Route = createFileRoute("/admin/expenses/$expenseId/")({
       ? queryClient.ensureQueryData(recentRecordAuditLogsQuery("expenses", expenseId))
       : Promise.resolve([]);
 
-    // Wait for all data to be loaded
-    const [expenseData, auditLogs] = await Promise.all([expensePromise, auditLogsPromise]);
-
-    // Extend expense with optional fields for type compatibility
-    // Note: unit_id, created_by fields not yet in database schema (Phase 3)
-    const expense = {
-      ...expenseData,
-      unit: undefined as unknown,
-      unit_id: undefined as string | undefined,
-      created_by: undefined as string | undefined,
-      created_by_name: undefined as string | undefined,
-    } as typeof expenseData & {
-      unit?: unknown;
-      unit_id?: string;
-      created_by?: string;
-      created_by_name?: string;
-    };
+    const [, auditLogs] = await Promise.all([expensePromise, auditLogsPromise]);
 
     return {
-      expense,
       auditLogs,
       canViewAudit,
     };
@@ -121,7 +87,7 @@ export const Route = createFileRoute("/admin/expenses/$expenseId/")({
 
 function ExpenseDetailComponent() {
   const { expenseId } = Route.useParams();
-  const { expense } = Route.useLoaderData();
+  const { data: expense } = useSuspenseQuery(expenseDetailQuery(expenseId));
 
   return (
     <ErrorBoundary level="page">
