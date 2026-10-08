@@ -4,8 +4,9 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
-import { db, supabase } from "@/lib/supabase";
+import { db } from "@/lib/supabase";
 
 // Lazy load the detail page component
 const ExpenseDetailPage = lazy(() =>
@@ -45,26 +46,7 @@ export const Route = createFileRoute("/admin/expenses/$expenseId/")({
 
     // Prefetch audit logs only if user has permission
     const auditLogsPromise = canViewAudit
-      ? queryClient.ensureQueryData({
-          queryKey: ["auditLogs", "expense", expenseId],
-          queryFn: async () => {
-            const { data, error } = await supabase
-              .from("audit_logs")
-              .select("*")
-              .eq("table_name", "expenses")
-              .eq("record_id", expenseId)
-              .order("created_at", { ascending: false })
-              .limit(50);
-
-            if (error) {
-              console.error("[Expense Detail] Failed to fetch audit logs:", error);
-              return [];
-            }
-
-            return data || [];
-          },
-          staleTime: 60000, // 1 minute
-        })
+      ? queryClient.ensureQueryData(recentRecordAuditLogsQuery("expenses", expenseId))
       : Promise.resolve([]);
 
     // Wait for all data to be loaded

@@ -526,6 +526,19 @@ export const db = {
      * @param recordId - UUID of record
      * @returns Promise with audit logs for this record
      */
+    recentByRecord: async (tableName: string, recordId: string, limit = 50) => {
+      const { data, error } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .eq("table_name", tableName)
+        .eq("record_id", recordId)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data || [];
+    },
+
     byRecord: async (tableName: string, recordId: string) => {
       const { data, error } = await supabase
         .from("audit_logs")

@@ -4,6 +4,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
 import { db, supabase } from "@/lib/supabase";
 
@@ -78,26 +79,7 @@ export const Route = createFileRoute("/admin/guests/$guestId/")({
 
     // Prefetch audit logs only if user has permission
     const auditLogsPromise = canViewAudit
-      ? queryClient.ensureQueryData({
-          queryKey: ["auditLogs", "guest", guestId],
-          queryFn: async () => {
-            const { data, error } = await supabase
-              .from("audit_logs")
-              .select("*")
-              .eq("table_name", "guests")
-              .eq("record_id", guestId)
-              .order("created_at", { ascending: false })
-              .limit(50);
-
-            if (error) {
-              console.error("[Guest Detail] Failed to fetch audit logs:", error);
-              return [];
-            }
-
-            return data || [];
-          },
-          staleTime: 60000, // 1 minute
-        })
+      ? queryClient.ensureQueryData(recentRecordAuditLogsQuery("guests", guestId))
       : Promise.resolve([]);
 
     // Wait for all data to be loaded

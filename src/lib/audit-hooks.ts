@@ -1,6 +1,6 @@
 // src/lib/audit-hooks.ts
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { logger } from "@/lib/logger";
 import { toManilaDateString } from "@/lib/timezone";
@@ -34,6 +34,21 @@ export const auditKeys = {
   stats: (filters?: AuditLogFilters) => [...auditKeys.all, "stats", filters] as const,
   user: (email: string) => [...auditKeys.all, "user", email] as const,
 };
+
+/** The 50 newest audit rows for one record, for detail-page loaders. A failure shows an empty history, not an error page. */
+export const recentRecordAuditLogsQuery = (tableName: string, recordId: string) =>
+  queryOptions({
+    queryKey: [...auditKeys.record(tableName, recordId), "recent"],
+    queryFn: async () => {
+      try {
+        return await db.auditLogs.recentByRecord(tableName, recordId);
+      } catch (error) {
+        logger.error(`Failed to fetch audit logs for ${tableName}/${recordId}`, error);
+        return [];
+      }
+    },
+    staleTime: 60000,
+  });
 
 // ============================================
 // QUERY HOOKS
