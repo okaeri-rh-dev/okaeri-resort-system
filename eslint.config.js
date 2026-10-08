@@ -32,7 +32,7 @@ const utcDateSliceSelector = {
   selector:
     "CallExpression[callee.property.name=/^(split|slice|substring)$/][callee.object.callee.property.name='toISOString']",
   message:
-    "toISOString() is UTC, so a local date before 08:00 Manila time becomes the previous day. Use toISODateString() from @/lib/timezone.",
+    "toISOString() is UTC, so before 08:00 Manila time it gives the previous day. From @/lib/timezone use toManilaDateString() for today or a timestamp, toISODateString() for a picked date, or toUTCDateString() when the key must follow UTC days (Cloudflare quotas).",
 };
 
 // Type-aware rules need a TS program per file (~4x slower), so the per-edit hook, Stop hook
@@ -113,7 +113,12 @@ export default tseslint.config([
       "no-unused-vars": "off", // Using TypeScript's version
       "prefer-const": "warn",
       "no-var": "error",
-      "no-restricted-syntax": ["error", metadataRoleSelector, untypedPayloadSelector],
+      "no-restricted-syntax": [
+        "error",
+        metadataRoleSelector,
+        untypedPayloadSelector,
+        utcDateSliceSelector,
+      ],
 
       // Code style - very relaxed
       "max-len": "off", // No line length limit
@@ -243,6 +248,7 @@ export default tseslint.config([
         metadataRoleSelector,
         untypedPayloadSelector,
         silentCatchSelector,
+        utcDateSliceSelector,
       ],
     },
   },
@@ -263,22 +269,6 @@ export default tseslint.config([
             },
           ],
         },
-      ],
-    },
-  },
-
-  // Date-only values must use the local (Asia/Manila) calendar day. toISOString() is UTC,
-  // so a date picked at local midnight becomes the previous day. Scope widens in
-  // guardrails Phase 1 (docs/plans/2026-10-03-guardrails-design.md).
-  {
-    files: ["src/components/expenses/**/*.{ts,tsx}", "src/stores/useExpenseStore.ts"],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        metadataRoleSelector,
-        untypedPayloadSelector,
-        silentCatchSelector,
-        utcDateSliceSelector,
       ],
     },
   },

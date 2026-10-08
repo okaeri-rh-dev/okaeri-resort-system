@@ -15,6 +15,7 @@ import type {
   DocumentType,
   LetterheadConfig,
 } from "@/components/documents/types";
+import { toManilaDateString } from "@/lib/timezone";
 
 // ============================================
 // TYPES
@@ -90,7 +91,7 @@ function calculatePricing(
 function createInitialFormData(): DocumentFormData {
   return {
     document_type: "quotation",
-    document_date: new Date().toISOString().split("T")[0],
+    document_date: toManilaDateString(new Date()),
     valid_until: "",
     recipient: {
       name: "",

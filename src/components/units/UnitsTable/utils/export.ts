@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import { toManilaDateString } from "@/lib/timezone";
 import type { Unit } from "@/types";
 
 /**
@@ -116,7 +117,7 @@ function downloadCSV(content: string, filename: string) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.setAttribute("href", url);
-  link.setAttribute("download", `${filename}_${new Date().toISOString().split("T")[0]}.csv`);
+  link.setAttribute("download", `${filename}_${toManilaDateString(new Date())}.csv`);
   link.style.display = "none";
   document.body.appendChild(link);
   link.click();

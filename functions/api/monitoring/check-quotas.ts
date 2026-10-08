@@ -5,6 +5,8 @@
  * Runs periodically via cron or can be called manually.
  */
 
+import { toUTCDateString } from "@/lib/timezone";
+
 interface Env {
   RATE_LIMIT_KV: KVNamespace;
   ALERT_WEBHOOK_URL?: string;
@@ -31,7 +33,7 @@ export async function onRequest(context: EventContext<Env, never, Record<string,
 
   const alerts: Alert[] = [];
   const now = new Date();
-  const today = now.toISOString().split("T")[0];
+  const today = toUTCDateString(now);
 
   try {
     // 1. Check KV writes quota (1,000/day free tier)

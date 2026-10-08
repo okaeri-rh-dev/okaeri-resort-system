@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { logger } from "@/lib/logger";
+import { toManilaDateString } from "@/lib/timezone";
 import type {
   AuditEventContext,
   AuditLog,
@@ -239,7 +240,7 @@ export function useExportAuditLogs() {
       const csv = convertLogsToCSV(result.data as AuditLog[]); // Type assertion for data array
 
       // Download CSV file
-      downloadCSV(csv, filename || `audit-logs-${new Date().toISOString().split("T")[0]}.csv`);
+      downloadCSV(csv, filename || `audit-logs-${toManilaDateString(new Date())}.csv`);
     },
   });
 }

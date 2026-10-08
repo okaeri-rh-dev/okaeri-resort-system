@@ -3,6 +3,8 @@
  * Contains test credentials, mock data, and common test values
  */
 
+import { toManilaDateString } from "../../src/lib/timezone";
+
 // Test account credentials - configure in your test environment
 // See .env.test for actual values (jasonacido+role@gmail.com / 12345678)
 export const TEST_USERS = {
@@ -48,7 +50,7 @@ export const TEST_BOOKING = {
 export function getFutureDate(daysFromNow: number): string {
   const date = new Date();
   date.setDate(date.getDate() + daysFromNow);
-  return date.toISOString().split("T")[0];
+  return toManilaDateString(date);
 }
 
 export function getCheckInDate(): string {

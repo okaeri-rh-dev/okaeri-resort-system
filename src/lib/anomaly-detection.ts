@@ -14,6 +14,8 @@
  * @module anomaly-detection
  */
 
+import { toUTCDateString } from "@/lib/timezone";
+
 import { blockInKV } from "./auto-blocking";
 
 /**
@@ -61,18 +63,14 @@ function getMinuteWindow(windowMinutes: number = 10): string {
   const minutes = Math.floor(now.getMinutes() / windowMinutes) * windowMinutes;
   const hourStr = now.getUTCHours().toString().padStart(2, "0");
   const minStr = minutes.toString().padStart(2, "0");
-  const dateStr = now.toISOString().split("T")[0];
+  const dateStr = toUTCDateString(now);
   return `${dateStr}T${hourStr}:${minStr}`;
 }
 
 /**
  * Increment and get a counter value in KV
  */
-async function incrementAndGet(
-  kv: KVNamespace,
-  key: string,
-  ttlSeconds: number
-): Promise<number> {
+async function incrementAndGet(kv: KVNamespace, key: string, ttlSeconds: number): Promise<number> {
   const current = await kv.get(key);
   const newValue = parseInt(current || "0") + 1;
 

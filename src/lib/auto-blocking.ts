@@ -8,6 +8,8 @@
  * - 50+ violations → 7 day block
  */
 
+import { toUTCDateString } from "@/lib/timezone";
+
 import { logSecurityEvent, shouldAutoBlock } from "./security-monitoring";
 
 /**
@@ -322,7 +324,7 @@ export async function getViolationCount(
   kv: KVNamespace,
   ip: string
 ): Promise<{ today: number; total: number }> {
-  const today = new Date().toISOString().split("T")[0];
+  const today = toUTCDateString(new Date());
   const dailyKey = `violations:${ip}:${today}`;
   const totalKey = `violations:total:${ip}`;
 
@@ -356,7 +358,7 @@ export async function incrementViolation(
   blocked: boolean;
   blockDuration?: number;
 }> {
-  const today = new Date().toISOString().split("T")[0];
+  const today = toUTCDateString(new Date());
   const dailyKey = `violations:${ip}:${today}`;
   const totalKey = `violations:total:${ip}`;
 
@@ -388,7 +390,12 @@ export async function incrementViolation(
   } else if (newDailyCount >= PROGRESSIVE_BLOCK_THRESHOLDS.MODERATE.violations) {
     // 10+ in 24 hours → 24 hour block
     blockDuration = PROGRESSIVE_BLOCK_THRESHOLDS.MODERATE.blockDurationSeconds;
-    await blockInKV(kv, ip, blockDuration, `${reason} (moderate: ${newDailyCount} violations today)`);
+    await blockInKV(
+      kv,
+      ip,
+      blockDuration,
+      `${reason} (moderate: ${newDailyCount} violations today)`
+    );
     blocked = true;
   } else if (newDailyCount >= PROGRESSIVE_BLOCK_THRESHOLDS.MINOR.violations) {
     // 3+ violations → 1 hour block

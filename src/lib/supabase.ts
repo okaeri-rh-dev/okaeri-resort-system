@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { format } from "date-fns";
 
+import { toManilaDateString } from "@/lib/timezone";
 import type { AuditEventContext, AuditLogFilters } from "@/types/audit.types";
 import type { Database, Json, TablesInsert, TablesUpdate } from "@/types/database.types";
 
@@ -612,7 +613,7 @@ export const db = {
 
         // By date (for recent activity)
         if (log.created_at) {
-          const date = new Date(log.created_at).toISOString().split("T")[0];
+          const date = toManilaDateString(new Date(log.created_at));
           dailyCounts[date] = (dailyCounts[date] || 0) + 1;
         }
       });

@@ -5,6 +5,8 @@
  * Provides consistent test data while ensuring date-based tests don't become stale.
  */
 
+import { toManilaDateString } from "../../src/lib/timezone";
+
 /**
  * Add days to a date
  */
@@ -18,7 +20,7 @@ export function addDays(date: Date, days: number): Date {
  * Format date as YYYY-MM-DD string
  */
 export function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
+  return toManilaDateString(date);
 }
 
 /**

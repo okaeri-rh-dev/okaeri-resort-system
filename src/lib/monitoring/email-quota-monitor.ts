@@ -5,6 +5,7 @@
  * and provides usage analytics and alerts.
  */
 
+import { toUTCDateString } from "@/lib/timezone";
 import { AuditCategory, AuditSeverity } from "@/types/audit.types";
 
 import { logAuditEvent } from "../audit-logger";
@@ -440,7 +441,7 @@ export class EmailQuotaMonitor {
 
   private getCurrentPeriod(): string {
     const now = new Date();
-    return now.toISOString().split("T")[0];
+    return toUTCDateString(now);
   }
 }
 

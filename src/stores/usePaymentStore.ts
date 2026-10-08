@@ -5,6 +5,7 @@ import { devtools, persist } from "zustand/middleware";
 import { afterBookingPaymentChange, invalidatePayments } from "@/lib/query-invalidation";
 import { uploadPaymentProof } from "@/lib/storage-security";
 import { handleSupabaseError, supabase } from "@/lib/supabase";
+import { toManilaDateString } from "@/lib/timezone";
 import type { Payment, PaymentMethod, PaymentStatus } from "@/types";
 import type { TablesInsert, TablesUpdate } from "@/types/database.types";
 
@@ -504,7 +505,7 @@ export const useExportPayments = () => {
 
       // Convert to CSV
       const csv = convertToCSV(data || []);
-      downloadCSV(csv, `payments-${new Date().toISOString().split("T")[0]}.csv`);
+      downloadCSV(csv, `payments-${toManilaDateString(new Date())}.csv`);
     },
   });
 };

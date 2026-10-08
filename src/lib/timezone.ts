@@ -8,6 +8,7 @@
  * - toPhilippineTime: Convert any Date to Philippine timezone
  * - formatPhilippineDate: Format date in Philippine timezone
  * - toISODateString: Convert to YYYY-MM-DD format for API calls
+ * - toManilaDateString / toUTCDateString: YYYY-MM-DD of an instant in Manila / UTC
  * - getTodayPhilippineTime: Get today's date in Philippine timezone
  * - isPastDate: Check if a date is in the past (Philippine time)
  * - isTooFarInFuture: Check if a date exceeds 1 year limit
@@ -17,7 +18,7 @@
  */
 
 import { addYears, endOfMonth, format, isBefore, startOfDay, startOfMonth } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
+import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 
 /**
  * Philippine timezone constant
@@ -71,6 +72,22 @@ export function formatPhilippineDate(date: Date, formatStr: string = "PPP"): str
  */
 export function toISODateString(date: Date): string {
   return format(date, "yyyy-MM-dd");
+}
+
+/**
+ * Calendar day of an instant in Manila, regardless of the runtime's timezone
+ * (Workers run in UTC). Use for "today" and for timestamps.
+ */
+export function toManilaDateString(date: Date): string {
+  return formatInTimeZone(date, TIMEZONE, "yyyy-MM-dd");
+}
+
+/**
+ * Calendar day of an instant in UTC. Only for keys that must follow a UTC
+ * day, such as Cloudflare free-tier quotas, which reset at 00:00 UTC.
+ */
+export function toUTCDateString(date: Date): string {
+  return formatInTimeZone(date, "UTC", "yyyy-MM-dd");
 }
 
 /**

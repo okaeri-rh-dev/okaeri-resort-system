@@ -13,6 +13,7 @@ import {
   invalidateBookings,
 } from "@/lib/query-invalidation";
 import { db, handleSupabaseError, storage, supabase } from "@/lib/supabase";
+import { toManilaDateString } from "@/lib/timezone";
 import type {
   Booking,
   BookingFilters,
@@ -1078,10 +1079,10 @@ export const useUpcomingCheckIns = (days = 7) => {
   return useQuery({
     queryKey: ["upcoming-checkins", days],
     queryFn: async () => {
-      const today = new Date().toISOString().split("T")[0];
+      const today = toManilaDateString(new Date());
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + days);
-      const futureDateStr = futureDate.toISOString().split("T")[0];
+      const futureDateStr = toManilaDateString(futureDate);
 
       const { data, error } = await supabase
         .from("bookings")
@@ -1112,10 +1113,10 @@ export const useUpcomingCheckOuts = (days = 7) => {
   return useQuery({
     queryKey: ["upcoming-checkouts", days],
     queryFn: async () => {
-      const today = new Date().toISOString().split("T")[0];
+      const today = toManilaDateString(new Date());
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + days);
-      const futureDateStr = futureDate.toISOString().split("T")[0];
+      const futureDateStr = toManilaDateString(futureDate);
 
       const { data, error } = await supabase
         .from("bookings")

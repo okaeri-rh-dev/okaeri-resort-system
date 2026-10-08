@@ -5,6 +5,7 @@
  * Mirrors the server-side pricing logic for E2E test assertions.
  */
 
+import { toManilaDateString } from "../../src/lib/timezone";
 import { calculateNights, isWeekendNight } from "./booking-data";
 
 /**
@@ -140,8 +141,8 @@ export function createSeasonalConfig(
 
   return {
     ...SEASONAL_CONFIGS[config],
-    startDate: startDate.toISOString().split("T")[0],
-    endDate: endDate.toISOString().split("T")[0],
+    startDate: toManilaDateString(startDate),
+    endDate: toManilaDateString(endDate),
   };
 }
 
@@ -186,7 +187,7 @@ export function calculateNightlyRate(
   seasonalRates: SeasonalRateConfig[] = []
 ): NightlyRate {
   const dateObj = typeof date === "string" ? new Date(date) : date;
-  const dateStr = dateObj.toISOString().split("T")[0];
+  const dateStr = toManilaDateString(dateObj);
   const isWeekend = isWeekendNight(dateObj);
   const baseRate = isWeekend ? pricing.weekendRate : pricing.baseRate;
   const seasonalMultiplier = getSeasonalMultiplier(dateObj, seasonalRates);
@@ -344,6 +345,6 @@ export function createRateChangeTestData(
   return {
     originalRate,
     newRate,
-    changeDate: changeDate.toISOString().split("T")[0],
+    changeDate: toManilaDateString(changeDate),
   };
 }

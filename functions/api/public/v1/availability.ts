@@ -37,6 +37,7 @@ import type { Database } from "@/types/database.types";
 import { verifyTurnstile } from "@/lib/turnstile";
 
 import { createLogger } from "../../../lib/logger";
+import { toManilaDateString } from "@/lib/timezone";
 
 interface Env {
   SUPABASE_URL: string;
@@ -137,8 +138,8 @@ export async function onRequest(context: {
     const defaultStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const defaultEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    const startDate = startParam || defaultStart.toISOString().split("T")[0];
-    const endDate = endParam || defaultEnd.toISOString().split("T")[0];
+    const startDate = startParam || toManilaDateString(defaultStart);
+    const endDate = endParam || toManilaDateString(defaultEnd);
 
     // ============================================================================
     // DATE FORMAT VALIDATION (YYYY-MM-DD)

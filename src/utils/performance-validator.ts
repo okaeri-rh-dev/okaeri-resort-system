@@ -17,6 +17,7 @@ import {
 } from "@/lib/availability";
 import { logger } from "@/lib/logger";
 import { supabase } from "@/lib/supabase";
+import { toManilaDateString } from "@/lib/timezone";
 
 // Performance targets
 const PERFORMANCE_TARGETS = {
@@ -75,8 +76,8 @@ async function testSingleUnitPerformance(): Promise<PerformanceResult> {
     }
 
     const unitId = units[0].unit_id;
-    const checkIn = new Date().toISOString().split("T")[0];
-    const checkOut = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    const checkIn = toManilaDateString(new Date());
+    const checkOut = toManilaDateString(new Date(Date.now() + 2 * 24 * 60 * 60 * 1000));
 
     const result = await checkUnitAvailability(unitId, checkIn, checkOut);
     const duration = timer.stop();
@@ -107,8 +108,8 @@ async function testMultiUnitPerformance(): Promise<PerformanceResult> {
   const timer = createTimer();
 
   try {
-    const checkIn = new Date().toISOString().split("T")[0];
-    const checkOut = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    const checkIn = toManilaDateString(new Date());
+    const checkOut = toManilaDateString(new Date(Date.now() + 2 * 24 * 60 * 60 * 1000));
 
     const result = await checkMultiUnitAvailability(checkIn, checkOut, { limit: 10 });
     const duration = timer.stop();
@@ -150,8 +151,8 @@ async function testCalendarPerformance(): Promise<PerformanceResult> {
     }
 
     const unitId = units[0].unit_id;
-    const startDate = new Date().toISOString().split("T")[0];
-    const endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]; // 30 days
+    const startDate = toManilaDateString(new Date());
+    const endDate = toManilaDateString(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)); // 30 days
 
     const result = await getUnitAvailabilityCalendar(unitId, startDate, endDate);
     const duration = timer.stop();
@@ -191,8 +192,8 @@ async function testBatchPerformance(): Promise<PerformanceResult> {
     }
 
     const unitIds = units.map((u) => u.unit_id);
-    const checkIn = new Date().toISOString().split("T")[0];
-    const checkOut = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    const checkIn = toManilaDateString(new Date());
+    const checkOut = toManilaDateString(new Date(Date.now() + 2 * 24 * 60 * 60 * 1000));
 
     const result = await batchCheckUnitAvailability(unitIds, checkIn, checkOut);
     const duration = timer.stop();

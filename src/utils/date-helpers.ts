@@ -11,6 +11,7 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 
 import { RESORT_OPERATION_HOURS, RESORT_TIMEZONE } from "@/config/settings";
+import { toISODateString } from "@/lib/timezone";
 
 // ============================================
 // TYPE DEFINITIONS
@@ -319,17 +320,15 @@ export const isWeekend = (date: Date): boolean => {
  * @returns True if holiday
  */
 export const isHoliday = (date: Date, customHolidays: Date[] = []): boolean => {
-  const dateString = date.toISOString().split("T")[0];
+  const dateString = toISODateString(date);
 
   // Check Philippine holidays
   const isPhilippineHoliday = PHILIPPINE_HOLIDAYS_2024.some(
-    (holiday) => holiday.date.toISOString().split("T")[0] === dateString
+    (holiday) => toISODateString(holiday.date) === dateString
   );
 
   // Check custom holidays
-  const isCustomHoliday = customHolidays.some(
-    (holiday) => holiday.toISOString().split("T")[0] === dateString
-  );
+  const isCustomHoliday = customHolidays.some((holiday) => toISODateString(holiday) === dateString);
 
   return isPhilippineHoliday || isCustomHoliday;
 };
@@ -341,11 +340,9 @@ export const isHoliday = (date: Date, customHolidays: Date[] = []): boolean => {
  * @returns Holiday information or null if not a holiday
  */
 export const getHolidayInfo = (date: Date): PhilippineHoliday | null => {
-  const dateString = date.toISOString().split("T")[0];
+  const dateString = toISODateString(date);
   return (
-    PHILIPPINE_HOLIDAYS_2024.find(
-      (holiday) => holiday.date.toISOString().split("T")[0] === dateString
-    ) || null
+    PHILIPPINE_HOLIDAYS_2024.find((holiday) => toISODateString(holiday.date) === dateString) || null
   );
 };
 

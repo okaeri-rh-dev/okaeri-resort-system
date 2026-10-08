@@ -5,6 +5,8 @@
  * with minimal write operations to stay within free tier limits.
  */
 
+import { toUTCDateString } from "@/lib/timezone";
+
 export interface Metric {
   name: string;
   value: number;
@@ -75,7 +77,7 @@ export class MetricsCollector {
   async flush(): Promise<void> {
     if (this.batchBuffer.size === 0) return;
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = toUTCDateString(new Date());
     const aggregateKey = `metrics:daily:${today}`;
 
     try {
@@ -110,7 +112,7 @@ export class MetricsCollector {
     // Flush any pending updates first
     await this.flush();
 
-    const dateStr = date || new Date().toISOString().split("T")[0];
+    const dateStr = date || toUTCDateString(new Date());
     const aggregateKey = `metrics:daily:${dateStr}`;
 
     try {
@@ -137,7 +139,7 @@ export class MetricsCollector {
   async getDailyMetrics(date?: string): Promise<DailyMetrics> {
     await this.flush();
 
-    const dateStr = date || new Date().toISOString().split("T")[0];
+    const dateStr = date || toUTCDateString(new Date());
     const aggregateKey = `metrics:daily:${dateStr}`;
 
     try {
@@ -186,7 +188,7 @@ export class MetricsCollector {
     const datePromises: Promise<{ date: string; data: Record<string, number> | null }>[] = [];
 
     while (current <= endDate) {
-      const dateStr = current.toISOString().split("T")[0];
+      const dateStr = toUTCDateString(current);
       const aggregateKey = `metrics:daily:${dateStr}`;
 
       datePromises.push(
@@ -301,7 +303,7 @@ export class MetricsCollector {
   async cleanup(daysToKeep: number = 30): Promise<number> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
-    const cutoffStr = cutoffDate.toISOString().split("T")[0];
+    const cutoffStr = toUTCDateString(cutoffDate);
 
     let deleted = 0;
 
