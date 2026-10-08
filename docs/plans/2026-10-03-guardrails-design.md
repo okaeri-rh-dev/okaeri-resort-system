@@ -269,7 +269,8 @@ Found by the `satisfies` annotations (2026-10-04):
 
 ## Resume state (2026-10-08, Phase 3 in progress)
 
-- **Next (Phase 3):** query-key item in progress (2026-10-08): measured; plugin `recommended` set at error; audit family migrated. Next: guest family (each entity commit also moves its detail page to `useSuspenseQuery`, user 2026-10-08), then expense, payment, unit, booking; then Knip, test type-check, exit criterion.
+- **Next (Phase 3):** query-key item in progress (2026-10-08): audit, guest, expense migrated. Next: payment, unit, booking (each moves its detail page to `useSuspenseQuery`); then Knip, test type-check, exit criterion. Pre-existing bugs found during the browser checks are listed under the guest and expense sub-items; fixes pending user decision.
+- **Verified 2026-10-08 (query-key batch 2):** pushed `f46e09a`..`d8b5e8c` (`HEAD` = `origin/main`). Deploy run 37750571956, infra-health 37750571658 and Security Scan 37750571685 all success. Lint: 171 warnings (162 `prefer-query-options`, 7 `no-restricted-imports`, 2 shadcn `react-refresh`).
 - **Verified 2026-10-08 (query-key batch 1):** pushed `98a2335`..`c72a425` (`HEAD` = `origin/main`). Deploy run 37728558268 (lint, type-check, unit, audit, deploy), infra-health 37728557785 and Security Scan 37728557799 all success. Lint: 10 warnings (8 `no-restricted-imports`, 2 shadcn `react-refresh`).
 - **Not verified (2026-10-08):** browser checks of reset-password, admin error-page sign-out, units table edit/delete, payment-proof upload, upcoming check-ins between 00:00 and 08:00 Manila; e2e suite not run after the fixture date change (only `playwright test --list`, 1464); Resend quota reset timezone.
 - **Verified 2026-10-07:** pushed `4120465`..`b895514` (`HEAD` = `origin/main`). Deploy run 37615490268: lint (type-aware, 211 warnings, 0 errors), type-check, unit, audit and deploy all success; infra-health 37615489821 and Security Scan 37615489888 success.
