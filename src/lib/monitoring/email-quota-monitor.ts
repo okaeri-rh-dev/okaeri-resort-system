@@ -245,16 +245,11 @@ export class EmailQuotaMonitor {
       .filter((e) => e.timestamp >= todayStart)
       .forEach((event) => {
         const template = String(event.metadata?.template || "default");
-        if (!templateMap.has(template)) {
-          templateMap.set(template, {
-            name: template,
-            sentCount: 0,
-            successRate: 0,
-            avgDeliveryTime: 0,
-          });
+        let stats = templateMap.get(template);
+        if (!stats) {
+          stats = { name: template, sentCount: 0, successRate: 0, avgDeliveryTime: 0 };
+          templateMap.set(template, stats);
         }
-
-        const stats = templateMap.get(template)!;
         if (event.type === "sent") stats.sentCount++;
       });
 

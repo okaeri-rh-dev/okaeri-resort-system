@@ -447,8 +447,9 @@ export function useMultiUnitStoreSync(bookingId?: string, options: { enabled?: b
       }
     },
     onDelete: (payload) => {
-      if (payload.old && "booking_id" in payload.old) {
-        clearOptimisticEntry((payload.old as Partial<MultiUnitBooking>).booking_id!);
+      const deletedBookingId = (payload.old as Partial<MultiUnitBooking> | undefined)?.booking_id;
+      if (deletedBookingId) {
+        clearOptimisticEntry(deletedBookingId);
       }
     },
     onError: (error) => {

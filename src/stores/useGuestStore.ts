@@ -144,9 +144,7 @@ export const useGuests = () => {
 
       // Merge with optimistic updates
       const mergedData =
-        (data as Guest[])?.map((guest) =>
-          optimisticGuests.has(guest.guest_id) ? optimisticGuests.get(guest.guest_id)! : guest
-        ) || [];
+        (data as Guest[])?.map((guest) => optimisticGuests.get(guest.guest_id) ?? guest) || [];
 
       return mergedData;
     },

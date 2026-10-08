@@ -75,19 +75,20 @@ export function useExpensesTable({ onViewExpense, onEditExpense }: ExpensesTable
     }
 
     // Apply amount range
-    if (filters.minAmount !== undefined) {
-      filtered = filtered.filter((expense) => expense.amount >= filters.minAmount!);
+    const { minAmount, maxAmount, dateFrom, dateTo } = filters;
+    if (minAmount !== undefined) {
+      filtered = filtered.filter((expense) => expense.amount >= minAmount);
     }
-    if (filters.maxAmount !== undefined) {
-      filtered = filtered.filter((expense) => expense.amount <= filters.maxAmount!);
+    if (maxAmount !== undefined) {
+      filtered = filtered.filter((expense) => expense.amount <= maxAmount);
     }
 
     // Apply date range
-    if (filters.dateFrom) {
-      filtered = filtered.filter((expense) => expense.date >= filters.dateFrom!);
+    if (dateFrom) {
+      filtered = filtered.filter((expense) => expense.date >= dateFrom);
     }
-    if (filters.dateTo) {
-      filtered = filtered.filter((expense) => expense.date <= filters.dateTo!);
+    if (dateTo) {
+      filtered = filtered.filter((expense) => expense.date <= dateTo);
     }
 
     return filtered;

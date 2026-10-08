@@ -109,7 +109,7 @@ export function ExpenseDetailModal({ expense, open, onOpenChange }: ExpenseDetai
               </div>
               <Button
                 variant="outline"
-                onClick={() => window.open(expense.receipt_url!, "_blank")}
+                onClick={() => expense.receipt_url && window.open(expense.receipt_url, "_blank")}
                 className="w-full justify-start border-neutral-200 text-neutral-700 hover:bg-neutral-50"
               >
                 <Receipt className="mr-2 h-4 w-4" />

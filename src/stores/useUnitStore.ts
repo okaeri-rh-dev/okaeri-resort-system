@@ -127,9 +127,7 @@ export const useUnits = () => {
 
       // Merge with optimistic updates
       const mergedData =
-        (data as Unit[])?.map((unit) =>
-          optimisticUnits.has(unit.unit_id) ? optimisticUnits.get(unit.unit_id)! : unit
-        ) || [];
+        (data as Unit[])?.map((unit) => optimisticUnits.get(unit.unit_id) ?? unit) || [];
 
       return mergedData;
     },

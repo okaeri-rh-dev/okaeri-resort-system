@@ -62,7 +62,7 @@ export function ExpenseCard({ expense, onView, onEdit, onDelete }: ExpenseCardPr
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => window.open(expense.receipt_url!, "_blank")}
+              onClick={() => expense.receipt_url && window.open(expense.receipt_url, "_blank")}
               className="ml-auto h-7 px-2 text-xs"
             >
               View Receipt

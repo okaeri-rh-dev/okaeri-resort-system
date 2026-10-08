@@ -469,7 +469,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(payment.proof_url!, "_blank")}
+                      onClick={() => payment.proof_url && window.open(payment.proof_url, "_blank")}
                     >
                       <Download className="mr-1 h-4 w-4" />
                       Receipt

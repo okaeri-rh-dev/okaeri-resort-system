@@ -329,6 +329,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
     };
 
     // Merge refs properly
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- React calls this after the ref is attached
     React.useImperativeHandle(ref, () => inputRef.current!);
 
     return (

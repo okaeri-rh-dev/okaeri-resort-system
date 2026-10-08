@@ -149,15 +149,17 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
                 // Inline pricing recalculation if guest assignment changed
                 if (updates.guest_assignment) {
                   const booking = state.draftBooking || state.selectedBooking;
-                  if (booking?.check_in && booking?.check_out) {
+                  const checkIn = booking?.check_in;
+                  const checkOut = booking?.check_out;
+                  if (checkIn && checkOut) {
                     let baseAmount = 0;
                     let totalSurcharges = 0;
 
                     state.selectedUnits.forEach((unit) => {
                       const pricing = get().calculateUnitPricing(
                         unit,
-                        booking.check_in!,
-                        booking.check_out!,
+                        checkIn,
+                        checkOut,
                         unit.guest_assignment?.num_guests || unit.base_occupancy
                       );
 
@@ -198,15 +200,17 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
 
                 // Inline pricing recalculation
                 const booking = state.draftBooking || state.selectedBooking;
-                if (booking?.check_in && booking?.check_out) {
+                const checkIn = booking?.check_in;
+                const checkOut = booking?.check_out;
+                if (checkIn && checkOut) {
                   let baseAmount = 0;
                   let totalSurcharges = 0;
 
                   state.selectedUnits.forEach((unit) => {
                     const pricing = get().calculateUnitPricing(
                       unit,
-                      booking.check_in!,
-                      booking.check_out!,
+                      checkIn,
+                      checkOut,
                       unit.guest_assignment?.num_guests || unit.base_occupancy
                     );
 
@@ -349,15 +353,17 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
 
               // Inline pricing recalculation
               const booking = state.draftBooking || state.selectedBooking;
-              if (booking?.check_in && booking?.check_out) {
+              const checkIn = booking?.check_in;
+              const checkOut = booking?.check_out;
+              if (checkIn && checkOut) {
                 let baseAmount = 0;
                 let totalSurcharges = 0;
 
                 state.selectedUnits.forEach((unit) => {
                   const pricing = get().calculateUnitPricing(
                     unit,
-                    booking.check_in!,
-                    booking.check_out!,
+                    checkIn,
+                    checkOut,
                     unit.guest_assignment?.num_guests || unit.base_occupancy
                   );
 
@@ -394,15 +400,17 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
 
               // Inline pricing recalculation
               const booking = state.draftBooking || state.selectedBooking;
-              if (booking?.check_in && booking?.check_out) {
+              const checkIn = booking?.check_in;
+              const checkOut = booking?.check_out;
+              if (checkIn && checkOut) {
                 let baseAmount = 0;
                 let totalSurcharges = 0;
 
                 state.selectedUnits.forEach((unit) => {
                   const pricing = get().calculateUnitPricing(
                     unit,
-                    booking.check_in!,
-                    booking.check_out!,
+                    checkIn,
+                    checkOut,
                     unit.guest_assignment?.num_guests || unit.base_occupancy
                   );
 

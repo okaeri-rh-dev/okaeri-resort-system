@@ -139,7 +139,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
                           {bu.unit_id.slice(0, 8)}
                         </Badge>
                       )}
-                      {booking.booking_units!.length > 1 && (
+                      {(booking.booking_units?.length ?? 0) > 1 && (
                         <span className="text-xs text-neutral-500">
                           ({bu.assigned_guests || 0} guests)
                         </span>

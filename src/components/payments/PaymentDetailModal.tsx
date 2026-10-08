@@ -147,7 +147,7 @@ export function PaymentDetailModal({ payment, open, onOpenChange }: PaymentDetai
               </div>
               <Button
                 variant="outline"
-                onClick={() => window.open(payment.proof_url!, "_blank")}
+                onClick={() => payment.proof_url && window.open(payment.proof_url, "_blank")}
                 className="w-full justify-start border-neutral-200 text-neutral-700 hover:bg-neutral-50"
               >
                 <Receipt className="mr-2 h-4 w-4" />

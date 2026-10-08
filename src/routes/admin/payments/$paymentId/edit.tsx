@@ -54,11 +54,12 @@ export const Route = createFileRoute("/admin/payments/$paymentId/edit")({
 
     // Prefetch associated booking if payment has booking_id
     const payment = await paymentPromise;
-    const bookingPromise = payment.booking_id
+    const bookingId = payment.booking_id;
+    const bookingPromise = bookingId
       ? queryClient.ensureQueryData({
-          queryKey: ["booking", payment.booking_id],
+          queryKey: ["booking", bookingId],
           queryFn: async () => {
-            const { data, error } = await db.bookings.byId(payment.booking_id!);
+            const { data, error } = await db.bookings.byId(bookingId);
 
             if (error) {
               console.error("[Payment Edit] Failed to fetch booking:", error);

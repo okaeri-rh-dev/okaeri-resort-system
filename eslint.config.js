@@ -102,7 +102,7 @@ export default tseslint.config([
         },
       ],
       "@typescript-eslint/no-explicit-any": "warn", // Warn instead of error
-      "@typescript-eslint/no-non-null-assertion": "warn",
+      "@typescript-eslint/no-non-null-assertion": "error",
       "@typescript-eslint/no-empty-function": "off",
       "@typescript-eslint/ban-ts-comment": "off", // Allow @ts-ignore when needed
       "@typescript-eslint/no-inferrable-types": "off",

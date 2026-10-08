@@ -300,7 +300,7 @@ export class CronMonitor {
         failureCount.set(name, recentFailures.length);
       }
 
-      const durations = recent.filter((e) => e.duration).map((e) => e.duration!);
+      const durations = recent.flatMap((e) => (e.duration ? [e.duration] : []));
 
       if (durations.length > 0) {
         totalDuration24h += durations.reduce((sum, d) => sum + d, 0);

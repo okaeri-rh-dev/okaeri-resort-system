@@ -148,7 +148,7 @@ function RoleChangeEntry({ entry, isLast }: { entry: AuditLog; isLast: boolean }
     changeDescription = (
       <div className="flex items-center gap-2">
         <span className="text-muted-foreground">Role granted:</span>
-        <RoleBadgeInline role={newRole!} />
+        <RoleBadgeInline role={newRole ?? "none"} />
       </div>
     );
   } else if (action === "DELETE") {
@@ -156,7 +156,7 @@ function RoleChangeEntry({ entry, isLast }: { entry: AuditLog; isLast: boolean }
     changeDescription = (
       <div className="flex items-center gap-2">
         <span className="text-muted-foreground">Role removed:</span>
-        <RoleBadgeInline role={oldRole!} />
+        <RoleBadgeInline role={oldRole ?? "none"} />
       </div>
     );
   } else if (oldActive && !newActive) {
@@ -164,7 +164,7 @@ function RoleChangeEntry({ entry, isLast }: { entry: AuditLog; isLast: boolean }
     changeDescription = (
       <div className="flex items-center gap-2">
         <span className="text-muted-foreground">Role deactivated:</span>
-        <RoleBadgeInline role={oldRole!} />
+        <RoleBadgeInline role={oldRole ?? "none"} />
       </div>
     );
   } else if (oldRole && newRole && oldRole !== newRole) {

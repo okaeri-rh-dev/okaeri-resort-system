@@ -316,9 +316,9 @@ export function BookingForm({
         is_walk_in: data.is_walk_in ?? false,
       };
 
-      if (isEditMode) {
+      if (bookingId) {
         await updateBookingMutation.mutateAsync({
-          bookingId: bookingId!,
+          bookingId,
           updates: bookingData,
         });
         toast.success("Booking updated successfully!");
