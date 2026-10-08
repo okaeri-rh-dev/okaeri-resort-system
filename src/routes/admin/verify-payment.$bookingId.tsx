@@ -61,7 +61,7 @@ function PaymentVerificationPage() {
         throw new Error("Failed to fetch booking");
       }
 
-      return response.json() as Promise<BookingDetail>;
+      return response.json();
     },
   });
 

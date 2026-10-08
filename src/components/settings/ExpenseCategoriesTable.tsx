@@ -85,7 +85,7 @@ export function ExpenseCategoriesTable({ onEditCategory }: ExpenseCategoriesTabl
       accessorKey: "is_active",
       header: "Status",
       cell: ({ row }) => {
-        const isActive = row.getValue("is_active") as boolean;
+        const isActive = row.getValue("is_active");
         return isActive ? (
           <Badge variant="default" className="bg-green-600">
             Active

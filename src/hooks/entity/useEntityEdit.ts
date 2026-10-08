@@ -156,7 +156,7 @@ export function useEntityEdit<T extends EntityType>(
       });
 
       // Call custom error handler
-      options?.onError?.(error as Error);
+      options?.onError?.(error);
     },
 
     // Refetch on success to ensure consistency

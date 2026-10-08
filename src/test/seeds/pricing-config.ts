@@ -56,7 +56,7 @@ export async function seedPricingConfig(): Promise<void> {
   }
 
   // Type assertion: We've checked they're defined above
-  const supabase = createClient<Database>(supabaseUrl as string, supabaseKey as string, {
+  const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -112,7 +112,7 @@ export async function cleanupPricingConfig(): Promise<void> {
   }
 
   // Type assertion: We've checked they're defined above
-  const supabase = createClient<Database>(supabaseUrl as string, supabaseKey as string, {
+  const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -156,7 +156,7 @@ export async function verifyPricingConfig(): Promise<boolean> {
   }
 
   // Type assertion: We've checked they're defined above
-  const supabase = createClient<Database>(supabaseUrl as string, supabaseKey as string, {
+  const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

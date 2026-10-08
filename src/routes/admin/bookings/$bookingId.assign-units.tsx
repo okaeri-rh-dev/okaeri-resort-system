@@ -342,7 +342,7 @@ function AssignUnitsPage() {
         throw new Error(errorData.error || "Failed to fetch booking details");
       }
 
-      return response.json() as Promise<BookingDetail>;
+      return response.json();
     },
     staleTime: 30000, // 30 seconds
     retry: 1,

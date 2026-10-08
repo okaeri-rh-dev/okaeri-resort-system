@@ -34,7 +34,7 @@ export async function apiRequest(path: string, options: RequestInit = {}): Promi
   // Add auth token if available
   const token = localStorage.getItem("supabase.auth.token");
   if (token) {
-    (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   return fetch(url, {

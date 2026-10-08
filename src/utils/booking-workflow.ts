@@ -192,7 +192,7 @@ export const BOOKING_BUSINESS_RULES: BusinessRule[] = [
  */
 export const getBookingWorkflowState = (booking: Booking): BookingWorkflowState => {
   const allowedTransitions = booking.booking_status
-    ? BOOKING_STATUS_TRANSITIONS[booking.booking_status as BookingStatus] || []
+    ? BOOKING_STATUS_TRANSITIONS[booking.booking_status] || []
     : [];
   const nextActions = generateNextActions(booking);
   const automatedTriggers = generateAutomatedTriggers(booking);
@@ -219,7 +219,7 @@ export const validateStatusTransition = (
   toStatus: BookingStatus
 ): WorkflowTransition => {
   const allowedTransitions = booking.booking_status
-    ? BOOKING_STATUS_TRANSITIONS[booking.booking_status as BookingStatus] || []
+    ? BOOKING_STATUS_TRANSITIONS[booking.booking_status] || []
     : [];
   const isValidTransition = allowedTransitions.includes(toStatus);
 
@@ -253,7 +253,7 @@ export const validateStatusTransition = (
 export const generateNextActions = (booking: Booking): WorkflowAction[] => {
   const actions: WorkflowAction[] = [];
   const allowedTransitions = booking.booking_status
-    ? BOOKING_STATUS_TRANSITIONS[booking.booking_status as BookingStatus] || []
+    ? BOOKING_STATUS_TRANSITIONS[booking.booking_status] || []
     : [];
 
   // Generate actions for each allowed transition
@@ -721,7 +721,7 @@ export const getWorkflowSummary = (bookings: Booking[]) => {
   bookings.forEach((booking) => {
     // Count by status
     if (booking.booking_status) {
-      summary.byStatus[booking.booking_status as BookingStatus]++;
+      summary.byStatus[booking.booking_status]++;
     }
 
     // Count pending actions

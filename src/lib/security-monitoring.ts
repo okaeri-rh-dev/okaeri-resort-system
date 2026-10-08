@@ -407,7 +407,7 @@ export async function logSecurityEvent(event: {
     await supabase.from("audit_logs").insert({
       action: `security_${event.type}`,
       table_name: "security_events", // Required field
-      severity: threatLevel as "WARNING" | "CRITICAL",
+      severity: threatLevel,
       ip_address: String(event.ip), // Database uses Json type for ip_address
       description: `Security event: ${event.type.replace(/_/g, " ")}`,
       metadata: {

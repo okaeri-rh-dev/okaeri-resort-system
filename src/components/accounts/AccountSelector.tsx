@@ -67,7 +67,7 @@ export const AccountSelector: React.FC<AccountSelectorProps> = ({
     };
 
     filteredAccounts.forEach((account) => {
-      const type = account.account_type as AccountType;
+      const type = account.account_type;
       if (groups[type]) {
         groups[type].push(account);
       }
@@ -153,8 +153,8 @@ const AccountOptionDisplay: React.FC<AccountOptionDisplayProps> = ({
 }) => {
   if (!account) return null;
 
-  const Icon = AccountTypeIcon[account.account_type as AccountType] || CreditCard;
-  const colorClass = AccountTypeColor[account.account_type as AccountType] || "text-gray-600";
+  const Icon = AccountTypeIcon[account.account_type] || CreditCard;
+  const colorClass = AccountTypeColor[account.account_type] || "text-gray-600";
 
   return (
     <div className="flex items-center gap-2">

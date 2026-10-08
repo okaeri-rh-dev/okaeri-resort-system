@@ -132,10 +132,13 @@ export default tseslint.config([
           files: ["**/*.{ts,tsx}"],
           languageOptions: {
             parserOptions: {
+              // First match wins, so each file gets the program tsc checks it with;
+              // tsconfig.eslint.json is the fallback for files tsc does not check.
               project: [
-                "./tsconfig.eslint.json",
+                "./tsconfig.json",
                 "./functions/tsconfig.json",
                 "./tsconfig.e2e.json",
+                "./tsconfig.eslint.json",
               ],
               tsconfigRootDir: import.meta.dirname,
             },
@@ -161,7 +164,9 @@ export default tseslint.config([
               "error",
               { checksVoidReturn: { attributes: false } },
             ],
-            "@typescript-eslint/no-unnecessary-type-assertion": "warn",
+            // Off: it calls `(await res.json()) as T` redundant because the cast itself
+            // infers json<T>(); removing it breaks tsc (88 of 124 hits, guardrails Phase 3).
+            "@typescript-eslint/no-unnecessary-type-assertion": "off",
           },
         },
       ]

@@ -14,7 +14,7 @@ import { useInstallPromptStore } from "@/stores/useInstallPromptStore";
 if (typeof window !== "undefined") {
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
-    useInstallPromptStore.getState().captureEvent(event as BeforeInstallPromptEvent);
+    useInstallPromptStore.getState().captureEvent(event);
   });
 
   window.addEventListener("appinstalled", () => {

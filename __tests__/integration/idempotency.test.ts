@@ -154,7 +154,7 @@ describe("Idempotency and Concurrency", () => {
       expect(failed).toHaveLength(1);
 
       // Verify failed one has constraint violation error
-      const error = (failed[0] as PromiseRejectedResult).reason;
+      const error = failed[0].reason;
       expect(error.code).toBe("23P01"); // PostgreSQL exclusion constraint
     });
 

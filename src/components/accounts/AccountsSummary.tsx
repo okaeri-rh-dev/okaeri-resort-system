@@ -35,8 +35,7 @@ export const AccountsSummary: React.FC<AccountsSummaryProps> = ({
         totalExpenses: acc.totalExpenses + account.total_expenses,
         byType: {
           ...acc.byType,
-          [account.account_type]:
-            (acc.byType[account.account_type as AccountType] || 0) + account.current_balance,
+          [account.account_type]: (acc.byType[account.account_type] || 0) + account.current_balance,
         },
       }),
       {

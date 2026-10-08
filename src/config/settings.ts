@@ -39,7 +39,7 @@ export const getSupportedTimezones = (): readonly string[] => {
 /**
  * All supported timezones as a const array
  */
-export const SUPPORTED_TIMEZONES = getSupportedTimezones() as readonly string[];
+export const SUPPORTED_TIMEZONES = getSupportedTimezones();
 
 /**
  * TypeScript type for valid timezone values

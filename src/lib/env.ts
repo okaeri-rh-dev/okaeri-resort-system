@@ -79,7 +79,7 @@ export function getEnv(key: keyof Env): string | undefined {
 
   // Node.js/Workers context - process.env is available
   if (typeof process !== "undefined" && process.env) {
-    return process.env[key] as string | undefined;
+    return process.env[key];
   }
 
   // Workers globalThis context (if env is passed via context)

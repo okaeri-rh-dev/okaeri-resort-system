@@ -84,21 +84,21 @@ export function hasStringProperty<K extends string>(
   value: unknown,
   key: K
 ): value is Record<K, string> {
-  return hasProperty(value, key) && isString((value as Record<K, unknown>)[key]);
+  return hasProperty(value, key) && isString(value[key]);
 }
 
 export function hasNumberProperty<K extends string>(
   value: unknown,
   key: K
 ): value is Record<K, number> {
-  return hasProperty(value, key) && isNumber((value as Record<K, unknown>)[key]);
+  return hasProperty(value, key) && isNumber(value[key]);
 }
 
 export function hasBooleanProperty<K extends string>(
   value: unknown,
   key: K
 ): value is Record<K, boolean> {
-  return hasProperty(value, key) && isBoolean((value as Record<K, unknown>)[key]);
+  return hasProperty(value, key) && isBoolean(value[key]);
 }
 
 // =============================================================================

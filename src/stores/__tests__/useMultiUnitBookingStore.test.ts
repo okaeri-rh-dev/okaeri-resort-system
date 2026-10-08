@@ -205,7 +205,7 @@ describe("useMultiUnitBookingStore", () => {
         result.current.addUnit(mockUnit);
         result.current.updateUnit("unit-1", {
           pricing: {
-            ...mockUnit.pricing!,
+            ...mockUnit.pricing,
             unit_total: 4000,
           },
         });

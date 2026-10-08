@@ -140,7 +140,7 @@ describe("RLS role-based access on core tables", () => {
 
   afterAll(async () => {
     if (!shouldRun) return;
-    const ids = Object.values(userIds).filter(Boolean) as string[];
+    const ids = Object.values(userIds).filter(Boolean);
     if (ids.length) await admin.from("app_roles").delete().in("user_id", ids);
     for (const id of ids) await admin.auth.admin.deleteUser(id).catch(() => {});
     // Remove the RLS seed rows cleanupTestData does not pattern-match.

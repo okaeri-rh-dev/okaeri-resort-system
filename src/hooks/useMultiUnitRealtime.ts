@@ -160,7 +160,7 @@ export function useMultiUnitBookingSubscription(
         }
       )
       .subscribe((status) => {
-        statusRef.current.channelStatus = status as REALTIME_SUBSCRIBE_STATES;
+        statusRef.current.channelStatus = status;
         statusRef.current.isSubscribed = status === "SUBSCRIBED";
 
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
@@ -272,7 +272,7 @@ export function useBookingUnitsSubscription(
         }
       )
       .subscribe((status) => {
-        statusRef.current.channelStatus = status as REALTIME_SUBSCRIBE_STATES;
+        statusRef.current.channelStatus = status;
         statusRef.current.isSubscribed = status === "SUBSCRIBED";
 
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
@@ -436,14 +436,14 @@ export function useMultiUnitStoreSync(bookingId?: string, options: { enabled?: b
     enabled,
     onInsert: (payload) => {
       if (payload.new && "booking_id" in payload.new) {
-        syncFromRealtime(payload.new as MultiUnitBooking);
+        syncFromRealtime(payload.new);
       }
     },
     onUpdate: (payload) => {
       if (payload.new && "booking_id" in payload.new) {
-        syncFromRealtime(payload.new as MultiUnitBooking);
+        syncFromRealtime(payload.new);
         // Clear optimistic entry if it exists
-        clearOptimisticEntry((payload.new as MultiUnitBooking).booking_id);
+        clearOptimisticEntry(payload.new.booking_id);
       }
     },
     onDelete: (payload) => {

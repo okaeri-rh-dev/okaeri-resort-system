@@ -160,7 +160,7 @@ export async function onRequest(context: {
     // Parse request body
     let requestBody: AssignUnitsRequest;
     try {
-      requestBody = (await request.json()) as AssignUnitsRequest;
+      requestBody = await request.json();
     } catch (_parseError) {
       const errorResponse: ErrorResponse = {
         success: false,

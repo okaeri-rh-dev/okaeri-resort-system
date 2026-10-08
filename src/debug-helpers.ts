@@ -265,7 +265,7 @@ Example:
   };
 
   // Expose to window
-  (window as Window & typeof globalThis).debug = debug;
+  window.debug = debug;
 
   // Show welcome message
   // eslint-disable-next-line no-console
