@@ -1,13 +1,16 @@
 import { lazy, Suspense } from "react";
 
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
+import { unitKeys } from "@/lib/query-keys";
 import { requireManager } from "@/lib/route-guards";
 import { db, supabase } from "@/lib/supabase";
+import { unitDetailQuery } from "@/stores/useUnitStore";
 
 // Lazy load the detail page component
 const UnitDetailPage = lazy(() =>
@@ -27,25 +30,7 @@ export const Route = createFileRoute("/admin/units/$unitId/")({
     const { unitId } = params;
     const { queryClient } = context;
 
-    // Prefetch unit data
-    const unitPromise = queryClient.ensureQueryData({
-      queryKey: ["unit", unitId],
-      queryFn: async () => {
-        const { data, error } = await db.units.byId(unitId);
-
-        if (error) {
-          console.error("[Unit Detail] Failed to fetch unit:", error);
-          throw new Error(`Failed to load unit: ${error.message}`);
-        }
-
-        if (!data) {
-          throw notFound();
-        }
-
-        return data;
-      },
-      staleTime: 30000, // 30 seconds
-    });
+    const unitPromise = queryClient.ensureQueryData(unitDetailQuery(unitId));
 
     // Prefetch related bookings for this unit
     const bookingsPromise = queryClient.ensureQueryData({
@@ -65,7 +50,7 @@ export const Route = createFileRoute("/admin/units/$unitId/")({
 
     // Calculate revenue statistics
     const revenueStatsPromise = queryClient.ensureQueryData({
-      queryKey: ["unit", unitId, "revenue-stats"],
+      queryKey: unitKeys.revenueStats(unitId),
       queryFn: async () => {
         const { data, error } = await supabase
           .from("booking_units")
@@ -119,21 +104,14 @@ export const Route = createFileRoute("/admin/units/$unitId/")({
       : Promise.resolve([]);
 
     // Wait for all data to be loaded
-    const [unitData, bookings, revenueStats, auditLogs] = await Promise.all([
+    const [, bookings, revenueStats, auditLogs] = await Promise.all([
       unitPromise,
       bookingsPromise,
       revenueStatsPromise,
       auditLogsPromise,
     ]);
 
-    // Cast amenities from Json to string[] for TypeScript compatibility
-    const unit = {
-      ...unitData,
-      amenities: unitData.amenities as string[] | null,
-    };
-
     return {
-      unit,
       bookings,
       revenueStats,
       auditLogs,
@@ -188,7 +166,7 @@ export const Route = createFileRoute("/admin/units/$unitId/")({
 
 function UnitDetailComponent() {
   const { unitId } = Route.useParams();
-  const { unit } = Route.useLoaderData();
+  const { data: unit } = useSuspenseQuery(unitDetailQuery(unitId));
 
   return (
     <ErrorBoundary level="page">

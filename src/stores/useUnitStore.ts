@@ -1,7 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+import { unitKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import type { AvailabilityCheck, Unit, UnitFilters, UnitStatus } from "@/types";
 import type { TablesUpdate } from "@/types/database.types";
@@ -94,13 +95,40 @@ export const useUnitStore = create<UnitStore>()(
 // TANSTACK QUERY HOOKS
 // ============================================
 
+// One unit with amenities typed; the detail and edit routes, useUnit and useEntityEdit share this cache entry
+export const unitDetailQuery = (unitId: string) =>
+  queryOptions({
+    queryKey: unitKeys.detail(unitId),
+    queryFn: async () => {
+      const { data, error } = await db.units.byId(unitId);
+      if (error) throw new Error(`Failed to load unit: ${handleSupabaseError(error)}`);
+      return { ...data, amenities: data.amenities as string[] | null };
+    },
+    staleTime: 30000,
+  });
+
+// Every unit, unfiltered, for selectors in edit forms; a failure shows an empty selector
+export const allUnitsQuery = () =>
+  queryOptions({
+    queryKey: unitKeys.unfiltered(),
+    queryFn: async () => {
+      const { data, error } = await db.units.all();
+      if (error) {
+        console.error("Failed to fetch units:", error);
+        return [];
+      }
+      return data || [];
+    },
+    staleTime: 60000,
+  });
+
 // Fetch all units with filters
 export const useUnits = () => {
   const filters = useUnitStore((state) => state.filters);
   const optimisticUnits = useUnitStore((state) => state.optimisticUnits);
 
   return useQuery({
-    queryKey: ["units", filters],
+    queryKey: unitKeys.list(filters),
     queryFn: async () => {
       let query = supabase.from("units").select("*");
 
@@ -138,18 +166,7 @@ export const useUnits = () => {
 
 // Fetch single unit
 export const useUnit = (unitId: string | undefined) => {
-  return useQuery({
-    queryKey: ["units", unitId],
-    queryFn: async () => {
-      if (!unitId) throw new Error("Unit ID is required");
-
-      const { data, error } = await db.units.byId(unitId);
-      if (error) throw new Error(handleSupabaseError(error));
-      return data;
-    },
-    enabled: !!unitId,
-    staleTime: 30000,
-  });
+  return useQuery({ ...unitDetailQuery(unitId ?? ""), enabled: !!unitId });
 };
 
 // Create unit mutation
@@ -166,7 +183,7 @@ export const useCreateUnit = () => {
     },
     onMutate: async (newUnit) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["units"] });
+      await queryClient.cancelQueries({ queryKey: unitKeys.all });
 
       // Create optimistic unit
       const optimisticUnit: Unit = {
@@ -194,7 +211,7 @@ export const useCreateUnit = () => {
     },
     onSettled: () => {
       // Refetch units after mutation
-      queryClient.invalidateQueries({ queryKey: ["units"] });
+      queryClient.invalidateQueries({ queryKey: unitKeys.all });
     },
   });
 };
@@ -218,10 +235,10 @@ export const useUpdateUnit = () => {
       return data;
     },
     onMutate: async ({ unitId, updates }) => {
-      await queryClient.cancelQueries({ queryKey: ["units"] });
+      await queryClient.cancelQueries({ queryKey: unitKeys.all });
 
       // Get current unit data
-      const previousUnit = queryClient.getQueryData<Unit>(["units", unitId]);
+      const previousUnit = queryClient.getQueryData<Unit>(unitKeys.detail(unitId));
 
       if (previousUnit) {
         const optimisticUnit: Unit = {
@@ -233,7 +250,7 @@ export const useUpdateUnit = () => {
         addOptimistic(optimisticUnit);
 
         // Update cache
-        queryClient.setQueryData(["units", unitId], optimisticUnit);
+        queryClient.setQueryData(unitKeys.detail(unitId), optimisticUnit);
 
         return { previousUnit, optimisticUnit };
       }
@@ -242,7 +259,7 @@ export const useUpdateUnit = () => {
       // Revert optimistic update on error
       if (context?.previousUnit) {
         removeOptimistic(variables.unitId);
-        queryClient.setQueryData(["units", variables.unitId], context.previousUnit);
+        queryClient.setQueryData(unitKeys.detail(variables.unitId), context.previousUnit);
       }
     },
     onSuccess: (_data2, _variables2, context) => {
@@ -251,7 +268,7 @@ export const useUpdateUnit = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["units"] });
+      queryClient.invalidateQueries({ queryKey: unitKeys.all });
     },
   });
 };
@@ -266,7 +283,7 @@ export const useDeleteUnit = () => {
       if (error) throw new Error(handleSupabaseError(error));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["units"] });
+      queryClient.invalidateQueries({ queryKey: unitKeys.all });
     },
   });
 };
@@ -306,11 +323,11 @@ export const useCheckAvailability = () => {
 //           },
 //           (payload) => {
 //             // Invalidate and refetch units on any change
-//             queryClient.invalidateQueries({ queryKey: ["units"] });
+//             queryClient.invalidateQueries({ queryKey: unitKeys.all });
 
 //             if (payload.eventType === "UPDATE" && payload.new) {
 //               // Update specific unit cache
-//               queryClient.setQueryData(["units", (payload.new as Unit).unit_id], payload.new);
+//               queryClient.setQueryData(unitKeys.detail((payload.new as Unit).unit_id), payload.new);
 //             }
 //           }
 //         )
@@ -341,7 +358,7 @@ export const useBatchUpdateUnitsStatus = () => {
       if (error) throw new Error(handleSupabaseError(error));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["units"] });
+      queryClient.invalidateQueries({ queryKey: unitKeys.all });
     },
   });
 };

@@ -6,6 +6,7 @@ import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleto
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
 import { db } from "@/lib/supabase";
+import { allUnitsQuery } from "@/stores/useUnitStore";
 
 // Lazy load the edit page component
 const BookingEditPage = lazy(() =>
@@ -51,20 +52,7 @@ export const Route = createFileRoute("/admin/bookings/$bookingId/edit")({
     });
 
     // Prefetch all available units for the unit selector
-    const unitsPromise = queryClient.ensureQueryData({
-      queryKey: ["units", "available"],
-      queryFn: async () => {
-        const { data, error } = await db.units.all();
-
-        if (error) {
-          console.error("[Booking Edit] Failed to fetch units:", error);
-          return [];
-        }
-
-        return data || [];
-      },
-      staleTime: 60000, // 1 minute
-    });
+    const unitsPromise = queryClient.ensureQueryData(allUnitsQuery());
 
     // Prefetch payments for this booking
     const paymentsPromise = queryClient.ensureQueryData({

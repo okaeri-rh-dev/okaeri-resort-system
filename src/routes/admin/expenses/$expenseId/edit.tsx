@@ -5,8 +5,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
-import { db } from "@/lib/supabase";
 import { expenseDetailQuery } from "@/stores/useExpenseStore";
+import { allUnitsQuery } from "@/stores/useUnitStore";
 
 // Lazy load the edit page component
 const ExpenseEditPage = lazy(() =>
@@ -37,20 +37,7 @@ export const Route = createFileRoute("/admin/expenses/$expenseId/edit")({
     const expensePromise = queryClient.ensureQueryData(expenseDetailQuery(expenseId));
 
     // Prefetch all units for the unit selector
-    const unitsPromise = queryClient.ensureQueryData({
-      queryKey: ["units", "all"],
-      queryFn: async () => {
-        const { data, error } = await db.units.all();
-
-        if (error) {
-          console.error("[Expense Edit] Failed to fetch units:", error);
-          return [];
-        }
-
-        return data || [];
-      },
-      staleTime: 60000, // 1 minute
-    });
+    const unitsPromise = queryClient.ensureQueryData(allUnitsQuery());
 
     // Wait for all data to be loaded
     const [expense, units] = await Promise.all([expensePromise, unitsPromise]);

@@ -12,6 +12,7 @@ import {
   afterBookingUpdate,
   invalidateBookings,
 } from "@/lib/query-invalidation";
+import { unitKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, storage, supabase } from "@/lib/supabase";
 import { toManilaDateString } from "@/lib/timezone";
 import type {
@@ -975,7 +976,7 @@ export const useCreateBlackout = () => {
       queryClient.invalidateQueries({ queryKey: ["unit-availability-fast", blackout.unit_id] });
       queryClient.invalidateQueries({ queryKey: ["multi-unit-availability"] });
       queryClient.invalidateQueries({ queryKey: ["availability-calendar", blackout.unit_id] });
-      queryClient.invalidateQueries({ queryKey: ["units"] });
+      queryClient.invalidateQueries({ queryKey: unitKeys.all });
     },
     onError: (error) => {
       console.error("Failed to create blackout period:", error);
