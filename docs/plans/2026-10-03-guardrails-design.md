@@ -252,9 +252,10 @@ Found by the `satisfies` annotations (2026-10-04):
 
 - [ ] Rewrite the two CLAUDE.md rules (4.8)
 
-## Resume state (2026-10-07, Phase 3 started)
+## Resume state (2026-10-08, Phase 3 in progress)
 
-- **Next (Phase 3):** type-aware item done (2026-10-08). Timezone rule done (2026-10-08). Next: query-key plugin, then Knip, test type-check, exit criterion.
+- **Next (Phase 3):** type-aware and timezone items done (2026-10-08). Next: query-key plugin (`@tanstack/eslint-plugin-query` not installed yet); measure first (2026-10-03 note: ~250 inline keys, duplicate roots, unused factory `src/lib/query-keys.ts`), then Knip, test type-check, exit criterion. `98a2335` (docs) is local only; push with the next batch.
+- **Not verified (2026-10-08):** browser checks of reset-password, admin error-page sign-out, units table edit/delete, payment-proof upload, upcoming check-ins between 00:00 and 08:00 Manila; e2e suite not run after the fixture date change (only `playwright test --list`, 1464); Resend quota reset timezone.
 - **Verified 2026-10-07:** pushed `4120465`..`b895514` (`HEAD` = `origin/main`). Deploy run 37615490268: lint (type-aware, 211 warnings, 0 errors), type-check, unit, audit and deploy all success; infra-health 37615489821 and Security Scan 37615489888 success.
 - **Verified 2026-10-08:** pushed `f727719`..`2a9893d` (`HEAD` = `origin/main`), type-aware item complete. Deploy run 37715980166 (lint, type-check, unit, audit, deploy), infra-health 37715979934 and Security Scan 37715979903 all success. Lint: 12 warnings left (10 `no-restricted-imports`, 2 shadcn `react-refresh`), the exit-criterion backlog.
 - **Verified 2026-10-08 (later):** pushed `35a3745`..`1406fc0` (`HEAD` = `origin/main`), timezone item complete. Deploy run 37718122577 (lint, type-check, unit, audit, deploy), infra-health 37718122431 and Security Scan 37718122386 all success.
