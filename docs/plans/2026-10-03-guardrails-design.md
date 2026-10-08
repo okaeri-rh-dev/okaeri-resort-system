@@ -264,7 +264,8 @@ Found by the `satisfies` annotations (2026-10-04):
 
 ## Resume state (2026-10-08, Phase 3 in progress)
 
-- **Next (Phase 3):** query-key item in progress (2026-10-08): measured, counts and migration order in the Phase 3 checklist; plugin installed. Next unchecked sub-item there, then Knip, test type-check, exit criterion. `98a2335`, `b8c8578` (docs) are local only; push with the next batch.
+- **Next (Phase 3):** query-key item in progress (2026-10-08): measured; plugin `recommended` set at error; audit family migrated. Next: guest family (see the per-entity note on `useSuspenseQuery` in the Phase 3 checklist; scope pending user review), then expense, payment, unit, booking; then Knip, test type-check, exit criterion.
+- **Verified 2026-10-08 (query-key batch 1):** pushed `98a2335`..`c72a425` (`HEAD` = `origin/main`). Deploy run 37728558268 (lint, type-check, unit, audit, deploy), infra-health 37728557785 and Security Scan 37728557799 all success. Lint: 10 warnings (8 `no-restricted-imports`, 2 shadcn `react-refresh`).
 - **Not verified (2026-10-08):** browser checks of reset-password, admin error-page sign-out, units table edit/delete, payment-proof upload, upcoming check-ins between 00:00 and 08:00 Manila; e2e suite not run after the fixture date change (only `playwright test --list`, 1464); Resend quota reset timezone.
 - **Verified 2026-10-07:** pushed `4120465`..`b895514` (`HEAD` = `origin/main`). Deploy run 37615490268: lint (type-aware, 211 warnings, 0 errors), type-check, unit, audit and deploy all success; infra-health 37615489821 and Security Scan 37615489888 success.
 - **Verified 2026-10-08:** pushed `f727719`..`2a9893d` (`HEAD` = `origin/main`), type-aware item complete. Deploy run 37715980166 (lint, type-check, unit, audit, deploy), infra-health 37715979934 and Security Scan 37715979903 all success. Lint: 12 warnings left (10 `no-restricted-imports`, 2 shadcn `react-refresh`), the exit-criterion backlog.
