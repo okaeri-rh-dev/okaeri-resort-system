@@ -45,10 +45,23 @@ export const unitKeys = {
   revenueStats: (unitId: string) => [...unitKeys.detail(unitId), "revenue-stats"] as const,
 };
 
-// Entities move here one at a time (guardrails Phase 3); the rest keep their singular root until then.
-const entityKeyFactories: Partial<
-  Record<EntityType, { all: readonly unknown[]; detail: (id: string) => readonly unknown[] }>
+export const bookingKeys = {
+  all: ["bookings"] as const,
+  lists: () => [...bookingKeys.all, "list"] as const,
+  list: (params: { filters: object; searchQuery: string; sortBy: string; sortOrder: string }) =>
+    [...bookingKeys.lists(), params] as const,
+  details: () => [...bookingKeys.all, "detail"] as const,
+  detail: (bookingId: string) => [...bookingKeys.details(), bookingId] as const,
+  // The /api/admin/bookings/:id response, a different shape from detail(); under it so invalidating detail covers both
+  adminDetail: (bookingId: string) => [...bookingKeys.detail(bookingId), "admin"] as const,
+  byUnit: (unitId: string) => [...bookingKeys.all, "unit", unitId] as const,
+};
+
+const entityKeyFactories: Record<
+  EntityType,
+  { all: readonly unknown[]; detail: (id: string) => readonly unknown[] }
 > = {
+  booking: bookingKeys,
   guest: guestKeys,
   expense: expenseKeys,
   payment: paymentKeys,
@@ -56,94 +69,17 @@ const entityKeyFactories: Partial<
 };
 
 /**
- * Centralized query key factory for TanStack Query
- * Provides type-safe, consistent query keys for caching and invalidation
- *
- * Usage:
- * ```typescript
- * const query = useQuery({
- *   queryKey: queryKeys.entity('booking', bookingId),
- *   queryFn: () => db.bookings.byId(bookingId)
- * })
- *
- * // Invalidate all bookings
- * queryClient.invalidateQueries({ queryKey: queryKeys.entities('booking') })
- * ```
+ * Keys for code that is generic over the entity type (useEntityEdit).
+ * Entity-specific code uses the factories above directly.
  */
-export const queryKeys = {
-  /**
-   * Individual entity detail query key
-   * Format: [type, id]
-   * Example: ['booking', '123-abc']
-   */
-  entity: <T extends EntityType>(type: T, id: string) =>
-    entityKeyFactories[type]?.detail(id) ?? ([type, id] as const),
-
-  /**
-   * All entities of a type
-   * Format: [type]
-   * Example: ['booking']
-   */
-  entities: <T extends EntityType>(type: T) => entityKeyFactories[type]?.all ?? ([type] as const),
-
-  /**
-   * Filtered list of entities
-   * Format: [type, 'list', filters]
-   * Example: ['booking', 'list', { status: 'Confirmed' }]
-   */
-  entitiesFiltered: <T extends EntityType>(type: T, filters: Record<string, unknown>) =>
-    [type, "list", filters] as const,
-
-  /**
-   * Audit logs for a specific entity
-   * Format: ['audit-logs', filters]
-   * Example: ['audit-logs', { entity_type: 'booking', entity_id: '123' }]
-   */
-  audit: (filters: AuditFilters) => ["audit-logs", filters] as const,
-
-  /**
-   * Related entities query key
-   * Format: [type, id, relation]
-   * Example: ['booking', '123', 'payments']
-   */
-  related: <T extends EntityType>(type: T, id: string, relation: string) =>
-    [type, id, relation] as const,
-
-  // ============================================
-  // SPECIFIC RELATIONSHIP QUERIES
-  // ============================================
-
-  /**
-   * Payments for a specific booking
-   * Format: ['booking', id, 'payments']
-   */
-  bookingPayments: (bookingId: string) => ["booking", bookingId, "payments"] as const,
+// Callers pass runtime strings through generic hooks, so an unknown type gets a clear error
+const factoryFor = (type: EntityType) => {
+  if (!(type in entityKeyFactories)) throw new Error(`Unknown entity type: ${type}`);
+  return entityKeyFactories[type];
 };
 
-/**
- * Example usage in components:
- *
- * ```typescript
- * // Fetch booking detail
- * const { data: booking } = useQuery({
- *   queryKey: queryKeys.entity('booking', bookingId),
- *   queryFn: () => db.bookings.byId(bookingId)
- * })
- *
- * // Fetch all payments for a booking
- * const { data: payments } = useQuery({
- *   queryKey: queryKeys.bookingPayments(bookingId),
- *   queryFn: () => db.payments.byBooking(bookingId)
- * })
- *
- * // Invalidate all booking queries
- * queryClient.invalidateQueries({
- *   queryKey: queryKeys.entities('booking')
- * })
- *
- * // Invalidate specific booking
- * queryClient.invalidateQueries({
- *   queryKey: queryKeys.entity('booking', bookingId)
- * })
- * ```
- */
+export const queryKeys = {
+  entity: <T extends EntityType>(type: T, id: string) => factoryFor(type).detail(id),
+  entities: <T extends EntityType>(type: T) => factoryFor(type).all,
+  audit: (filters: AuditFilters) => ["audit-logs", filters] as const,
+};

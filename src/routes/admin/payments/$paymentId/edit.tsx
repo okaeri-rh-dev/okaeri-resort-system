@@ -5,7 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
-import { db } from "@/lib/supabase";
+import { bookingDetailQuery } from "@/stores/useBookingStore";
 import { paymentDetailQuery } from "@/stores/usePaymentStore";
 
 // Lazy load the edit page component
@@ -39,20 +39,7 @@ export const Route = createFileRoute("/admin/payments/$paymentId/edit")({
     const payment = await paymentPromise;
     const bookingId = payment.booking_id;
     const bookingPromise = bookingId
-      ? queryClient.ensureQueryData({
-          queryKey: ["booking", bookingId],
-          queryFn: async () => {
-            const { data, error } = await db.bookings.byId(bookingId);
-
-            if (error) {
-              console.error("[Payment Edit] Failed to fetch booking:", error);
-              return null;
-            }
-
-            return data;
-          },
-          staleTime: 30000, // 30 seconds
-        })
+      ? queryClient.ensureQueryData(bookingDetailQuery(bookingId)).catch(() => null)
       : Promise.resolve(null);
 
     // Wait for all data to be loaded

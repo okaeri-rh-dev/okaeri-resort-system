@@ -8,6 +8,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { logAuditEvent } from "@/lib/audit-logger";
+import { queryKeys } from "@/lib/query-keys";
 import { db } from "@/lib/supabase";
 
 import { useEntityEdit } from "../useEntityEdit";
@@ -240,7 +241,7 @@ describe("useEntityEdit", () => {
 
       // Set up initial cached data
       queryClient.setQueryData(
-        ["booking", entityId],
+        queryKeys.entity("booking", entityId),
         createMockBooking({
           booking_id: entityId,
           guest_name: "Old Name",
@@ -273,7 +274,7 @@ describe("useEntityEdit", () => {
       });
       const updateData = { guest_name: "Optimistic Name" };
 
-      queryClient.setQueryData(["booking", entityId], initialData);
+      queryClient.setQueryData(queryKeys.entity("booking", entityId), initialData);
 
       // Delay the API response
       let resolvePromise: unknown;
@@ -297,7 +298,7 @@ describe("useEntityEdit", () => {
 
       // Check immediate optimistic update after mutation starts
       await waitFor(() => {
-        const optimisticData = queryClient.getQueryData(["booking", entityId]);
+        const optimisticData = queryClient.getQueryData(queryKeys.entity("booking", entityId));
         expect(optimisticData).toMatchObject({ guest_name: "Optimistic Name" });
       });
 
@@ -311,7 +312,7 @@ describe("useEntityEdit", () => {
       const initialData = { booking_id: entityId, guest_name: "Original" };
       const updateData = { guest_name: "Failed Update" };
 
-      queryClient.setQueryData(["booking", entityId], initialData);
+      queryClient.setQueryData(queryKeys.entity("booking", entityId), initialData);
 
       vi.mocked(db.bookings.update).mockResolvedValue(
         createErrorResponse({
@@ -333,7 +334,7 @@ describe("useEntityEdit", () => {
       });
 
       // Data should be rolled back
-      const currentData = queryClient.getQueryData(["booking", entityId]);
+      const currentData = queryClient.getQueryData(queryKeys.entity("booking", entityId));
       expect(currentData).toEqual(initialData);
     });
   });
@@ -533,7 +534,7 @@ describe("useEntityEdit", () => {
 
       // Set initial data
       queryClient.setQueryData(
-        ["booking", entityId],
+        queryKeys.entity("booking", entityId),
         createMockBooking({ booking_id: entityId, guest_name: "Old" })
       );
 
@@ -551,8 +552,10 @@ describe("useEntityEdit", () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["booking", entityId] });
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["booking"] });
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: queryKeys.entity("booking", entityId),
+      });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.entities("booking") });
     });
   });
 

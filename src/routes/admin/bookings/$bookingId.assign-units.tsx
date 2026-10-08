@@ -21,8 +21,9 @@ import { UnitAssignmentInterface } from "@/components/admin/UnitAssignmentInterf
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getAccessToken, useAuthToken } from "@/hooks/useAuthToken";
+import { useAuthToken } from "@/hooks/useAuthToken";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { adminBookingDetailQuery } from "@/stores/useBookingStore";
 
 // ============================================
 // Types
@@ -320,29 +321,9 @@ function AssignUnitsPage() {
     data: booking,
     isLoading,
     error,
-  } = useQuery<BookingDetail>({
-    queryKey: ["booking", bookingId],
+  } = useQuery({
+    ...adminBookingDetailQuery<BookingDetail>(bookingId),
     enabled: !!authToken, // Only fetch when authenticated
-    queryFn: async () => {
-      const accessToken = await getAccessToken();
-      const response = await fetch(`/api/admin/bookings/${bookingId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = (await response
-          .json()
-          .catch(() => ({ error: "Failed to fetch booking" }))) as { error?: string };
-        throw new Error(errorData.error || "Failed to fetch booking details");
-      }
-
-      return response.json();
-    },
-    staleTime: 30000, // 30 seconds
-    retry: 1,
   });
 
   // ============================================

@@ -1,11 +1,13 @@
 import { lazy, Suspense } from "react";
 
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
+import { paymentKeys } from "@/lib/query-keys";
 import { db } from "@/lib/supabase";
+import { bookingDetailQuery } from "@/stores/useBookingStore";
 import { allUnitsQuery } from "@/stores/useUnitStore";
 
 // Lazy load the edit page component
@@ -31,32 +33,14 @@ export const Route = createFileRoute("/admin/bookings/$bookingId/edit")({
     const { bookingId } = params;
     const { queryClient } = context;
 
-    // Prefetch booking data with relations
-    const bookingPromise = queryClient.ensureQueryData({
-      queryKey: ["booking", bookingId],
-      queryFn: async () => {
-        const { data, error } = await db.bookings.byId(bookingId);
-
-        if (error) {
-          console.error("[Booking Edit] Failed to fetch booking:", error);
-          throw new Error(`Failed to load booking: ${error.message}`);
-        }
-
-        if (!data) {
-          throw notFound();
-        }
-
-        return data;
-      },
-      staleTime: 30000, // 30 seconds
-    });
+    const bookingPromise = queryClient.ensureQueryData(bookingDetailQuery(bookingId));
 
     // Prefetch all available units for the unit selector
     const unitsPromise = queryClient.ensureQueryData(allUnitsQuery());
 
     // Prefetch payments for this booking
     const paymentsPromise = queryClient.ensureQueryData({
-      queryKey: ["payments", "booking", bookingId],
+      queryKey: paymentKeys.byBooking(bookingId),
       queryFn: async () => {
         const { data, error } = await db.payments.byBooking(bookingId);
 

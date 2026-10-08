@@ -7,7 +7,7 @@ import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleto
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
-import { unitKeys } from "@/lib/query-keys";
+import { bookingKeys, unitKeys } from "@/lib/query-keys";
 import { requireManager } from "@/lib/route-guards";
 import { db, supabase } from "@/lib/supabase";
 import { unitDetailQuery } from "@/stores/useUnitStore";
@@ -34,7 +34,7 @@ export const Route = createFileRoute("/admin/units/$unitId/")({
 
     // Prefetch related bookings for this unit
     const bookingsPromise = queryClient.ensureQueryData({
-      queryKey: ["bookings", "unit", unitId],
+      queryKey: bookingKeys.byUnit(unitId),
       queryFn: async () => {
         const { data, error } = await db.bookings.byUnit(unitId);
 

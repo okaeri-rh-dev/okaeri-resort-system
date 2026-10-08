@@ -12,8 +12,9 @@ import { ArrowLeft } from "lucide-react";
 import { PaymentProofViewer } from "@/components/admin/PaymentProofViewer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getAccessToken, useAuthToken } from "@/hooks/useAuthToken";
+import { useAuthToken } from "@/hooks/useAuthToken";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { adminBookingDetailQuery } from "@/stores/useBookingStore";
 
 // Type for booking detail response
 interface BookingDetail {
@@ -43,23 +44,9 @@ function PaymentVerificationPage() {
     data: booking,
     isLoading,
     error,
-  } = useQuery<BookingDetail>({
-    queryKey: ["booking", bookingId],
+  } = useQuery({
+    ...adminBookingDetailQuery<BookingDetail>(bookingId),
     enabled: !!authToken, // Only fetch when authenticated
-    queryFn: async () => {
-      const accessToken = await getAccessToken();
-      const response = await fetch(`/api/admin/bookings/${bookingId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch booking");
-      }
-
-      return response.json();
-    },
   });
 
   const handleStatusChange = () => {

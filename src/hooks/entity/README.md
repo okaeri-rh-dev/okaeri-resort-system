@@ -10,7 +10,6 @@ The Entity hooks library provides **type-safe, generic hooks** for managing enti
 
 ```
 entity/
-├── useEntityDetail.ts         # Fetch entity with relations
 ├── useEntityEdit.ts           # Update entity with optimistic UI
 ├── useEntityAudit.ts          # Fetch audit logs for entity
 ├── useEntityNavigation.ts     # Type-safe navigation helpers
@@ -20,42 +19,6 @@ entity/
 ```
 
 ## 📦 Core Hooks
-
-### 1. useEntityDetail
-
-**Purpose**: Generic hook for fetching entity details with type safety and automatic query key management.
-
-**Features**:
-- Automatically selects correct database query based on entity type
-- Returns properly typed data with relations included
-- TanStack Query integration with caching
-- Optional conditional fetching
-- Configurable stale time
-
-**Hook Signature**:
-```typescript
-function useEntityDetail<T extends EntityType>(
-  entityType: T,
-  entityId: string | undefined,
-  options?: {
-    enabled?: boolean;
-    staleTime?: number;
-  }
-): UseQueryResult<EntityDetail<T>>
-```
-
-**Supported Entity Types**: `'booking' | 'unit' | 'guest' | 'payment' | 'expense'`
-
-**Database Queries**:
-- `booking` → `db.bookings.byId()` (includes unit and guest relations)
-- `unit` → `db.units.byId()` (includes property relations)
-- `guest` → `db.guests.byId()` (includes booking stats)
-- `payment` → `db.payments.byId()` (includes booking relations)
-- `expense` → `db.expenses.byId()`
-
-**Real-World Usage**: Edit pages use this implicitly via route loaders - see `src/routes/_authenticated/bookings/$bookingId/edit.tsx`
-
----
 
 ### 2. useEntityEdit
 
@@ -399,19 +362,6 @@ const { data: paymentLogs } = useEntityAudit({
 });
 ```
 
-### 5. Conditional Fetching
-
-**✅ DO**: Use enabled option for conditional queries
-```typescript
-const { data: booking, isLoading } = useEntityDetail('booking', bookingId, {
-  enabled: !!bookingId, // Only fetch if bookingId exists
-  staleTime: 60_000, // Cache for 1 minute
-});
-
-if (!bookingId) return <Navigate to="/bookings" />;
-if (isLoading) return <DetailPageSkeleton />;
-```
-
 ### 6. Error Handling
 
 **✅ DO**: Provide custom error handlers when needed
@@ -462,13 +412,6 @@ const updateUnit = useEntityEdit('unit', unitId);
 All hooks have comprehensive test suites in `__tests__/`:
 
 ```typescript
-// useEntityDetail.test.tsx
-- ✅ Fetches entity data correctly
-- ✅ Handles entity not found
-- ✅ Respects enabled option
-- ✅ Uses correct query keys
-- ✅ Type safety for each entity type
-
 // useEntityEdit.test.tsx
 - ✅ Performs optimistic updates
 - ✅ Rolls back on error
@@ -574,12 +517,7 @@ export const db = {
 };
 ```
 
-3. **Update useEntityDetail**:
-```typescript
-// src/hooks/entity/useEntityDetail.ts
-case 'property':
-  return db.properties.byId(entityId);
-```
+3. **Add a key factory**: `propertyKeys` in `src/lib/query-keys.ts`, registered in `entityKeyFactories`, and a `propertyDetailQuery` (`queryOptions`) next to the entity's hooks
 
 4. **Update useEntityEdit**:
 ```typescript

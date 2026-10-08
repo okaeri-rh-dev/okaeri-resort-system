@@ -1,12 +1,15 @@
 import { lazy, Suspense } from "react";
 
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
+import { paymentKeys } from "@/lib/query-keys";
 import { db } from "@/lib/supabase";
+import { bookingDetailQuery } from "@/stores/useBookingStore";
 
 // Lazy load the detail page component
 const BookingDetailPage = lazy(() =>
@@ -21,30 +24,11 @@ export const Route = createFileRoute("/admin/bookings/$bookingId/")({
     const { bookingId } = params;
     const { queryClient } = context;
 
-    // Prefetch booking data with relations
-    const bookingPromise = queryClient.ensureQueryData({
-      queryKey: ["booking", bookingId],
-      queryFn: async () => {
-        const { data, error } = await db.bookings.byId(bookingId);
-
-        if (error) {
-          console.error("[Booking Detail] Failed to fetch booking:", error);
-          throw new Error(`Failed to load booking: ${error.message}`);
-        }
-
-        if (!data) {
-          throw notFound();
-        }
-
-        // Type assertion to handle Supabase Json type compatibility
-        return data as unknown;
-      },
-      staleTime: 30000, // 30 seconds
-    });
+    const bookingPromise = queryClient.ensureQueryData(bookingDetailQuery(bookingId));
 
     // Prefetch payments for this booking
     const paymentsPromise = queryClient.ensureQueryData({
-      queryKey: ["payments", "booking", bookingId],
+      queryKey: paymentKeys.byBooking(bookingId),
       queryFn: async () => {
         const { data, error } = await db.payments.byBooking(bookingId);
 
@@ -67,14 +51,13 @@ export const Route = createFileRoute("/admin/bookings/$bookingId/")({
       : Promise.resolve([]);
 
     // Wait for all data to be loaded
-    const [booking, payments, auditLogs] = await Promise.all([
+    const [, payments, auditLogs] = await Promise.all([
       bookingPromise,
       paymentsPromise,
       auditLogsPromise,
     ]);
 
     return {
-      booking,
       payments,
       auditLogs,
       canViewAudit,
@@ -128,7 +111,7 @@ export const Route = createFileRoute("/admin/bookings/$bookingId/")({
 
 function BookingDetailComponent() {
   const { bookingId } = Route.useParams();
-  const { booking } = Route.useLoaderData();
+  const { data: booking } = useSuspenseQuery(bookingDetailQuery(bookingId));
 
   return (
     <ErrorBoundary level="page">

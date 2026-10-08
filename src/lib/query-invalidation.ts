@@ -10,15 +10,14 @@
  */
 
 import { queryClient } from "@/lib/query-client";
-import { guestKeys, paymentKeys, unitKeys } from "@/lib/query-keys";
+import { bookingKeys, guestKeys, paymentKeys, unitKeys } from "@/lib/query-keys";
 
 // ============================================
 // GRANULAR HELPERS (building blocks)
 // ============================================
 
 export function invalidateBookings() {
-  queryClient.invalidateQueries({ queryKey: ["bookings"] });
-  queryClient.invalidateQueries({ queryKey: ["booking"] });
+  queryClient.invalidateQueries({ queryKey: bookingKeys.all });
 }
 
 export function invalidateGuests() {

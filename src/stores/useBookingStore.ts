@@ -1,7 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+import { getAccessToken } from "@/hooks/useAuthToken";
 import { adaptBookingFromDB } from "@/lib/database-adapters";
 import {
   afterBookingCancel,
@@ -12,7 +19,7 @@ import {
   afterBookingUpdate,
   invalidateBookings,
 } from "@/lib/query-invalidation";
-import { unitKeys } from "@/lib/query-keys";
+import { bookingKeys, unitKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, storage, supabase } from "@/lib/supabase";
 import { toManilaDateString } from "@/lib/timezone";
 import type {
@@ -236,13 +243,57 @@ export const useBookingStore = create<BookingStore>()(
 // TANSTACK QUERY HOOKS
 // ============================================
 
+// One booking with units and guest; the detail and edit routes, useBooking and useEntityEdit share this cache entry
+export const bookingDetailQuery = (bookingId: string) =>
+  queryOptions({
+    queryKey: bookingKeys.detail(bookingId),
+    queryFn: async () => {
+      const { data, error } = await db.bookings.byId(bookingId);
+      if (error) throw new Error(`Failed to load booking: ${handleSupabaseError(error)}`);
+      return data;
+    },
+    staleTime: 30000,
+  });
+
+// The admin API's booking view (assign-units, verify-payment); each page declares the fields it reads
+export const adminBookingDetailQuery = <TBooking>(bookingId: string) =>
+  queryOptions({
+    queryKey: bookingKeys.adminDetail(bookingId),
+    queryFn: async (): Promise<TBooking> => {
+      const accessToken = await getAccessToken();
+      const response = await fetch(`/api/admin/bookings/${bookingId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = (await response
+          .json()
+          .catch(() => ({ error: "Failed to fetch booking" }))) as { error?: string };
+        throw new Error(errorData.error || "Failed to fetch booking details");
+      }
+
+      return response.json();
+    },
+    staleTime: 30000,
+    retry: 1,
+  });
+
+// The cached detail row in the app shape the list and the optimistic map use, for rollback
+const cachedBooking = (queryClient: QueryClient, bookingId: string): Booking | undefined => {
+  const row = queryClient.getQueryData(bookingDetailQuery(bookingId).queryKey);
+  return row ? adaptBookingFromDB(row) : undefined;
+};
+
 // Fetch all bookings with filters
 export const useBookings = () => {
   const { filters, searchQuery, sortBy, sortOrder } = useBookingStore();
   const optimisticBookings = useBookingStore((state) => state.optimisticBookings);
 
   return useQuery({
-    queryKey: ["bookings", filters, searchQuery, sortBy, sortOrder],
+    queryKey: bookingKeys.list({ filters, searchQuery, sortBy, sortOrder }),
     queryFn: async () => {
       // Handle unit_id filter via junction table
       let bookingIdsForUnit: string[] | null = null;
@@ -330,18 +381,7 @@ export const useBookings = () => {
 
 // Fetch single booking
 export const useBooking = (bookingId: string | undefined) => {
-  return useQuery({
-    queryKey: ["bookings", bookingId],
-    queryFn: async () => {
-      if (!bookingId) throw new Error("Booking ID is required");
-
-      const { data, error } = await db.bookings.byId(bookingId);
-      if (error) throw new Error(handleSupabaseError(error));
-      return data;
-    },
-    enabled: !!bookingId,
-    staleTime: 30000,
-  });
+  return useQuery({ ...bookingDetailQuery(bookingId ?? ""), enabled: !!bookingId });
 };
 
 // Create booking mutation with optimistic update
@@ -432,7 +472,7 @@ export const useCreateBooking = () => {
       return data;
     },
     onMutate: async (newBooking) => {
-      await queryClient.cancelQueries({ queryKey: ["bookings"] });
+      await queryClient.cancelQueries({ queryKey: bookingKeys.all });
 
       // Create optimistic booking
       const optimisticBooking: Booking = {
@@ -522,9 +562,9 @@ export const useUpdateBookingStatus = () => {
       return data;
     },
     onMutate: async ({ bookingId, status }) => {
-      await queryClient.cancelQueries({ queryKey: ["bookings"] });
+      await queryClient.cancelQueries({ queryKey: bookingKeys.all });
 
-      const previousBooking = queryClient.getQueryData<Booking>(["bookings", bookingId]);
+      const previousBooking = cachedBooking(queryClient, bookingId);
 
       updateOptimistic(bookingId, {
         booking_status: status,
@@ -569,9 +609,9 @@ export const useUpdatePaymentStatus = () => {
       return data;
     },
     onMutate: async ({ bookingId, paymentStatus, paymentMethod }) => {
-      await queryClient.cancelQueries({ queryKey: ["bookings"] });
+      await queryClient.cancelQueries({ queryKey: bookingKeys.all });
 
-      const previousBooking = queryClient.getQueryData<Booking>(["bookings", bookingId]);
+      const previousBooking = cachedBooking(queryClient, bookingId);
 
       const updates: Partial<Booking> = {
         payment_status: paymentStatus,
@@ -637,7 +677,7 @@ export const useUploadPaymentProof = () => {
       return data;
     },
     onMutate: async ({ bookingId }) => {
-      await queryClient.cancelQueries({ queryKey: ["bookings"] });
+      await queryClient.cancelQueries({ queryKey: bookingKeys.all });
 
       updateOptimistic(bookingId, {
         payment_status: "Completed",
@@ -662,7 +702,7 @@ export const useCancelBooking = () => {
       return data;
     },
     onMutate: async (bookingId) => {
-      await queryClient.cancelQueries({ queryKey: ["bookings"] });
+      await queryClient.cancelQueries({ queryKey: bookingKeys.all });
 
       updateOptimistic(bookingId, {
         booking_status: "Cancelled",
@@ -720,9 +760,9 @@ export const useUpdateBooking = () => {
       return data;
     },
     onMutate: async ({ bookingId, updates }) => {
-      await queryClient.cancelQueries({ queryKey: ["bookings"] });
+      await queryClient.cancelQueries({ queryKey: bookingKeys.all });
 
-      const previousBooking = queryClient.getQueryData<Booking>(["bookings", bookingId]);
+      const previousBooking = cachedBooking(queryClient, bookingId);
 
       updateOptimistic(bookingId, {
         ...updates,
@@ -753,7 +793,7 @@ export const useDeleteBooking = () => {
       if (error) throw new Error(handleSupabaseError(error));
     },
     onMutate: async (bookingId) => {
-      await queryClient.cancelQueries({ queryKey: ["bookings"] });
+      await queryClient.cancelQueries({ queryKey: bookingKeys.all });
       removeOptimistic(bookingId);
       return { bookingId };
     },
@@ -1055,11 +1095,11 @@ export const useAvailabilityCache = () => {
 //             table: "bookings",
 //           },
 //           (payload) => {
-//             queryClient.invalidateQueries({ queryKey: ["bookings"] });
+//             queryClient.invalidateQueries({ queryKey: bookingKeys.all });
 
 //             if (payload.eventType === "UPDATE" && payload.new) {
 //               queryClient.setQueryData(
-//                 ["bookings", (payload.new as Booking).booking_id],
+//                 bookingKeys.detail((payload.new as Booking).booking_id),
 //                 payload.new
 //               );
 //             }
@@ -1205,9 +1245,9 @@ export const useUpdateBookingStatusWithWorkflow = () => {
       return workflowResult.workflowResult.updatedBooking;
     },
     onMutate: async ({ bookingId, status }) => {
-      await queryClient.cancelQueries({ queryKey: ["bookings"] });
+      await queryClient.cancelQueries({ queryKey: bookingKeys.all });
 
-      const previousBooking = queryClient.getQueryData<Booking>(["bookings", bookingId]);
+      const previousBooking = cachedBooking(queryClient, bookingId);
 
       updateOptimistic(bookingId, {
         booking_status: status,
@@ -1222,7 +1262,7 @@ export const useUpdateBookingStatusWithWorkflow = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
       queryClient.invalidateQueries({ queryKey: ["workflow-status"] });
       queryClient.invalidateQueries({ queryKey: ["workflow-summary"] });
     },
@@ -1304,7 +1344,7 @@ export const useAutomatedCheckIn = () => {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
       queryClient.invalidateQueries({ queryKey: ["upcoming-checkins"] });
       queryClient.invalidateQueries({ queryKey: ["workflow-summary"] });
     },
@@ -1342,7 +1382,7 @@ export const useAutomatedCheckOut = () => {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
       queryClient.invalidateQueries({ queryKey: ["upcoming-checkouts"] });
       queryClient.invalidateQueries({ queryKey: ["workflow-summary"] });
     },
@@ -1494,7 +1534,7 @@ export const useProcessWorkflowBatch = () => {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
       queryClient.invalidateQueries({ queryKey: ["workflow-summary"] });
       queryClient.invalidateQueries({ queryKey: ["bookings-needing-attention"] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-checkins"] });
