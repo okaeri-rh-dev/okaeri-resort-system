@@ -1,8 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { afterBookingPaymentChange, invalidatePayments } from "@/lib/query-invalidation";
+import { paymentKeys } from "@/lib/query-keys";
 import { uploadPaymentProof } from "@/lib/storage-security";
 import { handleSupabaseError, supabase } from "@/lib/supabase";
 import { toManilaDateString } from "@/lib/timezone";
@@ -110,12 +111,43 @@ export const usePaymentStore = create<PaymentStore>()(
 // TANSTACK QUERY HOOKS
 // ============================================
 
+// One payment with its booking and guest; the detail and edit routes and useEntityEdit share this cache entry
+export const paymentDetailQuery = (paymentId: string) =>
+  queryOptions({
+    queryKey: paymentKeys.detail(paymentId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("payments")
+        .select(
+          `
+          *,
+          booking:bookings(
+            booking_id,
+            booking_reference,
+            check_in,
+            check_out,
+            total_amount,
+            guest_id,
+            guest_name,
+            guest:guests(guest_name, email, phone_number)
+          )
+        `
+        )
+        .eq("payment_id", paymentId)
+        .single();
+
+      if (error) throw new Error(`Failed to load payment: ${handleSupabaseError(error)}`);
+      return data;
+    },
+    staleTime: 30000,
+  });
+
 // Fetch all payments
 export const usePayments = () => {
   const { filters, searchQuery, sortBy, sortOrder } = usePaymentStore();
 
   return useQuery({
-    queryKey: ["payments", filters, searchQuery, sortBy, sortOrder],
+    queryKey: paymentKeys.list({ filters, searchQuery, sortBy, sortOrder }),
     queryFn: async () => {
       let query = supabase
         .from("payments")
@@ -183,32 +215,13 @@ export const usePayments = () => {
 
 // Fetch single payment
 export const usePayment = (paymentId: string) => {
-  return useQuery({
-    queryKey: ["payments", paymentId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("payments")
-        .select(
-          `
-          *,
-          booking:bookings(*)
-        `
-        )
-        .eq("payment_id", paymentId)
-        .single();
-
-      if (error) throw new Error(handleSupabaseError(error));
-      return data;
-    },
-    enabled: !!paymentId,
-    staleTime: 60000,
-  });
+  return useQuery({ ...paymentDetailQuery(paymentId), enabled: !!paymentId });
 };
 
 // Fetch payments for a booking
 export const useBookingPayments = (bookingId: string) => {
   return useQuery({
-    queryKey: ["payments", "booking", bookingId],
+    queryKey: paymentKeys.byBooking(bookingId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("payments")
@@ -302,7 +315,7 @@ export const useCreatePayment = () => {
       return newPayment;
     },
     onMutate: async ({ data }) => {
-      await queryClient.cancelQueries({ queryKey: ["payments"] });
+      await queryClient.cancelQueries({ queryKey: paymentKeys.all });
 
       const optimisticPayment: Payment = {
         ...data,
@@ -371,9 +384,9 @@ export const useUpdatePayment = () => {
       return data;
     },
     onMutate: async ({ paymentId, updates }) => {
-      await queryClient.cancelQueries({ queryKey: ["payments"] });
+      await queryClient.cancelQueries({ queryKey: paymentKeys.all });
 
-      const previousPayment = queryClient.getQueryData<Payment>(["payments", paymentId]);
+      const previousPayment = queryClient.getQueryData<Payment>(paymentKeys.detail(paymentId));
 
       updateOptimistic(paymentId, updates);
 
@@ -402,7 +415,7 @@ export const useDeletePayment = () => {
       if (error) throw new Error(handleSupabaseError(error));
     },
     onMutate: async (paymentId) => {
-      await queryClient.cancelQueries({ queryKey: ["payments"] });
+      await queryClient.cancelQueries({ queryKey: paymentKeys.all });
       removeOptimistic(paymentId);
       return { paymentId };
     },
@@ -429,10 +442,10 @@ export const useSoftDeletePayment = () => {
       if (error) throw new Error(handleSupabaseError(error));
     },
     onMutate: async (paymentId) => {
-      await queryClient.cancelQueries({ queryKey: ["payments"] });
+      await queryClient.cancelQueries({ queryKey: paymentKeys.all });
 
       // Store previous data for rollback
-      const previousPayments = queryClient.getQueryData(["payments"]);
+      const previousPayments = queryClient.getQueryData(paymentKeys.all);
       return { previousPayments, paymentId };
     },
     onError: () => {
@@ -464,7 +477,7 @@ export const useVerifyPayment = () => {
       return data;
     },
     onMutate: async (paymentId) => {
-      await queryClient.cancelQueries({ queryKey: ["payments"] });
+      await queryClient.cancelQueries({ queryKey: paymentKeys.all });
 
       updateOptimistic(paymentId, {
         notes: `Verified on ${new Date().toISOString()}`,

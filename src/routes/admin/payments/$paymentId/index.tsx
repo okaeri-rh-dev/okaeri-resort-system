@@ -1,12 +1,13 @@
 import { lazy, Suspense } from "react";
 
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
-import { supabase } from "@/lib/supabase";
+import { paymentDetailQuery } from "@/stores/usePaymentStore";
 
 // Lazy load the detail page component
 const PaymentDetailPage = lazy(() =>
@@ -21,41 +22,7 @@ export const Route = createFileRoute("/admin/payments/$paymentId/")({
     const { paymentId } = params;
     const { queryClient } = context;
 
-    // Prefetch payment data with booking relation
-    const paymentPromise = queryClient.ensureQueryData({
-      queryKey: ["payment", paymentId],
-      queryFn: async () => {
-        const { data, error } = await supabase
-          .from("payments")
-          .select(
-            `
-            *,
-            booking:bookings(
-              booking_id,
-              booking_reference,
-              check_in,
-              check_out,
-              total_amount,
-              guest:guests(guest_name, email, contact_number)
-            )
-          `
-          )
-          .eq("payment_id", paymentId)
-          .single();
-
-        if (error) {
-          console.error("[Payment Detail] Failed to fetch payment:", error);
-          throw new Error(`Failed to load payment: ${error.message}`);
-        }
-
-        if (!data) {
-          throw notFound();
-        }
-
-        return data;
-      },
-      staleTime: 30000, // 30 seconds
-    });
+    const paymentPromise = queryClient.ensureQueryData(paymentDetailQuery(paymentId));
 
     // Check if user has permission to view audit logs
     const canViewAudit = await hasAuditRole(AuditRole.MANAGER);
@@ -65,18 +32,9 @@ export const Route = createFileRoute("/admin/payments/$paymentId/")({
       ? queryClient.ensureQueryData(recentRecordAuditLogsQuery("payments", paymentId))
       : Promise.resolve([]);
 
-    // Wait for all data to be loaded
-    const [paymentData, auditLogs] = await Promise.all([paymentPromise, auditLogsPromise]);
-
-    // Extend payment with optional fields for type compatibility
-    // Note: payment_status field not yet in database schema (Phase 3)
-    const payment = {
-      ...paymentData,
-      payment_status: undefined as string | undefined,
-    } as typeof paymentData & { payment_status?: string };
+    const [, auditLogs] = await Promise.all([paymentPromise, auditLogsPromise]);
 
     return {
-      payment,
       auditLogs,
       canViewAudit,
     };
@@ -129,7 +87,7 @@ export const Route = createFileRoute("/admin/payments/$paymentId/")({
 
 function PaymentDetailComponent() {
   const { paymentId } = Route.useParams();
-  const { payment } = Route.useLoaderData();
+  const { data: payment } = useSuspenseQuery(paymentDetailQuery(paymentId));
 
   return (
     <ErrorBoundary level="page">

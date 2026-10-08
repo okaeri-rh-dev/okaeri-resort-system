@@ -1,11 +1,12 @@
 import { lazy, Suspense } from "react";
 
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
 import { db } from "@/lib/supabase";
+import { paymentDetailQuery } from "@/stores/usePaymentStore";
 
 // Lazy load the edit page component
 const PaymentEditPage = lazy(() =>
@@ -32,25 +33,7 @@ export const Route = createFileRoute("/admin/payments/$paymentId/edit")({
     const { paymentId } = params;
     const { queryClient } = context;
 
-    // Prefetch payment data
-    const paymentPromise = queryClient.ensureQueryData({
-      queryKey: ["payment", paymentId],
-      queryFn: async () => {
-        const { data, error } = await db.payments.byId(paymentId);
-
-        if (error) {
-          console.error("[Payment Edit] Failed to fetch payment:", error);
-          throw new Error(`Failed to load payment: ${error.message}`);
-        }
-
-        if (!data) {
-          throw notFound();
-        }
-
-        return data;
-      },
-      staleTime: 30000, // 30 seconds
-    });
+    const paymentPromise = queryClient.ensureQueryData(paymentDetailQuery(paymentId));
 
     // Prefetch associated booking if payment has booking_id
     const payment = await paymentPromise;

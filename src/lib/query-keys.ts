@@ -25,12 +25,23 @@ export const expenseKeys = {
     [...expenseKeys.all, "stats", dateRange] as const,
 };
 
+export const paymentKeys = {
+  all: ["payments"] as const,
+  lists: () => [...paymentKeys.all, "list"] as const,
+  list: (params: { filters: object; searchQuery: string; sortBy: string; sortOrder: string }) =>
+    [...paymentKeys.lists(), params] as const,
+  details: () => [...paymentKeys.all, "detail"] as const,
+  detail: (paymentId: string) => [...paymentKeys.details(), paymentId] as const,
+  byBooking: (bookingId: string) => [...paymentKeys.all, "booking", bookingId] as const,
+};
+
 // Entities move here one at a time (guardrails Phase 3); the rest keep their singular root until then.
 const entityKeyFactories: Partial<
   Record<EntityType, { all: readonly unknown[]; detail: (id: string) => readonly unknown[] }>
 > = {
   guest: guestKeys,
   expense: expenseKeys,
+  payment: paymentKeys,
 };
 
 /**
