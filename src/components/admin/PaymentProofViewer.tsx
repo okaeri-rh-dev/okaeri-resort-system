@@ -100,7 +100,7 @@ export function PaymentProofViewer({
       }
     };
 
-    initializeSignedUrl();
+    void initializeSignedUrl();
   }, [paymentProofPath]);
 
   // Auto-renewal of signed URL

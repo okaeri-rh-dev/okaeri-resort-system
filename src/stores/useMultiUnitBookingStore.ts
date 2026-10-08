@@ -781,7 +781,7 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
 
               if (isOnline) {
                 // Process offline queue when coming online
-                get().processOfflineQueue();
+                void get().processOfflineQueue();
               }
             }),
 

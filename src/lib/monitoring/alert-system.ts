@@ -109,7 +109,7 @@ export class AlertSystem {
         existing.level = alert.level;
         existing.message = alert.message;
         existing.timestamp = alert.timestamp;
-        this.notifyChannels(existing);
+        void this.notifyChannels(existing);
         return existing;
       }
       return existing;
@@ -125,7 +125,7 @@ export class AlertSystem {
     }
 
     // Notify channels
-    this.notifyChannels(alert);
+    void this.notifyChannels(alert);
 
     // Notify subscribers
     this.subscribers.forEach((callback) => {
@@ -158,7 +158,7 @@ export class AlertSystem {
         },
       };
 
-      this.notifyChannels(resolvedAlert);
+      void this.notifyChannels(resolvedAlert);
     }
   }
 

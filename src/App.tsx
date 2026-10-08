@@ -79,7 +79,7 @@ function App() {
       }
     };
 
-    checkAuth();
+    void checkAuth();
 
     // Initialize optimistic bookings cleanup timer
     const { startCleanupTimer, stopCleanupTimer } = useBookingStore.getState();

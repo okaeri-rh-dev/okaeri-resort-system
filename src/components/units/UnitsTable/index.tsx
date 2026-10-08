@@ -62,7 +62,7 @@ function UnitsTableComponent({
   useResponsiveView(); // Used for responsive table rendering
 
   const handleExport = useCallback(() => {
-    exportUnitsToCSV(units);
+    void exportUnitsToCSV(units);
   }, [units]);
 
   // Loading state

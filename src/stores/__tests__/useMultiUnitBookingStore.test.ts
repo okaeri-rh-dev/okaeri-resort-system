@@ -503,11 +503,11 @@ describe("useMultiUnitBookingStore", () => {
       const checkFn = vi.fn(async () => true);
 
       await act(async () => {
-        result.current.checkUnitAvailability("unit-1", "2025-10-01", "2025-10-05", checkFn);
+        await result.current.checkUnitAvailability("unit-1", "2025-10-01", "2025-10-05", checkFn);
       });
 
       await act(async () => {
-        result.current.checkUnitAvailability("unit-1", "2025-10-01", "2025-10-05", checkFn);
+        await result.current.checkUnitAvailability("unit-1", "2025-10-01", "2025-10-05", checkFn);
       });
 
       // Should only call once due to caching

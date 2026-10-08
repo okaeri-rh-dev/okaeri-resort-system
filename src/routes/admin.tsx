@@ -44,8 +44,9 @@ export const Route = createFileRoute("/admin")({
               </button>
               <button
                 onClick={() => {
-                  auth.signOut();
-                  window.location.href = "/admin/login";
+                  void auth.signOut().finally(() => {
+                    window.location.href = "/admin/login";
+                  });
                 }}
                 className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
               >

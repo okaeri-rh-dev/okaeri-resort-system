@@ -371,7 +371,7 @@ async function downloadCSVFile(csvContent: string, filename: string): Promise<vo
  * Legacy export function for backward compatibility
  */
 export function exportToCSVLegacy(data: Record<string, unknown>[], filename: string): void {
-  exportToCSV(data, filename, undefined, {
+  void exportToCSV(data, filename, undefined, {
     philippineFormat: true,
     includeTimestamp: true,
     onError: (error) => {
@@ -440,7 +440,7 @@ export function exportBookingsToCSV(
   filename = `bookings_${format(new Date(), "yyyy-MM-dd")}.csv`
 ): void {
   const formattedData = formatBookingsForExport(bookings, units);
-  exportToCSV(formattedData, filename);
+  void exportToCSV(formattedData, filename);
 }
 
 /**
@@ -451,5 +451,5 @@ export function exportOccupancyToCSV(
   filename = `occupancy_${format(new Date(), "yyyy-MM-dd")}.csv`
 ): void {
   const formattedData = formatOccupancyForExport(report);
-  exportToCSV(formattedData, filename);
+  void exportToCSV(formattedData, filename);
 }

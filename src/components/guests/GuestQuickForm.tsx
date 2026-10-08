@@ -76,7 +76,7 @@ export function GuestQuickForm({
   // Check for existing guest when email changes
   useEffect(() => {
     if (debouncedEmail && debouncedEmail.includes("@") && showExistingGuestOption) {
-      checkExistingGuest(debouncedEmail);
+      void checkExistingGuest(debouncedEmail);
     } else {
       setExistingGuest(null);
     }

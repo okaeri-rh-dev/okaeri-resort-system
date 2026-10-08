@@ -1265,8 +1265,8 @@ export const useBookingWithWorkflow = (
     isLoading: bookingQuery.isLoading || workflowQuery.isLoading,
     error: bookingQuery.error || workflowQuery.error,
     refetch: () => {
-      bookingQuery.refetch();
-      workflowQuery.refetch();
+      void bookingQuery.refetch();
+      void workflowQuery.refetch();
     },
   };
 };

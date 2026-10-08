@@ -642,9 +642,7 @@ export function MultiUnitGuestBookingForm() {
                       <button
                         type="button"
                         onClick={() => {
-                          form.trigger().then(() => {
-                            // Validation triggered - logs removed for production
-                          });
+                          void form.trigger();
                         }}
                         className="mt-2 rounded bg-blue-500 px-2 py-1 text-xs text-white"
                       >

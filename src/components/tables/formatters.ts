@@ -101,7 +101,7 @@ export const exportToCSV = (
   // Import the secure, Philippine-compliant version
   import("@/utils/reports")
     .then(({ exportToCSV: secureExport }) => {
-      secureExport(data, filename, headers, {
+      void secureExport(data, filename, headers, {
         philippineFormat: true,
         includeTimestamp: true,
         onError: (error) => {

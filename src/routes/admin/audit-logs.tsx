@@ -56,7 +56,7 @@ function AuditLogsPage() {
 
   useEffect(() => {
     // Verify access on mount (double-check for security)
-    isCurrentUserOwner()
+    void isCurrentUserOwner()
       .then(setIsOwner)
       .finally(() => setIsChecking(false));
   }, []);

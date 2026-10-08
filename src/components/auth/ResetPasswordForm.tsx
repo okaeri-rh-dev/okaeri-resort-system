@@ -29,14 +29,17 @@ export function ResetPasswordForm() {
   // Check if user has a valid recovery session
   useEffect(() => {
     const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      // Supabase automatically sets a recovery session when user clicks the reset link
-      setIsValidSession(!!session);
-      setChecking(false);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        // Supabase automatically sets a recovery session when user clicks the reset link
+        setIsValidSession(!!session);
+      } finally {
+        setChecking(false);
+      }
     };
-    checkSession();
+    void checkSession();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

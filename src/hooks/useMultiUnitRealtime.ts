@@ -175,7 +175,7 @@ export function useMultiUnitBookingSubscription(
     // Cleanup on unmount
     return () => {
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
         statusRef.current = {
           isSubscribed: false,
@@ -192,7 +192,7 @@ export function useMultiUnitBookingSubscription(
     error: statusRef.current.error,
     unsubscribe: useCallback(() => {
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     }, []),
@@ -286,7 +286,7 @@ export function useBookingUnitsSubscription(
 
     return () => {
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
         statusRef.current = {
           isSubscribed: false,
@@ -303,7 +303,7 @@ export function useBookingUnitsSubscription(
     error: statusRef.current.error,
     unsubscribe: useCallback(() => {
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     }, []),
@@ -403,7 +403,7 @@ export function useMultiUnitAvailabilitySubscription(options: RealtimeSubscripti
 
     return () => {
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
@@ -412,7 +412,7 @@ export function useMultiUnitAvailabilitySubscription(options: RealtimeSubscripti
   return {
     unsubscribe: useCallback(() => {
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     }, []),
@@ -507,8 +507,8 @@ export function useMultiUnitPresence(bookingId: string, options: { enabled?: boo
 
     return () => {
       if (channelRef.current) {
-        channelRef.current.untrack();
-        supabase.removeChannel(channelRef.current);
+        void channelRef.current.untrack();
+        void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
@@ -553,7 +553,7 @@ export function useMultiUnitBroadcast(bookingId: string, options: { enabled?: bo
 
     return () => {
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };

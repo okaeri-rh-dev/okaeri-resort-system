@@ -91,7 +91,7 @@ export const UnitRequestSelector: React.FC<UnitRequestSelectorProps> = ({
       }
     };
 
-    loadRates();
+    void loadRates();
   }, []); // Run once on mount
 
   /**

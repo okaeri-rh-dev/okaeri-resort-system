@@ -65,7 +65,7 @@ export function useAuthToken() {
       }
     };
 
-    getInitialSession();
+    void getInitialSession();
 
     // Subscribe to auth state changes
     const {

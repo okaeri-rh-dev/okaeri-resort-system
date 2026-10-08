@@ -106,7 +106,7 @@ export function PaymentProofUpload({
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      handleFileSelect(file);
+      void handleFileSelect(file);
     }
   };
 
@@ -118,7 +118,7 @@ export function PaymentProofUpload({
 
       const file = event.dataTransfer.files?.[0];
       if (file && !disabled) {
-        handleFileSelect(file);
+        void handleFileSelect(file);
       }
     },
     [disabled, handleFileSelect]

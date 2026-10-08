@@ -135,7 +135,7 @@ export function exportSelectedUnits(units: Unit[], selectedIndices: number[]) {
     return;
   }
 
-  exportUnitsToCSV(selectedUnits);
+  void exportUnitsToCSV(selectedUnits);
 }
 
 /**

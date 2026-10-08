@@ -117,13 +117,13 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   // Check permissions on mount and auth state changes
   useEffect(() => {
-    checkPermissions();
+    void checkPermissions();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(() => {
       clearRoleCache();
-      checkPermissions();
+      void checkPermissions();
     });
 
     return () => subscription.unsubscribe();
@@ -380,7 +380,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                         size="sm"
                         onClick={() => {
                           setMobileMenuOpen(false);
-                          handleSignOut();
+                          void handleSignOut();
                         }}
                         className="text-muted-foreground hover:text-foreground h-11 w-full touch-manipulation justify-start"
                       >

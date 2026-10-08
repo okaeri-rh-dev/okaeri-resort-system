@@ -222,7 +222,7 @@ describe("useEntityEdit", () => {
       });
 
       act(() => {
-        result.current.mutateAsync(updateData);
+        result.current.mutate(updateData);
       });
 
       await waitFor(() => {
@@ -254,7 +254,7 @@ describe("useEntityEdit", () => {
       });
 
       act(() => {
-        result.current.mutateAsync(updateData);
+        result.current.mutate(updateData);
       });
 
       await waitFor(() => {
@@ -354,7 +354,7 @@ describe("useEntityEdit", () => {
       });
 
       act(() => {
-        result.current.mutateAsync(updateData);
+        result.current.mutate(updateData);
       });
 
       await waitFor(() => {
@@ -381,7 +381,7 @@ describe("useEntityEdit", () => {
       });
 
       act(() => {
-        result.current.mutateAsync(updateData);
+        result.current.mutate(updateData);
       });
 
       await waitFor(() => {
@@ -408,7 +408,7 @@ describe("useEntityEdit", () => {
       });
 
       act(() => {
-        result.current.mutateAsync(updateData);
+        result.current.mutate(updateData);
       });
 
       await waitFor(() => {
@@ -435,7 +435,7 @@ describe("useEntityEdit", () => {
       });
 
       act(() => {
-        result.current.mutateAsync(updateData);
+        result.current.mutate(updateData);
       });
 
       await waitFor(() => {
@@ -460,7 +460,7 @@ describe("useEntityEdit", () => {
       });
 
       act(() => {
-        result.current.mutateAsync(updateData);
+        result.current.mutate(updateData);
       });
 
       await waitFor(() => {
@@ -520,7 +520,7 @@ describe("useEntityEdit", () => {
       const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
       act(() => {
-        result.current.mutateAsync(updateData);
+        result.current.mutate(updateData);
       });
 
       await waitFor(() => {
