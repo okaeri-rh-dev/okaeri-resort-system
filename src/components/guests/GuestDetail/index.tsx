@@ -22,9 +22,15 @@ import type { Booking, Guest } from "@/types";
  */
 interface GuestDetailPageProps {
   guest: Guest & {
-    bookings?: Booking[];
-    total_spent?: number;
-    total_bookings?: number;
+    bookings?: Pick<
+      Booking,
+      | "booking_id"
+      | "booking_reference"
+      | "booking_status"
+      | "check_in"
+      | "check_out"
+      | "total_amount"
+    >[];
     address?: string;
     notes?: string;
   };

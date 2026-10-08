@@ -1,11 +1,11 @@
 import { lazy, Suspense } from "react";
 
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
-import { db } from "@/lib/supabase";
+import { guestDetailQuery } from "@/stores/useGuestStore";
 
 // Lazy load the edit page component
 const GuestEditPage = lazy(() =>
@@ -30,28 +30,7 @@ export const Route = createFileRoute("/admin/guests/$guestId/edit")({
     const { guestId } = params;
     const { queryClient } = context;
 
-    // Prefetch guest data
-    const guestPromise = queryClient.ensureQueryData({
-      queryKey: ["guest", guestId],
-      queryFn: async () => {
-        const { data, error } = await db.guests.byId(guestId);
-
-        if (error) {
-          console.error("[Guest Edit] Failed to fetch guest:", error);
-          throw new Error(`Failed to load guest: ${error.message}`);
-        }
-
-        if (!data) {
-          throw notFound();
-        }
-
-        return data;
-      },
-      staleTime: 30000, // 30 seconds
-    });
-
-    // Wait for data to be loaded
-    const [guest] = await Promise.all([guestPromise]);
+    const guest = await queryClient.ensureQueryData(guestDetailQuery(guestId));
 
     return {
       guest,

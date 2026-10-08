@@ -2,6 +2,25 @@
 
 import type { AuditFilters, EntityType } from "@/types/entity-detail.types";
 
+export const guestKeys = {
+  all: ["guests"] as const,
+  lists: () => [...guestKeys.all, "list"] as const,
+  list: (params: { searchQuery: string; sortBy: string; sortOrder: string }) =>
+    [...guestKeys.lists(), params] as const,
+  details: () => [...guestKeys.all, "detail"] as const,
+  detail: (guestId: string) => [...guestKeys.details(), guestId] as const,
+  bookings: (guestId: string) => [...guestKeys.all, "bookings", guestId] as const,
+  byEmail: (email: string) => [...guestKeys.all, "by-email", email] as const,
+  statistics: () => [...guestKeys.all, "statistics"] as const,
+};
+
+// Entities move here one at a time (guardrails Phase 3); the rest keep their singular root until then.
+const entityKeyFactories: Partial<
+  Record<EntityType, { all: readonly unknown[]; detail: (id: string) => readonly unknown[] }>
+> = {
+  guest: guestKeys,
+};
+
 /**
  * Centralized query key factory for TanStack Query
  * Provides type-safe, consistent query keys for caching and invalidation
@@ -23,14 +42,15 @@ export const queryKeys = {
    * Format: [type, id]
    * Example: ['booking', '123-abc']
    */
-  entity: <T extends EntityType>(type: T, id: string) => [type, id] as const,
+  entity: <T extends EntityType>(type: T, id: string) =>
+    entityKeyFactories[type]?.detail(id) ?? ([type, id] as const),
 
   /**
    * All entities of a type
    * Format: [type]
    * Example: ['booking']
    */
-  entities: <T extends EntityType>(type: T) => [type] as const,
+  entities: <T extends EntityType>(type: T) => entityKeyFactories[type]?.all ?? ([type] as const),
 
   /**
    * Filtered list of entities
@@ -64,12 +84,6 @@ export const queryKeys = {
    * Format: ['booking', id, 'payments']
    */
   bookingPayments: (bookingId: string) => ["booking", bookingId, "payments"] as const,
-
-  /**
-   * Bookings for a specific guest
-   * Format: ['guest', id, 'bookings']
-   */
-  guestBookings: (guestId: string) => ["guest", guestId, "bookings"] as const,
 
   /**
    * Bookings for a specific unit

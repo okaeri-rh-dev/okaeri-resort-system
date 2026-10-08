@@ -1,9 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { logger } from "@/lib/logger";
 import { invalidateBookings, invalidateGuests } from "@/lib/query-invalidation";
+import { guestKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Booking, Guest } from "@/types";
 import type { TablesUpdate } from "@/types/database.types";
@@ -109,13 +110,25 @@ export const useGuestStore = create<GuestStore>()(
 // TANSTACK QUERY HOOKS
 // ============================================
 
+// One guest with its bookings; the detail and edit routes and useEntityEdit share this cache entry
+export const guestDetailQuery = (guestId: string) =>
+  queryOptions({
+    queryKey: guestKeys.detail(guestId),
+    queryFn: async () => {
+      const { data, error } = await db.guests.withBookings(guestId);
+      if (error) throw new Error(`Failed to load guest: ${handleSupabaseError(error)}`);
+      return data;
+    },
+    staleTime: 30000,
+  });
+
 // Fetch all guests with search and sorting
 export const useGuests = () => {
   const { searchQuery, sortBy, sortOrder } = useGuestStore();
   const optimisticGuests = useGuestStore((state) => state.optimisticGuests);
 
   return useQuery({
-    queryKey: ["guests", searchQuery, sortBy, sortOrder],
+    queryKey: guestKeys.list({ searchQuery, sortBy, sortOrder }),
     queryFn: async () => {
       let query = supabase.from("guests").select("*");
 
@@ -155,24 +168,13 @@ export const useGuests = () => {
 
 // Fetch single guest with booking history
 export const useGuest = (guestId: string | undefined) => {
-  return useQuery({
-    queryKey: ["guests", guestId],
-    queryFn: async () => {
-      if (!guestId) throw new Error("Guest ID is required");
-
-      const { data, error } = await db.guests.withBookings(guestId);
-      if (error) throw new Error(handleSupabaseError(error));
-      return data;
-    },
-    enabled: !!guestId,
-    staleTime: 30000,
-  });
+  return useQuery({ ...guestDetailQuery(guestId ?? ""), enabled: !!guestId });
 };
 
 // Get guest by email
 export const useGuestByEmail = (email: string | undefined) => {
   return useQuery({
-    queryKey: ["guest-by-email", email],
+    queryKey: guestKeys.byEmail(email ?? ""),
     queryFn: async () => {
       if (!email) throw new Error("Email is required");
 
@@ -188,7 +190,7 @@ export const useGuestByEmail = (email: string | undefined) => {
 // Get guest booking history
 export const useGuestBookings = (guestId: string | undefined) => {
   return useQuery({
-    queryKey: ["guest-bookings", guestId],
+    queryKey: guestKeys.bookings(guestId ?? ""),
     queryFn: async () => {
       if (!guestId) throw new Error("Guest ID is required");
 
@@ -232,7 +234,7 @@ export const useCreateGuest = () => {
       return data;
     },
     onMutate: async (newGuest) => {
-      await queryClient.cancelQueries({ queryKey: ["guests"] });
+      await queryClient.cancelQueries({ queryKey: guestKeys.all });
 
       // Create optimistic guest
       const optimisticGuest: Guest = {
@@ -282,9 +284,9 @@ export const useUpdateGuest = () => {
       return data;
     },
     onMutate: async ({ guestId, updates }) => {
-      await queryClient.cancelQueries({ queryKey: ["guests"] });
+      await queryClient.cancelQueries({ queryKey: guestKeys.all });
 
-      const previousGuest = queryClient.getQueryData<Guest>(["guests", guestId]);
+      const previousGuest = queryClient.getQueryData<Guest>(guestKeys.detail(guestId));
 
       updateOptimistic(guestId, {
         ...updates,
@@ -328,7 +330,7 @@ export const useDeleteGuest = () => {
       if (error) throw new Error(handleSupabaseError(error));
     },
     onMutate: async (guestId) => {
-      await queryClient.cancelQueries({ queryKey: ["guests"] });
+      await queryClient.cancelQueries({ queryKey: guestKeys.all });
       removeOptimistic(guestId);
       return { guestId };
     },
@@ -404,7 +406,7 @@ interface GuestStatistics {
 
 export const useGuestStatistics = () => {
   return useQuery({
-    queryKey: ["guest-statistics"],
+    queryKey: guestKeys.statistics(),
     queryFn: async (): Promise<GuestStatistics> => {
       const now = new Date();
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -473,10 +475,10 @@ export const useGuestStatistics = () => {
 //             table: "guests",
 //           },
 //           (payload) => {
-//             queryClient.invalidateQueries({ queryKey: ["guests"] });
+//             queryClient.invalidateQueries({ queryKey: guestKeys.all });
 
 //             if (payload.eventType === "UPDATE" && payload.new) {
-//               queryClient.setQueryData(["guests", (payload.new as Guest).guest_id], payload.new);
+//               queryClient.setQueryData(guestKeys.detail((payload.new as Guest).guest_id), payload.new);
 //             }
 //           }
 //         )

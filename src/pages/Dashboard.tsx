@@ -2,6 +2,7 @@ import { useCallback } from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
 
+import { guestKeys } from "@/lib/query-keys";
 import { useBookings } from "@/stores/useBookingStore";
 
 import { DesktopDashboard } from "./DesktopDashboard";
@@ -14,7 +15,7 @@ export function Dashboard() {
   const refresh = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["bookings"] });
     queryClient.invalidateQueries({ queryKey: ["units"] });
-    queryClient.invalidateQueries({ queryKey: ["guests"] });
+    queryClient.invalidateQueries({ queryKey: guestKeys.all });
   }, [queryClient]);
 
   return (

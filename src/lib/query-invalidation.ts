@@ -10,6 +10,7 @@
  */
 
 import { queryClient } from "@/lib/query-client";
+import { guestKeys } from "@/lib/query-keys";
 
 // ============================================
 // GRANULAR HELPERS (building blocks)
@@ -21,8 +22,7 @@ export function invalidateBookings() {
 }
 
 export function invalidateGuests() {
-  queryClient.invalidateQueries({ queryKey: ["guests"] });
-  queryClient.invalidateQueries({ queryKey: ["guest"] });
+  queryClient.invalidateQueries({ queryKey: guestKeys.all });
 }
 
 export function invalidateUnits() {
