@@ -71,7 +71,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
       ]}
       status={<StatusBadge status={unit.unit_status || "Available"} />}
       editRoute={{
-        to: "/units/$unitId/edit",
+        to: "/admin/units/$unitId/edit",
         params: { unitId },
       }}
     >

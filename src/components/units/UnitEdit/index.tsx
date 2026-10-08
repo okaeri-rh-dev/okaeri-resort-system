@@ -99,7 +99,7 @@ export function UnitEditPage() {
       subtitle={`${unit.unit_name} (${unit.unit_code})`}
       breadcrumbs={[
         { label: "Cabins", to: "/admin/units" },
-        { label: unit.unit_name, to: `/units/${unitId}` },
+        { label: unit.unit_name, to: "/admin/units/$unitId", params: { unitId } },
         { label: "Edit" },
       ]}
     >

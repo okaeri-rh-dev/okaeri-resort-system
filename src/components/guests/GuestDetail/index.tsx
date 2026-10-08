@@ -69,7 +69,7 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
       subtitle={`Member since ${formatFullDate(guest.created_at || new Date().toISOString())}`}
       breadcrumbs={[{ label: "Guests", to: "/admin/guests" }, { label: guest.guest_name }]}
       editRoute={{
-        to: "/guests/$guestId/edit",
+        to: "/admin/guests/$guestId/edit",
         params: { guestId },
       }}
     >

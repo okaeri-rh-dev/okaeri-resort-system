@@ -93,7 +93,8 @@ export function ExpenseEditPage() {
         { label: "Expenses", to: "/admin/expenses" },
         {
           label: expense.description || "Expense",
-          to: `/admin/expenses/${expenseId}`,
+          to: "/admin/expenses/$expenseId",
+          params: { expenseId },
         },
         { label: "Edit" },
       ]}

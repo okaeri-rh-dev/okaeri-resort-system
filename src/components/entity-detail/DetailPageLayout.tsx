@@ -7,13 +7,15 @@ import { ChevronRight, Edit } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { FileRoutesByTo } from "@/routeTree.gen";
 
-/**
- * Breadcrumb type definition
- */
+/** A route path from the generated route tree, so a path that does not exist fails tsc. */
+export type RoutePath = keyof FileRoutesByTo;
+
 export type Breadcrumb = {
   label: string;
-  to?: string; // If provided, renders as Link
+  to?: RoutePath; // If provided, renders as Link
+  params?: Record<string, string>;
 };
 
 /**
@@ -26,7 +28,7 @@ export interface DetailPageLayoutProps {
   breadcrumbs: Breadcrumb[];
   status?: React.ReactNode; // Status badge
   actions?: React.ReactNode; // Header actions
-  editRoute?: { to: string; params: Record<string, string> };
+  editRoute?: { to: RoutePath; params: Record<string, string> };
   className?: string;
 }
 
@@ -78,7 +80,11 @@ export function DetailPageLayout({
           <React.Fragment key={index}>
             {index > 0 && <ChevronRight className="h-4 w-4" />}
             {crumb.to ? (
-              <Link to={crumb.to} className="transition-colors hover:text-neutral-900">
+              <Link
+                to={crumb.to}
+                params={crumb.params}
+                className="transition-colors hover:text-neutral-900"
+              >
                 {crumb.label}
               </Link>
             ) : (

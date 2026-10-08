@@ -62,7 +62,7 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
       ]}
       status={<StatusBadge status={payment.payment_status || "Pending"} />}
       editRoute={{
-        to: "/payments/$paymentId/edit",
+        to: "/admin/payments/$paymentId/edit",
         params: { paymentId },
       }}
     >

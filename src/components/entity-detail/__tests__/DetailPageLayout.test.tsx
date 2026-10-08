@@ -3,7 +3,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { DetailPageLayout } from "../DetailPageLayout";
+import { DetailPageLayout, type Breadcrumb } from "../DetailPageLayout";
 
 // Mock TanStack Router Link
 vi.mock("@tanstack/react-router", () => ({
@@ -55,7 +55,7 @@ describe("DetailPageLayout", () => {
 
   describe("Breadcrumbs", () => {
     it("renders breadcrumb navigation", () => {
-      const breadcrumbs = [
+      const breadcrumbs: Breadcrumb[] = [
         { label: "Home", to: "/" },
         { label: "Bookings", to: "/admin/bookings" },
         { label: "BK-001" },
@@ -73,7 +73,7 @@ describe("DetailPageLayout", () => {
     });
 
     it("handles breadcrumbs without to (current page)", () => {
-      const breadcrumbs = [
+      const breadcrumbs: Breadcrumb[] = [
         { label: "Bookings", to: "/admin/bookings" },
         { label: "Current Page" }, // No to - current page
       ];
@@ -208,7 +208,7 @@ describe("DetailPageLayout", () => {
     });
 
     it("breadcrumb nav has proper aria-label", () => {
-      const breadcrumbs = [{ label: "Home", to: "/" }, { label: "Current" }];
+      const breadcrumbs: Breadcrumb[] = [{ label: "Home", to: "/" }, { label: "Current" }];
 
       const { container } = render(
         <DetailPageLayout title="Test" breadcrumbs={breadcrumbs}>
@@ -223,7 +223,10 @@ describe("DetailPageLayout", () => {
 
   describe("Complex layouts", () => {
     it("handles all props together", () => {
-      const breadcrumbs = [{ label: "Bookings", to: "/admin/bookings" }, { label: "BK-001" }];
+      const breadcrumbs: Breadcrumb[] = [
+        { label: "Bookings", to: "/admin/bookings" },
+        { label: "BK-001" },
+      ];
 
       render(
         <DetailPageLayout

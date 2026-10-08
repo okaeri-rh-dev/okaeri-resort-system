@@ -99,7 +99,8 @@ export function BookingEditPage() {
         { label: "Bookings", to: "/admin/bookings" },
         {
           label: booking.booking_reference,
-          to: `/admin/bookings/${bookingId}`,
+          to: "/admin/bookings/$bookingId",
+          params: { bookingId },
         },
         { label: "Edit" },
       ]}

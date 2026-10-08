@@ -66,7 +66,7 @@ export function GuestEditPage() {
       subtitle={guest.guest_name}
       breadcrumbs={[
         { label: "Guests", to: "/admin/guests" },
-        { label: guest.guest_name, to: `/guests/${guestId}` },
+        { label: guest.guest_name, to: "/admin/guests/$guestId", params: { guestId } },
         { label: "Edit" },
       ]}
     >

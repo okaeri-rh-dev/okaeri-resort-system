@@ -59,7 +59,7 @@ export function ExpenseDetailPage({ expense, expenseId }: ExpenseDetailPageProps
       subtitle={`${expense.category} • ${formatFullDate(expense.date)}`}
       breadcrumbs={[{ label: "Expenses", to: "/admin/expenses" }, { label: titleDescription }]}
       editRoute={{
-        to: "/expenses/$expenseId/edit",
+        to: "/admin/expenses/$expenseId/edit",
         params: { expenseId },
       }}
     >
