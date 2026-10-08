@@ -17,7 +17,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useEntityEdit } from "@/hooks/entity";
 import { guestEditSchema, type GuestEditInput } from "@/lib/validation/entity-schemas";
 import type { Guest } from "@/types/entity-detail.types";
@@ -37,9 +36,7 @@ export function GuestEditPage() {
     defaultValues: {
       guest_name: guest.guest_name || "",
       email: guest.email || "",
-      contact_number: guest.phone_number || "", // DB uses phone_number
-      address: "", // Not in DB schema - will be added in Phase 3
-      notes: "", // Not in DB schema - will be added in Phase 3
+      contact_number: guest.phone_number || "",
     },
   });
 
@@ -51,8 +48,8 @@ export function GuestEditPage() {
   });
 
   // Form submission handler
-  const onSubmit = (data: GuestEditInput) => {
-    updateGuest.mutate(data);
+  const onSubmit = ({ guest_name, email, contact_number }: GuestEditInput) => {
+    updateGuest.mutate({ guest_name, email, phone_number: contact_number });
   };
 
   // Cancel handler
@@ -121,50 +118,6 @@ export function GuestEditPage() {
                   )}
                 />
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Additional Information Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Additional Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Enter complete address..."
-                        className="min-h-[80px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Internal Notes (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Add any internal notes about this guest..."
-                        className="min-h-[100px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </CardContent>
           </Card>
 

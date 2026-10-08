@@ -109,16 +109,6 @@ export const guestEditSchema = z.object({
   guest_name: z.string().min(1, "Guest name is required").max(200, "Name too long"),
   email: z.string().email("Invalid email address"),
   contact_number: z.string().min(10, "Valid phone number required").max(20, "Phone too long"),
-  address: z
-    .string()
-    .max(500, "Address too long")
-    .transform((val) => sanitizeText(val))
-    .optional(),
-  notes: z
-    .string()
-    .max(2000, "Notes too long")
-    .transform((val) => sanitizeText(val))
-    .optional(),
 });
 
 export type GuestEditInput = z.infer<typeof guestEditSchema>;
