@@ -21,7 +21,7 @@ import { UnitAssignmentInterface } from "@/components/admin/UnitAssignmentInterf
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuthToken } from "@/hooks/useAuthToken";
+import { getAccessToken, useAuthToken } from "@/hooks/useAuthToken";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 // ============================================
@@ -324,13 +324,10 @@ function AssignUnitsPage() {
     queryKey: ["booking", bookingId],
     enabled: !!authToken, // Only fetch when authenticated
     queryFn: async () => {
-      if (!authToken) {
-        throw new Error("Not authenticated. Please sign in again.");
-      }
-
+      const accessToken = await getAccessToken();
       const response = await fetch(`/api/admin/bookings/${bookingId}`, {
         headers: {
-          Authorization: `Bearer ${authToken}`,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
       });

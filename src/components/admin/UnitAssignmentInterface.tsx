@@ -33,7 +33,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useAuthToken } from "@/hooks/useAuthToken";
+import { getAccessToken, useAuthToken } from "@/hooks/useAuthToken";
 import { afterBookingUpdate } from "@/lib/query-invalidation";
 import { cn } from "@/lib/utils";
 
@@ -98,15 +98,12 @@ export function UnitAssignmentInterface({
   } = useQuery({
     queryKey: ["available-units", checkInDate, checkOutDate],
     queryFn: async () => {
-      if (!authToken) {
-        throw new Error("Not authenticated. Please sign in again.");
-      }
-
+      const accessToken = await getAccessToken();
       const response = await fetch(
         `/api/admin/available-units?check_in_date=${encodeURIComponent(checkInDate)}&check_out_date=${encodeURIComponent(checkOutDate)}`,
         {
           headers: {
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
         }
@@ -130,7 +127,7 @@ export function UnitAssignmentInterface({
   // Assignment Mutation
   // ============================================
 
-  const assignMutation = useMutation({
+  const { mutate: assignUnits, isPending: isAssigning } = useMutation({
     mutationFn: async (unitIds: string[]) => {
       if (!authToken) {
         throw new Error("Not authenticated. Please sign in again.");
@@ -267,9 +264,9 @@ export function UnitAssignmentInterface({
   };
 
   const confirmAssignment = useCallback(() => {
-    assignMutation.mutate(Array.from(selectedUnits));
+    assignUnits(Array.from(selectedUnits));
     setShowAssignDialog(false);
-  }, [assignMutation, selectedUnits]);
+  }, [assignUnits, selectedUnits]);
 
   // ============================================
   // Derived State
@@ -278,7 +275,7 @@ export function UnitAssignmentInterface({
   const validation = getValidationStatus();
   const requiredCount = unitRequests.length;
   const totalGuests = unitRequests.reduce((sum, req) => sum + req.guests_per_unit, 0);
-  const isAssignmentDisabled = !validation.isValid || assignMutation.isPending;
+  const isAssignmentDisabled = !validation.isValid || isAssigning;
 
   // ============================================
   // Render States
@@ -527,7 +524,7 @@ export function UnitAssignmentInterface({
           className="w-full"
           size="lg"
         >
-          {assignMutation.isPending ? (
+          {isAssigning ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
               Assigning Cabins...

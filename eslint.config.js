@@ -94,9 +94,9 @@ export default tseslint.config([
       ...reactHooks.configs["recommended-latest"].rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
 
-      // TanStack Query recommended set at warn until its 5 hits are fixed (guardrails Phase 3)
+      // TanStack Query recommended set (exhaustive-deps found a query that failed before the token loaded)
       ...Object.fromEntries(
-        Object.keys(pluginQuery.configs["flat/recommended"][0].rules).map((rule) => [rule, "warn"])
+        Object.keys(pluginQuery.configs["flat/recommended"][0].rules).map((rule) => [rule, "error"])
       ),
 
       // TypeScript rules - relaxed

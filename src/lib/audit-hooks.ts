@@ -148,7 +148,7 @@ export function useRecentAuditLogs(limit = 50) {
  */
 export function useUserAuditLogs(userEmail: string, limit = 100) {
   return useQuery<AuditLog[], Error>({
-    queryKey: auditKeys.user(userEmail),
+    queryKey: [...auditKeys.user(userEmail), limit],
     queryFn: () => db.auditLogs.byUser(userEmail, limit),
     staleTime: AUDIT_CACHE_CONFIG.STALE_TIME,
     gcTime: AUDIT_CACHE_CONFIG.CACHE_TIME,
