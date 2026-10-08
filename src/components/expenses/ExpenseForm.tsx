@@ -180,9 +180,8 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
                       </SelectItem>
                     ))
                   ) : (
-                    <SelectItem value="" disabled>
-                      No categories available
-                    </SelectItem>
+                    // Radix throws on an empty-string item value; categories are [] while loading
+                    <p className="px-2 py-1.5 text-sm text-neutral-500">No categories available</p>
                   )}
                 </SelectContent>
               </Select>

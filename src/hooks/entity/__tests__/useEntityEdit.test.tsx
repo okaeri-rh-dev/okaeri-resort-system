@@ -444,6 +444,30 @@ describe("useEntityEdit", () => {
 
       expect(db.expenses.update).toHaveBeenCalledWith(entityId, updateData);
     });
+
+    it("writes the app-level date field to the expense_date column", async () => {
+      const entityId = "expense-123";
+      vi.mocked(db.expenses.update).mockResolvedValue(
+        createSuccessResponse(createMockExpense({ expense_id: entityId }))
+      );
+
+      const { result } = renderHook(() => useEntityEdit("expense", entityId), {
+        wrapper: createWrapper(),
+      });
+
+      act(() => {
+        result.current.mutate({ amount: 500, date: "2026-01-15" });
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(db.expenses.update).toHaveBeenCalledWith(entityId, {
+        amount: 500,
+        expense_date: "2026-01-15",
+      });
+    });
   });
 
   describe("Callback options", () => {

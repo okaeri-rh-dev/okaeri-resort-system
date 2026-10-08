@@ -72,12 +72,8 @@ export function ExpenseEditPage() {
   });
 
   // Form submission handler
-  const onSubmit: SubmitHandler<ExpenseEditInput> = (data) => {
-    // Transform Date object to YYYY-MM-DD string for database
-    updateExpense.mutate({
-      ...data,
-      date: toISODateString(data.expense_date),
-    });
+  const onSubmit: SubmitHandler<ExpenseEditInput> = ({ expense_date, ...rest }) => {
+    updateExpense.mutate({ ...rest, date: toISODateString(expense_date) });
   };
 
   // Cancel handler
@@ -141,9 +137,10 @@ export function ExpenseEditPage() {
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="" disabled>
+                          // Radix throws on an empty-string item value; categories are [] while loading
+                          <p className="px-2 py-1.5 text-sm text-neutral-500">
                             No categories available
-                          </SelectItem>
+                          </p>
                         )}
                       </SelectContent>
                     </Select>

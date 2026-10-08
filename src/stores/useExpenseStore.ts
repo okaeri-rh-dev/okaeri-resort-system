@@ -229,8 +229,8 @@ export const useExpenseStats = (dateRange?: { from: Date; to: Date }) => {
 
       if (dateRange) {
         query = query
-          .gte("date", toISODateString(dateRange.from))
-          .lte("date", toISODateString(dateRange.to));
+          .gte("expense_date", toISODateString(dateRange.from))
+          .lte("expense_date", toISODateString(dateRange.to));
       }
 
       const { data, error } = await query;
@@ -439,8 +439,8 @@ export const useExportExpenses = () => {
 
       if (dateRange) {
         query = query
-          .gte("date", toISODateString(dateRange.from))
-          .lte("date", toISODateString(dateRange.to));
+          .gte("expense_date", toISODateString(dateRange.from))
+          .lte("expense_date", toISODateString(dateRange.to));
       }
 
       const { data, error } = await query.order("expense_date", { ascending: false });

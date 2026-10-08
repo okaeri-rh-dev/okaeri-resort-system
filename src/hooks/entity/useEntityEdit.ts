@@ -92,10 +92,13 @@ export function useEntityEdit<T extends EntityType>(
           case "payment":
             return db.payments.update(entityId, updateData as Partial<Payment>);
           case "expense": {
-            // Handle null values that DB doesn't accept - filter out null description
-            const { description, ...rest } = updateData as Partial<Expense>;
-            const expenseUpdate = description === null ? rest : { ...rest, description };
-            return db.expenses.update(entityId, expenseUpdate);
+            // The app type calls expense_date `date`; null description is not accepted by the DB
+            const { description, date, ...rest } = updateData as Partial<Expense>;
+            return db.expenses.update(entityId, {
+              ...rest,
+              ...(description !== null && { description }),
+              ...(date !== undefined && { expense_date: date }),
+            });
           }
           default:
             throw new Error(`Unknown entity type: ${entityType}`);
