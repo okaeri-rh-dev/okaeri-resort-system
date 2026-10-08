@@ -98,6 +98,8 @@ export default tseslint.config([
       ...Object.fromEntries(
         Object.keys(pluginQuery.configs["flat/recommended"][0].rules).map((rule) => [rule, "error"])
       ),
+      // Warn as a standing reminder; the entity key migration clears it (guardrails Phase 3)
+      "@tanstack/query/prefer-query-options": "warn",
 
       // TypeScript rules - relaxed
       "@typescript-eslint/no-unused-vars": [
