@@ -92,7 +92,6 @@ export const unitEditWithoutPricingSchema = z.object({
   base_rate: z.number().optional().default(0),
   weekend_rate: z.number().optional().default(0),
   extra_person_rate: z.number().optional().default(0),
-  cleaning_fee: z.number().positive("Cleaning fee must be positive").optional(),
   amenities: z.array(z.string()).optional(),
 });
 

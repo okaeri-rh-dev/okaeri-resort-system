@@ -58,7 +58,6 @@ export function UnitEditPage() {
       base_rate: 0,
       weekend_rate: 0,
       extra_person_rate: 0,
-      cleaning_fee: 0, // Not in DB schema - will be added in Phase 3
       amenities: (unit.amenities as string[]) || undefined,
     },
   });
@@ -77,15 +76,17 @@ export function UnitEditPage() {
       return;
     }
 
-    // Auto-populate pricing from global config before submission
-    const dataWithPricing = {
-      ...data,
+    // Pricing comes from the global config; units has no cleaning_fee column
+    updateUnit.mutate({
+      unit_name: data.unit_name,
+      unit_code: data.unit_code,
+      unit_type: data.unit_type,
+      max_occupancy: data.max_occupancy,
+      amenities: data.amenities,
       base_rate: pricingConfig.base_rate,
       weekend_rate: pricingConfig.weekend_rate,
       extra_person_rate: pricingConfig.extra_person_rate,
-    };
-
-    updateUnit.mutate(dataWithPricing);
+    });
   };
 
   // Cancel handler
@@ -156,10 +157,11 @@ export function UnitEditPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Villa">Villa</SelectItem>
-                          <SelectItem value="Room">Room</SelectItem>
+                          {/* units_unit_type_check allows exactly these */}
+                          <SelectItem value="Standard">Standard</SelectItem>
+                          <SelectItem value="Deluxe">Deluxe</SelectItem>
                           <SelectItem value="Suite">Suite</SelectItem>
-                          <SelectItem value="Cottage">Cottage</SelectItem>
+                          <SelectItem value="Villa">Villa</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
