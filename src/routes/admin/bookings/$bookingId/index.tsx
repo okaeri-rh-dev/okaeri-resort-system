@@ -7,8 +7,6 @@ import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleto
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
-import { paymentKeys } from "@/lib/query-keys";
-import { db } from "@/lib/supabase";
 import { bookingDetailQuery } from "@/stores/useBookingStore";
 
 // Lazy load the detail page component
@@ -26,22 +24,6 @@ export const Route = createFileRoute("/admin/bookings/$bookingId/")({
 
     const bookingPromise = queryClient.ensureQueryData(bookingDetailQuery(bookingId));
 
-    // Prefetch payments for this booking
-    const paymentsPromise = queryClient.ensureQueryData({
-      queryKey: paymentKeys.byBooking(bookingId),
-      queryFn: async () => {
-        const { data, error } = await db.payments.byBooking(bookingId);
-
-        if (error) {
-          console.error("[Booking Detail] Failed to fetch payments:", error);
-          return [];
-        }
-
-        return data || [];
-      },
-      staleTime: 30000, // 30 seconds
-    });
-
     // Check if user has permission to view audit logs
     const canViewAudit = await hasAuditRole(AuditRole.MANAGER);
 
@@ -51,14 +33,9 @@ export const Route = createFileRoute("/admin/bookings/$bookingId/")({
       : Promise.resolve([]);
 
     // Wait for all data to be loaded
-    const [, payments, auditLogs] = await Promise.all([
-      bookingPromise,
-      paymentsPromise,
-      auditLogsPromise,
-    ]);
+    const [, auditLogs] = await Promise.all([bookingPromise, auditLogsPromise]);
 
     return {
-      payments,
       auditLogs,
       canViewAudit,
     };

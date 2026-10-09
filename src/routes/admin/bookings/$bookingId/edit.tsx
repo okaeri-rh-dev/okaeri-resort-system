@@ -5,8 +5,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
-import { paymentKeys } from "@/lib/query-keys";
-import { db } from "@/lib/supabase";
 import { bookingDetailQuery } from "@/stores/useBookingStore";
 import { allUnitsQuery } from "@/stores/useUnitStore";
 
@@ -38,33 +36,12 @@ export const Route = createFileRoute("/admin/bookings/$bookingId/edit")({
     // Prefetch all available units for the unit selector
     const unitsPromise = queryClient.ensureQueryData(allUnitsQuery());
 
-    // Prefetch payments for this booking
-    const paymentsPromise = queryClient.ensureQueryData({
-      queryKey: paymentKeys.byBooking(bookingId),
-      queryFn: async () => {
-        const { data, error } = await db.payments.byBooking(bookingId);
-
-        if (error) {
-          console.error("[Booking Edit] Failed to fetch payments:", error);
-          return [];
-        }
-
-        return data || [];
-      },
-      staleTime: 30000, // 30 seconds
-    });
-
     // Wait for all data to be loaded
-    const [booking, units, payments] = await Promise.all([
-      bookingPromise,
-      unitsPromise,
-      paymentsPromise,
-    ]);
+    const [booking, units] = await Promise.all([bookingPromise, unitsPromise]);
 
     return {
       booking,
       units,
-      payments,
     };
   },
 

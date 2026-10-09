@@ -42,7 +42,6 @@ export const unitKeys = {
   unfiltered: () => [...unitKeys.all, "unfiltered"] as const,
   details: () => [...unitKeys.all, "detail"] as const,
   detail: (unitId: string) => [...unitKeys.details(), unitId] as const,
-  revenueStats: (unitId: string) => [...unitKeys.detail(unitId), "revenue-stats"] as const,
 };
 
 export const bookingKeys = {
@@ -54,7 +53,6 @@ export const bookingKeys = {
   detail: (bookingId: string) => [...bookingKeys.details(), bookingId] as const,
   // The /api/admin/bookings/:id response, a different shape from detail(); under it so invalidating detail covers both
   adminDetail: (bookingId: string) => [...bookingKeys.detail(bookingId), "admin"] as const,
-  byUnit: (unitId: string) => [...bookingKeys.all, "unit", unitId] as const,
 };
 
 export const accountKeys = {
