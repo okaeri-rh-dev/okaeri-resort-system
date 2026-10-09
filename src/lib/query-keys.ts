@@ -109,6 +109,50 @@ export const pricingKeys = {
   cached: (cacheKey: string) => [...pricingKeys.cache(), cacheKey] as const,
 };
 
+// Availability reads sit under several top-level roots; invalidateAvailability() covers each one
+export const availabilityKeys = {
+  unit: {
+    all: ["unit-availability"] as const,
+    byUnit: (unitId: string) => [...availabilityKeys.unit.all, unitId] as const,
+    range: (unitId: string, checkIn: string, checkOut: string, excludeBookingId?: string) =>
+      [...availabilityKeys.unit.byUnit(unitId), checkIn, checkOut, excludeBookingId] as const,
+  },
+  unitFast: {
+    all: ["unit-availability-fast"] as const,
+    byUnit: (unitId: string) => [...availabilityKeys.unitFast.all, unitId] as const,
+    range: (unitId: string, checkIn: string, checkOut: string, excludeBookingId?: string) =>
+      [...availabilityKeys.unitFast.byUnit(unitId), checkIn, checkOut, excludeBookingId] as const,
+  },
+  availableUnits: {
+    all: ["available-units"] as const,
+    range: (checkIn: string, checkOut: string) =>
+      [...availabilityKeys.availableUnits.all, checkIn, checkOut] as const,
+    search: (checkIn: string, checkOut: string, filters: object, limit: number) =>
+      [...availabilityKeys.availableUnits.range(checkIn, checkOut), filters, limit] as const,
+  },
+  availableUnitsByType: (checkIn: string, checkOut: string) =>
+    ["available-units-by-type", checkIn, checkOut] as const,
+  batch: (unitIds: string[], checkIn: string, checkOut: string) =>
+    ["batch-unit-availability", unitIds, checkIn, checkOut] as const,
+  calendar: {
+    all: ["availability-calendar"] as const,
+    byUnit: (unitId: string) => [...availabilityKeys.calendar.all, unitId] as const,
+  },
+  multiUnit: {
+    all: ["multi-unit-availability"] as const,
+    search: (checkIn: string, checkOut: string, filters: object) =>
+      [...availabilityKeys.multiUnit.all, checkIn, checkOut, filters] as const,
+    units: (unitIds: string[], checkIn: string, checkOut: string) =>
+      [...availabilityKeys.multiUnit.all, unitIds, checkIn, checkOut] as const,
+  },
+  blackouts: {
+    all: ["unit-blackouts"] as const,
+    byUnit: (unitId: string) => [...availabilityKeys.blackouts.all, unitId] as const,
+    range: (unitId: string, startDate?: string, endDate?: string) =>
+      [...availabilityKeys.blackouts.byUnit(unitId), startDate, endDate] as const,
+  },
+};
+
 const entityKeyFactories: Record<
   EntityType,
   { all: readonly unknown[]; detail: (id: string) => readonly unknown[] }

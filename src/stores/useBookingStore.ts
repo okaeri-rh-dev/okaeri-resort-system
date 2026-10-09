@@ -19,7 +19,7 @@ import {
   afterBookingUpdate,
   invalidateBookings,
 } from "@/lib/query-invalidation";
-import { bookingKeys, unitKeys } from "@/lib/query-keys";
+import { availabilityKeys, bookingKeys, unitKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, storage, supabase } from "@/lib/supabase";
 import { toManilaDateString } from "@/lib/timezone";
 import type {
@@ -811,21 +811,14 @@ export const useDeleteBooking = () => {
 // OPTIMIZED AVAILABILITY CHECKING HOOKS
 // ============================================
 
-/**
- * Fast unit availability check using check_multi_unit_availability RPC
- * Updated to use existing RPC function with single-unit array
- */
-export const useUnitAvailabilityFast = (
+const unitAvailabilityFastQuery = (
   unitId: string,
   checkIn: string,
   checkOut: string,
-  excludeBookingId?: string,
-  options: { enabled?: boolean } = {}
-) => {
-  const { enabled = true } = options;
-
-  return useQuery({
-    queryKey: ["unit-availability-fast", unitId, checkIn, checkOut, excludeBookingId],
+  excludeBookingId?: string
+) =>
+  queryOptions({
+    queryKey: availabilityKeys.unitFast.range(unitId, checkIn, checkOut, excludeBookingId),
     queryFn: async () => {
       if (!unitId || !checkIn || !checkOut) return null;
 
@@ -845,28 +838,37 @@ export const useUnitAvailabilityFast = (
         unitStatus: result?.is_available ? "Available" : "Unavailable",
       };
     },
-    enabled: enabled && !!unitId && !!checkIn && !!checkOut,
     staleTime: 300000, // 5 minutes - availability doesn't change frequently
     // Removed 30s refetch - users can manually check when needed
     retry: 2,
   });
-};
 
 /**
- * Multi-unit availability search with advanced filtering
+ * Fast unit availability check using check_multi_unit_availability RPC
+ * Updated to use existing RPC function with single-unit array
  */
-export const useMultiUnitAvailability = (
+export const useUnitAvailabilityFast = (
+  unitId: string,
   checkIn: string,
   checkOut: string,
-  filters: {
-    unitIds?: string[];
-  } = {},
+  excludeBookingId?: string,
   options: { enabled?: boolean } = {}
 ) => {
   const { enabled = true } = options;
 
   return useQuery({
-    queryKey: ["multi-unit-availability", checkIn, checkOut, filters],
+    ...unitAvailabilityFastQuery(unitId, checkIn, checkOut, excludeBookingId),
+    enabled: enabled && !!unitId && !!checkIn && !!checkOut,
+  });
+};
+
+const multiUnitAvailabilityQuery = (
+  checkIn: string,
+  checkOut: string,
+  filters: { unitIds?: string[] }
+) =>
+  queryOptions({
+    queryKey: availabilityKeys.multiUnit.search(checkIn, checkOut, filters),
     queryFn: async () => {
       if (!checkIn || !checkOut) return [];
 
@@ -894,9 +896,26 @@ export const useMultiUnitAvailability = (
         nextAvailableDate: unit.next_available_date,
       }));
     },
-    enabled: enabled && !!checkIn && !!checkOut,
     staleTime: 60000, // 1 minute
     retry: 2,
+  });
+
+/**
+ * Multi-unit availability search with advanced filtering
+ */
+export const useMultiUnitAvailability = (
+  checkIn: string,
+  checkOut: string,
+  filters: {
+    unitIds?: string[];
+  } = {},
+  options: { enabled?: boolean } = {}
+) => {
+  const { enabled = true } = options;
+
+  return useQuery({
+    ...multiUnitAvailabilityQuery(checkIn, checkOut, filters),
+    enabled: enabled && !!checkIn && !!checkOut,
   });
 };
 
@@ -939,19 +958,9 @@ export const useAvailabilityCalendar = (
 };
 */
 
-/**
- * Blackout period management
- */
-export const useUnitBlackouts = (
-  unitId: string,
-  startDate?: string,
-  endDate?: string,
-  options: { enabled?: boolean } = {}
-) => {
-  const { enabled = true } = options;
-
-  return useQuery({
-    queryKey: ["unit-blackouts", unitId, startDate, endDate],
+const unitBlackoutsQuery = (unitId: string, startDate?: string, endDate?: string) =>
+  queryOptions({
+    queryKey: availabilityKeys.blackouts.range(unitId, startDate, endDate),
     queryFn: async () => {
       if (!unitId) return [];
 
@@ -969,9 +978,24 @@ export const useUnitBlackouts = (
       if (error) throw new Error(handleSupabaseError(error));
       return data || [];
     },
-    enabled: enabled && !!unitId,
     staleTime: 300000, // 5 minutes
     retry: 1,
+  });
+
+/**
+ * Blackout period management
+ */
+export const useUnitBlackouts = (
+  unitId: string,
+  startDate?: string,
+  endDate?: string,
+  options: { enabled?: boolean } = {}
+) => {
+  const { enabled = true } = options;
+
+  return useQuery({
+    ...unitBlackoutsQuery(unitId, startDate, endDate),
+    enabled: enabled && !!unitId,
   });
 };
 
@@ -1012,10 +1036,16 @@ export const useCreateBlackout = () => {
     onSuccess: (data) => {
       // Invalidate all availability-related queries for the unit
       const blackout = data as unknown as BlackoutResponse;
-      queryClient.invalidateQueries({ queryKey: ["unit-blackouts", blackout.unit_id] });
-      queryClient.invalidateQueries({ queryKey: ["unit-availability-fast", blackout.unit_id] });
-      queryClient.invalidateQueries({ queryKey: ["multi-unit-availability"] });
-      queryClient.invalidateQueries({ queryKey: ["availability-calendar", blackout.unit_id] });
+      queryClient.invalidateQueries({
+        queryKey: availabilityKeys.blackouts.byUnit(blackout.unit_id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: availabilityKeys.unitFast.byUnit(blackout.unit_id),
+      });
+      queryClient.invalidateQueries({ queryKey: availabilityKeys.multiUnit.all });
+      queryClient.invalidateQueries({
+        queryKey: availabilityKeys.calendar.byUnit(blackout.unit_id),
+      });
       queryClient.invalidateQueries({ queryKey: unitKeys.all });
     },
     onError: (error) => {

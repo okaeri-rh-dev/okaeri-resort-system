@@ -18,6 +18,7 @@ import type {
 import { useQueryClient, type QueryClient, type QueryKey } from "@tanstack/react-query";
 
 import { logger } from "@/lib/logger";
+import { availabilityKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import type { BookingUnit, MultiUnitBooking } from "@/types";
@@ -250,7 +251,7 @@ export function useBookingUnitsSubscription(
               case "INSERT":
                 onInsert?.(payload);
                 invalidateDebounced(["multi-unit-bookings", bookingId]);
-                invalidateDebounced(["multi-unit-availability"]);
+                invalidateDebounced(availabilityKeys.multiUnit.all);
                 break;
 
               case "UPDATE":
@@ -261,7 +262,7 @@ export function useBookingUnitsSubscription(
               case "DELETE":
                 onDelete?.(payload);
                 invalidateDebounced(["multi-unit-bookings", bookingId]);
-                invalidateDebounced(["multi-unit-availability"]);
+                invalidateDebounced(availabilityKeys.multiUnit.all);
                 break;
             }
           } catch (error) {
@@ -377,7 +378,7 @@ export function useMultiUnitAvailabilitySubscription(options: RealtimeSubscripti
         },
         () => {
           // OPTIMIZED: Use debounced invalidation
-          invalidateDebounced(["multi-unit-availability"]);
+          invalidateDebounced(availabilityKeys.multiUnit.all);
         }
       )
       .on(
@@ -389,7 +390,7 @@ export function useMultiUnitAvailabilitySubscription(options: RealtimeSubscripti
         },
         () => {
           // OPTIMIZED: Use debounced invalidation
-          invalidateDebounced(["multi-unit-availability"]);
+          invalidateDebounced(availabilityKeys.multiUnit.all);
         }
       )
       .subscribe((status) => {

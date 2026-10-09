@@ -10,9 +10,10 @@
  * @module useMultiUnitBookingQueries
  */
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { afterBookingCreate } from "@/lib/query-invalidation";
+import { availabilityKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import type {
@@ -25,17 +26,9 @@ import type {
 // QUERY HOOKS
 // ============================================
 
-/**
- * Check availability for multiple units
- */
-export const useMultiUnitAvailability = (
-  unitIds: string[],
-  checkIn: string,
-  checkOut: string,
-  options: { enabled?: boolean } = {}
-) => {
-  return useQuery({
-    queryKey: ["multi-unit-availability", unitIds, checkIn, checkOut],
+const multiUnitAvailabilityQuery = (unitIds: string[], checkIn: string, checkOut: string) =>
+  queryOptions({
+    queryKey: availabilityKeys.multiUnit.units(unitIds, checkIn, checkOut),
     queryFn: async () => {
       // Get current session token for authentication
       const {
@@ -60,8 +53,21 @@ export const useMultiUnitAvailability = (
       const data = (await response.json()) as { data: { results: unknown[] } };
       return data.data.results;
     },
-    enabled: options.enabled !== false && unitIds.length > 0 && !!checkIn && !!checkOut,
     staleTime: 300000, // 5 minutes
+  });
+
+/**
+ * Check availability for multiple units
+ */
+export const useMultiUnitAvailability = (
+  unitIds: string[],
+  checkIn: string,
+  checkOut: string,
+  options: { enabled?: boolean } = {}
+) => {
+  return useQuery({
+    ...multiUnitAvailabilityQuery(unitIds, checkIn, checkOut),
+    enabled: options.enabled !== false && unitIds.length > 0 && !!checkIn && !!checkOut,
   });
 };
 

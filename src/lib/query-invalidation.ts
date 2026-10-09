@@ -10,7 +10,7 @@
  */
 
 import { queryClient } from "@/lib/query-client";
-import { bookingKeys, guestKeys, paymentKeys, unitKeys } from "@/lib/query-keys";
+import { availabilityKeys, bookingKeys, guestKeys, paymentKeys, unitKeys } from "@/lib/query-keys";
 
 // ============================================
 // GRANULAR HELPERS (building blocks)
@@ -37,12 +37,11 @@ export function invalidatePayments() {
 }
 
 export function invalidateAvailability() {
-  queryClient.invalidateQueries({ queryKey: ["unit-availability"] });
-  queryClient.invalidateQueries({ queryKey: ["unit-availability-fast"] });
-  queryClient.invalidateQueries({ queryKey: ["available-units"] });
-  queryClient.invalidateQueries({ queryKey: ["availability-calendar"] });
-  queryClient.invalidateQueries({ queryKey: ["availability"] });
-  queryClient.invalidateQueries({ queryKey: ["multi-unit-availability"] });
+  queryClient.invalidateQueries({ queryKey: availabilityKeys.unit.all });
+  queryClient.invalidateQueries({ queryKey: availabilityKeys.unitFast.all });
+  queryClient.invalidateQueries({ queryKey: availabilityKeys.availableUnits.all });
+  queryClient.invalidateQueries({ queryKey: availabilityKeys.calendar.all });
+  queryClient.invalidateQueries({ queryKey: availabilityKeys.multiUnit.all });
 }
 
 export function invalidateMultiUnitBookings() {

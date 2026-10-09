@@ -12,7 +12,7 @@
 
 import { useCallback, useMemo } from "react";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   // getUnitAvailabilityCalendar, // ❌ DISABLED: Function not deployed
@@ -32,10 +32,25 @@ import {
   type AvailabilityResult,
   type BlackoutPeriod,
 } from "@/lib/availability";
+import { availabilityKeys } from "@/lib/query-keys";
 
 // ============================================
 // SINGLE UNIT AVAILABILITY HOOKS
 // ============================================
+
+const unitAvailabilityQuery = (
+  unitId: string,
+  checkIn: string,
+  checkOut: string,
+  excludeBookingId?: string
+) =>
+  queryOptions({
+    queryKey: availabilityKeys.unit.range(unitId, checkIn, checkOut, excludeBookingId),
+    queryFn: () => checkUnitAvailability(unitId, checkIn, checkOut, excludeBookingId),
+    staleTime: 60000, // 1 minute
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  });
 
 /**
  * Hook for checking single unit availability with caching
@@ -55,13 +70,9 @@ export function useUnitAvailability(
   }, [checkIn, checkOut, allowPastDates]);
 
   return useQuery({
-    queryKey: ["unit-availability", unitId, checkIn, checkOut, excludeBookingId],
-    queryFn: () => checkUnitAvailability(unitId, checkIn, checkOut, excludeBookingId),
+    ...unitAvailabilityQuery(unitId, checkIn, checkOut, excludeBookingId),
     enabled: enabled && dateValidation.isValid && !!unitId,
-    staleTime: 60000, // 1 minute
     refetchInterval,
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 }
 
@@ -93,6 +104,19 @@ export function useAvailabilityCalendar(
 // MULTI-UNIT AVAILABILITY HOOKS
 // ============================================
 
+const availableUnitsQuery = (
+  checkIn: string,
+  checkOut: string,
+  filters: AvailabilityFilter,
+  limit: number
+) =>
+  queryOptions({
+    queryKey: availabilityKeys.availableUnits.search(checkIn, checkOut, filters, limit),
+    queryFn: () => checkMultiUnitAvailability(checkIn, checkOut, filters),
+    staleTime: 60000, // 1 minute
+    retry: 2,
+  });
+
 /**
  * Hook for searching available units with filters
  */
@@ -110,13 +134,18 @@ export function useAvailableUnits(
   }, [checkIn, checkOut, allowPastDates]);
 
   return useQuery({
-    queryKey: ["available-units", checkIn, checkOut, filters, limit],
-    queryFn: () => checkMultiUnitAvailability(checkIn, checkOut, filters),
+    ...availableUnitsQuery(checkIn, checkOut, filters, limit),
     enabled: enabled && dateValidation.isValid,
+  });
+}
+
+const availableUnitsByTypeQuery = (checkIn: string, checkOut: string) =>
+  queryOptions({
+    queryKey: availabilityKeys.availableUnitsByType(checkIn, checkOut),
+    queryFn: () => getAvailableUnitsByType(checkIn, checkOut),
     staleTime: 60000, // 1 minute
     retry: 2,
   });
-}
 
 /**
  * Hook for getting available units grouped by type
@@ -134,13 +163,18 @@ export function useAvailableUnitsByType(
   }, [checkIn, checkOut, allowPastDates]);
 
   return useQuery({
-    queryKey: ["available-units-by-type", checkIn, checkOut],
-    queryFn: () => getAvailableUnitsByType(checkIn, checkOut),
+    ...availableUnitsByTypeQuery(checkIn, checkOut),
     enabled: enabled && dateValidation.isValid,
+  });
+}
+
+const batchUnitAvailabilityQuery = (unitIds: string[], checkIn: string, checkOut: string) =>
+  queryOptions({
+    queryKey: availabilityKeys.batch(unitIds, checkIn, checkOut),
+    queryFn: () => batchCheckUnitAvailability(unitIds, checkIn, checkOut),
     staleTime: 60000, // 1 minute
     retry: 2,
   });
-}
 
 /**
  * Hook for batch availability checking
@@ -159,17 +193,22 @@ export function useBatchUnitAvailability(
   }, [checkIn, checkOut, allowPastDates]);
 
   return useQuery({
-    queryKey: ["batch-unit-availability", unitIds, checkIn, checkOut],
-    queryFn: () => batchCheckUnitAvailability(unitIds, checkIn, checkOut),
+    ...batchUnitAvailabilityQuery(unitIds, checkIn, checkOut),
     enabled: enabled && dateValidation.isValid && unitIds.length > 0,
-    staleTime: 60000, // 1 minute
-    retry: 2,
   });
 }
 
 // ============================================
 // BLACKOUT PERIOD HOOKS
 // ============================================
+
+const unitBlackoutsQuery = (unitId: string, startDate?: string, endDate?: string) =>
+  queryOptions({
+    queryKey: availabilityKeys.blackouts.range(unitId, startDate, endDate),
+    queryFn: () => getUnitBlackoutPeriods(unitId, startDate, endDate),
+    staleTime: 300000, // 5 minutes
+    retry: 1,
+  });
 
 /**
  * Hook for getting unit blackout periods
@@ -183,11 +222,8 @@ export function useUnitBlackouts(
   const { enabled = true } = options;
 
   return useQuery({
-    queryKey: ["unit-blackouts", unitId, startDate, endDate],
-    queryFn: () => getUnitBlackoutPeriods(unitId, startDate, endDate),
+    ...unitBlackoutsQuery(unitId, startDate, endDate),
     enabled: enabled && !!unitId,
-    staleTime: 300000, // 5 minutes
-    retry: 1,
   });
 }
 
@@ -215,10 +251,10 @@ export function useCreateBlackout() {
     }) => createBlackoutPeriod(unitId, blackoutType, startDate, endDate, reason, createdBy),
     onSuccess: (data) => {
       // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ["unit-blackouts", data.unitId] });
-      queryClient.invalidateQueries({ queryKey: ["unit-availability", data.unitId] });
-      queryClient.invalidateQueries({ queryKey: ["available-units"] });
-      queryClient.invalidateQueries({ queryKey: ["availability-calendar", data.unitId] });
+      queryClient.invalidateQueries({ queryKey: availabilityKeys.blackouts.byUnit(data.unitId) });
+      queryClient.invalidateQueries({ queryKey: availabilityKeys.unit.byUnit(data.unitId) });
+      queryClient.invalidateQueries({ queryKey: availabilityKeys.availableUnits.all });
+      queryClient.invalidateQueries({ queryKey: availabilityKeys.calendar.byUnit(data.unitId) });
     },
     onError: (error) => {
       console.error("Failed to create blackout period:", error);
@@ -341,23 +377,25 @@ export function useOptimisticAvailability() {
 
   const updateOptimistically = useCallback(
     (unitId: string, checkIn: string, checkOut: string, isAvailable: boolean) => {
-      const queryKey = ["unit-availability", unitId, checkIn, checkOut];
-
-      queryClient.setQueryData(queryKey, (old: AvailabilityResult | undefined) => ({
-        ...old,
-        isAvailable,
-        conflictingBookings: isAvailable ? 0 : old?.conflictingBookings || 1,
-        blackoutPeriods: old?.blackoutPeriods || 0,
-        unitStatus: old?.unitStatus || "Available",
-      }));
+      queryClient.setQueryData(
+        availabilityKeys.unit.range(unitId, checkIn, checkOut),
+        (old: AvailabilityResult | undefined) => ({
+          ...old,
+          isAvailable,
+          conflictingBookings: isAvailable ? 0 : old?.conflictingBookings || 1,
+          blackoutPeriods: old?.blackoutPeriods || 0,
+          unitStatus: old?.unitStatus || "Available",
+        })
+      );
     },
     [queryClient]
   );
 
   const revertOptimisticUpdate = useCallback(
     (unitId: string, checkIn: string, checkOut: string) => {
-      const queryKey = ["unit-availability", unitId, checkIn, checkOut];
-      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({
+        queryKey: availabilityKeys.unit.range(unitId, checkIn, checkOut),
+      });
     },
     [queryClient]
   );

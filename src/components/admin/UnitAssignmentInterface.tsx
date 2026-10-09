@@ -16,7 +16,7 @@
 
 import { useCallback, useState } from "react";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -35,6 +35,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { getAccessToken, useAuthToken } from "@/hooks/useAuthToken";
 import { afterBookingUpdate } from "@/lib/query-invalidation";
+import { availabilityKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
 // ============================================
@@ -71,32 +72,9 @@ interface AssignmentValidation {
   isSuccess: boolean;
 }
 
-// ============================================
-// Component
-// ============================================
-
-export function UnitAssignmentInterface({
-  bookingId,
-  checkInDate,
-  checkOutDate,
-  unitRequests,
-  onAssignmentSuccess,
-}: UnitAssignmentInterfaceProps) {
-  const { token: authToken, isLoading: isAuthLoading, error: authError } = useAuthToken();
-  const [selectedUnits, setSelectedUnits] = useState<Set<string>>(new Set());
-  const [assignmentError, setAssignmentError] = useState<string | null>(null);
-  const [showAssignDialog, setShowAssignDialog] = useState(false);
-
-  // ============================================
-  // Data Fetching - Available Units
-  // ============================================
-
-  const {
-    data: availableUnits,
-    isLoading: isLoadingUnits,
-    error: fetchError,
-  } = useQuery({
-    queryKey: ["available-units", checkInDate, checkOutDate],
+const availableUnitsQuery = (checkInDate: string, checkOutDate: string) =>
+  queryOptions({
+    queryKey: availabilityKeys.availableUnits.range(checkInDate, checkOutDate),
     queryFn: async () => {
       const accessToken = await getAccessToken();
       const response = await fetch(
@@ -122,6 +100,32 @@ export function UnitAssignmentInterface({
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: true,
   });
+
+// ============================================
+// Component
+// ============================================
+
+export function UnitAssignmentInterface({
+  bookingId,
+  checkInDate,
+  checkOutDate,
+  unitRequests,
+  onAssignmentSuccess,
+}: UnitAssignmentInterfaceProps) {
+  const { token: authToken, isLoading: isAuthLoading, error: authError } = useAuthToken();
+  const [selectedUnits, setSelectedUnits] = useState<Set<string>>(new Set());
+  const [assignmentError, setAssignmentError] = useState<string | null>(null);
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
+
+  // ============================================
+  // Data Fetching - Available Units
+  // ============================================
+
+  const {
+    data: availableUnits,
+    isLoading: isLoadingUnits,
+    error: fetchError,
+  } = useQuery(availableUnitsQuery(checkInDate, checkOutDate));
 
   // ============================================
   // Assignment Mutation
