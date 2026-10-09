@@ -5,7 +5,7 @@
 
 import { useMemo, useState } from "react";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
   Activity,
@@ -57,6 +57,54 @@ type AuditLog = {
 
 // ThreatSource type is inferred from getTopThreatSources return type
 
+const securityKeys = {
+  logsAll: ["security-logs"] as const,
+  logs: (timeRange: string, severity: string) =>
+    [...securityKeys.logsAll, timeRange, severity] as const,
+  threatSourcesAll: ["threat-sources"] as const,
+  threatSources: (timeRange: string) => [...securityKeys.threatSourcesAll, timeRange] as const,
+};
+
+const securityLogsQuery = (timeRange: string, severity: string) =>
+  queryOptions({
+    queryKey: securityKeys.logs(timeRange, severity),
+    queryFn: async () => {
+      const hoursBack =
+        timeRange === "1h" ? 1 : timeRange === "24h" ? 24 : timeRange === "7d" ? 168 : 24;
+
+      const startTime = new Date(Date.now() - hoursBack * 60 * 60 * 1000).toISOString();
+
+      let query = supabase
+        .from("audit_logs")
+        .select("*")
+        .gte("created_at", startTime)
+        .order("created_at", { ascending: false })
+        .limit(500);
+
+      if (severity !== "all") {
+        query = query.eq("severity", severity);
+      } else {
+        query = query.in("severity", ["WARNING", "ERROR", "CRITICAL"]);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return data as AuditLog[];
+    },
+  });
+
+const threatSourcesQuery = (timeRange: string) =>
+  queryOptions({
+    queryKey: securityKeys.threatSources(timeRange),
+    queryFn: async () => {
+      const hoursBack =
+        timeRange === "1h" ? 1 : timeRange === "24h" ? 24 : timeRange === "7d" ? 168 : 24;
+
+      return await getTopThreatSources(hoursBack);
+    },
+  });
+
 /**
  * Main Security Monitoring Dashboard Component
  */
@@ -69,55 +117,13 @@ export function SecurityMonitoringDashboard() {
 
   // Fetch security events
   const { data: securityLogs = [] } = useQuery({
-    queryKey: ["security-logs", selectedTimeRange, severityFilter],
-    queryFn: async () => {
-      const hoursBack =
-        selectedTimeRange === "1h"
-          ? 1
-          : selectedTimeRange === "24h"
-            ? 24
-            : selectedTimeRange === "7d"
-              ? 168
-              : 24;
-
-      const startTime = new Date(Date.now() - hoursBack * 60 * 60 * 1000).toISOString();
-
-      let query = supabase
-        .from("audit_logs")
-        .select("*")
-        .gte("created_at", startTime)
-        .order("created_at", { ascending: false })
-        .limit(500);
-
-      if (severityFilter !== "all") {
-        query = query.eq("severity", severityFilter);
-      } else {
-        query = query.in("severity", ["WARNING", "ERROR", "CRITICAL"]);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data as AuditLog[];
-    },
+    ...securityLogsQuery(selectedTimeRange, severityFilter),
     refetchInterval: autoRefresh ? 30000 : false, // Refresh every 30s if auto-refresh is on
   });
 
   // Fetch top threat sources
   const { data: threatSources = [] } = useQuery({
-    queryKey: ["threat-sources", selectedTimeRange],
-    queryFn: async () => {
-      const hoursBack =
-        selectedTimeRange === "1h"
-          ? 1
-          : selectedTimeRange === "24h"
-            ? 24
-            : selectedTimeRange === "7d"
-              ? 168
-              : 24;
-
-      return await getTopThreatSources(hoursBack);
-    },
+    ...threatSourcesQuery(selectedTimeRange),
     refetchInterval: autoRefresh ? 60000 : false, // Refresh every minute
   });
 
@@ -156,8 +162,8 @@ export function SecurityMonitoringDashboard() {
 
   // Manual refresh
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ["security-logs"] });
-    queryClient.invalidateQueries({ queryKey: ["threat-sources"] });
+    queryClient.invalidateQueries({ queryKey: securityKeys.logsAll });
+    queryClient.invalidateQueries({ queryKey: securityKeys.threatSourcesAll });
   };
 
   return (
