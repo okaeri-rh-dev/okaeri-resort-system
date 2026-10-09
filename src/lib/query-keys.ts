@@ -164,6 +164,10 @@ export const upcomingKeys = {
   },
 };
 
+export const discountRuleKeys = {
+  all: ["discount-rules"] as const,
+};
+
 const entityKeyFactories: Record<
   EntityType,
   { all: readonly unknown[]; detail: (id: string) => readonly unknown[] }

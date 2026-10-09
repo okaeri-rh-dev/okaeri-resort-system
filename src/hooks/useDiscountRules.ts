@@ -1,17 +1,15 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { discountRuleKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError } from "@/lib/supabase";
 import type { Database } from "@/types/database.types";
 
 type DiscountRuleInsert = Database["public"]["Tables"]["discount_rules"]["Insert"];
 
-/**
- * Hook to fetch all discount rules
- */
-export function useDiscountRules() {
-  return useQuery({
-    queryKey: ["discount-rules"],
+const discountRulesQuery = () =>
+  queryOptions({
+    queryKey: discountRuleKeys.all,
     queryFn: async () => {
       const { data, error } = await db.discountRules.all();
       if (error) throw error;
@@ -19,6 +17,12 @@ export function useDiscountRules() {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+/**
+ * Hook to fetch all discount rules
+ */
+export function useDiscountRules() {
+  return useQuery(discountRulesQuery());
 }
 
 /**
@@ -42,7 +46,7 @@ export function useSaveDiscountRules() {
       return await db.discountRules.bulkUpsert(cleanedRules);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["discount-rules"] });
+      queryClient.invalidateQueries({ queryKey: discountRuleKeys.all });
 
       toast.success("Discount rules saved", {
         description: "All discount rule changes have been saved successfully.",
