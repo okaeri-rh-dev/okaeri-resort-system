@@ -1,12 +1,35 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
+import { pricingConfigKeys } from "@/lib/query-keys";
 import { db, supabase } from "@/lib/supabase";
 import type { PricingConfigInput } from "@/lib/validation/pricing-schema";
 import type { Database } from "@/types/database.types";
 
 export type PricingConfig = Database["public"]["Tables"]["pricing_config"]["Row"];
+
+const pricingConfigQuery = queryOptions({
+  queryKey: pricingConfigKeys.all,
+  queryFn: async () => {
+    const { data, error } = await db.pricingConfig.get();
+
+    if (error) {
+      console.error("[usePricingConfig] Error fetching pricing config:", error);
+      throw new Error(error.message || "Failed to fetch pricing configuration");
+    }
+
+    if (!data) {
+      throw new Error("Pricing configuration not found");
+    }
+
+    return data as PricingConfig;
+  },
+  staleTime: 5 * 60 * 1000, // 5 minutes - pricing doesn't change often
+  gcTime: 30 * 60 * 1000, // 30 minutes cache retention (formerly cacheTime)
+  retry: 2, // Retry failed requests twice
+  refetchOnWindowFocus: false, // Don't refetch when user returns to tab
+});
 
 /**
  * Query Hook: Fetch Current Pricing Configuration
@@ -30,27 +53,7 @@ export type PricingConfig = Database["public"]["Tables"]["pricing_config"]["Row"
  * ```
  */
 export function usePricingConfig() {
-  return useQuery({
-    queryKey: ["pricing-config"],
-    queryFn: async () => {
-      const { data, error } = await db.pricingConfig.get();
-
-      if (error) {
-        console.error("[usePricingConfig] Error fetching pricing config:", error);
-        throw new Error(error.message || "Failed to fetch pricing configuration");
-      }
-
-      if (!data) {
-        throw new Error("Pricing configuration not found");
-      }
-
-      return data as PricingConfig;
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes - pricing doesn't change often
-    gcTime: 30 * 60 * 1000, // 30 minutes cache retention (formerly cacheTime)
-    retry: 2, // Retry failed requests twice
-    refetchOnWindowFocus: false, // Don't refetch when user returns to tab
-  });
+  return useQuery(pricingConfigQuery);
 }
 
 /**
@@ -134,14 +137,14 @@ export function useUpdatePricingConfig(options?: {
     // Optimistic update: immediately update UI before server confirms
     onMutate: async (newData) => {
       // Cancel any outgoing refetches to avoid overwriting our optimistic update
-      await queryClient.cancelQueries({ queryKey: ["pricing-config"] });
+      await queryClient.cancelQueries({ queryKey: pricingConfigQuery.queryKey });
 
       // Snapshot the previous value for rollback
-      const previousData = queryClient.getQueryData<PricingConfig>(["pricing-config"]);
+      const previousData = queryClient.getQueryData(pricingConfigQuery.queryKey);
 
       // Optimistically update the cache
       if (previousData) {
-        queryClient.setQueryData<PricingConfig>(["pricing-config"], {
+        queryClient.setQueryData(pricingConfigQuery.queryKey, {
           ...previousData,
           ...newData,
           updated_at: new Date().toISOString(),
@@ -156,7 +159,7 @@ export function useUpdatePricingConfig(options?: {
     onError: (error, _newData, context) => {
       // Restore previous data on error
       if (context?.previousData) {
-        queryClient.setQueryData(["pricing-config"], context.previousData);
+        queryClient.setQueryData(pricingConfigQuery.queryKey, context.previousData);
       }
 
       // Show error toast
@@ -170,7 +173,7 @@ export function useUpdatePricingConfig(options?: {
 
     // Always refetch after error or success to ensure cache is in sync
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["pricing-config"] });
+      queryClient.invalidateQueries({ queryKey: pricingConfigQuery.queryKey });
     },
 
     // Success handling
@@ -206,6 +209,6 @@ export function useUpdatePricingConfig(options?: {
  */
 export function usePricingConfigLoaded(): boolean {
   const queryClient = useQueryClient();
-  const data = queryClient.getQueryData<PricingConfig>(["pricing-config"]);
+  const data = queryClient.getQueryData(pricingConfigQuery.queryKey);
   return !!data;
 }

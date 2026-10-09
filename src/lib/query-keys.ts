@@ -98,6 +98,10 @@ export const seasonalRateKeys = {
   forDate: (date?: string) => [...seasonalRateKeys.all, "date", date] as const,
 };
 
+export const pricingConfigKeys = {
+  all: ["pricing-config"] as const,
+};
+
 const entityKeyFactories: Record<
   EntityType,
   { all: readonly unknown[]; detail: (id: string) => readonly unknown[] }
