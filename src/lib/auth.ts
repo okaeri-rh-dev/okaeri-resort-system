@@ -43,20 +43,8 @@ const LOCKOUT_DURATION = 30 * 60 * 1000; // 30 minutes
 // Session warning timing
 const SESSION_WARNING_TIME = 5 * 60 * 1000; // 5 minutes before expiry
 
-// ============================================
-// TYPE DEFINITIONS
-// ============================================
-
-export interface AuthUser {
-  id: string;
-  email: string;
-  role?: string;
-}
-
 // AuthSession type imported from @/types/supabase
 // Keep AuthUser as local type for auth service
-export type { AuthSession } from "@/types/supabase";
-
 // Rate limiting types
 interface FailedAttempt {
   count: number;
@@ -601,28 +589,3 @@ class AuthService {
 
 // Export singleton instance
 export const auth = new AuthService();
-
-// Export auth guard for protecting routes
-export const authGuard = async (): Promise<boolean> => {
-  try {
-    await auth.requireAuth();
-    return true;
-  } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("Auth guard failed:", error);
-    }
-    return false;
-  }
-};
-
-// Export role-based access control helper
-export const hasRole = async (_requiredRole: string): Promise<boolean> => {
-  try {
-    const user = await auth.getCurrentUser();
-    // For Phase 1, all authenticated users are considered admins
-    // In Phase 2, implement proper role checking from user metadata
-    return !!user;
-  } catch (_error) {
-    return false;
-  }
-};

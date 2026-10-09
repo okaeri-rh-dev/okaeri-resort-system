@@ -3,14 +3,10 @@ import React from "react";
 import {
   AvatarSkeleton,
   ButtonSkeleton,
-  FormSkeleton,
   KPICardSkeleton,
   MobileCardSkeleton,
-  NavigationSkeleton,
   Skeleton,
-  StepFormSkeleton,
   TableSkeleton,
-  TextSkeleton,
 } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -475,73 +471,6 @@ export const BookingFormSkeleton: React.FC<BookingFormSkeletonProps> = ({
 };
 
 // ============================================
-// NAVIGATION SKELETONS
-// ============================================
-
-interface MainLayoutSkeletonProps {
-  showSidebar?: boolean;
-  className?: string;
-}
-
-export const MainLayoutSkeleton: React.FC<MainLayoutSkeletonProps> = ({
-  showSidebar = true,
-  className,
-}) => {
-  return (
-    <div className={cn("min-h-screen bg-neutral-50", className)}>
-      {/* Top navigation */}
-      <NavigationSkeleton items={5} showLogo={true} showUser={true} className="sticky top-0 z-50" />
-
-      <div className="flex">
-        {/* Sidebar skeleton */}
-        {showSidebar && (
-          <div className="w-64 space-y-4 border-r border-neutral-200 bg-white p-4">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="flex items-center space-x-3">
-                <Skeleton variant="circle" className="h-4 w-4" />
-                <Skeleton className="h-4 w-20" />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Main content area */}
-        <div className="flex-1 p-6">
-          <div className="space-y-6">
-            {/* Page header */}
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-4 w-64" />
-            </div>
-
-            {/* Content placeholder */}
-            <div className="grid gap-6">
-              <Skeleton className="h-64 w-full rounded-lg" />
-              <Skeleton className="h-96 w-full rounded-lg" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ============================================
-// PAGE TRANSITION SKELETONS
-// ============================================
-
-export const PageTransitionSkeleton: React.FC<{ className?: string }> = ({ className }) => {
-  return (
-    <div className={cn("fixed inset-0 z-50 flex items-center justify-center bg-white", className)}>
-      <div className="space-y-4 text-center">
-        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
-        <Skeleton className="mx-auto h-4 w-32" />
-      </div>
-    </div>
-  );
-};
-
-// ============================================
 // EXPENSES TABLE SKELETONS
 // ============================================
 
@@ -654,13 +583,9 @@ export const ExpensesTableSkeleton: React.FC<ExpensesTableSkeletonProps> = ({
 export {
   // Generic skeletons
   Skeleton,
-  TextSkeleton,
   AvatarSkeleton,
   ButtonSkeleton,
   KPICardSkeleton,
   TableSkeleton,
   MobileCardSkeleton,
-  FormSkeleton,
-  StepFormSkeleton,
-  NavigationSkeleton,
 };

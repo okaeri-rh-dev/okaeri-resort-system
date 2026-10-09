@@ -17,13 +17,10 @@ import type { Database } from "@/types/database.types";
 // ✅ Use dedicated test database or local Supabase instance
 const TEST_SUPABASE_URL =
   process.env.TEST_SUPABASE_URL || process.env.VITE_SUPABASE_URL || "http://localhost:54321";
-const TEST_SUPABASE_ANON_KEY =
-  process.env.TEST_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
 const TEST_SERVICE_KEY =
   process.env.TEST_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
 // Create test clients
-export const testSupabase = createClient<Database>(TEST_SUPABASE_URL, TEST_SUPABASE_ANON_KEY);
 
 export const testSupabaseAdmin = createClient<Database>(TEST_SUPABASE_URL, TEST_SERVICE_KEY);
 
@@ -285,44 +282,6 @@ export async function createTestMultiUnitBooking(unitCount: number = 2) {
     .single();
 
   return booking;
-}
-
-/**
- * Wait for database to be ready
- */
-export async function waitForDatabase(maxAttempts: number = 5): Promise<boolean> {
-  for (let i = 0; i < maxAttempts; i++) {
-    try {
-      const { error } = await testSupabase.from("units").select("unit_id").limit(1);
-
-      if (!error) {
-        // eslint-disable-next-line no-console
-        console.log("Test database is ready");
-        return true;
-      }
-    } catch (_e) {
-      // eslint-disable-next-line no-console
-      console.log(`Database not ready (attempt ${i + 1}/${maxAttempts})`);
-      await new Promise((r) => setTimeout(r, 1000)); // Wait 1 second
-    }
-  }
-
-  console.warn("Test database not available after", maxAttempts, "attempts");
-  return false;
-}
-
-/**
- * Setup function to call at the start of test suites
- */
-export async function setupTestDatabase() {
-  const isReady = await waitForDatabase();
-
-  if (!isReady) {
-    console.warn("⚠️  Test database is not available. Tests requiring database will be skipped.");
-    console.warn("   Set TEST_SUPABASE_URL and TEST_SUPABASE_ANON_KEY to run database tests.");
-  }
-
-  return isReady;
 }
 
 // Export a helper to check if tests should run

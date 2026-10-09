@@ -71,33 +71,3 @@ export function useIdempotencyKey(): string {
 
   return key;
 }
-
-/**
- * Clear the current idempotency key
- *
- * Use this when you want to force a new operation (e.g., after successful submission).
- *
- * @example
- * const idempotencyKey = useIdempotencyKey();
- *
- * const handleSubmit = async () => {
- *   await createBooking.mutateAsync({ ...data, idempotency_key: idempotencyKey });
- *
- *   // Clear key after successful submission
- *   clearIdempotencyKey();
- * };
- */
-export function clearIdempotencyKey(): void {
-  sessionStorage.removeItem("current_idempotency_key");
-}
-
-/**
- * Get the current idempotency key from storage
- *
- * Useful for debugging or manual key retrieval.
- *
- * @returns Current idempotency key or null
- */
-export function getCurrentIdempotencyKey(): string | null {
-  return sessionStorage.getItem("current_idempotency_key");
-}

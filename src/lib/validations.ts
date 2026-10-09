@@ -35,23 +35,10 @@ const messages = {
 // ============================================
 
 // Philippine peso amount validation
-export const currencySchema = z
-  .string()
-  .min(1, messages.required)
-  .regex(/^\d+(\.\d{1,2})?$/, messages.currency)
-  .refine((val) => {
-    const num = parseFloat(val);
-    return num >= 100 && num <= 1000000;
-  }, "Amount must be between ₱100.00 and ₱1,000,000.00");
 
 // Philippine phone number validation
-export const phoneSchema = z
-  .string()
-  .min(1, messages.required)
-  .regex(philippinePhoneRegex, messages.phone);
 
 // Email validation
-export const emailSchema = z.string().min(1, messages.required).regex(emailRegex, messages.email);
 
 // Name validation (supports Filipino names)
 export const nameSchema = z
@@ -70,23 +57,10 @@ export const dateSchema = z.date({
 });
 
 // Future date validation
-export const futureDateSchema = dateSchema.refine((date) => date > new Date(), messages.futureDate);
 
 // File validation for payment proofs
-export const fileSchema = z
-  .instanceof(File)
-  .refine((file) => file.size <= 5 * 1024 * 1024, messages.maxFileSize)
-  .refine(
-    (file) => ["image/png", "image/jpeg", "image/jpg"].includes(file.type),
-    messages.fileType
-  );
 
 // Optional file validation
-export const optionalFileSchema = z
-  .instanceof(File)
-  .refine((file) => file.size <= 5 * 1024 * 1024, messages.maxFileSize)
-  .refine((file) => ["image/png", "image/jpeg", "image/jpg"].includes(file.type), messages.fileType)
-  .optional();
 
 // Unit code validation
 export const unitCodeSchema = z
@@ -94,24 +68,6 @@ export const unitCodeSchema = z
   .min(1, messages.required)
   .max(10, messages.maxLength(10))
   .regex(/^[A-Z0-9]+$/, messages.unitCode);
-
-// ============================================
-// GUEST VALIDATION SCHEMAS
-// ============================================
-
-export const guestSchema = z.object({
-  guest_name: nameSchema,
-  email: z
-    .string()
-    .regex(emailRegex, "Please enter a valid email address")
-    .optional()
-    .or(z.literal("")),
-  phone_number: phoneSchema.optional().or(z.literal("")),
-});
-
-export const guestQuickFormSchema = guestSchema.extend({
-  check_existing: z.boolean(),
-});
 
 // ============================================
 // UNIT VALIDATION SCHEMAS
@@ -144,15 +100,6 @@ export const unitFormSchema = z.object({
 });
 
 // Validation to ensure weekend rate is higher than base rate and occupancy constraints
-export const unitFormWithRateValidationSchema = unitFormSchema
-  .refine((data) => data.weekend_rate >= data.base_rate, {
-    message: "Weekend rate should be equal to or higher than base rate",
-    path: ["weekend_rate"],
-  })
-  .refine((data) => data.base_occupancy <= data.max_occupancy, {
-    message: "Base occupancy cannot exceed maximum occupancy",
-    path: ["base_occupancy"],
-  });
 
 // Unit form schema WITHOUT pricing validation (for global pricing mode)
 // Used when pricing fields are hidden and auto-populated from global config
@@ -174,36 +121,8 @@ export const unitFormWithoutPricingValidationSchema = unitFormSchema
 // ============================================
 
 // Base booking form schema
-export const bookingFormBaseSchema = z.object({
-  unit_id: z.string().min(1, "Please select a unit"),
-
-  guest_name: nameSchema,
-
-  contact_number: z
-    .string()
-    .refine((val) => val === "" || philippinePhoneRegex.test(val), messages.phone),
-
-  email: z.string().refine((val) => val === "" || emailRegex.test(val), messages.email),
-
-  num_guests: z.number().min(1, messages.minGuests).max(20, "Number of guests cannot exceed 20"),
-
-  special_requests: z.string().max(500, messages.maxLength(500)).optional(),
-
-  payment_method: z.enum(["GCash", "BankTransfer", "Cash", "Card"] as const).optional(),
-
-  is_walk_in: z.boolean(),
-});
 
 // Booking form with date validation
-export const bookingFormSchema = bookingFormBaseSchema
-  .extend({
-    check_in: dateSchema,
-    check_out: dateSchema,
-  })
-  .refine((data) => data.check_out > data.check_in, {
-    message: messages.endAfterStart,
-    path: ["check_out"],
-  });
 
 // Multi-step booking form schemas
 const bookingStep1BaseSchema = z.object({
@@ -253,104 +172,11 @@ export const completeBookingSchema = bookingStep1BaseSchema
   });
 
 // ============================================
-// PAYMENT VALIDATION SCHEMAS
-// ============================================
-
-export const paymentUploadSchema = z.object({
-  booking_id: z.string().min(1, "Booking ID is required"),
-
-  payment_amount: z.number().min(100, messages.minAmount).max(1000000, messages.maxAmount),
-
-  payment_method: z.enum(["GCash", "BankTransfer", "Cash", "Card"] as const, {
-    required_error: "Please select a payment method",
-  }),
-
-  payment_proof: fileSchema,
-
-  notes: z.string().max(300, messages.maxLength(300)).optional(),
-});
-
-// Payment proof only (for existing payments)
-export const paymentProofSchema = z.object({
-  payment_proof: fileSchema,
-  notes: z.string().max(300, messages.maxLength(300)).optional(),
-});
-
-// ============================================
-// SEARCH AND FILTER SCHEMAS
-// ============================================
-
-export const bookingFiltersSchema = z.object({
-  status: z
-    .enum(["Pending", "Confirmed", "CheckedIn", "CheckedOut", "Cancelled"] as const)
-    .optional(),
-  payment_status: z.enum(["Pending", "Partial", "Completed", "Refunded"] as const).optional(),
-  unit_id: z.string().optional(),
-  guest_id: z.string().optional(),
-  date_from: z.string().optional(),
-  date_to: z.string().optional(),
-  search: z.string().optional(),
-});
-
-export const unitFiltersSchema = z.object({
-  status: z.enum(["Available", "Occupied", "Maintenance", "Reserved"] as const).optional(),
-  type: z.enum(["Studio", "One Bedroom", "Two Bedroom", "Villa"] as const).optional(),
-  min_rate: z.number().min(0).optional(),
-  max_rate: z.number().min(0).optional(),
-  min_occupancy: z.number().min(1).optional(),
-});
-
-// ============================================
-// UPDATE SCHEMAS
-// ============================================
-
-export const updateBookingStatusSchema = z.object({
-  booking_status: z.enum(["Pending", "Confirmed", "CheckedIn", "CheckedOut", "Cancelled"] as const),
-  internal_notes: z.string().max(500, messages.maxLength(500)).optional(),
-});
-
-export const updatePaymentStatusSchema = z.object({
-  payment_status: z.enum(["Pending", "Partial", "Completed", "Refunded"] as const),
-  payment_method: z.enum(["Cash", "GCash", "BankTransfer", "Card", "Other"] as const).optional(),
-  payment_proof_url: z.string().url().optional(),
-});
-
-// ============================================
 // AVAILABILITY CHECK SCHEMA
 // ============================================
 
-export const availabilityCheckSchema = z
-  .object({
-    unit_id: z.string().min(1, "Unit ID is required"),
-    check_in: dateSchema,
-    check_out: dateSchema,
-    booking_id: z.string().optional(), // For excluding current booking when editing
-  })
-  .refine((data) => data.check_out > data.check_in, {
-    message: messages.endAfterStart,
-    path: ["check_out"],
-  });
-
-// ============================================
-// TYPE INFERENCE
-// ============================================
-
-// Export inferred types for use in components
-export type GuestFormData = z.infer<typeof guestSchema>;
-export type GuestQuickFormData = z.infer<typeof guestQuickFormSchema>;
 export type UnitFormData = z.infer<typeof unitFormSchema>;
-export type BookingFormData = z.infer<typeof bookingFormSchema>;
-export type BookingStep1Data = z.infer<typeof bookingStep1Schema>;
-export type BookingStep2Data = z.infer<typeof bookingStep2Schema>;
-export type BookingStep3Data = z.infer<typeof bookingStep3Schema>;
 export type CompleteBookingData = z.infer<typeof completeBookingSchema>;
-export type PaymentUploadData = z.infer<typeof paymentUploadSchema>;
-export type PaymentProofData = z.infer<typeof paymentProofSchema>;
-export type BookingFiltersData = z.infer<typeof bookingFiltersSchema>;
-export type UnitFiltersData = z.infer<typeof unitFiltersSchema>;
-export type UpdateBookingStatusData = z.infer<typeof updateBookingStatusSchema>;
-export type UpdatePaymentStatusData = z.infer<typeof updatePaymentStatusSchema>;
-export type AvailabilityCheckData = z.infer<typeof availabilityCheckSchema>;
 
 // ============================================
 // VALIDATION UTILITIES
@@ -365,9 +191,6 @@ export const formatCurrency = (amount: number): string => {
 };
 
 // Parse currency string to number
-export const parseCurrency = (value: string): number => {
-  return parseFloat(value.replace(/[^\d.]/g, ""));
-};
 
 // Format phone number for display
 export const formatPhoneNumber = (phone: string): string => {
@@ -379,42 +202,4 @@ export const formatPhoneNumber = (phone: string): string => {
     return `+63${phone.slice(1)}`;
   }
   return `+63${phone}`;
-};
-
-// Validate date range doesn't conflict with existing bookings
-export const validateDateRange = async (
-  _unitId: string,
-  _checkIn: Date,
-  _checkOut: Date,
-  _excludeBookingId?: string
-): Promise<boolean> => {
-  // This would typically make an API call to check availability
-  // For now, returning true - implement actual availability check
-  return true;
-};
-
-// Check if dates are within business rules (e.g., max advance booking)
-export const validateBusinessRules = (checkIn: Date, checkOut: Date): string[] => {
-  const errors: string[] = [];
-  const today = new Date();
-  const maxAdvanceDays = 365; // 1 year advance booking
-  const minStayDays = 1;
-  const maxStayDays = 30;
-
-  // Check advance booking limit
-  const daysDifference = Math.ceil((checkIn.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  if (daysDifference > maxAdvanceDays) {
-    errors.push(`Bookings can only be made up to ${maxAdvanceDays} days in advance`);
-  }
-
-  // Check stay duration
-  const stayDuration = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-  if (stayDuration < minStayDays) {
-    errors.push(`Minimum stay is ${minStayDays} day(s)`);
-  }
-  if (stayDuration > maxStayDays) {
-    errors.push(`Maximum stay is ${maxStayDays} days`);
-  }
-
-  return errors;
 };

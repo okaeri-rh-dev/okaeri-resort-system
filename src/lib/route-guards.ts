@@ -100,30 +100,6 @@ export async function requireManager(): Promise<void> {
   });
 }
 
-/**
- * Require owner role or higher
- * Access: owner, admin
- * Use for: Units, Expenses, Accounts, Transfers, Audit Logs
- */
-export async function requireOwner(): Promise<void> {
-  await requireRole({
-    requiredRole: AuditRole.OWNER,
-    message: "This page requires Owner access or higher",
-  });
-}
-
-/**
- * Require admin role (highest level)
- * Access: admin only
- * Use for: User Roles management
- */
-export async function requireAdmin(): Promise<void> {
-  await requireRole({
-    requiredRole: AuditRole.ADMIN,
-    message: "This page requires Administrator access",
-  });
-}
-
 // ============================================
 // SYNCHRONOUS ROLE CHECK HELPER
 // ============================================

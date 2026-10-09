@@ -6,65 +6,6 @@ import { logAuditEventWithIP } from "./audit-logger-workers";
 import { supabase } from "./supabase";
 
 /**
- * Password reset wrapper module with audit logging
- *
- * Purpose: Provides audit logging for password reset events
- * without modifying the existing auth.ts security module.
- *
- * Strategy: Wrapper functions that call Supabase auth + Workers logging
- *
- * Security Note: Always returns success to prevent email enumeration
- * - Success message is shown regardless of whether email exists
- * - Errors are logged internally but not exposed to users
- */
-
-/**
- * Request password reset with audit logging
- *
- * This function ALWAYS succeeds from the UI perspective to prevent
- * email enumeration attacks. The actual success/failure is logged
- * for security monitoring.
- *
- * @param email - User email address
- *
- * @example
- * // In ForgotPasswordForm.tsx
- * await requestPasswordResetWithAudit(email);
- * // Always show success message
- * setSubmitted(true);
- */
-export async function requestPasswordResetWithAudit(email: string): Promise<void> {
-  const normalizedEmail = email.toLowerCase().trim();
-
-  try {
-    await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-  } catch (error) {
-    // Log error but don't expose to user (prevents enumeration)
-    console.error("[Password Reset] Error:", error);
-  }
-
-  // Log password reset request (best-effort, non-blocking)
-  // Note: This may fail if there's no session, which is expected
-  // for password reset requests from unauthenticated users
-  logAuditEventWithIP({
-    tableName: "authentication",
-    description: "Password reset requested",
-    category: AuditCategory.AUTHENTICATION,
-    severity: AuditSeverity.INFO,
-    metadata: {
-      email: normalizedEmail,
-      event: "password_reset_requested",
-      timestamp: new Date().toISOString(),
-    },
-  }).catch((error) => {
-    // Silent failure - password reset should proceed regardless
-    console.warn("[Password Reset Audit] Logging failed:", error);
-  });
-}
-
-/**
  * Update password with audit logging
  *
  * Requires an active recovery session (from clicking the email link).

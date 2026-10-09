@@ -53,11 +53,3 @@ function legacyCopyToClipboard(text: string): boolean {
 
   return successful;
 }
-
-/**
- * Format booking reference for display
- */
-export function formatBookingReference(ref: string): string {
-  // BK-2025-001234 → BK-2025-001234 (already formatted)
-  return ref.toUpperCase();
-}

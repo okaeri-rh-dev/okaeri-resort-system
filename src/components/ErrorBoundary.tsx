@@ -162,19 +162,3 @@ export function withErrorBoundary<P extends object>(
 
   return WrappedComponent;
 }
-
-// Hook for error reporting in components
-export function useErrorHandler() {
-  const handleError = (error: Error, context?: string) => {
-    if (process.env.NODE_ENV === "development") {
-      console.error(`Error in ${context}:`, error);
-    }
-
-    // In production, report to error service
-    // reportError(error, { context });
-
-    throw error; // Re-throw to be caught by Error Boundary
-  };
-
-  return { handleError };
-}

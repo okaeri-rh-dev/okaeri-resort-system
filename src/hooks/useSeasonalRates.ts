@@ -6,7 +6,6 @@ import { db, handleSupabaseError } from "@/lib/supabase";
 import type { Database } from "@/types/database.types";
 
 type SeasonalRateInsert = Database["public"]["Tables"]["seasonal_rates"]["Insert"];
-type SeasonalRateUpdate = Database["public"]["Tables"]["seasonal_rates"]["Update"];
 
 const seasonalRatesQuery = () =>
   queryOptions({
@@ -19,46 +18,11 @@ const seasonalRatesQuery = () =>
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-const activeSeasonalRatesQuery = () =>
-  queryOptions({
-    queryKey: seasonalRateKeys.active(),
-    queryFn: async () => {
-      const { data, error } = await db.seasonalRates.active();
-      if (error) throw error;
-      return data;
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
-const seasonalRateForDateQuery = (date: Date | null) =>
-  queryOptions({
-    queryKey: seasonalRateKeys.forDate(date?.toISOString()),
-    queryFn: async () => {
-      if (!date) return null;
-      return await db.seasonalRates.forDate(date);
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
 /**
  * Hook to fetch all seasonal rates
  */
 export function useSeasonalRates() {
   return useQuery(seasonalRatesQuery());
-}
-
-/**
- * Hook to fetch active seasonal rates only
- */
-export function useActiveSeasonalRates() {
-  return useQuery(activeSeasonalRatesQuery());
-}
-
-/**
- * Hook to fetch seasonal rate for a specific date
- */
-export function useSeasonalRateForDate(date: Date | null) {
-  return useQuery({ ...seasonalRateForDateQuery(date), enabled: !!date });
 }
 
 /**
@@ -90,86 +54,6 @@ export function useSaveSeasonalRates() {
     },
     onError: (error) => {
       toast.error("Error saving seasonal rates", {
-        description: handleSupabaseError(error),
-      });
-    },
-  });
-}
-
-/**
- * Hook to create a single seasonal rate
- */
-export function useCreateSeasonalRate() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (rate: SeasonalRateInsert) => {
-      const { data, error } = await db.seasonalRates.create(rate);
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: seasonalRateKeys.all });
-
-      toast.success("Seasonal rate created", {
-        description: `${data.name} has been created successfully.`,
-      });
-    },
-    onError: (error) => {
-      toast.error("Error creating seasonal rate", {
-        description: handleSupabaseError(error),
-      });
-    },
-  });
-}
-
-/**
- * Hook to update a single seasonal rate
- */
-export function useUpdateSeasonalRate() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: SeasonalRateUpdate }) => {
-      const { data, error } = await db.seasonalRates.update(id, updates);
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: seasonalRateKeys.all });
-
-      toast.success("Seasonal rate updated", {
-        description: `${data.name} has been updated successfully.`,
-      });
-    },
-    onError: (error) => {
-      toast.error("Error updating seasonal rate", {
-        description: handleSupabaseError(error),
-      });
-    },
-  });
-}
-
-/**
- * Hook to delete a seasonal rate
- */
-export function useDeleteSeasonalRate() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await db.seasonalRates.delete(id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: seasonalRateKeys.all });
-
-      toast.success("Seasonal rate deleted", {
-        description: "The seasonal rate has been deleted successfully.",
-      });
-    },
-    onError: (error) => {
-      toast.error("Error deleting seasonal rate", {
         description: handleSupabaseError(error),
       });
     },

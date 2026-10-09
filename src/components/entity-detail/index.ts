@@ -7,8 +7,7 @@
  * - Layout components for consistent structure
  * - Field components for data display
  * - Navigation components for entity linking
- * - Utility components for loading/error states
- * - Type definitions and formatters
+ * - Formatters
  *
  * @example
  * ```typescript
@@ -18,8 +17,6 @@
  *   DetailField,
  *   RelatedEntityLink,
  *   DetailAuditSection,
- *   DetailPageSkeleton,
- *   DetailErrorBoundary,
  *   formatCurrency,
  *   formatTableDate,
  * } from '@/components/entity-detail';
@@ -37,10 +34,6 @@ export { RelatedEntityLink } from "./RelatedEntityLink";
 // Specialized Components
 export { DetailAuditSection } from "./DetailAuditSection";
 
-// State Components
-export { DetailPageSkeleton } from "./DetailPageSkeleton";
-export { DetailErrorBoundary } from "./DetailErrorBoundary";
-
 // Utilities
 export {
   formatCurrency,
@@ -51,14 +44,3 @@ export {
   formatPercentage,
   truncate,
 } from "./utils/formatters";
-
-// Type Definitions
-export type {
-  Breadcrumb,
-  DetailPageLayoutProps,
-  DetailSectionProps,
-  DetailFieldProps,
-  RelatedEntityLinkProps,
-  DetailAuditSectionProps,
-  DetailErrorBoundaryProps,
-} from "./utils/types";

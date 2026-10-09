@@ -7,7 +7,7 @@
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database, TablesInsert } from "@/types/database.types";
+import type { Database } from "@/types/database.types";
 
 interface Env {
   SUPABASE_URL: string;
@@ -32,73 +32,4 @@ export function createSupabaseAdmin(env: Env): SupabaseClient<Database> {
       persistSession: false,
     },
   });
-}
-
-/**
- * Find or create guest record
- */
-export async function findOrCreateGuest(
-  supabase: SupabaseClient<Database>,
-  guestData: {
-    guest_name: string;
-    email?: string | null;
-    phone_number?: string | null;
-  }
-): Promise<string> {
-  // Normalize empty strings to null
-  const normalizedEmail = guestData.email?.trim() || null;
-  const normalizedPhone = guestData.phone_number?.trim() || null;
-
-  // Try to find existing guest by email (only if email is provided)
-  if (normalizedEmail) {
-    const { data: existingGuest, error: findError } = await supabase
-      .from("guests")
-      .select("guest_id")
-      .eq("email", normalizedEmail)
-      .single();
-
-    if (existingGuest && !findError) {
-      return existingGuest.guest_id;
-    }
-  }
-
-  // Create new guest if not found
-  const { data: newGuest, error: createError } = await supabase
-    .from("guests")
-    .insert({
-      guest_name: guestData.guest_name,
-      email: normalizedEmail?.toLowerCase() ?? null,
-      phone_number: normalizedPhone,
-    } satisfies TablesInsert<"guests">)
-    .select("guest_id")
-    .single();
-
-  if (createError) {
-    throw createError;
-  }
-
-  return newGuest.guest_id;
-}
-
-/**
- * Check unit availability for date range
- */
-export async function checkUnitAvailability(
-  supabase: SupabaseClient<Database>,
-  unitId: string,
-  checkIn: string,
-  checkOut: string
-): Promise<boolean> {
-  // Call the database function to check availability
-  const { data, error } = await supabase.rpc("check_unit_availability", {
-    p_unit_id: unitId,
-    p_check_in: checkIn,
-    p_check_out: checkOut,
-  });
-
-  if (error) {
-    throw error;
-  }
-
-  return data === true;
 }

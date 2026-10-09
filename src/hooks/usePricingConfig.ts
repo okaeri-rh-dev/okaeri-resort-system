@@ -195,20 +195,3 @@ export function useUpdatePricingConfig(options?: {
     },
   });
 }
-
-/**
- * Helper Hook: Check if pricing config is loaded
- *
- * Useful for conditional rendering based on pricing availability
- *
- * @example
- * ```typescript
- * const hasPricing = usePricingConfigLoaded();
- * if (!hasPricing) return <LoadingState />;
- * ```
- */
-export function usePricingConfigLoaded(): boolean {
-  const queryClient = useQueryClient();
-  const data = queryClient.getQueryData(pricingConfigQuery.queryKey);
-  return !!data;
-}

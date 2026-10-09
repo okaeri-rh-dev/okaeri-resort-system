@@ -101,57 +101,6 @@ export const guestInfoSchema = z.object({
 });
 
 /**
- * Booking details schema with security validations
- */
-export const bookingDetailsSchema = z.object({
-  unit_id: z
-    .string()
-    .uuid("Invalid unit ID format")
-    .refine((val) => !val.includes("'") && !val.includes('"'), "Invalid unit ID"),
-
-  check_in: z
-    .string()
-    .datetime()
-    .refine((date) => {
-      const checkIn = new Date(date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      return checkIn >= today;
-    }, "Check-in date must be today or in the future")
-    .refine((date) => {
-      // Prevent dates too far in the future (2 years max)
-      const checkIn = new Date(date);
-      const maxDate = new Date();
-      maxDate.setFullYear(maxDate.getFullYear() + 2);
-      return checkIn <= maxDate;
-    }, "Check-in date cannot be more than 2 years in the future"),
-
-  check_out: z.string().datetime(),
-
-  guest_count: z
-    .number()
-    .int("Guest count must be a whole number")
-    .min(1, "At least 1 guest required")
-    .max(20, "Maximum 20 guests allowed"),
-
-  payment_amount: z
-    .number()
-    .positive("Payment amount must be positive")
-    .max(1000000, "Payment amount exceeds maximum allowed")
-    .refine((val) => Number.isFinite(val) && !Number.isNaN(val), "Invalid payment amount"),
-
-  payment_method: z.enum(["gcash", "bank_transfer", "credit_card", "cash", "maya", "paypal"], {
-    errorMap: () => ({ message: "Invalid payment method selected" }),
-  }),
-
-  payment_reference: z
-    .string()
-    .max(100, "Payment reference too long")
-    .transform(sanitizeString)
-    .optional(),
-});
-
-/**
  * File upload validation schema
  */
 export const fileUploadSchema = z.object({
@@ -287,12 +236,3 @@ export function validateSearchQuery(query: string): string {
 
   return sanitized.trim();
 }
-
-/**
- * Type exports for use in components
- */
-export type GuestInfo = z.infer<typeof guestInfoSchema>;
-export type BookingDetails = z.infer<typeof bookingDetailsSchema>;
-export type FileUpload = z.infer<typeof fileUploadSchema>;
-export type GuestBooking = z.infer<typeof guestBookingSchema>;
-export type StatusCheck = z.infer<typeof statusCheckSchema>;

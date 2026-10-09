@@ -8,7 +8,6 @@ import {
   countUsersByRole,
   deactivateRole,
   grantRole,
-  listActiveRoles,
   listAllRoles,
   updateRole,
   type AppRole,
@@ -55,28 +54,6 @@ const allRolesQuery = () =>
  */
 export function useAllRoles() {
   return useQuery(allRolesQuery());
-}
-
-const activeRolesQuery = () =>
-  queryOptions({
-    queryKey: roleKeys.list("active"),
-    queryFn: async () => {
-      const result = await listActiveRoles();
-      if (!result.success) {
-        throw new Error(result.error || "Failed to fetch active roles");
-      }
-      return result.data || [];
-    },
-    staleTime: 30 * 1000, // 30 seconds
-    retry: 1,
-  });
-
-/**
- * Fetch active roles only
- * Admin-only - will fail if user is not admin
- */
-export function useActiveRoles() {
-  return useQuery(activeRolesQuery());
 }
 
 const roleStatsQuery = () =>

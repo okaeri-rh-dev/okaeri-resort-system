@@ -1,7 +1,6 @@
 // Document Generator Type Definitions
 
 export type DocumentType = "quotation" | "invoice";
-export type DocumentStatus = "draft" | "final";
 export type LineItemType = "accommodation" | "service" | "fee" | "custom";
 
 export interface LetterheadConfig {

@@ -1,8 +1,8 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
-    "src/main.tsx",
-    "src/routeTree.gen.ts",
+    "src/main.tsx!",
+    "src/routeTree.gen.ts!",
     "functions/**/*.ts!",
     "!functions/lib/**",
     "scripts/**/*.{js,mjs,ts}",
@@ -10,8 +10,17 @@
     "__tests__/**/*.ts",
     "tests/**/*.ts"
   ],
-  "project": ["src/**/*.{ts,tsx}", "functions/**/*.ts", "scripts/**/*.{js,mjs,ts}"],
+  "project": ["src/**/*.{ts,tsx}!", "functions/**/*.ts!", "scripts/**/*.{js,mjs,ts}"],
   "ignore": ["**/*.phase3-4.*", "src/routeTree.gen.ts", "src/types/database.generated.ts"],
   "ignoreDependencies": ["tailwindcss"],
-  "ignoreBinaries": ["k6", "psql"]
+  "ignoreBinaries": ["k6", "psql"],
+  "ignoreExportsUsedInFile": true,
+  "ignoreIssues": {
+    "src/components/ui/**": ["exports", "types"],
+    "functions/_middleware.ts": ["duplicates"],
+    "src/utils/file-compression.ts": ["duplicates"]
+  },
+  "rules": {
+    "enumMembers": "off"
+  }
 }

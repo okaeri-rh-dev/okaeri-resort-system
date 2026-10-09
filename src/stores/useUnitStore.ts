@@ -4,7 +4,7 @@ import { devtools, persist } from "zustand/middleware";
 
 import { unitKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
-import type { AvailabilityCheck, Unit, UnitFilters, UnitStatus } from "@/types";
+import type { Unit, UnitFilters, UnitStatus } from "@/types";
 import type { TablesUpdate } from "@/types/database.types";
 
 // ============================================
@@ -168,9 +168,6 @@ export const useUnits = () => {
 };
 
 // Fetch single unit
-export const useUnit = (unitId: string | undefined) => {
-  return useQuery({ ...unitDetailQuery(unitId ?? ""), enabled: !!unitId });
-};
 
 // Create unit mutation
 export const useCreateUnit = () => {
@@ -292,20 +289,6 @@ export const useDeleteUnit = () => {
 };
 
 // Check availability
-export const useCheckAvailability = () => {
-  return useMutation({
-    mutationFn: async ({ unit_id, check_in, check_out }: AvailabilityCheck) => {
-      const { data, error } = await supabase.rpc("check_unit_availability", {
-        p_unit_id: unit_id,
-        p_check_in: check_in,
-        p_check_out: check_out,
-      });
-
-      if (error) throw new Error(handleSupabaseError(error));
-      return data;
-    },
-  });
-};
 
 // Real-time subscription for unit updates
 // NOTE: Disabled for Phase 1 - Real-time features scheduled for Phase 2

@@ -222,34 +222,8 @@ export const usePayments = () => {
 };
 
 // Fetch single payment
-export const usePayment = (paymentId: string) => {
-  return useQuery({ ...paymentDetailQuery(paymentId), enabled: !!paymentId });
-};
 
 // Fetch payments for a booking
-const bookingPaymentsQuery = (bookingId: string) =>
-  queryOptions({
-    queryKey: paymentKeys.byBooking(bookingId),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("payments")
-        .select("*")
-        .eq("booking_id", bookingId)
-        .neq("status", "Deleted")
-        .order("payment_date", { ascending: false });
-
-      if (error) throw new Error(handleSupabaseError(error));
-      return data || [];
-    },
-    staleTime: 60000,
-  });
-
-export const useBookingPayments = (bookingId: string) => {
-  return useQuery({
-    ...bookingPaymentsQuery(bookingId),
-    enabled: !!bookingId,
-  });
-};
 
 // Create payment
 export const useCreatePayment = () => {

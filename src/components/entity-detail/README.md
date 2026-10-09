@@ -16,9 +16,7 @@ entity-detail/
 ├── DetailAuditSection.tsx       # Audit trail integration for detail pages
 ├── RelatedEntityLink.tsx        # Type-safe links to related entities
 ├── DetailPageSkeleton.tsx       # Loading skeleton preserving layout
-├── DetailErrorBoundary.tsx      # Error display with retry/back actions
 ├── utils/
-│   ├── types.ts                 # Re-exported prop type definitions
 │   └── formatters.ts            # Data formatting utilities
 ├── __tests__/                   # Comprehensive component tests
 └── index.ts                     # Barrel export for all components
@@ -215,30 +213,6 @@ interface DetailAuditSectionProps {
 - Shimmer animation via shadcn/ui Skeleton
 
 **Real-World Usage**: `src/routes/_authenticated/bookings/$bookingId/index.tsx:141`
-
----
-
-### 7. DetailErrorBoundary
-
-**Purpose**: Error display component with retry and navigation functionality.
-
-**Features**:
-- Clear error message display
-- Try Again button to retry the operation
-- Go Back button to return to previous page
-- Customizable entity name for context
-- Accessible error states
-
-**Props Interface**:
-```typescript
-interface DetailErrorBoundaryProps {
-  error: Error;                  // Error object
-  reset: () => void;             // Retry function
-  entityName?: string;           // Entity name (default: "Item")
-}
-```
-
-**Real-World Usage**: `src/components/entity-detail/DetailErrorBoundary.tsx:34-69`
 
 ---
 
@@ -440,18 +414,9 @@ The entity-detail pattern standardizes how detail/view pages are structured acro
 
 **✅ DO**: Use DetailPageSkeleton for route pending states
 ```typescript
-export const Route = createFileRoute("/_authenticated/entities/$entityId/")({
+export const Route = createFileRoute("/admin/entities/$entityId/")({
   pendingComponent: DetailPageSkeleton,
-  errorComponent: ({ error, reset }) => (
-    <DetailErrorBoundary error={error} reset={reset} entityName="Entity" />
-  ),
 });
-```
-
-**✅ DO**: Provide entity-specific error names
-```typescript
-<DetailErrorBoundary error={error} reset={reset} entityName="Booking" />
-<DetailErrorBoundary error={error} reset={reset} entityName="Guest" />
 ```
 
 ### 7. Mobile Responsiveness
@@ -603,7 +568,7 @@ const entityRoutes = {
 ```
 
 3. **Create detail page component** using the pattern
-4. **Add route with DetailPageSkeleton and DetailErrorBoundary**
+4. **Add route with DetailPageSkeleton and an errorComponent**
 5. **Test and deploy** ✅
 
 ---

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 
-import { logger } from "@/lib/logger";
 import { debounce } from "@/utils";
 
 /**
@@ -66,97 +65,4 @@ export const useResponsiveView = (breakpoint: string = "1024px") => {
         ? window.matchMedia("(min-width: 768px) and (max-width: 1023px)").matches
         : false,
   };
-};
-
-/**
- * CSS-first alternative: Use data attributes for styling
- * This sets a data attribute that CSS can use for responsive styling
- * without any JavaScript-based conditional rendering
- */
-export const useResponsiveDataAttribute = (ref: React.RefObject<HTMLElement>) => {
-  useEffect(() => {
-    if (!ref.current) return;
-
-    const updateDataAttribute = () => {
-      if (!ref.current) return;
-
-      const width = window.innerWidth;
-
-      if (width < 640) {
-        ref.current.dataset.viewport = "mobile";
-      } else if (width < 1024) {
-        ref.current.dataset.viewport = "tablet";
-      } else {
-        ref.current.dataset.viewport = "desktop";
-      }
-    };
-
-    // Set initial value
-    updateDataAttribute();
-
-    // Use matchMedia for breakpoint detection instead of resize
-    const breakpoints = [
-      window.matchMedia("(max-width: 639px)"),
-      window.matchMedia("(min-width: 640px) and (max-width: 1023px)"),
-      window.matchMedia("(min-width: 1024px)"),
-    ];
-
-    const handleChange = debounce(updateDataAttribute, 300);
-
-    breakpoints.forEach((mq) => {
-      if (mq.addEventListener) {
-        mq.addEventListener("change", handleChange);
-      } else {
-        mq.addListener(handleChange);
-      }
-    });
-
-    return () => {
-      breakpoints.forEach((mq) => {
-        if (mq.removeEventListener) {
-          mq.removeEventListener("change", handleChange);
-        } else {
-          mq.removeListener(handleChange);
-        }
-      });
-    };
-  }, [ref]);
-};
-
-/**
- * Performance monitoring utility
- * Tracks how often responsive changes occur
- */
-export const useResponsivePerformanceMonitor = () => {
-  const [metrics, setMetrics] = useState({
-    changes: 0,
-    lastChange: null as Date | null,
-  });
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 768px)");
-
-    const handleChange = () => {
-      setMetrics((prev) => ({
-        changes: prev.changes + 1,
-        lastChange: new Date(),
-      }));
-
-      // Log to console in development
-      if (process.env.NODE_ENV === "development") {
-        logger.info("[ResponsiveView] Breakpoint crossed", {
-          timestamp: new Date().toISOString(),
-          isMobile: !mediaQuery.matches,
-        });
-      }
-    };
-
-    mediaQuery.addEventListener?.("change", handleChange);
-
-    return () => {
-      mediaQuery.removeEventListener?.("change", handleChange);
-    };
-  }, []);
-
-  return metrics;
 };

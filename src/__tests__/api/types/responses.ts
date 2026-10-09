@@ -90,55 +90,6 @@ export interface MultiUnitBookingResponse {
   };
 }
 
-/**
- * POST /api/bookings/:id/units/add
- * Success response for adding unit to booking
- */
-export interface AddUnitResponse {
-  success: boolean;
-  data: {
-    booking_id: string;
-    booking_reference: string;
-    total_amount: number;
-    units: Array<unknown>;
-  };
-}
-
-/**
- * POST /api/bookings/:id/units/remove
- * Success response for removing unit from booking
- */
-export interface RemoveUnitResponse {
-  success: boolean;
-  data: {
-    booking_id: string;
-    booking_reference: string;
-    total_amount: number;
-    units: Array<unknown>;
-    refund_amount?: number;
-  };
-}
-
-// ============================================================
-// PAYMENT API RESPONSES
-// ============================================================
-
-/**
- * POST /api/bookings/:id/payments/record
- * Success response for payment recording
- */
-export interface RecordPaymentResponse {
-  success: boolean;
-  data: {
-    payment_id: string;
-    booking_id: string;
-    amount: number;
-    payment_method: string;
-    payment_status: string;
-    created_at: string;
-  };
-}
-
 // ============================================================
 // ERROR RESPONSES
 // ============================================================
@@ -184,30 +135,3 @@ export interface BusinessErrorResponse {
     };
   };
 }
-
-// ============================================================
-// UNION TYPES FOR FLEXIBLE ASSERTIONS
-// ============================================================
-
-/**
- * Union type for booking API responses (success or error)
- */
-export type BookingApiResponse =
-  | MultiUnitBookingResponse
-  | ValidationErrorResponse
-  | BusinessErrorResponse;
-
-/**
- * Union type for availability API responses (success or error)
- */
-export type AvailabilityApiResponse = AvailabilityResponse | ApiErrorResponse;
-
-/**
- * Union type for payment API responses (success or error)
- */
-export type PaymentApiResponse = RecordPaymentResponse | ApiErrorResponse;
-
-/**
- * Union type for unit management responses (success or error)
- */
-export type UnitManagementResponse = AddUnitResponse | RemoveUnitResponse | ApiErrorResponse;

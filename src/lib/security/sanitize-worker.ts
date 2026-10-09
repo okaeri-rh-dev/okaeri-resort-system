@@ -140,24 +140,3 @@ export function sanitizePhoneWorker(phone: string | null | undefined): string {
 
   return cleaned.substring(0, 30);
 }
-
-/**
- * Validates if text contains suspicious patterns
- *
- * @param input - Input to check
- * @returns True if suspicious content detected
- */
-export function containsSuspiciousPatterns(input: string): boolean {
-  const patterns = [
-    /<script/i,
-    /<iframe/i,
-    /javascript:/i,
-    /on\w+\s*=/i,
-    /<embed/i,
-    /<object/i,
-    /data:text\/html/i,
-    /vbscript:/i,
-  ];
-
-  return patterns.some((pattern) => pattern.test(input));
-}

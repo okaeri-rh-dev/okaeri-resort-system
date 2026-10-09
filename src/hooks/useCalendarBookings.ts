@@ -120,22 +120,6 @@ export function getBookingStatusPriority(status: string): number {
 }
 
 // Helper function to get status color class (professional palette)
-export function getBookingStatusColor(status: string): string {
-  switch (status) {
-    case "Confirmed":
-      return "bg-blue-100 text-blue-800 border-blue-300";
-    case "CheckedIn":
-      return "bg-emerald-100 text-emerald-800 border-emerald-300";
-    case "Pending":
-      return "bg-slate-100 text-slate-700 border-slate-300";
-    case "CheckedOut":
-      return "bg-violet-50 text-violet-700 border-violet-200";
-    case "Cancelled":
-      return "bg-rose-50 text-rose-700 border-rose-200";
-    default:
-      return "bg-gray-100 text-gray-700 border-gray-300";
-  }
-}
 
 // Helper to format currency for Philippine peso
 export function formatCurrency(amount: number): string {

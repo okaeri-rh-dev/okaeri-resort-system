@@ -46,7 +46,7 @@ export interface Guest {
 // BOOKING TYPES
 // ============================================
 export { BOOKING_STATUSES, type BookingStatus } from "./booking-status";
-export { APP_ROLE_NAMES, type AppRoleName } from "./app-role";
+export { APP_ROLE_NAMES } from "./app-role";
 export type PaymentStatus = "Pending" | "Partial" | "Completed" | "Refunded";
 export type PaymentMethod = "Cash" | "GCash" | "BankTransfer" | "Card" | "Other";
 export type PaymentRecordStatus = "Active" | "Deleted" | "Refunded";
@@ -227,28 +227,6 @@ export interface Expense {
 }
 
 // ============================================
-// MAINTENANCE LOG TYPES (Future use)
-// ============================================
-export type MaintenanceStatus = "Pending" | "In Progress" | "Completed" | "Cancelled";
-export type MaintenancePriority = "Low" | "Medium" | "High" | "Urgent";
-
-export interface MaintenanceLog {
-  log_id: string;
-  unit_id: string;
-  issue_description: string;
-  status: MaintenanceStatus;
-  priority: MaintenancePriority;
-  reported_date: string;
-  resolved_date?: string | null;
-  cost?: number | null;
-  notes?: string | null;
-  created_at: string;
-  updated_at: string;
-  // Relations
-  unit?: Unit;
-}
-
-// ============================================
 // FORM INPUT TYPES
 // ============================================
 export interface BookingFormData {
@@ -264,35 +242,6 @@ export interface BookingFormData {
   special_requests?: string;
   payment_method?: PaymentMethod;
   is_walk_in?: boolean;
-}
-
-export interface UnitFormData {
-  unit_name: string;
-  unit_code: string;
-  unit_type: UnitType;
-  base_occupancy: number;
-  max_occupancy: number;
-  base_rate: number;
-  weekend_rate: number;
-  extra_person_rate: number;
-}
-
-// ============================================
-// API RESPONSE TYPES
-// ============================================
-export interface ApiResponse<T> {
-  data?: T;
-  error?: string;
-  message?: string;
-  success: boolean;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
 }
 
 // ============================================
@@ -319,54 +268,6 @@ export interface UnitFilters {
   min_rate?: number;
   max_rate?: number;
   min_occupancy?: number;
-}
-
-// ============================================
-// STATISTICS TYPES
-// ============================================
-export interface DashboardStats {
-  totalUnits: number;
-  availableUnits: number;
-  totalBookings: number;
-  activeBookings: number;
-  totalRevenue: number;
-  monthlyRevenue: number;
-  averageOccupancy: number;
-  upcomingCheckIns: number;
-  upcomingCheckOuts: number;
-}
-
-export interface UnitStats {
-  unit_id: string;
-  total_revenue: number;
-  total_bookings: number;
-  average_booking_value: number;
-  occupancy_rate: number;
-  current_month_revenue: number;
-}
-
-// ============================================
-// DATE UTILITY TYPES
-// ============================================
-export interface DateRange {
-  from: Date | undefined;
-  to: Date | undefined;
-}
-
-export interface AvailabilityCheck {
-  unit_id: string;
-  check_in: string;
-  check_out: string;
-}
-
-// ============================================
-// FILE UPLOAD TYPES
-// ============================================
-export interface FileUploadResponse {
-  url: string;
-  path: string;
-  size: number;
-  type: string;
 }
 
 // ============================================

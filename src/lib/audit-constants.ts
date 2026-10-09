@@ -11,7 +11,7 @@
  */
 
 import { logger } from "@/lib/logger";
-import { AuditCategory, AuditSeverity, type AuditAction } from "@/types/audit.types";
+import { type AuditAction } from "@/types/audit.types";
 
 // ============================================
 // OWNER EMAIL UTILITIES
@@ -86,17 +86,6 @@ export function getSensitiveFields(tableName: string): string[] {
 }
 
 /**
- * Check if a field should be redacted
- * @param tableName - Table name
- * @param fieldName - Field to check
- * @returns true if field should be redacted
- */
-export function isSensitiveField(tableName: string, fieldName: string): boolean {
-  const sensitiveFields = getSensitiveFields(tableName);
-  return sensitiveFields.includes(fieldName);
-}
-
-/**
  * REDACTION_PLACEHOLDER - Value used for redacted fields
  */
 export const REDACTION_PLACEHOLDER = "[REDACTED]";
@@ -158,20 +147,6 @@ export const AUDIT_PSEUDO_TABLES = [
 export const ALL_AUDIT_TABLES = [...PHYSICAL_AUDIT_TABLES, ...AUDIT_PSEUDO_TABLES] as const;
 
 /**
- * MANAGER_VISIBLE_TABLES - Tables visible to manager role
- * Excludes maintenance_logs (owner-only)
- */
-export const MANAGER_VISIBLE_TABLES = [
-  "bookings",
-  "payments",
-  "guests",
-  "expenses",
-  "system",
-  "authentication",
-  "expense_categories",
-] as const;
-
-/**
  * Type-safe table name (physical + pseudo)
  */
 export type AuditTableName =
@@ -183,13 +158,6 @@ export type AuditTableName =
  */
 export function isValidAuditTable(tableName: string): tableName is AuditTableName {
   return ALL_AUDIT_TABLES.includes(tableName as AuditTableName);
-}
-
-/**
- * Check if a table has database triggers (Layer 1)
- */
-export function hasAuditTrigger(tableName: string): boolean {
-  return PHYSICAL_AUDIT_TABLES.includes(tableName as (typeof PHYSICAL_AUDIT_TABLES)[number]);
 }
 
 // ============================================
@@ -221,31 +189,6 @@ export const ACTION_DISPLAY_NAMES: Record<AuditAction, string> = {
   INSERT: "Created",
   UPDATE: "Updated",
   DELETE: "Deleted",
-};
-
-/**
- * CATEGORY_DISPLAY_NAMES - Human-readable category names
- */
-export const CATEGORY_DISPLAY_NAMES: Record<AuditCategory, string> = {
-  [AuditCategory.AUTHENTICATION]: "Authentication",
-  [AuditCategory.BOOKING]: "Booking",
-  [AuditCategory.PAYMENT]: "Payment",
-  [AuditCategory.GUEST]: "Guest",
-  [AuditCategory.UNIT]: "Unit",
-  [AuditCategory.EXPENSE]: "Expense",
-  [AuditCategory.MAINTENANCE]: "Maintenance",
-  [AuditCategory.SYSTEM]: "System",
-};
-
-/**
- * SEVERITY_COLORS - Tailwind CSS color classes for severity badges
- * Keys match uppercase enum values
- */
-export const SEVERITY_COLORS: Record<AuditSeverity, string> = {
-  [AuditSeverity.INFO]: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-  [AuditSeverity.WARNING]: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-  [AuditSeverity.CRITICAL]: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-  [AuditSeverity.DEBUG]: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
 };
 
 // ============================================

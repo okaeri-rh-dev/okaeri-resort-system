@@ -88,7 +88,4 @@ export {
   generateTestJWT,
   generateExpiredJWT,
   generateIdempotencyKey,
-  createMockResponseWithHeaders,
 } from "./utils/test-helpers";
-export { testUnits, testGuest, testBookingRequest, testBookingResponse } from "./utils/fixtures";
-export { setMockData, resetMockData } from "./mocks/supabase";

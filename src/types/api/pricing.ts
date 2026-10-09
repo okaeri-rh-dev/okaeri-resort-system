@@ -169,26 +169,3 @@ export function isSuccessResponse(
 export function isErrorResponse(response: PricingApiResponse): response is PricingErrorResponse {
   return "error" in response;
 }
-
-export function isMultiUnitPricing(
-  pricing: PricingResult | MultiUnitPricingResult
-): pricing is MultiUnitPricingResult {
-  return "units" in pricing;
-}
-
-/**
- * Pricing cache entry structure
- */
-export interface PricingCacheEntry {
-  pricing: PricingResult | MultiUnitPricingResult;
-  notice: string | null;
-  calculated_at: string;
-}
-
-/**
- * Rate limit tracking structure
- */
-export interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}

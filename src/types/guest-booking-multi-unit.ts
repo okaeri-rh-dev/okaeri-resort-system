@@ -57,8 +57,6 @@ export const multiUnitBookingSchema = z
     path: ["check_out"],
   });
 
-export type MultiUnitBookingRequest = z.infer<typeof multiUnitBookingSchema>;
-
 // ============================================
 // Response Types
 // ============================================
@@ -90,21 +88,6 @@ export interface MultiUnitBookingResponse {
   is_duplicate?: boolean;
 }
 
-export interface DiscountRule {
-  id: string;
-  name: string;
-  description?: string;
-  conditions: Array<{
-    type: "min_nights" | "date_range" | "advance_booking" | "unit_count";
-    operator?: "gte" | "lte" | "between";
-    value: unknown;
-  }>;
-  discount_type: "percentage" | "fixed" | "per_night";
-  discount_value: number;
-  priority: number;
-  is_active: boolean;
-}
-
 export interface PricingConfig {
   base_rate: number;
   weekend_rate: number;
@@ -113,48 +96,6 @@ export interface PricingConfig {
   max_capacity_per_unit: number;
   downpayment_percent: number;
   currency: string;
-}
-
-/**
- * Pricing preview response from server
- * Returned by /api/guest-booking/preview-pricing endpoint
- * Source: 02-api-specification.md lines 676-691
- */
-export interface PricingPreview {
-  nights: number; // Number of nights in stay
-  total_units: number; // Total units requested
-  total_guests: number; // Total guests across all units
-  base_total: number; // Base rate × nights × units
-  weekend_surcharge: number; // Extra charge for weekend nights (Fri/Sat)
-  extra_person_fees: number; // Fees for guests above base_occupancy
-  subtotal: number; // base_total + surcharges + fees
-  discount?: {
-    // Optional discount (best-of policy)
-    percent: number; // Discount percentage (e.g., 5)
-    amount: number; // Discount amount in currency
-    rule_name: string; // Discount rule name (e.g., "7-Night Discount")
-  };
-  total: number; // Final total after discount
-  downpayment_required: number; // Required downpayment amount
-  downpayment_percent: number; // Downpayment percentage (default: 50)
-}
-
-/**
- * API response shape for preview endpoint
- */
-export interface PricingPreviewResponse {
-  success: boolean;
-  pricing: PricingPreview;
-  _note?: string; // Server note (e.g., "PREVIEW ONLY")
-}
-
-/**
- * Request payload for preview endpoint
- */
-export interface PricingPreviewRequest {
-  unit_requests: UnitRequest[];
-  check_in: string; // ISO 8601 datetime string
-  check_out: string; // ISO 8601 datetime string
 }
 
 // ============================================
@@ -184,12 +125,3 @@ export const ERROR_CODES = {
   DATABASE_ERROR: "DATABASE_ERROR",
   INTERNAL_ERROR: "INTERNAL_ERROR",
 } as const;
-
-export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
-
-export interface ErrorResponse {
-  success: false;
-  error: string;
-  error_code: ErrorCode;
-  details?: unknown;
-}

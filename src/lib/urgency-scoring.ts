@@ -39,13 +39,6 @@ export const URGENCY_THRESHOLDS = {
   MEDIUM: 25,
 } as const;
 
-export const SLO_TARGETS = {
-  critical: "1 hour",
-  high: "4 hours",
-  medium: "12 hours",
-  low: "24 hours",
-} as const;
-
 // ============================================
 // Core Scoring Function
 // ============================================

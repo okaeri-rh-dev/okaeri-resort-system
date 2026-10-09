@@ -94,22 +94,6 @@ export async function checkKVRateLimit(
 }
 
 /**
- * Create a fingerprint for more sophisticated rate limiting
- * Combines multiple factors to identify unique clients
- */
-export function createClientFingerprint(ip: string, userAgent?: string, headers?: Headers): string {
-  const components = [
-    ip,
-    userAgent || "unknown",
-    headers?.get("Accept-Language") || "unknown",
-    headers?.get("Accept-Encoding") || "unknown",
-  ];
-
-  // Create a simple hash of the components
-  return components.join("|").substring(0, 64);
-}
-
-/**
  * Advanced fingerprinting with SHA-256 hash
  * Creates a more unique identifier using multiple browser characteristics
  */

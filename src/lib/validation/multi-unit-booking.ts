@@ -71,13 +71,3 @@ export const step2Schema = baseMultiUnitBookingSchema.pick({
   email: true,
   contact_number: true,
 });
-
-/**
- * Step 4 validation (Payment)
- */
-export const step4Schema = baseMultiUnitBookingSchema.pick({
-  payment_method: true,
-  payment_amount: true,
-  payment_proof_url: true,
-  special_requests: true,
-});

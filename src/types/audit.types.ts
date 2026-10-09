@@ -95,19 +95,9 @@ export const AuditEventType = {
 export type AuditEventTypeValue = (typeof AuditEventType)[keyof typeof AuditEventType];
 
 /**
- * EventType - Alias for AuditEventTypeValue for backwards compatibility
- */
-export type EventType = AuditEventTypeValue;
-
-/**
  * AuditLog - Extended audit log type with all fields
  */
 export type AuditLog = Database["public"]["Tables"]["audit_logs"]["Row"];
-
-/**
- * AuditLogInsert - Insert type for audit logs
- */
-export type AuditLogInsert = Database["public"]["Tables"]["audit_logs"]["Insert"];
 
 /**
  * AuditLogFilters - Filters for querying audit logs
@@ -178,18 +168,6 @@ export interface AuditEventContext {
   recordPk?: Database["public"]["Tables"]["audit_logs"]["Row"]["record_pk"];
   oldData?: unknown;
   newData?: unknown;
-}
-
-/**
- * LogAuditEvent - Function signature for logging audit events
- */
-export interface LogAuditEvent {
-  action: AuditAction;
-  table_name: string;
-  record_id?: string;
-  old_data?: unknown;
-  new_data?: unknown;
-  context?: AuditEventContext;
 }
 
 /**

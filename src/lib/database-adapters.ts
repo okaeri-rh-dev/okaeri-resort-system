@@ -1,7 +1,7 @@
 // Database type adapters - Converting between Supabase types and application types
 // Handles the mismatch between DB Json types and typed arrays, nullable enums, etc.
 
-import type { Booking, BookingUnitRecord, Guest, Payment, Unit } from "@/types";
+import type { Booking, BookingUnitRecord, Guest, Unit } from "@/types";
 import type { Tables } from "@/types/database.types";
 
 // ============================================
@@ -19,9 +19,6 @@ export type DbBookingUnit = Tables<"booking_units"> & {
 export type DbBooking = Tables<"bookings"> & {
   booking_units?: DbBookingUnit[];
   guest?: DbGuest | null;
-};
-export type DbPayment = Tables<"payments"> & {
-  booking?: DbBooking | null;
 };
 
 // ============================================
@@ -143,64 +140,4 @@ export function adaptBookingFromDB(dbBooking: DbBooking): Booking {
     booking_units: dbBooking.booking_units?.map(adaptBookingUnitFromDB) || [],
     guest: dbBooking.guest ? adaptGuestFromDB(dbBooking.guest) : null,
   };
-}
-
-/**
- * Convert array of database Bookings to application Bookings
- */
-export function adaptBookingsFromDB(dbBookings: DbBooking[]): Booking[] {
-  return dbBookings.map(adaptBookingFromDB);
-}
-
-// ============================================
-// PAYMENT ADAPTER
-// ============================================
-
-/**
- * Convert database Payment to application Payment
- * Handles related booking conversion
- */
-export function adaptPaymentFromDB(dbPayment: DbPayment): Payment {
-  return {
-    payment_id: dbPayment.payment_id,
-    booking_id: dbPayment.booking_id,
-    amount: dbPayment.amount,
-    payment_method: dbPayment.payment_method,
-    payment_date: dbPayment.payment_date,
-    proof_url: dbPayment.proof_url,
-    notes: dbPayment.notes,
-    created_at: dbPayment.created_at,
-    // Convert related booking if present
-    booking: dbPayment.booking ? adaptBookingFromDB(dbPayment.booking) : undefined,
-  };
-}
-
-/**
- * Convert array of database Payments to application Payments
- */
-export function adaptPaymentsFromDB(dbPayments: DbPayment[]): Payment[] {
-  return dbPayments.map(adaptPaymentFromDB);
-}
-
-// ============================================
-// REVERSE ADAPTERS (App → DB)
-// ============================================
-
-/**
- * Convert application Unit amenities to database Json format
- * Used when inserting/updating units
- */
-export function unitAmenitiesToJson(amenities: string[] | null): unknown {
-  return amenities; // Json type accepts arrays directly
-}
-
-/**
- * Prepare booking data for database insert
- * Ensures all fields match database expectations
- */
-export function prepareBookingForDB(booking: Partial<Booking>): Partial<Tables<"bookings">> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { booking_units, guest, ...dbBooking } = booking;
-
-  return dbBooking;
 }

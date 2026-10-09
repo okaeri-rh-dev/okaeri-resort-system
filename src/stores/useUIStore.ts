@@ -241,117 +241,12 @@ export const useUIStore = create<UIStore>()(
 // ============================================
 
 // Hook for handling async operations with loading state
-export const useAsyncAction = () => {
-  const { withLoading, showSuccess, showError } = useUIStore();
-
-  return {
-    execute: async <T>(
-      action: () => Promise<T>,
-      options?: {
-        loadingMessage?: string;
-        successMessage?: string;
-        errorMessage?: string;
-        onSuccess?: (data: T) => void;
-        onError?: (error: Error) => void;
-      }
-    ): Promise<T | undefined> => {
-      try {
-        const result = await withLoading(action, options?.loadingMessage, options?.errorMessage);
-
-        if (result !== undefined) {
-          if (options?.successMessage) {
-            showSuccess(options.successMessage);
-          }
-          options?.onSuccess?.(result);
-        }
-
-        return result;
-      } catch (error) {
-        const err = error instanceof Error ? error : new Error("Unknown error");
-        options?.onError?.(err);
-        showError(options?.errorMessage || "Operation failed", err.message);
-        return undefined;
-      }
-    },
-  };
-};
 
 // Hook for confirmation dialogs
-export const useConfirm = () => {
-  const { openConfirmDialog, closeConfirmDialog } = useUIStore();
-
-  return {
-    confirm: (options: {
-      title: string;
-      description: string;
-      confirmText?: string;
-      cancelText?: string;
-      variant?: "default" | "destructive";
-    }): Promise<boolean> => {
-      return new Promise((resolve) => {
-        openConfirmDialog({
-          ...options,
-          onConfirm: () => {
-            resolve(true);
-            closeConfirmDialog();
-          },
-          onCancel: () => {
-            resolve(false);
-            closeConfirmDialog();
-          },
-        });
-      });
-    },
-  };
-};
 
 // Hook for managing form state with loading
-export const useFormLoading = (formId?: string) => {
-  const { isLoading, loadingMessage } = useUIStore((state) => ({
-    isLoading: state.isLoading,
-    loadingMessage: state.loadingMessage,
-  }));
-
-  const isFormLoading = formId ? isLoading && loadingMessage?.includes(formId) : isLoading;
-
-  return {
-    isLoading: isFormLoading,
-    loadingMessage,
-  };
-};
 
 // Hook for keyboard shortcuts
-export const useKeyboardShortcuts = (shortcuts: Record<string, () => void>) => {
-  const handleKeyPress = (event: KeyboardEvent) => {
-    const key = event.key.toLowerCase();
-    const ctrl = event.ctrlKey || event.metaKey;
-    const shift = event.shiftKey;
-    const alt = event.altKey;
-
-    let shortcutKey = "";
-    if (ctrl) shortcutKey += "ctrl+";
-    if (shift) shortcutKey += "shift+";
-    if (alt) shortcutKey += "alt+";
-    shortcutKey += key;
-
-    const action = shortcuts[shortcutKey];
-    if (action) {
-      event.preventDefault();
-      action();
-    }
-  };
-
-  // Add event listener on mount
-  if (typeof window !== "undefined") {
-    window.addEventListener("keydown", handleKeyPress);
-  }
-
-  return () => {
-    if (typeof window !== "undefined") {
-      window.removeEventListener("keydown", handleKeyPress);
-    }
-  };
-};
 
 // Initialize theme on app start
 export const initializeTheme = () => {

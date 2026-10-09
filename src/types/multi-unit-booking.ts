@@ -300,32 +300,6 @@ export interface MultiUnitBookingActions {
 
 export type MultiUnitBookingStore = MultiUnitBookingState & MultiUnitBookingActions;
 
-// ============================================
-// API RESPONSE TYPES
-// ============================================
-
-export interface MultiUnitAvailabilityResult {
-  unit_id: string;
-  unit_name: string;
-  is_available: boolean;
-  conflicting_bookings: number;
-  next_available_date?: string;
-}
-
-export interface MultiUnitAvailabilityResponse {
-  success: boolean;
-  data: {
-    check_in: string;
-    check_out: string;
-    results: MultiUnitAvailabilityResult[];
-    summary: {
-      total_units_checked: number;
-      available_units: number;
-      unavailable_units: number;
-    };
-  };
-}
-
 // Generic API response wrapper
 export interface ApiResponse<T> {
   success?: boolean;
@@ -334,65 +308,4 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-// Specific API response types
-export type MultiUnitBookingsApiResponse = ApiResponse<MultiUnitBooking[]>;
-export type MultiUnitAvailabilityApiResponse = ApiResponse<MultiUnitAvailabilityResult[]>;
 export type MultiUnitBookingApiResponse = ApiResponse<MultiUnitBooking>;
-
-// ============================================
-// TYPE GUARDS
-// ============================================
-
-export function isMultiUnitBooking(booking: unknown): booking is MultiUnitBooking {
-  return !!(
-    booking &&
-    typeof booking === "object" &&
-    "booking_units" in booking &&
-    Array.isArray(booking.booking_units) &&
-    "is_multi_unit" in booking
-  );
-}
-
-export function isBookingUnit(unit: unknown): unit is BookingUnit {
-  return !!(
-    unit &&
-    typeof unit === "object" &&
-    "unit_id" in unit &&
-    "pricing" in unit &&
-    "availability" in unit
-  );
-}
-
-export function isOptimisticEntry(entry: unknown): entry is OptimisticEntry {
-  return !!(
-    entry &&
-    typeof entry === "object" &&
-    "booking" in entry &&
-    "timestamp" in entry &&
-    "operation" in entry
-  );
-}
-
-// ============================================
-// UTILITY TYPES
-// ============================================
-
-/**
- * Type for partial booking unit updates
- */
-export type BookingUnitUpdate = Partial<Omit<BookingUnit, "unit_id" | "pricing" | "availability">>;
-
-/**
- * Type for creating a new multi-unit booking
- */
-export type CreateMultiUnitBookingData = Omit<
-  MultiUnitBooking,
-  "booking_id" | "booking_reference" | "created_at" | "updated_at"
->;
-
-/**
- * Type for updating an existing multi-unit booking
- */
-export type UpdateMultiUnitBookingData = Partial<
-  Omit<MultiUnitBooking, "booking_id" | "booking_reference" | "created_at" | "updated_at">
->;

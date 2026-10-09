@@ -81,36 +81,3 @@ export function useAvailabilityRealtime(
     onDelete: () => handleAvailabilityChange(),
   });
 }
-
-/**
- * Monitor availability for specific units
- *
- * More targeted than useAvailabilityRealtime - monitors specific unit IDs.
- *
- * @param unitIds - Unit IDs to monitor
- * @param options - Subscription options
- * @returns Subscription controls
- *
- * @example
- * const selectedUnitIds = selectedUnits.map(u => u.unit_id);
- * useUnitAvailabilityRealtime(selectedUnitIds);
- */
-export function useUnitAvailabilityRealtime(
-  unitIds: string[],
-  options?: Omit<RealtimeSubscriptionOptions, "enabled">
-) {
-  // Use useEffectEvent to avoid re-subscription when unitIds changes
-  const handleUnitBookedByOthers = useEffectEvent(() => {
-    if (unitIds.length > 0) {
-      toast.error("Unit no longer available", {
-        description: "A unit you selected was just booked by another user.",
-      });
-    }
-  });
-
-  return useMultiUnitAvailabilitySubscription({
-    ...options,
-    enabled: unitIds.length > 0,
-    onInsert: () => handleUnitBookedByOthers(),
-  });
-}

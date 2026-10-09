@@ -102,67 +102,7 @@ export const useAccountStore = create<AccountStore>()(
   )
 );
 
-// ============================================
-// TANSTACK QUERY HOOKS
-// ============================================
-
-type AccountSortBy = AccountStore["sortBy"];
-
-const accountListQuery = (params: {
-  filters: AccountFilters;
-  searchQuery: string;
-  sortBy: AccountSortBy;
-  sortOrder: "asc" | "desc";
-}) => {
-  const { filters, searchQuery, sortBy, sortOrder } = params;
-
-  return queryOptions({
-    queryKey: accountKeys.list({ filters, searchQuery, sortBy, sortOrder }),
-    queryFn: async () => {
-      let query = supabase.from("accounts").select("*");
-
-      // Apply filters
-      if (filters.accountType) {
-        query = query.eq("account_type", filters.accountType);
-      }
-      if (filters.isActive !== undefined) {
-        query = query.eq("is_active", filters.isActive);
-      }
-
-      // Apply search
-      if (searchQuery) {
-        query = query.or(`
-          account_name.ilike.%${searchQuery}%,
-          account_code.ilike.%${searchQuery}%,
-          description.ilike.%${searchQuery}%
-        `);
-      }
-
-      // Apply sorting
-      const column = {
-        name: "account_name",
-        balance: "initial_balance",
-        type: "account_type",
-        created: "created_at",
-      }[sortBy];
-
-      query = query.order(column, { ascending: sortOrder === "asc" });
-
-      const { data, error } = await query;
-      if (error) throw new Error(handleSupabaseError(error));
-
-      return (data || []) as Account[];
-    },
-    staleTime: 60000, // 1 minute
-    refetchOnWindowFocus: true,
-  });
-};
-
 // Fetch all accounts
-export const useAccounts = () => {
-  const { filters, searchQuery, sortBy, sortOrder } = useAccountStore();
-  return useQuery(accountListQuery({ filters, searchQuery, sortBy, sortOrder }));
-};
 
 const activeAccountsQuery = () =>
   queryOptions({
@@ -202,8 +142,6 @@ const accountDetailQuery = (accountId: string) =>
   });
 
 // Fetch single account
-export const useAccount = (accountId: string) =>
-  useQuery({ ...accountDetailQuery(accountId), enabled: !!accountId });
 
 const accountBalancesQuery = (asOfDate?: Date) =>
   queryOptions({
@@ -364,33 +302,4 @@ export const useReactivateAccount = () => {
       queryClient.invalidateQueries({ queryKey: accountKeys.all });
     },
   });
-};
-
-// ============================================
-// UTILITY FUNCTIONS
-// ============================================
-
-// Get account type display label
-export const getAccountTypeLabel = (type: AccountType): string => {
-  const labels: Record<AccountType, string> = {
-    Bank: "Bank Account",
-    "E-Wallet": "E-Wallet",
-    Cash: "Cash",
-  };
-  return labels[type] || type;
-};
-
-// Get account type icon color
-export const getAccountTypeColor = (type: AccountType): string => {
-  const colors: Record<AccountType, string> = {
-    Bank: "text-blue-600",
-    "E-Wallet": "text-green-600",
-    Cash: "text-amber-600",
-  };
-  return colors[type] || "text-gray-600";
-};
-
-// Format account for display
-export const formatAccountOption = (account: Account): string => {
-  return `${account.account_name} (${account.account_code})`;
 };

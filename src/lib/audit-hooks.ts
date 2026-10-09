@@ -1,11 +1,10 @@
 // src/lib/audit-hooks.ts
 
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 
 import { logger } from "@/lib/logger";
 import { toManilaDateString } from "@/lib/timezone";
 import type {
-  AuditEventContext,
   AuditLog,
   AuditLogFilters,
   AuditLogQueryResult,
@@ -85,57 +84,6 @@ export function useAuditLogs(filters?: AuditLogFilters) {
   return useQuery(auditLogsQuery(filters));
 }
 
-const auditLogQuery = (auditId: string) =>
-  queryOptions<AuditLog, Error>({
-    queryKey: auditKeys.detail(auditId),
-    queryFn: async () => {
-      const { data, error } = await db.auditLogs.byId(auditId);
-      if (error) throw error;
-      return data as AuditLog;
-    },
-    staleTime: AUDIT_CACHE_CONFIG.STALE_TIME,
-    gcTime: AUDIT_CACHE_CONFIG.CACHE_TIME,
-  });
-
-/**
- * Fetch single audit log by ID
- *
- * @param auditId - UUID of audit log
- * @returns Query result with single audit log
- */
-export function useAuditLog(auditId: string) {
-  return useQuery({
-    ...auditLogQuery(auditId),
-    enabled: !!auditId, // Only run if auditId is provided
-  });
-}
-
-const auditTrailQuery = (tableName: string, recordId: string) =>
-  queryOptions<AuditLog[], Error>({
-    queryKey: auditKeys.record(tableName, recordId),
-    queryFn: () => db.auditLogs.byRecord(tableName, recordId),
-    staleTime: AUDIT_CACHE_CONFIG.STALE_TIME,
-    gcTime: AUDIT_CACHE_CONFIG.CACHE_TIME,
-  });
-
-/**
- * Fetch audit trail for a specific record
- * Shows complete change history for a booking, unit, payment, etc.
- *
- * @param tableName - Table name (bookings, units, etc)
- * @param recordId - UUID of record
- * @returns Query result with record's audit history
- *
- * @example
- * const { data: history } = useAuditTrail('bookings', booking.booking_id);
- */
-export function useAuditTrail(tableName: string, recordId: string) {
-  return useQuery({
-    ...auditTrailQuery(tableName, recordId),
-    enabled: !!tableName && !!recordId,
-  });
-}
-
 const auditStatsQuery = (filters?: AuditLogFilters) =>
   queryOptions<AuditLogStats, Error>({
     queryKey: auditKeys.stats(filters),
@@ -157,104 +105,9 @@ export function useAuditStats(filters?: AuditLogFilters) {
   return useQuery(auditStatsQuery(filters));
 }
 
-const recentAuditLogsQuery = (limit: number) =>
-  queryOptions<AuditLog[], Error>({
-    queryKey: auditKeys.recent(limit),
-    queryFn: () => db.auditLogs.recent(limit),
-    staleTime: AUDIT_CACHE_CONFIG.STALE_TIME,
-    gcTime: AUDIT_CACHE_CONFIG.CACHE_TIME,
-  });
-
-/**
- * Fetch recent audit logs (last N logs)
- *
- * @param limit - Number of logs to fetch (default 50)
- * @returns Query result with recent logs
- */
-export function useRecentAuditLogs(limit = 50) {
-  return useQuery(recentAuditLogsQuery(limit));
-}
-
-const userAuditLogsQuery = (userEmail: string, limit: number) =>
-  queryOptions<AuditLog[], Error>({
-    queryKey: auditKeys.userActivity(userEmail, limit),
-    queryFn: () => db.auditLogs.byUser(userEmail, limit),
-    staleTime: AUDIT_CACHE_CONFIG.STALE_TIME,
-    gcTime: AUDIT_CACHE_CONFIG.CACHE_TIME,
-  });
-
-/**
- * Fetch user activity logs
- *
- * @param userEmail - User email to filter by
- * @param limit - Maximum logs to return
- * @returns Query result with user's audit logs
- */
-export function useUserAuditLogs(userEmail: string, limit = 100) {
-  return useQuery({
-    ...userAuditLogsQuery(userEmail, limit),
-    enabled: !!userEmail,
-  });
-}
-
 // ============================================
 // MUTATION HOOKS
 // ============================================
-
-/**
- * Create manual audit log entry
- * Used for Layer 2 application-level logging
- *
- * @returns Mutation hook for creating audit logs
- *
- * @example
- * const createAuditLog = useCreateAuditLog();
- * await createAuditLog.mutateAsync({
- *   tableName: 'bookings',
- *   description: 'Booking cancelled',
- *   category: AuditCategory.BOOKING,
- *   severity: AuditSeverity.WARNING
- * });
- */
-export function useCreateAuditLog() {
-  const queryClient = useQueryClient();
-
-  return useMutation<AuditLog, Error, AuditEventContext>({
-    mutationFn: async (context: AuditEventContext) => {
-      const { data, error } = await db.auditLogs.create(context);
-      if (error) throw error;
-      return data as AuditLog;
-    },
-    onSuccess: () => {
-      // Invalidate all audit log queries to refetch
-      queryClient.invalidateQueries({ queryKey: auditKeys.all });
-    },
-  });
-}
-
-/**
- * Archive old audit logs (manual cleanup)
- *
- * @returns Mutation hook for archiving logs
- *
- * @example
- * const archiveLogs = useArchiveAuditLogs();
- * const twoYearsAgo = new Date();
- * twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
- * await archiveLogs.mutateAsync(twoYearsAgo.toISOString());
- */
-export function useArchiveAuditLogs() {
-  const queryClient = useQueryClient();
-
-  return useMutation<{ count: number; error?: string }, Error, string>({
-    mutationFn: (beforeDate: string) => db.auditLogs.archiveOld(beforeDate),
-    onSuccess: (result) => {
-      logger.info(`Archived ${result.count} old audit logs`);
-      // Invalidate all audit log queries
-      queryClient.invalidateQueries({ queryKey: auditKeys.all });
-    },
-  });
-}
 
 /**
  * Export audit logs to CSV

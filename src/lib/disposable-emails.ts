@@ -3,8 +3,6 @@
  * Prevents registration with temporary email services
  */
 
-import { hasProperty, isObject } from "@/lib/type-guards";
-
 // Common disposable email domains (subset for performance)
 // Full list can be loaded from external source in production
 const DISPOSABLE_DOMAINS = new Set([
@@ -67,8 +65,6 @@ const DISPOSABLE_PATTERNS = [
 ];
 
 // Cache for external API responses (if using external service)
-const domainCache = new Map<string, { isDisposable: boolean; checkedAt: number }>();
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
  * Check if an email domain is disposable
@@ -98,76 +94,6 @@ export function isDisposableEmail(email: string): boolean {
 }
 
 /**
- * Async check with external API fallback (for production use)
- * Requires external service like https://www.ipqualityscore.com/ or similar
- */
-export async function isDisposableEmailAsync(email: string, apiKey?: string): Promise<boolean> {
-  const domain = email.toLowerCase().split("@")[1];
-
-  if (!domain) {
-    return false;
-  }
-
-  // Quick check against static list
-  if (DISPOSABLE_DOMAINS.has(domain)) {
-    return true;
-  }
-
-  // Check cache
-  const cached = domainCache.get(domain);
-  if (cached && Date.now() - cached.checkedAt < CACHE_TTL) {
-    return cached.isDisposable;
-  }
-
-  // Check patterns
-  for (const pattern of DISPOSABLE_PATTERNS) {
-    if (pattern.test(email)) {
-      domainCache.set(domain, { isDisposable: true, checkedAt: Date.now() });
-      return true;
-    }
-  }
-
-  // External API check (optional, requires API key)
-  if (apiKey) {
-    try {
-      const response = await fetch(
-        `https://api.disposable-email-detector.com/check?email=${encodeURIComponent(email)}`,
-        {
-          headers: {
-            "X-API-Key": apiKey,
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data: unknown = await response.json();
-        const isDisposable =
-          isObject(data) && hasProperty(data, "disposable") ? data.disposable === true : false;
-
-        // Cache the result
-        domainCache.set(domain, { isDisposable, checkedAt: Date.now() });
-
-        return isDisposable;
-      }
-    } catch (error) {
-      console.warn("Failed to check disposable email via API:", error);
-      // Fall through to default
-    }
-  }
-
-  // Default to allowing (fail open for better UX)
-  return false;
-}
-
-/**
- * Get a list of common disposable domains for client-side validation
- * Returns a subset to avoid sending large lists to client
- */
-export function getCommonDisposableDomains(): string[] {
-  return Array.from(DISPOSABLE_DOMAINS).slice(0, 20);
-}
-
-/**
  * Validate email with disposable check
  * Combines format validation with disposable detection
  */
@@ -192,29 +118,4 @@ export function validateEmailWithDisposableCheck(email: string): {
   }
 
   return { valid: true };
-}
-
-/**
- * Add a domain to the disposable list (for admin use)
- */
-export function addDisposableDomain(domain: string): void {
-  DISPOSABLE_DOMAINS.add(domain.toLowerCase());
-  // Clear cache for this domain
-  domainCache.delete(domain.toLowerCase());
-}
-
-/**
- * Remove a domain from the disposable list (for admin use)
- */
-export function removeDisposableDomain(domain: string): void {
-  DISPOSABLE_DOMAINS.delete(domain.toLowerCase());
-  // Clear cache for this domain
-  domainCache.delete(domain.toLowerCase());
-}
-
-/**
- * Clear the domain cache
- */
-export function clearDisposableEmailCache(): void {
-  domainCache.clear();
 }

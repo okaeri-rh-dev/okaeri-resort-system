@@ -16,8 +16,6 @@ export enum AuditRole {
 }
 
 export type AppRole = Database["public"]["Tables"]["app_roles"]["Row"];
-export type AppRoleInsert = Database["public"]["Tables"]["app_roles"]["Insert"];
-export type AppRoleUpdate = Database["public"]["Tables"]["app_roles"]["Update"];
 
 // Role hierarchy levels for permission checks
 const ROLE_HIERARCHY: Record<AuditRole | "none", number> = {
@@ -140,28 +138,6 @@ export async function hasAuditRole(requiredRole: AuditRole): Promise<boolean> {
 export async function canAccessAuditTrail(): Promise<boolean> {
   const role = await getUserAuditRole();
   return role !== null;
-}
-
-/**
- * Check if current user is an admin
- * Convenience function for admin-only features
- *
- * @returns true if user has admin role
- */
-export async function isAdmin(): Promise<boolean> {
-  const role = await getUserAuditRole();
-  return role === AuditRole.ADMIN;
-}
-
-/**
- * Check if current user is an admin or owner
- * Useful for features available to both admins and owners
- *
- * @returns true if user has admin or owner role
- */
-export async function isAdminOrOwner(): Promise<boolean> {
-  const role = await getUserAuditRole();
-  return role === AuditRole.ADMIN || role === AuditRole.OWNER;
 }
 
 // ============================================
@@ -459,69 +435,6 @@ export async function listAllRoles(): Promise<{
   } catch (error) {
     console.error("[Audit] Error listing roles:", error);
     return { success: false, error: String(error) };
-  }
-}
-
-/**
- * List active roles only
- * Requires admin privileges
- *
- * @returns Array of active users with roles
- */
-export async function listActiveRoles(): Promise<{
-  success: boolean;
-  data?: AppRole[];
-  error?: string;
-}> {
-  try {
-    // Verify current user is admin
-    const currentRole = await getUserAuditRole();
-    if (currentRole !== AuditRole.ADMIN) {
-      return { success: false, error: "Only admins can list roles" };
-    }
-
-    // Query active roles only
-    const { data, error } = await supabase
-      .from("app_roles")
-      .select("*")
-      .eq("is_active", true)
-      .order("role")
-      .order("granted_at", { ascending: false });
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    return { success: true, data: data || [] };
-  } catch (error) {
-    console.error("[Audit] Error listing active roles:", error);
-    return { success: false, error: String(error) };
-  }
-}
-
-/**
- * Get a specific user's role information
- *
- * @param userId - UUID of user to check
- * @returns User's role information or null if no role
- */
-export async function getUserRoleInfo(userId: string): Promise<AppRole | null> {
-  try {
-    const { data, error } = await supabase
-      .from("app_roles")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("is_active", true)
-      .single();
-
-    if (error || !data) {
-      return null;
-    }
-
-    return data;
-  } catch (error) {
-    console.error("[Audit] Error getting user role info:", error);
-    return null;
   }
 }
 

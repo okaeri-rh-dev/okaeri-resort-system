@@ -7,8 +7,6 @@ import type { BookingStatus } from "./booking-status";
 import type { Database as GeneratedDatabase } from "./database.generated";
 
 export type { Json } from "./database.generated";
-export { Constants } from "./database.generated";
-
 type GeneratedPublic = GeneratedDatabase["public"];
 
 // bookings and app_roles have the CHECKs; the two availability relations copy
@@ -66,8 +64,3 @@ export type TablesInsert<Name extends keyof PublicSchema["Tables"]> =
 
 export type TablesUpdate<Name extends keyof PublicSchema["Tables"]> =
   PublicSchema["Tables"][Name]["Update"];
-
-export type Enums<Name extends keyof PublicSchema["Enums"]> = PublicSchema["Enums"][Name];
-
-export type CompositeTypes<Name extends keyof PublicSchema["CompositeTypes"]> =
-  PublicSchema["CompositeTypes"][Name];

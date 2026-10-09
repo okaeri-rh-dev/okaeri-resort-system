@@ -15,8 +15,6 @@ export const unitRequestSchema = z.object({
     .max(20, "Maximum 20 guests per unit"),
 });
 
-export type UnitRequest = z.infer<typeof unitRequestSchema>;
-
 /**
  * Philippine phone number validation
  * Supports: +639171234567, 09171234567, +63-917-123-4567
@@ -164,15 +162,3 @@ export const STEP_FIELDS = {
   4: ["payment_proof_url"] as const, // Payment proof step (optional)
   5: ["terms_accepted", "turnstile_token"] as const, // Review step
 } as const;
-
-/**
- * Check if payment proof is required based on environment
- */
-export function isPaymentProofRequired(): boolean {
-  // Check if we're in a browser environment with Vite
-  if (typeof import.meta !== "undefined" && import.meta.env) {
-    return import.meta.env.PROD;
-  }
-  // Workers/Node context - default to required (production behavior)
-  return true;
-}

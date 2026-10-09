@@ -6,23 +6,10 @@
 
 import { vi } from "vitest";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface MockSupabaseResponse<T = any> {
-  data: T | null;
-  error: unknown;
-}
-
 /**
  * Global mock data store that can be updated by tests
  */
 export let globalMockData: Record<string, unknown> = {};
-
-/**
- * Update global mock data (use this in tests to customize mock behavior)
- */
-export function setMockData(data: Record<string, unknown>) {
-  globalMockData = { ...data };
-}
 
 /**
  * Reset global mock data to empty state

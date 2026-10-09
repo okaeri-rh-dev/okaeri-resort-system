@@ -56,8 +56,3 @@ export const createMockKV = (): KVNamespace => ({
 export const resetKVStore = () => {
   kvStore.clear();
 };
-
-/**
- * Get current KV store state (for assertions)
- */
-export const getKVState = () => new Map(kvStore);

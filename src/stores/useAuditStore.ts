@@ -173,22 +173,3 @@ export const useAuditStore = create<AuditStore>()(
     )
   )
 );
-
-// ============================================
-// SELECTOR HOOKS (for performance)
-// ============================================
-
-/**
- * Get current filters (optimized selector)
- */
-export const useAuditFilters = () => useAuditStore((state) => state.filters);
-
-/**
- * Get selected log (optimized selector)
- */
-export const useSelectedAuditLog = () => useAuditStore((state) => state.selectedLog);
-
-/**
- * Get table state (optimized selector)
- */
-export const useAuditTableState = () => useAuditStore((state) => state.tableState);

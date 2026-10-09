@@ -3,11 +3,10 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { logger } from "@/lib/logger";
-import { invalidateBookings, invalidateGuests } from "@/lib/query-invalidation";
+import { invalidateGuests } from "@/lib/query-invalidation";
 import { guestKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Booking, Guest } from "@/types";
-import type { TablesUpdate } from "@/types/database.types";
 
 // ============================================
 // ZUSTAND STORE
@@ -174,30 +173,8 @@ export const useGuests = () => {
 };
 
 // Fetch single guest with booking history
-export const useGuest = (guestId: string | undefined) => {
-  return useQuery({ ...guestDetailQuery(guestId ?? ""), enabled: !!guestId });
-};
 
 // Get guest by email
-const guestByEmailQuery = (email: string) =>
-  queryOptions({
-    queryKey: guestKeys.byEmail(email),
-    queryFn: async () => {
-      if (!email) throw new Error("Email is required");
-
-      const { data, error } = await db.guests.byEmail(email);
-      if (error) throw new Error(handleSupabaseError(error));
-      return data;
-    },
-    staleTime: 30000,
-  });
-
-export const useGuestByEmail = (email: string | undefined) => {
-  return useQuery({
-    ...guestByEmailQuery(email ?? ""),
-    enabled: !!email && email.includes("@"),
-  });
-};
 
 // Get guest booking history
 const guestBookingsQuery = (guestId: string) =>
@@ -234,54 +211,6 @@ export const useGuestBookings = (guestId: string | undefined) => {
 };
 
 // Create guest mutation
-export const useCreateGuest = () => {
-  const queryClient = useQueryClient();
-  const addOptimistic = useGuestStore((state) => state.addOptimisticGuest);
-  const removeOptimistic = useGuestStore((state) => state.removeOptimisticGuest);
-
-  return useMutation({
-    mutationFn: async (
-      guestData: Omit<
-        Guest,
-        "guest_id" | "created_at" | "updated_at" | "total_bookings" | "total_spent"
-      >
-    ) => {
-      const { data, error } = await db.guests.create(guestData);
-      if (error) throw new Error(handleSupabaseError(error));
-      return data;
-    },
-    onMutate: async (newGuest) => {
-      await queryClient.cancelQueries({ queryKey: guestKeys.all });
-
-      // Create optimistic guest
-      const optimisticGuest: Guest = {
-        ...newGuest,
-        guest_id: `temp-${Date.now()}`,
-        total_bookings: 0,
-        total_spent: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      addOptimistic(optimisticGuest);
-
-      return { optimisticGuest };
-    },
-    onError: (_err, _newGuest, context) => {
-      if (context?.optimisticGuest) {
-        removeOptimistic(context.optimisticGuest.guest_id);
-      }
-    },
-    onSuccess: (_data, _variables, context) => {
-      if (context?.optimisticGuest) {
-        removeOptimistic(context.optimisticGuest.guest_id);
-      }
-    },
-    onSettled: () => {
-      invalidateGuests();
-    },
-  });
-};
 
 // Update guest mutation
 export const useUpdateGuest = () => {
@@ -359,122 +288,6 @@ export const useDeleteGuest = () => {
       invalidateGuests();
     },
   });
-};
-
-// Merge duplicate guests
-export const useMergeGuests = () => {
-  return useMutation({
-    mutationFn: async ({
-      primaryGuestId,
-      duplicateGuestId,
-    }: {
-      primaryGuestId: string;
-      duplicateGuestId: string;
-    }) => {
-      // Update all bookings to point to primary guest
-      const { error: bookingError } = await supabase
-        .from("bookings")
-        .update({ guest_id: primaryGuestId } satisfies TablesUpdate<"bookings">)
-        .eq("guest_id", duplicateGuestId);
-
-      if (bookingError) throw new Error(handleSupabaseError(bookingError));
-
-      // Calculate new totals
-      const { data: primaryGuest } = await db.guests.byId(primaryGuestId);
-      const { data: duplicateGuest } = await db.guests.byId(duplicateGuestId);
-
-      if (primaryGuest && duplicateGuest) {
-        // Update primary guest with combined totals
-        const { error: updateError } = await db.guests.update(primaryGuestId, {
-          total_bookings: (primaryGuest.total_bookings ?? 0) + (duplicateGuest.total_bookings ?? 0),
-          total_spent: (primaryGuest.total_spent ?? 0) + (duplicateGuest.total_spent ?? 0),
-        });
-
-        if (updateError) throw new Error(handleSupabaseError(updateError));
-      }
-
-      // Delete duplicate guest
-      const { error: deleteError } = await supabase
-        .from("guests")
-        .delete()
-        .eq("guest_id", duplicateGuestId);
-
-      if (deleteError) throw new Error(handleSupabaseError(deleteError));
-    },
-    onSuccess: () => {
-      invalidateGuests();
-      invalidateBookings();
-    },
-  });
-};
-
-// Guest statistics
-interface GuestStatistics {
-  totalGuests: number;
-  newGuestsThisMonth: number;
-  repeatGuests: number;
-  averageBookingsPerGuest: number;
-  topGuests: Array<{
-    guest: Guest;
-    totalSpent: number;
-    totalBookings: number;
-  }>;
-}
-
-const guestStatisticsQuery = () =>
-  queryOptions({
-    queryKey: guestKeys.statistics(),
-    queryFn: async (): Promise<GuestStatistics> => {
-      const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-      // Get all guests
-      const { data: allGuests, error: guestsError } = await supabase
-        .from("guests")
-        .select("*")
-        .order("total_spent", { ascending: false });
-
-      if (guestsError) throw new Error(handleSupabaseError(guestsError));
-
-      // Get new guests this month
-      const { data: newGuests, error: newGuestsError } = await supabase
-        .from("guests")
-        .select("guest_id")
-        .gte("created_at", firstDayOfMonth.toISOString());
-
-      if (newGuestsError) throw new Error(handleSupabaseError(newGuestsError));
-
-      // Calculate statistics
-      const totalGuests = allGuests?.length || 0;
-      const newGuestsThisMonth = newGuests?.length || 0;
-      const repeatGuests = allGuests?.filter((g) => (g.total_bookings ?? 0) > 1).length || 0;
-
-      const totalBookings = allGuests?.reduce((sum, g) => sum + (g.total_bookings ?? 0), 0) || 0;
-      const averageBookingsPerGuest = totalGuests > 0 ? totalBookings / totalGuests : 0;
-
-      const topGuests = (allGuests || []).slice(0, 10).map((guest) => ({
-        guest: {
-          ...guest,
-          created_at: guest.created_at || new Date().toISOString(),
-          updated_at: guest.updated_at || new Date().toISOString(),
-        },
-        totalSpent: guest.total_spent ?? 0,
-        totalBookings: guest.total_bookings ?? 0,
-      }));
-
-      return {
-        totalGuests,
-        newGuestsThisMonth,
-        repeatGuests,
-        averageBookingsPerGuest,
-        topGuests,
-      };
-    },
-    staleTime: 300000, // 5 minutes
-  });
-
-export const useGuestStatistics = () => {
-  return useQuery(guestStatisticsQuery());
 };
 
 // Real-time subscription for guest updates

@@ -118,7 +118,6 @@ export function createLogger(env?: { ENVIRONMENT?: string }): Logger {
 }
 
 // Export default logger instance
-export const logger = new Logger(false); // Default to production mode
 
 // Export type for external use
 export type { LogLevel, LogContext, Logger };

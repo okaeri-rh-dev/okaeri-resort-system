@@ -180,67 +180,9 @@ export const useTransfers = () => {
   return useQuery(transferListQuery({ filters, searchQuery, sortBy, sortOrder }));
 };
 
-const transferDetailQuery = (transferId: string) =>
-  queryOptions({
-    queryKey: transferKeys.detail(transferId),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("account_transfers")
-        .select(
-          `
-          *,
-          from_account:accounts!account_transfers_from_account_id_fkey(*),
-          to_account:accounts!account_transfers_to_account_id_fkey(*)
-        `
-        )
-        .eq("transfer_id", transferId)
-        .single();
-
-      if (error) throw new Error(handleSupabaseError(error));
-      return data as AccountTransfer;
-    },
-    staleTime: 60000,
-  });
-
 // Fetch single transfer
-export const useTransfer = (transferId: string) =>
-  useQuery({ ...transferDetailQuery(transferId), enabled: !!transferId });
-
-const accountTransfersQuery = (accountId: string) =>
-  queryOptions({
-    queryKey: transferKeys.byAccount(accountId),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("account_transfers")
-        .select(
-          `
-          *,
-          from_account:accounts!account_transfers_from_account_id_fkey(
-            account_id,
-            account_name,
-            account_code,
-            account_type
-          ),
-          to_account:accounts!account_transfers_to_account_id_fkey(
-            account_id,
-            account_name,
-            account_code,
-            account_type
-          )
-        `
-        )
-        .or(`from_account_id.eq.${accountId},to_account_id.eq.${accountId}`)
-        .order("transfer_date", { ascending: false });
-
-      if (error) throw new Error(handleSupabaseError(error));
-      return (data || []) as AccountTransfer[];
-    },
-    staleTime: 60000,
-  });
 
 // Fetch transfers for a specific account (both incoming and outgoing)
-export const useAccountTransfers = (accountId: string) =>
-  useQuery({ ...accountTransfersQuery(accountId), enabled: !!accountId });
 
 // Create transfer
 export const useCreateTransfer = () => {
@@ -338,30 +280,4 @@ export const useDeleteTransfer = () => {
       queryClient.invalidateQueries({ queryKey: accountKeys.balances() });
     },
   });
-};
-
-// ============================================
-// UTILITY FUNCTIONS
-// ============================================
-
-// Format transfer direction for display
-export const getTransferDirection = (
-  transfer: AccountTransfer,
-  accountId: string
-): "incoming" | "outgoing" => {
-  return transfer.to_account_id === accountId ? "incoming" : "outgoing";
-};
-
-// Get CSS class for transfer direction
-export const getTransferDirectionClass = (direction: "incoming" | "outgoing"): string => {
-  return direction === "incoming" ? "text-green-600" : "text-red-600";
-};
-
-// Format transfer amount with direction sign
-export const formatTransferAmount = (
-  amount: number,
-  direction: "incoming" | "outgoing"
-): string => {
-  const sign = direction === "incoming" ? "+" : "-";
-  return `${sign}₱${amount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };

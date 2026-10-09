@@ -1,5 +1,4 @@
 // Import React for useEffect and useEffectEvent
-import React, { useEffectEvent } from "react";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -191,70 +190,6 @@ export function usePricingCalculation(options: UsePricingCalculationOptions = {}
 }
 
 /**
- * Hook for calculating pricing with automatic updates
- * Useful for forms that need to recalculate on every change
- */
-export function useAutoPricingCalculation(
-  request: PricingCalculateRequest | null,
-  options: UsePricingCalculationOptions = {}
-) {
-  const calculatePricing = usePricingCalculation(options);
-
-  // Generate cache key from request parameters
-  const cacheKey = request
-    ? `${request.unit_id || "custom"}:${request.check_in}:${
-        request.check_out
-      }:${request.guest_count}`
-    : undefined;
-
-  // Extract mutation call into useEffectEvent to prevent dependency issues
-  const handlePricingRequest = useEffectEvent((req: PricingCalculateRequest) => {
-    if (isValidRequest(req)) {
-      calculatePricing.mutate(req);
-    }
-  });
-
-  // Auto-calculate when request changes
-  React.useEffect(() => {
-    if (request) {
-      handlePricingRequest(request);
-    }
-  }, [request?.check_in, request?.check_out, request?.guest_count, request?.unit_id]);
-
-  return {
-    ...calculatePricing,
-    cacheKey,
-  };
-}
-
-/**
- * Helper function to validate pricing request
- */
-function isValidRequest(request: PricingCalculateRequest): boolean {
-  if (!request.check_in || !request.check_out) {
-    return false;
-  }
-
-  const checkIn = new Date(request.check_in);
-  const checkOut = new Date(request.check_out);
-
-  if (checkOut <= checkIn) {
-    return false;
-  }
-
-  if (request.guest_count < 1) {
-    return false;
-  }
-
-  // Must have one of: unit_id, custom_pricing, or unit_requests
-  if (!request.unit_id && !request.custom_pricing && !request.unit_requests) {
-    return false;
-  }
-
-  return true;
-}
-
-/**
  * Helper function to get user-friendly error descriptions
  */
 function getErrorDescription(error: PricingErrorResponse): string {
@@ -312,7 +247,4 @@ export type {
   PricingCalculateRequest,
   PricingCalculateResponse,
   PricingErrorResponse,
-  PricingResult,
-  MultiUnitPricingResult,
-  NightlyBreakdown,
 } from "@/types/api/pricing";

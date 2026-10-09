@@ -122,11 +122,3 @@ export function afterBookingDelete() {
   invalidateMultiUnitBookings();
   invalidateUpcoming();
 }
-
-/** After modifying a unit (status change, rate update, etc.). */
-export function afterUnitMutation() {
-  invalidateUnits();
-  invalidateBookings();
-  invalidateAvailability();
-  invalidateDashboard();
-}

@@ -10,32 +10,6 @@ import type { Expense } from "@/types";
 import type { TablesInsert } from "@/types/database.types";
 
 // ============================================
-// EXPENSE CATEGORIES
-// ============================================
-
-/**
- * @deprecated Use `useActiveExpenseCategories()` from `@/hooks/useExpenseCategories` instead.
- * Categories are now managed in the database via the expense_categories table.
- */
-export const EXPENSE_CATEGORIES = [
-  "Utilities",
-  "Maintenance & Repairs",
-  "Supplies & Inventory",
-  "Staff & Payroll",
-  "Marketing & Advertising",
-  "Food & Beverage",
-  "Cleaning & Laundry",
-  "Insurance & Permits",
-  "Professional Services",
-  "Other",
-] as const;
-
-/**
- * @deprecated Use `string` type instead. Categories are now database-driven.
- */
-export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
-
-// ============================================
 // ZUSTAND STORE
 // ============================================
 export interface ExpenseFilters {
@@ -224,9 +198,6 @@ export const useExpenses = () => {
 };
 
 // Fetch single expense
-export const useExpense = (expenseId: string) => {
-  return useQuery({ ...expenseDetailQuery(expenseId), enabled: !!expenseId });
-};
 
 // Fetch expense statistics
 const expenseStatsQuery = (dateRange?: { from: Date; to: Date }) =>

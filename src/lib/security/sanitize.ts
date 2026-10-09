@@ -7,11 +7,9 @@
  * @module SecuritySanitization
  */
 
-import { useCallback, useState } from "react";
-
 import DOMPurify from "dompurify";
 
-import type { BookingFormData, Guest } from "@/types";
+import type { BookingFormData } from "@/types";
 
 // ============================================
 // CONFIGURATION
@@ -401,35 +399,6 @@ export function sanitizeFormData<T extends Record<string, unknown>>(
 }
 
 // ============================================
-// REACT HOOKS
-// ============================================
-
-/**
- * React hook for sanitized input handling
- *
- * @param initialValue - Initial input value
- * @param sanitizer - Sanitization function to use
- * @returns Tuple of [value, setValue, sanitizedValue]
- *
- * @example
- * const [email, setEmail, sanitizedEmail] = useSanitizedInput('', sanitizeEmail);
- */
-export function useSanitizedInput(
-  initialValue = "",
-  sanitizer: (value: string) => string = sanitizeText
-): [string, (value: string) => void, string] {
-  const [value, setValue] = useState(initialValue);
-
-  const handleChange = useCallback((newValue: string) => {
-    setValue(newValue); // Store raw value for display
-  }, []);
-
-  const sanitizedValue = sanitizer(value);
-
-  return [value, handleChange, sanitizedValue];
-}
-
-// ============================================
 // VALIDATION HELPERS
 // ============================================
 
@@ -473,18 +442,6 @@ export function sanitizeBookingFormData(formData: Partial<BookingFormData>) {
 // ============================================
 // EXPORT VALIDATION WRAPPERS
 // ============================================
-
-/**
- * Validates and sanitizes guest information
- * Extends existing validation with XSS protection
- */
-export function sanitizeGuestData(guestData: Partial<Guest>) {
-  return sanitizeFormData(guestData, {
-    emailFields: ["email"],
-    phoneFields: ["phone_number"],
-    nameFields: ["guest_name"],
-  });
-}
 
 /**
  * Test suite for XSS prevention
