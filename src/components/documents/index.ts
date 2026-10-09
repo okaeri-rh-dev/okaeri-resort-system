@@ -1,1 +1,0 @@
-export { DocumentGenerator } from "./DocumentGenerator";
