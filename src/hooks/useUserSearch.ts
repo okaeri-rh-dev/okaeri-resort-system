@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 
 import { supabase } from "@/lib/supabase";
 
@@ -30,38 +30,15 @@ export interface AuthUser {
 export const userSearchKeys = {
   all: ["userSearch"] as const,
   search: (query: string) => [...userSearchKeys.all, "search", query] as const,
+  detail: (userId: string | null) => [...userSearchKeys.all, "detail", userId] as const,
 };
 
 // ============================================
 // HOOK
 // ============================================
 
-/**
- * Search for users in auth.users by email or name
- * Uses debounced search to avoid excessive queries
- *
- * @param searchQuery - The search term (email or name)
- * @param debounceMs - Debounce delay in milliseconds (default: 300ms)
- * @returns Query result with matching users
- *
- * @example
- * const { data: users, isLoading } = useUserSearch(searchQuery);
- */
-export function useUserSearch(searchQuery: string, debounceMs: number = 300) {
-  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
-
-  // Debounce the search query
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-    }, debounceMs);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchQuery, debounceMs]);
-
-  return useQuery({
+const userSearchQuery = (debouncedQuery: string) =>
+  queryOptions({
     queryKey: userSearchKeys.search(debouncedQuery),
     queryFn: async () => {
       // Don't search if query is too short
@@ -105,22 +82,44 @@ export function useUserSearch(searchQuery: string, debounceMs: number = 300) {
 
       return data || [];
     },
-    enabled: debouncedQuery.trim().length >= 2,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
   });
-}
 
 /**
- * Get a specific user by ID
- * Useful for pre-populating forms
+ * Search for users in auth.users by email or name
+ * Uses debounced search to avoid excessive queries
  *
- * @param userId - UUID of the user
- * @returns Query result with user details
+ * @param searchQuery - The search term (email or name)
+ * @param debounceMs - Debounce delay in milliseconds (default: 300ms)
+ * @returns Query result with matching users
+ *
+ * @example
+ * const { data: users, isLoading } = useUserSearch(searchQuery);
  */
-export function useUserById(userId: string | null) {
+export function useUserSearch(searchQuery: string, debounceMs: number = 300) {
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
+
+  // Debounce the search query
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, debounceMs);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery, debounceMs]);
+
   return useQuery({
-    queryKey: [...userSearchKeys.all, "detail", userId],
+    ...userSearchQuery(debouncedQuery),
+    enabled: debouncedQuery.trim().length >= 2,
+  });
+}
+
+const userByIdQuery = (userId: string | null) =>
+  queryOptions({
+    queryKey: userSearchKeys.detail(userId),
     queryFn: async () => {
       if (!userId) return null;
 
@@ -138,7 +137,19 @@ export function useUserById(userId: string | null) {
 
       return data;
     },
-    enabled: !!userId,
     staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+/**
+ * Get a specific user by ID
+ * Useful for pre-populating forms
+ *
+ * @param userId - UUID of the user
+ * @returns Query result with user details
+ */
+export function useUserById(userId: string | null) {
+  return useQuery({
+    ...userByIdQuery(userId),
+    enabled: !!userId,
   });
 }
