@@ -123,11 +123,8 @@ export const allUnitsQuery = () =>
   });
 
 // Fetch all units with filters
-export const useUnits = () => {
-  const filters = useUnitStore((state) => state.filters);
-  const optimisticUnits = useUnitStore((state) => state.optimisticUnits);
-
-  return useQuery({
+const unitListQuery = (filters: UnitStore["filters"]) =>
+  queryOptions({
     queryKey: unitKeys.list(filters),
     queryFn: async () => {
       let query = supabase.from("units").select("*");
@@ -154,6 +151,7 @@ export const useUnits = () => {
       if (error) throw new Error(handleSupabaseError(error));
 
       // Merge with optimistic updates
+      const { optimisticUnits } = useUnitStore.getState();
       const mergedData =
         (data as Unit[])?.map((unit) => optimisticUnits.get(unit.unit_id) ?? unit) || [];
 
@@ -162,6 +160,11 @@ export const useUnits = () => {
     staleTime: 30000, // Consider data fresh for 30 seconds
     refetchInterval: 60000, // Refetch every minute
   });
+
+export const useUnits = () => {
+  const filters = useUnitStore((state) => state.filters);
+
+  return useQuery(unitListQuery(filters));
 };
 
 // Fetch single unit
