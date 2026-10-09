@@ -18,6 +18,7 @@ Supabase project ref: `gxgpdlvathotgqtszabo` (already linked via supabase CLI).
 ## Gotchas (learned the hard way)
 
 - **SUPABASE_JWT_SECRET must be the LEGACY JWT secret** (Supabase dashboard > Settings > API > JWT Settings, HS256), NOT the new JWT signing keys. `_middleware.ts` verifies HS256; a signing-key value causes blanket 401 `Invalid or expired token` on every protected route (e.g. multi-unit booking) while direct-to-Supabase flows still work.
+- **Local 401 with a matching secret: check the token's `alg`.** Supabase CLI 2.11x signs user tokens with ES256 (asymmetric signing keys, `kid` in the header); the hosted project still issues HS256. `_middleware.ts` verifies HS256 with the secret and ES256 against `SUPABASE_URL/auth/v1/.well-known/jwks.json` (since 2026-10-09). Decode the header only: `echo "$TOKEN" | cut -d. -f1 | base64 -d`.
 - **If SUPABASE_JWT_SECRET is unset, middleware rejects ALL protected requests** — a missing secret looks identical to an expired token.
 - **Cloudflare Pages secrets take effect only on the NEXT deployment.** After any `wrangler pages secret put` or dashboard edit, redeploy: `git commit --allow-empty -m "chore: redeploy to pick up secret" && git push` (or dashboard > Retry deployment).
 

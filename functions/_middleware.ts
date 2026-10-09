@@ -182,48 +182,99 @@ interface JWTPayload {
   [key: string]: unknown;
 }
 
+const decodeBase64Url = (value: string) =>
+  Uint8Array.from(atob(value.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+
+// Public signing keys, cached per isolate. A kid miss refetches at most once a minute, so
+// tokens with made-up kids cannot turn every request into a JWKS fetch.
+const JWKS_REFETCH_INTERVAL_MS = 60_000;
+let jwksCache: { url: string; keys: JsonWebKey[]; fetchedAt: number } | null = null;
+
+async function findSigningKey(supabaseUrl: string, kid: string): Promise<JsonWebKey | undefined> {
+  const url = `${supabaseUrl}/auth/v1/.well-known/jwks.json`;
+  const findKid = () =>
+    jwksCache?.url === url
+      ? jwksCache.keys.find((jwk) => (jwk as JsonWebKey & { kid?: string }).kid === kid)
+      : undefined;
+
+  const cached = findKid();
+  if (cached) return cached;
+  if (jwksCache?.url === url && Date.now() - jwksCache.fetchedAt < JWKS_REFETCH_INTERVAL_MS) {
+    return undefined;
+  }
+
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`JWKS fetch failed: ${response.status}`);
+  const { keys } = (await response.json()) as { keys?: JsonWebKey[] };
+  jwksCache = { url, keys: keys ?? [], fetchedAt: Date.now() };
+  return findKid();
+}
+
 /**
- * Verify Supabase JWT token
- * Free-tier compatible: <1ms CPU time, no external API calls
+ * Verify Supabase JWT token. HS256 tokens (the hosted project's legacy secret) verify locally
+ * with no network call; ES256 tokens (asymmetric signing keys, the Supabase CLI default) verify
+ * against the project's JWKS. Any other alg is rejected.
  */
-async function verifySupabaseJWT(token: string, secret: string): Promise<JWTPayload | null> {
+async function verifySupabaseJWT(
+  token: string,
+  secret: string,
+  supabaseUrl: string | undefined
+): Promise<JWTPayload | null> {
   try {
-    // Use Web Crypto API (available in Cloudflare Workers)
     const encoder = new TextEncoder();
-    const keyData = encoder.encode(secret);
 
-    // Import the secret as a CryptoKey
-    const key = await crypto.subtle.importKey(
-      "raw",
-      keyData,
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["verify"]
-    );
-
-    // Split JWT into parts
     const parts = token.split(".");
     if (parts.length !== 3) {
       throw new Error("Invalid JWT format");
     }
 
     const [headerB64, payloadB64, signatureB64] = parts;
-
-    // Verify signature
+    const header = JSON.parse(new TextDecoder().decode(decodeBase64Url(headerB64))) as {
+      alg?: string;
+      kid?: string;
+    };
     const data = encoder.encode(`${headerB64}.${payloadB64}`);
-    const signature = Uint8Array.from(
-      atob(signatureB64.replace(/-/g, "+").replace(/_/g, "/")),
-      (c) => c.charCodeAt(0)
-    );
+    const signature = decodeBase64Url(signatureB64);
 
-    const isValid = await crypto.subtle.verify("HMAC", key, signature, data);
+    let isValid: boolean;
+    if (header.alg === "HS256") {
+      const key = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(secret),
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["verify"]
+      );
+      isValid = await crypto.subtle.verify("HMAC", key, signature, data);
+    } else if (header.alg === "ES256" && header.kid && supabaseUrl) {
+      const jwk = await findSigningKey(supabaseUrl, header.kid);
+      // The key must itself be a P-256 key, so a token cannot pick how its key is used
+      if (!jwk || jwk.kty !== "EC" || jwk.crv !== "P-256") {
+        throw new Error(`No ES256 signing key for kid ${header.kid}`);
+      }
+      const key = await crypto.subtle.importKey(
+        "jwk",
+        jwk,
+        { name: "ECDSA", namedCurve: "P-256" },
+        false,
+        ["verify"]
+      );
+      isValid = await crypto.subtle.verify(
+        { name: "ECDSA", hash: "SHA-256" },
+        key,
+        signature,
+        data
+      );
+    } else {
+      throw new Error(`Unsupported JWT alg: ${header.alg}`);
+    }
 
     if (!isValid) {
       throw new Error("Invalid signature");
     }
 
     // Decode payload
-    const payload = JSON.parse(atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/")));
+    const payload = JSON.parse(new TextDecoder().decode(decodeBase64Url(payloadB64)));
 
     // Check expiration
     if (payload.exp && payload.exp < Date.now() / 1000) {
@@ -461,7 +512,7 @@ export async function onRequest(
     }
 
     const token = authHeader.substring(7);
-    const payload = await verifySupabaseJWT(token, env.SUPABASE_JWT_SECRET);
+    const payload = await verifySupabaseJWT(token, env.SUPABASE_JWT_SECRET, env.SUPABASE_URL);
 
     if (!payload) {
       return new Response(
