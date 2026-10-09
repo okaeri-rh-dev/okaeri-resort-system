@@ -79,6 +79,12 @@ export const transferKeys = {
   byAccount: (accountId: string) => [...transferKeys.all, "account", accountId] as const,
 };
 
+export const paymentMethodKeys = {
+  all: ["payment-methods"] as const,
+  list: () => [...paymentMethodKeys.all, "list"] as const,
+  active: () => [...paymentMethodKeys.all, "active"] as const,
+};
+
 const entityKeyFactories: Record<
   EntityType,
   { all: readonly unknown[]; detail: (id: string) => readonly unknown[] }

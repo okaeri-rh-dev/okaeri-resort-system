@@ -1,15 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { paymentMethodKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, storage } from "@/lib/supabase";
 import type { PaymentMethodConfig } from "@/types";
 
-/**
- * Hook to fetch all payment methods (including inactive) for admin settings
- */
-export function usePaymentMethods() {
-  return useQuery<PaymentMethodConfig[]>({
-    queryKey: ["payment-methods"],
+const paymentMethodsQuery = () =>
+  queryOptions({
+    queryKey: paymentMethodKeys.list(),
     queryFn: async () => {
       const { data, error } = await db.paymentMethods.all();
       if (error) throw error;
@@ -17,15 +15,11 @@ export function usePaymentMethods() {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
-}
 
-/**
- * Hook to fetch active payment methods only (for guest-facing pages)
- * Longer stale time since payment methods rarely change
- */
-export function useActivePaymentMethods() {
-  return useQuery<PaymentMethodConfig[]>({
-    queryKey: ["payment-methods", "active"],
+// Longer stale time since payment methods rarely change
+const activePaymentMethodsQuery = () =>
+  queryOptions({
+    queryKey: paymentMethodKeys.active(),
     queryFn: async () => {
       const { data, error } = await db.paymentMethods.active();
       if (error) throw error;
@@ -33,6 +27,19 @@ export function useActivePaymentMethods() {
     },
     staleTime: 15 * 60 * 1000, // 15 minutes
   });
+
+/**
+ * Hook to fetch all payment methods (including inactive) for admin settings
+ */
+export function usePaymentMethods() {
+  return useQuery(paymentMethodsQuery());
+}
+
+/**
+ * Hook to fetch active payment methods only (for guest-facing pages)
+ */
+export function useActivePaymentMethods() {
+  return useQuery(activePaymentMethodsQuery());
 }
 
 /**
@@ -48,7 +55,7 @@ export function useCreatePaymentMethod() {
       return result as PaymentMethodConfig;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["payment-methods"] });
+      queryClient.invalidateQueries({ queryKey: paymentMethodKeys.all });
       toast.success("Payment method created", {
         description: `${data.display_name} has been added successfully.`,
       });
@@ -80,7 +87,7 @@ export function useUpdatePaymentMethod() {
       return data as PaymentMethodConfig;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["payment-methods"] });
+      queryClient.invalidateQueries({ queryKey: paymentMethodKeys.all });
       toast.success("Payment method updated", {
         description: `${data.display_name} has been updated successfully.`,
       });
@@ -106,7 +113,7 @@ export function useDeletePaymentMethod() {
       return data as PaymentMethodConfig;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["payment-methods"] });
+      queryClient.invalidateQueries({ queryKey: paymentMethodKeys.all });
       toast.success("Payment method deactivated", {
         description: `${data.display_name} has been deactivated.`,
       });
@@ -132,7 +139,7 @@ export function useReactivatePaymentMethod() {
       return data as PaymentMethodConfig;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["payment-methods"] });
+      queryClient.invalidateQueries({ queryKey: paymentMethodKeys.all });
       toast.success("Payment method reactivated", {
         description: `${data.display_name} has been reactivated.`,
       });
@@ -169,7 +176,7 @@ export function useUploadQrCode() {
       return data as PaymentMethodConfig;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["payment-methods"] });
+      queryClient.invalidateQueries({ queryKey: paymentMethodKeys.all });
       toast.success("QR code uploaded successfully");
     },
     onError: (error) => {
@@ -200,7 +207,7 @@ export function useDeleteQrCode() {
       return data as PaymentMethodConfig;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["payment-methods"] });
+      queryClient.invalidateQueries({ queryKey: paymentMethodKeys.all });
       toast.success("QR code removed");
     },
     onError: (error) => {
