@@ -123,11 +123,12 @@ export const guestDetailQuery = (guestId: string) =>
   });
 
 // Fetch all guests with search and sorting
-export const useGuests = () => {
-  const { searchQuery, sortBy, sortOrder } = useGuestStore();
-  const optimisticGuests = useGuestStore((state) => state.optimisticGuests);
-
-  return useQuery({
+const guestListQuery = ({
+  searchQuery,
+  sortBy,
+  sortOrder,
+}: Pick<GuestStore, "searchQuery" | "sortBy" | "sortOrder">) =>
+  queryOptions({
     queryKey: guestKeys.list({ searchQuery, sortBy, sortOrder }),
     queryFn: async () => {
       let query = supabase.from("guests").select("*");
@@ -156,6 +157,7 @@ export const useGuests = () => {
       if (error) throw new Error(handleSupabaseError(error));
 
       // Merge with optimistic updates
+      const { optimisticGuests } = useGuestStore.getState();
       const mergedData =
         (data as Guest[])?.map((guest) => optimisticGuests.get(guest.guest_id) ?? guest) || [];
 
@@ -164,6 +166,11 @@ export const useGuests = () => {
     staleTime: 30000,
     refetchInterval: 120000, // Refresh every 2 minutes
   });
+
+export const useGuests = () => {
+  const { searchQuery, sortBy, sortOrder } = useGuestStore();
+
+  return useQuery(guestListQuery({ searchQuery, sortBy, sortOrder }));
 };
 
 // Fetch single guest with booking history
@@ -172,9 +179,9 @@ export const useGuest = (guestId: string | undefined) => {
 };
 
 // Get guest by email
-export const useGuestByEmail = (email: string | undefined) => {
-  return useQuery({
-    queryKey: guestKeys.byEmail(email ?? ""),
+const guestByEmailQuery = (email: string) =>
+  queryOptions({
+    queryKey: guestKeys.byEmail(email),
     queryFn: async () => {
       if (!email) throw new Error("Email is required");
 
@@ -182,15 +189,20 @@ export const useGuestByEmail = (email: string | undefined) => {
       if (error) throw new Error(handleSupabaseError(error));
       return data;
     },
-    enabled: !!email && email.includes("@"),
     staleTime: 30000,
+  });
+
+export const useGuestByEmail = (email: string | undefined) => {
+  return useQuery({
+    ...guestByEmailQuery(email ?? ""),
+    enabled: !!email && email.includes("@"),
   });
 };
 
 // Get guest booking history
-export const useGuestBookings = (guestId: string | undefined) => {
-  return useQuery({
-    queryKey: guestKeys.bookings(guestId ?? ""),
+const guestBookingsQuery = (guestId: string) =>
+  queryOptions({
+    queryKey: guestKeys.bookings(guestId),
     queryFn: async () => {
       if (!guestId) throw new Error("Guest ID is required");
 
@@ -211,8 +223,13 @@ export const useGuestBookings = (guestId: string | undefined) => {
       if (error) throw new Error(handleSupabaseError(error));
       return data as Booking[];
     },
-    enabled: !!guestId,
     staleTime: 30000,
+  });
+
+export const useGuestBookings = (guestId: string | undefined) => {
+  return useQuery({
+    ...guestBookingsQuery(guestId ?? ""),
+    enabled: !!guestId,
   });
 };
 
@@ -404,8 +421,8 @@ interface GuestStatistics {
   }>;
 }
 
-export const useGuestStatistics = () => {
-  return useQuery({
+const guestStatisticsQuery = () =>
+  queryOptions({
     queryKey: guestKeys.statistics(),
     queryFn: async (): Promise<GuestStatistics> => {
       const now = new Date();
@@ -455,6 +472,9 @@ export const useGuestStatistics = () => {
     },
     staleTime: 300000, // 5 minutes
   });
+
+export const useGuestStatistics = () => {
+  return useQuery(guestStatisticsQuery());
 };
 
 // Real-time subscription for guest updates
