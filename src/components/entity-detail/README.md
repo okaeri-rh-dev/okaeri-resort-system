@@ -175,14 +175,14 @@ const entityRoutes = {
 
 ### 5. DetailAuditSection
 
-**Purpose**: Integrate audit trail display on detail pages with entity-specific filtering.
+**Purpose**: The record's own audit history on its detail page, newest first.
 
 **Features**:
-- Automatic filtering by entity type and ID
+- Reads `recentRecordAuditLogsQuery(\`${entityType}s\`, entityId)`, the query the detail loaders prefetch
+- What a user sees is limited by the `audit_logs` RLS policy (admin/owner: all; manager: bookings, payments, guests, expenses; everyone: rows they wrote)
+- App rows are labelled by `metadata.action` (see `ActionBadge`)
 - Collapsible by default on mobile
 - Configurable entry limit
-- Integration with AuditLogViewer component
-- Responsive design with mobile optimization
 
 **Props Interface**:
 ```typescript
@@ -198,7 +198,7 @@ interface DetailAuditSectionProps {
 
 **Mobile Behavior**: Automatically collapses on mobile devices (`max-width: 768px`) to reduce initial page height.
 
-**Real-World Usage**: `src/components/entity-detail/DetailAuditSection.tsx:42-63`
+**Real-World Usage**: `src/components/entity-detail/DetailAuditSection.tsx`
 
 ---
 

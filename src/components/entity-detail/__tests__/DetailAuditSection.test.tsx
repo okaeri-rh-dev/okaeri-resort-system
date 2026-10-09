@@ -6,227 +6,111 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { db } from "@/lib/supabase";
+import type { AuditLog } from "@/types/audit.types";
+
 import { DetailAuditSection } from "../DetailAuditSection";
 
-// Mock the useMediaQuery hook
 vi.mock("@/hooks/useMediaQuery", () => ({
-  useMediaQuery: vi.fn(() => false), // Default to desktop
+  useMediaQuery: vi.fn(() => false),
 }));
 
-// Mock the AuditLogViewer component
-vi.mock("@/components/audit/AuditLogViewer", () => ({
-  AuditLogViewer: () => <div data-testid="audit-log-viewer">Audit logs</div>,
+vi.mock("@/lib/supabase", () => ({
+  db: { auditLogs: { recentByRecord: vi.fn() } },
 }));
+
+const recentByRecord = vi.mocked(db.auditLogs.recentByRecord);
+
+const auditRow = (overrides: Partial<AuditLog>): AuditLog => ({
+  action: "UPDATE",
+  audit_id: crypto.randomUUID(),
+  category: null,
+  changed_fields: null,
+  correlation_id: null,
+  created_at: "2026-10-09T02:30:00Z",
+  description: null,
+  event_type: null,
+  ip_address: null,
+  metadata: null,
+  new_data: null,
+  old_data: null,
+  record_id: "guest-1",
+  record_pk: null,
+  severity: "INFO",
+  source: "trigger",
+  table_name: "guests",
+  user_agent: null,
+  user_email: "owner@example.com",
+  user_id: null,
+  user_role: null,
+  ...overrides,
+});
 
 describe("DetailAuditSection", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-        },
-      },
-    });
+    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    recentByRecord.mockReset();
   });
 
-  const createWrapper = () => {
-    return ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  const renderSection = (ui: ReactNode) =>
+    render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+
+  it("reads the record's own history from its plural table", async () => {
+    recentByRecord.mockResolvedValue([]);
+    renderSection(<DetailAuditSection entityType="guest" entityId="guest-1" />);
+
+    await screen.findByText("No history for this record yet");
+    expect(recentByRecord).toHaveBeenCalledWith("guests", "guest-1");
+  });
+
+  it("lists the returned rows with their action and description", async () => {
+    recentByRecord.mockResolvedValue([
+      auditRow({
+        source: "app",
+        action: "INSERT",
+        metadata: { action: "updated" },
+        description: "guest updated",
+      }),
+      auditRow({ action: "INSERT", description: "Guest record created" }),
+    ]);
+    renderSection(<DetailAuditSection entityType="guest" entityId="guest-1" />);
+
+    expect(await screen.findByText("guest updated")).toBeInTheDocument();
+    expect(screen.getByText("Guest record created")).toBeInTheDocument();
+    expect(screen.getByText("Updated")).toBeInTheDocument();
+    expect(screen.getByText("Created")).toBeInTheDocument();
+    expect(screen.getAllByText("owner@example.com")).toHaveLength(2);
+  });
+
+  it("shows at most `limit` rows", async () => {
+    recentByRecord.mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => auditRow({ description: `change ${i}` }))
     );
-  };
+    renderSection(<DetailAuditSection entityType="guest" entityId="guest-1" limit={2} />);
 
-  describe("Basic rendering", () => {
-    it("renders with default title", () => {
-      render(<DetailAuditSection entityType="booking" entityId="booking-123" />, {
-        wrapper: createWrapper(),
-      });
-
-      expect(screen.getByText("Audit Trail")).toBeInTheDocument();
-    });
-
-    it("renders with custom title", () => {
-      render(
-        <DetailAuditSection entityType="booking" entityId="booking-123" title="Change History" />,
-        { wrapper: createWrapper() }
-      );
-
-      expect(screen.getByText("Change History")).toBeInTheDocument();
-    });
-
-    it("renders AuditLogViewer component", () => {
-      render(<DetailAuditSection entityType="booking" entityId="booking-123" />, {
-        wrapper: createWrapper(),
-      });
-
-      expect(screen.getByTestId("audit-log-viewer")).toBeInTheDocument();
-      expect(screen.getByText("Audit logs")).toBeInTheDocument();
-    });
+    expect(await screen.findByText("change 0")).toBeInTheDocument();
+    expect(screen.getByText("change 1")).toBeInTheDocument();
+    expect(screen.queryByText("change 2")).not.toBeInTheDocument();
   });
 
-  describe("Entity types", () => {
-    it("works with booking entity", () => {
-      render(<DetailAuditSection entityType="booking" entityId="booking-123" />, {
-        wrapper: createWrapper(),
-      });
+  it("uses a custom title", () => {
+    recentByRecord.mockResolvedValue([]);
+    renderSection(
+      <DetailAuditSection entityType="booking" entityId="booking-1" title="Booking History" />
+    );
 
-      expect(screen.getByTestId("audit-log-viewer")).toBeInTheDocument();
-    });
-
-    it("works with unit entity", () => {
-      render(<DetailAuditSection entityType="unit" entityId="unit-456" />, {
-        wrapper: createWrapper(),
-      });
-
-      expect(screen.getByTestId("audit-log-viewer")).toBeInTheDocument();
-    });
-
-    it("works with guest entity", () => {
-      render(<DetailAuditSection entityType="guest" entityId="guest-789" />, {
-        wrapper: createWrapper(),
-      });
-
-      expect(screen.getByTestId("audit-log-viewer")).toBeInTheDocument();
-    });
-
-    it("works with payment entity", () => {
-      render(<DetailAuditSection entityType="payment" entityId="payment-101" />, {
-        wrapper: createWrapper(),
-      });
-
-      expect(screen.getByTestId("audit-log-viewer")).toBeInTheDocument();
-    });
-
-    it("works with expense entity", () => {
-      render(<DetailAuditSection entityType="expense" entityId="expense-202" />, {
-        wrapper: createWrapper(),
-      });
-
-      expect(screen.getByTestId("audit-log-viewer")).toBeInTheDocument();
-    });
+    expect(screen.getByText("Booking History")).toBeInTheDocument();
   });
 
-  describe("Collapsible behavior", () => {
-    it("is expanded by default when defaultCollapsed is false", () => {
-      render(
-        <DetailAuditSection entityType="booking" entityId="booking-123" defaultCollapsed={false} />,
-        { wrapper: createWrapper() }
-      );
+  it("hides the history when collapsed", () => {
+    recentByRecord.mockResolvedValue([auditRow({ description: "hidden change" })]);
+    renderSection(
+      <DetailAuditSection entityType="unit" entityId="unit-1" defaultCollapsed={true} />
+    );
 
-      expect(screen.getByTestId("audit-log-viewer")).toBeInTheDocument();
-    });
-
-    it("is collapsed by default when defaultCollapsed is true", () => {
-      render(
-        <DetailAuditSection entityType="booking" entityId="booking-123" defaultCollapsed={true} />,
-        { wrapper: createWrapper() }
-      );
-
-      // When collapsed, viewer should not be visible
-      expect(screen.queryByTestId("audit-log-viewer")).not.toBeInTheDocument();
-    });
-
-    it("defaults to collapsed on mobile (implicit behavior)", () => {
-      // This test verifies the component accepts defaultCollapsed prop
-      // Actual mobile detection would need viewport mocking
-      render(
-        <DetailAuditSection entityType="booking" entityId="booking-123" defaultCollapsed={true} />,
-        { wrapper: createWrapper() }
-      );
-
-      expect(screen.queryByTestId("audit-log-viewer")).not.toBeInTheDocument();
-    });
-  });
-
-  describe("Limit prop", () => {
-    it("passes limit to AuditLogViewer", () => {
-      // The limit prop should be passed through to AuditLogViewer
-      // Since we're mocking it, we verify the component renders
-      render(<DetailAuditSection entityType="booking" entityId="booking-123" limit={10} />, {
-        wrapper: createWrapper(),
-      });
-
-      expect(screen.getByTestId("audit-log-viewer")).toBeInTheDocument();
-    });
-
-    it("works without limit (default behavior)", () => {
-      render(<DetailAuditSection entityType="booking" entityId="booking-123" />, {
-        wrapper: createWrapper(),
-      });
-
-      expect(screen.getByTestId("audit-log-viewer")).toBeInTheDocument();
-    });
-  });
-
-  describe("Section integration", () => {
-    it("wraps content in DetailSection component", () => {
-      render(<DetailAuditSection entityType="booking" entityId="booking-123" />, {
-        wrapper: createWrapper(),
-      });
-
-      // DetailSection uses Card components which render divs
-      expect(screen.getByText("Audit Trail")).toBeInTheDocument();
-      expect(screen.getByTestId("audit-log-viewer")).toBeInTheDocument();
-    });
-
-    it("includes section title", () => {
-      render(
-        <DetailAuditSection entityType="booking" entityId="booking-123" title="Activity Log" />,
-        { wrapper: createWrapper() }
-      );
-
-      expect(screen.getByText("Activity Log")).toBeInTheDocument();
-    });
-  });
-
-  describe("Custom className", () => {
-    it("applies custom className to section", () => {
-      render(
-        <DetailAuditSection
-          entityType="booking"
-          entityId="booking-123"
-          className="custom-audit-class"
-        />,
-        { wrapper: createWrapper() }
-      );
-
-      // The className is applied to the Card wrapper
-      expect(screen.getByText("Audit Trail")).toBeInTheDocument();
-      expect(screen.getByTestId("audit-log-viewer")).toBeInTheDocument();
-    });
-  });
-
-  describe("Real-world usage", () => {
-    it("renders complete audit section for booking detail page", () => {
-      render(
-        <DetailAuditSection
-          entityType="booking"
-          entityId="booking-123"
-          title="Booking History"
-          defaultCollapsed={false}
-          limit={50}
-        />,
-        { wrapper: createWrapper() }
-      );
-
-      expect(screen.getByText("Booking History")).toBeInTheDocument();
-      expect(screen.getByTestId("audit-log-viewer")).toBeInTheDocument();
-    });
-
-    it("renders collapsed audit section for mobile", () => {
-      render(
-        <DetailAuditSection
-          entityType="unit"
-          entityId="unit-456"
-          title="Change Log"
-          defaultCollapsed={true}
-        />,
-        { wrapper: createWrapper() }
-      );
-
-      expect(screen.getByText("Change Log")).toBeInTheDocument();
-      expect(screen.queryByTestId("audit-log-viewer")).not.toBeInTheDocument();
-    });
+    expect(screen.getByText("Audit Trail")).toBeInTheDocument();
+    expect(screen.queryByText("hidden change")).not.toBeInTheDocument();
   });
 });
