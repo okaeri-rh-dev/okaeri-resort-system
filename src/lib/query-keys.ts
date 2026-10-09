@@ -85,6 +85,12 @@ export const paymentMethodKeys = {
   active: () => [...paymentMethodKeys.all, "active"] as const,
 };
 
+export const expenseCategoryKeys = {
+  all: ["expense-categories"] as const,
+  list: () => [...expenseCategoryKeys.all, "list"] as const,
+  active: () => [...expenseCategoryKeys.all, "active"] as const,
+};
+
 const entityKeyFactories: Record<
   EntityType,
   { all: readonly unknown[]; detail: (id: string) => readonly unknown[] }

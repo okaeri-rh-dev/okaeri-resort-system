@@ -1,15 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { expenseCategoryKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError } from "@/lib/supabase";
 import type { ExpenseCategoryConfig } from "@/types";
 
-/**
- * Hook to fetch all expense categories (including archived) for admin settings
- */
-export function useExpenseCategories() {
-  return useQuery<ExpenseCategoryConfig[]>({
-    queryKey: ["expense-categories"],
+const expenseCategoriesQuery = () =>
+  queryOptions({
+    queryKey: expenseCategoryKeys.list(),
     queryFn: async () => {
       const { data, error } = await db.expenseCategories.all();
       if (error) throw error;
@@ -17,15 +15,11 @@ export function useExpenseCategories() {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
-}
 
-/**
- * Hook to fetch active expense categories only (for expense form dropdowns)
- * Longer stale time since categories rarely change
- */
-export function useActiveExpenseCategories() {
-  return useQuery<ExpenseCategoryConfig[]>({
-    queryKey: ["expense-categories", "active"],
+// Longer stale time since categories rarely change
+const activeExpenseCategoriesQuery = () =>
+  queryOptions({
+    queryKey: expenseCategoryKeys.active(),
     queryFn: async () => {
       const { data, error } = await db.expenseCategories.active();
       if (error) throw error;
@@ -33,6 +27,19 @@ export function useActiveExpenseCategories() {
     },
     staleTime: 15 * 60 * 1000, // 15 minutes
   });
+
+/**
+ * Hook to fetch all expense categories (including archived) for admin settings
+ */
+export function useExpenseCategories() {
+  return useQuery(expenseCategoriesQuery());
+}
+
+/**
+ * Hook to fetch active expense categories only (for expense form dropdowns)
+ */
+export function useActiveExpenseCategories() {
+  return useQuery(activeExpenseCategoriesQuery());
 }
 
 /**
@@ -48,7 +55,7 @@ export function useCreateExpenseCategory() {
       return result as ExpenseCategoryConfig;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["expense-categories"] });
+      queryClient.invalidateQueries({ queryKey: expenseCategoryKeys.all });
       toast.success("Category created", {
         description: `${data.name} has been added successfully.`,
       });
@@ -93,7 +100,7 @@ export function useUpdateExpenseCategory() {
       return data as ExpenseCategoryConfig;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["expense-categories"] });
+      queryClient.invalidateQueries({ queryKey: expenseCategoryKeys.all });
       toast.success("Category updated", {
         description: `${data.name} has been updated successfully.`,
       });
@@ -131,7 +138,7 @@ export function useArchiveExpenseCategory() {
       return data as ExpenseCategoryConfig;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["expense-categories"] });
+      queryClient.invalidateQueries({ queryKey: expenseCategoryKeys.all });
       toast.success("Category archived", {
         description: `${data.name} has been archived.`,
       });
@@ -157,7 +164,7 @@ export function useRestoreExpenseCategory() {
       return data as ExpenseCategoryConfig;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["expense-categories"] });
+      queryClient.invalidateQueries({ queryKey: expenseCategoryKeys.all });
       toast.success("Category restored", {
         description: `${data.name} has been restored.`,
       });
