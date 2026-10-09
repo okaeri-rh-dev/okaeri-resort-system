@@ -288,11 +288,13 @@ const cachedBooking = (queryClient: QueryClient, bookingId: string): Booking | u
 };
 
 // Fetch all bookings with filters
-export const useBookings = () => {
-  const { filters, searchQuery, sortBy, sortOrder } = useBookingStore();
-  const optimisticBookings = useBookingStore((state) => state.optimisticBookings);
-
-  return useQuery({
+const bookingListQuery = ({
+  filters,
+  searchQuery,
+  sortBy,
+  sortOrder,
+}: Pick<BookingStore, "filters" | "searchQuery" | "sortBy" | "sortOrder">) =>
+  queryOptions({
     queryKey: bookingKeys.list({ filters, searchQuery, sortBy, sortOrder }),
     queryFn: async () => {
       // Handle unit_id filter via junction table
@@ -364,6 +366,7 @@ export const useBookings = () => {
       if (error) throw new Error(handleSupabaseError(error));
 
       // Convert database types to application types and merge with optimistic updates
+      const { optimisticBookings } = useBookingStore.getState();
       const mergedData =
         data?.map((dbBooking) => {
           const optimisticEntry = optimisticBookings.get(dbBooking.booking_id);
@@ -377,6 +380,11 @@ export const useBookings = () => {
     staleTime: 300000, // 5 minutes - increased from 30s
     // Removed refetchInterval - manual refresh preferred for dashboard
   });
+
+export const useBookings = () => {
+  const { filters, searchQuery, sortBy, sortOrder } = useBookingStore();
+
+  return useQuery(bookingListQuery({ filters, searchQuery, sortBy, sortOrder }));
 };
 
 // Fetch single booking
