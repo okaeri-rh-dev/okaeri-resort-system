@@ -91,6 +91,13 @@ export const expenseCategoryKeys = {
   active: () => [...expenseCategoryKeys.all, "active"] as const,
 };
 
+export const seasonalRateKeys = {
+  all: ["seasonal-rates"] as const,
+  list: () => [...seasonalRateKeys.all, "list"] as const,
+  active: () => [...seasonalRateKeys.all, "active"] as const,
+  forDate: (date?: string) => [...seasonalRateKeys.all, "date", date] as const,
+};
+
 const entityKeyFactories: Record<
   EntityType,
   { all: readonly unknown[]; detail: (id: string) => readonly unknown[] }

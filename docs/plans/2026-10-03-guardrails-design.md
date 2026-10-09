@@ -272,6 +272,7 @@ Found by the `satisfies` annotations (2026-10-04):
   - [x] transfers: `transferKeys` (root `transfers`: `list`, `detail`, `byAccount`), `queryOptions` factories for the three transfer hooks; same prefixes, so invalidation is unchanged. `prefer-query-options` 106 → 98. `useTransfer`/`useAccountTransfers` have no callers (Knip)
   - [x] payment-methods: `paymentMethodKeys` (root `payment-methods`: `list`, `active`); the all-methods read moved off the bare root to `list`, mutations still invalidate the root. `prefer-query-options` 98 → 90
   - [x] expense-categories: `expenseCategoryKeys` (root `expense-categories`: `list`, `active`), same shape as payment-methods. `prefer-query-options` 90 → 84
+  - [x] seasonal-rates: `seasonalRateKeys` (root `seasonal-rates`: `list`, `active`, `forDate`). `prefer-query-options` 84 → 77
 - [ ] Detail-page Audit Trail shows the record's own history (also: why an edit's app-side audit row says "Created") (`DetailAuditSection` uses `recentRecordAuditLogsQuery`); delete the loaders' unread prefetches (booking payments, unit bookings and revenue stats)
 - [ ] Knip after dead-code purge; audit job blocking after fix pass
 - [ ] Type-check tests (deferral due after Phase 2, scheduled 2026-10-07): `tsc -p tsconfig.eslint.json` has 316 errors, 174 in `src/__tests__` (was 255), rest in `__tests__/` and `load-testing/`; 120 are TS18046 (`unknown` from `response.json()`). Fix `src/__tests__` first, then add the program to `type-check`

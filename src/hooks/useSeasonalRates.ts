@@ -1,18 +1,16 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { seasonalRateKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError } from "@/lib/supabase";
 import type { Database } from "@/types/database.types";
 
 type SeasonalRateInsert = Database["public"]["Tables"]["seasonal_rates"]["Insert"];
 type SeasonalRateUpdate = Database["public"]["Tables"]["seasonal_rates"]["Update"];
 
-/**
- * Hook to fetch all seasonal rates
- */
-export function useSeasonalRates() {
-  return useQuery({
-    queryKey: ["seasonal-rates"],
+const seasonalRatesQuery = () =>
+  queryOptions({
+    queryKey: seasonalRateKeys.list(),
     queryFn: async () => {
       const { data, error } = await db.seasonalRates.all();
       if (error) throw error;
@@ -20,14 +18,10 @@ export function useSeasonalRates() {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
-}
 
-/**
- * Hook to fetch active seasonal rates only
- */
-export function useActiveSeasonalRates() {
-  return useQuery({
-    queryKey: ["seasonal-rates", "active"],
+const activeSeasonalRatesQuery = () =>
+  queryOptions({
+    queryKey: seasonalRateKeys.active(),
     queryFn: async () => {
       const { data, error } = await db.seasonalRates.active();
       if (error) throw error;
@@ -35,21 +29,36 @@ export function useActiveSeasonalRates() {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+const seasonalRateForDateQuery = (date: Date | null) =>
+  queryOptions({
+    queryKey: seasonalRateKeys.forDate(date?.toISOString()),
+    queryFn: async () => {
+      if (!date) return null;
+      return await db.seasonalRates.forDate(date);
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+/**
+ * Hook to fetch all seasonal rates
+ */
+export function useSeasonalRates() {
+  return useQuery(seasonalRatesQuery());
+}
+
+/**
+ * Hook to fetch active seasonal rates only
+ */
+export function useActiveSeasonalRates() {
+  return useQuery(activeSeasonalRatesQuery());
 }
 
 /**
  * Hook to fetch seasonal rate for a specific date
  */
 export function useSeasonalRateForDate(date: Date | null) {
-  return useQuery({
-    queryKey: ["seasonal-rates", "date", date?.toISOString()],
-    queryFn: async () => {
-      if (!date) return null;
-      return await db.seasonalRates.forDate(date);
-    },
-    enabled: !!date,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  return useQuery({ ...seasonalRateForDateQuery(date), enabled: !!date });
 }
 
 /**
@@ -73,7 +82,7 @@ export function useSaveSeasonalRates() {
       return await db.seasonalRates.bulkUpsert(cleanedRates);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["seasonal-rates"] });
+      queryClient.invalidateQueries({ queryKey: seasonalRateKeys.all });
 
       toast.success("Seasonal rates saved", {
         description: "All seasonal rate changes have been saved successfully.",
@@ -100,7 +109,7 @@ export function useCreateSeasonalRate() {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["seasonal-rates"] });
+      queryClient.invalidateQueries({ queryKey: seasonalRateKeys.all });
 
       toast.success("Seasonal rate created", {
         description: `${data.name} has been created successfully.`,
@@ -127,7 +136,7 @@ export function useUpdateSeasonalRate() {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["seasonal-rates"] });
+      queryClient.invalidateQueries({ queryKey: seasonalRateKeys.all });
 
       toast.success("Seasonal rate updated", {
         description: `${data.name} has been updated successfully.`,
@@ -153,7 +162,7 @@ export function useDeleteSeasonalRate() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["seasonal-rates"] });
+      queryClient.invalidateQueries({ queryKey: seasonalRateKeys.all });
 
       toast.success("Seasonal rate deleted", {
         description: "The seasonal rate has been deleted successfully.",
