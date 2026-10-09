@@ -1,6 +1,6 @@
 // src/hooks/useRoleManagement.ts
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { pendingUsersKeys } from "@/hooks/usePendingUsers";
 import {
@@ -35,12 +35,8 @@ export const roleKeys = {
 // QUERIES
 // ============================================
 
-/**
- * Fetch all roles (active and inactive)
- * Admin-only - will fail if user is not admin
- */
-export function useAllRoles() {
-  return useQuery({
+const allRolesQuery = () =>
+  queryOptions({
     queryKey: roleKeys.list("all"),
     queryFn: async () => {
       const result = await listAllRoles();
@@ -52,14 +48,17 @@ export function useAllRoles() {
     staleTime: 30 * 1000, // 30 seconds
     retry: 1,
   });
-}
 
 /**
- * Fetch active roles only
+ * Fetch all roles (active and inactive)
  * Admin-only - will fail if user is not admin
  */
-export function useActiveRoles() {
-  return useQuery({
+export function useAllRoles() {
+  return useQuery(allRolesQuery());
+}
+
+const activeRolesQuery = () =>
+  queryOptions({
     queryKey: roleKeys.list("active"),
     queryFn: async () => {
       const result = await listActiveRoles();
@@ -71,14 +70,17 @@ export function useActiveRoles() {
     staleTime: 30 * 1000, // 30 seconds
     retry: 1,
   });
-}
 
 /**
- * Fetch role statistics (count by role type)
+ * Fetch active roles only
  * Admin-only - will fail if user is not admin
  */
-export function useRoleStats() {
-  return useQuery({
+export function useActiveRoles() {
+  return useQuery(activeRolesQuery());
+}
+
+const roleStatsQuery = () =>
+  queryOptions({
     queryKey: roleKeys.stats(),
     queryFn: async () => {
       const result = await countUsersByRole();
@@ -90,19 +92,18 @@ export function useRoleStats() {
     staleTime: 60 * 1000, // 1 minute
     retry: 1,
   });
-}
 
 /**
- * Fetch role change history for a specific user
- * Queries audit_logs table for all role-related events
+ * Fetch role statistics (count by role type)
  * Admin-only - will fail if user is not admin
- *
- * @param userId - UUID of the user whose history to fetch
- * @returns Query result with audit log entries
  */
-export function useRoleHistory(userId: string | null) {
-  return useQuery({
-    queryKey: roleKeys.history(userId || ""),
+export function useRoleStats() {
+  return useQuery(roleStatsQuery());
+}
+
+const roleHistoryQuery = (userId: string) =>
+  queryOptions({
+    queryKey: roleKeys.history(userId),
     queryFn: async () => {
       if (!userId) return [];
 
@@ -122,9 +123,22 @@ export function useRoleHistory(userId: string | null) {
 
       return (data || []) as AuditLog[];
     },
-    enabled: !!userId,
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: 1,
+  });
+
+/**
+ * Fetch role change history for a specific user
+ * Queries audit_logs table for all role-related events
+ * Admin-only - will fail if user is not admin
+ *
+ * @param userId - UUID of the user whose history to fetch
+ * @returns Query result with audit log entries
+ */
+export function useRoleHistory(userId: string | null) {
+  return useQuery({
+    ...roleHistoryQuery(userId ?? ""),
+    enabled: !!userId,
   });
 }
 
