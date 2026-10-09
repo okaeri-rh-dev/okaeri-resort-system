@@ -1,7 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+import { accountKeys } from "@/lib/query-keys";
 import { handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Account, AccountType, AccountWithBalance } from "@/types";
 import type { TablesInsert, TablesUpdate } from "@/types/database.types";
@@ -105,12 +106,18 @@ export const useAccountStore = create<AccountStore>()(
 // TANSTACK QUERY HOOKS
 // ============================================
 
-// Fetch all accounts
-export const useAccounts = () => {
-  const { filters, searchQuery, sortBy, sortOrder } = useAccountStore();
+type AccountSortBy = AccountStore["sortBy"];
 
-  return useQuery({
-    queryKey: ["accounts", filters, searchQuery, sortBy, sortOrder],
+const accountListQuery = (params: {
+  filters: AccountFilters;
+  searchQuery: string;
+  sortBy: AccountSortBy;
+  sortOrder: "asc" | "desc";
+}) => {
+  const { filters, searchQuery, sortBy, sortOrder } = params;
+
+  return queryOptions({
+    queryKey: accountKeys.list({ filters, searchQuery, sortBy, sortOrder }),
     queryFn: async () => {
       let query = supabase.from("accounts").select("*");
 
@@ -151,10 +158,15 @@ export const useAccounts = () => {
   });
 };
 
-// Fetch active accounts only (for selectors)
-export const useActiveAccounts = () => {
-  return useQuery({
-    queryKey: ["accounts", "active"],
+// Fetch all accounts
+export const useAccounts = () => {
+  const { filters, searchQuery, sortBy, sortOrder } = useAccountStore();
+  return useQuery(accountListQuery({ filters, searchQuery, sortBy, sortOrder }));
+};
+
+const activeAccountsQuery = () =>
+  queryOptions({
+    queryKey: accountKeys.active(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("accounts")
@@ -169,12 +181,13 @@ export const useActiveAccounts = () => {
     staleTime: 300000, // 5 minutes - accounts don't change often
     refetchOnWindowFocus: false,
   });
-};
 
-// Fetch single account
-export const useAccount = (accountId: string) => {
-  return useQuery({
-    queryKey: ["accounts", accountId],
+// Fetch active accounts only (for selectors)
+export const useActiveAccounts = () => useQuery(activeAccountsQuery());
+
+const accountDetailQuery = (accountId: string) =>
+  queryOptions({
+    queryKey: accountKeys.detail(accountId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("accounts")
@@ -185,15 +198,16 @@ export const useAccount = (accountId: string) => {
       if (error) throw new Error(handleSupabaseError(error));
       return data as Account;
     },
-    enabled: !!accountId,
     staleTime: 60000,
   });
-};
 
-// Fetch all accounts with calculated balances
-export const useAccountBalances = (asOfDate?: Date) => {
-  return useQuery({
-    queryKey: ["accounts", "balances", asOfDate?.toISOString()],
+// Fetch single account
+export const useAccount = (accountId: string) =>
+  useQuery({ ...accountDetailQuery(accountId), enabled: !!accountId });
+
+const accountBalancesQuery = (asOfDate?: Date) =>
+  queryOptions({
+    queryKey: accountKeys.balancesAsOf(asOfDate?.toISOString()),
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_all_account_balances", {
         p_as_of_date: asOfDate?.toISOString() || new Date().toISOString(),
@@ -205,7 +219,9 @@ export const useAccountBalances = (asOfDate?: Date) => {
     staleTime: 30000, // 30 seconds - balances can change frequently
     refetchOnWindowFocus: true,
   });
-};
+
+// Fetch all accounts with calculated balances
+export const useAccountBalances = (asOfDate?: Date) => useQuery(accountBalancesQuery(asOfDate));
 
 // Create account
 export const useCreateAccount = () => {
@@ -232,7 +248,7 @@ export const useCreateAccount = () => {
       return newAccount as Account;
     },
     onMutate: async (data) => {
-      await queryClient.cancelQueries({ queryKey: ["accounts"] });
+      await queryClient.cancelQueries({ queryKey: accountKeys.all });
 
       const optimisticAccount: Account = {
         ...data,
@@ -251,7 +267,7 @@ export const useCreateAccount = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: accountKeys.all });
     },
   });
 };
@@ -280,9 +296,9 @@ export const useUpdateAccount = () => {
       return data as Account;
     },
     onMutate: async ({ accountId, updates }) => {
-      await queryClient.cancelQueries({ queryKey: ["accounts"] });
+      await queryClient.cancelQueries({ queryKey: accountKeys.all });
 
-      const previousAccount = queryClient.getQueryData<Account>(["accounts", accountId]);
+      const previousAccount = queryClient.getQueryData(accountDetailQuery(accountId).queryKey);
 
       updateOptimistic(accountId, updates);
 
@@ -294,7 +310,7 @@ export const useUpdateAccount = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: accountKeys.all });
     },
   });
 };
@@ -315,15 +331,15 @@ export const useDeleteAccount = () => {
       if (error) throw new Error(handleSupabaseError(error));
     },
     onMutate: async (accountId) => {
-      await queryClient.cancelQueries({ queryKey: ["accounts"] });
+      await queryClient.cancelQueries({ queryKey: accountKeys.all });
       removeOptimistic(accountId);
       return { accountId };
     },
     onError: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: accountKeys.all });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: accountKeys.all });
     },
   });
 };
@@ -345,7 +361,7 @@ export const useReactivateAccount = () => {
       return data as Account;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: accountKeys.all });
     },
   });
 };

@@ -57,6 +57,18 @@ export const bookingKeys = {
   byUnit: (unitId: string) => [...bookingKeys.all, "unit", unitId] as const,
 };
 
+export const accountKeys = {
+  all: ["accounts"] as const,
+  lists: () => [...accountKeys.all, "list"] as const,
+  list: (params: { filters: object; searchQuery: string; sortBy: string; sortOrder: string }) =>
+    [...accountKeys.lists(), params] as const,
+  active: () => [...accountKeys.all, "active"] as const,
+  details: () => [...accountKeys.all, "detail"] as const,
+  detail: (accountId: string) => [...accountKeys.details(), accountId] as const,
+  balances: () => [...accountKeys.all, "balances"] as const,
+  balancesAsOf: (asOfDate?: string) => [...accountKeys.balances(), asOfDate] as const,
+};
+
 const entityKeyFactories: Record<
   EntityType,
   { all: readonly unknown[]; detail: (id: string) => readonly unknown[] }

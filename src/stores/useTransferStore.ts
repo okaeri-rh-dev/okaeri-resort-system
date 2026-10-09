@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+import { accountKeys } from "@/lib/query-keys";
 import { handleSupabaseError, supabase } from "@/lib/supabase";
 import type { AccountTransfer } from "@/types";
 import type { TablesInsert } from "@/types/database.types";
@@ -269,7 +270,7 @@ export const useCreateTransfer = () => {
     },
     onMutate: async (data) => {
       await queryClient.cancelQueries({ queryKey: ["transfers"] });
-      await queryClient.cancelQueries({ queryKey: ["accounts", "balances"] });
+      await queryClient.cancelQueries({ queryKey: accountKeys.balances() });
 
       const optimisticTransfer: AccountTransfer = {
         ...data,
@@ -291,7 +292,7 @@ export const useCreateTransfer = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["transfers"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts", "balances"] });
+      queryClient.invalidateQueries({ queryKey: accountKeys.balances() });
     },
   });
 };
@@ -312,17 +313,17 @@ export const useDeleteTransfer = () => {
     },
     onMutate: async (transferId) => {
       await queryClient.cancelQueries({ queryKey: ["transfers"] });
-      await queryClient.cancelQueries({ queryKey: ["accounts", "balances"] });
+      await queryClient.cancelQueries({ queryKey: accountKeys.balances() });
       removeOptimistic(transferId);
       return { transferId };
     },
     onError: () => {
       queryClient.invalidateQueries({ queryKey: ["transfers"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts", "balances"] });
+      queryClient.invalidateQueries({ queryKey: accountKeys.balances() });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transfers"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts", "balances"] });
+      queryClient.invalidateQueries({ queryKey: accountKeys.balances() });
     },
   });
 };
