@@ -19,7 +19,7 @@
 
 import { useState } from "react";
 
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { isAfter, max } from "date-fns";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Info, Loader2 } from "lucide-react";
 
@@ -103,6 +103,17 @@ async function fetchAvailability(month: Date): Promise<AvailabilityResponse> {
   return response.json();
 }
 
+const publicAvailabilityQuery = (month: Date) =>
+  queryOptions<AvailabilityResponse>({
+    queryKey: ["publicAvailability", month.toISOString()],
+    queryFn: () => fetchAvailability(month),
+    staleTime: 5 * 60 * 1000, // 5 minutes (matches CDN cache)
+    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    refetchOnWindowFocus: true,
+    refetchOnMount: false,
+    retry: 2,
+  });
+
 export function PublicAvailabilityCalendar() {
   // State: Current month being displayed (initialized to today in Philippine Time)
   const [currentMonth, setCurrentMonth] = useState(getTodayPhilippineTime());
@@ -139,14 +150,8 @@ export function PublicAvailabilityCalendar() {
 
   // Fetch availability data with TanStack Query
   // Uses 5-minute stale time to match CDN cache duration
-  const { data, isLoading, error, isFetching } = useQuery<AvailabilityResponse>({
-    queryKey: ["publicAvailability", currentMonth.toISOString()],
-    queryFn: () => fetchAvailability(currentMonth),
-    staleTime: 5 * 60 * 1000, // 5 minutes (matches CDN cache)
-    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-    refetchOnWindowFocus: true,
-    refetchOnMount: false,
-    retry: 2,
+  const { data, isLoading, error, isFetching } = useQuery({
+    ...publicAvailabilityQuery(currentMonth),
     // Only fetch if month is valid (not past, not > 1 year ahead)
     enabled: validateMonth(currentMonth).valid,
     // Keep previous data visible while fetching new month (prevents flicker)
