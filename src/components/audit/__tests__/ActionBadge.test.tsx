@@ -7,7 +7,7 @@ import { ActionBadge } from "../ActionBadge";
 
 describe("ActionBadge", () => {
   it("labels trigger rows by their SQL operation", () => {
-    render(<ActionBadge log={{ action: "UPDATE", source: "trigger", metadata: null }} />);
+    render(<ActionBadge log={{ action: "UPDATE", source: "db", metadata: null }} />);
     expect(screen.getByText("Updated")).toBeInTheDocument();
   });
 

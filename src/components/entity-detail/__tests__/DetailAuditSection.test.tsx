@@ -37,7 +37,7 @@ const auditRow = (overrides: Partial<AuditLog>): AuditLog => ({
   record_id: "guest-1",
   record_pk: null,
   severity: "INFO",
-  source: "trigger",
+  source: "db",
   table_name: "guests",
   user_agent: null,
   user_email: "owner@example.com",
