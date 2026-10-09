@@ -150,10 +150,13 @@ export const expenseDetailQuery = (expenseId: string) =>
   });
 
 // Fetch all expenses
-export const useExpenses = () => {
-  const { filters, searchQuery, sortBy, sortOrder } = useExpenseStore();
-
-  return useQuery({
+const expenseListQuery = ({
+  filters,
+  searchQuery,
+  sortBy,
+  sortOrder,
+}: Pick<ExpenseStore, "filters" | "searchQuery" | "sortBy" | "sortOrder">) =>
+  queryOptions({
     queryKey: expenseKeys.list({ filters, searchQuery, sortBy, sortOrder }),
     queryFn: async () => {
       let query = supabase.from("expenses").select("*");
@@ -213,6 +216,11 @@ export const useExpenses = () => {
     staleTime: 60000, // 1 minute
     refetchOnWindowFocus: true,
   });
+
+export const useExpenses = () => {
+  const { filters, searchQuery, sortBy, sortOrder } = useExpenseStore();
+
+  return useQuery(expenseListQuery({ filters, searchQuery, sortBy, sortOrder }));
 };
 
 // Fetch single expense
@@ -221,8 +229,8 @@ export const useExpense = (expenseId: string) => {
 };
 
 // Fetch expense statistics
-export const useExpenseStats = (dateRange?: { from: Date; to: Date }) => {
-  return useQuery({
+const expenseStatsQuery = (dateRange?: { from: Date; to: Date }) =>
+  queryOptions({
     queryKey: expenseKeys.stats(dateRange),
     queryFn: async () => {
       let query = supabase.from("expenses").select("amount, category, expense_date");
@@ -277,6 +285,9 @@ export const useExpenseStats = (dateRange?: { from: Date; to: Date }) => {
     },
     staleTime: 300000, // 5 minutes
   });
+
+export const useExpenseStats = (dateRange?: { from: Date; to: Date }) => {
+  return useQuery(expenseStatsQuery(dateRange));
 };
 
 // Create expense
