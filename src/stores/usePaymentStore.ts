@@ -143,10 +143,13 @@ export const paymentDetailQuery = (paymentId: string) =>
   });
 
 // Fetch all payments
-export const usePayments = () => {
-  const { filters, searchQuery, sortBy, sortOrder } = usePaymentStore();
-
-  return useQuery({
+const paymentListQuery = ({
+  filters,
+  searchQuery,
+  sortBy,
+  sortOrder,
+}: Pick<PaymentStore, "filters" | "searchQuery" | "sortBy" | "sortOrder">) =>
+  queryOptions({
     queryKey: paymentKeys.list({ filters, searchQuery, sortBy, sortOrder }),
     queryFn: async () => {
       let query = supabase
@@ -211,6 +214,11 @@ export const usePayments = () => {
     staleTime: 60000, // 1 minute
     refetchOnWindowFocus: true,
   });
+
+export const usePayments = () => {
+  const { filters, searchQuery, sortBy, sortOrder } = usePaymentStore();
+
+  return useQuery(paymentListQuery({ filters, searchQuery, sortBy, sortOrder }));
 };
 
 // Fetch single payment
@@ -219,8 +227,8 @@ export const usePayment = (paymentId: string) => {
 };
 
 // Fetch payments for a booking
-export const useBookingPayments = (bookingId: string) => {
-  return useQuery({
+const bookingPaymentsQuery = (bookingId: string) =>
+  queryOptions({
     queryKey: paymentKeys.byBooking(bookingId),
     queryFn: async () => {
       const { data, error } = await supabase
@@ -233,8 +241,13 @@ export const useBookingPayments = (bookingId: string) => {
       if (error) throw new Error(handleSupabaseError(error));
       return data || [];
     },
-    enabled: !!bookingId,
     staleTime: 60000,
+  });
+
+export const useBookingPayments = (bookingId: string) => {
+  return useQuery({
+    ...bookingPaymentsQuery(bookingId),
+    enabled: !!bookingId,
   });
 };
 
