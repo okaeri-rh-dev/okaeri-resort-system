@@ -1,8 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
-import { accountKeys } from "@/lib/query-keys";
+import { accountKeys, transferKeys } from "@/lib/query-keys";
 import { handleSupabaseError, supabase } from "@/lib/supabase";
 import type { AccountTransfer } from "@/types";
 import type { TablesInsert } from "@/types/database.types";
@@ -99,12 +99,16 @@ export const useTransferStore = create<TransferStore>()(
 // TANSTACK QUERY HOOKS
 // ============================================
 
-// Fetch all transfers with account relations
-export const useTransfers = () => {
-  const { filters, searchQuery, sortBy, sortOrder } = useTransferStore();
+const transferListQuery = (params: {
+  filters: TransferFilters;
+  searchQuery: string;
+  sortBy: TransferStore["sortBy"];
+  sortOrder: TransferStore["sortOrder"];
+}) => {
+  const { filters, searchQuery, sortBy, sortOrder } = params;
 
-  return useQuery({
-    queryKey: ["transfers", filters, searchQuery, sortBy, sortOrder],
+  return queryOptions({
+    queryKey: transferKeys.list({ filters, searchQuery, sortBy, sortOrder }),
     queryFn: async () => {
       let query = supabase.from("account_transfers").select(`
         *,
@@ -170,10 +174,15 @@ export const useTransfers = () => {
   });
 };
 
-// Fetch single transfer
-export const useTransfer = (transferId: string) => {
-  return useQuery({
-    queryKey: ["transfers", transferId],
+// Fetch all transfers with account relations
+export const useTransfers = () => {
+  const { filters, searchQuery, sortBy, sortOrder } = useTransferStore();
+  return useQuery(transferListQuery({ filters, searchQuery, sortBy, sortOrder }));
+};
+
+const transferDetailQuery = (transferId: string) =>
+  queryOptions({
+    queryKey: transferKeys.detail(transferId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("account_transfers")
@@ -190,15 +199,16 @@ export const useTransfer = (transferId: string) => {
       if (error) throw new Error(handleSupabaseError(error));
       return data as AccountTransfer;
     },
-    enabled: !!transferId,
     staleTime: 60000,
   });
-};
 
-// Fetch transfers for a specific account (both incoming and outgoing)
-export const useAccountTransfers = (accountId: string) => {
-  return useQuery({
-    queryKey: ["transfers", "account", accountId],
+// Fetch single transfer
+export const useTransfer = (transferId: string) =>
+  useQuery({ ...transferDetailQuery(transferId), enabled: !!transferId });
+
+const accountTransfersQuery = (accountId: string) =>
+  queryOptions({
+    queryKey: transferKeys.byAccount(accountId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("account_transfers")
@@ -225,10 +235,12 @@ export const useAccountTransfers = (accountId: string) => {
       if (error) throw new Error(handleSupabaseError(error));
       return (data || []) as AccountTransfer[];
     },
-    enabled: !!accountId,
     staleTime: 60000,
   });
-};
+
+// Fetch transfers for a specific account (both incoming and outgoing)
+export const useAccountTransfers = (accountId: string) =>
+  useQuery({ ...accountTransfersQuery(accountId), enabled: !!accountId });
 
 // Create transfer
 export const useCreateTransfer = () => {
@@ -269,7 +281,7 @@ export const useCreateTransfer = () => {
       return newTransfer as AccountTransfer;
     },
     onMutate: async (data) => {
-      await queryClient.cancelQueries({ queryKey: ["transfers"] });
+      await queryClient.cancelQueries({ queryKey: transferKeys.all });
       await queryClient.cancelQueries({ queryKey: accountKeys.balances() });
 
       const optimisticTransfer: AccountTransfer = {
@@ -291,7 +303,7 @@ export const useCreateTransfer = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["transfers"] });
+      queryClient.invalidateQueries({ queryKey: transferKeys.all });
       queryClient.invalidateQueries({ queryKey: accountKeys.balances() });
     },
   });
@@ -312,17 +324,17 @@ export const useDeleteTransfer = () => {
       if (error) throw new Error(handleSupabaseError(error));
     },
     onMutate: async (transferId) => {
-      await queryClient.cancelQueries({ queryKey: ["transfers"] });
+      await queryClient.cancelQueries({ queryKey: transferKeys.all });
       await queryClient.cancelQueries({ queryKey: accountKeys.balances() });
       removeOptimistic(transferId);
       return { transferId };
     },
     onError: () => {
-      queryClient.invalidateQueries({ queryKey: ["transfers"] });
+      queryClient.invalidateQueries({ queryKey: transferKeys.all });
       queryClient.invalidateQueries({ queryKey: accountKeys.balances() });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transfers"] });
+      queryClient.invalidateQueries({ queryKey: transferKeys.all });
       queryClient.invalidateQueries({ queryKey: accountKeys.balances() });
     },
   });

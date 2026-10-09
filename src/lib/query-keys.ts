@@ -69,6 +69,16 @@ export const accountKeys = {
   balancesAsOf: (asOfDate?: string) => [...accountKeys.balances(), asOfDate] as const,
 };
 
+export const transferKeys = {
+  all: ["transfers"] as const,
+  lists: () => [...transferKeys.all, "list"] as const,
+  list: (params: { filters: object; searchQuery: string; sortBy: string; sortOrder: string }) =>
+    [...transferKeys.lists(), params] as const,
+  details: () => [...transferKeys.all, "detail"] as const,
+  detail: (transferId: string) => [...transferKeys.details(), transferId] as const,
+  byAccount: (accountId: string) => [...transferKeys.all, "account", accountId] as const,
+};
+
 const entityKeyFactories: Record<
   EntityType,
   { all: readonly unknown[]; detail: (id: string) => readonly unknown[] }
