@@ -6,7 +6,7 @@ on:
   workflow_dispatch: # Allow manual triggering
 
 jobs:
-  # Blocking quality gate: every job in ci.yml (lint, type-check, unit, audit).
+  # Blocking quality gate: every job in ci.yml (lint, type-check, unit, knip, audit).
   # Deploy is skipped entirely if this fails, so a red build never ships.
   quality:
     name: Quality gate
