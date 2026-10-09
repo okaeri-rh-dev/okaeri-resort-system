@@ -102,6 +102,13 @@ export const pricingConfigKeys = {
   all: ["pricing-config"] as const,
 };
 
+// Pricing results cached by the calculate mutation; no queryFn reads them
+export const pricingKeys = {
+  all: ["pricing"] as const,
+  cache: () => [...pricingKeys.all, "cache"] as const,
+  cached: (cacheKey: string) => [...pricingKeys.cache(), cacheKey] as const,
+};
+
 const entityKeyFactories: Record<
   EntityType,
   { all: readonly unknown[]; detail: (id: string) => readonly unknown[] }

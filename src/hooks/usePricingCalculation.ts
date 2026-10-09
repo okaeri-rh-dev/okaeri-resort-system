@@ -4,6 +4,7 @@ import React, { useEffectEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { pricingKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
 import {
   isErrorResponse,
@@ -66,11 +67,9 @@ export function usePricingCalculation(options: UsePricingCalculationOptions = {}
     mutationFn: async (request: PricingCalculateRequest) => {
       // Check cache first if enabled
       if (useCache && cacheKey) {
-        const cached = queryClient.getQueryData<PricingCalculateResponse>([
-          "pricing",
-          "cache",
-          cacheKey,
-        ]);
+        const cached = queryClient.getQueryData<PricingCalculateResponse>(
+          pricingKeys.cached(cacheKey)
+        );
 
         if (cached) {
           // Check if cache is still fresh (5 minutes)
@@ -134,7 +133,7 @@ export function usePricingCalculation(options: UsePricingCalculationOptions = {}
       // Cache successful response if cache key provided
       if (useCache && cacheKey && isSuccessResponse(data)) {
         // Cache for 5 minutes (staleTime is set in query options)
-        queryClient.setQueryData(["pricing", "cache", cacheKey], data);
+        queryClient.setQueryData(pricingKeys.cached(cacheKey), data);
       }
 
       return data as PricingCalculateResponse;
@@ -289,7 +288,7 @@ export function useCachedPricing(cacheKey?: string) {
 
   if (!cacheKey) return null;
 
-  return queryClient.getQueryData<PricingCalculateResponse>(["pricing", "cache", cacheKey]);
+  return queryClient.getQueryData<PricingCalculateResponse>(pricingKeys.cached(cacheKey));
 }
 
 /**
@@ -300,10 +299,10 @@ export function useClearPricingCache() {
 
   return {
     clearAll: () => {
-      queryClient.removeQueries({ queryKey: ["pricing", "cache"] });
+      queryClient.removeQueries({ queryKey: pricingKeys.cache() });
     },
     clearSpecific: (cacheKey: string) => {
-      queryClient.removeQueries({ queryKey: ["pricing", "cache", cacheKey] });
+      queryClient.removeQueries({ queryKey: pricingKeys.cached(cacheKey) });
     },
   };
 }

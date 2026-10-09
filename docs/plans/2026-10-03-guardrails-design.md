@@ -274,6 +274,7 @@ Found by the `satisfies` annotations (2026-10-04):
   - [x] expense-categories: `expenseCategoryKeys` (root `expense-categories`: `list`, `active`), same shape as payment-methods. `prefer-query-options` 90 → 84
   - [x] seasonal-rates: `seasonalRateKeys` (root `seasonal-rates`: `list`, `active`, `forDate`). `prefer-query-options` 84 → 77
   - [x] pricing-config: `pricingConfigKeys.all` (singleton row, key unchanged) behind a `pricingConfigQuery` constant; the optimistic update reads/writes its `queryKey`, so cache reads are typed without explicit generics. `prefer-query-options` 77 → 70
+  - [x] pricing: `pricingKeys` (root `pricing`: `cache`, `cached(cacheKey)`) for the calculate mutation's result cache (set/get/remove only, no `queryFn`, so no `queryOptions`); key shapes unchanged, the tests' literal keys still match. `prefer-query-options` 70 → 65
 - [ ] Detail-page Audit Trail shows the record's own history (also: why an edit's app-side audit row says "Created") (`DetailAuditSection` uses `recentRecordAuditLogsQuery`); delete the loaders' unread prefetches (booking payments, unit bookings and revenue stats)
 - [ ] Knip after dead-code purge; audit job blocking after fix pass
 - [ ] Type-check tests (deferral due after Phase 2, scheduled 2026-10-07): `tsc -p tsconfig.eslint.json` has 316 errors, 174 in `src/__tests__` (was 255), rest in `__tests__/` and `load-testing/`; 120 are TS18046 (`unknown` from `response.json()`). Fix `src/__tests__` first, then add the program to `type-check`
