@@ -10,7 +10,14 @@
  */
 
 import { queryClient } from "@/lib/query-client";
-import { availabilityKeys, bookingKeys, guestKeys, paymentKeys, unitKeys } from "@/lib/query-keys";
+import {
+  availabilityKeys,
+  bookingKeys,
+  guestKeys,
+  paymentKeys,
+  unitKeys,
+  upcomingKeys,
+} from "@/lib/query-keys";
 
 // ============================================
 // GRANULAR HELPERS (building blocks)
@@ -50,8 +57,8 @@ export function invalidateMultiUnitBookings() {
 }
 
 export function invalidateUpcoming() {
-  queryClient.invalidateQueries({ queryKey: ["upcoming-checkins"] });
-  queryClient.invalidateQueries({ queryKey: ["upcoming-checkouts"] });
+  queryClient.invalidateQueries({ queryKey: upcomingKeys.checkIns.all });
+  queryClient.invalidateQueries({ queryKey: upcomingKeys.checkOuts.all });
 }
 
 // ============================================

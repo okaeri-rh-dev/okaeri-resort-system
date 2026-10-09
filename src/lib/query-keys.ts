@@ -153,6 +153,17 @@ export const availabilityKeys = {
   },
 };
 
+export const upcomingKeys = {
+  checkIns: {
+    all: ["upcoming-checkins"] as const,
+    within: (days: number) => [...upcomingKeys.checkIns.all, days] as const,
+  },
+  checkOuts: {
+    all: ["upcoming-checkouts"] as const,
+    within: (days: number) => [...upcomingKeys.checkOuts.all, days] as const,
+  },
+};
+
 const entityKeyFactories: Record<
   EntityType,
   { all: readonly unknown[]; detail: (id: string) => readonly unknown[] }

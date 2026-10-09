@@ -19,7 +19,7 @@ import {
   afterBookingUpdate,
   invalidateBookings,
 } from "@/lib/query-invalidation";
-import { availabilityKeys, bookingKeys, unitKeys } from "@/lib/query-keys";
+import { availabilityKeys, bookingKeys, unitKeys, upcomingKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, storage, supabase } from "@/lib/supabase";
 import { toManilaDateString } from "@/lib/timezone";
 import type {
@@ -1154,9 +1154,9 @@ export const useAvailabilityCache = () => {
 // };
 
 // Get upcoming check-ins
-export const useUpcomingCheckIns = (days = 7) => {
-  return useQuery({
-    queryKey: ["upcoming-checkins", days],
+const upcomingCheckInsQuery = (days: number) =>
+  queryOptions({
+    queryKey: upcomingKeys.checkIns.within(days),
     queryFn: async () => {
       const today = toManilaDateString(new Date());
       const futureDate = new Date();
@@ -1185,12 +1185,15 @@ export const useUpcomingCheckIns = (days = 7) => {
     },
     staleTime: 60000, // Refresh every minute
   });
+
+export const useUpcomingCheckIns = (days = 7) => {
+  return useQuery(upcomingCheckInsQuery(days));
 };
 
 // Get upcoming check-outs
-export const useUpcomingCheckOuts = (days = 7) => {
-  return useQuery({
-    queryKey: ["upcoming-checkouts", days],
+const upcomingCheckOutsQuery = (days: number) =>
+  queryOptions({
+    queryKey: upcomingKeys.checkOuts.within(days),
     queryFn: async () => {
       const today = toManilaDateString(new Date());
       const futureDate = new Date();
@@ -1219,6 +1222,9 @@ export const useUpcomingCheckOuts = (days = 7) => {
     },
     staleTime: 60000,
   });
+
+export const useUpcomingCheckOuts = (days = 7) => {
+  return useQuery(upcomingCheckOutsQuery(days));
 };
 
 // ============================================
