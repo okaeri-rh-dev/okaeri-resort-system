@@ -2,7 +2,7 @@
 // Hook for accessing current user's role and permission flags
 // Used for role-based UI rendering (hiding/showing actions)
 
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 
 import { AuditRole, getUserAuditRole } from "@/lib/audit-roles";
 
@@ -13,6 +13,14 @@ import { AuditRole, getUserAuditRole } from "@/lib/audit-roles";
 export const userRoleKeys = {
   current: ["user-role", "current"] as const,
 };
+
+const currentUserRoleQuery = queryOptions({
+  queryKey: userRoleKeys.current,
+  queryFn: getUserAuditRole,
+  staleTime: 5 * 60 * 1000, // 5 minutes - role changes are infrequent
+  gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+  retry: 1,
+});
 
 // ============================================
 // HOOK
@@ -36,13 +44,7 @@ export const userRoleKeys = {
  * });
  */
 export function useUserRole() {
-  const { data: role, isLoading } = useQuery({
-    queryKey: userRoleKeys.current,
-    queryFn: getUserAuditRole,
-    staleTime: 5 * 60 * 1000, // 5 minutes - role changes are infrequent
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-    retry: 1,
-  });
+  const { data: role, isLoading } = useQuery(currentUserRoleQuery);
 
   // ============================================
   // PERMISSION FLAGS
