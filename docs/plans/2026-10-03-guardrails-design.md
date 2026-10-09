@@ -277,7 +277,7 @@ Found by the `satisfies` annotations (2026-10-04):
 
 - [ ] Rewrite the two CLAUDE.md rules (4.8)
 
-## Resume state (2026-10-08, Phase 3 in progress)
+## Resume state (2026-10-09, Phase 3 in progress)
 
 - **Next (Phase 3):** local 401 fixed (2026-10-09). Next: remaining `prefer-query-options` warnings (124, `accounts` first), then the Audit Trail item, Knip, test type-check, exit criterion.
 - **Verified 2026-10-09:** pushed `5ecd452`..`692e055` (`HEAD` = `origin/main`); Deploy 37863374854, Security Scan 37863374509, infra-health 37863374557 all success. Prod probe of `/api/admin/pending-users` on `okaeri-resort.pages.dev`: no header, malformed token and an ES256 token with an unknown kid all 401. **Not verified in prod:** a signed-in (HS256) request still passing; please open any admin page once after this deploy. `.env.test` `VITE_APP_URL` (`okaeri-resort-system.pages.dev`) does not resolve; the Pages host is `okaeri-resort.pages.dev`.
