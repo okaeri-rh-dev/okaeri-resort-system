@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 
 import { supabase } from "@/lib/supabase";
 
@@ -14,8 +14,8 @@ export const pendingUsersKeys = {
   all: ["pending-users"] as const,
 };
 
-export function usePendingUsers() {
-  return useQuery({
+const pendingUsersQuery = () =>
+  queryOptions({
     queryKey: pendingUsersKeys.all,
     queryFn: async (): Promise<PendingUser[]> => {
       const {
@@ -38,4 +38,7 @@ export function usePendingUsers() {
     staleTime: 30_000,
     retry: 1,
   });
+
+export function usePendingUsers() {
+  return useQuery(pendingUsersQuery());
 }
