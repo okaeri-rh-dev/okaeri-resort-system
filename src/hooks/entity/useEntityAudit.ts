@@ -1,40 +1,13 @@
 // src/hooks/entity/useEntityAudit.ts
 
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 
 import { queryKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
 import type { AuditFilters } from "@/types/entity-detail.types";
 
-/**
- * Generic hook for fetching audit logs filtered by entity
- *
- * Queries the audit_logs table with flexible filtering:
- * - By entity type and ID (required)
- * - By action, user, date range (optional)
- *
- * @param filters - Audit log filters
- *
- * @example
- * ```typescript
- * // Basic usage - all logs for a booking
- * const { data: auditLogs } = useEntityAudit({
- *   entity_type: 'booking',
- *   entity_id: bookingId
- * })
- *
- * // Advanced filtering
- * const { data: logs } = useEntityAudit({
- *   entity_type: 'payment',
- *   entity_id: paymentId,
- *   action: 'payment.verified',
- *   date_from: startDate,
- *   date_to: endDate
- * })
- * ```
- */
-export function useEntityAudit(filters: AuditFilters) {
-  return useQuery({
+const entityAuditQuery = (filters: AuditFilters) =>
+  queryOptions({
     queryKey: queryKeys.audit(filters),
     queryFn: async () => {
       // Start with base query filtered by entity
@@ -73,4 +46,34 @@ export function useEntityAudit(filters: AuditFilters) {
     },
     staleTime: 10_000, // 10 seconds - audit logs don't change frequently
   });
+
+/**
+ * Generic hook for fetching audit logs filtered by entity
+ *
+ * Queries the audit_logs table with flexible filtering:
+ * - By entity type and ID (required)
+ * - By action, user, date range (optional)
+ *
+ * @param filters - Audit log filters
+ *
+ * @example
+ * ```typescript
+ * // Basic usage - all logs for a booking
+ * const { data: auditLogs } = useEntityAudit({
+ *   entity_type: 'booking',
+ *   entity_id: bookingId
+ * })
+ *
+ * // Advanced filtering
+ * const { data: logs } = useEntityAudit({
+ *   entity_type: 'payment',
+ *   entity_id: paymentId,
+ *   action: 'payment.verified',
+ *   date_from: startDate,
+ *   date_to: endDate
+ * })
+ * ```
+ */
+export function useEntityAudit(filters: AuditFilters) {
+  return useQuery(entityAuditQuery(filters));
 }

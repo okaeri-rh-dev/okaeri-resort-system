@@ -33,6 +33,8 @@ export const auditKeys = {
     [...auditKeys.all, "record", tableName, recordId] as const,
   stats: (filters?: AuditLogFilters) => [...auditKeys.all, "stats", filters] as const,
   user: (email: string) => [...auditKeys.all, "user", email] as const,
+  recent: (limit: number) => [...auditKeys.lists(), "recent", limit] as const,
+  userActivity: (email: string, limit: number) => [...auditKeys.user(email), limit] as const,
 };
 
 /** The 50 newest audit rows for one record, for detail-page loaders. A failure shows an empty history, not an error page. */
@@ -54,6 +56,17 @@ export const recentRecordAuditLogsQuery = (tableName: string, recordId: string) 
 // QUERY HOOKS
 // ============================================
 
+const auditLogsQuery = (filters?: AuditLogFilters) =>
+  queryOptions<AuditLogQueryResult, Error>({
+    queryKey: auditKeys.list(filters),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    queryFn: () => db.auditLogs.all(filters as any), // Type cast needed due to Supabase query builder limitations
+    staleTime: AUDIT_CACHE_CONFIG.STALE_TIME,
+    gcTime: AUDIT_CACHE_CONFIG.CACHE_TIME,
+    retry: AUDIT_CACHE_CONFIG.RETRY,
+    refetchOnWindowFocus: AUDIT_CACHE_CONFIG.REFETCH_ON_WINDOW_FOCUS,
+  });
+
 /**
  * Fetch paginated audit logs with filters
  *
@@ -69,25 +82,11 @@ export const recentRecordAuditLogsQuery = (tableName: string, recordId: string) 
  * });
  */
 export function useAuditLogs(filters?: AuditLogFilters) {
-  return useQuery<AuditLogQueryResult, Error>({
-    queryKey: auditKeys.list(filters),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    queryFn: () => db.auditLogs.all(filters as any), // Type cast needed due to Supabase query builder limitations
-    staleTime: AUDIT_CACHE_CONFIG.STALE_TIME,
-    gcTime: AUDIT_CACHE_CONFIG.CACHE_TIME,
-    retry: AUDIT_CACHE_CONFIG.RETRY,
-    refetchOnWindowFocus: AUDIT_CACHE_CONFIG.REFETCH_ON_WINDOW_FOCUS,
-  });
+  return useQuery(auditLogsQuery(filters));
 }
 
-/**
- * Fetch single audit log by ID
- *
- * @param auditId - UUID of audit log
- * @returns Query result with single audit log
- */
-export function useAuditLog(auditId: string) {
-  return useQuery<AuditLog, Error>({
+const auditLogQuery = (auditId: string) =>
+  queryOptions<AuditLog, Error>({
     queryKey: auditKeys.detail(auditId),
     queryFn: async () => {
       const { data, error } = await db.auditLogs.byId(auditId);
@@ -96,9 +95,28 @@ export function useAuditLog(auditId: string) {
     },
     staleTime: AUDIT_CACHE_CONFIG.STALE_TIME,
     gcTime: AUDIT_CACHE_CONFIG.CACHE_TIME,
+  });
+
+/**
+ * Fetch single audit log by ID
+ *
+ * @param auditId - UUID of audit log
+ * @returns Query result with single audit log
+ */
+export function useAuditLog(auditId: string) {
+  return useQuery({
+    ...auditLogQuery(auditId),
     enabled: !!auditId, // Only run if auditId is provided
   });
 }
+
+const auditTrailQuery = (tableName: string, recordId: string) =>
+  queryOptions<AuditLog[], Error>({
+    queryKey: auditKeys.record(tableName, recordId),
+    queryFn: () => db.auditLogs.byRecord(tableName, recordId),
+    staleTime: AUDIT_CACHE_CONFIG.STALE_TIME,
+    gcTime: AUDIT_CACHE_CONFIG.CACHE_TIME,
+  });
 
 /**
  * Fetch audit trail for a specific record
@@ -112,14 +130,19 @@ export function useAuditLog(auditId: string) {
  * const { data: history } = useAuditTrail('bookings', booking.booking_id);
  */
 export function useAuditTrail(tableName: string, recordId: string) {
-  return useQuery<AuditLog[], Error>({
-    queryKey: auditKeys.record(tableName, recordId),
-    queryFn: () => db.auditLogs.byRecord(tableName, recordId),
-    staleTime: AUDIT_CACHE_CONFIG.STALE_TIME,
-    gcTime: AUDIT_CACHE_CONFIG.CACHE_TIME,
+  return useQuery({
+    ...auditTrailQuery(tableName, recordId),
     enabled: !!tableName && !!recordId,
   });
 }
+
+const auditStatsQuery = (filters?: AuditLogFilters) =>
+  queryOptions<AuditLogStats, Error>({
+    queryKey: auditKeys.stats(filters),
+    queryFn: () => db.auditLogs.stats(filters),
+    staleTime: AUDIT_CACHE_CONFIG.STALE_TIME,
+    gcTime: AUDIT_CACHE_CONFIG.CACHE_TIME,
+  });
 
 /**
  * Fetch audit statistics
@@ -131,13 +154,16 @@ export function useAuditTrail(tableName: string, recordId: string) {
  * const { data: stats } = useAuditStats({ startDate: '2024-01-01T00:00:00Z' });
  */
 export function useAuditStats(filters?: AuditLogFilters) {
-  return useQuery<AuditLogStats, Error>({
-    queryKey: auditKeys.stats(filters),
-    queryFn: () => db.auditLogs.stats(filters),
+  return useQuery(auditStatsQuery(filters));
+}
+
+const recentAuditLogsQuery = (limit: number) =>
+  queryOptions<AuditLog[], Error>({
+    queryKey: auditKeys.recent(limit),
+    queryFn: () => db.auditLogs.recent(limit),
     staleTime: AUDIT_CACHE_CONFIG.STALE_TIME,
     gcTime: AUDIT_CACHE_CONFIG.CACHE_TIME,
   });
-}
 
 /**
  * Fetch recent audit logs (last N logs)
@@ -146,13 +172,16 @@ export function useAuditStats(filters?: AuditLogFilters) {
  * @returns Query result with recent logs
  */
 export function useRecentAuditLogs(limit = 50) {
-  return useQuery<AuditLog[], Error>({
-    queryKey: [...auditKeys.lists(), "recent", limit],
-    queryFn: () => db.auditLogs.recent(limit),
+  return useQuery(recentAuditLogsQuery(limit));
+}
+
+const userAuditLogsQuery = (userEmail: string, limit: number) =>
+  queryOptions<AuditLog[], Error>({
+    queryKey: auditKeys.userActivity(userEmail, limit),
+    queryFn: () => db.auditLogs.byUser(userEmail, limit),
     staleTime: AUDIT_CACHE_CONFIG.STALE_TIME,
     gcTime: AUDIT_CACHE_CONFIG.CACHE_TIME,
   });
-}
 
 /**
  * Fetch user activity logs
@@ -162,11 +191,8 @@ export function useRecentAuditLogs(limit = 50) {
  * @returns Query result with user's audit logs
  */
 export function useUserAuditLogs(userEmail: string, limit = 100) {
-  return useQuery<AuditLog[], Error>({
-    queryKey: [...auditKeys.user(userEmail), limit],
-    queryFn: () => db.auditLogs.byUser(userEmail, limit),
-    staleTime: AUDIT_CACHE_CONFIG.STALE_TIME,
-    gcTime: AUDIT_CACHE_CONFIG.CACHE_TIME,
+  return useQuery({
+    ...userAuditLogsQuery(userEmail, limit),
     enabled: !!userEmail,
   });
 }
