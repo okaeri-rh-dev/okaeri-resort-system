@@ -250,7 +250,7 @@ function AuditLogRow({ log, isExpanded, onToggle, onViewDiff }: AuditLogRowProps
 
         {/* Action */}
         <TableCell>
-          <ActionBadge action={log.action} />
+          <ActionBadge log={log} />
         </TableCell>
 
         {/* Source */}

@@ -333,17 +333,10 @@ Color-coded action type indicator badges.
 #### Action Types & Colors
 
 ```tsx
-const ACTION_VARIANTS = {
-  created: 'default',   // Blue
-  updated: 'secondary', // Gray
-  deleted: 'destructive', // Red
-}
-
-// Usage
-<ActionBadge action="created" />  // Blue "Created"
-<ActionBadge action="updated" />  // Gray "Updated"
-<ActionBadge action="deleted" />  // Red "Deleted"
+<ActionBadge log={log} />
 ```
+
+Trigger rows show their SQL operation: `INSERT` "Created" (default), `UPDATE` "Updated" (secondary), `DELETE` "Deleted" (destructive). App rows (`source: "app"`) are always stored as `INSERT`, so they show `metadata.action` instead ("updated", "checked_in" → "Checked in"), or "Event" when it is missing, as an outline badge.
 
 ### AuditStatsPanel Component
 

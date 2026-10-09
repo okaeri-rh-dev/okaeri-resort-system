@@ -70,7 +70,7 @@ export function AuditDiffViewer({ log, open, onOpenChange }: AuditDiffViewerProp
             </div>
             <div>
               <div className="text-muted-foreground text-sm font-medium">Action</div>
-              <ActionBadge action={log.action} />
+              <ActionBadge log={log} />
             </div>
             {log.record_id && (
               <div>
