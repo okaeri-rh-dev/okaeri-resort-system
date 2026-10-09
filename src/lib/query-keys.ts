@@ -168,6 +168,13 @@ export const discountRuleKeys = {
   all: ["discount-rules"] as const,
 };
 
+// Nothing reads multi-unit-bookings today; mutations and realtime still cancel/invalidate it
+export const multiUnitBookingKeys = {
+  all: ["multi-unit-bookings"] as const,
+  detail: (bookingId?: string) => [...multiUnitBookingKeys.all, bookingId] as const,
+  pending: ["pending-multi-unit-bookings"] as const,
+};
+
 const entityKeyFactories: Record<
   EntityType,
   { all: readonly unknown[]; detail: (id: string) => readonly unknown[] }

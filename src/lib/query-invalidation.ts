@@ -14,6 +14,7 @@ import {
   availabilityKeys,
   bookingKeys,
   guestKeys,
+  multiUnitBookingKeys,
   paymentKeys,
   unitKeys,
   upcomingKeys,
@@ -52,8 +53,8 @@ export function invalidateAvailability() {
 }
 
 export function invalidateMultiUnitBookings() {
-  queryClient.invalidateQueries({ queryKey: ["multi-unit-bookings"] });
-  queryClient.invalidateQueries({ queryKey: ["pending-multi-unit-bookings"] });
+  queryClient.invalidateQueries({ queryKey: multiUnitBookingKeys.all });
+  queryClient.invalidateQueries({ queryKey: multiUnitBookingKeys.pending });
 }
 
 export function invalidateUpcoming() {

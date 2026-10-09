@@ -13,7 +13,7 @@
 
 import { useState } from "react";
 
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { Search, SlidersHorizontal } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { multiUnitBookingKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
 import { formatUrgencyLevel, type UrgencyLevel } from "@/lib/urgency-scoring";
 import { formatCurrency, formatDate, formatRelativeTime } from "@/lib/utils";
@@ -68,6 +69,40 @@ interface QueueFilters {
 // Component
 // ============================================
 
+const pendingBookingsQuery = queryOptions({
+  queryKey: multiUnitBookingKeys.pending,
+  queryFn: async () => {
+    // Get current session token for authentication
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const response = await fetch("/api/admin/pending-bookings", {
+      headers: {
+        ...(session?.access_token && {
+          Authorization: `Bearer ${session.access_token}`,
+        }),
+      },
+    });
+
+    if (!response.ok) {
+      // Parse the error response for more details
+      const errorData = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        hint?: string;
+      };
+      const errorMessage = errorData.error || "Failed to fetch pending bookings";
+      const hint = errorData.hint || "";
+      throw new Error(hint ? `${errorMessage}. ${hint}` : errorMessage);
+    }
+
+    const data = (await response.json()) as { bookings: PendingBooking[] };
+    return data.bookings;
+  },
+  refetchInterval: 30000, // Refresh every 30s
+  staleTime: 25000, // Consider stale after 25s
+});
+
 export function PendingBookingsQueue() {
   const [filters, setFilters] = useState<QueueFilters>({
     searchQuery: "",
@@ -76,43 +111,7 @@ export function PendingBookingsQueue() {
   });
 
   // Fetch pending bookings with urgency scoring
-  const {
-    data: bookings,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["pending-multi-unit-bookings"],
-    queryFn: async () => {
-      // Get current session token for authentication
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      const response = await fetch("/api/admin/pending-bookings", {
-        headers: {
-          ...(session?.access_token && {
-            Authorization: `Bearer ${session.access_token}`,
-          }),
-        },
-      });
-
-      if (!response.ok) {
-        // Parse the error response for more details
-        const errorData = (await response.json().catch(() => ({}))) as {
-          error?: string;
-          hint?: string;
-        };
-        const errorMessage = errorData.error || "Failed to fetch pending bookings";
-        const hint = errorData.hint || "";
-        throw new Error(hint ? `${errorMessage}. ${hint}` : errorMessage);
-      }
-
-      const data = (await response.json()) as { bookings: PendingBooking[] };
-      return data.bookings;
-    },
-    refetchInterval: 30000, // Refresh every 30s
-    staleTime: 25000, // Consider stale after 25s
-  });
+  const { data: bookings, isLoading, error } = useQuery(pendingBookingsQuery);
 
   // ============================================
   // Filtering Logic

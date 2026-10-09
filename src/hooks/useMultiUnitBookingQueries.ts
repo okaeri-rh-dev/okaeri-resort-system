@@ -13,7 +13,7 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { afterBookingCreate } from "@/lib/query-invalidation";
-import { availabilityKeys } from "@/lib/query-keys";
+import { availabilityKeys, multiUnitBookingKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import type {
@@ -115,7 +115,7 @@ export const useCreateMultiUnitBooking = () => {
       return data.data;
     },
     onMutate: async (newBooking) => {
-      await queryClient.cancelQueries({ queryKey: ["multi-unit-bookings"] });
+      await queryClient.cancelQueries({ queryKey: multiUnitBookingKeys.all });
 
       const optimisticBooking: MultiUnitBooking = {
         booking_id: `temp-${Date.now()}`,

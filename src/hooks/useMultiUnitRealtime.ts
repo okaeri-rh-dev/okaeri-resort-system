@@ -18,7 +18,7 @@ import type {
 import { useQueryClient, type QueryClient, type QueryKey } from "@tanstack/react-query";
 
 import { logger } from "@/lib/logger";
-import { availabilityKeys } from "@/lib/query-keys";
+import { availabilityKeys, multiUnitBookingKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import type { BookingUnit, MultiUnitBooking } from "@/types";
@@ -138,19 +138,19 @@ export function useMultiUnitBookingSubscription(
             switch (payload.eventType) {
               case "INSERT":
                 onInsert?.(payload);
-                invalidateDebounced(["multi-unit-bookings"]);
+                invalidateDebounced(multiUnitBookingKeys.all);
                 break;
 
               case "UPDATE":
                 onUpdate?.(payload);
                 // FIXED: Only invalidate the general query, not both specific AND general
                 // The specific query invalidation was causing duplicate refetches
-                invalidateDebounced(["multi-unit-bookings"]);
+                invalidateDebounced(multiUnitBookingKeys.all);
                 break;
 
               case "DELETE":
                 onDelete?.(payload);
-                invalidateDebounced(["multi-unit-bookings"]);
+                invalidateDebounced(multiUnitBookingKeys.all);
                 break;
             }
           } catch (error) {
@@ -250,18 +250,18 @@ export function useBookingUnitsSubscription(
             switch (payload.eventType) {
               case "INSERT":
                 onInsert?.(payload);
-                invalidateDebounced(["multi-unit-bookings", bookingId]);
+                invalidateDebounced(multiUnitBookingKeys.detail(bookingId));
                 invalidateDebounced(availabilityKeys.multiUnit.all);
                 break;
 
               case "UPDATE":
                 onUpdate?.(payload);
-                invalidateDebounced(["multi-unit-bookings", bookingId]);
+                invalidateDebounced(multiUnitBookingKeys.detail(bookingId));
                 break;
 
               case "DELETE":
                 onDelete?.(payload);
-                invalidateDebounced(["multi-unit-bookings", bookingId]);
+                invalidateDebounced(multiUnitBookingKeys.detail(bookingId));
                 invalidateDebounced(availabilityKeys.multiUnit.all);
                 break;
             }
