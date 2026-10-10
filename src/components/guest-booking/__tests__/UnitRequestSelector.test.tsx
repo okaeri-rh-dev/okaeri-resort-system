@@ -27,15 +27,6 @@ const mockPricingConfig: PricingConfig = {
 
 vi.mock("@/lib/api/guest-booking-client", () => ({
   fetchRates: vi.fn(() => Promise.resolve(mockPricingConfig)),
-  validateDateRange: vi.fn((checkIn, checkOut) => {
-    if (checkIn < new Date()) return "Check-in date cannot be in the past";
-    if (checkOut <= checkIn) return "Check-out date must be after check-in date";
-    return null;
-  }),
-  calculateNights: vi.fn((checkIn, checkOut) => {
-    const diff = checkOut.getTime() - checkIn.getTime();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
-  }),
 }));
 
 // ============================================
