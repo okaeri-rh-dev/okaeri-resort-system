@@ -309,12 +309,12 @@ Found by the `satisfies` annotations (2026-10-04):
 
 ### Phase 4: Docs
 
-- [ ] Rewrite the two CLAUDE.md rules (4.8): audit rule done 2026-10-10 (`de40660`); DOMPurify rule remains
-- [ ] Rewrite `src/hooks/README.md`: documents hooks that do not exist (`useSearch`, `useCleanup`, a `useAvailability` API, the deleted entity hooks)
+- [x] Rewrite the two CLAUDE.md rules (4.8): audit rule done 2026-10-10 (`de40660`). DOMPurify rule (2026-10-10): replaced by "no `dangerouslySetInnerHTML`", enforced as a `no-restricted-syntax` selector (`dangerousHtmlSelector`) in both blocks that set the rule for `src`, not `react/no-danger` (see Decisions). The one site, the landing page JSON-LD `<script>` (`src/routes/index.tsx`), serializes a constant and has a disable with that reason. The email half has no target: `src/lib/email.ts` was deleted as unreachable in `09de245` and nothing sends HTML email; the rule keeps one clause for when templates return
+- [x] Rewrite `src/hooks/README.md` (2026-10-10): 424 lines describing hooks that do not exist (`useSearch`, `useCleanup`, a `useAvailability` API, the deleted entity hooks) replaced by the conventions (query-options factories, key location, no `supabase` import in components, trigger-only audit) and a table of the 18 hook files and their exports
 
-## Resume state (2026-10-09, Phase 3 in progress)
+## Resume state (2026-10-10, all phases done)
 
-- **Next:** Phase 3 done (exit criterion met 2026-10-10). Next Phase 4 (Docs): the DOMPurify half of the 4.8 rule, then `src/hooks/README.md`.
+- **Done:** Phases 0-4 complete (2026-10-10). Open outside this plan: the deferrals in Decisions & Deferrals (online-booking restore, seasonal rates, trigger rows storing `old_data`/`new_data` unredacted), the e2e suite's CI pass, and a browser check of the edit flow and audit page.
 - **Verified 2026-10-09 (Knip item):** pushed `ef67a03`..`8c3f1ea` (`HEAD` = `origin/main`). Deploy 37906128930: Knip, audit, type-check, unit, lint and deploy jobs all success (first CI run of the Knip job); Security Scan 37906128529 and infra-health 37906128539 success. Local: verify green (6 warnings, 1511 tests), build green, browser smoke of 4 public + 17 admin routes with no console errors. **Not verified:** detail pages other than guest and the edit flows in a browser, e2e suite, signed-in prod admin page.
 - **Verified 2026-10-09 (rule at error + Audit Trail item):** pushed `bd32b41`..`0d586e7` (`HEAD` = `origin/main`). Deploy 37901527929, Security Scan 37901527658, infra-health 37901527846 all success. Lint 7 warnings (5 `no-restricted-imports`, 2 shadcn `react-refresh`); unit suite 1511 passed.
 - **Verified 2026-10-09 (query-options batch 2):** pushed `ce199da`..`7eec757` (`HEAD` = `origin/main`). Deploy 37897845124, Security Scan 37897844815, infra-health 37897844915 all success. Lint 8 warnings (0 `prefer-query-options`, 6 `no-restricted-imports`, 2 shadcn `react-refresh`); unit suite 1520 passed. No browser check (key shapes unchanged).
@@ -438,4 +438,5 @@ Decided during Phase 3 (2026-10-07; recommended defaults accepted by the user 20
 - **`load-testing/` not type-checked (2026-10-10, user accepted recommended).** Why: k6 scripts run by hand under k6's own runtime (k6 module types, not Node/DOM), so fixing 34 errors against the wrong globals buys nothing. Revisit: if load tests run in CI.
 - **Auth calls in components go through `supabaseAuth`, not a hook (2026-10-10, user accepted recommended).** Why: the import rule cannot tell auth calls from table queries on the same `supabase` export; a separate export keeps the rule meaningful without moving five call sites into hooks or adding disables. Revisit: if components start using `supabaseAuth` for more than session/sign-in.
 - **`react-refresh/only-export-components` off for `src/components/ui/**` (2026-10-10, user accepted recommended).\*\* Why: shadcn files are generated and export variants beside components; splitting them diverges from upstream. Revisit: n/a.
+- **`dangerouslySetInnerHTML` banned via `no-restricted-syntax`, not `react/no-danger` (2026-10-10).** Why: the config has no `eslint-plugin-react`; a selector matches the other architecture rules and needs no new dependency. Revisit: if `eslint-plugin-react` is added for other rules.
 - **21 exports used only by tests left (2026-10-10, user accepted recommended).** Why: they are small helpers in live modules, not unreachable features; deleting them means rewriting their tests against internals. Revisit: if `knip --production` becomes a CI step.
