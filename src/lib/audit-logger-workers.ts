@@ -14,7 +14,7 @@ import { supabase } from "./supabase";
  * - Data deletions
  * - Sensitive data exports
  *
- * For regular events, use logAuditEvent() from audit-logger.ts (client-side)
+ * Table writes need no call: the audit trigger logs them
  *
  * @param context - Audit event context with business information
  * @returns Promise resolving to success/error status

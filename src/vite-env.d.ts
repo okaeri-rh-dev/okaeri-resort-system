@@ -9,7 +9,6 @@ interface ImportMetaEnv {
    * Roles are now managed in the database via the app_roles table.
    */
   readonly VITE_OWNER_EMAILS?: string; // Optional - kept for backwards compatibility only
-  readonly VITE_AUDIT_DEBUG?: string; // Optional debug flag
   readonly PROD: boolean;
   readonly DEV: boolean;
   readonly MODE: string;

@@ -7,7 +7,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { logAuditEvent } from "@/lib/audit-logger";
 import { queryKeys } from "@/lib/query-keys";
 import { db } from "@/lib/supabase";
 
@@ -166,10 +165,6 @@ vi.mock("@/lib/supabase", () => ({
   },
 }));
 
-vi.mock("@/lib/audit-logger", () => ({
-  logAuditEvent: vi.fn(() => Promise.resolve()),
-}));
-
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -232,37 +227,6 @@ describe("useEntityEdit", () => {
 
       expect(db.bookings.update).toHaveBeenCalledWith(entityId, updateData);
       expect(result.current.data).toEqual(updatedBooking);
-    });
-
-    it("logs audit event on successful update", async () => {
-      const entityId = "booking-123";
-      const updateData = { guest_name: "New Name" };
-      const updatedBooking = createMockBooking({ booking_id: entityId, ...updateData });
-
-      // Set up initial cached data
-      queryClient.setQueryData(
-        queryKeys.entity("booking", entityId),
-        createMockBooking({
-          booking_id: entityId,
-          guest_name: "Old Name",
-        })
-      );
-
-      vi.mocked(db.bookings.update).mockResolvedValue(createSuccessResponse(updatedBooking));
-
-      const { result } = renderHook(() => useEntityEdit("booking", entityId), {
-        wrapper: createWrapper(),
-      });
-
-      act(() => {
-        result.current.mutate(updateData);
-      });
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      expect(logAuditEvent).toHaveBeenCalled();
     });
 
     it("performs optimistic update", async () => {

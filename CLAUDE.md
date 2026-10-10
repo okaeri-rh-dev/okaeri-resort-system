@@ -52,7 +52,8 @@ Current entries:
 
 - Run `npm run verify` before committing. The pre-commit hook blocks on type and lint errors but runs no tests — passing the hook is NOT passing verify.
 - Use the typed database helpers in `src/lib/supabase.ts` (`db.bookings.byId(...)`, `db.units.available()`, …) instead of raw Supabase queries where possible.
-- Sanitize all user input with DOMPurify, and log every data mutation to the audit trail (`logAuditEvent` — see `src/components/audit/CLAUDE.md` for the naming convention).
+- Sanitize all user input with DOMPurify.
+- Every table has the audit trigger or is on the allowlist in `src/__tests__/database/audit-trigger-coverage.test.ts`; table writes need no app-side audit call (see `src/components/audit/CLAUDE.md`).
 - Stay within free-tier quotas (Cloudflare KV / email / bandwidth): check `/api/monitoring/check-quotas` before adding chatty features; public endpoints need rate limiting.
 - Financial features are INTERNAL tracking only (expense categories, receipt screenshots, simple revenue summaries for the family). Never implement tax/BIR compliance, withholding tax, official receipts, or government/regulatory reporting — if asked, flag it as out of scope (accountant + dedicated tax software territory).
 - Maintain backwards compatibility when refactoring stores or types.

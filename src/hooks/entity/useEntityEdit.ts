@@ -3,11 +3,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { logAuditEvent } from "@/lib/audit-logger";
 import { queryKeys } from "@/lib/query-keys";
 import { db } from "@/lib/supabase";
 import type { Booking, Expense, Guest, Payment, Unit } from "@/types";
-import { AuditCategory, AuditSeverity } from "@/types/audit.types";
 import type { EntityType } from "@/types/entity-detail.types";
 
 /**
@@ -34,23 +32,11 @@ type UseEntityEditOptions<TData> = {
 };
 
 /**
- * Mapping of entity types to audit categories
- */
-const ENTITY_TO_AUDIT_CATEGORY: Record<EntityType, AuditCategory> = {
-  booking: AuditCategory.BOOKING,
-  unit: AuditCategory.UNIT,
-  guest: AuditCategory.GUEST,
-  payment: AuditCategory.PAYMENT,
-  expense: AuditCategory.EXPENSE,
-};
-
-/**
- * Generic hook for updating entities with optimistic updates and audit logging
+ * Generic hook for updating entities with optimistic updates
  *
  * Follows the pattern from useBookingStore with:
  * - Optimistic updates for instant UI feedback
  * - Automatic rollback on error
- * - Audit trail logging for all mutations
  * - Toast notifications
  *
  * @param entityType - The type of entity to edit
@@ -77,9 +63,6 @@ export function useEntityEdit<T extends EntityType>(
 
   return useMutation({
     mutationFn: async (updateData: EntityUpdateData<T>) => {
-      // Get current data for audit trail
-      const previousData = queryClient.getQueryData(queryKeys.entity(entityType, entityId));
-
       // Type-safe update based on entity type
       const { data, error } = await (async () => {
         switch (entityType) {
@@ -108,22 +91,6 @@ export function useEntityEdit<T extends EntityType>(
       if (error) {
         throw new Error(error.message);
       }
-
-      // Log audit event (fire-and-forget, don't block)
-      logAuditEvent({
-        tableName: `${entityType}s`, // Convert to plural table name
-        recordId: entityId,
-        description: `${entityType} updated`,
-        category: ENTITY_TO_AUDIT_CATEGORY[entityType],
-        severity: AuditSeverity.INFO,
-        metadata: {
-          action: "updated",
-          before: previousData,
-          after: data,
-        },
-      }).catch((err) => {
-        console.error(`[Audit] Failed to log ${entityType} update:`, err);
-      });
 
       return data;
     },

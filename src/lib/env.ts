@@ -40,7 +40,6 @@ export interface Env {
   RESEND_API_KEY?: string;
 
   // Debug Flags
-  VITE_AUDIT_DEBUG?: string;
   VITE_QUERY_DEBUG?: string;
   VITE_TEST_VERBOSE?: string;
 
@@ -117,25 +116,4 @@ export function requireEnv(key: keyof Env): string {
     );
   }
   return value;
-}
-
-/**
- * Check if a boolean environment variable is enabled
- *
- * Treats "true" (case-insensitive) as true, everything else as false.
- * Useful for debug flags and feature toggles.
- *
- * @param key - Environment variable key
- * @returns true if the variable is set to "true", false otherwise
- *
- * @example
- * ```typescript
- * if (isEnvEnabled('VITE_AUDIT_DEBUG')) {
- *   console.log('Audit debugging is enabled');
- * }
- * ```
- */
-export function isEnvEnabled(key: keyof Env): boolean {
-  const value = getEnv(key);
-  return value?.toLowerCase() === "true";
 }
