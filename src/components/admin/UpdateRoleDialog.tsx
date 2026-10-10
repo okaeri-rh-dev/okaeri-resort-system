@@ -37,7 +37,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useDeactivateRole, useUpdateRole } from "@/hooks/useRoleManagement";
 import { AuditRole, getRoleDisplayName, type AppRole } from "@/lib/audit-roles";
-import { supabase } from "@/lib/supabase";
+import { supabaseAuth } from "@/lib/supabase";
 
 // ============================================
 // UPDATE ROLE DIALOG
@@ -234,7 +234,7 @@ export function DeactivateRoleDialog({ role, open, onOpenChange }: DeactivateRol
   const isSelfDeactivation = async () => {
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await supabaseAuth.getUser();
     return user?.id === role?.user_id;
   };
 

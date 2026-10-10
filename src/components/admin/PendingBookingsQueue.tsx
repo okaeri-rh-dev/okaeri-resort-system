@@ -36,7 +36,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { multiUnitBookingKeys } from "@/lib/query-keys";
-import { supabase } from "@/lib/supabase";
+import { supabaseAuth } from "@/lib/supabase";
 import { formatUrgencyLevel, type UrgencyLevel } from "@/lib/urgency-scoring";
 import { formatCurrency, formatDate, formatRelativeTime } from "@/lib/utils";
 
@@ -75,7 +75,7 @@ const pendingBookingsQuery = queryOptions({
     // Get current session token for authentication
     const {
       data: { session },
-    } = await supabase.auth.getSession();
+    } = await supabaseAuth.getSession();
 
     const response = await fetch("/api/admin/pending-bookings", {
       headers: {

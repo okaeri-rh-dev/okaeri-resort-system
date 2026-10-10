@@ -58,6 +58,9 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+// Session and sign-in calls for components; table access goes through `db` or hooks
+export const supabaseAuth = supabase.auth;
+
 const paymentMethodsTable = () => supabase.from("payment_methods");
 
 const expenseCategoriesTable = () => supabase.from("expense_categories");

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { updatePasswordWithAudit } from "@/lib/auth-password-reset";
-import { supabase } from "@/lib/supabase";
+import { supabaseAuth } from "@/lib/supabase";
 
 import { PasswordStrengthIndicator } from "./PasswordStrengthIndicator";
 
@@ -32,7 +32,7 @@ export function ResetPasswordForm() {
       try {
         const {
           data: { session },
-        } = await supabase.auth.getSession();
+        } = await supabaseAuth.getSession();
         // Supabase automatically sets a recovery session when user clicks the reset link
         setIsValidSession(!!session);
       } finally {
@@ -66,7 +66,7 @@ export function ResetPasswordForm() {
 
       // Sign out and redirect to login after 3 seconds
       setTimeout(() => {
-        void supabase.auth.signOut().finally(() => {
+        void supabaseAuth.signOut().finally(() => {
           window.location.href = "/login";
         });
       }, 3000);

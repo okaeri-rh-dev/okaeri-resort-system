@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/lib/supabase";
+import { supabaseAuth } from "@/lib/supabase";
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -67,7 +67,7 @@ export function LoginForm({ onSuccess, registered, confirmed }: LoginFormProps) 
 
       // Set session in Supabase client
       if (data.session?.access_token && data.session?.refresh_token) {
-        await supabase.auth.setSession({
+        await supabaseAuth.setSession({
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
         });

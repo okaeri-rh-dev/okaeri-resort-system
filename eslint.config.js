@@ -282,6 +282,14 @@ export default tseslint.config([
     },
   },
 
+  // shadcn primitives export variants beside components; kept as generated (also excluded in knip.json)
+  {
+    files: ["src/components/ui/**/*.{ts,tsx}"],
+    rules: {
+      "react-refresh/only-export-components": "off",
+    },
+  },
+
   // Tests insert deliberately invalid rows (constraint tests), so payloads stay unannotated
   {
     files: [
