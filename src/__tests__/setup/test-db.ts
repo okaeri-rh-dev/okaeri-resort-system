@@ -24,6 +24,27 @@ const TEST_SERVICE_KEY =
 
 export const testSupabaseAdmin = createClient<Database>(TEST_SUPABASE_URL, TEST_SERVICE_KEY);
 
+type Tables = Database["public"]["Tables"];
+type Unit = Tables["units"]["Row"];
+type Guest = Tables["guests"]["Row"];
+
+type TestBookingOverrides = {
+  guest?: Guest;
+  unit?: Unit;
+  check_in?: Date;
+  check_out?: Date;
+  booking_reference?: string;
+  email?: string;
+  num_guests?: number;
+  booking_status?: string;
+  payment_status?: string;
+  total_amount?: number;
+  unit_price?: number;
+  weekend_surcharge?: number;
+  extra_person_charge?: number;
+  subtotal?: number;
+};
+
 /**
  * Cleanup helper - call in beforeEach/afterAll
  * Deletes test data in reverse dependency order to avoid foreign key violations
@@ -117,7 +138,7 @@ export async function cleanupTestData(options?: { includeTestFixtures?: boolean 
  */
 const uniqueSuffix = () => crypto.randomUUID().replace(/-/g, "").slice(0, 8);
 
-export async function createTestUnit(overrides: Partial<unknown> = {}) {
+export async function createTestUnit(overrides: Partial<Tables["units"]["Insert"]> = {}) {
   const suffix = uniqueSuffix();
   const { data, error } = await testSupabaseAdmin
     .from("units")
@@ -148,7 +169,7 @@ export async function createTestUnit(overrides: Partial<unknown> = {}) {
 /**
  * Create test guest fixture
  */
-export async function createTestGuest(overrides: Partial<unknown> = {}) {
+export async function createTestGuest(overrides: Partial<Tables["guests"]["Insert"]> = {}) {
   const suffix = uniqueSuffix();
   const phoneDigits = String(parseInt(suffix, 16) % 100000000).padStart(8, "0");
   const { data, error } = await testSupabaseAdmin
@@ -174,10 +195,9 @@ export async function createTestGuest(overrides: Partial<unknown> = {}) {
  * Create test booking fixture
  * Uses the unified multi-unit pattern (via create_multi_unit_booking function)
  */
-export async function createTestBooking(overrides: Partial<unknown> = {}) {
-  const { guest: guestOverride, unit: unitOverride, ...bookingOverrides } = overrides;
-  const guest = guestOverride || (await createTestGuest());
-  const unit = unitOverride || (await createTestUnit());
+export async function createTestBooking(overrides: TestBookingOverrides = {}) {
+  const guest = overrides.guest || (await createTestGuest());
+  const unit = overrides.unit || (await createTestUnit());
 
   const checkIn = overrides.check_in || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 1 week from now
   const checkOut = overrides.check_out || new Date(checkIn.getTime() + 2 * 24 * 60 * 60 * 1000); // 2 days later
@@ -187,7 +207,7 @@ export async function createTestBooking(overrides: Partial<unknown> = {}) {
     p_booking_data: {
       booking_reference: overrides.booking_reference || `TB-${uniqueSuffix()}`,
       guest_name: guest.guest_name,
-      email: guest.email,
+      email: overrides.email || guest.email,
       contact_number: guest.phone_number,
       check_in: checkIn.toISOString(),
       check_out: checkOut.toISOString(),
@@ -195,7 +215,6 @@ export async function createTestBooking(overrides: Partial<unknown> = {}) {
       booking_status: overrides.booking_status || "Confirmed",
       payment_status: overrides.payment_status || "Pending",
       total_amount: overrides.total_amount || 5000,
-      ...bookingOverrides,
     },
     p_units: [
       {
