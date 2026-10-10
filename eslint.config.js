@@ -36,6 +36,12 @@ const utcDateSliceSelector = {
     "toISOString() is UTC, so before 08:00 Manila time it gives the previous day. From @/lib/timezone use toManilaDateString() for today or a timestamp, toISODateString() for a picked date, or toUTCDateString() when the key must follow UTC days (Cloudflare quotas).",
 };
 
+const dangerousHtmlSelector = {
+  selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+  message:
+    "React escapes rendered values; dangerouslySetInnerHTML skips that. Render text or elements instead. If raw HTML is unavoidable, sanitize it with sanitizeRichText from @/lib/security/sanitize and disable this line with the reason.",
+};
+
 // Type-aware rules need a TS program per file (~4x slower), so the per-edit hook, Stop hook
 // and pre-commit set ESLINT_TYPE_AWARE=off. CI, `npm run lint` and pre-push run them.
 const typeAware = process.env.ESLINT_TYPE_AWARE !== "off";
@@ -127,6 +133,7 @@ export default tseslint.config([
         metadataRoleSelector,
         untypedPayloadSelector,
         utcDateSliceSelector,
+        dangerousHtmlSelector,
       ],
 
       // Code style - very relaxed
@@ -258,6 +265,7 @@ export default tseslint.config([
         untypedPayloadSelector,
         silentCatchSelector,
         utcDateSliceSelector,
+        dangerousHtmlSelector,
       ],
     },
   },

@@ -118,6 +118,7 @@ function HomePage() {
       {/* Add structured data */}
       <script
         type="application/ld+json"
+        // eslint-disable-next-line no-restricted-syntax -- JSON-LD from the constant above, no user input
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
 
