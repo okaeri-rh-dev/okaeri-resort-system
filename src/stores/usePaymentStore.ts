@@ -340,7 +340,7 @@ export const useUpdatePayment = () => {
       updates: Partial<Omit<Payment, "payment_id" | "created_at">>;
       receiptFile?: File;
     }) => {
-      let proof_url = updates.proof_url || null;
+      let uploadedProofUrl: string | undefined;
 
       // Upload new receipt if provided
       if (receiptFile) {
@@ -353,7 +353,7 @@ export const useUpdatePayment = () => {
 
         if (payment && payment.booking_id) {
           const uploadedUrl = await uploadPaymentProof(receiptFile, payment.booking_id);
-          proof_url = uploadedUrl.url;
+          uploadedProofUrl = uploadedUrl.url;
         }
       }
 
@@ -361,7 +361,7 @@ export const useUpdatePayment = () => {
         .from("payments")
         .update({
           ...updates,
-          proof_url,
+          ...(uploadedProofUrl && { proof_url: uploadedProofUrl }),
         } satisfies TablesUpdate<"payments">)
         .eq("payment_id", paymentId)
         .select()
