@@ -16,10 +16,11 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { afterAll, describe, expect, test } from "vitest";
 
 import validMultiUnit from "../../tests/fixtures/bookings/valid-multi-unit.json";
 import validSingleUnit from "../../tests/fixtures/bookings/valid-single-unit.json";
+import type { DiscountRulesResponse, GuestBookingResponse, RatesResponse } from "./responses";
 
 const API_BASE = process.env.VITE_API_URL || "http://localhost:8788";
 const supabase = createClient(
@@ -54,7 +55,7 @@ describe("Guest Booking API Integration", () => {
       });
 
       expect(response.status).toBe(201);
-      const data = await response.json();
+      const data = (await response.json()) as GuestBookingResponse;
 
       expect(data.success).toBe(true);
       expect(data.booking).toBeDefined();
@@ -80,7 +81,7 @@ describe("Guest Booking API Integration", () => {
       });
 
       expect(response.status).toBe(201);
-      const data = await response.json();
+      const data = (await response.json()) as GuestBookingResponse;
 
       expect(data.success).toBe(true);
       expect(data.booking.is_multi_unit).toBe(false);
@@ -107,10 +108,10 @@ describe("Guest Booking API Integration", () => {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as GuestBookingResponse;
       expect(data.booking.discount_applied).toBeDefined();
-      expect(data.booking.discount_applied.percent).toBe(5); // Week stay discount
-      expect(data.booking.discount_applied.rule_name).toBe("Week Stay Discount");
+      expect(data.booking.discount_applied?.percent).toBe(5); // Week stay discount
+      expect(data.booking.discount_applied?.rule_name).toBe("Week Stay Discount");
 
       testBookingIds.push(data.booking.booking_id);
     });
@@ -127,7 +128,7 @@ describe("Guest Booking API Integration", () => {
       });
 
       expect(response.status).toBe(400);
-      const data = await response.json();
+      const data = (await response.json()) as GuestBookingResponse;
       expect(data.success).toBe(false);
       expect(data.error).toBeDefined();
       expect(data.details).toBeDefined();
@@ -153,7 +154,7 @@ describe("Guest Booking API Integration", () => {
       });
 
       expect(response.status).toBe(400);
-      const data = await response.json();
+      const data = (await response.json()) as GuestBookingResponse;
       expect(data.error).toContain("Maximum");
       expect(data.error).toContain("guests per unit");
     });
@@ -164,7 +165,7 @@ describe("Guest Booking API Integration", () => {
       const response = await fetch(`${API_BASE}/api/guest-booking/rates`);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as RatesResponse;
 
       expect(data.success).toBe(true);
       expect(data.rates).toBeDefined();
@@ -181,7 +182,7 @@ describe("Guest Booking API Integration", () => {
       const response = await fetch(`${API_BASE}/api/guest-booking/discount-rules`);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as DiscountRulesResponse;
 
       expect(data.success).toBe(true);
       expect(data.discount_rules).toBeDefined();

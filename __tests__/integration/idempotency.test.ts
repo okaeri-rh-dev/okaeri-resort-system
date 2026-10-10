@@ -14,6 +14,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { describe, expect, test } from "vitest";
 
+import type { GuestBookingResponse } from "./responses";
+
 const API_BASE = process.env.VITE_API_URL || "http://localhost:8788";
 
 // Use test database URL with fallback to local Supabase
@@ -49,7 +51,7 @@ describe("Idempotency and Concurrency", () => {
         body: JSON.stringify(bookingData),
       });
 
-      const data1 = await response1.json();
+      const data1 = (await response1.json()) as GuestBookingResponse;
       expect(response1.status).toBe(201);
       expect(data1.success).toBe(true);
 
@@ -64,7 +66,7 @@ describe("Idempotency and Concurrency", () => {
         }),
       });
 
-      const data2 = await response2.json();
+      const data2 = (await response2.json()) as GuestBookingResponse;
 
       // Should return existing booking (not create new one)
       expect(response2.status).toBe(200);
@@ -94,7 +96,7 @@ describe("Idempotency and Concurrency", () => {
         }),
       });
 
-      const data1 = await response1.json();
+      const data1 = (await response1.json()) as GuestBookingResponse;
 
       // Second booking with DIFFERENT key
       const response2 = await fetch(`${API_BASE}/api/guest-booking`, {
@@ -106,7 +108,7 @@ describe("Idempotency and Concurrency", () => {
         }),
       });
 
-      const data2 = await response2.json();
+      const data2 = (await response2.json()) as GuestBookingResponse;
 
       // Should create NEW booking
       expect(response2.status).toBe(201);

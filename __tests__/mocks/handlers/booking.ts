@@ -116,6 +116,8 @@ function calculatePricing(checkIn: string, checkOut: string, unitRequests: any[]
   };
 }
 
+export type MockPricing = ReturnType<typeof calculatePricing>;
+
 export const bookingHandlers = [
   // POST /api/guest-booking - Create booking
   http.post("http://localhost:8788/api/guest-booking", async ({ request }) => {

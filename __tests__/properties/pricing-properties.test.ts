@@ -8,7 +8,9 @@
  */
 
 import * as fc from "fast-check";
-import { describe, expect, test } from "vitest";
+import { describe, test } from "vitest";
+
+import type { PreviewPricingResponse } from "../integration/responses";
 
 const API_BASE = process.env.VITE_API_URL || "http://localhost:8788";
 
@@ -39,7 +41,7 @@ describe("Server-Side Pricing - Property-Based Tests", () => {
 
           if (response.status !== 200) return true; // Skip invalid inputs
 
-          const data = await response.json();
+          const data = (await response.json()) as PreviewPricingResponse;
           return data.pricing.total >= 0;
         }
       ),
@@ -73,7 +75,7 @@ describe("Server-Side Pricing - Property-Based Tests", () => {
 
           if (response.status !== 200) return true;
 
-          const data = await response.json();
+          const data = (await response.json()) as PreviewPricingResponse;
           const expected = Math.round(data.pricing.total * 0.5);
           return Math.abs(data.pricing.downpayment_required - expected) < 1; // Allow rounding difference
         }
@@ -108,7 +110,7 @@ describe("Server-Side Pricing - Property-Based Tests", () => {
 
           if (response.status !== 200) return true;
 
-          const data = await response.json();
+          const data = (await response.json()) as PreviewPricingResponse;
           const discountAmount = data.pricing.discount?.amount || 0;
           return discountAmount <= data.pricing.subtotal;
         }
@@ -158,8 +160,8 @@ describe("Server-Side Pricing - Property-Based Tests", () => {
 
           if (shortResponse.status !== 200 || longResponse.status !== 200) return true;
 
-          const shortData = await shortResponse.json();
-          const longData = await longResponse.json();
+          const shortData = (await shortResponse.json()) as PreviewPricingResponse;
+          const longData = (await longResponse.json()) as PreviewPricingResponse;
 
           // More nights should cost more (using subtotal to avoid discount effects)
           return longData.pricing.subtotal >= shortData.pricing.subtotal;

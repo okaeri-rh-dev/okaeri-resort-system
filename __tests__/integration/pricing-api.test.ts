@@ -10,6 +10,8 @@
 
 import { describe, expect, test } from "vitest";
 
+import type { PreviewPricingResponse } from "./responses";
+
 const API_BASE = process.env.VITE_API_URL || "http://localhost:8788";
 
 describe("Pricing API Integration", () => {
@@ -28,7 +30,7 @@ describe("Pricing API Integration", () => {
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as PreviewPricingResponse;
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -50,12 +52,12 @@ describe("Pricing API Integration", () => {
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as PreviewPricingResponse;
 
       expect(data.pricing.nights).toBe(7);
       expect(data.pricing.discount).toBeDefined();
-      expect(data.pricing.discount.percent).toBe(5);
-      expect(data.pricing.discount.rule_name).toBe("Week Stay Discount");
+      expect(data.pricing.discount?.percent).toBe(5);
+      expect(data.pricing.discount?.rule_name).toBe("Week Stay Discount");
     });
 
     test("applies 10% discount for 14-night stay", async () => {
@@ -69,10 +71,10 @@ describe("Pricing API Integration", () => {
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as PreviewPricingResponse;
 
-      expect(data.pricing.discount.percent).toBe(10);
-      expect(data.pricing.discount.rule_name).toBe("Two Week Discount");
+      expect(data.pricing.discount?.percent).toBe(10);
+      expect(data.pricing.discount?.rule_name).toBe("Two Week Discount");
     });
 
     test("NO discount for short stays (< 7 nights)", async () => {
@@ -92,7 +94,7 @@ describe("Pricing API Integration", () => {
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as PreviewPricingResponse;
 
       expect(data.pricing.discount).toBeNull();
     });
@@ -108,7 +110,7 @@ describe("Pricing API Integration", () => {
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as PreviewPricingResponse;
 
       expect(data.pricing.nights).toBe(2);
       expect(data.pricing.weekend_surcharge).toBeGreaterThan(0);
@@ -128,7 +130,7 @@ describe("Pricing API Integration", () => {
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as PreviewPricingResponse;
 
       expect(data.pricing.extra_person_fees).toBeGreaterThan(0);
     });
@@ -144,7 +146,7 @@ describe("Pricing API Integration", () => {
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as PreviewPricingResponse;
 
       expect(data.pricing.nights).toBe(1);
       expect(data.pricing.base_total).toBeGreaterThan(0);
@@ -161,7 +163,7 @@ describe("Pricing API Integration", () => {
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as PreviewPricingResponse;
 
       expect(data.pricing.total_units).toBe(10);
       expect(data.pricing.base_total).toBeGreaterThan(0);
@@ -193,7 +195,7 @@ describe("Pricing API Integration", () => {
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as PreviewPricingResponse;
 
       // Verify rates structure exists (from pricing_config table)
       expect(data.pricing.rates).toBeDefined();

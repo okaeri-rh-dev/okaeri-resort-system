@@ -8,6 +8,8 @@
 
 import { describe, expect, test } from "vitest";
 
+import type { GuestBookingResponse } from "./responses";
+
 const API_BASE = process.env.VITE_API_URL || "http://localhost:8788";
 
 describe("API Backward Compatibility", () => {
@@ -32,7 +34,7 @@ describe("API Backward Compatibility", () => {
       body: JSON.stringify(legacyPayload),
     });
 
-    const data = await response.json();
+    const data = (await response.json()) as GuestBookingResponse;
 
     expect(response.ok).toBe(true);
     expect(data.success).toBe(true);
@@ -63,7 +65,7 @@ describe("API Backward Compatibility", () => {
       body: JSON.stringify(multiUnitPayload),
     });
 
-    const data = await response.json();
+    const data = (await response.json()) as GuestBookingResponse;
 
     expect(response.ok).toBe(true);
     expect(data.success).toBe(true);

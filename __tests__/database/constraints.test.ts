@@ -14,10 +14,10 @@
  * @vitest-environment node
  */
 
-import { randomUUID } from "crypto";
-
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeAll, describe, expect, test } from "vitest";
+
+import type { Database } from "@/types/database.types";
 
 import {
   cleanupTestBookings,
@@ -27,7 +27,7 @@ import {
 } from "./helpers";
 
 describe("Database Constraint Tests", () => {
-  let supabase: ReturnType<typeof createClient>;
+  let supabase: SupabaseClient<Database>;
   const testBookingIds: string[] = [];
   const testUnitIds: string[] = [];
 
@@ -41,7 +41,7 @@ describe("Database Constraint Tests", () => {
       process.env.SUPABASE_SERVICE_ROLE_KEY ||
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU";
 
-    supabase = createClient(TEST_SUPABASE_URL, TEST_SERVICE_KEY);
+    supabase = createClient<Database>(TEST_SUPABASE_URL, TEST_SERVICE_KEY);
   });
 
   afterEach(async () => {
