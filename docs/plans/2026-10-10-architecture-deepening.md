@@ -29,8 +29,32 @@ Source: architecture review run 2026-10-10 (`/improve-codebase-architecture`), s
 
 - [x] Grill the design (constraints, seam, what tests survive). Rounds 1-3 settled 2026-10-10 (see Decisions); `GLOSSARY.md` started
 - [x] 1a. (`53cac1d`) `fix:` `useUpdatePayment` nulls `proof_url` when the edit sends none
-- [ ] 1b. Migration: booking payment status trigger on `payments` + `bookings.total_amount`, backfill; DB tests (local)
-- [ ] 1c. Read-only prod diff of statuses the backfill would change → user reviews → user runs `db push` → confirm trigger in prod `pg_trigger`
+- [x] 1b. (`073cf4a`) Migration `20261010120000_derive_booking_payment_status.sql`: booking payment status trigger on `payments` + `bookings.total_amount`, backfill; DB tests (local)
+- [ ] 1c. Read-only prod diff of statuses the backfill would change → user reviews → user runs `db push` → confirm trigger in prod `pg_trigger`. Diff query (run in the Supabase SQL editor; reads only):
+
+  ```sql
+  SELECT b.booking_reference, b.payment_status AS current_status, d.derived_status,
+         b.total_amount, paid.active_total, paid.refunded_count
+  FROM public.bookings b
+  CROSS JOIN LATERAL (
+    SELECT COALESCE(SUM(p.amount) FILTER (WHERE p.status = 'Active'), 0) AS active_total,
+           COUNT(*) FILTER (WHERE p.status = 'Refunded') AS refunded_count
+    FROM public.payments p WHERE p.booking_id = b.booking_id
+  ) paid
+  CROSS JOIN LATERAL (
+    SELECT CASE
+      WHEN paid.active_total = 0 AND paid.refunded_count > 0 THEN 'Refunded'
+      WHEN paid.active_total = 0 THEN 'Pending'
+      WHEN paid.active_total < b.total_amount THEN 'Partial'
+      ELSE 'Completed'
+    END AS derived_status
+  ) d
+  WHERE b.payment_status IS DISTINCT FROM d.derived_status
+  ORDER BY b.check_in;
+  ```
+
+  After review: `supabase db push`, then confirm with `SELECT tgname FROM pg_trigger WHERE tgname IN ('refresh_booking_payment_status', 'refresh_payment_status_on_total_change');` (2 rows).
+
 - [ ] 1d. `src/lib/payments/` module (`createPayment`, `updatePayment`, `softDeletePayment`, `appendVerificationNote`; proof upload; `payment_date` at Manila 12:00) + DB tests; hooks become adapters owning invalidation; delete client status recompute, hard delete from the UI, the store's optimistic map/`selectedPayment`, the `useEntityEdit` payment branch and its mock tests; `paymentEditSchema` uses column names; booking-table proof upload records the outstanding balance. Gated: do not deploy before 1c
 - [ ] One booking-date convention (Manila day at 15:00 check-in / 11:00 check-out) owned by the booking persistence module; move `BookingForm`, `MultiUnitBookingForm` (create + availability, lines 148/282/296) and `toBookingUpdate` onto it; decide whether prod rows stored at local midnight need a correction migration
 - [ ] Then 4 → 6 on the client; 3 → 2 → 8 on the server
