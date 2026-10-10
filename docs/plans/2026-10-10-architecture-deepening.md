@@ -17,7 +17,7 @@ Source: architecture review run 2026-10-10 (`/improve-codebase-architecture`), s
 
 ### Phase 0: bugs found in passing (one `fix:` commit each)
 
-Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub Actions did not start any job ("recent account payments have failed or your spending limit needs to be increased"), so the deploy (gated on CI) has not run. Last deployed commit: `4e2abb1`. Re-run the workflows once billing is fixed.
+Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub Actions did not start any job ("recent account payments have failed or your spending limit needs to be increased"), so the deploy (gated on CI) has not run. Last deployed commit: `4e2abb1`. Re-run the workflows once billing is fixed. Cause found 2026-10-10: `okaeri-rh-dev` used 2,000/2,000 included Actions minutes with a $0 Actions budget (stop usage on); resets in 22 days (Nov 1).
 
 - [x] (`8d7a838`) Offline multi-unit booking creates are queued then dropped on reconnect: delete offline queuing, fail loudly when offline
 - [x] (`05baf35`) `BookingEdit` sends `payment_amount` (not a bookings column) and `toISOString()` dates. Fixed via `toBookingUpdate` (row-type checked, dates via `formDateToUTC` at check-in/out times like `BookingForm`); the payment amount field is removed (payments have their own page)
@@ -114,3 +114,6 @@ Candidate 1 grilling, round 3 (2026-10-10):
 - **Proof stays optional on every payment (cash has none); the module only writes `proof_url` when a file is uploaded or the caller sets it.** Why: user check 2026-10-10. Revisit: n/a.
 - **ADR 0001 records that booking payment status is derived in the database.** Revisit: n/a.
 - **Booking-table proof upload accepts PNG/JPEG only, like `PaymentForm`.** Why: the shared payment-proof validator is image-only. Revisit: if guests send PDF receipts.
+- **No Actions budget; wait for the Nov 1 reset and cut usage instead.** Why: user preference (2026-10-10). Revisit: if usage still exceeds 2,000 min/month after the trim.
+- **Manual deploy of `ffc8927` run by the user, from a clean worktree with only `.env.production`.** Why: prod had the trigger but the old client overwrote `payment_status`; CI could not run. The bash guard blocks agent deploys, so the user runs `wrangler pages deploy`. Rollback: production deployment `0765f99b` (`4e2abb1`). Revisit: n/a.
+- **CI trim: Security Scan on PRs + weekly only; infra-health `health` job (duplicate lint/unit) skipped on push; deploy and infra-health skip docs-only pushes.** Why: Security Scan (90 runs) and duplicates of the quality gate used most of October's minutes. Revisit: Nov 1 usage.
