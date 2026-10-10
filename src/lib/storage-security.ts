@@ -1,3 +1,7 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import type { Database } from "@/types/database.types";
+
 import { supabase } from "./supabase";
 
 /**
@@ -119,7 +123,8 @@ export function formatFileSize(bytes: number): string {
  */
 export async function uploadPaymentProof(
   file: File,
-  bookingId: string
+  bookingId: string,
+  client: SupabaseClient<Database> = supabase
 ): Promise<{ path: string; url: string }> {
   // Perform all validations
   validateFileSize(file);
@@ -129,7 +134,7 @@ export async function uploadPaymentProof(
   const filePath = generateSecureFilePath(file, "payment-proofs", `bookings/${bookingId}`);
 
   // Upload to Supabase Storage
-  const { data, error } = await supabase.storage.from("payment-proofs").upload(filePath, file, {
+  const { data, error } = await client.storage.from("payment-proofs").upload(filePath, file, {
     cacheControl: "3600",
     upsert: false, // Prevent overwriting existing files
     contentType: file.type,
@@ -145,7 +150,7 @@ export async function uploadPaymentProof(
   // Get public URL (requires proper bucket policies)
   const {
     data: { publicUrl },
-  } = supabase.storage.from("payment-proofs").getPublicUrl(filePath);
+  } = client.storage.from("payment-proofs").getPublicUrl(filePath);
 
   return {
     path: data.path,
