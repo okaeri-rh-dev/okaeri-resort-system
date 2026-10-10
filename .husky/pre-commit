@@ -25,14 +25,14 @@ fi
 # Phase 1: Run core checks in parallel; any failure blocks the commit
 # - lint-staged: Format staged files with Prettier (~1-2s)
 # - types: tsc must report zero errors for src, functions, e2e and the tests in src/ and __tests__/ (incremental)
-# - lint: ESLint errors block; warnings do not (cached, ~1s warm; type-aware rules run in pre-push/CI)
+# - lint: ESLint errors and warnings block (cached, ~1s warm; type-aware rules run in pre-push/CI)
 npx concurrently \
   --kill-others-on-fail \
   --names "format,types,lint" \
   --prefix-colors "cyan,yellow,magenta" \
   "npx lint-staged" \
   "npx tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/tsc-precommit.tsbuildinfo && npx tsc --noEmit --incremental -p functions/tsconfig.json && npx tsc --noEmit --incremental -p tsconfig.e2e.json && npx tsc --noEmit --incremental -p tsconfig.tests.json" \
-  "ESLINT_TYPE_AWARE=off npx eslint . --cache --cache-location .eslintcache"
+  "ESLINT_TYPE_AWARE=off npx eslint . --cache --cache-location .eslintcache --max-warnings 0"
 
 # Phase 2: Quick sequential checks (lightweight, ~1s total)
 echo ""

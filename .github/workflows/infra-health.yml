@@ -18,7 +18,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Lint
-        run: npx eslint . --ext .js,.jsx,.ts,.tsx
+        run: npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0
       - name: Migration filename lint
         run: |
           bad=$(ls supabase/migrations | grep -Ev '^[0-9]{14}_' || true)

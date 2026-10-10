@@ -25,7 +25,7 @@
     "generate:routes": "node scripts/generate-routes.mjs",
     "health-check": "bash scripts/health-check.sh",
     "knip": "knip",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "preflight:e2e": "tsx scripts/e2e/preflight.ts",
     "prepare": "husky",

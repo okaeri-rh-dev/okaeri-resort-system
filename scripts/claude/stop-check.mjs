@@ -52,6 +52,8 @@ const failures = [
     "--cache-location",
     ".eslintcache",
     "--no-warn-ignored",
+    "--max-warnings",
+    "0",
     ...changed,
   ]),
   run("npx", [
@@ -63,6 +65,7 @@ const failures = [
   ]),
   run("npx", ["tsc", "--noEmit", "--incremental", "-p", "functions/tsconfig.json"]),
   run("npx", ["tsc", "--noEmit", "--incremental", "-p", "tsconfig.e2e.json"]),
+  run("npx", ["tsc", "--noEmit", "--incremental", "-p", "tsconfig.tests.json"]),
 ]
   .filter(Boolean)
   .join("\n");

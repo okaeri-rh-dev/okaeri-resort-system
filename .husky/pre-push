@@ -22,7 +22,7 @@ npx concurrently \
   --kill-others-on-fail \
   --names "lint,unit" \
   --prefix-colors "yellow,cyan" \
-  "npx eslint . --ext .js,.jsx,.ts,.tsx" \
+  "npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0" \
   "npx vitest run --exclude 'src/__tests__/database/**' --exclude '__tests__/database/**' --exclude 'src/__tests__/performance/multi-unit-availability.test.ts' --fileParallelism --poolOptions.threads.maxThreads=8"
 
 echo "${GREEN}✅ Pre-push checks passed. DB/E2E suites run in CI and manually (see comments above).${NC}"
