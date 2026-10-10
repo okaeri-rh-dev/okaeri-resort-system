@@ -18,12 +18,12 @@ Source: architecture review run 2026-10-10 (`/improve-codebase-architecture`), s
 ### Phase 0: bugs found in passing (one `fix:` commit each)
 
 - [x] (`8d7a838`) Offline multi-unit booking creates are queued then dropped on reconnect: delete offline queuing, fail loudly when offline
-- [x] `BookingEdit` sends `payment_amount` (not a bookings column) and `toISOString()` dates. Fixed via `toBookingUpdate` (row-type checked, dates via `formDateToUTC` at check-in/out times like `BookingForm`); the payment amount field is removed (payments have their own page)
-- [ ] New: `MultiUnitBookingForm.tsx:282,296` also sends `toISOString()` of the picked local midnight; SQL compares `check_in::date` in UTC, so Manila picks land a day early unless the server normalizes. Verify, then align with `formDateToUTC`
-- [ ] Payment and expense mutations do not invalidate account balances
-- [ ] RLS lets staff write `bookings.payment_status`; restrict to manager+ with a DB test (prod `db push` by the user)
-- [ ] `bookings/multi-unit` accepts the client total when the server total ≤ 0: return 422
-- [ ] `invalidateDashboard()` targets `["dashboard-stats"]`, which nothing reads
+- [x] (`05baf35`) `BookingEdit` sends `payment_amount` (not a bookings column) and `toISOString()` dates. Fixed via `toBookingUpdate` (row-type checked, dates via `formDateToUTC` at check-in/out times like `BookingForm`); the payment amount field is removed (payments have their own page)
+- [ ] New: `MultiUnitBookingForm.tsx:282,296` also sends `toISOString()` of the picked local midnight. Verified 2026-10-10: `create_multi_unit_booking` casts straight to `TIMESTAMPTZ`, so multi-unit rows are stored at 16:00Z the day before and `check_in::date` (UTC) reads a day early. Not a one-line fix: the form also checks availability with midnight times (line 148) while `BookingForm` stores 15:00/11:00, so the DB already holds two conventions; existing prod rows stay shifted. Pending decision
+- [x] (`743c102`) Payment and expense mutations do not invalidate account balances (`invalidateAccounts`, new `afterExpenseChange`, `useEntityEdit` for payment/expense)
+- [ ] RLS lets staff write `bookings.payment_status`; restrict to manager+ with a DB test (prod `db push` by the user). Blocked 2026-10-10: staff legitimately write it when recording a payment (`usePaymentStore.ts:297` recomputes Pending/Partial/Completed in the browser; `payments_insert_staff`) and on proof upload (`useBookingStore.ts:622`). A plain restriction breaks staff payment recording. Pending decision
+- [x] (`2467e32`) `bookings/multi-unit` accepts the client total when the server total ≤ 0: return 422 `PRICING_UNAVAILABLE`
+- [x] (`528e2b1`) `invalidateDashboard()` targets `["dashboard-stats"]`, which nothing reads (dashboard reads `useBookings`, already invalidated); helper deleted
 
 ### Phase 1: Candidate 1 (Payment first)
 
