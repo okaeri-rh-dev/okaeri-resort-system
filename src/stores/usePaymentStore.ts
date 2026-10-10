@@ -151,19 +151,11 @@ const paymentListQuery = ({
         query = query.lte("payment_date", filters.dateTo);
       }
 
-      // Apply search
-      if (searchQuery) {
-        query = query.or(`
-          notes.ilike.%${searchQuery}%,
-          reference_number.ilike.%${searchQuery}%
-        `);
-      }
-
       // Apply sorting
       const column = {
         date: "payment_date",
         amount: "amount",
-        status: "payment_status",
+        status: "status",
         booking: "booking_id",
       }[sortBy];
 
@@ -172,7 +164,14 @@ const paymentListQuery = ({
       const { data, error } = await query;
       if (error) throw new Error(handleSupabaseError(error));
 
-      return data || [];
+      const search = searchQuery.trim().toLowerCase();
+      if (!search) return data || [];
+
+      return (data || []).filter((payment) =>
+        [payment.notes, payment.booking?.booking_reference, payment.booking?.guest_name].some(
+          (field) => field?.toLowerCase().includes(search)
+        )
+      );
     },
     staleTime: 60000, // 1 minute
     refetchOnWindowFocus: true,
