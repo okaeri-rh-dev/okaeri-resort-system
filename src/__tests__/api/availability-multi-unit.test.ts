@@ -77,7 +77,7 @@ describe("GET /api/availability/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestGet(context as unknown);
+    const response = await onRequestGet(context as never);
 
     expect(response.status).toBe(200);
     const data = (await response.json()) as AvailabilityResponse;
@@ -130,7 +130,7 @@ describe("GET /api/availability/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestGet(context as unknown);
+    const response = await onRequestGet(context as never);
 
     expect(response.status).toBe(200);
     const data = (await response.json()) as AvailabilityResponse;
@@ -169,7 +169,7 @@ describe("GET /api/availability/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestGet(context as unknown);
+    const response = await onRequestGet(context as never);
 
     const data = (await response.json()) as AvailabilityResponse;
     expect(data.data.results[0].is_available).toBe(false);
@@ -192,7 +192,7 @@ describe("GET /api/availability/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestGet(context as unknown);
+    const response = await onRequestGet(context as never);
 
     expect(response.status).toBe(200);
     // Verify RPC was called with exclude param
@@ -211,7 +211,7 @@ describe("GET /api/availability/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestGet(context as unknown);
+    const response = await onRequestGet(context as never);
 
     const data = (await response.json()) as AvailabilityResponse;
     const result = data.data.results[0];
@@ -233,7 +233,7 @@ describe("GET /api/availability/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestGet(context as unknown);
+    const response = await onRequestGet(context as never);
 
     expect(response.headers.has("X-Processing-Time")).toBe(true);
     expect(response.headers.get("X-Processing-Time")).toMatch(/\d+ms/);
@@ -251,7 +251,7 @@ describe("GET /api/availability/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestGet(context as unknown);
+    const response = await onRequestGet(context as never);
 
     expect(response.headers.get("Cache-Control")).toContain("max-age=60");
   });
@@ -269,7 +269,7 @@ describe("GET /api/availability/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestGet(context as unknown);
+    const response = await onRequestGet(context as never);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ApiErrorResponse;
@@ -288,7 +288,7 @@ describe("GET /api/availability/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestGet(context as unknown);
+    const response = await onRequestGet(context as never);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ApiErrorResponse;
@@ -307,7 +307,7 @@ describe("GET /api/availability/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestGet(context as unknown);
+    const response = await onRequestGet(context as never);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ApiErrorResponse;
@@ -327,7 +327,7 @@ describe("GET /api/availability/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestGet(context as unknown);
+    const response = await onRequestGet(context as never);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ApiErrorResponse;
@@ -346,7 +346,7 @@ describe("GET /api/availability/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestGet(context as unknown);
+    const response = await onRequestGet(context as never);
 
     expect(response.status).toBe(400);
     const data = (await response.json()) as ApiErrorResponse;
@@ -380,7 +380,7 @@ describe("GET /api/availability/multi-unit", () => {
     });
 
     const context = createMockContext(request, mockEnv);
-    const response = await onRequestGet(context as unknown);
+    const response = await onRequestGet(context as never);
 
     expect(response.status).toBe(500);
     const data = (await response.json()) as ApiErrorResponse;

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { onRequest } from "../../../../functions/api/pricing/calculate";
+import type { PricingCalculationResponse } from "../types/responses";
 
 // Mock environment
 const mockEnv = {
@@ -145,7 +146,7 @@ describe("Pricing Calculate API", () => {
     };
 
     const response = await onRequest({ request: mockRequest, env: mockEnv });
-    const data = await response.json();
+    const data = (await response.json()) as PricingCalculationResponse;
 
     expect(response.status).toBe(405);
     expect(data.error).toBe("METHOD_NOT_ALLOWED");
@@ -163,7 +164,7 @@ describe("Pricing Calculate API", () => {
     };
 
     const response = await onRequest({ request: mockRequest, env: mockEnv });
-    const data = await response.json();
+    const data = (await response.json()) as PricingCalculationResponse;
 
     expect(response.status).toBe(400);
     expect(data.error).toBe("VALIDATION_ERROR");
@@ -187,7 +188,7 @@ describe("Pricing Calculate API", () => {
     };
 
     const response = await onRequest({ request: mockRequest, env: mockEnv });
-    const data = await response.json();
+    const data = (await response.json()) as PricingCalculationResponse;
 
     expect(response.status).toBe(400);
     expect(data.error).toBe("VALIDATION_ERROR");
@@ -212,7 +213,7 @@ describe("Pricing Calculate API", () => {
     };
 
     const response = await onRequest({ request: mockRequest, env: mockEnv });
-    const data = await response.json();
+    const data = (await response.json()) as PricingCalculationResponse;
 
     if (response.status !== 200) {
       console.error("Response error:", data);
@@ -249,7 +250,7 @@ describe("Pricing Calculate API", () => {
     };
 
     const response = await onRequest({ request: mockRequest, env: mockEnv });
-    const data = await response.json();
+    const data = (await response.json()) as PricingCalculationResponse;
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
@@ -282,7 +283,7 @@ describe("Pricing Calculate API", () => {
     };
 
     const response = await onRequest({ request: mockRequest, env: mockEnv });
-    const data = await response.json();
+    const data = (await response.json()) as PricingCalculationResponse;
 
     expect(response.status).toBe(429);
     expect(data.error).toBe("RATE_LIMIT_EXCEEDED");
@@ -319,7 +320,7 @@ describe("Pricing Calculate API", () => {
     };
 
     const response = await onRequest({ request: mockRequest, env: mockEnv });
-    const data = await response.json();
+    const data = (await response.json()) as PricingCalculationResponse;
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
@@ -347,7 +348,7 @@ describe("Pricing Calculate API", () => {
     };
 
     const response = await onRequest({ request: mockRequest, env: mockEnv });
-    const data = await response.json();
+    const data = (await response.json()) as PricingCalculationResponse;
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
@@ -368,7 +369,7 @@ describe("Pricing Calculate API", () => {
     };
 
     const response = await onRequest({ request: mockRequest, env: mockEnv });
-    const data = await response.json();
+    const data = (await response.json()) as PricingCalculationResponse;
 
     expect(response.status).toBe(400);
     expect(data.error).toBe("VALIDATION_ERROR");
@@ -392,7 +393,7 @@ describe("Pricing Calculate API", () => {
     };
 
     const response = await onRequest({ request: mockRequest, env: mockEnv });
-    const data = await response.json();
+    const data = (await response.json()) as PricingCalculationResponse;
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);

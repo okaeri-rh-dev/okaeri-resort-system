@@ -41,6 +41,27 @@ export interface AvailabilityResponse {
 }
 
 // ============================================================
+// PRICING API RESPONSES
+// ============================================================
+
+/**
+ * POST /api/pricing/calculate
+ * `pricing` is set on success; `error`/`errors` on failure
+ */
+export interface PricingCalculationResponse {
+  success: boolean;
+  pricing: {
+    units?: unknown[];
+    total: number;
+    downpayment: number;
+  };
+  notice?: string | null;
+  cached?: boolean;
+  error?: string;
+  errors?: unknown;
+}
+
+// ============================================================
 // BOOKING API RESPONSES
 // ============================================================
 

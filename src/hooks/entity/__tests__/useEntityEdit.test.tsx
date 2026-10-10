@@ -12,15 +12,15 @@ import { db } from "@/lib/supabase";
 
 import { useEntityEdit } from "../useEntityEdit";
 
-// Helper to create Postgrest success response
-function createSuccessResponse<T>(data: T): PostgrestSingleResponse<T> {
+// Mock rows use the app types, which differ from the generated row types the db helpers return
+function createSuccessResponse<T>(data: T) {
   return {
     data,
     error: null,
     count: null,
     status: 200,
     statusText: "OK",
-  };
+  } as PostgrestSingleResponse<never>;
 }
 
 // Helper to create Postgrest error response
@@ -241,11 +241,11 @@ describe("useEntityEdit", () => {
       queryClient.setQueryData(queryKeys.entity("booking", entityId), initialData);
 
       // Delay the API response
-      let resolvePromise: unknown;
+      let resolvePromise: (value: unknown) => void = () => {};
       const delayedPromise = new Promise<unknown>((resolve) => {
         resolvePromise = resolve;
       });
-      vi.mocked(db.bookings.update).mockReturnValue(delayedPromise as unknown);
+      vi.mocked(db.bookings.update).mockReturnValue(delayedPromise as never);
 
       // Resolve after 100ms
       setTimeout(() => {
@@ -534,7 +534,7 @@ describe("useEntityEdit", () => {
       });
 
       act(() => {
-        result.current.mutate(updateData);
+        result.current.mutate(updateData as never);
       });
 
       await waitFor(() => {
