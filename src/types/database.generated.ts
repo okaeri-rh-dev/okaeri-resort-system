@@ -1435,6 +1435,7 @@ export type Database = {
         Args: { p_booking_data: Json; p_guest_id?: string; p_units: Json[] };
         Returns: string;
       };
+      derive_booking_payment_status: { Args: { p_booking_id: string }; Returns: string };
       detach_audit_trigger: { Args: { p_table_name: string }; Returns: undefined };
       generate_booking_reference: { Args: Record<PropertyKey, never>; Returns: string };
       generate_transfer_reference: { Args: Record<PropertyKey, never>; Returns: string };
@@ -1520,6 +1521,7 @@ export type Database = {
               logs_archived: number;
             }[];
           };
+      refresh_booking_payment_status: { Args: { p_booking_id: string }; Returns: undefined };
       restore_logs_from_archive:
         | { Args: { p_archive_month: string }; Returns: number }
         | { Args: { end_date: string; start_date: string }; Returns: number };
