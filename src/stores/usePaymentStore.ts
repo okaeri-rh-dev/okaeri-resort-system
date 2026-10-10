@@ -1,14 +1,20 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
-import { afterBookingPaymentChange, invalidatePayments } from "@/lib/query-invalidation";
+import {
+  appendVerificationNote,
+  createPayment,
+  softDeletePayment,
+  updatePayment,
+  type PaymentChanges,
+  type PaymentInput,
+} from "@/lib/payments";
+import { afterBookingPaymentChange } from "@/lib/query-invalidation";
 import { paymentKeys } from "@/lib/query-keys";
-import { uploadPaymentProof } from "@/lib/storage-security";
-import { handleSupabaseError, supabase } from "@/lib/supabase";
+import { handleSupabaseError, supabase, supabaseAuth } from "@/lib/supabase";
 import { toManilaDateString } from "@/lib/timezone";
-import type { Payment, PaymentMethod, PaymentStatus } from "@/types";
-import type { TablesInsert, TablesUpdate } from "@/types/database.types";
+import type { PaymentMethod, PaymentStatus } from "@/types";
 
 // ============================================
 // ZUSTAND STORE
@@ -21,43 +27,26 @@ interface PaymentFilters {
 }
 
 interface PaymentStore {
-  // Local state
-  selectedPayment: Payment | null;
   filters: PaymentFilters;
   searchQuery: string;
   sortBy: "date" | "amount" | "status" | "booking";
   sortOrder: "asc" | "desc";
 
-  // Actions
-  setSelectedPayment: (payment: Payment | null) => void;
   setFilters: (filters: PaymentFilters) => void;
   resetFilters: () => void;
   setSearchQuery: (query: string) => void;
   setSortBy: (sortBy: "date" | "amount" | "status" | "booking") => void;
   setSortOrder: (order: "asc" | "desc") => void;
-
-  // Optimistic updates
-  optimisticPayments: Map<string, Payment>;
-  addOptimisticPayment: (payment: Payment) => void;
-  updateOptimisticPayment: (paymentId: string, updates: Partial<Payment>) => void;
-  removeOptimisticPayment: (paymentId: string) => void;
-  clearOptimisticPayments: () => void;
 }
 
 export const usePaymentStore = create<PaymentStore>()(
   devtools(
     persist(
       (set) => ({
-        // Initial state
-        selectedPayment: null,
         filters: {},
         searchQuery: "",
         sortBy: "date",
         sortOrder: "desc",
-        optimisticPayments: new Map(),
-
-        // Actions
-        setSelectedPayment: (payment) => set({ selectedPayment: payment }),
 
         setFilters: (filters) => set({ filters }),
 
@@ -68,32 +57,6 @@ export const usePaymentStore = create<PaymentStore>()(
         setSortBy: (sortBy) => set({ sortBy }),
 
         setSortOrder: (order) => set({ sortOrder: order }),
-
-        addOptimisticPayment: (payment) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticPayments);
-            newMap.set(payment.payment_id, payment);
-            return { optimisticPayments: newMap };
-          }),
-
-        updateOptimisticPayment: (paymentId, updates) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticPayments);
-            const existing = newMap.get(paymentId);
-            if (existing) {
-              newMap.set(paymentId, { ...existing, ...updates });
-            }
-            return { optimisticPayments: newMap };
-          }),
-
-        removeOptimisticPayment: (paymentId) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticPayments);
-            newMap.delete(paymentId);
-            return { optimisticPayments: newMap };
-          }),
-
-        clearOptimisticPayments: () => set({ optimisticPayments: new Map() }),
       }),
       {
         name: "payment-store",
@@ -221,265 +184,53 @@ export const usePayments = () => {
   return useQuery(paymentListQuery({ filters, searchQuery, sortBy, sortOrder }));
 };
 
-// Fetch single payment
+// Mutations go through the Payment module; the database derives the booking's payment status.
 
-// Fetch payments for a booking
-
-// Create payment
-export const useCreatePayment = () => {
-  const queryClient = useQueryClient();
-  const addOptimistic = usePaymentStore((state) => state.addOptimisticPayment);
-
-  return useMutation({
-    mutationFn: async ({
-      data,
-      receiptFile,
-    }: {
-      data: Omit<Payment, "payment_id" | "created_at">;
-      receiptFile?: File;
-    }) => {
-      let receipt_url = data.proof_url || null;
-
-      // Upload receipt if provided
-      if (receiptFile && data.booking_id) {
-        const uploadedUrl = await uploadPaymentProof(receiptFile, data.booking_id);
-        receipt_url = uploadedUrl.url;
-      }
-
-      const { data: newPayment, error } = await supabase
-        .from("payments")
-        .insert({
-          booking_id: data.booking_id,
-          amount: data.amount,
-          payment_method: data.payment_method || "Cash",
-          payment_date: data.payment_date,
-          proof_url: receipt_url,
-          notes: data.notes || null,
-        } satisfies TablesInsert<"payments">)
-        .select()
-        .single();
-
-      if (error) throw new Error(handleSupabaseError(error));
-
-      // Update booking payment status if needed
-      let bookingPayments = null;
-      if (data.booking_id) {
-        const { data: payments } = await supabase
-          .from("payments")
-          .select("amount")
-          .eq("booking_id", data.booking_id);
-        bookingPayments = payments;
-      }
-
-      const totalPaid = bookingPayments?.reduce((sum, p) => sum + p.amount, 0) || 0;
-
-      let booking = null;
-      if (data.booking_id) {
-        const { data: bookingData } = await supabase
-          .from("bookings")
-          .select("total_amount")
-          .eq("booking_id", data.booking_id)
-          .single();
-        booking = bookingData;
-      }
-
-      if (booking) {
-        let paymentStatus: PaymentStatus = "Pending";
-        if (totalPaid >= booking.total_amount) {
-          paymentStatus = "Completed";
-        } else if (totalPaid > 0) {
-          paymentStatus = "Partial";
-        }
-
-        if (data.booking_id) {
-          await supabase
-            .from("bookings")
-            .update({ payment_status: paymentStatus } satisfies TablesUpdate<"bookings">)
-            .eq("booking_id", data.booking_id);
-        }
-      }
-
-      return newPayment;
-    },
-    onMutate: async ({ data }) => {
-      await queryClient.cancelQueries({ queryKey: paymentKeys.all });
-
-      const optimisticPayment: Payment = {
-        ...data,
-        payment_id: `temp-${Date.now()}`,
-        created_at: new Date().toISOString(),
-      };
-
-      addOptimistic(optimisticPayment);
-
-      return { optimisticPayment };
-    },
-    onError: (_, __, context) => {
-      if (context?.optimisticPayment) {
-        usePaymentStore.getState().removeOptimisticPayment(context.optimisticPayment.payment_id);
-      }
-    },
+export const useCreatePayment = () =>
+  useMutation({
+    mutationFn: ({ input, receiptFile }: { input: PaymentInput; receiptFile?: File }) =>
+      createPayment(supabase, input, receiptFile),
     onSettled: () => {
       afterBookingPaymentChange();
     },
   });
-};
 
-// Update payment
-export const useUpdatePayment = () => {
-  const queryClient = useQueryClient();
-  const updateOptimistic = usePaymentStore((state) => state.updateOptimisticPayment);
-
-  return useMutation({
-    mutationFn: async ({
+export const useUpdatePayment = () =>
+  useMutation({
+    mutationFn: ({
       paymentId,
-      updates,
+      changes,
       receiptFile,
     }: {
       paymentId: string;
-      updates: Partial<Omit<Payment, "payment_id" | "created_at">>;
+      changes: PaymentChanges;
       receiptFile?: File;
-    }) => {
-      let uploadedProofUrl: string | undefined;
-
-      // Upload new receipt if provided
-      if (receiptFile) {
-        // Get booking_id for the payment to use in upload path
-        const { data: payment } = await supabase
-          .from("payments")
-          .select("booking_id")
-          .eq("payment_id", paymentId)
-          .single();
-
-        if (payment && payment.booking_id) {
-          const uploadedUrl = await uploadPaymentProof(receiptFile, payment.booking_id);
-          uploadedProofUrl = uploadedUrl.url;
-        }
-      }
-
-      const { data, error } = await supabase
-        .from("payments")
-        .update({
-          ...updates,
-          ...(uploadedProofUrl && { proof_url: uploadedProofUrl }),
-        } satisfies TablesUpdate<"payments">)
-        .eq("payment_id", paymentId)
-        .select()
-        .single();
-
-      if (error) throw new Error(handleSupabaseError(error));
-      return data;
+    }) => updatePayment(supabase, paymentId, changes, receiptFile),
+    onSettled: () => {
+      afterBookingPaymentChange();
     },
-    onMutate: async ({ paymentId, updates }) => {
-      await queryClient.cancelQueries({ queryKey: paymentKeys.all });
+  });
 
-      const previousPayment = queryClient.getQueryData<Payment>(paymentKeys.detail(paymentId));
-
-      updateOptimistic(paymentId, updates);
-
-      return { previousPayment };
+export const useSoftDeletePayment = () =>
+  useMutation({
+    mutationFn: (paymentId: string) => softDeletePayment(supabase, paymentId),
+    onSettled: () => {
+      afterBookingPaymentChange();
     },
-    onError: (_, { paymentId }, context) => {
-      if (context?.previousPayment) {
-        updateOptimistic(paymentId, context.previousPayment);
-      }
+  });
+
+export const useVerifyPayment = () =>
+  useMutation({
+    mutationFn: async (paymentId: string) => {
+      const {
+        data: { user },
+      } = await supabaseAuth.getUser();
+      return appendVerificationNote(supabase, paymentId, user?.email ?? "unknown user");
     },
     onSettled: () => {
       afterBookingPaymentChange();
     },
   });
-};
-
-// Delete payment
-export const useDeletePayment = () => {
-  const queryClient = useQueryClient();
-  const removeOptimistic = usePaymentStore((state) => state.removeOptimisticPayment);
-
-  return useMutation({
-    mutationFn: async (paymentId: string) => {
-      const { error } = await supabase.from("payments").delete().eq("payment_id", paymentId);
-
-      if (error) throw new Error(handleSupabaseError(error));
-    },
-    onMutate: async (paymentId) => {
-      await queryClient.cancelQueries({ queryKey: paymentKeys.all });
-      removeOptimistic(paymentId);
-      return { paymentId };
-    },
-    onError: () => {
-      invalidatePayments();
-    },
-    onSuccess: () => {
-      afterBookingPaymentChange();
-    },
-  });
-};
-
-// Soft-delete payment (sets status to 'Deleted' instead of removing the row)
-export const useSoftDeletePayment = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (paymentId: string) => {
-      const { error } = await supabase
-        .from("payments")
-        .update({ status: "Deleted" } satisfies TablesUpdate<"payments">)
-        .eq("payment_id", paymentId);
-
-      if (error) throw new Error(handleSupabaseError(error));
-    },
-    onMutate: async (paymentId) => {
-      await queryClient.cancelQueries({ queryKey: paymentKeys.all });
-
-      // Store previous data for rollback
-      const previousPayments = queryClient.getQueryData(paymentKeys.all);
-      return { previousPayments, paymentId };
-    },
-    onError: () => {
-      invalidatePayments();
-    },
-    onSuccess: () => {
-      afterBookingPaymentChange();
-    },
-  });
-};
-
-// Verify payment
-export const useVerifyPayment = () => {
-  const queryClient = useQueryClient();
-  const updateOptimistic = usePaymentStore((state) => state.updateOptimisticPayment);
-
-  return useMutation({
-    mutationFn: async (paymentId: string) => {
-      const { data, error } = await supabase
-        .from("payments")
-        .update({
-          notes: `Verified on ${new Date().toISOString()}`,
-        } satisfies TablesUpdate<"payments">)
-        .eq("payment_id", paymentId)
-        .select()
-        .single();
-
-      if (error) throw new Error(handleSupabaseError(error));
-      return data;
-    },
-    onMutate: async (paymentId) => {
-      await queryClient.cancelQueries({ queryKey: paymentKeys.all });
-
-      updateOptimistic(paymentId, {
-        notes: `Verified on ${new Date().toISOString()}`,
-      });
-
-      return { paymentId };
-    },
-    onError: () => {
-      invalidatePayments();
-    },
-    onSettled: () => {
-      afterBookingPaymentChange();
-    },
-  });
-};
 
 // Export payments
 export const useExportPayments = () => {

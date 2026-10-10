@@ -41,7 +41,6 @@ import {
 import { useResponsiveView, useUserRole } from "@/hooks";
 import { cn } from "@/lib/utils";
 import {
-  useDeletePayment,
   useExportPayments,
   usePayments,
   usePaymentStore,
@@ -86,17 +85,15 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
   const [paymentToSoftDelete, setPaymentToSoftDelete] = useState<Payment | null>(null);
 
   // Use ultra-performant MediaQuery API for responsive detection
   const { isMobile } = useResponsiveView();
 
   // Role-based permissions for actions
-  const { canEdit, canDelete, canSoftDelete, canVerifyPayments } = useUserRole();
+  const { canEdit, canSoftDelete, canVerifyPayments } = useUserRole();
 
   // Mutations
-  const deletePayment = useDeletePayment();
   const softDeletePayment = useSoftDeletePayment();
   const verifyPayment = useVerifyPayment();
   const exportPayments = useExportPayments();
@@ -108,23 +105,6 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
   const filteredPayments = bookingId
     ? payments.filter((p) => p.booking_id === bookingId)
     : payments;
-
-  const handleDelete = useCallback((payment: Payment) => {
-    setPaymentToDelete(payment);
-  }, []);
-
-  const confirmDelete = useCallback(async () => {
-    if (!paymentToDelete) return;
-
-    try {
-      await deletePayment.mutateAsync(paymentToDelete.payment_id);
-    } catch (error) {
-      console.error("Failed to delete payment:", error);
-      toast.error("Failed to delete payment. Please try again.");
-    } finally {
-      setPaymentToDelete(null);
-    }
-  }, [deletePayment, paymentToDelete]);
 
   const handleSoftDelete = useCallback((payment: Payment) => {
     setPaymentToSoftDelete(payment);
@@ -309,23 +289,13 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
               onClick: () => payment.proof_url && window.open(payment.proof_url, "_blank"),
               disabled: !payment.proof_url,
             },
-            // Remove (soft-delete) - requires canSoftDelete (manager+), hidden if canDelete (owner+ sees hard delete instead)
-            ...(canSoftDelete && !canDelete
+            // Remove (soft-delete) - manager+; payments are never hard-deleted from the UI
+            ...(canSoftDelete
               ? [
                   {
                     label: "Remove",
                     onClick: () => handleSoftDelete(payment),
                     className: "text-orange-600 hover:text-orange-700",
-                  },
-                ]
-              : []),
-            // Delete (hard delete) - requires canDelete permission (owner+)
-            ...(canDelete
-              ? [
-                  {
-                    label: "Delete",
-                    onClick: () => handleDelete(payment),
-                    className: "text-red-600 hover:text-red-700",
                   },
                 ]
               : []),
@@ -339,11 +309,9 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
     [
       onViewPayment,
       onEditPayment,
-      handleDelete,
       handleSoftDelete,
       handleVerify,
       canEdit,
-      canDelete,
       canSoftDelete,
       canVerifyPayments,
     ]
@@ -675,34 +643,6 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
       {/* Desktop pagination */}
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <TablePagination table={table as any} totalItems={filteredPayments.length} />
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog
-        open={!!paymentToDelete}
-        onOpenChange={(open) => !open && setPaymentToDelete(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Payment</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this payment of{" "}
-              <span className="font-semibold">
-                {paymentToDelete && formatCurrency(paymentToDelete.amount)}
-              </span>
-              ? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Soft-Delete (Remove) Confirmation Dialog */}
       <AlertDialog

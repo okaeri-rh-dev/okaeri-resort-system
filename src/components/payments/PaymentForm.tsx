@@ -118,20 +118,20 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         account_id: data.account_id,
         amount: data.amount,
         payment_method: data.payment_method,
-        payment_date: data.payment_date.toISOString(),
+        payment_date: data.payment_date,
         notes: data.notes,
       };
 
       if (isEditMode) {
         await updatePayment.mutateAsync({
           paymentId: payment.payment_id,
-          updates: paymentData,
+          changes: paymentData,
           receiptFile: receiptFile || undefined,
         });
         toast.success("Payment updated successfully");
       } else {
         await createPayment.mutateAsync({
-          data: paymentData,
+          input: paymentData,
           receiptFile: receiptFile || undefined,
         });
         toast.success("Payment recorded successfully");
