@@ -28,7 +28,6 @@ export const bookingEditSchema = z
     payment_method: z.enum(["Cash", "GCash", "BankTransfer", "Card"], {
       required_error: "Payment method is required",
     }),
-    payment_amount: z.number().positive("Amount must be positive").optional(),
     special_requests: z
       .string()
       .transform((val) => sanitizeText(val))

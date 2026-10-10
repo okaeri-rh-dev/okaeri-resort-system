@@ -17,8 +17,9 @@ Source: architecture review run 2026-10-10 (`/improve-codebase-architecture`), s
 
 ### Phase 0: bugs found in passing (one `fix:` commit each)
 
-- [ ] Offline multi-unit booking creates are queued then dropped on reconnect: delete offline queuing, fail loudly when offline
-- [ ] `BookingEdit` sends `payment_amount` (not a bookings column) and `toISOString()` dates
+- [x] (`8d7a838`) Offline multi-unit booking creates are queued then dropped on reconnect: delete offline queuing, fail loudly when offline
+- [x] `BookingEdit` sends `payment_amount` (not a bookings column) and `toISOString()` dates. Fixed via `toBookingUpdate` (row-type checked, dates via `formDateToUTC` at check-in/out times like `BookingForm`); the payment amount field is removed (payments have their own page)
+- [ ] New: `MultiUnitBookingForm.tsx:282,296` also sends `toISOString()` of the picked local midnight; SQL compares `check_in::date` in UTC, so Manila picks land a day early unless the server normalizes. Verify, then align with `formDateToUTC`
 - [ ] Payment and expense mutations do not invalidate account balances
 - [ ] RLS lets staff write `bookings.payment_status`; restrict to manager+ with a DB test (prod `db push` by the user)
 - [ ] `bookings/multi-unit` accepts the client total when the server total ≤ 0: return 422

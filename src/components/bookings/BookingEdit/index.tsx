@@ -35,6 +35,8 @@ import { cn } from "@/lib/utils";
 import { bookingEditSchema, type BookingEditInput } from "@/lib/validation/entity-schemas";
 import type { Booking, Unit } from "@/types/entity-detail.types";
 
+import { toBookingUpdate } from "./to-booking-update";
+
 export interface BookingEditPageProps {
   booking?: Booking;
   units?: Unit[];
@@ -60,7 +62,6 @@ export function BookingEditPage() {
       num_guests: booking.num_guests,
       payment_method:
         (booking.payment_method as "Cash" | "GCash" | "BankTransfer" | "Card") || "Cash",
-      payment_amount: undefined,
       special_requests: booking.special_requests || "",
       is_walk_in: booking.is_walk_in ?? false,
     },
@@ -75,15 +76,7 @@ export function BookingEditPage() {
 
   // Form submission handler
   const onSubmit: SubmitHandler<BookingEditInput> = (data) => {
-    // Exclude unit_id - units are managed via booking_units junction table
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { unit_id, ...bookingData } = data;
-    // Transform Date objects to ISO strings for database
-    updateBooking.mutate({
-      ...bookingData,
-      check_in: data.check_in.toISOString(),
-      check_out: data.check_out.toISOString(),
-    });
+    updateBooking.mutate(toBookingUpdate(data));
   };
 
   // Cancel handler
@@ -362,31 +355,6 @@ export function BookingEditPage() {
                           <SelectItem value="Card">Credit Card</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="payment_amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Payment Amount (Optional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min={0}
-                          placeholder="0.00"
-                          {...field}
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)
-                          }
-                        />
-                      </FormControl>
-                      <FormDescription>Leave empty if not yet paid</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
