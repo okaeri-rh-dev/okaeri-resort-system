@@ -32,7 +32,7 @@ Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub 
 - [x] Grill the design (constraints, seam, what tests survive). Rounds 1-3 settled 2026-10-10 (see Decisions); `GLOSSARY.md` started
 - [x] 1a. (`53cac1d`) `fix:` `useUpdatePayment` nulls `proof_url` when the edit sends none
 - [x] 1b. (`073cf4a`) Migration `20261010120000_derive_booking_payment_status.sql`: booking payment status trigger on `payments` + `bookings.total_amount`, backfill; DB tests (local)
-- [x] 1c. (user `supabase db push` 2026-10-10; verified via read-only `supabase db dump --linked`: both triggers and 4 functions present, EXECUTE on derive/refresh granted to `service_role` only) Read-only prod diff of statuses the backfill would change → user reviews → user runs `db push` → confirm trigger in prod `pg_trigger`. Diff query (run in the Supabase SQL editor; reads only):
+- [x] 1c. (user `supabase db push` 2026-10-10; backfill audit query returned 0 rows, so no booking status changed; verified via read-only `supabase db dump --linked`: both triggers and 4 functions present, EXECUTE on derive/refresh granted to `service_role` only) Read-only prod diff of statuses the backfill would change → user reviews → user runs `db push` → confirm trigger in prod `pg_trigger`. Diff query (run in the Supabase SQL editor; reads only):
 
   ```sql
   SELECT b.booking_reference, b.payment_status AS current_status, d.derived_status,
@@ -70,7 +70,7 @@ Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub 
 
 - [x] 1d. Done locally 2026-10-10, NOT pushed (gated on 1c): `fe3cf60` Payment module (`createPayment`, `updatePayment`, `softDeletePayment`, `appendVerificationNote`, plus `recordProofPayment` for the booking-table proof, which owns the outstanding balance) + 7 DB tests; `0392c20` hooks are adapters, client status recompute / optimistic map / `selectedPayment` / hard delete gone; `ec9428e` edit page via the module, `paymentEditSchema` uses column names, `useEntityEdit` payment branch and its mock test deleted; `2fa87b6` booking-table proof records the outstanding balance (file picker now PNG/JPEG, matching the upload validator). Browser check (local, manager): recorded ₱2,500 cash with no proof → row `payment_date` 04:00Z (Manila noon), booking Partial; edit page → ₱6,000, existing proof kept, booking Completed; row menu shows Remove and no Delete; Remove → payment Deleted, booking Pending. Not browser-checked: Verify, booking-table proof upload (DB-tested only)
 - [ ] Push 1d after 1c confirms both triggers on prod. Urgent once billing is fixed: until 1d deploys, the deployed client (`4e2abb1`) rewrites `payment_status` after each payment insert with its old recompute, overriding the trigger
-- [ ] New: payment list search filters on `reference_number` and sort-by-status orders by `payment_status`; neither is a `payments` column, so both requests fail (`usePaymentStore.ts` `paymentListQuery`)
+- [x] (`caf64c8`) New: payment list search filters on `reference_number` and sort-by-status orders by `payment_status`; neither is a `payments` column, so both requests fail (`usePaymentStore.ts` `paymentListQuery`). Search now matches booking reference, guest name and notes on the fetched rows; sort uses `payments.status`
 - [ ] One booking-date convention (Manila day at 15:00 check-in / 11:00 check-out) owned by the booking persistence module; move `BookingForm`, `MultiUnitBookingForm` (create + availability, lines 148/282/296) and `toBookingUpdate` onto it; decide whether prod rows stored at local midnight need a correction migration
 - [ ] Then 4 → 6 on the client; 3 → 2 → 8 on the server
 
@@ -113,3 +113,4 @@ Candidate 1 grilling, round 3 (2026-10-10):
 - **`payment_date` stored as the picked Manila day at 12:00 (`formDateToUTC(date, "12:00")`); no correction for existing rows.** Why: midday is far from day boundaries, so as-of balances count the right day; old one-day shifts only touch historical as-of reports. Revisit: if as-of reports matter for past months.
 - **Proof stays optional on every payment (cash has none); the module only writes `proof_url` when a file is uploaded or the caller sets it.** Why: user check 2026-10-10. Revisit: n/a.
 - **ADR 0001 records that booking payment status is derived in the database.** Revisit: n/a.
+- **Booking-table proof upload accepts PNG/JPEG only, like `PaymentForm`.** Why: the shared payment-proof validator is image-only. Revisit: if guests send PDF receipts.
