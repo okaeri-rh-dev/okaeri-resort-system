@@ -5,11 +5,13 @@ import {
   useQueryClient,
   type QueryClient,
 } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { getAccessToken } from "@/hooks/useAuthToken";
 import { adaptBookingFromDB } from "@/lib/database-adapters";
+import { recordProofPayment } from "@/lib/payments";
 import {
   afterBookingCancel,
   afterBookingCreate,
@@ -20,7 +22,8 @@ import {
   invalidateBookings,
 } from "@/lib/query-invalidation";
 import { bookingKeys } from "@/lib/query-keys";
-import { db, handleSupabaseError, storage, supabase } from "@/lib/supabase";
+import { db, handleSupabaseError, supabase } from "@/lib/supabase";
+import { formatCurrency } from "@/lib/validations";
 import type {
   Booking,
   BookingFilters,
@@ -585,59 +588,21 @@ export const useUpdateBookingStatus = () => {
 
 // Update payment status with optimistic update
 
-// Upload payment proof
-export const useUploadPaymentProof = () => {
-  const queryClient = useQueryClient();
-  const updateOptimistic = useBookingStore((state) => state.updateOptimisticBooking);
-
-  return useMutation({
-    mutationFn: async ({ bookingId, file }: { bookingId: string; file: File }) => {
-      // Upload file to storage
-      const fileName = `payment-proofs/${bookingId}/${Date.now()}-${file.name}`;
-      const { url } = await storage.upload("payment-proofs", fileName, file);
-
-      // Get booking details for payment creation
-      const { data: booking } = await supabase
-        .from("bookings")
-        .select("total_amount")
-        .eq("booking_id", bookingId)
-        .single();
-
-      // Create payment record with proof
-      const { error: paymentError } = await supabase.from("payments").insert({
-        booking_id: bookingId,
-        amount: booking?.total_amount ?? 0,
-        payment_method: "Other", // Default since we don't have method info
-        // Real payments columns are status/proof_url/payment_date — the previous
-        // payment_status/receipt_url/transaction_date do not exist and 400'd.
-        status: "Active",
-        proof_url: url,
-        payment_date: new Date().toISOString(),
-      } satisfies TablesInsert<"payments">);
-
-      if (paymentError) throw new Error(handleSupabaseError(paymentError));
-
-      // Update booking payment status
-      const { data, error } = await db.bookings.update(bookingId, {
-        payment_status: "Completed",
-      });
-
-      if (error) throw new Error(handleSupabaseError(error));
-      return data;
+// Proof that the guest paid the rest: records the outstanding balance as a payment
+export const useUploadPaymentProof = () =>
+  useMutation({
+    mutationFn: ({ bookingId, file }: { bookingId: string; file: File }) =>
+      recordProofPayment(supabase, bookingId, file),
+    onSuccess: (payment) => {
+      toast.success(`Recorded ${formatCurrency(payment.amount)} with proof`);
     },
-    onMutate: async ({ bookingId }) => {
-      await queryClient.cancelQueries({ queryKey: bookingKeys.all });
-
-      updateOptimistic(bookingId, {
-        payment_status: "Completed",
-        updated_at: new Date().toISOString(),
-      });
+    onError: (error) => {
+      toast.error("Failed to record the payment proof", { description: error.message });
     },
     onSettled: () => {
       afterBookingPaymentChange();
     },
   });
-};
 
 // Cancel booking
 export const useCancelBooking = () => {

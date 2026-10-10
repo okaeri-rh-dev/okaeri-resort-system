@@ -59,7 +59,7 @@ export const useBookingsTable = () => {
     (booking: Booking) => {
       const input = document.createElement("input");
       input.type = "file";
-      input.accept = "image/*,.pdf";
+      input.accept = "image/png,image/jpeg";
       input.onchange = (e) => {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (file) {
