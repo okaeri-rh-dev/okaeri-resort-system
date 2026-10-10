@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { invalidateAccounts } from "@/lib/query-invalidation";
 import { queryKeys } from "@/lib/query-keys";
 import { db } from "@/lib/supabase";
 import type { Booking, Expense, Guest, Payment, Unit } from "@/types";
@@ -136,6 +137,8 @@ export function useEntityEdit<T extends EntityType>(
 
       // Invalidate list caches
       queryClient.invalidateQueries({ queryKey: queryKeys.entities(entityType) });
+
+      if (entityType === "payment" || entityType === "expense") invalidateAccounts();
 
       // Show success toast
       toast.success(`${entityType} updated successfully`);

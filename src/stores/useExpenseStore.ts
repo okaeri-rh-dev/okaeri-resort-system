@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/r
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+import { afterExpenseChange } from "@/lib/query-invalidation";
 import { expenseKeys } from "@/lib/query-keys";
 import { uploadReceipt } from "@/lib/storage-security";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
@@ -319,7 +320,7 @@ export const useCreateExpense = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
+      afterExpenseChange();
     },
   });
 };
@@ -383,7 +384,7 @@ export const useUpdateExpense = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
+      afterExpenseChange();
     },
   });
 };
@@ -408,7 +409,7 @@ export const useDeleteExpense = () => {
       queryClient.invalidateQueries({ queryKey: expenseKeys.all });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
+      afterExpenseChange();
     },
   });
 };

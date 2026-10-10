@@ -11,8 +11,10 @@
 
 import { queryClient } from "@/lib/query-client";
 import {
+  accountKeys,
   availabilityKeys,
   bookingKeys,
+  expenseKeys,
   guestKeys,
   multiUnitBookingKeys,
   paymentKeys,
@@ -38,6 +40,15 @@ export function invalidateUnits() {
 
 export function invalidateDashboard() {
   queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+}
+
+export function invalidateExpenses() {
+  queryClient.invalidateQueries({ queryKey: expenseKeys.all });
+}
+
+// Account balances are computed from payments and expenses
+export function invalidateAccounts() {
+  queryClient.invalidateQueries({ queryKey: accountKeys.all });
 }
 
 export function invalidatePayments() {
@@ -89,8 +100,15 @@ export function afterBookingStatusChange() {
 export function afterBookingPaymentChange() {
   invalidateBookings();
   invalidatePayments();
+  invalidateAccounts();
   invalidateDashboard();
   invalidateMultiUnitBookings();
+}
+
+/** After creating, editing or deleting an expense. */
+export function afterExpenseChange() {
+  invalidateExpenses();
+  invalidateAccounts();
 }
 
 /** After editing booking details (dates, guest info, units). */
