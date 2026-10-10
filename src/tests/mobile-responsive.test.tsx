@@ -6,7 +6,7 @@
  * and enterprise touch interface requirements
  */
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 // Skip mobile tests for Phase 4 - will be implemented in future phase
 describe.skip("Mobile Responsive Design Tests", () => {

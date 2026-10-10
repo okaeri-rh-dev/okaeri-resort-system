@@ -23,7 +23,7 @@ const mockMaybeSingle = vi.fn();
 const mockEq = vi.fn(() => ({ eq: mockEq, maybeSingle: mockMaybeSingle }));
 const mockSelect = vi.fn(() => ({ eq: mockEq }));
 const mockFrom = vi.fn(() => ({ select: mockSelect }));
-const mockCreateClient = vi.fn(() => ({
+const mockCreateClient = vi.fn((..._args: unknown[]) => ({
   auth: { getUser: mockGetUser },
   from: mockFrom,
 }));

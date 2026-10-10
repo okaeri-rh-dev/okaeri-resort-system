@@ -69,7 +69,7 @@ export function createAvailabilityMocks(options: AvailabilityMockOptions = {}) {
         }
 
         // Otherwise generate based on flags
-        return params.p_unit_ids.map((id: string) => ({
+        return (params.p_unit_ids as string[]).map((id) => ({
           unit_id: id,
           is_available: allUnavailable ? false : allAvailable,
           conflicting_bookings: allUnavailable ? 1 : 0,

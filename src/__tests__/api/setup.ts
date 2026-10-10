@@ -69,7 +69,7 @@ beforeEach(() => {
 
     // Default mock response
     return new Response(JSON.stringify({ error: "Unmocked fetch call" }), { status: 500 });
-  }) as unknown;
+  }) as typeof fetch;
 });
 
 /**

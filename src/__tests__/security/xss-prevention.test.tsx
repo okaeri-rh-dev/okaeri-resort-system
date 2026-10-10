@@ -251,7 +251,7 @@ describe("XSS Prevention Tests", () => {
         e.preventDefault();
         const formData = new FormData(e.target as HTMLFormElement);
         const data = Object.fromEntries(formData);
-        const sanitized = sanitizeBookingFormData(data as unknown);
+        const sanitized = sanitizeBookingFormData(data);
         onSubmit(sanitized);
       };
 

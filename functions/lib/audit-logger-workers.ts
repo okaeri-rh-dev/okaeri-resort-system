@@ -115,7 +115,7 @@ const SENSITIVE_FIELDS = [
 export async function logAuditEventWorker(
   supabase: SupabaseClient<Database>,
   entry: AuditLogEntry,
-  request?: Request
+  request?: { headers: { get(name: string): string | null } }
 ): Promise<void> {
   try {
     // Extract IP and user agent from request

@@ -249,6 +249,7 @@ export async function createTestBooking(overrides: TestBookingOverrides = {}) {
     .eq("booking_id", bookingId)
     .single();
 
+  if (!booking) throw new Error(`Test booking ${bookingId} not found after insert`);
   return booking;
 }
 
@@ -300,6 +301,7 @@ export async function createTestMultiUnitBooking(unitCount: number = 2) {
     .eq("booking_id", bookingId)
     .single();
 
+  if (!booking) throw new Error(`Test booking ${bookingId} not found after insert`);
   return booking;
 }
 

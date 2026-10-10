@@ -41,11 +41,11 @@ describe("Phase 2 Security Validation Suite", () => {
                 error: { message: "Row Level Security policy violated", code: "RLS_VIOLATION" },
               }),
             }),
-          } as unknown);
+          } as never);
 
           // Attempt to query without authentication
           const { data: _data, error } = await supabase
-            .from(table as unknown)
+            .from(table as never)
             .select("*")
             .limit(1);
 
@@ -93,7 +93,7 @@ describe("Phase 2 Security Validation Suite", () => {
               code: "STORAGE_RLS",
             },
           }),
-        } as unknown);
+        } as never);
 
         // Attempt to list files without authentication
         const { data: _data, error } = await supabase.storage.from(bucket).list();
@@ -110,7 +110,7 @@ describe("Phase 2 Security Validation Suite", () => {
       const mockSupabase = await import("@/lib/supabase");
       vi.mocked(mockSupabase.supabase.auth.signInWithPassword).mockResolvedValueOnce({
         data: { user: null, session: null },
-        error: { message: "Invalid login credentials", code: "invalid_credentials" },
+        error: { message: "Invalid login credentials", code: "invalid_credentials" } as never,
       });
 
       await expect(auth.signIn("invalid@test.com", "wrongpassword")).rejects.toThrow(
@@ -317,9 +317,9 @@ describe("Phase 2 Security Validation Suite", () => {
         await auth.signIn("test@test.com", "wrong");
       } catch (error: unknown) {
         // Should show generic error, not "user not found" or "wrong password"
-        expect(error.message).toBe("Invalid email or password");
-        expect(error.message).not.toContain("user not found");
-        expect(error.message).not.toContain("wrong password");
+        expect((error as Error).message).toBe("Invalid email or password");
+        expect((error as Error).message).not.toContain("user not found");
+        expect((error as Error).message).not.toContain("wrong password");
       }
     });
 
@@ -331,7 +331,7 @@ describe("Phase 2 Security Validation Suite", () => {
         );
       } catch (error: unknown) {
         // Should throw validation error for wrong file type
-        expect(error.message).toContain("not allowed");
+        expect((error as Error).message).toContain("not allowed");
       }
     });
   });

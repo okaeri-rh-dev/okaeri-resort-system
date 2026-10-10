@@ -132,7 +132,9 @@ export class SupabaseMockBuilder {
               gte: vi.fn((column: string, value: unknown) => ({
                 lte: vi.fn((column2: string, value2: unknown) => ({
                   data: data.filter(
-                    (item: MockData) => item[column] >= value && item[column2] <= value2
+                    (item: MockData) =>
+                      (item[column] as string) >= (value as string) &&
+                      (item[column2] as string) <= (value2 as string)
                   ),
                   error,
                 })),
@@ -214,7 +216,7 @@ export class SupabaseMockBuilder {
 
         const handler = rpcFunctions.get(functionName);
         if (handler) {
-          const result = handler(params);
+          const result = handler(params ?? {});
           return Promise.resolve({ data: result, error: null });
         }
 

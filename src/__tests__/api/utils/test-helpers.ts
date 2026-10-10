@@ -43,7 +43,7 @@ export function createMockRequest(
       ...options.headers,
     },
     body: options.body,
-  }) as unknown;
+  }) as Request & { user?: { id: string; email: string; role: string } };
 
   // Add mock user context if Authorization header is present
   // This simulates what the middleware does after JWT verification

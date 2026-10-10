@@ -78,7 +78,12 @@ async function makeUser(role: Role) {
   if (ROLES_WITH_APP_ROLE.includes(role)) {
     const { error: rErr } = await admin
       .from("app_roles")
-      .insert({ user_id: data.user.id, email, role, is_active: true });
+      .insert({
+        user_id: data.user.id,
+        email,
+        role: role as Exclude<Role, "user">,
+        is_active: true,
+      });
     if (rErr) throw new Error(`app_roles insert(${role}) failed: ${rErr.message}`);
   }
 
@@ -209,7 +214,11 @@ describe("RLS role-based access on core tables", () => {
             `${role} DELETE ${table} expected ${MATRIX[table].delete.includes(role)}`
           ).toBe(MATRIX[table].delete.includes(role));
           // Clean up rows a denied role left behind.
-          if (!deleted) await admin.from(table).delete().eq(pk, id);
+          if (!deleted)
+            await admin
+              .from(table as never)
+              .delete()
+              .eq(pk, id);
         }
       });
     });

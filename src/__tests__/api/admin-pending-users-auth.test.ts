@@ -22,7 +22,7 @@ const mockSelect = vi.fn((cols: string) => {
   return { eq: mockEq };
 });
 const mockFrom = vi.fn(() => ({ select: mockSelect }));
-const mockCreateClient = vi.fn(() => ({
+const mockCreateClient = vi.fn((..._args: unknown[]) => ({
   auth: { getUser: mockGetUser, admin: { listUsers: mockListUsers } },
   from: mockFrom,
 }));

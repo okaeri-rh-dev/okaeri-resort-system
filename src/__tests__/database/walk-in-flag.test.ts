@@ -30,7 +30,6 @@ const futureISO = (daysFromNow: number) =>
 const shortRef = (label: string) => `${label}-${crypto.randomUUID().slice(0, 8)}`.slice(0, 20);
 
 describe("bookings.is_walk_in column behavior", () => {
-  let testUnitId: string;
   let testUnitIdRpc1: string;
   let testUnitIdRpc2: string;
   let testGuestId: string;
@@ -44,17 +43,6 @@ describe("bookings.is_walk_in column behavior", () => {
     }
 
     await cleanupTestData({ includeTestFixtures: true });
-
-    const uniqueId = crypto.randomUUID().slice(0, 8);
-    const unit = await createTestUnit({
-      unit_name: `Test Unit Walkin ${uniqueId}`,
-      unit_code: `WI-${uniqueId.slice(0, 6)}`,
-      unit_type: "Standard",
-      base_rate: 2500,
-      weekend_rate: 3000,
-      extra_person_rate: 500,
-    });
-    testUnitId = unit.unit_id;
 
     // The RPC tests use unique units to dodge a pre-existing booking_units
     // exclusion bug (status defaults to 'confirmed' with NULL check_in_date /
@@ -266,7 +254,6 @@ describe("bookings.is_walk_in column behavior", () => {
           assigned_guests: 1,
         },
       ],
-      p_guest_id: null,
     });
 
     expect(error).toBeNull();
@@ -304,7 +291,6 @@ describe("bookings.is_walk_in column behavior", () => {
           assigned_guests: 1,
         },
       ],
-      p_guest_id: null,
     });
 
     expect(error).toBeNull();

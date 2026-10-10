@@ -116,8 +116,8 @@ export function createBookingMocks(options: BookingMockOptions = {}) {
         }
 
         // Otherwise generate based on flags
-        const unitIds = params.p_unit_ids || [];
-        return unitIds.map((id: string) => ({
+        const unitIds = (params.p_unit_ids as string[] | undefined) ?? [];
+        return unitIds.map((id) => ({
           unit_id: id,
           is_available: allUnavailable ? false : allAvailable,
           conflicting_bookings: allUnavailable ? 1 : 0,
