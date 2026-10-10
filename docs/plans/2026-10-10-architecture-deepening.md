@@ -55,6 +55,17 @@ Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub 
   ORDER BY b.check_in;
   ```
 
+  Backfill changes after the fact (the audit trigger logged each one; the migration ran without a user JWT):
+
+  ```sql
+  SELECT created_at, new_data->>'booking_reference' AS booking,
+         old_data->>'payment_status' AS before, new_data->>'payment_status' AS after
+  FROM public.audit_logs
+  WHERE table_name = 'bookings' AND 'payment_status' = ANY (changed_fields)
+    AND user_id IS NULL AND created_at > '2026-10-10'
+  ORDER BY created_at;
+  ```
+
   After review: `supabase db push`, then confirm with `SELECT tgname FROM pg_trigger WHERE tgname IN ('refresh_booking_payment_status', 'refresh_payment_status_on_total_change');` (2 rows).
 
 - [x] 1d. Done locally 2026-10-10, NOT pushed (gated on 1c): `fe3cf60` Payment module (`createPayment`, `updatePayment`, `softDeletePayment`, `appendVerificationNote`, plus `recordProofPayment` for the booking-table proof, which owns the outstanding balance) + 7 DB tests; `0392c20` hooks are adapters, client status recompute / optimistic map / `selectedPayment` / hard delete gone; `ec9428e` edit page via the module, `paymentEditSchema` uses column names, `useEntityEdit` payment branch and its mock test deleted; `2fa87b6` booking-table proof records the outstanding balance (file picker now PNG/JPEG, matching the upload validator). Browser check (local, manager): recorded ₱2,500 cash with no proof → row `payment_date` 04:00Z (Manila noon), booking Partial; edit page → ₱6,000, existing proof kept, booking Completed; row menu shows Remove and no Delete; Remove → payment Deleted, booking Pending. Not browser-checked: Verify, booking-table proof upload (DB-tested only)
