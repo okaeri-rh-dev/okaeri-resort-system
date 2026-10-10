@@ -38,10 +38,6 @@ export function invalidateUnits() {
   queryClient.invalidateQueries({ queryKey: unitKeys.all });
 }
 
-export function invalidateDashboard() {
-  queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-}
-
 export function invalidateExpenses() {
   queryClient.invalidateQueries({ queryKey: expenseKeys.all });
 }
@@ -83,7 +79,6 @@ export function afterBookingCreate() {
   invalidateGuests();
   invalidateUnits();
   invalidateAvailability();
-  invalidateDashboard();
   invalidateMultiUnitBookings();
   invalidateUpcoming();
 }
@@ -91,7 +86,6 @@ export function afterBookingCreate() {
 /** After changing booking status (confirm, check-in, check-out). */
 export function afterBookingStatusChange() {
   invalidateBookings();
-  invalidateDashboard();
   invalidateMultiUnitBookings();
   invalidateUpcoming();
 }
@@ -101,7 +95,6 @@ export function afterBookingPaymentChange() {
   invalidateBookings();
   invalidatePayments();
   invalidateAccounts();
-  invalidateDashboard();
   invalidateMultiUnitBookings();
 }
 
@@ -116,7 +109,6 @@ export function afterBookingUpdate() {
   invalidateBookings();
   invalidateGuests();
   invalidateAvailability();
-  invalidateDashboard();
   invalidateMultiUnitBookings();
 }
 
@@ -125,7 +117,6 @@ export function afterBookingCancel() {
   invalidateBookings();
   invalidateUnits();
   invalidateAvailability();
-  invalidateDashboard();
   invalidateMultiUnitBookings();
   invalidateUpcoming();
 }
@@ -136,7 +127,6 @@ export function afterBookingDelete() {
   invalidateGuests();
   invalidateUnits();
   invalidateAvailability();
-  invalidateDashboard();
   invalidateMultiUnitBookings();
   invalidateUpcoming();
 }
