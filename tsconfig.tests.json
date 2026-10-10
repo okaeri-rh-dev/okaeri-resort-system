@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.eslint.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.cache/tsc-tests.tsbuildinfo"
+  },
+  "include": ["src"]
+}

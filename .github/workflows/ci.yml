@@ -12,7 +12,7 @@ name: CI
 # non-DB suite mocks the network (MSW), so it runs fully offline. Deeper DB +
 # Playwright E2E checks live in infra-health.yml (push to main + weekly).
 #
-# `type-check` covers src/, functions/ and e2e/ (src/__tests__ is still excluded).
+# `type-check` covers src/ (tests included), functions/ and e2e/.
 
 on:
   pull_request:
