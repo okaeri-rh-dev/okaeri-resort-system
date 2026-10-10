@@ -3,6 +3,10 @@ name: Deploy to Cloudflare Pages
 on:
   push:
     branches: [main]
+    # Docs-only pushes change nothing that runs; skipping them saves Actions minutes.
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
   workflow_dispatch: # Allow manual triggering
 
 jobs:

@@ -2,12 +2,19 @@ name: infra-health
 on:
   push:
     branches: [main]
+    # Docs-only pushes change nothing that runs; skipping them saves Actions minutes.
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
   schedule:
     - cron: "0 22 * * 0" # weekly, Sun 22:00 UTC — catches drift during idle weeks
   workflow_dispatch:
 
 jobs:
+  # Lint + unit already run in the deploy quality gate on every push; keep this
+  # copy for the weekly and manual runs only.
   health:
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
