@@ -7,7 +7,6 @@
  * - Pricing calculations
  * - Availability checking
  * - Optimistic updates and TTL cleanup
- * - Offline queue management
  * - Network status handling
  * - Conflict resolution
  * - Edge cases and boundary conditions
@@ -15,7 +14,7 @@
  * Target: ≥95% code coverage
  */
 
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { BookingUnit, MultiUnitBooking } from "@/types";
@@ -62,7 +61,6 @@ describe("useMultiUnitBookingStore", () => {
       expect(result.current.selectedBooking).toBeNull();
       expect(result.current.availabilityCache).toEqual(new Map());
       expect(result.current.optimisticQueue).toEqual(new Map());
-      expect(result.current.offlineQueue).toEqual([]);
       expect(result.current.isOnline).toBe(true);
       expect(result.current.conflictResolutionStrategy).toBe("last-write-wins");
     });
@@ -788,157 +786,6 @@ describe("useMultiUnitBookingStore", () => {
 
       // Server always wins
       expect(result.current.selectedBooking?.total_amount).toBe(6000);
-    });
-  });
-
-  // ============================================
-  // OFFLINE QUEUE TESTS
-  // ============================================
-
-  describe("Offline Queue", () => {
-    it("should add operation to offline queue", () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      act(() => {
-        result.current.addToOfflineQueue({
-          operation: "create",
-          data: { booking_id: "offline-1" },
-          maxRetries: 3,
-        });
-      });
-
-      expect(result.current.offlineQueue).toHaveLength(1);
-      expect(result.current.offlineQueue[0].operation).toBe("create");
-    });
-
-    it("should process offline queue when online", async () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      const processFn = vi.fn(async () => ({ success: true }));
-
-      // Add to queue without triggering auto-processing
-      act(() => {
-        result.current.addToOfflineQueue({
-          operation: "create",
-          data: { booking_id: "offline-1" },
-        });
-      });
-
-      // Manually process queue with test function
-      await act(async () => {
-        await result.current.processOfflineQueue(processFn);
-      });
-
-      await waitFor(() => {
-        expect(processFn).toHaveBeenCalled();
-        expect(result.current.offlineQueue).toHaveLength(0);
-      });
-    });
-
-    it("should retry failed operations up to maxRetries", async () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      const processFn = vi.fn(async () => {
-        throw new Error("Network error");
-      });
-
-      act(() => {
-        result.current.addToOfflineQueue({
-          operation: "create",
-          data: { booking_id: "offline-1" },
-          maxRetries: 3, // Allow 3 retries so we can test without removal
-        });
-      });
-
-      // First attempt - should fail and increment retryCount to 1
-      await act(async () => {
-        await result.current.processOfflineQueue(processFn);
-      });
-
-      expect(result.current.offlineQueue[0].retryCount).toBe(1);
-      expect(result.current.offlineQueue).toHaveLength(1);
-
-      // Second attempt - should fail and increment retryCount to 2
-      await act(async () => {
-        await result.current.processOfflineQueue(processFn);
-      });
-
-      expect(result.current.offlineQueue[0].retryCount).toBe(2);
-      expect(result.current.offlineQueue).toHaveLength(1);
-      expect(processFn).toHaveBeenCalledTimes(2);
-    });
-
-    it("should remove operation after max retries exceeded", async () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      const processFn = vi.fn(async () => {
-        throw new Error("Network error");
-      });
-
-      act(() => {
-        result.current.addToOfflineQueue({
-          operation: "create",
-          data: { booking_id: "offline-1" },
-          maxRetries: 1,
-        });
-      });
-
-      // First attempt should fail and increment retry count
-      await act(async () => {
-        await result.current.processOfflineQueue(processFn);
-      });
-
-      // Queue should now be empty (maxRetries=1 means after 1 retry it's removed)
-      expect(result.current.offlineQueue).toHaveLength(0);
-      expect(processFn).toHaveBeenCalledTimes(1);
-    });
-
-    it("should successfully retry after network restoration", async () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      let attemptCount = 0;
-      const processFn = vi.fn(async () => {
-        attemptCount++;
-        // Fail first 2 attempts, succeed on 3rd
-        if (attemptCount < 3) {
-          throw new Error("Network error");
-        }
-        return { success: true };
-      });
-
-      act(() => {
-        result.current.addToOfflineQueue({
-          operation: "create",
-          data: { booking_id: "offline-1" },
-          maxRetries: 5, // Allow enough retries
-        });
-      });
-
-      // First attempt (should fail)
-      await act(async () => {
-        await result.current.processOfflineQueue(processFn);
-      });
-
-      expect(attemptCount).toBe(1);
-      expect(result.current.offlineQueue).toHaveLength(1);
-      expect(result.current.offlineQueue[0].retryCount).toBe(1);
-
-      // Second attempt (should fail)
-      await act(async () => {
-        await result.current.processOfflineQueue(processFn);
-      });
-
-      expect(attemptCount).toBe(2);
-      expect(result.current.offlineQueue).toHaveLength(1);
-      expect(result.current.offlineQueue[0].retryCount).toBe(2);
-
-      // Third attempt (should succeed and clear queue)
-      await act(async () => {
-        await result.current.processOfflineQueue(processFn);
-      });
-
-      expect(attemptCount).toBe(3);
-      expect(result.current.offlineQueue).toHaveLength(0);
     });
   });
 

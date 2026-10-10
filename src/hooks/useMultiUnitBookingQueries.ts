@@ -22,6 +22,13 @@ import type {
   MultiUnitBookingApiResponse,
 } from "@/types";
 
+export class OfflineBookingError extends Error {
+  constructor() {
+    super("You're offline. The booking was not saved — reconnect and try again.");
+    this.name = "OfflineBookingError";
+  }
+}
+
 // ============================================
 // QUERY HOOKS
 // ============================================
@@ -80,15 +87,11 @@ export const useMultiUnitAvailability = (
  */
 export const useCreateMultiUnitBooking = () => {
   const queryClient = useQueryClient();
-  const { addOptimisticBooking, removeOptimisticBooking, addToOfflineQueue, isOnline } =
-    useMultiUnitBookingStore();
+  const { addOptimisticBooking, removeOptimisticBooking, isOnline } = useMultiUnitBookingStore();
 
   return useMutation({
     mutationFn: async (bookingData: Partial<MultiUnitBooking> | AdminMultiUnitBookingCreate) => {
-      if (!isOnline) {
-        addToOfflineQueue({ operation: "create", data: bookingData, maxRetries: 3 });
-        return bookingData;
-      }
+      if (!isOnline) throw new OfflineBookingError();
 
       const idempotencyKey = crypto.randomUUID();
 

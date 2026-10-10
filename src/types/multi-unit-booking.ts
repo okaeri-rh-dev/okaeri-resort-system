@@ -2,7 +2,7 @@
  * Type definitions for Multi-Unit Booking System (Phase 3)
  *
  * Supports booking multiple units in a single transaction with unified payment,
- * optimistic updates, offline capabilities, and conflict resolution.
+ * optimistic updates and conflict resolution.
  *
  * @module MultiUnitBookingTypes
  */
@@ -155,19 +155,6 @@ export interface OptimisticEntry {
 }
 
 // ============================================
-// OFFLINE SUPPORT TYPES
-// ============================================
-
-export interface OfflineOperation {
-  id: string;
-  operation: "create" | "update" | "delete";
-  data: unknown;
-  timestamp: number;
-  retryCount: number;
-  maxRetries?: number;
-}
-
-// ============================================
 // STORE STATE TYPES
 // ============================================
 
@@ -199,8 +186,7 @@ export interface MultiUnitBookingState {
   optimisticQueue: Map<string, OptimisticEntry>;
   conflictResolutionStrategy: ConflictResolutionStrategy;
 
-  // Offline support
-  offlineQueue: OfflineOperation[];
+  // Network status
   isOnline: boolean;
 
   // UI state
@@ -265,12 +251,9 @@ export interface MultiUnitBookingActions {
   syncFromRealtime: (booking: MultiUnitBooking) => void;
   resolveOptimisticConflict: (bookingId: string, serverData: MultiUnitBooking) => void;
 
-  // ========== OFFLINE SUPPORT ACTIONS ==========
+  // ========== NETWORK STATUS ACTIONS ==========
 
-  addToOfflineQueue: (operation: Omit<OfflineOperation, "id" | "timestamp" | "retryCount">) => void;
-  processOfflineQueue: (processFn?: (item: OfflineOperation) => Promise<unknown>) => Promise<void>;
   setOnlineStatus: (isOnline: boolean) => void;
-  clearOfflineQueue: () => void;
 
   // ========== STATE MANAGEMENT ACTIONS ==========
 

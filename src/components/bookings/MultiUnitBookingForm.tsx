@@ -52,6 +52,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAvailabilityRealtime } from "@/hooks/useAvailabilityRealtime";
 import { useIdempotencyKey } from "@/hooks/useIdempotencyKey";
 import {
+  OfflineBookingError,
   useCreateMultiUnitBooking,
   useMultiUnitAvailability,
 } from "@/hooks/useMultiUnitBookingQueries";
@@ -331,7 +332,11 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
       }
     } catch (error) {
       console.error("Booking creation failed:", error);
-      toast.error("Failed to create booking. Please try again.");
+      toast.error(
+        error instanceof OfflineBookingError
+          ? error.message
+          : "Failed to create booking. Please try again."
+      );
     }
   };
 

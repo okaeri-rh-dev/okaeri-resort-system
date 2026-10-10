@@ -3,7 +3,6 @@
  *
  * Comprehensive state management for multi-unit bookings with:
  * - Optimistic updates with automatic rollback
- * - Offline queue processing
  * - Conflict resolution
  * - Real-time pricing calculation
  * - Unit availability tracking
@@ -50,7 +49,6 @@ function isAvailabilityResult(value: unknown): value is AvailabilityResult {
 const MAX_UNITS_PER_BOOKING = 10;
 const OPTIMISTIC_TTL = 5 * 60 * 1000; // 5 minutes
 const MAX_OPTIMISTIC_ENTRIES = 100;
-const MAX_OFFLINE_RETRIES = 3;
 
 // ============================================
 // STORE IMPLEMENTATION
@@ -71,7 +69,6 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
           availabilityCache: new Map(),
           optimisticQueue: new Map(),
           conflictResolutionStrategy: "last-write-wins",
-          offlineQueue: [],
           isOnline: typeof navigator !== "undefined" ? navigator.onLine : true,
           isLoading: false,
           error: null,
@@ -727,67 +724,11 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
               state.optimisticQueue.delete(bookingId);
             }),
 
-          // ========== OFFLINE SUPPORT ==========
-
-          addToOfflineQueue: (operation) =>
-            set((state: Draft<MultiUnitBookingStore>) => {
-              const { maxRetries = MAX_OFFLINE_RETRIES, ...rest } = operation;
-              state.offlineQueue.push({
-                id: crypto.randomUUID(),
-                timestamp: Date.now(),
-                retryCount: 0,
-                maxRetries,
-                ...rest,
-              });
-            }),
-
-          processOfflineQueue: async (processFn?) => {
-            const queue = get().offlineQueue;
-            if (queue.length === 0 || !get().isOnline) return;
-
-            for (const item of queue) {
-              try {
-                if (processFn) {
-                  await processFn(item);
-                } else {
-                  logger.info("Processing offline operation:", { operation: item });
-                }
-
-                // Remove from queue on success
-                set((state: Draft<MultiUnitBookingStore>) => {
-                  state.offlineQueue = state.offlineQueue.filter((q) => q.id !== item.id);
-                });
-              } catch (_error) {
-                // Increment retry count
-                set((state: Draft<MultiUnitBookingStore>) => {
-                  const queueItem = state.offlineQueue.find((q) => q.id === item.id);
-                  if (queueItem) {
-                    queueItem.retryCount++;
-
-                    // Remove if too many retries
-                    if (queueItem.retryCount >= (queueItem.maxRetries ?? MAX_OFFLINE_RETRIES)) {
-                      state.offlineQueue = state.offlineQueue.filter((q) => q.id !== item.id);
-                      console.error("Max retries exceeded for offline operation:", item);
-                    }
-                  }
-                });
-              }
-            }
-          },
+          // ========== NETWORK STATUS ==========
 
           setOnlineStatus: (isOnline) =>
             set((state: Draft<MultiUnitBookingStore>) => {
               state.isOnline = isOnline;
-
-              if (isOnline) {
-                // Process offline queue when coming online
-                void get().processOfflineQueue();
-              }
-            }),
-
-          clearOfflineQueue: () =>
-            set((state: Draft<MultiUnitBookingStore>) => {
-              state.offlineQueue = [];
             }),
 
           // ========== STATE MANAGEMENT ==========
@@ -851,7 +792,6 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
               state.unitPricingCache.clear();
               state.availabilityCache.clear();
               state.optimisticQueue.clear();
-              state.offlineQueue = [];
               state.isLoading = false;
               state.error = null;
             }),
@@ -893,7 +833,6 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
           partialize: (state) => ({
             draftBooking: state.draftBooking,
             conflictResolutionStrategy: state.conflictResolutionStrategy,
-            offlineQueue: state.offlineQueue,
           }),
         }
       ),
