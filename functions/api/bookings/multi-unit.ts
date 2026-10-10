@@ -275,6 +275,20 @@ export const onRequestPost = async (context: {
       }
     );
   } catch (error) {
+    if (error instanceof UnpricedBookingError) {
+      return Response.json(
+        {
+          success: false,
+          error: {
+            code: "PRICING_UNAVAILABLE",
+            message: "Could not price this booking. Check the unit and global rates.",
+            details: { server_total: error.serverTotal },
+          },
+        },
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     console.error("Multi-unit booking creation failed:", error);
 
     return Response.json(
@@ -290,6 +304,13 @@ export const onRequestPost = async (context: {
     );
   }
 };
+
+class UnpricedBookingError extends Error {
+  constructor(readonly serverTotal: number) {
+    super(`Server priced the booking at ${serverTotal}`);
+    this.name = "UnpricedBookingError";
+  }
+}
 
 /**
  * Check availability for multiple units
@@ -355,7 +376,7 @@ async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
   // BUG-001 FIX: Calculate pricing with validation and fallback
   // ============================================================
   // Previously: If unit rates were null, pricing was ₱0.00
-  // Now: Uses default rates + client amount as fallback
+  // Now: Uses default rates; a zero total is rejected with 422
   // ============================================================
 
   const unitsWithPricing = await Promise.all(
@@ -412,17 +433,7 @@ async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
     units_count: data.units.length,
   });
 
-  // If server calculation is 0 but client has a valid amount, use client amount
-  // This handles edge cases where unit rates aren't properly configured
-  if (serverTotal <= 0 && clientTotal > 0) {
-    console.warn("[PRICING] Server total is 0, using client total as fallback:", clientTotal);
-    // Distribute client total evenly across units
-    const perUnitAmount = clientTotal / data.units.length;
-    unitsWithPricing.forEach((unit) => {
-      unit.subtotal = perUnitAmount;
-      unit.unit_price = perUnitAmount;
-    });
-  }
+  if (serverTotal <= 0) throw new UnpricedBookingError(serverTotal);
 
   // Call database function to create booking
   const { data: bookingId, error } = await supabase.rpc("create_multi_unit_booking", {

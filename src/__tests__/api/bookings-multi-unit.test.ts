@@ -384,6 +384,41 @@ describe("POST /api/bookings/multi-unit", () => {
     expect(data.error.details?.unavailable_units).toContain(testUnits[0].unit_id);
   });
 
+  it("should return 422 instead of trusting the client total when the server prices at zero", async () => {
+    vi.resetModules();
+
+    const mockClient = createBookingMocks({
+      units: testUnits,
+      pricingConfig: { base_rate: 0, weekend_rate: 0, extra_person_rate: 0, base_occupancy: 2 },
+    });
+
+    vi.doMock("@supabase/supabase-js", () => ({
+      createClient: vi.fn(() => mockClient),
+    }));
+
+    vi.doMock("@/lib/security/sanitize-worker", () => ({
+      sanitizeTextWorker: vi.fn((text: string) => text),
+      sanitizeNameWorker: vi.fn((name: string) => name),
+      sanitizeEmailWorker: vi.fn((email: string) => email.toLowerCase()),
+      sanitizePhoneWorker: vi.fn((phone: string) => phone),
+    }));
+
+    const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
+
+    const request = createStaffRequest({
+      method: "POST",
+      body: JSON.stringify(validBookingData),
+    });
+
+    const context = createMockContext(request, mockEnv);
+    const response = await onRequestPost(context as never);
+
+    expect(response.status).toBe(422);
+    const data = (await response.json()) as BusinessErrorResponse;
+    expect(data.error.code).toBe("PRICING_UNAVAILABLE");
+    expect(mockClient.rpc).not.toHaveBeenCalledWith("create_multi_unit_booking", expect.anything());
+  });
+
   // ========== SECURITY TESTS ==========
 
   it("should sanitize special_requests input", async () => {

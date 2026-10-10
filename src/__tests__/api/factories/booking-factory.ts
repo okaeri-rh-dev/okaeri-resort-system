@@ -61,6 +61,14 @@ export interface BookingMockOptions {
   /** Booking ID returned by create_multi_unit_booking (default: "mock-booking-id") */
   createdBookingId?: string;
 
+  /** Global pricing_config row (default: none, so unit rates apply) */
+  pricingConfig?: {
+    base_rate: number;
+    weekend_rate: number;
+    extra_person_rate: number;
+    base_occupancy: number;
+  };
+
   /** Simulate database error */
   hasError?: boolean;
 
@@ -104,6 +112,7 @@ export function createBookingMocks(options: BookingMockOptions = {}) {
     tables: {
       units,
       bookings: [bookingResponse],
+      pricing_config: options.pricingConfig ? [{ id: "default", ...options.pricingConfig }] : [],
     },
     rpcs: {
       /**
