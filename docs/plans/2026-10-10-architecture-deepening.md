@@ -27,8 +27,11 @@ Source: architecture review run 2026-10-10 (`/improve-codebase-architecture`), s
 
 ### Phase 1: Candidate 1 (Payment first)
 
-- [ ] Grill the design (constraints, seam, what tests survive)
-- [ ] Payment persistence module + local-DB save tests
+- [x] Grill the design (constraints, seam, what tests survive). Rounds 1-3 settled 2026-10-10 (see Decisions); `GLOSSARY.md` started
+- [ ] 1a. `fix:` `useUpdatePayment` nulls `proof_url` when the edit sends none
+- [ ] 1b. Migration: booking payment status trigger on `payments` + `bookings.total_amount`, backfill; DB tests (local)
+- [ ] 1c. Read-only prod diff of statuses the backfill would change → user reviews → user runs `db push` → confirm trigger in prod `pg_trigger`
+- [ ] 1d. `src/lib/payments/` module (`createPayment`, `updatePayment`, `softDeletePayment`, `appendVerificationNote`; proof upload; `payment_date` at Manila 12:00) + DB tests; hooks become adapters owning invalidation; delete client status recompute, hard delete from the UI, the store's optimistic map/`selectedPayment`, the `useEntityEdit` payment branch and its mock tests; `paymentEditSchema` uses column names; booking-table proof upload records the outstanding balance. Gated: do not deploy before 1c
 - [ ] One booking-date convention (Manila day at 15:00 check-in / 11:00 check-out) owned by the booking persistence module; move `BookingForm`, `MultiUnitBookingForm` (create + availability, lines 148/282/296) and `toBookingUpdate` onto it; decide whether prod rows stored at local midnight need a correction migration
 - [ ] Then 4 → 6 on the client; 3 → 2 → 8 on the server
 
@@ -43,3 +46,29 @@ Accepted 2026-10-10 (recommended defaults):
 - **`bookings/multi-unit` returns 422 when the server total ≤ 0.** Why: the server must not trust a client-supplied price. Revisit: n/a.
 - **Edit page and dialog saves converge on one path per entity, keeping store side effects (guest upsert, payment-status recompute).** Why: two save paths with separate mappings caused 4 column-name bugs. Revisit: n/a.
 - **Order: client 1 → 4 → 6; server 3 → 2 → 8; candidates 5 and 7 inside guardrails deferred item 4.** Why: 1 is the hottest code with live bugs; 5 and 7 touch SQL that item 4 rewrites. Revisit: if item 4 is scheduled first.
+
+Candidate 1 grilling, round 1 (2026-10-10):
+
+- **Booking `payment_status` is derived by a Postgres trigger on `payments`, counting only `status = 'Active'`.** Why: the only seam every writer passes through (client, Workers, proof upload); fixes the stale status after update/delete and soft-deleted payments counting as paid; prerequisite for Candidate 5's RLS restriction. Needs a prod `db push` by the user. Revisit: n/a.
+- **The Payment module is a plain async module taking the Supabase client; React Query hooks are thin adapters over it.** Why: tests call it against local Supabase without React. Revisit: n/a.
+- **Payment edit input uses row column names (`amount`, `proof_url`); `paymentEditSchema` renamed to match; writes `satisfies TablesUpdate<"payments">`.** Why: one vocabulary removes the mapping where 4 column bugs lived. Revisit: n/a.
+- **Operations: create, update, soft-delete. Hard delete leaves the staff UI; "verify" appends a line to `notes` instead of overwriting it, until Candidate 5 defines real verification.** Why: soft delete keeps audit and balance history; current verify destroys notes. Revisit: Candidate 5.
+- **`useEntityEdit` loses one entity branch at a time (payment now, booking next with the date convention); deleted with its last branch.** Why: reviewable steps. Revisit: n/a.
+- **`usePaymentStore` keeps only persisted filter/sort state; optimistic map and `selectedPayment` deleted.** Why: unread, fail the deletion test. Revisit: n/a.
+
+Candidate 1 grilling, round 2 (2026-10-10):
+
+- **Trigger rule:** over the booking's payments, no Active but ≥1 Refunded → `Refunded`; Active sum 0 → `Pending`; < `total_amount` → `Partial`; ≥ → `Completed`. `Deleted` never counts. Fires AFTER INSERT/UPDATE/DELETE on `payments` (old and new booking on a `booking_id` change). Why: every status derived, none hand-set. Revisit: Candidate 5 (online verification statuses).
+- **Also recompute on `bookings` AFTER UPDATE OF `total_amount`.** Why: price edits otherwise leave stale status; no loop since the payments trigger writes only `payment_status`. Revisit: n/a.
+- **Backfill all bookings in the migration, gated on a read-only prod diff the user reviews before `db push`.** Why: corrects rows already wrong from the update/delete paths. Revisit: n/a.
+- **Tests:** DB tests for the trigger rule and the Payment module (create/update/soft-delete, row read back) against local Supabase; delete the `useEntityEdit` payment-branch mock tests; hooks untested (wiring). Revisit: n/a.
+- **Hooks adapter owns cache invalidation (`afterBookingPaymentChange`); the module never sees the cache.** Revisit: Candidate 4.
+- **The Payment module owns proof upload (optional `File` on create/update).** Why: serves `PaymentForm` and the booking-table proof upload; storage is local-substitutable. Revisit: n/a.
+- **Booking-table proof upload records the outstanding balance, not `total_amount`, and stops writing `Completed`.** Why: double-counted downpayments. Revisit: n/a.
+- **Fix the proof-erasing edit bug now as a standalone `fix:` (`useUpdatePayment` nulls `proof_url` when the form sends none).** Why: live data loss. Revisit: n/a.
+
+Candidate 1 grilling, round 3 (2026-10-10):
+
+- **Order 1a → 1b → 1c → 1d; 1d (which deletes the browser status recompute) must not deploy until the trigger is confirmed on prod.** Why: deploys run no migrations; without the gate prod would have neither the trigger nor the recompute. Revisit: n/a.
+- **Module at `src/lib/payments/`, functions take `(client, …)`; `GLOSSARY.md` started with Payment, Booking payment status, Outstanding balance, Soft-deleted payment.** Revisit: n/a.
+- **`payment_date` stored as the picked Manila day at 12:00 (`formDateToUTC(date, "12:00")`); no correction for existing rows.** Why: midday is far from day boundaries, so as-of balances count the right day; old one-day shifts only touch historical as-of reports. Revisit: if as-of reports matter for past months.
