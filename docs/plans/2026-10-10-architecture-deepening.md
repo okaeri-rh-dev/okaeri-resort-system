@@ -17,6 +17,8 @@ Source: architecture review run 2026-10-10 (`/improve-codebase-architecture`), s
 
 ### Phase 0: bugs found in passing (one `fix:` commit each)
 
+Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub Actions did not start any job ("recent account payments have failed or your spending limit needs to be increased"), so the deploy (gated on CI) has not run. Last deployed commit: `4e2abb1`. Re-run the workflows once billing is fixed.
+
 - [x] (`8d7a838`) Offline multi-unit booking creates are queued then dropped on reconnect: delete offline queuing, fail loudly when offline
 - [x] (`05baf35`) `BookingEdit` sends `payment_amount` (not a bookings column) and `toISOString()` dates. Fixed via `toBookingUpdate` (row-type checked, dates via `formDateToUTC` at check-in/out times like `BookingForm`); the payment amount field is removed (payments have their own page)
 - [ ] New: `MultiUnitBookingForm.tsx:282,296` also sends `toISOString()` of the picked local midnight. Verified 2026-10-10: `create_multi_unit_booking` casts straight to `TIMESTAMPTZ`, so multi-unit rows are stored at 16:00Z the day before and `check_in::date` (UTC) reads a day early. Not a one-line fix: the form also checks availability with midnight times (line 148) while `BookingForm` stores 15:00/11:00, so the DB already holds two conventions; existing prod rows stay shifted. Moved to Phase 1 (see Decisions)
