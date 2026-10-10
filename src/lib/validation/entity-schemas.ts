@@ -92,13 +92,11 @@ export type GuestEditInput = z.infer<typeof guestEditSchema>;
  * Validation schema for payment edit/create forms
  */
 export const paymentEditSchema = z.object({
-  payment_amount: z
-    .number({ required_error: "Amount is required" })
-    .positive("Amount must be positive"),
+  amount: z.number({ required_error: "Amount is required" }).positive("Amount must be positive"),
   payment_method: z.enum(["Cash", "GCash", "BankTransfer", "Card"], {
     required_error: "Payment method is required",
   }),
-  payment_proof_url: z.string().url("Invalid URL").optional().or(z.literal("")),
+  proof_url: z.string().url("Invalid URL").optional().or(z.literal("")),
   notes: z
     .string()
     .max(1000, "Notes too long")

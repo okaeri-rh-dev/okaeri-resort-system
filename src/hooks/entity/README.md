@@ -366,14 +366,13 @@ const { data: paymentLogs } = useEntityAudit({
 
 **✅ DO**: Provide custom error handlers when needed
 ```typescript
-const updatePayment = useEntityEdit('payment', paymentId, {
+const updateGuest = useEntityEdit('guest', guestId, {
   onSuccess: () => {
-    navigate({ to: '/payments' });
+    navigate({ to: '/admin/guests' });
   },
   onError: (error) => {
     // Custom error handling (in addition to toast)
-    console.error('[Payment Update Failed]:', error);
-    logErrorToService(error);
+    console.error('[Guest Update Failed]:', error);
   },
 });
 ```
@@ -381,8 +380,8 @@ const updatePayment = useEntityEdit('payment', paymentId, {
 **✅ DO**: Let built-in toast handle user notifications
 ```typescript
 // Built-in toasts:
-// ✅ Success: "payment updated successfully"
-// ❌ Error: "Failed to update payment: [error message]"
+// ✅ Success: "guest updated successfully"
+// ❌ Error: "Failed to update guest: [error message]"
 ```
 
 ### 7. Optimistic Updates

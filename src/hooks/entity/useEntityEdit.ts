@@ -6,23 +6,24 @@ import { toast } from "sonner";
 import { invalidateAccounts } from "@/lib/query-invalidation";
 import { queryKeys } from "@/lib/query-keys";
 import { db } from "@/lib/supabase";
-import type { Booking, Expense, Guest, Payment, Unit } from "@/types";
+import type { Booking, Expense, Guest, Unit } from "@/types";
 import type { EntityType } from "@/types/entity-detail.types";
+
+// Payments save through the Payment module (src/lib/payments)
+type EditableEntityType = Exclude<EntityType, "payment">;
 
 /**
  * Mapped type for entity update data
  */
-type EntityUpdateData<T extends EntityType> = T extends "booking"
+type EntityUpdateData<T extends EditableEntityType> = T extends "booking"
   ? Partial<Booking>
   : T extends "unit"
     ? Partial<Unit>
     : T extends "guest"
       ? Partial<Guest>
-      : T extends "payment"
-        ? Partial<Payment>
-        : T extends "expense"
-          ? Partial<Expense>
-          : never;
+      : T extends "expense"
+        ? Partial<Expense>
+        : never;
 
 /**
  * Options for useEntityEdit hook
@@ -55,7 +56,7 @@ type UseEntityEditOptions<TData> = {
  * }
  * ```
  */
-export function useEntityEdit<T extends EntityType>(
+export function useEntityEdit<T extends EditableEntityType>(
   entityType: T,
   entityId: string,
   options?: UseEntityEditOptions<EntityUpdateData<T>>
@@ -73,8 +74,6 @@ export function useEntityEdit<T extends EntityType>(
             return db.units.update(entityId, updateData as Partial<Unit>);
           case "guest":
             return db.guests.update(entityId, updateData as Partial<Guest>);
-          case "payment":
-            return db.payments.update(entityId, updateData as Partial<Payment>);
           case "expense": {
             // The app type calls expense_date `date`; null description is not accepted by the DB
             const { description, date, ...rest } = updateData as Partial<Expense>;
@@ -138,7 +137,7 @@ export function useEntityEdit<T extends EntityType>(
       // Invalidate list caches
       queryClient.invalidateQueries({ queryKey: queryKeys.entities(entityType) });
 
-      if (entityType === "payment" || entityType === "expense") invalidateAccounts();
+      if (entityType === "expense") invalidateAccounts();
 
       // Show success toast
       toast.success(`${entityType} updated successfully`);

@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoaderData, useNavigate, useParams } from "@tanstack/react-router";
 import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { DetailPageLayout } from "@/components/entity-detail";
 import { Button } from "@/components/ui/button";
@@ -26,8 +27,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useEntityEdit } from "@/hooks/entity";
 import { paymentEditSchema, type PaymentEditInput } from "@/lib/validation/entity-schemas";
+import { useUpdatePayment } from "@/stores/usePaymentStore";
 import type { Payment } from "@/types/entity-detail.types";
 
 export interface PaymentEditPageProps {
@@ -47,34 +48,29 @@ export function PaymentEditPage() {
   const form = useForm<PaymentEditInput>({
     resolver: zodResolver(paymentEditSchema),
     defaultValues: {
-      payment_amount: payment.amount || 0,
+      amount: payment.amount || 0,
       payment_method:
         (payment.payment_method as "Cash" | "GCash" | "BankTransfer" | "Card") || "Cash",
-      payment_proof_url: payment.proof_url || "",
+      proof_url: payment.proof_url || "",
       notes: payment.notes || "",
     },
   });
 
-  // Setup mutation with navigation on success
-  const updatePayment = useEntityEdit("payment", paymentId, {
-    onSuccess: () => {
-      navigate({ to: "/admin/payments" });
-    },
-  });
+  const updatePayment = useUpdatePayment();
 
-  // Form submission handler
-  const onSubmit = ({
-    payment_amount,
-    payment_method,
-    payment_proof_url,
-    notes,
-  }: PaymentEditInput) => {
-    updatePayment.mutate({
-      amount: payment_amount,
-      payment_method,
-      proof_url: payment_proof_url || null,
-      notes,
-    });
+  const onSubmit = ({ proof_url, ...changes }: PaymentEditInput) => {
+    updatePayment.mutate(
+      { paymentId, changes: { ...changes, proof_url: proof_url || null } },
+      {
+        onSuccess: () => {
+          toast.success("Payment updated");
+          navigate({ to: "/admin/payments" });
+        },
+        onError: (error) => {
+          toast.error("Failed to update payment", { description: error.message });
+        },
+      }
+    );
   };
 
   // Cancel handler
@@ -109,7 +105,7 @@ export function PaymentEditPage() {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="payment_amount"
+                  name="amount"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Amount</FormLabel>
@@ -169,7 +165,7 @@ export function PaymentEditPage() {
             <CardContent className="space-y-4">
               <FormField
                 control={form.control}
-                name="payment_proof_url"
+                name="proof_url"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Proof of Payment URL (Optional)</FormLabel>

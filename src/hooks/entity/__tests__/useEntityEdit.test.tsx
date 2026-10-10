@@ -115,20 +115,6 @@ const createMockGuest = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const createMockPayment = (overrides: Record<string, unknown> = {}) => ({
-  payment_id: "payment-123",
-  booking_id: "booking-123",
-  amount: 4500,
-  payment_method: "Cash",
-  payment_date: "2024-01-01T00:00:00Z",
-  payment_status: "Completed",
-  notes: null,
-  proof_url: null,
-  created_at: "2024-01-01T00:00:00Z",
-  updated_at: "2024-01-01T00:00:00Z",
-  ...overrides,
-});
-
 const createMockExpense = (overrides: Record<string, unknown> = {}) => ({
   expense_id: "expense-123",
   description: "Test Expense",
@@ -154,9 +140,6 @@ vi.mock("@/lib/supabase", () => ({
       update: vi.fn(),
     },
     guests: {
-      update: vi.fn(),
-    },
-    payments: {
       update: vi.fn(),
     },
     expenses: {
@@ -354,33 +337,6 @@ describe("useEntityEdit", () => {
       });
 
       expect(db.guests.update).toHaveBeenCalledWith(entityId, updateData);
-    });
-  });
-
-  describe("Payment entity", () => {
-    it("updates payment successfully", async () => {
-      const entityId = "payment-123";
-      const updateData = {
-        payment_amount: 7500,
-        payment_method: "Cash" as const,
-      };
-      const updatedPayment = createMockPayment({ payment_id: entityId, ...updateData });
-
-      vi.mocked(db.payments.update).mockResolvedValue(createSuccessResponse(updatedPayment));
-
-      const { result } = renderHook(() => useEntityEdit("payment", entityId), {
-        wrapper: createWrapper(),
-      });
-
-      act(() => {
-        result.current.mutate(updateData);
-      });
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      expect(db.payments.update).toHaveBeenCalledWith(entityId, updateData);
     });
   });
 
