@@ -1,0 +1,3 @@
+# Booking payment status is derived in the database
+
+A booking's payment status (Pending, Partial, Completed, Refunded) is computed by Postgres triggers from the booking's Active and Refunded payments and its total price; app code never writes it. We chose this over recomputing in the Payment module because payments are written from several places (staff forms, the booking-table proof upload, Workers endpoints), and the browser-side recompute had already drifted: it ran only on create and counted soft-deleted payments. It also lets RLS forbid direct writes to the status later (Candidate 5 in `docs/plans/2026-10-10-architecture-deepening.md`).

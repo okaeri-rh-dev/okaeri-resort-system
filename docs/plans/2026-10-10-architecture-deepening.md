@@ -28,7 +28,7 @@ Source: architecture review run 2026-10-10 (`/improve-codebase-architecture`), s
 ### Phase 1: Candidate 1 (Payment first)
 
 - [x] Grill the design (constraints, seam, what tests survive). Rounds 1-3 settled 2026-10-10 (see Decisions); `GLOSSARY.md` started
-- [ ] 1a. `fix:` `useUpdatePayment` nulls `proof_url` when the edit sends none
+- [x] 1a. (`53cac1d`) `fix:` `useUpdatePayment` nulls `proof_url` when the edit sends none
 - [ ] 1b. Migration: booking payment status trigger on `payments` + `bookings.total_amount`, backfill; DB tests (local)
 - [ ] 1c. Read-only prod diff of statuses the backfill would change → user reviews → user runs `db push` → confirm trigger in prod `pg_trigger`
 - [ ] 1d. `src/lib/payments/` module (`createPayment`, `updatePayment`, `softDeletePayment`, `appendVerificationNote`; proof upload; `payment_date` at Manila 12:00) + DB tests; hooks become adapters owning invalidation; delete client status recompute, hard delete from the UI, the store's optimistic map/`selectedPayment`, the `useEntityEdit` payment branch and its mock tests; `paymentEditSchema` uses column names; booking-table proof upload records the outstanding balance. Gated: do not deploy before 1c
@@ -72,3 +72,5 @@ Candidate 1 grilling, round 3 (2026-10-10):
 - **Order 1a → 1b → 1c → 1d; 1d (which deletes the browser status recompute) must not deploy until the trigger is confirmed on prod.** Why: deploys run no migrations; without the gate prod would have neither the trigger nor the recompute. Revisit: n/a.
 - **Module at `src/lib/payments/`, functions take `(client, …)`; `GLOSSARY.md` started with Payment, Booking payment status, Outstanding balance, Soft-deleted payment.** Revisit: n/a.
 - **`payment_date` stored as the picked Manila day at 12:00 (`formDateToUTC(date, "12:00")`); no correction for existing rows.** Why: midday is far from day boundaries, so as-of balances count the right day; old one-day shifts only touch historical as-of reports. Revisit: if as-of reports matter for past months.
+- **Proof stays optional on every payment (cash has none); the module only writes `proof_url` when a file is uploaded or the caller sets it.** Why: user check 2026-10-10. Revisit: n/a.
+- **ADR 0001 records that booking payment status is derived in the database.** Revisit: n/a.
