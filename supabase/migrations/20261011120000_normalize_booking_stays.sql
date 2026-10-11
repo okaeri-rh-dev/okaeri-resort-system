@@ -5,7 +5,8 @@
 --    second booking of a unit. booking_unit_availability is the overlap guard.
 -- 2. create_multi_unit_booking stores payment_method.
 -- 3. check_multi_unit_availability.next_available_date = when the conflicting stays end.
--- 4. normalize_booking_stays(): normalize stay times, sync and backfill availability rows.
+-- 4. create_multi_unit_booking is executable by service_role only (the Worker); it was open to anon.
+-- 5. normalize_booking_stays(): normalize stay times, sync and backfill availability rows.
 
 BEGIN;
 
@@ -81,6 +82,9 @@ BEGIN
     RETURN v_booking_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
+
+REVOKE ALL ON FUNCTION public.create_multi_unit_booking(JSONB, JSONB[], UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.create_multi_unit_booking(JSONB, JSONB[], UUID) TO service_role;
 
 CREATE OR REPLACE FUNCTION public.check_multi_unit_availability(
     p_unit_ids UUID[],

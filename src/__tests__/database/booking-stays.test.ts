@@ -5,6 +5,7 @@
  * @vitest-environment node
  */
 
+import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import {
@@ -14,6 +15,10 @@ import {
   shouldRunDatabaseTests,
   testSupabaseAdmin as supabase,
 } from "../setup/test-db";
+
+const SUPABASE_URL = process.env.TEST_SUPABASE_URL || "http://localhost:54321";
+const ANON_KEY =
+  process.env.TEST_SUPABASE_ANON_KEY || "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
 
 const iso = (value: string) => new Date(value).toISOString();
 
@@ -118,6 +123,26 @@ describe("create_multi_unit_booking and check_multi_unit_availability", () => {
 
   afterAll(async () => {
     if (shouldRun) await cleanupTestData({ includeTestFixtures: true });
+  });
+
+  it("refuses to run for the anon key", async () => {
+    if (!shouldRun) return;
+    const unit = await createTestUnit();
+    const anon = createClient(SUPABASE_URL, ANON_KEY);
+
+    const { data, error } = await anon.rpc("create_multi_unit_booking", {
+      p_booking_data: {
+        booking_reference: `TB-ANON-${Date.now()}`,
+        guest_name: "Anon Guest",
+        num_guests: 2,
+        check_in: "2026-12-20T06:00:00Z",
+        check_out: "2026-12-22T04:00:00Z",
+      },
+      p_units: [{ unit_id: unit.unit_id, price_per_night: 1000, subtotal: 2000 }],
+    });
+
+    expect(data).toBeNull();
+    expect(error?.message).toMatch(/permission denied/);
   });
 
   it("stores the payment method", async () => {
