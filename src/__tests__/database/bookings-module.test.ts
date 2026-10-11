@@ -131,6 +131,21 @@ describe("createBooking", () => {
     const { error } = await confirm(overlapping.booking_id);
     expect(error?.message).toMatch(/exclusion/);
   });
+
+  it("explains a double booking in plain words when confirming", async () => {
+    if (!shouldRun) return;
+    const unit = await createTestUnit();
+    const first = await createBooking(supabase, stayFor(unit.unit_id, "2026-12-20", "2026-12-23"));
+    const overlapping = await createBooking(
+      supabase,
+      stayFor(unit.unit_id, "2026-12-22", "2026-12-24")
+    );
+    await confirm(first.booking_id);
+
+    await expect(setBookingStatus(supabase, overlapping.booking_id, "Confirmed")).rejects.toThrow(
+      "This unit is already booked for some of these days"
+    );
+  });
 });
 
 describe("updateBooking", () => {

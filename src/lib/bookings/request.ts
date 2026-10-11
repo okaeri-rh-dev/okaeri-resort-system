@@ -5,7 +5,7 @@ import type { AdminMultiUnitBookingCreate, MultiUnitBooking } from "@/types";
 
 type RouteResponse =
   | { success: true; data: MultiUnitBooking }
-  | { success: false; error: { code: string; message: string } };
+  | { success: false; error?: { code: string; message: string } | string; message?: string };
 
 export async function requestBooking(
   booking: AdminMultiUnitBookingCreate
@@ -26,5 +26,6 @@ export async function requestBooking(
   const body = (await response.json().catch(() => null)) as RouteResponse | null;
 
   if (body?.success) return body.data;
-  throw new Error(body?.error.message ?? "Failed to create booking");
+  const reason = typeof body?.error === "object" ? body.error.message : body?.message;
+  throw new Error(reason ?? "Failed to create booking");
 }

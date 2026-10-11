@@ -18,9 +18,14 @@ export type BookingChanges = Partial<{
   is_walk_in: boolean;
 }> & { stay?: { check_in: ManilaDay; check_out: ManilaDay } };
 
-type Result<T> = { data: T | null; error: { message: string } | null };
+type Result<T> = { data: T | null; error: { message: string; code?: string } | null };
+
+const EXCLUSION_VIOLATION = "23P01";
 
 function rowFrom<T>({ data, error }: Result<T>): NonNullable<T> {
+  if (error?.code === EXCLUSION_VIOLATION) {
+    throw new Error("This unit is already booked for some of these days");
+  }
   if (error) throw new Error(error.message);
   if (data === null || data === undefined) throw new Error("The booking was not returned");
   return data;
@@ -53,6 +58,9 @@ async function guestIdForEmail(
     .eq("email", email)
     .limit(1)
     .maybeSingle();
+  if (error?.code === EXCLUSION_VIOLATION) {
+    throw new Error("This unit is already booked for some of these days");
+  }
   if (error) throw new Error(error.message);
   if (existing) return existing.guest_id;
 
