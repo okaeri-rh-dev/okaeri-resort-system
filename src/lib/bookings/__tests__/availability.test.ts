@@ -22,6 +22,10 @@ const results: UnitAvailability[] = [
 ];
 
 describe("unavailableReason", () => {
+  it("runs outside Manila so browser-local mistakes show", () => {
+    expect(new Date(2026, 0, 15).getTimezoneOffset()).toBe(480);
+  });
+
   it("is null while availability is still loading", () => {
     expect(unavailableReason(undefined, "booked")).toBeNull();
   });

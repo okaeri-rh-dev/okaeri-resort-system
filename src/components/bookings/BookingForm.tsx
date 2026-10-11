@@ -130,11 +130,11 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
   const checkInDay = checkIn ? pickedDay(checkIn) : "";
   const checkOutDay = checkOut && checkIn && checkOut > checkIn ? pickedDay(checkOut) : "";
   const unitIds = useMemo(() => units?.map((unit) => unit.unit_id) ?? [], [units]);
-  const { data: availability, isFetching: isCheckingAvailability } = useMultiUnitAvailability(
-    unitIds,
-    checkInDay,
-    checkOutDay
-  );
+  const {
+    data: availability,
+    isFetching: isCheckingAvailability,
+    isError: isAvailabilityError,
+  } = useMultiUnitAvailability(unitIds, checkInDay, checkOutDay);
 
   // Extract pricing calculation into useEffectEvent to prevent dependency issues
   const handlePricingCalculation = useEffectEvent(
@@ -194,6 +194,10 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
             check_out: values.check_out,
             num_guests: values.num_guests,
           });
+          if (checkInDay && checkOutDay && isCheckingAvailability) {
+            form.setError("unit_id", { message: "Still checking availability…" });
+            return false;
+          }
           const reason = unavailableReason(availability, values.unit_id);
           if (reason) {
             form.setError("unit_id", {
@@ -358,6 +362,11 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
               </SelectContent>
             </Select>
             {isCheckingAvailability && <FormDescription>Checking availability…</FormDescription>}
+            {isAvailabilityError && !isCheckingAvailability && (
+              <FormDescription>
+                Couldn't check availability. It is checked again when you save.
+              </FormDescription>
+            )}
             <FormMessage />
           </FormItem>
         )}
