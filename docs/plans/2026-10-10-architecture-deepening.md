@@ -71,8 +71,26 @@ Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub 
 - [x] 1d. Done locally 2026-10-10, NOT pushed (gated on 1c): `fe3cf60` Payment module (`createPayment`, `updatePayment`, `softDeletePayment`, `appendVerificationNote`, plus `recordProofPayment` for the booking-table proof, which owns the outstanding balance) + 7 DB tests; `0392c20` hooks are adapters, client status recompute / optimistic map / `selectedPayment` / hard delete gone; `ec9428e` edit page via the module, `paymentEditSchema` uses column names, `useEntityEdit` payment branch and its mock test deleted; `2fa87b6` booking-table proof records the outstanding balance (file picker now PNG/JPEG, matching the upload validator). Browser check (local, manager): recorded ₱2,500 cash with no proof → row `payment_date` 04:00Z (Manila noon), booking Partial; edit page → ₱6,000, existing proof kept, booking Completed; row menu shows Remove and no Delete; Remove → payment Deleted, booking Pending. Not browser-checked: Verify, booking-table proof upload (DB-tested only)
 - [x] Push 1d after 1c confirms both triggers on prod. Deployed 2026-10-10 by manual `wrangler pages deploy` (deployment `f55fa466`, Production, `main`, `ffc8927`); live `index.html` serves the verified build's entry `index-b2Ix7eyX.js`; `/api/health` 200. Urgent once billing is fixed: until 1d deploys, the deployed client (`4e2abb1`) rewrites `payment_status` after each payment insert with its old recompute, overriding the trigger
 - [x] (`caf64c8`) New: payment list search filters on `reference_number` and sort-by-status orders by `payment_status`; neither is a `payments` column, so both requests fail (`usePaymentStore.ts` `paymentListQuery`). Search now matches booking reference, guest name and notes on the fetched rows; sort uses `payments.status`
-- [ ] One booking-date convention (Manila day at 15:00 check-in / 11:00 check-out) owned by the booking persistence module; move `BookingForm`, `MultiUnitBookingForm` (create + availability, lines 148/282/296) and `toBookingUpdate` onto it; decide whether prod rows stored at local midnight need a correction migration
+- [x] Grill the booking entity (rounds 1-4 settled 2026-10-11; summary confirmed by the user 2026-10-11)
+- [ ] Booking module: implementation plan `docs/plans/2026-10-11-booking-module.md` (10 tasks; checkboxes tracked there)
+  - [ ] 1. Stay convention core (`toStayInstants`, 14:00/12:00, settings rule test under `TZ=America/Los_Angeles`)
+  - [ ] 2. Migration `20261011120000_normalize_booking_stays.sql` + DB tests
+  - [ ] 3. `createBooking` (server side) + DB tests
+  - [ ] 4. Worker routes take Manila days
+  - [ ] 5. Dialog and multi-unit page create through the route
+  - [ ] 6. Automatic availability in the dialog
+  - [ ] 7. `updateBooking` + edit page
+  - [ ] 8. Cancel/status via the module; hard delete leaves the UI
+  - [ ] 9. Readers (night count, list filter, confirmation card)
+  - [ ] 10. Browser check, read-only prod preview, user `db push`, push, manual deploy, post-deploy normalize
 - [ ] Then 4 → 6 on the client; 3 → 2 → 8 on the server
+
+## Resume state (2026-10-11)
+
+- Booking-entity grilling done and confirmed. Implementation plan written: `docs/plans/2026-10-11-booking-module.md`. Next: Task 1 there, test-first (needs `supabase start` from Task 2 on).
+- Open decisions from planning: see "Booking module planning (2026-10-11)" in Decisions; recommended defaults are written into the plan.
+- Prod gate clear: duplicates cancelled, 0 Confirmed overlaps (read-only query 2026-10-11).
+- Not verified: the 2 code-read claims "`/api/admin/available-units` returns 400 on ISO input" and "store night count undercounts at 14:00/12:00" were not run; `MultiUnitBookingForm` field order / exact availability UI not inspected.
 
 ## Decisions & Deferrals
 
@@ -117,3 +135,44 @@ Candidate 1 grilling, round 3 (2026-10-10):
 - **No Actions budget; wait for the Nov 1 reset and cut usage instead.** Why: user preference (2026-10-10). Revisit: if usage still exceeds 2,000 min/month after the trim.
 - **Manual deploy of `ffc8927` run by the user, from a clean worktree with only `.env.production`.** Why: prod had the trigger but the old client overwrote `payment_status`; CI could not run. The bash guard blocks agent deploys, so the user runs `wrangler pages deploy`. Rollback: production deployment `0765f99b` (`4e2abb1`). Revisit: n/a.
 - **CI trim: Security Scan on PRs + weekly only; infra-health `health` job (duplicate lint/unit) skipped on push; deploy and infra-health skip docs-only pushes.** Why: Security Scan (90 runs) and duplicates of the quality gate used most of October's minutes. Revisit: Nov 1 usage.
+
+Booking entity grilling, round 1-2 (2026-10-11). Facts: read-only `supabase db dump --linked` + `migration list --linked`; prod split by Manila time of day: 106 rows 15:00/11:00, 72 rows 00:00/00:00, 1 row 00:00/11:00, 1 row 15:48/00:00 (180 total, none at other hours, so every row's Manila date is the picked day):
+
+- **No re-run of the 1c diff query on prod.** Why: the backfill audit already showed 0 changed rows. Revisit: n/a.
+- **Stays are stored as instants in the existing TIMESTAMPTZ columns: the picked Manila check-in day at the check-in time, the check-out day at the check-out time.** Why: `'[)'` exclusion keeps same-day turnover free, and UTC `::date` readers and Worker pricing read the right day; `DATE` columns would rewrite the exclusion, 3 SQL functions and every reader. Revisit: if a reader needs real arrival times.
+- **The app's dates are always Manila days; the booking module's interface takes `YYYY-MM-DD` Manila day strings and one shared function in `src/lib/bookings/` turns them into instants (forms, API, availability checks).** Why: `formDateToUTC` reads browser-local fields, which is how guest-local midnights got stored. Revisit: n/a.
+- **Slice 1 of the booking module: the admin "New booking" dialog creates through `create_multi_unit_booking`, and the real `check_multi_unit_availability` replaces its fake check.** Why: `useCreateBooking` inserts into `bookings` and `booking_units` but writes no `booking_unit_availability` row, so dialog bookings block nothing; the "check" is a `setTimeout` + success toast. Revisit: n/a.
+- **Prod drift #2: migration `20251028154441` is recorded applied, but prod lacks `booking_units.check_in_date/check_out_date/status`, `booking_units_no_double_booking`, `assign_units_to_booking` and `check_units_available_for_booking`.** The assign-units page and `/api/admin/available-units` cannot work on prod. Out of scope here; nothing is designed against `booking_units` date columns. Revisit: guardrails deferred item 4.
+- **Guest-path date bugs deferred to guardrails item 4:** the guest form stores the guest's local midnight; the guest schema's "today or later" check uses UTC midnight in the Worker (rejects a same-day Manila booking after 08:00); `guest-booking/multi-unit.ts` prices from the full ISO timestamp, so the stored total can differ from the preview. Why: online booking is not live; the shared day→instant function fixes all three. Revisit: item 4.
+
+Booking entity grilling, round 3 (2026-10-11). Facts (read-only `supabase db query --linked`): 96 of 156 Confirmed bookings (plus 9 Cancelled, 2 Pending) have no `booking_unit_availability` row, exactly the dialog-created ones; 2 Confirmed double bookings exist (Cabin 3, 28-29 Jan: BKG-2026-02-394 + BKG-2026-06-481, same guest name; Cabin 1, 2-4 Apr: BKG-2026-03-548 + BKG-2026-03-866, different guests):
+
+- **Check-in 14:00 / check-out 12:00 Manila, a code setting (`RESORT_OPERATION_HOURS`), changed by deploy; a test enforces check-out time < check-in time and both ≥ 08:00 Manila.** Why: the resort's real times; out < in keeps turnover free under `'[)'`; ≥ 08:00 keeps UTC date = Manila date. Old rows need no rewrite if the times change later. Revisit: if the times change often.
+- **One migration rewrites all 180 prod rows to Manila day + 14:00 / 12:00 (check-ins first, then check-outs), gated on a read-only diff the user reviews before `db push`.** Why: one convention in the DB; no day changes. Revisit: n/a.
+- **The same migration backfills availability rows for the 107 dialog bookings (one per Booking and Unit, with the Booking's status).** Why: old dialog bookings must block their Units. Revisit: n/a.
+- **The user resolves the 2 double bookings by hand in the app before `db push`; the migration checks first and raises if any Confirmed overlap remains.** Why: the exclusion constraint rejects the backfill, and which booking is real is the user's call. Revisit: n/a. Chosen 2026-10-11: cancel BKG-2026-06-481 (re-entered duplicate) and BKG-2026-03-548 ("Kuya" hold; BKG-2026-03-866 holds the real guest). Done on the live admin 2026-10-11 19:46-19:47 Manila; verified by read-only query: both Cancelled, the kept pair still Confirmed, 0 Confirmed overlaps left on prod.
+
+Booking entity grilling, round 4 (2026-10-11). Facts: prod `pricing_config` is flat ₱10,000/night (weekend same, ₱0 extra person, base occupancy 6); prod drift #3: `seasonal_rates` absent although `20251106000000` is recorded applied, so the seasonal multiplier falls back to 1 and both Worker engines give ₱10,000 × nights:
+
+- **The dialog checks availability automatically: one `check_multi_unit_availability` query for all Units once both days are picked (via `useMultiUnitAvailability`); unavailable Units are disabled in the picker with "booked until <day>"; the button and fake toast are deleted. The server re-checks on save.** Why: user request; the hook already exists. Revisit: n/a.
+- **The dialog creates through `POST /api/bookings/multi-unit` (server price, server availability check, `create_multi_unit_booking`).** The on-screen price stays on `/api/pricing/calculate` until Candidate 3; the stored total is the server's. Revisit: Candidate 3.
+- **Module `src/lib/bookings/`: `toStayInstants`, `createBooking(client, input)` (Worker route, wraps the RPC), `updateBooking` (Manila days, keeps the guest upsert), `cancelBooking`, `setBookingStatus` (keeps `canTransitionStatus`). Hooks are thin adapters; `useEntityEdit` is deleted with its booking branch; the cancel adapter gets an error toast + refetch.** Revisit: n/a.
+- **Hard delete leaves the staff UI; Cancel is the only removal.** Why: hard delete erases availability rows and orphans history; matches Payments. Revisit: n/a.
+- **Fix only the readers the new times break: store night count (floor → Manila days), bookings list "to" filter (Manila days), confirmation card time (settings times or day only).** Browser-local day formatting (dashboard, tables, tooltip, check-status) is logged, not fixed. Why: it only misreads outside the Philippines. Revisit: if staff or guests use the app from abroad.
+- **Deploy: user cancels the duplicates → `db push` → manual client deploy right after; then re-run the read-only split query and normalize any rows written in between (the normalization is idempotent).** Revisit: n/a.
+- **`seasonal_rates` drift (#3) is logged under Candidate 3, out of scope here.** Revisit: Candidate 3.
+- **Tests: DB tests (create writes an availability row; 12:00 → 14:00 turnover accepted; overlap rejected; date update moves the availability row; migration normalization + backfill); unit tests for `toStayInstants` and the settings rule run under `TZ=America/Los_Angeles`.** Why: a browser-local mistake is invisible in a Manila time zone. Revisit: n/a.
+- **`GLOSSARY.md` gains Check-in day, Check-out day and Night; ADR 0002 records the stay storage convention.** Revisit: n/a.
+- **Follow-up candidate for the guardrails list: a read-only schema-drift check (`supabase db dump --linked` vs local).** Why: three migrations are recorded applied with objects missing. Revisit: next guardrails pass.
+
+Booking module planning (2026-10-11). Facts (read-only prod): `create_multi_unit_booking` ignores `payment_method`; `check_multi_unit_availability.next_available_date` is the earliest check-out of stays starting after the requested check-in (not "booked until") and units not `Available` are absent from its result, which the create route treats as available; the availability exclusion covers only Confirmed/CheckedIn, and `cascade_booking_status` copies status changes to availability rows; 0 same-day stays; 107 `booking_units` without availability rows. Local only: `booking_units_no_double_booking` (status defaults `'confirmed'`, dates NULL) blocks any second booking of a unit, which is why the Pending-overlap test was skipped. Recommended defaults, taken unless the user objects:
+
+- **`createBooking` runs server side (Worker, service-role client); the browser calls the route through `requestBooking`.** Why: DB tests call the module directly; pricing stays on the server. Revisit: Candidate 3.
+- **The migration drops `booking_units_no_double_booking` IF EXISTS (no-op on prod) and the Pending-overlap test is re-enabled.** Why: DB tests of turnover need a second booking per unit; prod has no such constraint. Revisit: guardrails item 4 (drift #2).
+- **The migration stores `payment_method` in `create_multi_unit_booking` and redefines `next_available_date` as the latest check-out of the conflicting stays.** Why: the dialog's payment method would be lost; "booked until" needs the conflict's end. Nothing else reads `next_available_date`. Revisit: n/a.
+- **Normalization is a function, `normalize_booking_stays()` (service_role only), called by the migration.** Why: DB-testable and re-runnable after the deploy. Revisit: n/a.
+- **The routes take `YYYY-MM-DD` days; a unit missing from the availability result is unavailable (409).** Revisit: n/a.
+- **Correction: `useEntityEdit` keeps its unit/guest/expense branches; only the booking branch goes.** Why: round-4 said "deleted with its booking branch", but three other edit pages use it. Revisit: when those entities get modules.
+- **`BookingForm` loses its unused edit mode.** Why: no caller passes `bookingId`; the edit page is the edit path. Revisit: n/a.
+- **Row Cancel gets a confirmation dialog (the Delete dialog reused).** Why: cancel frees the unit and cannot be undone. Revisit: n/a.
+- **Dialog bookings stay `Pending` (as today) and do not block units until confirmed.** Why: matches the exclusion and existing workflow. Revisit: if staff expect a new booking to hold the unit.
