@@ -28,9 +28,12 @@ function createStaffRequest(init: RequestInit) {
   const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
     ...init,
     headers: { Authorization: "Bearer test-token", ...(init.headers as Record<string, string>) },
-  }) as Request & { user: { role: string } };
-  request.user.role = "staff";
+  });
   return request;
+}
+
+function createStaffContext(request: Request) {
+  return createMockContext(request, mockEnv, {}, { id: "staff-user-id", role: "staff" });
 }
 
 describe("POST /api/bookings/multi-unit", () => {
@@ -89,7 +92,7 @@ describe("POST /api/bookings/multi-unit", () => {
       body: JSON.stringify(validBookingData),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     const response = await onRequestPost(context as never);
 
     expect(response.status).toBe(201);
@@ -115,7 +118,7 @@ describe("POST /api/bookings/multi-unit", () => {
       }),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     const response = await onRequestPost(context as never);
 
     expect(response.status).toBe(201);
@@ -136,7 +139,7 @@ describe("POST /api/bookings/multi-unit", () => {
       body: JSON.stringify(validBookingData),
     });
 
-    const context1 = createMockContext(request1, mockEnv);
+    const context1 = createStaffContext(request1);
     const response1 = await onRequestPost(context1 as never);
 
     expect(response1.status).toBe(201);
@@ -151,7 +154,7 @@ describe("POST /api/bookings/multi-unit", () => {
       body: JSON.stringify(validBookingData),
     });
 
-    const context2 = createMockContext(request2, mockEnv);
+    const context2 = createStaffContext(request2);
     const response2 = await onRequestPost(context2 as never);
 
     expect(response2.status).toBe(200); // Not 201!
@@ -168,7 +171,7 @@ describe("POST /api/bookings/multi-unit", () => {
       body: JSON.stringify(validBookingData),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     const response = await onRequestPost(context as never);
 
     expect(response.headers.has("X-Processing-Time")).toBe(true);
@@ -182,7 +185,7 @@ describe("POST /api/bookings/multi-unit", () => {
       body: JSON.stringify(validBookingData),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     const response = await onRequestPost(context as never);
 
     expect(response.headers.get("Access-Control-Allow-Origin")).toBeDefined();
@@ -196,7 +199,7 @@ describe("POST /api/bookings/multi-unit", () => {
       body: JSON.stringify(validBookingData),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     const response = await onRequestPost(context as never);
 
     const data = (await response.json()) as MultiUnitBookingResponse;
@@ -216,7 +219,7 @@ describe("POST /api/bookings/multi-unit", () => {
       }),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     const response = await onRequestPost(context as never);
 
     expect(response.status).toBe(400);
@@ -234,7 +237,7 @@ describe("POST /api/bookings/multi-unit", () => {
       body: JSON.stringify(restData),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     const response = await onRequestPost(context as never);
 
     expect(response.status).toBe(400);
@@ -256,7 +259,7 @@ describe("POST /api/bookings/multi-unit", () => {
       }),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     const response = await onRequestPost(context as never);
 
     expect(response.status).toBe(400);
@@ -275,7 +278,7 @@ describe("POST /api/bookings/multi-unit", () => {
       }),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     const response = await onRequestPost(context as never);
 
     expect(response.status).toBe(400);
@@ -293,7 +296,7 @@ describe("POST /api/bookings/multi-unit", () => {
       }),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     const response = await onRequestPost(context as never);
 
     expect(response.status).toBe(400);
@@ -315,7 +318,7 @@ describe("POST /api/bookings/multi-unit", () => {
       }),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     const response = await onRequestPost(context as never);
 
     expect(response.status).toBe(400);
@@ -336,7 +339,7 @@ describe("POST /api/bookings/multi-unit", () => {
       }),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     const response = await onRequestPost(context as never);
 
     expect(response.status).toBe(400);
@@ -376,7 +379,7 @@ describe("POST /api/bookings/multi-unit", () => {
       body: JSON.stringify(validBookingData),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     const response = await onRequestPost(context as never);
 
     expect(response.status).toBe(409);
@@ -396,7 +399,7 @@ describe("POST /api/bookings/multi-unit", () => {
     }));
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
     const request = createStaffRequest({ method: "POST", body: JSON.stringify(body) });
-    return onRequestPost(createMockContext(request, mockEnv) as never);
+    return onRequestPost(createStaffContext(request) as never);
   }
 
   it("should return 400 for a timestamp instead of a Manila day", async () => {
@@ -464,7 +467,7 @@ describe("POST /api/bookings/multi-unit", () => {
       body: JSON.stringify(validBookingData),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     const response = await onRequestPost(context as never);
 
     expect(response.status).toBe(422);
@@ -487,7 +490,7 @@ describe("POST /api/bookings/multi-unit", () => {
       }),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     await onRequestPost(context as never);
 
     // Verify sanitization was called
@@ -509,7 +512,7 @@ describe("POST /api/bookings/multi-unit", () => {
       }),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     await onRequestPost(context as never);
 
     expect(sanitizeNameWorker).toHaveBeenCalled();
@@ -524,7 +527,7 @@ describe("POST /api/bookings/multi-unit", () => {
       body: JSON.stringify(validBookingData),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     await onRequestPost(context as never);
 
     expect(sanitizeEmailWorker).toHaveBeenCalled();
@@ -560,7 +563,7 @@ describe("POST /api/bookings/multi-unit", () => {
       body: JSON.stringify(validBookingData),
     });
 
-    const context = createMockContext(request, mockEnv);
+    const context = createStaffContext(request);
     const response = await onRequestPost(context as never);
 
     expect(response.status).toBe(500);

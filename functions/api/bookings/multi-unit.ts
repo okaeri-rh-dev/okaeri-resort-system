@@ -23,8 +23,12 @@ import {
   sanitizeTextWorker,
 } from "../../../src/lib/security/sanitize-worker";
 import { logBookingCreated } from "../../lib/audit-logger-workers";
-import { requireRole, STAFF_OR_ABOVE, UnauthorizedError } from "../../lib/rbac";
-import type { AuthenticatedRequest } from "../../lib/types";
+import {
+  requireRole,
+  STAFF_OR_ABOVE,
+  UnauthorizedError,
+  type AuthenticatedData,
+} from "../../lib/rbac";
 import { calculateUnitPricing } from "../../lib/unit-pricing";
 
 interface Env {
@@ -100,9 +104,11 @@ type MultiUnitBookingRequest = z.infer<typeof multiUnitBookingSchema>;
 export const onRequestPost = async (context: {
   request: Request;
   env: Env;
+  data: AuthenticatedData;
   waitUntil: (promise: Promise<unknown>) => void;
 }): Promise<Response> => {
   const { request, env, waitUntil } = context;
+  const authenticatedUser = context.data.user;
   const startTime = Date.now();
 
   // CORS headers
@@ -114,7 +120,7 @@ export const onRequestPost = async (context: {
 
   try {
     try {
-      requireRole(request, STAFF_OR_ABOVE);
+      requireRole(authenticatedUser, STAFF_OR_ABOVE);
     } catch (error) {
       const unauthenticated = error instanceof UnauthorizedError;
       return Response.json(
@@ -221,8 +227,7 @@ export const onRequestPost = async (context: {
     // Create booking using database function (from spec lines 640-773)
     const booking = await createMultiUnitBooking(env, sanitizedData, stay);
 
-    // Get user ID from request context (if authenticated)
-    const userId = (request as AuthenticatedRequest).user?.id;
+    const userId = authenticatedUser?.id;
 
     // Create Supabase client for audit logging
     const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {

@@ -4,6 +4,7 @@
  * Provides utilities for creating mock requests, responses, and contexts
  */
 
+import type { AuthenticatedData, AuthenticatedUser } from "../../../../functions/lib/rbac";
 import type { TestEnv } from "../mocks/env";
 
 /**
@@ -43,19 +44,7 @@ export function createMockRequest(
       ...options.headers,
     },
     body: options.body,
-  }) as Request & { user?: { id: string; email: string; role: string } };
-
-  // Add mock user context if Authorization header is present
-  // This simulates what the middleware does after JWT verification
-  const headersObj = options.headers as Record<string, string> | undefined;
-  const authHeader = headersObj?.["Authorization"] || headersObj?.["authorization"];
-  if (authHeader) {
-    request.user = {
-      id: "test-user-id",
-      email: "test@example.com",
-      role: "admin", // Default to admin for tests, can be overridden
-    };
-  }
+  });
 
   return request;
 }
@@ -66,8 +55,16 @@ export function createMockRequest(
 export function createMockContext(
   request: Request,
   env: TestEnv,
-  params: Record<string, string> = {}
+  params: Record<string, string> = {},
+  user?: AuthenticatedUser
 ) {
+  // Mirrors what the middleware does after JWT verification: an Authorization
+  // header yields an admin user unless the caller passes one explicitly
+  const hasAuthorization = request.headers.has("Authorization");
+  const defaultUser: AuthenticatedUser | undefined = hasAuthorization
+    ? { id: "test-user-id", email: "test@example.com", role: "admin" }
+    : undefined;
+
   return {
     request,
     env,
@@ -77,7 +74,7 @@ export function createMockContext(
       promise.catch((err) => console.error("waitUntil error:", err));
     },
     next: async () => new Response("OK"),
-    data: {},
+    data: { user: user ?? defaultUser } as AuthenticatedData,
   };
 }
 

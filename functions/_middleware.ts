@@ -14,7 +14,7 @@
 import { track404Error, trackRequest } from "@/lib/anomaly-detection";
 import { isIPBlocked } from "@/lib/auto-blocking";
 
-import type { UserRole } from "./lib/rbac";
+import type { AuthenticatedData } from "./lib/rbac";
 import { lookupUserRole } from "./lib/role-lookup";
 
 interface Env {
@@ -347,7 +347,7 @@ function verifyCronSecret(
  * Main middleware function
  */
 export async function onRequest(
-  context: EventContext<Env, string, Record<string, unknown>>
+  context: EventContext<Env, string, AuthenticatedData>
 ): Promise<Response> {
   const { request, env, next } = context;
   const url = new URL(request.url);
@@ -469,7 +469,7 @@ export async function onRequest(
   } else if (!isPublicPath(url.pathname)) {
     // Fail-closed: missing JWT secret is misconfiguration, not a silent bypass.
     // Previously, an unset SUPABASE_JWT_SECRET would skip this whole block,
-    // leaving request.user undefined and causing 401s downstream silently.
+    // leaving context.data.user undefined and causing 401s downstream silently.
     if (!env.SUPABASE_JWT_SECRET) {
       console.error("SUPABASE_JWT_SECRET is not configured; rejecting protected request");
       return new Response(
@@ -542,14 +542,7 @@ export async function onRequest(
     // verbatim, leaving user_metadata.role attacker-controlled even though the
     // top-level role is overridden (user_metadata is user-mutable via
     // supabase.auth.updateUser({ data: { role: 'admin' } })).
-    interface AuthenticatedRequest extends Request {
-      user?: {
-        id: string;
-        email?: string;
-        role: UserRole;
-      };
-    }
-    (request as AuthenticatedRequest).user = {
+    context.data.user = {
       id: payload.sub,
       email: payload.email,
       role: userRole,

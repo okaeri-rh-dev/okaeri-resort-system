@@ -6,21 +6,20 @@
 
 import { describe, expect, it, vi } from "vitest";
 
+import type { UserRole } from "../../../functions/lib/rbac";
 import { createMockContext, createMockRequest, generateTestJWT, mockEnv } from "./setup";
 
-type RoleRequest = Request & { user: { role: string } };
-
-async function postAs(role: string): Promise<Response> {
+async function postAs(role: UserRole): Promise<Response> {
   vi.doMock("@supabase/supabase-js", () => ({ createClient: vi.fn(() => ({})) }));
   const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
   const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
     method: "POST",
     headers: { Authorization: `Bearer ${await generateTestJWT()}` },
     body: JSON.stringify({}),
-  }) as RoleRequest;
-  request.user.role = role;
+  });
+  const context = createMockContext(request, mockEnv, {}, { id: "test-user-id", role });
 
-  return onRequestPost(createMockContext(request, mockEnv) as never);
+  return onRequestPost(context as never);
 }
 
 describe("POST /api/bookings/multi-unit authorization", () => {
@@ -30,9 +29,22 @@ describe("POST /api/bookings/multi-unit authorization", () => {
     expect(response.status).toBe(403);
   });
 
-  it.each(["staff", "manager", "owner", "admin"])("lets %s through", async (role) => {
+  it.each<UserRole>(["staff", "manager", "owner", "admin"])("lets %s through", async (role) => {
     const response = await postAs(role);
 
     expect(response.status).not.toBe(403);
+  });
+
+  it("rejects a request with no authenticated user", async () => {
+    vi.doMock("@supabase/supabase-js", () => ({ createClient: vi.fn(() => ({})) }));
+    const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
+    const request = createMockRequest("https://api.example.com/api/bookings/multi-unit", {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+
+    const response = await onRequestPost(createMockContext(request, mockEnv) as never);
+
+    expect(response.status).toBe(401);
   });
 });

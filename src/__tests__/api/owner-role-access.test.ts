@@ -12,34 +12,22 @@ import {
   MANAGER_OR_ABOVE,
   requireRole,
   STAFF_OR_ABOVE,
+  type AuthenticatedUser,
 } from "../../../functions/lib/rbac";
-import { createMockRequest, generateTestJWT } from "./setup";
-
-type RoleRequest = Request & { user: { role: string } };
-
-async function requestAs(role: string, path: string): Promise<Request> {
-  const request = createMockRequest(`https://api.example.com${path}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${await generateTestJWT()}` },
-    body: JSON.stringify({}),
-  }) as RoleRequest;
-  request.user.role = role;
-  return request;
-}
 
 describe("rbac role tiers", () => {
-  it("treats owner as staff-or-above and manager-or-above", async () => {
-    const request = await requestAs("owner", "/api/x");
+  it("treats owner as staff-or-above and manager-or-above", () => {
+    const owner: AuthenticatedUser = { id: "owner-id", role: "owner" };
 
-    expect(isStaffOrAbove(request)).toBe(true);
-    expect(isManagerOrAbove(request)).toBe(true);
-    expect(() => requireRole(request, STAFF_OR_ABOVE)).not.toThrow();
-    expect(() => requireRole(request, MANAGER_OR_ABOVE)).not.toThrow();
+    expect(isStaffOrAbove(owner)).toBe(true);
+    expect(isManagerOrAbove(owner)).toBe(true);
+    expect(() => requireRole(owner, STAFF_OR_ABOVE)).not.toThrow();
+    expect(() => requireRole(owner, MANAGER_OR_ABOVE)).not.toThrow();
   });
 
-  it("excludes owner from admin-only checks", async () => {
-    const request = await requestAs("owner", "/api/x");
+  it("excludes owner from admin-only checks", () => {
+    const owner: AuthenticatedUser = { id: "owner-id", role: "owner" };
 
-    expect(() => requireRole(request, ["admin"])).toThrow();
+    expect(() => requireRole(owner, ["admin"])).toThrow();
   });
 });

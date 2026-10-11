@@ -24,20 +24,18 @@ export const MANAGER_OR_ABOVE: UserRole[] = ["manager", "owner", "admin"];
 export const OWNER_OR_ABOVE: UserRole[] = ["owner", "admin"];
 
 /**
- * User context attached to request by middleware
+ * The caller, as resolved by the root middleware and passed to routes on
+ * `context.data.user` (the Pages runtime hands each handler a fresh Request,
+ * so nothing attached to the request survives; `data` is shared across the chain)
  */
-export interface RequestUser {
+export interface AuthenticatedUser {
   id: string;
   email?: string;
   role: UserRole;
-  [key: string]: unknown;
 }
 
-/**
- * Authenticated request with user context
- */
-export interface AuthenticatedRequest extends Request {
-  user?: RequestUser;
+export interface AuthenticatedData {
+  user?: AuthenticatedUser;
 }
 
 /**
@@ -69,22 +67,20 @@ export class ForbiddenError extends Error {
  * Throws ForbiddenError if user role is not in allowedRoles.
  * Throws UnauthorizedError if no user context exists.
  *
- * @param request - Request with user context
+ * @param user - `context.data.user`, undefined when unauthenticated
  * @param allowedRoles - Array of roles that can access this resource
  * @throws {UnauthorizedError} If no user context
  * @throws {ForbiddenError} If user role not in allowedRoles
  *
  * @example
  * // Staff, manager, or admin can add units
- * requireRole(request, ['staff', 'manager', 'admin']);
+ * requireRole(context.data.user, ['staff', 'manager', 'admin']);
  *
  * @example
  * // Only managers and admins can process refunds
- * requireRole(request, ['manager', 'admin']);
+ * requireRole(context.data.user, ['manager', 'admin']);
  */
-export function requireRole(request: Request, allowedRoles: UserRole[]): void {
-  const user = (request as AuthenticatedRequest).user;
-
+export function requireRole(user: AuthenticatedUser | undefined, allowedRoles: UserRole[]): void {
   if (!user) {
     throw new UnauthorizedError("Authentication required");
   }
@@ -104,16 +100,15 @@ export function requireRole(request: Request, allowedRoles: UserRole[]): void {
  * - Add units to bookings
  * - Update booking details
  *
- * @param request - Request with user context
+ * @param user - `context.data.user`, undefined when unauthenticated
  * @returns True if user is staff, manager, owner, or admin
  *
  * @example
- * if (isStaffOrAbove(request)) {
+ * if (isStaffOrAbove(context.data.user)) {
  *   // Allow adding units to booking
  * }
  */
-export function isStaffOrAbove(request: Request): boolean {
-  const user = (request as AuthenticatedRequest).user;
+export function isStaffOrAbove(user: AuthenticatedUser | undefined): boolean {
   return STAFF_OR_ABOVE.includes(user?.role as UserRole);
 }
 
@@ -126,15 +121,14 @@ export function isStaffOrAbove(request: Request): boolean {
  * - Access financial reports
  * - Manage staff accounts
  *
- * @param request - Request with user context
+ * @param user - `context.data.user`, undefined when unauthenticated
  * @returns True if user is manager, owner, or admin
  *
  * @example
- * if (isManagerOrAbove(request)) {
+ * if (isManagerOrAbove(context.data.user)) {
  *   // Allow processing refund
  * }
  */
-export function isManagerOrAbove(request: Request): boolean {
-  const user = (request as AuthenticatedRequest).user;
+export function isManagerOrAbove(user: AuthenticatedUser | undefined): boolean {
   return MANAGER_OR_ABOVE.includes(user?.role as UserRole);
 }
