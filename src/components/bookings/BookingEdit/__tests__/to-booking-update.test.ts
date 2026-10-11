@@ -21,8 +21,8 @@ describe("toBookingUpdate", () => {
   it("stores the picked days as Manila check-in and check-out times", () => {
     const update = toBookingUpdate(editInput);
 
-    expect(update.check_in).toBe("2026-10-15T07:00:00.000Z");
-    expect(update.check_out).toBe("2026-10-17T03:00:00.000Z");
+    expect(update.check_in).toBe("2026-10-15T06:00:00.000Z");
+    expect(update.check_out).toBe("2026-10-17T04:00:00.000Z");
   });
 
   it("sends only bookings columns", () => {

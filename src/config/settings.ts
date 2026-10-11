@@ -60,8 +60,8 @@ if (!isValidTimezone(RESORT_TIMEZONE)) {
  * Times are in 24-hour format in the resort's timezone
  */
 export const RESORT_OPERATION_HOURS = {
-  checkInTime: "15:00", // 3:00 PM
-  checkOutTime: "11:00", // 11:00 AM
+  checkInTime: "14:00", // 2:00 PM
+  checkOutTime: "12:00", // 12:00 PM
   officeOpenTime: "08:00", // 8:00 AM
   officeCloseTime: "20:00", // 8:00 PM
 };
