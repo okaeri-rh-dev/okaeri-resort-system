@@ -39,9 +39,10 @@ describe("POST /api/bookings/multi-unit", () => {
       guest_name: "John Doe",
       email: "john.doe@example.com",
       contact_number: "+63 912 345 6789",
+      guest_id: "00000000-0000-4000-8000-000000000001",
     },
-    check_in: "2025-12-20T06:00:00Z",
-    check_out: "2025-12-22T04:00:00Z",
+    check_in: "2025-12-20",
+    check_out: "2025-12-22",
     units: [
       { unit_id: testUnits[0].unit_id, num_guests: 2 },
       { unit_id: testUnits[1].unit_id, num_guests: 3 },
@@ -269,8 +270,8 @@ describe("POST /api/bookings/multi-unit", () => {
       method: "POST",
       body: JSON.stringify({
         ...validBookingData,
-        check_in: "2025-12-22T06:00:00Z",
-        check_out: "2025-12-20T04:00:00Z", // Before check-in
+        check_in: "2025-12-22",
+        check_out: "2025-12-20", // Before check-in
       }),
     });
 
@@ -382,6 +383,59 @@ describe("POST /api/bookings/multi-unit", () => {
     const data = (await response.json()) as BusinessErrorResponse;
     expect(data.error.code).toBe("UNIT_UNAVAILABLE");
     expect(data.error.details?.unavailable_units).toContain(testUnits[0].unit_id);
+  });
+
+  async function postWith(mockClient: ReturnType<typeof createBookingMocks>, body: unknown) {
+    vi.resetModules();
+    vi.doMock("@supabase/supabase-js", () => ({ createClient: vi.fn(() => mockClient) }));
+    vi.doMock("@/lib/security/sanitize-worker", () => ({
+      sanitizeTextWorker: vi.fn((text: string) => text),
+      sanitizeNameWorker: vi.fn((name: string) => name),
+      sanitizeEmailWorker: vi.fn((email: string) => email.toLowerCase()),
+      sanitizePhoneWorker: vi.fn((phone: string) => phone),
+    }));
+    const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
+    const request = createStaffRequest({ method: "POST", body: JSON.stringify(body) });
+    return onRequestPost(createMockContext(request, mockEnv) as never);
+  }
+
+  it("should return 400 for a timestamp instead of a Manila day", async () => {
+    const response = await postWith(createBookingMocks({ units: testUnits }), {
+      ...validBookingData,
+      check_in: "2025-12-20T06:00:00Z",
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it("should return 409 when a unit is not bookable (missing from the availability result)", async () => {
+    const response = await postWith(
+      createBookingMocks({ units: testUnits, availabilityResults: [] }),
+      validBookingData
+    );
+    expect(response.status).toBe(409);
+  });
+
+  it("should check availability on the 14:00 / 12:00 Manila instants", async () => {
+    const mockClient = createBookingMocks({ units: testUnits });
+    await postWith(mockClient, validBookingData);
+    expect(mockClient.rpc).toHaveBeenCalledWith(
+      "check_multi_unit_availability",
+      expect.objectContaining({
+        p_check_in: "2025-12-20T06:00:00.000Z",
+        p_check_out: "2025-12-22T04:00:00.000Z",
+      })
+    );
+  });
+
+  it("should store the payment method through the create RPC", async () => {
+    const mockClient = createBookingMocks({ units: testUnits });
+    await postWith(mockClient, validBookingData);
+    expect(mockClient.rpc).toHaveBeenCalledWith(
+      "create_multi_unit_booking",
+      expect.objectContaining({
+        p_booking_data: expect.objectContaining({ payment_method: "GCash" }),
+      })
+    );
   });
 
   it("should return 422 instead of trusting the client total when the server prices at zero", async () => {

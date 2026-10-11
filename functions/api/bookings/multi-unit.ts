@@ -12,6 +12,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
+import { createBooking, type PricedUnit } from "@/lib/bookings/create";
+import { isManilaDay, toStayInstants } from "@/lib/bookings/stay";
 import type { Database } from "@/types/database.types";
 
 import {
@@ -31,6 +33,8 @@ interface Env {
   SUPABASE_SERVICE_ROLE_KEY: string;
   RATE_LIMIT_KV: KVNamespace;
 }
+
+const manilaDay = z.string().refine(isManilaDay, "Expected a YYYY-MM-DD day");
 
 // Validation schema (from spec lines 510-548)
 const multiUnitBookingSchema = z
@@ -53,8 +57,8 @@ const multiUnitBookingSchema = z
         ),
       guest_id: z.string().uuid().optional(),
     }),
-    check_in: z.string().datetime(),
-    check_out: z.string().datetime(),
+    check_in: manilaDay,
+    check_out: manilaDay,
     units: z
       .array(
         z.object({
@@ -71,17 +75,19 @@ const multiUnitBookingSchema = z
       )
       .min(1)
       .max(10), // Allow 1-10 units per booking
-    payment: z.object({
-      method: z.enum(["Cash", "GCash", "BankTransfer", "CreditCard"]),
-      amount: z.number().positive(),
-      proof_url: z.string().url().optional(),
-    }),
+    payment: z
+      .object({
+        method: z.enum(["Cash", "GCash", "BankTransfer", "CreditCard", "Card"]),
+        amount: z.number().nonnegative().optional(),
+        proof_url: z.string().url().optional(),
+      })
+      .optional(),
     special_requests: z.string().max(1000).optional(),
     internal_notes: z.string().max(1000).optional(),
     is_walk_in: z.boolean().optional().default(false),
     source: z.enum(["web", "mobile", "admin"]).optional(),
   })
-  .refine((data) => new Date(data.check_out) > new Date(data.check_in), {
+  .refine((data) => data.check_out > data.check_in, {
     message: "Check-out must be after check-in",
     path: ["check_out"],
   });
@@ -185,14 +191,17 @@ export const onRequestPost = async (context: {
     };
 
     // Check availability for all units (from spec lines 615-637)
+    const stay = toStayInstants(sanitizedData.check_in, sanitizedData.check_out);
+    const requestedUnitIds = sanitizedData.units.map((u) => u.unit_id);
     const availabilityCheck = await checkMultiUnitAvailability(
       env,
-      sanitizedData.units.map((u) => u.unit_id),
-      sanitizedData.check_in,
-      sanitizedData.check_out
+      requestedUnitIds,
+      stay.check_in,
+      stay.check_out
     );
 
-    const unavailableUnits = availabilityCheck.filter((u) => !u.is_available);
+    const bookable = new Set(availabilityCheck.filter((u) => u.is_available).map((u) => u.unit_id));
+    const unavailableUnits = requestedUnitIds.filter((unitId) => !bookable.has(unitId));
     if (unavailableUnits.length > 0) {
       return Response.json(
         {
@@ -201,7 +210,7 @@ export const onRequestPost = async (context: {
             code: "UNIT_UNAVAILABLE",
             message: "One or more units are not available for the selected dates",
             details: {
-              unavailable_units: unavailableUnits.map((u) => u.unit_id),
+              unavailable_units: unavailableUnits,
             },
           },
         },
@@ -210,7 +219,7 @@ export const onRequestPost = async (context: {
     }
 
     // Create booking using database function (from spec lines 640-773)
-    const booking = await createMultiUnitBooking(env, sanitizedData);
+    const booking = await createMultiUnitBooking(env, sanitizedData, stay);
 
     // Get user ID from request context (if authenticated)
     const userId = (request as AuthenticatedRequest).user?.id;
@@ -341,7 +350,11 @@ async function checkMultiUnitAvailability(
 /**
  * Create multi-unit booking using database function
  */
-async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
+async function createMultiUnitBooking(
+  env: Env,
+  data: MultiUnitBookingRequest,
+  stay: { check_in: string; check_out: string }
+) {
   const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
       autoRefreshToken: false,
@@ -362,15 +375,6 @@ async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
       pricingConfigError.message
     );
   }
-
-  // Generate booking reference
-  const { data: refData, error: refError } = await supabase.rpc("generate_booking_reference");
-
-  if (refError) {
-    console.error("Error generating booking reference:", refError.message);
-  }
-
-  const bookingReference = refData || `BK-${Date.now()}`;
 
   // ============================================================
   // BUG-001 FIX: Calculate pricing with validation and fallback
@@ -394,8 +398,8 @@ async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
 
       const pricing = calculateUnitPricing(
         unitData,
-        data.check_in,
-        data.check_out,
+        stay.check_in,
+        stay.check_out,
         unit.num_guests,
         pricingConfig
       );
@@ -423,7 +427,7 @@ async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
 
   // Calculate server total and compare with client amount
   const serverTotal = unitsWithPricing.reduce((sum, u) => sum + u.subtotal, 0);
-  const clientTotal = data.payment.amount;
+  const clientTotal = data.payment?.amount ?? 0;
 
   // Log pricing comparison for debugging (use warn to comply with lint rules)
   console.warn("[PRICING] Total comparison:", {
@@ -435,46 +439,21 @@ async function createMultiUnitBooking(env: Env, data: MultiUnitBookingRequest) {
 
   if (serverTotal <= 0) throw new UnpricedBookingError(serverTotal);
 
-  // Call database function to create booking
-  const { data: bookingId, error } = await supabase.rpc("create_multi_unit_booking", {
-    p_booking_data: {
-      booking_reference: bookingReference,
+  const units: PricedUnit[] = unitsWithPricing;
+
+  return createBooking(supabase, {
+    guest: {
       guest_name: data.primary_guest.guest_name,
-      contact_number: data.primary_guest.contact_number,
-      email: data.primary_guest.email,
-      check_in: data.check_in,
-      check_out: data.check_out,
-      num_guests: data.units.reduce((sum, u) => sum + u.num_guests, 0),
-      special_requests: data.special_requests,
-      internal_notes: data.internal_notes,
-      is_walk_in: data.is_walk_in,
-      booking_status: "Pending",
-      payment_status: "Pending",
+      email: data.primary_guest.email || null,
+      contact_number: data.primary_guest.contact_number || null,
+      guest_id: data.primary_guest.guest_id,
     },
-    p_units: unitsWithPricing,
-    p_guest_id: data.primary_guest.guest_id || undefined,
+    check_in: data.check_in,
+    check_out: data.check_out,
+    units,
+    payment_method: data.payment?.method ?? null,
+    special_requests: data.special_requests ?? null,
+    internal_notes: data.internal_notes ?? null,
+    is_walk_in: data.is_walk_in,
   });
-
-  if (error) {
-    throw error;
-  }
-
-  // Fetch created booking with units
-  const { data: createdBooking, error: fetchError } = await supabase
-    .from("bookings")
-    .select(
-      `
-      *,
-      booking_units (
-        *,
-        unit:units (*)
-      )
-    `
-    )
-    .eq("booking_id", bookingId)
-    .single();
-
-  if (fetchError) throw fetchError;
-
-  return createdBooking;
 }

@@ -11,6 +11,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+import { isManilaDay, toStayInstants } from "@/lib/bookings/stay";
 import type { Database } from "@/types/database.types";
 
 interface Env {
@@ -66,33 +67,16 @@ export const onRequestGet = async (context: { request: Request; env: Env }): Pro
       );
     }
 
-    // Validate dates
-    const checkInDate = new Date(checkIn);
-    const checkOutDate = new Date(checkOut);
-
-    if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
+    if (!isManilaDay(checkIn) || !isManilaDay(checkOut) || checkOut <= checkIn) {
       return Response.json(
         {
           error: "INVALID_DATES",
-          message: "check_in and check_out must be valid dates",
+          message: "check_in and check_out must be YYYY-MM-DD days, check_out after check_in",
         },
         { status: 400 }
       );
     }
-
-    if (checkOutDate <= checkInDate) {
-      return Response.json(
-        {
-          error: "INVALID_DATES",
-          message: "check_out must be after check_in",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Convert dates to UTC timestamps for database
-    const checkInUTC = checkInDate.toISOString();
-    const checkOutUTC = checkOutDate.toISOString();
+    const { check_in: checkInUTC, check_out: checkOutUTC } = toStayInstants(checkIn, checkOut);
 
     // ✅ Generate cache key
     const sortedUnitIds = [...unitIds].sort();

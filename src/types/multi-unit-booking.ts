@@ -128,12 +128,14 @@ export interface AdminMultiUnitBookingCreate {
     email: string;
     contact_number: string;
   };
+  /** Manila check-in day, YYYY-MM-DD */
   check_in: string;
+  /** Manila check-out day, YYYY-MM-DD */
   check_out: string;
   units: AdminBookingUnitCreate[];
   payment?: {
     method: string;
-    amount: number;
+    amount?: number;
     proof_url?: string;
   };
   special_requests?: string;

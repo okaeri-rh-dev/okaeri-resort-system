@@ -71,8 +71,8 @@ describe("GET /api/availability/multi-unit", () => {
       method: "GET",
       query: {
         "units[]": [testUnits[0].unit_id, testUnits[1].unit_id].join(","),
-        check_in: "2025-12-20T06:00:00Z",
-        check_out: "2025-12-22T04:00:00Z",
+        check_in: "2025-12-20",
+        check_out: "2025-12-22",
       },
     });
 
@@ -124,8 +124,8 @@ describe("GET /api/availability/multi-unit", () => {
       method: "GET",
       query: {
         "units[]": tenUnitIds.join(","),
-        check_in: "2025-12-20T06:00:00Z",
-        check_out: "2025-12-22T04:00:00Z",
+        check_in: "2025-12-20",
+        check_out: "2025-12-22",
       },
     });
 
@@ -163,8 +163,8 @@ describe("GET /api/availability/multi-unit", () => {
       method: "GET",
       query: {
         "units[]": testUnits[0].unit_id,
-        check_in: "2025-12-20T06:00:00Z",
-        check_out: "2025-12-22T04:00:00Z",
+        check_in: "2025-12-20",
+        check_out: "2025-12-22",
       },
     });
 
@@ -185,8 +185,8 @@ describe("GET /api/availability/multi-unit", () => {
       method: "GET",
       query: {
         "units[]": testUnits[0].unit_id,
-        check_in: "2025-12-20T06:00:00Z",
-        check_out: "2025-12-22T04:00:00Z",
+        check_in: "2025-12-20",
+        check_out: "2025-12-22",
         exclude_booking_id: excludeId,
       },
     });
@@ -205,8 +205,8 @@ describe("GET /api/availability/multi-unit", () => {
       method: "GET",
       query: {
         "units[]": testUnits[0].unit_id,
-        check_in: "2025-12-20T06:00:00Z",
-        check_out: "2025-12-22T04:00:00Z",
+        check_in: "2025-12-20",
+        check_out: "2025-12-22",
       },
     });
 
@@ -227,8 +227,8 @@ describe("GET /api/availability/multi-unit", () => {
       method: "GET",
       query: {
         "units[]": testUnits[0].unit_id,
-        check_in: "2025-12-20T06:00:00Z",
-        check_out: "2025-12-22T04:00:00Z",
+        check_in: "2025-12-20",
+        check_out: "2025-12-22",
       },
     });
 
@@ -245,8 +245,8 @@ describe("GET /api/availability/multi-unit", () => {
       method: "GET",
       query: {
         "units[]": testUnits[0].unit_id,
-        check_in: "2025-12-20T06:00:00Z",
-        check_out: "2025-12-22T04:00:00Z",
+        check_in: "2025-12-20",
+        check_out: "2025-12-22",
       },
     });
 
@@ -263,8 +263,8 @@ describe("GET /api/availability/multi-unit", () => {
     const request = createMockRequest("https://api.example.com/api/availability/multi-unit", {
       method: "GET",
       query: {
-        check_in: "2025-12-20T06:00:00Z",
-        check_out: "2025-12-22T04:00:00Z",
+        check_in: "2025-12-20",
+        check_out: "2025-12-22",
       },
     });
 
@@ -283,7 +283,7 @@ describe("GET /api/availability/multi-unit", () => {
       method: "GET",
       query: {
         "units[]": testUnits[0].unit_id,
-        check_out: "2025-12-22T04:00:00Z",
+        check_out: "2025-12-22",
       },
     });
 
@@ -302,7 +302,7 @@ describe("GET /api/availability/multi-unit", () => {
       method: "GET",
       query: {
         "units[]": testUnits[0].unit_id,
-        check_in: "2025-12-20T06:00:00Z",
+        check_in: "2025-12-20",
       },
     });
 
@@ -322,7 +322,7 @@ describe("GET /api/availability/multi-unit", () => {
       query: {
         "units[]": testUnits[0].unit_id,
         check_in: "invalid-date",
-        check_out: "2025-12-22T04:00:00Z",
+        check_out: "2025-12-22",
       },
     });
 
@@ -340,8 +340,8 @@ describe("GET /api/availability/multi-unit", () => {
       method: "GET",
       query: {
         "units[]": testUnits[0].unit_id,
-        check_in: "2025-12-22T06:00:00Z",
-        check_out: "2025-12-20T04:00:00Z", // Before check-in
+        check_in: "2025-12-22",
+        check_out: "2025-12-20", // Before check-in
       },
     });
 
@@ -374,8 +374,8 @@ describe("GET /api/availability/multi-unit", () => {
       method: "GET",
       query: {
         "units[]": testUnits[0].unit_id,
-        check_in: "2025-12-20T06:00:00Z",
-        check_out: "2025-12-22T04:00:00Z",
+        check_in: "2025-12-20",
+        check_out: "2025-12-22",
       },
     });
 
