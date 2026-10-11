@@ -88,8 +88,9 @@ Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub 
 ## Resume state (2026-10-11)
 
 - Booking-entity grilling done and confirmed. Implementation plan written: `docs/plans/2026-10-11-booking-module.md`. Next: Task 1 there, test-first (needs `supabase start` from Task 2 on).
-- Open decisions from planning: see "Booking module planning (2026-10-11)" in Decisions; recommended defaults are written into the plan.
+- Planning decisions confirmed ("Booking module planning (2026-10-11)" in Decisions). Docs commit `2166b6e` is pushed (by the session that pushed `0e5b2ae`, the booking-search debounce fix, which touched `useBookingStore.ts`).
 - Prod gate clear: duplicates cancelled, 0 Confirmed overlaps (read-only query 2026-10-11).
+- Plan code is unrun: line numbers in the plan for `src/stores/useBookingStore.ts` predate `0e5b2ae` (debounced `useBookings`), so locate edits by symbol; the result type of `createBooking` and the route-test mocks are expected to surface in Tasks 3-4.
 - Not verified: the 2 code-read claims "`/api/admin/available-units` returns 400 on ISO input" and "store night count undercounts at 14:00/12:00" were not run; `MultiUnitBookingForm` field order / exact availability UI not inspected.
 
 ## Decisions & Deferrals
@@ -165,7 +166,7 @@ Booking entity grilling, round 4 (2026-10-11). Facts: prod `pricing_config` is f
 - **`GLOSSARY.md` gains Check-in day, Check-out day and Night; ADR 0002 records the stay storage convention.** Revisit: n/a.
 - **Follow-up candidate for the guardrails list: a read-only schema-drift check (`supabase db dump --linked` vs local).** Why: three migrations are recorded applied with objects missing. Revisit: next guardrails pass.
 
-Booking module planning (2026-10-11). Facts (read-only prod): `create_multi_unit_booking` ignores `payment_method`; `check_multi_unit_availability.next_available_date` is the earliest check-out of stays starting after the requested check-in (not "booked until") and units not `Available` are absent from its result, which the create route treats as available; the availability exclusion covers only Confirmed/CheckedIn, and `cascade_booking_status` copies status changes to availability rows; 0 same-day stays; 107 `booking_units` without availability rows. Local only: `booking_units_no_double_booking` (status defaults `'confirmed'`, dates NULL) blocks any second booking of a unit, which is why the Pending-overlap test was skipped. Recommended defaults, taken unless the user objects:
+Booking module planning (2026-10-11). Facts (read-only prod): `create_multi_unit_booking` ignores `payment_method`; `check_multi_unit_availability.next_available_date` is the earliest check-out of stays starting after the requested check-in (not "booked until") and units not `Available` are absent from its result, which the create route treats as available; the availability exclusion covers only Confirmed/CheckedIn, and `cascade_booking_status` copies status changes to availability rows; 0 same-day stays; 107 `booking_units` without availability rows. Local only: `booking_units_no_double_booking` (status defaults `'confirmed'`, dates NULL) blocks any second booking of a unit, which is why the Pending-overlap test was skipped. Recommended defaults, confirmed by the user 2026-10-11:
 
 - **`createBooking` runs server side (Worker, service-role client); the browser calls the route through `requestBooking`.** Why: DB tests call the module directly; pricing stays on the server. Revisit: Candidate 3.
 - **The migration drops `booking_units_no_double_booking` IF EXISTS (no-op on prod) and the Pending-overlap test is re-enabled.** Why: DB tests of turnover need a second booking per unit; prod has no such constraint. Revisit: guardrails item 4 (drift #2).
@@ -176,3 +177,4 @@ Booking module planning (2026-10-11). Facts (read-only prod): `create_multi_unit
 - **`BookingForm` loses its unused edit mode.** Why: no caller passes `bookingId`; the edit page is the edit path. Revisit: n/a.
 - **Row Cancel gets a confirmation dialog (the Delete dialog reused).** Why: cancel frees the unit and cannot be undone. Revisit: n/a.
 - **Dialog bookings stay `Pending` (as today) and do not block units until confirmed.** Why: matches the exclusion and existing workflow. Revisit: if staff expect a new booking to hold the unit.
+- **Execute the booking module plan subagent-driven (one fresh subagent per task, review between tasks).** Why: user choice 2026-10-11. Revisit: n/a.
