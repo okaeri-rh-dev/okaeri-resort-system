@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   queryOptions,
   useMutation,
   useQuery,
@@ -10,6 +11,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { getAccessToken } from "@/hooks/useAuthToken";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { adaptBookingFromDB } from "@/lib/database-adapters";
 import { recordProofPayment } from "@/lib/payments";
 import {
@@ -378,10 +380,16 @@ const bookingListQuery = ({
     // Removed refetchInterval - manual refresh preferred for dashboard
   });
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 export const useBookings = () => {
   const { filters, searchQuery, sortBy, sortOrder } = useBookingStore();
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
 
-  return useQuery(bookingListQuery({ filters, searchQuery, sortBy, sortOrder }));
+  return useQuery({
+    ...bookingListQuery({ filters, searchQuery: debouncedSearchQuery, sortBy, sortOrder }),
+    placeholderData: keepPreviousData,
+  });
 };
 
 // Fetch single booking
