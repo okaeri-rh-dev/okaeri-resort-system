@@ -2119,7 +2119,7 @@ Check and screenshot (Read each screenshot before citing it):
 6. Bookings filter Dec 20 → Dec 20: lists the booking that checks in Dec 20.
 7. `/admin/bookings/new-multi`: book two units Dec 27 → Dec 29; the detail page shows Dec 27 → Dec 29, and in Studio (or `psql "$DB_URL"`) `check_in` is `2026-12-27 06:00:00+00`.
 
-- [ ] **Step 3: Read-only prod preview (agent runs, user reviews)**
+- [x] **Step 3: Read-only prod preview (agent runs, user reviews)** — 2026-10-12: 180 bookings, 0 Manila-day changes; split 106 × 15:00/11:00, 72 × 00:00/00:00, 1 × 00:00/11:00, 1 × 15:48/00:00; missing_availability 107; same_day 0; confirmed_overlap 0; newest booking 2026-10-10 03:47Z. Matches the baseline
 
 ```bash
 supabase db query --linked "
