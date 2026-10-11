@@ -81,7 +81,7 @@ Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub 
   - [x] 6. (`3d516a0`, `3035267`) Automatic availability in the dialog
   - [x] 7. (`fa8d4e7`, `542f923`) `updateBooking` + edit page
   - [x] 8. (`e7ed7f9`, `8a63830`) Cancel/status via the module; hard delete leaves the UI
-  - [ ] 9. Readers (night count, list filter, confirmation card)
+  - [x] 9. (`d7b018d`) Readers (night count, list filter, confirmation card)
   - [ ] 10. Browser check, read-only prod preview, user `db push`, push, manual deploy, post-deploy normalize
 - [ ] Then 4 → 6 on the client; 3 → 2 → 8 on the server
 

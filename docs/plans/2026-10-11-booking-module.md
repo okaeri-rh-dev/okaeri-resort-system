@@ -1963,7 +1963,7 @@ git commit -m "feat: cancel with confirmation through the booking module, remove
 
 - Produces: `filterDay(value: string): ManilaDay`, which accepts a day or a legacy persisted ISO filter value.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -2013,12 +2013,12 @@ describe("calculateUnitPricing night count", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `npx vitest run src/lib/bookings src/stores/__tests__/useMultiUnitBookingStore.nights.test.ts`
 Expected: FAIL: `filterDay` missing; `nights` is 0.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 // src/lib/bookings/filter-day.ts
@@ -2081,12 +2081,12 @@ const formatStayDay = (instant: string, time: string) =>
 
 with `{formatStayDay(checkIn, RESORT_OPERATION_HOURS.checkInTime)}` / `{formatStayDay(checkOut, RESORT_OPERATION_HOURS.checkOutTime)}`; imports `format`, `parse` from `date-fns`, `formatPhilippineDate` from `@/lib/timezone`, `RESORT_OPERATION_HOURS` from `@/config/settings`.
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx vitest run src/lib src/stores src/components/bookings src/components/booking-confirmation`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 npm run verify
