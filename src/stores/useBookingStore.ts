@@ -287,6 +287,11 @@ const cachedBooking = (queryClient: QueryClient, bookingId: string): Booking | u
 };
 
 // Fetch all bookings with filters
+const BOOKING_SEARCH_COLUMNS = ["guest_name", "booking_reference", "email", "contact_number"];
+
+export const bookingSearchFilter = (searchQuery: string) =>
+  BOOKING_SEARCH_COLUMNS.map((column) => `${column}.ilike.%${searchQuery}%`).join(",");
+
 const bookingListQuery = ({
   filters,
   searchQuery,
@@ -343,9 +348,7 @@ const bookingListQuery = ({
         query = query.lte("check_out", filters.date_to);
       }
       if (searchQuery) {
-        query = query.or(
-          `guest_name.ilike.%${searchQuery}%,booking_reference.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`
-        );
+        query = query.or(bookingSearchFilter(searchQuery));
       }
 
       // Apply sorting
