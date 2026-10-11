@@ -116,6 +116,10 @@ describe("create_multi_unit_booking and check_multi_unit_availability", () => {
     if (shouldRun) await cleanupTestData({ includeTestFixtures: true });
   });
 
+  afterAll(async () => {
+    if (shouldRun) await cleanupTestData({ includeTestFixtures: true });
+  });
+
   it("stores the payment method", async () => {
     if (!shouldRun) return;
     const unit = await createTestUnit();
