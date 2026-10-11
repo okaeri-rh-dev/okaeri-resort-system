@@ -2112,7 +2112,7 @@ Expected: both exit 0; quote the summary lines (test counts) in the plan doc.
 Check and screenshot (Read each screenshot before citing it):
 
 1. New booking dialog: pick Dec 20 → Dec 22 on a free unit; the price shows; create; toast shows the reference.
-2. Reopen the dialog: the same unit for Dec 21 → Dec 22 is enabled (Pending does not block). Confirm the first booking in the table, reopen: the unit is disabled with "Booked until Dec 22".
+2. Reopen the dialog: the same unit for Dec 21 → Dec 22 is enabled (Pending does not block). Confirm the first booking in the table, wait > 60 s (the availability route caches 60 s), reopen: the unit is disabled with "Booked until Dec 22".
 3. Same unit Dec 22 → Dec 24: enabled (same-day turnover).
 4. Edit the first booking to Dec 27 → Dec 29: the detail page shows the new days; the unit is free again for Dec 20.
 5. Row menu: no Delete; Cancel asks for confirmation; after cancelling, the unit is free.
@@ -2129,11 +2129,24 @@ SELECT booking_reference, booking_status, check_in, check_out,
 FROM public.bookings ORDER BY check_in;"
 supabase db query --linked "SELECT count(*) AS missing_availability FROM public.booking_units bu WHERE NOT EXISTS (SELECT 1 FROM public.booking_unit_availability a WHERE a.booking_id = bu.booking_id AND a.unit_id = bu.unit_id);"
 supabase db query --linked "SELECT count(*) AS same_day FROM public.bookings WHERE (check_out AT TIME ZONE 'Asia/Manila')::date <= (check_in AT TIME ZONE 'Asia/Manila')::date;"
+supabase db query --linked "
+SELECT a.booking_reference || ' & ' || b.booking_reference AS confirmed_overlap
+FROM public.booking_units au
+JOIN public.bookings a ON a.booking_id = au.booking_id
+JOIN public.booking_units bu ON bu.unit_id = au.unit_id AND bu.booking_id > au.booking_id
+JOIN public.bookings b ON b.booking_id = bu.booking_id
+WHERE a.booking_status IN ('Confirmed', 'CheckedIn') AND b.booking_status IN ('Confirmed', 'CheckedIn')
+  AND tstzrange(((a.check_in AT TIME ZONE 'Asia/Manila')::date + TIME '14:00') AT TIME ZONE 'Asia/Manila',
+                ((a.check_out AT TIME ZONE 'Asia/Manila')::date + TIME '12:00') AT TIME ZONE 'Asia/Manila', '[)')
+   && tstzrange(((b.check_in AT TIME ZONE 'Asia/Manila')::date + TIME '14:00') AT TIME ZONE 'Asia/Manila',
+                ((b.check_out AT TIME ZONE 'Asia/Manila')::date + TIME '12:00') AT TIME ZONE 'Asia/Manila', '[)');"
 ```
 
-Expected (2026-10-11 baseline): no Manila day changes between old and new columns; `missing_availability` 107; `same_day` 0. Any difference → stop and report.
+Expected (2026-10-11 baseline): no Manila day changes between old and new columns; `missing_availability` 107; `same_day` 0; no `confirmed_overlap` rows (the migration raises on any). Any difference → stop and report.
 
-- [ ] **Step 4: User pushes the migration** (`supabase db push`); agent confirms read-only: `normalize_booking_stays` exists, re-running the split query shows only 14:00 / 12:00, `missing_availability` = 0.
+Tell the user before `db push`: the normalization fires the audit trigger (about 2 audit rows per changed booking, ~360 rows) and the guest-statistics trigger, and bumps `updated_at` on every booking it touches. The migration also revokes EXECUTE on `create_multi_unit_booking` from `anon`/`authenticated` (only the Worker calls it).
+
+- [ ] **Step 4: User pushes the migration** (`supabase db push`); agent confirms read-only: `normalize_booking_stays` exists, re-running the split query shows only 14:00 / 12:00, `missing_availability` = 0, and `create_multi_unit_booking`'s `proacl` lists only `postgres` and `service_role`.
 - [ ] **Step 5: Push commits** (`git push` with `timeout: 600000`; verify `git fetch origin && git rev-parse HEAD origin/main` match).
 - [ ] **Step 6: User runs the manual deploy** from a clean worktree (memory: manual deploy recipe; never build with `.env.local`).
-- [ ] **Step 7: Post-deploy normalize.** If any booking was written between `db push` and the deploy, the user runs `SELECT * FROM public.normalize_booking_stays();` in the SQL editor (idempotent). Agent re-runs the split query: only 14:00 / 12:00.
+- [ ] **Step 7: Post-deploy normalize, the day after the deploy.** Open tabs and installed admin PWAs keep the old client until the update prompt is accepted (`registerType: "prompt"`); the old dialog still writes 15:00/11:00 without an availability row. Once every family device has updated, the agent re-runs the split query; if any row is off 14:00 / 12:00 or `missing_availability` > 0, the user runs `SELECT * FROM public.normalize_booking_stays();` in the SQL editor (idempotent). Agent re-runs the split query: only 14:00 / 12:00.

@@ -85,13 +85,11 @@ Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub 
   - [ ] 10. Browser check, read-only prod preview, user `db push`, push, manual deploy, post-deploy normalize
 - [ ] Then 4 → 6 on the client; 3 → 2 → 8 on the server
 
-## Resume state (2026-10-11)
+## Resume state (2026-10-11, evening)
 
-- Booking-entity grilling done and confirmed. Implementation plan written: `docs/plans/2026-10-11-booking-module.md`. Next: Task 1 there, test-first (needs `supabase start` from Task 2 on).
-- Planning decisions confirmed ("Booking module planning (2026-10-11)" in Decisions). Docs commit `2166b6e` is pushed (by the session that pushed `0e5b2ae`, the booking-search debounce fix, which touched `useBookingStore.ts`).
-- Prod gate clear: duplicates cancelled, 0 Confirmed overlaps (read-only query 2026-10-11).
-- Plan code is unrun: line numbers in the plan for `src/stores/useBookingStore.ts` predate `0e5b2ae` (debounced `useBookings`), so locate edits by symbol; the result type of `createBooking` and the route-test mocks are expected to surface in Tasks 3-4.
-- Not verified: the 2 code-read claims "`/api/admin/available-units` returns 400 on ISO input" and "store night count undercounts at 14:00/12:00" were not run; `MultiUnitBookingForm` field order / exact availability UI not inspected.
+- Booking module Tasks 1-9 done on local `main` (unpushed); ticks and commits on the task lines above, ledger in `.superpowers/sdd/progress.md` (git-ignored). Final whole-branch review done; its pre-deploy fixes and decisions are in "Booking module execution (2026-10-11)" below.
+- Next: Task 10 of `docs/plans/2026-10-11-booking-module.md` (Step 1 full verify + `test:db`, Step 2 browser check, Step 3 read-only prod preview incl. overlap query, then user `db push`, push, user manual deploy, next-day normalize).
+- A concurrent session committed into this working tree on 2026-10-11 and its commit crossed with Task 1; reworded to `5998f5d`/`419d12f`. Its orphaned phone-search fix was committed as `7798f7f` (user choice). Commit with `git commit -- <paths>` while other sessions share the tree.
 
 ## Decisions & Deferrals
 
@@ -178,3 +176,12 @@ Booking module planning (2026-10-11). Facts (read-only prod): `create_multi_unit
 - **Row Cancel gets a confirmation dialog (the Delete dialog reused).** Why: cancel frees the unit and cannot be undone. Revisit: n/a.
 - **Dialog bookings stay `Pending` (as today) and do not block units until confirmed.** Why: matches the exclusion and existing workflow. Revisit: if staff expect a new booking to hold the unit.
 - **Execute the booking module plan subagent-driven (one fresh subagent per task, review between tasks).** Why: user choice 2026-10-11. Revisit: n/a.
+
+Booking module execution (2026-10-11). Tasks 1-9 done subagent-driven (per-task commits are on the task lines above); final whole-branch review: deploy with fixes, no Critical. Facts (read-only prod ACL query 2026-10-11): `create_multi_unit_booking` is SECURITY DEFINER with EXECUTE for PUBLIC, `anon`, `authenticated`. Confirmed by the user 2026-10-11:
+
+- **Revoke EXECUTE on `create_multi_unit_booking` from PUBLIC/`anon`/`authenticated` in `20261011120000` (service_role only).** Why: anyone with the public anon key could create bookings with any price and status, bypassing server pricing; the Worker is the only caller now. Revisit: guardrails item 4, if the guest path needs it.
+- **Post-deploy normalize runs the day after the deploy, once every family device has accepted the update.** Why: the PWA update is a prompt, so open tabs keep writing 15:00/11:00 without availability rows until reloaded; the function is idempotent. Revisit: n/a.
+- **The availability route's 60 s cache (Worker KV + `Cache-Control: public`) stays; logged here.** Why: the server re-check on save is uncached, so a stale "free" only costs a 409. Revisit: Candidate 6 (stores shrink) or the next guardrails pass.
+- **CheckedIn and CheckedOut bookings can no longer be cancelled.** Why: cancel now goes through `canTransitionStatus` (the old direct update skipped it); the UI offers Cancel only for Pending/Confirmed. No UI sets CheckedIn today. Revisit: if staff need to undo a check-in.
+- **Before deploy, fix: refresh availability after a status change; map exclusion errors (23P01) to "This unit is already booked for some of these days".** Why: final review Important #1/#2; staff would otherwise see the unit as free after Confirm and raw Postgres text on a double booking. Revisit: n/a.
+- **Logged, not fixed (final-review triage, all "can wait"):** dialog same-day stay passes the client and gets a Worker 400; ₱0 price preview on today→tomorrow (Candidate 3); `afterBookingUpdate` doesn't refresh upcoming check-ins; availability cache key ignores `exclude_booking_id`; dead old-format callers (`db.bookings.update`, `db.bookings.checkMultiUnitAvailability`, store `checkUnitAvailability`/`checkAllUnitsAvailability`; delete in Candidate 6); no DB test as a staff-role user; `update_guest_statistics` skipped for staff (not SECURITY DEFINER); `setBookingStatus` read-then-write race (compare-and-set later); email guest lookup case-sensitive with unordered `limit(1)`; stale docs (`forms-documentation.md`, `bookings/README.md`, `stores/README.md`, `hooks/entity/README.md`); 2 older tests fail only when the whole suite is forced to `TZ=America/Los_Angeles`. Revisit: Candidate 6 / next guardrails pass.
