@@ -2,7 +2,7 @@
 
 **Role**: Staff
 **Last Updated**: 2025-01-30
-**Tester**: ******\_\_\_******
+**Tester**: **\*\***\_\_\_**\*\***
 
 ## Prerequisites
 
@@ -62,7 +62,7 @@
 
 1. Navigate to `/login`
 2. Enter staff email: `jasonacido+staff@gmail.com`
-3. Enter staff password: `12345678`
+3. Enter staff password: `<see password manager>`
 4. Click "Sign In" button
 5. Verify loading indicator appears
 6. Wait for authentication to complete
@@ -195,7 +195,7 @@
 
 **Result**: [ ] Pass [ ] Fail
 
-**Session Duration**: ******\_\_\_******
+**Session Duration**: **\*\***\_\_\_**\*\***
 
 **Notes/Issues Found**:
 
@@ -403,8 +403,8 @@
 | TC-AUTH-009 | XSS Prevention on Login             |        |
 | TC-AUTH-010 | Mobile Login Experience             |        |
 
-**Total Passed**: **_ / 10
-**Total Failed**: _** / 10
+**Total Passed**: **\_ / 10
+**Total Failed**: \_** / 10
 
 **Overall Notes**:
 

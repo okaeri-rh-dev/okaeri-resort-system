@@ -29,7 +29,7 @@
    - Staff: `jasonacido+staff@gmail.com` (ID: `35532ee6-b632-4e04-b493-2ac7c064ecdc`)
    - Admin: `jasonacido+admin@gmail.com` (ID: `bd751a0f-14b3-4943-98c1-47e7ef751a2a`)
    - Owner: `jasonacido+owner@gmail.com` (ID: `61b06b5b-c5a8-427e-9242-f7754a496524`)
-   - All accounts have password: `12345678`, email confirmed
+   - All accounts have password: `<see password manager>`, email confirmed
 
 2. **Roles Assigned in app_roles Table**
    - Staff role → `jasonacido+staff@gmail.com` ✅
@@ -288,7 +288,7 @@ VALUES
 ```bash
 curl -s "https://gxgpdlvathotgqtszabo.supabase.co/auth/v1/token?grant_type=password" \
   -H "apikey: $ANON_KEY" \
-  -d '{"email": "jasonacido+staff@gmail.com", "password": "12345678"}'
+  -d '{"email": "jasonacido+staff@gmail.com", "password": "<password>"}'
 # Returns: access_token, user object - SUCCESS ✅
 ```
 

@@ -19,7 +19,7 @@ Balance = Received (payments) - Spent (expenses) + Transfers In - Transfers Out
 ## Test Environment
 
 - **URL**: https://okaeri-resort.pages.dev
-- **Test Accounts** (password: `12345678`):
+- **Test Accounts** (password: `<see password manager>`):
   - Admin: `jasonacido+admin@gmail.com`
   - Owner: `jasonacido+owner@gmail.com`
 
@@ -57,13 +57,13 @@ Expected Final Balance: ₱_______________ (Initial + 5,000)
 
 #### Phase 1: Record Initial Balance (Owner)
 
-| Step | Action                             | Expected Result                       | Pass/Fail |
-| ---- | ---------------------------------- | ------------------------------------- | --------- |
-| 1    | Login as Owner                     | Dashboard loads                       |           |
-| 2    | Navigate to `/admin/accounts`      | Accounts page loads                   |           |
-| 3    | Find "Cash" account (or test acct) | Account visible in table              |           |
-| 4    | Note current balance               | Balance recorded: ₱******\_\_\_****** |           |
-| 5    | Note "Received" column value       | Received: ₱******\_\_\_******         |           |
+| Step | Action                             | Expected Result                           | Pass/Fail |
+| ---- | ---------------------------------- | ----------------------------------------- | --------- |
+| 1    | Login as Owner                     | Dashboard loads                           |           |
+| 2    | Navigate to `/admin/accounts`      | Accounts page loads                       |           |
+| 3    | Find "Cash" account (or test acct) | Account visible in table                  |           |
+| 4    | Note current balance               | Balance recorded: ₱**\*\***\_\_\_**\*\*** |           |
+| 5    | Note "Received" column value       | Received: ₱**\*\***\_\_\_**\*\***         |           |
 
 #### Phase 2: Admin Records Payment
 
@@ -142,12 +142,12 @@ Expected Final Balance: ₱_______________ (Initial - 1,500)
 
 #### Phase 1: Record Initial Balance
 
-| Step | Action                        | Expected Result                       | Pass/Fail |
-| ---- | ----------------------------- | ------------------------------------- | --------- |
-| 1    | Login as Owner                | Dashboard loads                       |           |
-| 2    | Navigate to `/admin/accounts` | Accounts page loads                   |           |
-| 3    | Note Cash account balance     | Balance recorded: ₱******\_\_\_****** |           |
-| 4    | Note "Spent" column value     | Spent: ₱******\_\_\_******            |           |
+| Step | Action                        | Expected Result                           | Pass/Fail |
+| ---- | ----------------------------- | ----------------------------------------- | --------- |
+| 1    | Login as Owner                | Dashboard loads                           |           |
+| 2    | Navigate to `/admin/accounts` | Accounts page loads                       |           |
+| 3    | Note Cash account balance     | Balance recorded: ₱**\*\***\_\_\_**\*\*** |           |
+| 4    | Note "Spent" column value     | Spent: ₱**\*\***\_\_\_**\*\***            |           |
 
 #### Phase 2: Create Expense
 
@@ -230,13 +230,13 @@ Transfer Amount: ₱1,000
 
 #### Phase 1: Record Initial Balances
 
-| Step | Action                          | Expected Result            | Pass/Fail |
-| ---- | ------------------------------- | -------------------------- | --------- |
-| 1    | Login as Owner                  | Dashboard loads            |           |
-| 2    | Navigate to `/admin/accounts`   | Accounts page loads        |           |
-| 3    | Note Cash balance               | Cash: ₱******\_\_\_******  |           |
-| 4    | Note GCash balance              | GCash: ₱******\_\_\_****** |           |
-| 5    | Calculate total across accounts | Total: ₱******\_\_\_****** |           |
+| Step | Action                          | Expected Result                | Pass/Fail |
+| ---- | ------------------------------- | ------------------------------ | --------- |
+| 1    | Login as Owner                  | Dashboard loads                |           |
+| 2    | Navigate to `/admin/accounts`   | Accounts page loads            |           |
+| 3    | Note Cash balance               | Cash: ₱**\*\***\_\_\_**\*\***  |           |
+| 4    | Note GCash balance              | GCash: ₱**\*\***\_\_\_**\*\*** |           |
+| 5    | Calculate total across accounts | Total: ₱**\*\***\_\_\_**\*\*** |           |
 
 #### Phase 2: Create Transfer
 
@@ -315,12 +315,12 @@ Account Balance =
 
 ## Cross-Account Integrity Checks
 
-| Check                                   | Expected            | Actual          | Pass/Fail |
-| --------------------------------------- | ------------------- | --------------- | --------- |
-| Total of all account balances           | ₱******\_\_\_****** | ₱******\_****** |           |
-| Sum of received = Sum of all payments   | ₱******\_\_\_****** | ₱******\_****** |           |
-| Sum of spent = Sum of all expenses      | ₱******\_\_\_****** | ₱******\_****** |           |
-| Transfers out = Transfers in (zero-sum) | ₱******\_\_\_****** | ₱******\_****** |           |
+| Check                                   | Expected                | Actual              | Pass/Fail |
+| --------------------------------------- | ----------------------- | ------------------- | --------- |
+| Total of all account balances           | ₱**\*\***\_\_\_**\*\*** | ₱**\*\***\_**\*\*** |           |
+| Sum of received = Sum of all payments   | ₱**\*\***\_\_\_**\*\*** | ₱**\*\***\_**\*\*** |           |
+| Sum of spent = Sum of all expenses      | ₱**\*\***\_\_\_**\*\*** | ₱**\*\***\_**\*\*** |           |
+| Transfers out = Transfers in (zero-sum) | ₱**\*\***\_\_\_**\*\*** | ₱**\*\***\_**\*\*** |           |
 
 ## Edge Cases to Consider
 

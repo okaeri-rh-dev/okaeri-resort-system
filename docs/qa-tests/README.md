@@ -30,9 +30,9 @@ See [`00-setup/test-credentials.md`](./00-setup/test-credentials.md) for login c
 
 | Role | Email | Password | Key Access |
 |------|-------|----------|------------|
-| Owner | `jasonacido+owner@gmail.com` | `12345678` | Full access, financial reports, system settings |
-| Admin | `jasonacido+admin@gmail.com` | `12345678` | CRUD operations, payment verification, audit logs |
-| Staff | `jasonacido+staff@gmail.com` | `12345678` | View-only access |
+| Owner | `jasonacido+owner@gmail.com` | `<see password manager>` | Full access, financial reports, system settings |
+| Admin | `jasonacido+admin@gmail.com` | `<see password manager>` | CRUD operations, payment verification, audit logs |
+| Staff | `jasonacido+staff@gmail.com` | `<see password manager>` | View-only access |
 | Anonymous | N/A | N/A | Public pages only |
 
 ## Test Organization

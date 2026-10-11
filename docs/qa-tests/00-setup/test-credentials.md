@@ -17,7 +17,7 @@ These credentials are for **testing purposes only**. Never use production creden
 | --------------- | -------------------------------------------------- |
 | **Role**        | Owner                                              |
 | **Email**       | `jasonacido+owner@gmail.com`                       |
-| **Password**    | `12345678`                                         |
+| **Password**    | `<see password manager>`                           |
 | **Permissions** | Full access to all features EXCEPT role management |
 
 **Key Access:**
@@ -38,7 +38,7 @@ These credentials are for **testing purposes only**. Never use production creden
 | --------------- | ---------------------------- |
 | **Role**        | Admin                        |
 | **Email**       | `jasonacido+admin@gmail.com` |
-| **Password**    | `12345678`                   |
+| **Password**    | `<see password manager>`     |
 | **Permissions** | Full access to ALL features  |
 
 **Key Access:**
@@ -59,7 +59,7 @@ These credentials are for **testing purposes only**. Never use production creden
 | --------------- | ---------------------------- |
 | **Role**        | Staff                        |
 | **Email**       | `jasonacido+staff@gmail.com` |
-| **Password**    | `12345678`                   |
+| **Password**    | `<see password manager>`     |
 | **Permissions** | View-only access             |
 
 **Key Access:**

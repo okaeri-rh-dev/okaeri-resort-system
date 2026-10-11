@@ -15,7 +15,7 @@ These tests verify that booking status changes (confirm, cancel, date modificati
 ## Test Environment
 
 - **URL**: https://okaeri-resort.pages.dev
-- **Test Accounts** (password: `12345678`):
+- **Test Accounts** (password: `<see password manager>`):
   - Admin: `jasonacido+admin@gmail.com`
 
 ## Prerequisites

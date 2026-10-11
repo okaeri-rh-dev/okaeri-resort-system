@@ -15,7 +15,7 @@ These tests verify that all critical operations in the system are properly logge
 ## Test Environment
 
 - **URL**: https://okaeri-resort.pages.dev
-- **Test Accounts** (password: `12345678`):
+- **Test Accounts** (password: `<see password manager>`):
   - Admin: `jasonacido+admin@gmail.com`
   - Owner: `jasonacido+owner@gmail.com`
 
@@ -62,27 +62,27 @@ All booking status transitions should appear in the audit log with before/after 
 | 3    | Click "Create Booking"        | Booking form opens               |           |
 | 4    | Fill required fields          | Form accepts input               |           |
 | 5    | Submit booking                | Booking created (Pending status) |           |
-| 6    | Note booking ID/reference     | ID: ******\_\_\_******           |           |
-| 7    | Note current time             | Time: ******\_\_\_******         |           |
+| 6    | Note booking ID/reference     | ID: **\*\***\_\_\_**\*\***       |           |
+| 7    | Note current time             | Time: **\*\***\_\_\_**\*\***     |           |
 
 #### Phase 2: Confirm the Booking
 
-| Step | Action                        | Expected Result          | Pass/Fail |
-| ---- | ----------------------------- | ------------------------ | --------- |
-| 8    | Find the new booking in table | Booking visible          |           |
-| 9    | Click Actions → Confirm       | Confirmation dialog      |           |
-| 10   | Confirm the action            | Status: Confirmed        |           |
-| 11   | Note current time             | Time: ******\_\_\_****** |           |
+| Step | Action                        | Expected Result              | Pass/Fail |
+| ---- | ----------------------------- | ---------------------------- | --------- |
+| 8    | Find the new booking in table | Booking visible              |           |
+| 9    | Click Actions → Confirm       | Confirmation dialog          |           |
+| 10   | Confirm the action            | Status: Confirmed            |           |
+| 11   | Note current time             | Time: **\*\***\_\_\_**\*\*** |           |
 
 #### Phase 3: Cancel the Booking
 
-| Step | Action                            | Expected Result          | Pass/Fail |
-| ---- | --------------------------------- | ------------------------ | --------- |
-| 12   | Find the confirmed booking        | Booking visible          |           |
-| 13   | Click Actions → Cancel            | Cancellation dialog      |           |
-| 14   | Enter reason: "Test cancellation" | Reason entered           |           |
-| 15   | Confirm cancellation              | Status: Cancelled        |           |
-| 16   | Note current time                 | Time: ******\_\_\_****** |           |
+| Step | Action                            | Expected Result              | Pass/Fail |
+| ---- | --------------------------------- | ---------------------------- | --------- |
+| 12   | Find the confirmed booking        | Booking visible              |           |
+| 13   | Click Actions → Cancel            | Cancellation dialog          |           |
+| 14   | Enter reason: "Test cancellation" | Reason entered               |           |
+| 15   | Confirm cancellation              | Status: Cancelled            |           |
+| 16   | Note current time                 | Time: **\*\***\_\_\_**\*\*** |           |
 
 #### Phase 4: Verify Audit Entries
 
@@ -137,31 +137,31 @@ All financial operations (expenses, transfers) should be logged for compliance.
 
 #### Phase 1: Create an Expense
 
-| Step | Action                          | Expected Result          | Pass/Fail |
-| ---- | ------------------------------- | ------------------------ | --------- |
-| 1    | Login as Owner                  | Dashboard loads          |           |
-| 2    | Navigate to `/admin/expenses`   | Expenses page loads      |           |
-| 3    | Click "Add Expense"             | Expense form opens       |           |
-| 4    | Enter description: "Audit Test" | Description entered      |           |
-| 5    | Enter amount: ₱500              | Amount entered           |           |
-| 6    | Select category: Utilities      | Category selected        |           |
-| 7    | Select account: Cash            | Account selected         |           |
-| 8    | Submit expense                  | Expense created          |           |
-| 9    | Note expense ID                 | ID: ******\_\_\_******   |           |
-| 10   | Note current time               | Time: ******\_\_\_****** |           |
+| Step | Action                          | Expected Result              | Pass/Fail |
+| ---- | ------------------------------- | ---------------------------- | --------- |
+| 1    | Login as Owner                  | Dashboard loads              |           |
+| 2    | Navigate to `/admin/expenses`   | Expenses page loads          |           |
+| 3    | Click "Add Expense"             | Expense form opens           |           |
+| 4    | Enter description: "Audit Test" | Description entered          |           |
+| 5    | Enter amount: ₱500              | Amount entered               |           |
+| 6    | Select category: Utilities      | Category selected            |           |
+| 7    | Select account: Cash            | Account selected             |           |
+| 8    | Submit expense                  | Expense created              |           |
+| 9    | Note expense ID                 | ID: **\*\***\_\_\_**\*\***   |           |
+| 10   | Note current time               | Time: **\*\***\_\_\_**\*\*** |           |
 
 #### Phase 2: Create a Transfer
 
-| Step | Action                         | Expected Result          | Pass/Fail |
-| ---- | ------------------------------ | ------------------------ | --------- |
-| 11   | Navigate to `/admin/transfers` | Transfers page loads     |           |
-| 12   | Click "New Transfer"           | Transfer form opens      |           |
-| 13   | Select From: Cash              | Source selected          |           |
-| 14   | Select To: GCash               | Destination selected     |           |
-| 15   | Enter amount: ₱200             | Amount entered           |           |
-| 16   | Submit transfer                | Transfer created         |           |
-| 17   | Note transfer ID               | ID: ******\_\_\_******   |           |
-| 18   | Note current time              | Time: ******\_\_\_****** |           |
+| Step | Action                         | Expected Result              | Pass/Fail |
+| ---- | ------------------------------ | ---------------------------- | --------- |
+| 11   | Navigate to `/admin/transfers` | Transfers page loads         |           |
+| 12   | Click "New Transfer"           | Transfer form opens          |           |
+| 13   | Select From: Cash              | Source selected              |           |
+| 14   | Select To: GCash               | Destination selected         |           |
+| 15   | Enter amount: ₱200             | Amount entered               |           |
+| 16   | Submit transfer                | Transfer created             |           |
+| 17   | Note transfer ID               | ID: **\*\***\_\_\_**\*\***   |           |
+| 18   | Note current time              | Time: **\*\***\_\_\_**\*\*** |           |
 
 #### Phase 3: Verify Audit Entries
 
@@ -214,25 +214,25 @@ Payment events should log with appropriate severity levels (INFO for received, W
 
 #### Phase 1: Record a Payment
 
-| Step | Action                        | Expected Result          | Pass/Fail |
-| ---- | ----------------------------- | ------------------------ | --------- |
-| 1    | Login as Admin                | Dashboard loads          |           |
-| 2    | Navigate to `/admin/payments` | Payments page loads      |           |
-| 3    | Click "Record Payment"        | Payment form opens       |           |
-| 4    | Select a booking              | Booking selected         |           |
-| 5    | Enter amount: ₱1,000          | Amount entered           |           |
-| 6    | Submit payment                | Payment created          |           |
-| 7    | Note payment ID               | ID: ******\_\_\_******   |           |
-| 8    | Note current time             | Time: ******\_\_\_****** |           |
+| Step | Action                        | Expected Result              | Pass/Fail |
+| ---- | ----------------------------- | ---------------------------- | --------- |
+| 1    | Login as Admin                | Dashboard loads              |           |
+| 2    | Navigate to `/admin/payments` | Payments page loads          |           |
+| 3    | Click "Record Payment"        | Payment form opens           |           |
+| 4    | Select a booking              | Booking selected             |           |
+| 5    | Enter amount: ₱1,000          | Amount entered               |           |
+| 6    | Submit payment                | Payment created              |           |
+| 7    | Note payment ID               | ID: **\*\***\_\_\_**\*\***   |           |
+| 8    | Note current time             | Time: **\*\***\_\_\_**\*\*** |           |
 
 #### Phase 2: Delete/Void the Payment (if feature exists)
 
-| Step | Action                   | Expected Result          | Pass/Fail |
-| ---- | ------------------------ | ------------------------ | --------- |
-| 9    | Find the payment in list | Payment visible          |           |
-| 10   | Click Delete/Void action | Confirmation dialog      |           |
-| 11   | Confirm deletion         | Payment deleted/voided   |           |
-| 12   | Note current time        | Time: ******\_\_\_****** |           |
+| Step | Action                   | Expected Result              | Pass/Fail |
+| ---- | ------------------------ | ---------------------------- | --------- |
+| 9    | Find the payment in list | Payment visible              |           |
+| 10   | Click Delete/Void action | Confirmation dialog          |           |
+| 11   | Confirm deletion         | Payment deleted/voided       |           |
+| 12   | Note current time        | Time: **\*\***\_\_\_**\*\*** |           |
 
 #### Phase 3: Verify Audit Entries with Severity
 

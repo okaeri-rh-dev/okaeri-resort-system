@@ -15,7 +15,7 @@ These tests verify the complete end-to-end flows for guest bookings: from anonym
 ## Test Environment
 
 - **URL**: https://okaeri-resort.pages.dev
-- **Test Accounts** (password: `12345678`):
+- **Test Accounts** (password: `<see password manager>`):
   - Admin: `jasonacido+admin@gmail.com`
 
 ## Prerequisites
@@ -69,8 +69,8 @@ Guest Phone: 09171234567
 | 11   | Complete any CAPTCHA/verification  | Verification passed               |           |
 | 12   | Click Submit                       | Form submits                      |           |
 | 13   | Wait for confirmation              | Confirmation page/message appears |           |
-| 14   | Note booking reference             | Ref: ******\_\_\_******           |           |
-| 15   | Note submission timestamp          | Time: ******\_\_\_******          |           |
+| 14   | Note booking reference             | Ref: **\*\***\_\_\_**\*\***       |           |
+| 15   | Note submission timestamp          | Time: **\*\***\_\_\_**\*\***      |           |
 
 **Guest Confirmation Record:**
 
@@ -116,7 +116,7 @@ Guest info matches: [ ] Yes [ ] No
 | 28   | Click "Confirm Booking" or similar   | Confirmation dialog appears   |           |
 | 29   | Confirm the approval                 | Status changes to "Confirmed" |           |
 | 30   | Verify status in bookings table      | Shows "Confirmed" badge       |           |
-| 31   | Note approval timestamp              | Time: ******\_\_\_******      |           |
+| 31   | Note approval timestamp              | Time: **\*\***\_\_\_**\*\***  |           |
 
 #### Phase 4: Public Calendar Reflects Booking
 
@@ -202,7 +202,7 @@ Guest Email: reject.test@example.com
 | 3    | Select dates: Mar 5-7           | Dates selected, shows available |           |
 | 4    | Fill guest info: Reject Test QA | Info entered                    |           |
 | 5    | Submit booking                  | Booking created                 |           |
-| 6    | Note booking reference          | Ref: ******\_\_\_******         |           |
+| 6    | Note booking reference          | Ref: **\*\***\_\_\_**\*\***     |           |
 
 #### Phase 2: Verify Pending Doesn't Block Calendar
 

@@ -15,7 +15,7 @@ These tests verify that payment records and booking payment status remain synchr
 ## Test Environment
 
 - **URL**: https://okaeri-resort.pages.dev
-- **Test Accounts** (password: `12345678`):
+- **Test Accounts** (password: `<see password manager>`):
   - Admin: `jasonacido+admin@gmail.com`
 
 ## Payment Status Logic

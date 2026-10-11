@@ -15,7 +15,7 @@ These tests verify that changes made by one user are properly visible to other u
 ## Test Environment
 
 - **URL**: https://okaeri-resort.pages.dev
-- **Test Accounts** (password: `12345678`):
+- **Test Accounts** (password: `<see password manager>`):
   - Staff: `jasonacido+staff@gmail.com`
   - Admin: `jasonacido+admin@gmail.com`
 
@@ -66,12 +66,12 @@ Initial Status: Pending
 
 #### Phase 2: Staff Notes Initial State
 
-| Step | Action                                    | Expected Result          | Pass/Fail |
-| ---- | ----------------------------------------- | ------------------------ | --------- |
-| 9    | **Tab 1 (Staff)**: Find a Pending booking | Booking visible          |           |
-| 10   | **Tab 1 (Staff)**: Note booking reference | Ref: ******\_\_\_******  |           |
-| 11   | **Tab 1 (Staff)**: Note current status    | Status: Pending          |           |
-| 12   | **Tab 1 (Staff)**: Note timestamp         | Time: ******\_\_\_****** |           |
+| Step | Action                                    | Expected Result              | Pass/Fail |
+| ---- | ----------------------------------------- | ---------------------------- | --------- |
+| 9    | **Tab 1 (Staff)**: Find a Pending booking | Booking visible              |           |
+| 10   | **Tab 1 (Staff)**: Note booking reference | Ref: **\*\***\_\_\_**\*\***  |           |
+| 11   | **Tab 1 (Staff)**: Note current status    | Status: Pending              |           |
+| 12   | **Tab 1 (Staff)**: Note timestamp         | Time: **\*\***\_\_\_**\*\*** |           |
 
 #### Phase 3: Admin Makes Changes
 
@@ -81,7 +81,7 @@ Initial Status: Pending
 | 14   | **Tab 2 (Admin)**: Click Actions → Confirm | Confirmation dialog appears   |           |
 | 15   | **Tab 2 (Admin)**: Confirm action          | Status changes to "Confirmed" |           |
 | 16   | **Tab 2 (Admin)**: Verify in table         | Shows Confirmed badge         |           |
-| 17   | Note timestamp of change                   | Time: ******\_\_\_******      |           |
+| 17   | Note timestamp of change                   | Time: **\*\***\_\_\_**\*\***  |           |
 
 #### Phase 4: Staff Sees Update
 
@@ -172,8 +172,8 @@ Overlapping Dates:
 | ---- | ---------------------------------- | ---------------------------- | --------- |
 | 12   | **User A**: Click Submit           | Form submits                 |           |
 | 13   | **User A**: Wait for confirmation  | Booking created successfully |           |
-| 14   | **User A**: Note booking reference | Ref: ******\_\_\_******      |           |
-| 15   | **User A**: Note submission time   | Time: ******\_\_\_******     |           |
+| 14   | **User A**: Note booking reference | Ref: **\*\***\_\_\_**\*\***  |           |
+| 15   | **User A**: Note submission time   | Time: **\*\***\_\_\_**\*\*** |           |
 
 #### Phase 3: User B Attempts Overlapping Booking
 
@@ -184,7 +184,7 @@ Overlapping Dates:
 |      |                                | a) Error: Dates no longer available  |           |
 |      |                                | b) Conflict warning message          |           |
 |      |                                | c) Redirect with availability notice |           |
-| 18   | **User B**: Note error message | Message: ******\_\_\_******          |           |
+| 18   | **User B**: Note error message | Message: **\*\***\_\_\_**\*\***      |           |
 
 ### Expected Outcomes
 
