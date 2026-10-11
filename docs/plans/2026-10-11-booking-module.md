@@ -1556,7 +1556,7 @@ export function updateBooking(
 
 `toBookingUpdate(input: BookingEditInput): BookingChanges`; `useUpdateBooking()` = `useMutation<Tables<"bookings">, Error, { bookingId: string; changes: BookingChanges }>`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `bookings-module.test.ts` (add `updateBooking` to the import):
 
@@ -1631,12 +1631,12 @@ expect(update.stay).toEqual({ check_in: "2026-10-15", check_out: "2026-10-17" })
 
 and update its key-list assertion: `check_in`/`check_out` replaced by `stay`. Add `process.env.TZ = "America/Los_Angeles";` as the file's first line.
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `npx vitest run src/__tests__/database/bookings-module.test.ts src/components/bookings/BookingEdit`
 Expected: FAIL: `updateBooking` not exported; `update.stay` undefined.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 // src/lib/bookings/operations.ts
@@ -1768,12 +1768,12 @@ export const useUpdateBooking = () =>
 
 `useEntityEdit.ts`: `type EditableEntityType = Exclude<EntityType, "payment" | "booking">;`, drop the `"booking"` arm of `EntityUpdateData` and of the switch, drop the `Booking` import, and update the header comment: `// Payments and bookings save through their modules (src/lib/payments, src/lib/bookings)`. Delete the booking cases in `useEntityEdit.test.tsx`.
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx vitest run src/__tests__/database/bookings-module.test.ts src/components/bookings src/hooks/entity`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 npm run verify

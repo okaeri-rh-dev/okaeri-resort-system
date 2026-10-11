@@ -79,7 +79,7 @@ Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub 
   - [x] 4. (`c88e459`) Worker routes take Manila days
   - [x] 5. (`afeb4ab`) Dialog and multi-unit page create through the route
   - [x] 6. (`3d516a0`, `3035267`) Automatic availability in the dialog
-  - [ ] 7. `updateBooking` + edit page
+  - [x] 7. (`fa8d4e7`, `542f923`) `updateBooking` + edit page
   - [ ] 8. Cancel/status via the module; hard delete leaves the UI
   - [ ] 9. Readers (night count, list filter, confirmation card)
   - [ ] 10. Browser check, read-only prod preview, user `db push`, push, manual deploy, post-deploy normalize
