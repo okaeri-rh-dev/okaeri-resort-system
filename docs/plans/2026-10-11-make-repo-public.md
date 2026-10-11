@@ -1,0 +1,26 @@
+# Make the repo public
+
+Goal: make the GitHub repo public so Actions runs on free public-repo minutes instead of manual deploys.
+
+Blockers found 2026-10-11: shared test-account password in docs (owner/admin/staff logins worked on prod), and `supabase/seed.sql` is a data dump with real auth users (bcrypt hashes), sessions, refresh tokens, guests and payments, in history since 2025-10-07.
+
+## Tasks
+
+- [x] Remove the shared password from `docs/qa-tests/` (3f77f79)
+- [ ] User: delete `jasonacido+owner|admin|staff@gmail.com` on prod; re-run the login probe, all must return `invalid_credentials`
+- [ ] User: revoke prod sessions for the 8 users in `seed.sql`
+- [ ] Replace `supabase/seed.sql` with synthetic data (3 units, a few made-up guests/bookings/payments, no `auth.*` rows); confirm `supabase db reset` + `npm run test:db` pass
+- [ ] Create local test users (owner/admin/staff) from a script instead of the seed, matching `.env.test`
+- [ ] Full secret + PII scan of all history (`gitleaks detect`, grep for guest names/phones from the old seed); list every file to purge
+- [ ] Wait until no other session has unpushed commits or uncommitted work; push `main`
+- [ ] `git filter-repo --invert-paths --path supabase/seed.sql` (plus anything the scan found) on a fresh mirror clone; re-add the synthetic seed; verify with `git log --all -- supabase/seed.sql`
+- [ ] Force-push all branches/tags; re-clone every local checkout and worktree (old clones would re-push the purged history)
+- [ ] Move or trim docs that list open security weaknesses (guardrails "Deferred list") before the visibility switch
+- [ ] Settings → Actions: require approval for fork PR workflows from outside contributors
+- [ ] Switch visibility to public; confirm the next push runs `ci.yml` + deploy without billing
+
+## Decisions & Deferrals
+
+- Rewrite history rather than start a fresh repo — keeps the 700+ commit history; revisit if filter-repo misses something.
+- History rewrite waits for parallel sessions to land their work — a force-push under an active session strands its commits.
+- Test accounts deleted on prod, not just re-passworded — nothing uses them there (CI never sets `TEST_*`; `.env.test` targets local).
