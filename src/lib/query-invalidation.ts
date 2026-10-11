@@ -86,6 +86,8 @@ export function afterBookingCreate() {
 /** After changing booking status (confirm, check-in, check-out). */
 export function afterBookingStatusChange() {
   invalidateBookings();
+  invalidateUnits();
+  invalidateAvailability();
   invalidateMultiUnitBookings();
   invalidateUpcoming();
 }
