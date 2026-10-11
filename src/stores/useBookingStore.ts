@@ -406,8 +406,6 @@ export const useCreateBooking = () =>
     },
   });
 
-export { canTransitionStatus } from "@/lib/bookings";
-
 // Update booking status with optimistic update
 export const useUpdateBookingStatus = () => {
   const queryClient = useQueryClient();

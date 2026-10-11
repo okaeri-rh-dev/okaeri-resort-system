@@ -44,46 +44,6 @@ export const getPhilippineTime = (): Date => {
   return new Date(new Date().toLocaleString("en-US", { timeZone: PHILIPPINE_TIMEZONE }));
 };
 
-/**
- * Calculates the difference between two dates in various units
- *
- * @param startDate - Start date
- * @param endDate - End date
- * @param unit - Unit of measurement
- * @returns Difference in specified unit
- */
-export const dateDifference = (
-  startDate: Date,
-  endDate: Date,
-  unit: "milliseconds" | "seconds" | "minutes" | "hours" | "days" | "weeks" | "months" | "years"
-): number => {
-  const diffMs = endDate.getTime() - startDate.getTime();
-
-  switch (unit) {
-    case "milliseconds":
-      return diffMs;
-    case "seconds":
-      return Math.floor(diffMs / 1000);
-    case "minutes":
-      return Math.floor(diffMs / (1000 * 60));
-    case "hours":
-      return Math.floor(diffMs / (1000 * 60 * 60));
-    case "days":
-      return Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    case "weeks":
-      return Math.floor(diffMs / (1000 * 60 * 60 * 24 * 7));
-    case "months": {
-      const yearDiff = endDate.getFullYear() - startDate.getFullYear();
-      const monthDiff = endDate.getMonth() - startDate.getMonth();
-      return yearDiff * 12 + monthDiff;
-    }
-    case "years":
-      return endDate.getFullYear() - startDate.getFullYear();
-    default:
-      return 0;
-  }
-};
-
 // ============================================
 // DATE FORMATTING
 // ============================================

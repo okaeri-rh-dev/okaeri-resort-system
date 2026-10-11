@@ -284,13 +284,3 @@ export interface MultiUnitBookingActions {
 // ============================================
 
 export type MultiUnitBookingStore = MultiUnitBookingState & MultiUnitBookingActions;
-
-// Generic API response wrapper
-export interface ApiResponse<T> {
-  success?: boolean;
-  data: T;
-  error?: string;
-  message?: string;
-}
-
-export type MultiUnitBookingApiResponse = ApiResponse<MultiUnitBooking>;

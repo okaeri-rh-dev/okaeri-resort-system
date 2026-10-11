@@ -21,19 +21,6 @@ import type { BookingUnit, MultiUnitBooking } from "@/types";
 
 import { useMultiUnitBookingStore } from "../useMultiUnitBookingStore";
 
-// Mock date-helpers
-vi.mock("@/utils/date-helpers", () => ({
-  dateDifference: (start: string, end: string) => {
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    return Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-  },
-  isWeekend: (date: string) => {
-    const day = new Date(date).getDay();
-    return day === 0 || day === 6; // Sunday or Saturday
-  },
-}));
-
 describe("useMultiUnitBookingStore", () => {
   beforeEach(() => {
     // Reset store state before each test
