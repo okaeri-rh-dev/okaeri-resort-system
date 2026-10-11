@@ -1372,7 +1372,7 @@ git commit -m "feat: create dialog bookings through the booking route"
 
 The label logic is a pure function so it is tested without opening a Radix Select in jsdom (the test setup polyfills pointer capture but not `scrollIntoView`).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -1418,12 +1418,12 @@ describe("unavailableReason", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `npx vitest run src/lib/bookings/__tests__/availability.test.ts`
 Expected: FAIL, `unavailableReason` is not exported.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 // src/lib/bookings/availability.ts
@@ -1503,12 +1503,12 @@ return true;
 - Imports: `useMemo`; `useMultiUnitAvailability` from `@/hooks/useMultiUnitBookingQueries`; `pickedDay`, `unavailableReason` from `@/lib/bookings`.
 - Load the `enterprise-ui` skill before styling the disabled item, and match its muted-text and badge conventions.
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx vitest run src/lib/bookings src/components/bookings`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 npm run verify
