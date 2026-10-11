@@ -2107,7 +2107,7 @@ git commit -m "fix: read stays as Manila days in night counts, list filter and c
 Run: `npm run verify && npm run test:db`
 Expected: both exit 0; quote the summary lines (test counts) in the plan doc.
 
-- [ ] **Step 2: Browser check (use the `run` skill: vite + `npm run dev:wrangler`, local Supabase, manager login)**
+- [x] **Step 2: Browser check (use the `run` skill: vite + `npm run dev:wrangler`, local Supabase, manager login)** — 2026-10-12, all 7 pass (screenshots read): 1. BKG-2026-10-346 created via the route (toast), stored `06:00Z`/`04:00Z`, GCash, availability row; 2. Pending didn't block, after Confirm "Booked until Dec 22" (needs > 60 s after the _first lookup_ of those days, plus a page reload: the client keeps availability 5 min); 3. Dec 22 → 24 enabled; 4. edit to Dec 27 → 29, detail shows Dec 27/29, availability row moved, Dec 19-21 free; 5. no Delete, Cancel confirms with the planned copy, booking + availability Cancelled, unit free; 6. filter Dec 27 lists it, Dec 28 lists none (request bounds Manila midnight); 7. new-multi: 2 units Dec 27 → 29, `check_in 2026-12-27 06:00:00+00`, 2 availability rows. Found and fixed during the check: POST `/api/bookings/multi-unit` returned 401 for every valid staff token (`ff7b7e7`, `21efd41`; see Decisions)
 
 Check and screenshot (Read each screenshot before citing it):
 
