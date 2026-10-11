@@ -12,15 +12,12 @@
 
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { requestBooking } from "@/lib/bookings/request";
 import { afterBookingCreate } from "@/lib/query-invalidation";
 import { availabilityKeys, multiUnitBookingKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
-import type {
-  AdminMultiUnitBookingCreate,
-  MultiUnitBooking,
-  MultiUnitBookingApiResponse,
-} from "@/types";
+import type { AdminMultiUnitBookingCreate, MultiUnitBooking } from "@/types";
 
 export class OfflineBookingError extends Error {
   constructor() {
@@ -90,32 +87,9 @@ export const useCreateMultiUnitBooking = () => {
   const { addOptimisticBooking, removeOptimisticBooking, isOnline } = useMultiUnitBookingStore();
 
   return useMutation({
-    mutationFn: async (bookingData: Partial<MultiUnitBooking> | AdminMultiUnitBookingCreate) => {
+    mutationFn: async (bookingData: AdminMultiUnitBookingCreate) => {
       if (!isOnline) throw new OfflineBookingError();
-
-      const idempotencyKey = crypto.randomUUID();
-
-      // Get current session token for authentication
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      const response = await fetch("/api/bookings/multi-unit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Idempotency-Key": idempotencyKey,
-          ...(session?.access_token && {
-            Authorization: `Bearer ${session.access_token}`,
-          }),
-        },
-        body: JSON.stringify(bookingData),
-      });
-
-      if (!response.ok) throw new Error("Failed to create booking");
-
-      const data = (await response.json()) as MultiUnitBookingApiResponse;
-      return data.data;
+      return requestBooking(bookingData);
     },
     onMutate: async (newBooking) => {
       await queryClient.cancelQueries({ queryKey: multiUnitBookingKeys.all });
@@ -126,7 +100,7 @@ export const useCreateMultiUnitBooking = () => {
         ...newBooking,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      } as MultiUnitBooking;
+      } as unknown as MultiUnitBooking;
 
       addOptimisticBooking(optimisticBooking);
 

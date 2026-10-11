@@ -57,6 +57,7 @@ import {
   useMultiUnitAvailability,
 } from "@/hooks/useMultiUnitBookingQueries";
 import { usePricingConfig } from "@/hooks/usePricingConfig";
+import { pickedDay } from "@/lib/bookings";
 import { hasProperty, isObject } from "@/lib/type-guards";
 import { cn } from "@/lib/utils";
 import {
@@ -145,8 +146,8 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
   }, [checkIn, checkOut]);
 
   // Convert dates to ISO strings for API calls
-  const checkInStr = checkIn ? checkIn.toISOString() : "";
-  const checkOutStr = checkOut ? checkOut.toISOString() : "";
+  const checkInStr = checkIn ? pickedDay(checkIn) : "";
+  const checkOutStr = checkOut ? pickedDay(checkOut) : "";
 
   // Real-time availability monitoring
   useAvailabilityRealtime(checkInStr, checkOutStr);
@@ -279,8 +280,8 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
           email: data.email,
           contact_number: data.contact_number,
         },
-        check_in: data.check_in.toISOString(),
-        check_out: data.check_out.toISOString(),
+        check_in: pickedDay(data.check_in),
+        check_out: pickedDay(data.check_out),
         total_amount: getTotalAmount(),
         booking_status: "Pending",
         payment_status: "Unpaid",
@@ -293,8 +294,8 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
           email: data.email,
           contact_number: data.contact_number,
         },
-        check_in: data.check_in.toISOString(),
-        check_out: data.check_out.toISOString(),
+        check_in: pickedDay(data.check_in),
+        check_out: pickedDay(data.check_out),
         units: selectedUnits.map((unit) => ({
           unit_id: unit.unit_id,
           num_guests: unit.guest_assignment?.num_guests || unit.base_occupancy,

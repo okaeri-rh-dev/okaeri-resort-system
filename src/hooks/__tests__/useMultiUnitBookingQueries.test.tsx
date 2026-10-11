@@ -38,7 +38,12 @@ describe("useCreateMultiUnitBooking", () => {
     const { result } = renderCreateHook();
 
     await expect(
-      result.current.mutateAsync({ special_requests: "offline" })
+      result.current.mutateAsync({
+        primary_guest: { guest_name: "Guest", email: "", contact_number: "" },
+        check_in: "2026-12-20",
+        check_out: "2026-12-22",
+        units: [{ unit_id: "u1", num_guests: 2 }],
+      })
     ).rejects.toBeInstanceOf(OfflineBookingError);
     expect(requestCount).toBe(0);
   });

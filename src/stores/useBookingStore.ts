@@ -12,6 +12,7 @@ import { devtools, persist } from "zustand/middleware";
 
 import { getAccessToken } from "@/hooks/useAuthToken";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { requestBooking } from "@/lib/bookings/request";
 import { adaptBookingFromDB } from "@/lib/database-adapters";
 import { recordProofPayment } from "@/lib/payments";
 import {
@@ -26,14 +27,7 @@ import {
 import { bookingKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/validations";
-import type {
-  Booking,
-  BookingFilters,
-  BookingFormData,
-  BookingStatus,
-  PaymentStatus,
-  TableState,
-} from "@/types";
+import type { Booking, BookingFilters, BookingStatus, TableState } from "@/types";
 import type { TablesInsert } from "@/types/database.types";
 
 // import { useWorkflowStore } from "./useWorkflowStore"; // Phase 3-4
@@ -397,144 +391,14 @@ export const useBookings = () => {
 
 // Fetch single booking
 
-// Create booking mutation with optimistic update
-export const useCreateBooking = () => {
-  const queryClient = useQueryClient();
-  const addOptimistic = useBookingStore((state) => state.addOptimisticBooking);
-  const removeOptimistic = useBookingStore((state) => state.removeOptimisticBooking);
-
-  return useMutation({
-    mutationFn: async (bookingData: BookingFormData & { total_amount: number }) => {
-      // Normalize empty strings to null for optional contact fields
-      const normalizedEmail = bookingData.email?.trim() || null;
-      const normalizedPhone = bookingData.contact_number?.trim() || null;
-
-      // Check if guest exists or create new
-      let guestId = null;
-
-      if (normalizedEmail) {
-        const { data: existingGuest } = await db.guests.byEmail(normalizedEmail);
-
-        if (existingGuest) {
-          guestId = existingGuest.guest_id;
-        }
-      }
-
-      if (!guestId) {
-        const { data: newGuest, error: guestError } = await db.guests.create({
-          guest_name: bookingData.guest_name,
-          email: normalizedEmail,
-          phone_number: normalizedPhone,
-          total_bookings: 0,
-          total_spent: 0,
-        });
-
-        if (guestError) throw new Error(handleSupabaseError(guestError));
-        guestId = newGuest?.guest_id || null;
-      }
-
-      // Create booking with generated reference
-      const { data: reference } = await supabase.rpc("generate_booking_reference");
-
-      const booking = {
-        booking_reference: reference || `BK-${Date.now()}`,
-        // unit_id removed - handled via booking_units junction table
-        guest_id: guestId,
-        guest_name: bookingData.guest_name,
-        contact_number: normalizedPhone,
-        email: normalizedEmail,
-        num_guests: bookingData.num_guests,
-        check_in:
-          typeof bookingData.check_in === "string"
-            ? bookingData.check_in
-            : bookingData.check_in.toISOString(),
-        check_out:
-          typeof bookingData.check_out === "string"
-            ? bookingData.check_out
-            : bookingData.check_out.toISOString(),
-        total_amount: bookingData.total_amount,
-        booking_status: "Pending" as BookingStatus,
-        payment_status: "Pending" as PaymentStatus,
-        payment_method: bookingData.payment_method || null,
-        special_requests: bookingData.special_requests || null,
-        is_walk_in: bookingData.is_walk_in ?? false,
-      };
-
-      const { data, error } = await supabase.from("bookings").insert(booking).select().single();
-      if (error) throw new Error(handleSupabaseError(error));
-
-      // Create booking_units entry
-      if (data && bookingData.unit_id) {
-        const { error: unitError } = await supabase.from("booking_units").insert({
-          booking_id: data.booking_id,
-          unit_id: bookingData.unit_id,
-          assigned_guests: bookingData.num_guests,
-          unit_price: bookingData.total_amount,
-          subtotal: bookingData.total_amount,
-          weekend_surcharge: 0,
-          extra_person_charge: 0,
-        } satisfies TablesInsert<"booking_units">);
-
-        if (unitError) {
-          // Rollback: delete the booking if junction table insert fails
-          await supabase.from("bookings").delete().eq("booking_id", data.booking_id);
-          throw new Error(handleSupabaseError(unitError));
-        }
-      }
-
-      return data;
-    },
-    onMutate: async (newBooking) => {
-      await queryClient.cancelQueries({ queryKey: bookingKeys.all });
-
-      // Create optimistic booking
-      const optimisticBooking: Booking = {
-        booking_id: `temp-${Date.now()}`,
-        booking_reference: `BK-${Date.now()}`,
-        guest_id: null,
-        guest_name: newBooking.guest_name,
-        contact_number: newBooking.contact_number,
-        email: newBooking.email,
-        num_guests: newBooking.num_guests,
-        check_in:
-          typeof newBooking.check_in === "string"
-            ? newBooking.check_in
-            : newBooking.check_in.toISOString(),
-        check_out:
-          typeof newBooking.check_out === "string"
-            ? newBooking.check_out
-            : newBooking.check_out.toISOString(),
-        total_amount: newBooking.total_amount,
-        booking_status: "Pending",
-        payment_status: "Pending",
-        payment_method: newBooking.payment_method || null,
-        payment_proof_url: null,
-        special_requests: newBooking.special_requests || null,
-        internal_notes: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        booking_units: [], // Initialize empty array for optimistic update
-      };
-
-      addOptimistic(optimisticBooking);
-
-      return { optimisticBooking };
-    },
-    onError: (_err, _newBooking, context) => {
-      if (context?.optimisticBooking) {
-        removeOptimistic(context.optimisticBooking.booking_id);
-      }
-    },
-    onSuccess: (_data, _variables, context) => {
-      if (context?.optimisticBooking) {
-        removeOptimistic(context.optimisticBooking.booking_id);
-      }
-    },
+// Creates through the Worker route (src/lib/bookings/request.ts)
+export const useCreateBooking = () =>
+  useMutation({
+    mutationFn: requestBooking,
     onSettled: () => {
       afterBookingCreate();
     },
   });
-};
 
 // Update booking status with optimistic update
 // Phase 2: Simple status transition validation

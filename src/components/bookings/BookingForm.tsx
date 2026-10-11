@@ -32,10 +32,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { RESORT_OPERATION_HOURS } from "@/config/settings";
 import { usePricingCalculation } from "@/hooks/usePricingCalculation";
+import { pickedDay } from "@/lib/bookings";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
 import { hasProperty, isObject } from "@/lib/type-guards";
 import { cn } from "@/lib/utils";
@@ -48,18 +47,14 @@ import {
   formatPhoneNumber,
   type CompleteBookingData,
 } from "@/lib/validations";
-import { useCreateBooking, useUpdateBooking } from "@/stores/useBookingStore";
+import { useCreateBooking } from "@/stores/useBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
-import type { Booking } from "@/types";
-import { formDateToUTC } from "@/utils/date-helpers";
+import type { MultiUnitBooking } from "@/types";
 
 interface BookingFormProps {
-  onSuccess?: (booking: Partial<Booking>) => void;
+  onSuccess?: (booking: MultiUnitBooking) => void;
   onCancel?: () => void;
-  initialData?: Partial<CompleteBookingData> & {
-    total_amount?: number; // Add total_amount for edit mode pricing
-  };
-  bookingId?: string; // If provided, form is in edit mode
+  initialData?: Partial<CompleteBookingData>;
   className?: string;
 }
 
@@ -72,24 +67,14 @@ const STEP_DESCRIPTIONS = {
   4: "Review your booking details before confirming",
 };
 
-export function BookingForm({
-  onSuccess,
-  onCancel,
-  initialData,
-  bookingId,
-  className,
-}: BookingFormProps) {
+export function BookingForm({ onSuccess, onCancel, initialData, className }: BookingFormProps) {
   const [currentStep, setCurrentStep] = useState<FormStep>(1);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [calculatedTotal, setCalculatedTotal] = useState<number>(0);
   const [downpaymentAmount, setDownpaymentAmount] = useState<number>(0);
   const [pricingNotice, setPricingNotice] = useState<string | null>(null);
-  const [recalculatePricing, setRecalculatePricing] = useState<boolean>(false);
-  const originalTotal = initialData?.total_amount || 0;
 
-  const isEditMode = !!bookingId;
   const createBookingMutation = useCreateBooking();
-  const updateBookingMutation = useUpdateBooking();
   const { data: units, isLoading: unitsLoading } = useUnits();
 
   // Initialize pricing calculation hook
@@ -144,23 +129,7 @@ export function BookingForm({
 
   // Extract pricing calculation into useEffectEvent to prevent dependency issues
   const handlePricingCalculation = useEffectEvent(
-    (params: {
-      unit: typeof selectedUnit;
-      checkIn: Date;
-      checkOut: Date;
-      numGuests: number;
-      isEditMode: boolean;
-      recalculatePricing: boolean;
-      originalTotal: number;
-    }) => {
-      // In edit mode, only calculate if recalculatePricing is enabled
-      if (params.isEditMode && !params.recalculatePricing) {
-        setCalculatedTotal(params.originalTotal);
-        setDownpaymentAmount(params.originalTotal * 0.5);
-        setPricingNotice(null);
-        return;
-      }
-
+    (params: { unit: typeof selectedUnit; checkIn: Date; checkOut: Date; numGuests: number }) => {
       if (!params.unit || !params.checkIn || !params.checkOut) {
         setCalculatedTotal(0);
         setDownpaymentAmount(0);
@@ -201,11 +170,8 @@ export function BookingForm({
       checkIn,
       checkOut,
       numGuests,
-      isEditMode,
-      recalculatePricing,
-      originalTotal,
     });
-  }, [selectedUnit?.unit_id, checkIn, checkOut, numGuests, recalculatePricing, isEditMode]);
+  }, [selectedUnit?.unit_id, checkIn, checkOut, numGuests]);
 
   const validateStep = async (step: FormStep): Promise<boolean> => {
     const values = form.getValues();
@@ -295,50 +261,30 @@ export function BookingForm({
   };
 
   const onSubmit = async (data: CompleteBookingData) => {
+    const sanitizedData = sanitizeBookingFormData(data);
+    const contactNumber = sanitizedData.contact_number || data.contact_number;
+
     try {
-      // Sanitize all form data to prevent XSS attacks
-      const sanitizedData = sanitizeBookingFormData(data);
-
-      const bookingData = {
-        unit_id: data.unit_id,
-        guest_name: sanitizedData.guest_name || data.guest_name,
-        email: sanitizedData.email || data.email,
-        contact_number:
-          sanitizedData.contact_number || data.contact_number
-            ? formatPhoneNumber(sanitizedData.contact_number || data.contact_number)
-            : "",
-        num_guests: data.num_guests,
-        check_in: formDateToUTC(data.check_in, RESORT_OPERATION_HOURS.checkInTime),
-        check_out: formDateToUTC(data.check_out, RESORT_OPERATION_HOURS.checkOutTime),
-        total_amount: calculatedTotal,
-        special_requests: sanitizedData.special_requests || data.special_requests,
-        payment_method: data.payment_method,
+      const booking = await createBookingMutation.mutateAsync({
+        primary_guest: {
+          guest_name: sanitizedData.guest_name || data.guest_name,
+          email: sanitizedData.email || data.email || "",
+          contact_number: contactNumber ? formatPhoneNumber(contactNumber) : "",
+        },
+        check_in: pickedDay(data.check_in),
+        check_out: pickedDay(data.check_out),
+        units: [{ unit_id: data.unit_id, num_guests: data.num_guests }],
+        payment: { method: data.payment_method, amount: calculatedTotal },
+        special_requests: sanitizedData.special_requests || data.special_requests || undefined,
         is_walk_in: data.is_walk_in ?? false,
-      };
-
-      if (bookingId) {
-        await updateBookingMutation.mutateAsync({
-          bookingId,
-          updates: bookingData,
-        });
-        toast.success("Booking updated successfully!");
-      } else {
-        await createBookingMutation.mutateAsync(bookingData);
-        toast.success("Booking created successfully!");
-      }
-
-      onSuccess?.(bookingData);
+        source: "admin",
+      });
+      toast.success(`Booking ${booking.booking_reference} created`);
+      onSuccess?.(booking);
     } catch (error) {
-      // Safe error handling without exposing sensitive information
-      const errorMessage = isEditMode
-        ? "Failed to update booking. Please try again."
-        : "Failed to create booking. Please try again.";
-
-      toast.error(errorMessage);
-
-      if (process.env.NODE_ENV === "development") {
-        console.error(`Booking ${isEditMode ? "update" : "creation"} error:`, error);
-      }
+      toast.error("Failed to create booking", {
+        description: error instanceof Error ? error.message : undefined,
+      });
     }
   };
 
@@ -488,49 +434,6 @@ export function BookingForm({
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-2">
-              {isEditMode && (
-                <>
-                  <div className="bg-muted/50 flex items-center justify-between rounded-md p-2">
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="recalculate-pricing"
-                        checked={recalculatePricing}
-                        onCheckedChange={setRecalculatePricing}
-                      />
-                      <label
-                        htmlFor="recalculate-pricing"
-                        className="cursor-pointer text-sm font-medium"
-                      >
-                        Recalculate with current rates
-                      </label>
-                    </div>
-                  </div>
-                  {recalculatePricing && originalTotal !== calculatedTotal && (
-                    <div className="rounded-md bg-yellow-50 p-2 dark:bg-yellow-900/20">
-                      <div className="space-y-1 text-xs text-yellow-800 dark:text-yellow-200">
-                        <div className="flex justify-between">
-                          <span>Original Price:</span>
-                          <span className="font-medium line-through">
-                            {formatCurrency(originalTotal)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>New Price:</span>
-                          <span className="font-medium text-green-700 dark:text-green-400">
-                            {formatCurrency(calculatedTotal)}
-                          </span>
-                        </div>
-                        <div className="mt-1 text-xs italic">
-                          {calculatedTotal > originalTotal
-                            ? `Price increased by ${formatCurrency(calculatedTotal - originalTotal)}`
-                            : `Price reduced by ${formatCurrency(originalTotal - calculatedTotal)}`}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <Separator />
-                </>
-              )}
               <div className="flex justify-between">
                 <span>Unit:</span>
                 <span className="font-medium">{selectedUnit.unit_name}</span>
@@ -547,13 +450,7 @@ export function BookingForm({
               <Separator />
               <div className="flex justify-between text-lg font-semibold">
                 <span>Total:</span>
-                <span>
-                  {calculatePricing.isPending && recalculatePricing ? (
-                    <span className="text-muted-foreground text-sm">Calculating...</span>
-                  ) : (
-                    formatCurrency(calculatedTotal)
-                  )}
-                </span>
+                <span>{formatCurrency(calculatedTotal)}</span>
               </div>
               {downpaymentAmount > 0 && (
                 <div className="text-muted-foreground flex justify-between text-sm">
@@ -848,32 +745,6 @@ export function BookingForm({
 
           <Separator />
 
-          {isEditMode && recalculatePricing && originalTotal !== calculatedTotal && (
-            <>
-              <div className="rounded-md bg-yellow-50 p-3 dark:bg-yellow-900/20">
-                <div className="space-y-1 text-sm text-yellow-800 dark:text-yellow-200">
-                  <div className="mb-2 font-medium">Pricing Updated</div>
-                  <div className="flex justify-between">
-                    <span>Original Booking Price:</span>
-                    <span className="font-mono line-through">{formatCurrency(originalTotal)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>New Price (Current Rates):</span>
-                    <span className="font-mono font-semibold text-green-700 dark:text-green-400">
-                      {formatCurrency(calculatedTotal)}
-                    </span>
-                  </div>
-                  <div className="mt-2 text-xs italic">
-                    {calculatedTotal > originalTotal
-                      ? `Price increased by ${formatCurrency(calculatedTotal - originalTotal)} due to seasonal rate changes`
-                      : `Price reduced by ${formatCurrency(originalTotal - calculatedTotal)} with current rates`}
-                  </div>
-                </div>
-              </div>
-              <Separator />
-            </>
-          )}
-
           <div className="flex items-center justify-between text-lg font-semibold">
             <span>Total Amount:</span>
             <span>{formatCurrency(calculatedTotal)}</span>
@@ -884,12 +755,7 @@ export function BookingForm({
               <span>{formatCurrency(downpaymentAmount)}</span>
             </div>
           )}
-          <PricingStatusBadge
-            notice={pricingNotice}
-            isLoading={calculatePricing.isPending && recalculatePricing}
-            className="mt-3"
-            size="md"
-          />
+          <PricingStatusBadge notice={pricingNotice} className="mt-3" size="md" />
         </CardContent>
       </Card>
     </div>
@@ -903,9 +769,7 @@ export function BookingForm({
       <Card className={cn("mx-auto w-full max-w-2xl", className)}>
         <CardHeader className="px-4 sm:px-6">
           <div className="text-center">
-            <CardTitle className="text-xl font-semibold sm:text-lg">
-              {bookingId ? "Edit Booking" : "Create New Booking"}
-            </CardTitle>
+            <CardTitle className="text-xl font-semibold sm:text-lg">Create New Booking</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="px-4 sm:px-6">
@@ -919,9 +783,7 @@ export function BookingForm({
     <Card className={cn("mx-auto w-full max-w-2xl", className)}>
       <CardHeader className="px-4 sm:px-6">
         <div className="text-center">
-          <CardTitle className="text-xl sm:text-2xl">
-            {bookingId ? "Edit Booking" : "Create New Booking"}
-          </CardTitle>
+          <CardTitle className="text-xl sm:text-2xl">Create New Booking</CardTitle>
           <p className="text-muted-foreground mt-2 text-sm sm:text-base">
             {STEP_DESCRIPTIONS[currentStep]}
           </p>
@@ -961,16 +823,10 @@ export function BookingForm({
                 <Button
                   key="submit-button"
                   type="submit"
-                  disabled={createBookingMutation.isPending || updateBookingMutation.isPending}
+                  disabled={createBookingMutation.isPending}
                   className="h-12 max-w-[200px] flex-1 touch-manipulation px-6 text-base sm:h-10 sm:text-sm"
                 >
-                  {isEditMode
-                    ? updateBookingMutation.isPending
-                      ? "Updating..."
-                      : "Update Booking"
-                    : createBookingMutation.isPending
-                      ? "Creating..."
-                      : "Confirm Booking"}
+                  {createBookingMutation.isPending ? "Creating..." : "Confirm Booking"}
                 </Button>
               )}
             </div>
