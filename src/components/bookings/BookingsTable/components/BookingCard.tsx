@@ -20,6 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useUserRole } from "@/hooks";
+import { canTransitionStatus } from "@/lib/bookings";
 import { cn } from "@/lib/utils";
 import type { BookingStatus } from "@/types";
 import { utcToResortTime } from "@/utils/date-helpers";
@@ -122,7 +123,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
       ? [{ label: "Upload Payment", onClick: onUploadPayment }]
       : []),
     ...(canConfirmBookings && isPending ? [{ label: "Confirm", onClick: handleConfirm }] : []),
-    ...(canEdit && !isCancelled
+    ...(canEdit && canTransitionStatus(booking.booking_status as BookingStatus, "Cancelled")
       ? [
           {
             label: "Cancel",

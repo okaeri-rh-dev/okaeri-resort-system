@@ -184,6 +184,17 @@ describe("BookingCard ⋯ menu role gating", () => {
     expect(onCancel).toHaveBeenCalledOnce();
   });
 
+  it("offers no Cancel for a CheckedIn booking", async () => {
+    const user = userEvent.setup();
+    renderCard({ booking: { booking_status: "CheckedIn" }, role: managerRole });
+    const trigger = screen
+      .getAllByRole("button")
+      .find((b) => b.querySelector("svg.lucide-ellipsis"));
+    await user.click(trigger!);
+    expect(await screen.findByText("Edit Booking")).toBeInTheDocument();
+    expect(screen.queryByText("Cancel")).not.toBeInTheDocument();
+  });
+
   it("excludes Confirm from menu when canConfirmBookings is false", async () => {
     const user = userEvent.setup();
     renderCard({

@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useUserRole } from "@/hooks";
+import { canTransitionStatus } from "@/lib/bookings";
 import type { Booking, BookingStatus } from "@/types";
 
 // Type for TanStack Query mutation objects (simplified from UseMutationResult)
@@ -84,7 +85,7 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
         ]
       : []),
     // Cancel - requires canEdit permission
-    ...(canEdit && booking.booking_status !== "Cancelled"
+    ...(canEdit && canTransitionStatus(booking.booking_status as BookingStatus, "Cancelled")
       ? [
           {
             label: "Cancel",
