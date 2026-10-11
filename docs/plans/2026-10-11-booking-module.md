@@ -244,7 +244,7 @@ git commit -m "feat: add the Manila-day stay convention at 14:00/12:00"
 
 - Produces: SQL `public.normalize_booking_stays(p_check_in_time time = '14:00', p_check_out_time time = '12:00') RETURNS TABLE(normalized_bookings integer, backfilled_availability integer)`, service_role only; `create_multi_unit_booking` stores `p_booking_data->>'payment_method'`; `check_multi_unit_availability.next_available_date` = latest check-out among the conflicting stays ("booked until"), NULL when available.
 
-- [ ] **Step 1: Write the failing DB tests**
+- [x] **Step 1: Write the failing DB tests**
 
 ```ts
 // src/__tests__/database/booking-stays.test.ts
@@ -419,12 +419,12 @@ describe("create_multi_unit_booking and check_multi_unit_availability", () => {
 
 In `multi-unit-booking.test.ts` change `it.skip("should allow Pending bookings to overlap (aggressive blocking)"` to `it(` and delete the 3-line `NOTE: Skipped` comment above it.
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `supabase status -o env >/dev/null && npx vitest run src/__tests__/database/booking-stays.test.ts src/__tests__/database/multi-unit-booking.test.ts`
 Expected: FAIL: `normalize_booking_stays` not found; `payment_method` null; `next_available_date` null; the Pending overlap test fails with `booking_units_no_double_booking`.
 
-- [ ] **Step 3: Write the migration**
+- [x] **Step 3: Write the migration**
 
 ```sql
 -- supabase/migrations/20261011120000_normalize_booking_stays.sql
@@ -621,12 +621,12 @@ supabase migration up
 npm run gen:types
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx vitest run src/__tests__/database`
 Expected: PASS, including `booking-stays.test.ts` (6 tests) and the un-skipped Pending overlap test; no other DB test regresses.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Delete `CLAUDE.md` line 30 ("One multi-unit booking test is intentionally skipped…").
 
