@@ -8,7 +8,7 @@ Blockers found 2026-10-11: shared test-account password in docs (owner/admin/sta
 
 - [x] Remove the shared password from `docs/qa-tests/` (3f77f79)
 - [x] User: delete `jasonacido+owner|admin|staff@gmail.com` on prod (2026-10-11)
-- [ ] Re-run the prod login probe; all three must return `invalid_credentials`
+- [x] Re-run the prod login probe; all three must return `invalid_credentials` (2026-10-11: all three did)
 - [x] User: revoke prod sessions for the 8 users in `seed.sql` (2026-10-11; 3 of the 8 IDs exist on prod, confirming a prod dump)
 - [x] Replace `supabase/seed.sql` with synthetic data: 3 units, 2 buckets, 4 local users; verified on an isolated stack (all 4 logins, `test:db` 93/93)
 - [x] Local test users come from the seed (`owner|admin|manager|staff@okaeri.test` / `test-password`), matching the e2e fixture defaults
