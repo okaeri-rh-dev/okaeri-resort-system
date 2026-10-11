@@ -73,7 +73,7 @@ Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub 
 - [x] (`caf64c8`) New: payment list search filters on `reference_number` and sort-by-status orders by `payment_status`; neither is a `payments` column, so both requests fail (`usePaymentStore.ts` `paymentListQuery`). Search now matches booking reference, guest name and notes on the fetched rows; sort uses `payments.status`
 - [x] Grill the booking entity (rounds 1-4 settled 2026-10-11; summary confirmed by the user 2026-10-11)
 - [ ] Booking module: implementation plan `docs/plans/2026-10-11-booking-module.md` (10 tasks; checkboxes tracked there)
-  - [ ] 1. Stay convention core (`toStayInstants`, 14:00/12:00, settings rule test under `TZ=America/Los_Angeles`)
+  - [x] 1. (`5998f5d`) Stay convention core (`toStayInstants`, 14:00/12:00, settings rule test under `TZ=America/Los_Angeles`)
   - [ ] 2. Migration `20261011120000_normalize_booking_stays.sql` + DB tests
   - [ ] 3. `createBooking` (server side) + DB tests
   - [ ] 4. Worker routes take Manila days

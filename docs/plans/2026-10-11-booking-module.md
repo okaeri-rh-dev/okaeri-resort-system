@@ -60,7 +60,7 @@
 
 - Produces: `type ManilaDay = string`; `isManilaDay(value: string): boolean`; `toStayInstants(checkInDay: ManilaDay, checkOutDay: ManilaDay): { check_in: string; check_out: string }` (ISO UTC); `pickedDay(date: Date): ManilaDay`; `manilaDayOf(instant: string | Date): ManilaDay`; `nightsBetween(checkInDay: ManilaDay, checkOutDay: ManilaDay): number`; `manilaDayStart(day: ManilaDay): string`; `dayAfter(day: ManilaDay): ManilaDay`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -137,12 +137,12 @@ describe("RESORT_OPERATION_HOURS", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `npx vitest run src/lib/bookings`
 Expected: FAIL, `Failed to resolve import "@/lib/bookings"`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `src/config/settings.ts`:
 
@@ -215,12 +215,12 @@ expect(update.check_in).toBe("2026-10-15T06:00:00.000Z");
 expect(update.check_out).toBe("2026-10-17T04:00:00.000Z");
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx vitest run src/lib/bookings src/components/bookings/BookingEdit`
 Expected: PASS (all of `stay.test.ts`, `to-booking-update.test.ts`).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 npm run verify
