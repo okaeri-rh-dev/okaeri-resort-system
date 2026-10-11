@@ -2102,7 +2102,7 @@ git commit -m "fix: read stays as Manila days in night counts, list filter and c
 
 - Modify: `docs/plans/2026-10-10-architecture-deepening.md` (checkboxes, results)
 
-- [ ] **Step 1: Full local verification**
+- [x] **Step 1: Full local verification** (2026-10-11 at `161d501`: verify exit 0, Test Files 110 passed | 1 skipped, Tests 1421 passed | 20 skipped; test:db exit 0, Test Files 15 passed, Tests 95 passed)
 
 Run: `npm run verify && npm run test:db`
 Expected: both exit 0; quote the summary lines (test counts) in the plan doc.
