@@ -481,7 +481,6 @@ const { data: bookings, isLoading, error } = useBookings()
 const updateBookingStatus = useUpdateBookingStatus()
 const uploadPaymentProof = useUploadPaymentProof()
 const cancelBooking = useCancelBooking()
-const deleteBooking = useDeleteBooking()
 
 // Update booking status
 updateBookingStatus.mutate({

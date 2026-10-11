@@ -28,7 +28,6 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
     handleUploadPayment,
     cancelBooking,
     updateBookingStatus,
-    deleteBooking,
   } = useBookingsTable();
 
   if (isLoading) {
@@ -68,7 +67,6 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
               onUploadPayment={() => handleUploadPayment(booking)}
               onCancel={() => cancelBooking.mutate(booking.booking_id)}
               updateBookingStatus={updateBookingStatus}
-              deleteBooking={deleteBooking}
             />
           ))}
           {bookings.length === 0 && (

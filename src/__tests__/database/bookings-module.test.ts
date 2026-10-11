@@ -6,7 +6,13 @@
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { createBooking, updateBooking, type NewBooking } from "@/lib/bookings";
+import {
+  cancelBooking,
+  createBooking,
+  setBookingStatus,
+  updateBooking,
+  type NewBooking,
+} from "@/lib/bookings";
 
 import {
   cleanupTestData,
@@ -185,5 +191,55 @@ describe("updateBooking", () => {
     await expect(
       updateBooking(supabase, "00000000-0000-0000-0000-000000000000", { num_guests: 2 })
     ).rejects.toThrow();
+  });
+});
+
+describe("cancelBooking and setBookingStatus", () => {
+  let shouldRun = false;
+
+  beforeAll(async () => {
+    shouldRun = await shouldRunDatabaseTests();
+  });
+
+  beforeEach(async () => {
+    if (shouldRun) await cleanupTestData({ includeTestFixtures: true });
+  });
+
+  it("cancels and frees the unit", async () => {
+    if (!shouldRun) return;
+    const unit = await createTestUnit();
+    const booking = await createBooking(
+      supabase,
+      stayFor(unit.unit_id, "2026-12-20", "2026-12-22")
+    );
+    await setBookingStatus(supabase, booking.booking_id, "Confirmed");
+
+    const cancelled = await cancelBooking(supabase, booking.booking_id);
+
+    expect(cancelled.booking_status).toBe("Cancelled");
+    const { data } = await supabase.rpc("check_multi_unit_availability", {
+      p_unit_ids: [unit.unit_id],
+      p_check_in: "2026-12-20T06:00:00Z",
+      p_check_out: "2026-12-22T04:00:00Z",
+    });
+    expect(data?.[0].is_available).toBe(true);
+  });
+
+  it("throws instead of silently doing nothing when no row is updated", async () => {
+    if (!shouldRun) return;
+    await expect(cancelBooking(supabase, "00000000-0000-0000-0000-000000000000")).rejects.toThrow();
+  });
+
+  it("refuses a status change the workflow does not allow", async () => {
+    if (!shouldRun) return;
+    const unit = await createTestUnit();
+    const booking = await createBooking(
+      supabase,
+      stayFor(unit.unit_id, "2026-12-20", "2026-12-22")
+    );
+
+    await expect(setBookingStatus(supabase, booking.booking_id, "CheckedOut")).rejects.toThrow(
+      /Cannot change a Pending booking to CheckedOut/
+    );
   });
 });

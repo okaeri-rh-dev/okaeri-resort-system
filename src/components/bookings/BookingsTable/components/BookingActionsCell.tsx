@@ -26,7 +26,6 @@ interface BookingActionsCellProps {
   booking: Booking;
   updateBookingStatus: MutationObject<{ bookingId: string; status: BookingStatus }>;
   cancelBooking: MutationObject<string>;
-  deleteBooking: MutationObject<string>;
   handleUploadPayment: (booking: Booking) => void;
 }
 
@@ -34,17 +33,16 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
   booking,
   updateBookingStatus,
   cancelBooking,
-  deleteBooking,
   handleUploadPayment,
 }) => {
   const navigate = useNavigate();
-  const { canEdit, canDelete, canConfirmBookings } = useUserRole();
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { canEdit, canConfirmBookings } = useUserRole();
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  const confirmDelete = useCallback(() => {
-    deleteBooking.mutate(booking.booking_id);
-    setShowDeleteDialog(false);
-  }, [deleteBooking, booking.booking_id]);
+  const confirmCancel = useCallback(() => {
+    cancelBooking.mutate(booking.booking_id);
+    setShowCancelDialog(false);
+  }, [cancelBooking, booking.booking_id]);
 
   // Build all possible actions
   const allActions = [
@@ -90,19 +88,7 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
       ? [
           {
             label: "Cancel",
-            onClick: () => {
-              cancelBooking.mutate(booking.booking_id);
-            },
-            variant: "destructive" as const,
-          },
-        ]
-      : []),
-    // Delete - requires canDelete permission (owner+)
-    ...(canDelete
-      ? [
-          {
-            label: "Delete",
-            onClick: () => setShowDeleteDialog(true),
+            onClick: () => setShowCancelDialog(true),
             variant: "destructive" as const,
           },
         ]
@@ -118,19 +104,19 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
     <>
       <ActionMenu actions={allActions} />
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Booking</AlertDialogTitle>
+            <AlertDialogTitle>Cancel booking</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to permanently delete booking &quot;
-              {booking.booking_reference}&quot;? This action cannot be undone.
+              {booking.booking_reference} will be cancelled and its unit freed for these days. This
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
-              Delete
+            <AlertDialogCancel>Keep booking</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCancel} className="bg-red-600 hover:bg-red-700">
+              Cancel booking
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

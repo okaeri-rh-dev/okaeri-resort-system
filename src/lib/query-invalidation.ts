@@ -120,13 +120,3 @@ export function afterBookingCancel() {
   invalidateMultiUnitBookings();
   invalidateUpcoming();
 }
-
-/** After hard-deleting a booking. */
-export function afterBookingDelete() {
-  invalidateBookings();
-  invalidateGuests();
-  invalidateUnits();
-  invalidateAvailability();
-  invalidateMultiUnitBookings();
-  invalidateUpcoming();
-}

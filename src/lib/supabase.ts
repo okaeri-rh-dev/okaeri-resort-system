@@ -168,11 +168,6 @@ export const db = {
     },
     update: (id: string, data: Database["public"]["Tables"]["bookings"]["Update"]) =>
       supabase.from("bookings").update(data).eq("booking_id", id).select().single(),
-    cancel: (id: string) =>
-      supabase
-        .from("bookings")
-        .update({ booking_status: "Cancelled" } satisfies TablesUpdate<"bookings">)
-        .eq("booking_id", id),
 
     // Check availability via junction table (legacy method - use checkAvailabilityFast for better performance)
     checkAvailability: (unitId: string, checkIn: string, checkOut: string) =>

@@ -16,7 +16,6 @@ import {
   useBookings,
   useBookingStore,
   useCancelBooking,
-  useDeleteBooking,
   useUpdateBookingStatus,
   useUploadPaymentProof,
 } from "@/stores/useBookingStore";
@@ -49,7 +48,6 @@ export const useBookingsTable = () => {
   const updateBookingStatus = useUpdateBookingStatus();
   const uploadPaymentProof = useUploadPaymentProof();
   const cancelBooking = useCancelBooking();
-  const deleteBooking = useDeleteBooking();
 
   // Data
   const { data: bookings = [], isLoading, error } = useBookings();
@@ -79,7 +77,6 @@ export const useBookingsTable = () => {
     handleUploadPayment,
     updateBookingStatus,
     cancelBooking,
-    deleteBooking,
   });
 
   // Export handler
@@ -177,6 +174,5 @@ export const useBookingsTable = () => {
     handleUploadPayment,
     cancelBooking,
     updateBookingStatus,
-    deleteBooking,
   };
 };

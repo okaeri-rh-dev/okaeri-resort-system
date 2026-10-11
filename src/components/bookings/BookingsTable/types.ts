@@ -13,7 +13,6 @@ export interface BookingCardProps {
   onUploadPayment: () => void;
   onCancel: () => void;
   updateBookingStatus: MutationLike<{ bookingId: string; status: BookingStatus }>;
-  deleteBooking: MutationLike<string>;
 }
 
 export interface BookingFiltersProps {

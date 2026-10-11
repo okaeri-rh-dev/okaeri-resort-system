@@ -77,7 +77,6 @@ interface RenderOptions {
 const renderCard = ({ booking = {}, role = ownerRole }: RenderOptions = {}) => {
   currentRole = role;
   const updateBookingStatus = { mutate: vi.fn() };
-  const deleteBooking = { mutate: vi.fn() };
   const onUploadPayment = vi.fn();
   const onCancel = vi.fn();
   const utils = render(
@@ -86,10 +85,9 @@ const renderCard = ({ booking = {}, role = ownerRole }: RenderOptions = {}) => {
       onUploadPayment={onUploadPayment}
       onCancel={onCancel}
       updateBookingStatus={updateBookingStatus}
-      deleteBooking={deleteBooking}
     />
   );
-  return { ...utils, updateBookingStatus, deleteBooking, onUploadPayment, onCancel };
+  return { ...utils, updateBookingStatus, onUploadPayment, onCancel };
 };
 
 beforeEach(() => {
@@ -161,27 +159,29 @@ describe("BookingCard primary action", () => {
 });
 
 describe("BookingCard ⋯ menu role gating", () => {
-  it("includes Delete only when canDelete is true (owner/admin)", async () => {
+  it("never offers Delete", async () => {
     const user = userEvent.setup();
     renderCard({ role: ownerRole });
-    // Open the ⋯ menu (last button in the card's button list)
-    const moreButtons = screen.getAllByRole("button");
-    const trigger = moreButtons.find((b) => b.querySelector("svg.lucide-ellipsis"));
-    expect(trigger).toBeDefined();
+    const trigger = screen
+      .getAllByRole("button")
+      .find((b) => b.querySelector("svg.lucide-ellipsis"));
     await user.click(trigger!);
-    expect(await screen.findByText("Delete")).toBeInTheDocument();
-  });
-
-  it("excludes Delete when canDelete is false (manager and below)", async () => {
-    const user = userEvent.setup();
-    renderCard({ role: managerRole });
-    const moreButtons = screen.getAllByRole("button");
-    const trigger = moreButtons.find((b) => b.querySelector("svg.lucide-ellipsis"));
-    expect(trigger).toBeDefined();
-    await user.click(trigger!);
-    // Wait for menu open by checking for a known-visible item
     expect(await screen.findByText("Edit Booking")).toBeInTheDocument();
     expect(screen.queryByText("Delete")).not.toBeInTheDocument();
+  });
+
+  it("cancels only after the confirmation dialog is accepted", async () => {
+    const user = userEvent.setup();
+    const { onCancel } = renderCard({ role: managerRole });
+    const trigger = screen
+      .getAllByRole("button")
+      .find((b) => b.querySelector("svg.lucide-ellipsis"));
+    await user.click(trigger!);
+    await user.click(await screen.findByText("Cancel"));
+    expect(onCancel).not.toHaveBeenCalled();
+
+    await user.click(await screen.findByRole("button", { name: "Cancel booking" }));
+    expect(onCancel).toHaveBeenCalledOnce();
   });
 
   it("excludes Confirm from menu when canConfirmBookings is false", async () => {

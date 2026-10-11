@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { BookingStatus } from "@/types/booking-status";
 import type { Database, Tables, TablesInsert, TablesUpdate } from "@/types/database.types";
 
 import { toStayInstants, type ManilaDay } from "./stay";
@@ -68,3 +69,38 @@ async function guestIdForEmail(
   );
   return guest_id;
 }
+
+const STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
+  Pending: ["Confirmed", "Cancelled"],
+  Confirmed: ["CheckedIn", "Cancelled"],
+  CheckedIn: ["CheckedOut"],
+  CheckedOut: [],
+  Cancelled: [],
+};
+
+export const canTransitionStatus = (current: BookingStatus, next: BookingStatus) =>
+  STATUS_TRANSITIONS[current]?.includes(next) ?? false;
+
+export async function setBookingStatus(
+  client: Client,
+  bookingId: string,
+  status: BookingStatus
+): Promise<BookingRow> {
+  const { booking_status } = rowFrom(
+    await client.from("bookings").select("booking_status").eq("booking_id", bookingId).single()
+  );
+  if (!canTransitionStatus(booking_status as BookingStatus, status)) {
+    throw new Error(`Cannot change a ${booking_status} booking to ${status}`);
+  }
+  return rowFrom(
+    await client
+      .from("bookings")
+      .update({ booking_status: status } satisfies TablesUpdate<"bookings">)
+      .eq("booking_id", bookingId)
+      .select()
+      .single()
+  );
+}
+
+export const cancelBooking = (client: Client, bookingId: string) =>
+  setBookingStatus(client, bookingId, "Cancelled");

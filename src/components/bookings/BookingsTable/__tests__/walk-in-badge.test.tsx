@@ -57,7 +57,6 @@ const renderCard = (overrides: Partial<Booking>) =>
       onUploadPayment={() => undefined}
       onCancel={() => undefined}
       updateBookingStatus={noopMutation}
-      deleteBooking={noopMutation}
     />
   );
 
@@ -81,7 +80,6 @@ describe("BookingCard walk-in badge", () => {
         onUploadPayment={() => undefined}
         onCancel={() => undefined}
         updateBookingStatus={noopMutation}
-        deleteBooking={noopMutation}
       />
     );
     expect(screen.queryByText("Walk-in")).not.toBeInTheDocument();

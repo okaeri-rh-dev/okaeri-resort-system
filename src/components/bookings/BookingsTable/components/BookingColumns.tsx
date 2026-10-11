@@ -24,14 +24,12 @@ interface UseBookingColumnsProps {
   handleUploadPayment: (booking: Booking) => void;
   updateBookingStatus: MutationObject<{ bookingId: string; status: BookingStatus }>;
   cancelBooking: MutationObject<string>;
-  deleteBooking: MutationObject<string>;
 }
 
 export const useBookingColumns = ({
   handleUploadPayment,
   updateBookingStatus,
   cancelBooking,
-  deleteBooking,
 }: UseBookingColumnsProps) => {
   return useMemo(
     () => [
@@ -177,13 +175,13 @@ export const useBookingColumns = ({
           return (
             <BookingActionsCell
               booking={row.original}
-              {...{ updateBookingStatus, cancelBooking, deleteBooking, handleUploadPayment }}
+              {...{ updateBookingStatus, cancelBooking, handleUploadPayment }}
             />
           );
         },
         size: 80,
       }),
     ],
-    [updateBookingStatus, cancelBooking, deleteBooking, handleUploadPayment]
+    [updateBookingStatus, cancelBooking, handleUploadPayment]
   );
 };

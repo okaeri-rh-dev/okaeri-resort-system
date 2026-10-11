@@ -12,18 +12,21 @@ import { devtools, persist } from "zustand/middleware";
 
 import { getAccessToken } from "@/hooks/useAuthToken";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { updateBooking, type BookingChanges } from "@/lib/bookings";
+import {
+  cancelBooking,
+  setBookingStatus,
+  updateBooking,
+  type BookingChanges,
+} from "@/lib/bookings";
 import { requestBooking } from "@/lib/bookings/request";
 import { adaptBookingFromDB } from "@/lib/database-adapters";
 import { recordProofPayment } from "@/lib/payments";
 import {
   afterBookingCancel,
   afterBookingCreate,
-  afterBookingDelete,
   afterBookingPaymentChange,
   afterBookingStatusChange,
   afterBookingUpdate,
-  invalidateBookings,
 } from "@/lib/query-invalidation";
 import { bookingKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
@@ -400,44 +403,16 @@ export const useCreateBooking = () =>
     },
   });
 
+export { canTransitionStatus } from "@/lib/bookings";
+
 // Update booking status with optimistic update
-// Phase 2: Simple status transition validation
-const VALID_STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
-  Pending: ["Confirmed", "Cancelled"],
-  Confirmed: ["CheckedIn", "Cancelled"],
-  CheckedIn: ["CheckedOut"],
-  CheckedOut: [],
-  Cancelled: [],
-};
-
-export const canTransitionStatus = (
-  currentStatus: BookingStatus,
-  newStatus: BookingStatus
-): boolean => {
-  return VALID_STATUS_TRANSITIONS[currentStatus]?.includes(newStatus) || false;
-};
-
 export const useUpdateBookingStatus = () => {
   const queryClient = useQueryClient();
   const updateOptimistic = useBookingStore((state) => state.updateOptimisticBooking);
 
   return useMutation({
-    mutationFn: async ({ bookingId, status }: { bookingId: string; status: BookingStatus }) => {
-      // Phase 2: Simple validation before updating
-      const { data: currentBooking } = await db.bookings.byId(bookingId);
-      if (
-        currentBooking &&
-        !canTransitionStatus(currentBooking.booking_status as BookingStatus, status)
-      ) {
-        throw new Error(`Cannot transition from ${currentBooking.booking_status} to ${status}`);
-      }
-
-      const { data, error } = await db.bookings.update(bookingId, {
-        booking_status: status,
-      });
-      if (error) throw new Error(handleSupabaseError(error));
-      return data;
-    },
+    mutationFn: ({ bookingId, status }: { bookingId: string; status: BookingStatus }) =>
+      setBookingStatus(supabase, bookingId, status),
     onMutate: async ({ bookingId, status }) => {
       await queryClient.cancelQueries({ queryKey: bookingKeys.all });
 
@@ -450,10 +425,11 @@ export const useUpdateBookingStatus = () => {
 
       return { previousBooking };
     },
-    onError: (_, { bookingId }, context) => {
+    onError: (error, { bookingId }, context) => {
       if (context?.previousBooking) {
         updateOptimistic(bookingId, context.previousBooking);
       }
+      toast.error("Failed to change the booking status", { description: error.message });
     },
     onSettled: () => {
       afterBookingStatusChange();
@@ -480,29 +456,19 @@ export const useUploadPaymentProof = () =>
   });
 
 // Cancel booking
-export const useCancelBooking = () => {
-  const queryClient = useQueryClient();
-  const updateOptimistic = useBookingStore((state) => state.updateOptimisticBooking);
-
-  return useMutation({
-    mutationFn: async (bookingId: string) => {
-      const { data, error } = await db.bookings.cancel(bookingId);
-      if (error) throw new Error(handleSupabaseError(error));
-      return data;
+export const useCancelBooking = () =>
+  useMutation({
+    mutationFn: (bookingId: string) => cancelBooking(supabase, bookingId),
+    onSuccess: (booking) => {
+      toast.success(`Booking ${booking.booking_reference} cancelled`);
     },
-    onMutate: async (bookingId) => {
-      await queryClient.cancelQueries({ queryKey: bookingKeys.all });
-
-      updateOptimistic(bookingId, {
-        booking_status: "Cancelled",
-        updated_at: new Date().toISOString(),
-      });
+    onError: (error) => {
+      toast.error("Failed to cancel the booking", { description: error.message });
     },
     onSettled: () => {
       afterBookingCancel();
     },
   });
-};
 
 export const useUpdateBooking = () =>
   useMutation({
@@ -518,28 +484,3 @@ export const useUpdateBooking = () =>
       afterBookingUpdate();
     },
   });
-
-// Hard delete booking (different from cancel)
-export const useDeleteBooking = () => {
-  const queryClient = useQueryClient();
-  const removeOptimistic = useBookingStore((state) => state.removeOptimisticBooking);
-
-  return useMutation({
-    mutationFn: async (bookingId: string) => {
-      const { error } = await supabase.from("bookings").delete().eq("booking_id", bookingId);
-      if (error) throw new Error(handleSupabaseError(error));
-    },
-    onMutate: async (bookingId) => {
-      await queryClient.cancelQueries({ queryKey: bookingKeys.all });
-      removeOptimistic(bookingId);
-      return { bookingId };
-    },
-    onError: () => {
-      // Re-fetch to restore state
-      invalidateBookings();
-    },
-    onSuccess: () => {
-      afterBookingDelete();
-    },
-  });
-};
