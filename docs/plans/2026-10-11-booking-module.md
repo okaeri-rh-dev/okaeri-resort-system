@@ -1799,7 +1799,7 @@ git commit -m "feat: save booking edits through updateBooking on Manila days"
 
 - Produces: `cancelBooking(client, bookingId): Promise<BookingRow>`; `setBookingStatus(client, bookingId, status: BookingStatus): Promise<BookingRow>`; `canTransitionStatus(current, next): boolean` (moved from the store; the store re-exports it for existing importers).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `bookings-module.test.ts` (import `cancelBooking`, `setBookingStatus`):
 
@@ -1855,12 +1855,12 @@ describe("cancelBooking and setBookingStatus", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `npx vitest run src/__tests__/database/bookings-module.test.ts`
 Expected: FAIL, functions not exported.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Append to `operations.ts`:
 
@@ -1932,12 +1932,12 @@ export const useCancelBooking = () =>
 
 `useBookingsTable.ts` and the columns hook: remove `useDeleteBooking`, `deleteBooking` and their prop plumbing. `src/tests/mobile-responsive.test.tsx` mocks `useCancelBooking`; delete any `useDeleteBooking` mock there.
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx vitest run src/__tests__/database/bookings-module.test.ts src/components/bookings src/stores src/tests`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 npm run verify
