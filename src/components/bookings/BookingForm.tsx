@@ -1,4 +1,4 @@
-import React, { useEffect, useEffectEvent, useState } from "react";
+import React, { useEffect, useEffectEvent, useMemo, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { differenceInDays, format } from "date-fns";
@@ -33,8 +33,9 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { useMultiUnitAvailability } from "@/hooks/useMultiUnitBookingQueries";
 import { usePricingCalculation } from "@/hooks/usePricingCalculation";
-import { pickedDay } from "@/lib/bookings";
+import { pickedDay, unavailableReason } from "@/lib/bookings";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
 import { hasProperty, isObject } from "@/lib/type-guards";
 import { cn } from "@/lib/utils";
@@ -69,7 +70,6 @@ const STEP_DESCRIPTIONS = {
 
 export function BookingForm({ onSuccess, onCancel, initialData, className }: BookingFormProps) {
   const [currentStep, setCurrentStep] = useState<FormStep>(1);
-  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [calculatedTotal, setCalculatedTotal] = useState<number>(0);
   const [downpaymentAmount, setDownpaymentAmount] = useState<number>(0);
   const [pricingNotice, setPricingNotice] = useState<string | null>(null);
@@ -127,6 +127,15 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
 
   const selectedUnit = units?.find((unit) => unit.unit_id === unitId);
 
+  const checkInDay = checkIn ? pickedDay(checkIn) : "";
+  const checkOutDay = checkOut && checkIn && checkOut > checkIn ? pickedDay(checkOut) : "";
+  const unitIds = useMemo(() => units?.map((unit) => unit.unit_id) ?? [], [units]);
+  const { data: availability, isFetching: isCheckingAvailability } = useMultiUnitAvailability(
+    unitIds,
+    checkInDay,
+    checkOutDay
+  );
+
   // Extract pricing calculation into useEffectEvent to prevent dependency issues
   const handlePricingCalculation = useEffectEvent(
     (params: { unit: typeof selectedUnit; checkIn: Date; checkOut: Date; numGuests: number }) => {
@@ -178,14 +187,22 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
 
     try {
       switch (step) {
-        case 1:
+        case 1: {
           await bookingStep1Schema.parseAsync({
             unit_id: values.unit_id,
             check_in: values.check_in,
             check_out: values.check_out,
             num_guests: values.num_guests,
           });
+          const reason = unavailableReason(availability, values.unit_id);
+          if (reason) {
+            form.setError("unit_id", {
+              message: `This unit is not free for these days (${reason})`,
+            });
+            return false;
+          }
           return true;
+        }
 
         case 2:
           await bookingStep2Schema.parseAsync({
@@ -242,21 +259,6 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
   const handlePreviousStep = () => {
     if (currentStep > 1) {
       setCurrentStep((prev) => (prev - 1) as FormStep);
-    }
-  };
-
-  const checkAvailability = async () => {
-    if (!selectedUnit || !checkIn || !checkOut) return;
-
-    setIsCheckingAvailability(true);
-    try {
-      // Simulate availability check - replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success("Cabin is available for your selected dates!");
-    } catch (_error) {
-      toast.error("Cabin is not available for the selected dates");
-    } finally {
-      setIsCheckingAvailability(false);
     }
   };
 
@@ -333,21 +335,29 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {units?.map((unit) => (
-                  <SelectItem key={unit.unit_id} value={unit.unit_id}>
-                    <div className="flex w-full items-center justify-between">
-                      <span>
-                        {unit.unit_name} ({unit.unit_type}) • {unit.base_occupancy}/
-                        {unit.max_occupancy} guests
-                      </span>
-                      <Badge variant="outline" className="ml-2">
-                        {formatCurrency(unit.base_rate)}/night
-                      </Badge>
-                    </div>
-                  </SelectItem>
-                ))}
+                {units?.map((unit) => {
+                  const reason = unavailableReason(availability, unit.unit_id);
+                  return (
+                    <SelectItem key={unit.unit_id} value={unit.unit_id} disabled={reason !== null}>
+                      <div className="flex w-full items-center justify-between">
+                        <span>
+                          {unit.unit_name} ({unit.unit_type}) • {unit.base_occupancy}/
+                          {unit.max_occupancy} guests
+                        </span>
+                        {reason ? (
+                          <span className="text-muted-foreground ml-2 text-xs">{reason}</span>
+                        ) : (
+                          <Badge variant="outline" className="ml-2">
+                            {formatCurrency(unit.base_rate)}/night
+                          </Badge>
+                        )}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
+            {isCheckingAvailability && <FormDescription>Checking availability…</FormDescription>}
             <FormMessage />
           </FormItem>
         )}
@@ -465,15 +475,6 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
                 size="sm"
               />
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              className="mt-4 w-full"
-              onClick={checkAvailability}
-              disabled={isCheckingAvailability}
-            >
-              {isCheckingAvailability ? "Checking..." : "Check Availability"}
-            </Button>
           </CardContent>
         </Card>
       )}

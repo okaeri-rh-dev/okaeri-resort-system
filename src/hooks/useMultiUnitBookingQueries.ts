@@ -12,6 +12,7 @@
 
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import type { UnitAvailability } from "@/lib/bookings";
 import { requestBooking } from "@/lib/bookings/request";
 import { afterBookingCreate } from "@/lib/query-invalidation";
 import { availabilityKeys, multiUnitBookingKeys } from "@/lib/query-keys";
@@ -54,14 +55,14 @@ const multiUnitAvailabilityQuery = (unitIds: string[], checkIn: string, checkOut
       });
       if (!response.ok) throw new Error("Availability check failed");
 
-      const data = (await response.json()) as { data: { results: unknown[] } };
+      const data = (await response.json()) as { data: { results: UnitAvailability[] } };
       return data.data.results;
     },
     staleTime: 300000, // 5 minutes
   });
 
 /**
- * Check availability for multiple units
+ * Check availability for multiple units; checkIn/checkOut are Manila days (YYYY-MM-DD)
  */
 export const useMultiUnitAvailability = (
   unitIds: string[],
