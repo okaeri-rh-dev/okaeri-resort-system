@@ -1182,7 +1182,7 @@ git commit -m "feat: booking and availability routes take Manila days"
 
 The form payloads are wiring over `pickedDay` (tested in Task 1); `MultiUnitBookingForm.test.tsx` has no submit test to extend, so the forms are covered by the Task 10 browser check. The new unit test pins the error surfacing that the dialog relies on.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/lib/bookings/__tests__/request.test.ts
@@ -1230,12 +1230,12 @@ describe("requestBooking", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `npx vitest run src/lib/bookings/__tests__/request.test.ts`
 Expected: FAIL, cannot resolve `@/lib/bookings/request`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 // src/lib/bookings/request.ts
@@ -1341,12 +1341,12 @@ const checkOutStr = checkOut ? pickedDay(checkOut) : "";
 
 and in both the draft and `bookingPayload` objects: `check_in: pickedDay(data.check_in)`, `check_out: pickedDay(data.check_out)`. The draft is only an optimistic placeholder, so its fields take day strings too.
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx vitest run src/lib/bookings src/components/bookings src/stores src/hooks src/tests`
 Expected: PASS. If `src/tests/mobile-responsive.test.tsx` renders `BookingForm` with removed props, update its render call to drop `bookingId`/`initialData.total_amount`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 npm run verify
