@@ -12,8 +12,8 @@ Blockers found 2026-10-11: shared test-account password in docs (owner/admin/sta
 - [x] User: revoke prod sessions for the 8 users in `seed.sql` (2026-10-11; 3 of the 8 IDs exist on prod, confirming a prod dump)
 - [x] Replace `supabase/seed.sql` with synthetic data: 3 units, 2 buckets, 4 local users; verified on an isolated stack (all 4 logins, `test:db` 93/93)
 - [x] Local test users come from the seed (`owner|admin|manager|staff@okaeri.test` / `test-password`), matching the e2e fixture defaults
-- [ ] User: drop the `TEST_*` lines from `.env.test` (or point them at `@okaeri.test`), then `supabase db reset` the main local stack
-- [ ] Full secret + PII scan of all history (`gitleaks detect`, grep for guest names/phones from the old seed); list every file to purge
+- [x] User: drop the `TEST_*` lines from `.env.test` (or point them at `@okaeri.test`), then `supabase db reset` the main local stack
+- [x] Full secret + PII scan of all history (2026-10-11, gitleaks 8.30.1: 141 hits, all placeholders, local defaults, md5 checksums or fake test tokens; old-seed emails/phones appear nowhere else except the owner's own email and sample numbers). Purge list: `supabase/seed.sql` only
 - [ ] Wait until no other session has unpushed commits or uncommitted work; push `main`
 - [ ] `git filter-repo --invert-paths --path supabase/seed.sql` (plus anything the scan found) on a fresh mirror clone; re-add the synthetic seed; verify with `git log --all -- supabase/seed.sql`
 - [ ] Force-push all branches/tags; re-clone every local checkout and worktree (old clones would re-push the purged history)
