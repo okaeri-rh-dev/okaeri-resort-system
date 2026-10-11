@@ -12,6 +12,7 @@ import {
 } from "@tanstack/react-table";
 
 import { useResponsiveView } from "@/hooks";
+import { filterDay, manilaDayOf } from "@/lib/bookings";
 import {
   useBookings,
   useBookingStore,
@@ -117,14 +118,11 @@ export const useBookingsTable = () => {
 
     // Apply date range filter
     if (filters.date_from || filters.date_to) {
+      const from = filters.date_from ? filterDay(filters.date_from) : null;
+      const to = filters.date_to ? filterDay(filters.date_to) : null;
       filtered = filtered.filter((booking) => {
-        const checkIn = new Date(booking.check_in);
-        const dateFrom = filters.date_from ? new Date(filters.date_from) : null;
-        const dateTo = filters.date_to ? new Date(filters.date_to) : null;
-
-        if (dateFrom && checkIn < dateFrom) return false;
-        if (dateTo && checkIn > dateTo) return false;
-        return true;
+        const checkInDay = manilaDayOf(booking.check_in);
+        return (!from || checkInDay >= from) && (!to || checkInDay <= to);
       });
     }
 

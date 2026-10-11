@@ -14,6 +14,9 @@ import { getAccessToken } from "@/hooks/useAuthToken";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import {
   cancelBooking,
+  dayAfter,
+  filterDay,
+  manilaDayStart,
   setBookingStatus,
   updateBooking,
   type BookingChanges,
@@ -339,10 +342,10 @@ const bookingListQuery = ({
         query = query.eq("guest_id", filters.guest_id);
       }
       if (filters.date_from) {
-        query = query.gte("check_in", filters.date_from);
+        query = query.gte("check_in", manilaDayStart(filterDay(filters.date_from)));
       }
       if (filters.date_to) {
-        query = query.lte("check_out", filters.date_to);
+        query = query.lt("check_in", manilaDayStart(dayAfter(filterDay(filters.date_to))));
       }
       if (searchQuery) {
         query = query.or(bookingSearchFilter(searchQuery));

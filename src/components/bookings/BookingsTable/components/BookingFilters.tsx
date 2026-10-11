@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useResponsiveView } from "@/hooks";
+import { pickedDay } from "@/lib/bookings";
 import type { BookingStatus, PaymentStatus } from "@/types";
 
 import type { BookingFiltersProps, DateRange } from "../types";
@@ -191,8 +192,8 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
         const toDate = tempDateRange?.to || fromDate;
         setFilters({
           ...filters,
-          date_from: fromDate?.toISOString(),
-          date_to: toDate?.toISOString(),
+          date_from: fromDate ? pickedDay(fromDate) : undefined,
+          date_to: toDate ? pickedDay(toDate) : undefined,
         });
       }}
       onClear={() => {

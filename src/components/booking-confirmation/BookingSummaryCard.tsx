@@ -1,8 +1,11 @@
+import { format, parse } from "date-fns";
 import { Calendar, MapPin, Users } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { RESORT_OPERATION_HOURS } from "@/config/settings";
+import { formatPhilippineDate } from "@/lib/timezone";
 
 interface BookingSummaryCardProps {
   checkIn: string;
@@ -33,16 +36,8 @@ export function BookingSummaryCard({
   pricingBreakdown,
   discountApplied,
 }: BookingSummaryCardProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-PH", {
-      weekday: "short",
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const formatStayDay = (instant: string, time: string) =>
+    `${formatPhilippineDate(new Date(instant), "EEE, MMM d, yyyy")} · ${format(parse(time, "HH:mm", new Date()), "h:mm a")}`;
 
   const totalUnits = unitRequests.length;
   const totalGuests = unitRequests.reduce((sum, req) => sum + req.guests_per_unit, 0);
@@ -60,11 +55,15 @@ export function BookingSummaryCard({
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <p className="text-muted-foreground mb-1 text-sm">Check-in</p>
-            <p className="font-medium">{formatDate(checkIn)}</p>
+            <p className="font-medium">
+              {formatStayDay(checkIn, RESORT_OPERATION_HOURS.checkInTime)}
+            </p>
           </div>
           <div>
             <p className="text-muted-foreground mb-1 text-sm">Check-out</p>
-            <p className="font-medium">{formatDate(checkOut)}</p>
+            <p className="font-medium">
+              {formatStayDay(checkOut, RESORT_OPERATION_HOURS.checkOutTime)}
+            </p>
           </div>
         </div>
 

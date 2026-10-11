@@ -15,11 +15,11 @@ import { create } from "zustand";
 import { devtools, persist, subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 
+import { manilaDayOf, nightsBetween } from "@/lib/bookings";
 import { logger } from "@/lib/logger";
 import { isWeekendNight } from "@/lib/pricing/weekend-night";
 import { hasBooleanProperty, hasProperty, hasStringProperty } from "@/lib/type-guards";
 import type { MultiUnitBookingStore, OptimisticEntry } from "@/types";
-import { dateDifference } from "@/utils/date-helpers";
 
 // Enable Immer MapSet plugin for Map and Set support
 enableMapSet();
@@ -254,8 +254,7 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
 
           calculateUnitPricing: (unit, checkIn, checkOut, numGuests) => {
             const checkInDate = new Date(checkIn);
-            const checkOutDate = new Date(checkOut);
-            const nights = dateDifference(checkInDate, checkOutDate, "days");
+            const nights = nightsBetween(manilaDayOf(checkIn), manilaDayOf(checkOut));
 
             let baseTotal = 0;
             let weekendSurcharge = 0;
