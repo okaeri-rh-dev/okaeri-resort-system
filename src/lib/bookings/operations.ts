@@ -58,9 +58,6 @@ async function guestIdForEmail(
     .eq("email", email)
     .limit(1)
     .maybeSingle();
-  if (error?.code === EXCLUSION_VIOLATION) {
-    throw new Error("This unit is already booked for some of these days");
-  }
   if (error) throw new Error(error.message);
   if (existing) return existing.guest_id;
 
