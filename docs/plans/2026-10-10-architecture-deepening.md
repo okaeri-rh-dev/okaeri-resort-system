@@ -75,7 +75,7 @@ Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub 
 - [ ] Booking module: implementation plan `docs/plans/2026-10-11-booking-module.md` (10 tasks; checkboxes tracked there)
   - [x] 1. (`5998f5d`) Stay convention core (`toStayInstants`, 14:00/12:00, settings rule test under `TZ=America/Los_Angeles`)
   - [x] 2. (`5ebc878`, `5a46fc1`) Migration `20261011120000_normalize_booking_stays.sql` + DB tests
-  - [ ] 3. `createBooking` (server side) + DB tests
+  - [x] 3. (`b2023ee`) `createBooking` (server side) + DB tests
   - [ ] 4. Worker routes take Manila days
   - [ ] 5. Dialog and multi-unit page create through the route
   - [ ] 6. Automatic availability in the dialog

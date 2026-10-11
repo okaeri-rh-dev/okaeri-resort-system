@@ -685,7 +685,7 @@ export function createBooking(
 ): Promise<BookingWithUnits>;
 ```
 
-- [ ] **Step 1: Write the failing DB tests**
+- [x] **Step 1: Write the failing DB tests**
 
 ```ts
 // src/__tests__/database/bookings-module.test.ts
@@ -819,12 +819,12 @@ describe("createBooking", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `npx vitest run src/__tests__/database/bookings-module.test.ts`
 Expected: FAIL, `createBooking` is not exported.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 // src/lib/bookings/create.ts
@@ -939,12 +939,12 @@ export * from "./stay";
 
 If `tsc` rejects `p_units: booking.units` against `Json[]`, the cause is an `interface`; keep `PricedUnit` a `type` alias.
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx vitest run src/__tests__/database/bookings-module.test.ts`
 Expected: PASS (5 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 npm run verify
