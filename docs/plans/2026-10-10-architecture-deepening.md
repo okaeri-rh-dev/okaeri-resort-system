@@ -88,7 +88,7 @@ Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub 
 ## Resume state (2026-10-11, evening)
 
 - Booking module Tasks 1-9 done on local `main` (unpushed); ticks and commits on the task lines above, ledger in `.superpowers/sdd/progress.md` (git-ignored). Final whole-branch review done; its pre-deploy fixes and decisions are in "Booking module execution (2026-10-11)" below.
-- Next: Task 10 Step 4 of `docs/plans/2026-10-11-booking-module.md` — the user runs `supabase db push`; Steps 1-3 done 2026-10-12 (verify, browser check, prod preview). Then push, user manual deploy, next-day normalize.
+- Next: Task 10 Step 6 of `docs/plans/2026-10-11-booking-module.md` — the user runs the manual deploy; Steps 1-5 done 2026-10-12 (verify, browser check, prod preview, `db push` confirmed, commits pushed). Then the next-day normalize (Step 7).
 - A concurrent session committed into this working tree on 2026-10-11 and its commit crossed with Task 1; reworded to `5998f5d`/`419d12f`. Its orphaned phone-search fix was committed as `7798f7f` (user choice). Commit with `git commit -- <paths>` while other sessions share the tree.
 
 ## Decisions & Deferrals
