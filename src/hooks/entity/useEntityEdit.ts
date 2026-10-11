@@ -6,24 +6,22 @@ import { toast } from "sonner";
 import { invalidateAccounts } from "@/lib/query-invalidation";
 import { queryKeys } from "@/lib/query-keys";
 import { db } from "@/lib/supabase";
-import type { Booking, Expense, Guest, Unit } from "@/types";
+import type { Expense, Guest, Unit } from "@/types";
 import type { EntityType } from "@/types/entity-detail.types";
 
-// Payments save through the Payment module (src/lib/payments)
-type EditableEntityType = Exclude<EntityType, "payment">;
+// Payments and bookings save through their modules (src/lib/payments, src/lib/bookings)
+type EditableEntityType = Exclude<EntityType, "payment" | "booking">;
 
 /**
  * Mapped type for entity update data
  */
-type EntityUpdateData<T extends EditableEntityType> = T extends "booking"
-  ? Partial<Booking>
-  : T extends "unit"
-    ? Partial<Unit>
-    : T extends "guest"
-      ? Partial<Guest>
-      : T extends "expense"
-        ? Partial<Expense>
-        : never;
+type EntityUpdateData<T extends EditableEntityType> = T extends "unit"
+  ? Partial<Unit>
+  : T extends "guest"
+    ? Partial<Guest>
+    : T extends "expense"
+      ? Partial<Expense>
+      : never;
 
 /**
  * Options for useEntityEdit hook
@@ -47,12 +45,12 @@ type UseEntityEditOptions<TData> = {
  *
  * @example
  * ```typescript
- * const updateBooking = useEntityEdit('booking', bookingId, {
- *   onSuccess: () => navigate({ to: '/bookings/$bookingId', params: { bookingId } })
+ * const updateGuest = useEntityEdit('guest', guestId, {
+ *   onSuccess: () => navigate({ to: '/guests/$guestId', params: { guestId } })
  * })
  *
- * const handleSubmit = (data: BookingFormData) => {
- *   updateBooking.mutate(data)
+ * const handleSubmit = (data: GuestFormData) => {
+ *   updateGuest.mutate(data)
  * }
  * ```
  */
@@ -68,8 +66,6 @@ export function useEntityEdit<T extends EditableEntityType>(
       // Type-safe update based on entity type
       const { data, error } = await (async () => {
         switch (entityType) {
-          case "booking":
-            return db.bookings.update(entityId, updateData as Partial<Booking>);
           case "unit":
             return db.units.update(entityId, updateData as Partial<Unit>);
           case "guest":

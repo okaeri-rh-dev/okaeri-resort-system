@@ -47,39 +47,6 @@ function createErrorResponse<T>(error: {
 }
 
 // Mock factories for complete database rows
-const createMockBooking = (overrides: Record<string, unknown> = {}) => ({
-  booking_id: "booking-123",
-  booking_reference: "BKG-2024-001",
-  booking_status: "Confirmed",
-  check_in: "2024-12-20T14:00:00Z",
-  check_out: "2024-12-22T11:00:00Z",
-  contact_number: "+63 912 345 6789",
-  created_at: "2024-01-01T00:00:00Z",
-  email: "test@example.com",
-  guest_id: "guest-123",
-  guest_name: "Test Guest",
-  is_guest_booking: false,
-  is_multi_unit: false,
-  num_guests: 2,
-  payment_method: null,
-  payment_proof_url: null,
-  payment_status: "Pending",
-  special_requests: null,
-  total_amount: 4500,
-  base_amount: 4000,
-  total_surcharges: 500,
-  discount_amount: 0,
-  tax_amount: 0,
-  unit_count: 1,
-  unit_id: "unit-123",
-  updated_at: "2024-01-01T00:00:00Z",
-  upload_status: null,
-  uploaded_at: null,
-  internal_notes: null,
-  upload_expires_at: null,
-  ...overrides,
-});
-
 const createMockUnit = (overrides: Record<string, unknown> = {}) => ({
   unit_id: "unit-123",
   unit_code: "DEL-1",
@@ -133,9 +100,6 @@ const createMockExpense = (overrides: Record<string, unknown> = {}) => ({
 // Mock dependencies
 vi.mock("@/lib/supabase", () => ({
   db: {
-    bookings: {
-      update: vi.fn(),
-    },
     units: {
       update: vi.fn(),
     },
@@ -180,111 +144,6 @@ describe("useEntityEdit", () => {
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
   };
-
-  describe("Booking entity", () => {
-    it("updates booking successfully", async () => {
-      const entityId = "booking-123";
-      const updateData = {
-        guest_name: "Updated Name",
-        email: "updated@example.com",
-      };
-      const updatedBooking = createMockBooking({
-        booking_id: entityId,
-        ...updateData,
-        booking_reference: "BK-001",
-      });
-
-      vi.mocked(db.bookings.update).mockResolvedValue(createSuccessResponse(updatedBooking));
-
-      const { result } = renderHook(() => useEntityEdit("booking", entityId), {
-        wrapper: createWrapper(),
-      });
-
-      act(() => {
-        result.current.mutate(updateData);
-      });
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      expect(db.bookings.update).toHaveBeenCalledWith(entityId, updateData);
-      expect(result.current.data).toEqual(updatedBooking);
-    });
-
-    it("performs optimistic update", async () => {
-      const entityId = "booking-123";
-      const initialData = createMockBooking({
-        booking_id: entityId,
-        guest_name: "Original Name",
-        email: "original@example.com",
-      });
-      const updateData = { guest_name: "Optimistic Name" };
-
-      queryClient.setQueryData(queryKeys.entity("booking", entityId), initialData);
-
-      // Delay the API response
-      let resolvePromise: (value: unknown) => void = () => {};
-      const delayedPromise = new Promise<unknown>((resolve) => {
-        resolvePromise = resolve;
-      });
-      vi.mocked(db.bookings.update).mockReturnValue(delayedPromise as never);
-
-      // Resolve after 100ms
-      setTimeout(() => {
-        resolvePromise(createSuccessResponse({ ...initialData, ...updateData }));
-      }, 100);
-
-      const { result } = renderHook(() => useEntityEdit("booking", entityId), {
-        wrapper: createWrapper(),
-      });
-
-      act(() => {
-        result.current.mutate(updateData);
-      });
-
-      // Check immediate optimistic update after mutation starts
-      await waitFor(() => {
-        const optimisticData = queryClient.getQueryData(queryKeys.entity("booking", entityId));
-        expect(optimisticData).toMatchObject({ guest_name: "Optimistic Name" });
-      });
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-    });
-
-    it("rolls back on error", async () => {
-      const entityId = "booking-123";
-      const initialData = { booking_id: entityId, guest_name: "Original" };
-      const updateData = { guest_name: "Failed Update" };
-
-      queryClient.setQueryData(queryKeys.entity("booking", entityId), initialData);
-
-      vi.mocked(db.bookings.update).mockResolvedValue(
-        createErrorResponse({
-          message: "Update failed",
-          code: "500",
-        })
-      );
-
-      const { result } = renderHook(() => useEntityEdit("booking", entityId), {
-        wrapper: createWrapper(),
-      });
-
-      act(() => {
-        result.current.mutate(updateData);
-      });
-
-      await waitFor(() => {
-        expect(result.current.isError).toBe(true);
-      });
-
-      // Data should be rolled back
-      const currentData = queryClient.getQueryData(queryKeys.entity("booking", entityId));
-      expect(currentData).toEqual(initialData);
-    });
-  });
 
   describe("Unit entity", () => {
     it("updates unit successfully", async () => {
@@ -393,14 +252,14 @@ describe("useEntityEdit", () => {
 
   describe("Callback options", () => {
     it("calls onSuccess callback", async () => {
-      const entityId = "booking-123";
+      const entityId = "guest-123";
       const updateData = { guest_name: "Success Test" };
-      const updatedData = createMockBooking({ booking_id: entityId, ...updateData });
+      const updatedData = createMockGuest({ guest_id: entityId, ...updateData });
       const onSuccess = vi.fn();
 
-      vi.mocked(db.bookings.update).mockResolvedValue(createSuccessResponse(updatedData));
+      vi.mocked(db.guests.update).mockResolvedValue(createSuccessResponse(updatedData));
 
-      const { result } = renderHook(() => useEntityEdit("booking", entityId, { onSuccess }), {
+      const { result } = renderHook(() => useEntityEdit("guest", entityId, { onSuccess }), {
         wrapper: createWrapper(),
       });
 
@@ -416,18 +275,18 @@ describe("useEntityEdit", () => {
     });
 
     it("calls onError callback", async () => {
-      const entityId = "booking-123";
+      const entityId = "guest-123";
       const updateData = { guest_name: "Error Test" };
       const onError = vi.fn();
 
-      vi.mocked(db.bookings.update).mockResolvedValue(
+      vi.mocked(db.guests.update).mockResolvedValue(
         createErrorResponse({
           message: "Update failed",
           code: "500",
         })
       );
 
-      const { result } = renderHook(() => useEntityEdit("booking", entityId, { onError }), {
+      const { result } = renderHook(() => useEntityEdit("guest", entityId, { onError }), {
         wrapper: createWrapper(),
       });
 
@@ -446,19 +305,19 @@ describe("useEntityEdit", () => {
 
   describe("Query invalidation", () => {
     it("invalidates entity query on success", async () => {
-      const entityId = "booking-123";
+      const entityId = "guest-123";
       const updateData = { guest_name: "Invalidate Test" };
-      const updatedData = createMockBooking({ booking_id: entityId, ...updateData });
+      const updatedData = createMockGuest({ guest_id: entityId, ...updateData });
 
-      vi.mocked(db.bookings.update).mockResolvedValue(createSuccessResponse(updatedData));
+      vi.mocked(db.guests.update).mockResolvedValue(createSuccessResponse(updatedData));
 
       // Set initial data
       queryClient.setQueryData(
-        queryKeys.entity("booking", entityId),
-        createMockBooking({ booking_id: entityId, guest_name: "Old" })
+        queryKeys.entity("guest", entityId),
+        createMockGuest({ guest_id: entityId, guest_name: "Old" })
       );
 
-      const { result } = renderHook(() => useEntityEdit("booking", entityId), {
+      const { result } = renderHook(() => useEntityEdit("guest", entityId), {
         wrapper: createWrapper(),
       });
 
@@ -473,9 +332,9 @@ describe("useEntityEdit", () => {
       });
 
       expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: queryKeys.entity("booking", entityId),
+        queryKey: queryKeys.entity("guest", entityId),
       });
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.entities("booking") });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.entities("guest") });
     });
   });
 
@@ -501,17 +360,17 @@ describe("useEntityEdit", () => {
     });
 
     it("handles database error gracefully", async () => {
-      const entityId = "booking-123";
+      const entityId = "guest-123";
       const updateData = { guest_name: "Test" };
 
-      vi.mocked(db.bookings.update).mockResolvedValue(
+      vi.mocked(db.guests.update).mockResolvedValue(
         createErrorResponse({
           message: "Database constraint violation",
           code: "23505",
         })
       );
 
-      const { result } = renderHook(() => useEntityEdit("booking", entityId), {
+      const { result } = renderHook(() => useEntityEdit("guest", entityId), {
         wrapper: createWrapper(),
       });
 

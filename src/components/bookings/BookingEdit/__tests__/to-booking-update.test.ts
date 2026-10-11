@@ -4,6 +4,8 @@ import type { BookingEditInput } from "@/lib/validation/entity-schemas";
 
 import { toBookingUpdate } from "../to-booking-update";
 
+process.env.TZ = "America/Los_Angeles";
+
 const editInput: BookingEditInput = {
   guest_name: "Maria Santos",
   email: "maria@example.com",
@@ -18,11 +20,10 @@ const editInput: BookingEditInput = {
 };
 
 describe("toBookingUpdate", () => {
-  it("stores the picked days as Manila check-in and check-out times", () => {
+  it("sends the picked days as the stay", () => {
     const update = toBookingUpdate(editInput);
 
-    expect(update.check_in).toBe("2026-10-15T06:00:00.000Z");
-    expect(update.check_out).toBe("2026-10-17T04:00:00.000Z");
+    expect(update.stay).toEqual({ check_in: "2026-10-15", check_out: "2026-10-17" });
   });
 
   it("sends only bookings columns", () => {
@@ -30,8 +31,6 @@ describe("toBookingUpdate", () => {
 
     expect(Object.keys(update).sort()).toEqual(
       [
-        "check_in",
-        "check_out",
         "contact_number",
         "email",
         "guest_name",
@@ -39,6 +38,7 @@ describe("toBookingUpdate", () => {
         "num_guests",
         "payment_method",
         "special_requests",
+        "stay",
       ].sort()
     );
   });

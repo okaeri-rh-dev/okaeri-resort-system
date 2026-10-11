@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoaderData, useNavigate, useParams } from "@tanstack/react-router";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { CalendarDays, Save, X } from "lucide-react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 
@@ -30,9 +30,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useEntityEdit } from "@/hooks/entity";
+import { manilaDayOf } from "@/lib/bookings";
 import { cn } from "@/lib/utils";
 import { bookingEditSchema, type BookingEditInput } from "@/lib/validation/entity-schemas";
+import { useUpdateBooking } from "@/stores/useBookingStore";
 import type { Booking, Unit } from "@/types/entity-detail.types";
 
 import { toBookingUpdate } from "./to-booking-update";
@@ -56,8 +57,8 @@ export function BookingEditPage() {
       guest_name: booking.guest_name || "",
       email: booking.email || "",
       contact_number: booking.contact_number || "",
-      check_in: new Date(booking.check_in),
-      check_out: new Date(booking.check_out),
+      check_in: parseISO(manilaDayOf(booking.check_in)),
+      check_out: parseISO(manilaDayOf(booking.check_out)),
       unit_id: booking.booking_units?.[0]?.unit_id ?? "",
       num_guests: booking.num_guests,
       payment_method:
@@ -68,15 +69,16 @@ export function BookingEditPage() {
   });
 
   // Setup mutation with navigation on success
-  const updateBooking = useEntityEdit("booking", bookingId, {
-    onSuccess: () => {
-      navigate({ to: "/admin/bookings/$bookingId", params: { bookingId } });
-    },
-  });
+  const updateBooking = useUpdateBooking();
 
   // Form submission handler
   const onSubmit: SubmitHandler<BookingEditInput> = (data) => {
-    updateBooking.mutate(toBookingUpdate(data));
+    updateBooking.mutate(
+      { bookingId, changes: toBookingUpdate(data) },
+      {
+        onSuccess: () => void navigate({ to: "/admin/bookings/$bookingId", params: { bookingId } }),
+      }
+    );
   };
 
   // Cancel handler

@@ -6,7 +6,7 @@
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { createBooking, type NewBooking } from "@/lib/bookings";
+import { createBooking, updateBooking, type NewBooking } from "@/lib/bookings";
 
 import {
   cleanupTestData,
@@ -124,5 +124,66 @@ describe("createBooking", () => {
 
     const { error } = await confirm(overlapping.booking_id);
     expect(error?.message).toMatch(/exclusion/);
+  });
+});
+
+describe("updateBooking", () => {
+  let shouldRun = false;
+
+  beforeAll(async () => {
+    shouldRun = await shouldRunDatabaseTests();
+  });
+
+  beforeEach(async () => {
+    if (shouldRun) await cleanupTestData({ includeTestFixtures: true });
+  });
+
+  it("moves the stay and its availability row to the new Manila days", async () => {
+    if (!shouldRun) return;
+    const unit = await createTestUnit();
+    const booking = await createBooking(
+      supabase,
+      stayFor(unit.unit_id, "2026-12-20", "2026-12-22")
+    );
+
+    const updated = await updateBooking(supabase, booking.booking_id, {
+      stay: { check_in: "2026-12-27", check_out: "2026-12-29" },
+    });
+
+    expect(iso(updated.check_in)).toBe("2026-12-27T06:00:00.000Z");
+    const { data: availability } = await supabase
+      .from("booking_unit_availability")
+      .select("check_in, check_out")
+      .eq("booking_id", booking.booking_id)
+      .single();
+    expect(iso(availability!.check_out)).toBe("2026-12-29T04:00:00.000Z");
+  });
+
+  it("links the booking to the guest with the new email, creating one when missing", async () => {
+    if (!shouldRun) return;
+    const unit = await createTestUnit();
+    const booking = await createBooking(
+      supabase,
+      stayFor(unit.unit_id, "2026-12-20", "2026-12-22")
+    );
+
+    const updated = await updateBooking(supabase, booking.booking_id, {
+      guest_name: "Renamed Guest",
+      email: `renamed-${Date.now()}@example.com`,
+    });
+
+    const { data: guest } = await supabase
+      .from("guests")
+      .select("email")
+      .eq("guest_id", updated.guest_id!)
+      .single();
+    expect(guest?.email).toBe(updated.email);
+  });
+
+  it("throws when the row is not visible to the caller", async () => {
+    if (!shouldRun) return;
+    await expect(
+      updateBooking(supabase, "00000000-0000-0000-0000-000000000000", { num_guests: 2 })
+    ).rejects.toThrow();
   });
 });

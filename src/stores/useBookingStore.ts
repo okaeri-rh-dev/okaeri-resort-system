@@ -12,6 +12,7 @@ import { devtools, persist } from "zustand/middleware";
 
 import { getAccessToken } from "@/hooks/useAuthToken";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { updateBooking, type BookingChanges } from "@/lib/bookings";
 import { requestBooking } from "@/lib/bookings/request";
 import { adaptBookingFromDB } from "@/lib/database-adapters";
 import { recordProofPayment } from "@/lib/payments";
@@ -28,7 +29,6 @@ import { bookingKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/validations";
 import type { Booking, BookingFilters, BookingStatus, TableState } from "@/types";
-import type { TablesInsert } from "@/types/database.types";
 
 // import { useWorkflowStore } from "./useWorkflowStore"; // Phase 3-4
 
@@ -504,72 +504,20 @@ export const useCancelBooking = () => {
   });
 };
 
-// General booking update (for editing all fields)
-export const useUpdateBooking = () => {
-  const queryClient = useQueryClient();
-  const updateOptimistic = useBookingStore((state) => state.updateOptimisticBooking);
-
-  return useMutation({
-    mutationFn: async ({
-      bookingId,
-      updates,
-    }: {
-      bookingId: string;
-      updates: Partial<Omit<Booking, "booking_id" | "created_at" | "updated_at">>;
-    }) => {
-      // Update guest information if email changed
-      if (updates.email) {
-        const { data: existingGuest } = await supabase
-          .from("guests")
-          .select("guest_id")
-          .eq("email", updates.email)
-          .single();
-
-        if (!existingGuest && updates.guest_name) {
-          const { data: newGuest } = await supabase
-            .from("guests")
-            .insert({
-              guest_name: updates.guest_name,
-              email: updates.email,
-              phone_number: updates.contact_number || "",
-            } satisfies TablesInsert<"guests">)
-            .select()
-            .single();
-
-          if (newGuest) {
-            updates.guest_id = newGuest.guest_id;
-          }
-        } else if (existingGuest) {
-          updates.guest_id = existingGuest.guest_id;
-        }
-      }
-
-      const { data, error } = await db.bookings.update(bookingId, updates);
-      if (error) throw new Error(handleSupabaseError(error));
-      return data;
+export const useUpdateBooking = () =>
+  useMutation({
+    mutationFn: ({ bookingId, changes }: { bookingId: string; changes: BookingChanges }) =>
+      updateBooking(supabase, bookingId, changes),
+    onSuccess: () => {
+      toast.success("Booking updated");
     },
-    onMutate: async ({ bookingId, updates }) => {
-      await queryClient.cancelQueries({ queryKey: bookingKeys.all });
-
-      const previousBooking = cachedBooking(queryClient, bookingId);
-
-      updateOptimistic(bookingId, {
-        ...updates,
-        updated_at: new Date().toISOString(),
-      });
-
-      return { previousBooking };
-    },
-    onError: (_, { bookingId }, context) => {
-      if (context?.previousBooking) {
-        updateOptimistic(bookingId, context.previousBooking);
-      }
+    onError: (error) => {
+      toast.error("Failed to update the booking", { description: error.message });
     },
     onSettled: () => {
       afterBookingUpdate();
     },
   });
-};
 
 // Hard delete booking (different from cancel)
 export const useDeleteBooking = () => {
