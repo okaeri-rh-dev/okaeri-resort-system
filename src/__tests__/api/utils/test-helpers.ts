@@ -58,13 +58,6 @@ export function createMockContext(
   params: Record<string, string> = {},
   user?: AuthenticatedUser
 ) {
-  // Mirrors what the middleware does after JWT verification: an Authorization
-  // header yields an admin user unless the caller passes one explicitly
-  const hasAuthorization = request.headers.has("Authorization");
-  const defaultUser: AuthenticatedUser | undefined = hasAuthorization
-    ? { id: "test-user-id", email: "test@example.com", role: "admin" }
-    : undefined;
-
   return {
     request,
     env,
@@ -74,7 +67,7 @@ export function createMockContext(
       promise.catch((err) => console.error("waitUntil error:", err));
     },
     next: async () => new Response("OK"),
-    data: { user: user ?? defaultUser } as AuthenticatedData,
+    data: { user } as AuthenticatedData,
   };
 }
 

@@ -8,6 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { onRequest } from "../../../functions/_middleware";
+import { lookupUserRole } from "../../../functions/lib/role-lookup";
 import { createMockContext, createMockRequest, generateTestJWT, mockEnv } from "./setup";
 
 vi.mock("../../../functions/lib/role-lookup", () => ({
@@ -23,7 +24,6 @@ async function postThroughMiddleware(token?: string): Promise<Response> {
     body: JSON.stringify({}),
   });
   const context = createMockContext(request, mockEnv);
-  context.data = {};
 
   // Same hand-off as node_modules/wrangler/templates/pages-template-worker.ts
   context.next = async () =>
@@ -43,8 +43,15 @@ describe("authentication hand-off from root middleware to a route", () => {
   it("lets a valid staff token reach the route authenticated", async () => {
     const response = await postThroughMiddleware(await generateTestJWT());
 
-    expect(response.status).not.toBe(401);
-    expect(response.status).not.toBe(403);
+    expect(response.status).toBe(400);
+  });
+
+  it("forbids a valid token whose user has no app role", async () => {
+    vi.mocked(lookupUserRole).mockResolvedValueOnce("user");
+
+    const response = await postThroughMiddleware(await generateTestJWT());
+
+    expect(response.status).toBe(403);
   });
 
   it("rejects a request without a token", async () => {
