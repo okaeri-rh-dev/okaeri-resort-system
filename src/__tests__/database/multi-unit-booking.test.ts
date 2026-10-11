@@ -321,10 +321,7 @@ describe("Multi-Unit Booking Database Functions", () => {
       expect(error!.message).toContain("exclusion"); // Exclusion constraint violated
     });
 
-    // NOTE: Skipped - Current schema doesn't support Pending overlap feature
-    // The exclusion constraint blocks ALL overlapping bookings regardless of status
-    // This feature requires updating the database constraint to exclude Pending status
-    it.skip("should allow Pending bookings to overlap (aggressive blocking)", async () => {
+    it("should allow Pending bookings to overlap (aggressive blocking)", async () => {
       // Create Pending booking
       const bookingData1 = {
         booking_reference: "BK-TEST-005",

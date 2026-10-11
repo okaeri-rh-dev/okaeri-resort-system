@@ -1368,6 +1368,7 @@ export type Database = {
         Args: { p_booking_id: string; p_unit_ids: string[] };
         Returns: undefined;
       };
+      at_manila_time: { Args: { p_instant: string; p_time: string }; Returns: string };
       attach_audit_trigger: { Args: { p_table_name: string }; Returns: undefined };
       calculate_booking_pricing: {
         Args: { p_check_in: string; p_check_out: string; p_unit_requests: Json };
@@ -1521,6 +1522,13 @@ export type Database = {
               logs_archived: number;
             }[];
           };
+      normalize_booking_stays: {
+        Args: { p_check_in_time?: string; p_check_out_time?: string };
+        Returns: {
+          backfilled_availability: number;
+          normalized_bookings: number;
+        }[];
+      };
       refresh_booking_payment_status: { Args: { p_booking_id: string }; Returns: undefined };
       restore_logs_from_archive:
         | { Args: { p_archive_month: string }; Returns: number }
