@@ -20,6 +20,10 @@ const editInput: BookingEditInput = {
 };
 
 describe("toBookingUpdate", () => {
+  it("runs outside Manila so browser-local mistakes show", () => {
+    expect(new Date(2026, 0, 15).getTimezoneOffset()).toBe(480);
+  });
+
   it("sends the picked days as the stay", () => {
     const update = toBookingUpdate(editInput);
 
