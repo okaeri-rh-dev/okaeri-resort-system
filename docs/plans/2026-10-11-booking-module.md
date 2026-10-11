@@ -968,7 +968,7 @@ git commit -m "feat: add createBooking to the booking module"
 - Consumes: `createBooking`, `toStayInstants`, `isManilaDay`, `PricedUnit` (`@/lib/bookings/create`, `@/lib/bookings/stay`; import these files directly, not the index, so the Worker never bundles browser code added later).
 - Produces: `POST /api/bookings/multi-unit` body `check_in`/`check_out` = `YYYY-MM-DD`; `payment` optional, `payment.method` ∈ `Cash | GCash | BankTransfer | CreditCard | Card`, `payment.amount` optional. 409 `UNIT_UNAVAILABLE` also when a unit is missing from the availability result (not `Available`). `GET /api/availability/multi-unit?units[]=…&check_in=YYYY-MM-DD&check_out=YYYY-MM-DD`; anything else → 400.
 
-- [ ] **Step 1: Update the route tests first**
+- [x] **Step 1: Update the route tests first**
 
 In `src/__tests__/api/bookings-multi-unit.test.ts`:
 
@@ -1033,12 +1033,12 @@ it("should store the payment method through the create RPC", async () => {
 
 If `mockClient.rpc` is not a `vi.fn` in `createMockSupabaseClient` (`src/__tests__/api/helpers/mock-supabase.ts:211` shows `rpc: vi.fn(...)`, so it is), the last two tests need no change.
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `npx vitest run src/__tests__/api/bookings-multi-unit.test.ts`
 Expected: FAIL: day strings rejected by `z.string().datetime()`; missing-unit case returns 201.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `functions/api/bookings/multi-unit.ts`, schema changes:
 
@@ -1149,12 +1149,12 @@ with `import { isManilaDay, toStayInstants } from "@/lib/bookings/stay";`.
   };
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx vitest run src/__tests__/api && npm run type-check`
 Expected: route tests PASS; `type-check` (which includes `functions/tsconfig.json`) exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 npm run verify
