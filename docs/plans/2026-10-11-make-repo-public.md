@@ -8,9 +8,10 @@ Blockers found 2026-10-11: shared test-account password in docs (owner/admin/sta
 
 - [x] Remove the shared password from `docs/qa-tests/` (3f77f79)
 - [ ] User: delete `jasonacido+owner|admin|staff@gmail.com` on prod; re-run the login probe, all must return `invalid_credentials`
-- [ ] User: revoke prod sessions for the 8 users in `seed.sql`
-- [ ] Replace `supabase/seed.sql` with synthetic data (3 units, a few made-up guests/bookings/payments, no `auth.*` rows); confirm `supabase db reset` + `npm run test:db` pass
-- [ ] Create local test users (owner/admin/staff) from a script instead of the seed, matching `.env.test`
+- [x] User: revoke prod sessions for the 8 users in `seed.sql` (2026-10-11; 3 of the 8 IDs exist on prod, confirming a prod dump)
+- [x] Replace `supabase/seed.sql` with synthetic data: 3 units, 2 buckets, 4 local users; verified on an isolated stack (all 4 logins, `test:db` 93/93)
+- [x] Local test users come from the seed (`owner|admin|manager|staff@okaeri.test` / `test-password`), matching the e2e fixture defaults
+- [ ] User: drop the `TEST_*` lines from `.env.test` (or point them at `@okaeri.test`), then `supabase db reset` the main local stack
 - [ ] Full secret + PII scan of all history (`gitleaks detect`, grep for guest names/phones from the old seed); list every file to purge
 - [ ] Wait until no other session has unpushed commits or uncommitted work; push `main`
 - [ ] `git filter-repo --invert-paths --path supabase/seed.sql` (plus anything the scan found) on a fresh mirror clone; re-add the synthetic seed; verify with `git log --all -- supabase/seed.sql`
@@ -24,3 +25,5 @@ Blockers found 2026-10-11: shared test-account password in docs (owner/admin/sta
 - Rewrite history rather than start a fresh repo — keeps the 700+ commit history; revisit if filter-repo misses something.
 - History rewrite waits for parallel sessions to land their work — a force-push under an active session strands its commits.
 - Test accounts deleted on prod, not just re-passworded — nothing uses them there (CI never sets `TEST_*`; `.env.test` targets local).
+- Seed has no guests/bookings/payments — the old seed's payments pointed at bookings it never inserted, and DB tests create their own rows; revisit if local dev needs sample bookings.
+- Seed users use the fixture defaults so e2e works without `TEST_*` env vars; the password is public by design and local-only.
