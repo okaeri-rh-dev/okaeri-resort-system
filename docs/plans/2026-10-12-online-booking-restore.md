@@ -53,7 +53,7 @@ Out of scope: `cleanup_expired_payment_proofs` (deferred item 3, needs a retenti
 - [x] 4. `verify-payment.ts` per D1/D2, with unit tests; narrow `payment_status` in `database.types.ts`.
 - [x] 4b. Booking-failure path: when `create_guest_booking` fails after the proof upload, the guest sees a clear "nothing was booked" message (check what `multi-unit.ts` and the form show today).
 - [x] 5. E2E: extend the verify-payment tests to click Verify and assert `Partial`, then assign units.
-- [ ] 6. Replica check (D3); drift baseline lines removed; `npm run verify`; PR.
+- [x] 6. Replica check (D3); drift baseline lines removed; `npm run verify`; PR.
 - [ ] 7. User: `supabase db push`; prod-drift check; one real test booking on prod (user).
 
 ## Resume state (2026-10-13, implementation done, PR next)
@@ -61,7 +61,7 @@ Out of scope: `cleanup_expired_payment_proofs` (deferred item 3, needs a retenti
 - Branch `fix/restore-guest-booking-schema` (off main `8532694`): implementation plan Tasks 1–8 done and reviewed; final whole-branch review fixes in `47c8f44` (`bookings.pricing_snapshot`, absent on prod), `318c5c9`, `3367702`.
 - Replica check (D3) passed 2026-10-13: prod dump loaded (only errors: 3 `auth.users` FKs), `is_staff_or_above` present, migration applied twice (both `COMMIT`), create → payment → assign gave `Confirmed | Partial | assigned | 7000.00`. Replica dropped, dump deleted.
 - `npm run verify` 1460 passed / 20 skipped; `npm run test:db` 116 passed.
-- Next: task 6 PR (implementation plan Task 9 Step 6), then task 7 (user, implementation plan Task 10).
+- PR #23 open (pushed `2eb772c`). Next: merge, then task 7 (user, implementation plan Task 10).
 
 ## Decisions & Deferrals
 

@@ -1837,7 +1837,7 @@ Keep line 101 (`authenticated_users_insert_booking_units`) deleted: the migratio
 Run: `npm run verify && npm run test:db`
 Expected: both exit 0; paste each summary line. Then check the tracking doc's task boxes for Tasks 1–9 and update its Resume state.
 
-- [ ] **Step 6: Commit and open the PR**
+- [x] **Step 6: Commit and open the PR**
 
 ```bash
 git add scripts/drift/baseline.txt docs/plans/2026-10-12-online-booking-restore.md docs/plans/2026-10-12-online-booking-restore-implementation.md
