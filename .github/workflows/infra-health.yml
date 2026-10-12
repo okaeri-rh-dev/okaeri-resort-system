@@ -122,6 +122,14 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: E2E (seed -> playwright -> cleanup)
         run: npm run test:e2e:hooked
+        env:
+          # Local-only users from supabase/seed.sql
+          TEST_ADMIN_EMAIL: admin@okaeri.test
+          TEST_ADMIN_PASSWORD: test-password
+          TEST_OWNER_EMAIL: owner@okaeri.test
+          TEST_OWNER_PASSWORD: test-password
+          TEST_STAFF_EMAIL: staff@okaeri.test
+          TEST_STAFF_PASSWORD: test-password
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v7
