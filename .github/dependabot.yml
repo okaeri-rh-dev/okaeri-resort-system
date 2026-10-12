@@ -8,6 +8,24 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # 0.5 flags every TanStack route file (local page component + `export const Route`); needs autoCodeSplitting or a route refactor first
+      - dependency-name: eslint-plugin-react-refresh
+        versions: [">=0.5.0"]
+      # Coupled majors: Dependabot opens them one package at a time, which can never install. Upgrade each set together by hand.
+      # eslint 10 needs @eslint/js 10 and an eslint-plugin-react-hooks release that accepts eslint 10
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+      # vitest 5 pins @vitest/ui and @vitest/coverage-v8 to its exact version
+      - dependency-name: vitest
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@vitest/*"
+        update-types: ["version-update:semver-major"]
+      # vite 8 (Rolldown) needs vitest 5 and a vite.config port (object-form manualChunks, esbuild options)
+      - dependency-name: vite
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /

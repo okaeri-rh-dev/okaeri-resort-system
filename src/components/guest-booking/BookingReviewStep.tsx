@@ -182,7 +182,7 @@ export function BookingReviewStep({
             <Checkbox
               id="terms"
               checked={termsAccepted}
-              onCheckedChange={onTermsChange}
+              onCheckedChange={(checked) => onTermsChange(checked === true)}
               aria-describedby="terms-description"
             />
             <div className="space-y-1 leading-none">

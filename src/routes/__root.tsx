@@ -20,7 +20,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
           <h1 className="mb-4 text-2xl font-bold text-red-600">Application Error</h1>
           <p className="mb-4 text-gray-600">Something went wrong with the application.</p>
           <pre className="max-w-md overflow-auto rounded bg-gray-100 p-4 text-left text-sm">
-            {error.message}
+            {error instanceof Error ? error.message : String(error)}
           </pre>
           <button
             onClick={() => window.location.reload()}

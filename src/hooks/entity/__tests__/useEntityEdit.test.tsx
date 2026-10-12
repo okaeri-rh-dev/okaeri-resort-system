@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import type { PostgrestSingleResponse } from "@supabase/supabase-js";
+import { PostgrestError, type PostgrestSingleResponse } from "@supabase/supabase-js";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -15,6 +15,7 @@ import { useEntityEdit } from "../useEntityEdit";
 // Mock rows use the app types, which differ from the generated row types the db helpers return
 function createSuccessResponse<T>(data: T) {
   return {
+    success: true,
     data,
     error: null,
     count: null,
@@ -29,17 +30,16 @@ function createErrorResponse<T>(error: {
   code: string;
   details?: string;
   hint?: string;
-  name?: string;
 }): PostgrestSingleResponse<T> {
   return {
+    success: false,
     data: null,
-    error: {
+    error: new PostgrestError({
       message: error.message,
       code: error.code,
       details: error.details || "",
       hint: error.hint || "",
-      name: error.name || "PostgrestError",
-    },
+    }),
     count: null,
     status: 500,
     statusText: "Internal Server Error",
