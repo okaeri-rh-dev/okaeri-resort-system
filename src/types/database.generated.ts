@@ -817,9 +817,6 @@ export type Database = {
           created_at: string | null;
           guests_per_unit: number;
           id: string;
-          quantity: number;
-          special_requests: string | null;
-          unit_type: string;
           updated_at: string | null;
         };
         Insert: {
@@ -827,9 +824,6 @@ export type Database = {
           created_at?: string | null;
           guests_per_unit: number;
           id?: string;
-          quantity: number;
-          special_requests?: string | null;
-          unit_type: string;
           updated_at?: string | null;
         };
         Update: {
@@ -837,9 +831,6 @@ export type Database = {
           created_at?: string | null;
           guests_per_unit?: number;
           id?: string;
-          quantity?: number;
-          special_requests?: string | null;
-          unit_type?: string;
           updated_at?: string | null;
         };
         Relationships: [
