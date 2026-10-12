@@ -28,8 +28,7 @@ export class DashboardPage {
   // Quick actions
   readonly newBookingButton: Locator;
 
-  // Header elements
-  readonly userMenu: Locator;
+  // Sidebar footer
   readonly logoutButton: Locator;
 
   constructor(page: Page) {
@@ -68,11 +67,7 @@ export class DashboardPage {
     // Quick actions
     this.newBookingButton = page.getByRole("button", { name: /new booking/i });
 
-    // User menu and logout
-    this.userMenu = page.locator(
-      '[data-testid="user-menu"], [aria-label*="user"], [aria-label*="account"]'
-    );
-    this.logoutButton = page.getByRole("button", { name: /logout|sign out/i });
+    this.logoutButton = page.getByRole("button", { name: "Sign Out" });
   }
 
   /**
@@ -206,19 +201,11 @@ export class DashboardPage {
   }
 
   /**
-   * Open user menu
-   */
-  async openUserMenu() {
-    await this.userMenu.click();
-  }
-
-  /**
    * Perform logout
    */
   async logout() {
-    await this.openUserMenu();
     await this.logoutButton.click();
-    await this.page.waitForURL(/\/(login)?$/);
+    await this.page.waitForURL(/\/admin\/login/);
   }
 
   /**
