@@ -45,9 +45,9 @@ Out of scope: `cleanup_expired_payment_proofs` (deferred item 3, needs a retenti
 - **D2. What Reject does.** Accepted: no booking write. `payment_status` stays `Pending` and the proof stays, so staff can still see what was rejected. The reason goes into the audit row (`payment.rejected`). Alternative: clear `payment_proof_url` so the guest's status page asks for a new upload. That needs a guest-side re-upload flow, which doesn't exist yet.
 - **D3. Test against a prod schema replica before the push.** Accepted: you run `! supabase db dump --linked --schema public -f <scratchpad>/prod-schema.sql` (agent prod reads are blocked). I load it into a scratch database, apply the migration, and run the DB tests against it. The dump is never committed (public repo).
 
-## Tasks (outline; next step: expand into full TDD steps with superpowers:writing-plans)
+## Tasks (outline; full TDD steps in `docs/plans/2026-10-12-online-booking-restore-implementation.md`, whose checkboxes track execution)
 
-- [ ] 1. Investigation: confirm the remaining baseline lines in the group (`pricing_config_admin_policy`, `authenticated_users_insert_booking_units`) and decide whether they belong here.
+- [x] 1. Investigation: confirm the remaining baseline lines in the group (`pricing_config_admin_policy`, `authenticated_users_insert_booking_units`) and decide whether they belong here. Done 2026-10-12: the `booking_units` insert policy is dropped in this migration; the `pricing_config` policy is unrelated and split out (implementation plan, Decisions).
 - [ ] 2. DB tests first (`src/__tests__/database/`): guest booking creates booking + unit requests; `anon` cannot execute either function; assign fails before verify, succeeds after, writes `booking_units` + availability; a conflicting unit fails; a wrong unit count fails.
 - [ ] 3. Migration + rollback; `npm run gen:types`; DB tests pass.
 - [ ] 4. `verify-payment.ts` per D1/D2, with unit tests; narrow `payment_status` in `database.types.ts`.
@@ -56,15 +56,18 @@ Out of scope: `cleanup_expired_payment_proofs` (deferred item 3, needs a retenti
 - [ ] 6. Replica check (D3); drift baseline lines removed; `npm run verify`; PR.
 - [ ] 7. User: `supabase db push`; prod-drift check; one real test booking on prod (user).
 
-## Resume state (2026-10-12, end of session)
+## Resume state (2026-10-12, implementation plan written)
 
-- Branch `fix/restore-guest-booking-schema` (off main `8532694`): 3 docs-only commits, not pushed, no upstream. No migration, test or code written yet.
-- Next: expand the task outline into full TDD steps (superpowers:writing-plans), then Task 1 (investigation).
-- Prod schema dump (D3) not taken yet; ask the user to run it when Task 6 is reached, into that session's scratchpad.
-- Not verified: the exact contents of `pricing_snapshot` per unit (needed for `booking_units.unit_price` in Task 3); whether `20261011120000` already drops anything this migration drops; the guest form's behaviour when booking creation fails (Task 4b).
+- Branch `fix/restore-guest-booking-schema` (off main `8532694`): docs-only commits, not pushed, no upstream. No migration, test or code written yet.
+- Implementation plan: `docs/plans/2026-10-12-online-booking-restore-implementation.md` (10 tasks). Proposed decisions D4–D8 there need the user's OK before Task 1 of that plan starts.
+- Next: the user picks subagent-driven or inline execution; start at the plan's Task 1.
+- Prod schema dump (D3) not taken yet; the plan's Task 9 asks the user for it.
+- Verified while planning: `pricing_snapshot.unit_breakdown[i]` holds `guests`, `extra_person_fees`, `total` per cabin (`multi-unit.ts:281-296`); `booking_units` triggers recompute `total_amount`/`num_guests`; `20261011120000` drops nothing this migration drops; on booking failure the form shows the endpoint's `error` text and the uploaded proof is orphaned.
 - Orphaned `TEMP-…` proofs: deleted by the user 2026-10-12 (`supabase storage rm` returned all 7 in `deleted`). The staff `bookings/…` file remains.
 
 ## Decisions & Deferrals
+
+- **D4–D8 proposed (2026-10-12, awaiting user).** Drop `payment_before_assignment`; single-cabin guest bookings in the queue; guest booking sends Manila days; `guest_booking_unit_requests` keeps only `guests_per_unit`; `create_guest_booking` stores the proof URL and idempotency key. Details and reasons: implementation plan, Decisions & Deferrals. Revisit: when the user answers.
 
 - **D1–D3 accepted as recommended (2026-10-12, user).** Verify inserts a `payments` row for `downpayment_required` (derives `Partial`); Reject writes nothing to the booking, reason in audit; prod schema dump by the user, loaded into a scratch DB, never committed. Revisit: n/a.
 
