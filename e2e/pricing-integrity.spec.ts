@@ -28,6 +28,19 @@ import { PricingConfigPage } from "./pages/PricingConfigPage";
  * 7. Server-side pricing is authoritative
  */
 test.describe("Pricing Integrity", () => {
+  let baseRateToRestore: number | null = null;
+
+  test.afterEach(async ({ page }) => {
+    if (baseRateToRestore === null) return;
+    const originalBaseRate = baseRateToRestore;
+    baseRateToRestore = null;
+
+    const pricingPage = new PricingConfigPage(page);
+    await pricingPage.goto();
+    await pricingPage.setBaseRate(originalBaseRate);
+    await pricingPage.saveChanges();
+  });
+
   test.describe("1. Existing Bookings Unaffected by Rate Changes", () => {
     test.beforeEach(async ({ page }) => {
       await loginAsAdmin(page);
@@ -65,6 +78,7 @@ test.describe("Pricing Integrity", () => {
       const detailPage = new BookingDetailPage(page);
       await detailPage.expectPageLoaded();
 
+      const bookingId = new URL(page.url()).pathname.split("/").pop()!;
       const originalPrice = await detailPage.getTotalAmount();
 
       // Now go to pricing config and change a rate
@@ -72,23 +86,19 @@ test.describe("Pricing Integrity", () => {
       await pricingPage.goto();
 
       const originalBaseRate = await pricingPage.getBaseRate();
+      baseRateToRestore = originalBaseRate;
       const newBaseRate = originalBaseRate + 500; // Increase by 500
 
       await pricingPage.setBaseRate(newBaseRate);
       await pricingPage.saveChanges();
 
       // Go back to the same booking and verify price unchanged
-      await detailPage.goto(bookingRef);
+      await detailPage.goto(bookingId);
 
       const priceAfterRateChange = await detailPage.getTotalAmount();
 
       // Price should be the same
       expect(isPriceEqual(priceAfterRateChange, originalPrice)).toBeTruthy();
-
-      // Cleanup: restore original rate
-      await pricingPage.goto();
-      await pricingPage.setBaseRate(originalBaseRate);
-      await pricingPage.saveChanges();
     });
   });
 
@@ -130,6 +140,7 @@ test.describe("Pricing Integrity", () => {
       await pricingPage.goto();
 
       const originalBaseRate = await pricingPage.getBaseRate();
+      baseRateToRestore = originalBaseRate;
       const newBaseRate = originalBaseRate + 1000;
 
       await pricingPage.setBaseRate(newBaseRate);
@@ -148,12 +159,6 @@ test.describe("Pricing Integrity", () => {
       const displayedPrice = await pricePreview.first().textContent();
       // Price should reflect the increased rate
       expect(displayedPrice).toBeDefined();
-
-      // Cleanup: restore original rate
-      await loginAsAdmin(page);
-      await pricingPage.goto();
-      await pricingPage.setBaseRate(originalBaseRate);
-      await pricingPage.saveChanges();
     });
   });
 

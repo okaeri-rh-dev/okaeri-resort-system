@@ -24,6 +24,7 @@ export class BookingsTablePage {
 
   // Table elements
   readonly table: Locator;
+  readonly bookingList: Locator;
   readonly tableRows: Locator;
   readonly tableBodyRows: Locator;
   readonly tableHeaders: Locator;
@@ -48,7 +49,7 @@ export class BookingsTablePage {
     this.page = page;
 
     // Search and filters - BookingFilters component uses FilterPopover
-    this.searchInput = page.getByPlaceholder("Search bookings...");
+    this.searchInput = page.getByPlaceholder(/^search/i);
     // Status filter is a FilterPopover trigger button with text "Status"
     this.statusFilter = page.getByRole("button", { name: "Status" });
     // Date filter is a FilterPopover trigger
@@ -59,6 +60,7 @@ export class BookingsTablePage {
 
     // Table elements
     this.table = page.getByRole("table");
+    this.bookingList = this.table.or(page.getByRole("button", { name: /^View booking / }));
     this.tableRows = page.getByRole("row");
     this.tableBodyRows = page.locator("table tbody tr");
     this.tableHeaders = page.getByRole("columnheader");
@@ -94,20 +96,9 @@ export class BookingsTablePage {
    */
   async waitForPageLoad() {
     await this.page.waitForLoadState("networkidle");
-    // Wait for table or empty state - check each independently to avoid strict mode violation
-    const tableVisible = await this.table.isVisible().catch(() => false);
-    const emptyVisible = await this.emptyState.isVisible().catch(() => false);
-
-    if (tableVisible) {
-      await expect(this.table).toBeVisible({ timeout: TIMEOUTS.navigation });
-    } else if (emptyVisible) {
-      await expect(this.emptyState).toBeVisible({ timeout: TIMEOUTS.navigation });
-    } else {
-      // Wait for either to appear
-      await this.page.waitForSelector('table, :text("No bookings found")', {
-        timeout: TIMEOUTS.navigation,
-      });
-    }
+    await expect(this.bookingList.or(this.emptyState).first()).toBeVisible({
+      timeout: TIMEOUTS.navigation,
+    });
   }
 
   /**
@@ -351,6 +342,13 @@ export class BookingsTablePage {
    */
   async expectTableVisible() {
     await expect(this.table).toBeVisible();
+  }
+
+  /**
+   * Verify bookings are listed as a table (desktop) or cards (mobile)
+   */
+  async expectBookingListVisible() {
+    await expect(this.bookingList.first()).toBeVisible();
   }
 
   /**

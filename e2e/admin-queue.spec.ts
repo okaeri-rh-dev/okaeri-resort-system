@@ -495,17 +495,13 @@ test.describe("Admin Booking Queue", () => {
     test.describe("Mobile Viewport", () => {
       test.beforeEach(async ({ page }) => {
         await page.setViewportSize(VIEWPORTS.mobile);
-        await loginAsAdmin(page);
       });
 
       test("queue page loads on mobile", async ({ page }) => {
         const queuePage = new AdminQueuePage(page);
         await queuePage.goto();
 
-        // Queue or empty state should be visible
-        const queueVisible = await queuePage.queueContainer.isVisible().catch(() => false);
-        const emptyVisible = await queuePage.emptyState.isVisible().catch(() => false);
-        expect(queueVisible || emptyVisible).toBeTruthy();
+        await expect(queuePage.queueContainer.or(queuePage.emptyState).first()).toBeVisible();
       });
 
       test("queue actions are tappable on mobile", async ({ page }) => {
@@ -540,7 +536,6 @@ test.describe("Admin Booking Queue", () => {
     test.describe("Tablet Viewport", () => {
       test.beforeEach(async ({ page }) => {
         await page.setViewportSize(VIEWPORTS.tablet);
-        await loginAsAdmin(page);
       });
 
       test("queue displays properly on tablet", async ({ page }) => {

@@ -67,14 +67,18 @@ async function seed(): Promise<void> {
 
   // Cancelled bookings keep guest_id NULL so update_guest_statistics
   // doesn't run for them (their guest stats would be no-ops anyway).
-  const bookingRows = E2E_BOOKINGS.map((b) => ({
+  const bookingRows = E2E_BOOKINGS.map(({ awaiting_unit_assignment, ...b }) => ({
     ...b,
     guest_id: b.booking_status === "Cancelled" ? null : E2E_GUEST.guest_id,
     guest_name: E2E_GUEST.guest_name,
     contact_number: E2E_GUEST.phone_number,
     email: E2E_GUEST.email,
     is_walk_in: false,
-    is_multi_unit: false,
+    is_multi_unit: Boolean(awaiting_unit_assignment),
+    ...(awaiting_unit_assignment && {
+      is_guest_booking: true,
+      unit_assignment_status: "pending",
+    }),
   }));
 
   const { data: insertedBookings, error: bookingError } = await supabase
@@ -86,8 +90,17 @@ async function seed(): Promise<void> {
     throw new Error(`bookings insert failed: ${bookingError?.message ?? "no rows returned"}`);
   }
 
-  const bookingUnitRows = insertedBookings.map((b) => {
-    const fixture = E2E_BOOKINGS.find((f) => f.booking_reference === b.booking_reference)!;
+  const fixtureFor = (reference: string) =>
+    E2E_BOOKINGS.find((f) => f.booking_reference === reference)!;
+  const queuedBookings = insertedBookings.filter(
+    (b) => fixtureFor(b.booking_reference).awaiting_unit_assignment
+  );
+  const assignedBookings = insertedBookings.filter(
+    (b) => !fixtureFor(b.booking_reference).awaiting_unit_assignment
+  );
+
+  const bookingUnitRows = assignedBookings.map((b) => {
+    const fixture = fixtureFor(b.booking_reference);
     return {
       booking_id: b.booking_id,
       unit_id: E2E_UNIT.unit_id,
@@ -103,6 +116,19 @@ async function seed(): Promise<void> {
   const { error: buError } = await supabase.from("booking_units").insert(bookingUnitRows);
   if (buError) {
     throw new Error(`booking_units insert failed: ${buError.message}`);
+  }
+
+  const unitRequestRows = queuedBookings.map((b) => ({
+    booking_id: b.booking_id,
+    unit_type: E2E_UNIT.unit_type,
+    quantity: 2,
+    guests_per_unit: 2,
+  }));
+  const { error: requestError } = await supabase
+    .from("guest_booking_unit_requests")
+    .insert(unitRequestRows);
+  if (requestError) {
+    throw new Error(`guest_booking_unit_requests insert failed: ${requestError.message}`);
   }
 
   console.log(

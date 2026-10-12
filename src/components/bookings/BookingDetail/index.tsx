@@ -15,6 +15,7 @@ import {
 } from "@/components/entity-detail";
 import { StatusBadge } from "@/components/tables/utils";
 import { Badge } from "@/components/ui/badge";
+import { useUserRole } from "@/hooks";
 import type { Booking } from "@/types";
 
 /**
@@ -50,9 +51,11 @@ interface BookingDetailPageProps {
 export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps) {
   // Data is received via props from the route component
   // No need for useParams() or useLoaderData() here
+  const { canEdit } = useUserRole();
 
   return (
     <DetailPageLayout
+      testId="booking-detail"
       title={`Booking #${booking.booking_reference}`}
       subtitle={`Created ${formatFullDate(booking.created_at || new Date().toISOString())}`}
       breadcrumbs={[
@@ -60,10 +63,9 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
         { label: booking.booking_reference },
       ]}
       status={<StatusBadge status={booking.booking_status || "Pending"} />}
-      editRoute={{
-        to: "/admin/bookings/$bookingId/edit",
-        params: { bookingId },
-      }}
+      editRoute={
+        canEdit ? { to: "/admin/bookings/$bookingId/edit", params: { bookingId } } : undefined
+      }
     >
       {/* 1. Booking Overview Section */}
       <DetailSection title="Booking Overview" icon={<Calendar className="h-5 w-5" />}>

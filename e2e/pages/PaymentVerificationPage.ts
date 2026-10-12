@@ -61,15 +61,11 @@ export class PaymentVerificationPage {
     this.page = page;
 
     // Page container
-    this.container = page.locator(
-      '[data-testid="payment-verification"], [class*="payment-verification"]'
-    );
+    this.container = page.getByTestId("payment-verification");
     this.pageTitle = page.getByRole("heading", { name: /payment|verify/i });
 
     // Booking info
-    this.bookingReference = page.locator(
-      '[data-testid="booking-reference"], [class*="booking-ref"]'
-    );
+    this.bookingReference = this.container.getByText(/^Booking: /);
     this.bookingAmount = page.locator('[data-testid="booking-amount"], [class*="total-amount"]');
     this.guestName = page.locator('[data-testid="guest-name"], [class*="guest-name"]');
     this.paymentMethod = page.locator('[data-testid="payment-method"], [class*="payment-method"]');
@@ -293,7 +289,8 @@ export class PaymentVerificationPage {
    * Get booking reference displayed
    */
   async getBookingReference(): Promise<string> {
-    return (await this.bookingReference.textContent())?.trim() || "";
+    const text = (await this.bookingReference.textContent()) ?? "";
+    return text.replace(/^Booking:\s*/, "").trim();
   }
 
   /**

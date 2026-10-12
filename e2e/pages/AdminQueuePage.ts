@@ -51,10 +51,7 @@ export class AdminQueuePage {
   constructor(page: Page) {
     this.page = page;
 
-    // Queue container - Card with "Pending Bookings Queue" heading
-    this.queueContainer = page.locator("article").filter({
-      has: page.getByRole("heading", { name: /pending.*bookings/i }),
-    });
+    this.queueContainer = page.getByTestId("pending-bookings-queue");
     this.queueHeader = page.getByRole("heading", {
       name: /pending.*bookings.*queue/i,
     });

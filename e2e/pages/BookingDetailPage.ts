@@ -90,7 +90,7 @@ export class BookingDetailPage {
     this.page = page;
 
     // Page container
-    this.container = page.locator('[data-testid="booking-detail"], [class*="booking-detail"]');
+    this.container = page.getByTestId("booking-detail");
     this.pageTitle = page.getByRole("heading", { name: /booking|OKR-/i }).first();
 
     // Booking header info
@@ -234,7 +234,7 @@ export class BookingDetailPage {
    * Get the total amount
    */
   async getTotalAmount(): Promise<number> {
-    const text = await this.totalAmount.textContent();
+    const text = await this.fieldValue("Total Amount").textContent();
     const cleaned = text?.replace(/[^\d.-]/g, "") || "0";
     return parseFloat(cleaned);
   }
@@ -254,14 +254,14 @@ export class BookingDetailPage {
    * Get check-in date
    */
   async getCheckInDate(): Promise<string> {
-    return (await this.checkInDate.textContent())?.trim() || "";
+    return (await this.fieldValue("Check-in Date").textContent())?.trim() || "";
   }
 
   /**
    * Get check-out date
    */
   async getCheckOutDate(): Promise<string> {
-    return (await this.checkOutDate.textContent())?.trim() || "";
+    return (await this.fieldValue("Check-out Date").textContent())?.trim() || "";
   }
 
   /**
@@ -277,13 +277,18 @@ export class BookingDetailPage {
    * Get assigned units list
    */
   async getAssignedUnits(): Promise<string[]> {
-    const unitsText = await this.assignedUnits.textContent();
-    if (!unitsText) return [];
-    // Parse comma-separated or list items
-    return unitsText
-      .split(/[,\n]/)
-      .map((s) => s.trim())
-      .filter(Boolean);
+    return this.fieldValue(/^Cabins?$/)
+      .getByRole("link")
+      .allTextContents();
+  }
+
+  /**
+   * Value element of a DetailField, located by its label
+   */
+  private fieldValue(label: string | RegExp): Locator {
+    return this.container
+      .getByText(label, { exact: true })
+      .locator("xpath=../following-sibling::div[1]");
   }
 
   // ================== Actions ==================
@@ -456,7 +461,7 @@ export class BookingDetailPage {
    * Verify specific unit is assigned
    */
   async expectUnitAssigned(unitName: string): Promise<void> {
-    await expect(this.assignedUnits).toContainText(unitName);
+    await expect(this.fieldValue(/^Cabins?$/)).toContainText(unitName);
   }
 
   /**
