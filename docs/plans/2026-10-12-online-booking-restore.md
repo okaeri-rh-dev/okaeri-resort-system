@@ -39,13 +39,13 @@ One forward migration, `supabase/migrations/20261013000000_online_booking.sql`. 
 
 Out of scope: `cleanup_expired_payment_proofs` (deferred item 3, needs a retention rule), seasonal rates (item 5), the `pricing_config_admin_policy` and `booking_units` insert policy lines in the same baseline group (checked in Task 1; split out if unrelated).
 
-## Decisions needed (before the task plan is written)
+## Decisions (D1–D3 accepted as recommended, user, 2026-10-12)
 
-- **D1. What Verify records.** Recommended: insert one `payments` row (`amount = downpayment_required`, `payment_method = bookings.payment_method`, `proof_url = bookings.payment_proof_url`, `status = 'Active'`). The trigger then derives `Partial`, which matches the 50% downpayment the guest is shown in `PaymentSummary.tsx`. Alternative: the full `total_amount` (derives `Completed`).
-- **D2. What Reject does.** Recommended: no booking write. `payment_status` stays `Pending` and the proof stays, so staff can still see what was rejected. The reason goes into the audit row (`payment.rejected`). Alternative: clear `payment_proof_url` so the guest's status page asks for a new upload. That needs a guest-side re-upload flow, which doesn't exist yet.
-- **D3. Test against a prod schema replica before the push.** Recommended: you run `! supabase db dump --linked --schema public -f <scratchpad>/prod-schema.sql` (agent prod reads are blocked). I load it into a scratch database, apply the migration, and run the DB tests against it. The dump is never committed (public repo).
+- **D1. What Verify records.** Accepted: insert one `payments` row (`amount = downpayment_required`, `payment_method = bookings.payment_method`, `proof_url = bookings.payment_proof_url`, `status = 'Active'`). The trigger then derives `Partial`, which matches the 50% downpayment the guest is shown in `PaymentSummary.tsx`. Alternative: the full `total_amount` (derives `Completed`).
+- **D2. What Reject does.** Accepted: no booking write. `payment_status` stays `Pending` and the proof stays, so staff can still see what was rejected. The reason goes into the audit row (`payment.rejected`). Alternative: clear `payment_proof_url` so the guest's status page asks for a new upload. That needs a guest-side re-upload flow, which doesn't exist yet.
+- **D3. Test against a prod schema replica before the push.** Accepted: you run `! supabase db dump --linked --schema public -f <scratchpad>/prod-schema.sql` (agent prod reads are blocked). I load it into a scratch database, apply the migration, and run the DB tests against it. The dump is never committed (public repo).
 
-## Tasks (outline; full steps written after D1–D3)
+## Tasks (outline; next step: expand into full TDD steps with superpowers:writing-plans)
 
 - [ ] 1. Investigation: confirm the remaining baseline lines in the group (`pricing_config_admin_policy`, `authenticated_users_insert_booking_units`) and decide whether they belong here.
 - [ ] 2. DB tests first (`src/__tests__/database/`): guest booking creates booking + unit requests; `anon` cannot execute either function; assign fails before verify, succeeds after, writes `booking_units` + availability; a conflicting unit fails; a wrong unit count fails.
@@ -57,6 +57,8 @@ Out of scope: `cleanup_expired_payment_proofs` (deferred item 3, needs a retenti
 - [ ] 7. User: `supabase db push`; prod-drift check; one real test booking on prod (user).
 
 ## Decisions & Deferrals
+
+- **D1–D3 accepted as recommended (2026-10-12, user).** Verify inserts a `payments` row for `downpayment_required` (derives `Partial`); Reject writes nothing to the booking, reason in audit; prod schema dump by the user, loaded into a scratch DB, never committed. Revisit: n/a.
 
 - **Orphaned proofs left in storage (2026-10-12).** Why: they may be the only record of a guest's payment; deletion waits for the user's review and the cleanup cron (guardrails deferred item 3). Revisit: after the user checks the 7 images.
 
