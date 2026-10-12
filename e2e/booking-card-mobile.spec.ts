@@ -53,7 +53,7 @@ test.describe("Mobile booking card", () => {
     await expect(card.getByRole("button", { name: /^Confirm$/ })).toHaveCount(0);
   });
 
-  test("⋯ menu shows owner-only Delete + full action set on Confirmed", async ({ page }) => {
+  test("⋯ menu shows the full action set on Confirmed, with no Delete", async ({ page }) => {
     const card = cardFor(page, E2E_REF.CONFIRMED);
     // ⋯ trigger is an unlabeled icon button inside the card header.
     await card.locator("button:has(svg.lucide-ellipsis)").click();
@@ -61,8 +61,8 @@ test.describe("Mobile booking card", () => {
     await expect(menu.getByRole("menuitem", { name: "Edit Booking" })).toBeVisible();
     await expect(menu.getByRole("menuitem", { name: "Upload Payment" })).toBeVisible();
     await expect(menu.getByRole("menuitem", { name: "Cancel" })).toBeVisible();
-    // Owner-only:
-    await expect(menu.getByRole("menuitem", { name: "Delete" })).toBeVisible();
+    // Bookings are cancelled, never deleted, even by an owner.
+    await expect(menu.getByRole("menuitem", { name: "Delete" })).toHaveCount(0);
     // Confirmed booking → no Confirm menu item
     await expect(menu.getByRole("menuitem", { name: "Confirm" })).toHaveCount(0);
   });
