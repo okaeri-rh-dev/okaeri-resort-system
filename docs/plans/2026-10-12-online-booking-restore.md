@@ -48,22 +48,20 @@ Out of scope: `cleanup_expired_payment_proofs` (deferred item 3, needs a retenti
 ## Tasks (outline; full TDD steps in `docs/plans/2026-10-12-online-booking-restore-implementation.md`, whose checkboxes track execution)
 
 - [x] 1. Investigation: confirm the remaining baseline lines in the group (`pricing_config_admin_policy`, `authenticated_users_insert_booking_units`) and decide whether they belong here. Done 2026-10-12: the `booking_units` insert policy is dropped in this migration; the `pricing_config` policy is unrelated and split out (implementation plan, Decisions).
-- [ ] 2. DB tests first (`src/__tests__/database/`): guest booking creates booking + unit requests; `anon` cannot execute either function; assign fails before verify, succeeds after, writes `booking_units` + availability; a conflicting unit fails; a wrong unit count fails.
-- [ ] 3. Migration + rollback; `npm run gen:types`; DB tests pass.
-- [ ] 4. `verify-payment.ts` per D1/D2, with unit tests; narrow `payment_status` in `database.types.ts`.
-- [ ] 4b. Booking-failure path: when `create_guest_booking` fails after the proof upload, the guest sees a clear "nothing was booked" message (check what `multi-unit.ts` and the form show today).
-- [ ] 5. E2E: extend the verify-payment tests to click Verify and assert `Partial`, then assign units.
+- [x] 2. DB tests first (`src/__tests__/database/`): guest booking creates booking + unit requests; `anon` cannot execute either function; assign fails before verify, succeeds after, writes `booking_units` + availability; a conflicting unit fails; a wrong unit count fails.
+- [x] 3. Migration + rollback; `npm run gen:types`; DB tests pass.
+- [x] 4. `verify-payment.ts` per D1/D2, with unit tests; narrow `payment_status` in `database.types.ts`.
+- [x] 4b. Booking-failure path: when `create_guest_booking` fails after the proof upload, the guest sees a clear "nothing was booked" message (check what `multi-unit.ts` and the form show today).
+- [x] 5. E2E: extend the verify-payment tests to click Verify and assert `Partial`, then assign units.
 - [ ] 6. Replica check (D3); drift baseline lines removed; `npm run verify`; PR.
 - [ ] 7. User: `supabase db push`; prod-drift check; one real test booking on prod (user).
 
-## Resume state (2026-10-12, implementation plan written)
+## Resume state (2026-10-13, implementation done, PR next)
 
-- Branch `fix/restore-guest-booking-schema` (off main `8532694`): docs-only commits, not pushed, no upstream. No migration, test or code written yet.
-- Implementation plan: `docs/plans/2026-10-12-online-booking-restore-implementation.md` (10 tasks). Decisions D4–D8 accepted (user, 2026-10-12).
-- Next: a fresh session runs the plan with superpowers:subagent-driven-development, from its Task 1.
-- Prod schema dump (D3) not taken yet; the plan's Task 9 asks the user for it.
-- Verified while planning: `pricing_snapshot.unit_breakdown[i]` holds `guests`, `extra_person_fees`, `total` per cabin (`multi-unit.ts:281-296`); `booking_units` triggers recompute `total_amount`/`num_guests`; `20261011120000` drops nothing this migration drops; on booking failure the form shows the endpoint's `error` text and the uploaded proof is orphaned.
-- Orphaned `TEMP-…` proofs: deleted by the user 2026-10-12 (`supabase storage rm` returned all 7 in `deleted`). The staff `bookings/…` file remains.
+- Branch `fix/restore-guest-booking-schema` (off main `8532694`): implementation plan Tasks 1–8 done and reviewed; final whole-branch review fixes in `47c8f44` (`bookings.pricing_snapshot`, absent on prod), `318c5c9`, `3367702`.
+- Replica check (D3) passed 2026-10-13: prod dump loaded (only errors: 3 `auth.users` FKs), `is_staff_or_above` present, migration applied twice (both `COMMIT`), create → payment → assign gave `Confirmed | Partial | assigned | 7000.00`. Replica dropped, dump deleted.
+- `npm run verify` 1460 passed / 20 skipped; `npm run test:db` 116 passed.
+- Next: task 6 PR (implementation plan Task 9 Step 6), then task 7 (user, implementation plan Task 10).
 
 ## Decisions & Deferrals
 

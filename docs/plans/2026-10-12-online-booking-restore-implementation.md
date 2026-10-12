@@ -30,6 +30,11 @@ Scope, problem table and accepted decisions D1–D3 live in the tracking doc `do
 - **D8. `create_guest_booking` stores `payment_proof_url` and the idempotency key.** Why: the endpoint never passed the proof URL (so D1's `proof_url` would be empty) and never wrote `idempotency_keys` (so its duplicate check never matched). Revisit: n/a.
 - **Assignment indexes dropped, not kept (design item 1).** Why: the queue scans a few dozen guest bookings; three partial indexes on `bookings` cost more to keep in sync with drift than they save. Revisit: if the queue gets slow.
 - **Task 1 of the outline (investigation), done 2026-10-12.** `authenticated_users_insert_booking_units` (from `20251028154441`) lets any signed-in user insert `booking_units` for any booking: dropped in this migration. `pricing_config_admin_policy` (from `20251108000000`) is unrelated: pricing writes go through `createSupabaseAdmin` (`functions/api/pricing/update-config.ts:89`), so its absence on prod breaks nothing; its baseline line moves to its own group in Task 9. Revisit: n/a.
+- **Plan test arithmetic corrected during execution (2026-10-12).** Guests `[2, 4]` price to 7000 + 9000 = 16000 (downpayment 8000), not 15000/7500; Task 2's second cabin is `extra_person_charge` 2000 / `subtotal` 9000. Task 1 also dropped `unit_type`/`quantity` from `constraints.test.ts` inserts and regenerated `database.generated.ts`. Revisit: n/a.
+- **Review-driven changes (2026-10-12, user).** D4 and repeat-assignment tests now assert the first assignment succeeded (`93e3395`). The rollback keeps guest bookings instead of deleting them; its header says so and asks for a manual export/cancel first (`863640f`), so a rollback never silently deletes real reservations. Task 4's lint step still reports the unused `p_turnstile_token`/`p_guest_data` parameters, which are kept for the caller's signature. Revisit: n/a.
+- **Final review: `bookings.pricing_snapshot` added to the migration (2026-10-12).** Why: it comes from drifted `20251104184719` and is absent on prod (baseline listed it under "Seasonal pricing"), so both functions would fail with `42703` after a clean push. Revisit: n/a.
+- **Deferred: cabin ↔ guest-group pairing (2026-10-12, user).** `assign_units_to_booking` pairs `p_unit_ids[i]` with `unit_breakdown[i]`, and the UI sends cabins in click order, so for mixed groups (e.g. 6 + 2) per-cabin `assigned_guests`/price can land on the wrong cabin; there is no capacity check. Totals stay right. Revisit: when a guest books cabins with different group sizes, or a cabin is over capacity (Task 10's prod test uses 2 cabins of different sizes).
+- **Deferred: concurrent double-verify (2026-10-12, user).** Two staff verifying the same booking at once in different browsers both insert the downpayment (derives `Completed`). Buttons are disabled per browser; one-family team. Fix if needed: atomic verify RPC (`FOR UPDATE`, insert only while `Pending`). Revisit: when more than one person verifies payments.
 - **Deferred: `cleanup_expired_payment_proofs`** stays in the baseline (deferred-list item 3). **Deferred: `preview-pricing.ts`** has no caller; left as is.
 
 ## File Structure
@@ -70,7 +75,7 @@ Scope, problem table and accepted decisions D1–D3 live in the tracking doc `do
 - Produces: `public.create_guest_booking(p_turnstile_token TEXT, p_booking_data JSONB, p_unit_requests JSONB, p_guest_data JSONB DEFAULT NULL) RETURNS JSONB` → `{"success": true, "booking": {"booking_id": uuid, "booking_reference": text}}`. `p_booking_data` keys: `booking_reference, guest_name, email, phone_number, check_in, check_out (ISO instants), special_requests, total_amount, downpayment_required, discount_percent, discount_amount, pricing_snapshot ({total, downpayment_required, unit_breakdown: [{guests, extra_person_fees, total, …}]}), payment_proof_url, idempotency_key (uuid)`. `p_unit_requests`: `[{guests_per_unit}]`.
 - Produces (test helpers, reused in Task 2): `guestBookingArgs(guests: number[])`, `createGuestBooking(guests: number[]): Promise<string>` in `online-booking.test.ts`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/__tests__/database/online-booking.test.ts`:
 
@@ -233,12 +238,12 @@ describe("create_guest_booking", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `npx vitest run src/__tests__/database/online-booking.test.ts`
 Expected: FAIL. "stores a pending guest booking" fails on `requested_unit_count` (null) / missing unit requests; "records the idempotency key" fails (no row); "refuses an empty cabin list" fails on the message (`At least one unit request is required`); "refuses to run for the anon key" fails (anon can execute today). "hides cabin requests" may pass already (no rows written).
 
-- [ ] **Step 3: Write the migration (part 1)**
+- [x] **Step 3: Write the migration (part 1)**
 
 Create `supabase/migrations/20261013000000_online_booking.sql`:
 
@@ -387,7 +392,7 @@ COMMIT;
 
 `CREATE OR REPLACE` resets every property it does not state (Postgres keeps only owner and grants), so the local function loses `SECURITY DEFINER` here. The Worker calls it with the service role, which bypasses RLS, so it does not need definer rights.
 
-- [ ] **Step 4: Remove the audit allowlist entry**
+- [x] **Step 4: Remove the audit allowlist entry**
 
 In `src/__tests__/database/audit-trigger-coverage.test.ts`, delete these two lines from `UNAUDITED_TABLES`:
 
@@ -396,7 +401,7 @@ In `src/__tests__/database/audit-trigger-coverage.test.ts`, delete these two lin
     "online booking flow, absent in prod and deferred (plan 2026-10-03, Decisions & Deferrals)",
 ```
 
-- [ ] **Step 5: Apply the migration and run the tests**
+- [x] **Step 5: Apply the migration and run the tests**
 
 Run:
 
@@ -408,7 +413,7 @@ npx vitest run src/__tests__/database/online-booking.test.ts src/__tests__/datab
 
 Expected: both `psql` runs end with `COMMIT` (the second proves idempotency); all tests PASS. If `ALTER TABLE … ADD CONSTRAINT bookings_unit_assignment_status_check` fails, list offending rows with `select booking_id, unit_assignment_status from bookings where unit_assignment_status not in ('pending','assigned')` and stop: report them, do not delete data.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add supabase/migrations/20261013000000_online_booking.sql src/__tests__/database/online-booking.test.ts src/__tests__/database/audit-trigger-coverage.test.ts
@@ -431,7 +436,7 @@ git commit -m "feat(db): store full guest bookings in create_guest_booking"
 - Consumes: `createGuestBooking(guests)` from Task 1's test file.
 - Produces: `public.assign_units_to_booking(p_booking_id UUID, p_unit_ids UUID[]) RETURNS VOID`. Error messages (matched by `parseRpcError`): `Booking <id> not found or not in pending state`, `Payment must be verified before unit assignment (payment status: <status>)`, `Must assign exactly <n> cabins, got <m>`; a taken cabin raises SQLSTATE `23P01` (`conflicting key value violates exclusion constraint …`).
 
-- [ ] **Step 1: Write the failing DB tests**
+- [x] **Step 1: Write the failing DB tests**
 
 Add `createTestBooking, createTestUnit` to the `../setup/test-db` import in `online-booking.test.ts`, then append:
 
@@ -615,7 +620,7 @@ describe("assign_units_to_booking", () => {
 });
 ```
 
-- [ ] **Step 2: Write the failing endpoint test**
+- [x] **Step 2: Write the failing endpoint test**
 
 Append to `src/__tests__/api/admin-assign-units.test.ts`, inside the existing `describe`:
 
@@ -632,12 +637,12 @@ it("maps a wrong cabin count to 400", async () => {
 });
 ```
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run: `npx vitest run src/__tests__/database/online-booking.test.ts src/__tests__/api/admin-assign-units.test.ts`
 Expected: FAIL. The old function reads `bookings.check_in_date` (`column "check_in_date" does not exist` inside `Assignment failed: …`), anon can still execute it, and the endpoint maps the count error to 500.
 
-- [ ] **Step 4: Write the migration (part 2)**
+- [x] **Step 4: Write the migration (part 2)**
 
 In `20261013000000_online_booking.sql`, insert before `COMMIT;`:
 
@@ -712,7 +717,7 @@ GRANT EXECUTE ON FUNCTION public.assign_units_to_booking(UUID, UUID[]) TO servic
 
 `CREATE OR REPLACE` drops the local function's old `SET statement_timeout TO '5s'` (unstated properties reset); Step 6 checks that.
 
-- [ ] **Step 5: Map the count error in the endpoint**
+- [x] **Step 5: Map the count error in the endpoint**
 
 In `functions/api/admin/assign-units.ts`, inside `parseRpcError`, add after the `"Payment must be verified"` branch:
 
@@ -726,7 +731,7 @@ if (errorMessage.includes("Must assign exactly")) {
 }
 ```
 
-- [ ] **Step 6: Apply and run the tests**
+- [x] **Step 6: Apply and run the tests**
 
 Run:
 
@@ -737,7 +742,7 @@ npx vitest run src/__tests__/database/online-booking.test.ts src/__tests__/api/a
 
 Expected: `COMMIT`; all tests PASS. Check `psql … -XAt -c "select proconfig from pg_proc where proname='assign_units_to_booking'"` prints `{search_path=""}` only.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add supabase/migrations/20261013000000_online_booking.sql src/__tests__/database/online-booking.test.ts functions/api/admin/assign-units.ts src/__tests__/api/admin-assign-units.test.ts
@@ -759,7 +764,7 @@ git commit -m "feat(db): assign guest booking cabins with availability rows"
 - Consumes: `toStayInstants(checkInDay, checkOutDay)` and `manilaDayOf(instant)` from `@/lib/bookings/stay`.
 - Produces: `GET /api/admin/available-units?check_in_date=YYYY-MM-DD&check_out_date=YYYY-MM-DD` (Manila days, unchanged contract) excludes cabins with a `Confirmed`/`CheckedIn` availability row overlapping the stay.
 
-- [ ] **Step 1: Rewrite the test's booked-rows fake**
+- [x] **Step 1: Rewrite the test's booked-rows fake**
 
 In `src/__tests__/api/admin-available-units.test.ts`, replace the block from `type BookedRow` through the end of `bookingUnitsQuery` and the `fakeSupabase` definition with:
 
@@ -832,12 +837,12 @@ it("compares against the stay at 14:00 / 12:00 Manila", async () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx vitest run src/__tests__/api/admin-available-units.test.ts`
 Expected: FAIL with `unexpected table booking_units`.
 
-- [ ] **Step 3: Query availability rows**
+- [x] **Step 3: Query availability rows**
 
 In `functions/api/admin/available-units.ts`, add the import `import { toStayInstants } from "@/lib/bookings/stay";` with the other imports, and replace the `bookedUnits` query (the comment above it included) with:
 
@@ -852,7 +857,7 @@ const { data: bookedUnits, error: bookingsError } = await supabase
   .gt("check_out", stay.check_in);
 ```
 
-- [ ] **Step 4: Pass Manila days from the assign page**
+- [x] **Step 4: Pass Manila days from the assign page**
 
 In `src/routes/admin/bookings/$bookingId.assign-units.tsx`, add `import { manilaDayOf } from "@/lib/bookings";` and change the `UnitAssignmentInterface` props:
 
@@ -861,12 +866,12 @@ In `src/routes/admin/bookings/$bookingId.assign-units.tsx`, add `import { manila
         checkOutDate={manilaDayOf(booking.check_out)}
 ```
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 Run: `npx vitest run src/__tests__/api/admin-available-units.test.ts && npm run type-check`
 Expected: PASS; type-check exits 0.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add functions/api/admin/available-units.ts src/__tests__/api/admin-available-units.test.ts 'src/routes/admin/bookings/$bookingId.assign-units.tsx'
@@ -887,12 +892,12 @@ git commit -m "fix(admin): read cabin conflicts from booking_unit_availability"
 
 - Produces: `booking_units` without `check_in_date`, `check_out_date`, `status`; no `calculate_booking_pricing`, `check_units_available_for_booking`, `create_guest_booking(jsonb,jsonb,jsonb,uuid)`, `authenticated_users_insert_booking_units`.
 
-- [ ] **Step 1: Confirm nothing else reads the dropped columns**
+- [x] **Step 1: Confirm nothing else reads the dropped columns**
 
 Run: `grep -rn "check_in_date\|check_out_date" functions src --include='*.ts' --include='*.tsx' | grep -v database.generated | grep -v __tests__`
 Expected: only query-string/prop names (`available-units.ts` params, `UnitAssignmentInterface.tsx`, `PendingBookingsQueue.tsx`, `urgency-scoring.ts`, `usePricingCalculation.ts`, `guest-booking/multi-unit.ts` comments), none selecting `booking_units` columns. If a `.from("booking_units")` query names them, stop and report.
 
-- [ ] **Step 2: Write the migration (part 3)**
+- [x] **Step 2: Write the migration (part 3)**
 
 Insert before `COMMIT;`:
 
@@ -917,7 +922,7 @@ DROP INDEX IF EXISTS public.idx_bookings_assignment_status;
 DROP INDEX IF EXISTS public.idx_bookings_multi_unit;
 ```
 
-- [ ] **Step 3: Write the rollback**
+- [x] **Step 3: Write the rollback**
 
 Create `supabase/rollbacks/20261013000000_rollback_online_booking.sql`:
 
@@ -946,7 +951,7 @@ ALTER TABLE public.bookings
 COMMIT;
 ```
 
-- [ ] **Step 4: Clean apply, regenerate types, run the DB suite**
+- [x] **Step 4: Clean apply, regenerate types, run the DB suite**
 
 Run:
 
@@ -959,12 +964,12 @@ npm run type-check
 
 Expected: `db reset` finishes with `Finished supabase db reset`; `test:db` all PASS (paste the summary line); type-check exits 0. `git diff --stat src/types/database.generated.ts` shows the changed tables/functions only. If type-check fails on a dropped column, fix the caller in this task.
 
-- [ ] **Step 5: Lint the schema**
+- [x] **Step 5: Lint the schema**
 
 Run: `supabase db lint --local --schema public -o json | grep -E 'create_guest_booking|assign_units_to_booking|calculate_booking_pricing|check_units_available' || echo "no lint findings for these functions"`
 Expected: the second command prints `no lint findings for these functions`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add supabase/migrations/20261013000000_online_booking.sql supabase/rollbacks/20261013000000_rollback_online_booking.sql src/types/database.generated.ts
@@ -988,7 +993,7 @@ git commit -m "feat(db): drop unfinished online booking objects"
 - Consumes: `create_guest_booking` `p_booking_data` keys (Task 1); `toStayInstants`, `isManilaDay`, `manilaDayOf`, `pickedDay` from `@/lib/bookings/stay`.
 - Produces: `toGuestBookingData(input: GuestBookingDataInput): Json`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/__tests__/api/guest-booking-data.test.ts`:
 
@@ -1075,12 +1080,12 @@ describe("multiUnitBookingSchema stay days", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx vitest run src/__tests__/api/guest-booking-data.test.ts`
 Expected: FAIL with `Failed to resolve import "../../../functions/lib/guest-booking-data"`.
 
-- [ ] **Step 3: Write the builder**
+- [x] **Step 3: Write the builder**
 
 Create `functions/lib/guest-booking-data.ts`:
 
@@ -1129,7 +1134,7 @@ export function toGuestBookingData(input: GuestBookingDataInput): Json {
 }
 ```
 
-- [ ] **Step 4: Take Manila days in the server schema**
+- [x] **Step 4: Take Manila days in the server schema**
 
 In `src/types/guest-booking-multi-unit.ts`, add `import { isManilaDay, manilaDayOf } from "@/lib/bookings/stay";` and replace the `check_in` / `check_out` fields and the trailing `.refine` with:
 
@@ -1148,7 +1153,7 @@ In `src/types/guest-booking-multi-unit.ts`, add `import { isManilaDay, manilaDay
   });
 ```
 
-- [ ] **Step 5: Use the days and the builder in the endpoint**
+- [x] **Step 5: Use the days and the builder in the endpoint**
 
 In `functions/api/guest-booking/multi-unit.ts`:
 
@@ -1177,7 +1182,7 @@ In `functions/api/guest-booking/multi-unit.ts`:
    ```
 4. Change the default failure copy (4b) from `"Booking creation failed. Please try again."` to `"Your booking was not saved. Nothing was charged; please try again."`, and in the outer `catch` change `"Booking creation failed. Please try again later."` to `"Your booking was not saved. Please try again later."`.
 
-- [ ] **Step 6: Send Manila days from the form**
+- [x] **Step 6: Send Manila days from the form**
 
 In `src/components/guest-booking/MultiUnitGuestBookingForm.tsx`, add `import { pickedDay } from "@/lib/bookings/stay";` and in the `payload`:
 
@@ -1186,12 +1191,12 @@ In `src/components/guest-booking/MultiUnitGuestBookingForm.tsx`, add `import { p
         check_out: pickedDay(data.check_out),
 ```
 
-- [ ] **Step 7: Run the tests and checks**
+- [x] **Step 7: Run the tests and checks**
 
 Run: `npx vitest run src/__tests__/api/guest-booking-data.test.ts src/components/guest-booking && npm run type-check && npm run lint`
 Expected: PASS; type-check and lint exit 0.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add functions/lib/guest-booking-data.ts src/__tests__/api/guest-booking-data.test.ts src/types/guest-booking-multi-unit.ts functions/api/guest-booking/multi-unit.ts src/components/guest-booking/MultiUnitGuestBookingForm.tsx
@@ -1214,7 +1219,7 @@ git commit -m "fix(guest-booking): send Manila days, proof and idempotency key"
 - Produces: `PAYMENT_STATUSES`, `type PaymentStatus` exported from `src/types/booking-status.ts` and re-exported from `@/types`. `bookings.payment_status` typed `PaymentStatus`.
 - Produces: `POST /api/admin/verify-payment` → 200 `{ success, message, payment_status: PaymentStatus, audit_logged }`; 409 when not `Pending` or when `downpayment_required` is null.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/__tests__/architecture/payment-status-parity.test.ts`:
 
@@ -1379,12 +1384,12 @@ describe("POST /api/admin/verify-payment", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `npx vitest run src/__tests__/architecture/payment-status-parity.test.ts src/__tests__/api/admin-verify-payment.test.ts`
 Expected: FAIL. Parity: `PAYMENT_STATUSES` is undefined. Verify: `updates` equals `["bookings"]` and no payment insert.
 
-- [ ] **Step 3: Add `PAYMENT_STATUSES` and narrow the column**
+- [x] **Step 3: Add `PAYMENT_STATUSES` and narrow the column**
 
 Append to `src/types/booking-status.ts`:
 
@@ -1404,7 +1409,7 @@ bookings: {
 }
 ```
 
-- [ ] **Step 4: Rewrite the verify/reject write**
+- [x] **Step 4: Rewrite the verify/reject write**
 
 In `functions/api/admin/verify-payment.ts`:
 
@@ -1464,12 +1469,12 @@ if (body.action === "verify") {
 
 3. Change the import line to `import type { TablesInsert } from "@/types/database.types";` (`TablesUpdate` is no longer used).
 
-- [ ] **Step 5: Run the tests and checks**
+- [x] **Step 5: Run the tests and checks**
 
 Run: `npx vitest run src/__tests__/architecture/payment-status-parity.test.ts src/__tests__/api/admin-verify-payment.test.ts && npm run type-check`
 Expected: PASS. If type-check now fails elsewhere because `payment_status` is narrowed, each error is a place that compares or writes a value the CHECK rejects: fix it in this task if it is one of the admin files in Task 7's list (move that change here), otherwise stop and report the list.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/types/booking-status.ts src/types/index.ts src/types/database.types.ts src/__tests__/architecture/payment-status-parity.test.ts functions/api/admin/verify-payment.ts src/__tests__/api/admin-verify-payment.test.ts
@@ -1495,7 +1500,7 @@ git commit -m "fix(admin): verify records the downpayment instead of writing pay
 - Consumes: `PaymentStatus` from `@/types` (Task 6).
 - Produces: `isPaymentReceived(status: PaymentStatus): boolean`; `PaymentProofViewer` prop `onStatusChange?: (action: "verify" | "reject") => void`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/lib/bookings/__tests__/payment.test.ts`:
 
@@ -1516,12 +1521,12 @@ describe("isPaymentReceived", () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx vitest run src/lib/bookings/__tests__/payment.test.ts`
 Expected: FAIL with `Failed to resolve import "../payment"`.
 
-- [ ] **Step 3: Write the helper**
+- [x] **Step 3: Write the helper**
 
 Create `src/lib/bookings/payment.ts`:
 
@@ -1535,11 +1540,11 @@ export const isPaymentReceived = (status: PaymentStatus) =>
 
 Add `export * from "./payment";` to `src/lib/bookings/index.ts`.
 
-- [ ] **Step 4: Include single-cabin guest bookings in the queue (D5)**
+- [x] **Step 4: Include single-cabin guest bookings in the queue (D5)**
 
 In `functions/api/admin/pending-bookings.ts`, delete the line `.eq("is_multi_unit", true)`.
 
-- [ ] **Step 5: Update the queue**
+- [x] **Step 5: Update the queue**
 
 In `src/components/admin/PendingBookingsQueue.tsx`:
 
@@ -1556,7 +1561,7 @@ In `src/components/admin/PendingBookingsQueue.tsx`:
   ```
 - In the action button, replace each `booking.payment_status === "Verified"` (three places: `title`, `onClick`, label) with `isPaymentReceived(booking.payment_status)`.
 
-- [ ] **Step 6: Update the proof viewer and verify page**
+- [x] **Step 6: Update the proof viewer and verify page**
 
 In `src/components/admin/PaymentProofViewer.tsx`:
 
@@ -1583,17 +1588,17 @@ In `src/routes/admin/bookings/$bookingId.assign-units.tsx`:
 - Line 45: `payment_status: PaymentStatus;`
 - Replace the guard comment and condition with `if (!isPaymentReceived(booking.payment_status)) {`.
 
-- [ ] **Step 7: Confirm no `Verified`/`Rejected` payment comparisons remain**
+- [x] **Step 7: Confirm no `Verified`/`Rejected` payment comparisons remain**
 
 Run: `grep -rn --include='*.ts' --include='*.tsx' '"Verified"\|"Rejected"' src/components/admin src/routes/admin functions/api/admin`
 Expected: no output.
 
-- [ ] **Step 8: Run tests and checks**
+- [x] **Step 8: Run tests and checks**
 
 Run: `npx vitest run src/lib/bookings src/components/admin && npm run type-check && npm run lint`
 Expected: PASS; exit 0.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/lib/bookings functions/api/admin/pending-bookings.ts src/components/admin/PendingBookingsQueue.tsx src/components/admin/PaymentProofViewer.tsx 'src/routes/admin/verify-payment.$bookingId.tsx' 'src/routes/admin/bookings/$bookingId.assign-units.tsx'
@@ -1612,7 +1617,7 @@ git commit -m "fix(admin): read derived payment status in the online booking scr
 
 - Consumes: `create_guest_booking` (Task 1), the screens from Tasks 3 and 7, `loginAsAdmin` from `e2e/fixtures/auth.ts`.
 
-- [ ] **Step 1: Write the spec**
+- [x] **Step 1: Write the spec**
 
 Create `e2e/online-booking.spec.ts`:
 
@@ -1724,17 +1729,17 @@ test.describe("Online booking: verify then assign", () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx playwright test e2e/online-booking.spec.ts --project=chromium`
 Expected: `1 passed`. If a locator does not match, read the failure screenshot under `test-results/` (Read it, state what it shows) and fix the locator only; the flow must not be weakened into a visibility check.
 
-- [ ] **Step 3: Run the neighbouring specs**
+- [x] **Step 3: Run the neighbouring specs**
 
 Run: `npx playwright test e2e/admin-queue.spec.ts e2e/booking-lifecycle.spec.ts --project=chromium`
 Expected: same pass/skip counts as on `main` (memory: 0 known chromium failures). Report the summary line.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add e2e/online-booking.spec.ts
@@ -1750,7 +1755,7 @@ git commit -m "test(e2e): verify the downpayment and assign a cabin"
 - Modify: `scripts/drift/baseline.txt:66-105`
 - Modify: `docs/plans/2026-10-12-online-booking-restore.md` (task checkboxes, Resume state)
 
-- [ ] **Step 1: Ask the user for the prod schema dump**
+- [x] **Step 1: Ask the user for the prod schema dump**
 
 Ask the user to run (agent prod reads are blocked):
 
@@ -1760,7 +1765,7 @@ Ask the user to run (agent prod reads are blocked):
 
 Wait for it. Confirm the file exists and is non-empty (`wc -l`).
 
-- [ ] **Step 2: Load the dump into a scratch database and apply the migration**
+- [x] **Step 2: Load the dump into a scratch database and apply the migration**
 
 Run (local Postgres from `supabase start`):
 
@@ -1786,7 +1791,7 @@ psql "$DB/prod_replica" -v ON_ERROR_STOP=1 -f supabase/migrations/20261013000000
 
 Expected: both migration runs end with `COMMIT`. Read `replica-load.log`: errors for `auth.users` foreign keys, storage and other Supabase-managed objects are expected. If an error touches `bookings`, `booking_units`, `booking_unit_availability`, `payments`, `guests`, `idempotency_keys` or `units`, add the missing prerequisite to the setup block, drop and recreate `prod_replica`, and reload. If `is_staff_or_above` is missing on prod, stop and tell the user (the new policy depends on it).
 
-- [ ] **Step 3: Exercise the functions on the replica**
+- [x] **Step 3: Exercise the functions on the replica**
 
 Run in `$DB/prod_replica` as one transaction that is rolled back:
 
@@ -1808,7 +1813,7 @@ ROLLBACK;
 
 Expected: last select prints `Confirmed | Partial | assigned | 7000.00`. Then `psql "$DB/postgres" -c "drop database prod_replica"` and `rm <scratchpad>/prod-schema.sql`.
 
-- [ ] **Step 4: Update the drift baseline**
+- [x] **Step 4: Update the drift baseline**
 
 In `scripts/drift/baseline.txt`, delete every line from 68 to 104 except the `cleanup_expired_payment_proofs` line, rewrite the group header (lines 66-67) to:
 
@@ -1827,7 +1832,7 @@ local-only policy pricing_config.pricing_config_admin_policy * roles=authenticat
 
 Keep line 101 (`authenticated_users_insert_booking_units`) deleted: the migration drops it locally. The remaining online-booking objects match after the push; `drift:prod` is run in Task 10 (after the push), when these lines must no longer differ.
 
-- [ ] **Step 5: Full verification**
+- [x] **Step 5: Full verification**
 
 Run: `npm run verify && npm run test:db`
 Expected: both exit 0; paste each summary line. Then check the tracking doc's task boxes for Tasks 1–9 and update its Resume state.
