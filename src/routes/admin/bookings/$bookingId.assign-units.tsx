@@ -22,6 +22,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthToken } from "@/hooks/useAuthToken";
+import { manilaDayOf } from "@/lib/bookings";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { adminBookingDetailQuery } from "@/stores/useBookingStore";
 
@@ -442,8 +443,8 @@ function AssignUnitsPage() {
       {/* Unit Assignment Interface */}
       <UnitAssignmentInterface
         bookingId={bookingId}
-        checkInDate={booking.check_in}
-        checkOutDate={booking.check_out}
+        checkInDate={manilaDayOf(booking.check_in)}
+        checkOutDate={manilaDayOf(booking.check_out)}
         unitRequests={booking.unit_requests || []}
         onAssignmentSuccess={handleAssignmentSuccess}
       />

@@ -1,6 +1,8 @@
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
+import { toStayInstants } from "@/lib/bookings/stay";
+
 import type { Database } from "../../../src/types/database.types";
 import { logAuditEventWorker } from "../../lib/audit-logger-workers";
 
@@ -219,14 +221,14 @@ export async function onRequest(context: {
       });
     }
 
-    // Query overlapping bookings for the date range
-    // Two bookings overlap if: booking_check_in < requested_checkout AND booking_checkout > requested_checkin
+    // A cabin is taken when a Confirmed or CheckedIn stay overlaps [check-in, check-out)
+    const stay = toStayInstants(checkInDate, checkOutDate);
     const { data: bookedUnits, error: bookingsError } = await supabase
-      .from("booking_units")
+      .from("booking_unit_availability")
       .select("unit_id")
-      .in("status", ["confirmed", "checked_in"]) // same occupying statuses as assign_units_to_booking
-      .lt("check_in_date", checkOutDate) // Existing check-in BEFORE requested check-out
-      .gt("check_out_date", checkInDate); // Existing check-out AFTER requested check-in
+      .in("booking_status", ["Confirmed", "CheckedIn"])
+      .lt("check_in", stay.check_out)
+      .gt("check_out", stay.check_in);
 
     if (bookingsError) {
       console.error("[available-units] Error fetching bookings:", bookingsError);
