@@ -97,7 +97,7 @@ function PaymentVerificationPage() {
   }
 
   return (
-    <div className="container mx-auto space-y-6 py-8">
+    <div className="container mx-auto space-y-6 py-8" data-testid="payment-verification">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button

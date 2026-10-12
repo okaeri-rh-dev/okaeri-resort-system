@@ -42,6 +42,8 @@ export interface E2EBookingFixture {
   check_out: string;
   total_amount: number;
   num_guests: number;
+  // Multi-cabin guest booking with no cabins assigned yet; shows in the booking queue
+  awaiting_unit_assignment?: boolean;
 }
 
 // booking_reference is varchar(20); keep all references ≤ 20 chars.
@@ -50,6 +52,7 @@ export const E2E_REF = {
   CONFIRMED: "E2E-CONFIRMED",
   CONF_PAID: "E2E-CONF-PAID",
   CANCELLED: "E2E-CANCELLED",
+  QUEUE: "E2E-QUEUE",
 } as const;
 
 export const E2E_BOOKINGS: E2EBookingFixture[] = [
@@ -88,5 +91,15 @@ export const E2E_BOOKINGS: E2EBookingFixture[] = [
     check_out: "2099-07-06",
     total_amount: 2500,
     num_guests: 1,
+  },
+  {
+    booking_reference: E2E_REF.QUEUE,
+    booking_status: "Pending",
+    payment_status: "Pending",
+    check_in: "2099-07-10",
+    check_out: "2099-07-11",
+    total_amount: 5000,
+    num_guests: 4,
+    awaiting_unit_assignment: true,
   },
 ];

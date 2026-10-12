@@ -30,6 +30,7 @@ export interface DetailPageLayoutProps {
   actions?: React.ReactNode; // Header actions
   editRoute?: { to: RoutePath; params: Record<string, string> };
   className?: string;
+  testId?: string;
 }
 
 /**
@@ -71,9 +72,13 @@ export function DetailPageLayout({
   actions,
   editRoute,
   className,
+  testId,
 }: DetailPageLayoutProps) {
   return (
-    <div className={cn("container mx-auto max-w-[1400px] space-y-6 py-6", className)}>
+    <div
+      className={cn("container mx-auto max-w-[1400px] space-y-6 py-6", className)}
+      data-testid={testId}
+    >
       {/* Breadcrumbs */}
       <nav className="flex items-center space-x-2 text-sm text-neutral-600" aria-label="Breadcrumb">
         {breadcrumbs.map((crumb, index) => (

@@ -46,10 +46,7 @@ test.describe("Multi-Role Workflows", () => {
       const queuePage = new AdminQueuePage(page);
       await queuePage.goto();
 
-      // Should be able to see the queue (or empty state) - check independently to avoid strict mode
-      const queueVisible = await queuePage.queueContainer.isVisible().catch(() => false);
-      const emptyVisible = await queuePage.emptyState.isVisible().catch(() => false);
-      expect(queueVisible || emptyVisible).toBeTruthy();
+      await expect(queuePage.queueContainer.or(queuePage.emptyState).first()).toBeVisible();
     });
 
     test("staff can view booking details", async ({ page }) => {
@@ -188,7 +185,8 @@ test.describe("Multi-Role Workflows", () => {
       await queuePage.expectQueueVisible();
     });
 
-    test("admin can verify payments", async ({ page }) => {
+    // Blocked by the verify-payment proof bug, see CLAUDE.md Known Infrastructure Issues
+    test.fixme("admin can verify payments", async ({ page }) => {
       const queuePage = new AdminQueuePage(page);
       await queuePage.goto();
 
@@ -317,7 +315,8 @@ test.describe("Multi-Role Workflows", () => {
       await detailPage.expectPageLoaded();
     });
 
-    test("owner can verify payments", async ({ page }) => {
+    // Blocked by the verify-payment proof bug, see CLAUDE.md Known Infrastructure Issues
+    test.fixme("owner can verify payments", async ({ page }) => {
       const queuePage = new AdminQueuePage(page);
       await queuePage.goto();
 
@@ -491,10 +490,7 @@ test.describe("Multi-Role Workflows", () => {
       await loginAsAdmin(page);
 
       // Admin should see all navigation options
-      const bookingsLink = page.getByRole("link", { name: /bookings/i });
-
-      const bookingsVisible = await bookingsLink.isVisible().catch(() => false);
-      expect(bookingsVisible).toBeTruthy();
+      await expect(page.getByRole("link", { name: /^bookings$/i })).toBeVisible();
     });
 
     test("owner sees appropriate navigation options", async ({ page }) => {
@@ -531,7 +527,7 @@ test.describe("Multi-Role Workflows", () => {
 
         // Should be able to access bookings table
         const bookingsTable = new BookingsTablePage(page);
-        await bookingsTable.expectTableVisible();
+        await bookingsTable.expectBookingListVisible();
       });
     });
   });

@@ -211,20 +211,14 @@ test.describe("Admin Bookings Management", () => {
       await expect(bookingsTable.newBookingButton).toBeVisible();
     });
 
-    test("clicking new booking opens form or navigates to wizard", async ({ page }) => {
+    test("new booking menu opens single cabin booking form", async ({ page }) => {
       const bookingsTable = new BookingsTablePage(page);
       await bookingsTable.goto();
 
       await bookingsTable.clickNewBooking();
+      await page.getByRole("menuitem", { name: /single cabin booking/i }).click();
 
-      // Should either show modal or navigate to new booking page
-      const hasModal = await page
-        .locator('[role="dialog"]')
-        .isVisible()
-        .catch(() => false);
-      const navigated = page.url().includes("new");
-
-      expect(hasModal || navigated).toBeTruthy();
+      await expect(page.getByRole("dialog")).toBeVisible();
     });
   });
 
@@ -385,18 +379,7 @@ test.describe("Responsive Design", () => {
     const bookingsTable = new BookingsTablePage(page);
     await bookingsTable.goto();
 
-    // Page should still be functional on mobile
-    // May show card layout instead of table - check each independently
-    const tableVisible = await bookingsTable.table.isVisible().catch(() => false);
-    const cardVisible = await page
-      .locator('[class*="card"]')
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const emptyVisible = await bookingsTable.emptyState.isVisible().catch(() => false);
-
-    // At least one layout should be visible
-    expect(tableVisible || cardVisible || emptyVisible).toBeTruthy();
+    await bookingsTable.expectBookingListVisible();
   });
 
   test("search works on mobile", async ({ page }) => {
@@ -405,13 +388,6 @@ test.describe("Responsive Design", () => {
     const bookingsTable = new BookingsTablePage(page);
     await bookingsTable.goto();
 
-    // Search should be accessible (might be in mobile menu)
-    const searchVisible = await bookingsTable.searchInput.isVisible();
-    const hasSearchButton = await page
-      .getByRole("button", { name: /search/i })
-      .isVisible()
-      .catch(() => false);
-
-    expect(searchVisible || hasSearchButton).toBeTruthy();
+    await expect(bookingsTable.searchInput).toBeVisible();
   });
 });

@@ -232,7 +232,7 @@ export function PendingBookingsQueue() {
   // ============================================
 
   return (
-    <Card>
+    <Card data-testid="pending-bookings-queue">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

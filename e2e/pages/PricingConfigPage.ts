@@ -131,10 +131,9 @@ export class PricingConfigPage {
 
     // Loading and feedback
     this.loadingState = page.locator('[data-testid="loading"], [class*="loading"]');
-    this.successMessage = page.locator(
-      '[data-testid="success"], [role="alert"]:has-text("success")'
-    );
-    this.errorMessage = page.locator('[data-testid="error"], [role="alert"]:has-text("error")');
+    const toasts = page.getByRole("region", { name: /notifications/i });
+    this.successMessage = toasts.getByText(/success/i);
+    this.errorMessage = toasts.getByText(/error|failed/i);
 
     // Price preview
     this.pricePreviewSection = page.locator('[data-testid="price-preview"], [class*="preview"]');

@@ -53,6 +53,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
 
   return (
     <DetailPageLayout
+      testId="booking-detail"
       title={`Booking #${booking.booking_reference}`}
       subtitle={`Created ${formatFullDate(booking.created_at || new Date().toISOString())}`}
       breadcrumbs={[
