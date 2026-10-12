@@ -185,7 +185,7 @@ test.describe("Authentication", () => {
       "Test credentials not configured"
     );
 
-    test("user can logout and return to public page", async ({ page }) => {
+    test("user can logout and lands on admin login", async ({ page }) => {
       const loginPage = new LoginPage(page);
       const dashboardPage = new DashboardPage(page);
 
@@ -193,54 +193,9 @@ test.describe("Authentication", () => {
       await loginPage.goto();
       await loginPage.loginAndWaitForDashboard(TEST_USERS.admin.email, TEST_USERS.admin.password);
 
-      // Try multiple logout approaches
-      // 1. Try direct logout button (visible without menu)
-      const directLogoutBtn = page.getByRole("button", { name: /logout|sign out/i });
-      const directLogoutLink = page.getByRole("link", { name: /logout|sign out/i });
+      await dashboardPage.logout();
 
-      const hasDirectButton = await directLogoutBtn.isVisible().catch(() => false);
-      const hasDirectLink = await directLogoutLink.isVisible().catch(() => false);
-
-      if (hasDirectButton) {
-        await directLogoutBtn.click();
-      } else if (hasDirectLink) {
-        await directLogoutLink.click();
-      } else {
-        // 2. Try user menu approach
-        const hasUserMenu = await dashboardPage.userMenu.isVisible().catch(() => false);
-
-        if (hasUserMenu) {
-          try {
-            await dashboardPage.logout();
-          } catch {
-            test.skip(true, "Logout UI pattern not matching test selectors");
-            return;
-          }
-        } else {
-          // 3. Look for avatar/profile button that might reveal logout
-          const avatarBtn = page.locator('button:has(img), [class*="avatar"]').first();
-          const hasAvatar = await avatarBtn.isVisible().catch(() => false);
-
-          if (hasAvatar) {
-            await avatarBtn.click();
-            await page.waitForTimeout(300);
-            const menuLogout = page.getByRole("menuitem", { name: /logout|sign out/i });
-            const hasMenuLogout = await menuLogout.isVisible().catch(() => false);
-            if (hasMenuLogout) {
-              await menuLogout.click();
-            } else {
-              test.skip(true, "Logout UI pattern not matching test selectors");
-              return;
-            }
-          } else {
-            test.skip(true, "Logout UI pattern not matching test selectors");
-            return;
-          }
-        }
-      }
-
-      // Should be redirected to public page or login
-      await expect(page).toHaveURL(/^\/$|\/login/);
+      await expect(page).toHaveURL(/\/admin\/login/);
     });
 
     test("after logout, protected routes redirect to login", async ({ page }) => {
@@ -251,52 +206,7 @@ test.describe("Authentication", () => {
       await loginPage.goto();
       await loginPage.loginAndWaitForDashboard(TEST_USERS.admin.email, TEST_USERS.admin.password);
 
-      // Try multiple logout approaches
-      const directLogoutBtn = page.getByRole("button", { name: /logout|sign out/i });
-      const directLogoutLink = page.getByRole("link", { name: /logout|sign out/i });
-
-      const hasDirectButton = await directLogoutBtn.isVisible().catch(() => false);
-      const hasDirectLink = await directLogoutLink.isVisible().catch(() => false);
-
-      if (hasDirectButton) {
-        await directLogoutBtn.click();
-      } else if (hasDirectLink) {
-        await directLogoutLink.click();
-      } else {
-        const hasUserMenu = await dashboardPage.userMenu.isVisible().catch(() => false);
-
-        if (hasUserMenu) {
-          try {
-            await dashboardPage.logout();
-          } catch {
-            test.skip(true, "Logout UI pattern not matching test selectors");
-            return;
-          }
-        } else {
-          const avatarBtn = page.locator('button:has(img), [class*="avatar"]').first();
-          const hasAvatar = await avatarBtn.isVisible().catch(() => false);
-
-          if (hasAvatar) {
-            await avatarBtn.click();
-            await page.waitForTimeout(300);
-            const menuLogout = page.getByRole("menuitem", { name: /logout|sign out/i });
-            const hasMenuLogout = await menuLogout.isVisible().catch(() => false);
-            if (hasMenuLogout) {
-              await menuLogout.click();
-            } else {
-              test.skip(true, "Logout UI pattern not matching test selectors");
-              return;
-            }
-          } else {
-            test.skip(true, "Logout UI pattern not matching test selectors");
-            return;
-          }
-        }
-      }
-
-      // Wait for logout redirect to complete
-      await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(500);
+      await dashboardPage.logout();
 
       // Try to access protected route
       await page.goto(ROUTES.admin.dashboard);
