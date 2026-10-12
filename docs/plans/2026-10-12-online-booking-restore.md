@@ -62,7 +62,7 @@ Out of scope: `cleanup_expired_payment_proofs` (deferred item 3, needs a retenti
 - Next: expand the task outline into full TDD steps (superpowers:writing-plans), then Task 1 (investigation).
 - Prod schema dump (D3) not taken yet; ask the user to run it when Task 6 is reached, into that session's scratchpad.
 - Not verified: the exact contents of `pricing_snapshot` per unit (needed for `booking_units.unit_price` in Task 3); whether `20261011120000` already drops anything this migration drops; the guest form's behaviour when booking creation fails (Task 4b).
-- Orphaned `TEMP-…` proofs: reviewed by the user, cleared for deletion (user runs it); not verified as deleted.
+- Orphaned `TEMP-…` proofs: deleted by the user 2026-10-12 (`supabase storage rm` returned all 7 in `deleted`). The staff `bookings/…` file remains.
 
 ## Decisions & Deferrals
 
