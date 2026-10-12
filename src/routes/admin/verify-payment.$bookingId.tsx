@@ -26,7 +26,7 @@ interface BookingDetail {
   check_out: string;
   total_amount: number;
   payment_status: "Pending" | "Verified" | "Rejected";
-  payment_proof_path: string | null;
+  payment_proof_url: string | null;
   requested_unit_count: number;
   created_at: string;
 }
@@ -142,7 +142,7 @@ function PaymentVerificationPage() {
       {/* Payment Proof Viewer */}
       <PaymentProofViewer
         bookingId={bookingId}
-        paymentProofPath={booking.payment_proof_path}
+        paymentProofPath={booking.payment_proof_url}
         currentPaymentStatus={booking.payment_status}
         onStatusChange={handleStatusChange}
       />

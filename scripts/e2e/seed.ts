@@ -1,7 +1,20 @@
-import { E2E_BOOKINGS, E2E_GUEST, E2E_REFERENCE_PREFIX, E2E_UNIT, E2E_USER } from "./fixtures";
+import {
+  E2E_BOOKINGS,
+  E2E_GUEST,
+  E2E_PAYMENT_PROOF_BUCKET,
+  E2E_PAYMENT_PROOF_PATHS,
+  E2E_REFERENCE_PREFIX,
+  E2E_UNIT,
+  E2E_USER,
+} from "./fixtures";
 import { getServiceRoleClient } from "./supabase-client";
 
 type Supabase = ReturnType<typeof getServiceRoleClient>;
+
+const ONE_PIXEL_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+  "base64"
+);
 
 async function findUserIdByEmail(supabase: Supabase, email: string): Promise<string | null> {
   const { data, error } = await supabase.auth.admin.listUsers();
@@ -39,6 +52,15 @@ async function clearExistingE2E(supabase: Supabase): Promise<void> {
   }
   await supabase.from("units").delete().eq("unit_id", E2E_UNIT.unit_id);
   await supabase.from("guests").delete().eq("guest_id", E2E_GUEST.guest_id);
+}
+
+async function uploadPaymentProofs(supabase: Supabase): Promise<void> {
+  for (const path of E2E_PAYMENT_PROOF_PATHS) {
+    const { error } = await supabase.storage
+      .from(E2E_PAYMENT_PROOF_BUCKET)
+      .upload(path, ONE_PIXEL_PNG, { upsert: true, contentType: "image/png" });
+    if (error) throw new Error(`payment proof upload (${path}) failed: ${error.message}`);
+  }
 }
 
 async function seed(): Promise<void> {
@@ -131,8 +153,10 @@ async function seed(): Promise<void> {
     throw new Error(`guest_booking_unit_requests insert failed: ${requestError.message}`);
   }
 
+  await uploadPaymentProofs(supabase);
+
   console.log(
-    `✓ Seeded 1 user (${E2E_USER.email}), 1 guest, 1 unit, ${insertedBookings.length} bookings (prefix ${E2E_REFERENCE_PREFIX}*).`
+    `✓ Seeded 1 user (${E2E_USER.email}), 1 guest, 1 unit, ${insertedBookings.length} bookings (prefix ${E2E_REFERENCE_PREFIX}*), ${E2E_PAYMENT_PROOF_PATHS.length} payment proof(s).`
   );
 }
 

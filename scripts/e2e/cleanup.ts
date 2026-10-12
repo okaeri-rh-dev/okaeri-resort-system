@@ -1,4 +1,11 @@
-import { E2E_GUEST_ID, E2E_REFERENCE_PREFIX, E2E_UNIT_ID, E2E_USER } from "./fixtures";
+import {
+  E2E_GUEST_ID,
+  E2E_PAYMENT_PROOF_BUCKET,
+  E2E_PAYMENT_PROOF_PATHS,
+  E2E_REFERENCE_PREFIX,
+  E2E_UNIT_ID,
+  E2E_USER,
+} from "./fixtures";
 import { getServiceRoleClient } from "./supabase-client";
 
 type Supabase = ReturnType<typeof getServiceRoleClient>;
@@ -52,6 +59,12 @@ async function cleanup(): Promise<void> {
     summary.bookings = 0;
     summary.payments = 0;
   }
+
+  const { data: removedProofs, error: proofError } = await supabase.storage
+    .from(E2E_PAYMENT_PROOF_BUCKET)
+    .remove(E2E_PAYMENT_PROOF_PATHS);
+  if (proofError) console.warn(`! payment proof remove: ${proofError.message}`);
+  summary.payment_proofs = removedProofs?.length ?? 0;
 
   // unit (by static id)
   const { count: unitCount } = await supabase

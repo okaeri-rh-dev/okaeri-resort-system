@@ -19,7 +19,7 @@ import { supabase } from "./supabase";
 // ============================================
 
 const SIGNED_URL_EXPIRY_SECONDS = 300; // 5 minutes
-const BUCKET_NAME = "booking-files";
+const BUCKET_NAME = "payment-proofs";
 
 // ============================================
 // Types
@@ -38,12 +38,12 @@ export interface SignedUrlResult {
 /**
  * Generates a signed URL for a private file in Supabase Storage
  *
- * @param filePath - Path to file in storage bucket (e.g., "payment-proofs/TEST-ABC123_1234567890.jpg")
+ * @param filePath - Path to file in storage bucket (e.g., "TEST-ABC123_1234567890.jpg")
  * @param expirySeconds - Optional expiry time in seconds (default: 300 = 5 minutes)
  * @returns Signed URL with expiry timestamp
  *
  * @example
- * const { url, expiresAt, error } = await generateSignedUrl('payment-proofs/TEST-ABC123.jpg', 3600);
+ * const { url, expiresAt, error } = await generateSignedUrl('TEST-ABC123_1234567890.jpg', 3600);
  * if (error) {
  *   console.error('Failed to generate URL:', error);
  * } else {

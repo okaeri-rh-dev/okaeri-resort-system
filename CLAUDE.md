@@ -45,7 +45,6 @@ Rules:
 Current entries:
 
 - **Supabase CLI output parsing** — helper scripts that regex `supabase status` human output break on CLI upgrades (bit household-hub at v2.105.0). Any new script must use `supabase status -o env` (machine-readable) instead. Known-good CLI version at last check: v2.101.0.
-- **Payment proof never shows on `/admin/verify-payment`** — the page reads `booking.payment_proof_path`, but `/api/admin/bookings/[bookingId]` returns `payment_proof_url`; `src/lib/storage-utils.ts` also signs paths in a `booking-files` bucket that doesn't exist (guest uploads go to private `payment-proofs` as a `getPublicUrl` link). Verify/Reject never render. Payment-flow fix pending a decision; 3 E2E tests are `test.fixme` (grep `verify-payment proof bug`) — re-enable them with the fix.
 - **`supabase gen types --local` fails password auth** (CLI v2.109.1: `password authentication failed for user "postgres"`; v2.119.0 exits 1 with no message). Workaround: `npm run gen:types`, which passes `--db-url` from `supabase status -o env`.
 
 ## Important Notes
