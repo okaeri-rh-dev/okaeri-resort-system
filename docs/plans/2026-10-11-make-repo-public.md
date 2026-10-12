@@ -25,7 +25,7 @@ Blockers found 2026-10-11: shared test-account password in docs (owner/admin/sta
 - [x] Fix `audit_logs` forged inserts (guardrails Deferred list #1): migration `20261012000000_audit_logs_block_client_writes.sql` + `audit-logs-write-lockdown.test.ts` (585b7f0); local `test:db` 102/102, `verify` exit 0; pushed to prod 2026-10-12
 - [x] User: confirm prod grants on `audit_logs`/`audit_logs_archive` (2026-10-12: `REFERENCES,SELECT,TRIGGER` for `anon`/`authenticated`; no write privileges)
 - [x] Correct the stale "P0 is only half-closed" line in `docs/whole-app-audit-2026-07-21.md` (8cfd2c1)
-- [ ] User: Settings → Actions → require approval for fork PR workflows from all outside collaborators (only possible once public; still `first_time_contributors` on 2026-10-12)
+- [x] User: Settings → Actions → require approval for fork PR workflows from all outside collaborators (`all_external_contributors`, 2026-10-12)
 - [x] After going public: `Scheduled Cleanup Tasks` idempotency run HTTP 200 (run 38196269890); `infra-health` all jobs green on 0b07ca5 after dropping 4 fixed baseline entries
 - [ ] User: delete the old Cloudflare API token once the first deploy succeeds
 - [ ] User: change passwords of the 3 prod accounts whose hashes were in the old seed
