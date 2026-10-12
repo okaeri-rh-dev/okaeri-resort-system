@@ -111,7 +111,7 @@ function PaymentNotVerifiedGuard({
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-yellow-900">
-            Payment must be verified before assigning units to this booking. Please verify the
+            Payment must be verified before assigning cabins to this booking. Please verify the
             payment proof first.
           </p>
           <div className="flex gap-3">
@@ -436,7 +436,7 @@ function AssignUnitsPage() {
         <CheckCircle2 className="h-4 w-4 text-green-600" />
         <AlertTitle className="text-green-900">Payment Verified</AlertTitle>
         <AlertDescription className="text-green-800">
-          Payment has been verified. You can now proceed with unit assignment.
+          Payment has been verified. You can now proceed with cabin assignment.
         </AlertDescription>
       </Alert>
 

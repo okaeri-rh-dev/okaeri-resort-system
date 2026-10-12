@@ -93,11 +93,11 @@ test.describe("Online booking: verify then assign", () => {
     await expect.poll(() => bookingField("payment_status")).toBe("Partial");
 
     await page
-      .getByRole("button", { name: /^Unit .*, not selected$/ })
+      .getByRole("button", { name: /^Cabin .*, not selected$/ })
       .first()
       .click();
-    await page.getByRole("button", { name: "Assign 1 Unit to Booking" }).click();
-    await page.getByRole("alertdialog").getByRole("button", { name: "Assign Units" }).click();
+    await page.getByRole("button", { name: "Assign 1 Cabin to Booking" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Assign Cabins" }).click();
 
     await expect.poll(() => bookingField("booking_status")).toBe("Confirmed");
     await expect.poll(() => bookingField("unit_assignment_status")).toBe("assigned");

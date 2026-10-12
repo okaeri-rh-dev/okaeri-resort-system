@@ -198,7 +198,7 @@ export function PaymentProofViewer({
         <Alert className="border-green-200 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            Payment verified - Ready for unit assignment
+            Payment verified - Ready for cabin assignment
           </AlertDescription>
         </Alert>
       );
@@ -445,7 +445,7 @@ export function PaymentProofViewer({
             <DialogTitle>Confirm Payment Verification</DialogTitle>
             <DialogDescription>
               Are you sure you want to verify this payment? The booking will be marked as confirmed
-              and ready for unit assignment.
+              and ready for cabin assignment.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
