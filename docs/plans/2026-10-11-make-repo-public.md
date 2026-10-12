@@ -20,17 +20,21 @@ Blockers found 2026-10-11: shared test-account password in docs (owner/admin/sta
 - [x] New repo secrets: the 7 the workflows use; `CRON_SECRET` and the `drift_reader` password rotated, new Cloudflare API token
 - [x] Local checkout moved to `../okaeri-resort-system-archive` (origin repointed to the archive); fresh clone at the original path with local env files copied
 - [ ] User: run the `alter role drift_reader password` SQL on prod (if not done)
-- [ ] User: enable Actions on the new repo; run `Deploy to Cloudflare Pages`; confirm `okaeri-resort.pages.dev` serves the new build and the cron endpoint accepts the new `CRON_SECRET`
+- [x] User: enable Actions on the new repo (2026-10-12; runs still blocked by the private-repo minutes quota until public)
+- [x] Manual deploy of c759e2d (deployment `d3b745da-2d36-406e-8668-7523a98e4a87`; rollback `923ceccb-ebb1-4e17-8c64-1d7f56ea0d10` = 79396f4); live entry `index-BGcGYCc4.js`, `/api/health` 200
+- [ ] Fix `audit_logs` forged inserts (guardrails Deferred list #1) with a migration + DB test; user approves `supabase db push`
+- [ ] Correct the stale "P0 is only half-closed" line in `docs/whole-app-audit-2026-07-21.md`
+- [ ] User: Settings → Actions → require approval for fork PR workflows from all outside collaborators
+- [ ] After going public: confirm `Scheduled Cleanup Tasks` passes (proves the rotated `CRON_SECRET`) and `infra-health` passes (proves the drift password)
 - [ ] User: delete the old Cloudflare API token once the first deploy succeeds
 - [ ] User: change passwords of the 3 prod accounts whose hashes were in the old seed
-- [ ] Move or trim docs that list open security weaknesses (guardrails "Deferred list") before the visibility switch
-- [ ] Settings → Actions: require approval for fork PR workflows from outside contributors
 - [ ] Switch visibility to public; confirm the next push runs `ci.yml` + deploy without billing
 
 ## Decisions & Deferrals
 
 - Rewritten history goes into a fresh repo, not a force-push — the 11 Dependabot PR refs (`refs/pull/*`) still reach the old seed and only GitHub Support can delete them; the fresh repo keeps the name, so remotes and URLs are unchanged.
 - Cloudflare unaffected by the repo swap — Pages project `okaeri-resort` is Direct Upload (Git Provider: No), deploys come from `wrangler pages deploy` with the API token.
+- Fix forged `audit_logs` inserts before going public; don't trim the open-weakness docs — the migrations show the same thing, and the docs are working notes.
 - Only the 7 secrets the workflows reference were re-added — the other 6 (incl. `SUPABASE_SERVICE_ROLE_KEY`, `TURNSTILE_SECRET_KEY`) were unused in Actions.
 - History rewrite waits for parallel sessions to land their work — a force-push under an active session strands its commits.
 - Test accounts deleted on prod, not just re-passworded — nothing uses them there (CI never sets `TEST_*`; `.env.test` targets local).
