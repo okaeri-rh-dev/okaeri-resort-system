@@ -2,7 +2,7 @@
 -- Online booking: a guest requests cabins, staff verify the downpayment, then assign cabins
 -- (docs/plans/2026-10-12-online-booking-restore.md). Idempotent: local has most of these
 -- objects from 20251028154441 / 20251104184719, prod has none of them.
--- 1. bookings: unit_assignment_status, requested_unit_count, downpayment_required, discount_percent.
+-- 1. bookings: unit_assignment_status, requested_unit_count, downpayment_required, discount_percent, pricing_snapshot.
 -- 2. guest_booking_unit_requests: one row per requested cabin, staff-readable, audited.
 -- 3. create_guest_booking: stores the requests, pricing, proof and idempotency key;
 --    executable by service_role only (the Worker).
@@ -16,7 +16,8 @@ ALTER TABLE public.bookings
     ADD COLUMN IF NOT EXISTS unit_assignment_status VARCHAR(20),
     ADD COLUMN IF NOT EXISTS requested_unit_count INTEGER,
     ADD COLUMN IF NOT EXISTS downpayment_required NUMERIC(10,2),
-    ADD COLUMN IF NOT EXISTS discount_percent NUMERIC(5,2);
+    ADD COLUMN IF NOT EXISTS discount_percent NUMERIC(5,2),
+    ADD COLUMN IF NOT EXISTS pricing_snapshot JSONB;
 
 ALTER TABLE public.bookings
     ALTER COLUMN unit_assignment_status DROP DEFAULT,
