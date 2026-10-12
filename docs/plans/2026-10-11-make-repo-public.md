@@ -22,8 +22,9 @@ Blockers found 2026-10-11: shared test-account password in docs (owner/admin/sta
 - [ ] User: run the `alter role drift_reader password` SQL on prod (if not done)
 - [x] User: enable Actions on the new repo (2026-10-12; runs still blocked by the private-repo minutes quota until public)
 - [x] Manual deploy of c759e2d (deployment `d3b745da-2d36-406e-8668-7523a98e4a87`; rollback `923ceccb-ebb1-4e17-8c64-1d7f56ea0d10` = 79396f4); live entry `index-BGcGYCc4.js`, `/api/health` 200
-- [ ] Fix `audit_logs` forged inserts (guardrails Deferred list #1) with a migration + DB test; user approves `supabase db push`
-- [ ] Correct the stale "P0 is only half-closed" line in `docs/whole-app-audit-2026-07-21.md`
+- [x] Fix `audit_logs` forged inserts (guardrails Deferred list #1): migration `20261012000000_audit_logs_block_client_writes.sql` + `audit-logs-write-lockdown.test.ts` (585b7f0); local `test:db` 102/102, `verify` exit 0; pushed to prod 2026-10-12
+- [ ] User: confirm prod grants on `audit_logs`/`audit_logs_archive` are `SELECT` only for `anon`/`authenticated`
+- [x] Correct the stale "P0 is only half-closed" line in `docs/whole-app-audit-2026-07-21.md` (8cfd2c1)
 - [ ] User: Settings → Actions → require approval for fork PR workflows from all outside collaborators
 - [ ] After going public: confirm `Scheduled Cleanup Tasks` passes (proves the rotated `CRON_SECRET`) and `infra-health` passes (proves the drift password)
 - [ ] User: delete the old Cloudflare API token once the first deploy succeeds
