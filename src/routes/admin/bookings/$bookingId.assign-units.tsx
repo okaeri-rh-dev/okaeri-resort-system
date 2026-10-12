@@ -2,7 +2,7 @@
  * Admin Unit Assignment Route
  *
  * Route: /admin/bookings/$bookingId/assign-units
- * Displays unit assignment interface for pending multi-unit bookings
+ * Displays unit assignment interface for pending guest bookings
  * with payment verification and assignment guards.
  *
  * Guards (render-based):

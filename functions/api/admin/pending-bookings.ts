@@ -3,7 +3,7 @@
  *
  * GET /api/admin/pending-bookings
  *
- * Fetches all pending multi-unit bookings with urgency scoring
+ * Fetches all pending guest bookings with urgency scoring
  *
  * Authentication: JWT required (admin role)
  * Source: docs/implementation/guest-booking-multi-unit/04-admin-interface.md lines 150-167

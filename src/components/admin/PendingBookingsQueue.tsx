@@ -1,7 +1,7 @@
 /**
  * Pending Bookings Queue Component
  *
- * Displays all pending multi-unit bookings sorted by urgency
+ * Displays all pending guest bookings sorted by urgency
  * Features:
  * - Real-time updates (30s refresh)
  * - Color-coded urgency badges
@@ -193,7 +193,7 @@ export function PendingBookingsQueue() {
       <Card>
         <CardHeader>
           <CardTitle>Pending Bookings Queue</CardTitle>
-          <CardDescription>Loading pending multi-unit bookings...</CardDescription>
+          <CardDescription>Loading pending guest bookings...</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
@@ -241,7 +241,7 @@ export function PendingBookingsQueue() {
           <div>
             <CardTitle>Pending Bookings Queue</CardTitle>
             <CardDescription>
-              {filteredBookings?.length || 0} pending multi-unit bookings
+              {filteredBookings?.length || 0} pending guest bookings
               {filters.urgencyLevel !== "all" &&
                 ` (${formatUrgencyLevel(filters.urgencyLevel)} priority)`}
             </CardDescription>
@@ -361,7 +361,7 @@ export function PendingBookingsQueue() {
                             : "Review payment proof and verify or reject payment"
                         }
                         onClick={() => {
-                          // If payment verified, go to assignment; otherwise, review payment first
+                          // If payment received, go to assignment; otherwise, review payment first
                           if (isPaymentReceived(booking.payment_status)) {
                             // Navigate to unit assignment
                             window.location.href = `/admin/bookings/${booking.booking_id}/assign-units`;
