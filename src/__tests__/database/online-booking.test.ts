@@ -26,6 +26,21 @@ const STAY = { check_in: "2027-03-10T06:00:00.000Z", check_out: "2027-03-12T04:0
 const NIGHTLY_SUBTOTAL = 7000;
 const EXTRA_PERSON_FEE = 500;
 
+async function signInAsStaff() {
+  const email = `online-booking-${crypto.randomUUID()}@test.local`;
+  const password = "test-password-12345";
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  });
+  if (error || !data.user) throw new Error(`createUser failed: ${error?.message}`);
+  const client = createClient(SUPABASE_URL, ANON_KEY);
+  const { error: signInError } = await client.auth.signInWithPassword({ email, password });
+  if (signInError) throw new Error(`signIn failed: ${signInError.message}`);
+  return { client, userId: data.user.id };
+}
+
 function guestBookingArgs(guests: number[]) {
   const unit_breakdown = guests.map((count, index) => {
     const extra = Math.max(0, count - 2) * EXTRA_PERSON_FEE * 2;
@@ -145,6 +160,16 @@ describe("create_guest_booking", () => {
     const { data, error } = await anon.rpc("create_guest_booking", guestBookingArgs([2]));
     expect(data).toBeNull();
     expect(error?.message).toMatch(/permission denied/);
+  });
+
+  it("refuses to run for a signed-in user", async () => {
+    if (!shouldRun) return;
+    const { client, userId } = await signInAsStaff();
+
+    const { data, error } = await client.rpc("create_guest_booking", guestBookingArgs([2]));
+    expect(data).toBeNull();
+    expect(error?.message).toMatch(/permission denied/);
+    await supabase.auth.admin.deleteUser(userId);
   });
 
   it("hides cabin requests from the anon key", async () => {
@@ -335,5 +360,17 @@ describe("assign_units_to_booking", () => {
       p_unit_ids: [crypto.randomUUID()],
     });
     expect(error?.message).toMatch(/permission denied/);
+  });
+
+  it("refuses to run for a signed-in user", async () => {
+    if (!shouldRun) return;
+    const { client, userId } = await signInAsStaff();
+
+    const { error } = await client.rpc("assign_units_to_booking", {
+      p_booking_id: crypto.randomUUID(),
+      p_unit_ids: [crypto.randomUUID()],
+    });
+    expect(error?.message).toMatch(/permission denied/);
+    await supabase.auth.admin.deleteUser(userId);
   });
 });
