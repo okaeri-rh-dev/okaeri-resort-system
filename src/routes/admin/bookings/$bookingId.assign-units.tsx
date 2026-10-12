@@ -22,9 +22,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthToken } from "@/hooks/useAuthToken";
-import { manilaDayOf } from "@/lib/bookings";
+import { isPaymentReceived, manilaDayOf } from "@/lib/bookings";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { adminBookingDetailQuery } from "@/stores/useBookingStore";
+import type { PaymentStatus } from "@/types";
 
 // ============================================
 // Types
@@ -43,7 +44,7 @@ interface BookingDetail {
   check_in: string;
   check_out: string;
   total_amount: number;
-  payment_status: "Pending" | "Verified" | "Completed" | "Rejected"; // Added Completed to match DB function
+  payment_status: PaymentStatus;
   unit_assignment_status: "pending" | "assigned" | "partial";
   payment_proof_url: string | null;
   requested_unit_count: number;
@@ -365,8 +366,7 @@ function AssignUnitsPage() {
     return <ErrorState error={error} bookingId={bookingId} />;
   }
 
-  // Payment verification guard - Accept both Verified and Completed statuses
-  if (!["Verified", "Completed"].includes(booking.payment_status)) {
+  if (!isPaymentReceived(booking.payment_status)) {
     return (
       <PaymentNotVerifiedGuard bookingId={bookingId} bookingReference={booking.booking_reference} />
     );

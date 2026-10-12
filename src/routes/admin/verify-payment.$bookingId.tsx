@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthToken } from "@/hooks/useAuthToken";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { adminBookingDetailQuery } from "@/stores/useBookingStore";
+import type { PaymentStatus } from "@/types";
 
 // Type for booking detail response
 interface BookingDetail {
@@ -25,7 +26,7 @@ interface BookingDetail {
   check_in: string;
   check_out: string;
   total_amount: number;
-  payment_status: "Pending" | "Verified" | "Rejected";
+  payment_status: PaymentStatus;
   payment_proof_url: string | null;
   requested_unit_count: number;
   created_at: string;
@@ -49,13 +50,9 @@ function PaymentVerificationPage() {
     enabled: !!authToken, // Only fetch when authenticated
   });
 
-  const handleStatusChange = () => {
-    // Navigate back to queue or to unit assignment if verified
-    if (booking?.payment_status === "Verified") {
-      window.location.href = `/admin/bookings/${bookingId}/assign-units`;
-    } else {
-      window.location.href = "/admin/bookings/queue";
-    }
+  const handleStatusChange = (action: "verify" | "reject") => {
+    window.location.href =
+      action === "verify" ? `/admin/bookings/${bookingId}/assign-units` : "/admin/bookings/queue";
   };
 
   // Auth loading state

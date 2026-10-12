@@ -114,7 +114,6 @@ export async function onRequest(context: {
         )
       `
       )
-      .eq("is_multi_unit", true)
       .eq("is_guest_booking", true)
       .eq("unit_assignment_status", "pending")
       .order("created_at", { ascending: false });
