@@ -24,6 +24,8 @@ Copying the local objects to prod would not fix this. Most of them were never fi
 
 Verify/reject is broken everywhere: `functions/api/admin/verify-payment.ts:254-259` writes `payment_status` `'Verified'`/`'Rejected'`, which the CHECK constraint rejects (500). Since ADR 0001, app code must not write `payment_status` at all; triggers derive it from `payments`. The E2E tests re-enabled in #20 only assert that the buttons render.
 
+**Orphaned guest proofs on prod (user's read-only queries, 2026-10-12).** `payment-proofs` holds 8 objects. One is a staff upload (`bookings/<id>/…`, 2025-09-29). Seven are guest-form uploads (`TEMP-<session>_<ms>.png|JPG`, from `MultiUnitGuestBookingForm.tsx:529`), made Feb 2 21:15 to Feb 3 00:37 (4 sessions), Feb 5, Feb 9 and May 15 2026, Manila time. No prod booking has a `payment_proof_url`, so none of the 7 sessions created a booking: the form uploads the proof before it submits, and the submit failed. Whether any are real payments needs the user to look at the images; if so, the family follows up with those guests.
+
 ## Design
 
 One forward migration, `supabase/migrations/20261013000000_online_booking.sql`. Idempotent (`IF NOT EXISTS`, `CREATE OR REPLACE`, `DROP … IF EXISTS`), so it applies both to local (which has the objects) and to prod (which doesn't).
@@ -49,11 +51,14 @@ Out of scope: `cleanup_expired_payment_proofs` (deferred item 3, needs a retenti
 - [ ] 2. DB tests first (`src/__tests__/database/`): guest booking creates booking + unit requests; `anon` cannot execute either function; assign fails before verify, succeeds after, writes `booking_units` + availability; a conflicting unit fails; a wrong unit count fails.
 - [ ] 3. Migration + rollback; `npm run gen:types`; DB tests pass.
 - [ ] 4. `verify-payment.ts` per D1/D2, with unit tests; narrow `payment_status` in `database.types.ts`.
+- [ ] 4b. Booking-failure path: when `create_guest_booking` fails after the proof upload, the guest sees a clear "nothing was booked" message (check what `multi-unit.ts` and the form show today).
 - [ ] 5. E2E: extend the verify-payment tests to click Verify and assert `Partial`, then assign units.
 - [ ] 6. Replica check (D3); drift baseline lines removed; `npm run verify`; PR.
 - [ ] 7. User: `supabase db push`; prod-drift check; one real test booking on prod (user).
 
 ## Decisions & Deferrals
+
+- **Orphaned proofs left in storage (2026-10-12).** Why: they may be the only record of a guest's payment; deletion waits for the user's review and the cleanup cron (guardrails deferred item 3). Revisit: after the user checks the 7 images.
 
 - **Online booking scheduled (2026-10-12, user).** Why: PR #20 fixed verify-payment only where the schema exists; prod has no guest-booking path. Revisit: n/a (active).
 - **Finish, not restore (2026-10-12).** Why: the local objects are stubs or broken (table above); pushing them would ship broken functions. Unused ones are dropped locally rather than pushed. Revisit: if a caller for the pricing stub appears.
