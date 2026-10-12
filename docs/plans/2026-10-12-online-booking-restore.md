@@ -62,13 +62,13 @@ Out of scope: `cleanup_expired_payment_proofs` (deferred item 3, needs a retenti
 - Next: expand the task outline into full TDD steps (superpowers:writing-plans), then Task 1 (investigation).
 - Prod schema dump (D3) not taken yet; ask the user to run it when Task 6 is reached, into that session's scratchpad.
 - Not verified: the exact contents of `pricing_snapshot` per unit (needed for `booking_units.unit_price` in Task 3); whether `20261011120000` already drops anything this migration drops; the guest form's behaviour when booking creation fails (Task 4b).
-- User still to review the 7 orphaned `TEMP-…` proofs in the dashboard.
+- Orphaned `TEMP-…` proofs: reviewed by the user, cleared for deletion (user runs it); not verified as deleted.
 
 ## Decisions & Deferrals
 
 - **D1–D3 accepted as recommended (2026-10-12, user).** Verify inserts a `payments` row for `downpayment_required` (derives `Partial`); Reject writes nothing to the booking, reason in audit; prod schema dump by the user, loaded into a scratch DB, never committed. Revisit: n/a.
 
-- **Orphaned proofs left in storage (2026-10-12).** Why: they may be the only record of a guest's payment; deletion waits for the user's review and the cleanup cron (guardrails deferred item 3). Revisit: after the user checks the 7 images.
+- **Orphaned proofs deleted (2026-10-12, user).** Why: the user reviewed the 7 `TEMP-…` images; none is a guest payment to follow up. The user deletes them with `supabase storage rm --linked --experimental` (Storage API, not SQL); the staff file `bookings/…` stays. Revisit: n/a.
 
 - **Online booking scheduled (2026-10-12, user).** Why: PR #20 fixed verify-payment only where the schema exists; prod has no guest-booking path. Revisit: n/a (active).
 - **Finish, not restore (2026-10-12).** Why: the local objects are stubs or broken (table above); pushing them would ship broken functions. Unused ones are dropped locally rather than pushed. Revisit: if a caller for the pricing stub appears.
