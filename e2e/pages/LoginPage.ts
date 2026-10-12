@@ -29,7 +29,7 @@ export class LoginPage {
 
     // Form elements - using accessible selectors
     this.emailInput = page.getByLabel("Email");
-    this.passwordInput = page.getByLabel("Password");
+    this.passwordInput = page.getByLabel("Password", { exact: true });
     this.signInButton = page.getByRole("button", { name: /sign in/i });
 
     // Error/feedback elements
