@@ -296,10 +296,11 @@ describe("assign_units_to_booking", () => {
     const bookingId = await createGuestBooking([2]);
     await payDownpayment(bookingId);
     const [first, second] = [await createTestUnit(), await createTestUnit()];
-    await supabase.rpc("assign_units_to_booking", {
+    const { error: firstError } = await supabase.rpc("assign_units_to_booking", {
       p_booking_id: bookingId,
       p_unit_ids: [first.unit_id],
     });
+    expect(firstError).toBeNull();
 
     const { error } = await supabase.rpc("assign_units_to_booking", {
       p_booking_id: bookingId,
@@ -313,10 +314,12 @@ describe("assign_units_to_booking", () => {
     const bookingId = await createGuestBooking([2]);
     await payDownpayment(bookingId);
     const unit = await createTestUnit();
-    await supabase.rpc("assign_units_to_booking", {
+    const { error: assignError } = await supabase.rpc("assign_units_to_booking", {
       p_booking_id: bookingId,
       p_unit_ids: [unit.unit_id],
     });
+    expect(assignError).toBeNull();
+    expect((await bookingState(bookingId)).unit_assignment_status).toBe("assigned");
 
     const { error } = await supabase.from("payments").delete().eq("booking_id", bookingId);
     expect(error).toBeNull();
