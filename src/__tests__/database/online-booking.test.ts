@@ -11,6 +11,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import {
   cleanupTestData,
+  createTestBooking,
+  createTestUnit,
   shouldRunDatabaseTests,
   testSupabaseAdmin as supabase,
 } from "../setup/test-db";
@@ -152,5 +154,183 @@ describe("create_guest_booking", () => {
 
     const { data } = await anon.from("guest_booking_unit_requests").select("id");
     expect(data ?? []).toEqual([]);
+  });
+});
+
+async function payDownpayment(bookingId: string) {
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select("downpayment_required")
+    .eq("booking_id", bookingId)
+    .single();
+  const { error } = await supabase
+    .from("payments")
+    .insert({ booking_id: bookingId, amount: booking!.downpayment_required!, status: "Active" });
+  if (error) throw error;
+}
+
+async function bookingState(bookingId: string) {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select(
+      "unit_assignment_status, booking_status, payment_status, total_amount, num_guests, booking_units(unit_id, unit_price, extra_person_charge, subtotal, assigned_guests), booking_unit_availability(unit_id, check_in, check_out, booking_status)"
+    )
+    .eq("booking_id", bookingId)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+describe("assign_units_to_booking", () => {
+  let shouldRun = false;
+
+  beforeAll(async () => {
+    shouldRun = await shouldRunDatabaseTests();
+  });
+
+  beforeEach(async () => {
+    if (shouldRun) await cleanupTestData({ includeTestFixtures: true });
+  });
+
+  afterAll(async () => {
+    if (shouldRun) await cleanupTestData({ includeTestFixtures: true });
+  });
+
+  it("refuses before the downpayment is recorded", async () => {
+    if (!shouldRun) return;
+    const bookingId = await createGuestBooking([2]);
+    const unit = await createTestUnit();
+
+    const { error } = await supabase.rpc("assign_units_to_booking", {
+      p_booking_id: bookingId,
+      p_unit_ids: [unit.unit_id],
+    });
+    expect(error?.message).toMatch(/Payment must be verified/);
+  });
+
+  it("assigns cabins at the quoted prices and blocks their dates", async () => {
+    if (!shouldRun) return;
+    const bookingId = await createGuestBooking([2, 4]);
+    await payDownpayment(bookingId);
+    const [first, second] = [await createTestUnit(), await createTestUnit()];
+
+    const { error } = await supabase.rpc("assign_units_to_booking", {
+      p_booking_id: bookingId,
+      p_unit_ids: [first.unit_id, second.unit_id],
+    });
+    expect(error).toBeNull();
+
+    const state = await bookingState(bookingId);
+    expect(state).toMatchObject({
+      unit_assignment_status: "assigned",
+      booking_status: "Confirmed",
+      payment_status: "Partial",
+      total_amount: 16000,
+      num_guests: 6,
+    });
+    const units = [...state.booking_units].sort((a, b) => a.subtotal - b.subtotal);
+    expect(units).toEqual([
+      {
+        unit_id: first.unit_id,
+        unit_price: 7000,
+        extra_person_charge: 0,
+        subtotal: 7000,
+        assigned_guests: 2,
+      },
+      {
+        unit_id: second.unit_id,
+        unit_price: 7000,
+        extra_person_charge: 2000,
+        subtotal: 9000,
+        assigned_guests: 4,
+      },
+    ]);
+    expect(state.booking_unit_availability).toHaveLength(2);
+    for (const row of state.booking_unit_availability) {
+      expect(row.booking_status).toBe("Confirmed");
+      expect(new Date(row.check_in).toISOString()).toBe(STAY.check_in);
+      expect(new Date(row.check_out).toISOString()).toBe(STAY.check_out);
+    }
+  });
+
+  it("refuses the wrong number of cabins and writes nothing", async () => {
+    if (!shouldRun) return;
+    const bookingId = await createGuestBooking([2, 2]);
+    await payDownpayment(bookingId);
+    const unit = await createTestUnit();
+
+    const { error } = await supabase.rpc("assign_units_to_booking", {
+      p_booking_id: bookingId,
+      p_unit_ids: [unit.unit_id],
+    });
+    expect(error?.message).toMatch(/Must assign exactly 2 cabins, got 1/);
+    const state = await bookingState(bookingId);
+    expect(state.unit_assignment_status).toBe("pending");
+    expect(state.booking_units).toEqual([]);
+  });
+
+  it("refuses a cabin already booked for those dates and writes nothing", async () => {
+    if (!shouldRun) return;
+    const unit = await createTestUnit();
+    await createTestBooking({
+      unit,
+      check_in: new Date(STAY.check_in),
+      check_out: new Date(STAY.check_out),
+    });
+    const bookingId = await createGuestBooking([2]);
+    await payDownpayment(bookingId);
+
+    const { error } = await supabase.rpc("assign_units_to_booking", {
+      p_booking_id: bookingId,
+      p_unit_ids: [unit.unit_id],
+    });
+    expect(error?.code).toBe("23P01");
+    const state = await bookingState(bookingId);
+    expect(state.unit_assignment_status).toBe("pending");
+    expect(state.booking_units).toEqual([]);
+    expect(state.booking_unit_availability).toEqual([]);
+  });
+
+  it("refuses a second assignment", async () => {
+    if (!shouldRun) return;
+    const bookingId = await createGuestBooking([2]);
+    await payDownpayment(bookingId);
+    const [first, second] = [await createTestUnit(), await createTestUnit()];
+    await supabase.rpc("assign_units_to_booking", {
+      p_booking_id: bookingId,
+      p_unit_ids: [first.unit_id],
+    });
+
+    const { error } = await supabase.rpc("assign_units_to_booking", {
+      p_booking_id: bookingId,
+      p_unit_ids: [second.unit_id],
+    });
+    expect(error?.message).toMatch(/not found or not in pending state/);
+  });
+
+  it("lets staff delete the payment of an assigned booking (D4)", async () => {
+    if (!shouldRun) return;
+    const bookingId = await createGuestBooking([2]);
+    await payDownpayment(bookingId);
+    const unit = await createTestUnit();
+    await supabase.rpc("assign_units_to_booking", {
+      p_booking_id: bookingId,
+      p_unit_ids: [unit.unit_id],
+    });
+
+    const { error } = await supabase.from("payments").delete().eq("booking_id", bookingId);
+    expect(error).toBeNull();
+    expect((await bookingState(bookingId)).payment_status).toBe("Pending");
+  });
+
+  it("refuses to run for the anon key", async () => {
+    if (!shouldRun) return;
+    const anon = createClient(SUPABASE_URL, ANON_KEY);
+
+    const { error } = await anon.rpc("assign_units_to_booking", {
+      p_booking_id: crypto.randomUUID(),
+      p_unit_ids: [crypto.randomUUID()],
+    });
+    expect(error?.message).toMatch(/permission denied/);
   });
 });

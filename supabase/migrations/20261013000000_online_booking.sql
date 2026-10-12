@@ -137,4 +137,71 @@ $$ LANGUAGE plpgsql SET search_path = '';
 REVOKE ALL ON FUNCTION public.create_guest_booking(TEXT, JSONB, JSONB, JSONB) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.create_guest_booking(TEXT, JSONB, JSONB, JSONB) TO service_role;
 
+-- 4. assign_units_to_booking. Each cabin takes the price the guest was quoted for the
+-- request in the same position (pricing_snapshot.unit_breakdown). booking_units triggers
+-- recompute total_amount and num_guests from these rows, so the sums must match the quote.
+-- Availability rows are written as Confirmed so the exclusion constraint rejects a taken cabin.
+ALTER TABLE public.bookings DROP CONSTRAINT IF EXISTS payment_before_assignment;
+
+CREATE OR REPLACE FUNCTION public.assign_units_to_booking(p_booking_id UUID, p_unit_ids UUID[])
+RETURNS VOID AS $$
+DECLARE
+    v_booking public.bookings%ROWTYPE;
+    v_unit_count INTEGER := COALESCE(array_length(p_unit_ids, 1), 0);
+    v_quote JSONB;
+    v_position INTEGER;
+    v_subtotal NUMERIC(10,2);
+    v_extra NUMERIC(10,2);
+BEGIN
+    SELECT * INTO v_booking
+    FROM public.bookings
+    WHERE booking_id = p_booking_id
+      AND is_guest_booking
+      AND unit_assignment_status = 'pending'
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Booking % not found or not in pending state', p_booking_id;
+    END IF;
+
+    IF v_booking.payment_status NOT IN ('Partial', 'Completed') THEN
+        RAISE EXCEPTION 'Payment must be verified before unit assignment (payment status: %)',
+            v_booking.payment_status;
+    END IF;
+
+    IF v_unit_count <> v_booking.requested_unit_count THEN
+        RAISE EXCEPTION 'Must assign exactly % cabins, got %', v_booking.requested_unit_count, v_unit_count;
+    END IF;
+
+    FOR v_position IN 1..v_unit_count LOOP
+        v_quote := v_booking.pricing_snapshot->'unit_breakdown'->(v_position - 1);
+        IF v_quote IS NULL THEN
+            RAISE EXCEPTION 'Booking % has no quoted price for cabin %', p_booking_id, v_position;
+        END IF;
+        v_subtotal := round((v_quote->>'total')::NUMERIC, 2);
+        v_extra := round((v_quote->>'extra_person_fees')::NUMERIC, 2);
+
+        INSERT INTO public.booking_units (
+            booking_id, unit_id, unit_price, extra_person_charge, subtotal, assigned_guests
+        ) VALUES (
+            p_booking_id, p_unit_ids[v_position], v_subtotal - v_extra, v_extra, v_subtotal,
+            (v_quote->>'guests')::INTEGER
+        );
+
+        INSERT INTO public.booking_unit_availability (
+            unit_id, booking_id, check_in, check_out, booking_status
+        ) VALUES (
+            p_unit_ids[v_position], p_booking_id, v_booking.check_in, v_booking.check_out, 'Confirmed'
+        );
+    END LOOP;
+
+    UPDATE public.bookings
+    SET unit_assignment_status = 'assigned', booking_status = 'Confirmed'
+    WHERE booking_id = p_booking_id;
+END;
+$$ LANGUAGE plpgsql SET search_path = '';
+
+REVOKE ALL ON FUNCTION public.assign_units_to_booking(UUID, UUID[]) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.assign_units_to_booking(UUID, UUID[]) TO service_role;
+
 COMMIT;

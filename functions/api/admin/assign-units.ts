@@ -67,6 +67,14 @@ function parseRpcError(error: RpcError): { status: number; message: string; deta
     };
   }
 
+  if (errorMessage.includes("Must assign exactly")) {
+    return {
+      status: 400,
+      message: "Wrong number of cabins",
+      details: errorMessage,
+    };
+  }
+
   if (errorMessage.includes("All-or-nothing violation")) {
     // Extract details from error message
     const requestedMatch = errorMessage.match(/Requested: (\d+)/);
