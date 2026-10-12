@@ -45,7 +45,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         with:
           version: latest
       - name: Start local Supabase (applies all migrations)
@@ -74,7 +74,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         with:
           version: latest # deliberately unpinned: CLI-upgrade breakage should fail HERE, not mid-session
       - run: npm ci
