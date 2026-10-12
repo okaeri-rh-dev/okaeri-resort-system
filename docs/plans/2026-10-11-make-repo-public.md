@@ -23,7 +23,7 @@ Blockers found 2026-10-11: shared test-account password in docs (owner/admin/sta
 - [x] User: enable Actions on the new repo (2026-10-12; runs still blocked by the private-repo minutes quota until public)
 - [x] Manual deploy of c759e2d (deployment `d3b745da-2d36-406e-8668-7523a98e4a87`; rollback `923ceccb-ebb1-4e17-8c64-1d7f56ea0d10` = 79396f4); live entry `index-BGcGYCc4.js`, `/api/health` 200
 - [x] Fix `audit_logs` forged inserts (guardrails Deferred list #1): migration `20261012000000_audit_logs_block_client_writes.sql` + `audit-logs-write-lockdown.test.ts` (585b7f0); local `test:db` 102/102, `verify` exit 0; pushed to prod 2026-10-12
-- [ ] User: confirm prod grants on `audit_logs`/`audit_logs_archive` are `SELECT` only for `anon`/`authenticated`
+- [x] User: confirm prod grants on `audit_logs`/`audit_logs_archive` (2026-10-12: `REFERENCES,SELECT,TRIGGER` for `anon`/`authenticated`; no write privileges)
 - [x] Correct the stale "P0 is only half-closed" line in `docs/whole-app-audit-2026-07-21.md` (8cfd2c1)
 - [ ] User: Settings → Actions → require approval for fork PR workflows from all outside collaborators
 - [ ] After going public: confirm `Scheduled Cleanup Tasks` passes (proves the rotated `CRON_SECRET`) and `infra-health` passes (proves the drift password)
@@ -35,6 +35,7 @@ Blockers found 2026-10-11: shared test-account password in docs (owner/admin/sta
 
 - Rewritten history goes into a fresh repo, not a force-push — the 11 Dependabot PR refs (`refs/pull/*`) still reach the old seed and only GitHub Support can delete them; the fresh repo keeps the name, so remotes and URLs are unchanged.
 - Cloudflare unaffected by the repo swap — Pages project `okaeri-resort` is Direct Upload (Git Provider: No), deploys come from `wrangler pages deploy` with the API token.
+- Prod still carried the 2025 `GRANT ALL` on the audit tables (anon could insert with `user_id` NULL until 2026-10-12); leftover `REFERENCES`/`TRIGGER` grants are unusable without DDL access, so revoking them is deferred — revisit with the next grants or drift-baseline migration.
 - Fix forged `audit_logs` inserts before going public; don't trim the open-weakness docs — the migrations show the same thing, and the docs are working notes.
 - Only the 7 secrets the workflows reference were re-added — the other 6 (incl. `SUPABASE_SERVICE_ROLE_KEY`, `TURNSTILE_SECRET_KEY`) were unused in Actions.
 - History rewrite waits for parallel sessions to land their work — a force-push under an active session strands its commits.
