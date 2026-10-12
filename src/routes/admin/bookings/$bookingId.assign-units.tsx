@@ -44,7 +44,7 @@ interface BookingDetail {
   total_amount: number;
   payment_status: "Pending" | "Verified" | "Completed" | "Rejected"; // Added Completed to match DB function
   unit_assignment_status: "pending" | "assigned" | "partial";
-  payment_proof_path: string | null;
+  payment_proof_url: string | null;
   requested_unit_count: number;
   unit_requests: UnitRequest[];
   created_at: string;

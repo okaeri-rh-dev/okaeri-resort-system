@@ -44,6 +44,8 @@ export interface E2EBookingFixture {
   num_guests: number;
   // Multi-cabin guest booking with no cabins assigned yet; shows in the booking queue
   awaiting_unit_assignment?: boolean;
+  // Object key in the payment-proofs bucket; seed uploads a placeholder image
+  payment_proof_url?: string;
 }
 
 // booking_reference is varchar(20); keep all references ≤ 20 chars.
@@ -101,5 +103,12 @@ export const E2E_BOOKINGS: E2EBookingFixture[] = [
     total_amount: 5000,
     num_guests: 4,
     awaiting_unit_assignment: true,
+    payment_proof_url: "E2E-QUEUE_proof.png",
   },
 ];
+
+export const E2E_PAYMENT_PROOF_BUCKET = "payment-proofs";
+
+export const E2E_PAYMENT_PROOF_PATHS = E2E_BOOKINGS.flatMap((b) =>
+  b.payment_proof_url ? [b.payment_proof_url] : []
+);

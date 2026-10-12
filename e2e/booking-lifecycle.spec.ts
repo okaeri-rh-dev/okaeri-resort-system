@@ -285,8 +285,7 @@ test.describe("Booking Lifecycle", () => {
       expect(reference).toMatch(/^[A-Z0-9]+-[A-Z0-9-]+$/);
     });
 
-    // Blocked by the verify-payment proof bug, see CLAUDE.md Known Infrastructure Issues
-    test.fixme("admin can verify payment", async ({ page }) => {
+    test("admin can verify payment", async ({ page }) => {
       const queuePage = new AdminQueuePage(page);
       await queuePage.goto();
 

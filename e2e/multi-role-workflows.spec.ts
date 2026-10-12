@@ -185,8 +185,7 @@ test.describe("Multi-Role Workflows", () => {
       await queuePage.expectQueueVisible();
     });
 
-    // Blocked by the verify-payment proof bug, see CLAUDE.md Known Infrastructure Issues
-    test.fixme("admin can verify payments", async ({ page }) => {
+    test("admin can verify payments", async ({ page }) => {
       const queuePage = new AdminQueuePage(page);
       await queuePage.goto();
 
@@ -315,8 +314,7 @@ test.describe("Multi-Role Workflows", () => {
       await detailPage.expectPageLoaded();
     });
 
-    // Blocked by the verify-payment proof bug, see CLAUDE.md Known Infrastructure Issues
-    test.fixme("owner can verify payments", async ({ page }) => {
+    test("owner can verify payments", async ({ page }) => {
       const queuePage = new AdminQueuePage(page);
       await queuePage.goto();
 

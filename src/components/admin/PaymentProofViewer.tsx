@@ -86,18 +86,21 @@ export function PaymentProofViewer({
     if (!paymentProofPath) return;
 
     const initializeSignedUrl = async () => {
-      try {
-        const { url, expiresAt } = await generateSignedUrl(
-          paymentProofPath,
-          3600 // 1 hour
-        );
-        setSignedUrl(url);
-        setUrlExpiry(expiresAt);
-        setError(null);
-      } catch (err) {
-        console.error("Failed to generate signed URL:", err);
+      const {
+        url,
+        expiresAt,
+        error: signError,
+      } = await generateSignedUrl(
+        paymentProofPath,
+        3600 // 1 hour
+      );
+      if (signError) {
         setError("Failed to load payment proof. Please try again.");
+        return;
       }
+      setSignedUrl(url);
+      setUrlExpiry(expiresAt);
+      setError(null);
     };
 
     void initializeSignedUrl();
@@ -110,14 +113,13 @@ export function PaymentProofViewer({
     const checkAndRenew = async () => {
       if (shouldRenewSignedUrl(urlExpiry, 60)) {
         // Renew 1 minute before expiry
-        try {
-          const { url, expiresAt } = await renewSignedUrl(paymentProofPath, 3600);
-          setSignedUrl(url);
-          setUrlExpiry(expiresAt);
-        } catch (err) {
-          console.error("Failed to renew signed URL:", err);
+        const { url, expiresAt, error: renewError } = await renewSignedUrl(paymentProofPath, 3600);
+        if (renewError) {
           setError("Session expired. Please refresh the page.");
+          return;
         }
+        setSignedUrl(url);
+        setUrlExpiry(expiresAt);
       }
     };
 
