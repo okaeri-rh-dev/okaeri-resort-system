@@ -3,6 +3,7 @@ import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { NotFoundPage } from "@/components/NotFoundPage";
 import { UpdateToast } from "@/components/pwa/UpdateToast";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -13,6 +14,7 @@ export interface RouterContext {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootComponent,
+  notFoundComponent: NotFoundPage,
   errorComponent: ({ error }) => (
     <ErrorBoundary level="app">
       <div className="flex min-h-screen items-center justify-center">
