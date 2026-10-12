@@ -11,7 +11,6 @@ routes/
 ├── __root.tsx              # Root layout wrapper
 ├── index.tsx               # Home page (/)
 ├── login.tsx               # Login page (/login)
-├── _404.tsx                # 404 error page
 ├── _authenticated.tsx      # Protected route layout
 └── _authenticated/         # Protected routes
     ├── index.tsx           # Dashboard (/dashboard)

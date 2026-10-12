@@ -1,13 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Home } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/_404")({
-  component: NotFoundPage,
-});
-
-function NotFoundPage() {
+export function NotFoundPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-md text-center">
