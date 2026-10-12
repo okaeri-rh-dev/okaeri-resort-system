@@ -8,7 +8,7 @@
 
 **Tech Stack:** Postgres (Supabase local, PL/pgSQL), Cloudflare Pages Functions (TypeScript), React + TanStack Router, Vitest, Playwright.
 
-Scope, problem table and accepted decisions D1–D3 live in the tracking doc `docs/plans/2026-10-12-online-booking-restore.md`. Decisions D4–D8 below were found while writing this plan.
+Scope, problem table and accepted decisions D1–D3 live in the tracking doc `docs/plans/2026-10-12-online-booking-restore.md`. Decisions D4–D8 below were found while writing this plan and accepted by the user.
 
 ## Global Constraints
 
@@ -21,7 +21,7 @@ Scope, problem table and accepted decisions D1–D3 live in the tracking doc `do
 - Commits: Conventional Commits, no Co-Authored-By line. Run `npm run verify` before each commit that touches TS.
 - Copy: "cabin" in guest/staff-facing text; no front-desk/reception wording (memory: no front desk).
 
-## Decisions & Deferrals (proposed while writing this plan, 2026-10-12)
+## Decisions & Deferrals (D4–D8 accepted as recommended, user, 2026-10-12)
 
 - **D4. Drop `payment_before_assignment` instead of rewriting it.** Why: the status is derived from `payments`, so deleting or refunding a payment on an assigned booking would hit the CHECK and fail. `assign_units_to_booking` already enforces the order. Revisit: n/a.
 - **D5. Single-cabin guest bookings go through the queue.** Why: `pending-bookings.ts:117` filters `is_multi_unit = true`, which `create_guest_booking` sets only for 2+ cabins, so a 1-cabin guest booking was never shown. Queue and assign key on `is_guest_booking`. Revisit: n/a.

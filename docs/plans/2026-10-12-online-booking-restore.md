@@ -59,15 +59,15 @@ Out of scope: `cleanup_expired_payment_proofs` (deferred item 3, needs a retenti
 ## Resume state (2026-10-12, implementation plan written)
 
 - Branch `fix/restore-guest-booking-schema` (off main `8532694`): docs-only commits, not pushed, no upstream. No migration, test or code written yet.
-- Implementation plan: `docs/plans/2026-10-12-online-booking-restore-implementation.md` (10 tasks). Proposed decisions D4–D8 there need the user's OK before Task 1 of that plan starts.
-- Next: the user picks subagent-driven or inline execution; start at the plan's Task 1.
+- Implementation plan: `docs/plans/2026-10-12-online-booking-restore-implementation.md` (10 tasks). Decisions D4–D8 accepted (user, 2026-10-12).
+- Next: a fresh session runs the plan with superpowers:subagent-driven-development, from its Task 1.
 - Prod schema dump (D3) not taken yet; the plan's Task 9 asks the user for it.
 - Verified while planning: `pricing_snapshot.unit_breakdown[i]` holds `guests`, `extra_person_fees`, `total` per cabin (`multi-unit.ts:281-296`); `booking_units` triggers recompute `total_amount`/`num_guests`; `20261011120000` drops nothing this migration drops; on booking failure the form shows the endpoint's `error` text and the uploaded proof is orphaned.
 - Orphaned `TEMP-…` proofs: deleted by the user 2026-10-12 (`supabase storage rm` returned all 7 in `deleted`). The staff `bookings/…` file remains.
 
 ## Decisions & Deferrals
 
-- **D4–D8 proposed (2026-10-12, awaiting user).** Drop `payment_before_assignment`; single-cabin guest bookings in the queue; guest booking sends Manila days; `guest_booking_unit_requests` keeps only `guests_per_unit`; `create_guest_booking` stores the proof URL and idempotency key. Details and reasons: implementation plan, Decisions & Deferrals. Revisit: when the user answers.
+- **D4–D8 accepted as recommended (2026-10-12, user).** Drop `payment_before_assignment`; single-cabin guest bookings in the queue; guest booking sends Manila days; `guest_booking_unit_requests` keeps only `guests_per_unit`; `create_guest_booking` stores the proof URL and idempotency key. Details and reasons: implementation plan, Decisions & Deferrals. Revisit: n/a.
 
 - **D1–D3 accepted as recommended (2026-10-12, user).** Verify inserts a `payments` row for `downpayment_required` (derives `Partial`); Reject writes nothing to the booking, reason in audit; prod schema dump by the user, loaded into a scratch DB, never committed. Revisit: n/a.
 
