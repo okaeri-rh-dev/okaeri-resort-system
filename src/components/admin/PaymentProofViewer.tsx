@@ -31,8 +31,10 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuthToken } from "@/hooks/useAuthToken";
+import { isPaymentReceived } from "@/lib/bookings";
 import { afterBookingPaymentChange } from "@/lib/query-invalidation";
 import { generateSignedUrl, renewSignedUrl, shouldRenewSignedUrl } from "@/lib/storage-utils";
+import type { PaymentStatus } from "@/types";
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.js";
@@ -40,8 +42,8 @@ pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.js";
 interface PaymentProofViewerProps {
   bookingId: string;
   paymentProofPath: string | null;
-  currentPaymentStatus: "Pending" | "Verified" | "Rejected";
-  onStatusChange?: () => void;
+  currentPaymentStatus: PaymentStatus;
+  onStatusChange?: (action: "verify" | "reject") => void;
 }
 
 interface VerifyPaymentPayload {
@@ -150,9 +152,9 @@ export function PaymentProofViewer({
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       afterBookingPaymentChange();
-      onStatusChange?.();
+      onStatusChange?.(variables.action);
       setShowVerifyConfirm(false);
       setIsRejectDialogOpen(false);
       setRejectionReason("");
@@ -191,23 +193,12 @@ export function PaymentProofViewer({
 
   // Render status badge
   const renderStatusBadge = () => {
-    if (currentPaymentStatus === "Verified") {
+    if (isPaymentReceived(currentPaymentStatus)) {
       return (
         <Alert className="border-green-200 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            Payment verified - Ready for unit assignment
-          </AlertDescription>
-        </Alert>
-      );
-    }
-
-    if (currentPaymentStatus === "Rejected") {
-      return (
-        <Alert className="border-red-200 bg-red-50">
-          <XCircle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="text-red-800">
-            Payment rejected - Guest must re-upload proof
+            Payment verified - Ready for cabin assignment
           </AlertDescription>
         </Alert>
       );
@@ -454,7 +445,7 @@ export function PaymentProofViewer({
             <DialogTitle>Confirm Payment Verification</DialogTitle>
             <DialogDescription>
               Are you sure you want to verify this payment? The booking will be marked as confirmed
-              and ready for unit assignment.
+              and ready for cabin assignment.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

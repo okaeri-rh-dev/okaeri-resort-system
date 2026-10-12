@@ -1,7 +1,7 @@
 /**
  * Pending Bookings Queue Component
  *
- * Displays all pending multi-unit bookings sorted by urgency
+ * Displays all pending guest bookings sorted by urgency
  * Features:
  * - Real-time updates (30s refresh)
  * - Color-coded urgency badges
@@ -35,10 +35,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { isPaymentReceived } from "@/lib/bookings";
 import { multiUnitBookingKeys } from "@/lib/query-keys";
 import { supabaseAuth } from "@/lib/supabase";
 import { formatUrgencyLevel, type UrgencyLevel } from "@/lib/urgency-scoring";
 import { formatCurrency, formatDate, formatRelativeTime } from "@/lib/utils";
+import type { PaymentStatus } from "@/types";
 
 // ============================================
 // Types
@@ -53,7 +55,7 @@ interface PendingBooking {
   check_out_date: string;
   requested_unit_count: number;
   total_amount: number;
-  payment_status: "Pending" | "Verified" | "Rejected";
+  payment_status: PaymentStatus;
   urgency_score: number;
   urgency_level: UrgencyLevel;
   created_at: string;
@@ -173,10 +175,11 @@ export function PendingBookingsQueue() {
   };
 
   const getPaymentBadge = (status: PendingBooking["payment_status"]) => {
-    const variantMap = {
-      Verified: "default" as const,
-      Pending: "secondary" as const,
-      Rejected: "destructive" as const,
+    const variantMap: Record<PaymentStatus, "default" | "secondary" | "destructive"> = {
+      Pending: "secondary",
+      Partial: "default",
+      Completed: "default",
+      Refunded: "destructive",
     };
     return <Badge variant={variantMap[status]}>{status}</Badge>;
   };
@@ -190,7 +193,7 @@ export function PendingBookingsQueue() {
       <Card>
         <CardHeader>
           <CardTitle>Pending Bookings Queue</CardTitle>
-          <CardDescription>Loading pending multi-unit bookings...</CardDescription>
+          <CardDescription>Loading pending guest bookings...</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
@@ -238,7 +241,7 @@ export function PendingBookingsQueue() {
           <div>
             <CardTitle>Pending Bookings Queue</CardTitle>
             <CardDescription>
-              {filteredBookings?.length || 0} pending multi-unit bookings
+              {filteredBookings?.length || 0} pending guest bookings
               {filters.urgencyLevel !== "all" &&
                 ` (${formatUrgencyLevel(filters.urgencyLevel)} priority)`}
             </CardDescription>
@@ -353,13 +356,13 @@ export function PendingBookingsQueue() {
                       <Button
                         size="sm"
                         title={
-                          booking.payment_status === "Verified"
+                          isPaymentReceived(booking.payment_status)
                             ? "Proceed to assign specific units for this booking"
                             : "Review payment proof and verify or reject payment"
                         }
                         onClick={() => {
-                          // If payment verified, go to assignment; otherwise, review payment first
-                          if (booking.payment_status === "Verified") {
+                          // If payment received, go to assignment; otherwise, review payment first
+                          if (isPaymentReceived(booking.payment_status)) {
                             // Navigate to unit assignment
                             window.location.href = `/admin/bookings/${booking.booking_id}/assign-units`;
                           } else {
@@ -368,7 +371,9 @@ export function PendingBookingsQueue() {
                           }
                         }}
                       >
-                        {booking.payment_status === "Verified" ? "Assign Cabins" : "Review Payment"}
+                        {isPaymentReceived(booking.payment_status)
+                          ? "Assign Cabins"
+                          : "Review Payment"}
                       </Button>
                     </TableCell>
                   </TableRow>

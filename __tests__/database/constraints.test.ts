@@ -170,8 +170,6 @@ describe("Database Constraint Tests", () => {
       // Try to insert unit request with 0 guests (should fail CHECK constraint)
       const { error } = await supabase.from("guest_booking_unit_requests").insert({
         booking_id: booking_id,
-        unit_type: "Standard",
-        quantity: 1,
         guests_per_unit: 0, // Invalid - violates CHECK (guests_per_unit > 0)
       });
 
@@ -195,8 +193,6 @@ describe("Database Constraint Tests", () => {
       // Try to insert unit request with negative guests (should fail CHECK constraint)
       const { error } = await supabase.from("guest_booking_unit_requests").insert({
         booking_id: booking_id,
-        unit_type: "Standard",
-        quantity: 1,
         guests_per_unit: -5, // Invalid - violates CHECK (guests_per_unit > 0)
       });
 

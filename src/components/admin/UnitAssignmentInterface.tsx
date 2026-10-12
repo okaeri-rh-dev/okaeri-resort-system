@@ -90,8 +90,8 @@ const availableUnitsQuery = (checkInDate: string, checkOutDate: string) =>
       if (!response.ok) {
         const errorData = (await response
           .json()
-          .catch(() => ({ error: "Failed to fetch units" }))) as { error?: string };
-        throw new Error(errorData.error || "Failed to fetch available units");
+          .catch(() => ({ error: "Failed to fetch cabins" }))) as { error?: string };
+        throw new Error(errorData.error || "Failed to fetch available cabins");
       }
 
       const data = (await response.json()) as { units: AvailableUnit[] };
@@ -153,7 +153,7 @@ export function UnitAssignmentInterface({
         const errorData = (await response.json().catch(() => ({ error: "Assignment failed" }))) as {
           error?: string;
         };
-        throw new Error(errorData.error || "Failed to assign units");
+        throw new Error(errorData.error || "Failed to assign cabins");
       }
 
       return response.json();
@@ -173,11 +173,11 @@ export function UnitAssignmentInterface({
       let errorMessage = error.message;
 
       if (errorMessage.includes("payment")) {
-        errorMessage = "Payment verification required before unit assignment";
+        errorMessage = "Payment verification required before cabin assignment";
       } else if (errorMessage.includes("conflict")) {
-        errorMessage = "Unit conflict detected. Please refresh and try again";
+        errorMessage = "Cabin conflict detected. Please refresh and try again";
       } else if (errorMessage.includes("all-or-nothing")) {
-        errorMessage = "All units must be assigned together";
+        errorMessage = "All cabins must be assigned together";
       }
 
       setAssignmentError(errorMessage);
@@ -220,7 +220,7 @@ export function UnitAssignmentInterface({
     if (selectedCount === 0) {
       return {
         isValid: false,
-        message: `Select ${requiredCount} unit${requiredCount > 1 ? "s" : ""} to proceed`,
+        message: `Select ${requiredCount} cabin${requiredCount > 1 ? "s" : ""} to proceed`,
         variant: "destructive",
         isSuccess: false,
       };
@@ -229,7 +229,7 @@ export function UnitAssignmentInterface({
     if (selectedCount < requiredCount) {
       return {
         isValid: false,
-        message: `Must select ALL ${requiredCount} units (currently selected: ${selectedCount})`,
+        message: `Must select ALL ${requiredCount} cabins (currently selected: ${selectedCount})`,
         variant: "destructive",
         isSuccess: false,
       };
@@ -238,7 +238,7 @@ export function UnitAssignmentInterface({
     if (selectedCount > requiredCount) {
       return {
         isValid: false,
-        message: `Too many units selected. Need exactly ${requiredCount}, but selected ${selectedCount}`,
+        message: `Too many cabins selected. Need exactly ${requiredCount}, but selected ${selectedCount}`,
         variant: "destructive",
         isSuccess: false,
       };
@@ -246,7 +246,7 @@ export function UnitAssignmentInterface({
 
     return {
       isValid: true,
-      message: "All units selected - ready to assign",
+      message: "All cabins selected - ready to assign",
       variant: "default",
       isSuccess: true,
     };
@@ -321,7 +321,7 @@ export function UnitAssignmentInterface({
         <CardContent className="flex items-center justify-center py-12">
           <div className="flex items-center gap-3 text-neutral-600">
             <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-sm font-medium">Loading available units...</span>
+            <span className="text-sm font-medium">Loading available cabins...</span>
           </div>
         </CardContent>
       </Card>
@@ -335,7 +335,7 @@ export function UnitAssignmentInterface({
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              Failed to load available units. {fetchError.message}
+              Failed to load available cabins. {fetchError.message}
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -350,7 +350,7 @@ export function UnitAssignmentInterface({
           <Alert variant="warning">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              No units available for the selected dates ({checkInDate} to {checkOutDate}). Please
+              No cabins available for the selected dates ({checkInDate} to {checkOutDate}). Please
               contact the guest to reschedule.
             </AlertDescription>
           </Alert>
@@ -436,7 +436,7 @@ export function UnitAssignmentInterface({
             Available Cabins ({availableUnits.length})
           </CardTitle>
           <CardDescription className="text-sm">
-            Click to select units for assignment. All units must be selected before proceeding.
+            Click to select cabins for assignment. All cabins must be selected before proceeding.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-4">
@@ -450,7 +450,7 @@ export function UnitAssignmentInterface({
                   role="button"
                   tabIndex={0}
                   aria-pressed={isSelected}
-                  aria-label={`Unit ${unit.unit_number} - ${unit.unit_type}, ${isSelected ? "selected" : "not selected"}`}
+                  aria-label={`Cabin ${unit.unit_number} - ${unit.unit_type}, ${isSelected ? "selected" : "not selected"}`}
                   onClick={() => handleUnitToggle(unit.unit_id)}
                   onKeyDown={(e) => handleKeyboardToggle(e, unit.unit_id)}
                   className={cn(
@@ -536,14 +536,14 @@ export function UnitAssignmentInterface({
           ) : (
             <>
               <CheckCircle2 className="h-4 w-4" />
-              Assign {requiredCount} Unit{requiredCount > 1 ? "s" : ""} to Booking
+              Assign {requiredCount} Cabin{requiredCount > 1 ? "s" : ""} to Booking
             </>
           )}
         </Button>
 
         {/* Helper Text */}
         <p className="mt-2 text-center text-xs text-neutral-600">
-          This action will immediately assign the selected units and send confirmation to the guest
+          This action will immediately assign the selected cabins and send confirmation to the guest
         </p>
       </div>
 
@@ -551,15 +551,15 @@ export function UnitAssignmentInterface({
       <AlertDialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Unit Assignment</AlertDialogTitle>
+            <AlertDialogTitle>Confirm Cabin Assignment</AlertDialogTitle>
             <AlertDialogDescription>
-              This will assign {selectedUnits.size} unit(s) to booking {bookingId}. This action
+              This will assign {selectedUnits.size} cabin(s) to booking {bookingId}. This action
               cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmAssignment}>Assign Units</AlertDialogAction>
+            <AlertDialogAction onClick={confirmAssignment}>Assign Cabins</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

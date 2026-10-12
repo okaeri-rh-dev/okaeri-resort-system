@@ -22,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ResponsiveDatePicker } from "@/components/ui/responsive-date-picker";
 import { Textarea } from "@/components/ui/textarea";
+import { pickedDay } from "@/lib/bookings/stay";
 import { logger } from "@/lib/logger";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
 import { hasProperty, isObject } from "@/lib/type-guards";
@@ -211,8 +212,8 @@ export function MultiUnitGuestBookingForm() {
       // Convert Date objects to ISO strings for API
       const payload = {
         ...sanitized,
-        check_in: data.check_in.toISOString(),
-        check_out: data.check_out.toISOString(),
+        check_in: pickedDay(data.check_in),
+        check_out: pickedDay(data.check_out),
         // Convert null to undefined for payment_proof_url (API expects undefined, not null)
         payment_proof_url: data.payment_proof_url || undefined,
         turnstile_token: effectiveToken,

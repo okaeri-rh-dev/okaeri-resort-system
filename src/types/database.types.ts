@@ -3,17 +3,20 @@
 // Import database types from this module, not from database.generated.ts.
 
 import type { AppRoleName } from "./app-role";
-import type { BookingStatus } from "./booking-status";
+import type { BookingStatus, PaymentStatus } from "./booking-status";
 import type { Database as GeneratedDatabase } from "./database.generated";
 
 export type { Json } from "./database.generated";
 type GeneratedPublic = GeneratedDatabase["public"];
 
-// bookings and app_roles have the CHECKs; the two availability relations copy
+// bookings and app_roles have the CHECKs (payment_status is derived, docs/adr/0001); the two availability relations copy
 // their status from bookings. bookings_conflict_backup is a snapshot with no
 // constraint and stays string.
 type NarrowedColumns = {
-  bookings: { booking_status: BookingStatus };
+  bookings: {
+    booking_status: BookingStatus;
+    payment_status: PaymentStatus;
+  };
   booking_unit_availability: { booking_status: BookingStatus };
   public_unit_availability: { booking_status: BookingStatus };
   app_roles: { role: AppRoleName };

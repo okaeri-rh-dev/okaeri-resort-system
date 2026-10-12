@@ -28,7 +28,6 @@ local-only column booking_pricing_analytics.season_names jsonb
 local-only column booking_pricing_analytics.subtotal numeric
 local-only column booking_pricing_analytics.total_amount numeric(10,2)
 local-only column bookings.pricing_metadata jsonb
-local-only column bookings.pricing_snapshot jsonb
 local-only column seasonal_rates.color text
 local-only column seasonal_rates.created_at timestamp with time zone default now()
 local-only column seasonal_rates.description text
@@ -63,47 +62,13 @@ local-only trigger CREATE TRIGGER audit_seasonal_rates_trigger AFTER INSERT OR D
 local-only trigger CREATE TRIGGER update_seasonal_rates_updated_at BEFORE UPDATE ON public.seasonal_rates FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()
 local-only view booking_pricing_analytics md5=ceb110890f81b1ab97ce087ba71961c2
 
-# Online booking and unit assignment (20251028154441, 20251104184719, 20251108000000 recorded as applied, objects absent
-# on prod). Deferred: see plan, 'Online booking left visible, not hidden'.
-local-only column booking_units.check_in_date date
-local-only column booking_units.check_out_date date
-local-only column booking_units.status character varying(20) default 'confirmed'::character varying
-local-only column bookings.discount_percent numeric(5,2)
-local-only column bookings.downpayment_required numeric(10,2)
-local-only column bookings.requested_unit_count integer default 1
-local-only column bookings.unit_assignment_status character varying(20) default 'pending'::character varying
-local-only column guest_booking_unit_requests.booking_id uuid not null
-local-only column guest_booking_unit_requests.created_at timestamp with time zone default now()
-local-only column guest_booking_unit_requests.guests_per_unit integer not null
-local-only column guest_booking_unit_requests.id uuid not null default gen_random_uuid()
-local-only column guest_booking_unit_requests.quantity integer not null
-local-only column guest_booking_unit_requests.special_requests text
-local-only column guest_booking_unit_requests.unit_type character varying(50) not null
-local-only column guest_booking_unit_requests.updated_at timestamp with time zone default now()
-local-only constraint bookings.payment_before_assignment CHECK unit_assignment_status <> 'assigned' OR payment_status = ANY ARRAY['Verified', 'Completed', 'Paid']
-local-only constraint guest_booking_unit_requests.guest_booking_unit_requests_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES bookings(booking_id) ON DELETE CASCADE
-local-only constraint guest_booking_unit_requests.guest_booking_unit_requests_guests_per_unit_check CHECK guests_per_unit > 0
-local-only constraint guest_booking_unit_requests.guest_booking_unit_requests_pkey PRIMARY KEY (id)
-local-only constraint guest_booking_unit_requests.guest_booking_unit_requests_quantity_check CHECK quantity > 0
-local-only function assign_units_to_booking(p_booking_id uuid, p_unit_ids uuid[]) returns void md5=3dbf3f4be261ef75d0e9bda857bf39f3
-local-only function calculate_booking_pricing(p_unit_requests jsonb, p_check_in date, p_check_out date) returns jsonb md5=75cebd34662be2e031fbef6ad4ab69c6
-local-only function check_units_available_for_booking(p_booking_id uuid, p_unit_ids uuid[]) returns TABLE(unit_id uuid, is_available boolean, conflict_booking_id uuid) md5=2eb42907b7fa9cbb624660808ecba1b4
+# Payment proof cleanup (20251104184719 recorded as applied, function absent on prod). Deferred: guardrails
+# plan deferred list item 3 (needs a retention rule).
 local-only function cleanup_expired_payment_proofs() returns TABLE(file_path text) md5=d02f4bfeac7e7ae3a8ecbeefda13dbd0
-local-only function create_guest_booking(p_guest_data jsonb, p_booking_data jsonb, p_unit_requests jsonb, p_idempotency_key uuid) returns jsonb md5=ccbcd2d0efa4af5dc7f501d8f8705d5c
-local-only function create_guest_booking(p_turnstile_token text, p_booking_data jsonb, p_unit_requests jsonb, p_guest_data jsonb) returns jsonb md5=7204ee6386a1854ff6dad988a08aef6d
-local-only index CREATE INDEX idx_booking_units_dates_status ON public.booking_units USING btree (unit_id, check_in_date, check_out_date, status) WHERE ((status)::text = ANY ((ARRAY['confirmed'::character varying, 'checked_in'::character varying])::text[]))
-local-only index CREATE INDEX idx_bookings_assignment_pending ON public.bookings USING btree (unit_assignment_status, created_at DESC) WHERE ((is_guest_booking = true) AND (is_multi_unit = true) AND ((unit_assignment_status)::text = 'pending'::text))
-local-only index CREATE INDEX idx_bookings_assignment_status ON public.bookings USING btree (unit_assignment_status, payment_status) WHERE ((unit_assignment_status)::text = 'pending'::text)
-local-only index CREATE INDEX idx_bookings_multi_unit ON public.bookings USING btree (is_multi_unit) WHERE (is_multi_unit = true)
-local-only index CREATE INDEX idx_guest_booking_requests_booking ON public.guest_booking_unit_requests USING btree (booking_id)
-local-only index CREATE INDEX idx_guest_booking_unit_requests_booking_id ON public.guest_booking_unit_requests USING btree (booking_id)
-local-only index CREATE UNIQUE INDEX guest_booking_unit_requests_pkey ON public.guest_booking_unit_requests USING btree (id)
-local-only policy booking_units.authenticated_users_insert_booking_units a roles=authenticated md5=249a934a6f1242b25f2098c017accd93
-local-only policy guest_booking_unit_requests.authenticated_users_read_unit_requests r roles=authenticated md5=eb28d87532d6edd9b635727493ef89f7
-local-only policy guest_booking_unit_requests.guest_booking_requests_insert_policy a roles=authenticated,service_role md5=1935a26a902396cbd009a466619d5032
-local-only policy guest_booking_unit_requests.guest_booking_requests_select_policy r roles=authenticated md5=34bf058956757491419b0cbb53c6a030
+
+# pricing_config admin policy (20251108000000) absent on prod. Unused: pricing writes go through the
+# service role (functions/api/pricing/update-config.ts). Drop it locally or leave as is.
 local-only policy pricing_config.pricing_config_admin_policy * roles=authenticated md5=81a979dae2eb74bd7947a276066fba2e
-local-only relation guest_booking_unit_requests kind=r rls=t
 
 # Role helpers has_any_role / is_staff (20251018004757) absent on prod; no prod policy references them.
 local-only function has_any_role(check_user_id uuid) returns boolean md5=df42017d724ddfa6a54c88b13fcc334d

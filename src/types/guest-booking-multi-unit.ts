@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { isManilaDay, manilaDayOf } from "@/lib/bookings/stay";
+
 // ============================================
 // Request Schemas (Zod Validation)
 // ============================================
@@ -31,14 +33,9 @@ export const multiUnitBookingSchema = z
 
     check_in: z
       .string()
-      .datetime()
-      .refine((date) => {
-        const checkIn = new Date(date);
-        const now = new Date();
-        now.setHours(0, 0, 0, 0); // Compare dates only, not times
-        return checkIn >= now;
-      }, "Check-in must be today or in the future"),
-    check_out: z.string().datetime(),
+      .refine(isManilaDay, "Expected a YYYY-MM-DD day")
+      .refine((day) => day >= manilaDayOf(new Date()), "Check-in must be today or in the future"),
+    check_out: z.string().refine(isManilaDay, "Expected a YYYY-MM-DD day"),
 
     // Array: each entry = 1 unit (NO quantity field)
     unit_requests: z
@@ -52,7 +49,7 @@ export const multiUnitBookingSchema = z
     idempotency_key: z.string().uuid().optional(),
     payment_proof_url: z.string().min(1, "Payment proof is required").optional(), // Chunk 008: Payment proof upload
   })
-  .refine((data) => new Date(data.check_out) > new Date(data.check_in), {
+  .refine((data) => data.check_out > data.check_in, {
     message: "Check-out must be after check-in",
     path: ["check_out"],
   });

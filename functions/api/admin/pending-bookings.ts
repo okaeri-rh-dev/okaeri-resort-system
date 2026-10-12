@@ -3,7 +3,7 @@
  *
  * GET /api/admin/pending-bookings
  *
- * Fetches all pending multi-unit bookings with urgency scoring
+ * Fetches all pending guest bookings with urgency scoring
  *
  * Authentication: JWT required (admin role)
  * Source: docs/implementation/guest-booking-multi-unit/04-admin-interface.md lines 150-167
@@ -114,7 +114,6 @@ export async function onRequest(context: {
         )
       `
       )
-      .eq("is_multi_unit", true)
       .eq("is_guest_booking", true)
       .eq("unit_assignment_status", "pending")
       .order("created_at", { ascending: false });

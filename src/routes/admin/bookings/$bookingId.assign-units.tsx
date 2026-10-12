@@ -2,7 +2,7 @@
  * Admin Unit Assignment Route
  *
  * Route: /admin/bookings/$bookingId/assign-units
- * Displays unit assignment interface for pending multi-unit bookings
+ * Displays unit assignment interface for pending guest bookings
  * with payment verification and assignment guards.
  *
  * Guards (render-based):
@@ -22,8 +22,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthToken } from "@/hooks/useAuthToken";
+import { isPaymentReceived, manilaDayOf } from "@/lib/bookings";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { adminBookingDetailQuery } from "@/stores/useBookingStore";
+import type { PaymentStatus } from "@/types";
 
 // ============================================
 // Types
@@ -42,7 +44,7 @@ interface BookingDetail {
   check_in: string;
   check_out: string;
   total_amount: number;
-  payment_status: "Pending" | "Verified" | "Completed" | "Rejected"; // Added Completed to match DB function
+  payment_status: PaymentStatus;
   unit_assignment_status: "pending" | "assigned" | "partial";
   payment_proof_url: string | null;
   requested_unit_count: number;
@@ -109,7 +111,7 @@ function PaymentNotVerifiedGuard({
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-yellow-900">
-            Payment must be verified before assigning units to this booking. Please verify the
+            Payment must be verified before assigning cabins to this booking. Please verify the
             payment proof first.
           </p>
           <div className="flex gap-3">
@@ -364,8 +366,7 @@ function AssignUnitsPage() {
     return <ErrorState error={error} bookingId={bookingId} />;
   }
 
-  // Payment verification guard - Accept both Verified and Completed statuses
-  if (!["Verified", "Completed"].includes(booking.payment_status)) {
+  if (!isPaymentReceived(booking.payment_status)) {
     return (
       <PaymentNotVerifiedGuard bookingId={bookingId} bookingReference={booking.booking_reference} />
     );
@@ -435,15 +436,15 @@ function AssignUnitsPage() {
         <CheckCircle2 className="h-4 w-4 text-green-600" />
         <AlertTitle className="text-green-900">Payment Verified</AlertTitle>
         <AlertDescription className="text-green-800">
-          Payment has been verified. You can now proceed with unit assignment.
+          Payment has been verified. You can now proceed with cabin assignment.
         </AlertDescription>
       </Alert>
 
       {/* Unit Assignment Interface */}
       <UnitAssignmentInterface
         bookingId={bookingId}
-        checkInDate={booking.check_in}
-        checkOutDate={booking.check_out}
+        checkInDate={manilaDayOf(booking.check_in)}
+        checkOutDate={manilaDayOf(booking.check_out)}
         unitRequests={booking.unit_requests || []}
         onAssignmentSuccess={handleAssignmentSuccess}
       />

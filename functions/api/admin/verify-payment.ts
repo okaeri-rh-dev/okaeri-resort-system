@@ -19,7 +19,8 @@
 
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 
-import type { TablesInsert, TablesUpdate } from "@/types/database.types";
+import type { PaymentStatus } from "@/types";
+import type { TablesInsert } from "@/types/database.types";
 
 import { MANAGER_OR_ABOVE } from "../../lib/rbac";
 import { lookupUserRole } from "../../lib/role-lookup";
@@ -204,7 +205,7 @@ export async function onRequest(context: {
     // Fetch booking to verify existence and current status
     const { data: booking, error: bookingError } = await supabase
       .from("bookings")
-      .select("payment_status")
+      .select("payment_status, downpayment_required, payment_method, payment_proof_url")
       .eq("booking_id", body.booking_id)
       .maybeSingle();
 
@@ -250,27 +251,53 @@ export async function onRequest(context: {
       );
     }
 
-    // Determine new payment status
-    const newPaymentStatus = body.action === "verify" ? "Verified" : "Rejected";
+    // Verify records the downpayment; a trigger derives payment_status (docs/adr/0001).
+    // Reject leaves the booking and its proof as they are; the reason goes to the audit log.
+    let newPaymentStatus: PaymentStatus = booking.payment_status;
+    if (body.action === "verify") {
+      const downpayment = booking.downpayment_required;
+      if (downpayment === null) {
+        return new Response(
+          JSON.stringify({
+            error: "Conflict",
+            message: "This booking has no downpayment to record",
+          }),
+          {
+            status: 409,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
 
-    // Update booking payment status
-    const { error: updateError } = await supabase
-      .from("bookings")
-      .update({ payment_status: newPaymentStatus } satisfies TablesUpdate<"bookings">)
-      .eq("booking_id", body.booking_id);
+      const { error: paymentError } = await supabase.from("payments").insert({
+        booking_id: body.booking_id,
+        amount: downpayment,
+        payment_method: booking.payment_method,
+        proof_url: booking.payment_proof_url,
+        status: "Active",
+        notes: "Online booking downpayment",
+      } satisfies TablesInsert<"payments">);
 
-    if (updateError) {
-      console.error("Failed to update booking:", updateError);
-      return new Response(
-        JSON.stringify({
-          error: "Internal Server Error",
-          message: "Failed to update payment status",
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      if (paymentError) {
+        console.error("Failed to record payment:", paymentError);
+        return new Response(
+          JSON.stringify({
+            error: "Internal Server Error",
+            message: "Failed to record the downpayment",
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      const { data: refreshed } = await supabase
+        .from("bookings")
+        .select("payment_status")
+        .eq("booking_id", body.booking_id)
+        .single();
+      newPaymentStatus = refreshed?.payment_status ?? booking.payment_status;
     }
 
     // Prepare audit log metadata

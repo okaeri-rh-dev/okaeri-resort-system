@@ -1,6 +1,7 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
+import { toStayInstants } from "@/lib/bookings/stay";
 import { checkKVRateLimit } from "@/lib/kv-rate-limit";
 import { sanitizeNameWorker, sanitizeTextWorker } from "@/lib/security/sanitize-worker";
 import { getClientIp, verifyTurnstile } from "@/lib/turnstile";
@@ -11,6 +12,7 @@ import {
   type MultiUnitBookingResponse,
 } from "@/types/guest-booking-multi-unit";
 
+import { toGuestBookingData } from "../../lib/guest-booking-data";
 import { calculateBookingPrice } from "../../lib/pricing";
 
 /**
@@ -243,8 +245,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     // 6. Calculate pricing using Workers pricing library
     // Calculate for each unit and aggregate
-    const checkIn = new Date(data.check_in);
-    const checkOut = new Date(data.check_out);
+    const stay = toStayInstants(data.check_in, data.check_out);
+    const checkIn = new Date(stay.check_in);
+    const checkOut = new Date(stay.check_out);
 
     const unitRequestsJson = data.unit_requests.map((r) => ({
       guests_per_unit: r.guests_per_unit,
@@ -353,21 +356,19 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     const { data: result, error: createError } = await supabase.rpc("create_guest_booking", {
       p_turnstile_token: data.turnstile_token || "dev-mock-token",
-      p_booking_data: {
-        booking_reference: bookingReference,
-        guest_name: sanitizedData.guest_name,
+      p_booking_data: toGuestBookingData({
+        bookingReference,
+        guestName: sanitizedData.guest_name,
         email: data.email,
-        phone_number: data.phone_number,
-        check_in: data.check_in, // Fixed: was check_in_date
-        check_out: data.check_out, // Fixed: was check_out_date
-        num_guests: totalGuests,
-        total_amount: pricing.total,
-        discount_percent: pricing.discount?.percent || null,
-        discount_amount: pricing.discount?.amount || null,
-        downpayment_required: pricing.downpayment_required,
-        pricing_snapshot: pricing,
-        special_requests: sanitizedData.special_requests || null,
-      },
+        phoneNumber: data.phone_number,
+        checkInDay: data.check_in,
+        checkOutDay: data.check_out,
+        numGuests: totalGuests,
+        specialRequests: sanitizedData.special_requests || null,
+        pricing,
+        paymentProofUrl: data.payment_proof_url ?? null,
+        idempotencyKey,
+      }),
       p_unit_requests: unitRequestsJson,
       p_guest_data: null, // Guest data is included in p_booking_data for simplified interface
     });
@@ -403,7 +404,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
       // Determine appropriate error response based on PostgreSQL error code
       let errorType: (typeof ERROR_CODES)[keyof typeof ERROR_CODES] = ERROR_CODES.DATABASE_ERROR;
-      let userMessage = "Booking creation failed. Please try again.";
+      let userMessage = "Your booking was not saved. Nothing was charged; please try again.";
 
       if (errorCode === "23505") {
         // Unique violation - likely duplicate booking
@@ -493,7 +494,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return Response.json(
       {
         success: false,
-        error: "Booking creation failed. Please try again later.",
+        error: "Your booking was not saved. Please try again later.",
         error_code: ERROR_CODES.INTERNAL_ERROR,
         details: {
           message: errorMessage,

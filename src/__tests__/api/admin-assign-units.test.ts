@@ -58,4 +58,15 @@ describe("POST /api/admin/assign-units RPC error mapping", () => {
     const body = (await response.json()) as { error: string };
     expect(body.error).toBe("Booking conflict");
   });
+
+  it("maps a wrong cabin count to 400", async () => {
+    rpcError = { message: "Must assign exactly 2 cabins, got 1", code: "P0001" };
+
+    const response = await assignUnits();
+
+    expect(response.status).toBe(400);
+    const body = (await response.json()) as { error: string; details: string };
+    expect(body.error).toBe("Wrong number of cabins");
+    expect(body.details).toBe("Must assign exactly 2 cabins, got 1");
+  });
 });

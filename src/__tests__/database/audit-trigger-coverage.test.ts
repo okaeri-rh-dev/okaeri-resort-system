@@ -24,8 +24,6 @@ const UNAUDITED_TABLES: Record<string, string> = {
   booking_unit_availability:
     "derived from booking_units by its sync triggers; booking_units is audited",
   guest_assignments: "no writers in the app or functions",
-  guest_booking_unit_requests:
-    "online booking flow, absent in prod and deferred (plan 2026-10-03, Decisions & Deferrals)",
 };
 
 const PG_HOST = "127.0.0.1";
