@@ -10,8 +10,6 @@ prod-only function archive_audit_logs(p_before_date timestamp with time zone) re
 prod-only function restore_logs_from_archive(p_archive_month date) returns integer md5=68726ad1fd70d03f9ab550861ed8ffc7
 
 # audit_logs_archive insert policy: roles=public in migrations (20251006093452), authenticated on prod.
-local-only policy audit_logs_archive.audit_logs_archive_insert_policy a roles=public md5=663636083cb0c137dbd994f4505e5127
-prod-only policy audit_logs_archive.audit_logs_archive_insert_policy a roles=authenticated md5=b706178b472b53695b474eedc8bb3fd3
 
 # Seasonal pricing (20251106000000, 20251107000000 recorded as applied, objects absent on prod). Deferred: see plan,
 # 'Admin seasonal-rates UI left as is'.
@@ -82,7 +80,6 @@ local-only column guest_booking_unit_requests.quantity integer not null
 local-only column guest_booking_unit_requests.special_requests text
 local-only column guest_booking_unit_requests.unit_type character varying(50) not null
 local-only column guest_booking_unit_requests.updated_at timestamp with time zone default now()
-local-only constraint booking_units.booking_units_no_double_booking EXCLUDE USING gist (unit_id WITH =, daterange(check_in_date, check_out_date, '[)'::text) WITH &&) WHERE (((status)::text = ANY ((ARRAY['confirmed'::character varying, 'checked_in'::character varying])::text[])))
 local-only constraint bookings.payment_before_assignment CHECK unit_assignment_status <> 'assigned' OR payment_status = ANY ARRAY['Verified', 'Completed', 'Paid']
 local-only constraint guest_booking_unit_requests.guest_booking_unit_requests_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES bookings(booking_id) ON DELETE CASCADE
 local-only constraint guest_booking_unit_requests.guest_booking_unit_requests_guests_per_unit_check CHECK guests_per_unit > 0
@@ -94,7 +91,6 @@ local-only function check_units_available_for_booking(p_booking_id uuid, p_unit_
 local-only function cleanup_expired_payment_proofs() returns TABLE(file_path text) md5=d02f4bfeac7e7ae3a8ecbeefda13dbd0
 local-only function create_guest_booking(p_guest_data jsonb, p_booking_data jsonb, p_unit_requests jsonb, p_idempotency_key uuid) returns jsonb md5=ccbcd2d0efa4af5dc7f501d8f8705d5c
 local-only function create_guest_booking(p_turnstile_token text, p_booking_data jsonb, p_unit_requests jsonb, p_guest_data jsonb) returns jsonb md5=7204ee6386a1854ff6dad988a08aef6d
-local-only index CREATE INDEX booking_units_no_double_booking ON public.booking_units USING gist (unit_id, daterange(check_in_date, check_out_date, '[)'::text)) WHERE ((status)::text = ANY ((ARRAY['confirmed'::character varying, 'checked_in'::character varying])::text[]))
 local-only index CREATE INDEX idx_booking_units_dates_status ON public.booking_units USING btree (unit_id, check_in_date, check_out_date, status) WHERE ((status)::text = ANY ((ARRAY['confirmed'::character varying, 'checked_in'::character varying])::text[]))
 local-only index CREATE INDEX idx_bookings_assignment_pending ON public.bookings USING btree (unit_assignment_status, created_at DESC) WHERE ((is_guest_booking = true) AND (is_multi_unit = true) AND ((unit_assignment_status)::text = 'pending'::text))
 local-only index CREATE INDEX idx_bookings_assignment_status ON public.bookings USING btree (unit_assignment_status, payment_status) WHERE ((unit_assignment_status)::text = 'pending'::text)
