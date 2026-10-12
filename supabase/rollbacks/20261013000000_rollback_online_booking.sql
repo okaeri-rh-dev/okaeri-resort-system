@@ -1,9 +1,13 @@
 -- ============================================
 -- ROLLBACK for 20261013000000_online_booking.sql
 -- ============================================
--- Returns prod to its state before the migration (prod had none of these objects).
--- Deletes guest booking data: export guest_booking_unit_requests and the four bookings
--- columns first if any real guest booking exists. Local: use `supabase db reset` instead.
+-- Returns prod's schema to its state before the migration (prod had none of these objects).
+-- Drops guest_booking_unit_requests and the four bookings columns, with their data. It does
+-- NOT delete guest bookings: their bookings rows, assigned booking_units, availability rows
+-- and idempotency_keys stay as ordinary bookings. Before running it, export
+-- guest_booking_unit_requests and the four columns, and cancel or delete any guest booking
+-- that should not survive. payment_before_assignment is not restored (prod never had it).
+-- Local: use `supabase db reset` instead.
 -- ============================================
 
 BEGIN;
