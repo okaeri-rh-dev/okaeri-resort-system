@@ -8,7 +8,7 @@ import { uploadReceipt } from "@/lib/storage-security";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import { toISODateString } from "@/lib/timezone";
 import type { Expense } from "@/types";
-import type { TablesInsert } from "@/types/database.types";
+import type { TablesInsert, TablesUpdate } from "@/types/database.types";
 
 // ============================================
 // ZUSTAND STORE
@@ -284,7 +284,7 @@ export const useCreateExpense = () => {
       }
 
       // Map date to expense_date for database insertion
-      const { date, ...restData } = data;
+      const { date, account: _account, ...restData } = data;
       const { data: newExpense, error } = await supabase
         .from("expenses")
         .insert({
@@ -349,13 +349,16 @@ export const useUpdateExpense = () => {
       }
 
       // Map date to expense_date if it exists in updates
-      const { date, ...restUpdates } = updates;
-      const dbUpdates: Record<string, unknown> = {
+      const { date, description, account: _account, ...restUpdates } = updates;
+      const dbUpdates: TablesUpdate<"expenses"> = {
         ...restUpdates,
         receipt_url,
       };
       if (date !== undefined) {
         dbUpdates.expense_date = date;
+      }
+      if (description !== undefined) {
+        dbUpdates.description = description ?? "";
       }
 
       const { data, error } = await supabase
