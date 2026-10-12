@@ -19,17 +19,17 @@ Blockers found 2026-10-11: shared test-account password in docs (owner/admin/sta
 - [x] Old repo renamed to `okaeri-resort-system-archive` (private, Actions off); new private `okaeri-resort-system` holds the rewritten `main` (c759e2d); `jrga03` added as collaborator
 - [x] New repo secrets: the 7 the workflows use; `CRON_SECRET` and the `drift_reader` password rotated, new Cloudflare API token
 - [x] Local checkout moved to `../okaeri-resort-system-archive` (origin repointed to the archive); fresh clone at the original path with local env files copied
-- [ ] User: run the `alter role drift_reader password` SQL on prod (if not done)
+- [x] User: run the `alter role drift_reader password` SQL on prod (proven by `prod-drift` success, run 38196613733)
 - [x] User: enable Actions on the new repo (2026-10-12; runs still blocked by the private-repo minutes quota until public)
 - [x] Manual deploy of c759e2d (deployment `d3b745da-2d36-406e-8668-7523a98e4a87`; rollback `923ceccb-ebb1-4e17-8c64-1d7f56ea0d10` = 79396f4); live entry `index-BGcGYCc4.js`, `/api/health` 200
 - [x] Fix `audit_logs` forged inserts (guardrails Deferred list #1): migration `20261012000000_audit_logs_block_client_writes.sql` + `audit-logs-write-lockdown.test.ts` (585b7f0); local `test:db` 102/102, `verify` exit 0; pushed to prod 2026-10-12
 - [x] User: confirm prod grants on `audit_logs`/`audit_logs_archive` (2026-10-12: `REFERENCES,SELECT,TRIGGER` for `anon`/`authenticated`; no write privileges)
 - [x] Correct the stale "P0 is only half-closed" line in `docs/whole-app-audit-2026-07-21.md` (8cfd2c1)
-- [ ] User: Settings → Actions → require approval for fork PR workflows from all outside collaborators
-- [ ] After going public: confirm `Scheduled Cleanup Tasks` passes (proves the rotated `CRON_SECRET`) and `infra-health` passes (proves the drift password)
+- [ ] User: Settings → Actions → require approval for fork PR workflows from all outside collaborators (only possible once public; still `first_time_contributors` on 2026-10-12)
+- [x] After going public: `Scheduled Cleanup Tasks` idempotency run HTTP 200 (run 38196269890); `infra-health` all jobs green on 0b07ca5 after dropping 4 fixed baseline entries
 - [ ] User: delete the old Cloudflare API token once the first deploy succeeds
 - [ ] User: change passwords of the 3 prod accounts whose hashes were in the old seed
-- [ ] Switch visibility to public; confirm the next push runs `ci.yml` + deploy without billing
+- [x] Switch visibility to public (2026-10-12); push of 7eb529b ran the quality gate + deploy without billing (deployment ed4c2244, `/api/health` 200)
 
 ## Decisions & Deferrals
 
