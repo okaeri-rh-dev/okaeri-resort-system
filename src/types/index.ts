@@ -1,6 +1,6 @@
 // Core type definitions for Okaeri Resort System
 
-import type { BookingStatus } from "./booking-status";
+import type { BookingStatus, PaymentStatus } from "./booking-status";
 
 // ============================================
 // UNIT TYPES
@@ -45,9 +45,13 @@ export interface Guest {
 // ============================================
 // BOOKING TYPES
 // ============================================
-export { BOOKING_STATUSES, type BookingStatus } from "./booking-status";
+export {
+  BOOKING_STATUSES,
+  type BookingStatus,
+  PAYMENT_STATUSES,
+  type PaymentStatus,
+} from "./booking-status";
 export { APP_ROLE_NAMES } from "./app-role";
-export type PaymentStatus = "Pending" | "Partial" | "Completed" | "Refunded";
 export type PaymentMethod = "Cash" | "GCash" | "BankTransfer" | "Card" | "Other";
 export type PaymentRecordStatus = "Active" | "Deleted" | "Refunded";
 
