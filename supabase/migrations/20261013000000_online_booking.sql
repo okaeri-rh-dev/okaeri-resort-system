@@ -149,7 +149,6 @@ DECLARE
     v_booking public.bookings%ROWTYPE;
     v_unit_count INTEGER := COALESCE(array_length(p_unit_ids, 1), 0);
     v_quote JSONB;
-    v_position INTEGER;
     v_subtotal NUMERIC(10,2);
     v_extra NUMERIC(10,2);
 BEGIN
@@ -203,5 +202,24 @@ $$ LANGUAGE plpgsql SET search_path = '';
 
 REVOKE ALL ON FUNCTION public.assign_units_to_booking(UUID, UUID[]) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.assign_units_to_booking(UUID, UUID[]) TO service_role;
+
+-- 5. Unfinished objects nothing calls (local only; prod never had them)
+DROP FUNCTION IF EXISTS public.create_guest_booking(JSONB, JSONB, JSONB, UUID);
+DROP FUNCTION IF EXISTS public.calculate_booking_pricing(JSONB, DATE, DATE);
+DROP FUNCTION IF EXISTS public.check_units_available_for_booking(UUID, UUID[]);
+
+-- Let any signed-in user add booking_units to any booking; booking_units_insert_staff covers staff.
+DROP POLICY IF EXISTS authenticated_users_insert_booking_units ON public.booking_units;
+
+-- Always NULL; booking_unit_availability is the overlap guard (20261011120000).
+DROP INDEX IF EXISTS public.idx_booking_units_dates_status;
+ALTER TABLE public.booking_units
+    DROP COLUMN IF EXISTS check_in_date,
+    DROP COLUMN IF EXISTS check_out_date,
+    DROP COLUMN IF EXISTS status;
+
+DROP INDEX IF EXISTS public.idx_bookings_assignment_pending;
+DROP INDEX IF EXISTS public.idx_bookings_assignment_status;
+DROP INDEX IF EXISTS public.idx_bookings_multi_unit;
 
 COMMIT;

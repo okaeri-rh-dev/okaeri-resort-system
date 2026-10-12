@@ -388,12 +388,9 @@ export type Database = {
           assigned_guests: number | null;
           booking_id: string;
           booking_unit_id: string;
-          check_in_date: string | null;
-          check_out_date: string | null;
           created_at: string | null;
           extra_person_charge: number | null;
           guest_names: string[] | null;
-          status: string | null;
           subtotal: number;
           unit_id: string;
           unit_notes: string | null;
@@ -405,12 +402,9 @@ export type Database = {
           assigned_guests?: number | null;
           booking_id: string;
           booking_unit_id?: string;
-          check_in_date?: string | null;
-          check_out_date?: string | null;
           created_at?: string | null;
           extra_person_charge?: number | null;
           guest_names?: string[] | null;
-          status?: string | null;
           subtotal: number;
           unit_id: string;
           unit_notes?: string | null;
@@ -422,12 +416,9 @@ export type Database = {
           assigned_guests?: number | null;
           booking_id?: string;
           booking_unit_id?: string;
-          check_in_date?: string | null;
-          check_out_date?: string | null;
           created_at?: string | null;
           extra_person_charge?: number | null;
           guest_names?: string[] | null;
-          status?: string | null;
           subtotal?: number;
           unit_id?: string;
           unit_notes?: string | null;
@@ -1361,10 +1352,6 @@ export type Database = {
       };
       at_manila_time: { Args: { p_instant: string; p_time: string }; Returns: string };
       attach_audit_trigger: { Args: { p_table_name: string }; Returns: undefined };
-      calculate_booking_pricing: {
-        Args: { p_check_in: string; p_check_out: string; p_unit_requests: Json };
-        Returns: Json;
-      };
       can_view_all_audit_logs: { Args: Record<PropertyKey, never>; Returns: boolean };
       check_multi_unit_availability: {
         Args: {
@@ -1389,14 +1376,6 @@ export type Database = {
         };
         Returns: boolean;
       };
-      check_units_available_for_booking: {
-        Args: { p_booking_id: string; p_unit_ids: string[] };
-        Returns: {
-          conflict_booking_id: string;
-          is_available: boolean;
-          unit_id: string;
-        }[];
-      };
       cleanup_expired_idempotency_keys: { Args: Record<PropertyKey, never>; Returns: number };
       cleanup_expired_payment_proofs: {
         Args: Record<PropertyKey, never>;
@@ -1404,25 +1383,15 @@ export type Database = {
           file_path: string;
         }[];
       };
-      create_guest_booking:
-        | {
-            Args: {
-              p_booking_data: Json;
-              p_guest_data: Json;
-              p_idempotency_key: string;
-              p_unit_requests: Json;
-            };
-            Returns: Json;
-          }
-        | {
-            Args: {
-              p_booking_data: Json;
-              p_guest_data?: Json;
-              p_turnstile_token: string;
-              p_unit_requests: Json;
-            };
-            Returns: Json;
-          };
+      create_guest_booking: {
+        Args: {
+          p_booking_data: Json;
+          p_guest_data?: Json;
+          p_turnstile_token: string;
+          p_unit_requests: Json;
+        };
+        Returns: Json;
+      };
       create_multi_unit_booking: {
         Args: { p_booking_data: Json; p_guest_id?: string; p_units: Json[] };
         Returns: string;
