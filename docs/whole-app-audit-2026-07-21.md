@@ -216,7 +216,7 @@ Role levels mirror the frontend route-guards (the app's expressed policy) rather
 
 **Decision (role policy):** allowed-role sets mirror the frontend guards. If the org runs owner/admin-only (no staff/managers), tighten the constants — trivial, flagged for confirmation.
 
-**Still open — P0 is only half-closed:** this fixes the functions API layer. A low-privilege authenticated user can STILL bypass it by hitting Supabase directly with the anon key (coarse RLS = P0 #2). That is **part 2 (RLS hardening)** — a prod migration needing careful design + E2E testing, the remaining escalation path.
+**Closed 2026-07-25 (see below), kept for history — P0 was only half-closed at this point:** this fixes the functions API layer. A low-privilege authenticated user can STILL bypass it by hitting Supabase directly with the anon key (coarse RLS = P0 #2). That is **part 2 (RLS hardening)** — a prod migration needing careful design + E2E testing, the remaining escalation path.
 
 ### 2026-07-31 — Browser-level RLS smoke + payment-proof upload bug fix
 
