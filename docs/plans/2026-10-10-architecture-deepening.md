@@ -72,7 +72,7 @@ Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub 
 - [x] Push 1d after 1c confirms both triggers on prod. Deployed 2026-10-10 by manual `wrangler pages deploy` (deployment `f55fa466`, Production, `main`, `ffc8927`); live `index.html` serves the verified build's entry `index-b2Ix7eyX.js`; `/api/health` 200. Urgent once billing is fixed: until 1d deploys, the deployed client (`4e2abb1`) rewrites `payment_status` after each payment insert with its old recompute, overriding the trigger
 - [x] (`caf64c8`) New: payment list search filters on `reference_number` and sort-by-status orders by `payment_status`; neither is a `payments` column, so both requests fail (`usePaymentStore.ts` `paymentListQuery`). Search now matches booking reference, guest name and notes on the fetched rows; sort uses `payments.status`
 - [x] Grill the booking entity (rounds 1-4 settled 2026-10-11; summary confirmed by the user 2026-10-11)
-- [ ] Booking module: implementation plan `docs/plans/2026-10-11-booking-module.md` (10 tasks; checkboxes tracked there)
+- [x] Booking module: implementation plan `docs/plans/2026-10-11-booking-module.md` (10 tasks; checkboxes tracked there)
   - [x] 1. (`5998f5d`) Stay convention core (`toStayInstants`, 14:00/12:00, settings rule test under `TZ=America/Los_Angeles`)
   - [x] 2. (`5ebc878`, `5a46fc1`) Migration `20261011120000_normalize_booking_stays.sql` + DB tests
   - [x] 3. (`b2023ee`) `createBooking` (server side) + DB tests
@@ -82,13 +82,13 @@ Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub 
   - [x] 7. (`fa8d4e7`, `542f923`) `updateBooking` + edit page
   - [x] 8. (`e7ed7f9`, `8a63830`) Cancel/status via the module; hard delete leaves the UI
   - [x] 9. (`d7b018d`) Readers (night count, list filter, confirmation card)
-  - [ ] 10. Browser check, read-only prod preview, user `db push`, push, manual deploy, post-deploy normalize
+  - [x] 10. Browser check, read-only prod preview, user `db push`, push, manual deploy, post-deploy normalize
 - [ ] Then 4 → 6 on the client; 3 → 2 → 8 on the server
 
-## Resume state (2026-10-11, evening)
+## Resume state (2026-10-13)
 
-- Booking module Tasks 1-9 done on local `main` (unpushed); ticks and commits on the task lines above, ledger in `.superpowers/sdd/progress.md` (git-ignored). Final whole-branch review done; its pre-deploy fixes and decisions are in "Booking module execution (2026-10-11)" below.
-- Next: Task 10 Step 7 of `docs/plans/2026-10-11-booking-module.md` — on or after 2026-10-13, once every family device has accepted the PWA update, the agent re-runs the split query; the user runs `normalize_booking_stays()` if needed. Steps 1-6 done 2026-10-12 (deployed `79396f4`).
+- Booking module (Candidate 1) done: Tasks 1-10 complete, deployed `79396f4`, post-deploy normalize found nothing to fix (2026-10-13); ticks and commits on the task lines above, ledger in `.superpowers/sdd/progress.md` (git-ignored). Final whole-branch review done; its pre-deploy fixes and decisions are in "Booking module execution (2026-10-11)" below.
+- Next: Candidate 4 on the client (order: client 4 → 6; server 3 → 2 → 8), per the task list above.
 - A concurrent session committed into this working tree on 2026-10-11 and its commit crossed with Task 1; reworded to `5998f5d`/`419d12f`. Its orphaned phone-search fix was committed as `7798f7f` (user choice). Commit with `git commit -- <paths>` while other sessions share the tree.
 
 ## Decisions & Deferrals
