@@ -56,3 +56,17 @@ Current entries:
 - Stay within free-tier quotas (Cloudflare KV / email / bandwidth): check `/api/monitoring/check-quotas` before adding chatty features; public endpoints need rate limiting.
 - Financial features are INTERNAL tracking only (expense categories, receipt screenshots, simple revenue summaries for the family). Never implement tax/BIR compliance, withholding tax, official receipts, or government/regulatory reporting — if asked, flag it as out of scope (accountant + dedicated tax software territory).
 - Maintain backwards compatibility when refactoring stores or types.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on okaeri-rh-dev/okaeri-resort-system, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default roles, label string = role name (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
