@@ -6,6 +6,7 @@
  * Retention Rules:
  * - Checked-out bookings: 90 days after check-out date
  * - Cancelled bookings: 30 days after cancellation (updated_at)
+ * Both live in the cleanup_expired_payment_proofs SQL function.
  *
  * Free Tier Impact:
  * - Reduces Supabase Storage usage (1GB free limit)
@@ -13,7 +14,6 @@
  *
  * Alerting Thresholds:
  * - >50 files deleted per week: Investigate for bulk cancellations or policy changes
- * - >100MB freed per week: Verify storage quota not being exceeded
  *
  * Retry Strategy: 3 attempts with exponential backoff (1min, 2min, 3min)
  */
@@ -30,12 +30,6 @@ interface Env {
   ENVIRONMENT?: string;
 }
 
-interface CleanupResult {
-  deleted_count: number;
-  storage_freed_bytes: number;
-  cleaned_at: string;
-}
-
 /**
  * Execute payment proof cleanup
  * Called by Cloudflare Pages cron trigger at 3:00 AM UTC every Sunday
@@ -47,7 +41,6 @@ export async function cleanupPaymentProofs(env: Env): Promise<void> {
   const MAX_RETRIES = 3;
   const RETRY_DELAY_MS = 2000; // 2 seconds base delay (fits within Cloudflare 30s Worker limit)
   const ALERT_THRESHOLD_COUNT = 50; // Alert if >50 files deleted
-  const ALERT_THRESHOLD_BYTES = 104857600; // Alert if >100MB freed
   const logger = createLogger(env);
 
   logger.info("[CRON] Starting payment proof cleanup");
@@ -55,50 +48,38 @@ export async function cleanupPaymentProofs(env: Env): Promise<void> {
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       // Create Supabase admin client with service role key
-      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+      const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
         auth: {
           autoRefreshToken: false,
           persistSession: false,
         },
       });
 
-      // Call PostgreSQL cleanup function
+      // Clears the expired references and returns each file's path in the bucket
       const { data, error } = await supabase.rpc("cleanup_expired_payment_proofs");
 
       if (error) {
         throw new Error(`Database error: ${error.message}`);
       }
 
-      // Parse result from PostgreSQL function
-      const result = (data as CleanupResult & { file_paths?: string[] }) || {
-        deleted_count: 0,
-        storage_freed_bytes: 0,
-        cleaned_at: new Date().toISOString(),
-      };
+      const filePaths = (data ?? []).map((row) => row.file_path);
 
-      const { deleted_count, storage_freed_bytes, file_paths } = result;
-
-      // Delete actual files from Supabase Storage
-      // PostgreSQL function only cleared database references
-      // Now we need to delete the actual files
-      if (file_paths && file_paths.length > 0) {
-        logger.info(`[STORAGE] Deleting ${file_paths.length} files from Supabase Storage...`);
+      if (filePaths.length > 0) {
+        logger.info(`[STORAGE] Deleting ${filePaths.length} files from Supabase Storage...`);
 
         const { error: storageError } = await supabase.storage
           .from("payment-proofs")
-          .remove(file_paths);
+          .remove(filePaths);
 
         if (storageError) {
-          // Log warning but don't fail entire cleanup
-          // Orphaned files will be caught in next cleanup cycle
+          // The database references are already cleared, so these files stay
+          // orphaned until someone removes them by hand.
           logger.warn(
             `[WARN] Storage deletion failed: ${storageError.message}. ` +
-              `Affected files: ${file_paths.length}. ` +
-              `Files marked for deletion but remain in storage (orphaned). ` +
-              `Next cleanup cycle will attempt deletion again.`
+              `Orphaned files: ${filePaths.join(", ")}`
           );
         } else {
-          logger.info(`[STORAGE] Successfully deleted ${file_paths.length} files from storage`);
+          logger.info(`[STORAGE] Successfully deleted ${filePaths.length} files from storage`);
         }
       }
 
@@ -107,9 +88,9 @@ export async function cleanupPaymentProofs(env: Env): Promise<void> {
       // - Bulk cancellations (seasonal downturn)
       // - Retention policy changes
       // - Data quality issues (incorrect statuses)
-      if (deleted_count > ALERT_THRESHOLD_COUNT) {
+      if (filePaths.length > ALERT_THRESHOLD_COUNT) {
         logger.warn(
-          `[ALERT] High payment proof cleanup: ${deleted_count} files deleted. ` +
+          `[ALERT] High payment proof cleanup: ${filePaths.length} files deleted. ` +
             `Expected: <${ALERT_THRESHOLD_COUNT} per week. ` +
             `Investigate for: ` +
             `1) Bulk booking cancellations, ` +
@@ -119,26 +100,7 @@ export async function cleanupPaymentProofs(env: Env): Promise<void> {
         );
       }
 
-      // Alert if high storage freed (indicates large files or volume)
-      if (storage_freed_bytes > ALERT_THRESHOLD_BYTES) {
-        const freedMB = (storage_freed_bytes / 1024 / 1024).toFixed(2);
-        logger.warn(
-          `[ALERT] High storage freed: ${freedMB} MB. ` +
-            `Expected: <${ALERT_THRESHOLD_BYTES / 1024 / 1024} MB per week. ` +
-            `Verify: ` +
-            `1) File sizes within expected range (2MB per receipt), ` +
-            `2) Storage quota not being exceeded (1GB free tier), ` +
-            `3) No duplicate file uploads.`
-        );
-      }
-
-      // Log successful cleanup
-      const freedMB = (storage_freed_bytes / 1024 / 1024).toFixed(2);
-      logger.info(
-        `[CRON] Payment proof cleanup completed: ` +
-          `${deleted_count} files deleted, ` +
-          `${freedMB} MB freed`
-      );
+      logger.info(`[CRON] Payment proof cleanup completed: ${filePaths.length} files deleted`);
 
       // Success - exit retry loop
       return;

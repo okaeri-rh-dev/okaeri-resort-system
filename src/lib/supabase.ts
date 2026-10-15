@@ -762,32 +762,6 @@ export const db = {
     },
 
     /**
-     * Archive old audit logs using archive-move pattern
-     * @param beforeDate - ISO date string, archive logs before this date
-     * @returns Promise with archive result (count of moved logs)
-     */
-    archiveOld: async (beforeDate: string): Promise<{ count: number; error?: string }> => {
-      try {
-        // Call the archive_audit_logs function (created in migration 008)
-        const { data, error } = await supabase.rpc("archive_audit_logs", {
-          cutoff_date: beforeDate,
-        });
-
-        if (error) throw error;
-
-        // RPC returns an array of results, sum the archived_count
-        const totalCount = Array.isArray(data)
-          ? data.reduce((sum, item) => sum + (item.archived_count || 0), 0)
-          : 0;
-
-        return { count: totalCount };
-      } catch (error) {
-        console.error("[Audit] Archive failed:", error);
-        return { count: 0, error: String(error) };
-      }
-    },
-
-    /**
      * Keyset pagination (cursor-based) - Efficient for large datasets
      * @param cursor - Cursor object from previous page
      * @param limit - Number of logs per page
