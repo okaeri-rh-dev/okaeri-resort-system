@@ -16,7 +16,6 @@ database/
 ├── availability-enhancements.sql    # Availability system optimizations (13KB)
 ├── migrate-availability-system.sql  # Availability migration (16KB)
 ├── verify-rls-status.sql           # RLS verification script (4.3KB)
-├── RLS_FIX_SUMMARY.md              # RLS implementation summary
 └── migrations/                      # Database migrations
     ├── README.md                   # Migration management guide
     ├── README-DEPLOYMENT.md        # Deployment-specific migrations
@@ -392,7 +391,7 @@ WHERE id IN (SELECT id FROM bookings_archive);
 
 - [Complete Schema Documentation](./SCHEMA.md) - ERD diagrams and table definitions
 - [Migration Guide](./migrations/README.md) - Database migration management
-- [RLS Implementation](./RLS_FIX_SUMMARY.md) - Row Level Security summary
+- RLS Implementation: vault note [[RLS_FIX_SUMMARY]]
 - [Database Helpers](/src/lib/supabase.ts) - Typed database client
 - [Availability System](/src/lib/availability.ts) - Availability checking logic
 

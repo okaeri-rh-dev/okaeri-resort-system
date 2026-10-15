@@ -6,7 +6,7 @@
  * 2. Client-side image compression (reduces upload time and bandwidth)
  *
  * @module file-validation-client
- * @see docs/implementation/guest-booking-multi-unit/chunks/008-payment-proof-upload/README.md
+ * @see vault note [[008-payment-proof-upload README]]
  */
 
 /**

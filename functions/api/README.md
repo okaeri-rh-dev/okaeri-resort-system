@@ -496,7 +496,7 @@ describe('Guest Booking API', () => {
 - [Audit API](/functions/api/audit/README.md) - Audit logging endpoint
 - [Monitoring API](/functions/api/monitoring/README.md) - Quota monitoring
 - [Cron Jobs](/functions/cron/README.md) - Scheduled tasks
-- [Security Guidelines](/docs/security/README.md) - Security best practices
+- Security Guidelines: vault note [[security README]]
 
 ## 🔧 Environment Variables
 

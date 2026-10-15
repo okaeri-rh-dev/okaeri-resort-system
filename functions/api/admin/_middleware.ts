@@ -17,7 +17,7 @@
  * - 403 Forbidden: Authenticated but role is below staff (e.g. pending approval)
  * - Passes to next handler: Authenticated + authorized, real role in adminContext
  *
- * Reference: docs/implementation/guest-booking-multi-unit/chunks/014-admin-api-endpoints/instructions.md lines 204-380
+ * Reference: vault note [[014-admin-api-endpoints instructions]]
  */
 
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";

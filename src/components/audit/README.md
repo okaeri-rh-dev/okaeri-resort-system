@@ -537,7 +537,7 @@ it('logs and displays audit events', async () => {
 ## 📚 Related Documentation
 
 - [Audit Logger Library](/src/lib/audit-logger.ts) - Backend audit logging
-- [Audit Trail Implementation](/docs/implementation/audit-trail/README.md) - Feature documentation
+- Audit Trail Implementation: vault note [[audit-trail README]]
 - [Security Guidelines](/src/lib/security/README.md) - Security best practices
 - [State Management](/src/stores/README.md) - Zustand patterns
 - [Table Patterns](/src/components/tables/README.md) - Reusable table components

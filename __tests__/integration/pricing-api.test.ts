@@ -4,8 +4,8 @@
  * Tests the PostgreSQL calculate_booking_pricing() function via API endpoints.
  * This validates the AUTHORITATIVE server-side pricing calculator.
  *
- * Source: 07-testing-strategy.md lines 253-461
- * Principle: PostgreSQL function is SOLE pricing authority (09-implementation-decisions.md lines 42-62)
+ * Source: vault note [[07-testing-strategy]]
+ * Principle: PostgreSQL function is SOLE pricing authority (vault note [[09-implementation-decisions]])
  */
 
 import { describe, expect, test } from "vitest";

@@ -202,7 +202,7 @@ The application will be available at `http://localhost:5173`
 
 ## 📁 Project Structure
 
-> **📖 For a comprehensive structure guide with visual diagrams, architecture flows, and detailed explanations, see [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)**
+> **📖 A longer structure guide with diagrams lives in the vault note [[PROJECT_STRUCTURE]].**
 
 ### Quick Overview
 
@@ -355,7 +355,7 @@ The application is optimized for Vercel deployment:
 2. **Configure Environment Variables**: Set up production variables in Vercel dashboard
 3. **Deploy**: Automatic deployments on push to main branch
 
-See [Deployment Guide](./docs/deployment/PRODUCTION.md) for detailed instructions.
+See the [deploy-production skill](./.claude/skills/deploy-production/SKILL.md) for detailed instructions.
 
 ### Production Considerations
 
@@ -366,18 +366,18 @@ See [Deployment Guide](./docs/deployment/PRODUCTION.md) for detailed instruction
 
 ## 📚 Documentation
 
-Comprehensive documentation is available throughout the repository:
+Comprehensive documentation is available throughout the repository. Long-form design, implementation, verification and audit docs live in the maintainer's notes vault (`2 Areas/Okaeri Resort System/`), cited below as vault notes.
 
 ### Core Documentation
-- [Architecture Overview](./docs/initial/01-architecture/README.md) - System design and database architecture
-- [Development Guide](./docs/initial/02-development/README.md) - Getting started, testing, and implementation guides
+- Architecture Overview: vault note [[01-architecture README]]
+- Development Guide: vault note [[02-development README]]
 - [Component Library](./src/components/ui/README.md) - UI component reference
 - [State Management](./src/stores/README.md) - Zustand + TanStack Query patterns
 - [Security Utilities](./src/lib/security/README.md) - XSS prevention, sanitization, and validation
 
 ### Feature Implementation
-- [Audit Trail System](./docs/implementation/audit-trail/README.md) - Complete audit logging implementation
-- [Guest Booking System](./docs/implementation/guest-booking-system/README.md) - Public booking flow
+- Audit Trail System: vault note [[audit-trail README]]
+- Guest Booking System: vault note [[guest-booking-multi-unit README]]
 - [Monitoring Infrastructure](./src/lib/monitoring/README.md) - Quota monitoring and alert systems
 - [Booking Components](./src/components/bookings/README.md) - Complex booking form and table architecture
 - [Table Patterns](./src/components/tables/README.md) - Reusable table components
@@ -396,17 +396,17 @@ Comprehensive documentation is available throughout the repository:
 
 ### Testing
 - [Testing Strategy](./src/__tests__/README.md) - E2E, performance, and security testing
-- [Testing Guide](./docs/initial/02-development/testing/testing-strategy.md) - Comprehensive testing documentation
+- Testing Guide: vault note [[testing-strategy]]
 
 ### Deployment & Operations
-- [Deployment Guide](./docs/deployment/README.md) - Production deployment instructions
+- [Deployment Guide](./.claude/skills/deploy-production/SKILL.md) - Production deployment instructions
 - [Storage Configuration](./docs/storage-configuration.md) - File upload and R2 storage setup
-- [Monitoring Setup](./docs/initial/03-deployment/monitoring-setup.md) - Operational monitoring
+- Monitoring Setup: vault note [[monitoring-setup]]
 
 ### Release & Verification
-- [Phase Releases](./docs/releases/README.md) - Completion handoffs and phase summaries
-- [Verification Reports](./docs/verification/README.md) - Feature verification and testing reports
-- [Security Audits](./docs/security/README.md) - Security assessments and compliance verifications
+- Phase Releases: vault note [[releases README]]
+- Verification Reports: vault note [[verification README]]
+- Security Audits: vault note [[security README]]
 
 ## 🤝 Contributing
 

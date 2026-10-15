@@ -11,7 +11,7 @@
  * - Mobile responsive grid (1/2/3 columns)
  * - Professional enterprise styling with high information density
  *
- * Source: docs/implementation/guest-booking-multi-unit/chunks/013-unit-assignment-system/
+ * Source: vault note [[013-unit-assignment-system README]]
  */
 
 import { useCallback, useState } from "react";

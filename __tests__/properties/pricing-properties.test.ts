@@ -4,7 +4,7 @@
  * Validates that pricing invariants hold for ALL possible inputs
  * using generative testing with fast-check library.
  *
- * Source: 07-testing-strategy.md lines 1487-1636
+ * Source: vault note [[07-testing-strategy]]
  */
 
 import * as fc from "fast-check";

@@ -9,7 +9,7 @@
 #   function cleanup_expired_payment_proofs() does not exist yet — a verbatim
 #   port fails/no-ops (schema mismatch: check_out vs check_out_date, real
 #   statuses Confirmed/Cancelled/Pending). See migration 20260715000000_*.sql
-#   and docs/whole-app-audit-2026-07-21.md. Re-add "0 3 * * 0" once ported.
+#   and vault note [[whole-app-audit-2026-07-21]]. Re-add "0 3 * * 0" once ported.
 #
 # Manual trigger: GitHub Actions > Scheduled Cleanup Tasks > Run workflow
 

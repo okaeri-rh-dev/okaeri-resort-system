@@ -19,7 +19,7 @@
  * - Preserves newlines and special characters for plain text without HTML
  *
  * @see src/lib/security/sanitize.ts for sanitization implementation
- * @see Phase 3E documentation: docs/implementation/audit-trail/03-audit-viewer-ui/03e-safe-components.md
+ * @see Phase 3E documentation: vault note [[03e-safe-components]]
  */
 
 /**

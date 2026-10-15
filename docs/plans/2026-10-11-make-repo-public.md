@@ -6,7 +6,7 @@ Blockers found 2026-10-11: shared test-account password in docs (owner/admin/sta
 
 ## Tasks
 
-- [x] Remove the shared password from `docs/qa-tests/` (3f77f79)
+- [x] Remove the shared password from the QA test docs, now vault notes under `qa-tests/` (3f77f79)
 - [x] User: delete `jasonacido+owner|admin|staff@gmail.com` on prod (2026-10-11)
 - [x] Re-run the prod login probe; all three must return `invalid_credentials` (2026-10-11: all three did)
 - [x] User: revoke prod sessions for the 8 users in `seed.sql` (2026-10-11; 3 of the 8 IDs exist on prod, confirming a prod dump)
@@ -24,7 +24,7 @@ Blockers found 2026-10-11: shared test-account password in docs (owner/admin/sta
 - [x] Manual deploy of c759e2d (deployment `d3b745da-2d36-406e-8668-7523a98e4a87`; rollback `923ceccb-ebb1-4e17-8c64-1d7f56ea0d10` = 79396f4); live entry `index-BGcGYCc4.js`, `/api/health` 200
 - [x] Fix `audit_logs` forged inserts (guardrails Deferred list #1): migration `20261012000000_audit_logs_block_client_writes.sql` + `audit-logs-write-lockdown.test.ts` (585b7f0); local `test:db` 102/102, `verify` exit 0; pushed to prod 2026-10-12
 - [x] User: confirm prod grants on `audit_logs`/`audit_logs_archive` (2026-10-12: `REFERENCES,SELECT,TRIGGER` for `anon`/`authenticated`; no write privileges)
-- [x] Correct the stale "P0 is only half-closed" line in `docs/whole-app-audit-2026-07-21.md` (8cfd2c1)
+- [x] Correct the stale "P0 is only half-closed" line in the whole-app audit, now vault note [[whole-app-audit-2026-07-21]] (8cfd2c1)
 - [x] User: Settings → Actions → require approval for fork PR workflows from all outside collaborators (`all_external_contributors`, 2026-10-12)
 - [x] After going public: `Scheduled Cleanup Tasks` idempotency run HTTP 200 (run 38196269890); `infra-health` all jobs green on 0b07ca5 after dropping 4 fixed baseline entries
 - [ ] User: delete the old Cloudflare API token once the first deploy succeeds

@@ -70,3 +70,7 @@ The five default roles, label string = role name (`needs-triage`, `needs-info`, 
 ### Domain docs
 
 Single-context: `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Long-form docs
+
+Audits, checklists, fix guides and implementation/verification write-ups live in the Obsidian vault at `~/repos/personal/Obsidian/2 Areas/Okaeri Resort System/` (hub note `Okaeri Resort System.md`), not in the repo; load on demand. "vault note [[Title]]" in code or docs means `<Title>.md` in that folder.

@@ -326,7 +326,7 @@ describe("XSS Prevention Tests", () => {
      * - Unicode lookalikes can remain (they're harmless text)
      * - This aligns with Phase 5 verification: "acceptable for production"
      *
-     * @see docs/implementation/audit-trail/PHASE_5_VERIFICATION_REPORT.md
+     * @see vault note [[PHASE_5_VERIFICATION_REPORT]]
      */
     it("should handle unicode lookalikes (non-executable visual spoofing)", () => {
       const attack = "¼script¾alert(¢XSS¢)¼/script¾";

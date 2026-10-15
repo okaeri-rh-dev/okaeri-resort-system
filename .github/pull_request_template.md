@@ -183,5 +183,4 @@ Closes #\_\_\_
 
 <!--
 This PR template enforces TDD practices and quality standards for the Okaeri Resort Management System.
-Reference: docs/implementation/TDD_SINGLE_SOURCE_OF_TRUTH.md
 -->

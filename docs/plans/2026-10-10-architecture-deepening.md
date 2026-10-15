@@ -87,7 +87,7 @@ Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub 
 
 ## Resume state (2026-10-13)
 
-- Booking module (Candidate 1) done: Tasks 1-10 complete, deployed `79396f4`, post-deploy normalize found nothing to fix (2026-10-13); ticks and commits on the task lines above, ledger in `.superpowers/sdd/progress.md` (git-ignored). Final whole-branch review done; its pre-deploy fixes and decisions are in "Booking module execution (2026-10-11)" below.
+- Booking module (Candidate 1) done: Tasks 1-10 complete, deployed `79396f4`, post-deploy normalize found nothing to fix (2026-10-13); ticks and commits on the task lines above (the SDD ledger was scratch and was deleted 2026-10-15). Final whole-branch review done; its pre-deploy fixes and decisions are in "Booking module execution (2026-10-11)" below.
 - Next: Candidate 4 on the client (order: client 4 → 6; server 3 → 2 → 8), per the task list above.
 - A concurrent session committed into this working tree on 2026-10-11 and its commit crossed with Task 1; reworded to `5998f5d`/`419d12f`. Its orphaned phone-search fix was committed as `7798f7f` (user choice). Commit with `git commit -- <paths>` while other sessions share the tree.
 

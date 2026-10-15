@@ -6,7 +6,7 @@
 -- tables (which let ANY authenticated user do full CRUD directly via the
 -- anon-key client, bypassing the functions-layer RBAC) with role-based policies
 -- sourced from public.app_roles. Closes audit P0 #2
--- (docs/whole-app-audit-2026-07-21.md).
+-- (vault note [[whole-app-audit-2026-07-21]]).
 --
 -- Levels mirror the frontend route-guards (src/lib/route-guards.ts). SELECT is
 -- kept at staff+ where the bookings area (requireStaff) cross-reads a table, so
