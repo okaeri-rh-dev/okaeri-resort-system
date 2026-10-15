@@ -427,7 +427,7 @@ onError: (error: Error) => {
 
 ## 🔗 Related Documentation
 
-- **Multi-Unit Booking System**: `/docs/implementation/guest-booking-multi-unit/` - Complete implementation guide
+- **Multi-Unit Booking System**: vault note [[guest-booking-multi-unit README]] - Complete implementation guide
 - **Admin API Endpoints**: `/functions/api/admin/` - Backend API documentation
 - **Urgency Scoring**: `/src/lib/urgency-scoring.ts` - Urgency calculation algorithm
 - **Storage Utils**: `/src/lib/storage-utils.ts` - Signed URL generation

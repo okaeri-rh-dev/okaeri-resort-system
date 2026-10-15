@@ -12,7 +12,7 @@
  * - Simpler syntax without Express dependency
  * - Modern JavaScript standard
  *
- * Source: 07-testing-strategy.md lines 696-864
+ * Source: vault note [[07-testing-strategy]]
  */
 
 import { createClient } from "@supabase/supabase-js";

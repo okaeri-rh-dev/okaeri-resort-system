@@ -6,7 +6,7 @@
  * - Concurrent unit assignment conflicts
  * - PostgreSQL EXCLUDE constraint enforcement
  *
- * Source: 07-testing-strategy.md lines 1641-1762
+ * Source: vault note [[07-testing-strategy]]
  *
  * @vitest-environment node
  */

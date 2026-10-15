@@ -9,7 +9,7 @@
  * removed in the unified multi-unit migration (Oct 17, 2024) and are now enforced
  * at the application layer.
  *
- * Source: 07-testing-strategy.md lines 467-691
+ * Source: vault note [[07-testing-strategy]]
  *
  * @vitest-environment node
  */

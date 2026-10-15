@@ -3,7 +3,7 @@
  *
  * Ensures API accepts both legacy (single-unit) and new (multi-unit) formats.
  *
- * Source: 07-testing-strategy.md lines 1769-1860
+ * Source: vault note [[07-testing-strategy]]
  */
 
 import { describe, expect, test } from "vitest";

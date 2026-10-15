@@ -6,7 +6,7 @@
  * Fetches all pending guest bookings with urgency scoring
  *
  * Authentication: JWT required (admin role)
- * Source: docs/implementation/guest-booking-multi-unit/04-admin-interface.md lines 150-167
+ * Source: vault note [[04-admin-interface]]
  */
 
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";

@@ -7,7 +7,7 @@
  * - Auto-renewal before expiry
  * - Private bucket access
  *
- * Source: docs/implementation/guest-booking-multi-unit/04-admin-interface.md lines 201-350
+ * Source: vault note [[04-admin-interface]]
  */
 
 import { logger } from "@/lib/logger";

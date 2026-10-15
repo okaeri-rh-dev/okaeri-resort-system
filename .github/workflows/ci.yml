@@ -4,7 +4,7 @@ name: CI
 # production npm audit run as parallel jobs; deploy needs all of them.
 #
 # - Runs on every pull request to main (blocks merge once branch protection is
-#   enabled — see docs/whole-app-audit-2026-07-21.md, Decision 2).
+#   enabled — see vault note [[whole-app-audit-2026-07-21]], Decision 2).
 # - Reused by deploy-cloudflare.yml via `workflow_call`, so nothing reaches
 #   production without passing this gate first.
 #

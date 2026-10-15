@@ -499,7 +499,7 @@ vi.mock('@marsidev/react-turnstile', () => ({
 ## 📚 Related Documentation
 
 - [Validation Utilities](/src/lib/validation/README.md) - Input validation testing
-- [Security Guidelines](/docs/security/README.md) - Security testing standards
+- Security Guidelines: vault note [[security README]]
 - [API Endpoints](/functions/api/README.md) - API integration testing
 - [Component Documentation](/src/components/README.md) - Component testing examples
 

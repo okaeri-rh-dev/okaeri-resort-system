@@ -8,7 +8,7 @@
  * - Filter controls (date, urgency, search)
  * - Mobile responsive design
  *
- * Source: docs/implementation/guest-booking-multi-unit/04-admin-interface.md lines 190-283
+ * Source: vault note [[04-admin-interface]]
  */
 
 import { useState } from "react";

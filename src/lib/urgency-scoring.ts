@@ -7,7 +7,7 @@
  * 3. Booking value (max 15 points)
  * 4. Unit count (max 15 points)
  *
- * Source: docs/implementation/guest-booking-multi-unit/04-admin-interface.md lines 24-148
+ * Source: vault note [[04-admin-interface]]
  */
 
 // ============================================

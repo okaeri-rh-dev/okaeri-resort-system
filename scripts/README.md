@@ -228,10 +228,10 @@ npm run deploy
 ## Support
 
 For issues or questions:
-1. Check the verification report: `docs/implementation/guest-booking-system/COMPLETE_SYSTEM_VERIFICATION_REPORT.md`
+1. Check the verification report: vault note [[COMPLETE_SYSTEM_VERIFICATION_REPORT]]
 2. Run diagnostics: `./scripts/verify-deployment.sh`
 3. Check logs: `wrangler tail --env production`
-4. Review documentation: `docs/implementation/guest-booking-system/`
+4. Review documentation: vault note [[guest-booking-multi-unit README]]
 
 ## License
 

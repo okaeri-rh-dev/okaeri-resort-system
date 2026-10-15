@@ -10,7 +10,7 @@
  * - Signed URLs with 5-minute expiry
  * - Private bucket (not publicly accessible)
  *
- * @see docs/implementation/guest-booking-multi-unit/02-api-specification.md lines 746-807
+ * @see vault note [[02-api-specification]]
  */
 
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
