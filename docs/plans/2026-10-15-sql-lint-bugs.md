@@ -27,8 +27,8 @@ Callers: `db.auditLogs.archiveOld` (`src/lib/supabase.ts:769`, named arg `cutoff
   - `attach_audit_trigger` / `detach_audit_trigger`: `format('%I', 'audit_trigger_' || name)`
   - `cleanup_expired_payment_proofs`: `CheckedOut` + 90 days after `check_out`, `Cancelled` + 30 days after `updated_at`; returns the storage path inside the `payment-proofs` bucket (public URL prefix and query string stripped); also clears `payments.proof_url` that points at the same file; `SET search_path = ''`
 - [x] 2. Cron reads `SETOF file_path` (typed client, `deleted_count = rows.length`), and the byte-based alert is removed (SQL cannot know file sizes); unit test.
-- [ ] 3. `npm run gen:types`; `supabase db lint --local` clean of errors; drift baseline lines for dropped/changed objects updated; `npm run verify`; `npm run test:db`; PR. Done 2026-10-15 except the PR: lint shows 0 errors (4 pre-existing warnings), verify 1467 passed / 20 skipped, test:db 121 passed. Unused `db.auditLogs.archiveOld` removed (browser client, now denied). Baseline edited by hand (agent prod reads are blocked), so it is unconfirmed until the drift check after the push.
-- [ ] 4. User: `supabase db push`; drift check.
+- [x] 3. `npm run gen:types`; `supabase db lint --local` clean of errors; drift baseline lines for dropped/changed objects updated; `npm run verify`; `npm run test:db`; PR. Done 2026-10-15, PR #25 merged: lint shows 0 errors (4 pre-existing warnings), verify 1467 passed / 20 skipped, test:db 121 passed. Unused `db.auditLogs.archiveOld` removed (browser client, now denied). Baseline edited by hand (agent prod reads are blocked), confirmed by the drift check after the push.
+- [x] 4. User: `supabase db push`; drift check. Done 2026-10-17: push applied `20261015000000`; `scripts/drift-check.sh` reported "No new drift (51 known lines)".
 
 ## Decisions & Deferrals
 
