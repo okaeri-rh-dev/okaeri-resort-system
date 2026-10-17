@@ -2,13 +2,6 @@
 # Generated 2026-10-06 after pushing 20261006000000. Delete lines once the drift is fixed;
 # the check fails on any line here that no longer differs.
 
-# Body drift: the 1-arg archive_audit_logs / restore_logs_from_archive overloads differ on prod (changed outside
-# migrations; db lint also flags them as ambiguous with the 2-arg versions). Fix with that db lint item.
-local-only function archive_audit_logs(p_before_date timestamp with time zone) returns integer md5=f34c07b3ba3b39f71119c25ebd0be307
-local-only function restore_logs_from_archive(p_archive_month date) returns integer md5=0dd8bd814817d688a393a9c161dccf8a
-prod-only function archive_audit_logs(p_before_date timestamp with time zone) returns integer md5=d66312a4b1a27ebf7872900689d680d3
-prod-only function restore_logs_from_archive(p_archive_month date) returns integer md5=68726ad1fd70d03f9ab550861ed8ffc7
-
 # audit_logs_archive insert policy: roles=public in migrations (20251006093452), authenticated on prod.
 
 # Seasonal pricing (20251106000000, 20251107000000 recorded as applied, objects absent on prod). Deferred: see plan,
@@ -61,10 +54,6 @@ local-only relation seasonal_rates kind=r rls=t
 local-only trigger CREATE TRIGGER audit_seasonal_rates_trigger AFTER INSERT OR DELETE OR UPDATE ON public.seasonal_rates FOR EACH ROW EXECUTE FUNCTION audit_trigger_func()
 local-only trigger CREATE TRIGGER update_seasonal_rates_updated_at BEFORE UPDATE ON public.seasonal_rates FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()
 local-only view booking_pricing_analytics md5=ceb110890f81b1ab97ce087ba71961c2
-
-# Payment proof cleanup (20251104184719 recorded as applied, function absent on prod). Deferred: guardrails
-# plan deferred list item 3 (needs a retention rule).
-local-only function cleanup_expired_payment_proofs() returns TABLE(file_path text) md5=d02f4bfeac7e7ae3a8ecbeefda13dbd0
 
 # pricing_config admin policy (20251108000000) absent on prod. Unused: pricing writes go through the
 # service role (functions/api/pricing/update-config.ts). Drop it locally or leave as is.

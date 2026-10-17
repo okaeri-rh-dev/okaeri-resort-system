@@ -1324,28 +1324,24 @@ export type Database = {
       };
     };
     Functions: {
-      archive_audit_logs:
-        | {
-            Args: { cutoff_date: string; dry_run?: boolean };
-            Returns: {
-              archived_count: number;
-              newest_archived: string;
-              oldest_archived: string;
-              tables_affected: string[];
-            }[];
-          }
-        | { Args: { p_before_date: string }; Returns: number };
-      archive_logs_older_than_months:
-        | {
-            Args: { dry_run?: boolean; months_old: number };
-            Returns: {
-              archived_count: number;
-              newest_archived: string;
-              oldest_archived: string;
-              tables_affected: string[];
-            }[];
-          }
-        | { Args: { p_months?: number }; Returns: number };
+      archive_audit_logs: {
+        Args: { cutoff_date: string; dry_run?: boolean };
+        Returns: {
+          archived_count: number;
+          newest_archived: string;
+          oldest_archived: string;
+          tables_affected: string[];
+        }[];
+      };
+      archive_logs_older_than_months: {
+        Args: { dry_run?: boolean; months_old: number };
+        Returns: {
+          archived_count: number;
+          newest_archived: string;
+          oldest_archived: string;
+          tables_affected: string[];
+        }[];
+      };
       assign_units_to_booking: {
         Args: { p_booking_id: string; p_unit_ids: string[] };
         Returns: undefined;
@@ -1467,21 +1463,13 @@ export type Database = {
       is_manager_or_above: { Args: { check_user_id?: string }; Returns: boolean };
       is_staff: { Args: { check_user_id: string }; Returns: boolean };
       is_staff_or_above: { Args: { check_user_id?: string }; Returns: boolean };
-      monthly_archive_until:
-        | {
-            Args: { dry_run?: boolean; final_cutoff_date: string };
-            Returns: {
-              logs_archived: number;
-              month_archived: string;
-            }[];
-          }
-        | {
-            Args: { p_until_date: string };
-            Returns: {
-              archive_month: string;
-              logs_archived: number;
-            }[];
-          };
+      monthly_archive_until: {
+        Args: { dry_run?: boolean; final_cutoff_date: string };
+        Returns: {
+          logs_archived: number;
+          month_archived: string;
+        }[];
+      };
       normalize_booking_stays: {
         Args: { p_check_in_time?: string; p_check_out_time?: string };
         Returns: {
@@ -1490,9 +1478,10 @@ export type Database = {
         }[];
       };
       refresh_booking_payment_status: { Args: { p_booking_id: string }; Returns: undefined };
-      restore_logs_from_archive:
-        | { Args: { p_archive_month: string }; Returns: number }
-        | { Args: { end_date: string; start_date: string }; Returns: number };
+      restore_logs_from_archive: {
+        Args: { end_date: string; start_date: string };
+        Returns: number;
+      };
     };
     Enums: {
       [_ in never]: never;
