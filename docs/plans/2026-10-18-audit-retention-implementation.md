@@ -39,7 +39,7 @@ Spec: `docs/plans/2026-10-18-audit-retention-design.md`. Branch: `feat/audit-ret
 - Produces: `public.anonymize_audit_logs(p_older_than interval DEFAULT '24 months') RETURNS TABLE(anonymized_count bigint, audit_logs_bytes bigint)`; RPC type `Database["public"]["Functions"]["anonymize_audit_logs"]` with `Returns: { anonymized_count: number; audit_logs_bytes: number }[]`.
 - Produces: `psqlAvailable(): boolean` and `runPsql(sql: string): string[]` from `src/__tests__/setup/psql.ts`.
 
-- [ ] **Step 1: Add the shared psql helper**
+- [x] **Step 1: Add the shared psql helper**
 
 `src/__tests__/setup/psql.ts`:
 
@@ -83,7 +83,7 @@ export function runPsql(sql: string): string[] {
 }
 ```
 
-- [ ] **Step 2: Write the failing DB test**
+- [x] **Step 2: Write the failing DB test**
 
 `src/__tests__/database/audit-anonymization.test.ts`:
 
@@ -239,12 +239,12 @@ describe("anonymize_audit_logs", () => {
 });
 ```
 
-- [ ] **Step 3: Run the test to verify it fails**
+- [x] **Step 3: Run the test to verify it fails**
 
 Run: `npx vitest run src/__tests__/database/audit-anonymization.test.ts`
 Expected: both tests FAIL (`function public.anonymize_audit_logs(interval) does not exist` from psql, and `Could not find the function public.anonymize_audit_logs` from PostgREST). If tests are skipped instead, run `supabase start` first.
 
-- [ ] **Step 4: Write the migration**
+- [x] **Step 4: Write the migration**
 
 `supabase/migrations/20261018000000_anonymize_audit_logs.sql`:
 
@@ -307,17 +307,17 @@ REVOKE ALL ON FUNCTION public.anonymize_audit_logs(interval) FROM public, anon, 
 GRANT EXECUTE ON FUNCTION public.anonymize_audit_logs(interval) TO service_role;
 ```
 
-- [ ] **Step 5: Apply it and run the test to verify it passes**
+- [x] **Step 5: Apply it and run the test to verify it passes**
 
 Run: `supabase migration up --local && npx vitest run src/__tests__/database/audit-anonymization.test.ts`
 Expected: `Tests  2 passed (2)`.
 
-- [ ] **Step 6: Regenerate types and lint**
+- [x] **Step 6: Regenerate types and lint**
 
 Run: `npm run gen:types && git diff --stat src/types && supabase db lint --local 2>/dev/null | jq '[.results[].issues[] | select(.level == "error")] | length'`
 Expected: `database.generated.ts` gains an `anonymize_audit_logs` entry; the lint prints `0`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/__tests__/setup/psql.ts src/__tests__/database/audit-anonymization.test.ts supabase/migrations/20261018000000_anonymize_audit_logs.sql src/types/database.generated.ts
@@ -339,7 +339,7 @@ git commit -m "feat(db): anonymize audit rows older than 24 months"
 
 - Produces: `verifyCronAuth(request: Request, cronSecret: string | undefined): { valid: boolean; error?: string }` from `functions/lib/cron-auth.ts`. Error strings, unchanged from the current copies: `"Missing Authorization header"`, `"Invalid Authorization format. Expected: Bearer <token>"`, `"Server configuration error"`, `"Invalid token"`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `src/__tests__/api/cron-auth.test.ts`:
 
@@ -386,12 +386,12 @@ describe("verifyCronAuth", () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx vitest run src/__tests__/api/cron-auth.test.ts`
 Expected: FAIL, `Failed to resolve import "../../../functions/lib/cron-auth"`.
 
-- [ ] **Step 3: Implement the helper**
+- [x] **Step 3: Implement the helper**
 
 `functions/lib/cron-auth.ts`:
 
@@ -424,7 +424,7 @@ export function verifyCronAuth(
 }
 ```
 
-- [ ] **Step 4: Use it in both existing endpoints**
+- [x] **Step 4: Use it in both existing endpoints**
 
 In `functions/api/cron/cleanup-idempotency.ts` and `functions/api/cron/cleanup-payment-proofs.ts`: delete the `/** Verify the request has a valid CRON_SECRET Bearer token */` doc comment and the whole `function verifyAuth(...) { ... }`; add `import { verifyCronAuth } from "../../lib/cron-auth";` below the existing scheduled-module import; replace `const auth = verifyAuth(request, env);` with:
 
@@ -432,12 +432,12 @@ In `functions/api/cron/cleanup-idempotency.ts` and `functions/api/cron/cleanup-p
 const auth = verifyCronAuth(request, env.CRON_SECRET);
 ```
 
-- [ ] **Step 5: Run the tests and type-check**
+- [x] **Step 5: Run the tests and type-check**
 
 Run: `npx vitest run src/__tests__/api/cron-auth.test.ts src/__tests__/api/cleanup-payment-proofs.test.ts && npx tsc --noEmit -p functions/tsconfig.json`
 Expected: `Tests  7 passed (7)`; tsc exits 0 with no output.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add functions/lib/cron-auth.ts src/__tests__/api/cron-auth.test.ts functions/api/cron/cleanup-idempotency.ts functions/api/cron/cleanup-payment-proofs.ts
@@ -459,7 +459,7 @@ git commit -m "refactor(api): share CRON_SECRET verification across cron endpoin
 - Consumes: RPC `anonymize_audit_logs` (Task 1), `verifyCronAuth` (Task 2), `createLogger(env)` from `functions/lib/logger.ts`.
 - Produces: `anonymizeAuditLogs(env: { SUPABASE_URL: string; SUPABASE_SERVICE_ROLE_KEY: string; ENVIRONMENT?: string }): Promise<{ anonymizedCount: number; auditLogsBytes: number }>`; `POST /api/cron/anonymize-audit` returning `{ success, anonymized_count, audit_logs_bytes, duration_ms, timestamp }` (200) or `{ success: false, error, message }` (401/500).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `src/__tests__/api/anonymize-audit.test.ts`:
 
@@ -568,12 +568,12 @@ describe("POST /api/cron/anonymize-audit", () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx vitest run src/__tests__/api/anonymize-audit.test.ts`
 Expected: FAIL, `Failed to resolve import "../../../functions/api/cron/anonymize-audit"`.
 
-- [ ] **Step 3: Implement the job**
+- [x] **Step 3: Implement the job**
 
 `functions/scheduled/anonymize-audit.ts`:
 
@@ -630,7 +630,7 @@ export async function anonymizeAuditLogs(
 }
 ```
 
-- [ ] **Step 4: Implement the endpoint**
+- [x] **Step 4: Implement the endpoint**
 
 `functions/api/cron/anonymize-audit.ts`:
 
@@ -686,12 +686,12 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
 }
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `npx vitest run src/__tests__/api/anonymize-audit.test.ts && npx tsc --noEmit -p functions/tsconfig.json`
 Expected: `Tests  6 passed (6)`; tsc exits 0.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add functions/scheduled/anonymize-audit.ts functions/api/cron/anonymize-audit.ts src/__tests__/api/anonymize-audit.test.ts
@@ -710,7 +710,7 @@ git commit -m "feat(api): add the weekly audit anonymization endpoint"
 
 - Consumes: `POST /api/cron/anonymize-audit` (Task 3), `POST /api/cron/cleanup-payment-proofs` (PR #25).
 
-- [ ] **Step 1: Replace the header comment (lines 1-14)**
+- [x] **Step 1: Replace the header comment (lines 1-14)**
 
 ```yaml
 # Scheduled Cleanup Tasks
@@ -727,7 +727,7 @@ git commit -m "feat(api): add the weekly audit anonymization endpoint"
 # Manual trigger: GitHub Actions > Scheduled Cleanup Tasks > Run workflow
 ```
 
-- [ ] **Step 2: Replace the `on:` block**
+- [x] **Step 2: Replace the `on:` block**
 
 ```yaml
 on:
@@ -750,11 +750,11 @@ on:
           - anonymize-audit
 ```
 
-- [ ] **Step 3: Update both job conditions and the payment-proof comment**
+- [x] **Step 3: Update both job conditions and the payment-proof comment**
 
 In `cleanup-idempotency`, replace `github.event.inputs.task == 'both'` with `github.event.inputs.task == 'all'` and the comment with `# Run daily at 2 AM UTC, or when manually triggered with 'all' or 'idempotency'`. In `cleanup-payment-proofs`, replace the two `# DISABLED ...` comment lines with `# Run weekly on Sunday 3 AM UTC, or when manually triggered with 'all' or 'payment-proofs'` and `'both'` with `'all'`.
 
-- [ ] **Step 4: Append the anonymization job**
+- [x] **Step 4: Append the anonymization job**
 
 ```yaml
 anonymize-audit:
@@ -788,12 +788,12 @@ anonymize-audit:
         echo "Audit anonymization completed successfully"
 ```
 
-- [ ] **Step 5: Validate the YAML**
+- [x] **Step 5: Validate the YAML**
 
 Run: `python3 -c "import yaml,sys; d=yaml.safe_load(open('.github/workflows/scheduled-cleanup.yml')); print(sorted(d['jobs']), [s['cron'] for s in d[True]['schedule']], d[True]['workflow_dispatch']['inputs']['task']['options'])"`
 Expected: `['anonymize-audit', 'cleanup-idempotency', 'cleanup-payment-proofs'] ['0 2 * * *', '0 3 * * 0'] ['all', 'idempotency', 'payment-proofs', 'anonymize-audit']` (PyYAML parses the `on:` key as `True`). Also `grep -c "'both'" .github/workflows/scheduled-cleanup.yml` prints `0`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .github/workflows/scheduled-cleanup.yml
@@ -818,7 +818,7 @@ git commit -m "ci(cleanup): schedule weekly payment-proof cleanup and audit anon
 - Consumes: the `metadata.anonymized_at` marker (Task 1); `AuditLog` from `@/types/audit.types`.
 - Produces: `isAnonymized(log: Pick<AuditLog, "metadata">): boolean`; `auditActorLabel(log: Pick<AuditLog, "user_email" | "user_id" | "metadata">): string`.
 
-- [ ] **Step 1: Write the failing unit test**
+- [x] **Step 1: Write the failing unit test**
 
 `src/lib/__tests__/audit-display.test.ts`:
 
@@ -860,12 +860,12 @@ describe("auditActorLabel", () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx vitest run src/lib/__tests__/audit-display.test.ts`
 Expected: FAIL, `Failed to resolve import "../audit-display"`.
 
-- [ ] **Step 3: Implement the helpers**
+- [x] **Step 3: Implement the helpers**
 
 `src/lib/audit-display.ts`:
 
@@ -892,12 +892,12 @@ export function auditActorLabel(
 }
 ```
 
-- [ ] **Step 4: Run it to verify it passes**
+- [x] **Step 4: Run it to verify it passes**
 
 Run: `npx vitest run src/lib/__tests__/audit-display.test.ts`
 Expected: `Tests  4 passed (4)`.
 
-- [ ] **Step 5: Add failing diff-viewer cases**
+- [x] **Step 5: Add failing diff-viewer cases**
 
 Append inside the top-level `describe("AuditDiffViewer", ...)` in `src/components/audit/__tests__/AuditDiffViewer.test.tsx`:
 
@@ -931,7 +931,7 @@ describe("anonymized rows", () => {
 Run: `npx vitest run src/components/audit/__tests__/AuditDiffViewer.test.tsx`
 Expected: the 2 new tests FAIL; the existing ones pass.
 
-- [ ] **Step 6: Use the helpers in the three components**
+- [x] **Step 6: Use the helpers in the three components**
 
 `src/components/audit/AuditDiffViewer.tsx`: add `import { auditActorLabel, isAnonymized } from "@/lib/audit-display";` with the other `@/lib` imports; replace line 69 with
 
@@ -961,12 +961,12 @@ and replace the `<span>` inside the no-data branch (line 129) with
 <div className="text-xs text-neutral-500">{auditActorLabel(log)}</div>
 ```
 
-- [ ] **Step 7: Run the UI tests to verify they pass**
+- [x] **Step 7: Run the UI tests to verify they pass**
 
 Run: `npx vitest run src/lib/__tests__/audit-display.test.ts src/components/audit src/components/entity-detail/__tests__/DetailAuditSection.test.tsx`
 Expected: all pass, 0 failed.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/lib/audit-display.ts src/lib/__tests__/audit-display.test.ts src/components/audit/AuditDiffViewer.tsx src/components/audit/AuditLogViewer.tsx src/components/entity-detail/DetailAuditSection.tsx src/components/audit/__tests__/AuditDiffViewer.test.tsx
@@ -977,12 +977,12 @@ git commit -m "feat(audit): label anonymized audit rows in the viewers"
 
 ### Task 6: Verify, PR, prod
 
-- [ ] **Step 1: Full verification**
+- [x] **Step 1: Full verification**
 
 Run: `npm run verify; echo "EXIT $?"` then `npm run test:db; echo "EXIT $?"`
 Expected: both `EXIT 0`; test:db count is the previous 121 plus 2.
 
-- [ ] **Step 2: Docs**
+- [x] **Step 2: Docs**
 
 Tick this plan's tasks; in `docs/plans/2026-10-03-guardrails-design.md` item 2, append "Implemented on `feat/audit-retention`, PR #<n>". In `src/components/audit/CLAUDE.md`, add one bullet: "Rows older than 24 months are anonymized weekly (`anonymize_audit_logs`); they carry `metadata.anonymized_at`. Use `auditActorLabel`/`isAnonymized` from `src/lib/audit-display.ts` instead of reading `user_email` directly." Commit as `docs(plans): track audit retention implementation`.
 
@@ -1001,3 +1001,4 @@ After merge: `supabase db push`; `sh scripts/drift-check.sh` (needs `supabase st
 - **No retries in the anonymization job.** Why: weekly and idempotent; the next run catches up, and the workflow failure email is the alert. Revisit: if runs fail intermittently.
 - **`both` dispatch option renamed `all`.** Why: there are now three tasks. No callers outside the workflow. Revisit: n/a.
 - **First prod run anonymizes nothing.** Why: the oldest row is 2025-10-02; rows start qualifying in 2027-10. The size log still runs weekly. Revisit: n/a.
+- **Execution notes (2026-10-18).** Task 1: the probe rows use a real auth user, because `audit_logs.user_id` references `auth.users` (`ON DELETE SET NULL`, so deleting a staff account already blanks `user_id` on live rows). Task 4: validated with the `yaml` npm package (PyYAML is not installed). Task 5: `src/components/admin/RoleChangeHistory.tsx` also rendered `user_email || "System"` and now uses `auditActorLabel`. Verify: 1486 passed / 20 skipped; test:db: 123 passed.
