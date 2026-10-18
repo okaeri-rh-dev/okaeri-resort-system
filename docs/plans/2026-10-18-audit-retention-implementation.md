@@ -986,7 +986,7 @@ Expected: both `EXIT 0`; test:db count is the previous 121 plus 2.
 
 Tick this plan's tasks; in `docs/plans/2026-10-03-guardrails-design.md` item 2, append "Implemented on `feat/audit-retention`, PR #<n>". In `src/components/audit/CLAUDE.md`, add one bullet: "Rows older than 24 months are anonymized weekly (`anonymize_audit_logs`); they carry `metadata.anonymized_at`. Use `auditActorLabel`/`isAnonymized` from `src/lib/audit-display.ts` instead of reading `user_email` directly." Commit as `docs(plans): track audit retention implementation`.
 
-- [ ] **Step 3: Push and open the PR**
+- [x] **Step 3: Push and open the PR** (PR #38)
 
 Push with `timeout: 600000` (pre-push runs the unit suite), verify `git rev-parse HEAD origin/feat/audit-retention` match, then `gh pr create` with the mattpocock `pr` skill template.
 
