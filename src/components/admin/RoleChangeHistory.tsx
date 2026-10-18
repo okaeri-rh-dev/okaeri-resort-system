@@ -14,6 +14,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRoleHistory } from "@/hooks/useRoleManagement";
+import { auditActorLabel } from "@/lib/audit-display";
 import { getRoleDisplayName } from "@/lib/audit-roles";
 import { formatDate } from "@/lib/utils";
 import type { AuditLog } from "@/types/audit.types";
@@ -130,7 +131,7 @@ function RoleChangeEntry({ entry, isLast }: { entry: AuditLog; isLast: boolean }
   // Determine what changed
   const action = entry.action;
   const timestamp = entry.created_at;
-  const userEmail = entry.user_email || "System";
+  const userEmail = auditActorLabel(entry);
 
   // Extract role changes
   const oldRole = oldData?.role;

@@ -5,11 +5,9 @@
 #
 # Schedules (UTC):
 # - Daily 2:00 AM: Cleanup expired idempotency keys (48+ hours old)
-# - Weekly payment-proofs cleanup is DISABLED (schedule removed). The prod
-#   function cleanup_expired_payment_proofs() does not exist yet — a verbatim
-#   port fails/no-ops (schema mismatch: check_out vs check_out_date, real
-#   statuses Confirmed/Cancelled/Pending). See migration 20260715000000_*.sql
-#   and vault note [[whole-app-audit-2026-07-21]]. Re-add "0 3 * * 0" once ported.
+# - Weekly Sunday 3:00 AM: payment-proof cleanup (90 days after check-out,
+#   30 days after cancellation) and audit anonymization (rows older than
+#   24 months; docs/plans/2026-10-18-audit-retention-design.md)
 #
 # Manual trigger: GitHub Actions > Scheduled Cleanup Tasks > Run workflow
 
@@ -17,22 +15,22 @@ name: Scheduled Cleanup Tasks
 
 on:
   schedule:
-    # Daily at 2:00 AM UTC (10:00 AM PHT) — idempotency-key cleanup only.
+    # Daily at 2:00 AM UTC (10:00 AM PHT): idempotency keys.
     - cron: "0 2 * * *"
-    # NOTE: weekly payment-proofs schedule ("0 3 * * 0") intentionally removed —
-    # see header. Re-add here when cleanup_expired_payment_proofs() lands on prod.
+    # Weekly, Sunday 3:00 AM UTC (11:00 AM PHT): payment proofs and audit anonymization.
+    - cron: "0 3 * * 0"
   workflow_dispatch:
     inputs:
       task:
         description: "Which cleanup task to run"
         required: true
-        # Default to the working task; payment-proofs is opt-in until ported.
         default: "idempotency"
         type: choice
         options:
-          - both
+          - all
           - idempotency
           - payment-proofs
+          - anonymize-audit
 
 env:
   PRODUCTION_URL: https://okaeri-resort.pages.dev
@@ -41,10 +39,10 @@ jobs:
   cleanup-idempotency:
     name: Cleanup Idempotency Keys
     runs-on: ubuntu-latest
-    # Run daily at 2 AM UTC, or when manually triggered with 'both' or 'idempotency'
+    # Run daily at 2 AM UTC, or when manually triggered with 'all' or 'idempotency'
     if: |
       github.event.schedule == '0 2 * * *' ||
-      (github.event_name == 'workflow_dispatch' && (github.event.inputs.task == 'both' || github.event.inputs.task == 'idempotency'))
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.task == 'all' || github.event.inputs.task == 'idempotency'))
     steps:
       - name: Trigger idempotency cleanup
         run: |
@@ -71,11 +69,10 @@ jobs:
   cleanup-payment-proofs:
     name: Cleanup Payment Proofs
     runs-on: ubuntu-latest
-    # DISABLED on schedule (weekly cron removed — prod function absent; see header).
-    # Runs only via manual workflow_dispatch with task 'payment-proofs' or 'both'.
+    # Run weekly on Sunday 3 AM UTC, or when manually triggered with 'all' or 'payment-proofs'
     if: |
       github.event.schedule == '0 3 * * 0' ||
-      (github.event_name == 'workflow_dispatch' && (github.event.inputs.task == 'both' || github.event.inputs.task == 'payment-proofs'))
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.task == 'all' || github.event.inputs.task == 'payment-proofs'))
     steps:
       - name: Trigger payment proof cleanup
         run: |
@@ -98,3 +95,33 @@ jobs:
           fi
 
           echo "Payment proof cleanup completed successfully"
+
+  anonymize-audit:
+    name: Anonymize Old Audit Rows
+    runs-on: ubuntu-latest
+    # Run weekly on Sunday 3 AM UTC, or when manually triggered with 'all' or 'anonymize-audit'
+    if: |
+      github.event.schedule == '0 3 * * 0' ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.task == 'all' || github.event.inputs.task == 'anonymize-audit'))
+    steps:
+      - name: Trigger audit anonymization
+        run: |
+          echo "Starting audit anonymization..."
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            "${{ env.PRODUCTION_URL }}/api/cron/anonymize-audit")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "Response: $BODY"
+          echo "HTTP Status: $HTTP_CODE"
+
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "::error::Anonymization failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+          echo "Audit anonymization completed successfully"

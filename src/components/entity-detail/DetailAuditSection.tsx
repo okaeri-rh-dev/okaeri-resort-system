@@ -6,6 +6,7 @@ import { History } from "lucide-react";
 import { ActionBadge } from "@/components/audit/ActionBadge";
 import { SafeAuditText } from "@/components/audit/SafeAuditText";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { auditActorLabel } from "@/lib/audit-display";
 import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { formatPhilippineDate } from "@/lib/timezone";
 import type { EntityType } from "@/types/entity-detail.types";
@@ -69,7 +70,7 @@ export function DetailAuditSection({
                     <SafeAuditText text={log.description} className="text-sm text-neutral-900" />
                   )}
                 </div>
-                <div className="text-xs text-neutral-500">{log.user_email || "System"}</div>
+                <div className="text-xs text-neutral-500">{auditActorLabel(log)}</div>
               </div>
               {log.created_at && (
                 <time

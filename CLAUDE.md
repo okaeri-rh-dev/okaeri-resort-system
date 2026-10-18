@@ -73,4 +73,4 @@ Single-context: `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents
 
 ### Long-form docs
 
-Audits, checklists, fix guides and implementation/verification write-ups live in the Obsidian vault at `~/repos/personal/Obsidian/2 Areas/Okaeri Resort System/` (hub note `Okaeri Resort System.md`), not in the repo; load on demand. "vault note [[Title]]" in code or docs means `<Title>.md` in that folder.
+Knowledge-base docs (audits, checklists, fix guides and implementation/verification write-ups) live in the Obsidian vault at `~/repos/personal/Obsidian/2 Areas/Okaeri Resort System/` (hub note `Okaeri Resort System.md`), not in the repo; load on demand. "vault note [[Title]]" in code or docs means `<Title>.md` in that folder. Docs that govern code (e.g. `DESIGN.md`, `docs/adr/`, `docs/plans/`) stay in the repo.

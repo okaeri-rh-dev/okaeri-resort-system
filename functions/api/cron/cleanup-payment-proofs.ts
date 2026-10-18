@@ -8,40 +8,13 @@
  * Rate Limiting: None (authenticated endpoint)
  */
 
+import { verifyCronAuth } from "../../lib/cron-auth";
 import { cleanupPaymentProofs } from "../../scheduled/cleanup-payment-proofs";
 
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   CRON_SECRET: string;
-}
-
-/**
- * Verify the request has a valid CRON_SECRET Bearer token
- */
-function verifyAuth(request: Request, env: Env): { valid: boolean; error?: string } {
-  const authHeader = request.headers.get("Authorization");
-
-  if (!authHeader) {
-    return { valid: false, error: "Missing Authorization header" };
-  }
-
-  if (!authHeader.startsWith("Bearer ")) {
-    return { valid: false, error: "Invalid Authorization format. Expected: Bearer <token>" };
-  }
-
-  const token = authHeader.substring(7); // Remove "Bearer " prefix
-
-  if (!env.CRON_SECRET) {
-    console.error("[CRON] CRON_SECRET environment variable not configured");
-    return { valid: false, error: "Server configuration error" };
-  }
-
-  if (token !== env.CRON_SECRET) {
-    return { valid: false, error: "Invalid token" };
-  }
-
-  return { valid: true };
 }
 
 /**
@@ -52,7 +25,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
   const startTime = Date.now();
 
   // Verify authentication
-  const auth = verifyAuth(request, env);
+  const auth = verifyCronAuth(request, env.CRON_SECRET);
   if (!auth.valid) {
     console.warn("[CRON] Unauthorized cleanup attempt:", auth.error);
     return Response.json({ error: "Unauthorized", message: auth.error }, { status: 401 });

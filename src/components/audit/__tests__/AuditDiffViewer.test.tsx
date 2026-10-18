@@ -487,4 +487,29 @@ describe("AuditDiffViewer", () => {
       expect(changedBadges.length).toBeGreaterThanOrEqual(2); // status and notes in both panels
     });
   });
+
+  describe("anonymized rows", () => {
+    const anonymized = createMockLog({
+      user_email: null,
+      ip_address: null,
+      description: null,
+      metadata: { anonymized_at: "2028-01-02T03:00:00Z" },
+    });
+
+    it("explains that details were removed", () => {
+      render(<AuditDiffViewer log={anonymized} open={true} onOpenChange={vi.fn()} />);
+
+      expect(screen.getByText("Details removed after the retention period")).toBeInTheDocument();
+      expect(
+        screen.queryByText("No data changes recorded for this log entry")
+      ).not.toBeInTheDocument();
+    });
+
+    it("labels the staff member as removed, not System", () => {
+      render(<AuditDiffViewer log={anonymized} open={true} onOpenChange={vi.fn()} />);
+
+      expect(screen.getByText("Staff (details removed)")).toBeInTheDocument();
+      expect(screen.queryByText("System")).not.toBeInTheDocument();
+    });
+  });
 });

@@ -25,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PAGINATION_DEFAULTS, TABLE_DISPLAY_NAMES } from "@/lib/audit-constants";
+import { auditActorLabel } from "@/lib/audit-display";
 import { useAuditLogs } from "@/lib/audit-hooks";
 import { useAuditStore } from "@/stores/useAuditStore";
 import type { AuditLog, AuditLogQueryResult } from "@/types/audit.types";
@@ -232,7 +233,7 @@ function AuditLogRow({ log, isExpanded, onToggle, onViewDiff }: AuditLogRowProps
 
         {/* User */}
         <TableCell>
-          <div className="text-sm">{log.user_email || "System"}</div>
+          <div className="text-sm">{auditActorLabel(log)}</div>
           {log.user_id && (
             <div className="text-muted-foreground max-w-[150px] truncate text-xs">
               {log.user_id}
