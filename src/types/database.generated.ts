@@ -1324,6 +1324,13 @@ export type Database = {
       };
     };
     Functions: {
+      anonymize_audit_logs: {
+        Args: { p_older_than?: string };
+        Returns: {
+          anonymized_count: number;
+          audit_logs_bytes: number;
+        }[];
+      };
       archive_audit_logs: {
         Args: { cutoff_date: string; dry_run?: boolean };
         Returns: {
