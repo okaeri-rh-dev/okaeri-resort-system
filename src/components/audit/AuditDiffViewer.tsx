@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { ACTION_DISPLAY_NAMES, TABLE_DISPLAY_NAMES } from "@/lib/audit-constants";
+import { auditActorLabel, isAnonymized } from "@/lib/audit-display";
 import { sanitizeText } from "@/lib/security/sanitize";
 import type { AuditLog } from "@/types/audit.types";
 
@@ -66,7 +67,7 @@ export function AuditDiffViewer({ log, open, onOpenChange }: AuditDiffViewerProp
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <div className="text-muted-foreground text-sm font-medium">User</div>
-              <div className="text-sm">{log.user_email || "System"}</div>
+              <div className="text-sm">{auditActorLabel(log)}</div>
             </div>
             <div>
               <div className="text-muted-foreground text-sm font-medium">Action</div>
@@ -126,7 +127,11 @@ export function AuditDiffViewer({ log, open, onOpenChange }: AuditDiffViewerProp
           ) : (
             <div className="text-muted-foreground flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
-              <span className="text-sm">No data changes recorded for this log entry</span>
+              <span className="text-sm">
+                {isAnonymized(log)
+                  ? "Details removed after the retention period"
+                  : "No data changes recorded for this log entry"}
+              </span>
             </div>
           )}
 
