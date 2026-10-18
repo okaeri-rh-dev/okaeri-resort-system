@@ -990,7 +990,7 @@ Tick this plan's tasks; in `docs/plans/2026-10-03-guardrails-design.md` item 2, 
 
 Push with `timeout: 600000` (pre-push runs the unit suite), verify `git rev-parse HEAD origin/feat/audit-retention` match, then `gh pr create` with the mattpocock `pr` skill template.
 
-- [ ] **Step 4: Prod (user)**
+- [x] **Step 4: Prod (user)** Done 2026-10-18: `supabase db push` applied `20261018000000`; drift check "No new drift (51 known lines)"; run 39094400259 returned `anonymized_count: 0`, `audit_logs_bytes: 3432448`, HTTP 200.
 
 After merge: `supabase db push`; `sh scripts/drift-check.sh` (needs `supabase start`); GitHub Actions > Scheduled Cleanup Tasks > Run workflow > `anonymize-audit`. Expected first-run log: about 0 rows anonymized (the oldest prod row is from 2025-10-02, so nothing qualifies until 2027-10), and `audit_logs` around 3.4 MB.
 
