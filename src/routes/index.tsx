@@ -114,7 +114,7 @@ function HomePage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="bg-background flex min-h-screen flex-col">
       {/* Add structured data */}
       <script
         type="application/ld+json"

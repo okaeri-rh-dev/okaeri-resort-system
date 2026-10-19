@@ -30,53 +30,80 @@ async function ruleIds(code: string, overrideConfig?: Linter.Config): Promise<st
   return (await lint(code, overrideConfig)).map((message) => message.ruleId ?? "fatal");
 }
 
-describe("better-tailwindcss reads the v4 @theme setup", () => {
-  // Palette and unknown-class rules turn on in a later slice; this proves the plugin
-  // as configured here (entryPoint src/index.css) can enforce them.
-  const laterSliceRules: Linter.Config = {
-    files: ["src/**/*.tsx"],
-    rules: {
-      "better-tailwindcss/no-restricted-classes": [
-        "error",
-        { restrict: [{ pattern: "^(?:.*:)?(?:bg|text|border)-(?:slate|red|blue)-\\d+$" }] },
-      ],
-      "better-tailwindcss/no-unknown-classes": "error",
-    },
-  };
+describe("palette classes and font-mono", () => {
+  const rule = "better-tailwindcss/no-restricted-classes";
 
-  it("flags a palette class inside cn() and cva()", async () => {
+  it("flags palette classes inside cn() and cva()", async () => {
     const messages = await lint(
       `import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 const variants = cva("bg-red-500", { variants: { tone: { quiet: "text-slate-700" } } });
 export const Box = () => <div className={cn(variants(), "text-blue-600")} />;
-`,
-      laterSliceRules
-    );
-
-    const flagged = messages
-      .filter((message) => message.ruleId === "better-tailwindcss/no-restricted-classes")
-      .map((message) => message.message);
-    expect(flagged).toEqual([
-      'Restricted class: "bg-red-500".',
-      'Restricted class: "text-slate-700".',
-      'Restricted class: "text-blue-600".',
-    ]);
-  });
-
-  it("flags an unknown class and accepts classes defined in @theme", async () => {
-    const messages = await lint(
-      `import { cn } from "@/lib/utils";
-export const Box = () => <div className={cn("bg-background text-foreground", "card-elevated")} />;
-`,
-      laterSliceRules
+`
     );
 
     expect(
-      messages
-        .filter((message) => message.ruleId === "better-tailwindcss/no-unknown-classes")
-        .map((message) => message.message)
+      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+    ).toEqual([
+      expect.stringContaining('"bg-red-500"'),
+      expect.stringContaining('"text-slate-700"'),
+      expect.stringContaining('"text-blue-600"'),
+    ]);
+  });
+
+  it.each([
+    "text-white",
+    "bg-black/50",
+    "hover:bg-emerald-50",
+    "dark:border-zinc-800",
+    "ring-offset-gray-100",
+    "from-amber-400",
+    "divide-y divide-neutral-200",
+    "fill-taupe-300",
+    "font-mono",
+    "md:font-mono",
+  ])("flags %s", async (className) => {
+    expect(await ruleIds(`export const A = () => <div className="${className}" />;`)).toContain(
+      rule
+    );
+  });
+
+  it.each([
+    "bg-success text-success-foreground",
+    "bg-availability-high text-foreground",
+    "bg-sidebar text-sidebar-foreground",
+    "bg-overlay shadow-card rounded-xl",
+    "font-display font-sans",
+    "border-transparent text-current",
+    "font-medium",
+  ])("accepts %s", async (className) => {
+    expect(await ruleIds(`export const A = () => <div className="${className}" />;`)).not.toContain(
+      rule
+    );
+  });
+});
+
+describe("unknown classes", () => {
+  const rule = "better-tailwindcss/no-unknown-classes";
+
+  it("flags a class Tailwind can't resolve", async () => {
+    const messages = await lint(
+      `import { cn } from "@/lib/utils";
+export const Box = () => <div className={cn("bg-background text-foreground", "card-elevated")} />;
+`
+    );
+
+    expect(
+      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
     ).toEqual(["Unknown class detected: card-elevated"]);
+  });
+
+  it("accepts the Hearth token utilities and dark: variants", async () => {
+    expect(
+      await ruleIds(
+        `export const A = () => <div className="bg-brand text-brand-foreground dark:bg-card shadow-popover" />;`
+      )
+    ).not.toContain(rule);
   });
 });
 
