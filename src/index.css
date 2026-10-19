@@ -3,81 +3,171 @@
 /* Import enterprise mobile styles */
 @import "./styles/enterprise-tables.css";
 
-/* Tailwind v4 uses @theme directive for design tokens */
-@theme {
-  /* Colors - using HSL values for shadcn/ui compatibility */
-  --color-background: hsl(0 0% 100%);
-  --color-foreground: hsl(222.2 84% 4.9%);
-  --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(222.2 84% 4.9%);
-  --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(222.2 84% 4.9%);
-  --color-primary: hsl(222.2 47.4% 11.2%);
-  --color-primary-foreground: hsl(210 40% 98%);
-  --color-secondary: hsl(210 40% 96.1%);
-  --color-secondary-foreground: hsl(222.2 47.4% 11.2%);
-  --color-muted: hsl(210 40% 96.1%);
-  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
-  --color-accent: hsl(210 40% 96.1%);
-  --color-accent-foreground: hsl(222.2 47.4% 11.2%);
-  --color-destructive: hsl(0 84.2% 60.2%);
-  --color-destructive-foreground: hsl(210 40% 98%);
-  --color-border: hsl(214.3 31.8% 91.4%);
-  --color-input: hsl(214.3 31.8% 91.4%);
-  --color-ring: hsl(222.2 84% 4.9%);
+@custom-variant dark (&:where(.dark, .dark *));
 
-  /* Border Radius */
-  --radius-lg: 0.5rem;
-  --radius-md: calc(0.5rem - 2px);
-  --radius-sm: calc(0.5rem - 4px);
+/* Hearth tokens (DESIGN.md, Colour). Hex reference: DESIGN.md, Hearth palette. */
+:root {
+  color-scheme: light;
+  --radius: 0.625rem;
+
+  --background: oklch(0.9599 0.0079 73.74);
+  --foreground: oklch(0.266 0.0106 48.3);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.266 0.0106 48.3);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.266 0.0106 48.3);
+  --primary: oklch(0.5016 0.0874 54.2);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.9343 0.0131 71.33);
+  --secondary-foreground: oklch(0.266 0.0106 48.3);
+  --muted: oklch(0.9599 0.0079 73.74);
+  --muted-foreground: oklch(0.4945 0.02 55.88);
+  --accent: oklch(0.9315 0.0235 69.59);
+  --accent-foreground: oklch(0.266 0.0106 48.3);
+  --destructive: oklch(0.5209 0.1579 29.21);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.9128 0.0143 74.42);
+  --input: oklch(0.6392 0.0393 61.59);
+  --ring: oklch(0.5016 0.0874 54.2);
+
+  --brand: oklch(0.7329 0.0866 60.56);
+  --brand-foreground: oklch(0.1972 0.0126 55.55);
+
+  --sidebar: oklch(0.266 0.0106 48.3);
+  --sidebar-foreground: oklch(0.9436 0.0121 67.68);
+  --sidebar-primary: oklch(0.7329 0.0866 60.56);
+  --sidebar-primary-foreground: oklch(0.1972 0.0126 55.55);
+  --sidebar-accent: oklch(0.324 0.0145 54.05);
+  --sidebar-accent-foreground: oklch(0.9436 0.0121 67.68);
+  --sidebar-border: oklch(0.3357 0.0143 54.08);
+  --sidebar-ring: oklch(0.7329 0.0866 60.56);
+
+  --success: oklch(0.958 0.0132 159.91);
+  --success-foreground: oklch(0.5207 0.1011 155.23);
+  --warning: oklch(0.9612 0.0261 82.39);
+  --warning-foreground: oklch(0.5038 0.1082 71.46);
+  --danger: oklch(0.9544 0.0166 26.65);
+  --danger-foreground: oklch(0.5209 0.1579 29.21);
+  --info: oklch(0.9551 0.0126 228.93);
+  --info-foreground: oklch(0.5005 0.087 237.9);
+
+  --availability-high: color-mix(in oklch, var(--brand) 75%, var(--card));
+  --availability-medium: color-mix(in oklch, var(--brand) 42%, var(--card));
+  --availability-low: color-mix(in oklch, var(--brand) 18%, var(--card));
+
+  --overlay: oklch(0.1809 0.0054 39.35 / 50%);
+
+  --elevation-card: 0 1px 2px rgb(60 40 25 / 0.06), 0 6px 16px -4px rgb(60 40 25 / 0.1);
+  --elevation-popover: 0 2px 4px rgb(60 40 25 / 0.08), 0 12px 28px -6px rgb(60 40 25 / 0.18);
 }
 
-/* Keep the CSS variables for shadcn/ui components compatibility */
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
-  }
+.dark {
+  color-scheme: dark;
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-  }
+  --background: oklch(0.213 0.0075 48.35);
+  --foreground: oklch(0.9436 0.0121 67.68);
+  --card: oklch(0.2493 0.0108 48.26);
+  --card-foreground: oklch(0.9436 0.0121 67.68);
+  --popover: oklch(0.2493 0.0108 48.26);
+  --popover-foreground: oklch(0.9436 0.0121 67.68);
+  --primary: oklch(0.7645 0.0824 61.81);
+  --primary-foreground: oklch(0.2436 0.0282 61.15);
+  --secondary: oklch(0.2844 0.014 48.21);
+  --secondary-foreground: oklch(0.9436 0.0121 67.68);
+  --muted: oklch(0.263 0.012 44.58);
+  --muted-foreground: oklch(0.7331 0.0217 62.75);
+  --accent: oklch(0.312 0.0224 55.42);
+  --accent-foreground: oklch(0.9436 0.0121 67.68);
+  --destructive: oklch(0.6097 0.1561 28.62);
+  --destructive-foreground: oklch(0.1809 0.0054 39.35);
+  --border: oklch(0.3212 0.0157 50.88);
+  --input: oklch(0.5414 0.0234 57.76);
+  --ring: oklch(0.7645 0.0824 61.81);
+
+  --brand: oklch(0.7645 0.0824 61.81);
+  --brand-foreground: oklch(0.1972 0.0126 55.55);
+
+  --sidebar: oklch(0.1809 0.0054 39.35);
+  --sidebar-foreground: oklch(0.9436 0.0121 67.68);
+  --sidebar-primary: oklch(0.7645 0.0824 61.81);
+  --sidebar-primary-foreground: oklch(0.1972 0.0126 55.55);
+  --sidebar-accent: oklch(0.263 0.012 44.58);
+  --sidebar-accent-foreground: oklch(0.9436 0.0121 67.68);
+  --sidebar-border: oklch(0.263 0.012 44.58);
+  --sidebar-ring: oklch(0.7645 0.0824 61.81);
+
+  --success: oklch(0.2764 0.0262 157.82);
+  --success-foreground: oklch(0.7941 0.0976 156.33);
+  --warning: oklch(0.2686 0.0317 76.09);
+  --warning-foreground: oklch(0.801 0.1236 78.65);
+  --danger: oklch(0.271 0.035 28.07);
+  --danger-foreground: oklch(0.7613 0.1153 26.62);
+  --info: oklch(0.275 0.0272 233.74);
+  --info-foreground: oklch(0.793 0.0737 233.99);
+
+  --availability-high: color-mix(in oklch, var(--brand) 50%, var(--card));
+  --availability-medium: color-mix(in oklch, var(--brand) 30%, var(--card));
+  --availability-low: color-mix(in oklch, var(--brand) 14%, var(--card));
+
+  --overlay: oklch(0 0 0 / 60%);
+
+  --elevation-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 20px -6px rgb(0 0 0 / 0.5);
+  --elevation-popover: 0 2px 6px rgb(0 0 0 / 0.45), 0 16px 36px -8px rgb(0 0 0 / 0.6);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-availability-high: var(--availability-high);
+  --color-availability-medium: var(--availability-medium);
+  --color-availability-low: var(--availability-low);
+  --color-overlay: var(--overlay);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-card: var(--elevation-card);
+  --shadow-popover: var(--elevation-popover);
+
+  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
@@ -96,7 +186,7 @@
 }
 
 /* Bottom inset for fixed action bars in the installed PWA (home indicator / gesture bar) */
-.safe-area-bottom {
+@utility safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 

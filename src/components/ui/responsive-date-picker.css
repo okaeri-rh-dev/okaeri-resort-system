@@ -31,7 +31,7 @@
 /* Active state for better touch feedback */
 .mobile-calendar .rdp-button:active {
   transform: scale(0.98);
-  background-color: hsl(var(--accent));
+  background-color: var(--accent);
 }
 
 /* Month navigation buttons - larger for mobile */
@@ -48,7 +48,7 @@
 
 /* Selected date - more prominent on mobile */
 .mobile-calendar [data-selected-single="true"] {
-  box-shadow: 0 0 0 2px hsl(var(--primary));
+  box-shadow: 0 0 0 2px var(--primary);
 }
 
 /* Range selection - clearer visual feedback */
@@ -72,7 +72,7 @@
   transform: translateX(-50%);
   width: 4px;
   height: 4px;
-  background-color: hsl(var(--primary));
+  background-color: var(--primary);
   border-radius: 50%;
 }
 
@@ -93,7 +93,7 @@
 
 /* Focus styles for accessibility */
 .mobile-calendar .rdp-button:focus-visible {
-  outline: 2px solid hsl(var(--ring));
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
   border-radius: calc(var(--radius) - 2px);
 }
@@ -148,12 +148,12 @@
 
 /* Range selection visual continuity */
 .mobile-calendar [data-range-middle="true"] {
-  background-color: hsl(var(--accent) / 0.5);
+  background-color: color-mix(in oklch, var(--accent) 50%, transparent);
 }
 
 /* Hover states (for devices that support it) */
 @media (hover: hover) {
   .mobile-calendar .rdp-button:not(:disabled):hover {
-    background-color: hsl(var(--accent));
+    background-color: var(--accent);
   }
 }

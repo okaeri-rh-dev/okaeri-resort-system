@@ -58,8 +58,26 @@ const generatedDatabaseTypesPattern = {
 const arbitraryColourMessage =
   "Arbitrary colour: use a semantic token class such as bg-primary or text-muted-foreground (DESIGN.md, Colour).";
 
+const paletteMessage =
+  '"$0" is a palette class: use a semantic token class such as bg-card, text-muted-foreground or bg-success (DESIGN.md, Colour).';
+const paletteNames =
+  "red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone|mauve|olive|mist|taupe";
+
 // Each slice of the design foundations adds its classes here (DESIGN.md enforcement map).
 const restrictedClasses = [
+  {
+    pattern: `^(?:.*:)?!?-?[a-z]+(?:-[a-z]+)*-(?:${paletteNames})-\\d+(?:\\/\\S+)?!?$`,
+    message: paletteMessage,
+  },
+  {
+    pattern: "^(?:.*:)?!?[a-z]+(?:-[a-z]+)*-(?:black|white)(?:\\/\\S+)?!?$",
+    message: paletteMessage,
+  },
+  {
+    pattern: "^(?:.*:)?!?font-mono!?$",
+    message:
+      '"$0": font-mono is retired, so figures use Figtree with tabular-nums (DESIGN.md, Data formatting).',
+  },
   {
     pattern:
       "^(?:.*:)?-?[a-z-]+-\\[(?:color:|#|(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb|color-mix|color)\\().*\\](?:\\/.*)?$",
@@ -371,6 +389,7 @@ export default tseslint.config([
       // Router Link renders its href from `to`
       "jsx-a11y/anchor-is-valid": ["error", { specialLink: ["to"] }],
       "better-tailwindcss/no-restricted-classes": ["error", { restrict: restrictedClasses }],
+      "better-tailwindcss/no-unknown-classes": "error",
       "design/no-restricted-syntax": ["error", ...designSyntaxSelectors],
     },
   },
