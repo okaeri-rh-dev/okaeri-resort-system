@@ -721,7 +721,7 @@ describe('Booking Management Flow', () => {
 
 ## 📚 Related Documentation
 
-- [Table Utilities](/src/components/tables/README.md) - Reusable table components
+- [Patterns kit](/src/components/patterns/CLAUDE.md) - Reusable table components (`@/components/patterns`)
 - [Booking Store](/src/stores/useBookingStore.ts) - State management
 - [TanStack Table](https://tanstack.com/table/latest) - Table library documentation
 - [Audit Trail](/src/components/audit/README.md) - Audit logging for booking changes

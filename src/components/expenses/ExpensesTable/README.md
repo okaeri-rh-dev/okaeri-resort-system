@@ -195,7 +195,7 @@ const filteredExpenses = expenses.filter(expense => {
 ### Philippine Peso Formatting
 
 ```typescript
-import { formatCurrency } from '@/components/tables/utils'
+import { formatCurrency } from '@/lib/formatters'
 
 // Amount column uses monospace font
 <span className="font-mono text-sm font-semibold text-neutral-900">
@@ -477,7 +477,7 @@ describe('ExpensesTable', () => {
 
 ## 📚 Related Documentation
 
-- [Table Utilities](/src/components/tables/README.md) - Shared table patterns
+- [Patterns kit](/src/components/patterns/CLAUDE.md) - Shared table patterns (`@/components/patterns`)
 - [Expense Store](/src/stores/useExpenseStore.ts) - State management
 - [Audit Trail](/src/components/audit/README.md) - Expense deletion logging
 - [CSV Export Utility](/src/utils/export.ts) - CSV generation
@@ -564,7 +564,7 @@ const COLUMN_WIDTHS = {
 
 **Solution**:
 ```typescript
-import { formatCurrency } from '@/components/tables/utils'
+import { formatCurrency } from '@/lib/formatters'
 
 // Ensure Philippine locale
 export function formatCurrency(amount: number): string {

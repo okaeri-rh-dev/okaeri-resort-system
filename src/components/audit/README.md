@@ -540,7 +540,7 @@ it('logs and displays audit events', async () => {
 - Audit Trail Implementation: vault note [[audit-trail README]]
 - [Security Guidelines](/src/lib/security/README.md) - Security best practices
 - [State Management](/src/stores/README.md) - Zustand patterns
-- [Table Patterns](/src/components/tables/README.md) - Reusable table components
+- [Patterns kit](/src/components/patterns/CLAUDE.md) - Reusable table components (`@/components/patterns`)
 
 ## 🔧 Maintenance Notes
 
