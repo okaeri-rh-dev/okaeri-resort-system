@@ -1,7 +1,10 @@
 import js from "@eslint/js";
 import pluginQuery from "@tanstack/eslint-plugin-query";
+import betterTailwind from "eslint-plugin-better-tailwindcss";
+import jsxA11y from "eslint-plugin-jsx-a11y";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
+import { builtinRules } from "eslint/use-at-your-own-risk";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
@@ -51,6 +54,50 @@ const generatedDatabaseTypesPattern = {
   message:
     "Import from @/types/database.types, which narrows CHECK-constrained columns such as booking_status.",
 };
+
+const arbitraryColourMessage =
+  "Arbitrary colour: use a semantic token class such as bg-primary or text-muted-foreground (DESIGN.md, Colour).";
+
+// Each slice of the design foundations adds its classes here (DESIGN.md enforcement map).
+const restrictedClasses = [
+  {
+    pattern:
+      "^(?:.*:)?-?[a-z-]+-\\[(?:color:|#|(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb|color-mix|color)\\().*\\](?:\\/.*)?$",
+    message: arbitraryColourMessage,
+  },
+  {
+    pattern:
+      "^(?:.*:)?\\[(?:color|background|background-color|border(?:-[a-z]+)?-color|outline-color|fill|stroke|caret-color|accent-color|text-decoration-color):.*\\]$",
+    message: arbitraryColourMessage,
+  },
+];
+
+// no-restricted-syntax again under its own id, so design suppressions are counted apart from the
+// guardrail selectors above and a legacy file can't trade one for the other.
+const designPlugin = {
+  rules: { "no-restricted-syntax": builtinRules.get("no-restricted-syntax") },
+};
+
+const transitionAllMessage =
+  "transition-all animates layout and colour together; list the properties (transition-colors, transition-opacity) with duration-150.";
+const focusRingMessage =
+  "focus: shows rings on mouse clicks; use focus-visible: so rings appear only for keyboard focus.";
+
+const classStringSelectors = (regex, message) => [
+  { selector: `Literal[value=/${regex}/]`, message },
+  { selector: `TemplateElement[value.raw=/${regex}/]`, message },
+];
+
+const designSyntaxSelectors = [
+  ...classStringSelectors("(^|\\s)([\\w-]+:)*!?transition-all!?(\\s|$)", transitionAllMessage),
+  ...classStringSelectors("(^|\\s)([\\w-]+:)*focus:(ring|outline)", focusRingMessage),
+  {
+    selector:
+      "JSXOpeningElement[name.name='img']:matches(:not(:has(JSXAttribute[name.name='width'])), :not(:has(JSXAttribute[name.name='height'])))",
+    message:
+      "Give <img> width and height so the browser reserves its space and the layout doesn't shift as it loads.",
+  },
+];
 
 export default tseslint.config([
   // Global ignores
@@ -308,6 +355,23 @@ export default tseslint.config([
     ],
     rules: {
       "no-restricted-syntax": ["error", metadataRoleSelector],
+    },
+  },
+
+  // Design rules (DESIGN.md enforcement map). Legacy violations live in eslint-suppressions.json.
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    plugins: { "better-tailwindcss": betterTailwind, design: designPlugin, "jsx-a11y": jsxA11y },
+    settings: {
+      "better-tailwindcss": { entryPoint: "src/index.css" },
+      "jsx-a11y": { components: { Button: "button", Label: "label", Link: "a" } },
+    },
+    rules: {
+      ...jsxA11y.flatConfigs.recommended.rules,
+      // Router Link renders its href from `to`
+      "jsx-a11y/anchor-is-valid": ["error", { specialLink: ["to"] }],
+      "better-tailwindcss/no-restricted-classes": ["error", { restrict: restrictedClasses }],
+      "design/no-restricted-syntax": ["error", ...designSyntaxSelectors],
     },
   },
 

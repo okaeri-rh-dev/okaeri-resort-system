@@ -252,3 +252,6 @@ static/
 # Template scaffolds (contain invalid TS/TSX placeholders)
 tests/templates/**
 tests/templates/**/*.template.*
+
+# Written by eslint --suppress-rule / --prune-suppressions
+eslint-suppressions.json
