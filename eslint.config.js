@@ -104,6 +104,11 @@ const restrictedClasses = [
     pattern: "^(?:.*:)?\\[(?:transition|animation)-duration:.*\\]!?$",
     message: arbitraryDurationMessage,
   },
+  {
+    pattern: "^(?:[^:]+:)*(?:max-)?(?:sm|md|lg|xl|2xl):.+$",
+    message:
+      '"$0" uses a default breakpoint: shells use the window size classes medium:, expanded:, large: and xlarge:, and panes adapt with @container (DESIGN.md, Layout). Touch targets use coarse:.',
+  },
 ];
 
 // no-restricted-syntax again under its own id, so design suppressions are counted apart from the
@@ -115,6 +120,19 @@ const designPlugin = {
   },
 };
 
+const widthHookMessage =
+  "Width hooks are retired: window queries live in AppShell, and panes adapt with @container or DataTable (DESIGN.md, Layout).";
+
+// Applies everywhere in src/, the kit included
+const widthHookImportPatterns = [
+  { group: ["**/hooks/useResponsiveView", "**/hooks/useMediaQuery"], message: widthHookMessage },
+  {
+    group: ["@/hooks", "**/hooks", "**/hooks/index"],
+    importNames: ["useResponsiveView", "useMediaQuery"],
+    message: widthHookMessage,
+  },
+];
+
 // Each slice adds its import patterns here; the rule's options don't merge across blocks.
 const designImportPatterns = [
   {
@@ -122,6 +140,7 @@ const designImportPatterns = [
     message:
       "Primitives are private to the kit: import from @/components/patterns (DESIGN.md, Components).",
   },
+  ...widthHookImportPatterns,
 ];
 
 const transitionAllMessage =
@@ -426,7 +445,9 @@ export default tseslint.config([
   // The kit itself is where primitives are composed
   {
     files: ["src/components/patterns/**/*.{ts,tsx}", "src/components/ui/**/*.{ts,tsx}"],
-    rules: { "design/no-restricted-imports": "off" },
+    rules: {
+      "design/no-restricted-imports": ["error", { patterns: widthHookImportPatterns }],
+    },
   },
 
   // Load testing scripts (k6) - allow console.log for test output

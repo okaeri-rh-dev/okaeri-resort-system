@@ -246,6 +246,18 @@
     sans-serif;
 }
 
+/*
+ * Material 3 window size classes (ADR 0004); compact is the unprefixed base. Only shells use them;
+ * panes adapt with @container. Tailwind's sm…2xl stay until Migration resets them. In rem like the
+ * defaults, so Tailwind can order the two sets: 600, 840, 1200 and 1600px.
+ */
+@theme {
+  --breakpoint-medium: 37.5rem;
+  --breakpoint-expanded: 52.5rem;
+  --breakpoint-large: 75rem;
+  --breakpoint-xlarge: 100rem;
+}
+
 @layer base {
   * {
     @apply border-border;

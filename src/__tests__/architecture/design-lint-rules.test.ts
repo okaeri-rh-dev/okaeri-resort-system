@@ -162,7 +162,7 @@ describe("arbitrary text sizes", () => {
     );
   });
 
-  it.each(["text-xs", "text-sm/6", "md:text-4xl", "text-muted-foreground", "text-balance"])(
+  it.each(["text-xs", "text-sm/6", "expanded:text-4xl", "text-muted-foreground", "text-balance"])(
     "accepts %s",
     async (className) => {
       expect(
@@ -207,6 +207,96 @@ describe("arbitrary durations", () => {
     expect(await ruleIds(`export const A = () => <div className="${className}" />;`)).not.toContain(
       rule
     );
+  });
+});
+
+describe("default breakpoints", () => {
+  const rule = "better-tailwindcss/no-restricted-classes";
+
+  it("names the class and the window size classes", async () => {
+    const messages = await lint(`export const A = () => <div className="md:flex" />;`);
+
+    expect(
+      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+    ).toEqual([expect.stringMatching(/"md:flex".*medium.*expanded.*@container/)]);
+  });
+
+  it.each([
+    "sm:px-4",
+    "lg:hidden",
+    "xl:grid-cols-3",
+    "2xl:max-w-7xl",
+    "max-md:min-h-11",
+    "max-sm:hidden",
+    "dark:md:bg-card",
+    "md:hover:bg-muted",
+    "lg:w-72!",
+  ])("flags %s", async (className) => {
+    expect(await ruleIds(`export const A = () => <div className="${className}" />;`)).toContain(
+      rule
+    );
+  });
+
+  it.each([
+    "medium:px-6",
+    "expanded:grid-cols-2",
+    "large:w-72",
+    "xlarge:max-w-400",
+    "max-medium:hidden",
+    "@container @md:flex @max-2xl:hidden",
+    "coarse:min-h-11",
+    "text-sm",
+  ])("accepts %s", async (className) => {
+    expect(await ruleIds(`export const A = () => <div className="${className}" />;`)).not.toContain(
+      rule
+    );
+  });
+
+  it("knows the M3 window size class names", async () => {
+    expect(
+      await ruleIds(
+        `export const A = () => <div className="medium:flex expanded:grid large:w-72 xlarge:px-6" />;`
+      )
+    ).not.toContain("better-tailwindcss/no-unknown-classes");
+  });
+});
+
+describe("design/no-restricted-imports: retired width hooks", () => {
+  const rule = "design/no-restricted-imports";
+  const importRuleIds = async (code: string, filePath?: string) =>
+    (await lint(`${code}\nexport const A = 1;`, undefined, filePath)).map(
+      (message) => message.ruleId
+    );
+
+  it.each([
+    `import { useResponsiveView } from "@/hooks";`,
+    `import { useResponsiveView } from "@/hooks/useResponsiveView";`,
+    `import { useMediaQuery } from "@/hooks/useMediaQuery";`,
+    `import { useMediaQuery } from "../../hooks/useMediaQuery";`,
+  ])("flags %s", async (code) => {
+    expect(await importRuleIds(code)).toContain(rule);
+  });
+
+  it("flags them inside the kit too", async () => {
+    expect(
+      await importRuleIds(
+        `import { useMediaQuery } from "@/hooks/useMediaQuery";`,
+        "src/components/ui/__design_lint__/Snippet.tsx"
+      )
+    ).toContain(rule);
+  });
+
+  it("points at shells and @container", async () => {
+    const messages = await lint(
+      `import { useResponsiveView } from "@/hooks";\nexport const A = useResponsiveView;`
+    );
+    expect(messages.find((message) => message.ruleId === rule)?.message).toMatch(
+      /AppShell.*@container/
+    );
+  });
+
+  it("accepts other hooks from @/hooks", async () => {
+    expect(await importRuleIds(`import { useUserRole } from "@/hooks";`)).not.toContain(rule);
   });
 });
 

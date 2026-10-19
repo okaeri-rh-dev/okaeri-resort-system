@@ -7,6 +7,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { AlertCircle, ArrowLeft, ArrowRight, CreditCard, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 
+import { DatePicker } from "@/components/patterns";
 import { PaymentMethodsDisplay } from "@/components/payments/PaymentMethodsDisplay";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { ResponsiveDatePicker } from "@/components/ui/responsive-date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { pickedDay } from "@/lib/bookings/stay";
 import { logger } from "@/lib/logger";
@@ -339,10 +339,12 @@ export function MultiUnitGuestBookingForm() {
                     <FormItem className="flex flex-col">
                       <FormLabel>Check-In Date</FormLabel>
                       <FormControl>
-                        <ResponsiveDatePicker
+                        <DatePicker
                           value={field.value}
                           onChange={field.onChange}
-                          disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                          isDateDisabled={(date) =>
+                            date < new Date(new Date().setHours(0, 0, 0, 0))
+                          }
                           placeholder="Pick a date"
                         />
                       </FormControl>
@@ -358,10 +360,10 @@ export function MultiUnitGuestBookingForm() {
                     <FormItem className="flex flex-col">
                       <FormLabel>Check-Out Date</FormLabel>
                       <FormControl>
-                        <ResponsiveDatePicker
+                        <DatePicker
                           value={field.value}
                           onChange={field.onChange}
-                          disabled={(date) =>
+                          isDateDisabled={(date) =>
                             !watchedValues.check_in || date <= watchedValues.check_in
                           }
                           placeholder="Pick a date"

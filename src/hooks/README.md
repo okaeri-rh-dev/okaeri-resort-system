@@ -28,7 +28,7 @@ React hooks shared across components. Entity CRUD (bookings, guests, payments, e
 | `useAvailabilityRealtime.ts`    | `useAvailabilityRealtime`: availability changes that affect multi-unit bookings               |
 | `useIdempotencyKey.ts`          | `useIdempotencyKey`: persisted key for retry-safe mutations                                   |
 | `useCalendarBookings.ts`        | `useCalendarBookings` plus `getBookingStatusPriority`, `formatCurrency` for the calendar view |
-| `useMediaQuery.ts`              | `useMediaQuery`                                                                               |
-| `useResponsiveView.ts`          | `useResponsiveView`: breakpoint flags via `matchMedia`                                        |
+
+Width hooks are retired: window queries live in `AppShell`, and panes adapt with `@container` or `DataTable` (DESIGN.md, Layout).
 
 Tests live in `__tests__/` beside the hooks; run them with `npm run test:unit`.

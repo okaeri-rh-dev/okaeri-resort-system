@@ -1,11 +1,17 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRouter,
+  RouterProvider,
+} from "@tanstack/react-router";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
 
-import { DatePicker, DateRangePicker, type DateRange } from "@/components/patterns";
+import { AppShell, DatePicker, DateRangePicker, type DateRange } from "@/components/patterns";
 
 // The setup file's vi.fn() ResizeObserver is reset between tests; Radix Popover measures with it
 beforeAll(() => {
@@ -106,5 +112,51 @@ describe("DateRangePicker", () => {
     const { container } = render(<StayDates />);
 
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("DatePicker in a shell", () => {
+  function renderInShell(ui: ReactNode, compact: boolean) {
+    vi.mocked(window.matchMedia).mockImplementation(
+      (query: string) =>
+        ({
+          matches: compact,
+          media: query,
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        }) as unknown as MediaQueryList
+    );
+    const rootRoute = createRootRoute({
+      component: () => (
+        <AppShell surface="guest" brand={{ name: "Okaeri Resort", to: "/" }} destinations={[]}>
+          {ui}
+        </AppShell>
+      ),
+    });
+    const router = createRouter({
+      routeTree: rootRoute,
+      history: createMemoryHistory({ initialEntries: ["/"] }),
+    });
+    return render(<RouterProvider router={router} />);
+  }
+
+  it("opens in a bottom sheet on a compact window and closes once a date is picked", async () => {
+    const onChange = vi.fn();
+    renderInShell(<DatePicker onChange={onChange} placeholder="Check-in date" />, true);
+
+    await userEvent.click(await screen.findByRole("button", { name: /Check-in date/ }));
+    expect(screen.getByRole("dialog", { name: "Select Date" })).toBeVisible();
+
+    await userEvent.click(dayButton(15) as HTMLElement);
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("dialog", { name: "Select Date" })).not.toBeInTheDocument();
+  });
+
+  it("opens in a popover on a wider window", async () => {
+    renderInShell(<DatePicker onChange={() => {}} placeholder="Check-in date" />, false);
+
+    await userEvent.click(await screen.findByRole("button", { name: /Check-in date/ }));
+    expect(screen.getByRole("dialog", { name: "Select date" })).toBeVisible();
+    expect(screen.queryByRole("dialog", { name: "Select Date" })).not.toBeInTheDocument();
   });
 });

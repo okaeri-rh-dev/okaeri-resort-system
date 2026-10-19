@@ -21,6 +21,9 @@
     }
   },
   "src/components/accounts/AccountForm.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 4
+    },
     "design/no-restricted-imports": {
       "count": 5
     }
@@ -51,7 +54,7 @@
   },
   "src/components/admin/GrantRoleDialog.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 1
+      "count": 2
     },
     "design/no-restricted-imports": {
       "count": 8
@@ -62,7 +65,7 @@
   },
   "src/components/admin/PaymentProofViewer.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 22
+      "count": 23
     },
     "design/no-restricted-imports": {
       "count": 5
@@ -73,7 +76,7 @@
   },
   "src/components/admin/PendingBookingsQueue.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 3
+      "count": 6
     },
     "design/no-restricted-imports": {
       "count": 6
@@ -81,7 +84,7 @@
   },
   "src/components/admin/RoleChangeHistory.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 4
+      "count": 5
     },
     "design/no-restricted-imports": {
       "count": 4
@@ -96,6 +99,9 @@
     }
   },
   "src/components/admin/RoleStatistics.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 4
+    },
     "better-tailwindcss/no-unknown-classes": {
       "count": 1
     },
@@ -105,7 +111,7 @@
   },
   "src/components/admin/UnitAssignmentInterface.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 55
+      "count": 58
     },
     "design/no-restricted-imports": {
       "count": 5
@@ -115,6 +121,9 @@
     }
   },
   "src/components/admin/UpdateRoleDialog.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 2
+    },
     "design/no-restricted-imports": {
       "count": 6
     }
@@ -134,7 +143,7 @@
   },
   "src/components/audit/AuditDiffViewer.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 7
+      "count": 9
     },
     "design/no-restricted-imports": {
       "count": 4
@@ -145,7 +154,7 @@
       "count": 1
     },
     "design/no-restricted-imports": {
-      "count": 5
+      "count": 4
     }
   },
   "src/components/audit/AuditLogViewer.tsx": {
@@ -157,6 +166,9 @@
     }
   },
   "src/components/audit/AuditStatsPanel.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 2
+    },
     "design/no-restricted-imports": {
       "count": 2
     }
@@ -230,7 +242,7 @@
   },
   "src/components/booking-confirmation/BookingReferenceDisplay.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 1
+      "count": 3
     },
     "design/no-restricted-imports": {
       "count": 2
@@ -238,7 +250,7 @@
   },
   "src/components/booking-confirmation/BookingSummaryCard.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 1
+      "count": 2
     },
     "design/no-restricted-imports": {
       "count": 3
@@ -264,7 +276,7 @@
   },
   "src/components/bookings/BookingDetail/index.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 4
+      "count": 7
     },
     "better-tailwindcss/no-unknown-classes": {
       "count": 2
@@ -274,13 +286,19 @@
     }
   },
   "src/components/bookings/BookingEdit/index.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 3
+    },
     "design/no-restricted-imports": {
       "count": 9
     }
   },
   "src/components/bookings/BookingForm.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 48
+    },
     "design/no-restricted-imports": {
-      "count": 11
+      "count": 10
     }
   },
   "src/components/bookings/BookingsTable/components/BookingActionsCell.tsx": {
@@ -309,10 +327,10 @@
   },
   "src/components/bookings/BookingsTable/components/BookingFilters.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 2
+      "count": 1
     },
     "design/no-restricted-imports": {
-      "count": 5
+      "count": 3
     }
   },
   "src/components/bookings/BookingsTable/index.tsx": {
@@ -321,6 +339,9 @@
     }
   },
   "src/components/bookings/MultiUnitBookingForm.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 12
+    },
     "design/no-restricted-imports": {
       "count": 9
     }
@@ -334,6 +355,9 @@
     }
   },
   "src/components/bookings/MultiUnitSelector.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 4
+    },
     "design/no-restricted-imports": {
       "count": 6
     },
@@ -351,12 +375,12 @@
   },
   "src/components/calendar/AvailabilityLegend.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 1
+      "count": 2
     }
   },
   "src/components/calendar/CalendarGrid.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 3
+      "count": 11
     },
     "better-tailwindcss/no-unknown-classes": {
       "count": 1
@@ -373,7 +397,7 @@
   },
   "src/components/calendar/PublicAvailabilityCalendar.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 26
+      "count": 27
     },
     "design/no-restricted-imports": {
       "count": 2
@@ -381,7 +405,7 @@
   },
   "src/components/dashboard/BookingIndicators.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 4
+      "count": 7
     }
   },
   "src/components/dashboard/BookingTooltip.tsx": {
@@ -392,9 +416,14 @@
       "count": 1
     }
   },
+  "src/components/dashboard/Dashboard.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 2
+    }
+  },
   "src/components/dashboard/DashboardCalendar.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 19
+      "count": 26
     },
     "design/no-restricted-imports": {
       "count": 3
@@ -413,7 +442,7 @@
   },
   "src/components/dashboard/DashboardStats.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 4
+      "count": 9
     },
     "design/no-restricted-imports": {
       "count": 1
@@ -421,7 +450,7 @@
   },
   "src/components/dashboard/DesktopDashboard.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 8
+      "count": 9
     },
     "design/no-restricted-imports": {
       "count": 2
@@ -441,6 +470,9 @@
     }
   },
   "src/components/documents/DocumentForm/LineItemsSection.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 3
+    },
     "design/no-restricted-imports": {
       "count": 4
     },
@@ -459,6 +491,9 @@
     }
   },
   "src/components/documents/DocumentForm/RecipientSection.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 3
+    },
     "design/no-restricted-imports": {
       "count": 2
     }
@@ -469,13 +504,16 @@
     }
   },
   "src/components/documents/DocumentGenerator.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 7
+    },
     "design/no-restricted-imports": {
       "count": 3
     }
   },
   "src/components/documents/DocumentPreview/DocumentPage.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 50
+      "count": 51
     },
     "design/no-restricted-syntax": {
       "count": 1
@@ -501,6 +539,9 @@
     }
   },
   "src/components/documents/LetterheadSettings/index.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 7
+    },
     "design/no-restricted-imports": {
       "count": 4
     }
@@ -512,7 +553,7 @@
   },
   "src/components/entity-detail/DetailPageSkeleton.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 1
+      "count": 2
     },
     "design/no-restricted-imports": {
       "count": 2
@@ -530,7 +571,7 @@
   },
   "src/components/expenses/ExpenseDetail/index.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 14
+      "count": 16
     },
     "better-tailwindcss/no-unknown-classes": {
       "count": 4
@@ -541,7 +582,7 @@
   },
   "src/components/expenses/ExpenseEdit.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 1
+      "count": 2
     },
     "design/no-restricted-imports": {
       "count": 8
@@ -549,7 +590,7 @@
   },
   "src/components/expenses/ExpenseForm.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 1
+      "count": 4
     },
     "design/no-restricted-imports": {
       "count": 7
@@ -579,15 +620,15 @@
   },
   "src/components/expenses/ExpensesTable/components/ExpenseFilters.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 4
+      "count": 2
     },
     "design/no-restricted-imports": {
-      "count": 6
+      "count": 4
     }
   },
   "src/components/expenses/ExpensesTable/index.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 12
+      "count": 3
     },
     "design/no-restricted-imports": {
       "count": 1
@@ -603,7 +644,7 @@
   },
   "src/components/guest-booking/BookingReviewStep.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 5
+      "count": 7
     },
     "design/no-restricted-imports": {
       "count": 5
@@ -611,7 +652,7 @@
   },
   "src/components/guest-booking/FormStepIndicator.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 1
+      "count": 6
     },
     "design/no-restricted-syntax": {
       "count": 1
@@ -622,10 +663,10 @@
   },
   "src/components/guest-booking/MultiUnitGuestBookingForm.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 9
+      "count": 11
     },
     "design/no-restricted-imports": {
-      "count": 7
+      "count": 6
     }
   },
   "src/components/guest-booking/PaymentProofUpload.tsx": {
@@ -651,7 +692,7 @@
   },
   "src/components/guest-booking/UnitRequestSelector.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 23
+      "count": 24
     },
     "design/no-restricted-imports": {
       "count": 4
@@ -659,25 +700,31 @@
   },
   "src/components/guests/GuestDetail/index.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 18
+      "count": 20
     },
     "better-tailwindcss/no-unknown-classes": {
       "count": 2
     }
   },
   "src/components/guests/GuestEdit/index.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 1
+    },
     "design/no-restricted-imports": {
       "count": 4
     }
   },
   "src/components/guests/GuestEditDialog.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 1
+    },
     "design/no-restricted-imports": {
       "count": 4
     }
   },
   "src/components/guests/GuestsTable.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 59
+      "count": 47
     },
     "design/no-restricted-imports": {
       "count": 5
@@ -685,7 +732,7 @@
   },
   "src/components/payments/PaymentDetail/index.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 13
+      "count": 15
     },
     "better-tailwindcss/no-unknown-classes": {
       "count": 2
@@ -696,7 +743,7 @@
   },
   "src/components/payments/PaymentEdit/index.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 3
+      "count": 4
     },
     "design/no-restricted-imports": {
       "count": 6
@@ -726,7 +773,7 @@
   },
   "src/components/payments/PaymentsTable.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 25
+      "count": 19
     },
     "design/no-restricted-imports": {
       "count": 5
@@ -737,7 +784,7 @@
   },
   "src/components/pricing/DiscountRulesForm.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 1
+      "count": 3
     },
     "design/no-restricted-imports": {
       "count": 9
@@ -745,7 +792,7 @@
   },
   "src/components/pricing/PricingConfigForm.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 13
+      "count": 18
     },
     "design/no-restricted-imports": {
       "count": 6
@@ -753,7 +800,7 @@
   },
   "src/components/pricing/PricingInfoCard.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 9
+      "count": 11
     },
     "design/no-restricted-imports": {
       "count": 4
@@ -769,7 +816,7 @@
   },
   "src/components/pricing/SeasonalRatesForm.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 4
+      "count": 6
     },
     "design/no-restricted-imports": {
       "count": 9
@@ -781,6 +828,9 @@
     }
   },
   "src/components/pwa/InstallBanner.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 5
+    },
     "design/no-restricted-imports": {
       "count": 1
     }
@@ -794,11 +844,17 @@
     }
   },
   "src/components/settings/ExpenseCategoryForm.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 2
+    },
     "design/no-restricted-imports": {
       "count": 4
     }
   },
   "src/components/settings/PaymentMethodForm.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 5
+    },
     "design/no-restricted-imports": {
       "count": 6
     },
@@ -818,6 +874,9 @@
     }
   },
   "src/components/transfers/TransferForm.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 5
+    },
     "design/no-restricted-imports": {
       "count": 6
     }
@@ -830,9 +889,37 @@
       "count": 5
     }
   },
+  "src/components/ui/alert-dialog.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 6
+    }
+  },
+  "src/components/ui/calendar.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 3
+    }
+  },
+  "src/components/ui/dialog.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 5
+    }
+  },
+  "src/components/ui/input.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 1
+    }
+  },
   "src/components/ui/responsive-date-picker.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 6
+    },
     "better-tailwindcss/no-unknown-classes": {
       "count": 4
+    }
+  },
+  "src/components/ui/sheet.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 6
     }
   },
   "src/components/ui/sonner.tsx": {
@@ -840,9 +927,14 @@
       "count": 1
     }
   },
+  "src/components/ui/textarea.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 1
+    }
+  },
   "src/components/units/UnitDetail/index.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 25
+      "count": 32
     },
     "design/no-restricted-imports": {
       "count": 2
@@ -850,7 +942,7 @@
   },
   "src/components/units/UnitEdit/index.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 12
+      "count": 15
     },
     "design/no-restricted-imports": {
       "count": 6
@@ -858,7 +950,7 @@
   },
   "src/components/units/UnitForm.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 3
+      "count": 5
     },
     "design/no-restricted-imports": {
       "count": 6
@@ -886,7 +978,7 @@
   },
   "src/components/units/UnitsTable/components/TableHeader.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 13
+      "count": 20
     },
     "design/no-restricted-imports": {
       "count": 4
@@ -908,23 +1000,6 @@
       "count": 2
     }
   },
-  "src/layouts/MainLayout.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "design/no-restricted-imports": {
-      "count": 3
-    },
-    "design/no-restricted-syntax": {
-      "count": 1
-    },
-    "jsx-a11y/click-events-have-key-events": {
-      "count": 2
-    },
-    "jsx-a11y/no-static-element-interactions": {
-      "count": 2
-    }
-  },
   "src/routes/__root.tsx": {
     "better-tailwindcss/no-restricted-classes": {
       "count": 6
@@ -940,7 +1015,7 @@
   },
   "src/routes/admin/accounts.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 2
+      "count": 8
     },
     "design/no-restricted-imports": {
       "count": 2
@@ -972,7 +1047,7 @@
   },
   "src/routes/admin/bookings/$bookingId.assign-units.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 23
+      "count": 25
     },
     "design/no-restricted-imports": {
       "count": 3
@@ -1051,7 +1126,7 @@
   },
   "src/routes/admin/settings.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 1
+      "count": 7
     },
     "design/no-restricted-imports": {
       "count": 3
@@ -1059,7 +1134,7 @@
   },
   "src/routes/admin/transfers.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 4
+      "count": 7
     },
     "design/no-restricted-imports": {
       "count": 2
@@ -1090,7 +1165,7 @@
   },
   "src/routes/admin/verify-payment.$bookingId.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 1
+      "count": 2
     },
     "design/no-restricted-imports": {
       "count": 2
@@ -1124,7 +1199,7 @@
   },
   "src/routes/index.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 7
+      "count": 8
     }
   },
   "src/routes/privacy-policy.tsx": {

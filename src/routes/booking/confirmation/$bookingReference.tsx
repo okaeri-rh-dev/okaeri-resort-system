@@ -8,6 +8,7 @@ import { PrintButton } from "@/components/booking-confirmation/PrintButton";
 import { StatusTimeline } from "@/components/booking-confirmation/StatusTimeline";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { GuestLayout } from "@/layouts/GuestLayout";
 
 /**
  * Booking confirmation data structure returned from the API
@@ -144,8 +145,8 @@ function BookingConfirmationComponent() {
   const paymentProofUploaded = !!booking.payment_proof_url;
 
   return (
-    <div className="from-primary/5 to-background min-h-screen bg-gradient-to-b">
-      <div className="container mx-auto px-4 py-8">
+    <GuestLayout>
+      <div>
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="mb-2 text-3xl font-bold text-green-600">Booking Confirmed!</h1>
@@ -208,6 +209,6 @@ function BookingConfirmationComponent() {
           </div>
         </div>
       </div>
-    </div>
+    </GuestLayout>
   );
 }

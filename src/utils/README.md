@@ -9,7 +9,6 @@ The `/src/utils/` directory contains 29 utility modules providing reusable funct
 ```
 utils/
 ├── Core Utilities
-│   ├── index.ts                  # Utility exports and common helpers
 │   ├── validation.ts             # Input validation utilities
 │   └── loadingPerformance.ts    # Performance monitoring utilities
 │

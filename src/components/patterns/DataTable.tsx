@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from "react";
+import { Fragment, useRef, type ReactNode } from "react";
 
 import { flexRender, type Row, type RowData, type Table } from "@tanstack/react-table";
 
@@ -34,6 +34,8 @@ export interface DataTableProps<TData> {
   label: string;
   /** Shown when the row model is empty: below the headers as a table, alone as cards. */
   emptyState?: ReactNode;
+  /** In table form, a full-width row under each expanded row (`row.getIsExpanded()`). */
+  renderExpandedRow?: (row: Row<TData>) => ReactNode;
   /** Placement only. */
   className?: string;
 }
@@ -62,6 +64,7 @@ export function DataTable<TData>({
   renderCard,
   label,
   emptyState,
+  renderExpandedRow,
   className,
 }: DataTableProps<TData>) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -107,17 +110,26 @@ export function DataTable<TData>({
           </TableHeader>
           <TableBody>
             {rows.map((row) => (
-              <TableRow key={row.id} className="h-10 duration-150">
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    style={{ textAlign: cell.column.columnDef.meta?.align }}
-                    className="text-foreground px-4 py-2 text-sm"
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
+              <Fragment key={row.id}>
+                <TableRow className="h-10 duration-150">
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell
+                      key={cell.id}
+                      style={{ textAlign: cell.column.columnDef.meta?.align }}
+                      className="text-foreground px-4 py-2 text-sm"
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+                {renderExpandedRow && row.getIsExpanded() && (
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableCell colSpan={row.getVisibleCells().length} className="p-0">
+                      {renderExpandedRow(row)}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </Fragment>
             ))}
           </TableBody>
         </TablePrimitive>

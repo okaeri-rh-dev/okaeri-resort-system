@@ -6,7 +6,7 @@ import { CheckCircle, CreditCard, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { FormSkeleton } from "@/components/patterns";
+import { DatePicker, FormSkeleton } from "@/components/patterns";
 import { PricingStatusBadge } from "@/components/pricing/PricingStatusBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/form";
 import { Input, NumberInput } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { ResponsiveDatePicker } from "@/components/ui/responsive-date-picker";
 import {
   Select,
   SelectContent,
@@ -380,7 +379,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
             <FormItem className="flex flex-col">
               <FormLabel className="text-base font-medium sm:text-sm">Check-in Date</FormLabel>
               <FormControl>
-                <ResponsiveDatePicker
+                <DatePicker
                   value={field.value}
                   onChange={field.onChange}
                   placeholder="Pick a date"
@@ -398,10 +397,10 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
             <FormItem className="flex flex-col">
               <FormLabel className="text-base font-medium sm:text-sm">Check-out Date</FormLabel>
               <FormControl>
-                <ResponsiveDatePicker
+                <DatePicker
                   value={field.value}
                   onChange={field.onChange}
-                  disabled={(date) => date <= checkIn}
+                  isDateDisabled={(date) => date <= checkIn}
                   placeholder="Pick a date"
                 />
               </FormControl>

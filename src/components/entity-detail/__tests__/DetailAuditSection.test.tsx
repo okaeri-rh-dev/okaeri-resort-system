@@ -11,10 +11,6 @@ import type { AuditLog } from "@/types/audit.types";
 
 import { DetailAuditSection } from "../DetailAuditSection";
 
-vi.mock("@/hooks/useMediaQuery", () => ({
-  useMediaQuery: vi.fn(() => false),
-}));
-
 vi.mock("@/lib/supabase", () => ({
   db: { auditLogs: { recentByRecord: vi.fn() } },
 }));
