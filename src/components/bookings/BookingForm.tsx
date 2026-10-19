@@ -6,7 +6,7 @@ import { CheckCircle, CreditCard, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { DatePicker, FormSkeleton } from "@/components/patterns";
+import { DatePicker } from "@/components/patterns";
 import { PricingStatusBadge } from "@/components/pricing/PricingStatusBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useMultiUnitAvailability } from "@/hooks/useMultiUnitBookingQueries";
 import { usePricingCalculation } from "@/hooks/usePricingCalculation";
 import { pickedDay, unavailableReason } from "@/lib/bookings";
+import { formatCurrency } from "@/lib/formatters";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
 import { hasProperty, isObject } from "@/lib/type-guards";
 import { cn } from "@/lib/utils";
@@ -43,13 +44,14 @@ import {
   bookingStep2Schema,
   bookingStep3Schema,
   completeBookingSchema,
-  formatCurrency,
   formatPhoneNumber,
   type CompleteBookingData,
 } from "@/lib/validations";
 import { useCreateBooking } from "@/stores/useBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
 import type { MultiUnitBooking } from "@/types";
+
+import { FormSkeleton } from "./FormSkeleton";
 
 interface BookingFormProps {
   onSuccess?: (booking: MultiUnitBooking) => void;

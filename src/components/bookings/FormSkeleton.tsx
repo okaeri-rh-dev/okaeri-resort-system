@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/patterns";
 import { cn } from "@/lib/utils";
 
 function StepsSkeleton({ steps, currentStep }: { steps: number; currentStep: number }) {

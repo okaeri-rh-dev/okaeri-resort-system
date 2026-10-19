@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { Check, Upload } from "lucide-react";
 
 import { UNIT_SLOT_MAP } from "@/components/dashboard/unit-calendar-config";
-import { ActionMenu, MobileCard, StatusBadge } from "@/components/patterns";
+import { ActionMenu, ListCard, StatusBadge } from "@/components/patterns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { useUserRole } from "@/hooks";
 import { canTransitionStatus } from "@/lib/bookings";
 import { formatCurrency } from "@/lib/formatters";
-import { statusTone } from "@/lib/status-tone";
+import { statusBadgeProps } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
 import type { BookingStatus } from "@/types";
 import { utcToResortTime } from "@/utils/date-helpers";
@@ -144,7 +144,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
 
   return (
     <>
-      <MobileCard className="space-y-2">
+      <ListCard className="space-y-2">
         {/* Header: identity (left) + status/menu (right) */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
@@ -162,9 +162,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
             <div className="font-mono text-xs text-neutral-400">{booking.booking_reference}</div>
           </div>
           <div className="flex items-center gap-1">
-            <StatusBadge tone={statusTone(booking.booking_status ?? "Pending")}>
-              {booking.booking_status ?? "Pending"}
-            </StatusBadge>
+            <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
             {menuActions.length > 0 && <ActionMenu actions={menuActions} />}
           </div>
         </div>
@@ -243,7 +241,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
             )}
           </div>
         )}
-      </MobileCard>
+      </ListCard>
 
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>

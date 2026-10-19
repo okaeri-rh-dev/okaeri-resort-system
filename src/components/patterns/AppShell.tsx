@@ -19,8 +19,8 @@ import {
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import type { RoutePath } from "@/types/route-path";
 
-import type { RoutePath } from "./DetailPageLayout";
 import { PageHeader, type PageHeaderProps } from "./PageHeader";
 import { CompactWindowContext, useCompactWindowQuery } from "./window-size";
 
@@ -130,7 +130,7 @@ const railItem = cn(
   "group flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-lg px-1 py-1.5",
   "text-sidebar-foreground text-xs font-medium transition-colors duration-150",
   "focus-visible:ring-sidebar-ring focus-visible:ring-2 focus-visible:outline-hidden",
-  "large:min-h-10 large:flex-row large:justify-start large:gap-3 large:px-3 large:text-sm",
+  "large:min-h-10 large:coarse:min-h-11 large:flex-row large:justify-start large:gap-3 large:px-3 large:text-sm",
   "large:hover:bg-sidebar-accent large:data-[status=active]:bg-sidebar-primary large:data-[status=active]:text-sidebar-primary-foreground"
 );
 
@@ -148,9 +148,101 @@ function RailIcon({ icon: Icon }: { icon: LucideIcon }) {
   );
 }
 
+/** How an item's icon and label are laid out: the rail, a menu sheet or the account dropdown. */
+type ItemForm = "rail" | "sheet" | "dropdown";
+
+function ItemLabel({
+  form,
+  icon: Icon,
+  label,
+}: {
+  form: ItemForm;
+  icon: LucideIcon;
+  label: string;
+}) {
+  if (form === "rail") {
+    return (
+      <>
+        <RailIcon icon={Icon} />
+        <span className="large:text-left line-clamp-2 text-center">{label}</span>
+      </>
+    );
+  }
+  return (
+    <>
+      <Icon className={form === "dropdown" ? "size-4" : "size-5"} aria-hidden="true" />
+      {label}
+    </>
+  );
+}
+
+/** Active on the destination's path, and on its child routes unless it is `exact`. */
+function matchOptions(destination: ShellDestination) {
+  return { exact: destination.exact ?? false };
+}
+
+function ActionButtons({
+  actions,
+  form,
+  className,
+  onBeforeSelect,
+}: {
+  actions: ShellAction[];
+  form: ItemForm;
+  className: string;
+  onBeforeSelect?: () => void;
+}) {
+  return actions.map(({ label, icon, onSelect }) => (
+    <button
+      key={label}
+      type="button"
+      onClick={() => {
+        onBeforeSelect?.();
+        onSelect();
+      }}
+      className={className}
+    >
+      <ItemLabel form={form} icon={icon} label={label} />
+    </button>
+  ));
+}
+
+function SheetDestinations({
+  destinations,
+  linkClassName,
+}: {
+  destinations: ShellDestination[];
+  linkClassName: string;
+}) {
+  return (
+    <ul className="space-y-1">
+      {destinations.map((destination) => (
+        <li key={destination.to}>
+          <SheetClose asChild>
+            <Link
+              to={destination.to}
+              activeOptions={matchOptions(destination)}
+              className={linkClassName}
+            >
+              <ItemLabel form="sheet" icon={destination.icon} label={destination.label} />
+            </Link>
+          </SheetClose>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 const sheetItem = cn(
   "flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors duration-150",
   "focus-visible:ring-2 focus-visible:outline-hidden"
+);
+
+const adminSheetItem = cn(sheetItem, "hover:bg-sidebar-accent focus-visible:ring-sidebar-ring");
+
+const adminSheetLink = cn(
+  adminSheetItem,
+  "data-[status=active]:bg-sidebar-primary data-[status=active]:text-sidebar-primary-foreground"
 );
 
 function AdminShell({
@@ -179,10 +271,9 @@ function AdminShell({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {actions.map(({ label, icon: Icon, onSelect }) => (
+              {actions.map(({ label, icon, onSelect }) => (
                 <DropdownMenuItem key={label} onSelect={onSelect}>
-                  <Icon className="size-4" aria-hidden="true" />
-                  {label}
+                  <ItemLabel form="dropdown" icon={icon} label={label} />
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -237,21 +328,17 @@ function AdminShell({
                 >
                   <Link
                     to={destination.to}
-                    activeOptions={{ exact: destination.exact ?? false }}
+                    activeOptions={matchOptions(destination)}
                     className={railItem}
                   >
-                    <RailIcon icon={destination.icon} />
-                    <span className="large:text-left line-clamp-2 text-center">
-                      {destination.label}
-                    </span>
+                    <ItemLabel form="rail" icon={destination.icon} label={destination.label} />
                   </Link>
                 </li>
               ))}
               {needsMore && (
                 <li className="medium:hidden min-w-0 flex-1">
                   <button type="button" onClick={() => setMenuOpen(true)} className={railItem}>
-                    <RailIcon icon={MoreHorizontal} />
-                    <span>More</span>
+                    <ItemLabel form="rail" icon={MoreHorizontal} label="More" />
                   </button>
                 </li>
               )}
@@ -261,17 +348,7 @@ function AdminShell({
 
         {actions.length > 0 && (
           <div className="border-sidebar-border medium:flex large:px-4 hidden flex-col gap-1 border-t p-2">
-            {actions.map((action) => (
-              <button
-                key={action.label}
-                type="button"
-                onClick={action.onSelect}
-                className={railItem}
-              >
-                <RailIcon icon={action.icon} />
-                <span className="large:text-left line-clamp-2 text-center">{action.label}</span>
-              </button>
-            ))}
+            <ActionButtons actions={actions} form="rail" className={railItem} />
           </div>
         )}
       </div>
@@ -297,46 +374,16 @@ function AdminShell({
             </SheetDescription>
           </div>
           <nav aria-label="Menu" className="flex-1 overflow-y-auto p-4">
-            <ul className="space-y-1">
-              {destinations.map(({ label, to, icon: Icon, exact }) => (
-                <li key={to}>
-                  <SheetClose asChild>
-                    <Link
-                      to={to}
-                      activeOptions={{ exact: exact ?? false }}
-                      className={cn(
-                        sheetItem,
-                        "hover:bg-sidebar-accent focus-visible:ring-sidebar-ring",
-                        "data-[status=active]:bg-sidebar-primary data-[status=active]:text-sidebar-primary-foreground"
-                      )}
-                    >
-                      <Icon className="size-5" aria-hidden="true" />
-                      {label}
-                    </Link>
-                  </SheetClose>
-                </li>
-              ))}
-            </ul>
+            <SheetDestinations destinations={destinations} linkClassName={adminSheetLink} />
           </nav>
           {actions.length > 0 && (
             <div className="border-sidebar-border space-y-1 border-t p-4">
-              {actions.map(({ label, icon: Icon, onSelect }) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onSelect();
-                  }}
-                  className={cn(
-                    sheetItem,
-                    "hover:bg-sidebar-accent focus-visible:ring-sidebar-ring"
-                  )}
-                >
-                  <Icon className="size-5" aria-hidden="true" />
-                  {label}
-                </button>
-              ))}
+              <ActionButtons
+                actions={actions}
+                form="sheet"
+                className={adminSheetItem}
+                onBeforeSelect={() => setMenuOpen(false)}
+              />
             </div>
           )}
         </SheetContent>
@@ -363,10 +410,14 @@ function GuestShell({ brand, destinations, banner, ...content }: AppShellProps) 
           </Link>
           <nav aria-label="Main" className="medium:block hidden">
             <ul className="flex items-center gap-1">
-              {destinations.map(({ label, to, exact }) => (
-                <li key={to}>
-                  <Link to={to} activeOptions={{ exact: exact ?? false }} className={topBarLink}>
-                    {label}
+              {destinations.map((destination) => (
+                <li key={destination.to}>
+                  <Link
+                    to={destination.to}
+                    activeOptions={matchOptions(destination)}
+                    className={topBarLink}
+                  >
+                    {destination.label}
                   </Link>
                 </li>
               ))}
@@ -398,22 +449,10 @@ function GuestShell({ brand, destinations, banner, ...content }: AppShellProps) 
             </SheetDescription>
           </div>
           <nav aria-label="Menu" className="p-4">
-            <ul className="space-y-1">
-              {destinations.map(({ label, to, icon: Icon, exact }) => (
-                <li key={to}>
-                  <SheetClose asChild>
-                    <Link
-                      to={to}
-                      activeOptions={{ exact: exact ?? false }}
-                      className={cn(sheetItem, topBarLink)}
-                    >
-                      <Icon className="size-5" aria-hidden="true" />
-                      {label}
-                    </Link>
-                  </SheetClose>
-                </li>
-              ))}
-            </ul>
+            <SheetDestinations
+              destinations={destinations}
+              linkClassName={cn(sheetItem, topBarLink)}
+            />
           </nav>
         </SheetContent>
       </Sheet>

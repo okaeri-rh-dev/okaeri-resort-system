@@ -107,6 +107,7 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
 
   const DateRangeFilter = () => (
     <FilterPopover
+      fitContent
       isActive={!!(filters.dateFrom || filters.dateTo)}
       content={
         <div className="space-y-3">

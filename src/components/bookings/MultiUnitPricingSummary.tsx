@@ -15,7 +15,7 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { formatCurrency } from "@/lib/validations";
+import { formatCurrency } from "@/lib/formatters";
 import type { BookingUnit } from "@/types/multi-unit-booking";
 
 // ============================================

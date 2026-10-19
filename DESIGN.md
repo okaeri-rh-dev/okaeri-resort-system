@@ -98,7 +98,7 @@ Rationale: [Type scale and font loading](https://github.com/okaeri-rh-dev/okaeri
 
 ## Data formatting
 
-- Money goes through `formatCurrency` (`src/lib/validations.ts`), which gives `₱2,500.00`. Money is right-aligned in tables and uses `tabular-nums`.
+- Money goes through `formatCurrency` (`src/lib/formatters.ts`), which gives `₱2,500.00`. Money is right-aligned in tables and uses `tabular-nums`.
 - `tabular-nums` is the default inside the `DataTable`, money and date patterns. Figures elsewhere opt in. Data uses Figtree; there is no monospace face.
 
 ## Motion and density

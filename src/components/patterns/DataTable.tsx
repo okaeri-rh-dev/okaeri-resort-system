@@ -28,7 +28,7 @@ const CARD_LAYOUT_MAX_WIDTH = 600;
 export interface DataTableProps<TData> {
   /** A TanStack table. Its row model (sorted, filtered, paginated) is what both forms render. */
   table: Table<TData>;
-  /** One row as a card, for panes narrower than ~600px. Usually a `MobileCard`. */
+  /** One row as a card, for panes narrower than ~600px. Usually a `ListCard`. */
   renderCard: (row: Row<TData>) => ReactNode;
   /** Accessible name for the table and for the card list. */
   label: string;

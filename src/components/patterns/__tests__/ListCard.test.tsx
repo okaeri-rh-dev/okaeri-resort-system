@@ -2,15 +2,15 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { axe } from "vitest-axe";
 
-import { MobileCard, MobileCardRow, StatusBadge } from "@/components/patterns";
+import { ListCard, ListCardRow, StatusBadge } from "@/components/patterns";
 
-describe("MobileCard and MobileCardRow", () => {
+describe("ListCard and ListCardRow", () => {
   it("lays out a record as labelled rows", () => {
     render(
-      <MobileCard>
-        <MobileCardRow label="Booking" value="OKR-1042" />
-        <MobileCardRow label="Status" value={<StatusBadge tone="success">Paid</StatusBadge>} />
-      </MobileCard>
+      <ListCard>
+        <ListCardRow label="Booking" value="OKR-1042" />
+        <ListCardRow label="Status" value={<StatusBadge tone="success">Paid</StatusBadge>} />
+      </ListCard>
     );
 
     expect(screen.getByText("Booking")).toBeVisible();
@@ -20,9 +20,9 @@ describe("MobileCard and MobileCardRow", () => {
 
   it("has no axe violations", async () => {
     const { container } = render(
-      <MobileCard>
-        <MobileCardRow label="Amount" value="₱2,500.00" />
-      </MobileCard>
+      <ListCard>
+        <ListCardRow label="Amount" value="₱2,500.00" />
+      </ListCard>
     );
 
     expect(await axe(container)).toHaveNoViolations();

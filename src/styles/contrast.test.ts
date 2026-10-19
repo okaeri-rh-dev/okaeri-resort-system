@@ -1,7 +1,7 @@
 // @vitest-environment node
 /**
  * WCAG 2.2 AA contrast for the semantic tokens in src/index.css, light and dark.
- * The pair list is from Semantic token architecture (#32); a new token joins it in the same change.
+ * A new token joins the pair list in the same change.
  */
 
 import { wcagContrast } from "culori";
@@ -37,7 +37,7 @@ const textOnSurfaces = ["foreground", "muted-foreground", "primary"].flatMap((te
   ["background", "card"].map((surface) => [text, surface, TEXT] as const)
 );
 
-// Calendar cells carry foreground text only (#32)
+// Calendar cells carry foreground text only
 const availabilityPairs = ["high", "medium", "low"].map(
   (level) => ["foreground", `availability-${level}`, TEXT] as const
 );

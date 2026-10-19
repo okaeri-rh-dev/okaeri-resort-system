@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { axe } from "vitest-axe";
 
-import { FormSkeleton } from "@/components/patterns";
+import { FormSkeleton } from "../FormSkeleton";
 
 describe("FormSkeleton", () => {
   it("announces that the form is loading", () => {

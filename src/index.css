@@ -10,7 +10,7 @@
 @custom-variant coarse (@media (pointer: coarse));
 
 /*
- * Fonts (DESIGN.md, Type; #36). Fontsource variable files, declared here rather than through the
+ * Fonts (DESIGN.md, Type). Fontsource variable files, declared here rather than through the
  * package CSS so only these subsets ship: its Figtree latin-ext face claims ₱ without having it.
  * Values copied from @fontsource-variable 5.3.0. index.html preloads the Figtree latin file.
  */

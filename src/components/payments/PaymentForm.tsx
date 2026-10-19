@@ -29,8 +29,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/validations";
 import { useBookings } from "@/stores/useBookingStore";
 import { useCreatePayment, useUpdatePayment } from "@/stores/usePaymentStore";
 import type { Payment } from "@/types";

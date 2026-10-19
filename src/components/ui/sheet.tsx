@@ -37,9 +37,9 @@ const sheetVariants = cva(
         top: "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 top-0 border-b",
         bottom:
           "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 border-t",
-        left: "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm",
+        left: "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-3/4 border-r medium:max-w-sm",
         right:
-          "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
+          "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l medium:max-w-sm",
       },
     },
     defaultVariants: {
@@ -77,7 +77,7 @@ SheetContent.displayName = SheetPrimitive.Content.displayName;
 
 const SheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("flex flex-col space-y-2 pr-8 text-center sm:text-left", className)}
+    className={cn("medium:text-left flex flex-col space-y-2 pr-8 text-center", className)}
     {...props}
   />
 );
@@ -85,7 +85,10 @@ SheetHeader.displayName = "SheetHeader";
 
 const SheetFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)}
+    className={cn(
+      "medium:flex-row medium:justify-end medium:space-x-2 flex flex-col-reverse",
+      className
+    )}
     {...props}
   />
 );

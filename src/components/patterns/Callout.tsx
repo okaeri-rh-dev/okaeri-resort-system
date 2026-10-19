@@ -5,26 +5,14 @@ import { CircleAlert, CircleCheck, Info, TriangleAlert, type LucideIcon } from "
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
-import type { StatusTone } from "./StatusBadge";
+import { toneClasses, type StatusTone } from "./status-tone-classes";
 
-const tones: Record<StatusTone, { className: string; icon: LucideIcon }> = {
-  success: {
-    className: "bg-success text-success-foreground border-success-foreground/30",
-    icon: CircleCheck,
-  },
-  warning: {
-    className: "bg-warning text-warning-foreground border-warning-foreground/30",
-    icon: TriangleAlert,
-  },
-  danger: {
-    className: "bg-danger text-danger-foreground border-danger-foreground/30",
-    icon: CircleAlert,
-  },
-  info: {
-    className: "bg-info text-info-foreground border-info-foreground/30",
-    icon: Info,
-  },
-  neutral: { className: "bg-muted text-foreground border-border", icon: Info },
+const toneIcons: Record<StatusTone, LucideIcon> = {
+  success: CircleCheck,
+  warning: TriangleAlert,
+  danger: CircleAlert,
+  info: Info,
+  neutral: Info,
 };
 
 export interface CalloutProps {
@@ -47,14 +35,19 @@ export interface CalloutProps {
  * ```
  */
 export function Callout({ tone, title, children, className }: CalloutProps) {
-  const { className: toneClassName, icon: Icon } = tones[tone];
+  const Icon = toneIcons[tone];
   const urgent = tone === "danger" || tone === "warning";
 
   return (
     <Alert
       role={urgent ? "alert" : "status"}
       data-tone={tone}
-      className={cn(toneClassName, "[&>svg]:text-current", className)}
+      className={cn(
+        toneClasses[tone].fill,
+        toneClasses[tone].border,
+        "[&>svg]:text-current",
+        className
+      )}
     >
       <Icon className="size-4" aria-hidden="true" />
       {title && <AlertTitle>{title}</AlertTitle>}

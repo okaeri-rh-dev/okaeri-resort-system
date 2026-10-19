@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { statusTone } from "@/lib/status-tone";
+import { statusBadgeProps, statusTone } from "@/lib/status-tone";
 
 describe("statusTone", () => {
   it.each([
@@ -20,5 +20,21 @@ describe("statusTone", () => {
     ["Hold", "neutral"],
   ])("maps %s to %s", (status, tone) => {
     expect(statusTone(status)).toBe(tone);
+  });
+});
+
+describe("statusBadgeProps", () => {
+  it("labels and tones the badge with the status", () => {
+    expect(statusBadgeProps("Cancelled", "Pending")).toEqual({
+      tone: "danger",
+      children: "Cancelled",
+    });
+  });
+
+  it.each([null, undefined, ""])("falls back when the status is %j", (status) => {
+    expect(statusBadgeProps(status, "Available")).toEqual({
+      tone: "success",
+      children: "Available",
+    });
   });
 });

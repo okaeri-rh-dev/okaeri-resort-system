@@ -11,7 +11,7 @@ import {
   RelatedEntityLink,
 } from "@/components/entity-detail";
 import { DetailField, DetailPageLayout, DetailSection, StatusBadge } from "@/components/patterns";
-import { statusTone } from "@/lib/status-tone";
+import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking, Guest } from "@/types";
 
 /**
@@ -173,9 +173,7 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
                       {formatCurrency(booking.total_amount)}
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      <StatusBadge tone={statusTone(booking.booking_status || "Pending")}>
-                        {booking.booking_status || "Pending"}
-                      </StatusBadge>
+                      <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
                     </td>
                   </tr>
                 ))}

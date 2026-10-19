@@ -8,7 +8,7 @@ import { BOOKING_STATUS, ROUTES, TIMEOUTS } from "../fixtures/test-data";
  * Based on actual BookingsTable component structure:
  * - TanStack Table (React Table v8) with standard <table> element
  * - Desktop: Table view with rows
- * - Mobile: Card-based layout with MobileCard components
+ * - Mobile: Card-based layout with ListCard components
  * - Booking references: font-mono text-blue-600 links
  * - Actions menu: Edit Booking, Upload Payment, Confirm, Cancel, Delete
  * - BookingFilters component for search/filters
