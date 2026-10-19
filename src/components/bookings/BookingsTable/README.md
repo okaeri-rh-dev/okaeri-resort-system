@@ -33,10 +33,8 @@ The orchestrating component managing table rendering and responsive views.
 #### Features
 
 1. **Responsive Design**
-   - Desktop: Enterprise table layout
-   - Mobile: Card-based layout
-   - Automatic view detection
-   - CSS-only responsiveness
+   - Rendered by the kit's `DataTable`: a table when its pane is 600px or wider, `BookingCard`s below
+   - The width is measured inside `DataTable`; this module passes the card renderer and never branches on width
 
 2. **Data Management**
    - TanStack Query integration
@@ -126,11 +124,6 @@ interface BookingsTableProps {
    - Filtered data export
    - Sanitized data output
 
-5. **Responsive View**
-   - Mobile detection
-   - Automatic view switching
-   - Conditional rendering
-
 #### Usage
 
 ```typescript
@@ -142,9 +135,6 @@ const {
   bookings,
   isLoading,
   error,
-
-  // View state
-  isMobile,
 
   // Filter state
   filters,

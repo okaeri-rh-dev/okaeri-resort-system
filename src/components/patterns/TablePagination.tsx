@@ -2,6 +2,7 @@ import type { Table } from "@tanstack/react-table";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const MAX_PAGE_BUTTONS = 5;
 
@@ -23,7 +24,8 @@ export interface TablePaginationProps<TData> {
 
 /**
  * Pagination for a TanStack table: a "Showing x to y of z results" summary, previous and next
- * buttons and up to five page buttons around the current page.
+ * buttons and up to five page buttons around the current page. In a pane narrower than 24rem it
+ * wraps, and only the current page button stays beside previous and next.
  *
  * @example
  * ```tsx
@@ -38,7 +40,7 @@ export function TablePagination<TData>({ table, totalItems = 0 }: TablePaginatio
   return (
     <nav
       aria-label="Pagination"
-      className="border-border bg-card flex items-center justify-between gap-2 border-t px-4 py-3"
+      className="border-border bg-card @container flex flex-wrap items-center justify-between gap-2 border-t px-4 py-3"
     >
       <p className="text-muted-foreground text-sm tabular-nums">
         Showing {startItem} to {endItem} of {totalItems} results
@@ -64,7 +66,7 @@ export function TablePagination<TData>({ table, totalItems = 0 }: TablePaginatio
               onClick={() => table.setPageIndex(index)}
               aria-label={`Page ${index + 1}`}
               aria-current={index === pageIndex ? "page" : undefined}
-              className="tabular-nums"
+              className={cn("tabular-nums", index !== pageIndex && "hidden @sm:inline-flex")}
             >
               {index + 1}
             </Button>
