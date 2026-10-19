@@ -127,9 +127,12 @@ function HomePage() {
       <div className="flex h-full flex-col">
         <Suspense
           fallback={
-            <div className="flex h-96 flex-col items-center justify-center rounded-lg border border-slate-200 bg-white p-8">
-              <Loader2 className="mb-4 h-10 w-10 animate-spin text-slate-600" />
-              <p className="text-slate-600">Loading availability calendar...</p>
+            <div className="border-border bg-card flex h-96 flex-col items-center justify-center rounded-lg border p-8">
+              <Loader2
+                className="text-muted-foreground mb-4 size-10 animate-spin"
+                aria-hidden="true"
+              />
+              <p className="text-muted-foreground">Loading availability calendar...</p>
             </div>
           }
         >
@@ -137,7 +140,7 @@ function HomePage() {
         </Suspense>
 
         {/* Compact Information Notice */}
-        <div className="mt-2 rounded border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700 sm:text-sm">
+        <div className="border-border bg-muted text-muted-foreground medium:text-sm mt-2 rounded border p-2 text-xs">
           <strong>View-Only:</strong> Contact us to book available dates. WhatsApp: +63 917 XXX XXXX
         </div>
       </div>

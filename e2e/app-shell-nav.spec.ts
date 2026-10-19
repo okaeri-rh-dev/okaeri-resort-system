@@ -3,11 +3,11 @@ import { expect, test, type Page } from "@playwright/test";
 import { loginAsAdmin, loginAsStaff } from "./fixtures/auth";
 
 /**
- * The navigation form per window size class (#34, ADR 0004, #60).
+ * The navigation form per window size class (ADR 0004).
  *
- * Admin: bottom bar below 600px, collapsed rail 600–1199px (including the old 840–1023px
- * hamburger-only gap), expanded rail from 1200px. Guest: menu sheet below 600px, inline links
- * from 600px. Needs the seed.sql admin and staff users from .env.test.
+ * Admin: bottom bar below 600px, collapsed rail 600–1199px, expanded rail from 1200px. Guest:
+ * menu sheet below 600px, inline links from 600px. Needs the seed.sql admin and staff users from
+ * .env.test.
  */
 
 const HEIGHT = 900;

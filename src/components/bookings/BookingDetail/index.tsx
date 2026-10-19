@@ -13,7 +13,7 @@ import {
 import { DetailField, DetailPageLayout, DetailSection, StatusBadge } from "@/components/patterns";
 import { Badge } from "@/components/ui/badge";
 import { useUserRole } from "@/hooks";
-import { statusTone } from "@/lib/status-tone";
+import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking } from "@/types";
 
 /**
@@ -60,11 +60,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
         { label: "Bookings", to: "/admin/bookings" },
         { label: booking.booking_reference },
       ]}
-      status={
-        <StatusBadge tone={statusTone(booking.booking_status || "Pending")}>
-          {booking.booking_status || "Pending"}
-        </StatusBadge>
-      }
+      status={<StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />}
       editRoute={
         canEdit ? { to: "/admin/bookings/$bookingId/edit", params: { bookingId } } : undefined
       }
@@ -170,11 +166,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
           />
           <DetailField
             label="Payment Status"
-            value={
-              <StatusBadge tone={statusTone(booking.payment_status || "Pending")}>
-                {booking.payment_status || "Pending"}
-              </StatusBadge>
-            }
+            value={<StatusBadge {...statusBadgeProps(booking.payment_status, "Pending")} />}
           />
         </div>
       </DetailSection>

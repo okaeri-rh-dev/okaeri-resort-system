@@ -3,7 +3,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { ROUTES } from "./fixtures/test-data";
 
 /**
- * Primitive targets and motion (DESIGN.md, Motion and density; #44).
+ * Primitive targets and motion (DESIGN.md, Motion and density).
  * Pointer type and reduced motion are media features jsdom can't evaluate, so these run in a
  * real browser on the guest booking form (Button, the date picker's Popover and Sheet).
  */

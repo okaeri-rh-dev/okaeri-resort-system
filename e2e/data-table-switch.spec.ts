@@ -4,7 +4,7 @@ import { E2E_REF, E2E_USER } from "../scripts/e2e/fixtures";
 import { LoginPage } from "./pages/LoginPage";
 
 /**
- * DataTable table ↔ card switch on the admin bookings list (#34, #59).
+ * DataTable table ↔ card switch on the admin bookings list.
  *
  * DataTable measures its own pane: cards below ~600px, a table from 600px. Needs the E2E
  * fixtures: run `npm run seed:e2e` first (or `npm run test:e2e:hooked`).

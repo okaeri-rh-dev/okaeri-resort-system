@@ -66,7 +66,7 @@ const paletteMessage =
 const paletteNames =
   "red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone|mauve|olive|mist|taupe";
 
-// Each slice of the design foundations adds its classes here (DESIGN.md enforcement map).
+// Class patterns the design rules ban (DESIGN.md enforcement map).
 const restrictedClasses = [
   {
     pattern: `^(?:.*:)?!?-?[a-z]+(?:-[a-z]+)*-(?:${paletteNames})-\\d+(?:\\/\\S+)?!?$`,
@@ -133,7 +133,7 @@ const widthHookImportPatterns = [
   },
 ];
 
-// Each slice adds its import patterns here; the rule's options don't merge across blocks.
+// One list for every design import ban: the rule's options don't merge across config blocks.
 const designImportPatterns = [
   {
     group: ["@/components/ui/*", "src/components/ui/*", "**/components/ui/*"],

@@ -32,7 +32,7 @@ import { withErrorBoundary } from "@/components/ErrorBoundary";
 import {
   ActionMenu,
   DataTable,
-  MobileCard,
+  ListCard,
   SortableHeader,
   StatusBadge,
   TableEmptyState,
@@ -56,7 +56,7 @@ import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { formatCurrency, formatPhoneNumber, formatTableDate } from "@/lib/formatters";
 import { logger } from "@/lib/logger";
-import { statusTone } from "@/lib/status-tone";
+import { statusBadgeProps } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
 import type { Guest } from "@/types";
 
@@ -117,9 +117,7 @@ const GuestBookingHistory: React.FC<GuestBookingHistoryProps> = ({ guestId, clas
                 <div className="font-mono text-xs font-medium text-blue-600">
                   {booking.booking_reference}
                 </div>
-                <StatusBadge tone={statusTone(booking.booking_status ?? "Pending")}>
-                  {booking.booking_status ?? "Pending"}
-                </StatusBadge>
+                <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
               </div>
               <div className="text-sm text-neutral-600">
                 {booking.booking_units?.[0]?.unit?.unit_name} • {formatTableDate(booking.check_in)}{" "}
@@ -160,7 +158,7 @@ const GuestCard: React.FC<GuestCardProps> = ({ guest, onView, onEdit, onEmail, o
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <MobileCard className="space-y-3">
+    <ListCard className="space-y-3">
       <div className="flex items-start justify-between">
         <div className="flex-1 space-y-1">
           <div className="font-medium text-neutral-900">{guest.guest_name}</div>
@@ -211,7 +209,7 @@ const GuestCard: React.FC<GuestCardProps> = ({ guest, onView, onEdit, onEmail, o
           <GuestBookingHistory guestId={guest.guest_id} />
         </CollapsibleContent>
       </Collapsible>
-    </MobileCard>
+    </ListCard>
   );
 };
 

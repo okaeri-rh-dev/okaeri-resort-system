@@ -7,7 +7,7 @@ import { UNIT_SLOT_MAP } from "@/components/dashboard/unit-calendar-config";
 import { SortableHeader, StatusBadge } from "@/components/patterns";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatPhoneNumber, formatTableDate } from "@/lib/formatters";
-import { statusTone } from "@/lib/status-tone";
+import { statusBadgeProps } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
 import type { Booking, BookingStatus } from "@/types";
 
@@ -141,21 +141,13 @@ export const useBookingColumns = ({
 
       columnHelper.accessor("booking_status", {
         header: "Status",
-        cell: ({ getValue }) => (
-          <StatusBadge tone={statusTone(getValue() ?? "Pending")}>
-            {getValue() ?? "Pending"}
-          </StatusBadge>
-        ),
+        cell: ({ getValue }) => <StatusBadge {...statusBadgeProps(getValue(), "Pending")} />,
         size: 100,
       }),
 
       columnHelper.accessor("payment_status", {
         header: "Payment",
-        cell: ({ getValue }) => (
-          <StatusBadge tone={statusTone(getValue() ?? "Pending")}>
-            {getValue() ?? "Pending"}
-          </StatusBadge>
-        ),
+        cell: ({ getValue }) => <StatusBadge {...statusBadgeProps(getValue(), "Pending")} />,
         size: 100,
       }),
 

@@ -9,7 +9,7 @@ import { act, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
 
-import { DataTable, MobileCard, MobileCardRow } from "@/components/patterns";
+import { DataTable, ListCard, ListCardRow } from "@/components/patterns";
 import { formatCurrency } from "@/lib/formatters";
 
 type StayRow = { guest: string; balance: number };
@@ -31,10 +31,10 @@ const columns: ColumnDef<StayRow>[] = [
 
 function StayCard({ row }: { row: Row<StayRow> }) {
   return (
-    <MobileCard>
-      <MobileCardRow label="Guest" value={row.original.guest} />
-      <MobileCardRow label="Balance" value={formatCurrency(row.original.balance)} />
-    </MobileCard>
+    <ListCard>
+      <ListCardRow label="Guest" value={row.original.guest} />
+      <ListCardRow label="Balance" value={formatCurrency(row.original.balance)} />
+    </ListCard>
   );
 }
 

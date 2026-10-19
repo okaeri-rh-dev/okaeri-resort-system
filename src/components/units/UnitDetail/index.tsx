@@ -14,7 +14,7 @@ import { DetailField, DetailPageLayout, DetailSection, StatusBadge } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { usePricingConfig } from "@/hooks/usePricingConfig";
-import { statusTone } from "@/lib/status-tone";
+import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking, Unit } from "@/types";
 
 /**
@@ -67,11 +67,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
         { label: "Cabins", to: "/admin/units" },
         { label: `${unit.unit_name} (${unit.unit_code})` },
       ]}
-      status={
-        <StatusBadge tone={statusTone(unit.unit_status || "Available")}>
-          {unit.unit_status || "Available"}
-        </StatusBadge>
-      }
+      status={<StatusBadge {...statusBadgeProps(unit.unit_status, "Available")} />}
       editRoute={{
         to: "/admin/units/$unitId/edit",
         params: { unitId },
@@ -89,11 +85,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
           />
           <DetailField
             label="Status"
-            value={
-              <StatusBadge tone={statusTone(unit.unit_status || "Available")}>
-                {unit.unit_status || "Available"}
-              </StatusBadge>
-            }
+            value={<StatusBadge {...statusBadgeProps(unit.unit_status, "Available")} />}
           />
         </div>
       </DetailSection>
@@ -184,9 +176,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
                       id={booking.booking_id}
                       label={booking.booking_reference}
                     />
-                    <StatusBadge tone={statusTone(booking.booking_status || "Pending")}>
-                      {booking.booking_status || "Pending"}
-                    </StatusBadge>
+                    <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
                   </div>
                   <p className="text-sm text-neutral-600">
                     {formatTableDate(booking.check_in)} - {formatTableDate(booking.check_out)}

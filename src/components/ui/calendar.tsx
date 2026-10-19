@@ -24,7 +24,7 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn(
-        "bg-background group/calendar p-3 [--cell-size:min(2.75rem,calc((100vw-4rem)/7))] md:[--cell-size:3rem] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
+        "bg-background group/calendar expanded:[--cell-size:3rem] p-3 [--cell-size:min(2.75rem,calc((100vw-4rem)/7))] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
         String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
         className
@@ -36,7 +36,10 @@ function Calendar({
       }}
       classNames={{
         root: cn("w-full", defaultClassNames.root),
-        months: cn("relative flex flex-col gap-4 md:flex-row md:gap-6", defaultClassNames.months),
+        months: cn(
+          "relative flex flex-col gap-4 expanded:flex-row expanded:gap-6",
+          defaultClassNames.months
+        ),
         month: cn("flex w-full flex-col gap-3", defaultClassNames.month),
         nav: cn(
           "absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1",
@@ -61,7 +64,7 @@ function Calendar({
           defaultClassNames.dropdowns
         ),
         dropdown_root: cn(
-          "has-focus-visible:border-ring border-input has-focus-visible:ring-ring/50 has-focus-visible:ring-[3px] relative rounded-md border",
+          "has-focus-visible:border-ring border-input has-focus-visible:ring-ring has-focus-visible:ring-[3px] relative rounded-md border",
           defaultClassNames.dropdown_root
         ),
         dropdown: cn("bg-popover absolute inset-0 opacity-0", defaultClassNames.dropdown),
@@ -173,7 +176,7 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        "group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 flex aspect-square h-(--cell-size) w-(--cell-size) min-w-(--cell-size) items-center justify-center gap-0 bg-transparent p-0 text-center leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] hover:bg-transparent [&>span]:text-xs [&>span]:opacity-70",
+        "group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring flex aspect-square h-(--cell-size) w-(--cell-size) min-w-(--cell-size) items-center justify-center gap-0 bg-transparent p-0 text-center leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] hover:bg-transparent [&>span]:text-xs [&>span]:opacity-70",
         defaultClassNames.day,
         className,
         "size-full"

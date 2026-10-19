@@ -3,16 +3,7 @@ import type * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-/** The domain-free status vocabulary patterns accept (DESIGN.md, Vocabulary). */
-export type StatusTone = "success" | "warning" | "danger" | "info" | "neutral";
-
-const toneClasses: Record<StatusTone, string> = {
-  success: "bg-success text-success-foreground",
-  warning: "bg-warning text-warning-foreground",
-  danger: "bg-danger text-danger-foreground",
-  info: "bg-info text-info-foreground",
-  neutral: "bg-muted text-muted-foreground",
-};
+import { toneClasses, type StatusTone } from "./status-tone-classes";
 
 export interface StatusBadgeProps {
   tone: StatusTone;
@@ -39,7 +30,7 @@ export function StatusBadge({ tone, children, className }: StatusBadgeProps) {
     <Badge
       variant="outline"
       data-tone={tone}
-      className={cn("border-transparent font-medium", toneClasses[tone], className)}
+      className={cn("border-transparent font-medium", toneClasses[tone].fill, className)}
     >
       {children}
     </Badge>

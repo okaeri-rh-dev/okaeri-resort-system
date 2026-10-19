@@ -182,14 +182,6 @@ export type CompleteBookingData = z.infer<typeof completeBookingSchema>;
 // VALIDATION UTILITIES
 // ============================================
 
-// Format currency for display
-export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-  }).format(amount);
-};
-
 // Parse currency string to number
 
 // Format phone number for display

@@ -5,12 +5,9 @@ import { ChevronRight, Edit } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { FileRoutesByTo } from "@/routeTree.gen";
+import type { RoutePath } from "@/types/route-path";
 
 import { PageHeader } from "./PageHeader";
-
-/** A route path from the generated route tree, so a path that does not exist fails tsc. */
-export type RoutePath = keyof FileRoutesByTo;
 
 export type Breadcrumb = {
   label: string;
@@ -77,10 +74,7 @@ export function DetailPageLayout({
     ) : undefined;
 
   return (
-    <div
-      className={cn("container mx-auto max-w-[1400px] space-y-6 py-6", className)}
-      data-testid={testId}
-    >
+    <div className={cn("space-y-6", className)} data-testid={testId}>
       <nav aria-label="Breadcrumb">
         <ol className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
           {breadcrumbs.map((crumb, index) => (

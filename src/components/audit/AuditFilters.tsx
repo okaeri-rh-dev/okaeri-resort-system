@@ -241,6 +241,7 @@ export function AuditFilters() {
 
   const DateFilter = () => (
     <FilterPopover
+      fitContent
       isActive={!!(filters.startDate || filters.endDate)}
       open={dateFilterOpen}
       onOpenChange={(open) => {

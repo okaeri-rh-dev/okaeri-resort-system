@@ -22,8 +22,8 @@ import {
   DataTable,
   FilterBar,
   FilterPopover,
-  MobileCard,
-  MobileCardRow,
+  ListCard,
+  ListCardRow,
   SortableHeader,
   StatusBadge,
   TableEmptyState,
@@ -52,7 +52,7 @@ import {
 } from "@/components/ui/select";
 import { useUserRole } from "@/hooks";
 import { formatCurrency, formatTableDate } from "@/lib/formatters";
-import { statusTone } from "@/lib/status-tone";
+import { statusBadgeProps, statusTone } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
 import {
   useExportPayments,
@@ -541,7 +541,7 @@ function PaymentCard({
   onEdit: () => void;
 }) {
   return (
-    <MobileCard>
+    <ListCard>
       <div className="space-y-2">
         <div className="flex items-start justify-between">
           <div>
@@ -550,16 +550,14 @@ function PaymentCard({
               {formatTableDate(payment.payment_date || "")}
             </div>
           </div>
-          <StatusBadge tone={statusTone(payment.booking?.payment_status || "Pending")}>
-            {payment.booking?.payment_status || "Pending"}
-          </StatusBadge>
+          <StatusBadge {...statusBadgeProps(payment.booking?.payment_status, "Pending")} />
         </div>
 
         {payment.booking && (
-          <MobileCardRow label="Booking" value={payment.booking.booking_reference} />
+          <ListCardRow label="Booking" value={payment.booking.booking_reference} />
         )}
 
-        {payment.payment_method && <MobileCardRow label="Method" value={payment.payment_method} />}
+        {payment.payment_method && <ListCardRow label="Method" value={payment.payment_method} />}
 
         <div className="flex gap-2 pt-2">
           {payment.proof_url && (
@@ -580,7 +578,7 @@ function PaymentCard({
           )}
         </div>
       </div>
-    </MobileCard>
+    </ListCard>
   );
 }
 

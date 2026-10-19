@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-export interface MobileCardRowProps {
+export interface ListCardRowProps {
   label: string;
   value: ReactNode;
   /** Placement only. */
@@ -10,14 +10,14 @@ export interface MobileCardRowProps {
 }
 
 /**
- * One label and value line inside a `MobileCard`, label left and value right.
+ * One label and value line inside a `ListCard`, label left and value right.
  *
  * @example
  * ```tsx
- * <MobileCardRow label="Amount" value={formatCurrency(payment.amount)} />
+ * <ListCardRow label="Amount" value={formatCurrency(payment.amount)} />
  * ```
  */
-export function MobileCardRow({ label, value, className }: MobileCardRowProps) {
+export function ListCardRow({ label, value, className }: ListCardRowProps) {
   return (
     <div className={cn("flex items-center justify-between gap-4", className)}>
       <span className="text-muted-foreground text-sm font-medium">{label}</span>

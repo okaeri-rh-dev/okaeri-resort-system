@@ -23,9 +23,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GuestLayout } from "@/layouts/GuestLayout";
+import { formatCurrency } from "@/lib/formatters";
 import { validateStatusResponse, type StatusResponse } from "@/lib/schema-transform";
 import { hasProperty, isObject } from "@/lib/type-guards";
-import { formatCurrency } from "@/lib/validations";
 
 const searchSchema = z.object({
   booking_reference: z.string().min(1, "Booking reference is required"),

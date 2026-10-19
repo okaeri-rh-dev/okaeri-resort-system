@@ -29,8 +29,8 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PricingConfig } from "@/hooks/usePricingConfig";
+import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/validations";
 import type { Unit } from "@/types";
 import type { BookingUnit } from "@/types/multi-unit-booking";
 

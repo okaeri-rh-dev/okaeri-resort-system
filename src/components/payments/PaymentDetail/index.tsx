@@ -11,7 +11,7 @@ import {
   RelatedEntityLink,
 } from "@/components/entity-detail";
 import { DetailField, DetailPageLayout, DetailSection, StatusBadge } from "@/components/patterns";
-import { statusTone } from "@/lib/status-tone";
+import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking, Guest, Payment } from "@/types";
 
 /**
@@ -58,11 +58,7 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
         { label: "Payments", to: "/admin/payments" },
         { label: `Payment #${displayPaymentId}` },
       ]}
-      status={
-        <StatusBadge tone={statusTone(payment.payment_status || "Pending")}>
-          {payment.payment_status || "Pending"}
-        </StatusBadge>
-      }
+      status={<StatusBadge {...statusBadgeProps(payment.payment_status, "Pending")} />}
       editRoute={{
         to: "/admin/payments/$paymentId/edit",
         params: { paymentId },
@@ -82,11 +78,7 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
           />
           <DetailField
             label="Status"
-            value={
-              <StatusBadge tone={statusTone(payment.payment_status || "Pending")}>
-                {payment.payment_status || "Pending"}
-              </StatusBadge>
-            }
+            value={<StatusBadge {...statusBadgeProps(payment.payment_status, "Pending")} />}
           />
           <DetailField
             label="Payment Date"
