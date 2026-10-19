@@ -61,7 +61,7 @@ function Calendar({
           defaultClassNames.dropdowns
         ),
         dropdown_root: cn(
-          "has-focus:border-ring border-input shadow-xs has-focus:ring-ring/50 has-focus:ring-[3px] relative rounded-md border",
+          "has-focus-visible:border-ring border-input has-focus-visible:ring-ring/50 has-focus-visible:ring-[3px] relative rounded-md border",
           defaultClassNames.dropdown_root
         ),
         dropdown: cn("bg-popover absolute inset-0 opacity-0", defaultClassNames.dropdown),
@@ -75,15 +75,12 @@ function Calendar({
         month_grid: "w-full border-collapse",
         weekdays: cn("flex", defaultClassNames.weekdays),
         weekday: cn(
-          "text-muted-foreground flex-1 select-none rounded-md text-[0.75rem] sm:text-[0.8rem] font-normal",
+          "text-muted-foreground flex-1 select-none rounded-md text-xs font-normal",
           defaultClassNames.weekday
         ),
         week: cn("mt-2 flex w-full", defaultClassNames.week),
         week_number_header: cn("w-[--cell-size] select-none", defaultClassNames.week_number_header),
-        week_number: cn(
-          "text-muted-foreground select-none text-[0.8rem]",
-          defaultClassNames.week_number
-        ),
+        week_number: cn("text-muted-foreground select-none text-xs", defaultClassNames.week_number),
         day: cn(
           "group/day relative aspect-square h-full w-full select-none p-0 text-center flex items-center justify-center",
           "[&:has([data-selected-single=true])]:bg-primary [&:has([data-selected-single=true])]:text-primary-foreground [&:has([data-selected-single=true])]:rounded-md",

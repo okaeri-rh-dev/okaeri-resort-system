@@ -1,26 +1,9 @@
 /**
  * Custom Calendar Styles
  *
- * Additional styles for the public availability calendar that enhance
- * the user experience with animations, mobile optimizations, and
- * accessibility improvements.
+ * Additional styles for the public availability calendar: mobile optimizations
+ * and accessibility improvements. Month changes don't animate (DESIGN.md, Motion).
  */
-
-/* Calendar animations */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.calendar-grid {
-  animation: fade-in 0.3s ease-out;
-}
 
 /* Mobile optimizations */
 @media (max-width: 640px) {

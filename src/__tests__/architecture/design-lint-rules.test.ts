@@ -168,6 +168,54 @@ describe("arbitrary text sizes", () => {
   );
 });
 
+describe("arbitrary durations", () => {
+  const rule = "better-tailwindcss/no-restricted-classes";
+
+  it("names the class and the two speeds", async () => {
+    const messages = await lint(`export const A = () => <div className="duration-[250ms]" />;`);
+
+    expect(
+      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+    ).toEqual([expect.stringMatching(/"duration-\[250ms\]".*duration-150.*duration-200/)]);
+  });
+
+  it.each([
+    "duration-[0.3s]",
+    "hover:duration-[400ms]",
+    "data-[state=open]:duration-[500ms]",
+    "animation-duration-[1.5s]",
+    "duration-[var(--speed)]",
+    "duration-[2s]!",
+    "[transition-duration:300ms]",
+    "md:[animation-duration:2s]",
+  ])("flags %s", async (className) => {
+    expect(await ruleIds(`export const A = () => <div className="${className}" />;`)).toContain(
+      rule
+    );
+  });
+
+  it.each([
+    "transition-colors duration-150",
+    "data-[state=open]:duration-200 data-[state=closed]:duration-150",
+    "ease-out animate-in fade-in-0",
+    "animate-spin",
+  ])("accepts %s", async (className) => {
+    expect(await ruleIds(`export const A = () => <div className="${className}" />;`)).not.toContain(
+      rule
+    );
+  });
+});
+
+describe("tw-animate-css classes", () => {
+  it("accepts the overlay enter and exit classes", async () => {
+    expect(
+      await ruleIds(
+        `export const A = () => <div className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2" />;`
+      )
+    ).not.toContain("better-tailwindcss/no-unknown-classes");
+  });
+});
+
 describe("design/no-restricted-syntax", () => {
   const rule = "design/no-restricted-syntax";
 

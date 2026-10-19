@@ -15,7 +15,8 @@
   "ignoreDependencies": [
     "tailwindcss",
     "@fontsource-variable/figtree",
-    "@fontsource-variable/bricolage-grotesque"
+    "@fontsource-variable/bricolage-grotesque",
+    "tw-animate-css"
   ],
   "ignoreBinaries": ["k6", "psql"],
   "ignoreExportsUsedInFile": true,

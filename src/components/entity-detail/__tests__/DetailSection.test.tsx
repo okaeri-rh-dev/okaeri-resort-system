@@ -70,7 +70,7 @@ describe("DetailSection", () => {
       // Component uses Card, not section element
       const card = container.querySelector(".bg-card");
       expect(card).toBeInTheDocument();
-      expect(card).toHaveClass("border", "shadow");
+      expect(card).toHaveClass("border", "shadow-card");
     });
 
     it("applies proper padding", () => {

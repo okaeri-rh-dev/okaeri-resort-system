@@ -544,123 +544,13 @@
       "count": 10
     }
   },
-  "src/components/ui/alert-dialog.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "better-tailwindcss/no-unknown-classes": {
-      "count": 14
-    }
-  },
-  "src/components/ui/alert.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 7
-    },
-    "jsx-a11y/heading-has-content": {
-      "count": 1
-    }
-  },
-  "src/components/ui/badge.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 5
-    },
-    "design/no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "src/components/ui/button.variants.ts": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "design/no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "src/components/ui/calendar.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 3
-    }
-  },
-  "src/components/ui/card.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 5
-    },
-    "better-tailwindcss/no-unknown-classes": {
-      "count": 36
-    },
-    "jsx-a11y/heading-has-content": {
-      "count": 1
-    }
-  },
-  "src/components/ui/dialog.tsx": {
-    "better-tailwindcss/no-unknown-classes": {
-      "count": 14
-    },
-    "design/no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "src/components/ui/dropdown-menu.tsx": {
-    "better-tailwindcss/no-unknown-classes": {
-      "count": 20
-    }
-  },
-  "src/components/ui/hover-card.tsx": {
-    "better-tailwindcss/no-unknown-classes": {
-      "count": 10
-    }
-  },
-  "src/components/ui/input.tsx": {
-    "better-tailwindcss/no-unknown-classes": {
-      "count": 19
-    }
-  },
-  "src/components/ui/popover.tsx": {
-    "better-tailwindcss/no-unknown-classes": {
-      "count": 10
-    }
-  },
-  "src/components/ui/progress.tsx": {
-    "design/no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "src/components/ui/responsive-date-picker.tsx": {
     "better-tailwindcss/no-unknown-classes": {
       "count": 4
     }
   },
-  "src/components/ui/select.tsx": {
-    "better-tailwindcss/no-unknown-classes": {
-      "count": 10
-    },
-    "design/no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "src/components/ui/sheet.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "better-tailwindcss/no-unknown-classes": {
-      "count": 14
-    },
-    "design/no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "src/components/ui/skeleton.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 23
-    }
-  },
   "src/components/ui/sonner.tsx": {
     "better-tailwindcss/no-unknown-classes": {
-      "count": 1
-    }
-  },
-  "src/components/ui/tabs.tsx": {
-    "design/no-restricted-syntax": {
       "count": 1
     }
   },

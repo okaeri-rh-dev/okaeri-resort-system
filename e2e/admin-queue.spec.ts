@@ -504,21 +504,26 @@ test.describe("Admin Booking Queue", () => {
         await expect(queuePage.queueContainer.or(queuePage.emptyState).first()).toBeVisible();
       });
 
-      test("queue actions are tappable on mobile", async ({ page }) => {
-        const queuePage = new AdminQueuePage(page);
-        await queuePage.goto();
+      test.describe("on a touch screen", () => {
+        // Targets follow the pointer, not the width: 44px under (pointer: coarse)
+        test.use({ hasTouch: true, isMobile: true });
 
-        if (await queuePage.emptyState.isVisible()) {
-          test.skip();
-          return;
-        }
+        test("queue actions are tappable on mobile", async ({ page }) => {
+          const queuePage = new AdminQueuePage(page);
+          await queuePage.goto();
 
-        // Check if action buttons have adequate touch target
-        const reviewButtons = await queuePage.reviewPaymentButtons.all();
-        if (reviewButtons.length > 0) {
-          const buttonBox = await reviewButtons[0].boundingBox();
-          expect(buttonBox?.height).toBeGreaterThanOrEqual(40);
-        }
+          if (await queuePage.emptyState.isVisible()) {
+            test.skip();
+            return;
+          }
+
+          // Check if action buttons have adequate touch target
+          const reviewButtons = await queuePage.reviewPaymentButtons.all();
+          if (reviewButtons.length > 0) {
+            const buttonBox = await reviewButtons[0].boundingBox();
+            expect(buttonBox?.height).toBeGreaterThanOrEqual(44);
+          }
+        });
       });
 
       test("queue filters accessible on mobile", async ({ page }) => {

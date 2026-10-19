@@ -111,11 +111,10 @@ describe("DetailPageSkeleton", () => {
       expect(animatedElements.length).toBeGreaterThan(0);
     });
 
-    it("skeleton bars have bg-neutral background", () => {
+    it("skeleton bars have the accent fill", () => {
       const { container } = render(<DetailPageSkeleton />);
 
-      // Skeleton component uses bg-neutral-200/70
-      const skeletonBars = container.querySelectorAll('[class*="bg-neutral"]');
+      const skeletonBars = container.querySelectorAll(".bg-accent");
       expect(skeletonBars.length).toBeGreaterThan(0);
     });
 

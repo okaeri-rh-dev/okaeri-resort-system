@@ -8,28 +8,19 @@ import { cn } from "src/lib/utils";
 
 interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: "default" | "text" | "circle" | "rounded" | "sharp";
-  animation?: "pulse" | "wave" | "none";
-  speed?: "slow" | "normal" | "fast";
+  animation?: "pulse" | "none";
 }
 
 function Skeleton({
   className,
   variant = "default",
   animation = "pulse",
-  speed = "normal",
   ...props
 }: SkeletonProps) {
   const animationClass = {
     pulse: "animate-pulse",
-    wave: "animate-wave",
     none: "",
   }[animation];
-
-  const speedClass = {
-    slow: "animation-duration-[2s]",
-    normal: "animation-duration-[1.5s]",
-    fast: "animation-duration-[1s]",
-  }[speed];
 
   const variantClass = {
     default: "rounded-md",
@@ -39,18 +30,7 @@ function Skeleton({
     sharp: "rounded-none",
   }[variant];
 
-  return (
-    <div
-      className={cn(
-        "bg-neutral-200/70 dark:bg-neutral-700/50",
-        variantClass,
-        animationClass,
-        speedClass,
-        className
-      )}
-      {...props}
-    />
-  );
+  return <div className={cn("bg-accent", variantClass, animationClass, className)} {...props} />;
 }
 
 // ============================================
@@ -122,9 +102,9 @@ const ButtonSkeleton: React.FC<ButtonSkeletonProps> = ({
   }[size];
 
   const variantClass = {
-    default: "bg-neutral-200/70",
-    outline: "bg-transparent border border-neutral-200",
-    ghost: "bg-neutral-100/50",
+    default: "bg-accent",
+    outline: "bg-transparent border border-border",
+    ghost: "bg-muted",
   }[variant];
 
   return <Skeleton className={cn("w-20 rounded-md", sizeClass, variantClass, className)} />;
@@ -152,7 +132,7 @@ const CardSkeleton: React.FC<CardSkeletonProps> = ({
       role="status"
       aria-live="polite"
       aria-label="Loading content"
-      className={cn("space-y-4 rounded-lg border border-neutral-200 bg-white p-4", className)}
+      className={cn("border-border bg-card space-y-4 rounded-lg border p-4", className)}
     >
       {hasHeader && (
         <div className="space-y-2">
@@ -186,7 +166,7 @@ interface KPICardSkeletonProps {
 
 const KPICardSkeleton: React.FC<KPICardSkeletonProps> = ({ hasIcon = true, className }) => {
   return (
-    <div className={cn("rounded-lg border border-neutral-200 bg-white p-4", className)}>
+    <div className={cn("border-border bg-card rounded-lg border p-4", className)}>
       <div className="flex items-center justify-between pb-3">
         <Skeleton className="h-4 w-24" />
         {hasIcon && <Skeleton variant="circle" className="h-5 w-5" />}
@@ -218,9 +198,7 @@ const TableRowSkeleton: React.FC<TableRowSkeletonProps> = ({
   className,
 }) => {
   return (
-    <div
-      className={cn("flex items-center space-x-4 border-b border-neutral-100 px-4 py-3", className)}
-    >
+    <div className={cn("border-border flex items-center space-x-4 border-b px-4 py-3", className)}>
       {showCheckbox && <Skeleton variant="sharp" className="h-4 w-4" />}
 
       {columns.map((width, index) => (
@@ -250,9 +228,9 @@ const TableSkeleton: React.FC<TableSkeletonProps> = ({
   className,
 }) => {
   return (
-    <div className={cn("overflow-hidden rounded-lg border border-neutral-200 bg-white", className)}>
+    <div className={cn("border-border bg-card overflow-hidden rounded-lg border", className)}>
       {hasHeader && (
-        <div className="border-b border-neutral-200 bg-neutral-50">
+        <div className="border-border bg-muted border-b">
           <TableRowSkeleton
             columns={columns}
             showCheckbox={showCheckbox}
@@ -269,10 +247,7 @@ const TableSkeleton: React.FC<TableSkeletonProps> = ({
             columns={columns}
             showCheckbox={showCheckbox}
             showActions={showActions}
-            className={cn(
-              index % 2 === 0 && "bg-neutral-50/30",
-              index === rows - 1 && "border-none"
-            )}
+            className={cn(index % 2 === 0 && "bg-muted/30", index === rows - 1 && "border-none")}
           />
         ))}
       </div>
@@ -298,7 +273,7 @@ const MobileCardSkeleton: React.FC<MobileCardSkeletonProps> = ({
   className,
 }) => {
   return (
-    <div className={cn("space-y-3 rounded-lg border border-neutral-200 bg-white p-4", className)}>
+    <div className={cn("border-border bg-card space-y-3 rounded-lg border p-4", className)}>
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center space-x-3">
@@ -326,7 +301,7 @@ const MobileCardSkeleton: React.FC<MobileCardSkeletonProps> = ({
 
       {/* Actions */}
       {hasActions && (
-        <div className="flex space-x-2 border-t border-neutral-100 pt-3">
+        <div className="border-border flex space-x-2 border-t pt-3">
           <ButtonSkeleton size="sm" className="flex-1" />
           <ButtonSkeleton size="sm" variant="outline" className="flex-1" />
         </div>
@@ -420,11 +395,11 @@ const StepFormSkeleton: React.FC<StepFormSkeletonProps> = ({
               <div
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-full border-2",
-                  index < currentStep ? "border-blue-600 bg-blue-600" : "border-neutral-300"
+                  index < currentStep ? "border-primary bg-primary" : "border-input"
                 )}
               >
                 {index < currentStep ? (
-                  <div className="h-2 w-2 rounded-full bg-white" />
+                  <div className="bg-primary-foreground h-2 w-2 rounded-full" />
                 ) : (
                   <Skeleton variant="circle" className="h-2 w-2" />
                 )}
@@ -433,7 +408,7 @@ const StepFormSkeleton: React.FC<StepFormSkeletonProps> = ({
                 <div
                   className={cn(
                     "h-0.5 flex-1",
-                    index < currentStep - 1 ? "bg-blue-600" : "bg-neutral-300"
+                    index < currentStep - 1 ? "bg-primary" : "bg-input"
                   )}
                 />
               )}
@@ -470,7 +445,7 @@ const NavigationSkeleton: React.FC<NavigationSkeletonProps> = ({
   return (
     <nav
       className={cn(
-        "flex items-center justify-between border-b border-neutral-200 bg-white p-4",
+        "border-border bg-card flex items-center justify-between border-b p-4",
         className
       )}
     >

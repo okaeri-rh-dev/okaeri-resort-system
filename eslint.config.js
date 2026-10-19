@@ -58,6 +58,9 @@ const generatedDatabaseTypesPattern = {
 const arbitraryColourMessage =
   "Arbitrary colour: use a semantic token class such as bg-primary or text-muted-foreground (DESIGN.md, Colour).";
 
+const arbitraryDurationMessage =
+  '"$0" is an arbitrary duration: use duration-150 for state changes, or duration-200 / duration-150 for overlay enter / exit (DESIGN.md, Motion and density).';
+
 const paletteMessage =
   '"$0" is a palette class: use a semantic token class such as bg-card, text-muted-foreground or bg-success (DESIGN.md, Colour).';
 const paletteNames =
@@ -92,6 +95,14 @@ const restrictedClasses = [
     pattern: "^(?:.*:)?!?text-\\[(?:length:|[\\d.]|(?:clamp|calc|min|max)\\().*\\](?:\\/\\S+)?!?$",
     message:
       '"$0" is an arbitrary text size: use a Tailwind step from text-xs (12px, the floor) to text-4xl (DESIGN.md, Type).',
+  },
+  {
+    pattern: "^(?:.*:)?!?(?:animation-)?duration-\\[.*\\]!?$",
+    message: arbitraryDurationMessage,
+  },
+  {
+    pattern: "^(?:.*:)?\\[(?:transition|animation)-duration:.*\\]!?$",
+    message: arbitraryDurationMessage,
   },
 ];
 
