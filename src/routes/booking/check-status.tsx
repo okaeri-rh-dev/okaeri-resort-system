@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GuestLayout } from "@/layouts/GuestLayout";
 import { validateStatusResponse, type StatusResponse } from "@/lib/schema-transform";
 import { hasProperty, isObject } from "@/lib/type-guards";
 import { formatCurrency } from "@/lib/validations";
@@ -126,16 +127,14 @@ function CheckBookingPage() {
   };
 
   return (
-    <div className="from-primary/5 to-background min-h-screen bg-gradient-to-b">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="mb-2 text-3xl font-bold">Check Booking Status</h1>
-          <p className="text-muted-foreground">
-            Enter your booking reference and email to view details
-          </p>
-        </div>
-
+    <GuestLayout
+      width="form"
+      pageHeader={{
+        title: "Check Booking Status",
+        description: "Enter your booking reference and email to view details",
+      }}
+    >
+      <div>
         {/* Search Form */}
         <Card className="mx-auto mb-8 max-w-md">
           <CardHeader>
@@ -288,6 +287,6 @@ function CheckBookingPage() {
           </Card>
         )}
       </div>
-    </div>
+    </GuestLayout>
   );
 }

@@ -18,7 +18,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-// Mock window.matchMedia (required for useMediaQuery hook)
+// Mock window.matchMedia (AppShell reads the compact window class through it)
 // Only apply in browser-like environments (jsdom), not in Node environment
 if (typeof window !== "undefined") {
   Object.defineProperty(window, "matchMedia", {

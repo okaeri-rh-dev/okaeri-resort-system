@@ -3,7 +3,6 @@ import React, { useCallback, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   createColumnHelper,
-  flexRender,
   getCoreRowModel,
   getExpandedRowModel,
   getFilteredRowModel,
@@ -32,8 +31,8 @@ import { toast } from "sonner";
 import { withErrorBoundary } from "@/components/ErrorBoundary";
 import {
   ActionMenu,
+  DataTable,
   MobileCard,
-  ResponsiveTable,
   SortableHeader,
   StatusBadge,
   TableEmptyState,
@@ -55,7 +54,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useResponsiveView } from "@/hooks";
 import { formatCurrency, formatPhoneNumber, formatTableDate } from "@/lib/formatters";
 import { logger } from "@/lib/logger";
 import { statusTone } from "@/lib/status-tone";
@@ -242,9 +240,6 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
   const [guestToDelete, setGuestToDelete] = useState<Guest | null>(null);
-
-  // Use ultra-performant MediaQuery API for responsive detection
-  const { isMobile } = useResponsiveView();
 
   // Mutations
   const exportGuests = useExportGuests();
@@ -493,15 +488,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
 
   // Loading state
   if (isLoading) {
-    return (
-      <TableSkeleton
-        layout={isMobile ? "cards" : "table"}
-        rows={6}
-        columns={6}
-        toolbar
-        label="Loading guests"
-      />
-    );
+    return <TableSkeleton rows={6} columns={6} toolbar label="Loading guests" />;
   }
 
   // Error state
@@ -513,101 +500,9 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
     );
   }
 
-  // Mobile view
-  if (isMobile) {
-    return (
-      <div className={cn("space-y-4", className)}>
-        {/* Mobile stats */}
-        <div className="grid grid-cols-2 gap-3">
-          <Card className="p-3">
-            <div className="space-y-1">
-              <div className="text-xs text-neutral-600">Total Guests</div>
-              <div className="text-lg font-semibold text-neutral-900">{stats.totalGuests}</div>
-            </div>
-          </Card>
-          <Card className="p-3">
-            <div className="space-y-1">
-              <div className="text-xs text-neutral-600">Total Revenue</div>
-              <div className="font-mono text-lg font-semibold text-neutral-900">
-                {formatCurrency(stats.totalRevenue)}
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Mobile search */}
-        <TableSearch
-          value={searchQuery}
-          onChange={setSearchQuery}
-          placeholder="Search guests..."
-          className="w-full"
-        />
-
-        <div className="flex justify-between">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSearchQuery("")}
-            disabled={!searchQuery}
-          >
-            Clear Search
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExport}
-            disabled={exportGuests.isPending}
-          >
-            <Download className="mr-1 h-3 w-3" />
-            Export
-          </Button>
-        </div>
-
-        {/* Mobile cards */}
-        <div className="space-y-3">
-          {table.getRowModel().rows.length === 0 ? (
-            <TableEmptyState
-              title="No guests found"
-              description={
-                searchQuery ? "No guests match your search." : "No guests in the system yet."
-              }
-              action={
-                searchQuery
-                  ? {
-                      label: "Clear Search",
-                      onClick: () => setSearchQuery(""),
-                    }
-                  : undefined
-              }
-            />
-          ) : (
-            table
-              .getRowModel()
-              .rows.map((row) => (
-                <GuestCard
-                  key={row.id}
-                  guest={row.original}
-                  onView={() => onViewGuest?.(row.original)}
-                  onEdit={() => onEditGuest?.(row.original)}
-                  onEmail={() => handleEmail(row.original)}
-                  onCall={() => handleCall(row.original)}
-                />
-              ))
-          )}
-        </div>
-
-        {/* Mobile pagination */}
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <TablePagination table={table as any} totalItems={guests.length} />
-      </div>
-    );
-  }
-
-  // Desktop view
   return (
-    <div className={cn("space-y-4", className)}>
-      {/* Desktop stats */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+    <div className={cn("@container space-y-4", className)}>
+      <div className="grid grid-cols-2 gap-4 @3xl:grid-cols-5">
         <Card className="p-4">
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
@@ -630,7 +525,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-4 @max-3xl:hidden">
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <Calendar className="h-4 w-4 text-orange-500" />
@@ -642,7 +537,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-4 @max-3xl:hidden">
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <div className="h-2 w-2 rounded-full bg-purple-500" />
@@ -654,7 +549,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-4 @max-3xl:hidden">
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <div className="h-2 w-2 rounded-full bg-indigo-500" />
@@ -665,14 +560,13 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
         </Card>
       </div>
 
-      {/* Desktop filters */}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center space-x-3">
+        <div className="flex w-full items-center gap-3 @xl:w-auto">
           <TableSearch
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Search guests by name, email, or phone..."
-            className="w-80"
+            className="w-full @xl:w-80"
           />
 
           {searchQuery && (
@@ -693,80 +587,38 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
         </Button>
       </div>
 
-      {/* Desktop table */}
-      <ResponsiveTable>
-        <table className="w-full">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    style={{ width: header.getSize() }}
-                    className="px-4 py-3 text-left text-xs font-medium tracking-wide text-neutral-700 uppercase"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row, index) => (
-              <React.Fragment key={row.id}>
-                <tr
-                  className={cn(
-                    "h-12 border-b border-neutral-100 hover:bg-neutral-50",
-                    index % 2 === 0 && "bg-neutral-50/30"
-                  )}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 text-sm text-neutral-900">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-                {row.getIsExpanded() && (
-                  <tr>
-                    <td colSpan={row.getVisibleCells().length} className="p-0">
-                      <div className="border-b border-neutral-200 bg-neutral-50">
-                        <GuestBookingHistory guestId={row.original.guest_id} />
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </React.Fragment>
-            ))}
-          </tbody>
-        </table>
-
-        {table.getRowModel().rows.length === 0 && (
-          <div className="p-8">
-            <TableEmptyState
-              title="No guests found"
-              description={
-                searchQuery
-                  ? "No guests match your search criteria."
-                  : "No guests in the system yet."
-              }
-              action={
-                searchQuery
-                  ? {
-                      label: "Clear Search",
-                      onClick: () => setSearchQuery(""),
-                    }
-                  : undefined
-              }
-            />
-          </div>
+      <DataTable
+        table={table}
+        label="Guests"
+        renderCard={(row) => (
+          <GuestCard
+            guest={row.original}
+            onView={() => onViewGuest?.(row.original)}
+            onEdit={() => onEditGuest?.(row.original)}
+            onEmail={() => handleEmail(row.original)}
+            onCall={() => handleCall(row.original)}
+          />
         )}
-      </ResponsiveTable>
+        renderExpandedRow={(row) => <GuestBookingHistory guestId={row.original.guest_id} />}
+        emptyState={
+          <TableEmptyState
+            title="No guests found"
+            description={
+              searchQuery ? "No guests match your search criteria." : "No guests in the system yet."
+            }
+            action={
+              searchQuery
+                ? {
+                    label: "Clear Search",
+                    onClick: () => setSearchQuery(""),
+                  }
+                : undefined
+            }
+          />
+        }
+      />
 
-      {/* Desktop pagination */}
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <TablePagination table={table as any} totalItems={guests.length} />
+      <TablePagination table={table} totalItems={guests.length} />
 
       {/* Edit Guest Dialog */}
       {editingGuest && (

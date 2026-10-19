@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { GuestLayout } from "@/layouts/GuestLayout";
 
 export const Route = createFileRoute("/terms-and-conditions")({
   component: TermsAndConditionsPage,
@@ -10,8 +11,8 @@ export const Route = createFileRoute("/terms-and-conditions")({
 
 function TermsAndConditionsPage() {
   return (
-    <div className="from-primary/5 to-background min-h-screen bg-gradient-to-b">
-      <div className="container mx-auto px-4 py-8">
+    <GuestLayout width="form">
+      <div>
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="mb-2 text-3xl font-bold">Terms and Conditions</h1>
@@ -400,6 +401,6 @@ function TermsAndConditionsPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </GuestLayout>
   );
 }

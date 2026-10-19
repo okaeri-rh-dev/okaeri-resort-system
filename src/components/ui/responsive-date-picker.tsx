@@ -4,7 +4,6 @@ import { format } from "date-fns";
 import { CalendarDays } from "lucide-react";
 import type { DateRange, SelectSingleEventHandler } from "react-day-picker";
 
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 
 // Import mobile-specific styles
@@ -33,14 +32,12 @@ export interface ResponsiveDatePickerProps {
   formatStr?: string;
   buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   "aria-label"?: string;
+  /** Open in a bottom sheet instead of a popover. The DatePicker pattern sets it on compact windows. */
+  sheet?: boolean;
 }
 
 /**
- * ResponsiveDatePicker - A responsive date picker that uses Sheet on mobile and Popover on desktop
- *
- * This component automatically switches between:
- * - Desktop (≥768px): Popover with Calendar (current experience)
- * - Mobile (<768px): Bottom Sheet with Calendar (mobile-optimized)
+ * ResponsiveDatePicker - A date picker that opens in a bottom sheet (`sheet`) or a popover
  *
  * @example
  * ```tsx
@@ -63,14 +60,14 @@ export function ResponsiveDatePicker({
   formatStr = "PPP",
   buttonVariant = "outline",
   "aria-label": ariaLabel,
+  sheet = false,
 }: ResponsiveDatePickerProps) {
-  const isMobile = useMediaQuery("(max-width: 768px)");
   const [open, setOpen] = React.useState(false);
 
   const handleSelect: SelectSingleEventHandler = (date, selectedDay, activeModifiers, e) => {
     onChange?.(date, selectedDay, activeModifiers, e);
     // Auto-close on mobile after selection for better UX
-    if (isMobile) {
+    if (sheet) {
       setOpen(false);
     }
   };
@@ -91,7 +88,7 @@ export function ResponsiveDatePicker({
   );
 
   // Mobile: Bottom Sheet
-  if (isMobile) {
+  if (sheet) {
     return (
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>{triggerButton}</SheetTrigger>
@@ -168,6 +165,8 @@ export interface ResponsiveDateRangePickerProps {
   "aria-describedby"?: string;
   /** Disable the button (prevents opening calendar) */
   buttonDisabled?: boolean;
+  /** Open in a bottom sheet with one month instead of a popover. */
+  sheet?: boolean;
 }
 
 export function ResponsiveDateRangePicker({
@@ -184,14 +183,14 @@ export function ResponsiveDateRangePicker({
   "aria-label": ariaLabel,
   "aria-describedby": ariaDescribedby,
   buttonDisabled = false,
+  sheet = false,
 }: ResponsiveDateRangePickerProps) {
-  const isMobile = useMediaQuery("(max-width: 768px)");
   const [open, setOpen] = React.useState(false);
 
   const handleSelect = (range: DateRange | undefined) => {
     onChange?.(range);
     // Auto-close on mobile when both dates are selected
-    if (isMobile && range?.from && range?.to) {
+    if (sheet && range?.from && range?.to) {
       setTimeout(() => setOpen(false), 200); // Small delay for visual feedback
     }
   };
@@ -223,7 +222,7 @@ export function ResponsiveDateRangePicker({
   );
 
   // Mobile: Bottom Sheet with single month view
-  if (isMobile) {
+  if (sheet) {
     return (
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>{triggerButton}</SheetTrigger>

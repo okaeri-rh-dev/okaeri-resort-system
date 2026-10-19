@@ -3,7 +3,6 @@ import React, { useCallback, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   createColumnHelper,
-  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
@@ -20,10 +19,11 @@ import { toast } from "sonner";
 import { withErrorBoundary } from "@/components/ErrorBoundary";
 import {
   ActionMenu,
+  DataTable,
+  FilterBar,
   FilterPopover,
   MobileCard,
   MobileCardRow,
-  ResponsiveTable,
   SortableHeader,
   StatusBadge,
   TableEmptyState,
@@ -50,7 +50,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useResponsiveView, useUserRole } from "@/hooks";
+import { useUserRole } from "@/hooks";
 import { formatCurrency, formatTableDate } from "@/lib/formatters";
 import { statusTone } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
@@ -86,9 +86,6 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [paymentToSoftDelete, setPaymentToSoftDelete] = useState<Payment | null>(null);
-
-  // Use ultra-performant MediaQuery API for responsive detection
-  const { isMobile } = useResponsiveView();
 
   // Role-based permissions for actions
   const { canEdit, canSoftDelete, canVerifyPayments } = useUserRole();
@@ -358,271 +355,150 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
     );
   }
 
-  // Mobile view
-  if (isMobile) {
-    return (
-      <div className={cn("space-y-4", className)}>
-        {/* Mobile stats */}
-        <div className="grid grid-cols-2 gap-3">
-          <Card className="p-3">
-            <div className="text-xs text-neutral-500">Total Amount</div>
-            <div className="font-mono text-lg font-bold">{formatCurrency(stats.total)}</div>
-          </Card>
-          <Card className="p-3">
-            <div className="text-xs text-neutral-500">Payments</div>
-            <div className="text-lg font-bold">
-              {stats.verified}/{stats.count} Verified
-            </div>
-          </Card>
-        </div>
+  const activeFilterCount = [filters.status, filters.method].filter(Boolean).length;
 
-        {/* Mobile search */}
-        <Card className="p-3">
-          <TableSearch
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search payments..."
-          />
-        </Card>
-
-        {/* Mobile cards */}
-        <div className="space-y-3">
-          {filteredPayments.map((payment) => (
-            <MobileCard key={payment.payment_id}>
-              <div className="space-y-2">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="font-mono text-lg font-semibold">
-                      {formatCurrency(payment.amount)}
-                    </div>
-                    <div className="text-xs text-neutral-500">
-                      {formatTableDate(payment.payment_date || "")}
-                    </div>
-                  </div>
-                  <StatusBadge tone={statusTone(payment.booking?.payment_status || "Pending")}>
-                    {payment.booking?.payment_status || "Pending"}
-                  </StatusBadge>
-                </div>
-
-                {payment.booking && (
-                  <MobileCardRow label="Booking" value={payment.booking.booking_reference} />
-                )}
-
-                {payment.payment_method && (
-                  <MobileCardRow label="Method" value={payment.payment_method} />
-                )}
-
-                <div className="flex gap-2 pt-2">
-                  {payment.proof_url && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => payment.proof_url && window.open(payment.proof_url, "_blank")}
-                    >
-                      <Download className="mr-1 h-4 w-4" />
-                      Receipt
-                    </Button>
-                  )}
-                  {canEdit && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        onEditPayment?.({
-                          ...payment,
-                          booking: payment.booking || undefined,
-                        } as Payment)
-                      }
-                    >
-                      <Edit className="mr-1 h-4 w-4" />
-                      Edit
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </MobileCard>
-          ))}
-        </div>
-
-        {filteredPayments.length === 0 && (
-          <Card className="p-8 text-center">
-            <div className="text-neutral-500">No payments found</div>
-          </Card>
-        )}
-      </div>
-    );
-  }
-
-  // Desktop view
   return (
-    <div className={cn("space-y-4", className)}>
-      {/* Desktop stats - commented out to match other tables */}
-      {/* <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Card className="p-4">
-          <div className="text-sm text-neutral-500">Total Collected</div>
-          <div className="font-mono font-bold text-xl">{formatCurrency(stats.total)}</div>
+    <div className={cn("@container space-y-4", className)}>
+      {/* Summary for narrow panes; wide panes read the table */}
+      <div className="grid grid-cols-2 gap-3 @3xl:hidden">
+        <Card className="p-3">
+          <div className="text-xs text-neutral-500">Total Amount</div>
+          <div className="font-mono text-lg font-bold">{formatCurrency(stats.total)}</div>
         </Card>
-        <Card className="p-4">
-          <div className="text-sm text-neutral-500">Total Payments</div>
-          <div className="font-bold text-xl">{stats.count}</div>
+        <Card className="p-3">
+          <div className="text-xs text-neutral-500">Payments</div>
+          <div className="text-lg font-bold">
+            {stats.verified}/{stats.count} Verified
+          </div>
         </Card>
-        <Card className="p-4">
-          <div className="text-sm text-neutral-500">Verified</div>
-          <div className="font-bold text-xl">{stats.verified}</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-sm text-neutral-500">Pending</div>
-          <div className="font-bold text-xl">{stats.pending}</div>
-        </Card>
-      </div> */}
+      </div>
 
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex min-w-0 flex-1 items-center space-x-3">
+      <FilterBar
+        search={
           <TableSearch
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Search payments..."
-            className="min-w-[200px]"
           />
-
-          <FilterPopover
-            isActive={!!filters.status}
-            content={
-              <div className="space-y-2">
-                <div className="text-sm font-medium">Payment Status</div>
-                <Select
-                  value={filters.status || "all"}
-                  onValueChange={(value) =>
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    setFilters({ ...filters, status: value === "all" ? undefined : (value as any) })
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Partial">Partial</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="Refunded">Refunded</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            }
-          >
-            Status
-          </FilterPopover>
-
-          <FilterPopover
-            isActive={!!filters.method}
-            content={
-              <div className="space-y-2">
-                <div className="text-sm font-medium">Payment Method</div>
-                <Select
-                  value={filters.method || "all"}
-                  onValueChange={(value) =>
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    setFilters({ ...filters, method: value === "all" ? undefined : (value as any) })
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Methods</SelectItem>
-                    <SelectItem value="Cash">Cash</SelectItem>
-                    <SelectItem value="GCash">GCash</SelectItem>
-                    <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
-                    <SelectItem value="Card">Card</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            }
-          >
-            Method
-          </FilterPopover>
-        </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleExport}
-          disabled={exportPayments.isPending}
-        >
-          <Download className="mr-1 h-3 w-3" />
-          Export CSV
-        </Button>
-      </div>
-
-      {/* Table */}
-      <ResponsiveTable>
-        <table className="w-full">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    style={{ width: header.getSize() }}
-                    className="px-4 py-3 text-left text-xs font-medium tracking-wide text-neutral-700 uppercase"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row, index) => (
-              <tr
-                key={row.id}
-                className={cn(
-                  "h-10 border-b border-neutral-100 hover:bg-neutral-50",
-                  index % 2 === 0 && "bg-neutral-50/30"
-                )}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 text-sm text-neutral-900">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {filteredPayments.length === 0 && (
-          <div className="p-8">
-            <TableEmptyState
-              title="No payments found"
-              description={
-                searchQuery
-                  ? "Try adjusting your search or filters"
-                  : bookingId
-                    ? "No payments recorded for this booking"
-                    : "No payments in the system yet"
-              }
-              action={
-                searchQuery
-                  ? {
-                      label: "Clear Search",
-                      onClick: () => setSearchQuery(""),
+        }
+        filters={
+          <>
+            <FilterPopover
+              isActive={!!filters.status}
+              content={
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Payment Status</div>
+                  <Select
+                    value={filters.status || "all"}
+                    onValueChange={(value) =>
+                      setFilters({
+                        ...filters,
+                        status: value === "all" ? undefined : (value as typeof filters.status),
+                      })
                     }
-                  : undefined
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Partial">Partial</SelectItem>
+                      <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value="Refunded">Refunded</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               }
-            />
-          </div>
-        )}
-      </ResponsiveTable>
+            >
+              Status
+            </FilterPopover>
 
-      {/* Desktop pagination */}
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <TablePagination table={table as any} totalItems={filteredPayments.length} />
+            <FilterPopover
+              isActive={!!filters.method}
+              content={
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Payment Method</div>
+                  <Select
+                    value={filters.method || "all"}
+                    onValueChange={(value) =>
+                      setFilters({
+                        ...filters,
+                        method: value === "all" ? undefined : (value as typeof filters.method),
+                      })
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Methods</SelectItem>
+                      <SelectItem value="Cash">Cash</SelectItem>
+                      <SelectItem value="GCash">GCash</SelectItem>
+                      <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
+                      <SelectItem value="Card">Card</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              }
+            >
+              Method
+            </FilterPopover>
+          </>
+        }
+        activeFilterCount={activeFilterCount}
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            disabled={exportPayments.isPending}
+          >
+            <Download className="mr-1 h-3 w-3" />
+            Export CSV
+          </Button>
+        }
+      />
+
+      <DataTable
+        table={table}
+        label="Payments"
+        renderCard={(row) => (
+          <PaymentCard
+            payment={row.original}
+            canEdit={canEdit}
+            onEdit={() =>
+              onEditPayment?.({
+                ...row.original,
+                booking: row.original.booking || undefined,
+              } as Payment)
+            }
+          />
+        )}
+        emptyState={
+          <TableEmptyState
+            title="No payments found"
+            description={
+              searchQuery
+                ? "Try adjusting your search or filters"
+                : bookingId
+                  ? "No payments recorded for this booking"
+                  : "No payments in the system yet"
+            }
+            action={
+              searchQuery
+                ? {
+                    label: "Clear Search",
+                    onClick: () => setSearchQuery(""),
+                  }
+                : undefined
+            }
+          />
+        }
+      />
+
+      <TablePagination table={table} totalItems={filteredPayments.length} />
 
       {/* Soft-Delete (Remove) Confirmation Dialog */}
       <AlertDialog
@@ -654,6 +530,59 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
     </div>
   );
 };
+
+function PaymentCard({
+  payment,
+  canEdit,
+  onEdit,
+}: {
+  payment: Payment;
+  canEdit: boolean;
+  onEdit: () => void;
+}) {
+  return (
+    <MobileCard>
+      <div className="space-y-2">
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="font-mono text-lg font-semibold">{formatCurrency(payment.amount)}</div>
+            <div className="text-xs text-neutral-500">
+              {formatTableDate(payment.payment_date || "")}
+            </div>
+          </div>
+          <StatusBadge tone={statusTone(payment.booking?.payment_status || "Pending")}>
+            {payment.booking?.payment_status || "Pending"}
+          </StatusBadge>
+        </div>
+
+        {payment.booking && (
+          <MobileCardRow label="Booking" value={payment.booking.booking_reference} />
+        )}
+
+        {payment.payment_method && <MobileCardRow label="Method" value={payment.payment_method} />}
+
+        <div className="flex gap-2 pt-2">
+          {payment.proof_url && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => payment.proof_url && window.open(payment.proof_url, "_blank")}
+            >
+              <Download className="mr-1 h-4 w-4" />
+              Receipt
+            </Button>
+          )}
+          {canEdit && (
+            <Button variant="outline" size="sm" onClick={onEdit}>
+              <Edit className="mr-1 h-4 w-4" />
+              Edit
+            </Button>
+          )}
+        </div>
+      </div>
+    </MobileCard>
+  );
+}
 
 // Export with error boundary
 export const PaymentsTable = withErrorBoundary(PaymentsTableComponent, {

@@ -67,17 +67,9 @@ function ExpensesPage() {
     <ExpenseFilters ... />
   </Card>
 
-  {/* Table Card */}
-  <Card className="overflow-hidden border-neutral-200">
-    <ResponsiveTable>
-      <table>...</table>
-    </ResponsiveTable>
-
-    {/* Pagination Footer */}
-    <div className="border-t border-neutral-200 bg-neutral-50/30 px-4 py-3">
-      <TablePagination ... />
-    </div>
-  </Card>
+  {/* Table, or cards in a narrow pane */}
+  <DataTable table={table} label="Expenses" renderCard={(row) => <ExpenseCard ... />} />
+  <TablePagination ... />
 </div>
 ```
 
@@ -333,14 +325,9 @@ const handleDelete = useMutation({
 
 ### Breakpoint Strategy
 
-```typescript
-// useExpensesTable hook
-const { isMobile } = useResponsiveView()
-
-// Renders:
-// - Desktop (≥768px): Full table with pagination
-// - Mobile (<768px): Stacked cards with compact info
-```
+`DataTable` measures its own pane: a table from 600px, stacked `ExpenseCard`s below it. Both
+forms share the table's row model, so cards paginate too. `ExpenseFilters` folds its filters
+behind a Filters toggle when its own width drops below 48rem (`FilterBar`).
 
 ### Mobile Card Component
 
@@ -592,16 +579,10 @@ const handleExport = () => {
 
 ### Issue: Mobile cards not responsive
 
-**Cause**: Missing responsive utilities
+**Cause**: Code branching on window width
 
-**Solution**:
-```typescript
-import { useResponsiveView } from '@/hooks'
-
-const { isMobile } = useResponsiveView()
-
-return isMobile ? <ExpenseCard ... /> : <ExpenseTable ... />
-```
+**Solution**: Pass the card through `DataTable`'s `renderCard`; it switches by pane width. Width
+hooks are retired (DESIGN.md, Layout).
 
 ## 🔒 Security
 

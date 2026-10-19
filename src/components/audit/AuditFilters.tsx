@@ -3,13 +3,12 @@
 import { useState } from "react";
 
 import { format } from "date-fns";
-import { CalendarDays, ChevronDown, Download, Filter, X, Zap } from "lucide-react";
+import { CalendarDays, Download, X, Zap } from "lucide-react";
 
-import { FilterPopover, TableSearch } from "@/components/patterns";
+import { FilterBar, FilterPopover, TableSearch } from "@/components/patterns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Select,
   SelectContent,
@@ -17,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useResponsiveView } from "@/hooks";
 import { ACTION_DISPLAY_NAMES, ALL_AUDIT_TABLES, TABLE_DISPLAY_NAMES } from "@/lib/audit-constants";
 import { useExportAuditLogs } from "@/lib/audit-hooks";
 import { QuickFilterPreset, useAuditStore } from "@/stores/useAuditStore";
@@ -48,8 +46,6 @@ export function AuditFilters() {
   const applyQuickFilter = useAuditStore((state) => state.applyQuickFilter);
 
   const exportLogs = useExportAuditLogs();
-  const { isMobile } = useResponsiveView();
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Date range state management (Apply/Clear pattern)
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -331,126 +327,38 @@ export function AuditFilters() {
         </Button>
       </div>
 
-      {/* Filter Row - Mobile vs Desktop */}
-      {isMobile ? (
-        <div className="space-y-3">
-          {/* Top row: Search + Filter toggle */}
-          <div className="flex items-center gap-2">
-            <TableSearch
-              value={searchQuery}
-              onChange={(value) => {
-                setSearchQuery(value);
-                updateFilter("userEmail", value || undefined);
-              }}
-              placeholder="Search by email..."
-              className="flex-1"
-            />
-            <Collapsible open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm" className="relative gap-1">
-                  <Filter className="h-4 w-4" />
-                  Filters
-                  {activeFilterCount() > 0 && (
-                    <Badge
-                      variant="secondary"
-                      className="bg-primary text-primary-foreground ml-1 h-5 min-w-5 px-1"
-                    >
-                      {activeFilterCount()}
-                    </Badge>
-                  )}
-                  <ChevronDown
-                    className={`h-3 w-3 transition-transform ${mobileFiltersOpen ? "rotate-180" : ""}`}
-                  />
-                </Button>
-              </CollapsibleTrigger>
-            </Collapsible>
-          </div>
-
-          {/* Collapsible filter section */}
-          <Collapsible open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-            <CollapsibleContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <TableFilter />
-                <SourceFilter />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <ActionFilter />
-                {filters.source === "app" && <EventTypeFilter />}
-              </div>
-              <div className="flex items-center gap-2">
-                <DateFilter />
-                {hasActiveFilters && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      resetFilters();
-                      setDateRange({ from: undefined, to: undefined });
-                      setSearchQuery("");
-                    }}
-                    className="gap-1"
-                  >
-                    <X className="h-3 w-3" />
-                    Clear
-                  </Button>
-                )}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-
-          {/* Export button */}
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExport}
-              disabled={exportLogs.isPending}
-            >
-              <Download className="mr-1 h-3 w-3" />
-              {exportLogs.isPending ? "Exporting..." : "Export"}
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center justify-between">
-          <div className="flex flex-wrap items-center gap-2">
-            {/* User Email Search */}
-            <TableSearch
-              value={searchQuery}
-              onChange={(value) => {
-                setSearchQuery(value);
-                updateFilter("userEmail", value || undefined);
-              }}
-              placeholder="Search by email..."
-              className="w-64"
-            />
-
+      <FilterBar
+        search={
+          <TableSearch
+            value={searchQuery}
+            onChange={(value) => {
+              setSearchQuery(value);
+              updateFilter("userEmail", value || undefined);
+            }}
+            placeholder="Search by email..."
+          />
+        }
+        filters={
+          <>
             <TableFilter />
             <SourceFilter />
             <ActionFilter />
-
             {/* Event Type Filter - Only shown when source='app' */}
             {filters.source === "app" && <EventTypeFilter />}
-
             <DateFilter />
-
-            {/* Clear Filters Button */}
-            {hasActiveFilters && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  resetFilters();
-                  setDateRange({ from: undefined, to: undefined });
-                  setSearchQuery("");
-                }}
-              >
-                Clear Filters
-              </Button>
-            )}
-          </div>
-
-          {/* Export Button */}
+          </>
+        }
+        activeFilterCount={activeFilterCount()}
+        onClearFilters={
+          hasActiveFilters
+            ? () => {
+                resetFilters();
+                setDateRange({ from: undefined, to: undefined });
+                setSearchQuery("");
+              }
+            : undefined
+        }
+        actions={
           <Button
             variant="outline"
             size="sm"
@@ -460,8 +368,8 @@ export function AuditFilters() {
             <Download className="mr-1 h-3 w-3" />
             {exportLogs.isPending ? "Exporting..." : "Export CSV"}
           </Button>
-        </div>
-      )}
+        }
+      />
 
       {/* Active Filters Display */}
       {hasActiveFilters && (

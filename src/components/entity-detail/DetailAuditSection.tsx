@@ -6,7 +6,6 @@ import { History } from "lucide-react";
 import { ActionBadge } from "@/components/audit/ActionBadge";
 import { SafeAuditText } from "@/components/audit/SafeAuditText";
 import { DetailSection } from "@/components/patterns";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { auditActorLabel } from "@/lib/audit-display";
 import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { formatPhilippineDate } from "@/lib/timezone";
@@ -41,7 +40,6 @@ export function DetailAuditSection({
   limit = 10,
   className,
 }: DetailAuditSectionProps) {
-  const isMobile = useMediaQuery("(max-width: 768px)");
   const { data: logs, isPending } = useQuery(
     recentRecordAuditLogsQuery(`${entityType}s`, entityId)
   );
@@ -51,7 +49,7 @@ export function DetailAuditSection({
       title={title}
       icon={<History className="h-5 w-5" />}
       collapsible
-      defaultCollapsed={defaultCollapsed ?? isMobile}
+      defaultCollapsed={defaultCollapsed}
       className={className}
     >
       {isPending ? (

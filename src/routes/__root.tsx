@@ -43,7 +43,8 @@ function RootComponent() {
         <Outlet />
         <Toaster />
         <UpdateToast />
-        {import.meta.env.DEV && <TanStackRouterDevtools />}
+        {/* Not under browser automation: the floating button covers the bottom bar and rail */}
+        {import.meta.env.DEV && !navigator.webdriver && <TanStackRouterDevtools />}
       </div>
     </ErrorBoundary>
   );

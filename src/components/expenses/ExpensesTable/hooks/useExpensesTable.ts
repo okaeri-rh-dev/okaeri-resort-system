@@ -12,7 +12,6 @@ import {
 } from "@tanstack/react-table";
 import { toast } from "sonner";
 
-import { useResponsiveView } from "@/hooks";
 import {
   useDeleteExpense,
   useExpenses,
@@ -39,9 +38,6 @@ export function useExpensesTable({ onViewExpense, onEditExpense }: ExpensesTable
   // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
-
-  // Responsive detection
-  const { isMobile } = useResponsiveView();
 
   // Mutations
   const deleteExpense = useDeleteExpense();
@@ -159,7 +155,6 @@ export function useExpensesTable({ onViewExpense, onEditExpense }: ExpensesTable
     totalUnfilteredCount,
     isLoading,
     error,
-    isMobile,
     filters,
     setFilters,
     searchQuery,

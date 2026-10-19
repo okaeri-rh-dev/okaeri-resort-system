@@ -187,7 +187,7 @@ interface DetailAuditSectionProps {
   entityType: EntityType;        // Entity type for filtering
   entityId: string;              // Entity ID for filtering
   title?: string;                // Section title (default: "Audit Trail")
-  defaultCollapsed?: boolean;    // Collapse state (auto on mobile)
+  defaultCollapsed?: boolean;    // Start collapsed (default: expanded)
   limit?: number;                // Number of entries (default: 10)
   className?: string;            // Optional styling
 }
@@ -427,13 +427,9 @@ export const Route = createFileRoute("/admin/entities/$entityId/")({
 </div>
 ```
 
-**✅ DO**: Collapse audit trail on mobile
+**✅ DO**: Keep the audit trail last, so on a phone it sits below the record
 ```typescript
-<DetailAuditSection
-  entityType="booking"
-  entityId={bookingId}
-  // Automatically collapses on mobile via useMediaQuery
-/>
+<DetailAuditSection entityType="booking" entityId={bookingId} />
 ```
 
 ### 8. Accessibility

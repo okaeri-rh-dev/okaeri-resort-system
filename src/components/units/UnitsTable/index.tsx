@@ -13,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useResponsiveView } from "@/hooks";
 import { cn } from "@/lib/utils";
 
 import { TableHeader as TableHeaderControls } from "./components/TableHeader";
@@ -57,8 +56,6 @@ function UnitsTableComponent({
     selectedCount,
     handleBatchStatusUpdate,
   } = useUnitsTable({ pageSize, onAddUnit, onViewUnit, onEditUnit });
-
-  useResponsiveView(); // Used for responsive table rendering
 
   const handleExport = useCallback(() => {
     void exportUnitsToCSV(units);

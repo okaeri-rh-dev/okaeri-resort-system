@@ -2,9 +2,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Import the mocked module to control its behavior
-import { useMediaQuery } from "@/hooks/useMediaQuery";
-
 import { ResponsiveDatePicker, ResponsiveDateRangePicker } from "../responsive-date-picker";
 
 // Mock ResizeObserver for floating-ui (Radix Popover uses this)
@@ -16,27 +13,15 @@ beforeAll(() => {
   };
 });
 
-// Mock the useMediaQuery hook
-vi.mock("@/hooks/useMediaQuery", () => ({
-  useMediaQuery: vi.fn(),
-}));
-
 describe("ResponsiveDatePicker", () => {
   const mockOnChange = vi.fn();
   const testDate = new Date(2024, 11, 25); // December 25, 2024
-  const mockedUseMediaQuery = vi.mocked(useMediaQuery);
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default to desktop view
-    mockedUseMediaQuery.mockReturnValue(false);
   });
 
-  describe("Desktop View (≥768px)", () => {
-    beforeEach(() => {
-      mockedUseMediaQuery.mockReturnValue(false); // Not mobile
-    });
-
+  describe("Popover", () => {
     it("should render popover trigger button on desktop", () => {
       render(<ResponsiveDatePicker placeholder="Select date" />);
       const button = screen.getByRole("button", { name: /select date/i });
@@ -135,13 +120,9 @@ describe("ResponsiveDatePicker", () => {
     });
   });
 
-  describe("Mobile View (<768px)", () => {
-    beforeEach(() => {
-      mockedUseMediaQuery.mockReturnValue(true); // Is mobile
-    });
-
+  describe("Sheet", () => {
     it("should render sheet trigger button on mobile", () => {
-      render(<ResponsiveDatePicker placeholder="Select date" />);
+      render(<ResponsiveDatePicker sheet placeholder="Select date" />);
       const button = screen.getByRole("button", { name: /select date/i });
       expect(button).toBeInTheDocument();
       expect(button).toHaveClass("touch-manipulation"); // Touch optimization
@@ -149,7 +130,7 @@ describe("ResponsiveDatePicker", () => {
 
     it("should open sheet when clicked on mobile", async () => {
       const user = userEvent.setup();
-      render(<ResponsiveDatePicker onChange={mockOnChange} />);
+      render(<ResponsiveDatePicker sheet onChange={mockOnChange} />);
 
       const button = screen.getByRole("button");
       await user.click(button);
@@ -165,7 +146,7 @@ describe("ResponsiveDatePicker", () => {
 
     it("should display calendar with mobile-calendar class in sheet", async () => {
       const user = userEvent.setup();
-      render(<ResponsiveDatePicker onChange={mockOnChange} />);
+      render(<ResponsiveDatePicker sheet onChange={mockOnChange} />);
 
       const button = screen.getByRole("button");
       await user.click(button);
@@ -180,7 +161,7 @@ describe("ResponsiveDatePicker", () => {
 
     it("should auto-close sheet after date selection on mobile", async () => {
       const user = userEvent.setup();
-      render(<ResponsiveDatePicker onChange={mockOnChange} />);
+      render(<ResponsiveDatePicker sheet onChange={mockOnChange} />);
 
       const button = screen.getByRole("button");
       await user.click(button);
@@ -214,7 +195,11 @@ describe("ResponsiveDatePicker", () => {
     it("should apply mobile-specific styles", async () => {
       const user = userEvent.setup();
       render(
-        <ResponsiveDatePicker onChange={mockOnChange} calendarClassName="custom-calendar-class" />
+        <ResponsiveDatePicker
+          sheet
+          onChange={mockOnChange}
+          calendarClassName="custom-calendar-class"
+        />
       );
 
       const button = screen.getByRole("button");
@@ -230,7 +215,7 @@ describe("ResponsiveDatePicker", () => {
 
     it("should have proper safe area padding on mobile", async () => {
       const user = userEvent.setup();
-      render(<ResponsiveDatePicker onChange={mockOnChange} />);
+      render(<ResponsiveDatePicker sheet onChange={mockOnChange} />);
 
       const button = screen.getByRole("button");
       await user.click(button);
@@ -244,12 +229,8 @@ describe("ResponsiveDatePicker", () => {
   });
 
   describe("Responsive behavior", () => {
-    it("should switch from desktop to mobile view when viewport changes", async () => {
+    it("should switch from popover to sheet when the sheet prop changes", async () => {
       const { rerender } = render(<ResponsiveDatePicker onChange={mockOnChange} />);
-
-      // Start with desktop view
-      mockedUseMediaQuery.mockReturnValue(false);
-      rerender(<ResponsiveDatePicker onChange={mockOnChange} />);
 
       const user = userEvent.setup();
       let button = screen.getByRole("button");
@@ -265,9 +246,8 @@ describe("ResponsiveDatePicker", () => {
       // Close popover
       await user.keyboard("{Escape}");
 
-      // Switch to mobile view
-      mockedUseMediaQuery.mockReturnValue(true);
-      rerender(<ResponsiveDatePicker onChange={mockOnChange} />);
+      // Switch to the sheet
+      rerender(<ResponsiveDatePicker sheet onChange={mockOnChange} />);
 
       button = screen.getByRole("button");
       await user.click(button);
@@ -284,18 +264,12 @@ describe("ResponsiveDateRangePicker", () => {
   const mockOnChange = vi.fn();
   const startDate = new Date(2024, 11, 20); // December 20, 2024
   const endDate = new Date(2024, 11, 27); // December 27, 2024
-  const mockedUseMediaQuery = vi.mocked(useMediaQuery);
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedUseMediaQuery.mockReturnValue(false); // Default to desktop
   });
 
   describe("Desktop View", () => {
-    beforeEach(() => {
-      mockedUseMediaQuery.mockReturnValue(false);
-    });
-
     it("should render date range in button", () => {
       render(
         <ResponsiveDateRangePicker
@@ -337,13 +311,9 @@ describe("ResponsiveDateRangePicker", () => {
   });
 
   describe("Mobile View", () => {
-    beforeEach(() => {
-      mockedUseMediaQuery.mockReturnValue(true);
-    });
-
     it("should render sheet with range picker header on mobile", async () => {
       const user = userEvent.setup();
-      render(<ResponsiveDateRangePicker onChange={mockOnChange} />);
+      render(<ResponsiveDateRangePicker sheet onChange={mockOnChange} />);
 
       const button = screen.getByRole("button");
       await user.click(button);
@@ -358,6 +328,7 @@ describe("ResponsiveDateRangePicker", () => {
       const user = userEvent.setup();
       render(
         <ResponsiveDateRangePicker
+          sheet
           onChange={mockOnChange}
           numberOfMonths={2} // Should be ignored on mobile
         />
@@ -377,7 +348,7 @@ describe("ResponsiveDateRangePicker", () => {
 
     it("should auto-close after selecting both dates on mobile", async () => {
       const user = userEvent.setup();
-      render(<ResponsiveDateRangePicker onChange={mockOnChange} />);
+      render(<ResponsiveDateRangePicker sheet onChange={mockOnChange} />);
 
       const button = screen.getByRole("button");
       await user.click(button);
@@ -430,6 +401,7 @@ describe("ResponsiveDateRangePicker", () => {
 
       render(
         <ResponsiveDateRangePicker
+          sheet
           value={{ from: longRangeStart, to: longRangeEnd }}
           onChange={mockOnChange}
         />

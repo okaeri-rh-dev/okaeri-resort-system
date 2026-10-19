@@ -159,7 +159,7 @@ The single list of what fails `npm run verify`. Rules marked "review" are the ch
 | Default breakpoints (`sm:`…`2xl:`, `max-md:`); touch targets use `coarse:` | `better-tailwindcss/no-restricted-classes`            |
 | `transition-all`, `focus:` rings, `<img>` without `width`/`height`         | `design/no-restricted-syntax`                         |
 | `@/components/ui/*` imported outside `src/components/patterns/`            | `design/no-restricted-imports`                        |
-| Retired width hooks (`useResponsiveView`, `useMediaQuery`)                 | `no-restricted-imports`                               |
+| Retired width hooks (`useResponsiveView`, `useMediaQuery`)                 | `design/no-restricted-imports`                        |
 | Accessible markup (labels, keyboard handlers, alt, anchors)                | `jsx-a11y` recommended, with the shadcn component map |
 | Token contrast pairs, light and dark (4.5:1; `input` and `ring` 3:1)       | contrast test in `src/styles/`                        |
 | Zoom not disabled; `theme-color` matches the background                    | `index.html` test                                     |

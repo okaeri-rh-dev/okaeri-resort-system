@@ -1,4 +1,10 @@
-import { getCoreRowModel, useReactTable, type ColumnDef, type Row } from "@tanstack/react-table";
+import {
+  getCoreRowModel,
+  getExpandedRowModel,
+  useReactTable,
+  type ColumnDef,
+  type Row,
+} from "@tanstack/react-table";
 import { act, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
@@ -163,4 +169,39 @@ describe("DataTable", () => {
 
     expect(await axe(container)).toHaveNoViolations();
   });
+
+  it("renders an expanded row's detail in a full-width row under it", () => {
+    render(<ExpandableStaysTable />);
+    ResizeObserverStub.resizeAllTo(840);
+
+    const rows = within(screen.getByRole("table", { name: "Stays" })).getAllByRole("row");
+    // header, Maria, Maria's detail, Jose
+    expect(rows.map((row) => row.textContent)).toEqual([
+      "GuestBalance",
+      "Maria Santos₱2,500.00",
+      "Past stays of Maria Santos",
+      "Jose Rizal₱1,200.50",
+    ]);
+    expect(within(rows[2]).getByRole("cell")).toHaveAttribute("colspan", "2");
+  });
 });
+
+function ExpandableStaysTable() {
+  const table = useReactTable({
+    data: stays,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    getRowCanExpand: () => true,
+    initialState: { expanded: { "0": true } },
+  });
+
+  return (
+    <DataTable
+      table={table}
+      label="Stays"
+      renderCard={(row) => <StayCard row={row} />}
+      renderExpandedRow={(row) => <p>Past stays of {row.original.guest}</p>}
+    />
+  );
+}

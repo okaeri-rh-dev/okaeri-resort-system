@@ -1,9 +1,13 @@
+import { useContext } from "react";
+
 import type { DateRange } from "react-day-picker";
 
 import {
   ResponsiveDatePicker,
   ResponsiveDateRangePicker,
 } from "@/components/ui/responsive-date-picker";
+
+import { CompactWindowContext } from "./window-size";
 
 export type { DateRange };
 
@@ -21,7 +25,8 @@ export interface DatePickerProps {
 
 /**
  * A date field: a trigger button that opens a calendar, in a bottom sheet on compact windows and
- * a popover elsewhere. The sheet closes once a date is picked.
+ * a popover elsewhere. The sheet closes once a date is picked. The window size comes from the
+ * enclosing `AppShell`; outside a shell it is always a popover.
  *
  * @example
  * ```tsx
@@ -41,8 +46,10 @@ export function DatePicker({
   "aria-label": ariaLabel,
   className,
 }: DatePickerProps) {
+  const isCompact = useContext(CompactWindowContext);
   return (
     <ResponsiveDatePicker
+      sheet={isCompact}
       value={value}
       onChange={(date) => onChange(date)}
       disabled={isDateDisabled}
@@ -90,8 +97,10 @@ export function DateRangePicker({
   disabled,
   className,
 }: DateRangePickerProps) {
+  const isCompact = useContext(CompactWindowContext);
   return (
     <ResponsiveDateRangePicker
+      sheet={isCompact}
       value={value}
       onChange={onChange}
       disabled={isDateDisabled}

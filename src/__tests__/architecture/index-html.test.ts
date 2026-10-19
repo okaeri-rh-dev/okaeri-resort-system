@@ -55,4 +55,8 @@ describe("manifest.json", () => {
     expect(manifest.theme_color.toLowerCase()).toBe(background.light);
     expect(manifest.background_color.toLowerCase()).toBe(background.light);
   });
+
+  it("does not lock the installed app's orientation", () => {
+    expect(manifest).not.toHaveProperty("orientation");
+  });
 });

@@ -55,10 +55,17 @@ export { FormSkeleton, type FormSkeletonProps } from "./FormSkeleton";
 export { SortableHeader, type SortableHeaderProps } from "./SortableHeader";
 export { TableSearch, type TableSearchProps } from "./TableSearch";
 export { FilterPopover, type FilterPopoverProps } from "./FilterPopover";
+export { FilterBar, type FilterBarProps } from "./FilterBar";
 export { TablePagination, type TablePaginationProps } from "./TablePagination";
 export { MobileCard, type MobileCardProps } from "./MobileCard";
 export { MobileCardRow, type MobileCardRowProps } from "./MobileCardRow";
 export { ActionMenu, type ActionMenuAction, type ActionMenuProps } from "./ActionMenu";
 export { TableEmptyState, type TableEmptyStateProps } from "./TableEmptyState";
-export { ResponsiveTable, type ResponsiveTableProps } from "./ResponsiveTable";
 export { DataTable, type DataTableProps } from "./DataTable";
+export {
+  AppShell,
+  type AppShellProps,
+  type ShellAction,
+  type ShellBrand,
+  type ShellDestination,
+} from "./AppShell";
