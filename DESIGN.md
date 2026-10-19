@@ -157,7 +157,7 @@ The single list of what fails `npm run verify`. Rules marked "review" are the ch
 | Arbitrary text sizes (`text-[…]`)                                          | `better-tailwindcss/no-restricted-classes`            |
 | Arbitrary durations (`duration-[…]`)                                       | `better-tailwindcss/no-restricted-classes`            |
 | Default breakpoints (`sm:`…`2xl:`, `max-md:`); touch targets use `coarse:` | `better-tailwindcss/no-restricted-classes`            |
-| `transition-all`, `focus:` rings, `<img>` without `width`/`height`         | `no-restricted-syntax`                                |
+| `transition-all`, `focus:` rings, `<img>` without `width`/`height`         | `design/no-restricted-syntax`                         |
 | `@/components/ui/*` imported outside `src/components/patterns/`            | `no-restricted-imports`                               |
 | Retired width hooks (`useResponsiveView`, `useMediaQuery`)                 | `no-restricted-imports`                               |
 | Accessible markup (labels, keyboard handlers, alt, anchors)                | `jsx-a11y` recommended, with the shadcn component map |

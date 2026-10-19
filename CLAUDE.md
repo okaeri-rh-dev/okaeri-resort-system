@@ -49,6 +49,7 @@ Current entries:
 
 ## Important Notes
 
+- Read `DESIGN.md` before writing or reviewing UI (components, pages, `index.css`).
 - Run `npm run verify` before committing. The pre-commit hook blocks on type and lint errors but runs no tests — passing the hook is NOT passing verify.
 - Use the typed database helpers in `src/lib/supabase.ts` (`db.bookings.byId(...)`, `db.units.available()`, …) instead of raw Supabase queries where possible.
 - React escapes rendered values, so XSS enters only through raw HTML: `dangerouslySetInnerHTML` is a lint error (raw HTML, if unavoidable, goes through `sanitizeRichText` with a justified disable), and any HTML email template must escape interpolated values.
