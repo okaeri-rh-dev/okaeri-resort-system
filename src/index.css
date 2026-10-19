@@ -1,9 +1,13 @@
 @import "tailwindcss";
+/* Overlay enter/exit keyframes (animate-in, fade-in-0, zoom-in-95, slide-in-from-*) */
+@import "tw-animate-css";
 
 /* Import enterprise mobile styles */
 @import "./styles/enterprise-tables.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
+/* Touch input, not a window size: 44px targets (DESIGN.md, Motion and density) */
+@custom-variant coarse (@media (pointer: coarse));
 
 /*
  * Fonts (DESIGN.md, Type; #36). Fontsource variable files, declared here rather than through the
@@ -270,9 +274,19 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Honor the user's reduced-motion preference (previously lived in mobile-enterprise.css) */
+/* Toasts follow the overlay speeds; sonner's injected stylesheet runs .4s (DESIGN.md, Motion) */
+[data-sonner-toaster] [data-sonner-toast] {
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
+}
+[data-sonner-toaster] [data-sonner-toast][data-removed="true"] {
+  transition-duration: 150ms;
+  transition-timing-function: ease-in;
+}
+
+/* Reduced motion: overlays appear instantly; spinners keep turning because they are loading feedback */
 @media (prefers-reduced-motion: reduce) {
-  *,
+  *:not(.animate-spin),
   *::before,
   *::after {
     animation-duration: 0.01ms !important;

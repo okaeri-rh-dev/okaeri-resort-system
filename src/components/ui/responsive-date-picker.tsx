@@ -77,7 +77,7 @@ export function ResponsiveDatePicker({
     <Button
       variant={buttonVariant}
       className={cn(
-        "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
+        "w-full touch-manipulation pl-4 text-left text-base font-normal sm:text-sm",
         !value && "text-muted-foreground",
         buttonClassName
       )}
@@ -203,7 +203,7 @@ export function ResponsiveDateRangePicker({
     <Button
       variant={buttonVariant}
       className={cn(
-        "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
+        "w-full touch-manipulation pl-4 text-left text-base font-normal sm:text-sm",
         !value?.from && "text-muted-foreground",
         buttonClassName
       )}

@@ -5,25 +5,20 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const inputVariants = cva(
-  "border-input bg-background ring-offset-background file:text-foreground placeholder:text-muted-foreground placeholder:italic placeholder:opacity-60 focus-visible:ring-ring flex w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 max-md:text-base",
+  "border-input bg-background ring-offset-background file:text-foreground placeholder:text-muted-foreground placeholder:italic placeholder:opacity-60 focus-visible:ring-ring flex w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50 max-md:text-base coarse:min-h-11",
   {
     variants: {
       variant: {
         default: "border-input focus-visible:ring-ring",
-        // Resort-themed variants
-        ocean: "border-ocean-300 focus-visible:ring-ocean-500 focus-visible:border-ocean-500",
-        coral: "border-coral-300 focus-visible:ring-coral-500 focus-visible:border-coral-500",
-        sand: "border-sand-300 focus-visible:ring-sand-500 focus-visible:border-sand-500",
-        palm: "border-palm-300 focus-visible:ring-palm-500 focus-visible:border-palm-500",
-        sunset: "border-sunset-300 focus-visible:ring-sunset-500 focus-visible:border-sunset-500",
         error: "border-destructive focus-visible:ring-destructive focus-visible:border-destructive",
-        success: "border-palm-500 focus-visible:ring-palm-500 focus-visible:border-palm-500",
+        success:
+          "border-success-foreground focus-visible:ring-success-foreground focus-visible:border-success-foreground",
       },
+      // Heights match buttonVariants: sm 32px, default 36px, lg 44px
       size: {
-        default: "h-10 px-3 py-2",
-        sm: "h-9 px-3 py-2 text-sm max-md:text-base",
-        lg: "h-11 px-4 py-3",
-        xl: "h-12 px-4 py-3 text-base",
+        default: "h-9 px-3 py-1",
+        sm: "h-8 px-3 py-1",
+        lg: "h-11 px-4 py-2",
       },
     },
     defaultVariants: {
@@ -34,7 +29,8 @@ const inputVariants = cva(
 );
 
 export interface InputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size">,
+  extends
+    Omit<React.InputHTMLAttributes<HTMLInputElement>, "size">,
     VariantProps<typeof inputVariants> {
   startIcon?: React.ReactNode;
   endIcon?: React.ReactNode;
@@ -106,7 +102,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <p
             className={cn(
               "text-sm",
-              error ? "text-destructive" : success ? "text-palm-600" : "text-muted-foreground"
+              error
+                ? "text-destructive"
+                : success
+                  ? "text-success-foreground"
+                  : "text-muted-foreground"
             )}
           >
             {error || success || helperText}
@@ -223,8 +223,10 @@ const PhoneInput = React.forwardRef<HTMLInputElement, InputProps>(
 PhoneInput.displayName = "PhoneInput";
 
 // Number Input Component with validation on blur
-export interface NumberInputProps
-  extends Omit<InputProps, "type" | "onChange" | "onBlur" | "value" | "defaultValue"> {
+export interface NumberInputProps extends Omit<
+  InputProps,
+  "type" | "onChange" | "onBlur" | "value" | "defaultValue"
+> {
   min?: number;
   max?: number;
   step?: number;

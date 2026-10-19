@@ -306,17 +306,20 @@ test.describe("Authentication", () => {
         expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 5);
       });
 
-      test("login inputs have adequate touch targets on mobile", async ({ page }) => {
-        const loginPage = new LoginPage(page);
-        await loginPage.goto();
+      test.describe("on a touch screen", () => {
+        // Targets follow the pointer, not the width: 44px under (pointer: coarse)
+        test.use({ hasTouch: true, isMobile: true });
 
-        // Check email input touch target size (minimum 44px for iOS)
-        const emailBox = await loginPage.emailInput.boundingBox();
-        expect(emailBox?.height).toBeGreaterThanOrEqual(40);
+        test("login inputs have adequate touch targets on mobile", async ({ page }) => {
+          const loginPage = new LoginPage(page);
+          await loginPage.goto();
 
-        // Check sign in button touch target
-        const buttonBox = await loginPage.signInButton.boundingBox();
-        expect(buttonBox?.height).toBeGreaterThanOrEqual(40);
+          const emailBox = await loginPage.emailInput.boundingBox();
+          expect(emailBox?.height).toBeGreaterThanOrEqual(44);
+
+          const buttonBox = await loginPage.signInButton.boundingBox();
+          expect(buttonBox?.height).toBeGreaterThanOrEqual(44);
+        });
       });
 
       test("forgot password page works on mobile", async ({ page }) => {

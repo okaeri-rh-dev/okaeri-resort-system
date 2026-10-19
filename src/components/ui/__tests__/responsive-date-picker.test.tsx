@@ -41,7 +41,6 @@ describe("ResponsiveDatePicker", () => {
       render(<ResponsiveDatePicker placeholder="Select date" />);
       const button = screen.getByRole("button", { name: /select date/i });
       expect(button).toBeInTheDocument();
-      expect(button).toHaveClass("h-12", "sm:h-10"); // Responsive height classes
     });
 
     it("should display selected date in correct format", () => {

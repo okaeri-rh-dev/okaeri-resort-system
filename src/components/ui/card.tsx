@@ -4,25 +4,12 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-const cardVariants = cva("bg-card text-card-foreground rounded-xl border shadow", {
+const cardVariants = cva("bg-card text-card-foreground rounded-xl border shadow-card", {
   variants: {
     variant: {
       default: "border-border bg-card",
       outline: "border-border bg-card border-2",
-      elevated: "border-border bg-card shadow-lg",
-      // Resort-themed variants
-      ocean:
-        "bg-ocean-50 border-ocean-200 text-ocean-900 dark:bg-ocean-950 dark:border-ocean-800 dark:text-ocean-100",
-      coral:
-        "bg-coral-50 border-coral-200 text-coral-900 dark:bg-coral-950 dark:border-coral-800 dark:text-coral-100",
-      sand: "bg-sand-50 border-sand-200 text-sand-900 dark:bg-sand-950 dark:border-sand-800 dark:text-sand-100",
-      palm: "bg-palm-50 border-palm-200 text-palm-900 dark:bg-palm-950 dark:border-palm-800 dark:text-palm-100",
-      sunset:
-        "bg-sunset-50 border-sunset-200 text-sunset-900 dark:bg-sunset-950 dark:border-sunset-800 dark:text-sunset-100",
-      glass: "glass border-white/20 text-white backdrop-blur-md",
-      gradient: "gradient-ocean border-transparent text-white shadow-lg",
-      "gradient-sunset": "gradient-sunset border-transparent text-white shadow-lg",
-      "gradient-tropical": "gradient-tropical border-transparent text-white shadow-lg",
+      elevated: "border-border bg-card shadow-popover",
     },
     padding: {
       none: "p-0",
@@ -39,8 +26,7 @@ const cardVariants = cva("bg-card text-card-foreground rounded-xl border shadow"
 });
 
 export interface CardProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof cardVariants> {}
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof cardVariants> {}
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant, padding, ...props }, ref) => (
@@ -57,12 +43,10 @@ const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
 CardHeader.displayName = "CardHeader";
 
 const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => (
-    <h3
-      ref={ref}
-      className={cn("leading-none font-semibold tracking-tight", className)}
-      {...props}
-    />
+  ({ className, children, ...props }, ref) => (
+    <h3 ref={ref} className={cn("leading-none font-semibold tracking-tight", className)} {...props}>
+      {children}
+    </h3>
   )
 );
 CardTitle.displayName = "CardTitle";
@@ -121,7 +105,7 @@ const StatsCard = React.forwardRef<
         <div
           className={cn(
             "mt-1 flex items-center text-xs",
-            trend.isPositive ? "text-palm-600" : "text-coral-600"
+            trend.isPositive ? "text-success-foreground" : "text-danger-foreground"
           )}
         >
           <span>{trend.isPositive ? "↗" : "↘"}</span>
