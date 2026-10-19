@@ -18,9 +18,13 @@ beforeAll(() => {
   eslint = new ESLint({ cwd: process.cwd() });
 });
 
-async function lint(code: string, overrideConfig?: Linter.Config): Promise<Linter.LintMessage[]> {
+async function lint(
+  code: string,
+  overrideConfig?: Linter.Config,
+  filePath = SNIPPET_PATH
+): Promise<Linter.LintMessage[]> {
   const linter = overrideConfig ? new ESLint({ cwd: process.cwd(), overrideConfig }) : eslint;
-  const [result] = await linter.lintText(code, { filePath: SNIPPET_PATH });
+  const [result] = await linter.lintText(code, { filePath });
   // A snippet that doesn't parse would pass every "accepts" case
   expect(result.messages.filter((message) => message.fatal)).toEqual([]);
   return result.messages;
@@ -276,5 +280,50 @@ describe("jsx-a11y recommended with the shadcn component map", () => {
     ["an unmapped component", `<Badge aria-checked />`],
   ])("accepts %s", async (_name, jsx) => {
     expect(await a11yRules(jsx)).toEqual([]);
+  });
+});
+
+describe("design/no-restricted-imports: ui/ is private to the kit", () => {
+  const rule = "design/no-restricted-imports";
+  const importRuleIds = async (code: string, filePath?: string) =>
+    (await lint(code, undefined, filePath)).map((message) => message.ruleId);
+
+  it.each([
+    `import { Button } from "@/components/ui/button";`,
+    `import { buttonVariants } from "src/components/ui/button.variants";`,
+    `import { Badge } from "../components/ui/badge";`,
+    `import type { BadgeProps } from "@/components/ui/badge";`,
+    `export { Table } from "@/components/ui/table";`,
+  ])("flags %s in product code", async (code) => {
+    expect(await importRuleIds(`${code}\nexport const A = 1;`)).toContain(rule);
+  });
+
+  it("names the barrel in its message", async () => {
+    const messages = await lint(
+      `import { Button } from "@/components/ui/button";\nexport const A = Button;`
+    );
+    expect(messages.find((message) => message.ruleId === rule)?.message).toContain(
+      "@/components/patterns"
+    );
+  });
+
+  it("accepts the barrel in product code", async () => {
+    expect(
+      await importRuleIds(
+        `import { Button, StatusBadge } from "@/components/patterns";\nexport const A = [Button, StatusBadge];`
+      )
+    ).not.toContain(rule);
+  });
+
+  it.each([
+    "src/components/patterns/__design_lint__/Snippet.tsx",
+    "src/components/ui/__design_lint__/Snippet.tsx",
+  ])("accepts ui/ imports inside the kit (%s)", async (filePath) => {
+    expect(
+      await importRuleIds(
+        `import { Badge } from "@/components/ui/badge";\nexport const A = Badge;`,
+        filePath
+      )
+    ).not.toContain(rule);
   });
 });

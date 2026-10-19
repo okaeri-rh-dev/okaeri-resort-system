@@ -3,8 +3,9 @@ import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { createColumnHelper, type Header } from "@tanstack/react-table";
 
-import { ActionMenu, SortableHeader, StatusBadge } from "@/components/tables/utils";
+import { ActionMenu, SortableHeader, StatusBadge } from "@/components/patterns";
 import { Checkbox } from "@/components/ui/checkbox";
+import { statusTone } from "@/lib/status-tone";
 import type { Unit, UnitStatus } from "@/types";
 
 import { InlineEdit, InlineSelect } from "./InlineEdit";
@@ -161,7 +162,11 @@ export function useUnitColumns({
               />
             );
           }
-          return <StatusBadge status={getValue() ?? "Available"} />;
+          return (
+            <StatusBadge tone={statusTone(getValue() ?? "Available")}>
+              {getValue() ?? "Available"}
+            </StatusBadge>
+          );
         },
         size: 120,
       }),

@@ -3,8 +3,7 @@ import { useCallback } from "react";
 import { flexRender } from "@tanstack/react-table";
 
 import { withErrorBoundary } from "@/components/ErrorBoundary";
-import { UnitsTableSkeleton } from "@/components/skeletons";
-import { TableEmptyState, TablePagination } from "@/components/tables/utils";
+import { TableEmptyState, TablePagination, TableSkeleton } from "@/components/patterns";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -67,7 +66,7 @@ function UnitsTableComponent({
 
   // Loading state
   if (isLoading) {
-    return <UnitsTableSkeleton />;
+    return <TableSkeleton rows={6} columns={9} toolbar label="Loading cabins" />;
   }
 
   // Error state

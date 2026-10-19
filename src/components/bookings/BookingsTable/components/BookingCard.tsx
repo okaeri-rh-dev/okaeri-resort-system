@@ -5,8 +5,7 @@ import { format } from "date-fns";
 import { Check, Upload } from "lucide-react";
 
 import { UNIT_SLOT_MAP } from "@/components/dashboard/unit-calendar-config";
-import { formatCurrency } from "@/components/tables/formatters";
-import { ActionMenu, MobileCard, StatusBadge } from "@/components/tables/utils";
+import { ActionMenu, MobileCard, StatusBadge } from "@/components/patterns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useUserRole } from "@/hooks";
 import { canTransitionStatus } from "@/lib/bookings";
+import { formatCurrency } from "@/lib/formatters";
+import { statusTone } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
 import type { BookingStatus } from "@/types";
 import { utcToResortTime } from "@/utils/date-helpers";
@@ -161,7 +162,9 @@ export const BookingCard: React.FC<BookingCardProps> = ({
             <div className="font-mono text-xs text-neutral-400">{booking.booking_reference}</div>
           </div>
           <div className="flex items-center gap-1">
-            <StatusBadge status={booking.booking_status ?? "Pending"} />
+            <StatusBadge tone={statusTone(booking.booking_status ?? "Pending")}>
+              {booking.booking_status ?? "Pending"}
+            </StatusBadge>
             {menuActions.length > 0 && <ActionMenu actions={menuActions} />}
           </div>
         </div>

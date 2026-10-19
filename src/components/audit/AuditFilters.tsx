@@ -5,7 +5,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { CalendarDays, ChevronDown, Download, Filter, X, Zap } from "lucide-react";
 
-import { FilterPopover, TableSearch } from "@/components/tables/utils";
+import { FilterPopover, TableSearch } from "@/components/patterns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";

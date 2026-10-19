@@ -1,6 +1,5 @@
 /**
- * Table formatting utilities
- * Separated from utils.tsx for React Fast Refresh compatibility
+ * Display formatters for money, percentages, dates and phone numbers
  */
 
 import { format } from "date-fns";

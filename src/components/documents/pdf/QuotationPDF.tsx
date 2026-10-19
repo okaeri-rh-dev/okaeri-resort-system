@@ -2,7 +2,7 @@ import { Document, Image, Page, Text, View } from "@react-pdf/renderer";
 
 import { isValidImageDataUri } from "@/components/documents/constants";
 import type { GeneratedDocument } from "@/components/documents/types";
-import { formatCurrency, formatFullDate } from "@/components/tables/formatters";
+import { formatCurrency, formatFullDate } from "@/lib/formatters";
 
 import { styles } from "./pdf-styles";
 

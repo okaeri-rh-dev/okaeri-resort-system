@@ -3,7 +3,7 @@
 /**
  * Data formatting utilities for entity detail pages
  *
- * Re-exports formatters from tables/utils to avoid duplication:
+ * Re-exports the formatters in @/lib/formatters to avoid duplication:
  * - formatCurrency: Philippine peso formatting
  * - formatTableDate: Compact date for tables
  * - formatFullDate: Full date with year
@@ -15,7 +15,7 @@
  * - truncate: Truncate long text with ellipsis
  */
 
-// Re-export existing formatters from table utils
+// Re-export the shared formatters
 export {
   formatCurrency,
   formatTableDate,
@@ -23,7 +23,7 @@ export {
   formatDateTime,
   formatPhoneNumber,
   formatPercentage,
-} from "@/components/tables/formatters";
+} from "@/lib/formatters";
 
 /**
  * Truncate text with ellipsis

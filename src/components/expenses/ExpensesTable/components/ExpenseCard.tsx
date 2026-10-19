@@ -1,9 +1,9 @@
 import { Calendar, DollarSign, Edit2, Eye, Receipt, Trash2 } from "lucide-react";
 
-import { formatCurrency, formatTableDate } from "@/components/tables/formatters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { formatCurrency, formatTableDate } from "@/lib/formatters";
 
 import type { ExpenseCardProps } from "../types";
 

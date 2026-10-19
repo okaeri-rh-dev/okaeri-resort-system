@@ -3,7 +3,6 @@ import { useFieldArray, type UseFormReturn } from "react-hook-form";
 import { ulid } from "ulid";
 
 import { LINE_ITEM_TYPE_LABELS, UNIT_LABEL_OPTIONS } from "@/components/documents/constants";
-import { formatCurrency } from "@/components/tables/formatters";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatCurrency } from "@/lib/formatters";
 import type { DocumentFormValues } from "@/lib/validation/document-schemas";
 
 interface LineItemsSectionProps {

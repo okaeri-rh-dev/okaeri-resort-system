@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 import { CalendarDays, ChevronDown, DollarSign, Download, Filter, X } from "lucide-react";
 
-import { FilterPopover, TableSearch } from "@/components/tables/utils";
+import { FilterPopover, TableSearch } from "@/components/patterns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -59,11 +59,11 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
 
   const hasActiveFilters = Boolean(
     filters.category ||
-      filters.minAmount ||
-      filters.maxAmount ||
-      filters.dateFrom ||
-      filters.dateTo ||
-      searchQuery
+    filters.minAmount ||
+    filters.maxAmount ||
+    filters.dateFrom ||
+    filters.dateTo ||
+    searchQuery
   );
 
   // Count active filter types (excluding search)

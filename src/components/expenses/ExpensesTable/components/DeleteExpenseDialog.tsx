@@ -2,7 +2,6 @@ import React from "react";
 
 import { Trash2 } from "lucide-react";
 
-import { formatCurrency } from "@/components/tables/formatters";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,6 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { formatCurrency } from "@/lib/formatters";
 import type { Expense } from "@/types";
 
 interface DeleteExpenseDialogProps {

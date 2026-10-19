@@ -1,8 +1,8 @@
 import type { UseFormReturn } from "react-hook-form";
 
-import { formatCurrency } from "@/components/tables/formatters";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { formatCurrency } from "@/lib/formatters";
 import type { DocumentFormValues } from "@/lib/validation/document-schemas";
 
 interface PricingSectionProps {

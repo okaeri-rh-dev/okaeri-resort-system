@@ -5,13 +5,12 @@ import { History } from "lucide-react";
 
 import { ActionBadge } from "@/components/audit/ActionBadge";
 import { SafeAuditText } from "@/components/audit/SafeAuditText";
+import { DetailSection } from "@/components/patterns";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { auditActorLabel } from "@/lib/audit-display";
 import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { formatPhilippineDate } from "@/lib/timezone";
 import type { EntityType } from "@/types/entity-detail.types";
-
-import { DetailSection } from "./DetailSection";
 
 /**
  * Props for DetailAuditSection component

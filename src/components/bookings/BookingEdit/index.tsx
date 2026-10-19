@@ -6,7 +6,7 @@ import { format, parseISO } from "date-fns";
 import { CalendarDays, Save, X } from "lucide-react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 
-import { DetailPageLayout } from "@/components/entity-detail";
+import { DetailPageLayout } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

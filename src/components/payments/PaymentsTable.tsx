@@ -19,6 +19,18 @@ import { toast } from "sonner";
 
 import { withErrorBoundary } from "@/components/ErrorBoundary";
 import {
+  ActionMenu,
+  FilterPopover,
+  MobileCard,
+  MobileCardRow,
+  ResponsiveTable,
+  SortableHeader,
+  StatusBadge,
+  TableEmptyState,
+  TablePagination,
+  TableSearch,
+} from "@/components/patterns";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -39,6 +51,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useResponsiveView, useUserRole } from "@/hooks";
+import { formatCurrency, formatTableDate } from "@/lib/formatters";
+import { statusTone } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
 import {
   useExportPayments,
@@ -48,20 +62,6 @@ import {
   useVerifyPayment,
 } from "@/stores/usePaymentStore";
 import type { Payment } from "@/types";
-
-import { formatCurrency, formatTableDate } from "../tables/formatters";
-import {
-  ActionMenu,
-  FilterPopover,
-  MobileCard,
-  MobileCardRow,
-  ResponsiveTable,
-  SortableHeader,
-  StatusBadge,
-  TableEmptyState,
-  TablePagination,
-  TableSearch,
-} from "../tables/utils";
 
 const columnHelper = createColumnHelper<Payment>();
 
@@ -219,20 +219,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
           const status = getValue() as string | undefined;
           if (!status) return "-";
 
-          return (
-            <StatusBadge
-              status={status}
-              variant={
-                status === "Completed"
-                  ? "default"
-                  : status === "Partial"
-                    ? "secondary"
-                    : status === "Refunded"
-                      ? "destructive"
-                      : "default"
-              }
-            />
-          );
+          return <StatusBadge tone={statusTone(status)}>{status}</StatusBadge>;
         },
         size: 120,
       }),
@@ -412,16 +399,9 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
                       {formatTableDate(payment.payment_date || "")}
                     </div>
                   </div>
-                  <StatusBadge
-                    status={payment.booking?.payment_status || "Pending"}
-                    variant={
-                      payment.booking?.payment_status === "Completed"
-                        ? "default"
-                        : payment.booking?.payment_status === "Partial"
-                          ? "secondary"
-                          : "default"
-                    }
-                  />
+                  <StatusBadge tone={statusTone(payment.booking?.payment_status || "Pending")}>
+                    {payment.booking?.payment_status || "Pending"}
+                  </StatusBadge>
                 </div>
 
                 {payment.booking && (

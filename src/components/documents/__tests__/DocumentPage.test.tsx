@@ -18,7 +18,7 @@ import { DocumentPage } from "@/components/documents/DocumentPreview/DocumentPag
 import type { DocumentFormData, LetterheadConfig } from "@/components/documents/types";
 
 // Mock formatters
-vi.mock("@/components/tables/formatters", () => ({
+vi.mock("@/lib/formatters", () => ({
   formatCurrency: (amount: number) =>
     `₱${amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
   formatFullDate: (date: string) => {

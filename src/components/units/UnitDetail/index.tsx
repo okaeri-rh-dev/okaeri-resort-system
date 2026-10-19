@@ -5,18 +5,16 @@ import { Calendar, DollarSign, Home, Info, Sparkles, TrendingUp } from "lucide-r
 
 import {
   DetailAuditSection,
-  DetailField,
-  DetailPageLayout,
-  DetailSection,
   formatCurrency,
   formatPercentage,
   formatTableDate,
   RelatedEntityLink,
 } from "@/components/entity-detail";
-import { StatusBadge } from "@/components/tables/utils";
+import { DetailField, DetailPageLayout, DetailSection, StatusBadge } from "@/components/patterns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { usePricingConfig } from "@/hooks/usePricingConfig";
+import { statusTone } from "@/lib/status-tone";
 import type { Booking, Unit } from "@/types";
 
 /**
@@ -69,7 +67,11 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
         { label: "Cabins", to: "/admin/units" },
         { label: `${unit.unit_name} (${unit.unit_code})` },
       ]}
-      status={<StatusBadge status={unit.unit_status || "Available"} />}
+      status={
+        <StatusBadge tone={statusTone(unit.unit_status || "Available")}>
+          {unit.unit_status || "Available"}
+        </StatusBadge>
+      }
       editRoute={{
         to: "/admin/units/$unitId/edit",
         params: { unitId },
@@ -78,20 +80,20 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
       {/* 1. Unit Specifications Section */}
       <DetailSection title="Cabin Specifications" icon={<Home className="h-5 w-5" />}>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <DetailField
-            label="Cabin Code"
-            value={unit.unit_code}
-            valueClassName="font-mono font-medium"
-          />
-          <DetailField label="Cabin Type" value={unit.unit_type} valueClassName="font-medium" />
+          <DetailField label="Cabin Code" value={unit.unit_code} emphasis="strong" />
+          <DetailField label="Cabin Type" value={unit.unit_type} emphasis="strong" />
           <DetailField
             label="Max Occupancy"
             value={`${unit.max_occupancy} guests`}
-            valueClassName="font-medium"
+            emphasis="strong"
           />
           <DetailField
             label="Status"
-            value={<StatusBadge status={unit.unit_status || "Available"} />}
+            value={
+              <StatusBadge tone={statusTone(unit.unit_status || "Available")}>
+                {unit.unit_status || "Available"}
+              </StatusBadge>
+            }
           />
         </div>
       </DetailSection>
@@ -182,7 +184,9 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
                       id={booking.booking_id}
                       label={booking.booking_reference}
                     />
-                    <StatusBadge status={booking.booking_status || "Pending"} />
+                    <StatusBadge tone={statusTone(booking.booking_status || "Pending")}>
+                      {booking.booking_status || "Pending"}
+                    </StatusBadge>
                   </div>
                   <p className="text-sm text-neutral-600">
                     {formatTableDate(booking.check_in)} - {formatTableDate(booking.check_out)}
@@ -208,23 +212,23 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
             <DetailField
               label="Total Bookings"
               value={unit.revenue_stats.total_bookings.toString()}
-              valueClassName="font-semibold text-lg text-neutral-900"
+              emphasis="figure"
             />
             <DetailField
               label="Total Revenue"
               value={formatCurrency(unit.revenue_stats.total_revenue)}
-              valueClassName="font-mono font-semibold text-lg text-neutral-900"
+              emphasis="figure"
             />
             <DetailField
               label="Average Booking Value"
               value={formatCurrency(unit.revenue_stats.average_booking_value)}
-              valueClassName="font-mono font-medium text-neutral-900"
+              emphasis="strong"
             />
             {unit.revenue_stats.occupancy_rate !== undefined && (
               <DetailField
                 label="Occupancy Rate"
                 value={formatPercentage(unit.revenue_stats.occupancy_rate)}
-                valueClassName="font-semibold text-lg text-neutral-900"
+                emphasis="figure"
               />
             )}
           </div>

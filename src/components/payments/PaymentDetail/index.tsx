@@ -4,16 +4,14 @@ import { Calendar, DollarSign, FileText, Image } from "lucide-react";
 
 import {
   DetailAuditSection,
-  DetailField,
-  DetailPageLayout,
-  DetailSection,
   formatCurrency,
   formatDateTime,
   formatFullDate,
   formatTableDate,
   RelatedEntityLink,
 } from "@/components/entity-detail";
-import { StatusBadge } from "@/components/tables/utils";
+import { DetailField, DetailPageLayout, DetailSection, StatusBadge } from "@/components/patterns";
+import { statusTone } from "@/lib/status-tone";
 import type { Booking, Guest, Payment } from "@/types";
 
 /**
@@ -60,7 +58,11 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
         { label: "Payments", to: "/admin/payments" },
         { label: `Payment #${displayPaymentId}` },
       ]}
-      status={<StatusBadge status={payment.payment_status || "Pending"} />}
+      status={
+        <StatusBadge tone={statusTone(payment.payment_status || "Pending")}>
+          {payment.payment_status || "Pending"}
+        </StatusBadge>
+      }
       editRoute={{
         to: "/admin/payments/$paymentId/edit",
         params: { paymentId },
@@ -69,11 +71,7 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
       {/* 1. Payment Overview Section */}
       <DetailSection title="Payment Overview" icon={<DollarSign className="h-5 w-5" />}>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <DetailField
-            label="Amount"
-            value={formatCurrency(payment.amount)}
-            valueClassName="font-mono font-semibold text-2xl text-neutral-900"
-          />
+          <DetailField label="Amount" value={formatCurrency(payment.amount)} emphasis="total" />
           <DetailField
             label="Payment Method"
             value={
@@ -84,12 +82,16 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
           />
           <DetailField
             label="Status"
-            value={<StatusBadge status={payment.payment_status || "Pending"} />}
+            value={
+              <StatusBadge tone={statusTone(payment.payment_status || "Pending")}>
+                {payment.payment_status || "Pending"}
+              </StatusBadge>
+            }
           />
           <DetailField
             label="Payment Date"
             value={formatDateTime(payment.payment_date || payment.created_at || "")}
-            valueClassName="font-medium"
+            emphasis="strong"
           />
         </div>
       </DetailSection>
@@ -125,12 +127,12 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
             <DetailField
               label="Check-in Date"
               value={formatTableDate(payment.booking.check_in)}
-              valueClassName="font-medium"
+              emphasis="strong"
             />
             <DetailField
               label="Check-out Date"
               value={formatTableDate(payment.booking.check_out)}
-              valueClassName="font-medium"
+              emphasis="strong"
             />
           </div>
         </DetailSection>
