@@ -1,4 +1,5 @@
 // @vitest-environment node
+/* eslint-disable design/no-restricted-syntax -- the snippets are deliberate violations */
 /**
  * Pins each design lint rule to a failing and a passing snippet, so a plugin
  * upgrade or config edit can't quietly turn a rule off. Snippets lint through
@@ -20,6 +21,8 @@ beforeAll(() => {
 async function lint(code: string, overrideConfig?: Linter.Config): Promise<Linter.LintMessage[]> {
   const linter = overrideConfig ? new ESLint({ cwd: process.cwd(), overrideConfig }) : eslint;
   const [result] = await linter.lintText(code, { filePath: SNIPPET_PATH });
+  // A snippet that doesn't parse would pass every "accepts" case
+  expect(result.messages.filter((message) => message.fatal)).toEqual([]);
   return result.messages;
 }
 
@@ -110,6 +113,8 @@ describe("design/no-restricted-syntax", () => {
     ["transition-all in className", `<div className="p-2 transition-all" />`],
     ["transition-all in cn()", `<div className={cn("p-2", "transition-all duration-150")} />`],
     ["transition-all in a template literal", "<div className={`p-2 ${x} transition-all`} />"],
+    ["transition-all behind a variant", `<div className="hover:transition-all" />`],
+    ["important transition-all", `<div className="transition-all!" />`],
     ["a focus: ring", `<button className="focus:ring-2" />`],
     ["a stacked focus: outline", `<button className="dark:focus:outline-none" />`],
     ["an <img> without width or height", `<img src="/logo.png" alt="Okaeri" />`],

@@ -83,20 +83,14 @@ const transitionAllMessage =
 const focusRingMessage =
   "focus: shows rings on mouse clicks; use focus-visible: so rings appear only for keyboard focus.";
 
+const classStringSelectors = (regex, message) => [
+  { selector: `Literal[value=/${regex}/]`, message },
+  { selector: `TemplateElement[value.raw=/${regex}/]`, message },
+];
+
 const designSyntaxSelectors = [
-  { selector: "Literal[value=/(^|\\s)transition-all(\\s|$)/]", message: transitionAllMessage },
-  {
-    selector: "TemplateElement[value.raw=/(^|\\s)transition-all(\\s|$)/]",
-    message: transitionAllMessage,
-  },
-  {
-    selector: "Literal[value=/(^|\\s)([\\w-]+:)*focus:(ring|outline)/]",
-    message: focusRingMessage,
-  },
-  {
-    selector: "TemplateElement[value.raw=/(^|\\s)([\\w-]+:)*focus:(ring|outline)/]",
-    message: focusRingMessage,
-  },
+  ...classStringSelectors("(^|\\s)([\\w-]+:)*!?transition-all!?(\\s|$)", transitionAllMessage),
+  ...classStringSelectors("(^|\\s)([\\w-]+:)*focus:(ring|outline)", focusRingMessage),
   {
     selector:
       "JSXOpeningElement[name.name='img']:matches(:not(:has(JSXAttribute[name.name='width'])), :not(:has(JSXAttribute[name.name='height'])))",
