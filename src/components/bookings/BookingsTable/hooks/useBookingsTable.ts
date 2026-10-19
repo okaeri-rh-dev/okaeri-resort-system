@@ -11,7 +11,6 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 
-import { useResponsiveView } from "@/hooks";
 import { filterDay, manilaDayOf } from "@/lib/bookings";
 import {
   useBookings,
@@ -41,9 +40,6 @@ export const useBookingsTable = () => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-
-  // Responsive view detection
-  const { isMobile } = useResponsiveView();
 
   // Mutations
   const updateBookingStatus = useUpdateBookingStatus();
@@ -162,7 +158,6 @@ export const useBookingsTable = () => {
     filteredCount: filteredBookings.length,
     isLoading,
     error,
-    isMobile,
     filters,
     setFilters,
     searchQuery,

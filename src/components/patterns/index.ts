@@ -61,3 +61,4 @@ export { MobileCardRow, type MobileCardRowProps } from "./MobileCardRow";
 export { ActionMenu, type ActionMenuAction, type ActionMenuProps } from "./ActionMenu";
 export { TableEmptyState, type TableEmptyStateProps } from "./TableEmptyState";
 export { ResponsiveTable, type ResponsiveTableProps } from "./ResponsiveTable";
+export { DataTable, type DataTableProps } from "./DataTable";

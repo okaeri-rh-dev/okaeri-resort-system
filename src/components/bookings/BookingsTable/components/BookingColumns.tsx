@@ -109,7 +109,8 @@ export const useBookingColumns = ({
 
       columnHelper.accessor("num_guests", {
         header: "Guests",
-        cell: ({ getValue }) => <div className="text-center font-mono text-sm">{getValue()}</div>,
+        cell: ({ getValue }) => getValue(),
+        meta: { align: "center" },
         size: 80,
       }),
 
@@ -119,11 +120,8 @@ export const useBookingColumns = ({
             Amount
           </SortableHeader>
         ),
-        cell: ({ getValue }) => (
-          <div className="text-right font-mono font-semibold text-neutral-900">
-            {formatCurrency(getValue())}
-          </div>
-        ),
+        cell: ({ getValue }) => <span className="font-semibold">{formatCurrency(getValue())}</span>,
+        meta: { align: "right" },
         size: 120,
       }),
 
