@@ -187,7 +187,7 @@ A human reference only. `src/index.css` is the source of truth and holds these v
 | Sidebar-primary / foreground | `#D19C70` / `#1A1410`  | `#D9A77C` / `#1A1410`  |
 | Sidebar-accent / border      | `#3A322D` / `#3D3530`  | `#2A2320` / `#2A2320`  |
 | Border                       | `#E8E1D8`              | `#3A312C`              |
-| Input                        | `#A68F7C`              | `#7A6C62`              |
+| Input                        | `#9E8774`              | `#7A6C62`              |
 | Ring                         | `#8A5530`              | `#D9A77C`              |
 | Destructive / foreground     | `#B23A2E` / `#FFFFFF`  | `#D0574A` / `#141110`  |
 | Success (fg on bg)           | `#2F7A4F` on `#EAF4EE` | `#86CFA2` on `#1D2C23` |

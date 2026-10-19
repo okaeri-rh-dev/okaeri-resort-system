@@ -33,15 +33,13 @@ const surfacePairs = [
   ].map((surface) => [`${surface}-foreground`, surface, TEXT] as const),
 ];
 
-const textSurfaces = [
-  "background",
-  "card",
-  "availability-high",
-  "availability-medium",
-  "availability-low",
-];
 const textOnSurfaces = ["foreground", "muted-foreground", "primary"].flatMap((text) =>
-  textSurfaces.map((surface) => [text, surface, TEXT] as const)
+  ["background", "card"].map((surface) => [text, surface, TEXT] as const)
+);
+
+// Calendar cells carry foreground text only (#32)
+const availabilityPairs = ["high", "medium", "low"].map(
+  (level) => ["foreground", `availability-${level}`, TEXT] as const
 );
 
 const nonTextPairs = [
@@ -52,7 +50,7 @@ const nonTextPairs = [
   ["sidebar-ring", "sidebar", NON_TEXT],
 ] as const;
 
-const requiredPairs = [...surfacePairs, ...textOnSurfaces, ...nonTextPairs];
+const requiredPairs = [...surfacePairs, ...textOnSurfaces, ...availabilityPairs, ...nonTextPairs];
 
 describe.each(Object.entries(themeTokens))("%s theme contrast", (_theme, tokens) => {
   it.each(requiredPairs)("%s on %s is at least %s:1", (foreground, background, minimum) => {
