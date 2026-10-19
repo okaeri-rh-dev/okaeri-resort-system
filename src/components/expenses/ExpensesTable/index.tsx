@@ -1,8 +1,12 @@
 import { flexRender } from "@tanstack/react-table";
 
 import { withErrorBoundary } from "@/components/ErrorBoundary";
-import { ExpensesTableSkeleton } from "@/components/skeletons";
-import { ResponsiveTable, TableEmptyState, TablePagination } from "@/components/tables/utils";
+import {
+  ResponsiveTable,
+  TableEmptyState,
+  TablePagination,
+  TableSkeleton,
+} from "@/components/patterns";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -40,7 +44,7 @@ function ExpensesTableComponent({ onViewExpense, onEditExpense, className }: Exp
   const isEmptyDatabase = totalUnfilteredCount === 0;
 
   if (isLoading) {
-    return <ExpensesTableSkeleton />;
+    return <TableSkeleton rows={8} columns={6} toolbar pagination label="Loading expenses" />;
   }
 
   if (error) {

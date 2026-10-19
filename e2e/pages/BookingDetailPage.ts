@@ -145,7 +145,7 @@ export class BookingDetailPage {
     this.adminNotes = page.locator('[data-testid="admin-notes"], [class*="admin-notes"]');
 
     // Action buttons
-    this.editButton = page.getByRole("button", { name: /edit/i });
+    this.editButton = page.getByRole("link", { name: "Edit", exact: true });
     this.cancelButton = page.getByRole("button", { name: /cancel.*booking/i });
     this.verifyPaymentButton = page.getByRole("button", {
       name: /verify.*payment/i,

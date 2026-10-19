@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 import { Building2, Calendar, TrendingUp, Users } from "lucide-react";
 
-import { DashboardStatsSkeleton } from "@/components/skeletons";
+import { Skeleton } from "@/components/patterns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBookings } from "@/stores/useBookingStore";
 import { useGuests } from "@/stores/useGuestStore";
@@ -68,7 +68,17 @@ export function DashboardStats() {
   }, [units, bookings, guests, isLoading]);
 
   if (isLoading) {
-    return <DashboardStatsSkeleton cardCount={4} />;
+    return (
+      <div
+        role="status"
+        aria-label="Loading stats"
+        className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
+      >
+        {Array.from({ length: 4 }, (_, index) => (
+          <Skeleton key={index} className="h-28 rounded-xl" />
+        ))}
+      </div>
+    );
   }
 
   return (

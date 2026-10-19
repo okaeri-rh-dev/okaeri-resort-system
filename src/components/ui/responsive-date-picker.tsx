@@ -32,6 +32,7 @@ export interface ResponsiveDatePickerProps {
   align?: "start" | "center" | "end";
   formatStr?: string;
   buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  "aria-label"?: string;
 }
 
 /**
@@ -61,6 +62,7 @@ export function ResponsiveDatePicker({
   align = "start",
   formatStr = "PPP",
   buttonVariant = "outline",
+  "aria-label": ariaLabel,
 }: ResponsiveDatePickerProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [open, setOpen] = React.useState(false);
@@ -81,6 +83,7 @@ export function ResponsiveDatePicker({
         !value && "text-muted-foreground",
         buttonClassName
       )}
+      aria-label={ariaLabel}
     >
       {value ? format(value, formatStr) : <span>{placeholder}</span>}
       <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" aria-hidden="true" />
@@ -117,7 +120,7 @@ export function ResponsiveDatePicker({
   return (
     <Popover>
       <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
-      <PopoverContent className="w-[340px] p-0" align={align}>
+      <PopoverContent className="w-auto p-0" align={align} aria-label="Select date">
         <Calendar
           mode="single"
           selected={value}
@@ -250,7 +253,7 @@ export function ResponsiveDateRangePicker({
   return (
     <Popover>
       <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align={align}>
+      <PopoverContent className="w-auto p-0" align={align} aria-label="Select date range">
         <Calendar
           mode="range"
           selected={value}

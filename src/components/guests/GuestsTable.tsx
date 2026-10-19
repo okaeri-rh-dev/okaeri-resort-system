@@ -30,7 +30,17 @@ import {
 import { toast } from "sonner";
 
 import { withErrorBoundary } from "@/components/ErrorBoundary";
-import { GuestsTableSkeleton } from "@/components/skeletons";
+import {
+  ActionMenu,
+  MobileCard,
+  ResponsiveTable,
+  SortableHeader,
+  StatusBadge,
+  TableEmptyState,
+  TablePagination,
+  TableSearch,
+  TableSkeleton,
+} from "@/components/patterns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,7 +56,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useResponsiveView } from "@/hooks";
+import { formatCurrency, formatPhoneNumber, formatTableDate } from "@/lib/formatters";
 import { logger } from "@/lib/logger";
+import { statusTone } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
 import type { Guest } from "@/types";
 
@@ -57,17 +69,6 @@ import {
   useGuests,
   useGuestStore,
 } from "../../stores/useGuestStore";
-import { formatCurrency, formatPhoneNumber, formatTableDate } from "../tables/formatters";
-import {
-  ActionMenu,
-  MobileCard,
-  ResponsiveTable,
-  SortableHeader,
-  StatusBadge,
-  TableEmptyState,
-  TablePagination,
-  TableSearch,
-} from "../tables/utils";
 import { GuestEditDialog } from "./GuestEditDialog";
 
 const columnHelper = createColumnHelper<Guest>();
@@ -118,7 +119,9 @@ const GuestBookingHistory: React.FC<GuestBookingHistoryProps> = ({ guestId, clas
                 <div className="font-mono text-xs font-medium text-blue-600">
                   {booking.booking_reference}
                 </div>
-                <StatusBadge status={booking.booking_status ?? "Pending"} />
+                <StatusBadge tone={statusTone(booking.booking_status ?? "Pending")}>
+                  {booking.booking_status ?? "Pending"}
+                </StatusBadge>
               </div>
               <div className="text-sm text-neutral-600">
                 {booking.booking_units?.[0]?.unit?.unit_name} • {formatTableDate(booking.check_in)}{" "}
@@ -490,7 +493,15 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
 
   // Loading state
   if (isLoading) {
-    return <GuestsTableSkeleton isMobile={isMobile} rows={6} />;
+    return (
+      <TableSkeleton
+        layout={isMobile ? "cards" : "table"}
+        rows={6}
+        columns={6}
+        toolbar
+        label="Loading guests"
+      />
+    );
   }
 
   // Error state

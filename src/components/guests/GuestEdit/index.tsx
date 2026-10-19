@@ -5,7 +5,7 @@ import { useLoaderData, useNavigate, useParams } from "@tanstack/react-router";
 import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { DetailPageLayout } from "@/components/entity-detail";
+import { DetailPageLayout } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {

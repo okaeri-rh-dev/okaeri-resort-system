@@ -7,7 +7,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { AlertCircle, ArrowLeft, ArrowRight, CreditCard, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { PaymentMethodsDisplay } from "@/components/shared/PaymentMethodsDisplay";
+import { PaymentMethodsDisplay } from "@/components/payments/PaymentMethodsDisplay";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

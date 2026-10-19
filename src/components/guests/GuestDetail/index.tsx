@@ -4,16 +4,14 @@ import { Calendar, FileText, Mail, TrendingUp } from "lucide-react";
 
 import {
   DetailAuditSection,
-  DetailField,
-  DetailPageLayout,
-  DetailSection,
   formatCurrency,
   formatFullDate,
   formatPhoneNumber,
   formatTableDate,
   RelatedEntityLink,
 } from "@/components/entity-detail";
-import { StatusBadge } from "@/components/tables/utils";
+import { DetailField, DetailPageLayout, DetailSection, StatusBadge } from "@/components/patterns";
+import { statusTone } from "@/lib/status-tone";
 import type { Booking, Guest } from "@/types";
 
 /**
@@ -106,13 +104,7 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
               )
             }
           />
-          {guest.address && (
-            <DetailField
-              label="Address"
-              value={guest.address}
-              valueClassName="text-sm text-neutral-700"
-            />
-          )}
+          {guest.address && <DetailField label="Address" value={guest.address} />}
         </div>
       </DetailSection>
 
@@ -122,17 +114,17 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
           <DetailField
             label="Total Bookings"
             value={(guest.total_bookings || 0).toString()}
-            valueClassName="font-semibold text-lg text-neutral-900"
+            emphasis="figure"
           />
           <DetailField
             label="Total Spent"
             value={formatCurrency(guest.total_spent || 0)}
-            valueClassName="font-mono font-semibold text-lg text-neutral-900"
+            emphasis="figure"
           />
           <DetailField
             label="Average Booking Value"
             value={formatCurrency(averageBookingValue)}
-            valueClassName="font-mono font-medium text-neutral-900"
+            emphasis="strong"
           />
         </div>
       </DetailSection>
@@ -181,7 +173,9 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
                       {formatCurrency(booking.total_amount)}
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      <StatusBadge status={booking.booking_status || "Pending"} />
+                      <StatusBadge tone={statusTone(booking.booking_status || "Pending")}>
+                        {booking.booking_status || "Pending"}
+                      </StatusBadge>
                     </td>
                   </tr>
                 ))}

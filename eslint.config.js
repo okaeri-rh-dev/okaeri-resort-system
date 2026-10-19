@@ -109,8 +109,20 @@ const restrictedClasses = [
 // no-restricted-syntax again under its own id, so design suppressions are counted apart from the
 // guardrail selectors above and a legacy file can't trade one for the other.
 const designPlugin = {
-  rules: { "no-restricted-syntax": builtinRules.get("no-restricted-syntax") },
+  rules: {
+    "no-restricted-syntax": builtinRules.get("no-restricted-syntax"),
+    "no-restricted-imports": builtinRules.get("no-restricted-imports"),
+  },
 };
+
+// Each slice adds its import patterns here; the rule's options don't merge across blocks.
+const designImportPatterns = [
+  {
+    group: ["@/components/ui/*", "src/components/ui/*", "**/components/ui/*"],
+    message:
+      "Primitives are private to the kit: import from @/components/patterns (DESIGN.md, Components).",
+  },
+];
 
 const transitionAllMessage =
   "transition-all animates layout and colour together; list the properties (transition-colors, transition-opacity) with duration-150.";
@@ -407,7 +419,14 @@ export default tseslint.config([
       "better-tailwindcss/no-restricted-classes": ["error", { restrict: restrictedClasses }],
       "better-tailwindcss/no-unknown-classes": "error",
       "design/no-restricted-syntax": ["error", ...designSyntaxSelectors],
+      "design/no-restricted-imports": ["error", { patterns: designImportPatterns }],
     },
+  },
+
+  // The kit itself is where primitives are composed
+  {
+    files: ["src/components/patterns/**/*.{ts,tsx}", "src/components/ui/**/*.{ts,tsx}"],
+    rules: { "design/no-restricted-imports": "off" },
   },
 
   // Load testing scripts (k6) - allow console.log for test output

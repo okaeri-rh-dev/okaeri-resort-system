@@ -4,14 +4,12 @@ import { DollarSign, FileText, Home, Image, StickyNote } from "lucide-react";
 
 import {
   DetailAuditSection,
-  DetailField,
-  DetailPageLayout,
-  DetailSection,
   formatCurrency,
   formatFullDate,
   RelatedEntityLink,
   truncate,
 } from "@/components/entity-detail";
+import { DetailField, DetailPageLayout, DetailSection } from "@/components/patterns";
 import type { Expense, Unit } from "@/types";
 
 /**
@@ -66,11 +64,7 @@ export function ExpenseDetailPage({ expense, expenseId }: ExpenseDetailPageProps
       {/* 1. Expense Overview Section */}
       <DetailSection title="Expense Overview" icon={<DollarSign className="h-5 w-5" />}>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <DetailField
-            label="Amount"
-            value={formatCurrency(expense.amount)}
-            valueClassName="font-mono font-semibold text-2xl text-neutral-900"
-          />
+          <DetailField label="Amount" value={formatCurrency(expense.amount)} emphasis="total" />
           <DetailField
             label="Category"
             value={
@@ -82,14 +76,10 @@ export function ExpenseDetailPage({ expense, expenseId }: ExpenseDetailPageProps
           <DetailField
             label="Expense Date"
             value={formatFullDate(expense.date)}
-            valueClassName="font-medium"
+            emphasis="strong"
           />
           {expense.created_by_name && (
-            <DetailField
-              label="Created By"
-              value={expense.created_by_name}
-              valueClassName="font-medium"
-            />
+            <DetailField label="Created By" value={expense.created_by_name} emphasis="strong" />
           )}
         </div>
       </DetailSection>
@@ -118,11 +108,7 @@ export function ExpenseDetailPage({ expense, expenseId }: ExpenseDetailPageProps
                 />
               }
             />
-            <DetailField
-              label="Cabin Type"
-              value={expense.unit.unit_type}
-              valueClassName="font-medium"
-            />
+            <DetailField label="Cabin Type" value={expense.unit.unit_type} emphasis="strong" />
           </div>
         </DetailSection>
       )}

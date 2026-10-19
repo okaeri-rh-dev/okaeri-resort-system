@@ -2,8 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { createColumnHelper, type Header } from "@tanstack/react-table";
 import { Edit2, Eye, MoreHorizontal, Receipt, Trash2 } from "lucide-react";
 
-import { formatCurrency, formatTableDate } from "@/components/tables/formatters";
-import { SortableHeader } from "@/components/tables/utils";
+import { SortableHeader } from "@/components/patterns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formatCurrency, formatTableDate } from "@/lib/formatters";
 import type { Expense } from "@/types";
 
 const columnHelper = createColumnHelper<Expense>();

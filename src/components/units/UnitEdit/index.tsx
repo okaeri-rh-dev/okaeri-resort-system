@@ -5,7 +5,8 @@ import { Link, useLoaderData, useNavigate, useParams } from "@tanstack/react-rou
 import { DollarSign, Info, Save, X } from "lucide-react";
 import { useForm, type Control, type Resolver } from "react-hook-form";
 
-import { DetailPageLayout, formatCurrency } from "@/components/entity-detail";
+import { formatCurrency } from "@/components/entity-detail";
+import { DetailPageLayout } from "@/components/patterns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

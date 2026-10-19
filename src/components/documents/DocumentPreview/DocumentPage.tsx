@@ -2,7 +2,7 @@ import { memo } from "react";
 
 import { DOCUMENT_PREFIX_MAP, isValidImageDataUri } from "@/components/documents/constants";
 import type { DocumentFormData, LetterheadConfig } from "@/components/documents/types";
-import { formatCurrency, formatFullDate } from "@/components/tables/formatters";
+import { formatCurrency, formatFullDate } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
 interface DocumentPageProps {

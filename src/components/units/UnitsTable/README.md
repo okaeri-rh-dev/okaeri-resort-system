@@ -340,9 +340,10 @@ DEL-1,Deluxe Room 1,Deluxe,2,3,3000.00,750.00,3500.00,Occupied
 ### Status Badge Component
 
 ```tsx
-import { StatusBadge } from '@/components/tables/utils'
+import { StatusBadge } from '@/components/patterns'
+import { statusTone } from '@/lib/status-tone'
 
-<StatusBadge status={unit.unit_status} />
+<StatusBadge tone={statusTone(unit.unit_status)}>{unit.unit_status}</StatusBadge>
 
 // Renders:
 // - Available: Green badge
@@ -459,7 +460,7 @@ describe('UnitsTable', () => {
 
 ## 📚 Related Documentation
 
-- [Table Utilities](/src/components/tables/README.md) - Shared table patterns
+- [Patterns kit](/src/components/patterns/CLAUDE.md) - Shared table patterns (`@/components/patterns`)
 - [Unit Store](/src/stores/useUnitStore.ts) - State management
 - [Availability Engine](/src/lib/availability.ts) - Unit availability logic
 - [Audit Trail](/src/components/audit/README.md) - Batch operation logging

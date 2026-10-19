@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 
 import { useNavigate } from "@tanstack/react-router";
 
-import { ActionMenu } from "@/components/tables/utils";
+import { ActionMenu } from "@/components/patterns";
 import {
   AlertDialog,
   AlertDialogAction,

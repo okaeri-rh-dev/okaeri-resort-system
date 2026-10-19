@@ -6,8 +6,8 @@ import { CheckCircle, CreditCard, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { FormSkeleton } from "@/components/patterns";
 import { PricingStatusBadge } from "@/components/pricing/PricingStatusBadge";
-import { BookingFormSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -783,7 +783,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
           </div>
         </CardHeader>
         <CardContent className="px-4 sm:px-6">
-          <BookingFormSkeleton currentStep={currentStep} />
+          <FormSkeleton steps={4} currentStep={currentStep} label="Loading booking form" />
         </CardContent>
       </Card>
     );

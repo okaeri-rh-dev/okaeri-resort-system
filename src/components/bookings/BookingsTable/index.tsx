@@ -1,8 +1,12 @@
 import { flexRender } from "@tanstack/react-table";
 
 import { withErrorBoundary } from "@/components/ErrorBoundary";
-import { BookingsTableSkeleton } from "@/components/skeletons";
-import { ResponsiveTable, TableEmptyState, TablePagination } from "@/components/tables/utils";
+import {
+  ResponsiveTable,
+  TableEmptyState,
+  TablePagination,
+  TableSkeleton,
+} from "@/components/patterns";
 import { cn } from "@/lib/utils";
 
 import { BookingCard } from "./components/BookingCard";
@@ -31,7 +35,7 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
   } = useBookingsTable();
 
   if (isLoading) {
-    return <BookingsTableSkeleton />;
+    return <TableSkeleton rows={8} columns={9} toolbar pagination label="Loading bookings" />;
   }
 
   if (error) {

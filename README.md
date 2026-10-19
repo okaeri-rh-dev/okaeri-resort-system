@@ -380,7 +380,7 @@ Comprehensive documentation is available throughout the repository. Long-form de
 - Guest Booking System: vault note [[guest-booking-multi-unit README]]
 - [Monitoring Infrastructure](./src/lib/monitoring/README.md) - Quota monitoring and alert systems
 - [Booking Components](./src/components/bookings/README.md) - Complex booking form and table architecture
-- [Table Patterns](./src/components/tables/README.md) - Reusable table components
+- [Patterns kit](./src/components/patterns/CLAUDE.md) - Reusable table and page patterns (`@/components/patterns`)
 
 ### API & Functions
 - [Serverless Functions](./functions/README.md) - Cloudflare Workers architecture
