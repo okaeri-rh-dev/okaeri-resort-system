@@ -88,6 +88,11 @@ const restrictedClasses = [
       "^(?:.*:)?\\[(?:color|background|background-color|border(?:-[a-z]+)?-color|outline-color|fill|stroke|caret-color|accent-color|text-decoration-color):.*\\]$",
     message: arbitraryColourMessage,
   },
+  {
+    pattern: "^(?:.*:)?!?text-\\[(?:length:|[\\d.]|(?:clamp|calc|min|max)\\().*\\](?:\\/\\S+)?!?$",
+    message:
+      '"$0" is an arbitrary text size: use a Tailwind step from text-xs (12px, the floor) to text-4xl (DESIGN.md, Type).',
+  },
 ];
 
 // no-restricted-syntax again under its own id, so design suppressions are counted apart from the

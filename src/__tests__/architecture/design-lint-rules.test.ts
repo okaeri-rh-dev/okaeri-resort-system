@@ -133,6 +133,41 @@ describe("arbitrary colours", () => {
   );
 });
 
+describe("arbitrary text sizes", () => {
+  const rule = "better-tailwindcss/no-restricted-classes";
+
+  it("names the class and the 12px floor", async () => {
+    const messages = await lint(`export const A = () => <div className="text-[10px]" />;`);
+
+    expect(
+      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+    ).toEqual([expect.stringMatching(/"text-\[10px\]".*text-xs/)]);
+  });
+
+  it.each([
+    "text-[0.8rem]",
+    "md:text-[11px]",
+    "text-[clamp(7px,2cqi,10px)]",
+    "text-[length:var(--size)]",
+    "text-[calc(1rem+2px)]",
+    "text-[9px]/4",
+    "text-[2em]!",
+  ])("flags %s", async (className) => {
+    expect(await ruleIds(`export const A = () => <div className="${className}" />;`)).toContain(
+      rule
+    );
+  });
+
+  it.each(["text-xs", "text-sm/6", "md:text-4xl", "text-muted-foreground", "text-balance"])(
+    "accepts %s",
+    async (className) => {
+      expect(
+        await ruleIds(`export const A = () => <div className="${className}" />;`)
+      ).not.toContain(rule);
+    }
+  );
+});
+
 describe("design/no-restricted-syntax", () => {
   const rule = "design/no-restricted-syntax";
 

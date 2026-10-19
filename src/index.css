@@ -5,6 +5,73 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Fonts (DESIGN.md, Type; #36). Fontsource variable files, declared here rather than through the
+ * package CSS so only these subsets ship: its Figtree latin-ext face claims ₱ without having it.
+ * Values copied from @fontsource-variable 5.3.0. index.html preloads the Figtree latin file.
+ */
+@font-face {
+  font-family: "Figtree Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 900;
+  src: url("@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Bricolage Grotesque Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url("@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-opsz-normal.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Downloads only when a page shows ₱ (U+20B1) or another latin-ext character */
+@font-face {
+  font-family: "Bricolage Grotesque Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url("@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-ext-opsz-normal.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+
+/*
+ * Metric-override fallbacks: Arial scaled to each face's cap height, so text barely moves when the
+ * web font swaps in. Source metrics (UPM 1000): Figtree asc 950 / desc 250 / capH 700; Bricolage
+ * asc 930 / desc 270 / capH 660; Arial capH 1467/2048. size-adjust = capH / 0.7163, and the
+ * overrides = metric / size-adjust.
+ */
+@font-face {
+  font-family: "Figtree Fallback";
+  src: local("Arial"), local("ArialMT"), local("Helvetica");
+  size-adjust: 97.72%;
+  ascent-override: 97.21%;
+  descent-override: 25.58%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Bricolage Grotesque Fallback";
+  src: local("Arial"), local("ArialMT"), local("Helvetica");
+  size-adjust: 92.14%;
+  ascent-override: 100.93%;
+  descent-override: 29.3%;
+  line-gap-override: 0%;
+}
+
 /* Hearth tokens (DESIGN.md, Colour). Hex reference: DESIGN.md, Hearth palette. */
 :root {
   color-scheme: light;
@@ -166,8 +233,13 @@
   --shadow-card: var(--elevation-card);
   --shadow-popover: var(--elevation-popover);
 
-  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  /* Figtree has no ₱, so the sans stack falls through to Bricolage latin-ext for it */
+  --font-sans:
+    "Figtree Variable", "Bricolage Grotesque Variable", "Figtree Fallback", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-display:
+    "Bricolage Grotesque Variable", "Bricolage Grotesque Fallback", ui-sans-serif, system-ui,
+    sans-serif;
 }
 
 @layer base {
@@ -182,6 +254,14 @@
     @apply bg-background text-foreground;
     /* Remove the gray tap flash on Android Chrome */
     -webkit-tap-highlight-color: transparent;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display;
   }
 }
 
