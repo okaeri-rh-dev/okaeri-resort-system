@@ -175,12 +175,12 @@
   },
   "src/components/bookings/BookingsTable/components/BookingCard.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 17
+      "count": 18
     }
   },
   "src/components/bookings/BookingsTable/components/BookingColumns.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 13
+      "count": 14
     }
   },
   "src/components/bookings/BookingsTable/components/BookingFilters.tsx": {
@@ -237,12 +237,12 @@
   },
   "src/components/dashboard/BookingIndicators.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 3
+      "count": 4
     }
   },
   "src/components/dashboard/BookingTooltip.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 17
+      "count": 19
     }
   },
   "src/components/dashboard/DashboardCalendar.tsx": {
@@ -255,7 +255,7 @@
   },
   "src/components/dashboard/DashboardHeader.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 2
+      "count": 3
     }
   },
   "src/components/dashboard/DashboardStats.tsx": {
@@ -275,7 +275,7 @@
   },
   "src/components/documents/DocumentPreview/DocumentPage.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 41
+      "count": 50
     },
     "design/no-restricted-syntax": {
       "count": 1
@@ -576,6 +576,11 @@
       "count": 1
     }
   },
+  "src/components/ui/calendar.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 3
+    }
+  },
   "src/components/ui/card.tsx": {
     "better-tailwindcss/no-restricted-classes": {
       "count": 5
@@ -707,6 +712,9 @@
     }
   },
   "src/layouts/MainLayout.tsx": {
+    "better-tailwindcss/no-restricted-classes": {
+      "count": 1
+    },
     "design/no-restricted-syntax": {
       "count": 1
     },

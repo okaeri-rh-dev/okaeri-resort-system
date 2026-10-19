@@ -75,6 +75,7 @@ export const BookingIndicators = React.memo(function BookingIndicators({
                 "flex w-full min-w-0 items-center rounded-sm border py-0.5",
                 compact ? "px-0.5" : "px-1",
                 "truncate leading-tight font-medium",
+                // eslint-disable-next-line better-tailwindcss/no-restricted-classes -- chips scale with the calendar cell's width (cqi) so every booking fits a cell; no fixed step can (#36)
                 "text-[clamp(7px,2cqi,10px)]",
                 slot.bg,
                 chipText,
