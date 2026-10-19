@@ -67,6 +67,17 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
 
+    <!-- Body font, so text doesn't wait on the stylesheet to discover it. Vite rewrites this to
+         the same hashed file the @font-face in src/index.css uses; crossorigin is required for
+         the preload to be reused. -->
+    <link
+      rel="preload"
+      href="/node_modules/@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
     <!-- Styles -->
     <link href="/src/index.css" rel="stylesheet" />
   </head>
