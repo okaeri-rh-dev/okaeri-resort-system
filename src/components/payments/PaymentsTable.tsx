@@ -19,18 +19,6 @@ import { toast } from "sonner";
 import { withErrorBoundary } from "@/components/ErrorBoundary";
 import {
   ActionMenu,
-  DataTable,
-  FilterBar,
-  FilterPopover,
-  ListCard,
-  ListCardRow,
-  SortableHeader,
-  StatusBadge,
-  TableEmptyState,
-  TablePagination,
-  TableSearch,
-} from "@/components/patterns";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -39,17 +27,24 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import {
+  Button,
+  Card,
+  DataTable,
+  FilterBar,
+  FilterPopover,
+  ListCard,
+  ListCardRow,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+  SortableHeader,
+  StatusBadge,
+  TableEmptyState,
+  TablePagination,
+  TableSearch,
+} from "@/components/patterns";
 import { useUserRole } from "@/hooks";
 import { formatCurrency, formatTableDate } from "@/lib/formatters";
 import { statusBadgeProps, statusTone } from "@/lib/status-tone";
@@ -162,12 +157,12 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
               <Link
                 to="/admin/bookings/$bookingId"
                 params={{ bookingId }}
-                className="font-mono text-blue-600 transition-colors hover:underline"
+                className="text-primary font-medium whitespace-nowrap hover:underline"
                 preload="intent"
               >
                 {booking.booking_reference}
               </Link>
-              <div className="text-xs text-neutral-500">{booking.guest_name}</div>
+              <div className="text-muted-foreground text-xs">{booking.guest_name}</div>
             </div>
           );
         },
@@ -177,13 +172,16 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
       columnHelper.accessor("amount", {
         id: "amount",
         header: ({ header }: { header: Header<Payment, unknown> }) => (
-          <SortableHeader header={header}>Amount</SortableHeader>
+          <SortableHeader header={header} className="text-right">
+            Amount
+          </SortableHeader>
         ),
         cell: ({ getValue }) => (
-          <span className="font-mono font-semibold text-neutral-900">
+          <span className="text-foreground font-semibold tabular-nums">
             {formatCurrency(getValue())}
           </span>
         ),
+        meta: { align: "right" },
         size: 100,
       }),
 
@@ -194,17 +192,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
           const method = getValue();
           if (!method) return "-";
 
-          const colors = {
-            Cash: "bg-green-100 text-green-800",
-            GCash: "bg-blue-100 text-blue-800",
-            BankTransfer: "bg-purple-100 text-purple-800",
-            Card: "bg-gray-100 text-gray-800",
-            Other: "bg-neutral-100 text-neutral-800",
-          };
-
-          return (
-            <Badge className={cn("text-xs", colors[method as keyof typeof colors])}>{method}</Badge>
-          );
+          return <StatusBadge tone="neutral">{method}</StatusBadge>;
         },
         size: 100,
       }),
@@ -231,7 +219,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
               <Download className="h-4 w-4" />
             </Button>
           ) : (
-            <span className="text-xs text-neutral-400">No receipt</span>
+            <span className="text-muted-foreground text-xs">No receipt</span>
           );
         },
         size: 80,
@@ -279,7 +267,6 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
                   {
                     label: "Remove",
                     onClick: () => handleSoftDelete(payment),
-                    className: "text-orange-600 hover:text-orange-700",
                   },
                 ]
               : []),
@@ -338,10 +325,10 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
     return (
       <Card className="p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-4 w-1/4 rounded bg-neutral-200"></div>
-          <div className="h-10 rounded bg-neutral-200"></div>
-          <div className="h-10 rounded bg-neutral-200"></div>
-          <div className="h-10 rounded bg-neutral-200"></div>
+          <div className="bg-muted h-4 w-1/4 rounded"></div>
+          <div className="bg-muted h-10 rounded"></div>
+          <div className="bg-muted h-10 rounded"></div>
+          <div className="bg-muted h-10 rounded"></div>
         </div>
       </Card>
     );
@@ -350,7 +337,9 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
   if (error) {
     return (
       <Card className="p-6">
-        <div className="text-center text-red-600">Error loading payments: {error.message}</div>
+        <div className="text-danger-foreground text-center">
+          Error loading payments: {error.message}
+        </div>
       </Card>
     );
   }
@@ -362,12 +351,12 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
       {/* Summary for narrow panes; wide panes read the table */}
       <div className="grid grid-cols-2 gap-3 @3xl:hidden">
         <Card className="p-3">
-          <div className="text-xs text-neutral-500">Total Amount</div>
-          <div className="font-mono text-lg font-bold">{formatCurrency(stats.total)}</div>
+          <div className="text-muted-foreground text-xs">Total Amount</div>
+          <div className="text-lg font-semibold tabular-nums">{formatCurrency(stats.total)}</div>
         </Card>
         <Card className="p-3">
-          <div className="text-xs text-neutral-500">Payments</div>
-          <div className="text-lg font-bold">
+          <div className="text-muted-foreground text-xs">Payments</div>
+          <div className="text-lg font-semibold tabular-nums">
             {stats.verified}/{stats.count} Verified
           </div>
         </Card>
@@ -518,12 +507,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmSoftDelete}
-              className="bg-orange-600 hover:bg-orange-700 focus:ring-orange-600"
-            >
-              Remove
-            </AlertDialogAction>
+            <AlertDialogAction onClick={confirmSoftDelete}>Remove</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -545,8 +529,10 @@ function PaymentCard({
       <div className="space-y-2">
         <div className="flex items-start justify-between">
           <div>
-            <div className="font-mono text-lg font-semibold">{formatCurrency(payment.amount)}</div>
-            <div className="text-xs text-neutral-500">
+            <div className="text-lg font-semibold tabular-nums">
+              {formatCurrency(payment.amount)}
+            </div>
+            <div className="text-muted-foreground text-xs">
               {formatTableDate(payment.payment_date || "")}
             </div>
           </div>

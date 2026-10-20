@@ -2,17 +2,19 @@ import React from "react";
 
 import { CalendarDays, DollarSign, Download } from "lucide-react";
 
-import { FilterBar, FilterPopover, TableSearch } from "@/components/patterns";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
 import {
+  Button,
+  FilterBar,
+  FilterPopover,
+  Input,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+  TableSearch,
+} from "@/components/patterns";
+import { Calendar } from "@/components/ui/calendar";
 import { useExpenseCategories } from "@/hooks/useExpenseCategories";
 import { toISODateString } from "@/lib/timezone";
 
@@ -212,36 +214,34 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
   );
 
   return (
-    <div className="border-b bg-neutral-50 p-4">
-      <FilterBar
-        search={
-          <TableSearch
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search expenses..."
-          />
-        }
-        filters={
-          <>
-            <CategoryFilter />
-            <DateRangeFilter />
-            <AmountFilter />
-          </>
-        }
-        activeFilterCount={activeFilterCount()}
-        onClearFilters={hasActiveFilters ? resetFilters : undefined}
-        summary={
-          <span className="text-sm text-neutral-600">
-            {totalCount} expense{totalCount !== 1 ? "s" : ""} total
-          </span>
-        }
-        actions={
-          <Button variant="outline" size="sm" onClick={onExport} disabled={isExporting}>
-            <Download className="mr-1 h-3 w-3" />
-            {isExporting ? "Exporting..." : "Export CSV"}
-          </Button>
-        }
-      />
-    </div>
+    <FilterBar
+      search={
+        <TableSearch
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search expenses..."
+        />
+      }
+      filters={
+        <>
+          <CategoryFilter />
+          <DateRangeFilter />
+          <AmountFilter />
+        </>
+      }
+      activeFilterCount={activeFilterCount()}
+      onClearFilters={hasActiveFilters ? resetFilters : undefined}
+      summary={
+        <span className="text-muted-foreground text-sm">
+          {totalCount} expense{totalCount !== 1 ? "s" : ""} total
+        </span>
+      }
+      actions={
+        <Button variant="outline" size="sm" onClick={onExport} disabled={isExporting}>
+          <Download className="mr-1 h-3 w-3" />
+          {isExporting ? "Exporting..." : "Export CSV"}
+        </Button>
+      }
+    />
   );
 };

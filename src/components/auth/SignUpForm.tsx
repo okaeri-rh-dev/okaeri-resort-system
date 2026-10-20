@@ -2,14 +2,19 @@ import { useRef, useState } from "react";
 
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { Link } from "@tanstack/react-router";
-import { AlertCircle, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { toast } from "sonner";
 
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import {
+  Button,
+  Callout,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+} from "@/components/patterns";
 
 export function SignUpForm() {
   const [fullName, setFullName] = useState("");
@@ -87,17 +92,17 @@ export function SignUpForm() {
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-            <Mail className="h-6 w-6 text-green-600" />
+          <div className="bg-success mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full">
+            <Mail className="text-success-foreground h-6 w-6" />
           </div>
           <CardTitle className="text-2xl font-bold">Check Your Email</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-center text-gray-600">
+          <p className="text-muted-foreground text-center">
             We've sent a verification link to <strong>{email}</strong>. Please check your inbox and
             click the link to verify your account.
           </p>
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-muted-foreground text-center text-sm">
             Didn't receive an email? Check your spam folder or try again in a few minutes.
           </p>
           <div className="pt-4">
@@ -117,7 +122,7 @@ export function SignUpForm() {
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
-        <p className="text-gray-600">Sign up to access the resort system</p>
+        <p className="text-muted-foreground">Sign up to access the resort system</p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -194,7 +199,11 @@ export function SignUpForm() {
               }
             />
             {confirmPassword && password !== confirmPassword && (
-              <p id="confirm-password-error" className="mt-1 text-sm text-red-600" role="alert">
+              <p
+                id="confirm-password-error"
+                className="text-danger-foreground mt-1 text-sm"
+                role="alert"
+              >
                 Passwords do not match
               </p>
             )}
@@ -203,12 +212,9 @@ export function SignUpForm() {
           {/* Turnstile Widget */}
           <div className="flex justify-center">
             {shouldSkipTurnstile ? (
-              <Alert className="border-amber-500/50 bg-amber-50 text-amber-900">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Development Mode:</strong> Security verification disabled.
-                </AlertDescription>
-              </Alert>
+              <Callout tone="warning">
+                <strong>Development Mode:</strong> Security verification disabled.
+              </Callout>
             ) : (
               <Turnstile
                 ref={turnstileRef}

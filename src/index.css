@@ -126,6 +126,17 @@
   --availability-medium: color-mix(in oklch, var(--brand) 42%, var(--card));
   --availability-low: color-mix(in oklch, var(--brand) 18%, var(--card));
 
+  /* Cabin identity lanes on the admin calendar (C1, C2, C3): fill, text, border/bar */
+  --unit-lane-1: oklch(0.93 0.04 245);
+  --unit-lane-1-foreground: oklch(0.44 0.1 250);
+  --unit-lane-1-accent: oklch(0.6 0.12 250);
+  --unit-lane-2: oklch(0.93 0.045 160);
+  --unit-lane-2-foreground: oklch(0.44 0.09 160);
+  --unit-lane-2-accent: oklch(0.6 0.12 160);
+  --unit-lane-3: oklch(0.94 0.05 85);
+  --unit-lane-3-foreground: oklch(0.46 0.09 70);
+  --unit-lane-3-accent: oklch(0.65 0.13 75);
+
   --overlay: oklch(0.1809 0.0054 39.35 / 50%);
 
   --elevation-card: 0 1px 2px rgb(60 40 25 / 0.06), 0 6px 16px -4px rgb(60 40 25 / 0.1);
@@ -149,7 +160,7 @@
   --muted-foreground: oklch(0.7331 0.0217 62.75);
   --accent: oklch(0.312 0.0224 55.42);
   --accent-foreground: oklch(0.9436 0.0121 67.68);
-  --destructive: oklch(0.6097 0.1561 28.62);
+  --destructive: oklch(0.66 0.1561 28.62);
   --destructive-foreground: oklch(0.1809 0.0054 39.35);
   --border: oklch(0.3212 0.0157 50.88);
   --input: oklch(0.5414 0.0234 57.76);
@@ -179,6 +190,16 @@
   --availability-high: color-mix(in oklch, var(--brand) 50%, var(--card));
   --availability-medium: color-mix(in oklch, var(--brand) 30%, var(--card));
   --availability-low: color-mix(in oklch, var(--brand) 14%, var(--card));
+
+  --unit-lane-1: oklch(0.32 0.05 245);
+  --unit-lane-1-foreground: oklch(0.86 0.07 245);
+  --unit-lane-1-accent: oklch(0.66 0.11 245);
+  --unit-lane-2: oklch(0.32 0.05 160);
+  --unit-lane-2-foreground: oklch(0.86 0.08 160);
+  --unit-lane-2-accent: oklch(0.66 0.11 160);
+  --unit-lane-3: oklch(0.33 0.05 85);
+  --unit-lane-3-foreground: oklch(0.87 0.09 85);
+  --unit-lane-3-accent: oklch(0.72 0.12 80);
 
   --overlay: oklch(0 0 0 / 60%);
 
@@ -227,6 +248,15 @@
   --color-availability-high: var(--availability-high);
   --color-availability-medium: var(--availability-medium);
   --color-availability-low: var(--availability-low);
+  --color-unit-lane-1: var(--unit-lane-1);
+  --color-unit-lane-1-foreground: var(--unit-lane-1-foreground);
+  --color-unit-lane-1-accent: var(--unit-lane-1-accent);
+  --color-unit-lane-2: var(--unit-lane-2);
+  --color-unit-lane-2-foreground: var(--unit-lane-2-foreground);
+  --color-unit-lane-2-accent: var(--unit-lane-2-accent);
+  --color-unit-lane-3: var(--unit-lane-3);
+  --color-unit-lane-3-foreground: var(--unit-lane-3-foreground);
+  --color-unit-lane-3-accent: var(--unit-lane-3-accent);
   --color-overlay: var(--overlay);
 
   --radius-sm: calc(var(--radius) - 4px);

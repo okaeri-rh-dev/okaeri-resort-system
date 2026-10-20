@@ -195,7 +195,7 @@ export const DocumentPage = memo(function DocumentPage({
       </div>
 
       {/* Footer */}
-      <div className="mt-8 border-t border-gray-200 pt-3 text-center text-[8px] text-gray-400 italic">
+      <div className="mt-8 border-t border-gray-200 pt-3 text-center text-[8px] text-gray-600 italic">
         This is a computer-generated document. No signature is required.
       </div>
     </div>

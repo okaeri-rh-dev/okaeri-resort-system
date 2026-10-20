@@ -31,6 +31,20 @@ import { toast } from "sonner";
 import { withErrorBoundary } from "@/components/ErrorBoundary";
 import {
   ActionMenu,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Button,
+  buttonVariants,
+  Card,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
   DataTable,
   ListCard,
   SortableHeader,
@@ -40,20 +54,6 @@ import {
   TableSearch,
   TableSkeleton,
 } from "@/components/patterns";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { formatCurrency, formatPhoneNumber, formatTableDate } from "@/lib/formatters";
 import { logger } from "@/lib/logger";
 import { statusBadgeProps } from "@/lib/status-tone";
@@ -87,7 +87,7 @@ const GuestBookingHistory: React.FC<GuestBookingHistoryProps> = ({ guestId, clas
     return (
       <div className={cn("space-y-2 p-4", className)}>
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-4 animate-pulse rounded bg-neutral-200" />
+          <div key={i} className="bg-muted h-4 animate-pulse rounded" />
         ))}
       </div>
     );
@@ -95,7 +95,7 @@ const GuestBookingHistory: React.FC<GuestBookingHistoryProps> = ({ guestId, clas
 
   if (bookings.length === 0) {
     return (
-      <div className={cn("p-4 text-center text-neutral-500", className)}>
+      <div className={cn("text-muted-foreground p-4 text-center", className)}>
         No booking history available
       </div>
     );
@@ -103,37 +103,37 @@ const GuestBookingHistory: React.FC<GuestBookingHistoryProps> = ({ guestId, clas
 
   return (
     <div className={cn("space-y-3 p-4", className)}>
-      <div className="text-sm font-medium text-neutral-700">
+      <div className="text-foreground text-sm font-medium">
         Booking History ({bookings.length} bookings)
       </div>
       <div className="space-y-2">
         {bookings.slice(0, 5).map((booking) => (
           <div
             key={booking.booking_id}
-            className="flex items-center justify-between rounded-md border border-neutral-200 bg-neutral-50 p-3"
+            className="border-border bg-muted flex items-center justify-between rounded-md border p-3"
           >
             <div className="space-y-1">
               <div className="flex items-center space-x-2">
-                <div className="font-mono text-xs font-medium text-blue-600">
+                <div className="text-foreground text-xs font-medium tabular-nums">
                   {booking.booking_reference}
                 </div>
                 <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
               </div>
-              <div className="text-sm text-neutral-600">
+              <div className="text-muted-foreground text-sm">
                 {booking.booking_units?.[0]?.unit?.unit_name} • {formatTableDate(booking.check_in)}{" "}
                 - {formatTableDate(booking.check_out)}
               </div>
             </div>
             <div className="text-right">
-              <div className="font-mono text-sm font-semibold">
+              <div className="text-sm font-semibold tabular-nums">
                 {formatCurrency(booking.total_amount)}
               </div>
-              <div className="text-xs text-neutral-600">{booking.num_guests} guests</div>
+              <div className="text-muted-foreground text-xs">{booking.num_guests} guests</div>
             </div>
           </div>
         ))}
         {bookings.length > 5 && (
-          <div className="text-center text-xs text-neutral-500">
+          <div className="text-muted-foreground text-center text-xs">
             And {bookings.length - 5} more bookings...
           </div>
         )}
@@ -161,17 +161,17 @@ const GuestCard: React.FC<GuestCardProps> = ({ guest, onView, onEdit, onEmail, o
     <ListCard className="space-y-3">
       <div className="flex items-start justify-between">
         <div className="flex-1 space-y-1">
-          <div className="font-medium text-neutral-900">{guest.guest_name}</div>
-          <div className="text-sm text-neutral-600">{guest.email || "\u2014"}</div>
-          <div className="text-sm text-neutral-600">
+          <div className="text-foreground font-medium">{guest.guest_name}</div>
+          <div className="text-muted-foreground text-sm">{guest.email || "\u2014"}</div>
+          <div className="text-muted-foreground text-sm">
             {guest.phone_number ? formatPhoneNumber(guest.phone_number) : "\u2014"}
           </div>
         </div>
         <div className="space-y-1 text-right">
-          <div className="font-mono font-semibold text-neutral-900">
+          <div className="text-foreground font-semibold tabular-nums">
             {formatCurrency(guest.total_spent ?? 0)}
           </div>
-          <div className="text-xs text-neutral-600">{guest.total_bookings ?? 0} bookings</div>
+          <div className="text-muted-foreground text-xs">{guest.total_bookings ?? 0} bookings</div>
         </div>
       </div>
 
@@ -197,7 +197,7 @@ const GuestCard: React.FC<GuestCardProps> = ({ guest, onView, onEdit, onEmail, o
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="sm" className="h-auto w-full justify-between p-2">
-            <span className="text-xs text-neutral-600">Booking History</span>
+            <span className="text-muted-foreground text-xs">Booking History</span>
             {isExpanded ? (
               <ChevronDown className="h-3 w-3" />
             ) : (
@@ -309,12 +309,12 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
             <Link
               to="/admin/guests/$guestId"
               params={{ guestId: row.original.guest_id }}
-              className="font-medium text-blue-600 transition-colors hover:underline"
+              className="text-primary font-medium transition-colors hover:underline"
               preload="intent"
             >
               {getValue()}
             </Link>
-            <div className="text-xs text-neutral-600">
+            <div className="text-muted-foreground text-xs">
               Member since{" "}
               {row.original.created_at ? formatTableDate(row.original.created_at) : "N/A"}
             </div>
@@ -327,8 +327,8 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
         header: "Contact Info",
         cell: ({ getValue, row }) => (
           <div className="space-y-1">
-            <div className="text-sm break-all text-neutral-900">{getValue() || "\u2014"}</div>
-            <div className="text-sm text-neutral-600">
+            <div className="text-foreground text-sm break-all">{getValue() || "\u2014"}</div>
+            <div className="text-muted-foreground text-sm">
               {row.original.phone_number ? formatPhoneNumber(row.original.phone_number) : "\u2014"}
             </div>
           </div>
@@ -344,7 +344,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
         ),
         cell: ({ getValue }) => (
           <div className="text-center">
-            <div className="font-mono text-lg font-semibold text-neutral-900">{getValue()}</div>
+            <div className="text-foreground text-lg font-semibold tabular-nums">{getValue()}</div>
           </div>
         ),
         size: 100,
@@ -364,10 +364,12 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
 
           return (
             <div className="space-y-1 text-right">
-              <div className="font-mono font-semibold text-neutral-900">
+              <div className="text-foreground font-semibold tabular-nums">
                 {formatCurrency(getValue() ?? 0)}
               </div>
-              <div className="text-xs text-neutral-600">{formatCurrency(avgPerBooking)} avg</div>
+              <div className="text-muted-foreground text-xs">
+                {formatCurrency(avgPerBooking)} avg
+              </div>
             </div>
           );
         },
@@ -384,21 +386,9 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
 
           return (
             <div className="space-y-1">
-              {isVIP && (
-                <Badge variant="default" className="text-xs">
-                  VIP
-                </Badge>
-              )}
-              {isRepeat && (
-                <Badge variant="secondary" className="text-xs">
-                  Repeat
-                </Badge>
-              )}
-              {!isVIP && !isRepeat && (
-                <Badge variant="outline" className="text-xs">
-                  New
-                </Badge>
-              )}
+              {isVIP && <StatusBadge tone="info">VIP</StatusBadge>}
+              {isRepeat && <StatusBadge tone="success">Repeat</StatusBadge>}
+              {!isVIP && !isRepeat && <StatusBadge tone="neutral">New</StatusBadge>}
             </div>
           );
         },
@@ -431,7 +421,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
             {
               label: "Delete Guest",
               onClick: () => setGuestToDelete(guest),
-              className: "text-red-600 hover:text-red-700",
+              variant: "destructive" as const,
             },
           ];
 
@@ -492,68 +482,72 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
   // Error state
   if (error) {
     return (
-      <Card className="p-6">
-        <div className="text-center text-red-600">Error loading guests: {error.message}</div>
+      <Card>
+        <div className="text-destructive text-center">Error loading guests: {error.message}</div>
       </Card>
     );
   }
 
   return (
     <div className={cn("@container space-y-4", className)}>
-      <div className="grid grid-cols-2 gap-4 @3xl:grid-cols-5">
-        <Card className="p-4">
+      <div className="grid grid-cols-1 gap-4 @md:grid-cols-2 @3xl:grid-cols-3 @6xl:grid-cols-5">
+        <Card padding="sm">
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
-              <div className="h-2 w-2 rounded-full bg-blue-500" />
-              <div className="text-sm font-medium text-neutral-700">Total Guests</div>
+              <div className="bg-muted-foreground size-2 rounded-full" aria-hidden="true" />
+              <div className="text-muted-foreground text-xs font-medium">Total Guests</div>
             </div>
-            <div className="text-2xl font-semibold text-neutral-900">{stats.totalGuests}</div>
+            <div className="font-display text-3xl font-semibold tabular-nums">
+              {stats.totalGuests}
+            </div>
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card padding="sm">
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
-              <DollarSign className="h-4 w-4 text-green-500" />
-              <div className="text-sm font-medium text-neutral-700">Total Revenue</div>
+              <DollarSign className="text-muted-foreground size-4" aria-hidden="true" />
+              <div className="text-muted-foreground text-xs font-medium">Total Revenue</div>
             </div>
-            <div className="font-mono text-2xl font-semibold text-neutral-900">
+            <div className="font-display text-3xl font-semibold tabular-nums">
               {formatCurrency(stats.totalRevenue)}
             </div>
           </div>
         </Card>
 
-        <Card className="p-4 @max-3xl:hidden">
+        <Card padding="sm" className="@max-3xl:hidden">
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4 text-orange-500" />
-              <div className="text-sm font-medium text-neutral-700">Avg per Guest</div>
+              <Calendar className="text-muted-foreground size-4" aria-hidden="true" />
+              <div className="text-muted-foreground text-xs font-medium">Avg per Guest</div>
             </div>
-            <div className="font-mono text-2xl font-semibold text-neutral-900">
+            <div className="font-display text-3xl font-semibold tabular-nums">
               {formatCurrency(stats.avgRevenuePerGuest)}
             </div>
           </div>
         </Card>
 
-        <Card className="p-4 @max-3xl:hidden">
+        <Card padding="sm" className="@max-3xl:hidden">
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
-              <div className="h-2 w-2 rounded-full bg-purple-500" />
-              <div className="text-sm font-medium text-neutral-700">Repeat Rate</div>
+              <div className="bg-muted-foreground size-2 rounded-full" aria-hidden="true" />
+              <div className="text-muted-foreground text-xs font-medium">Repeat Rate</div>
             </div>
-            <div className="text-2xl font-semibold text-neutral-900">
+            <div className="font-display text-3xl font-semibold tabular-nums">
               {stats.repeatRate.toFixed(1)}%
             </div>
           </div>
         </Card>
 
-        <Card className="p-4 @max-3xl:hidden">
+        <Card padding="sm" className="@max-3xl:hidden">
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
-              <div className="h-2 w-2 rounded-full bg-indigo-500" />
-              <div className="text-sm font-medium text-neutral-700">Total Bookings</div>
+              <div className="bg-muted-foreground size-2 rounded-full" aria-hidden="true" />
+              <div className="text-muted-foreground text-xs font-medium">Total Bookings</div>
             </div>
-            <div className="text-2xl font-semibold text-neutral-900">{stats.totalBookings}</div>
+            <div className="font-display text-3xl font-semibold tabular-nums">
+              {stats.totalBookings}
+            </div>
           </div>
         </Card>
       </div>
@@ -640,7 +634,10 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteGuest} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={confirmDeleteGuest}
+              className={buttonVariants({ variant: "destructive" })}
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

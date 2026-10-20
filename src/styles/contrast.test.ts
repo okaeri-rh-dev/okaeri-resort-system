@@ -33,14 +33,22 @@ const surfacePairs = [
   ].map((surface) => [`${surface}-foreground`, surface, TEXT] as const),
 ];
 
-const textOnSurfaces = ["foreground", "muted-foreground", "primary"].flatMap((text) =>
-  ["background", "card"].map((surface) => [text, surface, TEXT] as const)
+// destructive doubles as form error text
+const textOnSurfaces = ["foreground", "muted-foreground", "primary", "destructive"].flatMap(
+  (text) => ["background", "card"].map((surface) => [text, surface, TEXT] as const)
 );
 
 // Calendar cells carry foreground text only
 const availabilityPairs = ["high", "medium", "low"].map(
   (level) => ["foreground", `availability-${level}`, TEXT] as const
 );
+
+// Cabin chips: text on the chip fill and on a card (Pending chips are outlined on the card)
+const unitLanePairs = [1, 2, 3].flatMap((lane) => [
+  [`unit-lane-${lane}-foreground`, `unit-lane-${lane}`, TEXT] as const,
+  [`unit-lane-${lane}-foreground`, "card", TEXT] as const,
+  [`unit-lane-${lane}-accent`, "card", NON_TEXT] as const,
+]);
 
 const nonTextPairs = [
   ["input", "background", NON_TEXT],
@@ -50,7 +58,13 @@ const nonTextPairs = [
   ["sidebar-ring", "sidebar", NON_TEXT],
 ] as const;
 
-const requiredPairs = [...surfacePairs, ...textOnSurfaces, ...availabilityPairs, ...nonTextPairs];
+const requiredPairs = [
+  ...surfacePairs,
+  ...textOnSurfaces,
+  ...availabilityPairs,
+  ...unitLanePairs,
+  ...nonTextPairs,
+];
 
 describe.each(Object.entries(themeTokens))("%s theme contrast", (_theme, tokens) => {
   it.each(requiredPairs)("%s on %s is at least %s:1", (foreground, background, minimum) => {

@@ -189,7 +189,7 @@ A human reference only. `src/index.css` is the source of truth and holds these v
 | Border                       | `#E8E1D8`              | `#3A312C`              |
 | Input                        | `#9E8774`              | `#7A6C62`              |
 | Ring                         | `#8A5530`              | `#D9A77C`              |
-| Destructive / foreground     | `#B23A2E` / `#FFFFFF`  | `#D0574A` / `#141110`  |
+| Destructive / foreground     | `#B23A2E` / `#FFFFFF`  | `#E26759` / `#141110`  |
 | Success (fg on bg)           | `#2F7A4F` on `#EAF4EE` | `#86CFA2` on `#1D2C23` |
 | Warning (fg on bg)           | `#8A5800` on `#FBF1DF` | `#E9B45A` on `#2F2414` |
 | Danger (fg on bg)            | `#B23A2E` on `#FBECEA` | `#F2948A` on `#36201D` |

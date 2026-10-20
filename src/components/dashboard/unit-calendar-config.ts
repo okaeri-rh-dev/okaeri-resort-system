@@ -1,7 +1,7 @@
 /**
  * Static configuration for calendar unit slot layout.
  * Each unit gets a fixed vertical lane (C1=top, C2=middle, C3=bottom)
- * with dedicated colors so occupancy is scannable at a glance.
+ * with dedicated unit-lane tokens so occupancy is scannable at a glance.
  */
 
 export interface UnitSlotConfig {
@@ -17,26 +17,26 @@ export const UNIT_SLOTS: UnitSlotConfig[] = [
   {
     unitCode: "C1",
     slotIndex: 0,
-    bg: "bg-blue-100",
-    text: "text-blue-800",
-    border: "border-blue-300",
-    mobileBar: "bg-blue-400",
+    bg: "bg-unit-lane-1",
+    text: "text-unit-lane-1-foreground",
+    border: "border-unit-lane-1-accent",
+    mobileBar: "bg-unit-lane-1-accent",
   },
   {
     unitCode: "C2",
     slotIndex: 1,
-    bg: "bg-emerald-100",
-    text: "text-emerald-800",
-    border: "border-emerald-300",
-    mobileBar: "bg-emerald-400",
+    bg: "bg-unit-lane-2",
+    text: "text-unit-lane-2-foreground",
+    border: "border-unit-lane-2-accent",
+    mobileBar: "bg-unit-lane-2-accent",
   },
   {
     unitCode: "C3",
     slotIndex: 2,
-    bg: "bg-amber-100",
-    text: "text-amber-800",
-    border: "border-amber-300",
-    mobileBar: "bg-amber-400",
+    bg: "bg-unit-lane-3",
+    text: "text-unit-lane-3-foreground",
+    border: "border-unit-lane-3-accent",
+    mobileBar: "bg-unit-lane-3-accent",
   },
 ];
 
@@ -51,11 +51,11 @@ export const UNIT_SLOT_MAP = new Map(UNIT_SLOTS.map((s) => [s.unitCode, s]));
  */
 export const PENDING_CHIP_COLORS = {
   /** Desktop chip text color */
-  text: "text-amber-800",
+  text: "text-unit-lane-3-foreground",
   /** Desktop chip border color (pairs with border-2 border-dashed from getStatusHintClasses) */
-  border: "border-amber-600",
+  border: "border-unit-lane-3-accent",
   /** Mobile color-bar background */
-  mobileBar: "bg-amber-400",
+  mobileBar: "bg-unit-lane-3-accent",
 } as const;
 
 /** Returns Tailwind modifier classes for the desktop chip based on booking status */
@@ -65,7 +65,7 @@ export function getStatusHintClasses(status: string): string {
     case "CheckedIn":
       return ""; // full solid — no modifier
     case "Pending":
-      return "bg-white border-2 border-dashed";
+      return "bg-card border-2 border-dashed";
     case "CheckedOut":
       return "opacity-50";
     case "Cancelled":

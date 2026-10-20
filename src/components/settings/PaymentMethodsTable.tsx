@@ -23,6 +23,7 @@ import {
   Wallet,
 } from "lucide-react";
 
+import { StatusBadge } from "@/components/patterns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -170,11 +171,9 @@ export function PaymentMethodsTable({ onEditMethod }: PaymentMethodsTableProps) 
       cell: ({ row }) => {
         const isActive = row.getValue("is_active") as boolean;
         return isActive ? (
-          <Badge variant="default" className="bg-green-600">
-            Active
-          </Badge>
+          <StatusBadge tone="success">Active</StatusBadge>
         ) : (
-          <Badge variant="secondary">Inactive</Badge>
+          <StatusBadge tone="neutral">Inactive</StatusBadge>
         );
       },
     },

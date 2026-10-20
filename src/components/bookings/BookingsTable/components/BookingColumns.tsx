@@ -40,14 +40,17 @@ export const useBookingColumns = ({
         ),
         cell: ({ row }) => (
           <div className="space-y-1">
-            <Link
-              to="/admin/guests"
-              search={{ search: row.original.guest_name }}
-              className="font-medium text-blue-600 transition-colors hover:underline"
-            >
-              {row.original.guest_name}
-            </Link>
-            <div className="text-xs text-neutral-600">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Link
+                to="/admin/guests"
+                search={{ search: row.original.guest_name }}
+                className="text-primary font-medium hover:underline"
+              >
+                {row.original.guest_name}
+              </Link>
+              {row.original.is_walk_in && <StatusBadge tone="warning">Walk-in</StatusBadge>}
+            </div>
+            <div className="text-muted-foreground text-xs">
               {(row.original.contact_number && formatPhoneNumber(row.original.contact_number)) ||
                 row.original.email ||
                 ""}
@@ -63,7 +66,7 @@ export const useBookingColumns = ({
           const units = row.original.booking_units || [];
 
           if (units.length === 0) {
-            return <span className="text-xs text-neutral-400">No units</span>;
+            return <span className="text-muted-foreground text-xs">No units</span>;
           }
 
           return (
@@ -76,7 +79,7 @@ export const useBookingColumns = ({
                     key={bu.booking_unit_id}
                     variant="outline"
                     className={cn(
-                      "font-mono text-xs",
+                      "text-xs",
                       slotConfig
                         ? cn(slotConfig.bg, slotConfig.text, slotConfig.border)
                         : "bg-secondary text-secondary-foreground border-transparent"
@@ -99,7 +102,7 @@ export const useBookingColumns = ({
         cell: ({ getValue, row }) => (
           <div className="space-y-0.5">
             <div className="text-sm font-medium">{formatTableDate(getValue())}</div>
-            <div className="text-xs text-neutral-500">
+            <div className="text-muted-foreground text-xs">
               {formatTableDate(row.original.check_out)}
             </div>
           </div>
@@ -125,20 +128,6 @@ export const useBookingColumns = ({
         size: 120,
       }),
 
-      columnHelper.accessor("is_walk_in", {
-        header: "Type",
-        cell: ({ getValue }) =>
-          getValue() ? (
-            <Badge
-              variant="outline"
-              className="border-amber-300 bg-amber-50 px-1.5 py-0 text-[10px] font-semibold text-amber-800"
-            >
-              Walk-in
-            </Badge>
-          ) : null,
-        size: 90,
-      }),
-
       columnHelper.accessor("booking_status", {
         header: "Status",
         cell: ({ getValue }) => <StatusBadge {...statusBadgeProps(getValue(), "Pending")} />,
@@ -159,7 +148,7 @@ export const useBookingColumns = ({
           <Link
             to="/admin/bookings/$bookingId"
             params={{ bookingId: row.original.booking_id }}
-            className="font-mono text-sm font-medium text-blue-600 transition-colors hover:underline"
+            className="text-primary text-sm font-medium whitespace-nowrap hover:underline"
           >
             {row.getValue("booking_reference")}
           </Link>
@@ -169,7 +158,7 @@ export const useBookingColumns = ({
 
       columnHelper.display({
         id: "actions",
-        header: "Actions",
+        header: () => <span className="sr-only">Actions</span>,
         cell: ({ row }) => {
           return (
             <BookingActionsCell

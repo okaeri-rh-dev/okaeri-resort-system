@@ -9,7 +9,13 @@ import {
   RelatedEntityLink,
   truncate,
 } from "@/components/entity-detail";
-import { DetailField, DetailPageLayout, DetailSection } from "@/components/patterns";
+import {
+  buttonVariants,
+  DetailField,
+  DetailPageLayout,
+  DetailSection,
+  StatusBadge,
+} from "@/components/patterns";
 import type { Expense, Unit } from "@/types";
 
 /**
@@ -67,11 +73,7 @@ export function ExpenseDetailPage({ expense, expenseId }: ExpenseDetailPageProps
           <DetailField label="Amount" value={formatCurrency(expense.amount)} emphasis="total" />
           <DetailField
             label="Category"
-            value={
-              <span className="inline-flex items-center rounded-md border border-neutral-200 bg-neutral-100 px-3 py-1 text-sm font-medium text-neutral-700">
-                {expense.category}
-              </span>
-            }
+            value={<StatusBadge tone="neutral">{expense.category}</StatusBadge>}
           />
           <DetailField
             label="Expense Date"
@@ -88,7 +90,7 @@ export function ExpenseDetailPage({ expense, expenseId }: ExpenseDetailPageProps
       {expense.description && (
         <DetailSection title="Description" icon={<FileText className="h-5 w-5" />}>
           <div className="prose prose-sm max-w-none">
-            <p className="text-sm whitespace-pre-wrap text-neutral-700">{expense.description}</p>
+            <p className="text-foreground text-sm whitespace-pre-wrap">{expense.description}</p>
           </div>
         </DetailSection>
       )}
@@ -121,7 +123,7 @@ export function ExpenseDetailPage({ expense, expenseId }: ExpenseDetailPageProps
               <img
                 src={expense.receipt_url}
                 alt="Expense receipt"
-                className="h-auto w-full rounded-md border border-neutral-200"
+                className="border-border h-auto w-full rounded-md border"
               />
             </div>
             <div className="flex gap-2">
@@ -129,14 +131,14 @@ export function ExpenseDetailPage({ expense, expenseId }: ExpenseDetailPageProps
                 href={expense.receipt_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+                className={buttonVariants({ variant: "outline" })}
               >
                 Open in New Tab
               </a>
               <a
                 href={expense.receipt_url}
                 download
-                className="inline-flex items-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+                className={buttonVariants({ variant: "outline" })}
               >
                 Download
               </a>
@@ -149,7 +151,7 @@ export function ExpenseDetailPage({ expense, expenseId }: ExpenseDetailPageProps
       {expense.notes && (
         <DetailSection title="Internal Notes" icon={<StickyNote className="h-5 w-5" />}>
           <div className="prose prose-sm max-w-none">
-            <p className="text-sm whitespace-pre-wrap text-neutral-700">{expense.notes}</p>
+            <p className="text-foreground text-sm whitespace-pre-wrap">{expense.notes}</p>
           </div>
         </DetailSection>
       )}

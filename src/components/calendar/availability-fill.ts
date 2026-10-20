@@ -1,0 +1,18 @@
+import type { AvailabilityDay } from "./CalendarGrid";
+
+const bookedHatch =
+  "bg-muted bg-[repeating-linear-gradient(135deg,var(--border)_0_2px,transparent_2px_6px)]";
+
+export const availabilityFill: Record<AvailabilityDay["status"], string> = {
+  full: "bg-availability-high",
+  moderate: "bg-availability-medium",
+  limited: "bg-availability-low",
+  booked: bookedHatch,
+};
+
+export const adjacentMonthAvailabilityFill: Record<AvailabilityDay["status"], string> = {
+  full: "bg-availability-high/50",
+  moderate: "bg-availability-medium/50",
+  limited: "bg-availability-low/50",
+  booked: bookedHatch,
+};

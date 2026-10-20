@@ -30,34 +30,34 @@ describe("unit-calendar-config", () => {
       expect(UNIT_SLOTS).toHaveLength(3);
     });
 
-    it("should have C1 at index 0 with blue colors", () => {
+    it("should have C1 at index 0 with lane 1 tokens", () => {
       const c1 = UNIT_SLOTS[0];
       expect(c1.unitCode).toBe("C1");
       expect(c1.slotIndex).toBe(0);
-      expect(c1.bg).toBe("bg-blue-100");
-      expect(c1.text).toBe("text-blue-800");
-      expect(c1.border).toBe("border-blue-300");
-      expect(c1.mobileBar).toBe("bg-blue-400");
+      expect(c1.bg).toBe("bg-unit-lane-1");
+      expect(c1.text).toBe("text-unit-lane-1-foreground");
+      expect(c1.border).toBe("border-unit-lane-1-accent");
+      expect(c1.mobileBar).toBe("bg-unit-lane-1-accent");
     });
 
-    it("should have C2 at index 1 with emerald colors", () => {
+    it("should have C2 at index 1 with lane 2 tokens", () => {
       const c2 = UNIT_SLOTS[1];
       expect(c2.unitCode).toBe("C2");
       expect(c2.slotIndex).toBe(1);
-      expect(c2.bg).toBe("bg-emerald-100");
-      expect(c2.text).toBe("text-emerald-800");
-      expect(c2.border).toBe("border-emerald-300");
-      expect(c2.mobileBar).toBe("bg-emerald-400");
+      expect(c2.bg).toBe("bg-unit-lane-2");
+      expect(c2.text).toBe("text-unit-lane-2-foreground");
+      expect(c2.border).toBe("border-unit-lane-2-accent");
+      expect(c2.mobileBar).toBe("bg-unit-lane-2-accent");
     });
 
-    it("should have C3 at index 2 with amber colors", () => {
+    it("should have C3 at index 2 with lane 3 tokens", () => {
       const c3 = UNIT_SLOTS[2];
       expect(c3.unitCode).toBe("C3");
       expect(c3.slotIndex).toBe(2);
-      expect(c3.bg).toBe("bg-amber-100");
-      expect(c3.text).toBe("text-amber-800");
-      expect(c3.border).toBe("border-amber-300");
-      expect(c3.mobileBar).toBe("bg-amber-400");
+      expect(c3.bg).toBe("bg-unit-lane-3");
+      expect(c3.text).toBe("text-unit-lane-3-foreground");
+      expect(c3.border).toBe("border-unit-lane-3-accent");
+      expect(c3.mobileBar).toBe("bg-unit-lane-3-accent");
     });
 
     it("should have all required fields on every entry", () => {
@@ -114,21 +114,21 @@ describe("unit-calendar-config", () => {
       const config = UNIT_SLOT_MAP.get("C1");
       expect(config).toBeDefined();
       expect(config!.slotIndex).toBe(0);
-      expect(config!.bg).toBe("bg-blue-100");
+      expect(config!.bg).toBe("bg-unit-lane-1");
     });
 
     it("should return correct config for C2", () => {
       const config = UNIT_SLOT_MAP.get("C2");
       expect(config).toBeDefined();
       expect(config!.slotIndex).toBe(1);
-      expect(config!.bg).toBe("bg-emerald-100");
+      expect(config!.bg).toBe("bg-unit-lane-2");
     });
 
     it("should return correct config for C3", () => {
       const config = UNIT_SLOT_MAP.get("C3");
       expect(config).toBeDefined();
       expect(config!.slotIndex).toBe(2);
-      expect(config!.bg).toBe("bg-amber-100");
+      expect(config!.bg).toBe("bg-unit-lane-3");
     });
 
     it("should return undefined for unknown unit codes", () => {
@@ -156,8 +156,8 @@ describe("unit-calendar-config", () => {
       expect(getStatusHintClasses("CheckedIn")).toBe("");
     });
 
-    it('should return "bg-white border-2 border-dashed" for Pending', () => {
-      expect(getStatusHintClasses("Pending")).toBe("bg-white border-2 border-dashed");
+    it('should return "bg-card border-2 border-dashed" for Pending', () => {
+      expect(getStatusHintClasses("Pending")).toBe("bg-card border-2 border-dashed");
     });
 
     it('should return "opacity-50" for CheckedOut', () => {
@@ -211,10 +211,10 @@ describe("unit-calendar-config", () => {
   // PENDING_CHIP_COLORS
   // ─────────────────────────────────────────────
   describe("PENDING_CHIP_COLORS", () => {
-    it("should use amber colors for all Pending bookings regardless of unit", () => {
-      expect(PENDING_CHIP_COLORS.text).toBe("text-amber-800");
-      expect(PENDING_CHIP_COLORS.border).toBe("border-amber-600");
-      expect(PENDING_CHIP_COLORS.mobileBar).toBe("bg-amber-400");
+    it("should use lane 3 tokens for all Pending bookings regardless of unit", () => {
+      expect(PENDING_CHIP_COLORS.text).toBe("text-unit-lane-3-foreground");
+      expect(PENDING_CHIP_COLORS.border).toBe("border-unit-lane-3-accent");
+      expect(PENDING_CHIP_COLORS.mobileBar).toBe("bg-unit-lane-3-accent");
     });
 
     it("should match the C3 slot's color family (Pending mirrors C3 look)", () => {

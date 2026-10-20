@@ -83,7 +83,7 @@ describe("RelatedEntityLink", () => {
       render(<RelatedEntityLink type="unit" id="unit-123" label="Villa" badge="DV-001" />);
 
       const badge = screen.getByText(/DV-001/);
-      expect(badge).toHaveClass("text-xs", "font-mono", "text-neutral-500");
+      expect(badge).toHaveClass("text-xs", "tabular-nums", "text-muted-foreground");
     });
   });
 
@@ -136,7 +136,7 @@ describe("RelatedEntityLink", () => {
       render(<RelatedEntityLink type="booking" id="booking-123" label="Booking" />);
 
       const link = screen.getByTestId("router-link");
-      expect(link).toHaveClass("text-blue-600");
+      expect(link).toHaveClass("text-primary");
     });
 
     it("applies hover styles", () => {
@@ -217,7 +217,7 @@ describe("RelatedEntityLink", () => {
       );
 
       const link = screen.getByTestId("router-link");
-      expect(link).toHaveClass("custom-class", "text-blue-600", "hover:underline");
+      expect(link).toHaveClass("custom-class", "text-primary", "hover:underline");
     });
   });
 

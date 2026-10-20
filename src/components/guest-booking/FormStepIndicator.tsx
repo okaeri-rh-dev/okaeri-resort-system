@@ -38,7 +38,7 @@ export function FormStepIndicator({
         </div>
 
         {/* Progress bar */}
-        <div className="h-2 overflow-hidden rounded-full bg-neutral-200">
+        <div className="bg-border h-2 overflow-hidden rounded-full">
           <div
             className="bg-primary h-full transition-all duration-200 ease-out"
             style={{ width: `${progressPercentage}%` }}

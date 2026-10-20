@@ -6,9 +6,9 @@
  *
  * Features:
  * - Generates calendar days with proper month boundaries
- * - Color-codes days based on availability (green/yellow/orange/red)
- * - Highlights today with blue ring indicator
- * - Grays out past dates
+ * - Shades days by cabins left (availability ramp, hatched when booked)
+ * - Rings today
+ * - Mutes past dates
  * - Shows availability count on hover
  * - Responsive grid layout (7 columns for days of week)
  *
@@ -19,6 +19,8 @@ import { useMemo } from "react";
 
 import { toISODateString } from "@/lib/timezone";
 import { cn } from "@/lib/utils";
+
+import { adjacentMonthAvailabilityFill, availabilityFill } from "./availability-fill";
 
 /**
  * Availability data for a single day
@@ -130,7 +132,7 @@ export function CalendarGrid({ availability, currentMonth, onDateClick }: Calend
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
           <div
             key={day}
-            className="py-1 text-center text-xs font-semibold text-slate-600 uppercase sm:py-2"
+            className="text-muted-foreground py-1 text-center text-xs font-semibold uppercase sm:py-2"
             role="columnheader"
           >
             {day}
@@ -186,47 +188,14 @@ function DayCell({
     }
   };
 
-  /**
-   * Get background color based on availability status
-   * Uses soft, muted colors with transparency for reduced eye strain
-   */
   const getStatusColor = () => {
-    // Past dates: soft gray
-    if (isPast) return "bg-slate-100/50 text-slate-400";
+    if (isPast) return "text-muted-foreground";
+    if (!availability) return isCurrentMonth ? "text-foreground" : "text-muted-foreground";
 
-    // Adjacent month dates: reduced opacity with soft colors
-    if (!isCurrentMonth) {
-      if (!availability) return "bg-slate-50/30 text-slate-500";
-
-      switch (availability.status) {
-        case "full":
-          return "bg-emerald-400/30 text-emerald-700 hover:bg-emerald-400/40";
-        case "moderate":
-          return "bg-amber-400/30 text-amber-700 hover:bg-amber-400/40";
-        case "limited":
-          return "bg-orange-400/30 text-orange-700 hover:bg-orange-400/40";
-        case "booked":
-          return "bg-rose-400/30 text-rose-700 hover:bg-rose-400/40";
-        default:
-          return "bg-slate-50/30 text-slate-500";
-      }
-    }
-
-    // Current month dates: soft muted colors
-    if (!availability) return "bg-slate-50/50 text-slate-700";
-
-    switch (availability.status) {
-      case "full":
-        return "bg-emerald-400/70 text-slate-800 hover:bg-emerald-400/80";
-      case "moderate":
-        return "bg-amber-400/70 text-slate-800 hover:bg-amber-400/80";
-      case "limited":
-        return "bg-orange-400/70 text-slate-800 hover:bg-orange-400/80";
-      case "booked":
-        return "bg-rose-400/70 text-slate-800 hover:bg-rose-400/80";
-      default:
-        return "bg-slate-50/50 text-slate-700";
-    }
+    const fill = isCurrentMonth
+      ? availabilityFill[availability.status]
+      : adjacentMonthAvailabilityFill[availability.status];
+    return cn(fill, "text-foreground");
   };
 
   /**
@@ -264,7 +233,7 @@ function DayCell({
         "relative flex min-h-[44px] flex-col items-center justify-center rounded py-1 sm:min-h-[52px] md:min-h-[60px] lg:min-h-[64px]",
         "transition-all duration-200",
         getStatusColor(),
-        isToday && "ring-2 ring-slate-500 ring-offset-1",
+        isToday && "ring-primary ring-offset-card ring-2 ring-offset-1",
         !isPast && isCurrentMonth && "hover:shadow-sm",
         isPast && "cursor-not-allowed",
         isClickable && "cursor-pointer hover:shadow-sm",
@@ -290,17 +259,15 @@ function DayCell({
 
       {/* Available count (for all future dates with data) */}
       {availability && !isPast && (
-        <span
-          className={cn("mt-0.5 text-xs font-medium", isCurrentMonth ? "opacity-90" : "opacity-75")}
-        >
+        <span className="mt-0.5 text-xs font-medium tabular-nums">
           {availability.availableCount}
         </span>
       )}
 
-      {/* Today indicator (slate dot) */}
+      {/* Today indicator dot */}
       {isToday && (
         <div
-          className="absolute -bottom-1 h-1.5 w-1.5 rounded-full bg-slate-600"
+          className="bg-primary absolute -bottom-1 h-1.5 w-1.5 rounded-full"
           aria-label="Today"
         />
       )}

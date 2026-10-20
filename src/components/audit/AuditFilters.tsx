@@ -5,17 +5,19 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { CalendarDays, Download, X, Zap } from "lucide-react";
 
-import { FilterBar, FilterPopover, TableSearch } from "@/components/patterns";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
+  Button,
+  FilterBar,
+  FilterPopover,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+  TableSearch,
+} from "@/components/patterns";
+import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
 import { ACTION_DISPLAY_NAMES, ALL_AUDIT_TABLES, TABLE_DISPLAY_NAMES } from "@/lib/audit-constants";
 import { useExportAuditLogs } from "@/lib/audit-hooks";
 import { QuickFilterPreset, useAuditStore } from "@/stores/useAuditStore";
@@ -375,7 +377,7 @@ export function AuditFilters() {
       {/* Active Filters Display */}
       {hasActiveFilters && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-neutral-700">Active Filters:</span>
+          <span className="text-foreground text-sm font-medium">Active Filters:</span>
           {filters.tableName && (
             <Badge variant="secondary" className="gap-1">
               Table:{" "}

@@ -14,13 +14,19 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { UnitAssignmentInterface } from "@/components/admin/UnitAssignmentInterface";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Button,
+  Callout,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Skeleton,
+} from "@/components/patterns";
 import { useAuthToken } from "@/hooks/useAuthToken";
 import { isPaymentReceived, manilaDayOf } from "@/lib/bookings";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -100,17 +106,9 @@ function PaymentNotVerifiedGuard({
       </div>
 
       {/* Guard Alert */}
-      <Card className="border-yellow-500/50 bg-yellow-50">
-        <CardHeader>
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="mt-1 h-5 w-5 text-yellow-600" />
-            <div>
-              <CardTitle className="text-yellow-900">Payment Not Verified</CardTitle>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-yellow-900">
+      <Callout tone="warning" title="Payment Not Verified">
+        <div className="space-y-4">
+          <p>
             Payment must be verified before assigning cabins to this booking. Please verify the
             payment proof first.
           </p>
@@ -121,7 +119,6 @@ function PaymentNotVerifiedGuard({
                   to: `/admin/verify-payment/${bookingId}`, // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } as any)
               }
-              className="bg-yellow-600 hover:bg-yellow-700"
             >
               <CheckCircle2 className="mr-2 h-4 w-4" />
               Verify Payment
@@ -133,12 +130,13 @@ function PaymentNotVerifiedGuard({
                   to: "/admin/bookings/queue", // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } as any)
               }
+              className="text-foreground"
             >
               Back to Queue
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </Callout>
     </div>
   );
 }
@@ -179,17 +177,9 @@ function AlreadyAssignedGuard({
       </div>
 
       {/* Guard Alert */}
-      <Card className="border-blue-500/50 bg-blue-50">
-        <CardHeader>
-          <div className="flex items-start gap-3">
-            <CheckCircle2 className="mt-1 h-5 w-5 text-blue-600" />
-            <div>
-              <CardTitle className="text-blue-900">Cabins Already Assigned</CardTitle>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-blue-900">
+      <Callout tone="info" title="Cabins Already Assigned">
+        <div className="space-y-4">
+          <p>
             Cabins have already been assigned to this booking. You can view the booking details or
             return to the queue.
           </p>
@@ -201,7 +191,6 @@ function AlreadyAssignedGuard({
                   params: { bookingId },
                 } as unknown as Parameters<typeof navigate>[0])
               }
-              className="bg-blue-600 hover:bg-blue-700"
             >
               View Booking Details
             </Button>
@@ -212,12 +201,13 @@ function AlreadyAssignedGuard({
                   to: "/admin/bookings/queue",
                 } as Parameters<typeof navigate>[0])
               }
+              className="text-foreground"
             >
               Back to Queue
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </Callout>
     </div>
   );
 }
@@ -229,16 +219,16 @@ function LoadingState({ bookingReference }: { bookingReference?: string }) {
   return (
     <div className="container mx-auto space-y-6 p-6">
       <div className="flex items-center gap-4">
-        <div className="h-9 w-32 animate-pulse rounded bg-gray-200" />
+        <Skeleton className="h-9 w-32" />
         <div>
-          <div className="mb-2 h-8 w-64 animate-pulse rounded bg-gray-200" />
+          <Skeleton className="mb-2 h-8 w-64" />
           {bookingReference && <p className="text-muted-foreground">Booking: {bookingReference}</p>}
         </div>
       </div>
 
       <Card>
         <CardContent className="flex items-center justify-center py-12">
-          <div className="flex items-center gap-3 text-neutral-600">
+          <div className="text-muted-foreground flex items-center gap-3">
             <Loader2 className="h-5 w-5 animate-spin" />
             <span className="text-sm font-medium">Loading booking details...</span>
           </div>
@@ -275,13 +265,9 @@ function ErrorState({ error, bookingId }: { error: Error | null; bookingId: stri
         </div>
       </div>
 
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Error Loading Booking</AlertTitle>
-        <AlertDescription>
-          {error?.message || "Failed to load booking details. The booking may not exist."}
-        </AlertDescription>
-      </Alert>
+      <Callout tone="danger" title="Error Loading Booking">
+        {error?.message || "Failed to load booking details. The booking may not exist."}
+      </Callout>
 
       <Card>
         <CardContent className="flex flex-col items-center justify-center gap-4 py-12">
@@ -426,19 +412,15 @@ function AssignUnitsPage() {
           </div>
           <div>
             <div className="text-muted-foreground text-sm">Total Amount</div>
-            <div className="font-mono font-medium">{formatCurrency(booking.total_amount)}</div>
+            <div className="font-medium tabular-nums">{formatCurrency(booking.total_amount)}</div>
           </div>
         </CardContent>
       </Card>
 
       {/* Payment Status Badge */}
-      <Alert className="border-green-200 bg-green-50">
-        <CheckCircle2 className="h-4 w-4 text-green-600" />
-        <AlertTitle className="text-green-900">Payment Verified</AlertTitle>
-        <AlertDescription className="text-green-800">
-          Payment has been verified. You can now proceed with cabin assignment.
-        </AlertDescription>
-      </Alert>
+      <Callout tone="success" title="Payment Verified">
+        Payment has been verified. You can now proceed with cabin assignment.
+      </Callout>
 
       {/* Unit Assignment Interface */}
       <UnitAssignmentInterface

@@ -53,26 +53,26 @@ export function DetailAuditSection({
       className={className}
     >
       {isPending ? (
-        <p className="text-sm text-neutral-500">Loading history…</p>
+        <p className="text-muted-foreground text-sm">Loading history…</p>
       ) : !logs?.length ? (
-        <p className="text-sm text-neutral-500">No history for this record yet</p>
+        <p className="text-muted-foreground text-sm">No history for this record yet</p>
       ) : (
-        <ul className="divide-y divide-neutral-200">
+        <ul className="divide-border divide-y">
           {logs.slice(0, limit).map((log) => (
             <li key={log.audit_id} className="flex items-start justify-between gap-4 py-3">
               <div className="min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <ActionBadge log={log} />
                   {log.description && (
-                    <SafeAuditText text={log.description} className="text-sm text-neutral-900" />
+                    <SafeAuditText text={log.description} className="text-foreground text-sm" />
                   )}
                 </div>
-                <div className="text-xs text-neutral-500">{auditActorLabel(log)}</div>
+                <div className="text-muted-foreground text-xs">{auditActorLabel(log)}</div>
               </div>
               {log.created_at && (
                 <time
                   dateTime={log.created_at}
-                  className="shrink-0 font-mono text-xs text-neutral-500"
+                  className="text-muted-foreground shrink-0 text-xs tabular-nums"
                 >
                   {formatPhilippineDate(new Date(log.created_at), "MMM d, yyyy h:mm a")}
                 </time>
