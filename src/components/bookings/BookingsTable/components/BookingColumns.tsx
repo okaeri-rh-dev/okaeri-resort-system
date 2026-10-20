@@ -40,17 +40,15 @@ export const useBookingColumns = ({
         ),
         cell: ({ row }) => (
           <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Link
-                to="/admin/guests"
-                search={{ search: row.original.guest_name }}
-                className="text-primary font-medium hover:underline"
-              >
-                {row.original.guest_name}
-              </Link>
+            <Link
+              to="/admin/guests"
+              search={{ search: row.original.guest_name }}
+              className="text-primary font-medium hover:underline"
+            >
+              {row.original.guest_name}
+            </Link>
+            <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs">
               {row.original.is_walk_in && <StatusBadge tone="warning">Walk-in</StatusBadge>}
-            </div>
-            <div className="text-muted-foreground text-xs">
               {(row.original.contact_number && formatPhoneNumber(row.original.contact_number)) ||
                 row.original.email ||
                 ""}
