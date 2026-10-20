@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 
 export interface ContrastFailure {
   text: string;
@@ -107,4 +107,46 @@ export async function findLowContrastText(page: Page, root = "body"): Promise<Co
     }
     return failures;
   }, root);
+}
+
+/** The colour painted behind an element: its own and its ancestors' fills, composited. */
+function paintedFill(locator: Locator): Promise<[number, number, number]> {
+  return locator.evaluate((element) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 1;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) throw new Error("No 2d canvas context");
+    const layers: number[][] = [];
+    for (let node: Element | null = element; node; node = node.parentElement) {
+      context.clearRect(0, 0, 1, 1);
+      context.fillStyle = "#000";
+      context.fillStyle = getComputedStyle(node).backgroundColor;
+      context.fillRect(0, 0, 1, 1);
+      const [r, g, b, a] = context.getImageData(0, 0, 1, 1).data;
+      if (a > 0) layers.push([r, g, b, a / 255]);
+      if (a === 255) break;
+    }
+    let base: [number, number, number] = [255, 255, 255];
+    for (const [r, g, b, a] of layers.reverse()) {
+      base = [r * a + base[0] * (1 - a), g * a + base[1] * (1 - a), b * a + base[2] * (1 - a)];
+    }
+    return base;
+  });
+}
+
+function relativeLuminance([r, g, b]: [number, number, number]) {
+  const channel = (value: number) => {
+    const c = value / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+}
+
+/** The contrast ratio between two elements' painted fills, such as a tinted cell and its grid. */
+export async function fillContrast(target: Locator, backdrop: Locator): Promise<number> {
+  const [lighter, darker] = [
+    relativeLuminance(await paintedFill(target)),
+    relativeLuminance(await paintedFill(backdrop)),
+  ].sort((a, b) => b - a);
+  return (lighter + 0.05) / (darker + 0.05);
 }

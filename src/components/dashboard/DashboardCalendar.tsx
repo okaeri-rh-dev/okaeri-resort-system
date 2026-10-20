@@ -23,9 +23,11 @@ interface DashboardCalendarProps {
 }
 
 // Uniform subtle tint for any day with bookings (avoids competing with unit chip colors)
+// A foreground tint darkens the day in light and lightens it in dark; in light, `muted` is the
+// same colour as the grid's `background`, so a muted fill can't be seen
 function getDayBackgroundClass(bookingCount: number): string {
   if (bookingCount === 0) return "";
-  return "bg-muted hover:bg-accent";
+  return "bg-foreground/10 hover:bg-accent";
 }
 
 // Extracted DayButton component for better performance
@@ -64,7 +66,7 @@ const DayButton = React.memo(function DayButton({
           "min-w-0", // Allow shrinking below content size
           "transition-colors duration-150",
           // Base weekend styling (only if no bookings)
-          isWeekend && dayBookings.length === 0 && !isToday && "bg-muted/60",
+          isWeekend && dayBookings.length === 0 && !isToday && "bg-foreground/5",
           // Booking count-based colors
           bookingCountClass,
           // Today special styling (overrides other backgrounds)
