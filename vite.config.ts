@@ -85,7 +85,7 @@ export default defineConfig(({ mode }) => ({
             "immer",
           ],
           // UI libraries
-          "vendor-ui": ["react-day-picker", "sonner", "lucide-react", "next-themes"],
+          "vendor-ui": ["react-day-picker", "sonner", "lucide-react"],
           // PDF generation - lazy loaded only when user clicks "Download PDF"
           "vendor-pdf": ["@react-pdf/renderer"],
           // Note: heic2any and browser-image-compression are dynamically imported
