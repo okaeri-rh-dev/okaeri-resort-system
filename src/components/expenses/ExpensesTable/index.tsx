@@ -1,6 +1,11 @@
 import { withErrorBoundary } from "@/components/ErrorBoundary";
-import { DataTable, TableEmptyState, TablePagination, TableSkeleton } from "@/components/patterns";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  DataTable,
+  TableEmptyState,
+  TablePagination,
+  TableSkeleton,
+} from "@/components/patterns";
 import { cn } from "@/lib/utils";
 
 import { DeleteExpenseDialog } from "./components/DeleteExpenseDialog";
@@ -41,10 +46,10 @@ function ExpensesTableComponent({ onViewExpense, onEditExpense, className }: Exp
 
   if (error) {
     return (
-      <Card className="border-neutral-200 p-8">
+      <Card padding="lg">
         <div className="text-center">
-          <p className="text-red-600">Failed to load expenses</p>
-          <p className="mt-2 text-sm text-neutral-600">{error.message}</p>
+          <p className="text-destructive">Failed to load expenses</p>
+          <p className="text-muted-foreground mt-2 text-sm">{error.message}</p>
         </div>
       </Card>
     );

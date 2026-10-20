@@ -2,8 +2,8 @@ import { useCallback, useState } from "react";
 
 import { useNavigate } from "@tanstack/react-router";
 
-import { ActionMenu } from "@/components/patterns";
 import {
+  ActionMenu,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -12,7 +12,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/patterns";
 import { useUserRole } from "@/hooks";
 import { canTransitionStatus } from "@/lib/bookings";
 import type { Booking, BookingStatus } from "@/types";
@@ -116,7 +116,10 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep booking</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmCancel} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={confirmCancel}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Cancel booking
             </AlertDialogAction>
           </AlertDialogFooter>

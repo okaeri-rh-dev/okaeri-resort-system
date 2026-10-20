@@ -30,50 +30,49 @@ describe("AvailabilityLegend", () => {
       const { container } = render(<AvailabilityLegend />);
 
       // Check for new soft color classes
-      expect(container.querySelector(".bg-emerald-400\\/70")).toBeInTheDocument();
-      expect(container.querySelector(".bg-amber-400\\/70")).toBeInTheDocument();
-      expect(container.querySelector(".bg-orange-400\\/70")).toBeInTheDocument();
-      expect(container.querySelector(".bg-rose-400\\/70")).toBeInTheDocument();
+      expect(container.querySelector(".bg-availability-high")).toBeInTheDocument();
+      expect(container.querySelector(".bg-availability-medium")).toBeInTheDocument();
+      expect(container.querySelector(".bg-availability-low")).toBeInTheDocument();
+      expect(container.querySelector(".bg-muted")).toBeInTheDocument();
     });
   });
 
   describe("Color Coding", () => {
-    it("should associate emerald with full availability", () => {
+    it("should associate the high availability fill with 3 units", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const emeraldIndicator = container.querySelector(".bg-emerald-400\\/70");
-      expect(emeraldIndicator).toBeInTheDocument();
+      const highIndicator = container.querySelector(".bg-availability-high");
+      expect(highIndicator).toBeInTheDocument();
 
-      // Check that emerald is near "3 units"
       const legend = container.textContent;
       expect(legend).toContain("3 units");
     });
 
-    it("should associate amber with moderate availability", () => {
+    it("should associate the medium availability fill with 2 units", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const amberIndicator = container.querySelector(".bg-amber-400\\/70");
-      expect(amberIndicator).toBeInTheDocument();
+      const mediumIndicator = container.querySelector(".bg-availability-medium");
+      expect(mediumIndicator).toBeInTheDocument();
 
       const legend = container.textContent;
       expect(legend).toContain("2 units");
     });
 
-    it("should associate orange with limited availability", () => {
+    it("should associate the low availability fill with 1 unit", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const orangeIndicator = container.querySelector(".bg-orange-400\\/70");
-      expect(orangeIndicator).toBeInTheDocument();
+      const lowIndicator = container.querySelector(".bg-availability-low");
+      expect(lowIndicator).toBeInTheDocument();
 
       const legend = container.textContent;
       expect(legend).toContain("1 unit");
     });
 
-    it("should associate rose with fully booked", () => {
+    it("should associate the hatched muted fill with booked", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const roseIndicator = container.querySelector(".bg-rose-400\\/70");
-      expect(roseIndicator).toBeInTheDocument();
+      const bookedIndicator = container.querySelector(".bg-muted");
+      expect(bookedIndicator).toBeInTheDocument();
 
       const legend = container.textContent;
       expect(legend).toContain("Booked");
@@ -122,7 +121,7 @@ describe("AvailabilityLegend", () => {
       const { container } = render(<AvailabilityLegend />);
 
       // Check for text styling classes
-      const labels = container.querySelectorAll(".text-slate-700.font-medium");
+      const labels = container.querySelectorAll(".text-foreground.font-medium");
       expect(labels.length).toBe(4);
     });
   });
@@ -138,8 +137,8 @@ describe("AvailabilityLegend", () => {
     it("should have proper text contrast for readability", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      // Labels should use slate-700 for good contrast
-      const labels = container.querySelectorAll(".text-slate-700");
+      // Labels should use the foreground token for good contrast
+      const labels = container.querySelectorAll(".text-foreground");
       expect(labels.length).toBe(4); // Main labels
     });
   });
@@ -156,11 +155,11 @@ describe("AvailabilityLegend", () => {
     it("should match color scheme with CalendarGrid", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      // Colors should match those used in CalendarGrid (soft muted palette)
-      expect(container.querySelector(".bg-emerald-400\\/70")).toBeInTheDocument(); // Full
-      expect(container.querySelector(".bg-amber-400\\/70")).toBeInTheDocument(); // Moderate
-      expect(container.querySelector(".bg-orange-400\\/70")).toBeInTheDocument(); // Limited
-      expect(container.querySelector(".bg-rose-400\\/70")).toBeInTheDocument(); // Booked
+      // Colors should match those used in CalendarGrid (availability ramp)
+      expect(container.querySelector(".bg-availability-high")).toBeInTheDocument(); // Full
+      expect(container.querySelector(".bg-availability-medium")).toBeInTheDocument(); // Moderate
+      expect(container.querySelector(".bg-availability-low")).toBeInTheDocument(); // Limited
+      expect(container.querySelector(".bg-muted")).toBeInTheDocument(); // Booked
     });
   });
 
@@ -168,7 +167,7 @@ describe("AvailabilityLegend", () => {
     it("should display items in correct order", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const itemLabels = Array.from(container.querySelectorAll(".text-slate-700.font-medium")).map(
+      const itemLabels = Array.from(container.querySelectorAll(".text-foreground.font-medium")).map(
         (el) => el.textContent
       );
 

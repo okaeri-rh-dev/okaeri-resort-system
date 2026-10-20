@@ -5,18 +5,18 @@ import { useState } from "react";
 import { History, MoreHorizontal, Search, UserX } from "lucide-react";
 
 import { RoleChangeHistory } from "@/components/admin/RoleChangeHistory";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+  Input,
+  Skeleton,
+  StatusBadge,
+} from "@/components/patterns";
 import {
   Table,
   TableBody,
@@ -140,13 +140,9 @@ export function UserRolesTable({ onUpdateRole, onDeactivateRole }: UserRolesTabl
                   </TableCell>
                   <TableCell>
                     {role.is_active ? (
-                      <Badge variant="outline" className="bg-green-500/10 text-green-600">
-                        Active
-                      </Badge>
+                      <StatusBadge tone="success">Active</StatusBadge>
                     ) : (
-                      <Badge variant="outline" className="bg-gray-500/10 text-gray-600">
-                        Inactive
-                      </Badge>
+                      <StatusBadge tone="neutral">Inactive</StatusBadge>
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
@@ -230,17 +226,5 @@ function RoleBadge({ role }: { role: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const displayName = getRoleDisplayName(role as any);
 
-  // Professional enterprise color scheme with high contrast
-  const badgeStyles: Record<string, string> = {
-    admin: "bg-red-500 text-white border-red-500",
-    owner: "bg-purple-500 text-white border-purple-500",
-    manager: "bg-blue-500 text-white border-blue-500",
-    staff: "bg-green-500 text-white border-green-500",
-  };
-
-  const styleClass = badgeStyles[role] || "bg-gray-500 text-white border-gray-500";
-
-  return (
-    <Badge className={`${styleClass} px-2.5 py-0.5 text-xs font-semibold`}>{displayName}</Badge>
-  );
+  return <StatusBadge tone="neutral">{displayName}</StatusBadge>;
 }

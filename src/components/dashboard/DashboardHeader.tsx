@@ -44,7 +44,9 @@ export function DashboardHeader({
       <div className="flex items-center justify-between gap-3">
         <h1 className="min-w-0 truncate text-xl font-bold tracking-tight">{title}</h1>
         <div className="flex shrink-0 items-center gap-1">
-          <span className={cn("text-[11px]", isStale ? "text-amber-600" : "text-muted-foreground")}>
+          <span
+            className={cn("text-xs", isStale ? "text-warning-foreground" : "text-muted-foreground")}
+          >
             {mobileLabel}
           </span>
           <Button
@@ -69,7 +71,9 @@ export function DashboardHeader({
         {subtitle ? <p className="text-muted-foreground">{subtitle}</p> : null}
       </div>
       <div className="flex shrink-0 items-center gap-3">
-        <span className={cn("text-sm", isStale ? "text-amber-600" : "text-muted-foreground")}>
+        <span
+          className={cn("text-sm", isStale ? "text-warning-foreground" : "text-muted-foreground")}
+        >
           {desktopLabel}
         </span>
         <Button

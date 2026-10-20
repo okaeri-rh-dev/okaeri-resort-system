@@ -7,8 +7,11 @@ import {
   HoverCardContent,
   HoverCardPortal,
   HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { formatCurrency, getBookingStatusPriority } from "@/hooks/useCalendarBookings";
+  StatusBadge,
+} from "@/components/patterns";
+import { getBookingStatusPriority } from "@/hooks/useCalendarBookings";
+import { formatCurrency } from "@/lib/formatters";
+import { statusBadgeProps } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
 import type { Booking } from "@/types";
 
@@ -55,19 +58,13 @@ export const BookingTooltip = React.memo(function BookingTooltip({
           a containing block for position:fixed descendants. Without the portal,
           the popover's coordinates are table-relative and move with page scroll. */}
       <HoverCardPortal>
-        <HoverCardContent
-          className="isolate z-50 w-80 bg-white p-3 shadow-lg"
-          align="center"
-          collisionPadding={12}
-        >
+        <HoverCardContent className="isolate z-50 w-80 p-3" align="center" collisionPadding={12}>
           <div className="space-y-3">
             {/* Header */}
-            <div className="border-b border-neutral-200 pb-2">
+            <div className="border-b pb-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-neutral-900">
-                  {format(date, "MMMM d, yyyy")}
-                </span>
-                <span className="text-xs font-medium text-neutral-600">
+                <span className="text-sm font-semibold">{format(date, "MMMM d, yyyy")}</span>
+                <span className="text-muted-foreground text-xs font-medium">
                   {bookings.length} booking{bookings.length !== 1 ? "s" : ""}
                   {totalUnits > bookings.length ? ` (${totalUnits} units)` : ""}
                 </span>
@@ -83,8 +80,8 @@ export const BookingTooltip = React.memo(function BookingTooltip({
 
             {/* More indicator */}
             {remainingCount > 0 && (
-              <div className="border-t border-neutral-200 pt-2">
-                <span className="text-xs font-medium text-neutral-600">
+              <div className="border-t pt-2">
+                <span className="text-muted-foreground text-xs font-medium">
                   +{remainingCount} more booking{remainingCount !== 1 ? "s" : ""}
                 </span>
               </div>
@@ -103,16 +100,8 @@ interface BookingTooltipItemProps {
 const BookingTooltipItem = React.memo(function BookingTooltipItem({
   booking,
 }: BookingTooltipItemProps) {
-  const statusColors = {
-    Confirmed: "bg-blue-50 text-blue-700 border-blue-200",
-    CheckedIn: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    Pending: "bg-slate-50 text-slate-700 border-slate-200",
-    CheckedOut: "bg-violet-50 text-violet-600 border-violet-200",
-    Cancelled: "bg-rose-50 text-rose-700 border-rose-200",
-  };
-
   return (
-    <div className="space-y-1.5 rounded border border-neutral-200 bg-white p-2">
+    <div className="space-y-1.5 rounded border p-2">
       {/* Unit(s) and Status */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
@@ -124,10 +113,8 @@ const BookingTooltipItem = React.memo(function BookingTooltipItem({
                 <span
                   key={bu.booking_unit_id ?? bu.unit_id}
                   className={cn(
-                    "rounded px-1.5 py-0.5 font-mono text-xs font-semibold",
-                    slotConfig
-                      ? cn(slotConfig.bg, slotConfig.text, slotConfig.border, "border")
-                      : "text-neutral-900"
+                    "rounded px-1.5 py-0.5 text-xs font-semibold",
+                    slotConfig && cn(slotConfig.bg, slotConfig.text, slotConfig.border, "border")
                   )}
                 >
                   {unitCode || bu.unit?.unit_name || "—"}
@@ -135,31 +122,23 @@ const BookingTooltipItem = React.memo(function BookingTooltipItem({
               );
             })
           ) : (
-            <span className="font-mono text-xs font-semibold text-neutral-900">—</span>
+            <span className="text-xs font-semibold">—</span>
           )}
-          <span
-            className={cn(
-              "rounded border px-1.5 py-0.5 text-[10px] font-medium",
-              statusColors[booking.booking_status as keyof typeof statusColors] ||
-                statusColors.Pending
-            )}
-          >
-            {booking.booking_status}
-          </span>
+          <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
         </div>
-        <span className="font-mono text-xs font-semibold text-neutral-900 tabular-nums">
+        <span className="text-xs font-semibold tabular-nums">
           {formatCurrency(booking.total_amount)}
         </span>
       </div>
 
       {/* Guest Details */}
       <div className="space-y-0.5">
-        <div className="text-xs font-medium text-neutral-700">{booking.guest_name}</div>
-        <div className="flex items-center gap-3 text-[11px] text-neutral-600">
+        <div className="text-xs font-medium">{booking.guest_name}</div>
+        <div className="text-muted-foreground flex items-center gap-3 text-xs">
           <span>
             {booking.num_guests} guest{booking.num_guests !== 1 ? "s" : ""}
           </span>
-          <span className="text-neutral-400">•</span>
+          <span aria-hidden="true">•</span>
           <span>
             {format(new Date(booking.check_in), "MMM d")} -{" "}
             {format(new Date(booking.check_out), "MMM d")}

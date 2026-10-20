@@ -211,7 +211,7 @@ describe("BookingIndicators", () => {
       const booking = makeBooking({ unitCodes: ["C1"], guestName: "Maria Santos" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const unitCodeSpan = container.querySelector(".font-mono");
+      const unitCodeSpan = container.querySelector("span.hidden");
       expect(unitCodeSpan).toBeInTheDocument();
       expect(unitCodeSpan).toHaveClass("hidden");
       expect(unitCodeSpan).toHaveClass("sm:inline");
@@ -230,41 +230,41 @@ describe("BookingIndicators", () => {
       expect(chip).toHaveClass("text-[clamp(7px,2cqi,10px)]");
     });
 
-    it("applies correct per-unit chip bg/text/border for C1 (blue)", () => {
+    it("applies correct per-unit chip bg/text/border for C1", () => {
       const booking = makeBooking({ unitCodes: ["C1"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const [chip] = getChips(container);
-      expect(chip).toHaveClass("bg-blue-100");
-      expect(chip).toHaveClass("text-blue-800");
-      expect(chip).toHaveClass("border-blue-300");
+      expect(chip).toHaveClass("bg-unit-lane-1");
+      expect(chip).toHaveClass("text-unit-lane-1-foreground");
+      expect(chip).toHaveClass("border-unit-lane-1-accent");
     });
 
-    it("applies correct per-unit chip bg/text/border for C2 (emerald)", () => {
+    it("applies correct per-unit chip bg/text/border for C2", () => {
       const booking = makeBooking({ unitCodes: ["C2"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const [chip] = getChips(container);
-      expect(chip).toHaveClass("bg-emerald-100");
-      expect(chip).toHaveClass("text-emerald-800");
-      expect(chip).toHaveClass("border-emerald-300");
+      expect(chip).toHaveClass("bg-unit-lane-2");
+      expect(chip).toHaveClass("text-unit-lane-2-foreground");
+      expect(chip).toHaveClass("border-unit-lane-2-accent");
     });
 
-    it("applies correct per-unit chip bg/text/border for C3 (amber)", () => {
+    it("applies correct per-unit chip bg/text/border for C3", () => {
       const booking = makeBooking({ unitCodes: ["C3"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const [chip] = getChips(container);
-      expect(chip).toHaveClass("bg-amber-100");
-      expect(chip).toHaveClass("text-amber-800");
-      expect(chip).toHaveClass("border-amber-300");
+      expect(chip).toHaveClass("bg-unit-lane-3");
+      expect(chip).toHaveClass("text-unit-lane-3-foreground");
+      expect(chip).toHaveClass("border-unit-lane-3-accent");
     });
 
-    it("displays the unit code in a font-mono span", () => {
+    it("displays the unit code in its own span", () => {
       const booking = makeBooking({ unitCodes: ["C2"] });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
-      const monoSpan = container.querySelector(".font-mono");
+      const monoSpan = container.querySelector("span.hidden");
       expect(monoSpan).toBeInTheDocument();
       expect(monoSpan).toHaveTextContent("C2");
     });
@@ -295,7 +295,7 @@ describe("BookingIndicators", () => {
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const [chip] = getChips(container);
-      expect(chip).not.toHaveClass("bg-white");
+      expect(chip).not.toHaveClass("bg-card");
       expect(chip).not.toHaveClass("border-dashed");
       expect(chip).not.toHaveClass("opacity-50");
       expect(chip).not.toHaveClass("opacity-30");
@@ -312,29 +312,29 @@ describe("BookingIndicators", () => {
       expect(chip).not.toHaveClass("border-dashed");
     });
 
-    it("applies bg-white, border-2, dashed and amber border/text for Pending (unit-agnostic)", () => {
+    it("applies bg-card, border-2, dashed and lane 3 border/text for Pending (unit-agnostic)", () => {
       const booking = makeBooking({ unitCodes: ["C1"], status: "Pending" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const [chip] = getChips(container);
-      expect(chip).toHaveClass("bg-white");
+      expect(chip).toHaveClass("bg-card");
       expect(chip).toHaveClass("border-2");
       expect(chip).toHaveClass("border-dashed");
-      expect(chip).toHaveClass("border-amber-600");
-      expect(chip).toHaveClass("text-amber-800");
-      expect(chip).not.toHaveClass("border-blue-300");
-      expect(chip).not.toHaveClass("text-blue-800");
+      expect(chip).toHaveClass("border-unit-lane-3-accent");
+      expect(chip).toHaveClass("text-unit-lane-3-foreground");
+      expect(chip).not.toHaveClass("border-unit-lane-1-accent");
+      expect(chip).not.toHaveClass("text-unit-lane-1-foreground");
     });
 
-    it("applies amber Pending styling to a C2 booking (Pending color is unit-agnostic)", () => {
+    it("applies lane 3 Pending styling to a C2 booking (Pending color is unit-agnostic)", () => {
       const booking = makeBooking({ unitCodes: ["C2"], status: "Pending" });
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const [chip] = getChips(container);
-      expect(chip).toHaveClass("border-amber-600");
-      expect(chip).toHaveClass("text-amber-800");
-      expect(chip).not.toHaveClass("border-emerald-300");
-      expect(chip).not.toHaveClass("text-emerald-800");
+      expect(chip).toHaveClass("border-unit-lane-3-accent");
+      expect(chip).toHaveClass("text-unit-lane-3-foreground");
+      expect(chip).not.toHaveClass("border-unit-lane-2-accent");
+      expect(chip).not.toHaveClass("text-unit-lane-2-foreground");
     });
 
     it("still displays the booking's own unit code on a Pending chip (identity preserved)", () => {
@@ -344,8 +344,8 @@ describe("BookingIndicators", () => {
       const { container: c1Container } = render(<BookingIndicators bookings={[c1Booking]} />);
       const { container: c2Container } = render(<BookingIndicators bookings={[c2Booking]} />);
 
-      expect(c1Container.querySelector(".font-mono")).toHaveTextContent("C1");
-      expect(c2Container.querySelector(".font-mono")).toHaveTextContent("C2");
+      expect(c1Container.querySelector("span.hidden")).toHaveTextContent("C1");
+      expect(c2Container.querySelector("span.hidden")).toHaveTextContent("C2");
     });
 
     it("applies opacity-50 for CheckedOut", () => {
@@ -371,7 +371,7 @@ describe("BookingIndicators", () => {
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const [chip] = getChips(container);
-      expect(chip).toHaveClass("bg-white");
+      expect(chip).toHaveClass("bg-card");
       expect(chip).toHaveClass("border-dashed");
     });
   });
@@ -419,7 +419,7 @@ describe("BookingIndicators", () => {
       ];
       const { container } = render(<BookingIndicators bookings={bookings} />);
 
-      const monoSpans = container.querySelectorAll(".font-mono");
+      const monoSpans = container.querySelectorAll("span.hidden");
       const nameSpans = container.querySelectorAll(".font-sans.truncate");
 
       // C1 slot: Bob (CheckedIn > Pending)
@@ -470,9 +470,9 @@ describe("BookingIndicators", () => {
       const { container } = render(<BookingIndicators bookings={[booking]} />);
 
       const chips = getChips(container);
-      // First chip should be C1 (blue), second should be C3 (amber)
-      expect(chips[0]).toHaveClass("bg-blue-100");
-      expect(chips[1]).toHaveClass("bg-amber-100");
+      // First chip should be C1, second should be C3
+      expect(chips[0]).toHaveClass("bg-unit-lane-1");
+      expect(chips[1]).toHaveClass("bg-unit-lane-3");
     });
   });
 
@@ -484,7 +484,7 @@ describe("BookingIndicators", () => {
 
       const chips = getChips(container);
       expect(chips).toHaveLength(1);
-      expect(chips[0]).toHaveClass("bg-blue-100");
+      expect(chips[0]).toHaveClass("bg-unit-lane-1");
     });
 
     it("should handle bu.unit being null/undefined", () => {
@@ -499,7 +499,7 @@ describe("BookingIndicators", () => {
 
       const chips = getChips(container);
       expect(chips).toHaveLength(1);
-      expect(chips[0]).toHaveClass("bg-emerald-100");
+      expect(chips[0]).toHaveClass("bg-unit-lane-2");
     });
 
     it("should merge className prop onto the container", () => {
@@ -564,8 +564,8 @@ describe("BookingCountBadge", () => {
 
     expect(badge).toHaveClass("absolute");
     expect(badge).toHaveClass("rounded-full");
-    expect(badge).toHaveClass("bg-blue-600");
-    expect(badge).toHaveClass("text-white");
+    expect(badge).toHaveClass("bg-primary");
+    expect(badge).toHaveClass("text-primary-foreground");
     expect(badge).toHaveClass("font-bold");
   });
 

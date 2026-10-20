@@ -25,7 +25,7 @@ interface DashboardCalendarProps {
 // Uniform subtle tint for any day with bookings (avoids competing with unit chip colors)
 function getDayBackgroundClass(bookingCount: number): string {
   if (bookingCount === 0) return "";
-  return "bg-slate-50/60 hover:bg-slate-100/60";
+  return "bg-muted hover:bg-accent";
 }
 
 // Extracted DayButton component for better performance
@@ -62,18 +62,17 @@ const DayButton = React.memo(function DayButton({
           "relative h-20 w-full text-sm font-normal sm:h-24 md:h-28",
           compact ? "p-0.5" : "p-1",
           "min-w-0", // Allow shrinking below content size
-          "transition-all duration-150",
+          "transition-colors duration-150",
           // Base weekend styling (only if no bookings)
-          isWeekend && dayBookings.length === 0 && !isToday && "bg-slate-50/50",
+          isWeekend && dayBookings.length === 0 && !isToday && "bg-muted/60",
           // Booking count-based colors
           bookingCountClass,
           // Today special styling (overrides other backgrounds)
           isToday &&
-            "border border-blue-300 bg-blue-100 font-semibold text-blue-900 hover:bg-blue-200",
+            "border-primary bg-accent text-accent-foreground hover:bg-accent border font-semibold",
           // Make text bolder when there are bookings
           dayBookings.length > 0 && "font-medium",
-          // Outside month dates - reduce opacity but not for the button itself
-          isOutsideMonth && "opacity-40 hover:opacity-60"
+          isOutsideMonth && "text-muted-foreground"
         )}
         aria-label={`${format(date, "MMMM d, yyyy")}${
           dayBookings.length > 0
@@ -82,9 +81,7 @@ const DayButton = React.memo(function DayButton({
         }`}
       >
         <div className="flex h-full w-full min-w-0 flex-col items-center justify-start overflow-hidden">
-          <span className={cn("text-xs font-medium sm:text-sm", isToday && "text-blue-900")}>
-            {format(date, "d")}
-          </span>
+          <span className="text-xs font-medium sm:text-sm">{format(date, "d")}</span>
           {dayBookings.length > 0 && (
             <BookingIndicators
               bookings={dayBookings}
@@ -114,15 +111,15 @@ function RowHeader({
   onToday,
 }: CalendarHeaderProps) {
   return (
-    <CardHeader className="rounded-t-lg bg-gradient-to-r from-slate-50 to-blue-50/30 pb-3">
+    <CardHeader className="pb-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <CardTitle className="flex items-center gap-2 text-xl font-semibold">
-            <CalendarDays className="size-5 text-blue-600" />
-            <span className="text-slate-800">Booking Calendar</span>
+            <CalendarDays className="text-primary size-5" aria-hidden="true" />
+            <span>Booking Calendar</span>
           </CardTitle>
           {monthlyBookingCount > 0 && (
-            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-sm font-medium text-slate-600">
+            <span className="bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-sm font-medium">
               {monthlyBookingCount} booking{monthlyBookingCount !== 1 ? "s" : ""} this month
             </span>
           )}
@@ -148,10 +145,8 @@ function RowHeader({
             >
               <ChevronLeft className="size-4" />
             </Button>
-            <div className="min-w-[140px] rounded-md border border-slate-200 bg-white px-3 py-1 text-center">
-              <span className="text-sm font-semibold text-slate-800">
-                {format(currentMonth, "MMMM yyyy")}
-              </span>
+            <div className="border-border bg-background min-w-[140px] rounded-md border px-3 py-1 text-center">
+              <span className="text-sm font-semibold">{format(currentMonth, "MMMM yyyy")}</span>
             </div>
             <Button
               variant="ghost"
@@ -171,7 +166,7 @@ function RowHeader({
 
 export function StackedHeader({ currentMonth, onPrev, onNext }: CalendarHeaderProps) {
   return (
-    <CardHeader className="rounded-t-lg bg-gradient-to-r from-slate-50 to-blue-50/30 px-3 py-2">
+    <CardHeader className="px-3 py-2">
       <div className="flex items-center justify-between">
         <Button
           variant="ghost"
@@ -184,7 +179,7 @@ export function StackedHeader({ currentMonth, onPrev, onNext }: CalendarHeaderPr
         </Button>
         <span
           aria-live="polite"
-          className="min-w-0 truncate px-3 text-base font-semibold text-slate-800 tabular-nums"
+          className="min-w-0 truncate px-3 text-base font-semibold tabular-nums"
         >
           {format(currentMonth, "MMMM yyyy")}
         </span>
@@ -271,7 +266,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
       <CardContent className={cn("pt-0", headerVariant === "stacked" ? "p-0" : "p-4")}>
         {isLoading ? (
           <div className="flex h-[480px] items-center justify-center">
-            <div className="text-sm text-neutral-600">Loading calendar...</div>
+            <div className="text-muted-foreground text-sm">Loading calendar...</div>
           </div>
         ) : (
           <Calendar
@@ -295,7 +290,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
                 "w-full table-fixed border-collapse space-y-1 [container-type:inline-size]", // renamed from 'table'; table-fixed prevents the table from growing beyond its declared width
               weekdays: "flex w-full", // renamed from 'head_row'
               weekday:
-                "text-slate-600 rounded-md min-w-0 flex-1 font-medium text-[11px] uppercase tracking-wider", // renamed from 'head_cell'
+                "text-muted-foreground rounded-md min-w-0 flex-1 font-medium text-xs uppercase tracking-wider", // renamed from 'head_cell'
               week: "flex w-full mt-1", // renamed from 'row'
               day: cn(
                 "relative h-20 sm:h-24 md:h-28 min-w-0 flex-1 p-0 text-center text-sm",
@@ -311,8 +306,8 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
               selected:
                 "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground", // renamed from 'day_selected'
               today: "bg-accent/50 text-accent-foreground font-semibold", // renamed from 'day_today'
-              outside: "text-neutral-400 opacity-50", // renamed from 'day_outside'
-              disabled: "text-neutral-400 opacity-50", // renamed from 'day_disabled'
+              outside: "text-muted-foreground", // renamed from 'day_outside'
+              disabled: "text-muted-foreground opacity-50", // renamed from 'day_disabled'
               range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground", // renamed from 'day_range_middle'
               hidden: "invisible", // renamed from 'day_hidden'
             }}

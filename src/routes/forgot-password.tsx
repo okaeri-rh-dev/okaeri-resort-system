@@ -18,7 +18,7 @@ export const Route = createFileRoute("/forgot-password")({
 function ForgotPasswordPage() {
   return (
     <ErrorBoundary level="page">
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <div className="bg-background flex min-h-screen items-center justify-center p-4">
         <ForgotPasswordForm />
       </div>
     </ErrorBoundary>

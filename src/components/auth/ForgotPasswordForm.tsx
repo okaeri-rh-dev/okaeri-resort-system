@@ -2,12 +2,16 @@ import { useRef, useState } from "react";
 
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { Link } from "@tanstack/react-router";
-import { AlertCircle } from "lucide-react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import {
+  Button,
+  Callout,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+} from "@/components/patterns";
 
 /**
  * Forgot Password Form Component
@@ -84,10 +88,10 @@ export function ForgotPasswordForm() {
           <CardTitle className="text-2xl font-bold">Check Your Email</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-center text-gray-600">
+          <p className="text-muted-foreground text-center">
             If an account with that email exists, you will receive a password reset link shortly.
           </p>
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-muted-foreground text-center text-sm">
             Didn't receive an email? Check your spam folder or try again in a few minutes.
           </p>
           <div className="flex flex-col gap-2 pt-4">
@@ -110,7 +114,7 @@ export function ForgotPasswordForm() {
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Enter your email address and we'll send you a link to reset your password.
         </p>
       </CardHeader>
@@ -135,12 +139,9 @@ export function ForgotPasswordForm() {
           {/* Turnstile Widget */}
           <div className="flex justify-center">
             {shouldSkipTurnstile ? (
-              <Alert className="border-amber-500/50 bg-amber-50 text-amber-900">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Development Mode:</strong> Security verification disabled.
-                </AlertDescription>
-              </Alert>
+              <Callout tone="warning">
+                <strong>Development Mode:</strong> Security verification disabled.
+              </Callout>
             ) : (
               <Turnstile
                 ref={turnstileRef}

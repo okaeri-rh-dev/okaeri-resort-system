@@ -18,7 +18,7 @@ export const Route = createFileRoute("/sign-up")({
 function SignUpPage() {
   return (
     <ErrorBoundary level="page">
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <div className="bg-background flex min-h-screen items-center justify-center p-4">
         <div className="w-full max-w-md">
           <ErrorBoundary level="component">
             <SignUpForm />

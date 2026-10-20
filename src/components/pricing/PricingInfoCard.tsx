@@ -78,7 +78,7 @@ export const PricingInfoCard: React.FC<PricingInfoCardProps> = ({ onEdit, readOn
   }
 
   return (
-    <Card className="border-neutral-200">
+    <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold">Current Pricing Configuration</CardTitle>
@@ -96,7 +96,7 @@ export const PricingInfoCard: React.FC<PricingInfoCardProps> = ({ onEdit, readOn
           {/* Base Rate */}
           <div className="space-y-1">
             <p className="text-muted-foreground text-sm">Base Rate</p>
-            <p className="font-mono text-lg font-semibold text-green-600 tabular-nums">
+            <p className="text-foreground text-lg font-semibold tabular-nums">
               {formatCurrency(pricing.base_rate)}
               <span className="text-muted-foreground text-sm font-normal">/night</span>
             </p>
@@ -105,7 +105,7 @@ export const PricingInfoCard: React.FC<PricingInfoCardProps> = ({ onEdit, readOn
           {/* Weekend Rate */}
           <div className="space-y-1">
             <p className="text-muted-foreground text-sm">Weekend Rate</p>
-            <p className="font-mono text-lg font-semibold text-blue-600 tabular-nums">
+            <p className="text-foreground text-lg font-semibold tabular-nums">
               {formatCurrency(pricing.weekend_rate)}
               <span className="text-muted-foreground text-sm font-normal">/night</span>
             </p>
@@ -114,7 +114,7 @@ export const PricingInfoCard: React.FC<PricingInfoCardProps> = ({ onEdit, readOn
           {/* Extra Person */}
           <div className="space-y-1">
             <p className="text-muted-foreground text-sm">Extra Person</p>
-            <p className="font-mono text-lg font-semibold text-orange-600 tabular-nums">
+            <p className="text-foreground text-lg font-semibold tabular-nums">
               {formatCurrency(pricing.extra_person_rate)}
               <span className="text-muted-foreground text-sm font-normal">/night</span>
             </p>
@@ -122,7 +122,7 @@ export const PricingInfoCard: React.FC<PricingInfoCardProps> = ({ onEdit, readOn
         </div>
 
         {/* Capacity & Payment Terms */}
-        <div className="border-t border-neutral-100 pt-3">
+        <div className="border-border border-t pt-3">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             {/* Base Occupancy */}
             <div className="space-y-1">
@@ -158,7 +158,7 @@ export const PricingInfoCard: React.FC<PricingInfoCardProps> = ({ onEdit, readOn
         </div>
 
         {/* Info Footer */}
-        <p className="text-muted-foreground border-t border-neutral-100 pt-3 text-xs">
+        <p className="text-muted-foreground border-border border-t pt-3 text-xs">
           These rates are used for all booking calculations. Weekend rates apply to Friday and
           Saturday nights. Extra person fees apply to guests beyond base occupancy.
         </p>

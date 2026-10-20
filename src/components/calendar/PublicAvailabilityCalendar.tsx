@@ -21,10 +21,9 @@ import { useState } from "react";
 
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { isAfter, max } from "date-fns";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Info, Loader2 } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, Callout } from "@/components/patterns";
 import {
   getMonthEnd,
   getMonthStart,
@@ -166,13 +165,13 @@ export function PublicAvailabilityCalendar() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex h-96 flex-col items-center justify-center rounded-lg bg-white p-8 shadow-lg">
+      <div className="bg-card shadow-card flex h-96 flex-col items-center justify-center rounded-lg p-8">
         <Loader2
-          className="mb-4 h-12 w-12 animate-spin text-blue-600"
+          className="text-primary mb-4 h-12 w-12 animate-spin"
           role="progressbar"
           aria-label="Loading calendar"
         />
-        <p className="text-gray-600">Loading availability calendar...</p>
+        <p className="text-muted-foreground">Loading availability calendar...</p>
       </div>
     );
   }
@@ -180,15 +179,12 @@ export function PublicAvailabilityCalendar() {
   // Error state
   if (error) {
     return (
-      <Alert variant="destructive" className="mx-auto max-w-2xl">
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          Failed to load availability data. Please try refreshing the page.
-          {error instanceof Error && (
-            <span className="mt-2 block text-sm opacity-75">Error: {error.message}</span>
-          )}
-        </AlertDescription>
-      </Alert>
+      <Callout tone="danger" className="mx-auto max-w-2xl">
+        Failed to load availability data. Please try refreshing the page.
+        {error instanceof Error && (
+          <span className="mt-2 block text-sm">Error: {error.message}</span>
+        )}
+      </Callout>
     );
   }
 
@@ -210,22 +206,22 @@ export function PublicAvailabilityCalendar() {
   const isNextMonthValid = validateMonth(nextMonth).valid;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200/80 bg-white">
+    <div className="border-border bg-card overflow-hidden rounded-lg border">
       {/* Calendar Header with Title - Clean White with Border */}
-      <div className="border-b border-slate-200 bg-slate-50">
+      <div className="border-border bg-muted border-b">
         {/* Title Row */}
-        <div className="border-b border-slate-200/50 px-4 pt-2.5 pb-2">
+        <div className="border-border border-b px-4 pt-2.5 pb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5 text-slate-600" />
-              <h1 className="text-lg font-semibold text-slate-800">Okaeri Availability</h1>
+              <CalendarIcon className="text-muted-foreground h-5 w-5" />
+              <h1 className="text-foreground text-lg font-semibold">Okaeri Availability</h1>
             </div>
-            <span className="text-xs text-slate-600">3 Cabins</span>
+            <span className="text-muted-foreground text-xs">3 Cabins</span>
           </div>
         </div>
 
         {/* Month Navigation - Compact */}
-        <div className="bg-white px-4 py-2">
+        <div className="bg-card px-4 py-2">
           <div className="flex items-center justify-between">
             {/* Previous Month Button */}
             <Button
@@ -233,7 +229,7 @@ export function PublicAvailabilityCalendar() {
               disabled={!isPrevMonthValid}
               variant="ghost"
               size="sm"
-              className="text-slate-700 hover:bg-slate-100 disabled:opacity-30"
+              className="text-foreground"
               aria-label="Previous month"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -241,9 +237,9 @@ export function PublicAvailabilityCalendar() {
 
             {/* Current Month Display */}
             <div className="text-center">
-              <h2 className="text-xl font-bold text-slate-800">{monthName}</h2>
+              <h2 className="text-foreground text-xl font-bold">{monthName}</h2>
               {isFetching && (
-                <span className="mt-1 flex items-center justify-center gap-1 text-xs text-slate-600">
+                <span className="text-muted-foreground mt-1 flex items-center justify-center gap-1 text-xs">
                   <Loader2 className="h-3 w-3 animate-spin" />
                   Updating...
                 </span>
@@ -256,7 +252,7 @@ export function PublicAvailabilityCalendar() {
               disabled={!isNextMonthValid}
               variant="ghost"
               size="sm"
-              className="text-slate-700 hover:bg-slate-100 disabled:opacity-30"
+              className="text-foreground"
               aria-label="Next month"
             >
               <ChevronRight className="h-5 w-5" />
@@ -268,7 +264,7 @@ export function PublicAvailabilityCalendar() {
             onClick={goToToday}
             variant="secondary"
             size="sm"
-            className="mt-1.5 h-7 w-full border border-slate-200 bg-slate-100 text-sm text-slate-700 hover:bg-slate-200"
+            className="border-border mt-1.5 h-7 w-full border text-sm"
           >
             Today
           </Button>
@@ -276,7 +272,7 @@ export function PublicAvailabilityCalendar() {
       </div>
 
       {/* Legend - More Compact */}
-      <div className="border-b border-slate-200/80 px-4 py-2">
+      <div className="border-border border-b px-4 py-2">
         <AvailabilityLegend />
       </div>
 
@@ -297,8 +293,8 @@ export function PublicAvailabilityCalendar() {
       </div>
 
       {/* Last Updated Timestamp - Minimal Footer */}
-      <div className="border-t border-slate-200/80 bg-slate-50/50 px-4 py-2 text-center">
-        <p className="text-xs text-slate-600">
+      <div className="border-border bg-muted border-t px-4 py-2 text-center">
+        <p className="text-muted-foreground text-xs">
           Updated{" "}
           {new Date(data.metadata.generatedAt).toLocaleString("en-US", {
             month: "short",

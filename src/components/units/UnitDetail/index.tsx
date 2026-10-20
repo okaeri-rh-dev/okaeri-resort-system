@@ -103,29 +103,29 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
               </p>
 
               {pricingConfig && (
-                <div className="mt-4 space-y-2 rounded-md border border-neutral-200 bg-neutral-50 p-4">
-                  <p className="text-sm font-medium text-neutral-700">Current Global Rates:</p>
+                <div className="border-border bg-muted mt-4 space-y-2 rounded-md border p-4">
+                  <p className="text-foreground text-sm font-medium">Current Global Rates:</p>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                     <div>
-                      <p className="text-xs text-neutral-500">Base Rate (Weekdays)</p>
-                      <p className="font-mono text-base font-semibold text-neutral-900">
+                      <p className="text-muted-foreground text-xs">Base Rate (Weekdays)</p>
+                      <p className="text-foreground text-base font-semibold tabular-nums">
                         {formatCurrency(pricingConfig.base_rate)}
                       </p>
-                      <p className="text-xs text-neutral-500">per night</p>
+                      <p className="text-muted-foreground text-xs">per night</p>
                     </div>
                     <div>
-                      <p className="text-xs text-neutral-500">Weekend Rate</p>
-                      <p className="font-mono text-base font-semibold text-neutral-900">
+                      <p className="text-muted-foreground text-xs">Weekend Rate</p>
+                      <p className="text-foreground text-base font-semibold tabular-nums">
                         {formatCurrency(pricingConfig.weekend_rate)}
                       </p>
-                      <p className="text-xs text-neutral-500">Fri-Sat per night</p>
+                      <p className="text-muted-foreground text-xs">Fri-Sat per night</p>
                     </div>
                     <div>
-                      <p className="text-xs text-neutral-500">Extra Person Rate</p>
-                      <p className="font-mono text-base font-semibold text-neutral-900">
+                      <p className="text-muted-foreground text-xs">Extra Person Rate</p>
+                      <p className="text-foreground text-base font-semibold tabular-nums">
                         {formatCurrency(pricingConfig.extra_person_rate)}
                       </p>
-                      <p className="text-xs text-neutral-500">per person per night</p>
+                      <p className="text-muted-foreground text-xs">per person per night</p>
                     </div>
                   </div>
                 </div>
@@ -151,7 +151,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
             {unit.amenities.map((amenity, index) => (
               <span
                 key={index}
-                className="inline-flex items-center rounded-md border border-neutral-200 bg-neutral-100 px-3 py-1 text-sm font-medium text-neutral-700"
+                className="border-border bg-muted text-foreground inline-flex items-center rounded-md border px-3 py-1 text-sm font-medium"
               >
                 {amenity}
               </span>
@@ -167,7 +167,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
             {unit.bookings.map((booking) => (
               <div
                 key={booking.booking_id}
-                className="flex flex-col rounded-md border border-neutral-200 bg-neutral-50 p-4 md:flex-row md:items-center md:justify-between"
+                className="border-border bg-muted flex flex-col rounded-md border p-4 md:flex-row md:items-center md:justify-between"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -178,16 +178,16 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
                     />
                     <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
                   </div>
-                  <p className="text-sm text-neutral-600">
+                  <p className="text-muted-foreground text-sm">
                     {formatTableDate(booking.check_in)} - {formatTableDate(booking.check_out)}
                   </p>
-                  <p className="text-sm text-neutral-600">{booking.guest_name}</p>
+                  <p className="text-muted-foreground text-sm">{booking.guest_name}</p>
                 </div>
                 <div className="mt-2 text-right md:mt-0">
-                  <p className="font-mono text-lg font-semibold text-neutral-900">
+                  <p className="text-foreground text-lg font-semibold tabular-nums">
                     {formatCurrency(booking.total_amount)}
                   </p>
-                  <p className="text-sm text-neutral-600">{booking.num_guests} guests</p>
+                  <p className="text-muted-foreground text-sm">{booking.num_guests} guests</p>
                 </div>
               </div>
             ))}

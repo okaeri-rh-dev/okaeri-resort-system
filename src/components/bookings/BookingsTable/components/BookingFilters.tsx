@@ -2,16 +2,18 @@ import React, { useState } from "react";
 
 import { CalendarDays, Download } from "lucide-react";
 
-import { FilterBar, FilterPopover, TableSearch } from "@/components/patterns";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
+  Button,
+  FilterBar,
+  FilterPopover,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+  TableSearch,
+} from "@/components/patterns";
+import { Calendar } from "@/components/ui/calendar";
 import { pickedDay } from "@/lib/bookings";
 import type { BookingStatus, PaymentStatus } from "@/types";
 
@@ -230,33 +232,31 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
     );
 
   return (
-    <div className="border-b bg-neutral-50 p-4">
-      <FilterBar
-        search={
-          <TableSearch
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search bookings..."
-          />
-        }
-        filters={
-          <>
-            <StatusFilter />
-            <PaymentFilter />
-            <WalkInFilter />
-            <DateFilter />
-          </>
-        }
-        activeFilterCount={activeFilterCount()}
-        onClearFilters={hasActiveFilters() ? resetFilters : undefined}
-        summary={<ResultCount />}
-        actions={
-          <Button variant="outline" size="sm" onClick={onExport}>
-            <Download className="mr-1 h-3 w-3" />
-            Export CSV
-          </Button>
-        }
-      />
-    </div>
+    <FilterBar
+      search={
+        <TableSearch
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search bookings..."
+        />
+      }
+      filters={
+        <>
+          <StatusFilter />
+          <PaymentFilter />
+          <WalkInFilter />
+          <DateFilter />
+        </>
+      }
+      activeFilterCount={activeFilterCount()}
+      onClearFilters={hasActiveFilters() ? resetFilters : undefined}
+      summary={<ResultCount />}
+      actions={
+        <Button variant="outline" size="sm" onClick={onExport}>
+          <Download className="mr-1 h-3 w-3" />
+          Export CSV
+        </Button>
+      }
+    />
   );
 };

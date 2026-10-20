@@ -20,13 +20,13 @@ export function LoginScreen({ redirectTo, registered, confirmed }: LoginScreenPr
 
   return (
     <ErrorBoundary level="page">
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="bg-background flex min-h-screen items-center justify-center">
         <div className="w-full max-w-md space-y-8">
           <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            <h2 className="text-foreground mt-6 text-center text-3xl font-extrabold">
               Okaeri Resort System
             </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
+            <p className="text-muted-foreground mt-2 text-center text-sm">
               Sign in to access the resort management dashboard
             </p>
           </div>
