@@ -21,8 +21,8 @@ Not measured: the globalSetup `supabase stop/start` path when Supabase is down, 
 - [x] 4. Move every `.tsbuildinfo` from `node_modules/.cache/` to `.cache/tsc/` in the checkout (already gitignored): `.husky/pre-commit`, `functions/tsconfig.json`, `tsconfig.e2e.json`, `tsconfig.tests.json`, `tsconfig.eslint.json`, `scripts/claude/stop-check.mjs`.
 - [x] 5. `.husky/pre-commit`: delete the warning-only greps (sensitive patterns, `console.log`, TODO/FIXME). Keep the blocking debugger and >1 MB checks.
 - [x] 6. `.husky/pre-push`: remove type-aware ESLint; run `vitest run --changed <base>` where base = `@{upstream}` if set, else `origin/main`, else full suite.
-- [ ] 7. GitHub: set `allow_auto_merge: true`.
-- [ ] 8. GitHub: "protect main" ruleset covers `main` and `design/foundations`; add required status checks Lint, Type-check, Unit tests, Knip; add repo-admin bypass in `pull_request` mode.
+- [x] 7. GitHub: set `allow_auto_merge: true`.
+- [x] 8. GitHub: "protect main" ruleset covers `main` and `design/foundations`; add required status checks Lint, Type-check, Unit tests, Knip; add repo-admin bypass in `pull_request` mode.
 - [x] 9. CLAUDE.md: update the pre-push description (affected unit tests only; type-aware lint runs in CI), keep the long-timeout push rule, add "merge with `gh pr merge --auto --merge`".
 - [ ] 10. Verify: time pre-commit and pre-push end to end (warm, and from a worktree), run `npm run verify`, open a PR and confirm auto-merge waits for the required checks.
 
@@ -39,3 +39,12 @@ Not measured: the globalSetup `supabase stop/start` path when Supabase is down, 
 - Admin bypass in `pull_request` mode only — hotfixes go through a PR; direct pushes still need checks.
 - Auto-merge uses merge commits — matches existing history.
 - Keep the "never push at the 2-min default" rule in CLAUDE.md — a full vitest run under load can still take minutes.
+
+## Verification (2026-10-20)
+
+- `npm run verify` exit 0: 147 test files passed, 1 skipped.
+- tsc chain with `.cache/tsc/`: 17.5 s cold, 4.75 s warm.
+- Pre-push, test-infra diff → full suite: 127 files passed, 44.6 s wall at load average ~50 on 12 cores.
+- Pre-push, docs-only diff → "No test files found, exiting with code 0".
+- Ruleset read back: required checks Lint, Type-check, Unit tests, Knip (dead code), strict false. Bypass actors are hidden from the non-admin token; set in the UI by the owner.
+- Not verified: hook timing from a worktree, the globalSetup restart path with Supabase down (now skipped by pre-push).
