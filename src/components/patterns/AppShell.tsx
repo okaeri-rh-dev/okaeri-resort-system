@@ -1,25 +1,13 @@
 import { useState, type ReactNode } from "react";
 
 import { Link } from "@tanstack/react-router";
-import {
-  CircleUser,
-  Menu,
-  Monitor,
-  Moon,
-  MoreHorizontal,
-  Sun,
-  type LucideIcon,
-} from "lucide-react";
+import { CircleUser, Menu, MoreHorizontal, type LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -55,13 +43,6 @@ export interface ShellAction {
   onSelect: () => void;
 }
 
-export type ThemeSetting = "light" | "dark" | "system";
-
-export interface ShellTheme {
-  value: ThemeSetting;
-  onChange: (value: ThemeSetting) => void;
-}
-
 export interface ShellBrand {
   name: string;
   tagline?: string;
@@ -76,8 +57,6 @@ export interface AppShellProps {
   destinations: ShellDestination[];
   /** Account-level commands such as Sign Out (admin only). */
   actions?: ShellAction[];
-  /** The light / dark / system setting: in the account menu and rail (admin), the top bar (guest). */
-  theme?: ShellTheme;
   /** Shows a placeholder nav while the destinations are still unknown. */
   navLoading?: boolean;
   /** Rendered above the content as the page's `h1`. */
@@ -106,7 +85,6 @@ export interface AppShellProps {
  *   brand={{ name: "Okaeri Resort", to: "/admin/dashboard" }}
  *   destinations={destinations}
  *   actions={[{ label: "Sign Out", icon: LogOut, onSelect: signOut }]}
- *   theme={{ value: theme, onChange: setTheme }}
  * >
  *   <Outlet />
  * </AppShell>
@@ -203,35 +181,6 @@ function matchOptions(destination: ShellDestination) {
   return { exact: destination.exact ?? false };
 }
 
-const themeOptions: { value: ThemeSetting; label: string; icon: LucideIcon }[] = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "System", icon: Monitor },
-];
-
-function themeIcon(value: ThemeSetting) {
-  return themeOptions.find((option) => option.value === value)?.icon ?? Monitor;
-}
-
-function ThemeRadioItems({ theme }: { theme: ShellTheme }) {
-  return (
-    <>
-      <DropdownMenuLabel>Theme</DropdownMenuLabel>
-      <DropdownMenuRadioGroup
-        value={theme.value}
-        onValueChange={(value) => theme.onChange(value as ThemeSetting)}
-      >
-        {themeOptions.map(({ value, label, icon: Icon }) => (
-          <DropdownMenuRadioItem key={value} value={value} className="gap-2">
-            <Icon className="size-4" aria-hidden="true" />
-            {label}
-          </DropdownMenuRadioItem>
-        ))}
-      </DropdownMenuRadioGroup>
-    </>
-  );
-}
-
 function ActionButtons({
   actions,
   form,
@@ -300,7 +249,6 @@ function AdminShell({
   brand,
   destinations,
   actions = [],
-  theme,
   navLoading,
   banner,
   ...content
@@ -315,7 +263,7 @@ function AdminShell({
         <Link to={brand.to} className="font-display text-foreground text-lg font-bold">
           {brand.name}
         </Link>
-        {(actions.length > 0 || theme) && (
+        {actions.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Account menu">
@@ -323,8 +271,6 @@ function AdminShell({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {theme && <ThemeRadioItems theme={theme} />}
-              {theme && actions.length > 0 && <DropdownMenuSeparator />}
               {actions.map(({ label, icon, onSelect }) => (
                 <DropdownMenuItem key={label} onSelect={onSelect}>
                   <ItemLabel form="dropdown" icon={icon} label={label} />
@@ -400,18 +346,8 @@ function AdminShell({
           )}
         </nav>
 
-        {(actions.length > 0 || theme) && (
+        {actions.length > 0 && (
           <div className="border-sidebar-border medium:flex large:px-4 hidden flex-col gap-1 border-t p-2">
-            {theme && (
-              <DropdownMenu>
-                <DropdownMenuTrigger className={railItem}>
-                  <ItemLabel form="rail" icon={themeIcon(theme.value)} label="Theme" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="right" align="end">
-                  <ThemeRadioItems theme={theme} />
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
             <ActionButtons actions={actions} form="rail" className={railItem} />
           </div>
         )}
@@ -462,7 +398,7 @@ const topBarLink = cn(
   "data-[status=active]:bg-accent data-[status=active]:text-accent-foreground"
 );
 
-function GuestShell({ brand, destinations, theme, banner, ...content }: AppShellProps) {
+function GuestShell({ brand, destinations, banner, ...content }: AppShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -472,7 +408,7 @@ function GuestShell({ brand, destinations, theme, banner, ...content }: AppShell
           <Link to={brand.to} className="font-display text-foreground text-lg font-bold">
             {brand.name}
           </Link>
-          <nav aria-label="Main" className="medium:block ml-auto hidden">
+          <nav aria-label="Main" className="medium:block hidden">
             <ul className="flex items-center gap-1">
               {destinations.map((destination) => (
                 <li key={destination.to}>
@@ -487,18 +423,15 @@ function GuestShell({ brand, destinations, theme, banner, ...content }: AppShell
               ))}
             </ul>
           </nav>
-          <div className="flex items-center gap-1">
-            {theme && <GuestThemeMenu theme={theme} />}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMenuOpen(true)}
-              aria-label="Open menu"
-              className="medium:hidden"
-            >
-              <Menu className="size-5" aria-hidden="true" />
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Open menu"
+            className="medium:hidden"
+          >
+            <Menu className="size-5" aria-hidden="true" />
+          </Button>
         </div>
       </header>
 
@@ -524,21 +457,5 @@ function GuestShell({ brand, destinations, theme, banner, ...content }: AppShell
         </SheetContent>
       </Sheet>
     </div>
-  );
-}
-
-function GuestThemeMenu({ theme }: { theme: ShellTheme }) {
-  const Icon = themeIcon(theme.value);
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Theme">
-          <Icon className="size-5" aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <ThemeRadioItems theme={theme} />
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }

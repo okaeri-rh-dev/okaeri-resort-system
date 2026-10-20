@@ -47,7 +47,7 @@ Navigation per class:
 | Admin   | Bottom bar: Dashboard, Bookings, Booking Queue, Payments, More (opens the modal rail). Roles with ≤5 destinations get no More. | Collapsed rail; groups open a flyout | Expanded rail with labels |
 | Guest   | Top bar with a menu sheet                                                                                                      | Top bar with inline links            | (centred at max width)    |
 
-The theme setting (light / dark / system) is in the account menu on compact admin, at the foot of the rail from medium, and as an icon menu in the guest top bar. The rail and the menu sheets scroll as one column when the window is short.
+The rail and the menu sheets scroll as one column when the window is short.
 
 Pane layouts:
 
