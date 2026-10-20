@@ -46,8 +46,6 @@ Current entries:
 
 - **Supabase CLI output parsing** — helper scripts that regex `supabase status` human output break on CLI upgrades (bit household-hub at v2.105.0). Any new script must use `supabase status -o env` (machine-readable) instead. Known-good CLI version at last check: v2.101.0.
 - **Vitest global setup stops Supabase** — `src/test/global-setup.ts` runs `supabase stop` then `supabase start` when its DB check fails, so parallel vitest runs (subagents, worktrees, other sessions) race and leave the shared stack down. Workaround: run one vitest at a time; afterwards check `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:54321/rest/v1/` is 200, else `supabase start` from the main checkout.
-- **Storage upload `42P10` in `payments-module.test.ts`** (3 tests) and the E2E `rls-role-smoke` "staff can … upload a payment proof" (no payment row). Seen 2026-10-20 after `supabase start` restored the DB "from backup"; fails on the base branch too. Likely a storage schema mismatch. Workaround: treat as pre-existing; a `supabase db reset` probably clears it, but ask before resetting the shared DB.
-- **E2E `public-booking` "contact form inputs accessible on mobile" reads 14px** (fails on `design/foundations` at a6c995c). Inputs are `text-sm coarse:text-base` (DESIGN.md: 16px under a coarse pointer), and the chromium project emulates a phone width without a coarse pointer. Workaround: treat as pre-existing; fix the test's emulation (or the rule) before the #61 release.
 - **`supabase gen types --local` fails password auth** (CLI v2.109.1: `password authentication failed for user "postgres"`; v2.119.0 exits 1 with no message). Workaround: `npm run gen:types`, which passes `--db-url` from `supabase status -o env`.
 
 ## Important Notes

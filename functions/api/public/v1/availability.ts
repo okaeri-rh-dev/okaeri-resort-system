@@ -345,11 +345,11 @@ export async function onRequest(context: {
 }
 
 /**
- * Map available count to status string
- * Assumes 3 total units (hardcoded as per docs)
+ * Map available count to status string. The resort has 3 cabins; a larger count (extra test
+ * cabins) still reads as full availability.
  */
-function getAvailabilityStatus(count: number): AvailabilityStatus {
-  if (count === 3) return "full"; // All 3 units available
+export function getAvailabilityStatus(count: number): AvailabilityStatus {
+  if (count >= 3) return "full"; // All 3 units available
   if (count === 2) return "moderate"; // 2 units available
   if (count === 1) return "limited"; // Only 1 unit available
   return "booked"; // Fully booked (0 available)

@@ -129,9 +129,6 @@ async function seed(): Promise<void> {
       subtotal: fixture.total_amount,
       unit_price: fixture.total_amount,
       assigned_guests: fixture.num_guests,
-      check_in_date: fixture.check_in,
-      check_out_date: fixture.check_out,
-      status: fixture.booking_status,
     };
   });
 
@@ -140,12 +137,10 @@ async function seed(): Promise<void> {
     throw new Error(`booking_units insert failed: ${buError.message}`);
   }
 
-  const unitRequestRows = queuedBookings.map((b) => ({
-    booking_id: b.booking_id,
-    unit_type: E2E_UNIT.unit_type,
-    quantity: 2,
-    guests_per_unit: 2,
-  }));
+  // One row per requested cabin: two cabins of two guests each
+  const unitRequestRows = queuedBookings.flatMap((b) =>
+    [2, 2].map((guestsPerUnit) => ({ booking_id: b.booking_id, guests_per_unit: guestsPerUnit }))
+  );
   const { error: requestError } = await supabase
     .from("guest_booking_unit_requests")
     .insert(unitRequestRows);

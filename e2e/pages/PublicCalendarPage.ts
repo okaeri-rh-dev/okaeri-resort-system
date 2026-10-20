@@ -99,10 +99,9 @@ export class PublicCalendarPage {
 
     // Availability indicators - colored cells based on booking count
     this.unitRows = page.locator('[class*="unit-row"], tr');
-    // Available: no special background or light background
-    this.availableSlots = page.locator('[class*="bg-white"], [class*="available"]');
-    // Booked: colored backgrounds (blue-50, blue-100, amber-50)
-    this.bookedSlots = page.locator('[class*="bg-blue"], [class*="bg-amber"], [class*="booked"]');
+    // Day cells carry their status in the accessible name ("2 available", "Fully booked")
+    this.availableSlots = page.getByRole("gridcell", { name: /\d available/ });
+    this.bookedSlots = page.getByRole("gridcell", { name: /Fully booked/ });
 
     // CTA - "Book Now" link/button
     this.bookNowButton = page

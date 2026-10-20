@@ -204,18 +204,8 @@ function DayCell({
   const getStatusLabel = () => {
     if (!availability) return undefined;
 
-    switch (availability.availableCount) {
-      case 3:
-        return "3 available";
-      case 2:
-        return "2 available";
-      case 1:
-        return "1 available";
-      case 0:
-        return "Fully booked";
-      default:
-        return undefined;
-    }
+    const count = availability.availableCount;
+    return count > 0 ? `${count} available` : "Fully booked";
   };
 
   /**

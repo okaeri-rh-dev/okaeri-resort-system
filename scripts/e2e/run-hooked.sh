@@ -11,3 +11,4 @@ npx playwright test e2e/booking-card-mobile.spec.ts --project="Mobile Chrome"
 npx playwright test e2e/booking-api-auth.spec.ts --project=chromium
 npx playwright test e2e/admin-bookings.spec.ts e2e/admin-queue.spec.ts e2e/availability-calendar.spec.ts e2e/booking-lifecycle.spec.ts e2e/multi-role-workflows.spec.ts e2e/pricing-integrity.spec.ts --project=chromium
 npx playwright test e2e/admin-login-in-scope.spec.ts e2e/auth.spec.ts e2e/dashboard-mobile-overflow.spec.ts e2e/public-booking.spec.ts e2e/pwa-install-banner.spec.ts e2e/rls-role-smoke.spec.ts e2e/smoke.spec.ts --project=chromium
+npx playwright test e2e/app-shell-nav.spec.ts e2e/dark-mode-surfaces.spec.ts e2e/data-table-switch.spec.ts e2e/online-booking.spec.ts e2e/primitives-targets-motion.spec.ts e2e/theme-no-flash.spec.ts --project=chromium
