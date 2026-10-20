@@ -17,7 +17,7 @@ name: CI
 
 on:
   pull_request:
-    branches: [main, design/foundations]
+    branches: [main]
   workflow_call:
   workflow_dispatch:
 
