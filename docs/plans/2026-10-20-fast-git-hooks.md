@@ -35,6 +35,7 @@ Not measured: the globalSetup `supabase stop/start` path when Supabase is down, 
 - `SKIP_DB_SETUP` env flag, not a separate vitest DB project — smaller change. Revisit when the "Vitest global setup stops Supabase" infra issue is fixed properly.
 - No `maxForks` limit — forks already use all cores. Revisit if end-to-end timing shows contention.
 - npm audit is not a required check — upstream advisories would block unrelated merges. It still runs on every PR.
+- Ruleset covers `main` only — `design/foundations` merged into main (PR #63) and was deleted on 2026-10-20, during this work. Revisit when a new long-lived integration branch appears.
 - Admin bypass in `pull_request` mode only — hotfixes go through a PR; direct pushes still need checks.
 - Auto-merge uses merge commits — matches existing history.
 - Keep the "never push at the 2-min default" rule in CLAUDE.md — a full vitest run under load can still take minutes.
