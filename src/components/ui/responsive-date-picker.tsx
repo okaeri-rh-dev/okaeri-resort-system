@@ -186,12 +186,16 @@ export function ResponsiveDateRangePicker({
   sheet = false,
 }: ResponsiveDateRangePickerProps) {
   const [open, setOpen] = React.useState(false);
+  const autoCloseTimeout = React.useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  React.useEffect(() => () => clearTimeout(autoCloseTimeout.current), []);
 
   const handleSelect = (range: DateRange | undefined) => {
     onChange?.(range);
     // Auto-close on mobile when both dates are selected
     if (sheet && range?.from && range?.to) {
-      setTimeout(() => setOpen(false), 200); // Small delay for visual feedback
+      clearTimeout(autoCloseTimeout.current);
+      autoCloseTimeout.current = setTimeout(() => setOpen(false), 200); // Small delay for visual feedback
     }
   };
 
