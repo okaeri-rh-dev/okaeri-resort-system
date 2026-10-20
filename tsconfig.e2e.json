@@ -3,7 +3,7 @@
   "compilerOptions": {
     "lib": ["ES2022", "DOM"],
     "types": ["node"],
-    "tsBuildInfoFile": "./node_modules/.cache/tsc-e2e.tsbuildinfo"
+    "tsBuildInfoFile": "./.cache/tsc/e2e.tsbuildinfo"
   },
   "include": ["e2e/**/*.ts", "playwright.config.ts"],
   "exclude": []

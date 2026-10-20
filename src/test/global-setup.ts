@@ -131,6 +131,9 @@ async function checkDatabaseAvailability(): Promise<boolean> {
  * Global setup function - runs once before all tests
  */
 export default async function globalSetup() {
+  // Non-DB runs (pre-push) must not wait on, or restart, the shared Supabase stack.
+  if (process.env.SKIP_DB_SETUP === "1") return;
+
   // eslint-disable-next-line no-console
   console.log("\n" + "=".repeat(80));
   // eslint-disable-next-line no-console

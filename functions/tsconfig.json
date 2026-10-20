@@ -4,7 +4,7 @@
     "baseUrl": "..",
     "lib": ["ES2022"],
     "types": ["@cloudflare/workers-types", "vite/client"],
-    "tsBuildInfoFile": "../node_modules/.cache/tsc-functions.tsbuildinfo"
+    "tsBuildInfoFile": "../.cache/tsc/functions.tsbuildinfo"
   },
   "include": ["./**/*.ts"],
   "exclude": ["**/*.phase3-4.*"]

@@ -4,10 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Pushing to Remote
 
-- `.husky/pre-push` runs lint + the unit suite and can take several minutes. **Never run `git push` at the default 2-minute Bash timeout** — the hook gets killed (exit 143) and the push does NOT complete. Either:
+- `.husky/pre-push` runs only the unit tests affected by the branch (`vitest --changed`); type-aware lint, type-check, knip and the full unit suite run in CI as required checks. It is usually seconds, but a full run under load can take minutes. **Never run `git push` at the default 2-minute Bash timeout** — the hook gets killed (exit 143) and the push does NOT complete. Either:
   1. Run with an explicit long timeout (`timeout: 600000`), or
   2. Run with `run_in_background: true` and monitor until it exits.
 - After every push, verify it landed before reporting success: `git fetch origin && git rev-parse HEAD origin/main` — the two hashes must match. A started hook is not a completed push.
+- `main` and `design/foundations` need green CI (Lint, Type-check, Unit tests, Knip) to merge, and direct pushes to them are rejected. Merge PRs with `gh pr merge --auto --merge`; it waits for the required checks.
 - If the hook fails or hangs on pre-existing/unrelated failures: run `npm run verify` directly; if it passes, ASK the user before `git push --no-verify`. Never use `--no-verify` on your own.
 - DB tests (need `supabase start`) and Playwright E2E are not part of the hook; they run in CI (`.github/workflows/infra-health.yml`) and explicitly when relevant.
 
@@ -45,7 +46,7 @@ Rules:
 Current entries:
 
 - **Supabase CLI output parsing** — helper scripts that regex `supabase status` human output break on CLI upgrades (bit household-hub at v2.105.0). Any new script must use `supabase status -o env` (machine-readable) instead. Known-good CLI version at last check: v2.101.0.
-- **Vitest global setup stops Supabase** — `src/test/global-setup.ts` runs `supabase stop` then `supabase start` when its DB check fails, so parallel vitest runs (subagents, worktrees, other sessions) race and leave the shared stack down. Workaround: run one vitest at a time; afterwards check `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:54321/rest/v1/` is 200, else `supabase start` from the main checkout.
+- **Vitest global setup stops Supabase** — `src/test/global-setup.ts` runs `supabase stop` then `supabase start` when its DB check fails, so parallel vitest runs (subagents, worktrees, other sessions) race and leave the shared stack down. Workaround: non-DB runs set `SKIP_DB_SETUP=1` (pre-push does) to skip it; otherwise run one vitest at a time; afterwards check `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:54321/rest/v1/` is 200, else `supabase start` from the main checkout.
 - **`supabase gen types --local` fails password auth** (CLI v2.109.1: `password authentication failed for user "postgres"`; v2.119.0 exits 1 with no message). Workaround: `npm run gen:types`, which passes `--db-url` from `supabase status -o env`.
 
 ## Important Notes

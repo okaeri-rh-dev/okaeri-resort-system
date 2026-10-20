@@ -31,7 +31,7 @@ npx concurrently \
   --names "format,types,lint" \
   --prefix-colors "cyan,yellow,magenta" \
   "npx lint-staged" \
-  "npx tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/tsc-precommit.tsbuildinfo && npx tsc --noEmit --incremental -p functions/tsconfig.json && npx tsc --noEmit --incremental -p tsconfig.e2e.json && npx tsc --noEmit --incremental -p tsconfig.tests.json" \
+  "npx tsc --noEmit --incremental --tsBuildInfoFile .cache/tsc/precommit.tsbuildinfo && npx tsc --noEmit --incremental -p functions/tsconfig.json && npx tsc --noEmit --incremental -p tsconfig.e2e.json && npx tsc --noEmit --incremental -p tsconfig.tests.json" \
   "ESLINT_TYPE_AWARE=off npx eslint . --cache --cache-location .eslintcache --max-warnings 0"
 
 # Phase 2: Quick sequential checks (lightweight, ~1s total)
@@ -57,24 +57,6 @@ if [ -n "$STAGED_FILES" ]; then
     echo "$large_files"
     echo "${RED}Please use Git LFS for large files or exclude them${NC}"
     exit 1
-  fi
-
-  # Warnings (non-blocking) - consolidated output
-  console_logs=$(echo "$STAGED_FILES" | xargs grep -l "console.log" 2>/dev/null || true)
-  if [ -n "$console_logs" ]; then
-    echo "${YELLOW}⚠️  Warning: console.log found in staged files${NC}"
-  fi
-
-  todo_files=$(echo "$STAGED_FILES" | xargs grep -l "TODO\|FIXME" 2>/dev/null || true)
-  if [ -n "$todo_files" ]; then
-    echo "${YELLOW}📝 Info: TODO/FIXME comments in staged files${NC}"
-  fi
-
-  # Sensitive info check
-  sensitive_patterns="password|secret|key|token|credential"
-  sensitive_files=$(echo "$STAGED_FILES" | xargs grep -i -l -E "$sensitive_patterns" 2>/dev/null || true)
-  if [ -n "$sensitive_files" ]; then
-    echo "${YELLOW}🔐 Warning: Potential sensitive information detected - please review${NC}"
   fi
 fi
 
