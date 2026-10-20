@@ -408,6 +408,9 @@ test.describe("Public Booking Flow", () => {
 
   test.describe("Responsive Design", () => {
     test.describe("Mobile Viewport", () => {
+      // A phone has a coarse pointer; inputs reach 16px only under `coarse:` (DESIGN.md, Type)
+      test.use({ hasTouch: true });
+
       test.beforeEach(async ({ page }) => {
         await page.setViewportSize(VIEWPORTS.mobile);
       });
