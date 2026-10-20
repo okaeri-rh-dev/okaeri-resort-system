@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import type { RoutePath } from "@/types/route-path";
 
 import { PageHeader, type PageHeaderProps } from "./PageHeader";
+import { DarkModeSwitch, ThemeSegments, ThemeSwitchRows, type ShellTheme } from "./ThemeControls";
 import { CompactWindowContext, useCompactWindowQuery } from "./window-size";
 
 /** The compact bottom bar holds at most this many slots, More included. */
@@ -57,6 +58,8 @@ export interface AppShellProps {
   destinations: ShellDestination[];
   /** Account-level commands such as Sign Out (admin only). */
   actions?: ShellAction[];
+  /** The light / dark / system setting. The shell places its controls for each nav form. */
+  theme?: ShellTheme;
   /** Shows a placeholder nav while the destinations are still unknown. */
   navLoading?: boolean;
   /** Rendered above the content as the page's `h1`. */
@@ -75,6 +78,9 @@ export interface AppShellProps {
  * Admin: a bottom bar on compact windows (pinned destinations plus More, or every destination
  * when there are five or fewer), a collapsed rail from `medium` and an expanded rail with labels
  * from `large`. Guest: a top bar with inline links from `medium` and a menu sheet on compact.
+ * With `theme`, the expanded rail ends in a Light / Dark / Auto switch. Every narrower nav form
+ * gets a dark mode switch instead (compact header, collapsed rail foot, guest top bar), and the
+ * menu sheets add "Dark mode" and "Match my device" rows.
  * Margins are 16px, 24px from `medium`; content caps at 1600px (admin), 1200px (guest) or ~40rem
  * (`width="form"`).
  *
@@ -85,6 +91,7 @@ export interface AppShellProps {
  *   brand={{ name: "Okaeri Resort", to: "/admin/dashboard" }}
  *   destinations={destinations}
  *   actions={[{ label: "Sign Out", icon: LogOut, onSelect: signOut }]}
+ *   theme={{ value: theme, onChange: setTheme }}
  * >
  *   <Outlet />
  * </AppShell>
@@ -249,6 +256,7 @@ function AdminShell({
   brand,
   destinations,
   actions = [],
+  theme,
   navLoading,
   banner,
   ...content
@@ -256,6 +264,7 @@ function AdminShell({
   const [menuOpen, setMenuOpen] = useState(false);
   const needsMore = destinations.length > BAR_SLOTS;
   const inBar = (destination: ShellDestination) => !needsMore || destination.pinned;
+  const hasFooter = actions.length > 0 || theme !== undefined;
 
   return (
     <div className="bg-background medium:flex-row flex h-dvh flex-col">
@@ -263,22 +272,25 @@ function AdminShell({
         <Link to={brand.to} className="font-display text-foreground text-lg font-bold">
           {brand.name}
         </Link>
-        {actions.length > 0 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Account menu">
-                <CircleUser className="size-5" aria-hidden="true" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {actions.map(({ label, icon, onSelect }) => (
-                <DropdownMenuItem key={label} onSelect={onSelect}>
-                  <ItemLabel form="dropdown" icon={icon} label={label} />
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <div className="flex items-center gap-2">
+          {theme && <DarkModeSwitch theme={theme} holdForDeviceMatch />}
+          {actions.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Account menu">
+                  <CircleUser className="size-5" aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {actions.map(({ label, icon, onSelect }) => (
+                  <DropdownMenuItem key={label} onSelect={onSelect}>
+                    <ItemLabel form="dropdown" icon={icon} label={label} />
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </header>
 
       <div
@@ -346,8 +358,18 @@ function AdminShell({
           )}
         </nav>
 
-        {actions.length > 0 && (
+        {hasFooter && (
           <div className="border-sidebar-border medium:flex large:px-4 hidden flex-col gap-1 border-t p-2">
+            {theme && (
+              <>
+                <div className="large:hidden">
+                  <DarkModeSwitch theme={theme} orientation="vertical" />
+                </div>
+                <div className="large:block hidden pb-1">
+                  <ThemeSegments theme={theme} />
+                </div>
+              </>
+            )}
             <ActionButtons actions={actions} form="rail" className={railItem} />
           </div>
         )}
@@ -376,8 +398,9 @@ function AdminShell({
           <nav aria-label="Menu" className="min-h-0 flex-1 overflow-y-auto p-4">
             <SheetDestinations destinations={destinations} linkClassName={adminSheetLink} />
           </nav>
-          {actions.length > 0 && (
+          {hasFooter && (
             <div className="border-sidebar-border shrink-0 space-y-1 border-t p-4">
+              {theme && <ThemeSwitchRows theme={theme} tone="sidebar" />}
               <ActionButtons
                 actions={actions}
                 form="sheet"
@@ -398,7 +421,7 @@ const topBarLink = cn(
   "data-[status=active]:bg-accent data-[status=active]:text-accent-foreground"
 );
 
-function GuestShell({ brand, destinations, banner, ...content }: AppShellProps) {
+function GuestShell({ brand, destinations, theme, banner, ...content }: AppShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -408,30 +431,33 @@ function GuestShell({ brand, destinations, banner, ...content }: AppShellProps) 
           <Link to={brand.to} className="font-display text-foreground text-lg font-bold">
             {brand.name}
           </Link>
-          <nav aria-label="Main" className="medium:block hidden">
-            <ul className="flex items-center gap-1">
-              {destinations.map((destination) => (
-                <li key={destination.to}>
-                  <Link
-                    to={destination.to}
-                    activeOptions={matchOptions(destination)}
-                    className={topBarLink}
-                  >
-                    {destination.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMenuOpen(true)}
-            aria-label="Open menu"
-            className="medium:hidden"
-          >
-            <Menu className="size-5" aria-hidden="true" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <nav aria-label="Main" className="medium:block hidden">
+              <ul className="flex items-center gap-1">
+                {destinations.map((destination) => (
+                  <li key={destination.to}>
+                    <Link
+                      to={destination.to}
+                      activeOptions={matchOptions(destination)}
+                      className={topBarLink}
+                    >
+                      {destination.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            {theme && <DarkModeSwitch theme={theme} holdForDeviceMatch />}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+              className="medium:hidden"
+            >
+              <Menu className="size-5" aria-hidden="true" />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -454,6 +480,11 @@ function GuestShell({ brand, destinations, banner, ...content }: AppShellProps) 
               linkClassName={cn(sheetItem, topBarLink)}
             />
           </nav>
+          {theme && (
+            <div className="border-border shrink-0 border-t p-4">
+              <ThemeSwitchRows theme={theme} tone="surface" />
+            </div>
+          )}
         </SheetContent>
       </Sheet>
     </div>
