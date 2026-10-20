@@ -74,7 +74,7 @@ export class BookingsTablePage {
     this.refreshButton = page.getByRole("button", { name: /refresh/i });
 
     // Pagination - TablePagination component
-    this.pagination = page.locator("nav").filter({ hasText: /page/i });
+    this.pagination = page.getByRole("navigation", { name: "Pagination" });
     this.nextPageButton = page.getByRole("button", { name: /next/i });
     this.previousPageButton = page.getByRole("button", { name: /previous/i });
     this.pageInfo = page.getByText(/page \d+/i);

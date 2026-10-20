@@ -54,6 +54,21 @@ test.describe("DataTable switch on the bookings list", () => {
     await expect(amountCell).toHaveCSS("font-variant-numeric", "tabular-nums");
   });
 
+  test("a slim table pane keeps the row menu pinned in view", async ({ page }) => {
+    await page.setViewportSize({ width: 900, height: 900 });
+    await openBookings(page);
+
+    const table = page.getByRole("table", { name: "Bookings" });
+    const pane = table.locator("xpath=..");
+    expect(await pane.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+
+    const rowMenu = page.getByRole("button", { name: `Actions for ${E2E_REF.PENDING}` });
+    await expect(rowMenu).toBeInViewport({ ratio: 1 });
+    const paneBox = (await pane.boundingBox())!;
+    const menuBox = (await rowMenu.boundingBox())!;
+    expect(menuBox.x + menuBox.width).toBeLessThanOrEqual(paneBox.x + paneBox.width);
+  });
+
   test("resizing the window across 600px swaps the form in place", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await openBookings(page);

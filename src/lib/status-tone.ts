@@ -30,6 +30,11 @@ export function statusTone(status: string): StatusTone {
   return tonesByLowercaseStatus.get(status.toLowerCase()) ?? "neutral";
 }
 
+/** "CheckedOut" → "Checked Out": stored statuses are PascalCase. */
+function statusLabel(status: string) {
+  return status.replace(/([a-z])([A-Z])/g, "$1 $2");
+}
+
 /**
  * `StatusBadge` props for a status that may be empty, labelled with `fallback` when it is.
  *
@@ -40,5 +45,5 @@ export function statusTone(status: string): StatusTone {
  */
 export function statusBadgeProps(status: string | null | undefined, fallback: ToneStatus) {
   const label = status || fallback;
-  return { tone: statusTone(label), children: label };
+  return { tone: statusTone(label), children: statusLabel(label) };
 }

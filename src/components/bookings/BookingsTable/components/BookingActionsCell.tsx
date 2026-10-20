@@ -103,7 +103,7 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
 
   return (
     <>
-      <ActionMenu actions={allActions} />
+      <ActionMenu actions={allActions} label={`Actions for ${booking.booking_reference}`} />
 
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>

@@ -397,6 +397,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
 
       columnHelper.display({
         id: "actions",
+        meta: { pinned: true },
         header: "Actions",
         cell: ({ row }) => {
           const guest = row.original;

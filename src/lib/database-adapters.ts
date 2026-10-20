@@ -133,6 +133,7 @@ export function adaptBookingFromDB(dbBooking: DbBooking): Booking {
     special_requests: dbBooking.special_requests,
     internal_notes: dbBooking.internal_notes,
     is_multi_unit: dbBooking.is_multi_unit,
+    is_walk_in: dbBooking.is_walk_in,
     unit_count: dbBooking.unit_count,
     created_at: dbBooking.created_at,
     updated_at: dbBooking.updated_at,
