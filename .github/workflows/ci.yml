@@ -1,7 +1,8 @@
 name: CI
 
-# Fast, deterministic quality gate: lint, type-check, non-DB unit tests and the
-# production npm audit run as parallel jobs; deploy needs all of them.
+# Fast, deterministic quality gate: lint, type-check, non-DB unit tests, the
+# production build and the production npm audit run as parallel jobs; deploy
+# needs all of them.
 #
 # - Runs on every pull request to main (blocks merge once branch protection is
 #   enabled — see vault note [[whole-app-audit-2026-07-21]], Decision 2).
@@ -92,6 +93,22 @@ jobs:
       - run: npm run generate:routes
       - name: Knip
         run: npm run knip
+
+  # The deploy job's build, without secrets: config that only Rollup resolves (manualChunks,
+  # PWA, plugins) fails here instead of after the merge to main.
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Build frontend and functions
+        run: npm run build:full
 
   # Production dependencies only: a high or critical advisory blocks deploy.
   audit:
