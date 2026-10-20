@@ -360,4 +360,66 @@ describe("AppShell, theme control", () => {
     await userEvent.click(within(menu).getByRole("switch", { name: "Match my device" }));
     expect(onChange).toHaveBeenCalledWith("system");
   });
+
+  it("opens Match my device from a long press on the compact header switch", async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    renderAt(
+      "/admin/dashboard",
+      <AppShell
+        surface="admin"
+        brand={brand}
+        destinations={staffDestinations}
+        theme={{ value: "dark", onChange }}
+      >
+        <p>Dashboard</p>
+      </AppShell>
+    );
+
+    const header = await screen.findByRole("banner");
+    const darkMode = within(header).getByRole("switch", { name: "Dark mode" });
+    await user.pointer({ keys: "[MouseLeft>]", target: darkMode });
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    await user.pointer({ keys: "[/MouseLeft]", target: darkMode });
+
+    expect(onChange).not.toHaveBeenCalled();
+    const options = screen.getByRole("dialog", { name: "Theme options" });
+    expect(await axe(options)).toHaveNoViolations();
+
+    await user.click(within(options).getByRole("switch", { name: "Match my device" }));
+    expect(onChange).toHaveBeenCalledWith("system");
+  });
+
+  it("moves the theme choice with the arrow keys and keeps one tab stop", async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    renderAt(
+      "/admin/dashboard",
+      <AppShell
+        surface="admin"
+        brand={brand}
+        destinations={staffDestinations}
+        theme={{ value: "system", onChange }}
+      >
+        <p>Dashboard</p>
+      </AppShell>
+    );
+
+    const choice = await screen.findByRole("radiogroup", { name: "Theme" });
+    const auto = within(choice).getByRole("radio", { name: "Auto" });
+    expect(
+      within(choice)
+        .getAllByRole("radio")
+        .map((radio) => radio.tabIndex)
+    ).toEqual([-1, -1, 0]);
+
+    auto.focus();
+    await user.keyboard("{ArrowLeft}");
+    expect(onChange).toHaveBeenLastCalledWith("dark");
+    expect(within(choice).getByRole("radio", { name: "Dark" })).toHaveFocus();
+
+    auto.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(onChange).toHaveBeenLastCalledWith("light");
+  });
 });

@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import type { RoutePath } from "@/types/route-path";
 
 import { PageHeader, type PageHeaderProps } from "./PageHeader";
-import { MoonSwitch, ThemeSegments, ThemeSwitchRows, type ShellTheme } from "./ThemeControls";
+import { DarkModeSwitch, ThemeSegments, ThemeSwitchRows, type ShellTheme } from "./ThemeControls";
 import { CompactWindowContext, useCompactWindowQuery } from "./window-size";
 
 /** The compact bottom bar holds at most this many slots, More included. */
@@ -264,6 +264,7 @@ function AdminShell({
   const [menuOpen, setMenuOpen] = useState(false);
   const needsMore = destinations.length > BAR_SLOTS;
   const inBar = (destination: ShellDestination) => !needsMore || destination.pinned;
+  const hasFooter = actions.length > 0 || theme !== undefined;
 
   return (
     <div className="bg-background medium:flex-row flex h-dvh flex-col">
@@ -272,7 +273,7 @@ function AdminShell({
           {brand.name}
         </Link>
         <div className="flex items-center gap-2">
-          {theme && <MoonSwitch theme={theme} />}
+          {theme && <DarkModeSwitch theme={theme} holdForDeviceMatch />}
           {actions.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -357,12 +358,12 @@ function AdminShell({
           )}
         </nav>
 
-        {(actions.length > 0 || theme) && (
+        {hasFooter && (
           <div className="border-sidebar-border medium:flex large:px-4 hidden flex-col gap-1 border-t p-2">
             {theme && (
               <>
                 <div className="large:hidden">
-                  <MoonSwitch theme={theme} orientation="vertical" />
+                  <DarkModeSwitch theme={theme} orientation="vertical" />
                 </div>
                 <div className="large:block hidden pb-1">
                   <ThemeSegments theme={theme} />
@@ -397,9 +398,9 @@ function AdminShell({
           <nav aria-label="Menu" className="min-h-0 flex-1 overflow-y-auto p-4">
             <SheetDestinations destinations={destinations} linkClassName={adminSheetLink} />
           </nav>
-          {(actions.length > 0 || theme) && (
+          {hasFooter && (
             <div className="border-sidebar-border shrink-0 space-y-1 border-t p-4">
-              {theme && <ThemeSwitchRows theme={theme} />}
+              {theme && <ThemeSwitchRows theme={theme} tone="sidebar" />}
               <ActionButtons
                 actions={actions}
                 form="sheet"
@@ -446,7 +447,7 @@ function GuestShell({ brand, destinations, theme, banner, ...content }: AppShell
                 ))}
               </ul>
             </nav>
-            {theme && <MoonSwitch theme={theme} />}
+            {theme && <DarkModeSwitch theme={theme} />}
             <Button
               variant="ghost"
               size="icon"
@@ -481,7 +482,7 @@ function GuestShell({ brand, destinations, theme, banner, ...content }: AppShell
           </nav>
           {theme && (
             <div className="border-border shrink-0 border-t p-4">
-              <ThemeSwitchRows theme={theme} />
+              <ThemeSwitchRows theme={theme} tone="surface" />
             </div>
           )}
         </SheetContent>
