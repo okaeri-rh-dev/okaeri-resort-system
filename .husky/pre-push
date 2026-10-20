@@ -8,21 +8,31 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo "${GREEN}🚀 Running pre-push checks (lint + unit, ~1-2 min)...${NC}"
-
-# Fast, blocking checks only. DB tests (need `supabase start`) and Playwright
-# E2E are intentionally NOT run here — they are covered by CI (infra-health
-# workflow) and can be run manually:
-#   npx vitest run src/__tests__/database __tests__/database src/__tests__/performance/multi-unit-availability.test.ts
+# Fast local feedback only: unit tests affected by this branch. CI (ci.yml) is
+# the merge gate and runs type-aware lint, type-check, knip and the full unit
+# suite as required checks. DB tests and Playwright E2E run in infra-health and
+# manually:
+#   npm run test:db
 #   npm run test:e2e
-# NOTE: no `--success first` — exit code must reflect ALL lanes (the old flag
-# let a unit-test failure pass because cached lint exited first and green).
-# No --cache: type-aware results depend on other files, which the cache does not track.
-npx concurrently \
-  --kill-others-on-fail \
-  --names "lint,unit" \
-  --prefix-colors "yellow,cyan" \
-  "npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0" \
-  "npx vitest run --exclude 'src/__tests__/database/**' --exclude '__tests__/database/**' --exclude 'src/__tests__/performance/multi-unit-availability.test.ts' --fileParallelism --poolOptions.threads.maxThreads=8"
+if base=$(git rev-parse --verify --quiet '@{upstream}'); then
+  changed_flag="--changed=$base"
+elif base=$(git merge-base HEAD origin/main 2>/dev/null); then
+  changed_flag="--changed=$base"
+else
+  changed_flag=""
+fi
 
-echo "${GREEN}✅ Pre-push checks passed. DB/E2E suites run in CI and manually (see comments above).${NC}"
+# vitest --changed only follows imports, so config and setup edits would run nothing.
+test_infra='^(package(-lock)?\.json|vite(st)?\.config\..*|tsconfig.*\.json|src/test/.*|__tests__/setup/.*)$'
+if [ -n "$changed_flag" ] && git diff --name-only "$base" | grep -qE "$test_infra"; then
+  changed_flag=""
+fi
+
+echo "${GREEN}🚀 Running pre-push unit tests (${changed_flag:-full suite})...${NC}"
+
+SKIP_DB_SETUP=1 npx vitest run $changed_flag --passWithNoTests --fileParallelism \
+  --exclude 'src/__tests__/database/**' \
+  --exclude '__tests__/database/**' \
+  --exclude 'src/__tests__/performance/multi-unit-availability.test.ts'
+
+echo "${GREEN}✅ Pre-push checks passed. ${YELLOW}Full lint/type-check/unit run in CI.${NC}"

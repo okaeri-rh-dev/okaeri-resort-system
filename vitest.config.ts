@@ -87,13 +87,6 @@ export default defineConfig(({ mode }) => {
       // Watch configuration for development
       watchExclude: ["**/node_modules/**", "**/dist/**"],
 
-      // Thread configuration for performance
-      // Tests run in threads for within-file parallelism, but files run sequentially
-      // to prevent database connection pool exhaustion and data conflicts
-      threads: true,
-      maxThreads: 4,
-      minThreads: 1,
-
       // File-level parallelism: DISABLED
       // Reason: Database tests share state and race conditions occur when running
       // test files in parallel. The 77s execution time is acceptable for reliability.
