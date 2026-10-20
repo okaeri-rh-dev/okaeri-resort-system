@@ -91,6 +91,38 @@ test.describe("Admin navigation form", () => {
     await expectNoSidewaysScroll(page);
   });
 
+  test("small phone: the menu sheet scrolls to its last action", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await loginAsAdmin(page);
+
+    await page.getByRole("button", { name: "More" }).click();
+    const signOut = page.getByRole("dialog", { name: "Okaeri Resort" }).getByRole("button", {
+      name: "Sign Out",
+    });
+    await expect(signOut).toBeInViewport();
+
+    const lastLink = page.getByRole("navigation", { name: "Menu" }).getByRole("link").last();
+    await lastLink.scrollIntoViewIfNeeded();
+    await expect(lastLink).toBeInViewport();
+  });
+
+  test("landscape phone: the whole rail scrolls to its last destination and Sign Out", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 740, height: 360 });
+    await loginAsAdmin(page);
+
+    const { nav } = await mainNavBox(page);
+    await expect(nav.getByRole("link", { name: "Dashboard" })).toBeInViewport();
+    for (const target of [
+      nav.getByRole("link").last(),
+      page.getByRole("button", { name: "Sign Out" }),
+    ]) {
+      await target.scrollIntoViewIfNeeded();
+      await expect(target).toBeInViewport({ ratio: 1 });
+    }
+  });
+
   test("compact: a role with five or fewer destinations gets no More slot", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await loginAsStaff(page);

@@ -284,7 +284,7 @@ function AdminShell({
       <div
         className={cn(
           "bg-sidebar text-sidebar-foreground border-sidebar-border safe-area-bottom fixed inset-x-0 bottom-0 z-40 border-t",
-          "medium:static medium:flex medium:h-full medium:w-20 medium:shrink-0 medium:flex-col medium:border-t-0 medium:border-r",
+          "medium:static medium:flex medium:h-full medium:w-20 medium:shrink-0 medium:flex-col medium:overflow-y-auto medium:border-t-0 medium:border-r",
           "large:w-72"
         )}
       >
@@ -305,7 +305,7 @@ function AdminShell({
           </div>
         </div>
 
-        <nav aria-label="Main" className="medium:flex medium:min-h-0 medium:flex-1 medium:flex-col">
+        <nav aria-label="Main" className="medium:flex medium:flex-1 medium:flex-col">
           {navLoading ? (
             <div
               role="status"
@@ -317,7 +317,7 @@ function AdminShell({
               ))}
             </div>
           ) : (
-            <ul className="medium:flex-1 medium:flex-col medium:overflow-y-auto medium:py-3 large:px-4 flex gap-1 px-2 py-1">
+            <ul className="medium:flex-1 medium:flex-col medium:py-3 large:px-4 flex gap-1 px-2 py-1">
               {destinations.map((destination) => (
                 <li
                   key={destination.to}
@@ -361,9 +361,9 @@ function AdminShell({
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent
           side="left"
-          className="bg-sidebar text-sidebar-foreground border-sidebar-border w-72 gap-0 p-0"
+          className="bg-sidebar text-sidebar-foreground border-sidebar-border flex w-72 flex-col gap-0 p-0"
         >
-          <div className="border-sidebar-border border-b p-6">
+          <div className="border-sidebar-border shrink-0 border-b p-6">
             <SheetTitle className="font-display text-sidebar-foreground text-xl font-bold">
               {brand.name}
             </SheetTitle>
@@ -373,11 +373,11 @@ function AdminShell({
               {brand.tagline ?? "Every destination"}
             </SheetDescription>
           </div>
-          <nav aria-label="Menu" className="flex-1 overflow-y-auto p-4">
+          <nav aria-label="Menu" className="min-h-0 flex-1 overflow-y-auto p-4">
             <SheetDestinations destinations={destinations} linkClassName={adminSheetLink} />
           </nav>
           {actions.length > 0 && (
-            <div className="border-sidebar-border space-y-1 border-t p-4">
+            <div className="border-sidebar-border shrink-0 space-y-1 border-t p-4">
               <ActionButtons
                 actions={actions}
                 form="sheet"
@@ -441,14 +441,14 @@ function GuestShell({ brand, destinations, banner, ...content }: AppShellProps) 
       </main>
 
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-        <SheetContent side="right" className="w-72 gap-0 p-0">
-          <div className="border-border border-b p-6">
+        <SheetContent side="right" className="flex w-72 flex-col gap-0 p-0">
+          <div className="border-border shrink-0 border-b p-6">
             <SheetTitle className="font-display text-xl font-bold">{brand.name}</SheetTitle>
             <SheetDescription className={cn("mt-1", !brand.tagline && "sr-only")}>
               {brand.tagline ?? "Pages"}
             </SheetDescription>
           </div>
-          <nav aria-label="Menu" className="p-4">
+          <nav aria-label="Menu" className="min-h-0 flex-1 overflow-y-auto p-4">
             <SheetDestinations
               destinations={destinations}
               linkClassName={cn(sheetItem, topBarLink)}
