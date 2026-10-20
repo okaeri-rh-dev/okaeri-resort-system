@@ -64,3 +64,4 @@ export {
   type ShellBrand,
   type ShellDestination,
 } from "./AppShell";
+export type { ShellTheme, ThemeSetting } from "./ThemeControls";

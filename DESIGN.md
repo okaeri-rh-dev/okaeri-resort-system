@@ -49,6 +49,15 @@ Navigation per class:
 
 The rail and the menu sheets scroll as one column when the window is short.
 
+Theme control per nav form. It is never in the account menu.
+
+| Surface | Compact                                                                      | Medium, expanded                  | Large, xlarge                                         |
+| ------- | ---------------------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------- |
+| Admin   | Dark mode switch in the header; menu sheet adds Dark mode + Match my device  | Dark mode switch at the rail foot | Light / Dark / Auto segmented switch at the rail foot |
+| Guest   | Dark mode switch in the top bar; menu sheet adds Dark mode + Match my device | Dark mode switch in the top bar   | (as medium)                                           |
+
+The dark mode switch sets an explicit theme. "Match my device" is the system setting; while it is on, Dark mode is locked.
+
 Pane layouts:
 
 | Screen                         | Layout                                                                                     |

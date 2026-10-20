@@ -164,6 +164,7 @@ describe("AppShell, admin", () => {
         brand={brand}
         destinations={managerDestinations}
         actions={[{ label: "Sign Out", icon: LogOut, onSelect: () => {} }]}
+        theme={{ value: "system", onChange: () => {} }}
       >
         <p>Body</p>
       </AppShell>
@@ -243,6 +244,7 @@ describe("AppShell, guest", () => {
         brand={guestBrand}
         destinations={guestDestinations}
         pageHeader={{ title: "Book your stay" }}
+        theme={{ value: "light", onChange: () => {} }}
       >
         <p>Calendar</p>
       </AppShell>
@@ -250,5 +252,112 @@ describe("AppShell, guest", () => {
 
     await screen.findByRole("navigation", { name: "Main" });
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("AppShell, theme control", () => {
+  it("offers Light, Dark and Auto as one labelled choice in the expanded rail", async () => {
+    const onChange = vi.fn();
+    renderAt(
+      "/admin/dashboard",
+      <AppShell
+        surface="admin"
+        brand={brand}
+        destinations={staffDestinations}
+        theme={{ value: "system", onChange }}
+      >
+        <p>Dashboard</p>
+      </AppShell>
+    );
+
+    const choice = await screen.findByRole("radiogroup", { name: "Theme" });
+    expect(
+      within(choice)
+        .getAllByRole("radio")
+        .map((radio) => radio.textContent)
+    ).toEqual(["Light", "Dark", "Auto"]);
+    expect(within(choice).getByRole("radio", { name: "Auto" })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+
+    await userEvent.click(within(choice).getByRole("radio", { name: "Dark" }));
+    expect(onChange).toHaveBeenCalledWith("dark");
+  });
+
+  it("puts a dark mode switch in the compact header, not in the account menu", async () => {
+    const onChange = vi.fn();
+    renderAt(
+      "/admin/dashboard",
+      <AppShell
+        surface="admin"
+        brand={brand}
+        destinations={staffDestinations}
+        actions={[{ label: "Sign Out", icon: LogOut, onSelect: () => {} }]}
+        theme={{ value: "system", onChange }}
+      >
+        <p>Dashboard</p>
+      </AppShell>
+    );
+
+    const header = await screen.findByRole("banner");
+    const darkMode = within(header).getByRole("switch", { name: "Dark mode" });
+    expect(darkMode).not.toBeChecked();
+    await userEvent.click(darkMode);
+    expect(onChange).toHaveBeenCalledWith("dark");
+
+    await userEvent.click(within(header).getByRole("button", { name: "Account menu" }));
+    expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual(["Sign Out"]);
+  });
+
+  it("lets the menu sheet stop matching the device and keep the theme it shows", async () => {
+    const onChange = vi.fn();
+    renderAt(
+      "/admin/dashboard",
+      <AppShell
+        surface="admin"
+        brand={brand}
+        destinations={staffDestinations}
+        theme={{ value: "system", onChange }}
+      >
+        <p>Dashboard</p>
+      </AppShell>
+    );
+
+    await userEvent.click(await screen.findByRole("button", { name: "Open menu" }));
+
+    const menu = screen.getByRole("dialog", { name: "Okaeri Resort" });
+    expect(within(menu).getByRole("switch", { name: "Dark mode" })).toBeDisabled();
+    const matchDevice = within(menu).getByRole("switch", { name: "Match my device" });
+    expect(matchDevice).toBeChecked();
+
+    expect(await axe(menu)).toHaveNoViolations();
+
+    await userEvent.click(matchDevice);
+    expect(onChange).toHaveBeenCalledWith("light");
+  });
+
+  it("gives the guest top bar a dark mode switch and its menu sheet the switch rows", async () => {
+    const onChange = vi.fn();
+    renderAt(
+      "/",
+      <AppShell
+        surface="guest"
+        brand={guestBrand}
+        destinations={guestDestinations}
+        theme={{ value: "dark", onChange }}
+      >
+        <p>Calendar</p>
+      </AppShell>
+    );
+
+    const header = await screen.findByRole("banner");
+    expect(within(header).getByRole("switch", { name: "Dark mode" })).toBeChecked();
+    expect(screen.queryByRole("radiogroup", { name: "Theme" })).not.toBeInTheDocument();
+
+    await userEvent.click(within(header).getByRole("button", { name: "Open menu" }));
+    const menu = screen.getByRole("dialog", { name: "Okaeri Resort" });
+    await userEvent.click(within(menu).getByRole("switch", { name: "Match my device" }));
+    expect(onChange).toHaveBeenCalledWith("system");
   });
 });

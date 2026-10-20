@@ -25,6 +25,7 @@ import { auth } from "@/lib/auth";
 import { hasRoleLevel } from "@/lib/route-guards";
 import { supabase } from "@/lib/supabase";
 import { useInstallPromptStore } from "@/stores/useInstallPromptStore";
+import { useUIStore } from "@/stores/useUIStore";
 
 interface AdminDestination extends ShellDestination {
   /** Lowest role that sees it (hierarchical); undefined = every family member */
@@ -80,6 +81,8 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   const [userRole, setUserRole] = useState<AuditRole | null>(null);
   const [roleLoading, setRoleLoading] = useState(true);
+  const theme = useUIStore((s) => s.theme);
+  const setTheme = useUIStore((s) => s.setTheme);
 
   const installDismissalState = useInstallPromptStore((s) => s.dismissalState);
   const resetInstallPrompt = useInstallPromptStore((s) => s.reset);
@@ -136,6 +139,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       destinations={visibleDestinations}
       navLoading={roleLoading}
       actions={actions}
+      theme={{ value: theme, onChange: setTheme }}
       banner={<InstallBanner />}
     >
       {children}
