@@ -248,18 +248,12 @@ export const useUIStore = create<UIStore>()(
 
 // Hook for keyboard shortcuts
 
-// Initialize theme on app start
+// Initialize theme on app start; index.html has already applied the class before first paint
 export const initializeTheme = () => {
   const savedTheme = localStorage.getItem("theme") as "light" | "dark" | "system" | null;
-  const theme = savedTheme || "system";
+  useUIStore.getState().setTheme(savedTheme || "system");
 
-  useUIStore.getState().setTheme(theme);
-
-  // Listen for system theme changes
-  if (theme === "system" && typeof window !== "undefined") {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    mediaQuery.addEventListener("change", () => {
-      useUIStore.getState().setTheme("system");
-    });
-  }
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    if (useUIStore.getState().theme === "system") useUIStore.getState().setTheme("system");
+  });
 };

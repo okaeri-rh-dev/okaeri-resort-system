@@ -4,16 +4,20 @@ import { Calendar, DollarSign, FileText, Image } from "lucide-react";
 
 import {
   DetailAuditSection,
-  DetailField,
-  DetailPageLayout,
-  DetailSection,
   formatCurrency,
   formatDateTime,
   formatFullDate,
   formatTableDate,
   RelatedEntityLink,
 } from "@/components/entity-detail";
-import { StatusBadge } from "@/components/tables/utils";
+import {
+  Button,
+  DetailField,
+  DetailPageLayout,
+  DetailSection,
+  StatusBadge,
+} from "@/components/patterns";
+import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking, Guest, Payment } from "@/types";
 
 /**
@@ -40,7 +44,7 @@ interface PaymentDetailPageProps {
  *
  * Uses Professional Enterprise Design System with:
  * - High information density with minimal whitespace
- * - Monospace fonts for financial data
+ * - Tabular figures for financial data
  * - Responsive 2-column desktop / 1-column mobile layouts
  * - Professional status badges
  * - Consistent spacing and typography
@@ -60,7 +64,7 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
         { label: "Payments", to: "/admin/payments" },
         { label: `Payment #${displayPaymentId}` },
       ]}
-      status={<StatusBadge status={payment.payment_status || "Pending"} />}
+      status={<StatusBadge {...statusBadgeProps(payment.payment_status, "Pending")} />}
       editRoute={{
         to: "/admin/payments/$paymentId/edit",
         params: { paymentId },
@@ -69,27 +73,23 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
       {/* 1. Payment Overview Section */}
       <DetailSection title="Payment Overview" icon={<DollarSign className="h-5 w-5" />}>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <DetailField
-            label="Amount"
-            value={formatCurrency(payment.amount)}
-            valueClassName="font-mono font-semibold text-2xl text-neutral-900"
-          />
+          <DetailField label="Amount" value={formatCurrency(payment.amount)} emphasis="total" />
           <DetailField
             label="Payment Method"
             value={
-              <span className="inline-flex items-center rounded-md border border-neutral-200 bg-neutral-100 px-3 py-1 text-sm font-medium text-neutral-700">
+              <span className="border-border bg-muted text-foreground inline-flex items-center rounded-md border px-3 py-1 text-sm font-medium">
                 {payment.payment_method || "Not specified"}
               </span>
             }
           />
           <DetailField
             label="Status"
-            value={<StatusBadge status={payment.payment_status || "Pending"} />}
+            value={<StatusBadge {...statusBadgeProps(payment.payment_status, "Pending")} />}
           />
           <DetailField
             label="Payment Date"
             value={formatDateTime(payment.payment_date || payment.created_at || "")}
-            valueClassName="font-medium"
+            emphasis="strong"
           />
         </div>
       </DetailSection>
@@ -125,12 +125,12 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
             <DetailField
               label="Check-in Date"
               value={formatTableDate(payment.booking.check_in)}
-              valueClassName="font-medium"
+              emphasis="strong"
             />
             <DetailField
               label="Check-out Date"
               value={formatTableDate(payment.booking.check_out)}
-              valueClassName="font-medium"
+              emphasis="strong"
             />
           </div>
         </DetailSection>
@@ -144,25 +144,20 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
               <img
                 src={payment.proof_url}
                 alt="Payment proof"
-                className="h-auto w-full rounded-md border border-neutral-200"
+                className="border-border h-auto w-full rounded-md border"
               />
             </div>
             <div className="flex gap-2">
-              <a
-                href={payment.proof_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-              >
-                Open in New Tab
-              </a>
-              <a
-                href={payment.proof_url}
-                download
-                className="inline-flex items-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-              >
-                Download
-              </a>
+              <Button variant="outline" asChild>
+                <a href={payment.proof_url} target="_blank" rel="noopener noreferrer">
+                  Open in New Tab
+                </a>
+              </Button>
+              <Button variant="outline" asChild>
+                <a href={payment.proof_url} download>
+                  Download
+                </a>
+              </Button>
             </div>
           </div>
         </DetailSection>
@@ -171,9 +166,7 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
       {/* 4. Transaction Notes Section (Conditional) */}
       {payment.notes && (
         <DetailSection title="Transaction Notes" icon={<FileText className="h-5 w-5" />}>
-          <div className="prose prose-sm max-w-none">
-            <p className="text-sm whitespace-pre-wrap text-neutral-700">{payment.notes}</p>
-          </div>
+          <p className="text-foreground text-sm whitespace-pre-wrap">{payment.notes}</p>
         </DetailSection>
       )}
 

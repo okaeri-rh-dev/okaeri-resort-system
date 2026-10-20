@@ -88,23 +88,18 @@ export class DashboardPage {
   }
 
   /**
-   * True when the sidebar nav is hidden behind the hamburger Sheet (< lg / 1024px).
-   */
-  private isCollapsedNavViewport(): boolean {
-    return (this.page.viewportSize()?.width ?? 1280) < 1024;
-  }
-
-  /**
-   * Click a nav link, opening the mobile navigation Sheet first when the
-   * sidebar is collapsed (< lg). The sidebar links stay in the DOM but are
-   * hidden on small viewports, so the desktop locator cannot be clicked there.
+   * Click a destination in the main nav (bottom bar or rail). On compact windows the
+   * unpinned destinations sit behind More, which opens the full list.
    */
   private async clickNavLink(name: RegExp) {
-    if (this.isCollapsedNavViewport()) {
-      await this.page.getByRole("button", { name: "Open navigation menu" }).click();
-      await this.page.getByRole("dialog").getByRole("link", { name }).first().click();
+    const nav = this.page.getByRole("navigation", { name: "Main" });
+    await expect(nav.getByRole("link").first()).toBeVisible();
+    const link = nav.getByRole("link", { name });
+    if (await link.first().isVisible()) {
+      await link.first().click();
     } else {
-      await this.page.getByRole("link", { name }).first().click();
+      await this.page.getByRole("button", { name: "More" }).click();
+      await this.page.getByRole("dialog").getByRole("link", { name }).first().click();
     }
   }
 

@@ -2,13 +2,17 @@ import { useRef, useState } from "react";
 
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { Link } from "@tanstack/react-router";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import {
+  Button,
+  Callout,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+} from "@/components/patterns";
 import { supabaseAuth } from "@/lib/supabase";
 
 interface LoginFormProps {
@@ -91,26 +95,22 @@ export function LoginForm({ onSuccess, registered, confirmed }: LoginFormProps) 
   const isSubmitDisabled = loading || (!turnstileToken && !shouldSkipTurnstile);
 
   return (
-    <div className="flex items-center justify-center bg-gray-50 p-4">
+    <div className="bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Okaeri Resort System</CardTitle>
-          <p className="text-gray-600">Sign in to continue</p>
+          <p className="text-muted-foreground">Sign in to continue</p>
         </CardHeader>
         <CardContent>
           {registered && (
-            <Alert className="mb-4 border-green-500/50 bg-green-50 text-green-900">
-              <CheckCircle2 className="h-4 w-4" />
-              <AlertDescription>
-                Account created! Please check your email to verify before signing in.
-              </AlertDescription>
-            </Alert>
+            <Callout tone="success" className="mb-4">
+              Account created! Please check your email to verify before signing in.
+            </Callout>
           )}
           {confirmed && (
-            <Alert className="mb-4 border-green-500/50 bg-green-50 text-green-900">
-              <CheckCircle2 className="h-4 w-4" />
-              <AlertDescription>Email verified! You can now sign in.</AlertDescription>
-            </Alert>
+            <Callout tone="success" className="mb-4">
+              Email verified! You can now sign in.
+            </Callout>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -152,12 +152,9 @@ export function LoginForm({ onSuccess, registered, confirmed }: LoginFormProps) 
             {/* Turnstile Widget */}
             <div className="flex justify-center">
               {shouldSkipTurnstile ? (
-                <Alert className="border-amber-500/50 bg-amber-50 text-amber-900">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>Development Mode:</strong> Security verification disabled.
-                  </AlertDescription>
-                </Alert>
+                <Callout tone="warning">
+                  <strong>Development Mode:</strong> Security verification disabled.
+                </Callout>
               ) : (
                 <Turnstile
                   ref={turnstileRef}
@@ -174,9 +171,7 @@ export function LoginForm({ onSuccess, registered, confirmed }: LoginFormProps) 
               )}
             </div>
 
-            {/* size="lg" (h-10/40px): default h-9 (36px) is below the 40px
-                minimum mobile touch target asserted in e2e/auth.spec.ts and
-                shorter than the h-10 inputs above. */}
+            {/* size="lg" (44px): the screen's one primary action */}
             <Button type="submit" size="lg" className="w-full" disabled={isSubmitDisabled}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>

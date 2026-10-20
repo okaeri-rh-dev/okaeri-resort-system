@@ -16,7 +16,8 @@ export function QueryProvider({ children }: QueryProviderProps) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {import.meta.env.DEV && (
+      {/* Not under browser automation: the floating button covers the compact bottom bar */}
+      {import.meta.env.DEV && !navigator.webdriver && (
         <ReactQueryDevtools initialIsOpen={false} position="bottom" buttonPosition="bottom-right" />
       )}
     </QueryClientProvider>

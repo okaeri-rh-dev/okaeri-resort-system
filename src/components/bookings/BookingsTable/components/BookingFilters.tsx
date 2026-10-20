@@ -1,20 +1,19 @@
 import React, { useState } from "react";
 
-import { CalendarDays, ChevronDown, Download, Filter, X } from "lucide-react";
+import { CalendarDays, Download } from "lucide-react";
 
-import { FilterPopover, TableSearch } from "@/components/tables/utils";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
+  Button,
+  FilterBar,
+  FilterPopover,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useResponsiveView } from "@/hooks";
+  TableSearch,
+} from "@/components/patterns";
+import { Calendar } from "@/components/ui/calendar";
 import { pickedDay } from "@/lib/bookings";
 import type { BookingStatus, PaymentStatus } from "@/types";
 
@@ -39,8 +38,6 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
     to: undefined,
   });
   const [dateFilterOpen, setDateFilterOpen] = useState(false);
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const { isMobile } = useResponsiveView();
 
   // Check if any filters are actually active (have non-undefined values)
   const hasActiveFilters = (): boolean => {
@@ -234,104 +231,32 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
       </span>
     );
 
-  // Mobile Layout
-  if (isMobile) {
-    return (
-      <div className="space-y-3 border-b bg-neutral-50 p-4">
-        {/* Top row: Search + Filter toggle */}
-        <div className="flex items-center gap-2">
-          <TableSearch
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search..."
-            className="flex-1"
-          />
-          <Collapsible open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-            <CollapsibleTrigger asChild>
-              <Button variant="outline" size="sm" className="relative gap-1">
-                <Filter className="h-4 w-4" />
-                Filters
-                {activeFilterCount() > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-primary text-primary-foreground ml-1 h-5 min-w-5 px-1"
-                  >
-                    {activeFilterCount()}
-                  </Badge>
-                )}
-                <ChevronDown
-                  className={`h-3 w-3 transition-transform ${mobileFiltersOpen ? "rotate-180" : ""}`}
-                />
-              </Button>
-            </CollapsibleTrigger>
-          </Collapsible>
-        </div>
-
-        {/* Collapsible filter section */}
-        <Collapsible open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-          <CollapsibleContent className="space-y-3">
-            {/* Filter grid - 2 columns on mobile */}
-            <div className="grid grid-cols-2 gap-2">
-              <StatusFilter />
-              <PaymentFilter />
-              <WalkInFilter />
-            </div>
-            <div className="flex items-center gap-2">
-              <DateFilter />
-              {hasActiveFilters() && (
-                <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1">
-                  <X className="h-3 w-3" />
-                  Clear
-                </Button>
-              )}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-
-        {/* Bottom row: Result count + Export */}
-        <div className="flex items-center justify-between">
-          <ResultCount />
-          <Button variant="outline" size="sm" onClick={onExport}>
-            <Download className="mr-1 h-3 w-3" />
-            Export
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Desktop Layout (original)
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-neutral-50 p-4">
-      <div className="flex flex-wrap items-center gap-2">
+    <FilterBar
+      search={
         <TableSearch
           value={searchQuery}
           onChange={setSearchQuery}
           placeholder="Search bookings..."
-          className="w-64"
         />
-
-        <StatusFilter />
-        <PaymentFilter />
-        <WalkInFilter />
-        <DateFilter />
-
-        {hasActiveFilters() && (
-          <Button variant="outline" size="sm" onClick={resetFilters}>
-            Clear Filters
-          </Button>
-        )}
-
-        {/* Result count indicator */}
-        <div className="ml-2">
-          <ResultCount />
-        </div>
-      </div>
-
-      <Button variant="outline" size="sm" onClick={onExport}>
-        <Download className="mr-1 h-3 w-3" />
-        Export CSV
-      </Button>
-    </div>
+      }
+      filters={
+        <>
+          <StatusFilter />
+          <PaymentFilter />
+          <WalkInFilter />
+          <DateFilter />
+        </>
+      }
+      activeFilterCount={activeFilterCount()}
+      onClearFilters={hasActiveFilters() ? resetFilters : undefined}
+      summary={<ResultCount />}
+      actions={
+        <Button variant="outline" size="sm" onClick={onExport}>
+          <Download className="mr-1 h-3 w-3" />
+          Export CSV
+        </Button>
+      }
+    />
   );
 };

@@ -21,12 +21,9 @@ import {
 import { Input, NumberInput } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { usePricingConfig } from "@/hooks/usePricingConfig";
+import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import {
-  formatCurrency,
-  unitFormWithoutPricingValidationSchema,
-  type UnitFormData,
-} from "@/lib/validations";
+import { unitFormWithoutPricingValidationSchema, type UnitFormData } from "@/lib/validations";
 import { useCreateUnit, useUpdateUnit } from "@/stores/useUnitStore";
 import type { Unit, UnitType } from "@/types";
 

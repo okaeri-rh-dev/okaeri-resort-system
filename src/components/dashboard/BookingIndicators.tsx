@@ -75,6 +75,7 @@ export const BookingIndicators = React.memo(function BookingIndicators({
                 "flex w-full min-w-0 items-center rounded-sm border py-0.5",
                 compact ? "px-0.5" : "px-1",
                 "truncate leading-tight font-medium",
+                // eslint-disable-next-line better-tailwindcss/no-restricted-classes -- chips scale with the calendar cell's width (cqi) so every booking fits a cell; no fixed step can (#36)
                 "text-[clamp(7px,2cqi,10px)]",
                 slot.bg,
                 chipText,
@@ -83,7 +84,7 @@ export const BookingIndicators = React.memo(function BookingIndicators({
               )}
               aria-label={`${slot.unitCode}: ${booking.guest_name}`}
             >
-              <span className="mr-1 hidden font-mono sm:inline">{slot.unitCode}</span>
+              <span className="mr-1 hidden sm:inline">{slot.unitCode}</span>
               <span className="truncate font-sans">{booking.guest_name}</span>
             </div>
           </div>
@@ -107,7 +108,7 @@ export const BookingCountBadge = React.memo(function BookingCountBadge({
     <div
       className={cn(
         "absolute top-0.5 right-0.5 flex size-4 items-center justify-center",
-        "rounded-full bg-blue-600 text-[9px] font-bold text-white",
+        "bg-primary text-primary-foreground rounded-full text-[9px] font-bold",
         "shadow-sm",
         className
       )}

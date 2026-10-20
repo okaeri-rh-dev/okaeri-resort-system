@@ -4,9 +4,10 @@ import { Link } from "@tanstack/react-router";
 import { createColumnHelper, type Header } from "@tanstack/react-table";
 
 import { UNIT_SLOT_MAP } from "@/components/dashboard/unit-calendar-config";
-import { formatCurrency, formatPhoneNumber, formatTableDate } from "@/components/tables/formatters";
-import { SortableHeader, StatusBadge } from "@/components/tables/utils";
+import { SortableHeader, StatusBadge } from "@/components/patterns";
 import { Badge } from "@/components/ui/badge";
+import { formatCurrency, formatPhoneNumber, formatTableDate } from "@/lib/formatters";
+import { statusBadgeProps } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
 import type { Booking, BookingStatus } from "@/types";
 
@@ -42,11 +43,12 @@ export const useBookingColumns = ({
             <Link
               to="/admin/guests"
               search={{ search: row.original.guest_name }}
-              className="font-medium text-blue-600 transition-colors hover:underline"
+              className="text-primary font-medium hover:underline"
             >
               {row.original.guest_name}
             </Link>
-            <div className="text-xs text-neutral-600">
+            <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs">
+              {row.original.is_walk_in && <StatusBadge tone="warning">Walk-in</StatusBadge>}
               {(row.original.contact_number && formatPhoneNumber(row.original.contact_number)) ||
                 row.original.email ||
                 ""}
@@ -62,7 +64,7 @@ export const useBookingColumns = ({
           const units = row.original.booking_units || [];
 
           if (units.length === 0) {
-            return <span className="text-xs text-neutral-400">No units</span>;
+            return <span className="text-muted-foreground text-xs">No units</span>;
           }
 
           return (
@@ -75,7 +77,7 @@ export const useBookingColumns = ({
                     key={bu.booking_unit_id}
                     variant="outline"
                     className={cn(
-                      "font-mono text-xs",
+                      "text-xs",
                       slotConfig
                         ? cn(slotConfig.bg, slotConfig.text, slotConfig.border)
                         : "bg-secondary text-secondary-foreground border-transparent"
@@ -98,7 +100,7 @@ export const useBookingColumns = ({
         cell: ({ getValue, row }) => (
           <div className="space-y-0.5">
             <div className="text-sm font-medium">{formatTableDate(getValue())}</div>
-            <div className="text-xs text-neutral-500">
+            <div className="text-muted-foreground text-xs">
               {formatTableDate(row.original.check_out)}
             </div>
           </div>
@@ -108,7 +110,8 @@ export const useBookingColumns = ({
 
       columnHelper.accessor("num_guests", {
         header: "Guests",
-        cell: ({ getValue }) => <div className="text-center font-mono text-sm">{getValue()}</div>,
+        cell: ({ getValue }) => getValue(),
+        meta: { align: "center" },
         size: 80,
       }),
 
@@ -118,37 +121,20 @@ export const useBookingColumns = ({
             Amount
           </SortableHeader>
         ),
-        cell: ({ getValue }) => (
-          <div className="text-right font-mono font-semibold text-neutral-900">
-            {formatCurrency(getValue())}
-          </div>
-        ),
+        cell: ({ getValue }) => <span className="font-semibold">{formatCurrency(getValue())}</span>,
+        meta: { align: "right" },
         size: 120,
-      }),
-
-      columnHelper.accessor("is_walk_in", {
-        header: "Type",
-        cell: ({ getValue }) =>
-          getValue() ? (
-            <Badge
-              variant="outline"
-              className="border-amber-300 bg-amber-50 px-1.5 py-0 text-[10px] font-semibold text-amber-800"
-            >
-              Walk-in
-            </Badge>
-          ) : null,
-        size: 90,
       }),
 
       columnHelper.accessor("booking_status", {
         header: "Status",
-        cell: ({ getValue }) => <StatusBadge status={getValue() ?? "Pending"} />,
+        cell: ({ getValue }) => <StatusBadge {...statusBadgeProps(getValue(), "Pending")} />,
         size: 100,
       }),
 
       columnHelper.accessor("payment_status", {
         header: "Payment",
-        cell: ({ getValue }) => <StatusBadge status={getValue() ?? "Pending"} />,
+        cell: ({ getValue }) => <StatusBadge {...statusBadgeProps(getValue(), "Pending")} />,
         size: 100,
       }),
 
@@ -160,7 +146,7 @@ export const useBookingColumns = ({
           <Link
             to="/admin/bookings/$bookingId"
             params={{ bookingId: row.original.booking_id }}
-            className="font-mono text-sm font-medium text-blue-600 transition-colors hover:underline"
+            className="text-primary text-sm font-medium whitespace-nowrap hover:underline"
           >
             {row.getValue("booking_reference")}
           </Link>
@@ -170,7 +156,8 @@ export const useBookingColumns = ({
 
       columnHelper.display({
         id: "actions",
-        header: "Actions",
+        meta: { pinned: true },
+        header: () => <span className="sr-only">Actions</span>,
         cell: ({ row }) => {
           return (
             <BookingActionsCell

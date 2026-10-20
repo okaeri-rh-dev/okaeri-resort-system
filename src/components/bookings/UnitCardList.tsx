@@ -19,7 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import type { PricingConfig } from "@/hooks/usePricingConfig";
-import { formatCurrency } from "@/lib/validations";
+import { formatCurrency } from "@/lib/formatters";
 import type { BookingUnit } from "@/types/multi-unit-booking";
 
 // ============================================

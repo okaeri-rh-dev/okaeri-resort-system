@@ -86,13 +86,13 @@ export function RelatedEntityLink({ type, id, label, badge, className }: Related
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       params={{ [paramKey]: id } as any}
       className={cn(
-        "inline-flex items-center gap-2 font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline",
+        "text-primary inline-flex items-center gap-2 font-medium hover:underline",
         className
       )}
     >
       <Icon className="h-4 w-4" />
       <span>{label}</span>
-      {badge && <span className="font-mono text-xs text-neutral-500">({badge})</span>}
+      {badge && <span className="text-muted-foreground text-xs tabular-nums">({badge})</span>}
     </Link>
   );
 }

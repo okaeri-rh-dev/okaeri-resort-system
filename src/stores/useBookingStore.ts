@@ -23,6 +23,7 @@ import {
 } from "@/lib/bookings";
 import { requestBooking } from "@/lib/bookings/request";
 import { adaptBookingFromDB } from "@/lib/database-adapters";
+import { formatCurrency } from "@/lib/formatters";
 import { recordProofPayment } from "@/lib/payments";
 import {
   afterBookingCancel,
@@ -33,7 +34,6 @@ import {
 } from "@/lib/query-invalidation";
 import { bookingKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
-import { formatCurrency } from "@/lib/validations";
 import type { Booking, BookingFilters, BookingStatus, TableState } from "@/types";
 
 // import { useWorkflowStore } from "./useWorkflowStore"; // Phase 3-4

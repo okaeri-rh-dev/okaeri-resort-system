@@ -5,9 +5,8 @@ import { format } from "date-fns";
 import { Check, Upload } from "lucide-react";
 
 import { UNIT_SLOT_MAP } from "@/components/dashboard/unit-calendar-config";
-import { formatCurrency } from "@/components/tables/formatters";
-import { ActionMenu, MobileCard, StatusBadge } from "@/components/tables/utils";
 import {
+  ActionMenu,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -16,11 +15,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Button,
+  ListCard,
+  StatusBadge,
+} from "@/components/patterns";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useUserRole } from "@/hooks";
 import { canTransitionStatus } from "@/lib/bookings";
+import { formatCurrency } from "@/lib/formatters";
+import { statusBadgeProps } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
 import type { BookingStatus } from "@/types";
 import { utcToResortTime } from "@/utils/date-helpers";
@@ -53,17 +56,17 @@ const getNights = (checkIn: string, checkOut: string): number => {
 };
 
 const PAYMENT_DOT: Record<string, { color: string; label: string }> = {
-  Completed: { color: "bg-emerald-500", label: "Paid" },
-  Pending: { color: "bg-amber-500", label: "Pending" },
-  Failed: { color: "bg-red-500", label: "Failed" },
-  Refunded: { color: "bg-red-500", label: "Refunded" },
+  Completed: { color: "bg-success-foreground", label: "Paid" },
+  Pending: { color: "bg-warning-foreground", label: "Pending" },
+  Failed: { color: "bg-danger-foreground", label: "Failed" },
+  Refunded: { color: "bg-danger-foreground", label: "Refunded" },
 };
 
 const PaymentDot: React.FC<{ status: string | null | undefined }> = ({ status }) => {
   const key = status ?? "Pending";
-  const config = PAYMENT_DOT[key] ?? { color: "bg-neutral-400", label: key };
+  const config = PAYMENT_DOT[key] ?? { color: "bg-muted-foreground", label: key };
   return (
-    <span className="flex items-center gap-1.5 text-xs text-neutral-600">
+    <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
       <span className={cn("h-1.5 w-1.5 rounded-full", config.color)} aria-hidden />
       {config.label}
     </span>
@@ -143,25 +146,20 @@ export const BookingCard: React.FC<BookingCardProps> = ({
 
   return (
     <>
-      <MobileCard className="space-y-2">
+      <ListCard className="space-y-2">
         {/* Header: identity (left) + status/menu (right) */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-base font-semibold text-neutral-900">{booking.guest_name}</span>
-              {booking.is_walk_in && (
-                <Badge
-                  variant="outline"
-                  className="border-amber-300 bg-amber-50 px-1.5 py-0 text-[10px] font-semibold text-amber-800"
-                >
-                  Walk-in
-                </Badge>
-              )}
+              <span className="text-foreground text-base font-semibold">{booking.guest_name}</span>
+              {booking.is_walk_in && <StatusBadge tone="warning">Walk-in</StatusBadge>}
             </div>
-            <div className="font-mono text-xs text-neutral-400">{booking.booking_reference}</div>
+            <div className="text-muted-foreground text-xs tabular-nums">
+              {booking.booking_reference}
+            </div>
           </div>
           <div className="flex items-center gap-1">
-            <StatusBadge status={booking.booking_status ?? "Pending"} />
+            <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
             {menuActions.length > 0 && <ActionMenu actions={menuActions} />}
           </div>
         </div>
@@ -173,20 +171,18 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           onClick={handleViewBooking}
           onKeyDown={handleInfoKeyDown}
           aria-label={`View booking ${booking.booking_reference}`}
-          className="-mx-1 cursor-pointer space-y-1.5 rounded px-1 py-1 transition-colors focus-visible:bg-neutral-50 focus-visible:outline-none active:bg-neutral-100"
+          className="focus-visible:bg-muted active:bg-muted -mx-1 cursor-pointer space-y-1.5 rounded px-1 py-1 transition-colors focus-visible:outline-none"
         >
           {/* Facts strip: dates on the left, nights · guests pushed right */}
-          <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-0.5 text-sm text-neutral-700">
-            <span className="font-semibold text-neutral-900">
+          <div className="text-muted-foreground flex flex-wrap items-start justify-between gap-x-3 gap-y-0.5 text-sm">
+            <span className="text-foreground font-semibold">
               {formatStayRange(booking.check_in, booking.check_out)}
             </span>
             <div className="flex items-center gap-x-2">
               <span>
                 {nights} {nights === 1 ? "night" : "nights"}
               </span>
-              <span className="text-neutral-300" aria-hidden>
-                ·
-              </span>
+              <span aria-hidden>·</span>
               <span>
                 {booking.num_guests} {booking.num_guests === 1 ? "guest" : "guests"}
               </span>
@@ -204,7 +200,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
                     key={bu.booking_unit_id}
                     variant="outline"
                     className={cn(
-                      "font-mono text-xs",
+                      "text-xs",
                       slotConfig
                         ? cn(slotConfig.bg, slotConfig.text, slotConfig.border)
                         : "bg-secondary text-secondary-foreground border-transparent"
@@ -216,7 +212,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
               })}
             </div>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-sm font-semibold text-neutral-900">
+              <span className="text-foreground text-sm font-semibold tabular-nums">
                 {formatCurrency(booking.total_amount)}
               </span>
               <PaymentDot status={booking.payment_status} />
@@ -240,7 +236,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
             )}
           </div>
         )}
-      </MobileCard>
+      </ListCard>
 
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>
@@ -253,7 +249,10 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep booking</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmCancel} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={confirmCancel}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Cancel booking
             </AlertDialogAction>
           </AlertDialogFooter>

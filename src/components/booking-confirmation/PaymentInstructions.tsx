@@ -1,6 +1,6 @@
 import { AlertCircle, Building2 } from "lucide-react";
 
-import { PaymentMethodsDisplay } from "@/components/shared/PaymentMethodsDisplay";
+import { PaymentMethodsDisplay } from "@/components/payments/PaymentMethodsDisplay";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";

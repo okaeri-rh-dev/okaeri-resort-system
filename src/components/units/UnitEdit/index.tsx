@@ -5,7 +5,8 @@ import { Link, useLoaderData, useNavigate, useParams } from "@tanstack/react-rou
 import { DollarSign, Info, Save, X } from "lucide-react";
 import { useForm, type Control, type Resolver } from "react-hook-form";
 
-import { DetailPageLayout, formatCurrency } from "@/components/entity-detail";
+import { formatCurrency } from "@/components/entity-detail";
+import { DetailPageLayout } from "@/components/patterns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -210,26 +211,24 @@ export function UnitEditPage() {
                     </p>
 
                     {pricingConfig && (
-                      <div className="mt-4 space-y-2 rounded-md border border-neutral-200 bg-neutral-50 p-4">
-                        <p className="text-sm font-medium text-neutral-700">
-                          Current Global Rates:
-                        </p>
+                      <div className="border-border bg-muted mt-4 space-y-2 rounded-md border p-4">
+                        <p className="text-foreground text-sm font-medium">Current Global Rates:</p>
                         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                           <div>
-                            <p className="text-xs text-neutral-500">Base Rate</p>
-                            <p className="font-mono text-base font-semibold text-neutral-900">
+                            <p className="text-muted-foreground text-xs">Base Rate</p>
+                            <p className="text-foreground text-base font-semibold tabular-nums">
                               {formatCurrency(pricingConfig.base_rate)}
                             </p>
                           </div>
                           <div>
-                            <p className="text-xs text-neutral-500">Weekend Rate</p>
-                            <p className="font-mono text-base font-semibold text-neutral-900">
+                            <p className="text-muted-foreground text-xs">Weekend Rate</p>
+                            <p className="text-foreground text-base font-semibold tabular-nums">
                               {formatCurrency(pricingConfig.weekend_rate)}
                             </p>
                           </div>
                           <div>
-                            <p className="text-xs text-neutral-500">Extra Person</p>
-                            <p className="font-mono text-base font-semibold text-neutral-900">
+                            <p className="text-muted-foreground text-xs">Extra Person</p>
+                            <p className="text-foreground text-base font-semibold tabular-nums">
                               {formatCurrency(pricingConfig.extra_person_rate)}
                             </p>
                           </div>

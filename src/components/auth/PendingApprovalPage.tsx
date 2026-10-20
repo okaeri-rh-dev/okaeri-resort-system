@@ -4,8 +4,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Clock, LogOut, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/patterns";
 import { getUserAuditRole } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
 
@@ -39,20 +38,20 @@ export function PendingApprovalPage({ loginPath = "/admin/login" }: { loginPath?
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+    <div className="bg-background flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
-            <Clock className="h-6 w-6 text-amber-600" />
+          <div className="bg-warning mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full">
+            <Clock className="text-warning-foreground h-6 w-6" />
           </div>
           <CardTitle className="text-2xl font-bold">Account Pending Approval</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-center text-gray-600">
+          <p className="text-muted-foreground text-center">
             Your account has been created but an administrator hasn't assigned you a role yet.
             Please contact your administrator to get access.
           </p>
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-muted-foreground text-center text-sm">
             Once approved, click "Check Again" below or sign in again to access the system.
           </p>
           <div className="flex flex-col gap-2 pt-4">

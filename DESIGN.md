@@ -47,6 +47,17 @@ Navigation per class:
 | Admin   | Bottom bar: Dashboard, Bookings, Booking Queue, Payments, More (opens the modal rail). Roles with ≤5 destinations get no More. | Collapsed rail; groups open a flyout | Expanded rail with labels |
 | Guest   | Top bar with a menu sheet                                                                                                      | Top bar with inline links            | (centred at max width)    |
 
+The rail and the menu sheets scroll as one column when the window is short.
+
+Theme control per nav form. It is never in the account menu.
+
+| Surface | Compact                                                                                                         | Medium, expanded                                                                   | Large, xlarge                                         |
+| ------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Admin   | Dark mode switch in the header; a long press on it opens Match my device. More's sheet adds both switch rows    | Dark mode switch at the rail foot; the menu sheet adds Dark mode + Match my device | Light / Dark / Auto segmented switch at the rail foot |
+| Guest   | Dark mode switch in the top bar (long press opens Match my device); menu sheet adds Dark mode + Match my device | Dark mode switch in the top bar; long press opens Match my device                  | (as medium)                                           |
+
+The dark mode switch sets an explicit theme. "Match my device" is the system setting; while it is on, Dark mode is locked. The long press exists where no menu sheet is in reach: compact admin roles with five or fewer destinations have no More, and the guest top bar has no menu from `medium`.
+
 Pane layouts:
 
 | Screen                         | Layout                                                                                     |
@@ -98,7 +109,7 @@ Rationale: [Type scale and font loading](https://github.com/okaeri-rh-dev/okaeri
 
 ## Data formatting
 
-- Money goes through `formatCurrency` (`src/lib/validations.ts`), which gives `₱2,500.00`. Money is right-aligned in tables and uses `tabular-nums`.
+- Money goes through `formatCurrency` (`src/lib/formatters.ts`), which gives `₱2,500.00`. Money is right-aligned in tables and uses `tabular-nums`.
 - `tabular-nums` is the default inside the `DataTable`, money and date patterns. Figures elsewhere opt in. Data uses Figtree; there is no monospace face.
 
 ## Motion and density
@@ -158,8 +169,8 @@ The single list of what fails `npm run verify`. Rules marked "review" are the ch
 | Arbitrary durations (`duration-[…]`)                                       | `better-tailwindcss/no-restricted-classes`            |
 | Default breakpoints (`sm:`…`2xl:`, `max-md:`); touch targets use `coarse:` | `better-tailwindcss/no-restricted-classes`            |
 | `transition-all`, `focus:` rings, `<img>` without `width`/`height`         | `design/no-restricted-syntax`                         |
-| `@/components/ui/*` imported outside `src/components/patterns/`            | `no-restricted-imports`                               |
-| Retired width hooks (`useResponsiveView`, `useMediaQuery`)                 | `no-restricted-imports`                               |
+| `@/components/ui/*` imported outside `src/components/patterns/`            | `design/no-restricted-imports`                        |
+| Retired width hooks (`useResponsiveView`, `useMediaQuery`)                 | `design/no-restricted-imports`                        |
 | Accessible markup (labels, keyboard handlers, alt, anchors)                | `jsx-a11y` recommended, with the shadcn component map |
 | Token contrast pairs, light and dark (4.5:1; `input` and `ring` 3:1)       | contrast test in `src/styles/`                        |
 | Zoom not disabled; `theme-color` matches the background                    | `index.html` test                                     |
@@ -182,12 +193,14 @@ A human reference only. `src/index.css` is the source of truth and holds these v
 | Primary / primary-foreground | `#8A5530` / `#FFFFFF`  | `#D9A77C` / `#2A1D12`  |
 | Secondary                    | `#EFE8E0`              | `#302824`              |
 | Accent                       | `#F3E6D8`              | `#3A2E26`              |
-| Brand                        | `#D19C70`              | `#D9A77C`              |
+| Brand / brand-foreground     | `#D19C70` / `#1A1410`  | `#D9A77C` / `#1A1410`  |
 | Sidebar / sidebar-foreground | `#2A2421` / `#F2EBE4`  | `#141110` / `#F2EBE4`  |
+| Sidebar-primary / foreground | `#D19C70` / `#1A1410`  | `#D9A77C` / `#1A1410`  |
+| Sidebar-accent / border      | `#3A322D` / `#3D3530`  | `#2A2320` / `#2A2320`  |
 | Border                       | `#E8E1D8`              | `#3A312C`              |
-| Input                        | `#A68F7C`              | `#7A6C62`              |
+| Input                        | `#9E8774`              | `#7A6C62`              |
 | Ring                         | `#8A5530`              | `#D9A77C`              |
-| Destructive                  | `#B23A2E`              | `#D0574A`              |
+| Destructive / foreground     | `#B23A2E` / `#FFFFFF`  | `#E26759` / `#141110`  |
 | Success (fg on bg)           | `#2F7A4F` on `#EAF4EE` | `#86CFA2` on `#1D2C23` |
 | Warning (fg on bg)           | `#8A5800` on `#FBF1DF` | `#E9B45A` on `#2F2414` |
 | Danger (fg on bg)            | `#B23A2E` on `#FBECEA` | `#F2948A` on `#36201D` |

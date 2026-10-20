@@ -18,9 +18,13 @@ beforeAll(() => {
   eslint = new ESLint({ cwd: process.cwd() });
 });
 
-async function lint(code: string, overrideConfig?: Linter.Config): Promise<Linter.LintMessage[]> {
+async function lint(
+  code: string,
+  overrideConfig?: Linter.Config,
+  filePath = SNIPPET_PATH
+): Promise<Linter.LintMessage[]> {
   const linter = overrideConfig ? new ESLint({ cwd: process.cwd(), overrideConfig }) : eslint;
-  const [result] = await linter.lintText(code, { filePath: SNIPPET_PATH });
+  const [result] = await linter.lintText(code, { filePath });
   // A snippet that doesn't parse would pass every "accepts" case
   expect(result.messages.filter((message) => message.fatal)).toEqual([]);
   return result.messages;
@@ -30,53 +34,80 @@ async function ruleIds(code: string, overrideConfig?: Linter.Config): Promise<st
   return (await lint(code, overrideConfig)).map((message) => message.ruleId ?? "fatal");
 }
 
-describe("better-tailwindcss reads the v4 @theme setup", () => {
-  // Palette and unknown-class rules turn on in a later slice; this proves the plugin
-  // as configured here (entryPoint src/index.css) can enforce them.
-  const laterSliceRules: Linter.Config = {
-    files: ["src/**/*.tsx"],
-    rules: {
-      "better-tailwindcss/no-restricted-classes": [
-        "error",
-        { restrict: [{ pattern: "^(?:.*:)?(?:bg|text|border)-(?:slate|red|blue)-\\d+$" }] },
-      ],
-      "better-tailwindcss/no-unknown-classes": "error",
-    },
-  };
+describe("palette classes and font-mono", () => {
+  const rule = "better-tailwindcss/no-restricted-classes";
 
-  it("flags a palette class inside cn() and cva()", async () => {
+  it("flags palette classes inside cn() and cva()", async () => {
     const messages = await lint(
       `import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 const variants = cva("bg-red-500", { variants: { tone: { quiet: "text-slate-700" } } });
 export const Box = () => <div className={cn(variants(), "text-blue-600")} />;
-`,
-      laterSliceRules
-    );
-
-    const flagged = messages
-      .filter((message) => message.ruleId === "better-tailwindcss/no-restricted-classes")
-      .map((message) => message.message);
-    expect(flagged).toEqual([
-      'Restricted class: "bg-red-500".',
-      'Restricted class: "text-slate-700".',
-      'Restricted class: "text-blue-600".',
-    ]);
-  });
-
-  it("flags an unknown class and accepts classes defined in @theme", async () => {
-    const messages = await lint(
-      `import { cn } from "@/lib/utils";
-export const Box = () => <div className={cn("bg-background text-foreground", "card-elevated")} />;
-`,
-      laterSliceRules
+`
     );
 
     expect(
-      messages
-        .filter((message) => message.ruleId === "better-tailwindcss/no-unknown-classes")
-        .map((message) => message.message)
+      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+    ).toEqual([
+      expect.stringContaining('"bg-red-500"'),
+      expect.stringContaining('"text-slate-700"'),
+      expect.stringContaining('"text-blue-600"'),
+    ]);
+  });
+
+  it.each([
+    "text-white",
+    "bg-black/50",
+    "hover:bg-emerald-50",
+    "dark:border-zinc-800",
+    "ring-offset-gray-100",
+    "from-amber-400",
+    "divide-y divide-neutral-200",
+    "fill-taupe-300",
+    "font-mono",
+    "md:font-mono",
+  ])("flags %s", async (className) => {
+    expect(await ruleIds(`export const A = () => <div className="${className}" />;`)).toContain(
+      rule
+    );
+  });
+
+  it.each([
+    "bg-success text-success-foreground",
+    "bg-availability-high text-foreground",
+    "bg-sidebar text-sidebar-foreground",
+    "bg-overlay shadow-card rounded-xl",
+    "font-display font-sans",
+    "border-transparent text-current",
+    "font-medium",
+  ])("accepts %s", async (className) => {
+    expect(await ruleIds(`export const A = () => <div className="${className}" />;`)).not.toContain(
+      rule
+    );
+  });
+});
+
+describe("unknown classes", () => {
+  const rule = "better-tailwindcss/no-unknown-classes";
+
+  it("flags a class Tailwind can't resolve", async () => {
+    const messages = await lint(
+      `import { cn } from "@/lib/utils";
+export const Box = () => <div className={cn("bg-background text-foreground", "card-elevated")} />;
+`
+    );
+
+    expect(
+      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
     ).toEqual(["Unknown class detected: card-elevated"]);
+  });
+
+  it("accepts the Hearth token utilities and dark: variants", async () => {
+    expect(
+      await ruleIds(
+        `export const A = () => <div className="bg-brand text-brand-foreground dark:bg-card shadow-popover" />;`
+      )
+    ).not.toContain(rule);
   });
 });
 
@@ -104,6 +135,179 @@ describe("arbitrary colours", () => {
       ).not.toContain(rule);
     }
   );
+});
+
+describe("arbitrary text sizes", () => {
+  const rule = "better-tailwindcss/no-restricted-classes";
+
+  it("names the class and the 12px floor", async () => {
+    const messages = await lint(`export const A = () => <div className="text-[10px]" />;`);
+
+    expect(
+      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+    ).toEqual([expect.stringMatching(/"text-\[10px\]".*text-xs/)]);
+  });
+
+  it.each([
+    "text-[0.8rem]",
+    "md:text-[11px]",
+    "text-[clamp(7px,2cqi,10px)]",
+    "text-[length:var(--size)]",
+    "text-[calc(1rem+2px)]",
+    "text-[9px]/4",
+    "text-[2em]!",
+  ])("flags %s", async (className) => {
+    expect(await ruleIds(`export const A = () => <div className="${className}" />;`)).toContain(
+      rule
+    );
+  });
+
+  it.each(["text-xs", "text-sm/6", "expanded:text-4xl", "text-muted-foreground", "text-balance"])(
+    "accepts %s",
+    async (className) => {
+      expect(
+        await ruleIds(`export const A = () => <div className="${className}" />;`)
+      ).not.toContain(rule);
+    }
+  );
+});
+
+describe("arbitrary durations", () => {
+  const rule = "better-tailwindcss/no-restricted-classes";
+
+  it("names the class and the two speeds", async () => {
+    const messages = await lint(`export const A = () => <div className="duration-[250ms]" />;`);
+
+    expect(
+      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+    ).toEqual([expect.stringMatching(/"duration-\[250ms\]".*duration-150.*duration-200/)]);
+  });
+
+  it.each([
+    "duration-[0.3s]",
+    "hover:duration-[400ms]",
+    "data-[state=open]:duration-[500ms]",
+    "animation-duration-[1.5s]",
+    "duration-[var(--speed)]",
+    "duration-[2s]!",
+    "[transition-duration:300ms]",
+    "md:[animation-duration:2s]",
+  ])("flags %s", async (className) => {
+    expect(await ruleIds(`export const A = () => <div className="${className}" />;`)).toContain(
+      rule
+    );
+  });
+
+  it.each([
+    "transition-colors duration-150",
+    "data-[state=open]:duration-200 data-[state=closed]:duration-150",
+    "ease-out animate-in fade-in-0",
+    "animate-spin",
+  ])("accepts %s", async (className) => {
+    expect(await ruleIds(`export const A = () => <div className="${className}" />;`)).not.toContain(
+      rule
+    );
+  });
+});
+
+describe("default breakpoints", () => {
+  const rule = "better-tailwindcss/no-restricted-classes";
+
+  it("names the class and the window size classes", async () => {
+    const messages = await lint(`export const A = () => <div className="md:flex" />;`);
+
+    expect(
+      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+    ).toEqual([expect.stringMatching(/"md:flex".*medium.*expanded.*@container/)]);
+  });
+
+  it.each([
+    "sm:px-4",
+    "lg:hidden",
+    "xl:grid-cols-3",
+    "2xl:max-w-7xl",
+    "max-md:min-h-11",
+    "max-sm:hidden",
+    "dark:md:bg-card",
+    "md:hover:bg-muted",
+    "lg:w-72!",
+  ])("flags %s", async (className) => {
+    expect(await ruleIds(`export const A = () => <div className="${className}" />;`)).toContain(
+      rule
+    );
+  });
+
+  it.each([
+    "medium:px-6",
+    "expanded:grid-cols-2",
+    "large:w-72",
+    "xlarge:max-w-400",
+    "max-medium:hidden",
+    "@container @md:flex @max-2xl:hidden",
+    "coarse:min-h-11",
+    "text-sm",
+  ])("accepts %s", async (className) => {
+    expect(await ruleIds(`export const A = () => <div className="${className}" />;`)).not.toContain(
+      rule
+    );
+  });
+
+  it("knows the M3 window size class names", async () => {
+    expect(
+      await ruleIds(
+        `export const A = () => <div className="medium:flex expanded:grid large:w-72 xlarge:px-6" />;`
+      )
+    ).not.toContain("better-tailwindcss/no-unknown-classes");
+  });
+});
+
+describe("design/no-restricted-imports: retired width hooks", () => {
+  const rule = "design/no-restricted-imports";
+  const importRuleIds = async (code: string, filePath?: string) =>
+    (await lint(`${code}\nexport const A = 1;`, undefined, filePath)).map(
+      (message) => message.ruleId
+    );
+
+  it.each([
+    `import { useResponsiveView } from "@/hooks";`,
+    `import { useResponsiveView } from "@/hooks/useResponsiveView";`,
+    `import { useMediaQuery } from "@/hooks/useMediaQuery";`,
+    `import { useMediaQuery } from "../../hooks/useMediaQuery";`,
+  ])("flags %s", async (code) => {
+    expect(await importRuleIds(code)).toContain(rule);
+  });
+
+  it("flags them inside the kit too", async () => {
+    expect(
+      await importRuleIds(
+        `import { useMediaQuery } from "@/hooks/useMediaQuery";`,
+        "src/components/ui/__design_lint__/Snippet.tsx"
+      )
+    ).toContain(rule);
+  });
+
+  it("points at shells and @container", async () => {
+    const messages = await lint(
+      `import { useResponsiveView } from "@/hooks";\nexport const A = useResponsiveView;`
+    );
+    expect(messages.find((message) => message.ruleId === rule)?.message).toMatch(
+      /AppShell.*@container/
+    );
+  });
+
+  it("accepts other hooks from @/hooks", async () => {
+    expect(await importRuleIds(`import { useUserRole } from "@/hooks";`)).not.toContain(rule);
+  });
+});
+
+describe("tw-animate-css classes", () => {
+  it("accepts the overlay enter and exit classes", async () => {
+    expect(
+      await ruleIds(
+        `export const A = () => <div className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2" />;`
+      )
+    ).not.toContain("better-tailwindcss/no-unknown-classes");
+  });
 });
 
 describe("design/no-restricted-syntax", () => {
@@ -166,5 +370,50 @@ describe("jsx-a11y recommended with the shadcn component map", () => {
     ["an unmapped component", `<Badge aria-checked />`],
   ])("accepts %s", async (_name, jsx) => {
     expect(await a11yRules(jsx)).toEqual([]);
+  });
+});
+
+describe("design/no-restricted-imports: ui/ is private to the kit", () => {
+  const rule = "design/no-restricted-imports";
+  const importRuleIds = async (code: string, filePath?: string) =>
+    (await lint(code, undefined, filePath)).map((message) => message.ruleId);
+
+  it.each([
+    `import { Button } from "@/components/ui/button";`,
+    `import { buttonVariants } from "src/components/ui/button.variants";`,
+    `import { Badge } from "../components/ui/badge";`,
+    `import type { BadgeProps } from "@/components/ui/badge";`,
+    `export { Table } from "@/components/ui/table";`,
+  ])("flags %s in product code", async (code) => {
+    expect(await importRuleIds(`${code}\nexport const A = 1;`)).toContain(rule);
+  });
+
+  it("names the barrel in its message", async () => {
+    const messages = await lint(
+      `import { Button } from "@/components/ui/button";\nexport const A = Button;`
+    );
+    expect(messages.find((message) => message.ruleId === rule)?.message).toContain(
+      "@/components/patterns"
+    );
+  });
+
+  it("accepts the barrel in product code", async () => {
+    expect(
+      await importRuleIds(
+        `import { Button, StatusBadge } from "@/components/patterns";\nexport const A = [Button, StatusBadge];`
+      )
+    ).not.toContain(rule);
+  });
+
+  it.each([
+    "src/components/patterns/__design_lint__/Snippet.tsx",
+    "src/components/ui/__design_lint__/Snippet.tsx",
+  ])("accepts ui/ imports inside the kit (%s)", async (filePath) => {
+    expect(
+      await importRuleIds(
+        `import { Badge } from "@/components/ui/badge";\nexport const A = Badge;`,
+        filePath
+      )
+    ).not.toContain(rule);
   });
 });

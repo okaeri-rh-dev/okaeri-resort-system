@@ -8,6 +8,7 @@ import { PrintButton } from "@/components/booking-confirmation/PrintButton";
 import { StatusTimeline } from "@/components/booking-confirmation/StatusTimeline";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { GuestLayout } from "@/layouts/GuestLayout";
 
 /**
  * Booking confirmation data structure returned from the API
@@ -113,7 +114,7 @@ export const Route = createFileRoute("/booking/confirmation/$bookingReference")(
   errorComponent: ({ error }) => (
     <div className="container mx-auto px-4 py-8">
       <div className="mx-auto max-w-md text-center">
-        <h1 className="mb-4 text-2xl font-bold text-gray-800">Booking Not Found</h1>
+        <h1 className="text-foreground mb-4 text-2xl font-bold">Booking Not Found</h1>
         <p className="text-muted-foreground mb-6">
           {error instanceof Error && error.message === "Booking not found"
             ? "We couldn't find a booking with this reference number. Please check the reference and try again."
@@ -144,11 +145,11 @@ function BookingConfirmationComponent() {
   const paymentProofUploaded = !!booking.payment_proof_url;
 
   return (
-    <div className="from-primary/5 to-background min-h-screen bg-gradient-to-b">
-      <div className="container mx-auto px-4 py-8">
+    <GuestLayout>
+      <div>
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="mb-2 text-3xl font-bold text-green-600">Booking Confirmed!</h1>
+          <h1 className="text-success-foreground mb-2 text-3xl font-bold">Booking Confirmed!</h1>
           <p className="text-muted-foreground">
             Thank you for your booking. Your confirmation details are below.
           </p>
@@ -208,6 +209,6 @@ function BookingConfirmationComponent() {
           </div>
         </div>
       </div>
-    </div>
+    </GuestLayout>
   );
 }

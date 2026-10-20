@@ -3,8 +3,9 @@ import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { createColumnHelper, type Header } from "@tanstack/react-table";
 
-import { ActionMenu, SortableHeader, StatusBadge } from "@/components/tables/utils";
+import { ActionMenu, SortableHeader, StatusBadge } from "@/components/patterns";
 import { Checkbox } from "@/components/ui/checkbox";
+import { statusBadgeProps } from "@/lib/status-tone";
 import type { Unit, UnitStatus } from "@/types";
 
 import { InlineEdit, InlineSelect } from "./InlineEdit";
@@ -58,7 +59,7 @@ export function useUnitColumns({
           <SortableHeader header={header}>Code</SortableHeader>
         ),
         cell: ({ getValue }) => (
-          <div className="font-mono text-sm font-medium text-blue-600">{getValue()}</div>
+          <div className="text-sm font-medium tabular-nums">{getValue()}</div>
         ),
         size: 100,
       }),
@@ -85,7 +86,7 @@ export function useUnitColumns({
             <Link
               to="/admin/units/$unitId"
               params={{ unitId: row.original.unit_id }}
-              className="font-medium text-blue-600 transition-colors hover:underline"
+              className="text-primary font-medium hover:underline"
               preload="intent"
             >
               {getValue()}
@@ -99,7 +100,7 @@ export function useUnitColumns({
       columnHelper.accessor("max_occupancy", {
         header: "Capacity",
         cell: ({ row }) => (
-          <div className="text-center font-mono text-sm">
+          <div className="text-center text-sm tabular-nums">
             {row.original.base_occupancy}/{row.original.max_occupancy} guests
           </div>
         ),
@@ -161,7 +162,7 @@ export function useUnitColumns({
               />
             );
           }
-          return <StatusBadge status={getValue() ?? "Available"} />;
+          return <StatusBadge {...statusBadgeProps(getValue(), "Available")} />;
         },
         size: 120,
       }),
@@ -185,7 +186,7 @@ export function useUnitColumns({
             {
               label: "Delete",
               onClick: () => onDeleteUnit?.(unit),
-              className: "text-red-600 hover:text-red-700",
+              variant: "destructive" as const,
             },
           ];
 

@@ -46,11 +46,37 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
 
-    <!-- Theme Color -->
-    <meta name="theme-color" content="#0066cc" />
+    <!-- Theme Color: hand-synced copies of --background (DESIGN.md) -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F5F1EC" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1C1816" />
+
+    <!-- Apply the saved theme before first paint; useUIStore takes over after load -->
+    <script>
+      (function () {
+        var theme = "system";
+        try {
+          theme = localStorage.getItem("theme") || "system";
+        } catch (_error) {}
+        var dark =
+          theme === "dark" ||
+          (theme !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.add(dark ? "dark" : "light");
+      })();
+    </script>
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
+
+    <!-- Body font, so text doesn't wait on the stylesheet to discover it. Vite rewrites this to
+         the same hashed file the @font-face in src/index.css uses; crossorigin is required for
+         the preload to be reused. -->
+    <link
+      rel="preload"
+      href="/node_modules/@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
 
     <!-- Styles -->
     <link href="/src/index.css" rel="stylesheet" />

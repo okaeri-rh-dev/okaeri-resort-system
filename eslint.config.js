@@ -58,8 +58,29 @@ const generatedDatabaseTypesPattern = {
 const arbitraryColourMessage =
   "Arbitrary colour: use a semantic token class such as bg-primary or text-muted-foreground (DESIGN.md, Colour).";
 
-// Each slice of the design foundations adds its classes here (DESIGN.md enforcement map).
+const arbitraryDurationMessage =
+  '"$0" is an arbitrary duration: use duration-150 for state changes, or duration-200 / duration-150 for overlay enter / exit (DESIGN.md, Motion and density).';
+
+const paletteMessage =
+  '"$0" is a palette class: use a semantic token class such as bg-card, text-muted-foreground or bg-success (DESIGN.md, Colour).';
+const paletteNames =
+  "red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone|mauve|olive|mist|taupe";
+
+// Class patterns the design rules ban (DESIGN.md enforcement map).
 const restrictedClasses = [
+  {
+    pattern: `^(?:.*:)?!?-?[a-z]+(?:-[a-z]+)*-(?:${paletteNames})-\\d+(?:\\/\\S+)?!?$`,
+    message: paletteMessage,
+  },
+  {
+    pattern: "^(?:.*:)?!?[a-z]+(?:-[a-z]+)*-(?:black|white)(?:\\/\\S+)?!?$",
+    message: paletteMessage,
+  },
+  {
+    pattern: "^(?:.*:)?!?font-mono!?$",
+    message:
+      '"$0": font-mono is retired, so figures use Figtree with tabular-nums (DESIGN.md, Data formatting).',
+  },
   {
     pattern:
       "^(?:.*:)?-?[a-z-]+-\\[(?:color:|#|(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb|color-mix|color)\\().*\\](?:\\/.*)?$",
@@ -70,13 +91,57 @@ const restrictedClasses = [
       "^(?:.*:)?\\[(?:color|background|background-color|border(?:-[a-z]+)?-color|outline-color|fill|stroke|caret-color|accent-color|text-decoration-color):.*\\]$",
     message: arbitraryColourMessage,
   },
+  {
+    pattern: "^(?:.*:)?!?text-\\[(?:length:|[\\d.]|(?:clamp|calc|min|max)\\().*\\](?:\\/\\S+)?!?$",
+    message:
+      '"$0" is an arbitrary text size: use a Tailwind step from text-xs (12px, the floor) to text-4xl (DESIGN.md, Type).',
+  },
+  {
+    pattern: "^(?:.*:)?!?(?:animation-)?duration-\\[.*\\]!?$",
+    message: arbitraryDurationMessage,
+  },
+  {
+    pattern: "^(?:.*:)?\\[(?:transition|animation)-duration:.*\\]!?$",
+    message: arbitraryDurationMessage,
+  },
+  {
+    pattern: "^(?:[^:]+:)*(?:max-)?(?:sm|md|lg|xl|2xl):.+$",
+    message:
+      '"$0" uses a default breakpoint: shells use the window size classes medium:, expanded:, large: and xlarge:, and panes adapt with @container (DESIGN.md, Layout). Touch targets use coarse:.',
+  },
 ];
 
 // no-restricted-syntax again under its own id, so design suppressions are counted apart from the
 // guardrail selectors above and a legacy file can't trade one for the other.
 const designPlugin = {
-  rules: { "no-restricted-syntax": builtinRules.get("no-restricted-syntax") },
+  rules: {
+    "no-restricted-syntax": builtinRules.get("no-restricted-syntax"),
+    "no-restricted-imports": builtinRules.get("no-restricted-imports"),
+  },
 };
+
+const widthHookMessage =
+  "Width hooks are retired: window queries live in AppShell, and panes adapt with @container or DataTable (DESIGN.md, Layout).";
+
+// Applies everywhere in src/, the kit included
+const widthHookImportPatterns = [
+  { group: ["**/hooks/useResponsiveView", "**/hooks/useMediaQuery"], message: widthHookMessage },
+  {
+    group: ["@/hooks", "**/hooks", "**/hooks/index"],
+    importNames: ["useResponsiveView", "useMediaQuery"],
+    message: widthHookMessage,
+  },
+];
+
+// One list for every design import ban: the rule's options don't merge across config blocks.
+const designImportPatterns = [
+  {
+    group: ["@/components/ui/*", "src/components/ui/*", "**/components/ui/*"],
+    message:
+      "Primitives are private to the kit: import from @/components/patterns (DESIGN.md, Components).",
+  },
+  ...widthHookImportPatterns,
+];
 
 const transitionAllMessage =
   "transition-all animates layout and colour together; list the properties (transition-colors, transition-opacity) with duration-150.";
@@ -371,7 +436,17 @@ export default tseslint.config([
       // Router Link renders its href from `to`
       "jsx-a11y/anchor-is-valid": ["error", { specialLink: ["to"] }],
       "better-tailwindcss/no-restricted-classes": ["error", { restrict: restrictedClasses }],
+      "better-tailwindcss/no-unknown-classes": "error",
       "design/no-restricted-syntax": ["error", ...designSyntaxSelectors],
+      "design/no-restricted-imports": ["error", { patterns: designImportPatterns }],
+    },
+  },
+
+  // The kit itself is where primitives are composed
+  {
+    files: ["src/components/patterns/**/*.{ts,tsx}", "src/components/ui/**/*.{ts,tsx}"],
+    rules: {
+      "design/no-restricted-imports": ["error", { patterns: widthHookImportPatterns }],
     },
   },
 

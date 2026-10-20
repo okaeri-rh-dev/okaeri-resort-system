@@ -2,7 +2,6 @@ import React from "react";
 
 import { Trash2 } from "lucide-react";
 
-import { formatCurrency } from "@/components/tables/formatters";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,7 +11,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  buttonVariants,
+} from "@/components/patterns";
+import { formatCurrency } from "@/lib/formatters";
 import type { Expense } from "@/types";
 
 interface DeleteExpenseDialogProps {
@@ -37,19 +38,19 @@ export const DeleteExpenseDialog: React.FC<DeleteExpenseDialogProps> = ({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            <Trash2 className="h-5 w-5 text-red-600" />
+            <Trash2 className="text-destructive h-5 w-5" aria-hidden="true" />
             Delete Expense
           </AlertDialogTitle>
           <AlertDialogDescription className="space-y-2">
             <span className="block">Are you sure you want to delete this expense?</span>
-            <span className="block rounded-md bg-neutral-100 p-3 text-neutral-900">
+            <span className="bg-muted text-foreground block rounded-md p-3">
               <strong>{expense.description || "No description"}</strong>
               <br />
-              <span className="text-sm text-neutral-600">
+              <span className="text-muted-foreground text-sm">
                 {expense.category} • {formatCurrency(expense.amount)}
               </span>
             </span>
-            <span className="block text-red-600">This action cannot be undone.</span>
+            <span className="text-destructive block">This action cannot be undone.</span>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -57,7 +58,7 @@ export const DeleteExpenseDialog: React.FC<DeleteExpenseDialogProps> = ({
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isDeleting}
-            className="bg-red-600 text-white hover:bg-red-700 focus:ring-red-600"
+            className={buttonVariants({ variant: "destructive" })}
           >
             {isDeleting ? "Deleting..." : "Delete Expense"}
           </AlertDialogAction>

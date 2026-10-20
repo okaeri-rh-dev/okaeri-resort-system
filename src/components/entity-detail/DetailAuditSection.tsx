@@ -5,13 +5,11 @@ import { History } from "lucide-react";
 
 import { ActionBadge } from "@/components/audit/ActionBadge";
 import { SafeAuditText } from "@/components/audit/SafeAuditText";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { DetailSection } from "@/components/patterns";
 import { auditActorLabel } from "@/lib/audit-display";
 import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { formatPhilippineDate } from "@/lib/timezone";
 import type { EntityType } from "@/types/entity-detail.types";
-
-import { DetailSection } from "./DetailSection";
 
 /**
  * Props for DetailAuditSection component
@@ -42,7 +40,6 @@ export function DetailAuditSection({
   limit = 10,
   className,
 }: DetailAuditSectionProps) {
-  const isMobile = useMediaQuery("(max-width: 768px)");
   const { data: logs, isPending } = useQuery(
     recentRecordAuditLogsQuery(`${entityType}s`, entityId)
   );
@@ -52,30 +49,30 @@ export function DetailAuditSection({
       title={title}
       icon={<History className="h-5 w-5" />}
       collapsible
-      defaultCollapsed={defaultCollapsed ?? isMobile}
+      defaultCollapsed={defaultCollapsed}
       className={className}
     >
       {isPending ? (
-        <p className="text-sm text-neutral-500">Loading history…</p>
+        <p className="text-muted-foreground text-sm">Loading history…</p>
       ) : !logs?.length ? (
-        <p className="text-sm text-neutral-500">No history for this record yet</p>
+        <p className="text-muted-foreground text-sm">No history for this record yet</p>
       ) : (
-        <ul className="divide-y divide-neutral-200">
+        <ul className="divide-border divide-y">
           {logs.slice(0, limit).map((log) => (
             <li key={log.audit_id} className="flex items-start justify-between gap-4 py-3">
               <div className="min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <ActionBadge log={log} />
                   {log.description && (
-                    <SafeAuditText text={log.description} className="text-sm text-neutral-900" />
+                    <SafeAuditText text={log.description} className="text-foreground text-sm" />
                   )}
                 </div>
-                <div className="text-xs text-neutral-500">{auditActorLabel(log)}</div>
+                <div className="text-muted-foreground text-xs">{auditActorLabel(log)}</div>
               </div>
               {log.created_at && (
                 <time
                   dateTime={log.created_at}
-                  className="shrink-0 font-mono text-xs text-neutral-500"
+                  className="text-muted-foreground shrink-0 text-xs tabular-nums"
                 >
                   {formatPhilippineDate(new Date(log.created_at), "MMM d, yyyy h:mm a")}
                 </time>

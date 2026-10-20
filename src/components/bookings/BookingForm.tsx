@@ -6,8 +6,8 @@ import { CheckCircle, CreditCard, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { DatePicker } from "@/components/patterns";
 import { PricingStatusBadge } from "@/components/pricing/PricingStatusBadge";
-import { BookingFormSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/form";
 import { Input, NumberInput } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { ResponsiveDatePicker } from "@/components/ui/responsive-date-picker";
 import {
   Select,
   SelectContent,
@@ -36,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useMultiUnitAvailability } from "@/hooks/useMultiUnitBookingQueries";
 import { usePricingCalculation } from "@/hooks/usePricingCalculation";
 import { pickedDay, unavailableReason } from "@/lib/bookings";
+import { formatCurrency } from "@/lib/formatters";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
 import { hasProperty, isObject } from "@/lib/type-guards";
 import { cn } from "@/lib/utils";
@@ -44,13 +44,14 @@ import {
   bookingStep2Schema,
   bookingStep3Schema,
   completeBookingSchema,
-  formatCurrency,
   formatPhoneNumber,
   type CompleteBookingData,
 } from "@/lib/validations";
 import { useCreateBooking } from "@/stores/useBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
 import type { MultiUnitBooking } from "@/types";
+
+import { FormSkeleton } from "./FormSkeleton";
 
 interface BookingFormProps {
   onSuccess?: (booking: MultiUnitBooking) => void;
@@ -380,7 +381,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
             <FormItem className="flex flex-col">
               <FormLabel className="text-base font-medium sm:text-sm">Check-in Date</FormLabel>
               <FormControl>
-                <ResponsiveDatePicker
+                <DatePicker
                   value={field.value}
                   onChange={field.onChange}
                   placeholder="Pick a date"
@@ -398,10 +399,10 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
             <FormItem className="flex flex-col">
               <FormLabel className="text-base font-medium sm:text-sm">Check-out Date</FormLabel>
               <FormControl>
-                <ResponsiveDatePicker
+                <DatePicker
                   value={field.value}
                   onChange={field.onChange}
-                  disabled={(date) => date <= checkIn}
+                  isDateDisabled={(date) => date <= checkIn}
                   placeholder="Pick a date"
                 />
               </FormControl>
@@ -783,7 +784,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
           </div>
         </CardHeader>
         <CardContent className="px-4 sm:px-6">
-          <BookingFormSkeleton currentStep={currentStep} />
+          <FormSkeleton steps={4} currentStep={currentStep} label="Loading booking form" />
         </CardContent>
       </Card>
     );

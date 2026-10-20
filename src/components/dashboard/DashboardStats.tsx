@@ -2,8 +2,7 @@ import { useMemo } from "react";
 
 import { Building2, Calendar, TrendingUp, Users } from "lucide-react";
 
-import { DashboardStatsSkeleton } from "@/components/skeletons";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, Skeleton } from "@/components/patterns";
 import { useBookings } from "@/stores/useBookingStore";
 import { useGuests } from "@/stores/useGuestStore";
 import { useUnits } from "@/stores/useUnitStore";
@@ -68,35 +67,40 @@ export function DashboardStats() {
   }, [units, bookings, guests, isLoading]);
 
   if (isLoading) {
-    return <DashboardStatsSkeleton cardCount={4} />;
+    return (
+      <div role="status" aria-label="Loading stats" className="@container">
+        <div className="grid grid-cols-1 gap-4 @md:grid-cols-2 @3xl:grid-cols-4">
+          {Array.from({ length: 4 }, (_, index) => (
+            <Skeleton key={index} className="h-28 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      {stats.map((stat, index) => {
-        const Icon = stat.icon;
-        return (
-          <Card
-            key={index}
-            className="border border-neutral-200 p-4 shadow-sm transition-shadow hover:shadow-md"
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm leading-tight font-medium text-neutral-700">
-                {stat.title}
-              </CardTitle>
-              <div className="flex-shrink-0">
-                <Icon className="text-muted-foreground h-5 w-5" />
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="mb-1 font-mono text-2xl font-bold text-neutral-900 lg:text-3xl">
-                {stat.value}
-              </div>
-              <p className="text-muted-foreground text-xs leading-tight">{stat.description}</p>
-            </CardContent>
-          </Card>
-        );
-      })}
+    <div className="@container">
+      <div className="grid grid-cols-1 gap-4 @md:grid-cols-2 @3xl:grid-cols-4">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={stat.title} padding="sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 pb-3">
+                <CardTitle className="text-muted-foreground font-sans text-xs leading-tight font-medium">
+                  {stat.title}
+                </CardTitle>
+                <Icon className="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="font-display mb-1 text-3xl font-semibold tabular-nums">
+                  {stat.value}
+                </div>
+                <p className="text-muted-foreground text-xs leading-tight">{stat.description}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }

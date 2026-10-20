@@ -11,7 +11,7 @@ import {
 } from "@tanstack/react-table";
 import { Archive, ArrowUpDown, Edit, MoreHorizontal, RefreshCcw, RotateCcw } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -87,11 +87,9 @@ export function ExpenseCategoriesTable({ onEditCategory }: ExpenseCategoriesTabl
       cell: ({ row }) => {
         const isActive = row.getValue("is_active");
         return isActive ? (
-          <Badge variant="default" className="bg-green-600">
-            Active
-          </Badge>
+          <StatusBadge tone="success">Active</StatusBadge>
         ) : (
-          <Badge variant="secondary">Archived</Badge>
+          <StatusBadge tone="neutral">Archived</StatusBadge>
         );
       },
     },

@@ -10,8 +10,8 @@ export function cn(...inputs: ClassValue[]) {
 // Re-export Common Formatters
 // ============================================
 
-// Re-export formatCurrency from tables/formatters for convenience
-export { formatCurrency } from "@/components/tables/formatters";
+// Re-export formatCurrency from lib/formatters for convenience
+export { formatCurrency } from "@/lib/formatters";
 
 // Re-export formatDate from utils/date-helpers
 export { formatDate } from "@/utils/date-helpers";

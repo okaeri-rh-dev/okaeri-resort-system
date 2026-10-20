@@ -4,18 +4,16 @@ import { Calendar, DollarSign, FileText, Home, User } from "lucide-react";
 
 import {
   DetailAuditSection,
-  DetailField,
-  DetailPageLayout,
-  DetailSection,
   formatCurrency,
   formatFullDate,
   formatPhoneNumber,
   formatTableDate,
   RelatedEntityLink,
 } from "@/components/entity-detail";
-import { StatusBadge } from "@/components/tables/utils";
+import { DetailField, DetailPageLayout, DetailSection, StatusBadge } from "@/components/patterns";
 import { Badge } from "@/components/ui/badge";
 import { useUserRole } from "@/hooks";
+import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking } from "@/types";
 
 /**
@@ -62,7 +60,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
         { label: "Bookings", to: "/admin/bookings" },
         { label: booking.booking_reference },
       ]}
-      status={<StatusBadge status={booking.booking_status || "Pending"} />}
+      status={<StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />}
       editRoute={
         canEdit ? { to: "/admin/bookings/$bookingId/edit", params: { bookingId } } : undefined
       }
@@ -73,22 +71,18 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
           <DetailField
             label="Check-in Date"
             value={formatTableDate(booking.check_in)}
-            valueClassName="font-medium"
+            emphasis="strong"
           />
           <DetailField
             label="Check-out Date"
             value={formatTableDate(booking.check_out)}
-            valueClassName="font-medium"
+            emphasis="strong"
           />
-          <DetailField
-            label="Number of Guests"
-            value={booking.num_guests}
-            valueClassName="font-medium"
-          />
+          <DetailField label="Number of Guests" value={booking.num_guests} emphasis="strong" />
           <DetailField
             label="Total Amount"
             value={formatCurrency(booking.total_amount)}
-            valueClassName="font-mono font-semibold text-lg text-neutral-900"
+            emphasis="figure"
           />
         </div>
       </DetailSection>
@@ -106,14 +100,12 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
               )
             }
           />
-          {booking.email && (
-            <DetailField label="Email" value={booking.email} valueClassName="font-medium" />
-          )}
+          {booking.email && <DetailField label="Email" value={booking.email} emphasis="strong" />}
           {booking.contact_number && (
             <DetailField
               label="Contact Number"
               value={formatPhoneNumber(booking.contact_number)}
-              valueClassName="font-medium"
+              emphasis="strong"
             />
           )}
         </div>
@@ -158,7 +150,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
             <DetailField
               label="Total Cabins"
               value={booking.unit_count || booking.booking_units.length}
-              valueClassName="font-medium"
+              emphasis="strong"
             />
           )}
         </div>
@@ -170,11 +162,11 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
           <DetailField
             label="Payment Method"
             value={booking.payment_method || "Not specified"}
-            valueClassName="font-medium"
+            emphasis="strong"
           />
           <DetailField
             label="Payment Status"
-            value={<StatusBadge status={booking.payment_status || "Pending"} />}
+            value={<StatusBadge {...statusBadgeProps(booking.payment_status, "Pending")} />}
           />
         </div>
       </DetailSection>

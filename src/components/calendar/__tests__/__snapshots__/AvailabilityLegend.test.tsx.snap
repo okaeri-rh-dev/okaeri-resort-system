@@ -9,10 +9,10 @@ exports[`AvailabilityLegend > Snapshot > should match snapshot 1`] = `
   >
     <div
       aria-hidden="true"
-      class="h-3 w-3 rounded bg-emerald-400/70"
+      class="border-border h-3 w-3 rounded border bg-availability-high"
     />
     <span
-      class="font-medium text-slate-700"
+      class="text-foreground font-medium"
     >
       3 units
     </span>
@@ -22,10 +22,10 @@ exports[`AvailabilityLegend > Snapshot > should match snapshot 1`] = `
   >
     <div
       aria-hidden="true"
-      class="h-3 w-3 rounded bg-amber-400/70"
+      class="border-border h-3 w-3 rounded border bg-availability-medium"
     />
     <span
-      class="font-medium text-slate-700"
+      class="text-foreground font-medium"
     >
       2 units
     </span>
@@ -35,10 +35,10 @@ exports[`AvailabilityLegend > Snapshot > should match snapshot 1`] = `
   >
     <div
       aria-hidden="true"
-      class="h-3 w-3 rounded bg-orange-400/70"
+      class="border-border h-3 w-3 rounded border bg-availability-low"
     />
     <span
-      class="font-medium text-slate-700"
+      class="text-foreground font-medium"
     >
       1 unit
     </span>
@@ -48,10 +48,10 @@ exports[`AvailabilityLegend > Snapshot > should match snapshot 1`] = `
   >
     <div
       aria-hidden="true"
-      class="h-3 w-3 rounded bg-rose-400/70"
+      class="border-border h-3 w-3 rounded border bg-muted bg-[repeating-linear-gradient(135deg,var(--border)_0_2px,transparent_2px_6px)]"
     />
     <span
-      class="font-medium text-slate-700"
+      class="text-foreground font-medium"
     >
       Booked
     </span>

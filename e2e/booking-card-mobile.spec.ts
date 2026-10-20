@@ -15,7 +15,7 @@ import { LoginPage } from "./pages/LoginPage";
  * iteration, `npm run e2e:dev` against a manually-seeded DB.
  */
 
-// Scope to a single MobileCard by anchoring on the per-booking info-zone
+// Scope to a single ListCard by anchoring on the per-booking info-zone
 // button (aria-label "View booking <ref>") and stepping up to its parent.
 const cardFor = (page: Page, ref: string) =>
   page.getByRole("button", { name: `View booking ${ref}` }).locator("..");

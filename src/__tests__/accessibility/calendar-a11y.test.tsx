@@ -311,23 +311,16 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
         />
       );
 
-      // White text on colored backgrounds (green/yellow/orange/red) should have sufficient contrast
-      // This is enforced by Tailwind's color choices:
-      // - bg-green-500 with text-white: 4.5:1 contrast ✓
-      // - bg-yellow-500 with text-white: 3.7:1 contrast (acceptable for large text)
-      // - bg-orange-500 with text-white: 3.4:1 contrast (acceptable for large text)
-      // - bg-red-500 with text-white: 4.5:1 contrast ✓
-
+      // Token pairs are checked in src/styles/contrast.test.ts; cells pair each fill with foreground
       // Check January 15 (today) which has 2 available units with moderate status
       const moderateCell = screen.getByLabelText(/2 available/i);
-      expect(moderateCell).toHaveClass("bg-amber-400/70", "text-slate-800");
+      expect(moderateCell).toHaveClass("bg-availability-medium", "text-foreground");
     });
 
     it("should have sufficient contrast for legend text", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      // Legend labels should use slate-700 for good contrast
-      const legendLabels = container.querySelectorAll(".text-slate-700");
+      const legendLabels = container.querySelectorAll(".text-foreground");
       expect(legendLabels.length).toBeGreaterThan(0); // Should have labels with proper contrast
     });
 

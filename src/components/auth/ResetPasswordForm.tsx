@@ -3,9 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Button, Card, CardContent, CardHeader, CardTitle, Input } from "@/components/patterns";
 import { updatePasswordWithAudit } from "@/lib/auth-password-reset";
 import { supabaseAuth } from "@/lib/supabase";
 
@@ -83,8 +81,8 @@ export function ResetPasswordForm() {
       <Card className="w-full max-w-md">
         <CardContent className="flex items-center justify-center py-12">
           <div className="text-center">
-            <div className="border-t-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-gray-200" />
-            <p className="text-gray-600">Verifying reset link...</p>
+            <div className="border-t-primary border-muted mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4" />
+            <p className="text-muted-foreground">Verifying reset link...</p>
           </div>
         </CardContent>
       </Card>
@@ -99,7 +97,7 @@ export function ResetPasswordForm() {
           <CardTitle className="text-2xl font-bold">Invalid or Expired Link</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-center text-gray-600">
+          <p className="text-muted-foreground text-center">
             This password reset link has expired or is invalid. Please request a new one.
           </p>
           <div className="flex flex-col gap-2 pt-4">
@@ -122,10 +120,12 @@ export function ResetPasswordForm() {
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-green-600">Password Updated!</CardTitle>
+          <CardTitle className="text-success-foreground text-2xl font-bold">
+            Password Updated!
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-center text-gray-600">
+          <p className="text-muted-foreground text-center">
             Your password has been successfully updated. You will be redirected to the login page in
             a moment.
           </p>
@@ -144,7 +144,7 @@ export function ResetPasswordForm() {
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Set New Password</CardTitle>
-        <p className="text-gray-600">Enter your new password below</p>
+        <p className="text-muted-foreground">Enter your new password below</p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -181,7 +181,7 @@ export function ResetPasswordForm() {
               minLength={8}
             />
             {confirmPassword && password !== confirmPassword && (
-              <p className="mt-1 text-sm text-red-600">Passwords do not match</p>
+              <p className="text-danger-foreground mt-1 text-sm">Passwords do not match</p>
             )}
           </div>
 

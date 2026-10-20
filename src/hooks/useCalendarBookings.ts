@@ -120,8 +120,3 @@ export function getBookingStatusPriority(status: string): number {
 }
 
 // Helper function to get status color class (professional palette)
-
-// Helper to format currency for Philippine peso
-export function formatCurrency(amount: number): string {
-  return `₱${amount.toLocaleString("en-PH")}`;
-}

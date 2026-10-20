@@ -2,17 +2,17 @@ import { Link } from "@tanstack/react-router";
 import { createColumnHelper, type Header } from "@tanstack/react-table";
 import { Edit2, Eye, MoreHorizontal, Receipt, Trash2 } from "lucide-react";
 
-import { formatCurrency, formatTableDate } from "@/components/tables/formatters";
-import { SortableHeader } from "@/components/tables/utils";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  SortableHeader,
+  StatusBadge,
+} from "@/components/patterns";
+import { formatCurrency, formatTableDate } from "@/lib/formatters";
 import type { Expense } from "@/types";
 
 const columnHelper = createColumnHelper<Expense>();
@@ -28,15 +28,10 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
     // Date column
     columnHelper.accessor("date", {
       header: ({ header }: { header: Header<Expense, unknown> }) => (
-        <SortableHeader
-          header={header}
-          className="text-xs font-medium tracking-wide text-neutral-700 uppercase"
-        >
-          Date
-        </SortableHeader>
+        <SortableHeader header={header}>Date</SortableHeader>
       ),
       cell: ({ getValue }) => (
-        <span className="text-sm font-medium text-neutral-900">{formatTableDate(getValue())}</span>
+        <span className="text-foreground text-sm font-medium">{formatTableDate(getValue())}</span>
       ),
       size: 120,
     }),
@@ -44,33 +39,16 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
     // Category column
     columnHelper.accessor("category", {
       header: ({ header }: { header: Header<Expense, unknown> }) => (
-        <SortableHeader
-          header={header}
-          className="text-xs font-medium tracking-wide text-neutral-700 uppercase"
-        >
-          Category
-        </SortableHeader>
+        <SortableHeader header={header}>Category</SortableHeader>
       ),
-      cell: ({ getValue }) => (
-        <Badge
-          variant="outline"
-          className="border-neutral-200 bg-neutral-50 text-xs font-medium text-neutral-700"
-        >
-          {getValue()}
-        </Badge>
-      ),
+      cell: ({ getValue }) => <StatusBadge tone="neutral">{getValue()}</StatusBadge>,
       size: 180,
     }),
 
     // Description column
     columnHelper.accessor("description", {
       header: ({ header }: { header: Header<Expense, unknown> }) => (
-        <SortableHeader
-          header={header}
-          className="text-xs font-medium tracking-wide text-neutral-700 uppercase"
-        >
-          Description
-        </SortableHeader>
+        <SortableHeader header={header}>Description</SortableHeader>
       ),
       cell: ({ getValue, row }) => {
         const description = getValue() || "No description";
@@ -80,7 +58,7 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
           <Link
             to="/admin/expenses/$expenseId"
             params={{ expenseId: row.original.expense_id }}
-            className="text-blue-600 transition-colors hover:underline"
+            className="text-primary transition-colors hover:underline"
             title={description}
             preload="intent"
           >
@@ -94,30 +72,20 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
     // Amount column
     columnHelper.accessor("amount", {
       header: ({ header }: { header: Header<Expense, unknown> }) => (
-        <SortableHeader
-          header={header}
-          className="text-right text-xs font-medium tracking-wide text-neutral-700 uppercase"
-        >
-          Amount
-        </SortableHeader>
+        <SortableHeader header={header}>Amount</SortableHeader>
       ),
       cell: ({ getValue }) => (
-        <div className="text-right">
-          <span className="font-mono text-sm font-semibold text-neutral-900">
-            {formatCurrency(getValue())}
-          </span>
-        </div>
+        <span className="text-foreground text-sm font-semibold tabular-nums">
+          {formatCurrency(getValue())}
+        </span>
       ),
+      meta: { align: "right" },
       size: 120,
     }),
 
     // Receipt column
     columnHelper.accessor("receipt_url", {
-      header: () => (
-        <span className="text-xs font-medium tracking-wide text-neutral-700 uppercase">
-          Receipt
-        </span>
-      ),
+      header: "Receipt",
       cell: ({ getValue }) => {
         const url = getValue();
         return url ? (
@@ -125,12 +93,12 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
             variant="ghost"
             size="sm"
             onClick={() => window.open(url, "_blank")}
-            className="h-8 w-8 p-0 hover:bg-neutral-100"
+            className="h-8 w-8 p-0"
           >
-            <Receipt className="h-3.5 w-3.5 text-neutral-600" />
+            <Receipt className="text-muted-foreground h-3.5 w-3.5" />
           </Button>
         ) : (
-          <span className="text-xs text-neutral-400">—</span>
+          <span className="text-muted-foreground text-xs">—</span>
         );
       },
       size: 80,
@@ -140,18 +108,15 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
     // Actions column
     columnHelper.display({
       id: "actions",
-      header: () => (
-        <span className="text-xs font-medium tracking-wide text-neutral-700 uppercase">
-          Actions
-        </span>
-      ),
+      meta: { pinned: true },
+      header: "Actions",
       cell: ({ row }) => {
         const expense = row.original;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-neutral-100">
-                <MoreHorizontal className="h-4 w-4 text-neutral-600" />
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreHorizontal className="text-muted-foreground h-4 w-4" />
                 <span className="sr-only">Open menu</span>
               </Button>
             </DropdownMenuTrigger>
@@ -171,7 +136,7 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
               {(onViewExpense || onEditExpense) && <DropdownMenuSeparator />}
               <DropdownMenuItem
                 onClick={() => onDelete(expense)}
-                className="text-red-600 focus:text-red-600"
+                className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="mr-2 h-3.5 w-3.5" />
                 Delete Expense

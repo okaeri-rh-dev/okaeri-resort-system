@@ -2,7 +2,7 @@ import { memo } from "react";
 
 import { DOCUMENT_PREFIX_MAP, isValidImageDataUri } from "@/components/documents/constants";
 import type { DocumentFormData, LetterheadConfig } from "@/components/documents/types";
-import { formatCurrency, formatFullDate } from "@/components/tables/formatters";
+import { formatCurrency, formatFullDate } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
 interface DocumentPageProps {
@@ -195,7 +195,7 @@ export const DocumentPage = memo(function DocumentPage({
       </div>
 
       {/* Footer */}
-      <div className="mt-8 border-t border-gray-200 pt-3 text-center text-[8px] text-gray-400 italic">
+      <div className="mt-8 border-t border-gray-200 pt-3 text-center text-[8px] text-gray-600 italic">
         This is a computer-generated document. No signature is required.
       </div>
     </div>

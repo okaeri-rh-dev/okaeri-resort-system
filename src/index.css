@@ -1,83 +1,291 @@
 @import "tailwindcss";
+/* Overlay enter/exit keyframes (animate-in, fade-in-0, zoom-in-95, slide-in-from-*) */
+@import "tw-animate-css";
 
 /* Import enterprise mobile styles */
 @import "./styles/enterprise-tables.css";
 
-/* Tailwind v4 uses @theme directive for design tokens */
-@theme {
-  /* Colors - using HSL values for shadcn/ui compatibility */
-  --color-background: hsl(0 0% 100%);
-  --color-foreground: hsl(222.2 84% 4.9%);
-  --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(222.2 84% 4.9%);
-  --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(222.2 84% 4.9%);
-  --color-primary: hsl(222.2 47.4% 11.2%);
-  --color-primary-foreground: hsl(210 40% 98%);
-  --color-secondary: hsl(210 40% 96.1%);
-  --color-secondary-foreground: hsl(222.2 47.4% 11.2%);
-  --color-muted: hsl(210 40% 96.1%);
-  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
-  --color-accent: hsl(210 40% 96.1%);
-  --color-accent-foreground: hsl(222.2 47.4% 11.2%);
-  --color-destructive: hsl(0 84.2% 60.2%);
-  --color-destructive-foreground: hsl(210 40% 98%);
-  --color-border: hsl(214.3 31.8% 91.4%);
-  --color-input: hsl(214.3 31.8% 91.4%);
-  --color-ring: hsl(222.2 84% 4.9%);
+@custom-variant dark (&:where(.dark, .dark *));
+/* Touch input, not a window size: 44px targets (DESIGN.md, Motion and density) */
+@custom-variant coarse (@media (pointer: coarse));
 
-  /* Border Radius */
-  --radius-lg: 0.5rem;
-  --radius-md: calc(0.5rem - 2px);
-  --radius-sm: calc(0.5rem - 4px);
+/*
+ * Fonts (DESIGN.md, Type). Fontsource variable files, declared here rather than through the
+ * package CSS so only these subsets ship: its Figtree latin-ext face claims ₱ without having it.
+ * Values copied from @fontsource-variable 5.3.0. index.html preloads the Figtree latin file.
+ */
+@font-face {
+  font-family: "Figtree Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 900;
+  src: url("@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* Keep the CSS variables for shadcn/ui components compatibility */
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
-  }
+@font-face {
+  font-family: "Bricolage Grotesque Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url("@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-opsz-normal.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-  }
+/* Downloads only when a page shows ₱ (U+20B1) or another latin-ext character */
+@font-face {
+  font-family: "Bricolage Grotesque Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url("@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-ext-opsz-normal.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+
+/*
+ * Metric-override fallbacks: Arial scaled to each face's cap height, so text barely moves when the
+ * web font swaps in. Source metrics (UPM 1000): Figtree asc 950 / desc 250 / capH 700; Bricolage
+ * asc 930 / desc 270 / capH 660; Arial capH 1467/2048. size-adjust = capH / 0.7163, and the
+ * overrides = metric / size-adjust.
+ */
+@font-face {
+  font-family: "Figtree Fallback";
+  src: local("Arial"), local("ArialMT"), local("Helvetica");
+  size-adjust: 97.72%;
+  ascent-override: 97.21%;
+  descent-override: 25.58%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Bricolage Grotesque Fallback";
+  src: local("Arial"), local("ArialMT"), local("Helvetica");
+  size-adjust: 92.14%;
+  ascent-override: 100.93%;
+  descent-override: 29.3%;
+  line-gap-override: 0%;
+}
+
+/* Hearth tokens (DESIGN.md, Colour). Hex reference: DESIGN.md, Hearth palette. */
+:root {
+  color-scheme: light;
+  --radius: 0.625rem;
+
+  --background: oklch(0.9599 0.0079 73.74);
+  --foreground: oklch(0.266 0.0106 48.3);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.266 0.0106 48.3);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.266 0.0106 48.3);
+  --primary: oklch(0.5016 0.0874 54.2);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.9343 0.0131 71.33);
+  --secondary-foreground: oklch(0.266 0.0106 48.3);
+  --muted: oklch(0.9599 0.0079 73.74);
+  --muted-foreground: oklch(0.4945 0.02 55.88);
+  --accent: oklch(0.9315 0.0235 69.59);
+  --accent-foreground: oklch(0.266 0.0106 48.3);
+  --destructive: oklch(0.5209 0.1579 29.21);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.9128 0.0143 74.42);
+  --input: oklch(0.6392 0.0393 61.59);
+  --ring: oklch(0.5016 0.0874 54.2);
+
+  --brand: oklch(0.7329 0.0866 60.56);
+  --brand-foreground: oklch(0.1972 0.0126 55.55);
+
+  --sidebar: oklch(0.266 0.0106 48.3);
+  --sidebar-foreground: oklch(0.9436 0.0121 67.68);
+  --sidebar-primary: oklch(0.7329 0.0866 60.56);
+  --sidebar-primary-foreground: oklch(0.1972 0.0126 55.55);
+  --sidebar-accent: oklch(0.324 0.0145 54.05);
+  --sidebar-accent-foreground: oklch(0.9436 0.0121 67.68);
+  --sidebar-border: oklch(0.3357 0.0143 54.08);
+  --sidebar-ring: oklch(0.7329 0.0866 60.56);
+
+  --success: oklch(0.958 0.0132 159.91);
+  --success-foreground: oklch(0.5207 0.1011 155.23);
+  --warning: oklch(0.9612 0.0261 82.39);
+  --warning-foreground: oklch(0.5038 0.1082 71.46);
+  --danger: oklch(0.9544 0.0166 26.65);
+  --danger-foreground: oklch(0.5209 0.1579 29.21);
+  --info: oklch(0.9551 0.0126 228.93);
+  --info-foreground: oklch(0.5005 0.087 237.9);
+
+  --availability-high: color-mix(in oklch, var(--brand) 75%, var(--card));
+  --availability-medium: color-mix(in oklch, var(--brand) 42%, var(--card));
+  --availability-low: color-mix(in oklch, var(--brand) 18%, var(--card));
+
+  /* Cabin identity lanes on the admin calendar (C1, C2, C3): fill, text, border/bar */
+  --unit-lane-1: oklch(0.93 0.04 245);
+  --unit-lane-1-foreground: oklch(0.44 0.1 250);
+  --unit-lane-1-accent: oklch(0.6 0.12 250);
+  --unit-lane-2: oklch(0.93 0.045 160);
+  --unit-lane-2-foreground: oklch(0.44 0.09 160);
+  --unit-lane-2-accent: oklch(0.6 0.12 160);
+  --unit-lane-3: oklch(0.94 0.05 85);
+  --unit-lane-3-foreground: oklch(0.46 0.09 70);
+  --unit-lane-3-accent: oklch(0.65 0.13 75);
+
+  --overlay: oklch(0.1809 0.0054 39.35 / 50%);
+
+  --elevation-card: 0 1px 2px rgb(60 40 25 / 0.06), 0 6px 16px -4px rgb(60 40 25 / 0.1);
+  --elevation-popover: 0 2px 4px rgb(60 40 25 / 0.08), 0 12px 28px -6px rgb(60 40 25 / 0.18);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --background: oklch(0.213 0.0075 48.35);
+  --foreground: oklch(0.9436 0.0121 67.68);
+  --card: oklch(0.2493 0.0108 48.26);
+  --card-foreground: oklch(0.9436 0.0121 67.68);
+  --popover: oklch(0.2493 0.0108 48.26);
+  --popover-foreground: oklch(0.9436 0.0121 67.68);
+  --primary: oklch(0.7645 0.0824 61.81);
+  --primary-foreground: oklch(0.2436 0.0282 61.15);
+  --secondary: oklch(0.2844 0.014 48.21);
+  --secondary-foreground: oklch(0.9436 0.0121 67.68);
+  --muted: oklch(0.263 0.012 44.58);
+  --muted-foreground: oklch(0.7331 0.0217 62.75);
+  --accent: oklch(0.312 0.0224 55.42);
+  --accent-foreground: oklch(0.9436 0.0121 67.68);
+  --destructive: oklch(0.66 0.1561 28.62);
+  --destructive-foreground: oklch(0.1809 0.0054 39.35);
+  --border: oklch(0.3212 0.0157 50.88);
+  --input: oklch(0.5414 0.0234 57.76);
+  --ring: oklch(0.7645 0.0824 61.81);
+
+  --brand: oklch(0.7645 0.0824 61.81);
+  --brand-foreground: oklch(0.1972 0.0126 55.55);
+
+  --sidebar: oklch(0.1809 0.0054 39.35);
+  --sidebar-foreground: oklch(0.9436 0.0121 67.68);
+  --sidebar-primary: oklch(0.7645 0.0824 61.81);
+  --sidebar-primary-foreground: oklch(0.1972 0.0126 55.55);
+  --sidebar-accent: oklch(0.263 0.012 44.58);
+  --sidebar-accent-foreground: oklch(0.9436 0.0121 67.68);
+  --sidebar-border: oklch(0.263 0.012 44.58);
+  --sidebar-ring: oklch(0.7645 0.0824 61.81);
+
+  --success: oklch(0.2764 0.0262 157.82);
+  --success-foreground: oklch(0.7941 0.0976 156.33);
+  --warning: oklch(0.2686 0.0317 76.09);
+  --warning-foreground: oklch(0.801 0.1236 78.65);
+  --danger: oklch(0.271 0.035 28.07);
+  --danger-foreground: oklch(0.7613 0.1153 26.62);
+  --info: oklch(0.275 0.0272 233.74);
+  --info-foreground: oklch(0.793 0.0737 233.99);
+
+  --availability-high: color-mix(in oklch, var(--brand) 50%, var(--card));
+  --availability-medium: color-mix(in oklch, var(--brand) 30%, var(--card));
+  --availability-low: color-mix(in oklch, var(--brand) 14%, var(--card));
+
+  --unit-lane-1: oklch(0.32 0.05 245);
+  --unit-lane-1-foreground: oklch(0.86 0.07 245);
+  --unit-lane-1-accent: oklch(0.66 0.11 245);
+  --unit-lane-2: oklch(0.32 0.05 160);
+  --unit-lane-2-foreground: oklch(0.86 0.08 160);
+  --unit-lane-2-accent: oklch(0.66 0.11 160);
+  --unit-lane-3: oklch(0.33 0.05 85);
+  --unit-lane-3-foreground: oklch(0.87 0.09 85);
+  --unit-lane-3-accent: oklch(0.72 0.12 80);
+
+  --overlay: oklch(0 0 0 / 60%);
+
+  --elevation-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 20px -6px rgb(0 0 0 / 0.5);
+  --elevation-popover: 0 2px 6px rgb(0 0 0 / 0.45), 0 16px 36px -8px rgb(0 0 0 / 0.6);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-availability-high: var(--availability-high);
+  --color-availability-medium: var(--availability-medium);
+  --color-availability-low: var(--availability-low);
+  --color-unit-lane-1: var(--unit-lane-1);
+  --color-unit-lane-1-foreground: var(--unit-lane-1-foreground);
+  --color-unit-lane-1-accent: var(--unit-lane-1-accent);
+  --color-unit-lane-2: var(--unit-lane-2);
+  --color-unit-lane-2-foreground: var(--unit-lane-2-foreground);
+  --color-unit-lane-2-accent: var(--unit-lane-2-accent);
+  --color-unit-lane-3: var(--unit-lane-3);
+  --color-unit-lane-3-foreground: var(--unit-lane-3-foreground);
+  --color-unit-lane-3-accent: var(--unit-lane-3-accent);
+  --color-overlay: var(--overlay);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-card: var(--elevation-card);
+  --shadow-popover: var(--elevation-popover);
+
+  /* Figtree has no ₱, so the sans stack falls through to Bricolage latin-ext for it */
+  --font-sans:
+    "Figtree Variable", "Bricolage Grotesque Variable", "Figtree Fallback", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-display:
+    "Bricolage Grotesque Variable", "Bricolage Grotesque Fallback", ui-sans-serif, system-ui,
+    sans-serif;
+}
+
+/*
+ * Material 3 window size classes (ADR 0004); compact is the unprefixed base. Only shells use them;
+ * panes adapt with @container. Tailwind's sm…2xl stay until Migration resets them. In rem like the
+ * defaults, so Tailwind can order the two sets: 600, 840, 1200 and 1600px.
+ */
+@theme {
+  --breakpoint-medium: 37.5rem;
+  --breakpoint-expanded: 52.5rem;
+  --breakpoint-large: 75rem;
+  --breakpoint-xlarge: 100rem;
 }
 
 @layer base {
@@ -93,16 +301,34 @@
     /* Remove the gray tap flash on Android Chrome */
     -webkit-tap-highlight-color: transparent;
   }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display;
+  }
 }
 
 /* Bottom inset for fixed action bars in the installed PWA (home indicator / gesture bar) */
-.safe-area-bottom {
+@utility safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Honor the user's reduced-motion preference (previously lived in mobile-enterprise.css) */
+/* Toasts follow the overlay speeds; sonner's injected stylesheet runs .4s (DESIGN.md, Motion) */
+[data-sonner-toaster] [data-sonner-toast] {
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
+}
+[data-sonner-toaster] [data-sonner-toast][data-removed="true"] {
+  transition-duration: 150ms;
+  transition-timing-function: ease-in;
+}
+
+/* Reduced motion: overlays appear instantly; spinners keep turning because they are loading feedback */
 @media (prefers-reduced-motion: reduce) {
-  *,
+  *:not(.animate-spin),
   *::before,
   *::after {
     animation-duration: 0.01ms !important;

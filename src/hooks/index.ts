@@ -5,4 +5,3 @@
  */
 
 export { useUserRole } from "./useUserRole";
-export { useResponsiveView } from "./useResponsiveView";

@@ -8,8 +8,8 @@ import { BOOKING_STATUS, ROUTES, TIMEOUTS } from "../fixtures/test-data";
  * Based on actual BookingsTable component structure:
  * - TanStack Table (React Table v8) with standard <table> element
  * - Desktop: Table view with rows
- * - Mobile: Card-based layout with MobileCard components
- * - Booking references: font-mono text-blue-600 links
+ * - Mobile: Card-based layout with ListCard components
+ * - Booking references: links to /admin/bookings/$bookingId
  * - Actions menu: Edit Booking, Upload Payment, Confirm, Cancel, Delete
  * - BookingFilters component for search/filters
  */
@@ -74,7 +74,7 @@ export class BookingsTablePage {
     this.refreshButton = page.getByRole("button", { name: /refresh/i });
 
     // Pagination - TablePagination component
-    this.pagination = page.locator("nav").filter({ hasText: /page/i });
+    this.pagination = page.getByRole("navigation", { name: "Pagination" });
     this.nextPageButton = page.getByRole("button", { name: /next/i });
     this.previousPageButton = page.getByRole("button", { name: /previous/i });
     this.pageInfo = page.getByText(/page \d+/i);
@@ -171,12 +171,11 @@ export class BookingsTablePage {
 
   /**
    * Get all booking references from the table
-   * References have font-mono class and blue-600 color (links)
+   * References link to the booking detail page
    */
   async getBookingReferences(): Promise<string[]> {
     const refs: string[] = [];
-    // Look for font-mono links in table cells
-    const refLinks = this.page.locator("table tbody td a.font-mono");
+    const refLinks = this.page.locator('table tbody td a[href^="/admin/bookings/"]');
     const count = await refLinks.count();
 
     for (let i = 0; i < count; i++) {

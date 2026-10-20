@@ -2,8 +2,15 @@ import React from "react";
 
 import { Building2, CreditCard, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Skeleton,
+} from "@/components/patterns";
+import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { useAccountBalances } from "@/stores/useAccountStore";
 import type { AccountType } from "@/types";
@@ -46,13 +53,6 @@ export const AccountsSummary: React.FC<AccountsSummaryProps> = ({
       }
     );
   }, [accounts]);
-
-  const formatCurrency = (amount: number) => {
-    return `₱${Math.abs(amount).toLocaleString("en-PH", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
 
   if (isLoading) {
     return (
@@ -100,7 +100,7 @@ export const AccountsSummary: React.FC<AccountsSummaryProps> = ({
             )}
           >
             {totals.totalBalance < 0 ? "-" : ""}
-            {formatCurrency(totals.totalBalance)}
+            {formatCurrency(Math.abs(totals.totalBalance))}
           </span>
         </div>
 
@@ -108,24 +108,24 @@ export const AccountsSummary: React.FC<AccountsSummaryProps> = ({
         {showDetails && (
           <div className="mb-4 grid grid-cols-2 gap-4">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100">
-                <TrendingUp className="h-4 w-4 text-green-600" />
+              <div className="bg-success text-success-foreground flex h-8 w-8 items-center justify-center rounded-lg">
+                <TrendingUp className="h-4 w-4" aria-hidden="true" />
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Received</p>
-                <p className="font-semibold text-green-600 tabular-nums">
-                  +{formatCurrency(totals.totalPayments)}
+                <p className="text-foreground font-semibold tabular-nums">
+                  +{formatCurrency(Math.abs(totals.totalPayments))}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100">
-                <TrendingDown className="h-4 w-4 text-red-600" />
+              <div className="bg-danger text-danger-foreground flex h-8 w-8 items-center justify-center rounded-lg">
+                <TrendingDown className="h-4 w-4" aria-hidden="true" />
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Spent</p>
-                <p className="font-semibold text-red-600 tabular-nums">
-                  -{formatCurrency(totals.totalExpenses)}
+                <p className="text-foreground font-semibold tabular-nums">
+                  -{formatCurrency(Math.abs(totals.totalExpenses))}
                 </p>
               </div>
             </div>
@@ -149,14 +149,7 @@ export const AccountsSummary: React.FC<AccountsSummaryProps> = ({
                   className="bg-muted/50 flex items-center justify-between rounded-lg px-3 py-2"
                 >
                   <div className="flex items-center gap-2">
-                    <Icon
-                      className={cn(
-                        "h-4 w-4",
-                        type === "Bank" && "text-blue-600",
-                        type === "E-Wallet" && "text-green-600",
-                        type === "Cash" && "text-amber-600"
-                      )}
-                    />
+                    <Icon className="text-muted-foreground h-4 w-4" />
                     <span className="text-sm">
                       {type === "E-Wallet" ? "E-Wallets" : type}
                       <span className="text-muted-foreground ml-1 text-xs">({accountCount})</span>
@@ -165,7 +158,7 @@ export const AccountsSummary: React.FC<AccountsSummaryProps> = ({
                   <span
                     className={cn("font-medium tabular-nums", balance < 0 && "text-destructive")}
                   >
-                    {formatCurrency(balance)}
+                    {formatCurrency(Math.abs(balance))}
                   </span>
                 </div>
               );
@@ -189,13 +182,6 @@ export const AccountsSummaryCompact: React.FC<AccountsSummaryCompactProps> = ({ 
     return accounts.reduce((sum, account) => sum + account.current_balance, 0);
   }, [accounts]);
 
-  const formatCurrency = (amount: number) => {
-    return `₱${Math.abs(amount).toLocaleString("en-PH", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
-
   if (isLoading) {
     return <Skeleton className={cn("h-10 w-full", className)} />;
   }
@@ -210,7 +196,7 @@ export const AccountsSummaryCompact: React.FC<AccountsSummaryCompactProps> = ({ 
       <span className="text-muted-foreground text-sm">Total Balance</span>
       <span className={cn("font-semibold tabular-nums", totalBalance < 0 && "text-destructive")}>
         {totalBalance < 0 ? "-" : ""}
-        {formatCurrency(totalBalance)}
+        {formatCurrency(Math.abs(totalBalance))}
       </span>
     </div>
   );

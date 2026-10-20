@@ -10,9 +10,6 @@ The Entity Detail component library provides a **standardized, reusable pattern*
 
 ```
 entity-detail/
-├── DetailPageLayout.tsx         # Main layout wrapper with breadcrumbs & header
-├── DetailSection.tsx            # Card-based section container with collapse
-├── DetailField.tsx              # Label-value pair with formatting options
 ├── DetailAuditSection.tsx       # Audit trail integration for detail pages
 ├── RelatedEntityLink.tsx        # Type-safe links to related entities
 ├── DetailPageSkeleton.tsx       # Loading skeleton preserving layout
@@ -21,6 +18,8 @@ entity-detail/
 ├── __tests__/                   # Comprehensive component tests
 └── index.ts                     # Barrel export for all components
 ```
+
+`DetailPageLayout`, `DetailSection` and `DetailField` moved to the kit: they live in `src/components/patterns/` and are imported from `@/components/patterns`. This folder keeps the product pieces (`DetailAuditSection`, `RelatedEntityLink`, `DetailPageSkeleton`) and the formatter re-exports.
 
 ## 📦 Core Components
 
@@ -188,7 +187,7 @@ interface DetailAuditSectionProps {
   entityType: EntityType;        // Entity type for filtering
   entityId: string;              // Entity ID for filtering
   title?: string;                // Section title (default: "Audit Trail")
-  defaultCollapsed?: boolean;    // Collapse state (auto on mobile)
+  defaultCollapsed?: boolean;    // Start collapsed (default: expanded)
   limit?: number;                // Number of entries (default: 10)
   className?: string;            // Optional styling
 }
@@ -220,7 +219,7 @@ interface DetailAuditSectionProps {
 
 ### Formatters
 
-Located in `utils/formatters.ts`, re-exported from `@/components/tables/utils`:
+Located in `utils/formatters.ts`, re-exported from `@/lib/formatters`:
 
 ```typescript
 // Currency formatting (Philippine Peso)
@@ -428,13 +427,9 @@ export const Route = createFileRoute("/admin/entities/$entityId/")({
 </div>
 ```
 
-**✅ DO**: Collapse audit trail on mobile
+**✅ DO**: Keep the audit trail last, so on a phone it sits below the record
 ```typescript
-<DetailAuditSection
-  entityType="booking"
-  entityId={bookingId}
-  // Automatically collapses on mobile via useMediaQuery
-/>
+<DetailAuditSection entityType="booking" entityId={bookingId} />
 ```
 
 ### 8. Accessibility
@@ -513,7 +508,7 @@ npx vitest run src/components/entity-detail/__tests__/ --watch
 
 - **TanStack Router**: [src/routes/README.md](../../routes/README.md) - Route definitions and loading data
 - **Entity Hooks**: [src/hooks/entity/README.md](../../hooks/entity/README.md) - Hooks for entity management
-- **Tables Components**: [src/components/tables/README.md](../tables/README.md) - Table formatting utilities
+- **Patterns kit**: [src/components/patterns/CLAUDE.md](../patterns/CLAUDE.md) - Detail and table patterns (`@/components/patterns`); formatters in `src/lib/formatters.ts`
 - **Audit System**: [src/components/audit/README.md](../audit/README.md) - Audit log viewer
 - **Type Definitions**: [src/types/entity-detail.types.ts](../../types/entity-detail.types.ts) - Entity type definitions
 

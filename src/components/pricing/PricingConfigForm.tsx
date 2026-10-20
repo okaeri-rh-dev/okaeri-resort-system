@@ -2,10 +2,10 @@ import * as React from "react";
 import { useEffectEvent } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calculator, DollarSign, Home, Info, Users } from "lucide-react";
+import { Calculator, DollarSign, Home, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Callout } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -150,17 +150,11 @@ export function PricingConfigForm({ onSuccess, onCancel, className }: PricingCon
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className={className}>
         {/* Global Pricing Notice */}
-        <Alert className="mb-6 border-blue-200 bg-blue-50">
-          <Info className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-900">
-            <p className="font-semibold">Global Pricing Configuration</p>
-            <p className="mt-1 text-sm">
-              These settings automatically apply to <strong>all cabins</strong> in your resort. When
-              you update rates here, all cabin pricing will be synchronized instantly. Individual
-              cabin pricing has been centralized for consistent guest experience.
-            </p>
-          </AlertDescription>
-        </Alert>
+        <Callout tone="info" title="Global Pricing Configuration" className="mb-6">
+          These settings automatically apply to <strong>all cabins</strong> in your resort. When you
+          update rates here, all cabin pricing will be synchronized instantly. Individual cabin
+          pricing has been centralized for consistent guest experience.
+        </Callout>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Left Column: Form Fields */}
@@ -201,7 +195,7 @@ export function PricingConfigForm({ onSuccess, onCancel, className }: PricingCon
                         <FormDescription>
                           Rate per night (Sunday - Thursday)
                           {watchedValues.base_rate > 0 && (
-                            <span className="mt-1 block text-xs font-medium text-blue-600">
+                            <span className="text-muted-foreground mt-1 block text-xs font-medium tabular-nums">
                               {formatCurrency(watchedValues.base_rate)} per night
                             </span>
                           )}
@@ -237,7 +231,7 @@ export function PricingConfigForm({ onSuccess, onCancel, className }: PricingCon
                         <FormDescription>
                           Rate per night (Friday & Saturday)
                           {watchedValues.weekend_rate > 0 && (
-                            <span className="mt-1 block text-xs font-medium text-blue-600">
+                            <span className="text-muted-foreground mt-1 block text-xs font-medium tabular-nums">
                               {formatCurrency(watchedValues.weekend_rate)} per night
                             </span>
                           )}
@@ -284,7 +278,7 @@ export function PricingConfigForm({ onSuccess, onCancel, className }: PricingCon
                       <FormDescription>
                         Additional charge per guest per night (beyond base occupancy)
                         {watchedValues.extra_person_rate > 0 && (
-                          <span className="mt-1 block text-xs font-medium text-blue-600">
+                          <span className="text-muted-foreground mt-1 block text-xs font-medium tabular-nums">
                             {formatCurrency(watchedValues.extra_person_rate)} per guest per night
                           </span>
                         )}
@@ -428,18 +422,18 @@ export function PricingConfigForm({ onSuccess, onCancel, className }: PricingCon
                       <span className="text-muted-foreground">
                         Base ({preview.nights - 2} weekday nights)
                       </span>
-                      <span className="font-mono">{formatCurrency(preview.baseTotal)}</span>
+                      <span className="tabular-nums">{formatCurrency(preview.baseTotal)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Weekend (2 nights)</span>
-                      <span className="font-mono">{formatCurrency(preview.weekendTotal)}</span>
+                      <span className="tabular-nums">{formatCurrency(preview.weekendTotal)}</span>
                     </div>
                     {preview.extraPersonTotal > 0 && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">
                           Extra guests ({preview.guests - watchedValues.base_occupancy})
                         </span>
-                        <span className="font-mono">
+                        <span className="tabular-nums">
                           {formatCurrency(preview.extraPersonTotal)}
                         </span>
                       </div>
@@ -452,15 +446,15 @@ export function PricingConfigForm({ onSuccess, onCancel, className }: PricingCon
                   <div className="space-y-2">
                     <div className="flex justify-between font-semibold">
                       <span>Subtotal</span>
-                      <span className="font-mono">{formatCurrency(preview.subtotal)}</span>
+                      <span className="tabular-nums">{formatCurrency(preview.subtotal)}</span>
                     </div>
                     <div className="flex justify-between text-sm font-medium">
                       <span>Downpayment ({watchedValues.downpayment_percent}%)</span>
-                      <span className="font-mono">{formatCurrency(preview.downpayment)}</span>
+                      <span className="tabular-nums">{formatCurrency(preview.downpayment)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Remaining Balance</span>
-                      <span className="font-mono">{formatCurrency(preview.remaining)}</span>
+                      <span className="tabular-nums">{formatCurrency(preview.remaining)}</span>
                     </div>
                   </div>
 

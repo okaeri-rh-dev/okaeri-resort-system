@@ -4,7 +4,6 @@ import { format } from "date-fns";
 import { CalendarDays } from "lucide-react";
 import type { DateRange, SelectSingleEventHandler } from "react-day-picker";
 
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 
 // Import mobile-specific styles
@@ -32,14 +31,13 @@ export interface ResponsiveDatePickerProps {
   align?: "start" | "center" | "end";
   formatStr?: string;
   buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  "aria-label"?: string;
+  /** Open in a bottom sheet instead of a popover. The DatePicker pattern sets it on compact windows. */
+  sheet?: boolean;
 }
 
 /**
- * ResponsiveDatePicker - A responsive date picker that uses Sheet on mobile and Popover on desktop
- *
- * This component automatically switches between:
- * - Desktop (≥768px): Popover with Calendar (current experience)
- * - Mobile (<768px): Bottom Sheet with Calendar (mobile-optimized)
+ * ResponsiveDatePicker - A date picker that opens in a bottom sheet (`sheet`) or a popover
  *
  * @example
  * ```tsx
@@ -61,14 +59,15 @@ export function ResponsiveDatePicker({
   align = "start",
   formatStr = "PPP",
   buttonVariant = "outline",
+  "aria-label": ariaLabel,
+  sheet = false,
 }: ResponsiveDatePickerProps) {
-  const isMobile = useMediaQuery("(max-width: 768px)");
   const [open, setOpen] = React.useState(false);
 
   const handleSelect: SelectSingleEventHandler = (date, selectedDay, activeModifiers, e) => {
     onChange?.(date, selectedDay, activeModifiers, e);
     // Auto-close on mobile after selection for better UX
-    if (isMobile) {
+    if (sheet) {
       setOpen(false);
     }
   };
@@ -77,10 +76,11 @@ export function ResponsiveDatePicker({
     <Button
       variant={buttonVariant}
       className={cn(
-        "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
+        "w-full touch-manipulation pl-4 text-left text-base font-normal sm:text-sm",
         !value && "text-muted-foreground",
         buttonClassName
       )}
+      aria-label={ariaLabel}
     >
       {value ? format(value, formatStr) : <span>{placeholder}</span>}
       <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" aria-hidden="true" />
@@ -88,7 +88,7 @@ export function ResponsiveDatePicker({
   );
 
   // Mobile: Bottom Sheet
-  if (isMobile) {
+  if (sheet) {
     return (
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>{triggerButton}</SheetTrigger>
@@ -117,7 +117,7 @@ export function ResponsiveDatePicker({
   return (
     <Popover>
       <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
-      <PopoverContent className="w-[340px] p-0" align={align}>
+      <PopoverContent className="w-auto p-0" align={align} aria-label="Select date">
         <Calendar
           mode="single"
           selected={value}
@@ -165,6 +165,8 @@ export interface ResponsiveDateRangePickerProps {
   "aria-describedby"?: string;
   /** Disable the button (prevents opening calendar) */
   buttonDisabled?: boolean;
+  /** Open in a bottom sheet with one month instead of a popover. */
+  sheet?: boolean;
 }
 
 export function ResponsiveDateRangePicker({
@@ -181,14 +183,14 @@ export function ResponsiveDateRangePicker({
   "aria-label": ariaLabel,
   "aria-describedby": ariaDescribedby,
   buttonDisabled = false,
+  sheet = false,
 }: ResponsiveDateRangePickerProps) {
-  const isMobile = useMediaQuery("(max-width: 768px)");
   const [open, setOpen] = React.useState(false);
 
   const handleSelect = (range: DateRange | undefined) => {
     onChange?.(range);
     // Auto-close on mobile when both dates are selected
-    if (isMobile && range?.from && range?.to) {
+    if (sheet && range?.from && range?.to) {
       setTimeout(() => setOpen(false), 200); // Small delay for visual feedback
     }
   };
@@ -203,7 +205,7 @@ export function ResponsiveDateRangePicker({
     <Button
       variant={buttonVariant}
       className={cn(
-        "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
+        "w-full touch-manipulation pl-4 text-left text-base font-normal sm:text-sm",
         !value?.from && "text-muted-foreground",
         buttonClassName
       )}
@@ -220,7 +222,7 @@ export function ResponsiveDateRangePicker({
   );
 
   // Mobile: Bottom Sheet with single month view
-  if (isMobile) {
+  if (sheet) {
     return (
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>{triggerButton}</SheetTrigger>
@@ -250,7 +252,7 @@ export function ResponsiveDateRangePicker({
   return (
     <Popover>
       <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align={align}>
+      <PopoverContent className="w-auto p-0" align={align} aria-label="Select date range">
         <Calendar
           mode="range"
           selected={value}

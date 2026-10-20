@@ -5,18 +5,16 @@ import { Calendar, DollarSign, Home, Info, Sparkles, TrendingUp } from "lucide-r
 
 import {
   DetailAuditSection,
-  DetailField,
-  DetailPageLayout,
-  DetailSection,
   formatCurrency,
   formatPercentage,
   formatTableDate,
   RelatedEntityLink,
 } from "@/components/entity-detail";
-import { StatusBadge } from "@/components/tables/utils";
+import { DetailField, DetailPageLayout, DetailSection, StatusBadge } from "@/components/patterns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { usePricingConfig } from "@/hooks/usePricingConfig";
+import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking, Unit } from "@/types";
 
 /**
@@ -69,7 +67,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
         { label: "Cabins", to: "/admin/units" },
         { label: `${unit.unit_name} (${unit.unit_code})` },
       ]}
-      status={<StatusBadge status={unit.unit_status || "Available"} />}
+      status={<StatusBadge {...statusBadgeProps(unit.unit_status, "Available")} />}
       editRoute={{
         to: "/admin/units/$unitId/edit",
         params: { unitId },
@@ -78,20 +76,16 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
       {/* 1. Unit Specifications Section */}
       <DetailSection title="Cabin Specifications" icon={<Home className="h-5 w-5" />}>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <DetailField
-            label="Cabin Code"
-            value={unit.unit_code}
-            valueClassName="font-mono font-medium"
-          />
-          <DetailField label="Cabin Type" value={unit.unit_type} valueClassName="font-medium" />
+          <DetailField label="Cabin Code" value={unit.unit_code} emphasis="strong" />
+          <DetailField label="Cabin Type" value={unit.unit_type} emphasis="strong" />
           <DetailField
             label="Max Occupancy"
             value={`${unit.max_occupancy} guests`}
-            valueClassName="font-medium"
+            emphasis="strong"
           />
           <DetailField
             label="Status"
-            value={<StatusBadge status={unit.unit_status || "Available"} />}
+            value={<StatusBadge {...statusBadgeProps(unit.unit_status, "Available")} />}
           />
         </div>
       </DetailSection>
@@ -109,29 +103,29 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
               </p>
 
               {pricingConfig && (
-                <div className="mt-4 space-y-2 rounded-md border border-neutral-200 bg-neutral-50 p-4">
-                  <p className="text-sm font-medium text-neutral-700">Current Global Rates:</p>
+                <div className="border-border bg-muted mt-4 space-y-2 rounded-md border p-4">
+                  <p className="text-foreground text-sm font-medium">Current Global Rates:</p>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                     <div>
-                      <p className="text-xs text-neutral-500">Base Rate (Weekdays)</p>
-                      <p className="font-mono text-base font-semibold text-neutral-900">
+                      <p className="text-muted-foreground text-xs">Base Rate (Weekdays)</p>
+                      <p className="text-foreground text-base font-semibold tabular-nums">
                         {formatCurrency(pricingConfig.base_rate)}
                       </p>
-                      <p className="text-xs text-neutral-500">per night</p>
+                      <p className="text-muted-foreground text-xs">per night</p>
                     </div>
                     <div>
-                      <p className="text-xs text-neutral-500">Weekend Rate</p>
-                      <p className="font-mono text-base font-semibold text-neutral-900">
+                      <p className="text-muted-foreground text-xs">Weekend Rate</p>
+                      <p className="text-foreground text-base font-semibold tabular-nums">
                         {formatCurrency(pricingConfig.weekend_rate)}
                       </p>
-                      <p className="text-xs text-neutral-500">Fri-Sat per night</p>
+                      <p className="text-muted-foreground text-xs">Fri-Sat per night</p>
                     </div>
                     <div>
-                      <p className="text-xs text-neutral-500">Extra Person Rate</p>
-                      <p className="font-mono text-base font-semibold text-neutral-900">
+                      <p className="text-muted-foreground text-xs">Extra Person Rate</p>
+                      <p className="text-foreground text-base font-semibold tabular-nums">
                         {formatCurrency(pricingConfig.extra_person_rate)}
                       </p>
-                      <p className="text-xs text-neutral-500">per person per night</p>
+                      <p className="text-muted-foreground text-xs">per person per night</p>
                     </div>
                   </div>
                 </div>
@@ -157,7 +151,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
             {unit.amenities.map((amenity, index) => (
               <span
                 key={index}
-                className="inline-flex items-center rounded-md border border-neutral-200 bg-neutral-100 px-3 py-1 text-sm font-medium text-neutral-700"
+                className="border-border bg-muted text-foreground inline-flex items-center rounded-md border px-3 py-1 text-sm font-medium"
               >
                 {amenity}
               </span>
@@ -173,7 +167,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
             {unit.bookings.map((booking) => (
               <div
                 key={booking.booking_id}
-                className="flex flex-col rounded-md border border-neutral-200 bg-neutral-50 p-4 md:flex-row md:items-center md:justify-between"
+                className="border-border bg-muted flex flex-col rounded-md border p-4 md:flex-row md:items-center md:justify-between"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -182,18 +176,18 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
                       id={booking.booking_id}
                       label={booking.booking_reference}
                     />
-                    <StatusBadge status={booking.booking_status || "Pending"} />
+                    <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
                   </div>
-                  <p className="text-sm text-neutral-600">
+                  <p className="text-muted-foreground text-sm">
                     {formatTableDate(booking.check_in)} - {formatTableDate(booking.check_out)}
                   </p>
-                  <p className="text-sm text-neutral-600">{booking.guest_name}</p>
+                  <p className="text-muted-foreground text-sm">{booking.guest_name}</p>
                 </div>
                 <div className="mt-2 text-right md:mt-0">
-                  <p className="font-mono text-lg font-semibold text-neutral-900">
+                  <p className="text-foreground text-lg font-semibold tabular-nums">
                     {formatCurrency(booking.total_amount)}
                   </p>
-                  <p className="text-sm text-neutral-600">{booking.num_guests} guests</p>
+                  <p className="text-muted-foreground text-sm">{booking.num_guests} guests</p>
                 </div>
               </div>
             ))}
@@ -208,23 +202,23 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
             <DetailField
               label="Total Bookings"
               value={unit.revenue_stats.total_bookings.toString()}
-              valueClassName="font-semibold text-lg text-neutral-900"
+              emphasis="figure"
             />
             <DetailField
               label="Total Revenue"
               value={formatCurrency(unit.revenue_stats.total_revenue)}
-              valueClassName="font-mono font-semibold text-lg text-neutral-900"
+              emphasis="figure"
             />
             <DetailField
               label="Average Booking Value"
               value={formatCurrency(unit.revenue_stats.average_booking_value)}
-              valueClassName="font-mono font-medium text-neutral-900"
+              emphasis="strong"
             />
             {unit.revenue_stats.occupancy_rate !== undefined && (
               <DetailField
                 label="Occupancy Rate"
                 value={formatPercentage(unit.revenue_stats.occupancy_rate)}
-                valueClassName="font-semibold text-lg text-neutral-900"
+                emphasis="figure"
               />
             )}
           </div>

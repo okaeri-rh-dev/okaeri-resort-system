@@ -4,16 +4,14 @@ import { Calendar, FileText, Mail, TrendingUp } from "lucide-react";
 
 import {
   DetailAuditSection,
-  DetailField,
-  DetailPageLayout,
-  DetailSection,
   formatCurrency,
   formatFullDate,
   formatPhoneNumber,
   formatTableDate,
   RelatedEntityLink,
 } from "@/components/entity-detail";
-import { StatusBadge } from "@/components/tables/utils";
+import { DetailField, DetailPageLayout, DetailSection, StatusBadge } from "@/components/patterns";
+import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking, Guest } from "@/types";
 
 /**
@@ -82,12 +80,12 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
               guest.email ? (
                 <a
                   href={`mailto:${guest.email}`}
-                  className="font-medium text-blue-600 hover:underline"
+                  className="text-primary font-medium hover:underline"
                 >
                   {guest.email}
                 </a>
               ) : (
-                <span className="text-neutral-400">{"\u2014"}</span>
+                <span className="text-muted-foreground">{"\u2014"}</span>
               )
             }
           />
@@ -97,22 +95,16 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
               guest.phone_number ? (
                 <a
                   href={`tel:${guest.phone_number}`}
-                  className="font-medium text-blue-600 hover:underline"
+                  className="text-primary font-medium hover:underline"
                 >
                   {formatPhoneNumber(guest.phone_number)}
                 </a>
               ) : (
-                <span className="text-neutral-400">{"\u2014"}</span>
+                <span className="text-muted-foreground">{"\u2014"}</span>
               )
             }
           />
-          {guest.address && (
-            <DetailField
-              label="Address"
-              value={guest.address}
-              valueClassName="text-sm text-neutral-700"
-            />
-          )}
+          {guest.address && <DetailField label="Address" value={guest.address} />}
         </div>
       </DetailSection>
 
@@ -122,17 +114,17 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
           <DetailField
             label="Total Bookings"
             value={(guest.total_bookings || 0).toString()}
-            valueClassName="font-semibold text-lg text-neutral-900"
+            emphasis="figure"
           />
           <DetailField
             label="Total Spent"
             value={formatCurrency(guest.total_spent || 0)}
-            valueClassName="font-mono font-semibold text-lg text-neutral-900"
+            emphasis="figure"
           />
           <DetailField
             label="Average Booking Value"
             value={formatCurrency(averageBookingValue)}
-            valueClassName="font-mono font-medium text-neutral-900"
+            emphasis="strong"
           />
         </div>
       </DetailSection>
@@ -143,27 +135,27 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-neutral-200 bg-neutral-100">
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-neutral-900">
+                <tr className="border-border bg-muted border-b">
+                  <th className="text-foreground px-4 py-3 text-left text-sm font-semibold">
                     Booking Reference
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-neutral-900">
+                  <th className="text-foreground px-4 py-3 text-left text-sm font-semibold">
                     Check-in
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-neutral-900">
+                  <th className="text-foreground px-4 py-3 text-left text-sm font-semibold">
                     Check-out
                   </th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-neutral-900">
+                  <th className="text-foreground px-4 py-3 text-right text-sm font-semibold">
                     Amount
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-neutral-900">
+                  <th className="text-foreground px-4 py-3 text-left text-sm font-semibold">
                     Status
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-200">
+              <tbody className="divide-border divide-y">
                 {guest.bookings.map((booking) => (
-                  <tr key={booking.booking_id} className="hover:bg-neutral-50">
+                  <tr key={booking.booking_id} className="hover:bg-muted">
                     <td className="px-4 py-3 text-sm">
                       <RelatedEntityLink
                         type="booking"
@@ -171,17 +163,17 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
                         label={booking.booking_reference}
                       />
                     </td>
-                    <td className="px-4 py-3 text-sm text-neutral-700">
+                    <td className="text-foreground px-4 py-3 text-sm tabular-nums">
                       {formatTableDate(booking.check_in)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-neutral-700">
+                    <td className="text-foreground px-4 py-3 text-sm tabular-nums">
                       {formatTableDate(booking.check_out)}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-sm font-medium text-neutral-900">
+                    <td className="text-foreground px-4 py-3 text-right text-sm font-medium tabular-nums">
                       {formatCurrency(booking.total_amount)}
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      <StatusBadge status={booking.booking_status || "Pending"} />
+                      <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
                     </td>
                   </tr>
                 ))}
@@ -195,7 +187,7 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
       {guest.notes && (
         <DetailSection title="Notes" icon={<FileText className="h-5 w-5" />}>
           <div className="prose prose-sm max-w-none">
-            <p className="text-sm whitespace-pre-wrap text-neutral-700">{guest.notes}</p>
+            <p className="text-foreground text-sm whitespace-pre-wrap">{guest.notes}</p>
           </div>
         </DetailSection>
       )}

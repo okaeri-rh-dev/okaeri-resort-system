@@ -77,23 +77,23 @@ export function PasswordStrengthIndicator({ password, className }: PasswordStren
   }
 
   const colorClasses = {
-    weak: "bg-red-500",
-    fair: "bg-orange-500",
-    good: "bg-yellow-500",
-    strong: "bg-green-500",
+    weak: "bg-danger-foreground",
+    fair: "bg-warning-foreground",
+    good: "bg-warning-foreground",
+    strong: "bg-success-foreground",
   };
 
   const textColorClasses = {
-    weak: "text-red-600",
-    fair: "text-orange-600",
-    good: "text-yellow-600",
-    strong: "text-green-600",
+    weak: "text-danger-foreground",
+    fair: "text-warning-foreground",
+    good: "text-warning-foreground",
+    strong: "text-success-foreground",
   };
 
   return (
     <div className={cn("space-y-2", className)}>
       {/* Progress bar */}
-      <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+      <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
         <div
           className={cn(
             "h-full transition-all duration-300 ease-out",
@@ -105,7 +105,7 @@ export function PasswordStrengthIndicator({ password, className }: PasswordStren
 
       {/* Strength label */}
       <div className="flex items-center justify-between text-sm">
-        <span className="text-gray-500">Password strength:</span>
+        <span className="text-muted-foreground">Password strength:</span>
         <span className={cn("font-medium", textColorClasses[strength.level])}>
           {strength.label}
         </span>
