@@ -158,6 +158,7 @@ export const useBookingColumns = ({
 
       columnHelper.display({
         id: "actions",
+        meta: { pinned: true },
         header: () => <span className="sr-only">Actions</span>,
         cell: ({ row }) => {
           return (

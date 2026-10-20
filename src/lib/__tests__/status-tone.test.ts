@@ -31,6 +31,13 @@ describe("statusBadgeProps", () => {
     });
   });
 
+  it.each([
+    ["CheckedIn", "Checked In"],
+    ["CheckedOut", "Checked Out"],
+  ])("labels %s as %s", (status, label) => {
+    expect(statusBadgeProps(status, "Pending").children).toBe(label);
+  });
+
   it.each([null, undefined, ""])("falls back when the status is %j", (status) => {
     expect(statusBadgeProps(status, "Available")).toEqual({
       tone: "success",

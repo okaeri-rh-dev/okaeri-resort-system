@@ -19,8 +19,19 @@ declare module "@tanstack/react-table" {
   interface ColumnMeta<TData extends RowData, TValue> {
     /** Cell and header alignment. Money and counts are `right`. */
     align?: "left" | "center" | "right";
+    /** Sticks to the end edge when the table scrolls sideways, such as a row menu column. */
+    pinned?: boolean;
   }
 }
+
+// Collapsed table borders don't move with a sticky cell, so the divider is an inset shadow. The
+// hover tint is translucent, so it layers over the card fill to keep content from showing through.
+const pinnedDivider = "sticky right-0 z-10 shadow-[inset_1px_0_0_var(--border)]";
+const pinnedHead = cn(pinnedDivider, "bg-muted");
+const pinnedCell = cn(
+  pinnedDivider,
+  "bg-card group-hover:bg-linear-to-r group-hover:from-muted/50 group-hover:to-muted/50"
+);
 
 /** Below this pane width the rows render as cards (the M3 compact class). */
 const CARD_LAYOUT_MAX_WIDTH = 600;
@@ -46,8 +57,9 @@ export interface DataTableProps<TData> {
  * code passes a card renderer and never branches on width. One form renders at a time.
  *
  * Rows are 40px with tabular figures. Set `meta: { align: "right" }` on money and count columns,
- * and format money with `formatCurrency` (`₱2,500.00`). Render `TablePagination` after it when the
- * table paginates; it applies to both forms.
+ * and format money with `formatCurrency` (`₱2,500.00`). Set `meta: { pinned: true }` on a row menu
+ * column so it stays in view when a slim pane scrolls the table sideways. Render `TablePagination`
+ * after it when the table paginates; it applies to both forms.
  *
  * @example
  * ```tsx
@@ -98,7 +110,10 @@ export function DataTable<TData>({
                       width:
                         header.column.columnDef.size === undefined ? undefined : header.getSize(),
                     }}
-                    className="h-10 text-xs tracking-wide uppercase"
+                    className={cn(
+                      "h-10 text-xs tracking-wide uppercase",
+                      header.column.columnDef.meta?.pinned && pinnedHead
+                    )}
                   >
                     {header.isPlaceholder
                       ? null
@@ -111,12 +126,15 @@ export function DataTable<TData>({
           <TableBody>
             {rows.map((row) => (
               <Fragment key={row.id}>
-                <TableRow className="h-10 duration-150">
+                <TableRow className="group h-10 duration-150">
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
                       style={{ textAlign: cell.column.columnDef.meta?.align }}
-                      className="text-foreground px-4 py-2 text-sm"
+                      className={cn(
+                        "text-foreground px-4 py-2 text-sm",
+                        cell.column.columnDef.meta?.pinned && pinnedCell
+                      )}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>

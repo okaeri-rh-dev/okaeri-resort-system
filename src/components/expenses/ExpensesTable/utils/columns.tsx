@@ -108,6 +108,7 @@ export function getColumns({ onViewExpense, onEditExpense, onDelete }: ColumnOpt
     // Actions column
     columnHelper.display({
       id: "actions",
+      meta: { pinned: true },
       header: "Actions",
       cell: ({ row }) => {
         const expense = row.original;

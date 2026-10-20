@@ -22,7 +22,7 @@ export interface StatusBadgeProps {
  *
  * @example
  * ```tsx
- * <StatusBadge tone={statusTone(booking.booking_status)}>{booking.booking_status}</StatusBadge>
+ * <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
  * ```
  */
 export function StatusBadge({ tone, children, className }: StatusBadgeProps) {
@@ -30,7 +30,11 @@ export function StatusBadge({ tone, children, className }: StatusBadgeProps) {
     <Badge
       variant="outline"
       data-tone={tone}
-      className={cn("border-transparent font-medium", toneClasses[tone].fill, className)}
+      className={cn(
+        "border-transparent font-medium whitespace-nowrap",
+        toneClasses[tone].fill,
+        className
+      )}
     >
       {children}
     </Badge>

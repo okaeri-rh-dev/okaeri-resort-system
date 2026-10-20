@@ -40,7 +40,7 @@ export interface DetailPageLayoutProps {
  * <DetailPageLayout
  *   title={`Booking ${booking.booking_reference}`}
  *   breadcrumbs={[{ label: "Bookings", to: "/admin/bookings" }, { label: booking.booking_reference }]}
- *   status={<StatusBadge tone={statusTone(booking.booking_status)}>{booking.booking_status}</StatusBadge>}
+ *   status={<StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />}
  *   editRoute={{ to: "/admin/bookings/$bookingId/edit", params: { bookingId: booking.id } }}
  * >
  *   <DetailSection title="Stay">…</DetailSection>

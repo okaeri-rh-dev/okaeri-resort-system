@@ -227,6 +227,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
 
       columnHelper.display({
         id: "actions",
+        meta: { pinned: true },
         header: "Actions",
         cell: ({ row }) => {
           const payment = row.original;
