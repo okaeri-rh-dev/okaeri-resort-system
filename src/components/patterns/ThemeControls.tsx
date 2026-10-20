@@ -1,8 +1,7 @@
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useSyncExternalStore } from "react";
 
 import { Monitor, Moon, Sun, type LucideIcon } from "lucide-react";
 
-import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
@@ -13,8 +12,6 @@ export interface ShellTheme {
   onChange: (value: ThemeSetting) => void;
 }
 
-type ShownTheme = "light" | "dark";
-
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 function subscribeToDeviceTheme(onChange: () => void) {
@@ -24,7 +21,7 @@ function subscribeToDeviceTheme(onChange: () => void) {
 }
 
 /** What the page shows now: the setting, or the device's choice when it is `system`. */
-function useShownTheme(value: ThemeSetting): ShownTheme {
+function useShownTheme(value: ThemeSetting): "light" | "dark" {
   const deviceIsDark = useSyncExternalStore(
     subscribeToDeviceTheme,
     () => window.matchMedia(DARK_QUERY).matches,
@@ -32,22 +29,6 @@ function useShownTheme(value: ThemeSetting): ShownTheme {
   );
   if (value === "system") return deviceIsDark ? "dark" : "light";
   return value;
-}
-
-/** Dark mode on or off sets an explicit theme, so it also stops following the device. */
-function darkModeToggle(theme: ShellTheme, shown: ShownTheme) {
-  return {
-    checked: shown === "dark",
-    onCheckedChange: (checked: boolean) => theme.onChange(checked ? "dark" : "light"),
-  };
-}
-
-/** Turning matching off keeps the theme the page shows now. */
-function matchDeviceToggle(theme: ShellTheme, shown: ShownTheme) {
-  return {
-    checked: theme.value === "system",
-    onCheckedChange: (checked: boolean) => theme.onChange(checked ? "system" : shown),
-  };
 }
 
 const segments: { value: ThemeSetting; label: string; icon: LucideIcon }[] = [
@@ -63,9 +44,36 @@ const arrowSteps: Partial<Record<string, number>> = {
   ArrowDown: 1,
 };
 
-/** Light / Dark / Auto as three labelled segments. Only the expanded rail has room for it. */
-export function ThemeSegments({ theme }: { theme: ShellTheme }) {
+const segmentTone = {
+  sidebar: {
+    track: "bg-sidebar-accent",
+    ring: "focus-visible:ring-sidebar-ring",
+    checked: "bg-sidebar-primary text-sidebar-primary-foreground",
+    unchecked: "text-sidebar-foreground hover:bg-sidebar",
+  },
+  surface: {
+    track: "bg-secondary",
+    ring: "focus-visible:ring-ring",
+    checked: "bg-card text-foreground shadow-card",
+    unchecked: "text-muted-foreground hover:text-foreground",
+  },
+};
+
+/**
+ * Light / Dark / Auto as three segments of one pill. `labelled` shows the words, `icons` shows
+ * icons only, and `rail` stacks icons in the narrow rail and shows the words once it is wide.
+ */
+export function ThemeSegments({
+  theme,
+  tone,
+  form,
+}: {
+  theme: ShellTheme;
+  tone: keyof typeof segmentTone;
+  form: "labelled" | "icons" | "rail";
+}) {
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
+  const colors = segmentTone[tone];
 
   const selectByArrow = (event: React.KeyboardEvent, index: number) => {
     const step = arrowSteps[event.key];
@@ -80,7 +88,13 @@ export function ThemeSegments({ theme }: { theme: ShellTheme }) {
     <div
       role="radiogroup"
       aria-label="Theme"
-      className="bg-sidebar-accent flex gap-0.5 rounded-full p-1"
+      className={cn(
+        "flex gap-0.5 rounded-full p-1",
+        colors.track,
+        form === "labelled" && "w-full",
+        form === "icons" && "w-fit",
+        form === "rail" && "large:w-full large:flex-row mx-auto w-fit flex-col"
+      )}
     >
       {segments.map(({ value, label, icon: Icon }, index) => {
         const checked = theme.value === value;
@@ -93,19 +107,24 @@ export function ThemeSegments({ theme }: { theme: ShellTheme }) {
             type="button"
             role="radio"
             aria-checked={checked}
+            aria-label={form === "labelled" ? undefined : label}
             tabIndex={checked ? 0 : -1}
             onClick={() => theme.onChange(value)}
             onKeyDown={(event) => selectByArrow(event, index)}
             className={cn(
-              "coarse:min-h-11 flex min-h-8 flex-1 items-center justify-center gap-1.5 rounded-full px-2 text-xs font-medium transition-colors duration-150",
-              "focus-visible:ring-sidebar-ring focus-visible:ring-2 focus-visible:outline-hidden",
-              checked
-                ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                : "text-sidebar-foreground hover:bg-sidebar"
+              "coarse:min-h-11 coarse:min-w-11 flex min-h-8 min-w-8 flex-1 items-center justify-center gap-1.5 rounded-full px-2 text-xs font-medium transition-colors duration-150",
+              "focus-visible:ring-2 focus-visible:outline-hidden",
+              colors.ring,
+              checked ? colors.checked : colors.unchecked
             )}
           >
             <Icon className="size-4" aria-hidden="true" />
-            {label}
+            {form === "labelled" && label}
+            {form === "rail" && (
+              <span className="large:inline hidden" aria-hidden="true">
+                {label}
+              </span>
+            )}
           </button>
         );
       })}
@@ -113,128 +132,17 @@ export function ThemeSegments({ theme }: { theme: ShellTheme }) {
   );
 }
 
-const HOLD_MS = 500;
-
-/** Calls `onHold` after a press of `HOLD_MS`, and swallows the click that ends that press. */
-function useLongPress(onHold: () => void) {
-  const timer = useRef<number | undefined>(undefined);
-  const held = useRef(false);
-  const cancel = () => window.clearTimeout(timer.current);
-
-  return {
-    onPointerDown: () => {
-      held.current = false;
-      cancel();
-      timer.current = window.setTimeout(() => {
-        held.current = true;
-        onHold();
-      }, HOLD_MS);
-    },
-    onPointerUp: cancel,
-    onPointerLeave: cancel,
-    onPointerCancel: cancel,
-    onContextMenu: (event: React.MouseEvent) => event.preventDefault(),
-    onClickCapture: (event: React.MouseEvent) => {
-      if (!held.current) return;
-      held.current = false;
-      event.preventDefault();
-      event.stopPropagation();
-    },
-  };
-}
-
-/**
- * The dark mode switch, for wherever the nav is not wide. With `holdForDeviceMatch`, a long press
- * opens "Match my device", for spots with no menu sheet to hold it.
- */
-export function DarkModeSwitch({
-  theme,
-  orientation = "horizontal",
-  holdForDeviceMatch = false,
-}: {
-  theme: ShellTheme;
-  orientation?: "horizontal" | "vertical";
-  holdForDeviceMatch?: boolean;
-}) {
+/** One-tap dark mode for the compact bars. It sets an explicit theme, so it stops following the device. */
+export function DarkModeSwitch({ theme }: { theme: ShellTheme }) {
   const shown = useShownTheme(theme.value);
-  const [optionsOpen, setOptionsOpen] = useState(false);
-  const longPress = useLongPress(() => setOptionsOpen(true));
-
-  const control = (
-    <div
-      className={cn(
-        "flex items-center gap-2",
-        orientation === "vertical" && "mx-auto flex-col py-2",
-        holdForDeviceMatch && "select-none"
-      )}
-      {...(holdForDeviceMatch && longPress)}
-    >
+  return (
+    <div className="flex items-center gap-2">
       <Moon className="size-4" aria-hidden="true" />
-      <Switch aria-label="Dark mode" {...darkModeToggle(theme, shown)} />
-    </div>
-  );
-
-  if (!holdForDeviceMatch) return control;
-
-  return (
-    <Popover open={optionsOpen} onOpenChange={setOptionsOpen}>
-      <PopoverAnchor asChild>{control}</PopoverAnchor>
-      <PopoverContent align="end" aria-label="Theme options" className="w-64">
-        <MatchDeviceRow theme={theme} shown={shown} tone="surface" />
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-type RowTone = "surface" | "sidebar";
-
-const mutedText: Record<RowTone, string> = {
-  surface: "text-muted-foreground",
-  sidebar: "opacity-70",
-};
-
-/** `secondary` indents and mutes the row under "Dark mode". */
-function MatchDeviceRow({
-  theme,
-  shown,
-  tone,
-  secondary = false,
-}: {
-  theme: ShellTheme;
-  shown: ShownTheme;
-  tone: RowTone;
-  secondary?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 text-sm">
-      <span className={cn(secondary ? ["pl-8", mutedText[tone]] : "font-medium")}>
-        Match my device
-      </span>
-      <Switch aria-label="Match my device" {...matchDeviceToggle(theme, shown)} />
-    </div>
-  );
-}
-
-/**
- * The menu sheets' pair: "Dark mode", and "Match my device" for the system setting. Dark mode is
- * locked while the device decides.
- */
-export function ThemeSwitchRows({ theme, tone }: { theme: ShellTheme; tone: RowTone }) {
-  const shown = useShownTheme(theme.value);
-  return (
-    <div className="space-y-3 px-3 py-2">
-      <div className="flex items-center justify-between gap-3 text-sm font-medium">
-        <span className="flex items-center gap-3">
-          <Moon className="size-5" aria-hidden="true" />
-          Dark mode
-        </span>
-        <Switch
-          aria-label="Dark mode"
-          disabled={theme.value === "system"}
-          {...darkModeToggle(theme, shown)}
-        />
-      </div>
-      <MatchDeviceRow theme={theme} shown={shown} tone={tone} secondary />
+      <Switch
+        aria-label="Dark mode"
+        checked={shown === "dark"}
+        onCheckedChange={(checked) => theme.onChange(checked ? "dark" : "light")}
+      />
     </div>
   );
 }

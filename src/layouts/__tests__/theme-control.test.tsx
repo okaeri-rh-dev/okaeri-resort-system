@@ -48,7 +48,7 @@ function renderAt(path: string, ui: ReactNode) {
 }
 
 describe("theme control wiring", () => {
-  it("switches the admin app to dark from the rail", async () => {
+  it("switches the admin app to dark from the header", async () => {
     renderAt(
       "/admin/dashboard",
       <MainLayout>
@@ -56,7 +56,8 @@ describe("theme control wiring", () => {
       </MainLayout>
     );
 
-    const choice = await screen.findByRole("radiogroup", { name: "Theme" });
+    const header = await screen.findByRole("banner");
+    const choice = await within(header).findByRole("radiogroup", { name: "Theme" });
     await userEvent.click(within(choice).getByRole("radio", { name: "Dark" }));
 
     expect(useUIStore.getState().theme).toBe("dark");

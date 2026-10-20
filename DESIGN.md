@@ -49,14 +49,14 @@ Navigation per class:
 
 The rail and the menu sheets scroll as one column when the window is short.
 
-Theme control per nav form. It is never in the account menu.
+Theme control per nav form. It is never in the account menu. The choice is a pill of three segments, Light / Dark / Auto; the dark mode switch is one tap between light and dark.
 
-| Surface | Compact                                                                                                         | Medium, expanded                                                                   | Large, xlarge                                         |
-| ------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| Admin   | Dark mode switch in the header; a long press on it opens Match my device. More's sheet adds both switch rows    | Dark mode switch at the rail foot; the menu sheet adds Dark mode + Match my device | Light / Dark / Auto segmented switch at the rail foot |
-| Guest   | Dark mode switch in the top bar (long press opens Match my device); menu sheet adds Dark mode + Match my device | Dark mode switch in the top bar; long press opens Match my device                  | (as medium)                                           |
+| Surface | Compact                                                                                                                 | Medium, expanded                                                                     | Large, xlarge                    |
+| ------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------- |
+| Admin   | Dark mode switch in the header, labelled choice at the end of More's sheet. With no More: the icon choice in the header | Icon choice (stacked) at the rail foot, labelled choice at the end of the menu sheet | Labelled choice at the rail foot |
+| Guest   | Dark mode switch in the top bar, labelled choice at the end of the menu sheet                                           | Icon choice in the top bar                                                           | (as medium)                      |
 
-The dark mode switch sets an explicit theme. "Match my device" is the system setting; while it is on, Dark mode is locked. The long press exists where no menu sheet is in reach: compact admin roles with five or fewer destinations have no More, and the guest top bar has no menu from `medium`.
+Auto is the system setting. The dark mode switch sets an explicit theme, so Auto is always one sheet or one tap away from it.
 
 Pane layouts:
 

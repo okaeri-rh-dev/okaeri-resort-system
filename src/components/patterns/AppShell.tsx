@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import type { RoutePath } from "@/types/route-path";
 
 import { PageHeader, type PageHeaderProps } from "./PageHeader";
-import { DarkModeSwitch, ThemeSegments, ThemeSwitchRows, type ShellTheme } from "./ThemeControls";
+import { DarkModeSwitch, ThemeSegments, type ShellTheme } from "./ThemeControls";
 import { CompactWindowContext, useCompactWindowQuery } from "./window-size";
 
 /** The compact bottom bar holds at most this many slots, More included. */
@@ -78,9 +78,9 @@ export interface AppShellProps {
  * Admin: a bottom bar on compact windows (pinned destinations plus More, or every destination
  * when there are five or fewer), a collapsed rail from `medium` and an expanded rail with labels
  * from `large`. Guest: a top bar with inline links from `medium` and a menu sheet on compact.
- * With `theme`, the expanded rail ends in a Light / Dark / Auto switch. Every narrower nav form
- * gets a dark mode switch instead (compact header, collapsed rail foot, guest top bar), and the
- * menu sheets add "Dark mode" and "Match my device" rows.
+ * With `theme`, a Light / Dark / Auto choice sits at the rail foot (icons, words from `large`), in
+ * the guest top bar from `medium` (icons) and at the end of both menu sheets (words). Compact bars
+ * get a one-tap dark mode switch instead; compact admin with no More gets the icon choice.
  * Margins are 16px, 24px from `medium`; content caps at 1600px (admin), 1200px (guest) or ~40rem
  * (`width="form"`).
  *
@@ -273,7 +273,12 @@ function AdminShell({
           {brand.name}
         </Link>
         <div className="flex items-center gap-2">
-          {theme && <DarkModeSwitch theme={theme} holdForDeviceMatch />}
+          {theme &&
+            (needsMore ? (
+              <DarkModeSwitch theme={theme} />
+            ) : (
+              <ThemeSegments theme={theme} tone="surface" form="icons" />
+            ))}
           {actions.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -361,14 +366,9 @@ function AdminShell({
         {hasFooter && (
           <div className="border-sidebar-border medium:flex large:px-4 hidden flex-col gap-1 border-t p-2">
             {theme && (
-              <>
-                <div className="large:hidden">
-                  <DarkModeSwitch theme={theme} orientation="vertical" />
-                </div>
-                <div className="large:block hidden pb-1">
-                  <ThemeSegments theme={theme} />
-                </div>
-              </>
+              <div className="large:pb-1 py-1">
+                <ThemeSegments theme={theme} tone="sidebar" form="rail" />
+              </div>
             )}
             <ActionButtons actions={actions} form="rail" className={railItem} />
           </div>
@@ -400,7 +400,11 @@ function AdminShell({
           </nav>
           {hasFooter && (
             <div className="border-sidebar-border shrink-0 space-y-1 border-t p-4">
-              {theme && <ThemeSwitchRows theme={theme} tone="sidebar" />}
+              {theme && (
+                <div className="pb-2">
+                  <ThemeSegments theme={theme} tone="sidebar" form="labelled" />
+                </div>
+              )}
               <ActionButtons
                 actions={actions}
                 form="sheet"
@@ -447,7 +451,16 @@ function GuestShell({ brand, destinations, theme, banner, ...content }: AppShell
                 ))}
               </ul>
             </nav>
-            {theme && <DarkModeSwitch theme={theme} holdForDeviceMatch />}
+            {theme && (
+              <>
+                <div className="medium:hidden">
+                  <DarkModeSwitch theme={theme} />
+                </div>
+                <div className="medium:block hidden">
+                  <ThemeSegments theme={theme} tone="surface" form="icons" />
+                </div>
+              </>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -482,7 +495,7 @@ function GuestShell({ brand, destinations, theme, banner, ...content }: AppShell
           </nav>
           {theme && (
             <div className="border-border shrink-0 border-t p-4">
-              <ThemeSwitchRows theme={theme} tone="surface" />
+              <ThemeSegments theme={theme} tone="surface" form="labelled" />
             </div>
           )}
         </SheetContent>
