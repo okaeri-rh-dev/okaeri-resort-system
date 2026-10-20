@@ -24,7 +24,7 @@ Not measured: the globalSetup `supabase stop/start` path when Supabase is down, 
 - [x] 7. GitHub: set `allow_auto_merge: true`.
 - [x] 8. GitHub: "protect main" ruleset covers `main` and `design/foundations`; add required status checks Lint, Type-check, Unit tests, Knip; add repo-admin bypass in `pull_request` mode.
 - [x] 9. CLAUDE.md: update the pre-push description (affected unit tests only; type-aware lint runs in CI), keep the long-timeout push rule, add "merge with `gh pr merge --auto --merge`".
-- [ ] 10. Verify: time pre-commit and pre-push end to end (warm, and from a worktree), run `npm run verify`, open a PR and confirm auto-merge waits for the required checks.
+- [x] 10. Verify: time pre-commit and pre-push end to end (warm, and from a worktree), run `npm run verify`, open a PR and confirm auto-merge waits for the required checks.
 
 ## Decisions & Deferrals
 
@@ -48,3 +48,5 @@ Not measured: the globalSetup `supabase stop/start` path when Supabase is down, 
 - Pre-push, docs-only diff → "No test files found, exiting with code 0".
 - Ruleset read back: required checks Lint, Type-check, Unit tests, Knip (dead code), strict false. Bypass actors are hidden from the non-admin token; set in the UI by the owner.
 - Not verified: hook timing from a worktree, the globalSetup restart path with Supabase down (now skipped by pre-push).
+- Auto-merge waits: PR #84 showed `autoMergeRequest` set and `mergeStateStatus: BLOCKED` while checks ran, then merged by itself after ~420 s.
+- Worktree timing skipped by decision (2026-10-20): the per-checkout cache change is simple; judge it in normal use.
