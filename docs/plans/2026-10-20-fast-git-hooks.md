@@ -31,6 +31,7 @@ Not measured: the globalSetup `supabase stop/start` path when Supabase is down, 
 - Keep tsc in pre-commit — costs ~5 s and pushes are the pain; moving it would slow pushes. Revisit if commits feel slow after task 4.
 - Type-aware ESLint is CI-only — saves 15.6 s and CPU contention per push; safe because required checks block the merge. Revisit if type-aware errors keep landing in red PRs.
 - Pre-push runs affected tests only (`--changed`) — CI runs the full suite. Revisit if a missed test reaches CI more than rarely.
+- Pre-push runs the full suite when the diff touches package.json/lock, vite(st) config, tsconfig or test setup — measured: `--changed` ignored a `vitest.config.ts` + `global-setup.ts` diff ("No test files found"), so `forceRerunTriggers` does not cover it.
 - `SKIP_DB_SETUP` env flag, not a separate vitest DB project — smaller change. Revisit when the "Vitest global setup stops Supabase" infra issue is fixed properly.
 - No `maxForks` limit — forks already use all cores. Revisit if end-to-end timing shows contention.
 - npm audit is not a required check — upstream advisories would block unrelated merges. It still runs on every PR.

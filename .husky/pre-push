@@ -22,6 +22,12 @@ else
   changed_flag=""
 fi
 
+# vitest --changed only follows imports, so config and setup edits would run nothing.
+test_infra='^(package(-lock)?\.json|vite(st)?\.config\..*|tsconfig.*\.json|src/test/.*|__tests__/setup/.*)$'
+if [ -n "$changed_flag" ] && git diff --name-only "$base" | grep -qE "$test_infra"; then
+  changed_flag=""
+fi
+
 echo "${GREEN}🚀 Running pre-push unit tests (${changed_flag:-full suite})...${NC}"
 
 SKIP_DB_SETUP=1 npx vitest run $changed_flag --passWithNoTests --fileParallelism \
