@@ -256,14 +256,14 @@ describe("AppShell, guest", () => {
 });
 
 describe("AppShell, theme control", () => {
-  it("offers Light, Dark and Auto as one labelled choice in the expanded rail", async () => {
+  it("offers Light, Dark and Auto as one choice at the rail foot", async () => {
     const onChange = vi.fn();
     renderAt(
       "/admin/dashboard",
       <AppShell
         surface="admin"
         brand={brand}
-        destinations={staffDestinations}
+        destinations={managerDestinations}
         theme={{ value: "system", onChange }}
       >
         <p>Dashboard</p>
@@ -274,7 +274,7 @@ describe("AppShell, theme control", () => {
     expect(
       within(choice)
         .getAllByRole("radio")
-        .map((radio) => radio.textContent)
+        .map((radio) => radio.getAttribute("aria-label"))
     ).toEqual(["Light", "Dark", "Auto"]);
     expect(within(choice).getByRole("radio", { name: "Auto" })).toHaveAttribute(
       "aria-checked",
@@ -285,14 +285,14 @@ describe("AppShell, theme control", () => {
     expect(onChange).toHaveBeenCalledWith("dark");
   });
 
-  it("puts a dark mode switch in the compact header, not in the account menu", async () => {
+  it("puts a dark mode switch in the compact header when More holds the full choice", async () => {
     const onChange = vi.fn();
     renderAt(
       "/admin/dashboard",
       <AppShell
         surface="admin"
         brand={brand}
-        destinations={staffDestinations}
+        destinations={managerDestinations}
         actions={[{ label: "Sign Out", icon: LogOut, onSelect: () => {} }]}
         theme={{ value: "system", onChange }}
       >
@@ -301,6 +301,7 @@ describe("AppShell, theme control", () => {
     );
 
     const header = await screen.findByRole("banner");
+    expect(within(header).queryByRole("radiogroup")).not.toBeInTheDocument();
     const darkMode = within(header).getByRole("switch", { name: "Dark mode" });
     expect(darkMode).not.toBeChecked();
     await userEvent.click(darkMode);
@@ -310,7 +311,7 @@ describe("AppShell, theme control", () => {
     expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual(["Sign Out"]);
   });
 
-  it("lets the menu sheet stop matching the device and keep the theme it shows", async () => {
+  it("puts the icon choice in the compact header when there is no More", async () => {
     const onChange = vi.fn();
     renderAt(
       "/admin/dashboard",
@@ -318,6 +319,27 @@ describe("AppShell, theme control", () => {
         surface="admin"
         brand={brand}
         destinations={staffDestinations}
+        theme={{ value: "dark", onChange }}
+      >
+        <p>Dashboard</p>
+      </AppShell>
+    );
+
+    const header = await screen.findByRole("banner");
+    expect(within(header).queryByRole("switch")).not.toBeInTheDocument();
+    const choice = within(header).getByRole("radiogroup", { name: "Theme" });
+    await userEvent.click(within(choice).getByRole("radio", { name: "Auto" }));
+    expect(onChange).toHaveBeenCalledWith("system");
+  });
+
+  it("ends the menu sheet with the labelled choice", async () => {
+    const onChange = vi.fn();
+    renderAt(
+      "/admin/dashboard",
+      <AppShell
+        surface="admin"
+        brand={brand}
+        destinations={managerDestinations}
         theme={{ value: "system", onChange }}
       >
         <p>Dashboard</p>
@@ -327,17 +349,21 @@ describe("AppShell, theme control", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Open menu" }));
 
     const menu = screen.getByRole("dialog", { name: "Okaeri Resort" });
-    expect(within(menu).getByRole("switch", { name: "Dark mode" })).toBeDisabled();
-    const matchDevice = within(menu).getByRole("switch", { name: "Match my device" });
-    expect(matchDevice).toBeChecked();
+    expect(within(menu).queryByRole("switch")).not.toBeInTheDocument();
+    const choice = within(menu).getByRole("radiogroup", { name: "Theme" });
+    expect(
+      within(choice)
+        .getAllByRole("radio")
+        .map((radio) => radio.textContent)
+    ).toEqual(["Light", "Dark", "Auto"]);
 
     expect(await axe(menu)).toHaveNoViolations();
 
-    await userEvent.click(matchDevice);
+    await userEvent.click(within(choice).getByRole("radio", { name: "Light" }));
     expect(onChange).toHaveBeenCalledWith("light");
   });
 
-  it("gives the guest top bar a dark mode switch and its menu sheet the switch rows", async () => {
+  it("gives the guest top bar a dark mode switch and the icon choice, and its menu sheet the labelled choice", async () => {
     const onChange = vi.fn();
     renderAt(
       "/",
@@ -353,40 +379,17 @@ describe("AppShell, theme control", () => {
 
     const header = await screen.findByRole("banner");
     expect(within(header).getByRole("switch", { name: "Dark mode" })).toBeChecked();
-    expect(screen.queryByRole("radiogroup", { name: "Theme" })).not.toBeInTheDocument();
+    const barChoice = within(header).getByRole("radiogroup", { name: "Theme" });
+    expect(within(barChoice).getByRole("radio", { name: "Dark" })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
 
     await userEvent.click(within(header).getByRole("button", { name: "Open menu" }));
     const menu = screen.getByRole("dialog", { name: "Okaeri Resort" });
-    await userEvent.click(within(menu).getByRole("switch", { name: "Match my device" }));
-    expect(onChange).toHaveBeenCalledWith("system");
-  });
-
-  it("opens Match my device from a long press on the compact header switch", async () => {
-    const onChange = vi.fn();
-    const user = userEvent.setup();
-    renderAt(
-      "/admin/dashboard",
-      <AppShell
-        surface="admin"
-        brand={brand}
-        destinations={staffDestinations}
-        theme={{ value: "dark", onChange }}
-      >
-        <p>Dashboard</p>
-      </AppShell>
-    );
-
-    const header = await screen.findByRole("banner");
-    const darkMode = within(header).getByRole("switch", { name: "Dark mode" });
-    await user.pointer({ keys: "[MouseLeft>]", target: darkMode });
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    await user.pointer({ keys: "[/MouseLeft]", target: darkMode });
-
-    expect(onChange).not.toHaveBeenCalled();
-    const options = screen.getByRole("dialog", { name: "Theme options" });
-    expect(await axe(options)).toHaveNoViolations();
-
-    await user.click(within(options).getByRole("switch", { name: "Match my device" }));
+    expect(within(menu).queryByRole("switch")).not.toBeInTheDocument();
+    const sheetChoice = within(menu).getByRole("radiogroup", { name: "Theme" });
+    await userEvent.click(within(sheetChoice).getByRole("radio", { name: "Auto" }));
     expect(onChange).toHaveBeenCalledWith("system");
   });
 
@@ -398,7 +401,7 @@ describe("AppShell, theme control", () => {
       <AppShell
         surface="admin"
         brand={brand}
-        destinations={staffDestinations}
+        destinations={managerDestinations}
         theme={{ value: "system", onChange }}
       >
         <p>Dashboard</p>
@@ -421,32 +424,5 @@ describe("AppShell, theme control", () => {
     auto.focus();
     await user.keyboard("{ArrowRight}");
     expect(onChange).toHaveBeenLastCalledWith("light");
-  });
-
-  it("opens Match my device from a long press on the guest top bar switch", async () => {
-    const onChange = vi.fn();
-    const user = userEvent.setup();
-    renderAt(
-      "/",
-      <AppShell
-        surface="guest"
-        brand={guestBrand}
-        destinations={guestDestinations}
-        theme={{ value: "light", onChange }}
-      >
-        <p>Calendar</p>
-      </AppShell>
-    );
-
-    const header = await screen.findByRole("banner");
-    const darkMode = within(header).getByRole("switch", { name: "Dark mode" });
-    await user.pointer({ keys: "[MouseLeft>]", target: darkMode });
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    await user.pointer({ keys: "[/MouseLeft]", target: darkMode });
-
-    expect(onChange).not.toHaveBeenCalled();
-    const options = screen.getByRole("dialog", { name: "Theme options" });
-    await user.click(within(options).getByRole("switch", { name: "Match my device" }));
-    expect(onChange).toHaveBeenCalledWith("system");
   });
 });
