@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { CalendarDays, Search } from "lucide-react";
 
 import { AppShell, type AppShellProps, type ShellDestination } from "@/components/patterns";
+import { useUIStore } from "@/stores/useUIStore";
 
 const destinations: ShellDestination[] = [
   { label: "Availability", icon: CalendarDays, to: "/", exact: true },
@@ -20,11 +21,15 @@ interface GuestLayoutProps {
  * the link the family sends after a chat (see routes/index.tsx).
  */
 export function GuestLayout({ pageHeader, width, children }: GuestLayoutProps) {
+  const theme = useUIStore((state) => state.theme);
+  const setTheme = useUIStore((state) => state.setTheme);
+
   return (
     <AppShell
       surface="guest"
       brand={{ name: "Okaeri Resort", to: "/" }}
       destinations={destinations}
+      theme={{ value: theme, onChange: setTheme }}
       pageHeader={pageHeader}
       width={width}
     >

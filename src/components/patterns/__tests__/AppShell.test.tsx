@@ -128,6 +128,47 @@ describe("AppShell, admin", () => {
     expect(signOut).toHaveBeenCalledTimes(1);
   });
 
+  it("switches the theme from the account menu", async () => {
+    const onChange = vi.fn();
+    renderAt(
+      "/admin/dashboard",
+      <AppShell
+        surface="admin"
+        brand={brand}
+        destinations={staffDestinations}
+        actions={[{ label: "Sign Out", icon: LogOut, onSelect: () => {} }]}
+        theme={{ value: "system", onChange }}
+      >
+        <p>Dashboard</p>
+      </AppShell>
+    );
+
+    await userEvent.click(await screen.findByRole("button", { name: "Account menu" }));
+    expect(screen.getByRole("menuitemradio", { name: "System" })).toBeChecked();
+    await userEvent.click(screen.getByRole("menuitemradio", { name: "Dark" }));
+    expect(onChange).toHaveBeenCalledWith("dark");
+  });
+
+  it("switches the theme from the rail", async () => {
+    const onChange = vi.fn();
+    renderAt(
+      "/admin/dashboard",
+      <AppShell
+        surface="admin"
+        brand={brand}
+        destinations={staffDestinations}
+        theme={{ value: "dark", onChange }}
+      >
+        <p>Dashboard</p>
+      </AppShell>
+    );
+
+    await userEvent.click(await screen.findByRole("button", { name: "Theme" }));
+    expect(screen.getByRole("menuitemradio", { name: "Dark" })).toBeChecked();
+    await userEvent.click(screen.getByRole("menuitemradio", { name: "Light" }));
+    expect(onChange).toHaveBeenCalledWith("light");
+  });
+
   it("shows a named loading state while the destinations are unknown", async () => {
     renderAt(
       "/admin/dashboard",
@@ -164,6 +205,7 @@ describe("AppShell, admin", () => {
         brand={brand}
         destinations={managerDestinations}
         actions={[{ label: "Sign Out", icon: LogOut, onSelect: () => {} }]}
+        theme={{ value: "system", onChange: () => {} }}
       >
         <p>Body</p>
       </AppShell>
@@ -222,6 +264,26 @@ describe("AppShell, guest", () => {
     ).toEqual(["Availability", "Book a stay", "Check a booking"]);
   });
 
+  it("switches the theme from the top bar", async () => {
+    const onChange = vi.fn();
+    renderAt(
+      "/",
+      <AppShell
+        surface="guest"
+        brand={guestBrand}
+        destinations={guestDestinations}
+        theme={{ value: "light", onChange }}
+      >
+        <p>Calendar</p>
+      </AppShell>
+    );
+
+    await userEvent.click(await screen.findByRole("button", { name: "Theme" }));
+    expect(screen.getByRole("menuitemradio", { name: "Light" })).toBeChecked();
+    await userEvent.click(screen.getByRole("menuitemradio", { name: "System" }));
+    expect(onChange).toHaveBeenCalledWith("system");
+  });
+
   it("has no bottom bar or More slot", async () => {
     renderAt(
       "/",
@@ -243,6 +305,7 @@ describe("AppShell, guest", () => {
         brand={guestBrand}
         destinations={guestDestinations}
         pageHeader={{ title: "Book your stay" }}
+        theme={{ value: "system", onChange: () => {} }}
       >
         <p>Calendar</p>
       </AppShell>

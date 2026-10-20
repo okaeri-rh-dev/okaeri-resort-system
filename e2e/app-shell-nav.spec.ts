@@ -91,6 +91,38 @@ test.describe("Admin navigation form", () => {
     await expectNoSidewaysScroll(page);
   });
 
+  test("small phone: the menu sheet scrolls to its last action", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await loginAsAdmin(page);
+
+    await page.getByRole("button", { name: "More" }).click();
+    const signOut = page.getByRole("dialog", { name: "Okaeri Resort" }).getByRole("button", {
+      name: "Sign Out",
+    });
+    await expect(signOut).toBeInViewport();
+
+    const lastLink = page.getByRole("navigation", { name: "Menu" }).getByRole("link").last();
+    await lastLink.scrollIntoViewIfNeeded();
+    await expect(lastLink).toBeInViewport();
+  });
+
+  test("landscape phone: the whole rail scrolls to its last destination and Sign Out", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 740, height: 360 });
+    await loginAsAdmin(page);
+
+    const { nav } = await mainNavBox(page);
+    await expect(nav.getByRole("link", { name: "Dashboard" })).toBeInViewport();
+    for (const target of [
+      nav.getByRole("link").last(),
+      page.getByRole("button", { name: "Sign Out" }),
+    ]) {
+      await target.scrollIntoViewIfNeeded();
+      await expect(target).toBeInViewport({ ratio: 1 });
+    }
+  });
+
   test("compact: a role with five or fewer destinations gets no More slot", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await loginAsStaff(page);
@@ -136,4 +168,48 @@ test.describe("Guest navigation form", () => {
       await expectNoSidewaysScroll(page);
     });
   }
+});
+
+test.describe("Theme control", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "light" });
+  });
+
+  test("guest compact: the top bar sets dark, and it survives a reload", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/booking/check-status");
+
+    await page.getByRole("button", { name: "Theme" }).click();
+    await page.getByRole("menuitemradio", { name: "Dark" }).click();
+    await expect(page.locator("html")).toHaveClass(/\bdark\b/);
+
+    await page.reload();
+    await expect(page.locator("html")).toHaveClass(/\bdark\b/);
+    await page.getByRole("button", { name: "Theme" }).click();
+    await expect(page.getByRole("menuitemradio", { name: "Dark" })).toBeChecked();
+  });
+
+  test("admin compact: the account menu sets dark", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await loginAsAdmin(page);
+
+    await page.getByRole("button", { name: "Account menu" }).click();
+    await page.getByRole("menuitemradio", { name: "Dark" }).click();
+    await expect(page.locator("html")).toHaveClass(/\bdark\b/);
+  });
+
+  test("admin 1280px: the rail sets light over a dark setting", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: HEIGHT });
+    await page.addInitScript(() => {
+      if (!sessionStorage.getItem("theme-seeded")) {
+        localStorage.setItem("theme", "dark");
+        sessionStorage.setItem("theme-seeded", "1");
+      }
+    });
+    await loginAsAdmin(page);
+
+    await page.getByRole("button", { name: "Theme" }).click();
+    await page.getByRole("menuitemradio", { name: "Light" }).click();
+    await expect(page.locator("html")).not.toHaveClass(/\bdark\b/);
+  });
 });

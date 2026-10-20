@@ -1,13 +1,25 @@
 import { useState, type ReactNode } from "react";
 
 import { Link } from "@tanstack/react-router";
-import { CircleUser, Menu, MoreHorizontal, type LucideIcon } from "lucide-react";
+import {
+  CircleUser,
+  Menu,
+  Monitor,
+  Moon,
+  MoreHorizontal,
+  Sun,
+  type LucideIcon,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -43,6 +55,13 @@ export interface ShellAction {
   onSelect: () => void;
 }
 
+export type ThemeSetting = "light" | "dark" | "system";
+
+export interface ShellTheme {
+  value: ThemeSetting;
+  onChange: (value: ThemeSetting) => void;
+}
+
 export interface ShellBrand {
   name: string;
   tagline?: string;
@@ -57,6 +76,8 @@ export interface AppShellProps {
   destinations: ShellDestination[];
   /** Account-level commands such as Sign Out (admin only). */
   actions?: ShellAction[];
+  /** The light / dark / system setting: in the account menu and rail (admin), the top bar (guest). */
+  theme?: ShellTheme;
   /** Shows a placeholder nav while the destinations are still unknown. */
   navLoading?: boolean;
   /** Rendered above the content as the page's `h1`. */
@@ -85,6 +106,7 @@ export interface AppShellProps {
  *   brand={{ name: "Okaeri Resort", to: "/admin/dashboard" }}
  *   destinations={destinations}
  *   actions={[{ label: "Sign Out", icon: LogOut, onSelect: signOut }]}
+ *   theme={{ value: theme, onChange: setTheme }}
  * >
  *   <Outlet />
  * </AppShell>
@@ -181,6 +203,35 @@ function matchOptions(destination: ShellDestination) {
   return { exact: destination.exact ?? false };
 }
 
+const themeOptions: { value: ThemeSetting; label: string; icon: LucideIcon }[] = [
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon },
+  { value: "system", label: "System", icon: Monitor },
+];
+
+function themeIcon(value: ThemeSetting) {
+  return themeOptions.find((option) => option.value === value)?.icon ?? Monitor;
+}
+
+function ThemeRadioItems({ theme }: { theme: ShellTheme }) {
+  return (
+    <>
+      <DropdownMenuLabel>Theme</DropdownMenuLabel>
+      <DropdownMenuRadioGroup
+        value={theme.value}
+        onValueChange={(value) => theme.onChange(value as ThemeSetting)}
+      >
+        {themeOptions.map(({ value, label, icon: Icon }) => (
+          <DropdownMenuRadioItem key={value} value={value} className="gap-2">
+            <Icon className="size-4" aria-hidden="true" />
+            {label}
+          </DropdownMenuRadioItem>
+        ))}
+      </DropdownMenuRadioGroup>
+    </>
+  );
+}
+
 function ActionButtons({
   actions,
   form,
@@ -249,6 +300,7 @@ function AdminShell({
   brand,
   destinations,
   actions = [],
+  theme,
   navLoading,
   banner,
   ...content
@@ -263,7 +315,7 @@ function AdminShell({
         <Link to={brand.to} className="font-display text-foreground text-lg font-bold">
           {brand.name}
         </Link>
-        {actions.length > 0 && (
+        {(actions.length > 0 || theme) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Account menu">
@@ -271,6 +323,8 @@ function AdminShell({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {theme && <ThemeRadioItems theme={theme} />}
+              {theme && actions.length > 0 && <DropdownMenuSeparator />}
               {actions.map(({ label, icon, onSelect }) => (
                 <DropdownMenuItem key={label} onSelect={onSelect}>
                   <ItemLabel form="dropdown" icon={icon} label={label} />
@@ -284,7 +338,7 @@ function AdminShell({
       <div
         className={cn(
           "bg-sidebar text-sidebar-foreground border-sidebar-border safe-area-bottom fixed inset-x-0 bottom-0 z-40 border-t",
-          "medium:static medium:flex medium:h-full medium:w-20 medium:shrink-0 medium:flex-col medium:border-t-0 medium:border-r",
+          "medium:static medium:flex medium:h-full medium:w-20 medium:shrink-0 medium:flex-col medium:overflow-y-auto medium:border-t-0 medium:border-r",
           "large:w-72"
         )}
       >
@@ -305,7 +359,7 @@ function AdminShell({
           </div>
         </div>
 
-        <nav aria-label="Main" className="medium:flex medium:min-h-0 medium:flex-1 medium:flex-col">
+        <nav aria-label="Main" className="medium:flex medium:flex-1 medium:flex-col">
           {navLoading ? (
             <div
               role="status"
@@ -317,7 +371,7 @@ function AdminShell({
               ))}
             </div>
           ) : (
-            <ul className="medium:flex-1 medium:flex-col medium:overflow-y-auto medium:py-3 large:px-4 flex gap-1 px-2 py-1">
+            <ul className="medium:flex-1 medium:flex-col medium:py-3 large:px-4 flex gap-1 px-2 py-1">
               {destinations.map((destination) => (
                 <li
                   key={destination.to}
@@ -346,8 +400,18 @@ function AdminShell({
           )}
         </nav>
 
-        {actions.length > 0 && (
+        {(actions.length > 0 || theme) && (
           <div className="border-sidebar-border medium:flex large:px-4 hidden flex-col gap-1 border-t p-2">
+            {theme && (
+              <DropdownMenu>
+                <DropdownMenuTrigger className={railItem}>
+                  <ItemLabel form="rail" icon={themeIcon(theme.value)} label="Theme" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="right" align="end">
+                  <ThemeRadioItems theme={theme} />
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <ActionButtons actions={actions} form="rail" className={railItem} />
           </div>
         )}
@@ -361,9 +425,9 @@ function AdminShell({
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent
           side="left"
-          className="bg-sidebar text-sidebar-foreground border-sidebar-border w-72 gap-0 p-0"
+          className="bg-sidebar text-sidebar-foreground border-sidebar-border flex w-72 flex-col gap-0 p-0"
         >
-          <div className="border-sidebar-border border-b p-6">
+          <div className="border-sidebar-border shrink-0 border-b p-6">
             <SheetTitle className="font-display text-sidebar-foreground text-xl font-bold">
               {brand.name}
             </SheetTitle>
@@ -373,11 +437,11 @@ function AdminShell({
               {brand.tagline ?? "Every destination"}
             </SheetDescription>
           </div>
-          <nav aria-label="Menu" className="flex-1 overflow-y-auto p-4">
+          <nav aria-label="Menu" className="min-h-0 flex-1 overflow-y-auto p-4">
             <SheetDestinations destinations={destinations} linkClassName={adminSheetLink} />
           </nav>
           {actions.length > 0 && (
-            <div className="border-sidebar-border space-y-1 border-t p-4">
+            <div className="border-sidebar-border shrink-0 space-y-1 border-t p-4">
               <ActionButtons
                 actions={actions}
                 form="sheet"
@@ -398,7 +462,7 @@ const topBarLink = cn(
   "data-[status=active]:bg-accent data-[status=active]:text-accent-foreground"
 );
 
-function GuestShell({ brand, destinations, banner, ...content }: AppShellProps) {
+function GuestShell({ brand, destinations, theme, banner, ...content }: AppShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -408,7 +472,7 @@ function GuestShell({ brand, destinations, banner, ...content }: AppShellProps) 
           <Link to={brand.to} className="font-display text-foreground text-lg font-bold">
             {brand.name}
           </Link>
-          <nav aria-label="Main" className="medium:block hidden">
+          <nav aria-label="Main" className="medium:block ml-auto hidden">
             <ul className="flex items-center gap-1">
               {destinations.map((destination) => (
                 <li key={destination.to}>
@@ -423,15 +487,18 @@ function GuestShell({ brand, destinations, banner, ...content }: AppShellProps) 
               ))}
             </ul>
           </nav>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMenuOpen(true)}
-            aria-label="Open menu"
-            className="medium:hidden"
-          >
-            <Menu className="size-5" aria-hidden="true" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {theme && <GuestThemeMenu theme={theme} />}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+              className="medium:hidden"
+            >
+              <Menu className="size-5" aria-hidden="true" />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -441,14 +508,14 @@ function GuestShell({ brand, destinations, banner, ...content }: AppShellProps) 
       </main>
 
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-        <SheetContent side="right" className="w-72 gap-0 p-0">
-          <div className="border-border border-b p-6">
+        <SheetContent side="right" className="flex w-72 flex-col gap-0 p-0">
+          <div className="border-border shrink-0 border-b p-6">
             <SheetTitle className="font-display text-xl font-bold">{brand.name}</SheetTitle>
             <SheetDescription className={cn("mt-1", !brand.tagline && "sr-only")}>
               {brand.tagline ?? "Pages"}
             </SheetDescription>
           </div>
-          <nav aria-label="Menu" className="p-4">
+          <nav aria-label="Menu" className="min-h-0 flex-1 overflow-y-auto p-4">
             <SheetDestinations
               destinations={destinations}
               linkClassName={cn(sheetItem, topBarLink)}
@@ -457,5 +524,21 @@ function GuestShell({ brand, destinations, banner, ...content }: AppShellProps) 
         </SheetContent>
       </Sheet>
     </div>
+  );
+}
+
+function GuestThemeMenu({ theme }: { theme: ShellTheme }) {
+  const Icon = themeIcon(theme.value);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label="Theme">
+          <Icon className="size-5" aria-hidden="true" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <ThemeRadioItems theme={theme} />
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

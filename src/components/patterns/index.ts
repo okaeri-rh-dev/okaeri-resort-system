@@ -63,4 +63,6 @@ export {
   type ShellAction,
   type ShellBrand,
   type ShellDestination,
+  type ShellTheme,
+  type ThemeSetting,
 } from "./AppShell";
