@@ -447,7 +447,7 @@ function GuestShell({ brand, destinations, theme, banner, ...content }: AppShell
                 ))}
               </ul>
             </nav>
-            {theme && <DarkModeSwitch theme={theme} />}
+            {theme && <DarkModeSwitch theme={theme} holdForDeviceMatch />}
             <Button
               variant="ghost"
               size="icon"

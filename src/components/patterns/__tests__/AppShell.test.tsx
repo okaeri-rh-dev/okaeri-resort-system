@@ -422,4 +422,31 @@ describe("AppShell, theme control", () => {
     await user.keyboard("{ArrowRight}");
     expect(onChange).toHaveBeenLastCalledWith("light");
   });
+
+  it("opens Match my device from a long press on the guest top bar switch", async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    renderAt(
+      "/",
+      <AppShell
+        surface="guest"
+        brand={guestBrand}
+        destinations={guestDestinations}
+        theme={{ value: "light", onChange }}
+      >
+        <p>Calendar</p>
+      </AppShell>
+    );
+
+    const header = await screen.findByRole("banner");
+    const darkMode = within(header).getByRole("switch", { name: "Dark mode" });
+    await user.pointer({ keys: "[MouseLeft>]", target: darkMode });
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    await user.pointer({ keys: "[/MouseLeft]", target: darkMode });
+
+    expect(onChange).not.toHaveBeenCalled();
+    const options = screen.getByRole("dialog", { name: "Theme options" });
+    await user.click(within(options).getByRole("switch", { name: "Match my device" }));
+    expect(onChange).toHaveBeenCalledWith("system");
+  });
 });
