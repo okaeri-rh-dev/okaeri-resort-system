@@ -2335,17 +2335,19 @@ Done note (2026-10-21): `npm run verify` exit 0 (155 files, 1810 passed, 20 skip
 - `docs/plans/2026-10-03-guardrails-design.md`: item 8 → DONE with the PR number; Resume state updated.
 - Tick the steps in this plan.
 
-- [ ] **Step 3: Push and open the PR**
+- [x] **Step 3: Push and open the PR**
 
 Push with `timeout: 600000` (CLAUDE.md, pre-push hook). Use the `mattpocock-skills:pr` skill for the body. Merge with `gh pr merge --auto --merge` after the user approves. Verify with `git fetch origin && git rev-parse HEAD origin/main` after merge.
 
-- [ ] **Step 4: Prod (user)**
+- [x] **Step 4: Prod (user)**
 
 1. `! supabase db push` — it must list only `20261021000000_guest_retention.sql`.
 2. `! npm run drift:prod` — expected: no new drift.
 3. GitHub Actions → Scheduled Cleanup Tasks → Run workflow → `anonymize-guests`. Expected: HTTP 200, `guests_count: 0` (prod data starts 2025-10).
 4. Also run `payment-proofs` once and confirm the response now has `deleted_count`.
 5. Optional: anonymize one test guest on prod from its page and confirm `select count(*) from audit_logs where concat(old_data::text, new_data::text) like '%<test email>%'` returns 0.
+
+Done note (2026-10-21): PR #113 merged as `ea2dbc0` with all 8 checks green, after `origin/main` was merged into the branch (no conflicts, verify green). Deploy to Cloudflare Pages for `ea2dbc0` succeeded. `supabase db push` ran from the worktree (the main checkout was on another branch); the dry run listed only `20261021000000_guest_retention.sql`. `drift:prod` showed no retention drift; its only lines were `local-only` `contact_channels` objects from another session's unmerged migration in the shared local DB. Run 39556894273 (`anonymize-guests`): HTTP 200, `guests_count: 0`, `bookings_count: 0`, `failed_count: 0`. Run 39556937398 (`payment-proofs`): HTTP 200, `deleted_count: 0`. Step 5 skipped (Decisions & Deferrals).
 
 ---
 
@@ -2363,4 +2365,5 @@ Push with `timeout: 600000` (CLAUDE.md, pre-push hook). Use the `mattpocock-skil
 - **Anonymizing an already-anonymized guest who has a future booking returns 409, not 200 (2026-10-21, user via review).** Why: the future-booking check runs before the no-op check; the case needs a booking added after anonymization (line above). Revisit: with that line.
 - **The anonymize action has no spinner (2026-10-21, user via review).** Why: the dialog closes on confirm and a toast reports the result. Revisit: if the call becomes slow.
 - **Retention errors show fix-it wording by status (404, 409), not the server message (2026-10-21, user via review).** Why: the server message holds the guest UUID and does not say what to do (DESIGN.md #19). Revisit: n/a.
+- **Task 8 Step 4.5 (anonymize a test guest on prod) skipped (2026-10-21, user).** Why: the local browser check and DB tests cover the audit scrub, and the first prod run matched 0 guests. Revisit: if a prod guest asks for erasure.
 - **Run with `/mattpocock-skills:implement` in a worktree; one PR carries spec, plan and code (2026-10-21, user).** Why: no GitHub tickets exist, so `implement-spec` does not fit, and the tasks are mostly sequential; the docs branch `docs/guest-retention-design` is the worktree's base and is not pushed separately. Revisit: n/a.
