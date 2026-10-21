@@ -1,7 +1,8 @@
 import * as React from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Edit2, Percent, Plus, Save, Trash2 } from "lucide-react";
+import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
+import { Percent, Plus, Save } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -13,6 +14,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  DataTable,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -23,21 +25,18 @@ import {
   Form,
   FormField,
   Input,
+  ListCard,
+  ListCardRow,
   SelectControl,
   SelectItem,
   StatusBadge,
   Switch,
 } from "@/components/patterns";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { formatCurrency } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
 import type { Json } from "@/types/database.types";
+
+import { PricingActiveSwitch, PricingRowActions } from "./PricingRowControls";
 
 // Types
 export interface DiscountRule {
@@ -78,6 +77,10 @@ const DISCOUNT_TYPE_LABELS: Record<string, string> = {
   fixed: "Fixed Amount",
   per_night: "Per Night",
 };
+
+function DiscountTypeBadge({ type }: { type: string }) {
+  return <StatusBadge tone="neutral">{DISCOUNT_TYPE_LABELS[type] || type}</StatusBadge>;
+}
 
 function parseCondition(conditions: Json): { type: string; value: number } {
   if (Array.isArray(conditions) && conditions.length > 0) {
@@ -257,6 +260,76 @@ export function DiscountRulesForm({ rules = [], onSave, isLoading }: DiscountRul
       is_active: rule.is_active,
     });
   };
+
+  const renderActiveSwitch = (rule: DiscountRule) => (
+    <PricingActiveSwitch
+      name={rule.name}
+      isActive={rule.is_active}
+      onToggle={() => handleToggleActive(rule)}
+    />
+  );
+
+  const renderRowActions = (rule: DiscountRule) => (
+    <PricingRowActions
+      name={rule.name}
+      onEdit={() => openEditDialog(rule)}
+      onDelete={() => handleDelete(rule)}
+    />
+  );
+
+  const columns: ColumnDef<DiscountRule>[] = [
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => <RuleName rule={row.original} className="min-w-36" />,
+    },
+    {
+      accessorKey: "discount_type",
+      header: "Type",
+      cell: ({ row }) => <DiscountTypeBadge type={row.original.discount_type} />,
+    },
+    {
+      accessorKey: "discount_value",
+      header: "Value",
+      cell: ({ row }) => (
+        <span className="whitespace-nowrap">
+          {formatDiscountValue(row.original.discount_type, row.original.discount_value)}
+        </span>
+      ),
+      meta: { align: "right" },
+    },
+    {
+      id: "condition",
+      header: "Condition",
+      cell: ({ row }) => (
+        <span className="whitespace-nowrap">{formatCondition(row.original.conditions)}</span>
+      ),
+    },
+    { accessorKey: "priority", header: "Priority", meta: { align: "right" } },
+    {
+      accessorKey: "is_active",
+      header: "Status",
+      cell: ({ row }) => renderActiveSwitch(row.original),
+    },
+    {
+      id: "actions",
+      header: () => <span className="sr-only">Actions</span>,
+      cell: ({ row }) => renderRowActions(row.original),
+      meta: { align: "right", pinned: true },
+    },
+  ];
+
+  const rulesByPriority = React.useMemo(
+    () => [...localRules].sort((a, b) => a.priority - b.priority),
+    [localRules]
+  );
+
+  const table = useReactTable({
+    data: rulesByPriority,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (rule) => rule.id || rule.name,
+  });
 
   const hasChanges = JSON.stringify(localRules) !== JSON.stringify(rules);
 
@@ -444,74 +517,32 @@ export function DiscountRulesForm({ rules = [], onSave, isLoading }: DiscountRul
             </p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Value</TableHead>
-                <TableHead>Condition</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {[...localRules]
-                .sort((a, b) => a.priority - b.priority)
-                .map((rule) => (
-                  <TableRow key={rule.id || rule.name}>
-                    <TableCell>
-                      <div>
-                        <span className="font-medium break-words">{rule.name}</span>
-                        {rule.description && (
-                          <p className="text-muted-foreground text-sm break-words">
-                            {rule.description}
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge tone="neutral">
-                        {DISCOUNT_TYPE_LABELS[rule.discount_type] || rule.discount_type}
-                      </StatusBadge>
-                    </TableCell>
-                    <TableCell className="text-sm whitespace-nowrap tabular-nums">
-                      {formatDiscountValue(rule.discount_type, rule.discount_value)}
-                    </TableCell>
-                    <TableCell className="text-sm">{formatCondition(rule.conditions)}</TableCell>
-                    <TableCell className="tabular-nums">{rule.priority}</TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={rule.is_active}
-                        onCheckedChange={() => handleToggleActive(rule)}
-                        aria-label={`${rule.name} active`}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditDialog(rule)}
-                          aria-label={`Edit ${rule.name}`}
-                        >
-                          <Edit2 className="h-4 w-4" aria-hidden="true" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(rule)}
-                          aria-label={`Delete ${rule.name}`}
-                        >
-                          <Trash2 className="text-destructive h-4 w-4" aria-hidden="true" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            table={table}
+            label="Discount rules"
+            renderCard={(row) => (
+              <ListCard>
+                <div className="flex items-start justify-between gap-2">
+                  <RuleName rule={row.original} />
+                  {renderRowActions(row.original)}
+                </div>
+                <ListCardRow
+                  label="Type"
+                  value={<DiscountTypeBadge type={row.original.discount_type} />}
+                />
+                <ListCardRow
+                  label="Value"
+                  value={formatDiscountValue(
+                    row.original.discount_type,
+                    row.original.discount_value
+                  )}
+                />
+                <ListCardRow label="Condition" value={formatCondition(row.original.conditions)} />
+                <ListCardRow label="Priority" value={row.original.priority} />
+                <ListCardRow label="Active" value={renderActiveSwitch(row.original)} />
+              </ListCard>
+            )}
+          />
         )}
 
         {/* Edit Dialog */}
@@ -536,5 +567,16 @@ export function DiscountRulesForm({ rules = [], onSave, isLoading }: DiscountRul
         </Dialog>
       </CardContent>
     </Card>
+  );
+}
+
+function RuleName({ rule, className }: { rule: DiscountRule; className?: string }) {
+  return (
+    <div className={cn("min-w-0", className)}>
+      <span className="font-medium break-words">{rule.name}</span>
+      {rule.description && (
+        <p className="text-muted-foreground text-sm break-words">{rule.description}</p>
+      )}
+    </div>
   );
 }

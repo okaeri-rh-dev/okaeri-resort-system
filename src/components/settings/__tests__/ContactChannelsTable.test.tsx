@@ -1,12 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   useContactChannels,
   useReorderContactChannel,
   type ContactChannel,
 } from "@/hooks/useContactChannels";
+import { stubPaneWidth } from "@/test/pane-width";
 
 import { ContactChannelsTable } from "../ContactChannelsTable";
 
@@ -41,14 +42,9 @@ const whatsapp = channel({ id: "whatsapp", kind: "whatsapp", display_order: 2 })
 
 const reorder = vi.fn();
 
-class ResizeObserverStub {
-  observe() {}
-  disconnect() {}
-}
-
 describe("ContactChannelsTable ordering", () => {
   beforeEach(() => {
-    vi.stubGlobal("ResizeObserver", ResizeObserverStub);
+    stubPaneWidth(390);
     reorder.mockReset();
     vi.mocked(useContactChannels).mockReturnValue({
       data: [viber, email, whatsapp],
@@ -60,6 +56,11 @@ describe("ContactChannelsTable ordering", () => {
       mutate: reorder,
       isPending: false,
     } as unknown as ReturnType<typeof useReorderContactChannel>);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("offers no up move on the first channel and no down move on the last", () => {

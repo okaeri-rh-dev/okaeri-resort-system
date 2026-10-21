@@ -1,7 +1,8 @@
 // src/components/admin/RoleManagementPage.tsx
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
+import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Clock, Loader2, Shield, UserPlus } from "lucide-react";
 
@@ -12,16 +13,11 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  DataTable,
+  ListCard,
+  ListCardRow,
   StatusBadge,
 } from "@/components/patterns";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { usePendingUsers, type PendingUser } from "@/hooks/usePendingUsers";
 import { type AppRole } from "@/lib/audit-roles";
 
@@ -34,6 +30,9 @@ import { UserRolesTable } from "./UserRolesTable";
 // COMPONENT
 // ============================================
 
+// TanStack needs a stable `data` array: a new one each render loops through its page-index reset.
+const noPendingUsers: PendingUser[] = [];
+
 export function RoleManagementPage() {
   const [showGrantDialog, setShowGrantDialog] = useState(false);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
@@ -43,20 +42,62 @@ export function RoleManagementPage() {
 
   const { data: pendingUsers, isLoading: isLoadingPending } = usePendingUsers();
 
-  const handleUpdateRole = (role: AppRole) => {
+  // Stable, so re-renders here don't remount the role table's cells and close an open row menu.
+  const handleUpdateRole = useCallback((role: AppRole) => {
     setSelectedRole(role);
     setShowUpdateDialog(true);
-  };
+  }, []);
 
-  const handleDeactivateRole = (role: AppRole) => {
+  const handleDeactivateRole = useCallback((role: AppRole) => {
     setSelectedRole(role);
     setShowDeactivateDialog(true);
-  };
+  }, []);
 
   const handleGrantRoleForUser = (user: PendingUser) => {
     setPrefilledUser(user);
     setShowGrantDialog(true);
   };
+
+  const renderGrantRoleButton = (user: PendingUser) => (
+    <Button size="sm" onClick={() => handleGrantRoleForUser(user)}>
+      <UserPlus className="mr-1 h-3 w-3" aria-hidden="true" />
+      Grant Role
+    </Button>
+  );
+
+  const pendingColumns: ColumnDef<PendingUser>[] = [
+    {
+      accessorKey: "email",
+      header: "Email",
+      cell: ({ row }) => <span className="font-medium break-words">{row.original.email}</span>,
+    },
+    { accessorKey: "full_name", header: "Name", cell: ({ row }) => row.original.full_name || "—" },
+    {
+      accessorKey: "created_at",
+      header: "Signed Up",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{formatSignUpDate(row.original.created_at)}</span>
+      ),
+    },
+    {
+      accessorKey: "email_confirmed_at",
+      header: "Email Verified",
+      cell: ({ row }) => <EmailVerifiedBadge user={row.original} />,
+    },
+    {
+      id: "action",
+      header: "Action",
+      cell: ({ row }) => renderGrantRoleButton(row.original),
+      meta: { align: "right" },
+    },
+  ];
+
+  const pendingTable = useReactTable({
+    data: pendingUsers ?? noPendingUsers,
+    columns: pendingColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (user) => user.id,
+  });
 
   const handleOpenGrantDialog = () => {
     setPrefilledUser(undefined);
@@ -108,41 +149,28 @@ export function RoleManagementPage() {
               No users awaiting approval.
             </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Signed Up</TableHead>
-                  <TableHead>Email Verified</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pendingUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.email}</TableCell>
-                    <TableCell>{user.full_name || "—"}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {format(new Date(user.created_at), "MMM d, yyyy")}
-                    </TableCell>
-                    <TableCell>
-                      {user.email_confirmed_at ? (
-                        <StatusBadge tone="success">Verified</StatusBadge>
-                      ) : (
-                        <StatusBadge tone="warning">Unverified</StatusBadge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button size="sm" onClick={() => handleGrantRoleForUser(user)}>
-                        <UserPlus className="mr-1 h-3 w-3" />
-                        Grant Role
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DataTable
+              table={pendingTable}
+              label="Users awaiting approval"
+              renderCard={(row) => (
+                <ListCard>
+                  <div className="min-w-0">
+                    <div className="font-medium break-words">{row.original.email}</div>
+                    {row.original.full_name && (
+                      <div className="text-muted-foreground text-sm break-words">
+                        {row.original.full_name}
+                      </div>
+                    )}
+                  </div>
+                  <ListCardRow
+                    label="Signed Up"
+                    value={formatSignUpDate(row.original.created_at)}
+                  />
+                  <ListCardRow label="Email" value={<EmailVerifiedBadge user={row.original} />} />
+                  {renderGrantRoleButton(row.original)}
+                </ListCard>
+              )}
+            />
           )}
         </CardContent>
       </Card>
@@ -180,5 +208,15 @@ export function RoleManagementPage() {
         onOpenChange={setShowDeactivateDialog}
       />
     </div>
+  );
+}
+
+const formatSignUpDate = (createdAt: string) => format(new Date(createdAt), "MMM d, yyyy");
+
+function EmailVerifiedBadge({ user }: { user: PendingUser }) {
+  return user.email_confirmed_at ? (
+    <StatusBadge tone="success">Verified</StatusBadge>
+  ) : (
+    <StatusBadge tone="warning">Unverified</StatusBadge>
   );
 }

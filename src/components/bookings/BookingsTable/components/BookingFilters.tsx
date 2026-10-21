@@ -6,6 +6,7 @@ import {
   Button,
   FilterBar,
   FilterPopover,
+  InlineCalendar,
   Select,
   SelectContent,
   SelectItem,
@@ -13,7 +14,6 @@ import {
   SelectValue,
   TableSearch,
 } from "@/components/patterns";
-import { Calendar } from "@/components/ui/calendar";
 import { pickedDay } from "@/lib/bookings";
 import type { BookingStatus, PaymentStatus } from "@/types";
 
@@ -182,7 +182,8 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
           setTempDateRange(dateRange);
         }
       }}
-      showActions={true}
+      fitContent
+      showActions
       onApply={() => {
         setDateRange(tempDateRange);
         const fromDate = tempDateRange?.from;
@@ -197,14 +198,12 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
         setTempDateRange({ from: undefined, to: undefined });
       }}
       content={
-        <div className="space-y-3">
+        <div className="space-y-3 px-2 pt-2">
           <div className="text-sm font-medium">Date Range</div>
-          <Calendar
-            mode="range"
+          <InlineCalendar
+            variant="range"
             selected={tempDateRange}
             onSelect={(range) => setTempDateRange(range || { from: undefined, to: undefined })}
-            className="rounded-md border"
-            required={false}
           />
         </div>
       }

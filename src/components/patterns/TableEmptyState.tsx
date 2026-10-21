@@ -19,7 +19,8 @@ interface EmptyStateAction {
 
 export interface TableEmptyStateProps {
   title: string;
-  description: string;
+  /** What to do next. Leave it out when the title says it all. */
+  description?: string;
   action?: EmptyStateAction;
   secondaryAction?: EmptyStateAction;
   /** `no-data` for an empty list, `no-results` when filters hide everything, `error` when loading failed. */
@@ -27,8 +28,8 @@ export interface TableEmptyStateProps {
 }
 
 /**
- * The body of a table with no rows: an icon, a title, a line saying what to do, and up to two
- * actions.
+ * The body of a table with no rows: an icon, a title, an optional line saying what to do, and up
+ * to two actions.
  *
  * @example
  * ```tsx
@@ -57,7 +58,7 @@ export function TableEmptyState({
         <Icon className="size-6" aria-hidden="true" />
       </div>
       <h3 className="text-foreground mt-4 text-sm font-medium">{title}</h3>
-      <p className="text-muted-foreground mt-1 text-sm">{description}</p>
+      {description && <p className="text-muted-foreground mt-1 text-sm">{description}</p>}
       {(action || secondaryAction) && (
         <div className="mt-4 flex items-center gap-2">
           {action && (

@@ -23,7 +23,7 @@ The visual identity is **Hearth**: timber and sand on warm stone, chosen in [Vis
 
 ## Components
 
-Product code imports UI from `@/components/patterns` only. That barrel re-exports the plain primitives as they are and wraps the rest in patterns: `Table` → `DataTable`, `Badge` → `StatusBadge`, `Alert` → `Callout`, `Form` → `FormField`, `Calendar` → `DatePicker`. `@/components/ui/*` is private to `src/components/patterns/`.
+Product code imports UI from `@/components/patterns` only. That barrel re-exports the plain primitives as they are and wraps the rest in patterns: `Table` → `DataTable`, `Badge` → `StatusBadge`, `Alert` → `Callout`, `Form` → `FormField`, `Calendar` → `DatePicker` and `InlineCalendar`. `@/components/ui/*` is private to `src/components/patterns/`.
 
 The barrel is the catalogue: each pattern documents its own usage in TSDoc. The rules for writing a pattern are in `src/components/patterns/CLAUDE.md`, and changes from upstream shadcn are logged in `src/components/ui/README.md`.
 
