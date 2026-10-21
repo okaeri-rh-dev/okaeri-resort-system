@@ -80,7 +80,11 @@ function MoveButtons({ channel, canMoveUp, canMoveDown, disabled, onMove }: Move
             <Icon aria-hidden="true" />
           </Button>
         ) : (
-          <span key={direction} className="size-8" aria-hidden="true" />
+          <span
+            key={direction}
+            className="coarse:min-h-11 coarse:min-w-11 size-8"
+            aria-hidden="true"
+          />
         )
       )}
     </span>
