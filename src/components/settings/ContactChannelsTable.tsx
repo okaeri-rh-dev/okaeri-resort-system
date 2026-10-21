@@ -19,7 +19,12 @@ import {
   useSetContactChannelActive,
   type ContactChannel,
 } from "@/hooks/useContactChannels";
-import { contactChannelKindNames, toDisplayValue, toKindLabel } from "@/lib/contact-channel";
+import {
+  contactChannelKindNames,
+  toDisplayValue,
+  toKindLabel,
+  type MoveDirection,
+} from "@/lib/contact-channel";
 
 interface ContactChannelsTableProps {
   onEditChannel: (channel: ContactChannel) => void;
@@ -43,8 +48,6 @@ function KindName({ channel }: { channel: ContactChannel }) {
     </span>
   );
 }
-
-type MoveDirection = "up" | "down";
 
 interface MoveButtonsProps {
   channel: ContactChannel;

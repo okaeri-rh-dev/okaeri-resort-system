@@ -28,6 +28,12 @@ export function toKindLabel({
   return label ? `${name} (${label})` : name;
 }
 
+export const PH_MOBILE_PATTERN = /^\+639\d{9}$/;
+
+export const PH_MOBILE_PLACEHOLDER = "+63 9XX XXX XXXX";
+
+export type MoveDirection = "up" | "down";
+
 const PHONE_KINDS: ReadonlySet<ContactChannelKind> = new Set(["mobile", "viber", "whatsapp"]);
 
 export function isPhoneKind(kind: ContactChannelKind): boolean {
@@ -79,9 +85,9 @@ export function normalizeValue(kind: ContactChannelKind, input: string): string 
 }
 
 const STORED_VALUE_PATTERNS: Record<ContactChannelKind, RegExp> = {
-  mobile: /^\+639\d{9}$/,
-  viber: /^\+639\d{9}$/,
-  whatsapp: /^\+639\d{9}$/,
+  mobile: PH_MOBILE_PATTERN,
+  viber: PH_MOBILE_PATTERN,
+  whatsapp: PH_MOBILE_PATTERN,
   messenger: /^[A-Za-z0-9.-]{1,50}$/,
   facebook: /^[A-Za-z0-9.-]{1,50}$/,
   instagram: /^[A-Za-z0-9._]{1,30}$/,

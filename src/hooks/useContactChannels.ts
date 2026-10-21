@@ -1,7 +1,7 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { toKindLabel } from "@/lib/contact-channel";
+import { toKindLabel, type MoveDirection } from "@/lib/contact-channel";
 import { contactChannelKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError } from "@/lib/supabase";
 import type { Tables, TablesInsert } from "@/types/database.types";
@@ -150,7 +150,7 @@ export function useReorderContactChannel() {
       direction,
     }: {
       channel: ContactChannel;
-      direction: "up" | "down";
+      direction: MoveDirection;
     }): Promise<void> => {
       const { error } = await db.contactChannels.reorder(channel.id, direction);
       if (error) throw error;

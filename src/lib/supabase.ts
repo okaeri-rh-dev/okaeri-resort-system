@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { format } from "date-fns";
 
+import type { MoveDirection } from "@/lib/contact-channel";
 import { toManilaDateString } from "@/lib/timezone";
 import type { AuditEventContext, AuditLogFilters } from "@/types/audit.types";
 import type { Database, Json, TablesInsert, TablesUpdate } from "@/types/database.types";
@@ -1117,7 +1118,7 @@ export const db = {
       contactChannelsTable().update({ is_active: isActive }).eq("id", id).select().single(),
 
     /** Swap a channel with its neighbour above or below (manager+, atomic) */
-    reorder: (id: string, direction: "up" | "down") =>
+    reorder: (id: string, direction: MoveDirection) =>
       supabase.rpc("reorder_contact_channel", { p_id: id, p_direction: direction }),
 
     /** Get active contact channels in display order (guest pages) */

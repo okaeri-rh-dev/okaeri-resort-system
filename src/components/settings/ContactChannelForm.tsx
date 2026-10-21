@@ -27,6 +27,7 @@ import {
   contactChannelKindNames,
   isPhoneKind,
   normalizeValue,
+  PH_MOBILE_PLACEHOLDER,
   toDisplayValue,
   validateValue,
   type ContactChannelKind,
@@ -48,9 +49,9 @@ type ContactChannelFormValues = z.infer<typeof contactChannelSchema>;
 const SOCIAL_HINT = "Paste the URL or the handle.";
 
 const valueFieldText: Record<ContactChannelKind, { placeholder: string; description?: string }> = {
-  mobile: { placeholder: "+63 9XX XXX XXXX" },
-  viber: { placeholder: "+63 9XX XXX XXXX" },
-  whatsapp: { placeholder: "+63 9XX XXX XXXX" },
+  mobile: { placeholder: PH_MOBILE_PLACEHOLDER },
+  viber: { placeholder: PH_MOBILE_PLACEHOLDER },
+  whatsapp: { placeholder: PH_MOBILE_PLACEHOLDER },
   messenger: { placeholder: "m.me/yourpage", description: SOCIAL_HINT },
   facebook: { placeholder: "facebook.com/yourpage", description: SOCIAL_HINT },
   instagram: { placeholder: "@yourhandle", description: SOCIAL_HINT },
