@@ -49,9 +49,9 @@ Fewest taps and least confusion wins; parts may be mixed.
 ## Tasks
 
 - [x] Create a worktree on branch `proto/bookings-overhaul` from `main` (`../okaeri-proto-bookings`, base 55fdba34)
-- [ ] Fixture of ~40 bookings, dates relative to today: every status, multi-cabin, walk-in, long names, unpaid balance, empty In-house case
-- [ ] Staff-only route `/admin/prototype/bookings?v=1|2|3`
-- [ ] V1 Agenda
+- [x] Fixture of ~40 bookings, dates relative to today: every status, multi-cabin, walk-in, long names, unpaid balance, empty In-house case
+- [x] Staff-only route `/admin/prototype/bookings?v=1|2|3` (dev server: `npx vite --port 5174` in this worktree; 5173 is left for other sessions)
+- [x] V1 Agenda
 - [ ] V2 Views + side pane
 - [ ] V3 Cabin timeline
 - [ ] Run the 5 tasks on each variant at both widths; record results here
@@ -65,8 +65,10 @@ Fewest taps and least confusion wins; parts may be mixed.
 - Prototype on `proto/bookings-overhaul`, never merged; only the decision moves forward via the spec. Revisit: never.
 - Fixture data in code, not the DB, because the local DB has no real data. Revisit: never.
 - Deferred to separate tickets (bugs, not design): Status filter offers `NoShow` but `src/types/booking-status.ts` has no NoShow; CSV export ignores active filters (`useBookingsTable.ts:80-82`); route search params `status/search/page` are declared but unused (`src/routes/admin/bookings.tsx:27-31`). Revisit: file with `/to-tickets` or before the spec.
+- Prototype does not virtualize: 40 fixture rows render fast, and Past/Cancelled use "Show more" (10 at a time). The spec picks the library (`@tanstack/react-virtual` is the default candidate). Revisit: in the spec.
+- Prototype extras to judge, not decided: V1-V3 share a Verify step that verifies AND assigns cabins in one screen (today these are two routes); a "Data: nobody in-house" toggle in the switcher shows the empty In-house case. Revisit: during evaluation.
 - Virtualization: no virtualization library in `package.json` yet. Choosing one (e.g. `@tanstack/react-virtual`, same family as TanStack Table) is a prototype-session decision. Revisit: during V1/V2 build.
 
 ## Resume state
 
-Grilling done 2026-10-21. No prototype code written. This doc is untracked; it was written while the main checkout was on another session's branch (`fix/booking-edit-mobile-double-scroll`).
+Grilling done 2026-10-21. 2026-10-21: worktree `../okaeri-proto-bookings`, fixture, route and V1 built; V2 next. This doc is untracked; it was written while the main checkout was on another session's branch (`fix/booking-edit-mobile-double-scroll`).
