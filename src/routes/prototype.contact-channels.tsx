@@ -10,6 +10,7 @@ import { lazy, Suspense } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AtSign, Mail, MessageCircle, Phone, type LucideIcon } from "lucide-react";
 
+import { FacebookIcon, InstagramIcon, MessengerIcon } from "@/components/prototype/brand-icons";
 import { PrototypeSwitcher } from "@/components/prototype/PrototypeSwitcher";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { GuestLayout } from "@/layouts/GuestLayout";
@@ -53,7 +54,11 @@ const variants = [
   { key: "B", name: "Chips" },
   { key: "C", name: "Stacked list" },
   { key: "D", name: "Stacked list + icons" },
+  { key: "E", name: "Minimal, words for links" },
+  { key: "F", name: "Minimal, icons for links" },
 ];
+
+const linkIcons = { Messenger: MessengerIcon, Facebook: FacebookIcon, Instagram: InstagramIcon };
 
 const kindIcons: Record<ChannelKind, LucideIcon> = {
   Mobile: Phone,
@@ -168,10 +173,67 @@ function StackedChannels({ channels, withIcons }: ChannelsProps & { withIcons?: 
   );
 }
 
+function isLink({ kind }: ContactChannel) {
+  return kind === "Messenger" || kind === "Facebook" || kind === "Instagram";
+}
+
+function MinimalChannels({ channels, linkAs }: ChannelsProps & { linkAs: "word" | "icon" }) {
+  return (
+    <>
+      {channels.map((channel, i) => {
+        const separator = i > 0 && " · ";
+        if (isLink(channel)) {
+          const Icon = linkIcons[channel.kind as keyof typeof linkIcons];
+          return (
+            <span key={i}>
+              {separator}
+              {linkAs === "icon" ? (
+                <a
+                  href={channelHref(channel)}
+                  aria-label={kindLabel(channel)}
+                  title={kindLabel(channel)}
+                  className="text-foreground hover:text-primary inline-flex size-6 items-center justify-center align-middle"
+                >
+                  <Icon className="size-4" />
+                </a>
+              ) : (
+                <a href={channelHref(channel)} className="font-medium whitespace-nowrap underline">
+                  {kindLabel(channel)}
+                </a>
+              )}
+            </span>
+          );
+        }
+        if (channel.kind === "Email") {
+          return (
+            <span key={i}>
+              {separator}
+              <a href={channelHref(channel)} className="font-medium wrap-anywhere underline">
+                {channel.value}
+              </a>
+            </span>
+          );
+        }
+        return (
+          <span key={i}>
+            {separator}
+            <span className="whitespace-nowrap">{kindLabel(channel)}:</span>{" "}
+            <a href={channelHref(channel)} className="font-medium whitespace-nowrap underline">
+              {displayValue(channel)}
+            </a>
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
 function Channels({ variant, channels }: ChannelsProps & { variant: string }) {
   if (variant === "B") return <ChipChannels channels={channels} />;
   if (variant === "C") return <StackedChannels channels={channels} />;
   if (variant === "D") return <StackedChannels channels={channels} withIcons />;
+  if (variant === "E") return <MinimalChannels channels={channels} linkAs="word" />;
+  if (variant === "F") return <MinimalChannels channels={channels} linkAs="icon" />;
   return <InlineChannels channels={channels} />;
 }
 
@@ -189,7 +251,7 @@ function ContactChannelsPrototype() {
   const navigate = Route.useNavigate();
   const channels = dataSets[data] ?? dataSets["3"];
   const hasChannels = channels.length > 0;
-  const isInline = variant === "A";
+  const isInline = ["A", "E", "F"].includes(variant);
 
   return (
     <GuestLayout>
@@ -204,7 +266,7 @@ function ContactChannelsPrototype() {
           {hasChannels && isInline && (
             <>
               {" "}
-              <InlineChannels channels={channels} />
+              <Channels variant={variant} channels={channels} />
             </>
           )}
           {hasChannels && !isInline && <Channels variant={variant} channels={channels} />}
@@ -221,7 +283,7 @@ function ContactChannelsPrototype() {
             {hasChannels && isInline && (
               <>
                 {" "}
-                <InlineChannels channels={channels} />
+                <Channels variant={variant} channels={channels} />
               </>
             )}
             {hasChannels && !isInline && <Channels variant={variant} channels={channels} />}
