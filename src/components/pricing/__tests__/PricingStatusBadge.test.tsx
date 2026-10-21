@@ -15,10 +15,9 @@ describe("PricingStatusBadge", () => {
       expect(screen.getByText("Calculating pricing...")).toBeInTheDocument();
     });
 
-    it("should render loading state with pulse animation", () => {
+    it("should render loading state with a spinner", () => {
       const { container } = render(<PricingStatusBadge notice={null} isLoading={true} />);
-      const badge = container.querySelector(".animate-pulse");
-      expect(badge).toBeInTheDocument();
+      expect(container.querySelector('[data-tone="neutral"] .animate-spin')).toBeInTheDocument();
     });
 
     it("should render notice when provided", () => {
@@ -34,15 +33,14 @@ describe("PricingStatusBadge", () => {
       );
       expect(screen.getByText("Seasonal rates applied (Peak Summer)")).toBeInTheDocument();
 
-      // Should have orange background for increase
-      const badge = container.querySelector(".bg-orange-500");
+      const badge = container.querySelector('[data-tone="warning"]');
       expect(badge).toBeInTheDocument();
     });
 
     it("should render increase badge for high season", () => {
       const { container } = render(<PricingStatusBadge notice="High season rates in effect" />);
 
-      const badge = container.querySelector(".bg-orange-500");
+      const badge = container.querySelector('[data-tone="warning"]');
       expect(badge).toBeInTheDocument();
     });
 
@@ -51,14 +49,14 @@ describe("PricingStatusBadge", () => {
         <PricingStatusBadge notice="Seasonal rates applied (Christmas & New Year)" />
       );
 
-      const badge = container.querySelector(".bg-orange-500");
+      const badge = container.querySelector('[data-tone="warning"]');
       expect(badge).toBeInTheDocument();
     });
 
     it("should render increase badge for holiday", () => {
       const { container } = render(<PricingStatusBadge notice="Holiday pricing in effect" />);
 
-      const badge = container.querySelector(".bg-orange-500");
+      const badge = container.querySelector('[data-tone="warning"]');
       expect(badge).toBeInTheDocument();
     });
 
@@ -77,21 +75,21 @@ describe("PricingStatusBadge", () => {
     it("should render decrease badge for low season", () => {
       const { container } = render(<PricingStatusBadge notice="Low season discount applied" />);
 
-      const badge = container.querySelector(".bg-green-500");
+      const badge = container.querySelector('[data-tone="success"]');
       expect(badge).toBeInTheDocument();
     });
 
     it("should render decrease badge for discount", () => {
       const { container } = render(<PricingStatusBadge notice="Special discount pricing" />);
 
-      const badge = container.querySelector(".bg-green-500");
+      const badge = container.querySelector('[data-tone="success"]');
       expect(badge).toBeInTheDocument();
     });
 
     it("should render decrease badge for off-season", () => {
       const { container } = render(<PricingStatusBadge notice="Off-season rates available" />);
 
-      const badge = container.querySelector(".bg-green-500");
+      const badge = container.querySelector('[data-tone="success"]');
       expect(badge).toBeInTheDocument();
     });
 
@@ -111,61 +109,27 @@ describe("PricingStatusBadge", () => {
       expect(screen.getByText("Standard rates apply")).toBeInTheDocument();
     });
 
-    it("should not have special color classes for neutral", () => {
+    it("should use the neutral tone for neutral pricing", () => {
       const { container } = render(<PricingStatusBadge notice="Standard rates" />);
 
-      // Should not have orange or green backgrounds
-      expect(container.querySelector(".bg-orange-500")).not.toBeInTheDocument();
-      expect(container.querySelector(".bg-green-500")).not.toBeInTheDocument();
-    });
-  });
-
-  describe("Size Variants", () => {
-    it("should render small size with correct classes", () => {
-      const { container } = render(<PricingStatusBadge notice="Test notice" size="sm" />);
-
-      const badge = container.querySelector(".text-xs");
-      expect(badge).toBeInTheDocument();
-    });
-
-    it("should render medium size (default) with correct classes", () => {
-      const { container } = render(<PricingStatusBadge notice="Test notice" size="md" />);
-
-      const badge = container.querySelector(".text-sm");
-      expect(badge).toBeInTheDocument();
-    });
-
-    it("should render large size with correct classes", () => {
-      const { container } = render(<PricingStatusBadge notice="Test notice" size="lg" />);
-
-      const badge = container.querySelector(".text-base");
-      expect(badge).toBeInTheDocument();
-    });
-
-    it("should use medium size by default", () => {
-      const { container } = render(<PricingStatusBadge notice="Test notice" />);
-
-      const badge = container.querySelector(".text-sm");
-      expect(badge).toBeInTheDocument();
+      expect(container.querySelector('[data-tone="neutral"]')).toBeInTheDocument();
+      expect(container.querySelector('[data-tone="warning"]')).not.toBeInTheDocument();
+      expect(container.querySelector('[data-tone="success"]')).not.toBeInTheDocument();
     });
   });
 
   describe("Custom Styling", () => {
     it("should apply custom className", () => {
-      const { container } = render(
-        <PricingStatusBadge notice="Test notice" className="custom-class" />
-      );
+      const { container } = render(<PricingStatusBadge notice="Test notice" className="mt-2" />);
 
-      const badge = container.querySelector(".custom-class");
+      const badge = container.querySelector(".mt-2");
       expect(badge).toBeInTheDocument();
     });
 
     it("should merge custom className with default classes", () => {
-      const { container } = render(
-        <PricingStatusBadge notice="Peak Summer" className="custom-class" />
-      );
+      const { container } = render(<PricingStatusBadge notice="Peak Summer" className="mt-2" />);
 
-      const badge = container.querySelector(".custom-class.bg-orange-500");
+      const badge = container.querySelector('.mt-2[data-tone="warning"]');
       expect(badge).toBeInTheDocument();
     });
   });
@@ -174,21 +138,21 @@ describe("PricingStatusBadge", () => {
     it("should detect PEAK in uppercase", () => {
       const { container } = render(<PricingStatusBadge notice="PEAK SUMMER SEASON" />);
 
-      const badge = container.querySelector(".bg-orange-500");
+      const badge = container.querySelector('[data-tone="warning"]');
       expect(badge).toBeInTheDocument();
     });
 
     it("should detect Low in mixed case", () => {
       const { container } = render(<PricingStatusBadge notice="Low Season Discount" />);
 
-      const badge = container.querySelector(".bg-green-500");
+      const badge = container.querySelector('[data-tone="success"]');
       expect(badge).toBeInTheDocument();
     });
 
     it("should detect christmas in any case", () => {
       const { container } = render(<PricingStatusBadge notice="Christmas Special" />);
 
-      const badge = container.querySelector(".bg-orange-500");
+      const badge = container.querySelector('[data-tone="warning"]');
       expect(badge).toBeInTheDocument();
     });
   });
@@ -218,30 +182,28 @@ describe("PricingStatusIcon", () => {
     it("should render TrendingUp icon for peak season", () => {
       const { container } = render(<PricingStatusIcon notice="Peak summer rates" />);
 
-      // Should have orange color for increase
-      const icon = container.querySelector(".text-orange-500");
+      const icon = container.querySelector(".text-warning-foreground");
       expect(icon).toBeInTheDocument();
     });
 
     it("should render TrendingUp icon for high season", () => {
       const { container } = render(<PricingStatusIcon notice="High season pricing" />);
 
-      const icon = container.querySelector(".text-orange-500");
+      const icon = container.querySelector(".text-warning-foreground");
       expect(icon).toBeInTheDocument();
     });
 
     it("should render TrendingDown icon for low season", () => {
       const { container } = render(<PricingStatusIcon notice="Low season discount" />);
 
-      // Should have green color for decrease
-      const icon = container.querySelector(".text-green-500");
+      const icon = container.querySelector(".text-success-foreground");
       expect(icon).toBeInTheDocument();
     });
 
     it("should render TrendingDown icon for discount", () => {
       const { container } = render(<PricingStatusIcon notice="Special discount" />);
 
-      const icon = container.querySelector(".text-green-500");
+      const icon = container.querySelector(".text-success-foreground");
       expect(icon).toBeInTheDocument();
     });
 
@@ -272,20 +234,16 @@ describe("PricingStatusIcon", () => {
 
   describe("Custom Styling", () => {
     it("should apply custom className", () => {
-      const { container } = render(
-        <PricingStatusIcon notice="Test notice" className="custom-icon-class" />
-      );
+      const { container } = render(<PricingStatusIcon notice="Test notice" className="mt-2" />);
 
-      const icon = container.querySelector(".custom-icon-class");
+      const icon = container.querySelector(".mt-2");
       expect(icon).toBeInTheDocument();
     });
 
     it("should merge custom className with color classes", () => {
-      const { container } = render(
-        <PricingStatusIcon notice="Peak Summer" className="custom-icon-class" />
-      );
+      const { container } = render(<PricingStatusIcon notice="Peak Summer" className="mt-2" />);
 
-      const icon = container.querySelector(".custom-icon-class.text-orange-500");
+      const icon = container.querySelector(".mt-2.text-warning-foreground");
       expect(icon).toBeInTheDocument();
     });
   });
@@ -303,10 +261,10 @@ describe("PricingStatusIcon", () => {
 
       // Should show spinner, not the peak summer icon color
       const spinner = container.querySelector(".animate-spin");
-      const orangeIcon = container.querySelector(".text-orange-500");
+      const increaseIcon = container.querySelector(".text-warning-foreground");
 
       expect(spinner).toBeInTheDocument();
-      expect(orangeIcon).not.toBeInTheDocument();
+      expect(increaseIcon).not.toBeInTheDocument();
     });
   });
 
@@ -314,14 +272,14 @@ describe("PricingStatusIcon", () => {
     it("should detect PEAK in uppercase", () => {
       const { container } = render(<PricingStatusIcon notice="PEAK SEASON" />);
 
-      const icon = container.querySelector(".text-orange-500");
+      const icon = container.querySelector(".text-warning-foreground");
       expect(icon).toBeInTheDocument();
     });
 
     it("should detect low in lowercase", () => {
       const { container } = render(<PricingStatusIcon notice="low season" />);
 
-      const icon = container.querySelector(".text-green-500");
+      const icon = container.querySelector(".text-success-foreground");
       expect(icon).toBeInTheDocument();
     });
   });

@@ -1,9 +1,10 @@
 import React from "react";
 
-import { CalendarDays, DollarSign, Download } from "lucide-react";
+import { DollarSign, Download } from "lucide-react";
 
 import {
   Button,
+  DateRangePicker,
   FilterBar,
   FilterPopover,
   Input,
@@ -13,17 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
   TableSearch,
+  type DateRange,
 } from "@/components/patterns";
-import { Calendar } from "@/components/ui/calendar";
 import { useExpenseCategories } from "@/hooks/useExpenseCategories";
 import { toISODateString } from "@/lib/timezone";
 
 import type { ExpenseFiltersProps } from "../types";
-
-interface DateRange {
-  from: Date | undefined;
-  to: Date | undefined;
-}
 
 interface AmountRange {
   min: number | undefined;
@@ -43,10 +39,13 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
   const { data: allCategories = [] } = useExpenseCategories();
 
   // Date range - derive from filters, apply instantly
-  const dateRange: DateRange = {
-    from: filters.dateFrom ? new Date(filters.dateFrom) : undefined,
-    to: filters.dateTo ? new Date(filters.dateTo) : undefined,
-  };
+  const dateRange: DateRange | undefined =
+    filters.dateFrom || filters.dateTo
+      ? {
+          from: filters.dateFrom ? new Date(filters.dateFrom) : undefined,
+          to: filters.dateTo ? new Date(filters.dateTo) : undefined,
+        }
+      : undefined;
 
   // Amount range - derive from filters, apply instantly
   const amountRange: AmountRange = {
@@ -107,53 +106,15 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
     </FilterPopover>
   );
 
-  const DateRangeFilter = () => (
-    <FilterPopover
-      fitContent
-      isActive={!!(filters.dateFrom || filters.dateTo)}
-      content={
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Date Range</span>
-            {(filters.dateFrom || filters.dateTo) && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-xs"
-                onClick={() => {
-                  setFilters({
-                    ...filters,
-                    dateFrom: undefined,
-                    dateTo: undefined,
-                  });
-                }}
-              >
-                Clear
-              </Button>
-            )}
-          </div>
-          <Calendar
-            mode="range"
-            selected={dateRange}
-            onSelect={(range) => {
-              const fromDate = range?.from;
-              const toDate = range?.to || fromDate;
-              setFilters({
-                ...filters,
-                dateFrom: fromDate ? toISODateString(fromDate) : undefined,
-                dateTo: toDate ? toISODateString(toDate) : undefined,
-              });
-            }}
-            className="rounded-md border"
-            required={false}
-          />
-        </div>
-      }
-    >
-      <CalendarDays className="mr-1 h-3 w-3" />
-      Dates
-    </FilterPopover>
-  );
+  const applyDateRange = (range: DateRange | undefined) => {
+    const fromDate = range?.from;
+    const toDate = range?.to || fromDate;
+    setFilters({
+      ...filters,
+      dateFrom: fromDate ? toISODateString(fromDate) : undefined,
+      dateTo: toDate ? toISODateString(toDate) : undefined,
+    });
+  };
 
   const AmountFilter = () => (
     <FilterPopover
@@ -225,7 +186,13 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
       filters={
         <>
           <CategoryFilter />
-          <DateRangeFilter />
+          <DateRangePicker
+            value={dateRange}
+            onChange={applyDateRange}
+            placeholder="Dates"
+            aria-label="Filter by date range"
+            className="w-56"
+          />
           <AmountFilter />
         </>
       }

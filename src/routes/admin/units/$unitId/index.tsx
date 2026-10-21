@@ -5,6 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Button } from "@/components/patterns";
 import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
 import { requireManager } from "@/lib/route-guards";
@@ -52,16 +53,11 @@ export const Route = createFileRoute("/admin/units/$unitId/")({
     <ErrorBoundary level="page">
       <div className="container mx-auto py-8">
         <div className="text-center">
-          <h1 className="mb-4 text-2xl font-bold text-red-600">Failed to Load Unit</h1>
-          <p className="mb-4 text-gray-600">
+          <h1 className="text-destructive mb-4 text-2xl font-bold">Failed to Load Cabin</h1>
+          <p className="text-muted-foreground mb-4">
             {error instanceof Error ? error.message : "An unexpected error occurred"}
           </p>
-          <button
-            onClick={() => window.history.back()}
-            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
-            Go Back
-          </button>
+          <Button onClick={() => window.history.back()}>Go Back</Button>
         </div>
       </div>
     </ErrorBoundary>
@@ -71,16 +67,11 @@ export const Route = createFileRoute("/admin/units/$unitId/")({
   notFoundComponent: () => (
     <div className="container mx-auto py-8">
       <div className="text-center">
-        <h1 className="mb-4 text-2xl font-bold text-gray-800">Cabin Not Found</h1>
-        <p className="mb-4 text-gray-600">
+        <h1 className="text-foreground mb-4 text-2xl font-bold">Cabin Not Found</h1>
+        <p className="text-muted-foreground mb-4">
           The unit you are looking for does not exist or has been removed.
         </p>
-        <button
-          onClick={() => window.history.back()}
-          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-        >
-          Go Back to Cabins
-        </button>
+        <Button onClick={() => window.history.back()}>Go Back to Cabins</Button>
       </div>
     </div>
   ),

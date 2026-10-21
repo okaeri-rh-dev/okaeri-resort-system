@@ -2,24 +2,23 @@ import { useEffect, useEffectEvent } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "@tanstack/react-router";
-import { Building2, Info, Users } from "lucide-react";
+import { Building2, Users } from "lucide-react";
 import { useForm, type Control, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Button,
+  Callout,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   Form,
-  FormControl,
-  FormDescription,
   FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input, NumberInput } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
+  Input,
+  NumberInput,
+  Separator,
+} from "@/components/patterns";
 import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -120,116 +119,97 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
     <Card className={cn("mx-auto w-full max-w-3xl", className)}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Building2 className="h-5 w-5" />
+          <Building2 className="h-5 w-5" aria-hidden="true" />
           {isEditing ? "Edit Cabin" : "Create New Cabin"}
         </CardTitle>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="@container">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Basic Information</h3>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
                 <FormField
                   control={form.control as Control<UnitFormData>}
                   name="unit_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cabin Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g., Ocean View Standard A"
-                          {...field}
-                          autoComplete="off"
-                        />
-                      </FormControl>
-                      <FormDescription>Descriptive name for the cabin</FormDescription>
-                      <FormMessage />
-                    </FormItem>
+                  label="Cabin Name"
+                  description="Descriptive name for the cabin"
+                >
+                  {(field) => (
+                    <Input
+                      placeholder="e.g., Ocean View Standard A"
+                      {...field}
+                      autoComplete="off"
+                    />
                   )}
-                />
+                </FormField>
 
                 <FormField
                   control={form.control as Control<UnitFormData>}
                   name="unit_code"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cabin Code</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g., A101"
-                          className="uppercase"
-                          {...field}
-                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                          autoComplete="off"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Unique alphanumeric code (letters and numbers only)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
+                  label="Cabin Code"
+                  description="Unique alphanumeric code (letters and numbers only)"
+                >
+                  {(field) => (
+                    <Input
+                      placeholder="e.g., A101"
+                      className="uppercase"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
                   )}
-                />
+                </FormField>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
                 <FormField
                   control={form.control as Control<UnitFormData>}
                   name="base_occupancy"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Base Occupancy</FormLabel>
-                      <FormControl>
-                        <NumberInput
-                          min={1}
-                          max={20}
-                          allowDecimals={false}
-                          className="pl-10"
-                          startIcon={<Users className="h-4 w-4" />}
-                          value={field.value}
-                          onChange={(value) => field.onChange(value)}
-                          onBlur={(value) => {
-                            field.onChange(value || 1); // Set minimum on blur
-                            field.onBlur();
-                          }}
-                        />
-                      </FormControl>
-                      <FormDescription>Number of guests included in base rate</FormDescription>
-                      <FormMessage />
-                    </FormItem>
+                  label="Base Occupancy"
+                  description="Number of guests included in base rate"
+                >
+                  {(field) => (
+                    <NumberInput
+                      min={1}
+                      max={20}
+                      allowDecimals={false}
+                      startIcon={<Users className="h-4 w-4" aria-hidden="true" />}
+                      value={field.value}
+                      onChange={(value) => field.onChange(value)}
+                      onBlur={(value) => {
+                        field.onChange(value || 1); // Set minimum on blur
+                        field.onBlur();
+                      }}
+                    />
                   )}
-                />
+                </FormField>
 
                 <FormField
                   control={form.control as Control<UnitFormData>}
                   name="max_occupancy"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Maximum Occupancy</FormLabel>
-                      <FormControl>
-                        <NumberInput
-                          min={1}
-                          max={20}
-                          allowDecimals={false}
-                          className="pl-10"
-                          startIcon={<Users className="h-4 w-4" />}
-                          value={field.value}
-                          onChange={(value) => field.onChange(value)}
-                          onBlur={(value) => {
-                            field.onChange(value || 1); // Set minimum on blur
-                            field.onBlur();
-                          }}
-                        />
-                      </FormControl>
-                      <FormDescription>Maximum number of guests allowed</FormDescription>
-                      <FormMessage />
-                    </FormItem>
+                  label="Maximum Occupancy"
+                  description="Maximum number of guests allowed"
+                >
+                  {(field) => (
+                    <NumberInput
+                      min={1}
+                      max={20}
+                      allowDecimals={false}
+                      startIcon={<Users className="h-4 w-4" aria-hidden="true" />}
+                      value={field.value}
+                      onChange={(value) => field.onChange(value)}
+                      onBlur={(value) => {
+                        field.onChange(value || 1); // Set minimum on blur
+                        field.onBlur();
+                      }}
+                    />
                   )}
-                />
+                </FormField>
               </div>
             </div>
 
@@ -239,46 +219,34 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Pricing</h3>
 
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  <div className="space-y-2">
-                    <p className="font-medium">This cabin uses global pricing configuration.</p>
-                    <p className="text-muted-foreground text-sm">
-                      All cabins automatically inherit rates from your resort-wide pricing settings.
-                    </p>
-                    {pricingConfig && (
-                      <div className="mt-3 space-y-1 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Base Rate:</span>
-                          <span className="font-mono font-medium">
-                            {formatCurrency(pricingConfig.base_rate)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Weekend Rate:</span>
-                          <span className="font-mono font-medium">
-                            {formatCurrency(pricingConfig.weekend_rate)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Extra Person Rate:</span>
-                          <span className="font-mono font-medium">
-                            {formatCurrency(pricingConfig.extra_person_rate)}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    <div className="mt-3 border-t pt-3">
-                      <Link to="/admin/units/pricing">
-                        <Button variant="link" size="sm" className="h-auto p-0">
-                          Manage Global Pricing Settings →
-                        </Button>
-                      </Link>
-                    </div>
+              <Callout tone="info" title="This cabin uses global pricing configuration.">
+                All cabins automatically inherit rates from your resort-wide pricing settings.
+              </Callout>
+              {pricingConfig && (
+                <dl className="space-y-1 text-sm">
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Base Rate</dt>
+                    <dd className="font-medium tabular-nums">
+                      {formatCurrency(pricingConfig.base_rate)}
+                    </dd>
                   </div>
-                </AlertDescription>
-              </Alert>
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Weekend Rate</dt>
+                    <dd className="font-medium tabular-nums">
+                      {formatCurrency(pricingConfig.weekend_rate)}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Extra Person Rate</dt>
+                    <dd className="font-medium tabular-nums">
+                      {formatCurrency(pricingConfig.extra_person_rate)}
+                    </dd>
+                  </div>
+                </dl>
+              )}
+              <Button asChild variant="link" size="sm" className="h-auto p-0">
+                <Link to="/admin/units/pricing">Manage Global Pricing Settings →</Link>
+              </Button>
             </div>
 
             {/* Action Buttons */}
@@ -295,7 +263,7 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
               <Button
                 type="submit"
                 disabled={createUnitMutation.isPending || updateUnitMutation.isPending}
-                className="min-w-[120px]"
+                className="min-w-32"
               >
                 {createUnitMutation.isPending || updateUnitMutation.isPending
                   ? isEditing

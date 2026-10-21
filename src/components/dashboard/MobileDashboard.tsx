@@ -4,8 +4,17 @@ import { addDays, format } from "date-fns";
 
 import { DashboardCalendar } from "@/components/dashboard/DashboardCalendar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/patterns";
+import { formatCurrency } from "@/lib/formatters";
 import type { Booking } from "@/types";
 
 interface MobileDashboardProps {
@@ -76,16 +85,16 @@ export function MobileDashboard({
               {upcomingCheckIns.length === 0 ? (
                 <p className="text-muted-foreground py-3 text-sm">No check-ins tomorrow</p>
               ) : (
-                <ul className="divide-y divide-slate-100">
+                <ul className="divide-border divide-y">
                   {upcomingCheckIns.map((b) => (
                     <li
                       key={b.booking_id}
                       className="flex min-w-0 items-baseline gap-2 py-2 text-sm"
                     >
                       <span className="truncate font-medium">{b.guest_name}</span>
-                      <span className="text-muted-foreground shrink-0 text-xs">
-                        · {b.booking_units?.[0]?.unit?.unit_code ?? "—"} · {b.num_guests} guests · ₱
-                        {b.total_amount.toLocaleString()}
+                      <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                        · {b.booking_units?.[0]?.unit?.unit_code ?? "—"} · {b.num_guests} guests ·{" "}
+                        {formatCurrency(b.total_amount)}
                       </span>
                     </li>
                   ))}
@@ -96,7 +105,7 @@ export function MobileDashboard({
               {upcomingCheckOuts.length === 0 ? (
                 <p className="text-muted-foreground py-3 text-sm">No check-outs tomorrow</p>
               ) : (
-                <ul className="divide-y divide-slate-100">
+                <ul className="divide-border divide-y">
                   {upcomingCheckOuts.map((b) => (
                     <li
                       key={b.booking_id}

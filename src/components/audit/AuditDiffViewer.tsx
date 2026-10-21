@@ -3,16 +3,19 @@
 import { format } from "date-fns";
 import { AlertCircle, ArrowRight } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
+  Separator,
+  StatusBadge,
+} from "@/components/patterns";
 import { ACTION_DISPLAY_NAMES, TABLE_DISPLAY_NAMES } from "@/lib/audit-constants";
 import { auditActorLabel, isAnonymized } from "@/lib/audit-display";
 import { sanitizeText } from "@/lib/security/sanitize";
@@ -62,9 +65,9 @@ export function AuditDiffViewer({ log, open, onOpenChange }: AuditDiffViewerProp
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="@container space-y-6">
           {/* Metadata Section */}
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 @2xl:grid-cols-2">
             <div>
               <div className="text-muted-foreground text-sm font-medium">User</div>
               <div className="text-sm">{auditActorLabel(log)}</div>
@@ -76,13 +79,13 @@ export function AuditDiffViewer({ log, open, onOpenChange }: AuditDiffViewerProp
             {log.record_id && (
               <div>
                 <div className="text-muted-foreground text-sm font-medium">Record ID</div>
-                <div className="truncate font-mono text-xs">{log.record_id}</div>
+                <div className="truncate text-xs">{log.record_id}</div>
               </div>
             )}
             {log.ip_address !== null && log.ip_address !== undefined && (
               <div>
                 <div className="text-muted-foreground text-sm font-medium">IP Address</div>
-                <div className="font-mono text-sm">{String(log.ip_address)}</div>
+                <div className="text-sm tabular-nums">{String(log.ip_address)}</div>
               </div>
             )}
           </div>
@@ -108,9 +111,9 @@ export function AuditDiffViewer({ log, open, onOpenChange }: AuditDiffViewerProp
               </div>
               <div className="flex flex-wrap gap-2">
                 {changedFields.map((field) => (
-                  <Badge key={field} variant="outline">
+                  <StatusBadge key={field} tone="neutral">
                     {field}
-                  </Badge>
+                  </StatusBadge>
                 ))}
               </div>
             </div>
@@ -197,12 +200,12 @@ function DiffComparison({ oldData, newData, changedFields, action }: DiffCompari
   // For UPDATE, show side-by-side comparison
   if (action === "UPDATE" && oldData && newData) {
     return (
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 @2xl:grid-cols-2">
         {/* Before */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
-              <div className="h-2 w-2 rounded-full bg-red-500" />
+              <div className="bg-danger-foreground h-2 w-2 rounded-full" aria-hidden="true" />
               Before
             </CardTitle>
           </CardHeader>
@@ -220,7 +223,7 @@ function DiffComparison({ oldData, newData, changedFields, action }: DiffCompari
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
-              <div className="h-2 w-2 rounded-full bg-green-500" />
+              <div className="bg-success-foreground h-2 w-2 rounded-full" aria-hidden="true" />
               After
               <ArrowRight className="text-muted-foreground h-4 w-4" />
             </CardTitle>
@@ -271,9 +274,9 @@ function DataDisplay({ data, highlightFields, variant, comparisonData }: DataDis
         const isChanged = highlightFields.includes(key);
         const highlightClass = isChanged
           ? variant === "before"
-            ? "bg-red-50 dark:bg-red-950/20 border-l-2 border-red-500 pl-3"
+            ? "bg-danger border-l-2 border-danger-foreground pl-3"
             : variant === "after"
-              ? "bg-green-50 dark:bg-green-950/20 border-l-2 border-green-500 pl-3"
+              ? "bg-success border-l-2 border-success-foreground pl-3"
               : ""
           : "";
 
@@ -286,9 +289,9 @@ function DataDisplay({ data, highlightFields, variant, comparisonData }: DataDis
             <div className="text-muted-foreground mb-1 text-xs font-medium">
               {formatFieldName(key)}
               {isChanged && (
-                <Badge variant="secondary" className="ml-2 text-xs">
+                <StatusBadge tone="neutral" className="ml-2">
                   Changed
-                </Badge>
+                </StatusBadge>
               )}
             </div>
             <div className="text-sm">
@@ -319,18 +322,18 @@ function ValueDisplay({ value }: { value: unknown }) {
 
   // Boolean
   if (typeof value === "boolean") {
-    return <Badge variant={value ? "default" : "secondary"}>{String(value)}</Badge>;
+    return <StatusBadge tone="neutral">{String(value)}</StatusBadge>;
   }
 
   // Number
   if (typeof value === "number") {
-    return <span className="font-mono">{value.toLocaleString()}</span>;
+    return <span className="tabular-nums">{value.toLocaleString()}</span>;
   }
 
   // Date string (ISO 8601)
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
     try {
-      return <span className="font-mono">{format(new Date(value), "PPpp")}</span>;
+      return <span className="tabular-nums">{format(new Date(value), "PPpp")}</span>;
     } catch {
       // Date parsing failed, treat as regular string (sanitize below)
       return <span>{sanitizeText(value)}</span>;
@@ -341,11 +344,7 @@ function ValueDisplay({ value }: { value: unknown }) {
   if (typeof value === "string") {
     // Redacted fields
     if (value === "[REDACTED]") {
-      return (
-        <Badge variant="destructive" className="font-mono text-xs">
-          [REDACTED]
-        </Badge>
-      );
+      return <StatusBadge tone="danger">[REDACTED]</StatusBadge>;
     }
 
     // Long strings - truncate with expand

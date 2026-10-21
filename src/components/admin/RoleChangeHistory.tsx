@@ -3,16 +3,16 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, ExternalLink, History } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
+  ScrollArea,
+  Skeleton,
+  StatusBadge,
+} from "@/components/patterns";
 import { useRoleHistory } from "@/hooks/useRoleManagement";
 import { auditActorLabel } from "@/lib/audit-display";
 import { getRoleDisplayName } from "@/lib/audit-roles";
@@ -51,15 +51,14 @@ export function RoleChangeHistory({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <History className="h-5 w-5" />
             Role Change History
           </DialogTitle>
           <DialogDescription>
-            Complete audit trail for{" "}
-            <span className="font-mono text-sm font-medium">{userEmail}</span>
+            Complete audit trail for <span className="font-medium break-all">{userEmail}</span>
           </DialogDescription>
         </DialogHeader>
 
@@ -68,7 +67,7 @@ export function RoleChangeHistory({
             // Loading state
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="border-l-2 border-neutral-200 pb-4 pl-4">
+                <div key={i} className="border-l-2 pb-4 pl-4">
                   <Skeleton className="mb-2 h-4 w-32" />
                   <Skeleton className="mb-1 h-6 w-48" />
                   <Skeleton className="h-4 w-64" />
@@ -90,7 +89,7 @@ export function RoleChangeHistory({
             </div>
           ) : (
             // History timeline
-            <div className="space-y-0">
+            <div className="pt-1 pl-3.5">
               {history.map((entry, index) => (
                 <RoleChangeEntry
                   key={entry.audit_id}
@@ -189,12 +188,12 @@ function RoleChangeEntry({ entry, isLast }: { entry: AuditLog; isLast: boolean }
   }
 
   // Timeline styling
-  const borderColor = isLast ? "border-transparent" : "border-neutral-200";
+  const borderColor = isLast ? "border-transparent" : "border-border";
   const dotColor = {
-    create: "bg-green-500",
-    update: "bg-blue-500",
-    deactivate: "bg-orange-500",
-    delete: "bg-red-500",
+    create: "bg-success-foreground",
+    update: "bg-info-foreground",
+    deactivate: "bg-warning-foreground",
+    delete: "bg-danger-foreground",
   }[changeType];
 
   return (
@@ -205,7 +204,7 @@ function RoleChangeEntry({ entry, isLast }: { entry: AuditLog; isLast: boolean }
       />
 
       {/* Timestamp */}
-      <p className="text-muted-foreground mb-1 font-mono text-xs">
+      <p className="text-muted-foreground mb-1 text-xs tabular-nums">
         {timestamp ? formatDate(new Date(timestamp)) : "Unknown date"}
       </p>
 
@@ -219,7 +218,7 @@ function RoleChangeEntry({ entry, isLast }: { entry: AuditLog; isLast: boolean }
 
       {/* Notes */}
       {notes && (
-        <div className="bg-muted/50 mt-2 rounded-md border border-neutral-200 p-2">
+        <div className="bg-muted/50 mt-2 rounded-md border p-2">
           <p className="text-muted-foreground text-xs italic">"{notes}"</p>
         </div>
       )}
@@ -235,14 +234,5 @@ function RoleBadgeInline({ role }: { role: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const displayName = getRoleDisplayName(role as any);
 
-  const badgeStyles: Record<string, string> = {
-    admin: "bg-red-500 text-white",
-    owner: "bg-purple-500 text-white",
-    manager: "bg-blue-500 text-white",
-    staff: "bg-green-500 text-white",
-  };
-
-  const styleClass = badgeStyles[role] || "bg-gray-500 text-white";
-
-  return <Badge className={`${styleClass} px-2 py-0.5 text-xs font-semibold`}>{displayName}</Badge>;
+  return <StatusBadge tone="neutral">{displayName}</StatusBadge>;
 }

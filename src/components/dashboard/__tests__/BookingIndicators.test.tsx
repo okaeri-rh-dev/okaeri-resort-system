@@ -8,7 +8,7 @@
  * - Null/empty returns
  * - Fixed 3-slot layout with invisible placeholders
  * - Unified chip render path (single element per occupied slot at all viewports)
- * - Unit code hidden on mobile, visible from sm: up; aria-label always preserved
+ * - Unit code hidden in a narrow calendar, visible once the calendar pane reaches @sm; aria-label always preserved
  * - clamp() font-size inline style for container-query-driven scaling
  * - Status hint modifier classes on the chip
  * - Priority resolution when multiple bookings target the same slot
@@ -171,7 +171,7 @@ describe("BookingIndicators", () => {
       const placeholders = container.querySelectorAll('[aria-hidden="true"]');
       for (const placeholder of placeholders) {
         expect(placeholder).toHaveClass("h-3");
-        expect(placeholder).toHaveClass("sm:h-4");
+        expect(placeholder).toHaveClass("@sm/calendar:h-4");
       }
     });
 
@@ -214,7 +214,7 @@ describe("BookingIndicators", () => {
       const unitCodeSpan = container.querySelector("span.hidden");
       expect(unitCodeSpan).toBeInTheDocument();
       expect(unitCodeSpan).toHaveClass("hidden");
-      expect(unitCodeSpan).toHaveClass("sm:inline");
+      expect(unitCodeSpan).toHaveClass("@sm/calendar:inline");
 
       const [chip] = getChips(container);
       expect(chip).toHaveAttribute("aria-label", "C1: Maria Santos");
@@ -505,13 +505,13 @@ describe("BookingIndicators", () => {
     it("should merge className prop onto the container", () => {
       const booking = makeBooking({ unitCodes: ["C1"] });
       const { container } = render(
-        <BookingIndicators bookings={[booking]} className="custom-class mt-2" />
+        <BookingIndicators bookings={[booking]} className="mt-2 px-2" />
       );
 
       const wrapper = container.firstChild as HTMLElement;
       expect(wrapper).toHaveClass("flex-col");
       expect(wrapper).toHaveClass("mt-2");
-      expect(wrapper).toHaveClass("custom-class");
+      expect(wrapper).toHaveClass("px-2");
     });
 
     it("should render correctly with a single booking across separate renders", () => {

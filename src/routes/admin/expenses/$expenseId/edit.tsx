@@ -4,6 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Button } from "@/components/patterns";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
 import { expenseDetailQuery } from "@/stores/useExpenseStore";
 import { allUnitsQuery } from "@/stores/useUnitStore";
@@ -53,24 +54,21 @@ export const Route = createFileRoute("/admin/expenses/$expenseId/edit")({
     <ErrorBoundary level="page">
       <div className="container mx-auto py-8">
         <div className="text-center">
-          <h1 className="mb-4 text-2xl font-bold text-red-600">Failed to Load Expense Editor</h1>
-          <p className="mb-4 text-gray-600">
+          <h1 className="text-destructive mb-4 text-2xl font-bold">
+            Failed to Load Expense Editor
+          </h1>
+          <p className="text-muted-foreground mb-4">
             {error instanceof Error ? error.message : "An unexpected error occurred"}
           </p>
           {error instanceof Error && error.message.includes("permission") ? (
-            <p className="mb-4 text-sm text-gray-500">
+            <p className="text-muted-foreground mb-4 text-sm">
               Only the expense creator or managers can edit expenses.
             </p>
           ) : null}
           {error instanceof Error && error.message.includes("Authentication") ? (
-            <p className="mb-4 text-sm text-gray-500">Please sign in to edit expenses.</p>
+            <p className="text-muted-foreground mb-4 text-sm">Please sign in to edit expenses.</p>
           ) : null}
-          <button
-            onClick={() => window.history.back()}
-            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
-            Go Back
-          </button>
+          <Button onClick={() => window.history.back()}>Go Back</Button>
         </div>
       </div>
     </ErrorBoundary>
@@ -80,16 +78,11 @@ export const Route = createFileRoute("/admin/expenses/$expenseId/edit")({
   notFoundComponent: () => (
     <div className="container mx-auto py-8">
       <div className="text-center">
-        <h1 className="mb-4 text-2xl font-bold text-gray-800">Expense Not Found</h1>
-        <p className="mb-4 text-gray-600">
+        <h1 className="text-foreground mb-4 text-2xl font-bold">Expense Not Found</h1>
+        <p className="text-muted-foreground mb-4">
           The expense you are trying to edit does not exist or has been removed.
         </p>
-        <button
-          onClick={() => window.history.back()}
-          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-        >
-          Go Back to Expenses
-        </button>
+        <Button onClick={() => window.history.back()}>Go Back to Expenses</Button>
       </div>
     </div>
   ),

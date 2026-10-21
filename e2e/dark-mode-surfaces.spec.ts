@@ -6,7 +6,7 @@ import {
   E2E_UNIT_ID,
   E2E_USER,
 } from "../scripts/e2e/fixtures";
-import { findLowContrastText } from "./fixtures/contrast";
+import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
 import { TEST_GUEST } from "./fixtures/test-data";
 import { BookingFormPage } from "./pages/BookingFormPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -16,21 +16,10 @@ import { LoginPage } from "./pages/LoginPage";
  * painted behind it. Needs the E2E-* fixtures (`npm run seed:e2e`).
  */
 
-const COMPACT = { width: 390, height: 844 };
-const EXPANDED = { width: 1280, height: 900 };
-
-async function useDarkTheme(page: Page) {
-  await page.addInitScript(() => localStorage.setItem("theme", "dark"));
-}
-
 async function loginAsE2EOwner(page: Page) {
   const loginPage = new LoginPage(page);
   await loginPage.goto();
   await loginPage.loginAndWaitForDashboard(E2E_USER.email, E2E_USER.password);
-}
-
-async function expectReadable(page: Page, root = "main") {
-  expect(await findLowContrastText(page, root)).toEqual([]);
 }
 
 test.describe("Dark mode surfaces", () => {

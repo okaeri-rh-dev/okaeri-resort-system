@@ -117,20 +117,18 @@ describe("SafeAuditText", () => {
 
   describe("Custom styling", () => {
     it("applies custom className", () => {
-      const { container } = render(
-        <SafeAuditText text="Text" className="custom-class text-red-500" />
-      );
+      const { container } = render(<SafeAuditText text="Text" className="text-destructive mt-4" />);
       const span = container.querySelector("span");
-      expect(span).toHaveClass("custom-class");
-      expect(span).toHaveClass("text-red-500");
+      expect(span).toHaveClass("mt-4");
+      expect(span).toHaveClass("text-destructive");
     });
 
     it("applies className to empty state", () => {
       const { container } = render(
-        <SafeAuditText text={null} className="custom-empty" emptyMessage="Empty" />
+        <SafeAuditText text={null} className="mt-4" emptyMessage="Empty" />
       );
       const span = container.querySelector("span");
-      expect(span).toHaveClass("custom-empty");
+      expect(span).toHaveClass("mt-4");
       expect(span).toHaveClass("text-muted-foreground");
       expect(span).toHaveClass("italic");
     });

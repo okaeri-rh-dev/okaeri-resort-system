@@ -3,15 +3,13 @@ import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { createColumnHelper, type Header } from "@tanstack/react-table";
 
-import { UNIT_SLOT_MAP } from "@/components/dashboard/unit-calendar-config";
 import { SortableHeader, StatusBadge } from "@/components/patterns";
-import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatPhoneNumber, formatTableDate } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
-import { cn } from "@/lib/utils";
 import type { Booking, BookingStatus } from "@/types";
 
 import { BookingActionsCell } from "./BookingActionsCell";
+import { CabinChip } from "./CabinChip";
 
 const columnHelper = createColumnHelper<Booking>();
 
@@ -69,24 +67,9 @@ export const useBookingColumns = ({
 
           return (
             <div className="flex flex-wrap gap-1">
-              {units.map((bu) => {
-                const unitCode = bu.unit?.unit_code;
-                const slotConfig = unitCode ? UNIT_SLOT_MAP.get(unitCode) : undefined;
-                return (
-                  <Badge
-                    key={bu.booking_unit_id}
-                    variant="outline"
-                    className={cn(
-                      "text-xs",
-                      slotConfig
-                        ? cn(slotConfig.bg, slotConfig.text, slotConfig.border)
-                        : "bg-secondary text-secondary-foreground border-transparent"
-                    )}
-                  >
-                    {unitCode || bu.unit?.unit_name || `Unit ${bu.unit_id.slice(0, 4)}`}
-                  </Badge>
-                );
-              })}
+              {units.map((bu) => (
+                <CabinChip key={bu.booking_unit_id} bookingUnit={bu} />
+              ))}
             </div>
           );
         },

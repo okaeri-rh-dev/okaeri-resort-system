@@ -7,7 +7,7 @@ import {
   LOGO_COMPRESSED_MAX_BYTES,
   LOGO_MAX_SIZE_BYTES,
 } from "@/components/documents/constants";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/patterns";
 
 interface LogoUploaderProps {
   logo_base64?: string;
@@ -79,14 +79,19 @@ export function LogoUploader({ logo_base64, onLogoChange }: LogoUploaderProps) {
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium">Logo</label>
+      <p className="text-sm font-medium">Logo</p>
 
       {logo_base64 ? (
         <div className="flex items-center gap-3">
-          <div className="border-border flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border bg-white">
+          <div
+            data-theme="light"
+            className="bg-card flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border"
+          >
             <img
               src={logo_base64}
               alt="Logo preview"
+              width={56}
+              height={56}
               className="max-h-14 max-w-14 object-contain"
             />
           </div>

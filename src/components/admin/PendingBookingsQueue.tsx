@@ -16,17 +16,22 @@ import { useState } from "react";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { Search, SlidersHorizontal } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Input,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+  StatusBadge,
+  type StatusTone,
+} from "@/components/patterns";
 import {
   Table,
   TableBody,
@@ -37,6 +42,7 @@ import {
 } from "@/components/ui/table";
 import { isPaymentReceived } from "@/lib/bookings";
 import { multiUnitBookingKeys } from "@/lib/query-keys";
+import { statusBadgeProps } from "@/lib/status-tone";
 import { supabaseAuth } from "@/lib/supabase";
 import { formatUrgencyLevel, type UrgencyLevel } from "@/lib/urgency-scoring";
 import { formatCurrency, formatDate, formatRelativeTime } from "@/lib/utils";
@@ -159,30 +165,24 @@ export function PendingBookingsQueue() {
   // ============================================
 
   const getUrgencyBadge = (level: UrgencyLevel, score: number) => {
-    const variantMap: Record<UrgencyLevel, "destructive" | "warning" | "default" | "secondary"> = {
-      critical: "destructive",
+    const toneByLevel: Record<UrgencyLevel, StatusTone> = {
+      critical: "danger",
       high: "warning",
-      medium: "default",
-      low: "secondary",
+      medium: "info",
+      low: "neutral",
     };
 
     return (
       <div className="flex items-center gap-2">
-        <Badge variant={variantMap[level]}>{formatUrgencyLevel(level)}</Badge>
-        <span className="text-muted-foreground font-mono text-sm">{score}</span>
+        <StatusBadge tone={toneByLevel[level]}>{formatUrgencyLevel(level)}</StatusBadge>
+        <span className="text-muted-foreground text-sm tabular-nums">{score}</span>
       </div>
     );
   };
 
-  const getPaymentBadge = (status: PendingBooking["payment_status"]) => {
-    const variantMap: Record<PaymentStatus, "default" | "secondary" | "destructive"> = {
-      Pending: "secondary",
-      Partial: "default",
-      Completed: "default",
-      Refunded: "destructive",
-    };
-    return <Badge variant={variantMap[status]}>{status}</Badge>;
-  };
+  const getPaymentBadge = (status: PaymentStatus) => (
+    <StatusBadge {...statusBadgeProps(status, "Pending")} />
+  );
 
   // ============================================
   // Loading & Error States
@@ -246,15 +246,13 @@ export function PendingBookingsQueue() {
                 ` (${formatUrgencyLevel(filters.urgencyLevel)} priority)`}
             </CardDescription>
           </div>
-          <Badge variant="outline" className="text-xs">
-            Auto-refresh: 30s
-          </Badge>
+          <StatusBadge tone="neutral">Auto-refresh: 30s</StatusBadge>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="@container space-y-4">
         {/* Filter Controls */}
-        <div className="flex flex-col gap-4 sm:flex-row">
+        <div className="flex flex-col gap-4 @xl:flex-row">
           {/* Search */}
           <div className="relative flex-1">
             <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
@@ -273,8 +271,8 @@ export function PendingBookingsQueue() {
               setFilters({ ...filters, urgencyLevel: value as QueueFilters["urgencyLevel"] })
             }
           >
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SlidersHorizontal className="mr-2 h-4 w-4" />
+            <SelectTrigger className="w-full @xl:w-44">
+              <SlidersHorizontal className="mr-2 h-4 w-4" aria-hidden="true" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -293,7 +291,7 @@ export function PendingBookingsQueue() {
               setFilters({ ...filters, dateRange: value as QueueFilters["dateRange"] })
             }
           >
-            <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectTrigger className="w-full @xl:w-44">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -315,7 +313,7 @@ export function PendingBookingsQueue() {
                 <TableHead>Guest</TableHead>
                 <TableHead>Check-in</TableHead>
                 <TableHead>Cabins</TableHead>
-                <TableHead>Amount</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
                 <TableHead>Payment</TableHead>
                 <TableHead>Pending</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -334,7 +332,9 @@ export function PendingBookingsQueue() {
                     <TableCell>
                       {getUrgencyBadge(booking.urgency_level, booking.urgency_score)}
                     </TableCell>
-                    <TableCell className="font-mono text-sm">{booking.booking_reference}</TableCell>
+                    <TableCell className="text-sm whitespace-nowrap">
+                      {booking.booking_reference}
+                    </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-medium">{booking.guest_name}</span>
@@ -344,8 +344,10 @@ export function PendingBookingsQueue() {
                       </div>
                     </TableCell>
                     <TableCell>{formatDate(new Date(booking.check_in_date))}</TableCell>
-                    <TableCell className="text-center">{booking.requested_unit_count}</TableCell>
-                    <TableCell className="font-mono">
+                    <TableCell className="text-center tabular-nums">
+                      {booking.requested_unit_count}
+                    </TableCell>
+                    <TableCell className="text-right whitespace-nowrap tabular-nums">
                       {formatCurrency(booking.total_amount)}
                     </TableCell>
                     <TableCell>{getPaymentBadge(booking.payment_status)}</TableCell>

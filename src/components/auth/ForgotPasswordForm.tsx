@@ -132,7 +132,6 @@ export function ForgotPasswordForm() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@resort.com"
               required
-              autoFocus
             />
           </div>
 

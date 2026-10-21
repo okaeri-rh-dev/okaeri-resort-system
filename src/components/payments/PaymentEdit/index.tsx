@@ -6,27 +6,21 @@ import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { DetailPageLayout } from "@/components/patterns";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Button,
+  Callout,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  DetailPageLayout,
   Form,
-  FormControl,
-  FormDescription,
   FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
+  Input,
+  SelectControl,
   SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+  Textarea,
+} from "@/components/patterns";
 import { paymentEditSchema, type PaymentEditInput } from "@/lib/validation/entity-schemas";
 import { useUpdatePayment } from "@/stores/usePaymentStore";
 import type { Payment } from "@/types/entity-detail.types";
@@ -95,64 +89,48 @@ export function PaymentEditPage() {
             <CardHeader>
               <CardTitle className="text-lg">Transaction Details</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="@container space-y-4">
               {isVerified && (
-                <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+                <Callout tone="info">
                   Note: This payment has been verified. Amount and method are read-only.
-                </div>
+                </Callout>
               )}
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Amount</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min={0}
-                          placeholder="0.00"
-                          disabled={isVerified}
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormDescription>₱ Philippine Peso</FormDescription>
-                      <FormMessage />
-                    </FormItem>
+                  label="Amount"
+                  description="₱ Philippine Peso"
+                >
+                  {(field) => (
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min={0}
+                      placeholder="0.00"
+                      disabled={isVerified}
+                      {...field}
+                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    />
                   )}
-                />
+                </FormField>
 
-                <FormField
-                  control={form.control}
-                  name="payment_method"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Payment Method</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={isVerified}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select payment method" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Cash">Cash</SelectItem>
-                          <SelectItem value="GCash">GCash</SelectItem>
-                          <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
-                          <SelectItem value="Card">Credit Card</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
+                <FormField control={form.control} name="payment_method" label="Payment Method">
+                  {(field) => (
+                    <SelectControl
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={isVerified}
+                      placeholder="Select payment method"
+                    >
+                      <SelectItem value="Cash">Cash</SelectItem>
+                      <SelectItem value="GCash">GCash</SelectItem>
+                      <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
+                      <SelectItem value="Card">Credit Card</SelectItem>
+                    </SelectControl>
                   )}
-                />
+                </FormField>
               </div>
             </CardContent>
           </Card>
@@ -166,40 +144,26 @@ export function PaymentEditPage() {
               <FormField
                 control={form.control}
                 name="proof_url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Payment proof URL (optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://..." {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Link to the payment proof image (image upload coming soon)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                label="Payment proof URL (optional)"
+                description="Link to the payment proof image (image upload coming soon)"
+              >
+                {(field) => <Input placeholder="https://..." {...field} />}
+              </FormField>
 
               <FormField
                 control={form.control}
                 name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Verification Notes (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Add notes about payment verification or any issues..."
-                        className="min-h-[100px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Internal notes for managers (automatically sanitized)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
+                label="Verification Notes (Optional)"
+                description="Internal notes for managers (automatically sanitized)"
+              >
+                {(field) => (
+                  <Textarea
+                    placeholder="Add notes about payment verification or any issues..."
+                    className="min-h-[100px]"
+                    {...field}
+                  />
                 )}
-              />
+              </FormField>
             </CardContent>
           </Card>
 

@@ -9,7 +9,6 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
-  FileText,
   RotateCcw,
   XCircle,
   ZoomIn,
@@ -18,18 +17,22 @@ import {
 import { Document, Page, pdfjs } from "react-pdf";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Button,
+  Callout,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+  Textarea,
+} from "@/components/patterns";
 import { useAuthToken } from "@/hooks/useAuthToken";
 import { isPaymentReceived } from "@/lib/bookings";
 import { afterBookingPaymentChange } from "@/lib/query-invalidation";
@@ -194,22 +197,10 @@ export function PaymentProofViewer({
   // Render status badge
   const renderStatusBadge = () => {
     if (isPaymentReceived(currentPaymentStatus)) {
-      return (
-        <Alert className="border-green-200 bg-green-50">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            Payment verified - Ready for cabin assignment
-          </AlertDescription>
-        </Alert>
-      );
+      return <Callout tone="success">Payment verified - Ready for cabin assignment</Callout>;
     }
 
-    return (
-      <Alert>
-        <FileText className="h-4 w-4" />
-        <AlertDescription>Payment pending verification - Review proof below</AlertDescription>
-      </Alert>
-    );
+    return <Callout tone="info">Payment pending verification - Review proof below</Callout>;
   };
 
   // Render image viewer
@@ -249,7 +240,7 @@ export function PaymentProofViewer({
                 Reset
               </Button>
             </div>
-            <div className="overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50">
+            <div className="bg-muted overflow-hidden rounded-lg border">
               <TransformComponent
                 wrapperStyle={{
                   width: "100%",
@@ -266,6 +257,8 @@ export function PaymentProofViewer({
                 <img
                   src={signedUrl}
                   alt="Payment proof"
+                  width={800}
+                  height={600}
                   className="max-h-full max-w-full object-contain"
                 />
               </TransformComponent>
@@ -293,7 +286,7 @@ export function PaymentProofViewer({
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>
-            <span className="text-sm text-neutral-600">
+            <span className="text-muted-foreground text-sm tabular-nums">
               Page {currentPage} of {numPages || "?"}
             </span>
             <Button
@@ -307,7 +300,7 @@ export function PaymentProofViewer({
             </Button>
           </div>
         </div>
-        <div className="overflow-auto rounded-lg border border-neutral-200 bg-neutral-50">
+        <div className="bg-muted overflow-auto rounded-lg border">
           <div className="flex justify-center p-4">
             <Document
               file={signedUrl}
@@ -330,7 +323,7 @@ export function PaymentProofViewer({
     if (currentPaymentStatus !== "Pending") return null;
 
     return (
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-wrap gap-3">
         <Button
           onClick={() => setShowVerifyConfirm(true)}
           size="lg"
@@ -362,15 +355,13 @@ export function PaymentProofViewer({
   // Show auth loading state
   if (isAuthLoading) {
     return (
-      <Card className="border-neutral-200">
+      <Card>
         <CardHeader>
           <CardTitle>Payment Proof</CardTitle>
           <CardDescription>Authenticating...</CardDescription>
         </CardHeader>
         <CardContent>
-          <Alert>
-            <AlertDescription>Loading authentication...</AlertDescription>
-          </Alert>
+          <Callout tone="neutral">Loading authentication...</Callout>
         </CardContent>
       </Card>
     );
@@ -379,18 +370,15 @@ export function PaymentProofViewer({
   // Show auth error
   if (authError) {
     return (
-      <Card className="border-neutral-200">
+      <Card>
         <CardHeader>
           <CardTitle>Payment Proof</CardTitle>
           <CardDescription>Authentication Error</CardDescription>
         </CardHeader>
         <CardContent>
-          <Alert className="border-red-200 bg-red-50">
-            <XCircle className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-800">
-              {authError.message || "Failed to authenticate. Please sign in again."}
-            </AlertDescription>
-          </Alert>
+          <Callout tone="danger">
+            {authError.message || "Failed to authenticate. Please sign in again."}
+          </Callout>
         </CardContent>
       </Card>
     );
@@ -398,15 +386,13 @@ export function PaymentProofViewer({
 
   if (!paymentProofPath) {
     return (
-      <Card className="border-neutral-200">
+      <Card>
         <CardHeader>
           <CardTitle>Payment Proof</CardTitle>
           <CardDescription>Review uploaded payment proof</CardDescription>
         </CardHeader>
         <CardContent>
-          <Alert>
-            <AlertDescription>No payment proof uploaded</AlertDescription>
-          </Alert>
+          <Callout tone="neutral">No payment proof uploaded</Callout>
         </CardContent>
       </Card>
     );
@@ -414,22 +400,17 @@ export function PaymentProofViewer({
 
   return (
     <>
-      <Card className="border-neutral-200">
+      <Card>
         <CardHeader>
           <CardTitle>Payment Proof Verification</CardTitle>
-          <CardDescription className="font-mono text-sm">
+          <CardDescription className="text-sm break-all">
             {paymentProofPath.split("/").pop()}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {renderStatusBadge()}
 
-          {error && (
-            <Alert className="border-red-200 bg-red-50">
-              <XCircle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">{error}</AlertDescription>
-            </Alert>
-          )}
+          {error && <Callout tone="danger">{error}</Callout>}
 
           {signedUrl && fileType === "image" && renderImageViewer()}
           {signedUrl && fileType === "pdf" && renderPdfViewer()}

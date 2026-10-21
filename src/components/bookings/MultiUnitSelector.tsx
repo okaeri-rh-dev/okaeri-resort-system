@@ -16,18 +16,20 @@ import { useMemo, useState } from "react";
 
 import { Filter, Grid3x3, List } from "lucide-react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
+  Button,
+  Callout,
+  Card,
+  CardContent,
+  CardFooter,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
+  Skeleton,
+  StatusBadge,
+} from "@/components/patterns";
 import type { PricingConfig } from "@/hooks/usePricingConfig";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -108,7 +110,7 @@ export function MultiUnitSelector({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="@container space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
@@ -202,18 +204,14 @@ export function MultiUnitSelector({
       )}
 
       {/* Error State */}
-      {error && (
-        <Alert variant="destructive" role="alert">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      {error && <Callout tone="danger">{error}</Callout>}
 
       {/* Loading State */}
       {isLoading && (
         <div
           className={cn(
             "grid gap-4",
-            viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
+            viewMode === "grid" ? "grid-cols-1 @lg:grid-cols-2 @3xl:grid-cols-3" : "grid-cols-1"
           )}
         >
           {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -233,7 +231,7 @@ export function MultiUnitSelector({
         <div
           className={cn(
             "grid gap-4",
-            viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
+            viewMode === "grid" ? "grid-cols-1 @lg:grid-cols-2 @3xl:grid-cols-3" : "grid-cols-1"
           )}
           aria-label="Available units"
         >
@@ -299,7 +297,7 @@ function UnitCard({
   return (
     <Card
       className={cn(
-        "transition-all hover:shadow-lg",
+        "transition-shadow duration-150 hover:shadow-lg",
         isSelected && "ring-primary ring-2",
         !isAvailable && "opacity-60"
       )}
@@ -311,19 +309,15 @@ function UnitCard({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <h3 className="text-lg font-semibold">{unit.unit_name}</h3>
-            {isSelected && (
-              <Badge variant="secondary" aria-label="Cabin selected">
-                Selected
-              </Badge>
-            )}
+            {isSelected && <StatusBadge tone="neutral">Selected</StatusBadge>}
           </div>
           <p className="text-muted-foreground text-sm">Max {unit.max_occupancy} guests</p>
           <p className="text-primary text-lg font-semibold">{formatCurrency(displayRate)}/night</p>
 
           {/* Availability Badge */}
-          <Badge variant={isAvailable ? "default" : "destructive"} className="font-normal">
+          <StatusBadge tone={isAvailable ? "success" : "danger"}>
             {isAvailable ? "✓ Available" : "✗ Unavailable"}
-          </Badge>
+          </StatusBadge>
 
           {/* Date Range Display */}
           {checkIn && checkOut && (

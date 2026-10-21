@@ -3,41 +3,30 @@
 import { useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import {
+  Button,
+  Callout,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Form,
-  FormControl,
-  FormDescription,
   FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+  SelectControl,
+  Textarea,
+} from "@/components/patterns";
 import { useDeactivateRole, useUpdateRole } from "@/hooks/useRoleManagement";
 import { AuditRole, getRoleDisplayName, type AppRole } from "@/lib/audit-roles";
 import { supabaseAuth } from "@/lib/supabase";
+
+import { RoleOptions } from "./RoleOptions";
 
 // ============================================
 // UPDATE ROLE DIALOG
@@ -107,7 +96,7 @@ export function UpdateRoleDialog({ role, open, onOpenChange }: UpdateRoleDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Update User Role</DialogTitle>
           <DialogDescription>
@@ -118,67 +107,45 @@ export function UpdateRoleDialog({ role, open, onOpenChange }: UpdateRoleDialogP
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {/* Current Role Display */}
-            <Alert>
-              <AlertDescription>
-                Current role: <strong>{getRoleDisplayName(role.role as AuditRole)}</strong>
-              </AlertDescription>
-            </Alert>
+            <Callout tone="neutral">
+              Current role: <strong>{getRoleDisplayName(role.role as AuditRole)}</strong>
+            </Callout>
 
             {/* New Role Selection */}
             <FormField
               control={form.control}
               name="newRole"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>New Role</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a new role" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={AuditRole.ADMIN}>
-                        {getRoleDisplayName(AuditRole.ADMIN)} - Full system access
-                      </SelectItem>
-                      <SelectItem value={AuditRole.OWNER}>
-                        {getRoleDisplayName(AuditRole.OWNER)} - Business owner privileges
-                      </SelectItem>
-                      <SelectItem value={AuditRole.MANAGER}>
-                        {getRoleDisplayName(AuditRole.MANAGER)} - Operations management
-                      </SelectItem>
-                      <SelectItem value={AuditRole.STAFF}>
-                        {getRoleDisplayName(AuditRole.STAFF)} - Basic access
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>Choose the new access level for this user</FormDescription>
-                  <FormMessage />
-                </FormItem>
+              label="New Role"
+              description="Choose the new access level for this user"
+            >
+              {({ value, onChange, onBlur, ref }) => (
+                <SelectControl
+                  value={value}
+                  onValueChange={onChange}
+                  onBlur={onBlur}
+                  ref={ref}
+                  placeholder="Select a new role"
+                >
+                  <RoleOptions />
+                </SelectControl>
               )}
-            />
+            </FormField>
 
             {/* Notes */}
             <FormField
               control={form.control}
               name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Reason for changing this role..."
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Optional notes about why this role was changed (for audit trail)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
+              label="Notes (Optional)"
+              description="Optional notes about why this role was changed (for audit trail)"
+            >
+              {(field) => (
+                <Textarea
+                  placeholder="Reason for changing this role..."
+                  className="resize-none"
+                  {...field}
+                />
               )}
-            />
+            </FormField>
 
             <DialogFooter>
               <Button
@@ -273,7 +240,7 @@ export function DeactivateRoleDialog({ role, open, onOpenChange }: DeactivateRol
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Deactivate User Role</DialogTitle>
           <DialogDescription>
@@ -281,14 +248,10 @@ export function DeactivateRoleDialog({ role, open, onOpenChange }: DeactivateRol
           </DialogDescription>
         </DialogHeader>
 
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Warning</AlertTitle>
-          <AlertDescription>
-            This will remove all system access for this user. This is a soft delete - the record
-            will remain in the database but marked as inactive.
-          </AlertDescription>
-        </Alert>
+        <Callout tone="danger" title="Warning">
+          This will remove all system access for this user. This is a soft delete - the record will
+          remain in the database but marked as inactive.
+        </Callout>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -306,23 +269,17 @@ export function DeactivateRoleDialog({ role, open, onOpenChange }: DeactivateRol
             <FormField
               control={form.control}
               name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Reason (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Reason for deactivating this role..."
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Optional notes about why this role was deactivated
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
+              label="Reason (Optional)"
+              description="Optional notes about why this role was deactivated"
+            >
+              {(field) => (
+                <Textarea
+                  placeholder="Reason for deactivating this role..."
+                  className="resize-none"
+                  {...field}
+                />
               )}
-            />
+            </FormField>
 
             <DialogFooter>
               <Button

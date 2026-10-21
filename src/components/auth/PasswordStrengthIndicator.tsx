@@ -95,10 +95,7 @@ export function PasswordStrengthIndicator({ password, className }: PasswordStren
       {/* Progress bar */}
       <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
         <div
-          className={cn(
-            "h-full transition-all duration-300 ease-out",
-            colorClasses[strength.level]
-          )}
+          className={cn("h-full transition-colors duration-150", colorClasses[strength.level])}
           style={{ width: `${strength.score}%` }}
         />
       </div>

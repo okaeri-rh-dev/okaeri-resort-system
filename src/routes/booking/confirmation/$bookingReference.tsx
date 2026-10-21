@@ -7,8 +7,7 @@ import { PaymentInstructions } from "@/components/booking-confirmation/PaymentIn
 import { PrintButton } from "@/components/booking-confirmation/PrintButton";
 import { StatusTimeline } from "@/components/booking-confirmation/StatusTimeline";
 import { ContactChannelList } from "@/components/contact-channels/ContactChannelList";
-import { Callout } from "@/components/patterns";
-import { Button } from "@/components/ui/button";
+import { Button, Callout } from "@/components/patterns";
 import { useActiveContactChannels } from "@/hooks/useContactChannels";
 import { GuestLayout } from "@/layouts/GuestLayout";
 
@@ -190,17 +189,14 @@ function BookingConfirmationComponent() {
 
           {/* Contact channels - Not printed */}
           {contactChannels.length > 0 && (
-            <div className="no-print">
-              <Callout tone="info">
-                If you have any questions or need to make changes to your booking, please contact
-                us.
-                <ContactChannelList channels={contactChannels} className="mt-2" />
-              </Callout>
-            </div>
+            <Callout tone="info" className="print:hidden">
+              If you have any questions or need to make changes to your booking, please contact us.
+              <ContactChannelList channels={contactChannels} className="mt-2" />
+            </Callout>
           )}
 
           {/* Back to Home Link - Not printed */}
-          <div className="no-print flex justify-center">
+          <div className="flex justify-center print:hidden">
             <Button variant="outline" asChild>
               <Link to="/">Back to Home</Link>
             </Button>

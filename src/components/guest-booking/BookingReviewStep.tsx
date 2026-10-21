@@ -1,13 +1,18 @@
 import { useEffect, useState, type RefObject } from "react";
 
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
-import { AlertCircle, Calendar, Mail, Phone, User, Users } from "lucide-react";
+import { Calendar, Mail, Phone, User, Users } from "lucide-react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import {
+  Callout,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Checkbox,
+  Label,
+  Separator,
+} from "@/components/patterns";
 import type { MultiUnitBookingRequest } from "@/lib/validation/booking-schema";
 
 import { PaymentSummary } from "./PaymentSummary";
@@ -71,8 +76,8 @@ export function BookingReviewStep({
             Booking Details
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+        <CardContent className="@container space-y-4">
+          <div className="grid gap-4 @md:grid-cols-2">
             <div>
               <p className="text-muted-foreground text-sm">Check-in</p>
               <p className="font-medium">{formatDate(formData.check_in?.toISOString())}</p>
@@ -85,7 +90,7 @@ export function BookingReviewStep({
 
           <Separator />
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 @md:grid-cols-2">
             <div className="flex items-center gap-2">
               <Users className="text-muted-foreground h-5 w-5" />
               <div>
@@ -217,19 +222,16 @@ export function BookingReviewStep({
           <div className="flex flex-col items-center justify-center space-y-4">
             {shouldSkipTurnstile ? (
               // Development mode - Turnstile disabled
-              <Alert className="border-amber-500/50 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-50">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Development Mode:</strong> Security verification is disabled.
-                  {skipTurnstile
-                    ? " (VITE_SKIP_TURNSTILE=true)"
-                    : " (VITE_TURNSTILE_SITE_KEY not set)"}
-                  <br />
-                  <span className="text-xs">
-                    This would normally require CAPTCHA verification in production.
-                  </span>
-                </AlertDescription>
-              </Alert>
+              <Callout tone="warning" title="Development Mode">
+                Security verification is disabled.
+                {skipTurnstile
+                  ? " (VITE_SKIP_TURNSTILE=true)"
+                  : " (VITE_TURNSTILE_SITE_KEY not set)"}
+                <br />
+                <span className="text-xs">
+                  This would normally require CAPTCHA verification in production.
+                </span>
+              </Callout>
             ) : !turnstileError ? (
               <Turnstile
                 ref={turnstileRef}
@@ -251,12 +253,9 @@ export function BookingReviewStep({
                 }}
               />
             ) : (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Security verification failed. Please refresh the page and try again.
-                </AlertDescription>
-              </Alert>
+              <Callout tone="danger">
+                Security verification failed. Please refresh the page and try again.
+              </Callout>
             )}
 
             {turnstileToken && !turnstileError && !turnstileExpired && !shouldSkipTurnstile && (
@@ -264,25 +263,19 @@ export function BookingReviewStep({
             )}
 
             {turnstileExpired && !turnstileError && (
-              <Alert variant="destructive" className="mt-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Security verification has expired. Please complete the CAPTCHA again to continue.
-                </AlertDescription>
-              </Alert>
+              <Callout tone="danger" className="mt-4">
+                Security verification has expired. Please complete the CAPTCHA again to continue.
+              </Callout>
             )}
           </div>
         </CardContent>
       </Card>
 
       {/* Final Warning */}
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Please review all information carefully before submitting. You will receive a booking
-          reference number after submission.
-        </AlertDescription>
-      </Alert>
+      <Callout tone="info">
+        Please review all information carefully before submitting. You will receive a booking
+        reference number after submission.
+      </Callout>
     </div>
   );
 }

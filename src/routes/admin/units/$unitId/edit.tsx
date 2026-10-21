@@ -4,6 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Button } from "@/components/patterns";
 import { requireManager } from "@/lib/route-guards";
 import { unitDetailQuery } from "@/stores/useUnitStore";
 
@@ -37,21 +38,16 @@ export const Route = createFileRoute("/admin/units/$unitId/edit")({
     <ErrorBoundary level="page">
       <div className="container mx-auto py-8">
         <div className="text-center">
-          <h1 className="mb-4 text-2xl font-bold text-red-600">Failed to Load Unit Editor</h1>
-          <p className="mb-4 text-gray-600">
+          <h1 className="text-destructive mb-4 text-2xl font-bold">Failed to Load Cabin Editor</h1>
+          <p className="text-muted-foreground mb-4">
             {error instanceof Error ? error.message : "An unexpected error occurred"}
           </p>
           {error instanceof Error && error.message.includes("permission") ? (
-            <p className="mb-4 text-sm text-gray-500">
+            <p className="text-muted-foreground mb-4 text-sm">
               Please contact your administrator if you need access to edit units.
             </p>
           ) : null}
-          <button
-            onClick={() => window.history.back()}
-            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
-            Go Back
-          </button>
+          <Button onClick={() => window.history.back()}>Go Back</Button>
         </div>
       </div>
     </ErrorBoundary>
@@ -61,16 +57,11 @@ export const Route = createFileRoute("/admin/units/$unitId/edit")({
   notFoundComponent: () => (
     <div className="container mx-auto py-8">
       <div className="text-center">
-        <h1 className="mb-4 text-2xl font-bold text-gray-800">Cabin Not Found</h1>
-        <p className="mb-4 text-gray-600">
+        <h1 className="text-foreground mb-4 text-2xl font-bold">Cabin Not Found</h1>
+        <p className="text-muted-foreground mb-4">
           The unit you are trying to edit does not exist or has been removed.
         </p>
-        <button
-          onClick={() => window.history.back()}
-          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-        >
-          Go Back to Cabins
-        </button>
+        <Button onClick={() => window.history.back()}>Go Back to Cabins</Button>
       </div>
     </div>
   ),

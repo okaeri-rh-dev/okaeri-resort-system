@@ -35,7 +35,7 @@ describe("DetailPageSkeleton", () => {
       const { container } = render(<DetailPageSkeleton />);
 
       // Should have multiple section placeholders (using Card components)
-      const sections = container.querySelectorAll('[class*="border-neutral-200"]');
+      const sections = container.querySelectorAll('[class*="shadow-card"]');
       expect(sections.length).toBeGreaterThan(0);
     });
   });
@@ -85,8 +85,8 @@ describe("DetailPageSkeleton", () => {
     it("renders content sections skeleton (3 sections)", () => {
       const { container } = render(<DetailPageSkeleton />);
 
-      // Should have 3 content section cards (Card components with border-neutral-200)
-      const sectionCards = container.querySelectorAll('[class*="border-neutral-200"]');
+      // Should have 3 content section cards (Card components, which carry shadow-card)
+      const sectionCards = container.querySelectorAll('[class*="shadow-card"]');
       expect(sectionCards.length).toBe(3);
     });
 
@@ -94,7 +94,7 @@ describe("DetailPageSkeleton", () => {
       const { container } = render(<DetailPageSkeleton />);
 
       // Each Card section should have content with field placeholders
-      const sections = container.querySelectorAll('[class*="border-neutral-200"]');
+      const sections = container.querySelectorAll('[class*="shadow-card"]');
       sections.forEach((section) => {
         // Check for skeleton elements within each section
         const skeletons = section.querySelectorAll('[class*="h-4"]');
@@ -138,8 +138,8 @@ describe("DetailPageSkeleton", () => {
     it("sections use card-like structure", () => {
       const { container } = render(<DetailPageSkeleton />);
 
-      // Card components with border-neutral-200 class
-      const cards = container.querySelectorAll('[class*="border-neutral-200"]');
+      // Card components carry the shadow-card class
+      const cards = container.querySelectorAll('[class*="shadow-card"]');
       expect(cards.length).toBeGreaterThan(0);
     });
   });
@@ -218,8 +218,8 @@ describe("DetailPageSkeleton", () => {
     it("section count matches typical detail page (3 sections)", () => {
       const { container } = render(<DetailPageSkeleton />);
 
-      // Count Card components by border-neutral-200 class
-      const sections = container.querySelectorAll('[class*="border-neutral-200"]');
+      // Count Card components by their shadow-card class
+      const sections = container.querySelectorAll('[class*="shadow-card"]');
       expect(sections.length).toBe(3);
     });
   });

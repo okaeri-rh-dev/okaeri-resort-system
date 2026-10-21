@@ -6,32 +6,25 @@ import { CheckCircle, CreditCard, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { DatePicker } from "@/components/patterns";
-import { PricingStatusBadge } from "@/components/pricing/PricingStatusBadge";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  DatePicker,
   Form,
-  FormControl,
-  FormDescription,
   FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input, NumberInput } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
+  Input,
+  NumberInput,
+  Progress,
+  SelectControl,
   SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
+  Separator,
+  StatusBadge,
+  Textarea,
+} from "@/components/patterns";
+import { PricingStatusBadge } from "@/components/pricing/PricingStatusBadge";
 import { useMultiUnitAvailability } from "@/hooks/useMultiUnitBookingQueries";
 import { usePricingCalculation } from "@/hooks/usePricingCalculation";
 import { pickedDay, unavailableReason } from "@/lib/bookings";
@@ -51,6 +44,7 @@ import { useCreateBooking } from "@/stores/useBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
 import type { MultiUnitBooking } from "@/types";
 
+import { WalkInField } from "./form-fields";
 import { FormSkeleton } from "./FormSkeleton";
 
 interface BookingFormProps {
@@ -301,8 +295,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
         <React.Fragment key={step}>
           <div
             className={cn(
-              "flex h-10 w-10 touch-manipulation items-center justify-center rounded-full border-2 text-sm font-medium",
-              "sm:h-8 sm:w-8",
+              "flex size-10 items-center justify-center rounded-full border-2 text-sm font-medium @md:size-8",
               step < currentStep
                 ? "bg-primary border-primary text-primary-foreground"
                 : step === currentStep
@@ -310,12 +303,16 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
                   : "border-muted-foreground/30 text-muted-foreground"
             )}
           >
-            {step < currentStep ? <CheckCircle className="h-5 w-5 sm:h-4 sm:w-4" /> : step}
+            {step < currentStep ? (
+              <CheckCircle className="size-5 @md:size-4" aria-hidden="true" />
+            ) : (
+              step
+            )}
           </div>
           {step < 4 && (
             <div
               className={cn(
-                "h-0.5 w-8 sm:w-12",
+                "h-0.5 w-8 @md:w-12",
                 step < currentStep ? "bg-primary" : "bg-muted-foreground/30"
               )}
             />
@@ -330,125 +327,104 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
       <FormField
         control={form.control}
         name="unit_id"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="text-base font-medium sm:text-sm">Select Unit</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <FormControl>
-                <SelectTrigger className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm">
-                  <SelectValue placeholder="Choose a unit" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {units?.map((unit) => {
-                  const reason = unavailableReason(availability, unit.unit_id);
-                  return (
-                    <SelectItem key={unit.unit_id} value={unit.unit_id} disabled={reason !== null}>
-                      <div className="flex w-full items-center justify-between">
-                        <span>
-                          {unit.unit_name} ({unit.unit_type}) • {unit.base_occupancy}/
-                          {unit.max_occupancy} guests
-                        </span>
-                        {reason ? (
-                          <span className="text-muted-foreground ml-2 text-xs">{reason}</span>
-                        ) : (
-                          <Badge variant="outline" className="ml-2">
-                            {formatCurrency(unit.base_rate)}/night
-                          </Badge>
-                        )}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-            {isCheckingAvailability && <FormDescription>Checking availability…</FormDescription>}
-            {isAvailabilityError && !isCheckingAvailability && (
-              <FormDescription>
-                Couldn't check availability. It is checked again when you save.
-              </FormDescription>
-            )}
-            <FormMessage />
-          </FormItem>
+        label="Select Unit"
+        description={
+          isCheckingAvailability
+            ? "Checking availability…"
+            : isAvailabilityError
+              ? "Couldn't check availability. It is checked again when you save."
+              : undefined
+        }
+      >
+        {(field) => (
+          <SelectControl
+            value={field.value}
+            onValueChange={field.onChange}
+            placeholder="Choose a unit"
+          >
+            {units?.map((unit) => {
+              const reason = unavailableReason(availability, unit.unit_id);
+              return (
+                <SelectItem key={unit.unit_id} value={unit.unit_id} disabled={reason !== null}>
+                  <div className="flex w-full items-center justify-between">
+                    <span>
+                      {unit.unit_name} ({unit.unit_type}) • {unit.base_occupancy}/
+                      {unit.max_occupancy} guests
+                    </span>
+                    {reason ? (
+                      <span className="text-muted-foreground ml-2 text-xs">{reason}</span>
+                    ) : (
+                      <StatusBadge tone="neutral" className="ml-2">
+                        {formatCurrency(unit.base_rate)}/night
+                      </StatusBadge>
+                    )}
+                  </div>
+                </SelectItem>
+              );
+            })}
+          </SelectControl>
         )}
-      />
+      </FormField>
 
-      <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0">
-        <FormField
-          control={form.control}
-          name="check_in"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel className="text-base font-medium sm:text-sm">Check-in Date</FormLabel>
-              <FormControl>
-                <DatePicker
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Pick a date"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+      <div className="grid gap-4 @md:grid-cols-2">
+        <FormField control={form.control} name="check_in" label="Check-in Date">
+          {(field) => (
+            <DatePicker
+              value={field.value}
+              onChange={field.onChange}
+              placeholder="Pick a date"
+              aria-label="Check-in Date"
+            />
           )}
-        />
+        </FormField>
 
-        <FormField
-          control={form.control}
-          name="check_out"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel className="text-base font-medium sm:text-sm">Check-out Date</FormLabel>
-              <FormControl>
-                <DatePicker
-                  value={field.value}
-                  onChange={field.onChange}
-                  isDateDisabled={(date) => date <= checkIn}
-                  placeholder="Pick a date"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        <FormField control={form.control} name="check_out" label="Check-out Date">
+          {(field) => (
+            <DatePicker
+              value={field.value}
+              onChange={field.onChange}
+              isDateDisabled={(date) => date <= checkIn}
+              placeholder="Pick a date"
+              aria-label="Check-out Date"
+            />
           )}
-        />
+        </FormField>
       </div>
 
       <FormField
         control={form.control}
         name="num_guests"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="text-base font-medium sm:text-sm">Number of Guests</FormLabel>
-            <FormControl>
-              <NumberInput
-                min={1}
-                max={selectedUnit?.max_occupancy || 20}
-                allowDecimals={false}
-                className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm"
-                startIcon={<Users className="h-5 w-5 sm:h-4 sm:w-4" />}
-                value={field.value}
-                onChange={(value) => field.onChange(value)}
-                onBlur={(value) => {
-                  field.onChange(value || 1); // Set minimum on blur
-                  field.onBlur();
-                }}
-              />
-            </FormControl>
-            {selectedUnit && (
-              <FormDescription>
-                Base occupancy: {selectedUnit.base_occupancy} guests (included) • Max:{" "}
-                {selectedUnit.max_occupancy} guests
-                {selectedUnit.max_occupancy > selectedUnit.base_occupancy && (
-                  <span className="mt-1 block text-xs">
-                    Extra person rate: {formatCurrency(selectedUnit.extra_person_rate)} per person
-                    per night
-                  </span>
-                )}
-              </FormDescription>
-            )}
-            <FormMessage />
-          </FormItem>
+        label="Number of Guests"
+        description={
+          selectedUnit && (
+            <>
+              Base occupancy: {selectedUnit.base_occupancy} guests (included) • Max:{" "}
+              {selectedUnit.max_occupancy} guests
+              {selectedUnit.max_occupancy > selectedUnit.base_occupancy && (
+                <span className="mt-1 block text-xs">
+                  Extra person rate: {formatCurrency(selectedUnit.extra_person_rate)} per person per
+                  night
+                </span>
+              )}
+            </>
+          )
+        }
+      >
+        {(field) => (
+          <NumberInput
+            min={1}
+            max={selectedUnit?.max_occupancy || 20}
+            allowDecimals={false}
+            startIcon={<Users className="size-4" aria-hidden="true" />}
+            value={field.value}
+            onChange={(value) => field.onChange(value)}
+            onBlur={(value) => {
+              field.onChange(value || 1); // Set minimum on blur
+              field.onBlur();
+            }}
+          />
         )}
-      />
+      </FormField>
 
       {selectedUnit && calculatedTotal > 0 && (
         <Card>
@@ -460,7 +436,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
               </div>
               <div className="flex justify-between">
                 <span>Nights:</span>
-                <span>
+                <span className="tabular-nums">
                   {Math.ceil(
                     (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
                       (1000 * 60 * 60 * 24)
@@ -470,19 +446,18 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
               <Separator />
               <div className="flex justify-between text-lg font-semibold">
                 <span>Total:</span>
-                <span>{formatCurrency(calculatedTotal)}</span>
+                <span className="tabular-nums">{formatCurrency(calculatedTotal)}</span>
               </div>
               {downpaymentAmount > 0 && (
                 <div className="text-muted-foreground flex justify-between text-sm">
                   <span>Downpayment Required:</span>
-                  <span>{formatCurrency(downpaymentAmount)}</span>
+                  <span className="tabular-nums">{formatCurrency(downpaymentAmount)}</span>
                 </div>
               )}
               <PricingStatusBadge
                 notice={pricingNotice}
                 isLoading={calculatePricing.isPending}
                 className="mt-2"
-                size="sm"
               />
             </div>
           </CardContent>
@@ -493,150 +468,86 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
 
   const renderStep2 = () => (
     <div className="space-y-6">
-      <FormField
+      <WalkInField
         control={form.control}
-        name="is_walk_in"
-        render={({ field }) => (
-          <FormItem className="bg-muted/40 flex flex-row items-start gap-3 rounded-md border p-4">
-            <FormControl>
-              <Checkbox
-                checked={field.value ?? false}
-                onCheckedChange={(checked) => field.onChange(checked === true)}
-                className="mt-1"
-              />
-            </FormControl>
-            <div className="space-y-1 leading-none">
-              <FormLabel className="text-base font-medium sm:text-sm">Walk-in booking</FormLabel>
-              <FormDescription className="text-sm">
-                Check this if the guest arrived on-site without a prior reservation. Reporting flag
-                only — does not change pricing, payment, or confirmation behavior.
-              </FormDescription>
-            </div>
-          </FormItem>
-        )}
+        description="Check this if the guest arrived on-site without a prior reservation. Reporting flag only — does not change pricing, payment, or confirmation behavior."
       />
 
-      <FormField
-        control={form.control}
-        name="guest_name"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="text-base font-medium sm:text-sm">Full Name</FormLabel>
-            <FormControl>
-              <Input
-                placeholder="Enter guest's full name"
-                className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm"
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <FormField control={form.control} name="guest_name" label="Full Name">
+        {(field) => <Input placeholder="Enter guest's full name" autoComplete="off" {...field} />}
+      </FormField>
 
       <FormField
         control={form.control}
         name="email"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="text-base font-medium sm:text-sm">
-              Email Address (Optional)
-            </FormLabel>
-            <FormControl>
-              <Input
-                type="email"
-                placeholder="guest@example.com"
-                className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm"
-                autoComplete="email"
-                {...field}
-              />
-            </FormControl>
-            <FormDescription className="text-sm">
-              If provided, booking confirmation will be sent to this email
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
+        label="Email Address (Optional)"
+        description="If provided, booking confirmation will be sent to this email"
+      >
+        {(field) => (
+          <Input
+            type="email"
+            placeholder="guest@example.com"
+            autoComplete="email"
+            spellCheck={false}
+            {...field}
+          />
         )}
-      />
+      </FormField>
 
       <FormField
         control={form.control}
         name="contact_number"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="text-base font-medium sm:text-sm">
-              Phone Number (Optional)
-            </FormLabel>
-            <FormControl>
-              <Input
-                type="tel"
-                placeholder="+639123456789 or 09123456789"
-                className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm"
-                autoComplete="tel"
-                {...field}
-              />
-            </FormControl>
-            <FormDescription className="text-sm">Philippine mobile numbers only</FormDescription>
-            <FormMessage />
-          </FormItem>
+        label="Phone Number (Optional)"
+        description="Philippine mobile numbers only"
+      >
+        {(field) => (
+          <Input
+            type="tel"
+            placeholder="+639123456789 or 09123456789"
+            autoComplete="tel"
+            {...field}
+          />
         )}
-      />
+      </FormField>
     </div>
   );
 
   const renderStep3 = () => (
     <div className="space-y-6">
-      <FormField
-        control={form.control}
-        name="payment_method"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="text-base font-medium sm:text-sm">Payment Method</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <FormControl>
-                <SelectTrigger className="h-12 touch-manipulation text-base sm:h-10 sm:text-sm">
-                  <SelectValue placeholder="Select payment method" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="GCash">
-                  <div className="flex items-center">
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    GCash
-                  </div>
-                </SelectItem>
-                <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
-                <SelectItem value="Cash">Cash</SelectItem>
-                <SelectItem value="Card">Credit/Debit Card</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
+      <FormField control={form.control} name="payment_method" label="Payment Method">
+        {(field) => (
+          <SelectControl
+            value={field.value}
+            onValueChange={field.onChange}
+            placeholder="Select payment method"
+          >
+            <SelectItem value="GCash">
+              <div className="flex items-center">
+                <CreditCard className="mr-2 size-4" aria-hidden="true" />
+                GCash
+              </div>
+            </SelectItem>
+            <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
+            <SelectItem value="Cash">Cash</SelectItem>
+            <SelectItem value="Card">Credit/Debit Card</SelectItem>
+          </SelectControl>
         )}
-      />
+      </FormField>
 
       <FormField
         control={form.control}
         name="special_requests"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="text-base font-medium sm:text-sm">
-              Special Requests (Optional)
-            </FormLabel>
-            <FormControl>
-              <Textarea
-                placeholder="Any special requests or notes for your stay..."
-                className="min-h-[120px] touch-manipulation resize-none text-base sm:min-h-[100px] sm:text-sm"
-                {...field}
-              />
-            </FormControl>
-            <FormDescription className="text-sm">
-              Let us know if you have any specific requirements
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
+        label="Special Requests (Optional)"
+        description="Let us know if you have any specific requirements"
+      >
+        {(field) => (
+          <Textarea
+            placeholder="Any special requests or notes for your stay..."
+            className="min-h-28 resize-none"
+            {...field}
+          />
         )}
-      />
+      </FormField>
     </div>
   );
 
@@ -707,7 +618,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
                     {Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))}{" "}
                     nights)
                   </span>
-                  <span>
+                  <span className="tabular-nums">
                     {formatCurrency(
                       (() => {
                         const nights = Math.ceil(
@@ -739,7 +650,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
                       Extra person ({numGuests - selectedUnit.base_occupancy} ×{" "}
                       {formatCurrency(selectedUnit.extra_person_rate)})
                     </span>
-                    <span>
+                    <span className="tabular-nums">
                       {formatCurrency(
                         (numGuests - selectedUnit.base_occupancy) *
                           selectedUnit.extra_person_rate *
@@ -758,15 +669,15 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
 
           <div className="flex items-center justify-between text-lg font-semibold">
             <span>Total Amount:</span>
-            <span>{formatCurrency(calculatedTotal)}</span>
+            <span className="tabular-nums">{formatCurrency(calculatedTotal)}</span>
           </div>
           {downpaymentAmount > 0 && (
             <div className="text-muted-foreground flex items-center justify-between text-sm">
               <span>Downpayment Required:</span>
-              <span>{formatCurrency(downpaymentAmount)}</span>
+              <span className="tabular-nums">{formatCurrency(downpaymentAmount)}</span>
             </div>
           )}
-          <PricingStatusBadge notice={pricingNotice} className="mt-3" size="md" />
+          <PricingStatusBadge notice={pricingNotice} className="mt-3" />
         </CardContent>
       </Card>
     </div>
@@ -777,13 +688,13 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
   // Show loading skeleton while units are loading
   if (unitsLoading) {
     return (
-      <Card className={cn("mx-auto w-full max-w-2xl", className)}>
-        <CardHeader className="px-4 sm:px-6">
+      <Card className={cn("@container mx-auto w-full max-w-2xl", className)}>
+        <CardHeader className="px-4 @md:px-6">
           <div className="text-center">
-            <CardTitle className="text-xl font-semibold sm:text-lg">Create New Booking</CardTitle>
+            <CardTitle className="text-xl font-semibold @md:text-lg">Create New Booking</CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="px-4 sm:px-6">
+        <CardContent className="px-4 @md:px-6">
           <FormSkeleton steps={4} currentStep={currentStep} label="Loading booking form" />
         </CardContent>
       </Card>
@@ -791,11 +702,11 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
   }
 
   return (
-    <Card className={cn("mx-auto w-full max-w-2xl", className)}>
-      <CardHeader className="px-4 sm:px-6">
+    <Card className={cn("@container mx-auto w-full max-w-2xl", className)}>
+      <CardHeader className="px-4 @md:px-6">
         <div className="text-center">
-          <CardTitle className="text-xl sm:text-2xl">Create New Booking</CardTitle>
-          <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+          <CardTitle className="text-xl @md:text-2xl">Create New Booking</CardTitle>
+          <p className="text-muted-foreground mt-2 text-sm @md:text-base">
             {STEP_DESCRIPTIONS[currentStep]}
           </p>
         </div>
@@ -803,7 +714,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
         <Progress value={getStepProgress()} className="h-2 w-full" />
       </CardHeader>
 
-      <CardContent className="px-4 sm:px-6">
+      <CardContent className="px-4 @md:px-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {currentStep === 1 && renderStep1()}
@@ -816,7 +727,8 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
                 type="button"
                 variant="outline"
                 onClick={currentStep === 1 ? onCancel : handlePreviousStep}
-                className="h-12 max-w-[140px] flex-1 touch-manipulation px-6 text-base sm:h-10 sm:text-sm"
+                size="lg"
+                className="max-w-36 flex-1"
               >
                 {currentStep === 1 ? "Cancel" : "Previous"}
               </Button>
@@ -826,7 +738,8 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
                   key="next-button"
                   type="button"
                   onClick={handleNextStep}
-                  className="h-12 max-w-[140px] flex-1 touch-manipulation px-6 text-base sm:h-10 sm:text-sm"
+                  size="lg"
+                  className="max-w-36 flex-1"
                 >
                   Next
                 </Button>
@@ -835,7 +748,8 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
                   key="submit-button"
                   type="submit"
                   disabled={createBookingMutation.isPending}
-                  className="h-12 max-w-[200px] flex-1 touch-manipulation px-6 text-base sm:h-10 sm:text-sm"
+                  size="lg"
+                  className="max-w-52 flex-1"
                 >
                   {createBookingMutation.isPending ? "Creating..." : "Confirm Booking"}
                 </Button>

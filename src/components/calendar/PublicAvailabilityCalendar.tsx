@@ -206,7 +206,7 @@ export function PublicAvailabilityCalendar() {
   const isNextMonthValid = validateMonth(nextMonth).valid;
 
   return (
-    <div className="border-border bg-card overflow-hidden rounded-lg border">
+    <div className="border-border bg-card @container overflow-hidden rounded-lg border">
       {/* Calendar Header with Title - Clean White with Border */}
       <div className="border-border bg-muted border-b">
         {/* Title Row */}
@@ -277,7 +277,7 @@ export function PublicAvailabilityCalendar() {
       </div>
 
       {/* Calendar Grid - Reduced Padding */}
-      <div className="p-2 sm:p-3">
+      <div className="p-2 @lg:p-3">
         <CalendarGrid
           availability={data.availability}
           currentMonth={currentMonth}
