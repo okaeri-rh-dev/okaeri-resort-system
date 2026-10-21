@@ -70,10 +70,6 @@ interface QueueFilters {
   dateRange: "all" | "today" | "week" | "month";
 }
 
-// ============================================
-// Rows
-// ============================================
-
 const toneByUrgency: Record<UrgencyLevel, StatusTone> = {
   critical: "danger",
   high: "warning",

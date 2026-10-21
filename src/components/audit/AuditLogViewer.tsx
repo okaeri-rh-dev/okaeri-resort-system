@@ -236,10 +236,6 @@ export function AuditLogViewer() {
   );
 }
 
-// ============================================
-// ROW PARTS
-// ============================================
-
 function ExpandButton({ isExpanded, onToggle }: { isExpanded: boolean; onToggle: () => void }) {
   return (
     <Button
