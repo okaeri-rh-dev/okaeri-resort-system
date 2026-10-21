@@ -1271,6 +1271,15 @@ export type Database = {
           proof_path: string;
         }[];
       };
+      anonymize_expired_guests: {
+        Args: { p_older_than?: string };
+        Returns: {
+          bookings_count: number;
+          failed_count: number;
+          guests_count: number;
+          proof_paths: string[];
+        }[];
+      };
       anonymize_guest: {
         Args: { p_guest_id: string };
         Returns: {
@@ -1344,6 +1353,12 @@ export type Database = {
       create_multi_unit_booking: {
         Args: { p_booking_data: Json; p_guest_id?: string; p_units: Json[] };
         Returns: string;
+      };
+      delete_guest: {
+        Args: { p_guest_id: string };
+        Returns: {
+          proof_path: string;
+        }[];
       };
       derive_booking_payment_status: { Args: { p_booking_id: string }; Returns: string };
       detach_audit_trigger: { Args: { p_table_name: string }; Returns: undefined };

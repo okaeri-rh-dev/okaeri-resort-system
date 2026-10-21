@@ -804,7 +804,7 @@ git commit -m "feat(db): anonymize a guest's personal data and audit rows in pla
 - Consumes: `anonymize_guest(uuid)`, `anonymize_booking(uuid)` from Task 1.
 - Produces: `public.anonymize_expired_guests(p_older_than interval DEFAULT '24 months') RETURNS TABLE(guests_count bigint, bookings_count bigint, failed_count bigint, proof_paths text[])`; `public.delete_guest(p_guest_id uuid) RETURNS TABLE(proof_path text)` (raises `PT404`, `PT409`). Clients can no longer `DELETE` from `guests`.
 
-- [ ] **Step 1: Append the failing tests**
+- [x] **Step 1: Append the failing tests**
 
 Append to `src/__tests__/database/guest-anonymization.test.ts`:
 
@@ -947,12 +947,12 @@ describe("delete_guest", () => {
 
 Note: `guestWithStay(3, "Confirmed")` has a past check-out, so the 409 comes from the Confirmed/CheckedIn rule of `delete_guest`, not from the future-booking rule.
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `npx vitest run src/__tests__/database/guest-anonymization.test.ts`
 Expected: FAIL (`anonymize_expired_guests` / `delete_guest` not found; policy count `1`).
 
-- [ ] **Step 3: Append to the migration**
+- [x] **Step 3: Append to the migration**
 
 ```sql
 -- Weekly job: guests whose last check-out (or creation, with no bookings) is past the window
@@ -1052,7 +1052,7 @@ GRANT EXECUTE ON FUNCTION public.anonymize_expired_guests(interval) TO service_r
 GRANT EXECUTE ON FUNCTION public.delete_guest(uuid) TO service_role;
 ```
 
-- [ ] **Step 4: Extend the rollback**
+- [x] **Step 4: Extend the rollback**
 
 In `supabase/rollbacks/20261021000000_rollback_guest_retention.sql`, right after `BEGIN;` add:
 
@@ -1063,11 +1063,11 @@ CREATE POLICY "guests_delete_manager" ON public.guests
     FOR DELETE TO authenticated USING (public.is_manager_or_above());
 ```
 
-- [ ] **Step 5: Update the RLS matrix**
+- [x] **Step 5: Update the RLS matrix**
 
 In `src/__tests__/database/rls-core-tables.test.ts:44` change the guests entry to `delete: []` and extend the comment above `MATRIX` with: `// guests DELETE has no client policy: deletes go through delete_guest (20261021000000).` Read how the test treats an empty role list before running; if it skips empty lists, add an explicit assertion that a manager's delete affects 0 rows.
 
-- [ ] **Step 6: Apply and run**
+- [x] **Step 6: Apply and run**
 
 ```bash
 npx supabase db reset
@@ -1078,7 +1078,7 @@ npx vitest run src/__tests__/database/rls-core-tables.test.ts
 
 Expected: all PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add supabase/migrations/20261021000000_guest_retention.sql supabase/rollbacks/20261021000000_rollback_guest_retention.sql \

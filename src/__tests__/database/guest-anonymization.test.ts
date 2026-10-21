@@ -218,3 +218,138 @@ describe("anonymize_guest", () => {
     ).toEqual([before]);
   });
 });
+
+describe("anonymize_expired_guests", () => {
+  it("anonymizes guests past the window, skips recent ones and open balances", async () => {
+    if (!canRun) return;
+    const settled = await guestWithStay(25);
+    await pay(settled.booking.booking_id, 5000);
+    const recent = await guestWithStay(23);
+    await pay(recent.booking.booking_id, 5000);
+    const partial = await guestWithStay(25);
+    await pay(partial.booking.booking_id, 1000);
+    const cancelledUnpaid = await guestWithStay(25, "Cancelled");
+
+    const { data, error } = await admin.rpc("anonymize_expired_guests");
+
+    expect(error).toBeNull();
+    expect(data?.[0]?.failed_count).toBe(0);
+    const names = runPsql(`
+      SELECT guest_id || '|' || guest_name FROM public.guests
+      WHERE guest_id IN ('${settled.guest.guest_id}', '${recent.guest.guest_id}',
+                         '${partial.guest.guest_id}', '${cancelledUnpaid.guest.guest_id}');
+    `);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        `${settled.guest.guest_id}|Removed guest`,
+        `${recent.guest.guest_id}|${recent.guest.guest_name}`,
+        `${partial.guest.guest_id}|${partial.guest.guest_name}`,
+        `${cancelledUnpaid.guest.guest_id}|Removed guest`,
+      ])
+    );
+  });
+
+  it("anonymizes an orphan booking past the window", async () => {
+    if (!canRun) return;
+    const { booking } = await guestWithStay(25);
+    await pay(booking.booking_id, 5000);
+    runPsql(
+      `UPDATE public.bookings SET guest_id = NULL WHERE booking_id = '${booking.booking_id}';`
+    );
+
+    const { data, error } = await admin.rpc("anonymize_expired_guests");
+
+    expect(error).toBeNull();
+    expect(data?.[0]?.bookings_count).toBeGreaterThanOrEqual(1);
+    expect(
+      runPsql(`SELECT guest_name FROM public.bookings WHERE booking_id = '${booking.booking_id}';`)
+    ).toEqual(["Removed guest"]);
+  });
+
+  it("keeps going when one guest fails", async () => {
+    if (!canRun) return;
+    const good = await guestWithStay(25);
+    await pay(good.booking.booking_id, 5000);
+    const bad = await guestWithStay(25);
+    await pay(bad.booking.booking_id, 5000);
+    runPsql(`
+      CREATE FUNCTION public.test_fail_guest() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        IF OLD.guest_id = '${bad.guest.guest_id}' THEN RAISE EXCEPTION 'forced failure'; END IF;
+        RETURN NEW;
+      END $$;
+      CREATE TRIGGER test_fail_guest BEFORE UPDATE ON public.guests
+        FOR EACH ROW EXECUTE FUNCTION public.test_fail_guest();
+    `);
+    try {
+      const { data, error } = await admin.rpc("anonymize_expired_guests");
+
+      expect(error).toBeNull();
+      expect(data?.[0]?.failed_count).toBe(1);
+      expect(
+        runPsql(`SELECT guest_name FROM public.guests WHERE guest_id = '${good.guest.guest_id}';`)
+      ).toEqual(["Removed guest"]);
+      expect(
+        runPsql(
+          `SELECT guest_name FROM public.bookings WHERE booking_id = '${bad.booking.booking_id}';`
+        )
+      ).toEqual([bad.guest.guest_name]);
+    } finally {
+      runPsql(`
+        DROP TRIGGER test_fail_guest ON public.guests;
+        DROP FUNCTION public.test_fail_guest();
+      `);
+    }
+  });
+});
+
+describe("delete_guest", () => {
+  it("anonymizes the guest's bookings, then deletes the guest", async () => {
+    if (!canRun) return;
+    const { guest, booking } = await guestWithStay(3);
+
+    const { error } = await admin.rpc("delete_guest", { p_guest_id: guest.guest_id });
+
+    expect(error).toBeNull();
+    expect(
+      runPsql(`SELECT count(*) FROM public.guests WHERE guest_id = '${guest.guest_id}';`)
+    ).toEqual(["0"]);
+    expect(
+      runPsql(
+        `SELECT guest_name || '|' || coalesce(guest_id::text, 'null') FROM public.bookings WHERE booking_id = '${booking.booking_id}';`
+      )
+    ).toEqual(["Removed guest|null"]);
+    expect(auditRowsMentioning(guest.email!)).toBe(0);
+  });
+
+  it("refuses a guest with a confirmed booking", async () => {
+    if (!canRun) return;
+    const { guest } = await guestWithStay(3, "Confirmed");
+
+    const { error } = await admin.rpc("delete_guest", { p_guest_id: guest.guest_id });
+
+    expect(error?.code).toBe("PT409");
+  });
+
+  it("clients can no longer delete guests directly", () => {
+    if (!canRun) return;
+    expect(
+      runPsql(
+        `SELECT count(*) FROM pg_policies WHERE schemaname = 'public' AND tablename = 'guests' AND cmd = 'DELETE';`
+      )
+    ).toEqual(["0"]);
+  });
+
+  it("only the service role can execute the batch and delete functions", () => {
+    if (!canRun) return;
+    for (const fn of ["public.anonymize_expired_guests(interval)", "public.delete_guest(uuid)"]) {
+      expect(
+        runPsql(`
+          SELECT has_function_privilege('anon', '${fn}', 'EXECUTE'),
+                 has_function_privilege('authenticated', '${fn}', 'EXECUTE'),
+                 has_function_privilege('service_role', '${fn}', 'EXECUTE');
+        `)
+      ).toEqual(["f|f|t"]);
+    }
+  });
+});

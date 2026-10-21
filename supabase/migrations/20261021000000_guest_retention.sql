@@ -212,3 +212,99 @@ REVOKE ALL ON FUNCTION public.anonymize_booking(uuid) FROM public, anon, authent
 REVOKE ALL ON FUNCTION public.anonymize_guest(uuid) FROM public, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.anonymize_booking(uuid) TO service_role;
 GRANT EXECUTE ON FUNCTION public.anonymize_guest(uuid) TO service_role;
+
+-- Weekly job: guests whose last check-out (or creation, with no bookings) is past the window
+-- and who have no open balance; then bookings with no guest row, on their own check-out.
+-- Each guest runs in its own subtransaction, so one failure does not stop the rest.
+CREATE OR REPLACE FUNCTION public.anonymize_expired_guests(p_older_than interval DEFAULT interval '24 months')
+RETURNS TABLE(guests_count bigint, bookings_count bigint, failed_count bigint, proof_paths text[])
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+    v_cutoff timestamptz := now() - p_older_than;
+    v_id uuid;
+    v_guests bigint := 0;
+    v_bookings bigint := 0;
+    v_failed bigint := 0;
+    v_paths text[] := '{}';
+BEGIN
+    FOR v_id IN
+        SELECT g.guest_id FROM public.guests g
+        WHERE g.anonymized_at IS NULL
+          AND COALESCE(
+                (SELECT max(b.check_out) FROM public.bookings b WHERE b.guest_id = g.guest_id),
+                g.created_at
+              ) < v_cutoff
+          AND NOT EXISTS (
+                SELECT 1 FROM public.bookings b
+                WHERE b.guest_id = g.guest_id
+                  AND COALESCE(b.payment_status, '') IN ('Pending', 'Partial')
+                  AND b.booking_status IS DISTINCT FROM 'Cancelled')
+    LOOP
+        BEGIN
+            v_paths := v_paths || ARRAY(SELECT a.proof_path FROM public.anonymize_guest(v_id) a);
+            v_guests := v_guests + 1;
+        EXCEPTION WHEN OTHERS THEN
+            v_failed := v_failed + 1;
+            RAISE WARNING 'anonymize_guest(%) failed: %', v_id, SQLERRM;
+        END;
+    END LOOP;
+
+    FOR v_id IN
+        SELECT b.booking_id FROM public.bookings b
+        WHERE b.guest_id IS NULL
+          AND b.anonymized_at IS NULL
+          AND b.check_out < v_cutoff
+          AND NOT (COALESCE(b.payment_status, '') IN ('Pending', 'Partial')
+                   AND b.booking_status IS DISTINCT FROM 'Cancelled')
+    LOOP
+        BEGIN
+            v_paths := v_paths || ARRAY(SELECT a.proof_path FROM public.anonymize_booking(v_id) a);
+            v_bookings := v_bookings + 1;
+        EXCEPTION WHEN OTHERS THEN
+            v_failed := v_failed + 1;
+            RAISE WARNING 'anonymize_booking(%) failed: %', v_id, SQLERRM;
+        END;
+    END LOOP;
+
+    RETURN QUERY SELECT v_guests, v_bookings, v_failed, v_paths;
+END;
+$$;
+
+-- Guest delete always scrubs first: a bare DELETE left the name and contact on the
+-- bookings (guest_id is ON DELETE SET NULL) and in the audit trail.
+CREATE OR REPLACE FUNCTION public.delete_guest(p_guest_id uuid)
+RETURNS TABLE(proof_path text)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+    v_paths text[];
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM public.bookings b
+        WHERE b.guest_id = p_guest_id AND b.booking_status IN ('Confirmed', 'CheckedIn')
+    ) THEN
+        RAISE EXCEPTION 'Guest % has active bookings', p_guest_id USING ERRCODE = 'PT409';
+    END IF;
+
+    v_paths := ARRAY(SELECT a.proof_path FROM public.anonymize_guest(p_guest_id) a);
+
+    -- guest_assignments.guest_id is ON DELETE RESTRICT
+    DELETE FROM public.guest_assignments WHERE guest_id = p_guest_id;
+    DELETE FROM public.guests WHERE guest_id = p_guest_id;
+
+    RETURN QUERY SELECT unnest(v_paths);
+END;
+$$;
+
+-- Deletes go through delete_guest (service role) so they cannot skip the scrub.
+DROP POLICY IF EXISTS "guests_delete_manager" ON public.guests;
+
+REVOKE ALL ON FUNCTION public.anonymize_expired_guests(interval) FROM public, anon, authenticated;
+REVOKE ALL ON FUNCTION public.delete_guest(uuid) FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.anonymize_expired_guests(interval) TO service_role;
+GRANT EXECUTE ON FUNCTION public.delete_guest(uuid) TO service_role;

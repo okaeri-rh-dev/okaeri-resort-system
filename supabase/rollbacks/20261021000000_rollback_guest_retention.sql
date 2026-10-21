@@ -10,6 +10,11 @@
 
 BEGIN;
 
+DROP FUNCTION IF EXISTS public.delete_guest(uuid);
+DROP FUNCTION IF EXISTS public.anonymize_expired_guests(interval);
+CREATE POLICY "guests_delete_manager" ON public.guests
+    FOR DELETE TO authenticated USING (public.is_manager_or_above());
+
 DROP FUNCTION IF EXISTS public.anonymize_guest(uuid);
 DROP FUNCTION IF EXISTS public.anonymize_booking(uuid);
 DROP FUNCTION IF EXISTS public._payment_proof_path(text);
