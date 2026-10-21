@@ -65,6 +65,8 @@ const paymentMethodsTable = () => supabase.from("payment_methods");
 
 const expenseCategoriesTable = () => supabase.from("expense_categories");
 
+const contactChannelsTable = () => supabase.from("contact_channels");
+
 // Type for PostgrestError from Supabase
 interface PostgrestError {
   message: string;
@@ -1097,6 +1099,16 @@ export const db = {
     /** Reactivate a payment method */
     reactivate: (id: string) =>
       paymentMethodsTable().update({ is_active: true }).eq("id", id).select().single(),
+  },
+
+  // Contact channels (guest-facing contact list, managed on admin Settings)
+  contactChannels: {
+    /** Get active contact channels in display order (guest pages) */
+    active: () =>
+      contactChannelsTable()
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true }),
   },
 
   // Expense Categories configuration (expense form dropdowns)
