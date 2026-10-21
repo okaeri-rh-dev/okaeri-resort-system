@@ -1,5 +1,5 @@
 /**
- * Contact channels: RLS per role and the table's constraints.
+ * Contact channels: RLS per role, the table's constraints and reordering.
  *
  * Requires a local Supabase (supabase start).
  *
@@ -158,5 +158,78 @@ describe("contact_channels", () => {
       .insert({ kind: "messenger", value: nextHandle(), label: "x".repeat(41) });
 
     expect(error?.code).toBe("23514");
+  });
+
+  it("appends a new channel after the last one", async () => {
+    if (!shouldRun) return;
+    const { data: last } = await admin
+      .from("contact_channels")
+      .select("display_order")
+      .order("display_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const created = await createChannel(true);
+
+    expect(created.display_order).toBe((last?.display_order ?? -1) + 1);
+  });
+
+  describe("reorder_contact_channel", () => {
+    async function orderOf(...ids: string[]) {
+      const { data } = await admin
+        .from("contact_channels")
+        .select("id, display_order")
+        .in("id", ids);
+      return ids.map((id) => data?.find((row) => row.id === id)?.display_order);
+    }
+
+    it.each(MANAGER_PLUS)("%s swaps a channel with the one above it", async (role) => {
+      if (!shouldRun) return;
+      const upper = await createChannel(true);
+      const lower = await createChannel(false);
+
+      const { error } = await roles.byRole[role].rpc("reorder_contact_channel", {
+        p_id: lower.id,
+        p_direction: "up",
+      });
+
+      expect(error).toBeNull();
+      const [upperOrder, lowerOrder] = await orderOf(upper.id, lower.id);
+      expect(lowerOrder! + 1).toBe(upperOrder);
+    });
+
+    it("leaves the order alone when the last channel moves down", async () => {
+      if (!shouldRun) return;
+      const upper = await createChannel(true);
+      const lower = await createChannel(true);
+      const before = await orderOf(upper.id, lower.id);
+
+      const { error } = await roles.byRole.manager.rpc("reorder_contact_channel", {
+        p_id: lower.id,
+        p_direction: "down",
+      });
+
+      expect(error).toBeNull();
+      expect(await orderOf(upper.id, lower.id)).toEqual(before);
+    });
+
+    it.each(["staff", "anon"] as const)(
+      "%s cannot reorder, and neither row changes",
+      async (role) => {
+        if (!shouldRun) return;
+        const upper = await createChannel(true);
+        const lower = await createChannel(true);
+        const before = await orderOf(upper.id, lower.id);
+        const client = role === "anon" ? roles.anon : roles.byRole.staff;
+
+        const { error } = await client.rpc("reorder_contact_channel", {
+          p_id: lower.id,
+          p_direction: "up",
+        });
+
+        expect(error?.code).toBe("42501");
+        expect(await orderOf(upper.id, lower.id)).toEqual(before);
+      }
+    );
   });
 });

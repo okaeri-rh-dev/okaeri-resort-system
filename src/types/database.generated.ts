@@ -1510,6 +1510,7 @@ export type Database = {
           month_archived: string;
         }[];
       };
+      next_contact_channel_order: { Args: Record<PropertyKey, never>; Returns: number };
       normalize_booking_stays: {
         Args: { p_check_in_time?: string; p_check_out_time?: string };
         Returns: {
@@ -1518,6 +1519,7 @@ export type Database = {
         }[];
       };
       refresh_booking_payment_status: { Args: { p_booking_id: string }; Returns: undefined };
+      reorder_contact_channel: { Args: { p_direction: string; p_id: string }; Returns: undefined };
       restore_logs_from_archive: {
         Args: { end_date: string; start_date: string };
         Returns: number;
