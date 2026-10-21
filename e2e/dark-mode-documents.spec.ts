@@ -1,7 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { loginAsAdmin } from "./fixtures/auth";
-import { findLowContrastText } from "./fixtures/contrast";
+import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
 
 /**
  * Dark mode is readable on the document generator (#107): the form, the letterhead settings
@@ -9,17 +9,7 @@ import { findLowContrastText } from "./fixtures/contrast";
  * admin; the document itself lives in the browser, so no fixtures are touched.
  */
 
-const COMPACT = { width: 390, height: 844 };
 const TABLET = { width: 1000, height: 900 };
-const EXPANDED = { width: 1280, height: 900 };
-
-async function useDarkTheme(page: Page) {
-  await page.addInitScript(() => localStorage.setItem("theme", "dark"));
-}
-
-async function expectReadable(page: Page, root: string) {
-  expect(await findLowContrastText(page, root)).toEqual([]);
-}
 
 function visible(page: Page, selector: string): Locator {
   return page.locator(`${selector} >> visible=true`).first();

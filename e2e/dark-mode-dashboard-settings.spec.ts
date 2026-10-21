@@ -1,7 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { loginAsAdmin } from "./fixtures/auth";
-import { findLowContrastText } from "./fixtures/contrast";
+import { COMPACT, EXPANDED, expectReadable, useTheme } from "./fixtures/contrast";
 
 /**
  * The dashboard and settings screens read in light and dark (#110): no text under WCAG AA
@@ -10,8 +10,6 @@ import { findLowContrastText } from "./fixtures/contrast";
  * database holds; settings use the seeded payment methods and expense categories.
  */
 
-const COMPACT = { width: 390, height: 844 };
-const EXPANDED = { width: 1280, height: 900 };
 const THEMES = ["light", "dark"] as const;
 
 const isoDay = (offsetDays: number) => {
@@ -105,10 +103,6 @@ async function stubBookings(page: Page) {
 /** The dashboard renders its mobile and desktop layouts together and hides one with CSS. */
 const visible = (locator: Locator) => locator.locator("visible=true").first();
 
-async function expectReadable(page: Page, root = "main") {
-  expect(await findLowContrastText(page, root)).toEqual([]);
-}
-
 test.describe("Dashboard and settings read in light and dark", () => {
   test.beforeEach(() => {
     if (!process.env.TEST_ADMIN_EMAIL || !process.env.TEST_ADMIN_PASSWORD) test.skip();
@@ -117,7 +111,7 @@ test.describe("Dashboard and settings read in light and dark", () => {
   for (const theme of THEMES) {
     test.describe(theme, () => {
       test.beforeEach(async ({ page }) => {
-        await page.addInitScript((value) => localStorage.setItem("theme", value), theme);
+        await useTheme(page, theme);
       });
 
       test("desktop dashboard", async ({ page }) => {

@@ -1,7 +1,7 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { loginAsAdmin } from "./fixtures/auth";
-import { findLowContrastText } from "./fixtures/contrast";
+import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
 
 /**
  * Dark mode is readable on the markup the admin route files draw themselves (#104): the
@@ -10,8 +10,6 @@ import { findLowContrastText } from "./fixtures/contrast";
  * errorComponent renders regardless of what the shared database holds.
  */
 
-const COMPACT = { width: 390, height: 844 };
-const EXPANDED = { width: 1280, height: 900 };
 const MISSING_ID = "00000000-0000-4000-8000-00000000dead";
 // The query client retries a failed detail fetch before the errorComponent shows.
 const ERROR_SCREEN_WAIT = { timeout: 30_000 };
@@ -28,14 +26,6 @@ const DETAIL_ROUTES = [
   { path: `/admin/units/${MISSING_ID}`, heading: "Failed to Load Cabin" },
   { path: `/admin/units/${MISSING_ID}/edit`, heading: "Failed to Load Cabin Editor" },
 ];
-
-async function useDarkTheme(page: Page) {
-  await page.addInitScript(() => localStorage.setItem("theme", "dark"));
-}
-
-async function expectReadable(page: Page, root = "main") {
-  expect(await findLowContrastText(page, root)).toEqual([]);
-}
 
 test.describe("Dark mode admin routes", () => {
   test.beforeEach(async ({ page }) => {

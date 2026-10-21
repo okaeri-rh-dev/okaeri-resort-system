@@ -1,24 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { E2E_USER } from "../scripts/e2e/fixtures";
-import { findLowContrastText } from "./fixtures/contrast";
+import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
 import { LoginPage } from "./pages/LoginPage";
 
 /**
  * Dark mode is readable on the app shell, the public pages and the shared fallbacks (#103):
  * the login page, the PWA install banner, the error screens and the legal pages.
  */
-
-const COMPACT = { width: 390, height: 844 };
-const EXPANDED = { width: 1280, height: 900 };
-
-async function useDarkTheme(page: Page) {
-  await page.addInitScript(() => localStorage.setItem("theme", "dark"));
-}
-
-async function expectReadable(page: Page, root = "body") {
-  expect(await findLowContrastText(page, root)).toEqual([]);
-}
 
 /**
  * Serves a component module that throws on render, so the nearest `ErrorBoundary` shows its
@@ -59,7 +48,7 @@ test.describe("Dark mode app shell", () => {
     await page.setViewportSize(COMPACT);
     await page.goto("/login");
     await expect(page.getByRole("button", { name: /sign in/i })).toBeVisible();
-    await expectReadable(page);
+    await expectReadable(page, "body");
   });
 
   test("PWA install banner reads in dark", async ({ page }) => {
@@ -78,14 +67,14 @@ test.describe("Dark mode app shell", () => {
     await page.setViewportSize(COMPACT);
     await page.goto("/privacy-policy");
     await expect(page.getByRole("heading", { name: /privacy policy/i }).first()).toBeVisible();
-    await expectReadable(page);
+    await expectReadable(page, "body");
   });
 
   test("terms and conditions read in dark on a phone", async ({ page }) => {
     await page.setViewportSize(COMPACT);
     await page.goto("/terms-and-conditions");
     await expect(page.getByRole("heading", { name: /terms/i }).first()).toBeVisible();
-    await expectReadable(page);
+    await expectReadable(page, "body");
   });
 });
 
@@ -99,7 +88,7 @@ test.describe("Dark mode error boundary fallbacks", () => {
     await forceRenderError(page, "src/components/auth/LoginForm.tsx", "LoginForm");
     await page.goto("/login");
     await expect(page.getByText("Component Error")).toBeVisible();
-    await expectReadable(page);
+    await expectReadable(page, "body");
   });
 
   test("page fallback in the admin layout reads in dark", async ({ page }) => {
@@ -112,7 +101,7 @@ test.describe("Dark mode error boundary fallbacks", () => {
     await page.goto("/admin/transfers?search=123");
     await expect(page.getByText("Page Error")).toBeVisible();
     await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
-    await expectReadable(page);
+    await expectReadable(page, "body");
   });
 
   test("app fallback reads in dark", async ({ page }) => {
@@ -120,6 +109,6 @@ test.describe("Dark mode error boundary fallbacks", () => {
     await page.goto("/login?registered=oops");
     await expect(page.getByText("Application Error")).toBeVisible();
     await expect(page.getByRole("button", { name: "Go Home" })).toBeVisible();
-    await expectReadable(page);
+    await expectReadable(page, "body");
   });
 });

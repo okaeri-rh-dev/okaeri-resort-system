@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { findLowContrastText } from "./fixtures/contrast";
+import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
 import { TEST_GUEST } from "./fixtures/test-data";
 import { BookingFormPage } from "./pages/BookingFormPage";
 
@@ -10,18 +10,7 @@ import { BookingFormPage } from "./pages/BookingFormPage";
  * so these tests need only the dev server and wrangler (for rates and pricing).
  */
 
-const COMPACT = { width: 390, height: 844 };
-const EXPANDED = { width: 1280, height: 900 };
-
 const CONFIRMATION_REF = "OKR-E2E-DARK";
-
-async function useDarkTheme(page: Page) {
-  await page.addInitScript(() => localStorage.setItem("theme", "dark"));
-}
-
-async function expectReadable(page: Page, root = "main") {
-  expect(await findLowContrastText(page, root)).toEqual([]);
-}
 
 async function stubConfirmation(page: Page) {
   await page.route(`**/api/guest-booking/${CONFIRMATION_REF}`, (route) =>

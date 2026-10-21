@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { loginAsAdmin } from "./fixtures/auth";
-import { findLowContrastText } from "./fixtures/contrast";
+import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
 
 /**
  * Dark mode is readable on the accounts, transfers and expenses screens (#108): no text under
@@ -9,9 +9,6 @@ import { findLowContrastText } from "./fixtures/contrast";
  * expense are stubbed so money in, money out and a negative balance render whatever the shared
  * database holds.
  */
-
-const COMPACT = { width: 390, height: 844 };
-const EXPANDED = { width: 1280, height: 900 };
 
 const account = (
   id: string,
@@ -132,14 +129,10 @@ async function stubExpense(page: Page) {
   );
 }
 
-async function expectReadable(page: Page, root = "main") {
-  expect(await findLowContrastText(page, root)).toEqual([]);
-}
-
 test.describe("Dark mode accounts, transfers and expenses", () => {
   test.beforeEach(async ({ page }) => {
     if (!process.env.TEST_ADMIN_EMAIL || !process.env.TEST_ADMIN_PASSWORD) test.skip();
-    await page.addInitScript(() => localStorage.setItem("theme", "dark"));
+    await useDarkTheme(page);
   });
 
   for (const viewport of [EXPANDED, COMPACT]) {

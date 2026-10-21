@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { loginAsAdmin } from "./fixtures/auth";
-import { findLowContrastText } from "./fixtures/contrast";
+import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
 
 /**
  * Dark mode is readable on the cabin and pricing screens (#109): no text under WCAG AA against
@@ -9,9 +9,6 @@ import { findLowContrastText } from "./fixtures/contrast";
  * discount rules are stubbed so every badge colour and discount type renders regardless of what
  * the shared database holds.
  */
-
-const COMPACT = { width: 390, height: 844 };
-const EXPANDED = { width: 1280, height: 900 };
 
 const SEED_CABIN_ID = "b88857ce-bbc1-474b-ac02-86e8a416c22e";
 
@@ -77,14 +74,10 @@ async function stubPricingRules(page: Page) {
   );
 }
 
-async function expectReadable(page: Page, root = "main") {
-  expect(await findLowContrastText(page, root)).toEqual([]);
-}
-
 test.describe("Dark mode cabin and pricing screens", () => {
   test.beforeEach(async ({ page }) => {
     if (!process.env.TEST_ADMIN_EMAIL || !process.env.TEST_ADMIN_PASSWORD) test.skip();
-    await page.addInitScript(() => localStorage.setItem("theme", "dark"));
+    await useDarkTheme(page);
   });
 
   for (const viewport of [EXPANDED, COMPACT]) {

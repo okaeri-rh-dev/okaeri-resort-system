@@ -7,7 +7,7 @@ import {
   E2E_REF,
   E2E_USER,
 } from "../scripts/e2e/fixtures";
-import { findLowContrastText } from "./fixtures/contrast";
+import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
 import { LoginPage } from "./pages/LoginPage";
 
 /**
@@ -16,19 +16,12 @@ import { LoginPage } from "./pages/LoginPage";
  * Needs the E2E-* fixtures (`npm run seed:e2e`).
  */
 
-const COMPACT = { width: 390, height: 844 };
-const EXPANDED = { width: 1280, height: 900 };
-
 async function loginInDark(page: Page, viewport: typeof COMPACT) {
-  await page.addInitScript(() => localStorage.setItem("theme", "dark"));
+  await useDarkTheme(page);
   await page.setViewportSize(viewport);
   const loginPage = new LoginPage(page);
   await loginPage.goto();
   await loginPage.loginAndWaitForDashboard(E2E_USER.email, E2E_USER.password);
-}
-
-async function expectReadable(page: Page, root = "main") {
-  expect(await findLowContrastText(page, root)).toEqual([]);
 }
 
 async function openBookingDetail(page: Page, bookingReference: string) {
@@ -92,7 +85,10 @@ test.describe("Dark mode bookings and guests", () => {
   test("multi-cabin booking reads in dark", async ({ page }) => {
     await loginInDark(page, EXPANDED);
     await page.goto("/admin/bookings/new-multi");
-    await page.getByRole("button", { name: /^Add .* to booking$/ }).first().click();
+    await page
+      .getByRole("button", { name: /^Add .* to booking$/ })
+      .first()
+      .click();
     await expect(page.getByRole("region", { name: "Pricing summary" })).toBeVisible();
     await expectReadable(page);
   });

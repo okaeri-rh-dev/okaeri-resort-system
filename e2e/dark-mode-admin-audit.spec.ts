@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { loginAsAdmin } from "./fixtures/auth";
-import { findLowContrastText } from "./fixtures/contrast";
+import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
 
 /**
  * Dark mode is readable on the role management, booking queue, payment verification and audit
@@ -9,9 +9,6 @@ import { findLowContrastText } from "./fixtures/contrast";
  * seeded admin; queue, booking, proof and role-history data are stubbed so every urgency,
  * payment state and change type renders regardless of what the shared database holds.
  */
-
-const COMPACT = { width: 390, height: 844 };
-const EXPANDED = { width: 1280, height: 900 };
 
 const roleHistoryEntry = (
   action: "INSERT" | "UPDATE" | "DELETE",
@@ -113,14 +110,10 @@ async function stubBookingWithProof(page: Page, paymentStatus: "Pending" | "Comp
   return booking.booking_id;
 }
 
-async function expectReadable(page: Page, root = "main") {
-  expect(await findLowContrastText(page, root)).toEqual([]);
-}
-
 test.describe("Dark mode admin and audit screens", () => {
   test.beforeEach(async ({ page }) => {
     if (!process.env.TEST_ADMIN_EMAIL || !process.env.TEST_ADMIN_PASSWORD) test.skip();
-    await page.addInitScript(() => localStorage.setItem("theme", "dark"));
+    await useDarkTheme(page);
   });
 
   for (const viewport of [EXPANDED, COMPACT]) {
