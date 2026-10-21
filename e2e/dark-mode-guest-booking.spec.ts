@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import type { StatusResponse } from "../src/lib/schema-transform";
 import { seedConfirmation } from "./fixtures/confirmation";
 import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
 import { TEST_GUEST } from "./fixtures/test-data";
@@ -17,15 +18,20 @@ async function stubStatusLookup(page: Page) {
   await page.route("**/api/guest-booking/status", (route) =>
     route.fulfill({
       json: {
-        booking_id: "00000000-0000-0000-0000-00000000da7c",
         booking_reference: CONFIRMATION_REF,
-        booking_status: "Pending",
+        status: "Pending",
         payment_status: "Pending",
-        check_in: "2026-12-04",
-        check_out: "2026-12-06",
+        check_in: "2026-12-04T06:00:00+00:00",
+        check_out: "2026-12-06T04:00:00+00:00",
         total_amount: 13000,
-        unit: { unit_name: "To be assigned", unit_type: "Cabin" },
-      },
+        num_guests: 6,
+        unit_name: "",
+        unit_type: "",
+        created_at: "2026-10-21T02:00:00+00:00",
+        upload_status: "pending",
+        special_requests: null,
+        message: "Your booking is pending payment verification. We'll confirm within 24 hours.",
+      } satisfies StatusResponse,
     })
   );
 }

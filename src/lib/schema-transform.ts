@@ -37,11 +37,7 @@ export function transformToAPIFormat(formData: GuestBookingFormData): Record<str
     // File metadata extraction (don't send File object)
     file_name: formData.payment_proof.name,
     file_type: formData.payment_proof.type as
-      | "image/jpeg"
-      | "image/png"
-      | "image/jpg"
-      | "image/webp"
-      | "application/pdf",
+      "image/jpeg" | "image/png" | "image/jpg" | "image/webp" | "application/pdf",
     file_size: formData.payment_proof.size,
 
     // CAPTCHA token (added separately in form submission)
@@ -76,20 +72,23 @@ export function validateAPIResponse(data: unknown): ApiResponse {
 }
 
 /**
- * Guest booking status check response schema
+ * Guest booking status check response schema, the body of POST /api/guest-booking/status.
+ * `unit_name` and `unit_type` are comma-joined and empty until cabins are assigned.
  */
 export const statusResponseSchema = z.object({
-  booking_id: z.string().uuid(),
   booking_reference: z.string(),
-  booking_status: z.string(),
-  payment_status: z.string(),
+  status: z.string().nullable(),
+  payment_status: z.string().nullable(),
   check_in: z.string(),
   check_out: z.string(),
   total_amount: z.number(),
-  unit: z.object({
-    unit_name: z.string(),
-    unit_type: z.string(),
-  }),
+  num_guests: z.number(),
+  unit_name: z.string(),
+  unit_type: z.string(),
+  created_at: z.string().nullable(),
+  upload_status: z.string(),
+  special_requests: z.string().nullable(),
+  message: z.string(),
 });
 
 export type StatusResponse = z.infer<typeof statusResponseSchema>;

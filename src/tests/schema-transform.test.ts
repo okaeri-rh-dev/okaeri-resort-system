@@ -160,24 +160,26 @@ describe("Schema Transformation Utilities", () => {
   describe("validateStatusResponse", () => {
     it("should validate correct status response", () => {
       const response = {
-        booking_id: "123e4567-e89b-12d3-a456-426614174000",
-        booking_reference: "BK-2025-ABCD",
-        booking_status: "Confirmed",
+        booking_reference: "BK-202502-ABCD12",
+        status: "Confirmed",
         payment_status: "Completed",
         check_in: "2025-02-15T06:00:00.000Z",
         check_out: "2025-02-18T04:00:00.000Z",
         total_amount: 5000,
-        unit: {
-          unit_name: "Deluxe Room 101",
-          unit_type: "Deluxe",
-        },
+        num_guests: 2,
+        unit_name: "Cabin 1",
+        unit_type: "Cabin",
+        created_at: "2025-02-01T00:00:00.000Z",
+        upload_status: "pending",
+        special_requests: null,
+        message: "Your booking is confirmed!",
       };
 
       const validated = validateStatusResponse(response);
 
-      expect(validated.booking_reference).toBe("BK-2025-ABCD");
-      expect(validated.booking_status).toBe("Confirmed");
-      expect(validated.unit.unit_name).toBe("Deluxe Room 101");
+      expect(validated.booking_reference).toBe("BK-202502-ABCD12");
+      expect(validated.status).toBe("Confirmed");
+      expect(validated.unit_name).toBe("Cabin 1");
     });
 
     it("should throw error for missing fields", () => {
