@@ -161,7 +161,6 @@ export function ResetPasswordForm() {
               placeholder="Enter new password"
               required
               minLength={8}
-              autoFocus
             />
             <PasswordStrengthIndicator password={password} className="mt-2" />
           </div>
