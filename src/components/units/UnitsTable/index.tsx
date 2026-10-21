@@ -116,8 +116,7 @@ function UnitsTableComponent({
         }
       />
 
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <TablePagination table={table as any} totalItems={units.length} />
+      <TablePagination table={table} totalItems={units.length} />
     </div>
   );
 }
