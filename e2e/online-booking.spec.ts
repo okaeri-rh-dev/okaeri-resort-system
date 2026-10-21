@@ -9,6 +9,9 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { loginAsAdmin } from "./fixtures/auth";
 
+/** Set before the confirm click; still true after it only if the app navigated in place. */
+type MarkedWindow = Window & { sameDocument?: boolean };
+
 // 1x1 PNG, accepted by the payment-proofs bucket (image/*)
 const PNG_1X1 = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
@@ -102,15 +105,13 @@ test.describe("Online booking: verify then assign", () => {
     await expect(confirmDialog).not.toContainText(bookingId);
 
     await page.evaluate(() => {
-      (window as Window & { sameDocument?: boolean }).sameDocument = true;
+      (window as MarkedWindow).sameDocument = true;
     });
     await confirmDialog.getByRole("button", { name: "Assign Cabins" }).click();
 
     await expect(page).toHaveURL(/\/admin\/bookings\/queue$/);
     await expect(page.getByRole("heading", { name: "Booking Queue", level: 1 })).toBeVisible();
-    expect(
-      await page.evaluate(() => (window as Window & { sameDocument?: boolean }).sameDocument)
-    ).toBe(true);
+    expect(await page.evaluate(() => (window as MarkedWindow).sameDocument)).toBe(true);
 
     await expect.poll(() => bookingField("booking_status")).toBe("Confirmed");
     await expect.poll(() => bookingField("unit_assignment_status")).toBe("assigned");
