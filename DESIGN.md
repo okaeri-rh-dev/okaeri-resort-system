@@ -56,6 +56,8 @@ Theme control per nav form. It is never in the account menu. The choice is a pil
 | Admin   | Dark mode switch in the header, labelled choice at the end of More's sheet. With no More: the icon choice in the header | Icon choice (stacked) at the rail foot, labelled choice at the end of the menu sheet | Labelled choice at the rail foot |
 | Guest   | Dark mode switch in the top bar, labelled choice at the end of the menu sheet                                           | Icon choice in the top bar                                                           | (as medium)                      |
 
+Account menu: the admin account actions (Sign Out, Install app) sit behind one trigger, in the compact header and at the rail foot. Menu sheets carry destinations and the theme control only, so nothing that ends the session sits under the thumb.
+
 Auto is the system setting. The dark mode switch sets an explicit theme, so Auto is always one sheet or one tap away from it.
 
 Pane layouts:

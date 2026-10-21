@@ -56,7 +56,7 @@ export interface AppShellProps {
   brand: ShellBrand;
   /** The nav contents, already filtered to what the viewer may reach. */
   destinations: ShellDestination[];
-  /** Account-level commands such as Sign Out (admin only). */
+  /** Account-level commands such as Sign Out (admin only), behind the account menu at every width. */
   actions?: ShellAction[];
   /** The light / dark / system setting. The shell places its controls for each nav form. */
   theme?: ShellTheme;
@@ -81,6 +81,8 @@ export interface AppShellProps {
  * With `theme`, a Light / Dark / Auto choice sits at the rail foot (icons, words from `large`), in
  * the guest top bar from `medium` (icons) and at the end of both menu sheets (words). Compact bars
  * get a one-tap dark mode switch instead; compact admin with no More gets the icon choice.
+ * `actions` sit in an account menu in the compact header and at the rail foot; menu sheets carry
+ * destinations and the theme only.
  * Margins are 16px, 24px from `medium`; content caps at 1600px (admin), 1200px (guest) or ~40rem
  * (`width="form"`).
  *
@@ -188,30 +190,30 @@ function matchOptions(destination: ShellDestination) {
   return { exact: destination.exact ?? false };
 }
 
-function ActionButtons({
-  actions,
-  form,
-  className,
-  onBeforeSelect,
-}: {
-  actions: ShellAction[];
-  form: ItemForm;
-  className: string;
-  onBeforeSelect?: () => void;
-}) {
-  return actions.map(({ label, icon, onSelect }) => (
-    <button
-      key={label}
-      type="button"
-      onClick={() => {
-        onBeforeSelect?.();
-        onSelect();
-      }}
-      className={className}
-    >
-      <ItemLabel form={form} icon={icon} label={label} />
-    </button>
-  ));
+/** Account-level actions behind one trigger: the compact header and the rail foot. */
+function AccountMenu({ actions, form }: { actions: ShellAction[]; form: "header" | "rail" }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        {form === "header" ? (
+          <Button variant="ghost" size="icon" aria-label="Account menu">
+            <CircleUser className="size-5" aria-hidden="true" />
+          </Button>
+        ) : (
+          <button type="button" aria-label="Account menu" className={railItem}>
+            <ItemLabel form="rail" icon={CircleUser} label="Account" />
+          </button>
+        )}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side={form === "header" ? "bottom" : "right"} align="end">
+        {actions.map(({ label, icon, onSelect }) => (
+          <DropdownMenuItem key={label} onSelect={onSelect}>
+            <ItemLabel form="dropdown" icon={icon} label={label} />
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 function SheetDestinations({
@@ -245,10 +247,9 @@ const sheetItem = cn(
   "focus-visible:ring-2 focus-visible:outline-hidden"
 );
 
-const adminSheetItem = cn(sheetItem, "hover:bg-sidebar-accent focus-visible:ring-sidebar-ring");
-
 const adminSheetLink = cn(
-  adminSheetItem,
+  sheetItem,
+  "hover:bg-sidebar-accent focus-visible:ring-sidebar-ring",
   "data-[status=active]:bg-sidebar-primary data-[status=active]:text-sidebar-primary-foreground"
 );
 
@@ -279,22 +280,7 @@ function AdminShell({
             ) : (
               <ThemeSegments theme={theme} tone="surface" form="icons" />
             ))}
-          {actions.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Account menu">
-                  <CircleUser className="size-5" aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {actions.map(({ label, icon, onSelect }) => (
-                  <DropdownMenuItem key={label} onSelect={onSelect}>
-                    <ItemLabel form="dropdown" icon={icon} label={label} />
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          {actions.length > 0 && <AccountMenu actions={actions} form="header" />}
         </div>
       </header>
 
@@ -370,7 +356,7 @@ function AdminShell({
                 <ThemeSegments theme={theme} tone="sidebar" form="rail" />
               </div>
             )}
-            <ActionButtons actions={actions} form="rail" className={railItem} />
+            {actions.length > 0 && <AccountMenu actions={actions} form="rail" />}
           </div>
         )}
       </div>
@@ -398,19 +384,9 @@ function AdminShell({
           <nav aria-label="Menu" className="min-h-0 flex-1 overflow-y-auto p-4">
             <SheetDestinations destinations={destinations} linkClassName={adminSheetLink} />
           </nav>
-          {hasFooter && (
-            <div className="border-sidebar-border shrink-0 space-y-1 border-t p-4">
-              {theme && (
-                <div className="pb-2">
-                  <ThemeSegments theme={theme} tone="sidebar" form="labelled" />
-                </div>
-              )}
-              <ActionButtons
-                actions={actions}
-                form="sheet"
-                className={adminSheetItem}
-                onBeforeSelect={() => setMenuOpen(false)}
-              />
+          {theme && (
+            <div className="border-sidebar-border shrink-0 border-t p-4">
+              <ThemeSegments theme={theme} tone="sidebar" form="labelled" />
             </div>
           )}
         </SheetContent>
