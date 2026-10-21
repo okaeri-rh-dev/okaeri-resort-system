@@ -593,17 +593,6 @@
       "count": 1
     }
   },
-  "src/components/payments/PaymentMethodsDisplay.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "design/no-restricted-imports": {
-      "count": 2
-    },
-    "design/no-restricted-syntax": {
-      "count": 2
-    }
-  },
   "src/components/pricing/DiscountRulesForm.tsx": {
     "better-tailwindcss/no-restricted-classes": {
       "count": 3
