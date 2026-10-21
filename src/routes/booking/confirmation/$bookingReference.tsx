@@ -6,8 +6,7 @@ import { BookingSummaryCard } from "@/components/booking-confirmation/BookingSum
 import { PaymentInstructions } from "@/components/booking-confirmation/PaymentInstructions";
 import { PrintButton } from "@/components/booking-confirmation/PrintButton";
 import { StatusTimeline } from "@/components/booking-confirmation/StatusTimeline";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, Callout } from "@/components/patterns";
 import { GuestLayout } from "@/layouts/GuestLayout";
 
 /**
@@ -186,23 +185,20 @@ function BookingConfirmationComponent() {
           </div>
 
           {/* Contact Information - Not printed */}
-          <Alert className="no-print">
-            <AlertDescription>
-              If you have any questions or need to make changes to your booking, please contact us
-              at{" "}
-              <a href="mailto:bookings@resort.com" className="font-medium underline">
-                bookings@resort.com
-              </a>{" "}
-              or call us at{" "}
-              <a href="tel:+1234567890" className="font-medium underline">
-                +1 (234) 567-890
-              </a>
-              .
-            </AlertDescription>
-          </Alert>
+          <Callout tone="neutral" className="print:hidden">
+            If you have any questions or need to make changes to your booking, please contact us at{" "}
+            <a href="mailto:bookings@resort.com" className="font-medium underline">
+              bookings@resort.com
+            </a>{" "}
+            or call us at{" "}
+            <a href="tel:+1234567890" className="font-medium underline">
+              +1 (234) 567-890
+            </a>
+            .
+          </Callout>
 
           {/* Back to Home Link - Not printed */}
-          <div className="no-print flex justify-center">
+          <div className="flex justify-center print:hidden">
             <Button variant="outline" asChild>
               <Link to="/">Back to Home</Link>
             </Button>

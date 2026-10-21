@@ -126,13 +126,13 @@ export function CalendarGrid({ availability, currentMonth, onDateClick }: Calend
   }, [currentMonth, availabilityMap]);
 
   return (
-    <div className="calendar-grid" role="grid" aria-label="Availability calendar">
+    <div className="@container" role="grid" aria-label="Availability calendar">
       {/* Day headers (Sun, Mon, Tue, ...) */}
-      <div className="mb-1 grid grid-cols-7 gap-1 sm:mb-2 sm:gap-2" role="row">
+      <div className="mb-1 grid grid-cols-7 gap-1 @lg:mb-2 @lg:gap-2" role="row">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
           <div
             key={day}
-            className="text-muted-foreground py-1 text-center text-xs font-semibold uppercase sm:py-2"
+            className="text-muted-foreground py-1 text-center text-xs font-semibold uppercase @lg:py-2"
             role="columnheader"
           >
             {day}
@@ -141,7 +141,7 @@ export function CalendarGrid({ availability, currentMonth, onDateClick }: Calend
       </div>
 
       {/* Calendar days grid */}
-      <div className="grid grid-cols-7 gap-1 sm:gap-2" role="row">
+      <div className="grid grid-cols-7 gap-1 @lg:gap-2" role="row">
         {calendarDays.map((day, index) => (
           <DayCell
             key={index}
@@ -218,10 +218,17 @@ function DayCell({
   return (
     <div
       onClick={handleClick}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          handleClick();
+        }
+      }}
+      tabIndex={isClickable ? 0 : -1}
       className={cn(
         // Further reduced heights for desktop to prevent scrolling
-        "relative flex min-h-[44px] flex-col items-center justify-center rounded py-1 sm:min-h-[52px] md:min-h-[60px] lg:min-h-[64px]",
-        "transition-all duration-200",
+        "relative flex min-h-11 flex-col items-center justify-center rounded py-1 @lg:min-h-13 @2xl:min-h-15 @3xl:min-h-16",
+        "transition-colors duration-150",
         getStatusColor(),
         isToday && "ring-primary ring-offset-card ring-2 ring-offset-1",
         !isPast && isCurrentMonth && "hover:shadow-sm",
@@ -240,7 +247,7 @@ function DayCell({
       {/* Day number */}
       <span
         className={cn(
-          "text-sm font-semibold sm:text-base"
+          "text-sm font-semibold @lg:text-base"
           // No opacity reduction for adjacent months anymore - color handles visibility
         )}
       >

@@ -1,12 +1,17 @@
 import * as React from "react";
 
-import { AlertTriangle, Home, X } from "lucide-react";
+import { Home, X } from "lucide-react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { NumberInput } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Button,
+  Callout,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Label,
+  NumberInput,
+} from "@/components/patterns";
 import { cn } from "@/lib/utils";
 
 /**
@@ -45,7 +50,7 @@ export interface UnitRequestCardProps {
  * - Guest count input with validation (min=1, max=maxCapacityPerUnit)
  * - Extra person warning indicator (when guests > baseOccupancy)
  * - Remove button (only shown if canRemove=true)
- * - Monospace currency formatting for extra person fees
+ * - Tabular currency formatting for extra person fees
  *
  * @example
  * ```tsx
@@ -97,10 +102,7 @@ export const UnitRequestCard: React.FC<UnitRequestCardProps> = ({
   );
 
   return (
-    <Card
-      className={cn("relative border-neutral-200", disabled && "pointer-events-none opacity-60")}
-      padding="none"
-    >
+    <Card className={cn("relative", disabled && "pointer-events-none opacity-60")} padding="none">
       {/* Header with title and remove button */}
       <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-3">
         <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -147,22 +149,18 @@ export const UnitRequestCard: React.FC<UnitRequestCardProps> = ({
 
         {/* Extra person warning indicator */}
         {hasExtraPerson && (
-          <Alert
-            id={`unit-${index}-extra-person-warning`}
-            className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950"
-          >
-            <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
-            <AlertDescription className="text-sm text-yellow-800 dark:text-yellow-200">
+          <div id={`unit-${index}-extra-person-warning`}>
+            <Callout tone="warning">
               <span className="font-medium">Extra person fee: </span>
-              <span className="font-mono">
+              <span className="tabular-nums">
                 ₱{extraPersonRate.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
                 /person/night
               </span>
               <span className="ml-1">
                 ({extraPersonCount} extra {extraPersonCount === 1 ? "person" : "people"})
               </span>
-            </AlertDescription>
-          </Alert>
+            </Callout>
+          </div>
         )}
       </CardContent>
     </Card>

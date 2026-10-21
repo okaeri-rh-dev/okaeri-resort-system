@@ -1,6 +1,6 @@
 import { Check, Clock, Phone, Users } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/patterns";
 import { cn } from "@/lib/utils";
 
 interface TimelineStep {

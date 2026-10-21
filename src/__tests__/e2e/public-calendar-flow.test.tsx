@@ -181,9 +181,9 @@ describe("Public Calendar E2E Flow", () => {
         expect(screen.getByText("January 2025")).toBeInTheDocument();
       });
 
-      // Check for responsive breakpoint classes
-      const mdBreakpoints = container.querySelectorAll('[class*="md:"]');
-      expect(mdBreakpoints.length).toBeGreaterThan(0);
+      // The grid adapts to its pane with container queries
+      const containerQueries = container.querySelectorAll('[class*="@lg:"]');
+      expect(containerQueries.length).toBeGreaterThan(0);
     });
   });
 
