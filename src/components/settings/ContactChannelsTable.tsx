@@ -1,4 +1,5 @@
 import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 import {
   contactChannelKinds,
@@ -7,6 +8,7 @@ import {
 } from "@/components/contact-channels/contact-channel";
 import {
   ActionMenu,
+  Button,
   DataTable,
   ListCard,
   ListCardRow,
@@ -17,6 +19,7 @@ import {
 } from "@/components/patterns";
 import {
   useContactChannels,
+  useReorderContactChannel,
   useSetContactChannelActive,
   type ContactChannel,
 } from "@/hooks/useContactChannels";
@@ -43,9 +46,60 @@ function KindName({ channel }: { channel: ContactChannel }) {
   );
 }
 
+type MoveDirection = "up" | "down";
+
+interface MoveButtonsProps {
+  channel: ContactChannel;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  disabled: boolean;
+  onMove: (direction: MoveDirection) => void;
+}
+
+function MoveButtons({ channel, canMoveUp, canMoveDown, disabled, onMove }: MoveButtonsProps) {
+  const kindLabel = toKindLabel(channel);
+  const moves = [
+    { direction: "up", Icon: ArrowUp, allowed: canMoveUp },
+    { direction: "down", Icon: ArrowDown, allowed: canMoveDown },
+  ] as const;
+
+  return (
+    <span className="inline-flex gap-1">
+      {moves.map(({ direction, Icon, allowed }) =>
+        allowed ? (
+          <Button
+            key={direction}
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            aria-label={`Move ${kindLabel} ${direction}`}
+            disabled={disabled}
+            onClick={() => onMove(direction)}
+          >
+            <Icon aria-hidden="true" />
+          </Button>
+        ) : (
+          <span key={direction} className="size-8" aria-hidden="true" />
+        )
+      )}
+    </span>
+  );
+}
+
 export function ContactChannelsTable({ onEditChannel }: ContactChannelsTableProps) {
   const { data: channels = [], isLoading, isError, refetch } = useContactChannels();
   const setActive = useSetContactChannelActive();
+  const reorder = useReorderContactChannel();
+
+  const moveButtons = (channel: ContactChannel, index: number) => (
+    <MoveButtons
+      channel={channel}
+      canMoveUp={index > 0}
+      canMoveDown={index < channels.length - 1}
+      disabled={reorder.isPending}
+      onMove={(direction) => reorder.mutate({ channel, direction })}
+    />
+  );
 
   const rowActions = (channel: ContactChannel): ActionMenuAction[] => [
     { label: "Edit", onClick: () => onEditChannel(channel) },
@@ -79,9 +133,10 @@ export function ContactChannelsTable({ onEditChannel }: ContactChannelsTableProp
       cell: ({ row }) => <ChannelStatus isActive={row.original.is_active} />,
     },
     {
-      accessorKey: "display_order",
+      id: "order",
       header: "Order",
       meta: { align: "right" },
+      cell: ({ row }) => moveButtons(row.original, row.index),
     },
     {
       id: "actions",
@@ -133,7 +188,7 @@ export function ContactChannelsTable({ onEditChannel }: ContactChannelsTableProp
             />
             {channel.label && <ListCardRow label="Label" value={channel.label} />}
             <ListCardRow label="Status" value={<ChannelStatus isActive={channel.is_active} />} />
-            <ListCardRow label="Order" value={channel.display_order} />
+            <ListCardRow label="Order" value={moveButtons(channel, row.index)} />
           </ListCard>
         );
       }}
