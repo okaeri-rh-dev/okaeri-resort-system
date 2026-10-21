@@ -85,6 +85,7 @@ export const paymentMethodKeys = {
 
 export const contactChannelKeys = {
   all: ["contact-channels"] as const,
+  list: () => [...contactChannelKeys.all, "list"] as const,
   active: () => [...contactChannelKeys.all, "active"] as const,
 };
 

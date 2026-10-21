@@ -1103,6 +1103,19 @@ export const db = {
 
   // Contact channels (guest-facing contact list, managed on admin Settings)
   contactChannels: {
+    /** Get all contact channels, hidden ones included, in display order (admin settings) */
+    all: () => contactChannelsTable().select("*").order("display_order", { ascending: true }),
+
+    create: (data: TablesInsert<"contact_channels">) =>
+      contactChannelsTable().insert(data).select().single(),
+
+    update: (id: string, data: TablesUpdate<"contact_channels">) =>
+      contactChannelsTable().update(data).eq("id", id).select().single(),
+
+    /** Hide (false) or show (true) a channel on guest pages */
+    setActive: (id: string, isActive: boolean) =>
+      contactChannelsTable().update({ is_active: isActive }).eq("id", id).select().single(),
+
     /** Get active contact channels in display order (guest pages) */
     active: () =>
       contactChannelsTable()
