@@ -1,7 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { FormProvider } from "react-hook-form";
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/patterns";
 import { cn } from "@/lib/utils";
 
 import { useDocumentForm } from "./hooks/useDocumentForm";

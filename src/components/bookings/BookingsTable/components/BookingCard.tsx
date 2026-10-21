@@ -4,7 +4,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { Check, Upload } from "lucide-react";
 
-import { UNIT_SLOT_MAP } from "@/components/dashboard/unit-calendar-config";
 import {
   ActionMenu,
   AlertDialog,
@@ -19,7 +18,6 @@ import {
   ListCard,
   StatusBadge,
 } from "@/components/patterns";
-import { Badge } from "@/components/ui/badge";
 import { useUserRole } from "@/hooks";
 import { canTransitionStatus } from "@/lib/bookings";
 import { formatCurrency } from "@/lib/formatters";
@@ -29,6 +27,7 @@ import type { BookingStatus } from "@/types";
 import { utcToResortTime } from "@/utils/date-helpers";
 
 import type { BookingCardProps } from "../types";
+import { CabinChip } from "./CabinChip";
 
 const formatStayRange = (checkIn: string, checkOut: string): string => {
   try {
@@ -192,24 +191,9 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           {/* Units · amount · payment dot */}
           <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
             <div className="flex flex-wrap gap-1">
-              {units.map((bu) => {
-                const unitCode = bu.unit?.unit_code;
-                const slotConfig = unitCode ? UNIT_SLOT_MAP.get(unitCode) : undefined;
-                return (
-                  <Badge
-                    key={bu.booking_unit_id}
-                    variant="outline"
-                    className={cn(
-                      "text-xs",
-                      slotConfig
-                        ? cn(slotConfig.bg, slotConfig.text, slotConfig.border)
-                        : "bg-secondary text-secondary-foreground border-transparent"
-                    )}
-                  >
-                    {unitCode || bu.unit?.unit_name || `Unit ${bu.unit_id.slice(0, 4)}`}
-                  </Badge>
-                );
-              })}
+              {units.map((bu) => (
+                <CabinChip key={bu.booking_unit_id} bookingUnit={bu} />
+              ))}
             </div>
             <div className="flex items-center gap-3">
               <span className="text-foreground text-sm font-semibold tabular-nums">

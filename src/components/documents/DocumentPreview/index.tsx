@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Minus, Plus } from "lucide-react";
 
 import type { DocumentFormData, LetterheadConfig } from "@/components/documents/types";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/patterns";
 import { cn } from "@/lib/utils";
 
 import { DocumentPage } from "./DocumentPage";
@@ -59,7 +59,7 @@ export function DocumentPreview({
       {/* Document area */}
       <div className="bg-muted flex-1 overflow-auto p-4">
         <div
-          className="origin-top-left transition-transform duration-150"
+          className="@container origin-top-left transition-transform duration-150"
           style={{ transform: `scale(${zoom})` }}
         >
           <DocumentPage

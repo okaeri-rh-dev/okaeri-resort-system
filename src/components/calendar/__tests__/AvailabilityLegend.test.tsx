@@ -97,7 +97,7 @@ describe("AvailabilityLegend", () => {
     it("should be responsive with different gap on desktop", () => {
       const { container } = render(<AvailabilityLegend />);
 
-      const flexContainer = container.querySelector(".sm\\:gap-4");
+      const flexContainer = container.querySelector(".\\@lg\\:gap-4");
       expect(flexContainer).toBeInTheDocument();
     });
 

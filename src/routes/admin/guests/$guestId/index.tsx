@@ -5,6 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Button } from "@/components/patterns";
 import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
 import { guestDetailQuery } from "@/stores/useGuestStore";
@@ -45,16 +46,11 @@ export const Route = createFileRoute("/admin/guests/$guestId/")({
     <ErrorBoundary level="page">
       <div className="container mx-auto py-8">
         <div className="text-center">
-          <h1 className="mb-4 text-2xl font-bold text-red-600">Failed to Load Guest</h1>
-          <p className="mb-4 text-gray-600">
+          <h1 className="text-destructive mb-4 text-2xl font-bold">Failed to Load Guest</h1>
+          <p className="text-muted-foreground mb-4">
             {error instanceof Error ? error.message : "An unexpected error occurred"}
           </p>
-          <button
-            onClick={() => window.history.back()}
-            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
-            Go Back
-          </button>
+          <Button onClick={() => window.history.back()}>Go Back</Button>
         </div>
       </div>
     </ErrorBoundary>
@@ -64,16 +60,11 @@ export const Route = createFileRoute("/admin/guests/$guestId/")({
   notFoundComponent: () => (
     <div className="container mx-auto py-8">
       <div className="text-center">
-        <h1 className="mb-4 text-2xl font-bold text-gray-800">Guest Not Found</h1>
-        <p className="mb-4 text-gray-600">
+        <h1 className="text-foreground mb-4 text-2xl font-bold">Guest Not Found</h1>
+        <p className="text-muted-foreground mb-4">
           The guest you are looking for does not exist or has been removed.
         </p>
-        <button
-          onClick={() => window.history.back()}
-          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-        >
-          Go Back to Guests
-        </button>
+        <Button onClick={() => window.history.back()}>Go Back to Guests</Button>
       </div>
     </div>
   ),

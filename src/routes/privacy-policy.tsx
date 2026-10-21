@@ -1,8 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import {
+  Callout,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Separator,
+} from "@/components/patterns";
 import { GuestLayout } from "@/layouts/GuestLayout";
 
 export const Route = createFileRoute("/privacy-policy")({
@@ -33,13 +39,11 @@ function PrivacyPolicyPage() {
           <CardContent>
             <div className="space-y-6 text-sm">
               {/* Introduction */}
-              <Alert>
-                <AlertDescription>
-                  In compliance with the Data Privacy Act of 2012 (Republic Act No. 10173), Okaeri
-                  Resort is committed to protecting your personal information. This Privacy Policy
-                  explains how we collect, use, store, and protect your personal data.
-                </AlertDescription>
-              </Alert>
+              <Callout tone="info">
+                In compliance with the Data Privacy Act of 2012 (Republic Act No. 10173), Okaeri
+                Resort is committed to protecting your personal information. This Privacy Policy
+                explains how we collect, use, store, and protect your personal data.
+              </Callout>
 
               <Separator />
 
@@ -476,23 +480,19 @@ function PrivacyPolicyPage() {
               <Separator />
 
               {/* Footer */}
-              <Alert>
-                <AlertDescription className="text-center">
-                  <p className="font-medium">
-                    Thank you for trusting Okaeri Resort with your personal information
-                  </p>
-                  <p className="mt-2">
-                    We are committed to protecting your privacy and handling your data responsibly
-                    in accordance with the Data Privacy Act of 2012.
-                  </p>
-                  <p className="text-muted-foreground mt-4 text-xs">
-                    Last Updated: October 20, 2025
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    Effective Date: October 20, 2025
-                  </p>
-                </AlertDescription>
-              </Alert>
+              <div className="bg-background rounded-lg border p-4 text-center">
+                <p className="font-medium">
+                  Thank you for trusting Okaeri Resort with your personal information
+                </p>
+                <p className="mt-2">
+                  We are committed to protecting your privacy and handling your data responsibly in
+                  accordance with the Data Privacy Act of 2012.
+                </p>
+                <p className="text-muted-foreground mt-4 text-xs">Last Updated: October 20, 2025</p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Effective Date: October 20, 2025
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

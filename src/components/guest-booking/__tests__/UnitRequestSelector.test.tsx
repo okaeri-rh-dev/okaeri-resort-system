@@ -83,7 +83,7 @@ describe("UnitRequestSelector", () => {
 
       // Wait for loading to complete
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       // Rates should be displayed
@@ -158,7 +158,7 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} value={[]} />);
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       expect(screen.getByText(/no units selected/i)).toBeInTheDocument();
@@ -168,7 +168,7 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} value={[]} />);
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       const addButton = screen.getByRole("button", { name: /add unit request/i });
@@ -179,7 +179,7 @@ describe("UnitRequestSelector", () => {
       const { container } = render(<UnitRequestSelector {...defaultProps} value={[]} />);
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       // Check for dashed border styling
@@ -195,7 +195,7 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} value={mockMultipleUnits} />);
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       // Should render 3 unit cards
@@ -208,7 +208,7 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} value={mockMultipleUnits} />);
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       // Count UnitRequestCard instances by looking for unit titles
@@ -220,7 +220,7 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} value={mockMultipleUnits} />);
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       // Verify unit cards are rendered with correct indices
@@ -244,7 +244,7 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} value={[]} onChange={onChange} />);
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       const addButton = screen.getByRole("button", { name: /add unit request/i });
@@ -263,7 +263,7 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} value={mockSingleUnit} onChange={onChange} />);
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       const addAnotherButton = screen.getByRole("button", { name: /add another cabin/i });
@@ -284,7 +284,7 @@ describe("UnitRequestSelector", () => {
       );
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       // Get all remove buttons
@@ -302,7 +302,7 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} value={maxedUnits} maxTotalUnits={10} />);
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       // "Add Another Cabin" button should not be rendered at max
@@ -321,7 +321,7 @@ describe("UnitRequestSelector", () => {
       );
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       const guestInputs = screen.getAllByLabelText(/number of guests/i);
@@ -442,7 +442,7 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} value={maxedUnits} maxTotalUnits={10} />);
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       const addAnotherButton = screen.queryByRole("button", { name: /add another cabin/i });
@@ -517,7 +517,7 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} value={[]} disabled={true} />);
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       const addButton = screen.getByRole("button", { name: /add unit request/i });
@@ -528,7 +528,7 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} value={mockMultipleUnits} disabled={true} />);
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       const guestInputs = screen.getAllByLabelText(/number of guests/i);
@@ -547,19 +547,19 @@ describe("UnitRequestSelector", () => {
       );
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       const results = await axe(container);
       expect(results).toHaveNoViolations();
     });
 
-    it("uses proper ARIA roles for alerts", async () => {
+    it("announces the cabin totals politely", async () => {
       render(<UnitRequestSelector {...defaultProps} value={mockSingleUnit} />);
 
       await waitFor(() => {
         const infoAlert = screen.getByText(/add cabins and specify guests/i).closest("[role]");
-        expect(infoAlert).toHaveAttribute("role", "alert");
+        expect(infoAlert).toHaveAttribute("role", "status");
       });
     });
   });
@@ -601,7 +601,7 @@ describe("UnitRequestSelector", () => {
       );
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       // No "Add Another Cabin" button should exist
@@ -616,7 +616,7 @@ describe("UnitRequestSelector", () => {
       render(<UnitRequestSelector {...defaultProps} value={mockSingleUnit} />);
 
       await waitFor(() => {
-        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status", { name: "Loading rates" })).not.toBeInTheDocument();
       });
 
       // canRemove should be false for single cabin (enforced by UnitRequestCard)

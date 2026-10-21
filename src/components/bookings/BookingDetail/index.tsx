@@ -11,7 +11,6 @@ import {
   RelatedEntityLink,
 } from "@/components/entity-detail";
 import { DetailField, DetailPageLayout, DetailSection, StatusBadge } from "@/components/patterns";
-import { Badge } from "@/components/ui/badge";
 import { useUserRole } from "@/hooks";
 import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking } from "@/types";
@@ -38,7 +37,7 @@ interface BookingDetailPageProps {
  *
  * Uses Professional Enterprise Design System with:
  * - High information density with minimal whitespace
- * - Monospace fonts for financial data
+ * - Tabular figures for financial data
  * - Responsive 2-column desktop / 1-column mobile layouts
  * - Professional status badges
  * - Consistent spacing and typography
@@ -78,47 +77,55 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
     >
       {/* 1. Booking Overview Section */}
       <DetailSection title="Booking Overview" icon={<Calendar className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <DetailField
-            label="Check-in Date"
-            value={formatTableDate(booking.check_in)}
-            emphasis="strong"
-          />
-          <DetailField
-            label="Check-out Date"
-            value={formatTableDate(booking.check_out)}
-            emphasis="strong"
-          />
-          <DetailField label="Number of Guests" value={booking.num_guests} emphasis="strong" />
-          <DetailField
-            label="Total Amount"
-            value={formatCurrency(booking.total_amount)}
-            emphasis="figure"
-          />
+        <div className="@container">
+          <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
+            <DetailField
+              label="Check-in Date"
+              value={formatTableDate(booking.check_in)}
+              emphasis="strong"
+            />
+            <DetailField
+              label="Check-out Date"
+              value={formatTableDate(booking.check_out)}
+              emphasis="strong"
+            />
+            <DetailField label="Number of Guests" value={booking.num_guests} emphasis="strong" />
+            <DetailField
+              label="Total Amount"
+              value={formatCurrency(booking.total_amount)}
+              emphasis="figure"
+            />
+          </div>
         </div>
       </DetailSection>
 
       {/* 2. Guest Information Section */}
       <DetailSection title="Guest Information" icon={<User className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <DetailField
-            label="Guest Name"
-            value={
-              booking.guest_id && booking.guest ? (
-                <RelatedEntityLink type="guest" id={booking.guest_id} label={booking.guest_name} />
-              ) : (
-                <span className="font-medium">{booking.guest_name}</span>
-              )
-            }
-          />
-          {booking.email && <DetailField label="Email" value={booking.email} emphasis="strong" />}
-          {booking.contact_number && (
+        <div className="@container">
+          <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
             <DetailField
-              label="Contact Number"
-              value={formatPhoneNumber(booking.contact_number)}
-              emphasis="strong"
+              label="Guest Name"
+              value={
+                booking.guest_id && booking.guest ? (
+                  <RelatedEntityLink
+                    type="guest"
+                    id={booking.guest_id}
+                    label={booking.guest_name}
+                  />
+                ) : (
+                  <span className="font-medium">{booking.guest_name}</span>
+                )
+              }
             />
-          )}
+            {booking.email && <DetailField label="Email" value={booking.email} emphasis="strong" />}
+            {booking.contact_number && (
+              <DetailField
+                label="Contact Number"
+                value={formatPhoneNumber(booking.contact_number)}
+                emphasis="strong"
+              />
+            )}
+          </div>
         </div>
       </DetailSection>
 
@@ -140,12 +147,10 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
                           badge={bu.unit.unit_code}
                         />
                       ) : (
-                        <Badge variant="secondary" className="font-mono">
-                          {bu.unit_id.slice(0, 8)}
-                        </Badge>
+                        <StatusBadge tone="neutral">{bu.unit_id.slice(0, 8)}</StatusBadge>
                       )}
                       {(booking.booking_units?.length ?? 0) > 1 && (
-                        <span className="text-xs text-neutral-500">
+                        <span className="text-muted-foreground text-xs">
                           ({bu.assigned_guests || 0} guests)
                         </span>
                       )}
@@ -153,7 +158,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
                   ))}
                 </div>
               ) : (
-                <span className="text-neutral-500">No units assigned</span>
+                <span className="text-muted-foreground">No units assigned</span>
               )
             }
           />
@@ -169,27 +174,25 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
 
       {/* 4. Payment Details Section */}
       <DetailSection title="Payment Details" icon={<DollarSign className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <DetailField
-            label="Payment Method"
-            value={booking.payment_method || "Not specified"}
-            emphasis="strong"
-          />
-          <DetailField
-            label="Payment Status"
-            value={<StatusBadge {...statusBadgeProps(booking.payment_status, "Pending")} />}
-          />
+        <div className="@container">
+          <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
+            <DetailField
+              label="Payment Method"
+              value={booking.payment_method || "Not specified"}
+              emphasis="strong"
+            />
+            <DetailField
+              label="Payment Status"
+              value={<StatusBadge {...statusBadgeProps(booking.payment_status, "Pending")} />}
+            />
+          </div>
         </div>
       </DetailSection>
 
       {/* 5. Special Requests Section (Conditional) */}
       {booking.special_requests && (
         <DetailSection title="Special Requests" icon={<FileText className="h-5 w-5" />}>
-          <div className="prose prose-sm max-w-none">
-            <p className="text-sm whitespace-pre-wrap text-neutral-700">
-              {booking.special_requests}
-            </p>
-          </div>
+          <p className="text-sm break-words whitespace-pre-wrap">{booking.special_requests}</p>
         </DetailSection>
       )}
 

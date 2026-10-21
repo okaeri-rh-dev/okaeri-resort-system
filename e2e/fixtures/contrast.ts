@@ -1,4 +1,24 @@
-import type { Locator, Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
+
+/** Window sizes the dark-mode specs check: compact (phone) and expanded (desktop). */
+export const COMPACT = { width: 390, height: 844 };
+export const EXPANDED = { width: 1280, height: 900 };
+
+export type Theme = "light" | "dark";
+
+/** Sets the stored theme before any page script runs, so the first paint already uses it. */
+export async function useTheme(page: Page, theme: Theme) {
+  await page.addInitScript((value) => localStorage.setItem("theme", value), theme);
+}
+
+export async function useDarkTheme(page: Page) {
+  await useTheme(page, "dark");
+}
+
+/** Fails with the offending text runs when any text under `root` is below WCAG AA contrast. */
+export async function expectReadable(page: Page, root = "main") {
+  expect(await findLowContrastText(page, root)).toEqual([]);
+}
 
 export interface ContrastFailure {
   text: string;

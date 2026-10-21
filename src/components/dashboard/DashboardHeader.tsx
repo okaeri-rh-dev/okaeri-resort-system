@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { RefreshCw } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/patterns";
 import { cn, formatRelativeTime, formatRelativeTimeShort } from "@/lib/utils";
 
 const STALE_AFTER_MS = 10 * 60 * 1000;

@@ -22,33 +22,25 @@ import { useEffect, useEffectEvent, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { CalendarDays, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  DatePicker,
   Form,
-  FormControl,
-  FormDescription,
   FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
+  Input,
+  SelectControl,
   SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+  Textarea,
+} from "@/components/patterns";
 import { useAvailabilityRealtime } from "@/hooks/useAvailabilityRealtime";
 import { useIdempotencyKey } from "@/hooks/useIdempotencyKey";
 import {
@@ -59,7 +51,6 @@ import {
 import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { pickedDay } from "@/lib/bookings";
 import { hasProperty, isObject } from "@/lib/type-guards";
-import { cn } from "@/lib/utils";
 import {
   multiUnitBookingSchema,
   type MultiUnitBookingFormData,
@@ -68,6 +59,7 @@ import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
 import type { AdminMultiUnitBookingCreate, Unit } from "@/types";
 
+import { WalkInField } from "./form-fields";
 import { MultiUnitPricingSummary } from "./MultiUnitPricingSummary";
 import { MultiUnitSelector } from "./MultiUnitSelector";
 import { UnitCardList } from "./UnitCardList";
@@ -386,91 +378,31 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
               {step === 1 && (
                 <div className="space-y-6">
                   {/* Date Selection */}
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="check_in"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel className="text-base font-medium sm:text-sm">
-                            Check-in Date
-                          </FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                  <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[340px] p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                initialFocus
-                                className="touch-manipulation"
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <div className="@container">
+                    <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
+                      <FormField control={form.control} name="check_in" label="Check-in Date">
+                        {(field) => (
+                          <DatePicker
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Pick a date"
+                            aria-label="Check-in Date"
+                          />
+                        )}
+                      </FormField>
 
-                    <FormField
-                      control={form.control}
-                      name="check_out"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel className="text-base font-medium sm:text-sm">
-                            Check-out Date
-                          </FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "h-12 w-full touch-manipulation pl-4 text-left text-base font-normal sm:h-10 sm:text-sm",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                  <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[340px] p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) => date <= checkIn}
-                                initialFocus
-                                className="touch-manipulation"
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                      <FormField control={form.control} name="check_out" label="Check-out Date">
+                        {(field) => (
+                          <DatePicker
+                            value={field.value}
+                            onChange={field.onChange}
+                            isDateDisabled={(date) => date <= checkIn}
+                            placeholder="Pick a date"
+                            aria-label="Check-out Date"
+                          />
+                        )}
+                      </FormField>
+                    </div>
                   </div>
 
                   {/* Unit Selection */}
@@ -516,79 +448,44 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
               {/* Step 2: Guest Information */}
               {step === 2 && (
                 <div className="space-y-4">
-                  <FormField
+                  <WalkInField
                     control={form.control}
-                    name="is_walk_in"
-                    render={({ field }) => (
-                      <FormItem className="bg-muted/40 flex flex-row items-start gap-3 rounded-md border p-4">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value ?? false}
-                            onCheckedChange={(checked) => field.onChange(checked === true)}
-                            className="mt-1"
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel className="text-base font-medium sm:text-sm">
-                            Walk-in booking
-                          </FormLabel>
-                          <FormDescription className="text-sm">
-                            Check this if the guest arrived on-site without a prior reservation.
-                            Reporting flag only.
-                          </FormDescription>
-                        </div>
-                      </FormItem>
-                    )}
+                    description="Check this if the guest arrived on-site without a prior reservation. Reporting flag only."
                   />
 
                   <FormField
                     control={form.control}
                     name="guest_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Primary Guest Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="John Doe" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Name of the primary guest for this booking
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    label="Primary Guest Name"
+                    description="Name of the primary guest for this booking"
+                  >
+                    {(field) => <Input placeholder="John Doe" autoComplete="off" {...field} />}
+                  </FormField>
 
                   <FormField
                     control={form.control}
                     name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email Address (Optional)</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="john@example.com" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          If provided, booking confirmation will be sent to this email
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
+                    label="Email Address (Optional)"
+                    description="If provided, booking confirmation will be sent to this email"
+                  >
+                    {(field) => (
+                      <Input
+                        type="email"
+                        placeholder="john@example.com"
+                        spellCheck={false}
+                        {...field}
+                      />
                     )}
-                  />
+                  </FormField>
 
                   <FormField
                     control={form.control}
                     name="contact_number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number (Optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="+63 912 345 6789" {...field} />
-                        </FormControl>
-                        <FormDescription>Philippine mobile numbers only</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    label="Phone Number (Optional)"
+                    description="Philippine mobile numbers only"
+                  >
+                    {(field) => <Input type="tel" placeholder="+63 912 345 6789" {...field} />}
+                  </FormField>
                 </div>
               )}
 
@@ -612,49 +509,36 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                       <span className="text-muted-foreground">Check-out:</span>
                       <span>{format(form.watch("check_out"), "PPP")}</span>
                       <span className="text-muted-foreground">Cabins:</span>
-                      <span>{selectedUnits.length}</span>
+                      <span className="tabular-nums">{selectedUnits.length}</span>
                     </div>
                   </div>
 
                   <MultiUnitPricingSummary units={selectedUnits} />
 
-                  <FormField
-                    control={form.control}
-                    name="payment_method"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Payment Method</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select payment method" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="GCash">GCash</SelectItem>
-                            <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
-                            <SelectItem value="Cash">Cash</SelectItem>
-                            <SelectItem value="CreditCard">Credit Card</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
+                  <FormField control={form.control} name="payment_method" label="Payment Method">
+                    {(field) => (
+                      <SelectControl
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="Select payment method"
+                      >
+                        <SelectItem value="GCash">GCash</SelectItem>
+                        <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
+                        <SelectItem value="Cash">Cash</SelectItem>
+                        <SelectItem value="CreditCard">Credit Card</SelectItem>
+                      </SelectControl>
                     )}
-                  />
+                  </FormField>
 
                   <FormField
                     control={form.control}
                     name="special_requests"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Special Requests (Optional)</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Any special requests or notes..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                    label="Special Requests (Optional)"
+                  >
+                    {(field) => (
+                      <Textarea placeholder="Any special requests or notes..." {...field} />
                     )}
-                  />
+                  </FormField>
                 </div>
               )}
 

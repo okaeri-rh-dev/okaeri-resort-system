@@ -20,7 +20,7 @@ export function Dashboard() {
 
   return (
     <>
-      <div className="md:hidden">
+      <div className="expanded:hidden">
         <MobileDashboard
           bookings={bookings}
           isLoading={isLoading}
@@ -29,7 +29,7 @@ export function Dashboard() {
           onRefresh={refresh}
         />
       </div>
-      <div className="hidden md:block">
+      <div className="expanded:block hidden">
         <DesktopDashboard
           bookings={bookings}
           isLoading={isLoading}

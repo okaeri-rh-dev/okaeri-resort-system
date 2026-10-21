@@ -3,8 +3,7 @@ import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button, Card, CardContent } from "@/components/patterns";
 import { copyToClipboard } from "@/lib/utils/copy-to-clipboard";
 
 interface BookingReferenceDisplayProps {
@@ -27,7 +26,7 @@ export function BookingReferenceDisplay({ reference }: BookingReferenceDisplayPr
 
   return (
     <Card className="border-primary bg-primary/5">
-      <CardContent className="pt-6">
+      <CardContent className="@container pt-6">
         <div className="text-center">
           <p className="text-muted-foreground mb-2 text-sm font-medium tracking-wide uppercase">
             Your Booking Reference
@@ -35,7 +34,7 @@ export function BookingReferenceDisplay({ reference }: BookingReferenceDisplayPr
 
           {/* Large, prominent reference number */}
           <div className="my-4">
-            <p className="font-mono text-4xl font-bold tracking-wider md:text-5xl lg:text-6xl">
+            <p className="text-4xl font-bold tracking-wider tabular-nums @lg:text-5xl @2xl:text-6xl">
               {reference}
             </p>
           </div>

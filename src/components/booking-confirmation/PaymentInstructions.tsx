@@ -1,9 +1,14 @@
-import { AlertCircle, Building2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 
+import {
+  Callout,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Separator,
+} from "@/components/patterns";
 import { PaymentMethodsDisplay } from "@/components/payments/PaymentMethodsDisplay";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 
 interface PaymentInstructionsProps {
   downpaymentAmount: number;
@@ -39,23 +44,18 @@ export function PaymentInstructions({
         <Separator />
 
         {/* Payment Reference */}
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Important:</strong> When making payment, use your booking reference{" "}
-            <span className="font-mono font-bold">{bookingReference}</span> as the payment reference
-            or description.
-          </AlertDescription>
-        </Alert>
+        <Callout tone="info">
+          <strong>Important:</strong> When making payment, use your booking reference{" "}
+          <span className="font-bold tabular-nums">{bookingReference}</span> as the payment
+          reference or description.
+        </Callout>
 
         {/* Upload Reminder */}
         {!paymentProofUploaded && (
-          <Alert>
-            <AlertDescription>
-              After payment, please upload your payment screenshot. You can do this now or later by
-              contacting us with your booking reference.
-            </AlertDescription>
-          </Alert>
+          <Callout tone="neutral">
+            After payment, please upload your payment screenshot. You can do this now or later by
+            contacting us with your booking reference.
+          </Callout>
         )}
       </CardContent>
     </Card>

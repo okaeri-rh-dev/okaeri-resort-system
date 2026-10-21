@@ -32,7 +32,7 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
 
   if (error) {
     return (
-      <div className="p-8 text-center text-red-600">
+      <div className="text-destructive p-8 text-center">
         <p>Failed to load bookings</p>
         <p className="mt-2 text-sm">{error.message}</p>
       </div>

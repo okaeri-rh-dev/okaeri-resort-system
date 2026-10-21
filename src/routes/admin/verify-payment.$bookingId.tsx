@@ -10,8 +10,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 
 import { PaymentProofViewer } from "@/components/admin/PaymentProofViewer";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/patterns";
 import { useAuthToken } from "@/hooks/useAuthToken";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { adminBookingDetailQuery } from "@/stores/useBookingStore";
@@ -116,22 +115,24 @@ function PaymentVerificationPage() {
         <CardHeader>
           <CardTitle>Booking Details</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <div>
-            <div className="text-muted-foreground text-sm">Guest</div>
-            <div className="font-medium">{booking.guest_name}</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground text-sm">Check-in</div>
-            <div className="font-medium">{formatDate(new Date(booking.check_in))}</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground text-sm">Cabins Requested</div>
-            <div className="font-medium">{booking.requested_unit_count}</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground text-sm">Total Amount</div>
-            <div className="font-mono font-medium">{formatCurrency(booking.total_amount)}</div>
+        <CardContent className="@container">
+          <div className="grid grid-cols-2 gap-4 @lg:grid-cols-4">
+            <div>
+              <div className="text-muted-foreground text-sm">Guest</div>
+              <div className="font-medium">{booking.guest_name}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground text-sm">Check-in</div>
+              <div className="font-medium">{formatDate(new Date(booking.check_in))}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground text-sm">Cabins Requested</div>
+              <div className="font-medium">{booking.requested_unit_count}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground text-sm">Total Amount</div>
+              <div className="font-medium tabular-nums">{formatCurrency(booking.total_amount)}</div>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -6,8 +6,19 @@ import { BookingsTable } from "@/components/bookings/BookingsTable";
 import { DashboardCalendar } from "@/components/dashboard/DashboardCalendar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  StatusBadge,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/patterns";
+import { formatCurrency } from "@/lib/formatters";
+import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking } from "@/types";
 
 interface DesktopDashboardProps {
@@ -58,7 +69,7 @@ export function DesktopDashboard({
   }, [bookings]);
 
   return (
-    <div className="space-y-6">
+    <div className="@container space-y-6">
       {/* Page Header */}
       <DashboardHeader
         title="Dashboard"
@@ -76,7 +87,7 @@ export function DesktopDashboard({
       <DashboardCalendar bookings={bookings} isLoading={isLoading} />
 
       {/* Main Content */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 @4xl:grid-cols-2">
         {/* Upcoming Activities */}
         <Card>
           <CardHeader>
@@ -105,8 +116,8 @@ export function DesktopDashboard({
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium">
-                          ₱{booking.total_amount.toLocaleString()}
+                        <p className="text-sm font-medium tabular-nums">
+                          {formatCurrency(booking.total_amount)}
                         </p>
                         <p className="text-muted-foreground text-xs">{booking.payment_status}</p>
                       </div>
@@ -131,8 +142,8 @@ export function DesktopDashboard({
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium">
-                          ₱{booking.total_amount.toLocaleString()}
+                        <p className="text-sm font-medium tabular-nums">
+                          {formatCurrency(booking.total_amount)}
                         </p>
                         <p className="text-muted-foreground text-xs">{booking.payment_status}</p>
                       </div>
@@ -172,19 +183,7 @@ export function DesktopDashboard({
                       <p className="text-sm font-medium">
                         {booking.booking_units?.[0]?.unit?.unit_name || "N/A"}
                       </p>
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs ${
-                          booking.booking_status === "Confirmed"
-                            ? "bg-green-100 text-green-800"
-                            : booking.booking_status === "Pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : booking.booking_status === "CheckedIn"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {booking.booking_status}
-                      </span>
+                      <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
                     </div>
                   </div>
                 ))}

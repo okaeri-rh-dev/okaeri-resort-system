@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 
 import { format } from "date-fns";
-import { AlertTriangle, Info } from "lucide-react";
 
+import {
+  Callout,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Separator,
+  Skeleton,
+} from "@/components/patterns";
 import { PricingStatusBadge } from "@/components/pricing/PricingStatusBadge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-// Removed unused import: Badge
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
 import { usePricingCalculation } from "@/hooks/usePricingCalculation";
 import type { MultiUnitPricingResult, PricingResult } from "@/types/api/pricing";
 import type { UnitRequest } from "@/types/guest-booking-multi-unit";
@@ -111,12 +114,7 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
 
   // Empty state: No units added yet
   if (unitRequests.length === 0 || !checkIn || !checkOut) {
-    return (
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertDescription>Add units to see pricing estimate</AlertDescription>
-      </Alert>
-    );
+    return <Callout tone="info">Add units to see pricing estimate</Callout>;
   }
 
   // Loading state: Calculating pricing
@@ -149,12 +147,7 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
 
   // Error state: Failed to calculate pricing
   if (calculatePricing.isError) {
-    return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>Unable to calculate pricing. Please try again.</AlertDescription>
-      </Alert>
-    );
+    return <Callout tone="danger">Unable to calculate pricing. Please try again.</Callout>;
   }
 
   // Success state: Display pricing breakdown
@@ -186,12 +179,9 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
   return (
     <div className="space-y-4">
       {/* Preview Warning Banner */}
-      <Alert variant="warning">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          Preview Only - Final pricing calculated by server at booking submission
-        </AlertDescription>
-      </Alert>
+      <Callout tone="warning">
+        Preview Only - Final pricing calculated by server at booking submission
+      </Callout>
 
       {/* Pricing Card */}
       <Card>
@@ -232,24 +222,17 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
           {/* Seasonal Rates Notice */}
           {pricingNotice && (
             <div className="pt-2">
-              <PricingStatusBadge
-                notice={pricingNotice}
-                isLoading={calculatePricing.isPending}
-                size="sm"
-              />
+              <PricingStatusBadge notice={pricingNotice} isLoading={calculatePricing.isPending} />
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Admin Assignment Notice */}
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          Downpayment secures your booking. Admin assigns specific units after payment verification,
-          typically within 4-24 hours.
-        </AlertDescription>
-      </Alert>
+      <Callout tone="info">
+        Downpayment secures your booking. Admin assigns specific units after payment verification,
+        typically within 4-24 hours.
+      </Callout>
     </div>
   );
 }

@@ -13,11 +13,15 @@
 
 import { ChevronDown } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Input } from "@/components/ui/input";
+import {
+  Button,
+  Card,
+  CardContent,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+  Input,
+} from "@/components/patterns";
 import type { PricingConfig } from "@/hooks/usePricingConfig";
 import { formatCurrency } from "@/lib/formatters";
 import type { BookingUnit } from "@/types/multi-unit-booking";
@@ -116,9 +120,12 @@ function UnitCardItem({
           {/* Unit Info */}
           <div className="flex-1">
             <div className="mb-2 flex items-center gap-2">
-              <Badge variant="outline" aria-label={`Unit number ${index + 1}`}>
+              <span
+                className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold tabular-nums"
+                aria-label={`Unit number ${index + 1}`}
+              >
                 {index + 1}
-              </Badge>
+              </span>
               <h3 className="font-semibold">{unit.unit_name}</h3>
             </div>
 
@@ -213,12 +220,14 @@ function UnitCardItem({
                 Base ({unit.pricing.nights} night{unit.pricing.nights !== 1 ? "s" : ""} ×{" "}
                 {formatCurrency(pricingConfig?.base_rate ?? unit.base_rate)})
               </span>
-              <span className="font-mono">{formatCurrency(unit.pricing.base_total)}</span>
+              <span className="tabular-nums">{formatCurrency(unit.pricing.base_total)}</span>
             </div>
             {unit.pricing.weekend_surcharge > 0 && (
               <div className="text-muted-foreground flex justify-between">
                 <span>Weekend surcharge</span>
-                <span className="font-mono">+{formatCurrency(unit.pricing.weekend_surcharge)}</span>
+                <span className="tabular-nums">
+                  +{formatCurrency(unit.pricing.weekend_surcharge)}
+                </span>
               </div>
             )}
             {unit.pricing.extra_person_fee > 0 && (
@@ -229,7 +238,9 @@ function UnitCardItem({
                   × {unit.pricing.nights} night{unit.pricing.nights !== 1 ? "s" : ""} ×{" "}
                   {formatCurrency(pricingConfig?.extra_person_rate ?? unit.extra_person_rate)})
                 </span>
-                <span className="font-mono">+{formatCurrency(unit.pricing.extra_person_fee)}</span>
+                <span className="tabular-nums">
+                  +{formatCurrency(unit.pricing.extra_person_fee)}
+                </span>
               </div>
             )}
           </CollapsibleContent>

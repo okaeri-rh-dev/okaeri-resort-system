@@ -1,19 +1,21 @@
 import { useCallback } from "react";
 
-import { flexRender } from "@tanstack/react-table";
+import { flexRender, type Row } from "@tanstack/react-table";
 
 import { withErrorBoundary } from "@/components/ErrorBoundary";
-import { TableEmptyState, TablePagination, TableSkeleton } from "@/components/patterns";
-import { Card } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Button,
+  Callout,
+  Checkbox,
+  DataTable,
+  ListCard,
+  ListCardRow,
+  TableEmptyState,
+  TablePagination,
+  TableSkeleton,
+} from "@/components/patterns";
 import { cn } from "@/lib/utils";
+import type { Unit } from "@/types";
 
 import { TableHeader as TableHeaderControls } from "./components/TableHeader";
 import { useUnitsTable } from "./hooks/useUnitsTable";
@@ -69,15 +71,17 @@ function UnitsTableComponent({
   // Error state
   if (error) {
     return (
-      <Card className="p-8 text-center">
-        <p className="text-red-600">Error loading units: {error.message}</p>
-        <button
+      <Callout tone="danger" title="Couldn't load cabins">
+        <p>{error.message}</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-3"
           onClick={() => window.location.reload()}
-          className="bg-primary hover:bg-primary/90 mt-4 rounded px-4 py-2 text-white"
         >
           Retry
-        </button>
-      </Card>
+        </Button>
+      </Callout>
     );
   }
 
@@ -100,63 +104,50 @@ function UnitsTableComponent({
         onBatchStatusUpdate={handleBatchStatusUpdate}
       />
 
-      {/* Table Content */}
-      <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} style={{ width: header.getSize() }}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
+      <DataTable
+        table={table}
+        label="Cabins"
+        renderCard={(row) => <UnitCard row={row} />}
+        emptyState={
+          <TableEmptyState
+            title="No cabins found"
+            description="Add your first cabin to get started"
+          />
+        }
+      />
 
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    className={cn(
-                      row.getIsSelected() && "bg-blue-50",
-                      "transition-colors hover:bg-gray-50"
-                    )}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={table.getAllColumns().length} className="h-24">
-                    <TableEmptyState
-                      title="No units found"
-                      description="Add your first unit to get started"
-                    />
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Pagination */}
-        <div className="border-t px-4 py-3">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <TablePagination table={table as any} totalItems={units.length} />
-        </div>
-      </Card>
+      <TablePagination table={table} totalItems={units.length} />
     </div>
+  );
+}
+
+/** Renders one column's cell, so the card form shares the table's edit mode and actions. */
+function renderCell(row: Row<Unit>, columnId: string) {
+  const cell = row.getVisibleCells().find((visibleCell) => visibleCell.column.id === columnId);
+  return cell ? flexRender(cell.column.columnDef.cell, cell.getContext()) : null;
+}
+
+function UnitCard({ row }: { row: Row<Unit> }) {
+  const unit = row.original;
+  return (
+    <ListCard>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-3">
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label={`Select ${unit.unit_name}`}
+          />
+          <div className="min-w-0">
+            {renderCell(row, "unit_name")}
+            <p className="text-muted-foreground text-sm tabular-nums">{unit.unit_code}</p>
+          </div>
+        </div>
+        {renderCell(row, "actions")}
+      </div>
+      <ListCardRow label="Capacity" value={renderCell(row, "max_occupancy")} />
+      <ListCardRow label="Status" value={renderCell(row, "unit_status")} />
+    </ListCard>
   );
 }
 
@@ -164,15 +155,11 @@ function UnitsTableComponent({
 export const UnitsTable = withErrorBoundary(UnitsTableComponent, {
   level: "component",
   fallback: (
-    <Card className="p-8 text-center">
-      <p className="mb-4 text-red-600">Failed to load units table</p>
-      <button
-        onClick={() => window.location.reload()}
-        className="bg-primary hover:bg-primary/90 rounded px-4 py-2 text-white"
-      >
+    <Callout tone="danger" title="Couldn't load the cabins table">
+      <Button variant="outline" size="sm" className="mt-3" onClick={() => window.location.reload()}>
         Reload Page
-      </button>
-    </Card>
+      </Button>
+    </Callout>
   ),
 }) as React.ComponentType<UnitsTableProps>;
 

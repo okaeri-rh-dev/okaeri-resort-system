@@ -8,23 +8,24 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Button,
+  Callout,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
   Form,
-  FormControl,
   FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+  Input,
+  Skeleton,
+  StatusBadge,
+} from "@/components/patterns";
 import { GuestLayout } from "@/layouts/GuestLayout";
 import { formatCurrency } from "@/lib/formatters";
 import { validateStatusResponse, type StatusResponse } from "@/lib/schema-transform";
+import { statusBadgeProps } from "@/lib/status-tone";
 import { hasProperty, isObject } from "@/lib/type-guards";
 
 const searchSchema = z.object({
@@ -99,25 +100,6 @@ function CheckBookingPage() {
     }
   };
 
-  const getStatusVariant = (
-    status: string
-  ): "default" | "secondary" | "destructive" | "outline" => {
-    switch (status.toLowerCase()) {
-      case "confirmed":
-      case "completed":
-      case "checkedin":
-      case "checkedout":
-        return "default";
-      case "pending":
-        return "secondary";
-      case "cancelled":
-      case "refunded":
-        return "destructive";
-      default:
-        return "outline";
-    }
-  };
-
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), "MMM dd, yyyy");
@@ -147,35 +129,23 @@ function CheckBookingPage() {
                 <FormField
                   control={form.control}
                   name="booking_reference"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Booking Reference</FormLabel>
-                      <FormControl>
-                        <Input placeholder="BK-2025-ABCD" {...field} disabled={isSearching} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                  label="Booking Reference"
+                >
+                  {(field) => (
+                    <Input placeholder="BK-2025-ABCD" {...field} disabled={isSearching} />
                   )}
-                />
+                </FormField>
 
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email Address</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="john@example.com"
-                          {...field}
-                          disabled={isSearching}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                <FormField control={form.control} name="email" label="Email Address">
+                  {(field) => (
+                    <Input
+                      type="email"
+                      placeholder="john@example.com"
+                      {...field}
+                      disabled={isSearching}
+                    />
                   )}
-                />
+                </FormField>
 
                 <Button type="submit" className="w-full" disabled={isSearching}>
                   {isSearching ? (
@@ -225,12 +195,8 @@ function CheckBookingPage() {
                   <CardDescription>Reference: {booking.booking_reference}</CardDescription>
                 </div>
                 <div className="flex gap-2">
-                  <Badge variant={getStatusVariant(booking.booking_status)}>
-                    {booking.booking_status}
-                  </Badge>
-                  <Badge variant={getStatusVariant(booking.payment_status)}>
-                    {booking.payment_status}
-                  </Badge>
+                  <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
+                  <StatusBadge {...statusBadgeProps(booking.payment_status, "Pending")} />
                 </div>
               </div>
             </CardHeader>
@@ -267,20 +233,16 @@ function CheckBookingPage() {
 
                 {/* Status Messages */}
                 {booking.payment_status === "Pending" && (
-                  <Alert>
-                    <AlertDescription>
-                      Your payment is being verified. You will receive a confirmation email once the
-                      payment is confirmed.
-                    </AlertDescription>
-                  </Alert>
+                  <Callout tone="info">
+                    Your payment is being verified. You will receive a confirmation email once the
+                    payment is confirmed.
+                  </Callout>
                 )}
 
                 {booking.booking_status === "Confirmed" && (
-                  <Alert>
-                    <AlertDescription>
-                      Your booking is confirmed! We look forward to welcoming you.
-                    </AlertDescription>
-                  </Alert>
+                  <Callout tone="success">
+                    Your booking is confirmed! We look forward to welcoming you.
+                  </Callout>
                 )}
               </div>
             </CardContent>

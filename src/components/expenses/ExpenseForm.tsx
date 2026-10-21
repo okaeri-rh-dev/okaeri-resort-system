@@ -1,38 +1,27 @@
 import React, { useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
-import { CalendarIcon, Upload, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { AccountSelector } from "@/components/accounts/AccountSelector";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
+  Button,
+  DatePicker,
   Form,
-  FormControl,
-  FormDescription,
   FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input, NumberInput } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
+  Input,
+  Label,
+  NumberInput,
+  SelectControl,
   SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+  Textarea,
+} from "@/components/patterns";
 import { useActiveExpenseCategories } from "@/hooks/useExpenseCategories";
 import { sanitizeFormData } from "@/lib/security/sanitize";
 import { toISODateString } from "@/lib/timezone";
-import { cn } from "@/lib/utils";
 import { useCreateExpense, useUpdateExpense } from "@/stores/useExpenseStore";
 import type { Expense } from "@/types";
 
@@ -58,7 +47,6 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
   const isEditMode = !!expense;
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(expense?.receipt_url || null);
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   const { data: categories = [] } = useActiveExpenseCategories();
   const createExpense = useCreateExpense();
@@ -159,155 +147,110 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Category */}
         <FormField
           control={form.control}
           name="category"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Category *</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select expense category" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {categories.length > 0 ? (
-                    categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.name}>
-                        {cat.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    // Radix throws on an empty-string item value; categories are [] while loading
-                    <p className="px-2 py-1.5 text-sm text-neutral-500">No categories available</p>
-                  )}
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                Choose the most appropriate category for this expense
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+          label="Category *"
+          description="Choose the most appropriate category for this expense"
+        >
+          {(field) => (
+            <SelectControl
+              value={field.value}
+              onValueChange={field.onChange}
+              placeholder="Select expense category"
+            >
+              {categories.length > 0 ? (
+                categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.name}>
+                    {cat.name}
+                  </SelectItem>
+                ))
+              ) : (
+                // Radix throws on an empty-string item value; categories are [] while loading
+                <p className="text-muted-foreground px-2 py-1.5 text-sm">No categories available</p>
+              )}
+            </SelectControl>
           )}
-        />
+        </FormField>
 
-        {/* Description */}
         <FormField
           control={form.control}
           name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description *</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="e.g., Monthly electricity bill, Air conditioning repair"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                Brief description of the expense (max 500 characters)
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+          label="Description *"
+          description="Brief description of the expense (max 500 characters)"
+        >
+          {(field) => (
+            <Input
+              placeholder="e.g., Monthly electricity bill, Air conditioning repair"
+              {...field}
+            />
           )}
-        />
+        </FormField>
 
-        {/* Payment Account */}
         <FormField
           control={form.control}
           name="account_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Paid From *</FormLabel>
-              <FormControl>
-                <AccountSelector
+          label="Paid From *"
+          description="Which account was used to pay this expense?"
+        >
+          {(field) => (
+            <AccountSelector
+              value={field.value}
+              onChange={field.onChange}
+              placeholder="Select account"
+              required
+            />
+          )}
+        </FormField>
+
+        <div className="@container">
+          <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="amount"
+              label="Amount (PHP) *"
+              description="Enter the amount in Philippine Peso"
+            >
+              {(field) => (
+                <NumberInput
+                  min={0.01}
+                  allowDecimals={true}
+                  placeholder="0.00"
+                  startIcon={<span className="text-sm font-medium">₱</span>}
+                  value={field.value}
+                  onChange={(value) => field.onChange(value)}
+                  onBlur={(value) => {
+                    field.onChange(value || 0.01); // Set minimum on blur
+                    field.onBlur();
+                  }}
+                />
+              )}
+            </FormField>
+
+            <FormField
+              control={form.control}
+              name="expense_date"
+              label="Expense Date *"
+              description="When did this expense occur?"
+              className="flex flex-col"
+            >
+              {(field) => (
+                <DatePicker
                   value={field.value}
                   onChange={field.onChange}
-                  placeholder="Select account"
-                  required
+                  isDateDisabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                  placeholder="Pick a date"
+                  aria-label="Expense date"
+                  className="w-full"
                 />
-              </FormControl>
-              <FormDescription>Which account was used to pay this expense?</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Amount */}
-          <FormField
-            control={form.control}
-            name="amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Amount (PHP) *</FormLabel>
-                <FormControl>
-                  <NumberInput
-                    min={0.01}
-                    allowDecimals={true}
-                    placeholder="0.00"
-                    startIcon={<span className="text-sm font-medium">₱</span>}
-                    value={field.value}
-                    onChange={(value) => field.onChange(value)}
-                    onBlur={(value) => {
-                      field.onChange(value || 0.01); // Set minimum on blur
-                      field.onBlur();
-                    }}
-                  />
-                </FormControl>
-                <FormDescription>Enter the amount in Philippine Peso</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Expense Date */}
-          <FormField
-            control={form.control}
-            name="expense_date"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Expense Date *</FormLabel>
-                <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[340px] p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={(date) => {
-                        field.onChange(date);
-                        setDatePickerOpen(false);
-                      }}
-                      disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormDescription>When did this expense occur?</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              )}
+            </FormField>
+          </div>
         </div>
 
         {/* Receipt Upload */}
         <div className="space-y-4">
-          <FormLabel>Receipt (Optional)</FormLabel>
+          <Label htmlFor="receipt-upload">Receipt (Optional)</Label>
           <div className="border-muted-foreground/25 rounded-lg border-2 border-dashed p-6">
             {receiptPreview ? (
               <div className="space-y-4">
@@ -315,16 +258,19 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
                   <img
                     src={receiptPreview}
                     alt="Receipt preview"
-                    className="max-h-48 max-w-full rounded-lg object-contain"
+                    width={192}
+                    height={192}
+                    className="h-auto max-h-48 w-auto max-w-full rounded-lg object-contain"
                   />
                   <Button
                     type="button"
                     variant="destructive"
                     size="sm"
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                    className="absolute -top-2 -right-2 size-6 rounded-full p-0"
                     onClick={removeReceipt}
+                    aria-label="Remove receipt"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="size-3" aria-hidden="true" />
                   </Button>
                 </div>
                 <div className="text-muted-foreground text-sm">
@@ -333,7 +279,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
               </div>
             ) : (
               <div className="text-center">
-                <Upload className="text-muted-foreground/40 mx-auto h-12 w-12" />
+                <Upload className="text-muted-foreground/40 mx-auto size-12" aria-hidden="true" />
                 <div className="mt-4">
                   <Button type="button" variant="outline" asChild>
                     <label htmlFor="receipt-upload" className="cursor-pointer">
@@ -354,30 +300,23 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, on
           </div>
         </div>
 
-        {/* Notes */}
         <FormField
           control={form.control}
           name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Additional notes about this expense..."
-                  className="min-h-[100px]"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                Any additional information about this expense (max 1000 characters)
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+          label="Notes"
+          description="Any additional information about this expense (max 1000 characters)"
+        >
+          {(field) => (
+            <Textarea
+              placeholder="Additional notes about this expense..."
+              className="min-h-24"
+              {...field}
+            />
           )}
-        />
+        </FormField>
 
         {/* Actions */}
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
             Cancel
           </Button>

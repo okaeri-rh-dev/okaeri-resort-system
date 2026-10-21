@@ -1,7 +1,7 @@
 // src/components/units/UnitDetail/index.tsx
 
 import { Link } from "@tanstack/react-router";
-import { Calendar, DollarSign, Home, Info, Sparkles, TrendingUp } from "lucide-react";
+import { Calendar, DollarSign, Home, Sparkles, TrendingUp } from "lucide-react";
 
 import {
   DetailAuditSection,
@@ -10,9 +10,14 @@ import {
   formatTableDate,
   RelatedEntityLink,
 } from "@/components/entity-detail";
-import { DetailField, DetailPageLayout, DetailSection, StatusBadge } from "@/components/patterns";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import {
+  Button,
+  Callout,
+  DetailField,
+  DetailPageLayout,
+  DetailSection,
+  StatusBadge,
+} from "@/components/patterns";
 import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking, Unit } from "@/types";
@@ -47,7 +52,7 @@ interface UnitDetailPageProps {
  *
  * Uses Professional Enterprise Design System with:
  * - High information density with minimal whitespace
- * - Monospace fonts for financial data
+ * - Tabular figures for financial data
  * - Responsive 2-column desktop / 1-column mobile layouts
  * - Professional status badges
  * - Consistent spacing and typography
@@ -74,74 +79,74 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
       }}
     >
       {/* 1. Unit Specifications Section */}
-      <DetailSection title="Cabin Specifications" icon={<Home className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <DetailField label="Cabin Code" value={unit.unit_code} emphasis="strong" />
-          <DetailField label="Cabin Type" value={unit.unit_type} emphasis="strong" />
-          <DetailField
-            label="Max Occupancy"
-            value={`${unit.max_occupancy} guests`}
-            emphasis="strong"
-          />
-          <DetailField
-            label="Status"
-            value={<StatusBadge {...statusBadgeProps(unit.unit_status, "Available")} />}
-          />
+      <DetailSection
+        title="Cabin Specifications"
+        icon={<Home className="h-5 w-5" aria-hidden="true" />}
+      >
+        <div className="@container">
+          <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
+            <DetailField label="Cabin Code" value={unit.unit_code} emphasis="strong" />
+            <DetailField label="Cabin Type" value={unit.unit_type} emphasis="strong" />
+            <DetailField
+              label="Max Occupancy"
+              value={`${unit.max_occupancy} guests`}
+              emphasis="strong"
+            />
+            <DetailField
+              label="Status"
+              value={<StatusBadge {...statusBadgeProps(unit.unit_status, "Available")} />}
+            />
+          </div>
         </div>
       </DetailSection>
 
       {/* 2. Pricing Information Section */}
-      <DetailSection title="Pricing Information" icon={<DollarSign className="h-5 w-5" />}>
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            <div className="space-y-3">
-              <p className="font-medium">This cabin uses global pricing configuration.</p>
-              <p className="text-muted-foreground text-sm">
-                All cabins automatically inherit rates from your resort-wide pricing settings to
-                ensure consistent pricing across all units.
-              </p>
+      <DetailSection
+        title="Pricing Information"
+        icon={<DollarSign className="h-5 w-5" aria-hidden="true" />}
+      >
+        <div className="@container space-y-4">
+          <Callout tone="info" title="This cabin uses global pricing configuration.">
+            All cabins automatically inherit rates from your resort-wide pricing settings to ensure
+            consistent pricing across all units.
+          </Callout>
 
-              {pricingConfig && (
-                <div className="border-border bg-muted mt-4 space-y-2 rounded-md border p-4">
-                  <p className="text-foreground text-sm font-medium">Current Global Rates:</p>
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                    <div>
-                      <p className="text-muted-foreground text-xs">Base Rate (Weekdays)</p>
-                      <p className="text-foreground text-base font-semibold tabular-nums">
-                        {formatCurrency(pricingConfig.base_rate)}
-                      </p>
-                      <p className="text-muted-foreground text-xs">per night</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground text-xs">Weekend Rate</p>
-                      <p className="text-foreground text-base font-semibold tabular-nums">
-                        {formatCurrency(pricingConfig.weekend_rate)}
-                      </p>
-                      <p className="text-muted-foreground text-xs">Fri-Sat per night</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground text-xs">Extra Person Rate</p>
-                      <p className="text-foreground text-base font-semibold tabular-nums">
-                        {formatCurrency(pricingConfig.extra_person_rate)}
-                      </p>
-                      <p className="text-muted-foreground text-xs">per person per night</p>
-                    </div>
-                  </div>
+          {pricingConfig && (
+            <div className="bg-muted space-y-2 rounded-md border p-4">
+              <p className="text-sm font-medium">Current Global Rates:</p>
+              <div className="grid grid-cols-1 gap-3 @lg:grid-cols-3">
+                <div>
+                  <p className="text-muted-foreground text-xs">Base Rate (Weekdays)</p>
+                  <p className="text-base font-semibold tabular-nums">
+                    {formatCurrency(pricingConfig.base_rate)}
+                  </p>
+                  <p className="text-muted-foreground text-xs">per night</p>
                 </div>
-              )}
-
-              <div className="pt-2">
-                <Link to="/admin/units/pricing">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <DollarSign className="h-4 w-4" />
-                    Manage Global Pricing Settings
-                  </Button>
-                </Link>
+                <div>
+                  <p className="text-muted-foreground text-xs">Weekend Rate</p>
+                  <p className="text-base font-semibold tabular-nums">
+                    {formatCurrency(pricingConfig.weekend_rate)}
+                  </p>
+                  <p className="text-muted-foreground text-xs">Fri-Sat per night</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Extra Person Rate</p>
+                  <p className="text-base font-semibold tabular-nums">
+                    {formatCurrency(pricingConfig.extra_person_rate)}
+                  </p>
+                  <p className="text-muted-foreground text-xs">per person per night</p>
+                </div>
               </div>
             </div>
-          </AlertDescription>
-        </Alert>
+          )}
+
+          <Button asChild variant="outline" size="sm" className="gap-2">
+            <Link to="/admin/units/pricing">
+              <DollarSign className="h-4 w-4" aria-hidden="true" />
+              Manage Global Pricing Settings
+            </Link>
+          </Button>
+        </div>
       </DetailSection>
 
       {/* 3. Amenities Section (Conditional) */}
@@ -163,13 +168,13 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
       {/* 4. Current/Upcoming Bookings Section */}
       {unit.bookings && unit.bookings.length > 0 && (
         <DetailSection title="Current/Upcoming Bookings" icon={<Calendar className="h-5 w-5" />}>
-          <div className="space-y-3">
+          <div className="@container space-y-3">
             {unit.bookings.map((booking) => (
               <div
                 key={booking.booking_id}
-                className="border-border bg-muted flex flex-col rounded-md border p-4 md:flex-row md:items-center md:justify-between"
+                className="bg-muted flex flex-col rounded-md border p-4 @lg:flex-row @lg:items-center @lg:justify-between"
               >
-                <div className="space-y-1">
+                <div className="min-w-0 space-y-1">
                   <div className="flex items-center gap-2">
                     <RelatedEntityLink
                       type="booking"
@@ -181,9 +186,9 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
                   <p className="text-muted-foreground text-sm">
                     {formatTableDate(booking.check_in)} - {formatTableDate(booking.check_out)}
                   </p>
-                  <p className="text-muted-foreground text-sm">{booking.guest_name}</p>
+                  <p className="text-muted-foreground text-sm break-words">{booking.guest_name}</p>
                 </div>
-                <div className="mt-2 text-right md:mt-0">
+                <div className="mt-2 text-right @lg:mt-0">
                   <p className="text-foreground text-lg font-semibold tabular-nums">
                     {formatCurrency(booking.total_amount)}
                   </p>
@@ -198,29 +203,31 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
       {/* 5. Revenue Statistics Section */}
       {unit.revenue_stats && (
         <DetailSection title="Revenue Statistics" icon={<TrendingUp className="h-5 w-5" />}>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <DetailField
-              label="Total Bookings"
-              value={unit.revenue_stats.total_bookings.toString()}
-              emphasis="figure"
-            />
-            <DetailField
-              label="Total Revenue"
-              value={formatCurrency(unit.revenue_stats.total_revenue)}
-              emphasis="figure"
-            />
-            <DetailField
-              label="Average Booking Value"
-              value={formatCurrency(unit.revenue_stats.average_booking_value)}
-              emphasis="strong"
-            />
-            {unit.revenue_stats.occupancy_rate !== undefined && (
+          <div className="@container">
+            <div className="grid grid-cols-1 gap-6 @lg:grid-cols-3">
               <DetailField
-                label="Occupancy Rate"
-                value={formatPercentage(unit.revenue_stats.occupancy_rate)}
+                label="Total Bookings"
+                value={unit.revenue_stats.total_bookings.toString()}
                 emphasis="figure"
               />
-            )}
+              <DetailField
+                label="Total Revenue"
+                value={formatCurrency(unit.revenue_stats.total_revenue)}
+                emphasis="figure"
+              />
+              <DetailField
+                label="Average Booking Value"
+                value={formatCurrency(unit.revenue_stats.average_booking_value)}
+                emphasis="strong"
+              />
+              {unit.revenue_stats.occupancy_rate !== undefined && (
+                <DetailField
+                  label="Occupancy Rate"
+                  value={formatPercentage(unit.revenue_stats.occupancy_rate)}
+                  emphasis="figure"
+                />
+              )}
+            </div>
           </div>
         </DetailSection>
       )}
