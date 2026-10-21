@@ -37,6 +37,7 @@ import {
   Checkbox,
 } from "@/components/patterns";
 import { getAccessToken, useAuthToken } from "@/hooks/useAuthToken";
+import { pluralize } from "@/lib/formatters";
 import { afterBookingUpdate } from "@/lib/query-invalidation";
 import { availabilityKeys } from "@/lib/query-keys";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -220,7 +221,7 @@ export function UnitAssignmentInterface({
     const requiredCount = unitRequests.length;
     const selectedCount = selectedUnits.size;
     const cabins = (count: number, qualifier = "") =>
-      `${count} ${qualifier}cabin${count === 1 ? "" : "s"}`;
+      `${count} ${qualifier}${pluralize(count, "cabin")}`;
 
     if (selectedCount === 0) {
       return { isValid: false, message: `Select ${cabins(requiredCount)} to proceed` };
@@ -276,7 +277,7 @@ export function UnitAssignmentInterface({
   // ============================================
 
   if (isAuthLoading) {
-    return <LoadingCard label="Authenticating..." />;
+    return <LoadingCard label="Authenticating…" />;
   }
 
   if (authError) {
@@ -288,7 +289,7 @@ export function UnitAssignmentInterface({
   }
 
   if (isLoadingUnits) {
-    return <LoadingCard label="Loading available cabins..." />;
+    return <LoadingCard label="Loading available cabins…" />;
   }
 
   if (fetchError) {
@@ -373,7 +374,7 @@ export function UnitAssignmentInterface({
                       <UnitFact label="Rate/Night">
                         <span className="tabular-nums">{formatCurrency(unit.rate_per_night)}</span>
                       </UnitFact>
-                      {unit.floor_level !== null && unit.floor_level !== undefined && (
+                      {unit.floor_level != null && (
                         <UnitFact label="Floor">
                           <span className="tabular-nums">{unit.floor_level}</span>
                         </UnitFact>
@@ -398,12 +399,12 @@ export function UnitAssignmentInterface({
           {isAssigning ? (
             <>
               <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-              Assigning Cabins...
+              Assigning Cabins…
             </>
           ) : (
             <>
               <CheckCircle2 className="size-4" aria-hidden="true" />
-              Assign {requiredCount} Cabin{requiredCount > 1 ? "s" : ""} to Booking
+              Assign {requiredCount} {pluralize(requiredCount, "Cabin")} to Booking
             </>
           )}
         </Button>
@@ -418,8 +419,8 @@ export function UnitAssignmentInterface({
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Cabin Assignment</AlertDialogTitle>
             <AlertDialogDescription>
-              This will assign {selectedUnits.size} cabin(s) to booking {bookingReference}. This
-              action cannot be undone.
+              This will assign {selectedUnits.size} {pluralize(selectedUnits.size, "cabin")} to
+              booking {bookingReference}. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -434,7 +435,7 @@ export function UnitAssignmentInterface({
 
 function LoadingCard({ label }: { label: string }) {
   return (
-    <Card>
+    <Card role="status">
       <CardContent className="text-muted-foreground flex items-center justify-center gap-3 py-12">
         <Loader2 className="size-5 animate-spin" aria-hidden="true" />
         <span className="text-sm font-medium">{label}</span>

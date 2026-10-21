@@ -25,10 +25,12 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  DetailField,
   Skeleton,
 } from "@/components/patterns";
 import { useAuthToken } from "@/hooks/useAuthToken";
 import { isPaymentReceived, manilaDayOf } from "@/lib/bookings";
+import { pluralize } from "@/lib/formatters";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { adminBookingDetailQuery } from "@/stores/useBookingStore";
 import type { PaymentStatus } from "@/types";
@@ -295,8 +297,13 @@ function ErrorState({ error, bookingId }: { error: Error | null; bookingId: stri
   );
 }
 
-function BookingSummaryCard({ booking }: { booking: BookingDetail }) {
-  const unitRequests = booking.unit_requests || [];
+function BookingSummaryCard({
+  booking,
+  unitRequests,
+}: {
+  booking: BookingDetail;
+  unitRequests: UnitRequest[];
+}) {
   const totalGuests = unitRequests.reduce((sum, request) => sum + request.guests_per_unit, 0);
 
   return (
@@ -305,24 +312,39 @@ function BookingSummaryCard({ booking }: { booking: BookingDetail }) {
         <CardTitle>Booking Summary</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <dl className="medium:grid-cols-3 grid grid-cols-2 gap-4">
+        <div className="medium:grid-cols-3 grid grid-cols-2 gap-4">
           <div className="medium:col-span-1 col-span-2 min-w-0">
-            <dt className="text-muted-foreground text-sm">Guest</dt>
-            <dd className="font-medium break-words">{booking.guest_name}</dd>
-            <dd className="text-muted-foreground text-xs break-words">{booking.guest_contact}</dd>
+            <DetailField
+              label="Guest"
+              emphasis="strong"
+              value={
+                <>
+                  {booking.guest_name}
+                  <span className="text-muted-foreground block text-xs font-normal">
+                    {booking.guest_contact}
+                  </span>
+                </>
+              }
+            />
           </div>
-          <SummaryFact label="Check-in">{formatDate(new Date(booking.check_in))}</SummaryFact>
-          <SummaryFact label="Check-out">{formatDate(new Date(booking.check_out))}</SummaryFact>
-          <SummaryFact label="Total Amount">
-            <span className="tabular-nums">{formatCurrency(booking.total_amount)}</span>
-          </SummaryFact>
-          <SummaryFact label="Cabins requested">
-            <span className="tabular-nums">{unitRequests.length}</span>
-          </SummaryFact>
-          <SummaryFact label="Guests">
-            <span className="tabular-nums">{totalGuests}</span>
-          </SummaryFact>
-        </dl>
+          <DetailField
+            label="Check-in"
+            value={formatDate(new Date(booking.check_in))}
+            emphasis="strong"
+          />
+          <DetailField
+            label="Check-out"
+            value={formatDate(new Date(booking.check_out))}
+            emphasis="strong"
+          />
+          <DetailField
+            label="Total Amount"
+            value={formatCurrency(booking.total_amount)}
+            emphasis="figure"
+          />
+          <DetailField label="Cabins requested" value={unitRequests.length} emphasis="figure" />
+          <DetailField label="Guests" value={totalGuests} emphasis="figure" />
+        </div>
 
         {unitRequests.length > 1 && (
           <div className="border-t pt-4">
@@ -332,7 +354,7 @@ function BookingSummaryCard({ booking }: { booking: BookingDetail }) {
                 <li key={request.id} className="bg-muted rounded-md border px-3 py-1.5 text-xs">
                   <span className="font-medium">Cabin {index + 1}:</span>{" "}
                   <span className="font-semibold tabular-nums">{request.guests_per_unit}</span>{" "}
-                  guest{request.guests_per_unit === 1 ? "" : "s"}
+                  {pluralize(request.guests_per_unit, "guest")}
                 </li>
               ))}
             </ul>
@@ -340,15 +362,6 @@ function BookingSummaryCard({ booking }: { booking: BookingDetail }) {
         )}
       </CardContent>
     </Card>
-  );
-}
-
-function SummaryFact({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <dt className="text-muted-foreground text-sm">{label}</dt>
-      <dd className="font-medium">{children}</dd>
-    </div>
   );
 }
 
@@ -420,6 +433,8 @@ function AssignUnitsPage() {
     );
   }
 
+  const unitRequests = booking.unit_requests ?? [];
+
   // ============================================
   // Main Render
   // ============================================
@@ -446,7 +461,7 @@ function AssignUnitsPage() {
         </div>
       </div>
 
-      <BookingSummaryCard booking={booking} />
+      <BookingSummaryCard booking={booking} unitRequests={unitRequests} />
 
       {/* Payment Status Badge */}
       <Callout tone="success" title="Payment Verified">
@@ -459,7 +474,7 @@ function AssignUnitsPage() {
         bookingReference={booking.booking_reference}
         checkInDate={manilaDayOf(booking.check_in)}
         checkOutDate={manilaDayOf(booking.check_out)}
-        unitRequests={booking.unit_requests || []}
+        unitRequests={unitRequests}
         onAssignmentSuccess={handleAssignmentSuccess}
       />
     </div>
