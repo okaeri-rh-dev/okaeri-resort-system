@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { Calendar, Edit2, Plus, Save, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -13,6 +14,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  DataTable,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -23,20 +25,14 @@ import {
   Form,
   FormField,
   Input,
+  ListCard,
+  ListCardRow,
   SelectControl,
   SelectItem,
   StatusBadge,
   Switch,
   type StatusTone,
 } from "@/components/patterns";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 // Types
 export interface SeasonalRate {
@@ -239,6 +235,84 @@ export function SeasonalRatesForm({
     return `${startMonth} ${startDay} - ${endMonth} ${endDay}`;
   };
 
+  const renderActiveSwitch = (rate: SeasonalRate) => (
+    <Switch
+      checked={rate.is_active}
+      onCheckedChange={() => handleToggleActive(rate)}
+      aria-label={`${rate.name} active`}
+    />
+  );
+
+  const renderRowActions = (rate: SeasonalRate) => (
+    <div className="flex justify-end gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => openEditDialog(rate)}
+        aria-label={`Edit ${rate.name}`}
+      >
+        <Edit2 className="h-4 w-4" aria-hidden="true" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleDelete(rate)}
+        aria-label={`Delete ${rate.name}`}
+      >
+        <Trash2 className="text-destructive h-4 w-4" aria-hidden="true" />
+      </Button>
+    </div>
+  );
+
+  const columns: ColumnDef<SeasonalRate>[] = [
+    {
+      accessorKey: "name",
+      header: "Season",
+      cell: ({ row }) => (
+        <StatusBadge tone={getBadgeTone(row.original.color)}>{row.original.name}</StatusBadge>
+      ),
+    },
+    {
+      id: "date_range",
+      header: "Date Range",
+      cell: ({ row }) => (
+        <span className="whitespace-nowrap">
+          {formatDateRange(row.original.start_date, row.original.end_date)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "multiplier",
+      header: "Multiplier",
+      cell: ({ row }) => <MultiplierFigure multiplier={row.original.multiplier} />,
+      meta: { align: "right" },
+    },
+    { accessorKey: "priority", header: "Priority", meta: { align: "right" } },
+    {
+      accessorKey: "is_active",
+      header: "Status",
+      cell: ({ row }) => renderActiveSwitch(row.original),
+    },
+    {
+      id: "actions",
+      header: () => <span className="sr-only">Actions</span>,
+      cell: ({ row }) => renderRowActions(row.original),
+      meta: { align: "right", pinned: true },
+    },
+  ];
+
+  const ratesByPriority = React.useMemo(
+    () => [...localRates].sort((a, b) => b.priority - a.priority),
+    [localRates]
+  );
+
+  const table = useReactTable({
+    data: ratesByPriority,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (rate) => rate.season_id,
+  });
+
   // Check if there are unsaved changes
   const hasChanges = JSON.stringify(localRates) !== JSON.stringify(rates);
 
@@ -411,85 +485,30 @@ export function SeasonalRatesForm({
             </p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Season</TableHead>
-                <TableHead>Date Range</TableHead>
-                <TableHead>Multiplier</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {localRates
-                .sort((a, b) => b.priority - a.priority)
-                .map((rate) => (
-                  <TableRow key={rate.season_id}>
-                    <TableCell>
-                      <StatusBadge tone={getBadgeTone(rate.color)}>{rate.name}</StatusBadge>
-                    </TableCell>
-                    <TableCell className="text-sm whitespace-nowrap tabular-nums">
-                      {formatDateRange(rate.start_date, rate.end_date)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 tabular-nums">
-                        {rate.multiplier > 1 ? (
-                          <TrendingUp
-                            className="text-success-foreground h-4 w-4"
-                            aria-hidden="true"
-                          />
-                        ) : rate.multiplier < 1 ? (
-                          <TrendingDown
-                            className="text-danger-foreground h-4 w-4"
-                            aria-hidden="true"
-                          />
-                        ) : null}
-                        <span>{rate.multiplier}x</span>
-                        <span className="text-muted-foreground text-sm">
-                          (
-                          {rate.multiplier > 1
-                            ? `+${Math.round((rate.multiplier - 1) * 100)}%`
-                            : rate.multiplier < 1
-                              ? `-${Math.round((1 - rate.multiplier) * 100)}%`
-                              : "0%"}
-                          )
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="tabular-nums">{rate.priority}</TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={rate.is_active}
-                        onCheckedChange={() => handleToggleActive(rate)}
-                        aria-label={`${rate.name} active`}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditDialog(rate)}
-                          aria-label={`Edit ${rate.name}`}
-                        >
-                          <Edit2 className="h-4 w-4" aria-hidden="true" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(rate)}
-                          aria-label={`Delete ${rate.name}`}
-                        >
-                          <Trash2 className="text-destructive h-4 w-4" aria-hidden="true" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            table={table}
+            label="Seasonal rates"
+            renderCard={(row) => (
+              <ListCard>
+                <div className="flex items-start justify-between gap-2">
+                  <StatusBadge tone={getBadgeTone(row.original.color)}>
+                    {row.original.name}
+                  </StatusBadge>
+                  {renderRowActions(row.original)}
+                </div>
+                <ListCardRow
+                  label="Dates"
+                  value={formatDateRange(row.original.start_date, row.original.end_date)}
+                />
+                <ListCardRow
+                  label="Multiplier"
+                  value={<MultiplierFigure multiplier={row.original.multiplier} />}
+                />
+                <ListCardRow label="Priority" value={row.original.priority} />
+                <ListCardRow label="Active" value={renderActiveSwitch(row.original)} />
+              </ListCard>
+            )}
+          />
         )}
 
         {/* Edit Dialog */}
@@ -514,5 +533,26 @@ export function SeasonalRatesForm({
         </Dialog>
       </CardContent>
     </Card>
+  );
+}
+
+function MultiplierFigure({ multiplier }: { multiplier: number }) {
+  const percentChange =
+    multiplier > 1
+      ? `+${Math.round((multiplier - 1) * 100)}%`
+      : multiplier < 1
+        ? `-${Math.round((1 - multiplier) * 100)}%`
+        : "0%";
+
+  return (
+    <div className="flex items-center justify-end gap-1 tabular-nums">
+      {multiplier > 1 ? (
+        <TrendingUp className="text-success-foreground h-4 w-4" aria-hidden="true" />
+      ) : multiplier < 1 ? (
+        <TrendingDown className="text-danger-foreground h-4 w-4" aria-hidden="true" />
+      ) : null}
+      <span>{multiplier}x</span>
+      <span className="text-muted-foreground text-sm">({percentChange})</span>
+    </div>
   );
 }
