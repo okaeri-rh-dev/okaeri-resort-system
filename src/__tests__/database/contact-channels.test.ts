@@ -237,6 +237,17 @@ describe("contact_channels", () => {
   });
 
   describe("reorder_contact_channel", () => {
+    // Every UPDATE on contact_channels writes one audit row.
+    async function contactChannelUpdateCount() {
+      const { count, error } = await admin
+        .from("audit_logs")
+        .select("*", { count: "exact", head: true })
+        .eq("table_name", "contact_channels")
+        .eq("action", "UPDATE");
+      if (error) throw new Error(`count audit rows failed: ${error.message}`);
+      return count ?? 0;
+    }
+
     async function orderOf(...ids: string[]) {
       const { data } = await admin
         .from("contact_channels")
@@ -251,6 +262,44 @@ describe("contact_channels", () => {
       const lower = await createChannel(false);
 
       const { error } = await roles.byRole[role].rpc("reorder_contact_channel", {
+        p_id: lower.id,
+        p_direction: "up",
+      });
+
+      expect(error).toBeNull();
+      const [upperOrder, lowerOrder] = await orderOf(upper.id, lower.id);
+      expect(lowerOrder! + 1).toBe(upperOrder);
+    });
+
+    it("updates only the two swapped rows when there are no ties, even across a gap", async () => {
+      if (!shouldRun) return;
+      const upper = await createChannel(true);
+      const removed = await createChannel(true);
+      const lower = await createChannel(true);
+      await admin.from("contact_channels").delete().eq("id", removed.id);
+      const updatesBefore = await contactChannelUpdateCount();
+
+      const { error } = await roles.byRole.manager.rpc("reorder_contact_channel", {
+        p_id: lower.id,
+        p_direction: "up",
+      });
+
+      expect(error).toBeNull();
+      expect((await contactChannelUpdateCount()) - updatesBefore).toBe(2);
+      const [upperOrder, lowerOrder] = await orderOf(upper.id, lower.id);
+      expect(lowerOrder).toBeLessThan(upperOrder!);
+    });
+
+    it("moves a channel above one it ties with", async () => {
+      if (!shouldRun) return;
+      const upper = await createChannel(true);
+      const lower = await createChannel(true);
+      await admin
+        .from("contact_channels")
+        .update({ display_order: upper.display_order })
+        .eq("id", lower.id);
+
+      const { error } = await roles.byRole.manager.rpc("reorder_contact_channel", {
         p_id: lower.id,
         p_direction: "up",
       });

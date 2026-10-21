@@ -1,6 +1,7 @@
 -- Contact channels: new channels go to the end of the list, and manager+ can
--- move a channel up or down. A move renumbers the list 0..n-1 and swaps the
--- channel with its neighbour in one transaction, so both rows change or neither.
+-- move a channel up or down. A move swaps the channel's display_order with its
+-- neighbour's in one transaction, so both rows change or neither. Each updated
+-- row writes an audit row, so a move touches only the rows it has to.
 
 BEGIN;
 
@@ -27,7 +28,8 @@ SET search_path = ''
 AS $$
 DECLARE
     v_position INTEGER;
-    v_neighbour INTEGER;
+    v_neighbour_id UUID;
+    v_neighbour_position INTEGER;
 BEGIN
     IF NOT public.is_manager_or_above() THEN
         RAISE EXCEPTION 'Only managers can reorder contact channels' USING ERRCODE = '42501';
@@ -39,29 +41,47 @@ BEGIN
 
     PERFORM 1 FROM public.contact_channels FOR UPDATE;
 
-    WITH ranked AS (
-        SELECT id, (ROW_NUMBER() OVER (ORDER BY display_order, created_at, id) - 1)::INTEGER AS position
-        FROM public.contact_channels
-    )
-    UPDATE public.contact_channels c
-    SET display_order = ranked.position
-    FROM ranked
-    WHERE c.id = ranked.id AND c.display_order <> ranked.position;
+    -- Swapping two equal display_orders changes nothing, so ties are first
+    -- renumbered 0..n-1 in rank order (the order db.contactChannels lists by).
+    IF EXISTS (
+        SELECT 1 FROM public.contact_channels GROUP BY display_order HAVING COUNT(*) > 1
+    ) THEN
+        WITH ranked AS (
+            SELECT id, (ROW_NUMBER() OVER (ORDER BY display_order, created_at, id) - 1)::INTEGER AS position
+            FROM public.contact_channels
+        )
+        UPDATE public.contact_channels c
+        SET display_order = ranked.position
+        FROM ranked
+        WHERE c.id = ranked.id AND c.display_order IS DISTINCT FROM ranked.position;
+    END IF;
 
     SELECT display_order INTO v_position FROM public.contact_channels WHERE id = p_id;
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Contact channel not found' USING ERRCODE = 'P0002';
     END IF;
 
-    v_neighbour := v_position + CASE p_direction WHEN 'up' THEN -1 ELSE 1 END;
+    IF p_direction = 'up' THEN
+        SELECT id, display_order INTO v_neighbour_id, v_neighbour_position
+        FROM public.contact_channels
+        WHERE display_order < v_position
+        ORDER BY display_order DESC
+        LIMIT 1;
+    ELSE
+        SELECT id, display_order INTO v_neighbour_id, v_neighbour_position
+        FROM public.contact_channels
+        WHERE display_order > v_position
+        ORDER BY display_order
+        LIMIT 1;
+    END IF;
 
-    IF NOT EXISTS (SELECT 1 FROM public.contact_channels WHERE display_order = v_neighbour) THEN
+    IF v_neighbour_id IS NULL THEN
         RETURN;
     END IF;
 
     UPDATE public.contact_channels
-    SET display_order = CASE WHEN id = p_id THEN v_neighbour ELSE v_position END
-    WHERE id = p_id OR display_order = v_neighbour;
+    SET display_order = CASE WHEN id = p_id THEN v_neighbour_position ELSE v_position END
+    WHERE id IN (p_id, v_neighbour_id);
 END;
 $$;
 
