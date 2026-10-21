@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from "react";
 
 import {
-  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
@@ -10,19 +9,11 @@ import {
   type ColumnDef,
   type SortingState,
 } from "@tanstack/react-table";
-import {
-  ArrowUpDown,
-  Building2,
-  CreditCard,
-  Edit,
-  MoreHorizontal,
-  RefreshCcw,
-  Trash2,
-  Wallet,
-} from "lucide-react";
+import { Building2, CreditCard, RefreshCcw, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
 import {
+  ActionMenu,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -31,26 +22,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Button,
+  Card,
+  DataTable,
+  ListCard,
+  ListCardRow,
+  SortableHeader,
+  StatusBadge,
+  TableEmptyState,
+  TablePagination,
+  TableSearch,
+} from "@/components/patterns";
+import { formatCurrency, pluralize } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import {
   useAccountBalances,
@@ -59,18 +42,13 @@ import {
 } from "@/stores/useAccountStore";
 import type { AccountType, AccountWithBalance } from "@/types";
 
-// Icon and color mapping
 const AccountTypeIcon: Record<AccountType, React.ComponentType<{ className?: string }>> = {
   Bank: Building2,
   "E-Wallet": Wallet,
   Cash: CreditCard,
 };
 
-const AccountTypeBadgeVariant: Record<AccountType, "default" | "secondary" | "outline"> = {
-  Bank: "default",
-  "E-Wallet": "secondary",
-  Cash: "outline",
-};
+const netTransfers = (account: AccountWithBalance) => account.transfers_in - account.transfers_out;
 
 interface AccountsTableProps {
   onEditAccount?: (account: AccountWithBalance) => void;
@@ -81,7 +59,7 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
   onEditAccount,
   showInactive = false,
 }) => {
-  const [sorting, setSorting] = useState<SortingState>([{ id: "display_order", desc: false }]);
+  const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
 
   const [accountToDeactivate, setAccountToDeactivate] = useState<AccountWithBalance | null>(null);
@@ -90,8 +68,14 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
   const deleteAccount = useDeleteAccount();
   const reactivateAccount = useReactivateAccount();
 
-  // Filter accounts based on showInactive
-  const filteredAccounts = showInactive ? accounts : accounts.filter((a) => a.is_active);
+  // A stable array: TanStack resets the page whenever `data` changes identity
+  const filteredAccounts = React.useMemo(
+    () =>
+      (showInactive ? [...accounts] : accounts.filter((a) => a.is_active)).sort(
+        (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
+      ),
+    [accounts, showInactive]
+  );
 
   const confirmDeactivate = useCallback(async () => {
     if (!accountToDeactivate) return;
@@ -114,175 +98,74 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return `₱${amount.toLocaleString("en-PH", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
+  const accountActions = (account: AccountWithBalance) => [
+    { label: "Edit", onClick: () => onEditAccount?.(account) },
+    account.is_active
+      ? {
+          label: "Deactivate",
+          onClick: () => setAccountToDeactivate(account),
+          variant: "destructive" as const,
+        }
+      : { label: "Reactivate", onClick: () => handleReactivate(account) },
+  ];
 
   const columns: ColumnDef<AccountWithBalance>[] = [
     {
       accessorKey: "account_name",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-4"
-        >
-          Account
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) => {
-        const account = row.original;
-        const Icon = AccountTypeIcon[account.account_type as AccountType] || CreditCard;
-
-        return (
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-lg",
-                account.account_type === "Bank" && "bg-blue-100 text-blue-600",
-                account.account_type === "E-Wallet" && "bg-green-100 text-green-600",
-                account.account_type === "Cash" && "bg-amber-100 text-amber-600"
-              )}
-            >
-              <Icon className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="font-medium">{account.account_name}</div>
-              <div className="text-muted-foreground text-xs">{account.account_code}</div>
-            </div>
-          </div>
-        );
-      },
+      header: ({ header }) => <SortableHeader header={header}>Account</SortableHeader>,
+      cell: ({ row }) => <AccountName account={row.original} />,
     },
     {
       accessorKey: "account_type",
       header: "Type",
-      cell: ({ row }) => {
-        const type = row.getValue("account_type") as AccountType;
-        return (
-          <Badge variant={AccountTypeBadgeVariant[type] || "default"}>
-            {type === "E-Wallet" ? "E-Wallet" : type}
-          </Badge>
-        );
-      },
+      cell: ({ row }) => (
+        <StatusBadge tone="neutral">{row.getValue<AccountType>("account_type")}</StatusBadge>
+      ),
     },
     {
       accessorKey: "initial_balance",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-4"
-        >
-          Initial
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: ({ header }) => <SortableHeader header={header}>Initial</SortableHeader>,
       cell: ({ row }) => (
         <span className="text-muted-foreground tabular-nums">
           {formatCurrency(row.getValue("initial_balance"))}
         </span>
       ),
+      meta: { align: "right" },
     },
     {
       accessorKey: "total_payments",
       header: "Received",
-      cell: ({ row }) => (
-        <span className="text-green-600 tabular-nums">
-          +{formatCurrency(row.getValue("total_payments"))}
-        </span>
-      ),
+      cell: ({ row }) => <SignedAmount amount={row.getValue("total_payments")} />,
+      meta: { align: "right" },
     },
     {
       accessorKey: "total_expenses",
       header: "Spent",
-      cell: ({ row }) => (
-        <span className="text-red-600 tabular-nums">
-          -{formatCurrency(row.getValue("total_expenses"))}
-        </span>
-      ),
+      cell: ({ row }) => <SignedAmount amount={-row.getValue<number>("total_expenses")} />,
+      meta: { align: "right" },
     },
     {
       id: "net_transfers",
       header: "Transfers",
-      cell: ({ row }) => {
-        const account = row.original;
-        const netTransfer = account.transfers_in - account.transfers_out;
-        const isPositive = netTransfer >= 0;
-
-        return (
-          <span className={cn("tabular-nums", isPositive ? "text-green-600" : "text-red-600")}>
-            {isPositive ? "+" : ""}
-            {formatCurrency(netTransfer)}
-          </span>
-        );
-      },
+      cell: ({ row }) => <SignedAmount amount={netTransfers(row.original)} />,
+      meta: { align: "right" },
     },
     {
       accessorKey: "current_balance",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-4"
-        >
-          Balance
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) => {
-        const balance = row.getValue("current_balance") as number;
-        const isNegative = balance < 0;
-
-        return (
-          <span className={cn("font-semibold tabular-nums", isNegative && "text-destructive")}>
-            {formatCurrency(balance)}
-          </span>
-        );
-      },
+      header: ({ header }) => <SortableHeader header={header}>Balance</SortableHeader>,
+      cell: ({ row }) => <Balance amount={row.getValue("current_balance")} />,
+      meta: { align: "right" },
     },
     {
       id: "actions",
-      cell: ({ row }) => {
-        const account = row.original;
-
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onEditAccount?.(account)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              {account.is_active ? (
-                <DropdownMenuItem
-                  onClick={() => setAccountToDeactivate(account)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Deactivate
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem onClick={() => handleReactivate(account)}>
-                  <RefreshCcw className="mr-2 h-4 w-4" />
-                  Reactivate
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
+      header: () => <span className="sr-only">Actions</span>,
+      cell: ({ row }) => (
+        <ActionMenu
+          actions={accountActions(row.original)}
+          label={`Actions for ${row.original.account_name}`}
+        />
+      ),
+      meta: { pinned: true },
     },
   ];
 
@@ -306,14 +189,13 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
     },
   });
 
-  // Calculate totals
   const totals = React.useMemo(() => {
     return filteredAccounts.reduce(
       (acc, account) => ({
         initial: acc.initial + account.initial_balance,
         payments: acc.payments + account.total_payments,
         expenses: acc.expenses + account.total_expenses,
-        transfers: acc.transfers + (account.transfers_in - account.transfers_out),
+        transfers: acc.transfers + netTransfers(account),
         balance: acc.balance + account.current_balance,
       }),
       { initial: 0, payments: 0, expenses: 0, transfers: 0, balance: 0 }
@@ -323,7 +205,11 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+        <div
+          role="status"
+          aria-label="Loading accounts"
+          className="border-primary size-8 animate-spin rounded-full border-b-2"
+        />
       </div>
     );
   }
@@ -341,127 +227,62 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Search and filters */}
       <div className="flex items-center gap-4">
-        <Input
+        <TableSearch
+          value={globalFilter}
+          onChange={setGlobalFilter}
           placeholder="Search accounts..."
-          value={globalFilter ?? ""}
-          onChange={(e) => setGlobalFilter(e.target.value)}
           className="max-w-sm"
         />
         <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCcw className="mr-2 h-4 w-4" />
+          <RefreshCcw className="mr-2 size-4" aria-hidden="true" />
           Refresh
         </Button>
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              <>
-                {table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    className={cn(!row.original.is_active && "opacity-50")}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-                {/* Totals row */}
-                <TableRow className="bg-muted/50 font-medium">
-                  <TableCell>
-                    <span className="font-semibold">
-                      Total ({filteredAccounts.length} accounts)
-                    </span>
-                  </TableCell>
-                  <TableCell />
-                  <TableCell className="text-muted-foreground tabular-nums">
-                    {formatCurrency(totals.initial)}
-                  </TableCell>
-                  <TableCell className="text-green-600 tabular-nums">
-                    +{formatCurrency(totals.payments)}
-                  </TableCell>
-                  <TableCell className="text-red-600 tabular-nums">
-                    -{formatCurrency(totals.expenses)}
-                  </TableCell>
-                  <TableCell
-                    className={cn(
-                      "tabular-nums",
-                      totals.transfers >= 0 ? "text-green-600" : "text-red-600"
-                    )}
-                  >
-                    {totals.transfers >= 0 ? "+" : ""}
-                    {formatCurrency(totals.transfers)}
-                  </TableCell>
-                  <TableCell className="font-bold tabular-nums">
-                    {formatCurrency(totals.balance)}
-                  </TableCell>
-                  <TableCell />
-                </TableRow>
-              </>
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No accounts found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable
+        table={table}
+        label="Accounts"
+        renderCard={(row) => (
+          <AccountCard account={row.original} actions={accountActions(row.original)} />
+        )}
+        emptyState={
+          <TableEmptyState
+            title="No accounts found"
+            description="Try a different search, or add an account."
+          />
+        }
+      />
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <div className="text-muted-foreground text-sm">
-          Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}{" "}
-          to{" "}
-          {Math.min(
-            (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-            filteredAccounts.length
-          )}{" "}
-          of {filteredAccounts.length} accounts
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+      {filteredAccounts.length > 0 && (
+        <Card padding="sm" className="@container">
+          <h3 className="text-sm font-semibold">
+            Total ({filteredAccounts.length} {pluralize(filteredAccounts.length, "account")})
+          </h3>
+          <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 @lg:grid-cols-5">
+            <TotalFigure label="Initial">
+              <span className="text-muted-foreground tabular-nums">
+                {formatCurrency(totals.initial)}
+              </span>
+            </TotalFigure>
+            <TotalFigure label="Received">
+              <SignedAmount amount={totals.payments} />
+            </TotalFigure>
+            <TotalFigure label="Spent">
+              <SignedAmount amount={-totals.expenses} />
+            </TotalFigure>
+            <TotalFigure label="Transfers">
+              <SignedAmount amount={totals.transfers} />
+            </TotalFigure>
+            <TotalFigure label="Balance">
+              <Balance amount={totals.balance} className="font-bold" />
+            </TotalFigure>
+          </dl>
+        </Card>
+      )}
 
-      {/* Deactivate Account Confirmation Dialog */}
+      <TablePagination table={table} totalItems={filteredAccounts.length} />
+
       <AlertDialog
         open={!!accountToDeactivate}
         onOpenChange={(open) => !open && setAccountToDeactivate(null)}
@@ -476,7 +297,10 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeactivate} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={confirmDeactivate}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Deactivate
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -485,3 +309,89 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
     </div>
   );
 };
+
+/** Money in reads "+₱…" in success, money out "-₱…" in danger; nothing moved stays muted. */
+function SignedAmount({ amount }: { amount: number }) {
+  if (amount === 0) {
+    return (
+      <span className="text-muted-foreground whitespace-nowrap tabular-nums">
+        {formatCurrency(0)}
+      </span>
+    );
+  }
+  return amount > 0 ? (
+    <span className="text-success-foreground whitespace-nowrap tabular-nums">
+      +{formatCurrency(amount)}
+    </span>
+  ) : (
+    <span className="text-danger-foreground whitespace-nowrap tabular-nums">
+      {formatCurrency(amount)}
+    </span>
+  );
+}
+
+function Balance({ amount, className }: { amount: number; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "font-semibold whitespace-nowrap tabular-nums",
+        amount < 0 && "text-danger-foreground",
+        className
+      )}
+    >
+      {formatCurrency(amount)}
+    </span>
+  );
+}
+
+function AccountName({ account }: { account: AccountWithBalance }) {
+  const Icon = AccountTypeIcon[account.account_type as AccountType] || CreditCard;
+
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <div className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
+        <Icon className="size-5" aria-hidden="true" />
+      </div>
+      <div className="min-w-0">
+        <div className="truncate font-medium">{account.account_name}</div>
+        <div className="text-muted-foreground text-xs">{account.account_code}</div>
+      </div>
+      {!account.is_active && <StatusBadge tone="neutral">Inactive</StatusBadge>}
+    </div>
+  );
+}
+
+function AccountCard({
+  account,
+  actions,
+}: {
+  account: AccountWithBalance;
+  actions: React.ComponentProps<typeof ActionMenu>["actions"];
+}) {
+  return (
+    <ListCard>
+      <div className="flex items-start justify-between gap-2">
+        <AccountName account={account} />
+        <ActionMenu actions={actions} label={`Actions for ${account.account_name}`} />
+      </div>
+      <ListCardRow
+        label="Type"
+        value={<StatusBadge tone="neutral">{account.account_type}</StatusBadge>}
+      />
+      <ListCardRow label="Initial" value={formatCurrency(account.initial_balance)} />
+      <ListCardRow label="Received" value={<SignedAmount amount={account.total_payments} />} />
+      <ListCardRow label="Spent" value={<SignedAmount amount={-account.total_expenses} />} />
+      <ListCardRow label="Transfers" value={<SignedAmount amount={netTransfers(account)} />} />
+      <ListCardRow label="Balance" value={<Balance amount={account.current_balance} />} />
+    </ListCard>
+  );
+}
+
+function TotalFigure({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <dt className="text-muted-foreground text-xs font-medium">{label}</dt>
+      <dd className="mt-1 text-sm">{children}</dd>
+    </div>
+  );
+}
