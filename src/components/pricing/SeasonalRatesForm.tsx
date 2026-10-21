@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
-import { Calendar, Edit2, Plus, Save, Trash2, TrendingDown, TrendingUp } from "lucide-react";
+import { Calendar, Plus, Save, TrendingDown, TrendingUp } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -33,6 +33,8 @@ import {
   Switch,
   type StatusTone,
 } from "@/components/patterns";
+
+import { PricingActiveSwitch, PricingRowActions } from "./PricingRowControls";
 
 // Types
 export interface SeasonalRate {
@@ -236,32 +238,19 @@ export function SeasonalRatesForm({
   };
 
   const renderActiveSwitch = (rate: SeasonalRate) => (
-    <Switch
-      checked={rate.is_active}
-      onCheckedChange={() => handleToggleActive(rate)}
-      aria-label={`${rate.name} active`}
+    <PricingActiveSwitch
+      name={rate.name}
+      isActive={rate.is_active}
+      onToggle={() => handleToggleActive(rate)}
     />
   );
 
   const renderRowActions = (rate: SeasonalRate) => (
-    <div className="flex justify-end gap-2">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => openEditDialog(rate)}
-        aria-label={`Edit ${rate.name}`}
-      >
-        <Edit2 className="h-4 w-4" aria-hidden="true" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleDelete(rate)}
-        aria-label={`Delete ${rate.name}`}
-      >
-        <Trash2 className="text-destructive h-4 w-4" aria-hidden="true" />
-      </Button>
-    </div>
+    <PricingRowActions
+      name={rate.name}
+      onEdit={() => openEditDialog(rate)}
+      onDelete={() => handleDelete(rate)}
+    />
   );
 
   const columns: ColumnDef<SeasonalRate>[] = [

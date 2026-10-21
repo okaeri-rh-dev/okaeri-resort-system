@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
-import { Edit2, Percent, Plus, Save, Trash2 } from "lucide-react";
+import { Percent, Plus, Save } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -35,6 +35,8 @@ import {
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import type { Json } from "@/types/database.types";
+
+import { PricingActiveSwitch, PricingRowActions } from "./PricingRowControls";
 
 // Types
 export interface DiscountRule {
@@ -75,6 +77,10 @@ const DISCOUNT_TYPE_LABELS: Record<string, string> = {
   fixed: "Fixed Amount",
   per_night: "Per Night",
 };
+
+function DiscountTypeBadge({ type }: { type: string }) {
+  return <StatusBadge tone="neutral">{DISCOUNT_TYPE_LABELS[type] || type}</StatusBadge>;
+}
 
 function parseCondition(conditions: Json): { type: string; value: number } {
   if (Array.isArray(conditions) && conditions.length > 0) {
@@ -256,32 +262,19 @@ export function DiscountRulesForm({ rules = [], onSave, isLoading }: DiscountRul
   };
 
   const renderActiveSwitch = (rule: DiscountRule) => (
-    <Switch
-      checked={rule.is_active}
-      onCheckedChange={() => handleToggleActive(rule)}
-      aria-label={`${rule.name} active`}
+    <PricingActiveSwitch
+      name={rule.name}
+      isActive={rule.is_active}
+      onToggle={() => handleToggleActive(rule)}
     />
   );
 
   const renderRowActions = (rule: DiscountRule) => (
-    <div className="flex justify-end gap-2">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => openEditDialog(rule)}
-        aria-label={`Edit ${rule.name}`}
-      >
-        <Edit2 className="h-4 w-4" aria-hidden="true" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleDelete(rule)}
-        aria-label={`Delete ${rule.name}`}
-      >
-        <Trash2 className="text-destructive h-4 w-4" aria-hidden="true" />
-      </Button>
-    </div>
+    <PricingRowActions
+      name={rule.name}
+      onEdit={() => openEditDialog(rule)}
+      onDelete={() => handleDelete(rule)}
+    />
   );
 
   const columns: ColumnDef<DiscountRule>[] = [
@@ -293,11 +286,7 @@ export function DiscountRulesForm({ rules = [], onSave, isLoading }: DiscountRul
     {
       accessorKey: "discount_type",
       header: "Type",
-      cell: ({ row }) => (
-        <StatusBadge tone="neutral">
-          {DISCOUNT_TYPE_LABELS[row.original.discount_type] || row.original.discount_type}
-        </StatusBadge>
-      ),
+      cell: ({ row }) => <DiscountTypeBadge type={row.original.discount_type} />,
     },
     {
       accessorKey: "discount_value",
@@ -539,12 +528,7 @@ export function DiscountRulesForm({ rules = [], onSave, isLoading }: DiscountRul
                 </div>
                 <ListCardRow
                   label="Type"
-                  value={
-                    <StatusBadge tone="neutral">
-                      {DISCOUNT_TYPE_LABELS[row.original.discount_type] ||
-                        row.original.discount_type}
-                    </StatusBadge>
-                  }
+                  value={<DiscountTypeBadge type={row.original.discount_type} />}
                 />
                 <ListCardRow
                   label="Value"
