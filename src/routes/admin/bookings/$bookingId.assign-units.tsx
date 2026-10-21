@@ -323,9 +323,7 @@ function AssignUnitsPage() {
       `Cabins successfully assigned to booking ${booking?.booking_reference}. The guest will receive a confirmation email shortly.`
     );
 
-    // Navigate back to admin queue
-    // Using window.location for simplicity and to ensure fresh data load
-    window.location.href = "/admin/queue";
+    void navigate({ to: "/admin/bookings/queue" });
   };
 
   // ============================================
@@ -425,6 +423,7 @@ function AssignUnitsPage() {
       {/* Unit Assignment Interface */}
       <UnitAssignmentInterface
         bookingId={bookingId}
+        bookingReference={booking.booking_reference}
         checkInDate={manilaDayOf(booking.check_in)}
         checkOutDate={manilaDayOf(booking.check_out)}
         unitRequests={booking.unit_requests || []}

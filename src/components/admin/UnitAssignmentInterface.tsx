@@ -36,7 +36,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { getAccessToken, useAuthToken } from "@/hooks/useAuthToken";
 import { afterBookingUpdate } from "@/lib/query-invalidation";
 import { availabilityKeys } from "@/lib/query-keys";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 // ============================================
 // Types
@@ -59,6 +59,7 @@ interface AvailableUnit {
 
 interface UnitAssignmentInterfaceProps {
   bookingId: string;
+  bookingReference: string;
   checkInDate: string; // YYYY-MM-DD
   checkOutDate: string; // YYYY-MM-DD
   unitRequests: UnitRequest[];
@@ -107,6 +108,7 @@ const availableUnitsQuery = (checkInDate: string, checkOutDate: string) =>
 
 export function UnitAssignmentInterface({
   bookingId,
+  bookingReference,
   checkInDate,
   checkOutDate,
   unitRequests,
@@ -490,7 +492,7 @@ export function UnitAssignmentInterface({
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-neutral-600">Rate/Night</span>
                         <span className="font-mono text-xs font-semibold text-neutral-900">
-                          ₱{unit.rate_per_night.toLocaleString()}
+                          {formatCurrency(unit.rate_per_night)}
                         </span>
                       </div>
 
@@ -553,8 +555,8 @@ export function UnitAssignmentInterface({
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Cabin Assignment</AlertDialogTitle>
             <AlertDialogDescription>
-              This will assign {selectedUnits.size} cabin(s) to booking {bookingId}. This action
-              cannot be undone.
+              This will assign {selectedUnits.size} cabin(s) to booking {bookingReference}. This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
