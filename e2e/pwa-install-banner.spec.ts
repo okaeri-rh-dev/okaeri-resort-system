@@ -72,15 +72,15 @@ test.describe("PWA install banner", () => {
     await expect(page.getByRole("region", { name: /install okaeri/i })).toHaveCount(0);
   });
 
-  test("sidebar Install app escape hatch re-shows the banner", async ({ page }) => {
+  test("account menu Install app escape hatch re-shows the banner", async ({ page }) => {
     await loginAsAdmin(page);
     const banner = page.getByRole("region", { name: /install okaeri/i });
     await expect(banner).toBeVisible();
     await banner.getByRole("button", { name: /don't show again/i }).click();
     await expect(banner).toHaveCount(0);
 
-    // Sidebar escape hatch (desktop sidebar — Playwright default Desktop Chrome viewport)
-    await page.getByRole("button", { name: /install app/i }).click();
+    await page.getByRole("button", { name: "Account menu" }).click();
+    await page.getByRole("menuitem", { name: /install app/i }).click();
     await expect(page.getByRole("region", { name: /install okaeri/i })).toBeVisible();
   });
 });
