@@ -1,11 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/patterns";
 import { DiscountRulesForm, type DiscountRule } from "@/components/pricing/DiscountRulesForm";
 import { PricingConfigForm } from "@/components/pricing/PricingConfigForm";
 import { SeasonalRatesForm, type SeasonalRate } from "@/components/pricing/SeasonalRatesForm";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDiscountRules, useSaveDiscountRules } from "@/hooks/useDiscountRules";
 import { useSaveSeasonalRates, useSeasonalRates } from "@/hooks/useSeasonalRates";
 import { requireManager } from "@/lib/route-guards";

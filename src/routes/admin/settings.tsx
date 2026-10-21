@@ -4,15 +4,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/patterns";
 import { requireManager } from "@/lib/route-guards";
 import type { ExpenseCategoryConfig, PaymentMethodConfig } from "@/types";
 
@@ -47,7 +50,7 @@ export const Route = createFileRoute("/admin/settings")({
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center py-12">
-    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+    <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
   </div>
 );
 
@@ -98,7 +101,7 @@ function SettingsPage() {
 
           <TabsContent value="payment-methods" className="space-y-4">
             {/* Section Header with Add Button */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="medium:flex-row medium:items-center medium:justify-between flex flex-col gap-4">
               <div>
                 <h2 className="text-xl font-semibold">Payment Methods</h2>
                 <p className="text-muted-foreground text-sm">
@@ -121,7 +124,7 @@ function SettingsPage() {
 
           <TabsContent value="expense-categories" className="space-y-4">
             {/* Section Header with Add Button */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="medium:flex-row medium:items-center medium:justify-between flex flex-col gap-4">
               <div>
                 <h2 className="text-xl font-semibold">Expense Categories</h2>
                 <p className="text-muted-foreground text-sm">

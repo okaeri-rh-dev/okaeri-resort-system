@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/patterns";
 import { requireStaff } from "@/lib/route-guards";
 import { useBookings } from "@/stores/useBookingStore";
 
@@ -57,7 +57,7 @@ function AvailabilityPage() {
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center py-12">
-                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+                    <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
                   </div>
                 }
               >
@@ -71,7 +71,7 @@ function AvailabilityPage() {
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center py-12">
-                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+                    <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
                   </div>
                 }
               >

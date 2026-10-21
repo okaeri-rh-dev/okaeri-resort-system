@@ -5,14 +5,15 @@ import { Building2, ChevronDown, Plus, Users } from "lucide-react";
 import { z } from "zod";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
+  Button,
+  Dialog,
+  DialogContent,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/patterns";
 import { requireStaff } from "@/lib/route-guards";
 
 // Lazy load heavy components
@@ -107,7 +108,7 @@ function BookingsPage() {
           <Suspense
             fallback={
               <div className="flex items-center justify-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+                <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
               </div>
             }
           >
@@ -123,7 +124,7 @@ function BookingsPage() {
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center py-12">
-                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+                    <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
                   </div>
                 }
               >
