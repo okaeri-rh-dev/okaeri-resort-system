@@ -1,6 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { E2E_REF, E2E_UNIT_ID, E2E_USER } from "../scripts/e2e/fixtures";
+import {
+  E2E_ASSIGN_PAID_BOOKING_ID,
+  E2E_REF,
+  E2E_UNIT_ID,
+  E2E_USER,
+} from "../scripts/e2e/fixtures";
 import { findLowContrastText } from "./fixtures/contrast";
 import { LoginPage } from "./pages/LoginPage";
 
@@ -65,6 +70,21 @@ test.describe("Dark mode surfaces", () => {
     await loginAsE2EOwner(page);
     await page.goto(`/admin/units/${E2E_UNIT_ID}`);
     await expect(page.getByText("Current Global Rates")).toBeVisible();
+    await expectReadable(page);
+  });
+
+  test("assign cabins reads in dark", async ({ page }) => {
+    await page.setViewportSize(EXPANDED);
+    await loginAsE2EOwner(page);
+    await page.goto(`/admin/bookings/${E2E_ASSIGN_PAID_BOOKING_ID}/assign-units`);
+    await expect(page.getByText(E2E_REF.ASSIGN_PAID)).toBeVisible();
+
+    const firstCabin = page.getByRole("button", { name: /^Cabin .*, not selected$/ }).first();
+    await expect(firstCabin).toBeVisible();
+    await expectReadable(page);
+
+    await firstCabin.click();
+    await expect(page.getByText("1/2 selected")).toBeVisible();
     await expectReadable(page);
   });
 
