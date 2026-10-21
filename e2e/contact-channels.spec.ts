@@ -140,6 +140,55 @@ test.describe("Contact channels", () => {
     );
   });
 
+  test("a manager moves a channel up and down and guests see the new order", async ({ page }) => {
+    await loginAsManager(page);
+    const table = await openContactChannelsTab(page);
+    const rows = table.locator("tbody tr");
+    await expect(rows.filter({ hasText: `@${HANDLE}` })).toBeVisible();
+
+    // The shown channel just above the new one, so the move is visible to guests.
+    const rowTexts = await rows.allInnerTexts();
+    const ownIndex = rowTexts.findIndex((text) => text.includes(`@${HANDLE}`));
+    const neighbourIndex = rowTexts
+      .slice(0, ownIndex)
+      .map((text) => text.includes("Shown"))
+      .lastIndexOf(true);
+    expect(neighbourIndex).toBeGreaterThanOrEqual(0);
+    const neighbour = rows.nth(neighbourIndex);
+    const neighbourKind = (await neighbour
+      .getByRole("button", { name: / down$/ })
+      .getAttribute("aria-label"))!.replace(/^Move (.*) down$/, "$1");
+    const neighbourValue = (await neighbour.locator("td").nth(2).innerText()).trim();
+    const neighbourLink = `${neighbourKind}: ${neighbourValue}`;
+
+    const moveOwn = async (direction: "up" | "down", toIndex: number) => {
+      await rows
+        .filter({ hasText: `@${HANDLE}` })
+        .getByRole("button", { name: `Move Instagram ${direction}` })
+        .press("Enter");
+      await expect(rows.nth(toIndex)).toContainText(`@${HANDLE}`);
+    };
+
+    for (let index = ownIndex - 1; index >= neighbourIndex; index--) {
+      await moveOwn("up", index);
+    }
+    await expect(page.getByText("Contact channel moved").first()).toBeVisible();
+
+    const guestLinkOrder = async () => {
+      await openGuestPage(page, "/");
+      const names = await page
+        .locator("dl a")
+        .evaluateAll((links) => links.map((link) => link.getAttribute("aria-label")));
+      expect(names).toEqual(expect.arrayContaining([CHANNEL_LINK.name, neighbourLink]));
+      return names.indexOf(CHANNEL_LINK.name) - names.indexOf(neighbourLink);
+    };
+    expect(await guestLinkOrder()).toBe(-1);
+
+    await openContactChannelsTab(page);
+    await moveOwn("down", neighbourIndex + 1);
+    expect(await guestLinkOrder()).toBe(1);
+  });
+
   test("hiding every channel removes the contact part from both guest pages", async ({ page }) => {
     await loginAsManager(page);
     const table = await openContactChannelsTab(page);
