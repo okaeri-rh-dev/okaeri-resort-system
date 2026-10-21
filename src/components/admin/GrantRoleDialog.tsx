@@ -1,10 +1,9 @@
 // src/components/admin/GrantRoleDialog.tsx
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -20,21 +19,10 @@ import {
   Form,
   FormField,
   Input,
-  Label,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
   SelectControl,
+  SelectItem,
   Textarea,
 } from "@/components/patterns";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { usePendingUsers, type PendingUser } from "@/hooks/usePendingUsers";
 import { useGrantRole } from "@/hooks/useRoleManagement";
 import { AuditRole, getRoleDisplayName } from "@/lib/audit-roles";
@@ -74,9 +62,7 @@ interface GrantRoleDialogProps {
 export function GrantRoleDialog({ open, onOpenChange, prefilledUser }: GrantRoleDialogProps) {
   const grantRoleMutation = useGrantRole();
   const { data: pendingUsers, isLoading: isLoadingUsers } = usePendingUsers();
-  const [userPickerOpen, setUserPickerOpen] = useState(false);
   const [manualEntry, setManualEntry] = useState(false);
-  const userPickerId = useId();
 
   const form = useForm<GrantRoleFormData>({
     resolver: zodResolver(grantRoleSchema),
@@ -98,10 +84,22 @@ export function GrantRoleDialog({ open, onOpenChange, prefilledUser }: GrantRole
 
   const selectedUserId = form.watch("userId");
 
-  const handleSelectUser = (user: PendingUser) => {
-    form.setValue("userId", user.id);
+  const userOptions =
+    prefilledUser && !pendingUsers?.some((user) => user.id === prefilledUser.id)
+      ? [prefilledUser, ...(pendingUsers ?? [])]
+      : (pendingUsers ?? []);
+
+  const userPickerPlaceholder = isLoadingUsers
+    ? "Loading users..."
+    : userOptions.length === 0
+      ? "No pending users"
+      : "Select a pending user...";
+
+  const handleSelectUser = (userId: string) => {
+    const user = userOptions.find((option) => option.id === userId);
+    if (!user) return;
+    form.setValue("userId", user.id, { shouldValidate: true });
     form.setValue("email", user.email);
-    setUserPickerOpen(false);
   };
 
   const onSubmit = async (data: GrantRoleFormData) => {
@@ -149,60 +147,24 @@ export function GrantRoleDialog({ open, onOpenChange, prefilledUser }: GrantRole
             {/* Pending Users Picker */}
             {!manualEntry && (
               <div className="space-y-2">
-                <Label id={`${userPickerId}-label`} htmlFor={`${userPickerId}-trigger`}>
-                  Select User
-                </Label>
-                <Popover open={userPickerOpen} onOpenChange={setUserPickerOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      id={`${userPickerId}-trigger`}
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={userPickerOpen}
-                      aria-controls={`${userPickerId}-list`}
-                      aria-labelledby={`${userPickerId}-label ${userPickerId}-trigger`}
-                      className="w-full justify-between"
+                <FormField control={form.control} name="userId" label="Select User">
+                  {({ value, onBlur, ref }) => (
+                    <SelectControl
+                      value={value}
+                      onValueChange={handleSelectUser}
+                      onBlur={onBlur}
+                      ref={ref}
+                      disabled={isLoadingUsers || userOptions.length === 0}
+                      placeholder={userPickerPlaceholder}
                     >
-                      {selectedUserId
-                        ? pendingUsers?.find((u) => u.id === selectedUserId)?.email ||
-                          form.getValues("email") ||
-                          "User selected"
-                        : "Select a pending user..."}
-                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    id={`${userPickerId}-list`}
-                    className="w-[var(--radix-popover-trigger-width)] p-0"
-                    align="start"
-                  >
-                    <Command>
-                      <CommandInput placeholder="Search users..." />
-                      <CommandList>
-                        <CommandEmpty>
-                          {isLoadingUsers ? "Loading..." : "No pending users found."}
-                        </CommandEmpty>
-                        <CommandGroup>
-                          {pendingUsers?.map((user) => (
-                            <CommandItem
-                              key={user.id}
-                              value={`${user.email} ${user.full_name || ""}`}
-                              onSelect={() => handleSelectUser(user)}
-                            >
-                              <div className="flex flex-col gap-0.5">
-                                <span className="text-sm font-medium">{user.email}</span>
-                                <span className="text-muted-foreground text-xs">
-                                  {user.full_name || "No name"} &middot; Joined{" "}
-                                  {format(new Date(user.created_at), "MMM d, yyyy")}
-                                </span>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                      {userOptions.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.full_name ? `${user.email} (${user.full_name})` : user.email}
+                        </SelectItem>
+                      ))}
+                    </SelectControl>
+                  )}
+                </FormField>
                 <p className="text-muted-foreground text-xs">
                   Can't find the user?{" "}
                   <button
