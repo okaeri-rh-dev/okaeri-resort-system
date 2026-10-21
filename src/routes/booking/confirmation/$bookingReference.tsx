@@ -7,7 +7,7 @@ import { PaymentInstructions } from "@/components/booking-confirmation/PaymentIn
 import { PrintButton } from "@/components/booking-confirmation/PrintButton";
 import { StatusTimeline } from "@/components/booking-confirmation/StatusTimeline";
 import { ContactChannelList } from "@/components/contact-channels/ContactChannelList";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Callout } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import { useActiveContactChannels } from "@/hooks/useContactChannels";
 import { GuestLayout } from "@/layouts/GuestLayout";
@@ -190,13 +190,13 @@ function BookingConfirmationComponent() {
 
           {/* Contact channels - Not printed */}
           {contactChannels.length > 0 && (
-            <Alert className="no-print">
-              <AlertDescription>
+            <div className="no-print">
+              <Callout tone="info">
                 If you have any questions or need to make changes to your booking, please contact
                 us.
                 <ContactChannelList channels={contactChannels} className="mt-2" />
-              </AlertDescription>
-            </Alert>
+              </Callout>
+            </div>
           )}
 
           {/* Back to Home Link - Not printed */}

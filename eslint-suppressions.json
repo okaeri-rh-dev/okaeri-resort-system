@@ -932,7 +932,7 @@
       "count": 2
     },
     "design/no-restricted-imports": {
-      "count": 2
+      "count": 1
     }
   },
   "src/routes/booking/index.tsx": {
