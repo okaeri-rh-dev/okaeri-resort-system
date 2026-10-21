@@ -2,7 +2,7 @@
 
 exports[`AvailabilityLegend > Snapshot > should match snapshot 1`] = `
 <div
-  class="flex flex-wrap items-center gap-3 text-xs sm:gap-4"
+  class="flex flex-wrap items-center gap-3 text-xs @lg:gap-4"
 >
   <div
     class="flex items-center gap-1.5"

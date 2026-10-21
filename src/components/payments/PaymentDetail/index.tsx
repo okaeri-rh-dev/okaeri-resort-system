@@ -72,66 +72,70 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
     >
       {/* 1. Payment Overview Section */}
       <DetailSection title="Payment Overview" icon={<DollarSign className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <DetailField label="Amount" value={formatCurrency(payment.amount)} emphasis="total" />
-          <DetailField
-            label="Payment Method"
-            value={
-              <span className="border-border bg-muted text-foreground inline-flex items-center rounded-md border px-3 py-1 text-sm font-medium">
-                {payment.payment_method || "Not specified"}
-              </span>
-            }
-          />
-          <DetailField
-            label="Status"
-            value={<StatusBadge {...statusBadgeProps(payment.payment_status, "Pending")} />}
-          />
-          <DetailField
-            label="Payment Date"
-            value={formatDateTime(payment.payment_date || payment.created_at || "")}
-            emphasis="strong"
-          />
+        <div className="@container">
+          <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
+            <DetailField label="Amount" value={formatCurrency(payment.amount)} emphasis="total" />
+            <DetailField
+              label="Payment Method"
+              value={
+                <span className="border-border bg-muted text-foreground inline-flex items-center rounded-md border px-3 py-1 text-sm font-medium">
+                  {payment.payment_method || "Not specified"}
+                </span>
+              }
+            />
+            <DetailField
+              label="Status"
+              value={<StatusBadge {...statusBadgeProps(payment.payment_status, "Pending")} />}
+            />
+            <DetailField
+              label="Payment Date"
+              value={formatDateTime(payment.payment_date || payment.created_at || "")}
+              emphasis="strong"
+            />
+          </div>
         </div>
       </DetailSection>
 
       {/* 2. Related Booking Section */}
       {payment.booking && (
         <DetailSection title="Related Booking" icon={<Calendar className="h-5 w-5" />}>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <DetailField
-              label="Booking Reference"
-              value={
-                <RelatedEntityLink
-                  type="booking"
-                  id={payment.booking.booking_id}
-                  label={payment.booking.booking_reference}
-                />
-              }
-            />
-            <DetailField
-              label="Guest Name"
-              value={
-                payment.booking.guest_id && payment.booking.guest ? (
+          <div className="@container">
+            <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
+              <DetailField
+                label="Booking Reference"
+                value={
                   <RelatedEntityLink
-                    type="guest"
-                    id={payment.booking.guest_id}
-                    label={payment.booking.guest_name}
+                    type="booking"
+                    id={payment.booking.booking_id}
+                    label={payment.booking.booking_reference}
                   />
-                ) : (
-                  <span className="font-medium">{payment.booking.guest_name}</span>
-                )
-              }
-            />
-            <DetailField
-              label="Check-in Date"
-              value={formatTableDate(payment.booking.check_in)}
-              emphasis="strong"
-            />
-            <DetailField
-              label="Check-out Date"
-              value={formatTableDate(payment.booking.check_out)}
-              emphasis="strong"
-            />
+                }
+              />
+              <DetailField
+                label="Guest Name"
+                value={
+                  payment.booking.guest_id && payment.booking.guest ? (
+                    <RelatedEntityLink
+                      type="guest"
+                      id={payment.booking.guest_id}
+                      label={payment.booking.guest_name}
+                    />
+                  ) : (
+                    <span className="font-medium">{payment.booking.guest_name}</span>
+                  )
+                }
+              />
+              <DetailField
+                label="Check-in Date"
+                value={formatTableDate(payment.booking.check_in)}
+                emphasis="strong"
+              />
+              <DetailField
+                label="Check-out Date"
+                value={formatTableDate(payment.booking.check_out)}
+                emphasis="strong"
+              />
+            </div>
           </div>
         </DetailSection>
       )}
@@ -144,6 +148,8 @@ export function PaymentDetailPage({ payment, paymentId }: PaymentDetailPageProps
               <img
                 src={payment.proof_url}
                 alt="Payment proof"
+                width={672}
+                height={1456}
                 className="border-border h-auto w-full rounded-md border"
               />
             </div>

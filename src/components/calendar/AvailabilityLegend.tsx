@@ -36,7 +36,7 @@ export function AvailabilityLegend() {
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-3 text-xs sm:gap-4">
+    <div className="flex flex-wrap items-center gap-3 text-xs @lg:gap-4">
       {legendItems.map((item) => (
         <div key={item.label} className="flex items-center gap-1.5">
           <div

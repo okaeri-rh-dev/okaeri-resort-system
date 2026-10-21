@@ -1,9 +1,14 @@
 import { format, parse } from "date-fns";
 import { Calendar, MapPin, Users } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Separator,
+  StatusBadge,
+} from "@/components/patterns";
 import { RESORT_OPERATION_HOURS } from "@/config/settings";
 import { formatPhilippineDate } from "@/lib/timezone";
 
@@ -50,9 +55,9 @@ export function BookingSummaryCard({
           Booking Summary
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="@container space-y-6">
         {/* Dates */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 @md:grid-cols-2">
           <div>
             <p className="text-muted-foreground mb-1 text-sm">Check-in</p>
             <p className="font-medium">
@@ -81,10 +86,10 @@ export function BookingSummaryCard({
               <Users className="h-4 w-4" />
               Cabins Requested
             </h4>
-            <Badge variant="secondary">
+            <StatusBadge tone="neutral">
               {totalUnits} {totalUnits === 1 ? "cabin" : "cabins"}, {totalGuests}{" "}
               {totalGuests === 1 ? "guest" : "guests"}
-            </Badge>
+            </StatusBadge>
           </div>
 
           <div className="space-y-2">
@@ -141,14 +146,14 @@ export function BookingSummaryCard({
           </div>
 
           {discountApplied && (
-            <div className="flex justify-between text-green-600">
+            <div className="text-success-foreground flex justify-between">
               <div className="flex items-center gap-2">
                 <span>Discount ({discountApplied.percent}%)</span>
-                <Badge variant="secondary" className="text-xs">
-                  {discountApplied.rule_name}
-                </Badge>
+                <StatusBadge tone="neutral">{discountApplied.rule_name}</StatusBadge>
               </div>
-              <span>-₱{discountApplied.amount.toLocaleString("en-PH")}</span>
+              <span className="tabular-nums">
+                -₱{discountApplied.amount.toLocaleString("en-PH")}
+              </span>
             </div>
           )}
 
