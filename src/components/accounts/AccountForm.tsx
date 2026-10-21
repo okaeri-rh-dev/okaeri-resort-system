@@ -5,25 +5,16 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   Form,
-  FormControl,
-  FormDescription,
   FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input, NumberInput } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
+  Input,
+  NumberInput,
   SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+  Textarea,
+} from "@/components/patterns";
+import { SelectControl } from "@/components/payments/SelectControl";
 import { sanitizeFormData } from "@/lib/security/sanitize";
 import { useCreateAccount, useUpdateAccount } from "@/stores/useAccountStore";
 import type { Account, AccountType } from "@/types";
@@ -129,156 +120,125 @@ export const AccountForm: React.FC<AccountFormProps> = ({ account, onSuccess, on
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Account Name */}
         <FormField
           control={form.control}
           name="account_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Account Name *</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., BDO Savings, GCash Business" {...field} />
-              </FormControl>
-              <FormDescription>A descriptive name for this account</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          label="Account Name *"
+          description="A descriptive name for this account"
+        >
+          {(field) => <Input placeholder="e.g., BDO Savings, GCash Business" {...field} />}
+        </FormField>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Account Code */}
-          <FormField
-            control={form.control}
-            name="account_code"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Account Code *</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="e.g., BDO-SAV, GCASH"
-                    {...field}
-                    onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                  />
-                </FormControl>
-                <FormDescription>Short unique identifier (uppercase, no spaces)</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className="@container">
+          <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="account_code"
+              label="Account Code *"
+              description="Short unique identifier (uppercase, no spaces)"
+            >
+              {(field) => (
+                <Input
+                  placeholder="e.g., BDO-SAV, GCASH"
+                  autoComplete="off"
+                  spellCheck={false}
+                  {...field}
+                  onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                />
+              )}
+            </FormField>
 
-          {/* Account Type */}
-          <FormField
-            control={form.control}
-            name="account_type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Account Type *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select account type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {ACCOUNT_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        <div className="flex flex-col">
-                          <span>{type.label}</span>
-                          <span className="text-muted-foreground text-xs">{type.description}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormDescription>Category of financial account</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="account_type"
+              label="Account Type *"
+              description="Category of financial account"
+            >
+              {(field) => (
+                <SelectControl
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  placeholder="Select account type"
+                >
+                  {ACCOUNT_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      <div className="flex flex-col">
+                        <span>{type.label}</span>
+                        <span className="text-muted-foreground text-xs">{type.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectControl>
+              )}
+            </FormField>
+
+            <FormField
+              control={form.control}
+              name="initial_balance"
+              label="Initial Balance (PHP) *"
+              description={
+                isEditMode
+                  ? "The starting balance when this account was added"
+                  : "Current balance before adding to the system"
+              }
+            >
+              {(field) => (
+                <NumberInput
+                  min={0}
+                  allowDecimals={true}
+                  placeholder="0.00"
+                  startIcon={<span className="text-sm font-medium">₱</span>}
+                  value={field.value}
+                  onChange={(value) => field.onChange(value)}
+                  onBlur={(value) => {
+                    field.onChange(value || 0);
+                    field.onBlur();
+                  }}
+                />
+              )}
+            </FormField>
+
+            <FormField
+              control={form.control}
+              name="display_order"
+              label="Display Order"
+              description="Lower numbers appear first in lists"
+            >
+              {(field) => (
+                <NumberInput
+                  min={0}
+                  max={999}
+                  allowDecimals={false}
+                  placeholder="0"
+                  value={field.value}
+                  onChange={(value) => field.onChange(value)}
+                  onBlur={(value) => {
+                    field.onChange(value || 0);
+                    field.onBlur();
+                  }}
+                />
+              )}
+            </FormField>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Initial Balance */}
-          <FormField
-            control={form.control}
-            name="initial_balance"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Initial Balance (PHP) *</FormLabel>
-                <FormControl>
-                  <NumberInput
-                    min={0}
-                    allowDecimals={true}
-                    placeholder="0.00"
-                    startIcon={<span className="text-sm font-medium">₱</span>}
-                    value={field.value}
-                    onChange={(value) => field.onChange(value)}
-                    onBlur={(value) => {
-                      field.onChange(value || 0);
-                      field.onBlur();
-                    }}
-                  />
-                </FormControl>
-                <FormDescription>
-                  {isEditMode
-                    ? "The starting balance when this account was added"
-                    : "Current balance before adding to the system"}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Display Order */}
-          <FormField
-            control={form.control}
-            name="display_order"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Display Order</FormLabel>
-                <FormControl>
-                  <NumberInput
-                    min={0}
-                    max={999}
-                    allowDecimals={false}
-                    placeholder="0"
-                    value={field.value}
-                    onChange={(value) => field.onChange(value)}
-                    onBlur={(value) => {
-                      field.onChange(value || 0);
-                      field.onBlur();
-                    }}
-                  />
-                </FormControl>
-                <FormDescription>Lower numbers appear first in lists</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Description */}
         <FormField
           control={form.control}
           name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Optional notes about this account..."
-                  className="min-h-[80px]"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>Additional details or notes (optional)</FormDescription>
-              <FormMessage />
-            </FormItem>
+          label="Description"
+          description="Additional details or notes (optional)"
+        >
+          {(field) => (
+            <Textarea
+              placeholder="Optional notes about this account..."
+              className="min-h-20"
+              {...field}
+            />
           )}
-        />
+        </FormField>
 
         {/* Actions */}
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
             Cancel
           </Button>
