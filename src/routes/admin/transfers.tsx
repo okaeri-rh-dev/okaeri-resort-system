@@ -5,14 +5,14 @@ import { ArrowLeftRight, Plus } from "lucide-react";
 import { z } from "zod";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/patterns";
 import { requireManager } from "@/lib/route-guards";
 
 // Lazy load components for better performance
@@ -44,7 +44,7 @@ function TransfersPage() {
     <ErrorBoundary level="page">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="medium:flex-row medium:items-center medium:justify-between flex flex-col gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Account Transfers</h1>
             <p className="text-muted-foreground">
@@ -60,8 +60,8 @@ function TransfersPage() {
         {/* Info Card */}
         <div className="bg-muted/50 rounded-lg border p-4">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-              <ArrowLeftRight className="h-5 w-5 text-blue-600" />
+            <div className="bg-info flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+              <ArrowLeftRight className="text-info-foreground h-5 w-5" aria-hidden="true" />
             </div>
             <div>
               <h3 className="font-medium">About Transfers</h3>
@@ -79,7 +79,7 @@ function TransfersPage() {
           <Suspense
             fallback={
               <div className="flex items-center justify-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+                <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
               </div>
             }
           >
@@ -100,7 +100,7 @@ function TransfersPage() {
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center py-12">
-                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+                    <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
                   </div>
                 }
               >

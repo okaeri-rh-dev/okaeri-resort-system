@@ -4,9 +4,8 @@ import { createFileRoute, Outlet, useMatches, useNavigate } from "@tanstack/reac
 import { z } from "zod";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/patterns";
 import { PricingInfoCard } from "@/components/pricing/PricingInfoCard";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { requireManager } from "@/lib/route-guards";
 import type { Unit } from "@/types";
 
@@ -85,7 +84,7 @@ function UnitsPage() {
           <Suspense
             fallback={
               <div className="flex items-center justify-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+                <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
               </div>
             }
           >
@@ -103,7 +102,7 @@ function UnitsPage() {
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center py-12">
-                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+                    <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
                   </div>
                 }
               >

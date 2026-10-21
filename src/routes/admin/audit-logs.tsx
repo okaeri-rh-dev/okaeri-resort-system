@@ -3,14 +3,19 @@
 import { useEffect, useState } from "react";
 
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { Shield } from "lucide-react";
 
 import { AuditFilters } from "@/components/audit/AuditFilters";
 import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
 import { AuditStatsPanel } from "@/components/audit/AuditStatsPanel";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Callout,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/patterns";
 import { useAuditStats } from "@/lib/audit-hooks";
 import { isCurrentUserOwner } from "@/lib/audit-logger";
 import { useAuditStore } from "@/stores/useAuditStore";
@@ -66,7 +71,7 @@ function AuditLogsPage() {
     return (
       <div className="container mx-auto py-8">
         <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+          <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
         </div>
       </div>
     );
@@ -76,13 +81,10 @@ function AuditLogsPage() {
   if (!isOwner) {
     return (
       <div className="container mx-auto py-8">
-        <Alert variant="destructive">
-          <Shield className="h-4 w-4" />
-          <AlertDescription>
-            You do not have permission to access audit logs. This area is restricted to owners and
-            managers.
-          </AlertDescription>
-        </Alert>
+        <Callout tone="danger">
+          You do not have permission to access audit logs. This area is restricted to owners and
+          managers.
+        </Callout>
       </div>
     );
   }
