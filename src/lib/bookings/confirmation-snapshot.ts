@@ -4,7 +4,7 @@ import { toStayInstants, type ManilaDay } from "./stay";
 
 // The confirmation page has no public read endpoint: it shows what the submit
 // response returned, kept in this tab's sessionStorage.
-const STORAGE_KEY = "bookingConfirmation";
+export const CONFIRMATION_SNAPSHOT_KEY = "bookingConfirmation";
 
 const discountSchema = z.object({
   percent: z.number(),
@@ -73,7 +73,7 @@ export function saveConfirmationSnapshot(response: unknown, submitted: Submitted
   };
 
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+    sessionStorage.setItem(CONFIRMATION_SNAPSHOT_KEY, JSON.stringify(snapshot));
   } catch {
     // Storage blocked or full: the page falls back to the status lookup link.
   }
@@ -83,7 +83,7 @@ export function readConfirmationSnapshot(
   bookingReference: string
 ): BookingConfirmationSnapshot | null {
   try {
-    const stored = sessionStorage.getItem(STORAGE_KEY);
+    const stored = sessionStorage.getItem(CONFIRMATION_SNAPSHOT_KEY);
     if (!stored) return null;
 
     const snapshot = snapshotSchema.safeParse(JSON.parse(stored));

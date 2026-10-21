@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { seedConfirmation } from "./fixtures/confirmation";
 import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
 import { TEST_GUEST } from "./fixtures/test-data";
 import { BookingFormPage } from "./pages/BookingFormPage";
@@ -11,34 +12,6 @@ import { BookingFormPage } from "./pages/BookingFormPage";
  */
 
 const CONFIRMATION_REF = "OKR-E2E-DARK";
-
-/** Seeds the snapshot the booking form saves on submit; the page makes no booking request. */
-async function seedConfirmation(page: Page) {
-  await page.addInitScript((reference) => {
-    sessionStorage.setItem(
-      "bookingConfirmation",
-      JSON.stringify({
-        booking_reference: reference,
-        check_in: "2026-12-04T06:00:00.000Z",
-        check_out: "2026-12-06T04:00:00.000Z",
-        unit_requests: [{ guests_per_unit: 2 }, { guests_per_unit: 4 }],
-        special_requests: "Late arrival, around 9 PM",
-        downpayment_amount: 6500,
-        discount_applied: { percent: 10, amount: 1300, rule_name: "Early bird" },
-        pricing_breakdown: {
-          base_total: 12000,
-          weekend_surcharge: 1300,
-          extra_person_fees: 1000,
-          subtotal: 14300,
-          discount_amount: 1300,
-          total: 13000,
-          nights: 2,
-        },
-        payment_proof_attached: false,
-      })
-    );
-  }, CONFIRMATION_REF);
-}
 
 async function stubStatusLookup(page: Page) {
   await page.route("**/api/guest-booking/status", (route) =>
@@ -100,7 +73,24 @@ test.describe("Dark mode guest booking form", () => {
 test.describe("Dark mode booking confirmation", () => {
   test.beforeEach(async ({ page }) => {
     await useDarkTheme(page);
-    await seedConfirmation(page);
+    await seedConfirmation(page, {
+      booking_reference: CONFIRMATION_REF,
+      check_in: "2026-12-04T06:00:00.000Z",
+      check_out: "2026-12-06T04:00:00.000Z",
+      unit_requests: [{ guests_per_unit: 2 }, { guests_per_unit: 4 }],
+      special_requests: "Late arrival, around 9 PM",
+      downpayment_amount: 6500,
+      discount_applied: { percent: 10, amount: 1300, rule_name: "Early bird" },
+      pricing_breakdown: {
+        base_total: 12000,
+        weekend_surcharge: 1300,
+        extra_person_fees: 1000,
+        subtotal: 14300,
+        discount_amount: 1300,
+        total: 13000,
+        nights: 2,
+      },
+    });
   });
 
   for (const size of [COMPACT, EXPANDED]) {
