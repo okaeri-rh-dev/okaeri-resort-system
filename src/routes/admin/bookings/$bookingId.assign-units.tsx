@@ -295,6 +295,63 @@ function ErrorState({ error, bookingId }: { error: Error | null; bookingId: stri
   );
 }
 
+function BookingSummaryCard({ booking }: { booking: BookingDetail }) {
+  const unitRequests = booking.unit_requests || [];
+  const totalGuests = unitRequests.reduce((sum, request) => sum + request.guests_per_unit, 0);
+
+  return (
+    <Card padding="none">
+      <CardHeader>
+        <CardTitle>Booking Summary</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <dl className="medium:grid-cols-3 grid grid-cols-2 gap-4">
+          <div className="medium:col-span-1 col-span-2 min-w-0">
+            <dt className="text-muted-foreground text-sm">Guest</dt>
+            <dd className="font-medium break-words">{booking.guest_name}</dd>
+            <dd className="text-muted-foreground text-xs break-words">{booking.guest_contact}</dd>
+          </div>
+          <SummaryFact label="Check-in">{formatDate(new Date(booking.check_in))}</SummaryFact>
+          <SummaryFact label="Check-out">{formatDate(new Date(booking.check_out))}</SummaryFact>
+          <SummaryFact label="Total Amount">
+            <span className="tabular-nums">{formatCurrency(booking.total_amount)}</span>
+          </SummaryFact>
+          <SummaryFact label="Cabins requested">
+            <span className="tabular-nums">{unitRequests.length}</span>
+          </SummaryFact>
+          <SummaryFact label="Guests">
+            <span className="tabular-nums">{totalGuests}</span>
+          </SummaryFact>
+        </dl>
+
+        {unitRequests.length > 1 && (
+          <div className="border-t pt-4">
+            <p className="text-muted-foreground mb-2 text-sm">Guests per cabin</p>
+            <ul className="flex flex-wrap gap-2">
+              {unitRequests.map((request, index) => (
+                <li key={request.id} className="bg-muted rounded-md border px-3 py-1.5 text-xs">
+                  <span className="font-medium">Cabin {index + 1}:</span>{" "}
+                  <span className="font-semibold tabular-nums">{request.guests_per_unit}</span>{" "}
+                  guest{request.guests_per_unit === 1 ? "" : "s"}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function SummaryFact({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-muted-foreground text-sm">{label}</dt>
+      <dd className="font-medium">{children}</dd>
+    </div>
+  );
+}
+
 // ============================================
 // Main Component
 // ============================================
@@ -389,31 +446,7 @@ function AssignUnitsPage() {
         </div>
       </div>
 
-      {/* Booking Summary Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Booking Summary</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
-          <div>
-            <div className="text-muted-foreground text-sm">Guest</div>
-            <div className="font-medium">{booking.guest_name}</div>
-            <div className="text-muted-foreground text-xs">{booking.guest_contact}</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground text-sm">Check-in</div>
-            <div className="font-medium">{formatDate(new Date(booking.check_in))}</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground text-sm">Check-out</div>
-            <div className="font-medium">{formatDate(new Date(booking.check_out))}</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground text-sm">Total Amount</div>
-            <div className="font-medium tabular-nums">{formatCurrency(booking.total_amount)}</div>
-          </div>
-        </CardContent>
-      </Card>
+      <BookingSummaryCard booking={booking} />
 
       {/* Payment Status Badge */}
       <Callout tone="success" title="Payment Verified">

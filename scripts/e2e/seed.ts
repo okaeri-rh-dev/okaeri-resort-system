@@ -89,7 +89,7 @@ async function seed(): Promise<void> {
 
   // Cancelled bookings keep guest_id NULL so update_guest_statistics
   // doesn't run for them (their guest stats would be no-ops anyway).
-  const bookingRows = E2E_BOOKINGS.map(({ awaiting_unit_assignment, ...b }) => ({
+  const bookingRows = E2E_BOOKINGS.map(({ awaiting_unit_assignment, hidden_from_queue, ...b }) => ({
     ...b,
     guest_id: b.booking_status === "Cancelled" ? null : E2E_GUEST.guest_id,
     guest_name: E2E_GUEST.guest_name,
@@ -98,14 +98,14 @@ async function seed(): Promise<void> {
     is_walk_in: false,
     is_multi_unit: Boolean(awaiting_unit_assignment),
     ...(awaiting_unit_assignment && {
-      is_guest_booking: true,
+      is_guest_booking: !hidden_from_queue,
       unit_assignment_status: "pending",
     }),
   }));
 
   const { data: insertedBookings, error: bookingError } = await supabase
     .from("bookings")
-    .insert(bookingRows)
+    .insert(bookingRows, { defaultToNull: false })
     .select("booking_id, booking_reference");
 
   if (bookingError || !insertedBookings) {
