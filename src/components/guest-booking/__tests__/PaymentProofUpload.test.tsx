@@ -70,14 +70,14 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function renderUpload() {
+function renderUpload(storedPath: string | null = null) {
   const onChange = vi.fn();
   const onUploadingChange = vi.fn();
   const user = userEvent.setup({ applyAccept: false });
   render(
     <PaymentProofUpload
       bookingReference="TEMP-1"
-      value={null}
+      value={storedPath}
       onChange={onChange}
       onUploadingChange={onUploadingChange}
     />
@@ -155,6 +155,25 @@ describe("PaymentProofUpload", () => {
       expect(onChange).toHaveBeenLastCalledWith("payment-proofs/TEMP-1/proof-2.png")
     );
     expect(screen.getByText("bank-transfer.png")).toBeInTheDocument();
+  });
+
+  it("clears the stored path when a replacement fails, and a retry stores the new file", async () => {
+    const { onChange, user, chooseFile } = renderUpload("payment-proofs/TEMP-1/earlier.png");
+    await user.click(screen.getByRole("button", { name: /replace/i }));
+
+    await chooseFile(pngFile("bank-transfer.png"));
+    const failedRequest = await nextUploadRequest();
+    act(() => failedRequest.respond(500));
+
+    await waitFor(() => expect(onChange).toHaveBeenLastCalledWith(null));
+
+    await user.click(screen.getByRole("button", { name: /try again/i }));
+    const retryRequest = await nextUploadRequest();
+    act(() => retryRequest.respond(200));
+
+    await waitFor(() =>
+      expect(onChange).toHaveBeenLastCalledWith("payment-proofs/TEMP-1/proof-2.png")
+    );
   });
 
   it("clears the stored path when Remove is pressed", async () => {

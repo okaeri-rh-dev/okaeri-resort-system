@@ -122,6 +122,7 @@ export function PaymentProofUpload({
       setStatus("failed");
       setErrorMessage(message);
       onUploadError?.(message);
+      if (value) onChange?.(null);
     }
   };
 
