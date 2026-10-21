@@ -144,8 +144,8 @@ export function PaymentEditPage() {
               <FormField
                 control={form.control}
                 name="proof_url"
-                label="Proof of Payment URL (Optional)"
-                description="URL to payment screenshot or receipt (image upload coming soon)"
+                label="Payment proof URL (optional)"
+                description="Link to the payment proof image (image upload coming soon)"
               >
                 {(field) => <Input placeholder="https://..." {...field} />}
               </FormField>
