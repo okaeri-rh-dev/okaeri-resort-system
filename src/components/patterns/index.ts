@@ -44,6 +44,11 @@ export {
   type DateRange,
   type DateRangePickerProps,
 } from "./DatePicker";
+export {
+  InlineCalendar,
+  type CalendarDayButtonProps,
+  type InlineCalendarProps,
+} from "./InlineCalendar";
 export { DetailPageLayout, type Breadcrumb, type DetailPageLayoutProps } from "./DetailPageLayout";
 export { DetailSection, type DetailSectionProps } from "./DetailSection";
 export { DetailField, type DetailFieldProps } from "./DetailField";
