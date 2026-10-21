@@ -63,11 +63,12 @@ export function FilterPopover({
       <PopoverContent
         className={cn(fitContent ? "w-auto p-0" : "w-56 p-3")}
         align="start"
+        collisionPadding={16}
         aria-label={typeof children === "string" ? `${children} filter` : "Filter"}
       >
         {content}
         {showActions && (
-          <div className={cn("flex justify-between gap-2 pt-3", fitContent && "px-3 pb-3")}>
+          <div className={cn("flex justify-between gap-2 pt-3", fitContent && "px-2 pb-2")}>
             <Button size="sm" variant="outline" onClick={() => onClear?.()} className="flex-1">
               Clear
             </Button>

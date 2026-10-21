@@ -198,7 +198,7 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
         setTempDateRange({ from: undefined, to: undefined });
       }}
       content={
-        <div className="space-y-3 px-3 pt-3">
+        <div className="space-y-3 px-2 pt-2">
           <div className="text-sm font-medium">Date Range</div>
           <InlineCalendar
             variant="range"
