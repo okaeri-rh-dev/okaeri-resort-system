@@ -29,4 +29,15 @@ INSERT INTO "storage"."buckets" ("id", "name", "public", "allowed_mime_types") V
 	('receipts', 'receipts', false, NULL),
 	('payment-proofs', 'payment-proofs', false, '{image/*}');
 
+-- Fake Contact channels; the last one is hidden from guests.
+INSERT INTO "public"."contact_channels" ("kind", "value", "label", "is_active", "display_order") VALUES
+	('mobile', '+639170000001', 'Maria', true, 0),
+	('viber', '+639170000001', 'Maria', true, 1),
+	('whatsapp', '+639170000001', NULL, true, 2),
+	('messenger', 'okaeri.resort.example', NULL, true, 3),
+	('email', 'reservations@okaeri-resort.example', NULL, true, 4),
+	('facebook', 'okaeri.resort.example', NULL, true, 5),
+	('instagram', 'okaeri.resort.example', NULL, true, 6),
+	('mobile', '+639280000002', 'Ben', false, 7);
+
 RESET ALL;

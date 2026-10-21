@@ -644,6 +644,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      contact_channels: {
+        Row: {
+          created_at: string;
+          display_order: number;
+          id: string;
+          is_active: boolean;
+          kind: string;
+          label: string | null;
+          updated_at: string;
+          value: string;
+        };
+        Insert: {
+          created_at?: string;
+          display_order?: number;
+          id?: string;
+          is_active?: boolean;
+          kind: string;
+          label?: string | null;
+          updated_at?: string;
+          value: string;
+        };
+        Update: {
+          created_at?: string;
+          display_order?: number;
+          id?: string;
+          is_active?: boolean;
+          kind?: string;
+          label?: string | null;
+          updated_at?: string;
+          value?: string;
+        };
+        Relationships: [];
+      };
       discount_rules: {
         Row: {
           conditions: NonNullable<Json>;
