@@ -12,9 +12,6 @@ interface PricingStatusBadgeProps {
 
   /** Placement only (margin, flex position). */
   className?: string;
-
-  /** @deprecated The badge has one size, as every status pill does (DESIGN.md, Colour). */
-  size?: "sm" | "md" | "lg";
 }
 
 /**
@@ -76,7 +73,7 @@ export function PricingStatusIcon({
   notice,
   isLoading = false,
   className,
-}: Omit<PricingStatusBadgeProps, "size">) {
+}: PricingStatusBadgeProps) {
   if (!notice && !isLoading) {
     return null;
   }

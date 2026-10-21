@@ -222,11 +222,7 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
           {/* Seasonal Rates Notice */}
           {pricingNotice && (
             <div className="pt-2">
-              <PricingStatusBadge
-                notice={pricingNotice}
-                isLoading={calculatePricing.isPending}
-                size="sm"
-              />
+              <PricingStatusBadge notice={pricingNotice} isLoading={calculatePricing.isPending} />
             </div>
           )}
         </CardContent>

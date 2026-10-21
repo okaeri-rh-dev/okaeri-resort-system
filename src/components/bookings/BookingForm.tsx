@@ -458,7 +458,6 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
                 notice={pricingNotice}
                 isLoading={calculatePricing.isPending}
                 className="mt-2"
-                size="sm"
               />
             </div>
           </CardContent>
@@ -678,7 +677,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
               <span className="tabular-nums">{formatCurrency(downpaymentAmount)}</span>
             </div>
           )}
-          <PricingStatusBadge notice={pricingNotice} className="mt-3" size="md" />
+          <PricingStatusBadge notice={pricingNotice} className="mt-3" />
         </CardContent>
       </Card>
     </div>
