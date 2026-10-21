@@ -1,6 +1,6 @@
 // src/components/audit/ActionBadge.tsx
 
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge, type StatusTone } from "@/components/patterns";
 import { ACTION_DISPLAY_NAMES } from "@/lib/audit-constants";
 import type { AuditLog } from "@/types/audit.types";
 
@@ -25,18 +25,18 @@ function appActionLabel(metadata: AuditLog["metadata"]): string {
  */
 export function ActionBadge({ log }: ActionBadgeProps) {
   if (log.source === "app") {
-    return <Badge variant="outline">{appActionLabel(log.metadata)}</Badge>;
+    return <StatusBadge tone="neutral">{appActionLabel(log.metadata)}</StatusBadge>;
   }
 
-  const variants: Record<string, "default" | "secondary" | "destructive"> = {
-    INSERT: "default",
-    UPDATE: "secondary",
-    DELETE: "destructive",
+  const tones: Record<string, StatusTone> = {
+    INSERT: "success",
+    UPDATE: "info",
+    DELETE: "danger",
   };
 
   return (
-    <Badge variant={variants[log.action] || "outline"}>
+    <StatusBadge tone={tones[log.action] ?? "neutral"}>
       {ACTION_DISPLAY_NAMES[log.action as keyof typeof ACTION_DISPLAY_NAMES] || log.action}
-    </Badge>
+    </StatusBadge>
   );
 }

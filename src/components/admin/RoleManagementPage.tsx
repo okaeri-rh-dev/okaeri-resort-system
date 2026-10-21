@@ -5,9 +5,15 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { Clock, Loader2, Shield, UserPlus } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  StatusBadge,
+} from "@/components/patterns";
 import {
   Table,
   TableBody,
@@ -84,7 +90,7 @@ export function RoleManagementPage() {
                 Pending Approval
               </CardTitle>
               {pendingUsers && pendingUsers.length > 0 && (
-                <Badge variant="secondary">{pendingUsers.length}</Badge>
+                <StatusBadge tone="neutral">{pendingUsers.length}</StatusBadge>
               )}
             </div>
           </div>
@@ -122,13 +128,9 @@ export function RoleManagementPage() {
                     </TableCell>
                     <TableCell>
                       {user.email_confirmed_at ? (
-                        <Badge variant="outline" className="border-green-500/50 text-green-700">
-                          Verified
-                        </Badge>
+                        <StatusBadge tone="success">Verified</StatusBadge>
                       ) : (
-                        <Badge variant="outline" className="border-amber-500/50 text-amber-700">
-                          Unverified
-                        </Badge>
+                        <StatusBadge tone="warning">Unverified</StatusBadge>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
