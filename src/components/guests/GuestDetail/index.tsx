@@ -1,6 +1,7 @@
 // src/components/guests/GuestDetail/index.tsx
 
 import { Calendar, FileText, Mail, TrendingUp } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   DetailAuditSection,
@@ -11,8 +12,12 @@ import {
   RelatedEntityLink,
 } from "@/components/entity-detail";
 import { DetailField, DetailPageLayout, DetailSection, StatusBadge } from "@/components/patterns";
+import { useUserRole } from "@/hooks";
 import { statusBadgeProps } from "@/lib/status-tone";
+import { useAnonymizeGuest } from "@/stores/useGuestStore";
 import type { Booking, Guest } from "@/types";
+
+import { AnonymizeGuestDialog } from "./AnonymizeGuestDialog";
 
 /**
  * Props for GuestDetailPage component
@@ -25,6 +30,7 @@ interface GuestDetailPageProps {
       | "booking_id"
       | "booking_reference"
       | "booking_status"
+      | "payment_status"
       | "check_in"
       | "check_out"
       | "total_amount"
@@ -56,6 +62,21 @@ interface GuestDetailPageProps {
  * The route file handles useParams() and useLoaderData() calls.
  */
 export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
+  const { isOwner } = useUserRole();
+  const anonymizeGuest = useAnonymizeGuest();
+  const isAnonymized = Boolean(guest.anonymized_at);
+
+  const handleAnonymize = () =>
+    anonymizeGuest.mutate(guestId, {
+      onSuccess: ({ deleted_files }) =>
+        toast.success(
+          deleted_files === 1
+            ? "Guest anonymized. 1 payment proof file deleted."
+            : `Guest anonymized. ${deleted_files} payment proof files deleted.`
+        ),
+      onError: (error) => toast.error(error.message),
+    });
+
   const averageBookingValue =
     guest.total_spent && guest.total_bookings && guest.total_bookings > 0
       ? guest.total_spent / guest.total_bookings
@@ -66,10 +87,26 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
       title={guest.guest_name}
       subtitle={`Member since ${formatFullDate(guest.created_at || new Date().toISOString())}`}
       breadcrumbs={[{ label: "Guests", to: "/admin/guests" }, { label: guest.guest_name }]}
-      editRoute={{
-        to: "/admin/guests/$guestId/edit",
-        params: { guestId },
-      }}
+      status={
+        guest.anonymized_at ? (
+          <StatusBadge tone="neutral">
+            Anonymized on {formatFullDate(guest.anonymized_at)}
+          </StatusBadge>
+        ) : undefined
+      }
+      actions={
+        isOwner && !isAnonymized ? (
+          <AnonymizeGuestDialog
+            guestName={guest.guest_name}
+            bookings={guest.bookings ?? []}
+            onConfirm={handleAnonymize}
+            isPending={anonymizeGuest.isPending}
+          />
+        ) : undefined
+      }
+      editRoute={
+        isAnonymized ? undefined : { to: "/admin/guests/$guestId/edit", params: { guestId } }
+      }
     >
       {/* 1. Contact Information Section */}
       <DetailSection title="Contact Information" icon={<Mail className="h-5 w-5" />}>
@@ -78,7 +115,9 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
             <DetailField
               label="Email"
               value={
-                guest.email ? (
+                isAnonymized ? (
+                  <span className="text-muted-foreground">Removed</span>
+                ) : guest.email ? (
                   <a
                     href={`mailto:${guest.email}`}
                     className="text-primary font-medium hover:underline"
@@ -93,7 +132,9 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
             <DetailField
               label="Phone"
               value={
-                guest.phone_number ? (
+                isAnonymized ? (
+                  <span className="text-muted-foreground">Removed</span>
+                ) : guest.phone_number ? (
                   <a
                     href={`tel:${guest.phone_number}`}
                     className="text-primary font-medium hover:underline"
