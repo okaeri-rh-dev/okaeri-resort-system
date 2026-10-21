@@ -6,15 +6,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import {
-  CONTACT_CHANNEL_KINDS,
-  contactChannelKinds,
-  isPhoneKind,
-  normalizeValue,
-  toDisplayValue,
-  validateValue,
-  type ContactChannelKind,
-} from "@/components/contact-channels/contact-channel";
-import {
   Button,
   Form,
   FormField,
@@ -31,6 +22,15 @@ import {
   useUpdateContactChannel,
   type ContactChannel,
 } from "@/hooks/useContactChannels";
+import {
+  CONTACT_CHANNEL_KINDS,
+  contactChannelKindNames,
+  isPhoneKind,
+  normalizeValue,
+  toDisplayValue,
+  validateValue,
+  type ContactChannelKind,
+} from "@/lib/contact-channel";
 
 const contactChannelSchema = z
   .object({
@@ -72,7 +72,7 @@ function KindSelect({ value, onChange, ...triggerProps }: KindSelectProps) {
       <SelectContent>
         {CONTACT_CHANNEL_KINDS.map((kind) => (
           <SelectItem key={kind} value={kind}>
-            {contactChannelKinds[kind].name}
+            {contactChannelKindNames[kind]}
           </SelectItem>
         ))}
       </SelectContent>

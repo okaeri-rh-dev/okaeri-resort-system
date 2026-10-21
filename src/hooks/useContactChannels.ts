@@ -1,7 +1,7 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { toKindLabel } from "@/components/contact-channels/contact-channel";
+import { toKindLabel } from "@/lib/contact-channel";
 import { contactChannelKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError } from "@/lib/supabase";
 import type { Tables, TablesInsert } from "@/types/database.types";

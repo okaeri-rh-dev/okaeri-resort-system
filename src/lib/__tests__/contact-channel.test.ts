@@ -8,7 +8,7 @@ import {
   toKindLabel,
   validateValue,
   type ContactChannelKind,
-} from "../contact-channel";
+} from "@/lib/contact-channel";
 
 function coveredKinds(cases: Array<[ContactChannelKind, ...unknown[]]>) {
   return cases.map(([kind]) => kind).sort();

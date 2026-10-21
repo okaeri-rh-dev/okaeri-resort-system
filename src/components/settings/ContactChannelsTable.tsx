@@ -1,11 +1,7 @@
 import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp } from "lucide-react";
 
-import {
-  contactChannelKinds,
-  toDisplayValue,
-  toKindLabel,
-} from "@/components/contact-channels/contact-channel";
+import { contactChannelIcons } from "@/components/contact-channels/contact-channel-icons";
 import {
   ActionMenu,
   Button,
@@ -23,6 +19,7 @@ import {
   useSetContactChannelActive,
   type ContactChannel,
 } from "@/hooks/useContactChannels";
+import { contactChannelKindNames, toDisplayValue, toKindLabel } from "@/lib/contact-channel";
 
 interface ContactChannelsTableProps {
   onEditChannel: (channel: ContactChannel) => void;
@@ -37,7 +34,8 @@ function ChannelStatus({ isActive }: { isActive: boolean }) {
 }
 
 function KindName({ channel }: { channel: ContactChannel }) {
-  const { name, Icon } = contactChannelKinds[channel.kind];
+  const name = contactChannelKindNames[channel.kind];
+  const Icon = contactChannelIcons[channel.kind];
   return (
     <span className="flex items-center gap-2 font-medium">
       <Icon className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />

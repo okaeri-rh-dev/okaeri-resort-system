@@ -1,10 +1,4 @@
-import type { ComponentType, SVGProps } from "react";
-
-import { Mail, Phone } from "lucide-react";
-
 import type { ContactChannelKind } from "@/types/contact-channel-kind";
-
-import { FacebookIcon, InstagramIcon, MessengerIcon, ViberIcon, WhatsAppIcon } from "./brand-icons";
 
 export { CONTACT_CHANNEL_KINDS, type ContactChannelKind } from "@/types/contact-channel-kind";
 
@@ -13,19 +7,14 @@ export interface ContactChannelValue {
   value: string;
 }
 
-interface ContactChannelKindDetails {
-  name: string;
-  Icon: ComponentType<SVGProps<SVGSVGElement>>;
-}
-
-export const contactChannelKinds: Record<ContactChannelKind, ContactChannelKindDetails> = {
-  mobile: { name: "Mobile", Icon: Phone },
-  viber: { name: "Viber", Icon: ViberIcon },
-  whatsapp: { name: "WhatsApp", Icon: WhatsAppIcon },
-  messenger: { name: "Messenger", Icon: MessengerIcon },
-  email: { name: "Email", Icon: Mail },
-  facebook: { name: "Facebook", Icon: FacebookIcon },
-  instagram: { name: "Instagram", Icon: InstagramIcon },
+export const contactChannelKindNames: Record<ContactChannelKind, string> = {
+  mobile: "Mobile",
+  viber: "Viber",
+  whatsapp: "WhatsApp",
+  messenger: "Messenger",
+  email: "Email",
+  facebook: "Facebook",
+  instagram: "Instagram",
 };
 
 export function toKindLabel({
@@ -35,7 +24,7 @@ export function toKindLabel({
   kind: ContactChannelKind;
   label: string | null;
 }): string {
-  const { name } = contactChannelKinds[kind];
+  const name = contactChannelKindNames[kind];
   return label ? `${name} (${label})` : name;
 }
 
@@ -101,7 +90,7 @@ const STORED_VALUE_PATTERNS: Record<ContactChannelKind, RegExp> = {
 
 function invalidValueMessage(kind: ContactChannelKind): string {
   if (isPhoneKind(kind)) return "Enter a PH mobile number, like 0917 123 4567";
-  if (isSocialKind(kind)) return `Paste the ${contactChannelKinds[kind].name} URL or the handle`;
+  if (isSocialKind(kind)) return `Paste the ${contactChannelKindNames[kind]} URL or the handle`;
   return "Enter an email address, like stay@example.com";
 }
 

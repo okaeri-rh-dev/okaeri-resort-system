@@ -1,7 +1,8 @@
 import type { ContactChannel } from "@/hooks/useContactChannels";
+import { toDisplayValue, toHref, toKindLabel } from "@/lib/contact-channel";
 import { cn } from "@/lib/utils";
 
-import { contactChannelKinds, toDisplayValue, toHref, toKindLabel } from "./contact-channel";
+import { contactChannelIcons } from "./contact-channel-icons";
 
 interface ContactChannelListProps {
   channels: ContactChannel[];
@@ -20,7 +21,7 @@ export function ContactChannelList({ channels, className }: ContactChannelListPr
     // Arbitrary grid template: a shrink-to-fit kind column beside a value column that may wrap.
     <dl className={cn("grid grid-cols-[max-content_minmax(0,1fr)] gap-x-3 gap-y-1", className)}>
       {channels.map((channel) => {
-        const { Icon } = contactChannelKinds[channel.kind];
+        const Icon = contactChannelIcons[channel.kind];
         const kindLabel = toKindLabel(channel);
         const displayValue = toDisplayValue(channel);
         const href = toHref(channel);
