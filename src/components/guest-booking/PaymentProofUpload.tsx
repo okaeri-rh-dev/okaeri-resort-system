@@ -19,7 +19,9 @@ export interface PaymentProofUploadProps {
   onUploadingChange?: (uploading: boolean) => void;
 }
 
-type UploadStatus = "empty" | "validating" | "uploading" | "uploaded" | "failed";
+type UploadState =
+  | { status: "empty" | "uploaded"; rejection?: string }
+  | { status: "validating" | "uploading" | "failed" };
 
 interface CompressionInfo {
   originalSize: number;
@@ -98,45 +100,54 @@ export function PaymentProofUpload({
   onUploadingChange,
 }: PaymentProofUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [status, setStatus] = useState<UploadStatus>(value ? "uploaded" : "empty");
+  const [uploadState, setUploadState] = useState<UploadState>({
+    status: value ? "uploaded" : "empty",
+  });
   const [file, setFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [compressionInfo, setCompressionInfo] = useState<CompressionInfo | null>(null);
+  const { status } = uploadState;
+  const rejection = "rejection" in uploadState ? uploadState.rejection : undefined;
   const isBusy = status === "validating" || status === "uploading";
 
+  const reportUploading = async (task: () => Promise<void>) => {
+    onUploadingChange?.(true);
+    try {
+      await task();
+    } finally {
+      onUploadingChange?.(false);
+    }
+  };
+
   const upload = async (fileToUpload: File) => {
-    setStatus("uploading");
+    setUploadState({ status: "uploading" });
     setUploadProgress(0);
-    setErrorMessage(null);
 
     try {
       const { uploadUrl, filePath } = await requestUploadUrl(bookingReference, fileToUpload);
       await putFile(uploadUrl, fileToUpload, setUploadProgress);
-      setStatus("uploaded");
+      setUploadState({ status: "uploaded" });
       onUploadComplete?.(filePath);
       onChange?.(filePath);
     } catch (err) {
       console.error("[UPLOAD] Upload error:", err);
-      const message = err instanceof Error ? err.message : "Upload failed";
-      setStatus("failed");
-      setErrorMessage(message);
-      onUploadError?.(message);
+      setUploadState({ status: "failed" });
+      onUploadError?.(err instanceof Error ? err.message : "Upload failed");
       if (value) onChange?.(null);
     }
   };
 
-  const handleFileSelect = async (chosenFile: File) => {
-    setStatus("validating");
-    setErrorMessage(null);
+  const checkAndUpload = async (chosenFile: File) => {
+    setUploadState({ status: "validating" });
     setCompressionInfo(null);
-    onUploadingChange?.(true);
 
     try {
       const validationError = await validateFile(chosenFile);
       if (validationError) {
-        setStatus(value ? "uploaded" : "empty");
-        setErrorMessage(validationError.message);
+        setUploadState({
+          status: value ? "uploaded" : "empty",
+          rejection: validationError.message,
+        });
         return;
       }
 
@@ -152,22 +163,16 @@ export function PaymentProofUpload({
       await upload(compressed.file);
     } catch (err) {
       console.error("[UPLOAD] File validation error:", err);
-      setStatus("empty");
-      setErrorMessage("Failed to check the file. Please choose it again.");
-    } finally {
-      onUploadingChange?.(false);
+      setUploadState({
+        status: "empty",
+        rejection: "We couldn't check that file. Please choose it again.",
+      });
     }
   };
 
-  const handleRetry = async () => {
-    if (!file) return;
-    onUploadingChange?.(true);
-    try {
-      await upload(file);
-    } finally {
-      onUploadingChange?.(false);
-    }
-  };
+  const handleFileSelect = (chosenFile: File) => reportUploading(() => checkAndUpload(chosenFile));
+
+  const handleRetry = () => (file ? reportUploading(() => upload(file)) : Promise.resolve());
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const chosenFile = event.target.files?.[0];
@@ -186,9 +191,8 @@ export function PaymentProofUpload({
   };
 
   const handleRemove = () => {
-    setStatus("empty");
+    setUploadState({ status: "empty" });
     setFile(null);
-    setErrorMessage(null);
     setCompressionInfo(null);
     onChange?.(null);
   };
@@ -225,9 +229,9 @@ export function PaymentProofUpload({
         disabled={disabled || isBusy}
       />
 
-      {errorMessage && status !== "failed" && (
+      {rejection && (
         <Callout tone="danger" title="Screenshot not accepted">
-          {errorMessage}
+          {rejection}
         </Callout>
       )}
 
@@ -294,7 +298,7 @@ export function PaymentProofUpload({
         <div className="bg-card space-y-3 rounded-lg border p-4">
           {fileDetails}
           <Callout tone="danger" title="Upload failed">
-            {errorMessage}
+            We couldn&apos;t upload your screenshot. Check your connection and try again.
           </Callout>
           <div className="flex flex-wrap gap-2">
             <Button type="button" onClick={() => void handleRetry()} disabled={disabled}>
@@ -309,7 +313,7 @@ export function PaymentProofUpload({
         </div>
       )}
 
-      {status === "empty" && !errorMessage && (
+      {status === "empty" && !rejection && (
         <p className="text-muted-foreground text-xs">
           Attach a screenshot of your GCash or bank transfer.
           {import.meta.env.DEV

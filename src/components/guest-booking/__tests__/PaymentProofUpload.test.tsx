@@ -128,7 +128,12 @@ describe("PaymentProofUpload", () => {
     const failedRequest = await nextUploadRequest();
     act(() => failedRequest.respond(500));
 
-    expect(await screen.findByText(/upload failed with status 500/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        /couldn.t upload your screenshot\. check your connection and try again/i
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/status 500/i)).not.toBeInTheDocument();
     expect(onChange).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: /try again/i }));
