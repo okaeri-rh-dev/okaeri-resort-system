@@ -1,13 +1,16 @@
 /**
  * Online booking, staff side: verify the guest's downpayment, then assign a
- * cabin. Seeds the guest booking through create_guest_booking (service role),
- * as the Worker does.
+ * cabin and land back on the booking queue. Seeds the guest booking through
+ * create_guest_booking (service role), as the Worker does.
  */
 
 import { expect, test } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { loginAsAdmin } from "./fixtures/auth";
+
+/** Set before the confirm click; still true after it only if the app navigated in place. */
+type MarkedWindow = Window & { sameDocument?: boolean };
 
 // 1x1 PNG, accepted by the payment-proofs bucket (image/*)
 const PNG_1X1 = Buffer.from(
@@ -92,12 +95,23 @@ test.describe("Online booking: verify then assign", () => {
     await expect(page).toHaveURL(new RegExp(`/admin/bookings/${bookingId}/assign-units`));
     await expect.poll(() => bookingField("payment_status")).toBe("Partial");
 
-    await page
-      .getByRole("button", { name: /^Cabin .*, not selected$/ })
-      .first()
-      .click();
+    const cabinCard = page.getByRole("button", { name: /^Cabin .*, not selected$/ }).first();
+    await expect(cabinCard.getByText(/^₱[\d,]+\.\d{2}$/)).toBeVisible();
+    await cabinCard.click();
     await page.getByRole("button", { name: "Assign 1 Cabin to Booking" }).click();
-    await page.getByRole("alertdialog").getByRole("button", { name: "Assign Cabins" }).click();
+
+    const confirmDialog = page.getByRole("alertdialog");
+    await expect(confirmDialog).toContainText(reference);
+    await expect(confirmDialog).not.toContainText(bookingId);
+
+    await page.evaluate(() => {
+      (window as MarkedWindow).sameDocument = true;
+    });
+    await confirmDialog.getByRole("button", { name: "Assign Cabins" }).click();
+
+    await expect(page).toHaveURL(/\/admin\/bookings\/queue$/);
+    await expect(page.getByRole("heading", { name: "Booking Queue", level: 1 })).toBeVisible();
+    expect(await page.evaluate(() => (window as MarkedWindow).sameDocument)).toBe(true);
 
     await expect.poll(() => bookingField("booking_status")).toBe("Confirmed");
     await expect.poll(() => bookingField("unit_assignment_status")).toBe("assigned");

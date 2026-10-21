@@ -45,7 +45,7 @@ const STEPS = [
   { number: 3, label: "Contact", description: "Your information" },
   {
     number: 4,
-    label: "Payment Proof",
+    label: "Payment",
     description: isDevelopment ? "Upload payment (optional)" : "Upload payment (required)",
   },
   { number: 5, label: "Review", description: "Confirm and submit" },
@@ -56,6 +56,7 @@ export function MultiUnitGuestBookingForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isProofUploading, setIsProofUploading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(() => {
     // Initialize with dev mock token if bypass is enabled
@@ -475,15 +476,15 @@ export function MultiUnitGuestBookingForm() {
             </div>
           )}
 
-          {/* Step 4: Payment Proof */}
+          {/* Step 4: Payment screenshot */}
           {currentStep === 4 && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold">Upload Payment Proof</h2>
+                <h2 className="text-2xl font-bold">Payment screenshot</h2>
                 <p className="text-muted-foreground">
                   {isDevelopment
-                    ? "Upload your payment receipt (optional - you can do this later)"
-                    : "Upload your payment receipt (required for booking confirmation)"}
+                    ? "Attach your payment screenshot (optional - you can do this later)"
+                    : "Attach your payment screenshot (required for booking confirmation)"}
                 </p>
               </div>
 
@@ -523,13 +524,14 @@ export function MultiUnitGuestBookingForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Payment Receipt {isDevelopment ? "(Optional)" : "(Required)"}
+                      Payment screenshot {isDevelopment ? "(optional)" : "(required)"}
                     </FormLabel>
                     <FormControl>
                       <PaymentProofUpload
                         value={field.value}
                         onChange={field.onChange}
                         bookingReference={`TEMP-${idempotencyKey.slice(0, 8)}`}
+                        onUploadingChange={setIsProofUploading}
                       />
                     </FormControl>
                     <FormMessage />
@@ -581,7 +583,11 @@ export function MultiUnitGuestBookingForm() {
             </Button>
 
             {currentStep < STEPS.length ? (
-              <Button type="button" onClick={handleNext} disabled={isSubmitting}>
+              <Button
+                type="button"
+                onClick={handleNext}
+                disabled={isSubmitting || (currentStep === 4 && isProofUploading)}
+              >
                 Next
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
