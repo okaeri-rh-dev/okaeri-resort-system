@@ -1,8 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import {
+  Callout,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Separator,
+} from "@/components/patterns";
 import { GuestLayout } from "@/layouts/GuestLayout";
 
 export const Route = createFileRoute("/terms-and-conditions")({
@@ -31,13 +37,11 @@ function TermsAndConditionsPage() {
           <CardContent>
             <div className="space-y-6 text-sm">
               {/* Introduction */}
-              <Alert>
-                <AlertDescription>
-                  By submitting a booking through our online system, you agree to be bound by these
-                  Terms and Conditions. Please ensure you have read, understood, and agreed to all
-                  terms before proceeding with your reservation.
-                </AlertDescription>
-              </Alert>
+              <Callout tone="info">
+                By submitting a booking through our online system, you agree to be bound by these
+                Terms and Conditions. Please ensure you have read, understood, and agreed to all
+                terms before proceeding with your reservation.
+              </Callout>
 
               <Separator />
 
@@ -385,18 +389,14 @@ function TermsAndConditionsPage() {
               <Separator />
 
               {/* Footer */}
-              <Alert>
-                <AlertDescription className="text-center">
-                  <p className="font-medium">Thank you for choosing Okaeri Resort</p>
-                  <p className="mt-2">
-                    By proceeding with your booking, you acknowledge that you have read, understood,
-                    and agree to be bound by these Terms and Conditions.
-                  </p>
-                  <p className="text-muted-foreground mt-4 text-xs">
-                    Last Updated: October 20, 2025
-                  </p>
-                </AlertDescription>
-              </Alert>
+              <div className="bg-background rounded-lg border p-4 text-center">
+                <p className="font-medium">Thank you for choosing Okaeri Resort</p>
+                <p className="mt-2">
+                  By proceeding with your booking, you acknowledge that you have read, understood,
+                  and agree to be bound by these Terms and Conditions.
+                </p>
+                <p className="text-muted-foreground mt-4 text-xs">Last Updated: October 20, 2025</p>
+              </div>
             </div>
           </CardContent>
         </Card>
