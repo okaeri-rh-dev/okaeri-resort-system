@@ -61,6 +61,11 @@ export interface DataTableProps<TData> {
  * column so it stays in view when a slim pane scrolls the table sideways. Render `TablePagination`
  * after it when the table paginates; it applies to both forms.
  *
+ * Keep the table's `data` and `columns` stable across renders (`useMemo`, `useCallback` for the
+ * handlers they close over). A new `data` array each render, such as `rows?.filter(...) ?? []`,
+ * makes TanStack reset the page in a loop and freezes the screen. New `columns` remount every
+ * cell, which closes an open row menu.
+ *
  * @example
  * ```tsx
  * <DataTable
