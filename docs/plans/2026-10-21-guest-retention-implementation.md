@@ -1245,7 +1245,7 @@ git commit -m "feat(api): report deleted proof files from the cleanup job"
 - Consumes: `anonymize_expired_guests` (Task 2), `deletePaymentProofFiles` (Task 3), `verifyCronAuth` (`functions/lib/cron-auth.ts`).
 - Produces: `anonymizeExpiredGuests(env): Promise<{ guestsCount: number; bookingsCount: number; failedCount: number; deletedFiles: string[]; failedFiles: string[] }>`; `POST /api/cron/anonymize-guests`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `src/__tests__/api/anonymize-guests.test.ts`:
 
@@ -1359,12 +1359,12 @@ describe("POST /api/cron/anonymize-guests", () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx vitest run src/__tests__/api/anonymize-guests.test.ts`
 Expected: FAIL (modules not found).
 
-- [ ] **Step 3: Implement the job**
+- [x] **Step 3: Implement the job**
 
 `functions/scheduled/anonymize-guests.ts`:
 
@@ -1424,7 +1424,7 @@ export async function anonymizeExpiredGuests(env: Env): Promise<{
 }
 ```
 
-- [ ] **Step 4: Implement the endpoint**
+- [x] **Step 4: Implement the endpoint**
 
 `functions/api/cron/anonymize-guests.ts`:
 
@@ -1488,12 +1488,12 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
 }
 ```
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 Run: `npx vitest run src/__tests__/api/anonymize-guests.test.ts && npx tsc --noEmit -p functions/tsconfig.json`
 Expected: PASS, no type errors.
 
-- [ ] **Step 6: Add the workflow job**
+- [x] **Step 6: Add the workflow job**
 
 In `.github/workflows/scheduled-cleanup.yml`:
 
@@ -1534,10 +1534,12 @@ anonymize-guests:
         echo "Guest anonymization completed successfully"
 ```
 
+Done note (2026-10-21): the job is indented two spaces under `jobs:`; PyYAML is not installed, so the parse check used the `yaml` npm package.
+
 Run: `npx prettier --check .github/workflows/scheduled-cleanup.yml && python3 -c "import yaml,sys; yaml.safe_load(open('.github/workflows/scheduled-cleanup.yml'))" && echo OK`
 Expected: `OK`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add functions/scheduled/anonymize-guests.ts functions/api/cron/anonymize-guests.ts src/__tests__/api/anonymize-guests.test.ts .github/workflows/scheduled-cleanup.yml
