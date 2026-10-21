@@ -23,6 +23,7 @@ import {
   StatusBadge,
 } from "@/components/patterns";
 import { GuestLayout } from "@/layouts/GuestLayout";
+import { isGuestBookingReference } from "@/lib/bookings/reference";
 import { formatCurrency } from "@/lib/formatters";
 import { validateStatusResponse, type StatusResponse } from "@/lib/schema-transform";
 import { statusBadgeProps } from "@/lib/status-tone";
@@ -35,11 +36,17 @@ const searchSchema = z.object({
 
 type SearchFormData = z.infer<typeof searchSchema>;
 
+const checkStatusSearchSchema = z.object({
+  reference: z.string().refine(isGuestBookingReference).optional().catch(undefined),
+});
+
 export const Route = createFileRoute("/booking/check-status")({
+  validateSearch: checkStatusSearchSchema,
   component: CheckBookingPage,
 });
 
 function CheckBookingPage() {
+  const { reference } = Route.useSearch();
   const [isSearching, setIsSearching] = useState(false);
   const [booking, setBooking] = useState<StatusResponse | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -47,7 +54,7 @@ function CheckBookingPage() {
   const form = useForm<SearchFormData>({
     resolver: zodResolver(searchSchema),
     defaultValues: {
-      booking_reference: "",
+      booking_reference: reference ?? "",
       email: "",
     },
   });

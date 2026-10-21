@@ -3,14 +3,14 @@
  * root page notice and the booking confirmation page.
  *
  * The spec changes shared rows, so it snapshots which channels were shown before it ran and
- * restores them afterwards, and it deletes the channel it adds. The confirmation page loads its
- * booking from /api/guest-booking/:ref, which no Pages function serves yet, so that response is
- * stubbed; the contact channels on it come from the real database.
+ * restores them afterwards, and it deletes the channel it adds. The confirmation page shows a
+ * seeded booking snapshot; the contact channels on it come from the real database.
  */
 import { expect, test, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
 import { loginAsManager, loginAsStaff } from "./fixtures/auth";
+import { seedConfirmation } from "./fixtures/confirmation";
 
 const HANDLE = "e2e.okaeri";
 const INSTAGRAM_URL = `https://www.instagram.com/${HANDLE}/?igsh=e2e`;
@@ -26,40 +26,6 @@ function serviceClient() {
       process.env.TEST_SUPABASE_SERVICE_ROLE_KEY ||
       "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz",
     { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
-
-async function stubConfirmationBooking(page: Page) {
-  await page.route(`**/api/guest-booking/${BOOKING_REFERENCE}`, (route) =>
-    route.fulfill({
-      json: {
-        success: true,
-        booking: {
-          booking_id: "00000000-0000-0000-0000-0000000000c1",
-          booking_reference: BOOKING_REFERENCE,
-          guest_name: "E2E Test Guest",
-          email: "guest@e2e.local",
-          phone_number: "+639170000000",
-          check_in: "2099-08-01",
-          check_out: "2099-08-02",
-          unit_requests: [{ guests_per_unit: 2 }],
-          total_amount: 2500,
-          downpayment_amount: 1250,
-          pricing_breakdown: {
-            base_total: 2500,
-            weekend_surcharge: 0,
-            extra_person_fees: 0,
-            subtotal: 2500,
-            discount_amount: 0,
-            total: 2500,
-            nights: 1,
-          },
-          payment_proof_url: null,
-          status: "Pending",
-          created_at: "2099-07-01T00:00:00Z",
-        },
-      },
-    })
   );
 }
 
@@ -133,7 +99,7 @@ test.describe("Contact channels", () => {
       `https://instagram.com/${HANDLE}`
     );
 
-    await stubConfirmationBooking(page);
+    await seedConfirmation(page, { booking_reference: BOOKING_REFERENCE });
     await openGuestPage(page, `/booking/confirmation/${BOOKING_REFERENCE}`);
     await expect(page.getByText(CONFIRMATION_CONTACT_TEXT)).toBeVisible();
     await expect(page.getByRole("link", CHANNEL_LINK)).toHaveAttribute(
@@ -214,7 +180,7 @@ test.describe("Contact channels", () => {
     await expect(page.getByRole("link", CHANNEL_LINK)).toHaveCount(0);
     await expect(page.locator("dl a")).toHaveCount(0);
 
-    await stubConfirmationBooking(page);
+    await seedConfirmation(page, { booking_reference: BOOKING_REFERENCE });
     await openGuestPage(page, `/booking/confirmation/${BOOKING_REFERENCE}`);
     await expect(page.getByRole("heading", { name: "Booking Confirmed!" })).toBeVisible();
     await expect(page.getByText(CONFIRMATION_CONTACT_TEXT)).toHaveCount(0);
