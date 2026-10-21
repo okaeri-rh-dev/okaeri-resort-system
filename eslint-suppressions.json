@@ -4,42 +4,12 @@
       "count": 1
     }
   },
-  "src/components/admin/PendingBookingsQueue.tsx": {
-    "design/no-restricted-imports": {
-      "count": 1
-    }
-  },
-  "src/components/admin/RoleManagementPage.tsx": {
-    "design/no-restricted-imports": {
-      "count": 1
-    }
-  },
-  "src/components/admin/UserRolesTable.tsx": {
-    "design/no-restricted-imports": {
-      "count": 1
-    }
-  },
-  "src/components/audit/AuditLogViewer.tsx": {
-    "design/no-restricted-imports": {
-      "count": 1
-    }
-  },
   "src/components/bookings/BookingsTable/components/BookingFilters.tsx": {
     "design/no-restricted-imports": {
       "count": 1
     }
   },
   "src/components/dashboard/DashboardCalendar.tsx": {
-    "design/no-restricted-imports": {
-      "count": 1
-    }
-  },
-  "src/components/pricing/DiscountRulesForm.tsx": {
-    "design/no-restricted-imports": {
-      "count": 1
-    }
-  },
-  "src/components/pricing/SeasonalRatesForm.tsx": {
     "design/no-restricted-imports": {
       "count": 1
     }
