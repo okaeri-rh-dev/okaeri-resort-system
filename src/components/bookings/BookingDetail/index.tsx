@@ -60,9 +60,20 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
         { label: "Bookings", to: "/admin/bookings" },
         { label: booking.booking_reference },
       ]}
-      status={<StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />}
+      status={
+        <>
+          <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
+          {booking.anonymized_at && (
+            <StatusBadge tone="neutral">
+              Anonymized on {formatFullDate(booking.anonymized_at)}
+            </StatusBadge>
+          )}
+        </>
+      }
       editRoute={
-        canEdit ? { to: "/admin/bookings/$bookingId/edit", params: { bookingId } } : undefined
+        canEdit && !booking.anonymized_at
+          ? { to: "/admin/bookings/$bookingId/edit", params: { bookingId } }
+          : undefined
       }
     >
       {/* 1. Booking Overview Section */}

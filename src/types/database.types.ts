@@ -11,8 +11,7 @@ export type { Json } from "./database.generated";
 type GeneratedPublic = GeneratedDatabase["public"];
 
 // bookings, app_roles and contact_channels have the CHECKs (payment_status is derived, docs/adr/0001); the two availability relations copy
-// their status from bookings. bookings_conflict_backup is a snapshot with no
-// constraint and stays string.
+// their status from bookings.
 type NarrowedColumns = {
   bookings: {
     booking_status: BookingStatus;

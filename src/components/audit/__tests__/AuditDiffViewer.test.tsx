@@ -499,7 +499,7 @@ describe("AuditDiffViewer", () => {
     it("explains that details were removed", () => {
       render(<AuditDiffViewer log={anonymized} open={true} onOpenChange={vi.fn()} />);
 
-      expect(screen.getByText("Details removed after the retention period")).toBeInTheDocument();
+      expect(screen.getByText("Details removed")).toBeInTheDocument();
       expect(
         screen.queryByText("No data changes recorded for this log entry")
       ).not.toBeInTheDocument();

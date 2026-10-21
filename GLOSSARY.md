@@ -33,7 +33,7 @@ Money received from a guest toward one booking, with an amount, method, date and
 _Avoid_: Transaction, receipt, deposit
 
 **Payment proof**:
-The screenshot of a GCash or bank transfer that a guest attaches when booking online, so staff can match it to money received. Screen copy calls it a "payment screenshot".
+The screenshot of a GCash or bank transfer that a guest attaches when booking online, so staff can match it to money received. Admin screens call it a "payment proof"; the guest booking flow calls it a "payment screenshot".
 _Avoid_: Receipt
 
 **Soft-deleted payment**:

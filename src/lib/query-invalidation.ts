@@ -122,3 +122,12 @@ export function afterBookingCancel() {
   invalidateMultiUnitBookings();
   invalidateUpcoming();
 }
+
+/** After anonymizing or deleting a guest: their bookings and payments lose personal data too. */
+export function afterGuestRetention() {
+  invalidateGuests();
+  invalidateBookings();
+  invalidatePayments();
+  invalidateMultiUnitBookings();
+  invalidateUpcoming();
+}

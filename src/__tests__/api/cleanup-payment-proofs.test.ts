@@ -26,7 +26,7 @@ describe("cleanupPaymentProofs", () => {
       error: null,
     });
 
-    await cleanupPaymentProofs(env);
+    await expect(cleanupPaymentProofs(env)).resolves.toEqual({ deletedCount: 2 });
 
     expect(rpc).toHaveBeenCalledWith("cleanup_expired_payment_proofs");
     expect(remove).toHaveBeenCalledWith(["bookings/b1/proof.jpg", "REF_1.png"]);
@@ -35,7 +35,7 @@ describe("cleanupPaymentProofs", () => {
   it("skips storage when nothing expired", async () => {
     rpc.mockResolvedValue({ data: [], error: null });
 
-    await cleanupPaymentProofs(env);
+    await expect(cleanupPaymentProofs(env)).resolves.toEqual({ deletedCount: 0 });
 
     expect(remove).not.toHaveBeenCalled();
   });

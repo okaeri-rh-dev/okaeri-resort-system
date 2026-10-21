@@ -54,6 +54,7 @@ import {
   TableSearch,
   TableSkeleton,
 } from "@/components/patterns";
+import { useUserRole } from "@/hooks";
 import { formatCurrency, formatPhoneNumber, formatTableDate } from "@/lib/formatters";
 import { logger } from "@/lib/logger";
 import { statusBadgeProps } from "@/lib/status-tone";
@@ -228,6 +229,8 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
   onEditGuest,
   className,
 }) => {
+  const { isManager } = useUserRole();
+
   // Store state
   const { searchQuery, setSearchQuery } = useGuestStore();
 
@@ -419,11 +422,15 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
               label: "Call Guest",
               onClick: () => handleCall(guest),
             },
-            {
-              label: "Delete Guest",
-              onClick: () => setGuestToDelete(guest),
-              variant: "destructive" as const,
-            },
+            ...(isManager
+              ? [
+                  {
+                    label: "Delete Guest",
+                    onClick: () => setGuestToDelete(guest),
+                    variant: "destructive" as const,
+                  },
+                ]
+              : []),
           ];
 
           return <ActionMenu actions={actions} />;
@@ -431,7 +438,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
         size: 80,
       }),
     ],
-    [onViewGuest]
+    [onViewGuest, isManager]
   );
 
   // Create table instance

@@ -8,6 +8,8 @@
 # - Weekly Sunday 3:00 AM: payment-proof cleanup (90 days after check-out,
 #   30 days after cancellation) and audit anonymization (rows older than
 #   24 months; docs/plans/2026-10-18-audit-retention-design.md)
+#   and guest anonymization (24 months after the last check-out;
+#   docs/plans/2026-10-21-guest-retention-design.md)
 #
 # Manual trigger: GitHub Actions > Scheduled Cleanup Tasks > Run workflow
 
@@ -17,7 +19,7 @@ on:
   schedule:
     # Daily at 2:00 AM UTC (10:00 AM PHT): idempotency keys.
     - cron: "0 2 * * *"
-    # Weekly, Sunday 3:00 AM UTC (11:00 AM PHT): payment proofs and audit anonymization.
+    # Weekly, Sunday 3:00 AM UTC (11:00 AM PHT): payment proofs, audit and guest anonymization.
     - cron: "0 3 * * 0"
   workflow_dispatch:
     inputs:
@@ -31,6 +33,7 @@ on:
           - idempotency
           - payment-proofs
           - anonymize-audit
+          - anonymize-guests
 
 env:
   PRODUCTION_URL: https://okaeri-resort.pages.dev
@@ -125,3 +128,33 @@ jobs:
           fi
 
           echo "Audit anonymization completed successfully"
+
+  anonymize-guests:
+    name: Anonymize Past Guests
+    runs-on: ubuntu-latest
+    # Run weekly on Sunday 3 AM UTC, or when manually triggered with 'all' or 'anonymize-guests'
+    if: |
+      github.event.schedule == '0 3 * * 0' ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.task == 'all' || github.event.inputs.task == 'anonymize-guests'))
+    steps:
+      - name: Trigger guest anonymization
+        run: |
+          echo "Starting guest anonymization..."
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            "${{ env.PRODUCTION_URL }}/api/cron/anonymize-guests")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "Response: $BODY"
+          echo "HTTP Status: $HTTP_CODE"
+
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "::error::Guest anonymization failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+          echo "Guest anonymization completed successfully"
