@@ -14,10 +14,7 @@ function dayButton(dayOfMonth: number) {
   return within(grid)
     .getAllByRole("button")
     .find(
-      (button) =>
-        button.textContent === String(dayOfMonth) &&
-        !button.closest("[data-outside]") &&
-        !button.closest(".rdp-outside")
+      (button) => button.textContent === String(dayOfMonth) && !button.closest("[data-outside]")
     ) as HTMLElement;
 }
 
