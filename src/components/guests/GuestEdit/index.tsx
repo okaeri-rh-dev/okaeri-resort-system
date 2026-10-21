@@ -5,18 +5,17 @@ import { useLoaderData, useNavigate, useParams } from "@tanstack/react-router";
 import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { DetailPageLayout } from "@/components/patterns";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  DetailPageLayout,
   Form,
-  FormControl,
   FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+  Input,
+} from "@/components/patterns";
 import { useEntityEdit } from "@/hooks/entity";
 import { guestEditSchema, type GuestEditInput } from "@/lib/validation/entity-schemas";
 import type { Guest } from "@/types/entity-detail.types";
@@ -75,48 +74,35 @@ export function GuestEditPage() {
               <CardTitle className="text-lg">Personal Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="guest_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Guest Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter full name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="guest_name" label="Guest Name">
+                {(field) => <Input placeholder="Enter full name" autoComplete="name" {...field} />}
+              </FormField>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="guest@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="@container">
+                <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
+                  <FormField control={form.control} name="email" label="Email">
+                    {(field) => (
+                      <Input
+                        type="email"
+                        placeholder="guest@example.com"
+                        autoComplete="email"
+                        spellCheck={false}
+                        {...field}
+                      />
+                    )}
+                  </FormField>
 
-                <FormField
-                  control={form.control}
-                  name="contact_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Contact Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+63 XXX XXX XXXX" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField control={form.control} name="contact_number" label="Contact Number">
+                    {(field) => (
+                      <Input
+                        type="tel"
+                        placeholder="+63 XXX XXX XXXX"
+                        autoComplete="tel"
+                        {...field}
+                      />
+                    )}
+                  </FormField>
+                </div>
               </div>
             </CardContent>
           </Card>

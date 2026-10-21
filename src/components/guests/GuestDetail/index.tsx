@@ -47,7 +47,7 @@ interface GuestDetailPageProps {
  *
  * Uses Professional Enterprise Design System with:
  * - High information density with minimal whitespace
- * - Monospace fonts for financial data
+ * - Tabular figures for financial data
  * - Responsive 2-column desktop / 1-column mobile layouts
  * - Professional status badges
  * - Consistent spacing and typography
@@ -73,59 +73,63 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
     >
       {/* 1. Contact Information Section */}
       <DetailSection title="Contact Information" icon={<Mail className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <DetailField
-            label="Email"
-            value={
-              guest.email ? (
-                <a
-                  href={`mailto:${guest.email}`}
-                  className="text-primary font-medium hover:underline"
-                >
-                  {guest.email}
-                </a>
-              ) : (
-                <span className="text-muted-foreground">{"\u2014"}</span>
-              )
-            }
-          />
-          <DetailField
-            label="Phone"
-            value={
-              guest.phone_number ? (
-                <a
-                  href={`tel:${guest.phone_number}`}
-                  className="text-primary font-medium hover:underline"
-                >
-                  {formatPhoneNumber(guest.phone_number)}
-                </a>
-              ) : (
-                <span className="text-muted-foreground">{"\u2014"}</span>
-              )
-            }
-          />
-          {guest.address && <DetailField label="Address" value={guest.address} />}
+        <div className="@container">
+          <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
+            <DetailField
+              label="Email"
+              value={
+                guest.email ? (
+                  <a
+                    href={`mailto:${guest.email}`}
+                    className="text-primary font-medium hover:underline"
+                  >
+                    {guest.email}
+                  </a>
+                ) : (
+                  <span className="text-muted-foreground">{"\u2014"}</span>
+                )
+              }
+            />
+            <DetailField
+              label="Phone"
+              value={
+                guest.phone_number ? (
+                  <a
+                    href={`tel:${guest.phone_number}`}
+                    className="text-primary font-medium hover:underline"
+                  >
+                    {formatPhoneNumber(guest.phone_number)}
+                  </a>
+                ) : (
+                  <span className="text-muted-foreground">{"\u2014"}</span>
+                )
+              }
+            />
+            {guest.address && <DetailField label="Address" value={guest.address} />}
+          </div>
         </div>
       </DetailSection>
 
       {/* 2. Guest Statistics Section */}
       <DetailSection title="Guest Statistics" icon={<TrendingUp className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <DetailField
-            label="Total Bookings"
-            value={(guest.total_bookings || 0).toString()}
-            emphasis="figure"
-          />
-          <DetailField
-            label="Total Spent"
-            value={formatCurrency(guest.total_spent || 0)}
-            emphasis="figure"
-          />
-          <DetailField
-            label="Average Booking Value"
-            value={formatCurrency(averageBookingValue)}
-            emphasis="strong"
-          />
+        <div className="@container">
+          <div className="grid grid-cols-1 gap-6 @2xl:grid-cols-3">
+            <DetailField
+              label="Total Bookings"
+              value={(guest.total_bookings || 0).toString()}
+              emphasis="figure"
+            />
+            <DetailField
+              label="Total Spent"
+              value={formatCurrency(guest.total_spent || 0)}
+              emphasis="figure"
+            />
+            <DetailField
+              label="Average Booking Value"
+              value={formatCurrency(averageBookingValue)}
+              emphasis="strong"
+            />
+          </div>
         </div>
       </DetailSection>
 
@@ -186,9 +190,7 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
       {/* 4. Notes Section (Conditional) */}
       {guest.notes && (
         <DetailSection title="Notes" icon={<FileText className="h-5 w-5" />}>
-          <div className="prose prose-sm max-w-none">
-            <p className="text-foreground text-sm whitespace-pre-wrap">{guest.notes}</p>
-          </div>
+          <p className="text-sm break-words whitespace-pre-wrap">{guest.notes}</p>
         </DetailSection>
       )}
 
