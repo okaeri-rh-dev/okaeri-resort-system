@@ -2335,17 +2335,19 @@ Done note (2026-10-21): `npm run verify` exit 0 (155 files, 1810 passed, 20 skip
 - `docs/plans/2026-10-03-guardrails-design.md`: item 8 → DONE with the PR number; Resume state updated.
 - Tick the steps in this plan.
 
-- [ ] **Step 3: Push and open the PR**
+- [x] **Step 3: Push and open the PR**
 
 Push with `timeout: 600000` (CLAUDE.md, pre-push hook). Use the `mattpocock-skills:pr` skill for the body. Merge with `gh pr merge --auto --merge` after the user approves. Verify with `git fetch origin && git rev-parse HEAD origin/main` after merge.
 
-- [ ] **Step 4: Prod (user)**
+- [x] **Step 4: Prod (user)**
 
 1. `! supabase db push` — it must list only `20261021000000_guest_retention.sql`.
 2. `! npm run drift:prod` — expected: no new drift.
 3. GitHub Actions → Scheduled Cleanup Tasks → Run workflow → `anonymize-guests`. Expected: HTTP 200, `guests_count: 0` (prod data starts 2025-10).
 4. Also run `payment-proofs` once and confirm the response now has `deleted_count`.
 5. Optional: anonymize one test guest on prod from its page and confirm `select count(*) from audit_logs where concat(old_data::text, new_data::text) like '%<test email>%'` returns 0.
+
+Done note (2026-10-21): PR #113 merged as `ea2dbc0` with all 8 checks green, after `origin/main` was merged into the branch (no conflicts, verify green). Deploy to Cloudflare Pages for `ea2dbc0` succeeded. `supabase db push` ran from the worktree (the main checkout was on another branch); the dry run listed only `20261021000000_guest_retention.sql`. `drift:prod` showed no retention drift; its only lines were `local-only` `contact_channels` objects from another session's unmerged migration in the shared local DB. Run 39556894273 (`anonymize-guests`): HTTP 200, `guests_count: 0`, `bookings_count: 0`, `failed_count: 0`. Run 39556937398 (`payment-proofs`): HTTP 200, `deleted_count: 0`. Step 5 not done.
 
 ---
 
