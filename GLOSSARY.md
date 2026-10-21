@@ -50,3 +50,9 @@ _Avoid_: Paid flag, verification status
 **Outstanding balance**:
 A booking's total price minus its counted payments.
 _Avoid_: Remaining amount, due
+
+### Reaching the resort
+
+**Contact channel**:
+One way a guest can reach the resort, one of: mobile number, Viber, WhatsApp, Messenger, email, Facebook or Instagram. Each has an optional label and can be hidden from guests without being deleted. The resort keeps an ordered list of them.
+_Avoid_: Contact details, contact info, social link, contact (alone, which means a guest's own phone or email)
