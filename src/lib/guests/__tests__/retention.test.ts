@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { anonymizeBlockers } from "../retention";
+import { anonymizeBlockers, type RetentionBooking } from "../retention";
 
 const now = new Date("2026-10-21T00:00:00Z");
-const booking = (
-  overrides: Partial<{ booking_status: string; payment_status: string; check_out: string }>
-) => ({
+const booking = (overrides: Partial<RetentionBooking>): RetentionBooking => ({
   booking_status: "CheckedOut",
   payment_status: "Completed",
   check_out: "2025-01-02T04:00:00Z",

@@ -2,10 +2,12 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import type { RetentionBooking } from "@/lib/guests/retention";
+
 import { AnonymizeGuestDialog } from "../AnonymizeGuestDialog";
 
 // src/test/setup.ts pins the clock to 2025-09-25
-const past = {
+const past: RetentionBooking = {
   booking_status: "CheckedOut",
   payment_status: "Completed",
   check_out: "2025-01-02T04:00:00Z",

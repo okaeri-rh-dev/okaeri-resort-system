@@ -8,7 +8,7 @@
 ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS anonymized_at timestamptz;
 ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS anonymized_at timestamptz;
 
--- One-off snapshot from database/migrations/014; prod held 2 test rows (user, 2026-10-21).
+-- One-off snapshot from database/migrations/014; prod held 2 test rows.
 DROP TABLE IF EXISTS public.bookings_conflict_backup;
 
 -- The anonymize_audit_logs rules (20261018000000), shared with guest anonymization.

@@ -69,7 +69,11 @@ export function GuestDetailPage({ guest, guestId }: GuestDetailPageProps) {
   const handleAnonymize = () =>
     anonymizeGuest.mutate(guestId, {
       onSuccess: ({ deleted_files }) =>
-        toast.success(`Guest anonymized. ${deleted_files} payment proof file(s) deleted.`),
+        toast.success(
+          deleted_files === 1
+            ? "Guest anonymized. 1 payment proof file deleted."
+            : `Guest anonymized. ${deleted_files} payment proof files deleted.`
+        ),
       onError: (error) => toast.error(error.message),
     });
 

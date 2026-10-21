@@ -164,11 +164,13 @@ describe("anonymize_guest", () => {
               '{"email":"${guest.email}"}', now() - interval '1 month');
     `);
     expect(auditRowsMentioning(guest.email!)).toBeGreaterThan(0);
+    expect(auditRowsMentioning(guest.phone_number!)).toBeGreaterThan(0);
 
     const { error } = await admin.rpc("anonymize_guest", { p_guest_id: guest.guest_id });
 
     expect(error).toBeNull();
     expect(auditRowsMentioning(guest.email!)).toBe(0);
+    expect(auditRowsMentioning(guest.phone_number!)).toBe(0);
     expect(auditRowsMentioning(guest.guest_name)).toBe(0);
     expect(auditRowsMentioning(other.guest.email!)).toBeGreaterThan(0);
   });

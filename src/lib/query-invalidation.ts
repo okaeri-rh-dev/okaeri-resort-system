@@ -124,7 +124,7 @@ export function afterBookingCancel() {
 }
 
 /** After anonymizing or deleting a guest: their bookings and payments lose personal data too. */
-export function afterGuestAnonymize() {
+export function afterGuestRetention() {
   invalidateGuests();
   invalidateBookings();
   invalidatePayments();

@@ -4,7 +4,7 @@ import { devtools, persist } from "zustand/middleware";
 
 import { getAccessToken } from "@/hooks/useAuthToken";
 import { logger } from "@/lib/logger";
-import { afterGuestAnonymize, invalidateGuests } from "@/lib/query-invalidation";
+import { afterGuestRetention, invalidateGuests } from "@/lib/query-invalidation";
 import { guestKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Booking, Guest } from "@/types";
@@ -253,6 +253,11 @@ export const useUpdateGuest = () => {
   });
 };
 
+const RETENTION_ERROR_BY_STATUS: Record<number, string> = {
+  404: "This guest no longer exists. Refresh the page.",
+  409: "This guest has a current or upcoming booking. Cancel or finish it first.",
+};
+
 async function callGuestRetention(path: string, method: "POST" | "DELETE") {
   const response = await fetch(path, {
     method,
@@ -262,7 +267,13 @@ async function callGuestRetention(path: string, method: "POST" | "DELETE") {
     deleted_files?: number;
     message?: string;
   };
-  if (!response.ok) throw new Error(body.message ?? `Request failed (${response.status})`);
+  if (!response.ok) {
+    throw new Error(
+      RETENTION_ERROR_BY_STATUS[response.status] ??
+        body.message ??
+        `Request failed (${response.status})`
+    );
+  }
   return { deleted_files: body.deleted_files ?? 0 };
 }
 
@@ -272,11 +283,11 @@ export const useAnonymizeGuest = () =>
     mutationFn: (guestId: string) =>
       callGuestRetention(`/api/admin/guests/${guestId}/anonymize`, "POST"),
     onSuccess: () => {
-      afterGuestAnonymize();
+      afterGuestRetention();
     },
   });
 
-// Delete guest mutation: delete_guest refuses guests with Confirmed/CheckedIn bookings (409)
+// Delete guest mutation: delete_guest refuses Confirmed/CheckedIn or current/future bookings (409)
 export const useDeleteGuest = () => {
   const queryClient = useQueryClient();
   const removeOptimistic = useGuestStore((state) => state.removeOptimisticGuest);
@@ -293,7 +304,7 @@ export const useDeleteGuest = () => {
       invalidateGuests();
     },
     onSuccess: () => {
-      afterGuestAnonymize();
+      afterGuestRetention();
     },
   });
 };

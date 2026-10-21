@@ -1930,7 +1930,7 @@ In `useDeleteGuest`, replace the whole `mutationFn` body (the Supabase active-bo
 
 `delete_guest` enforces the active-bookings rule (409 with its message). Remove imports that become unused. Check that `invalidateGuests()` also invalidates `guestKeys.detail(...)`; if it does not, invalidate `guestKeys.all` in `useAnonymizeGuest`'s `onSuccess` with the hook's `queryClient`.
 
-Done note (2026-10-21): the test spies `fetch` in `beforeEach` (`vi.spyOn(globalThis, "fetch")`); `__tests__/setup/msw-setup.ts` patches fetch in `beforeAll`, so a module-level `vi.stubGlobal` stub is wrapped and receives a `Request`. Both mutations call a new composite `afterGuestAnonymize()` (`src/lib/query-invalidation.ts`).
+Done note (2026-10-21): the test spies `fetch` in `beforeEach` (`vi.spyOn(globalThis, "fetch")`); `__tests__/setup/msw-setup.ts` patches fetch in `beforeAll`, so a module-level `vi.stubGlobal` stub is wrapped and receives a `Request`. Both mutations call a new composite `afterGuestRetention()` (`src/lib/query-invalidation.ts`).
 
 - [x] **Step 4: Show Delete to managers and above only**
 
@@ -2357,4 +2357,10 @@ Push with `timeout: 600000` (CLAUDE.md, pre-push hook). Use the `mattpocock-skil
 - **`cleanup_expired_payment_proofs` keeps its own path regexp (2026-10-21, plan).** Why: changing it adds a prod function change outside this item; `_payment_proof_path` copies the same expression. Revisit: next time that function changes.
 - **Guest delete is manager+ in the UI too (2026-10-21, plan).** Why: the UI showed Delete to staff, whose request RLS rejected; the endpoint now enforces manager+. Revisit: if delete should be owner/admin only (spec Decisions).
 - **Anonymize and delete invalidate guests, bookings, payments, multi-unit bookings and upcoming (2026-10-21, implementation).** Why: both rewrite the guest's bookings and payments, and `invalidateGuests()` alone left cached booking names stale. Revisit: n/a.
+- **The anonymize dialog shows how many bookings have an unpaid balance, not the amount (2026-10-21, user via review).** Why: the amount needs paid totals per booking, which the guest page does not load. Revisit: when the guest page loads payments per booking.
+- **Delete also refuses a guest with a current or future booking that is not cancelled, e.g. Pending (2026-10-21, user via review).** Why: `delete_guest` calls `anonymize_guest` first and inherits its PT409; before, only Confirmed/CheckedIn blocked it. Revisit: if staff need to delete guests with pending future bookings.
+- **A booking added to a guest after anonymization is not scrubbed (2026-10-21, user via review).** Why: the weekly job selects only guests with `anonymized_at IS NULL`, and this change does not stop a new booking for an anonymized guest. Revisit: if such bookings show up.
+- **Anonymizing an already-anonymized guest who has a future booking returns 409, not 200 (2026-10-21, user via review).** Why: the future-booking check runs before the no-op check; the case needs a booking added after anonymization (line above). Revisit: with that line.
+- **The anonymize action has no spinner (2026-10-21, user via review).** Why: the dialog closes on confirm and a toast reports the result. Revisit: if the call becomes slow.
+- **Retention errors show fix-it wording by status (404, 409), not the server message (2026-10-21, user via review).** Why: the server message holds the guest UUID and does not say what to do (DESIGN.md #19). Revisit: n/a.
 - **Run with `/mattpocock-skills:implement` in a worktree; one PR carries spec, plan and code (2026-10-21, user).** Why: no GitHub tickets exist, so `implement-spec` does not fit, and the tasks are mostly sequential; the docs branch `docs/guest-retention-design` is the worktree's base and is not pushed separately. Revisit: n/a.
