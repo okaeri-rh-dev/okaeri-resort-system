@@ -113,6 +113,8 @@ describe("validateValue", () => {
     ["whatsapp", "639171234567"],
     ["messenger", "https://m.me/okaeriresort"],
     ["facebook", "https://www.facebook.com/okaeriresortlaunion/"],
+    ["facebook", "facebook.com/okaeri.resort.php.fan"],
+    ["messenger", "messenger.com/t/100012345678901"],
     ["instagram", "@okaeri.resort"],
     ["email", " Stay@Okaeri.Example "],
   ];
@@ -128,6 +130,16 @@ describe("validateValue", () => {
     ["whatsapp", "", "Enter a PH mobile number, like 0917 123 4567"],
     ["messenger", "okaeri resort", "Paste the Messenger URL or the handle"],
     ["facebook", "https://example.com/okaeri", "Paste the Facebook URL or the handle"],
+    [
+      "facebook",
+      "https://www.facebook.com/profile.php?id=123",
+      "Paste the Facebook URL or the handle",
+    ],
+    ["facebook", "facebook.com/people/Okaeri-Resort/123", "Paste the Facebook URL or the handle"],
+    ["facebook", "https://www.facebook.com/groups/okaeri", "Paste the Facebook URL or the handle"],
+    ["facebook", "facebook.com/share/abc123", "Paste the Facebook URL or the handle"],
+    ["messenger", "facebook.com/profile.php?id=123", "Paste the Messenger URL or the handle"],
+    ["messenger", "https://www.facebook.com/pages/okaeri", "Paste the Messenger URL or the handle"],
     ["instagram", "https://www.facebook.com/okaeri", "Paste the Instagram URL or the handle"],
     ["instagram", "@", "Paste the Instagram URL or the handle"],
     ["email", "stay@okaeri", "Enter an email address, like stay@example.com"],
@@ -139,7 +151,7 @@ describe("validateValue", () => {
   });
 
   it("covers every kind", () => {
-    expect(coveredKinds(validCases)).toEqual(everyKind);
+    expect([...new Set(coveredKinds(validCases))]).toEqual(everyKind);
     expect([...new Set(coveredKinds(invalidCases))]).toEqual(everyKind);
   });
 });

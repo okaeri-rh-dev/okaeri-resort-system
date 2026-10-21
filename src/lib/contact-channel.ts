@@ -84,12 +84,17 @@ export function normalizeValue(kind: ContactChannelKind, input: string): string 
   return input.trim().toLowerCase();
 }
 
+// Facebook paths that look like a handle but are not a page: profile.php?id=…,
+// people/…, groups/…, share/… and the like.
+const FACEBOOK_HANDLE_PATTERN =
+  /^(?!.*\.php$)(?!(?:people|pages|groups|share|watch|events|reel|photo|story)$)[A-Za-z0-9.-]{1,50}$/i;
+
 const STORED_VALUE_PATTERNS: Record<ContactChannelKind, RegExp> = {
   mobile: PH_MOBILE_PATTERN,
   viber: PH_MOBILE_PATTERN,
   whatsapp: PH_MOBILE_PATTERN,
-  messenger: /^[A-Za-z0-9.-]{1,50}$/,
-  facebook: /^[A-Za-z0-9.-]{1,50}$/,
+  messenger: FACEBOOK_HANDLE_PATTERN,
+  facebook: FACEBOOK_HANDLE_PATTERN,
   instagram: /^[A-Za-z0-9._]{1,30}$/,
   email: /^(?=.{1,254}$)[^\s@]+@[^\s@]+\.[^\s@]+$/,
 };
