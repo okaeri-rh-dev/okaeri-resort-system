@@ -16,6 +16,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/patterns";
+import type { ContactChannel } from "@/hooks/useContactChannels";
 import { requireManager } from "@/lib/route-guards";
 import type { ExpenseCategoryConfig, PaymentMethodConfig } from "@/types";
 
@@ -38,6 +39,16 @@ const ExpenseCategoriesTable = lazy(() =>
 const ExpenseCategoryForm = lazy(() =>
   import("@/components/settings/ExpenseCategoryForm").then((m) => ({
     default: m.ExpenseCategoryForm,
+  }))
+);
+const ContactChannelsTable = lazy(() =>
+  import("@/components/settings/ContactChannelsTable").then((m) => ({
+    default: m.ContactChannelsTable,
+  }))
+);
+const ContactChannelForm = lazy(() =>
+  import("@/components/settings/ContactChannelForm").then((m) => ({
+    default: m.ContactChannelForm,
   }))
 );
 
@@ -63,6 +74,9 @@ function SettingsPage() {
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ExpenseCategoryConfig | null>(null);
 
+  const [showChannelForm, setShowChannelForm] = useState(false);
+  const [editingChannel, setEditingChannel] = useState<ContactChannel | null>(null);
+
   const handleEditMethod = (method: PaymentMethodConfig) => {
     setEditingMethod(method);
     setShowForm(true);
@@ -83,6 +97,16 @@ function SettingsPage() {
     setEditingCategory(null);
   };
 
+  const handleEditChannel = (channel: ContactChannel) => {
+    setEditingChannel(channel);
+    setShowChannelForm(true);
+  };
+
+  const handleCloseChannelForm = () => {
+    setShowChannelForm(false);
+    setEditingChannel(null);
+  };
+
   return (
     <ErrorBoundary level="page">
       <div className="space-y-6">
@@ -97,6 +121,7 @@ function SettingsPage() {
           <TabsList>
             <TabsTrigger value="payment-methods">Payment Methods</TabsTrigger>
             <TabsTrigger value="expense-categories">Expense Categories</TabsTrigger>
+            <TabsTrigger value="contact-channels">Contact Channels</TabsTrigger>
           </TabsList>
 
           <TabsContent value="payment-methods" className="space-y-4">
@@ -141,6 +166,27 @@ function SettingsPage() {
             <ErrorBoundary level="component">
               <Suspense fallback={<LoadingSpinner />}>
                 <ExpenseCategoriesTable onEditCategory={handleEditCategory} />
+              </Suspense>
+            </ErrorBoundary>
+          </TabsContent>
+
+          <TabsContent value="contact-channels" className="space-y-4">
+            <div className="medium:flex-row medium:items-center medium:justify-between flex flex-col gap-4">
+              <div>
+                <h2 className="text-xl font-semibold">Contact Channels</h2>
+                <p className="text-muted-foreground text-sm">
+                  How guests reach you, shown on the home page and the booking confirmation
+                </p>
+              </div>
+              <Button onClick={() => setShowChannelForm(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Channel
+              </Button>
+            </div>
+
+            <ErrorBoundary level="component">
+              <Suspense fallback={<LoadingSpinner />}>
+                <ContactChannelsTable onEditChannel={handleEditChannel} />
               </Suspense>
             </ErrorBoundary>
           </TabsContent>
@@ -190,6 +236,29 @@ function SettingsPage() {
                   category={editingCategory || undefined}
                   onSuccess={handleCloseCategoryForm}
                   onCancel={handleCloseCategoryForm}
+                />
+              </Suspense>
+            </ErrorBoundary>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showChannelForm} onOpenChange={handleCloseChannelForm}>
+          <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editingChannel ? "Edit Contact Channel" : "Add Contact Channel"}
+              </DialogTitle>
+              <DialogDescription>
+                Guests see shown channels on the home page and their booking confirmation.
+              </DialogDescription>
+            </DialogHeader>
+            <ErrorBoundary level="component">
+              <Suspense fallback={<LoadingSpinner />}>
+                <ContactChannelForm
+                  key={editingChannel?.id ?? "new"}
+                  channel={editingChannel ?? undefined}
+                  onSuccess={handleCloseChannelForm}
+                  onCancel={handleCloseChannelForm}
                 />
               </Suspense>
             </ErrorBoundary>

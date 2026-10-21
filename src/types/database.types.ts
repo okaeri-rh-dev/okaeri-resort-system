@@ -4,12 +4,13 @@
 
 import type { AppRoleName } from "./app-role";
 import type { BookingStatus, PaymentStatus } from "./booking-status";
+import type { ContactChannelKind } from "./contact-channel-kind";
 import type { Database as GeneratedDatabase } from "./database.generated";
 
 export type { Json } from "./database.generated";
 type GeneratedPublic = GeneratedDatabase["public"];
 
-// bookings and app_roles have the CHECKs (payment_status is derived, docs/adr/0001); the two availability relations copy
+// bookings, app_roles and contact_channels have the CHECKs (payment_status is derived, docs/adr/0001); the two availability relations copy
 // their status from bookings.
 type NarrowedColumns = {
   bookings: {
@@ -19,6 +20,7 @@ type NarrowedColumns = {
   booking_unit_availability: { booking_status: BookingStatus };
   public_unit_availability: { booking_status: BookingStatus };
   app_roles: { role: AppRoleName };
+  contact_channels: { kind: ContactChannelKind };
 };
 
 type NarrowString<Column, Narrowed> = Column extends string ? Narrowed : Column;
