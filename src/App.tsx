@@ -115,8 +115,8 @@ function App() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-          <p className="text-gray-600">Loading Okaeri Resort System...</p>
+          <div className="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"></div>
+          <p className="text-muted-foreground">Loading Okaeri Resort System...</p>
         </div>
       </div>
     );
