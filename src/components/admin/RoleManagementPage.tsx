@@ -58,7 +58,7 @@ export function RoleManagementPage() {
     setShowGrantDialog(true);
   };
 
-  const grantRoleButton = (user: PendingUser) => (
+  const renderGrantRoleButton = (user: PendingUser) => (
     <Button size="sm" onClick={() => handleGrantRoleForUser(user)}>
       <UserPlus className="mr-1 h-3 w-3" aria-hidden="true" />
       Grant Role
@@ -87,7 +87,7 @@ export function RoleManagementPage() {
     {
       id: "action",
       header: "Action",
-      cell: ({ row }) => grantRoleButton(row.original),
+      cell: ({ row }) => renderGrantRoleButton(row.original),
       meta: { align: "right" },
     },
   ];
@@ -167,7 +167,7 @@ export function RoleManagementPage() {
                     value={formatSignUpDate(row.original.created_at)}
                   />
                   <ListCardRow label="Email" value={<EmailVerifiedBadge user={row.original} />} />
-                  {grantRoleButton(row.original)}
+                  {renderGrantRoleButton(row.original)}
                 </ListCard>
               )}
             />

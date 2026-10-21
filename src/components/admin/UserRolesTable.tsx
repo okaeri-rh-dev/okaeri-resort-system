@@ -80,7 +80,7 @@ export function UserRolesTable({ onUpdateRole, onDeactivateRole }: UserRolesTabl
       {
         accessorKey: "email",
         header: "Email",
-        cell: ({ row }) => <UserEmail role={row.original} />,
+        cell: ({ row }) => <UserIdentity role={row.original} />,
       },
       {
         accessorKey: "role",
@@ -151,7 +151,7 @@ export function UserRolesTable({ onUpdateRole, onDeactivateRole }: UserRolesTabl
           renderCard={(row) => (
             <ListCard>
               <div className="flex items-start justify-between gap-2">
-                <UserEmail role={row.original} />
+                <UserIdentity role={row.original} />
                 {roleMenu(row.original)}
               </div>
               <ListCardRow label="Role" value={<RoleBadge role={row.original.role} />} />
@@ -204,7 +204,7 @@ function RoleBadge({ role }: { role: string }) {
   return <StatusBadge tone="neutral">{displayName}</StatusBadge>;
 }
 
-function UserEmail({ role }: { role: AppRole }) {
+function UserIdentity({ role }: { role: AppRole }) {
   return (
     <div className="min-w-0 font-medium">
       <div className="break-words">{role.email}</div>
