@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import {
-  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
@@ -9,37 +8,38 @@ import {
   type ColumnDef,
   type SortingState,
 } from "@tanstack/react-table";
-import { Archive, ArrowUpDown, Edit, MoreHorizontal, RefreshCcw, RotateCcw } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 
-import { StatusBadge } from "@/components/patterns";
-import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  ActionMenu,
+  Button,
+  DataTable,
+  Input,
+  ListCard,
+  ListCardRow,
+  SortableHeader,
+  StatusBadge,
+  TableEmptyState,
+  TableSkeleton,
+  type ActionMenuAction,
+} from "@/components/patterns";
 import {
   useArchiveExpenseCategory,
   useExpenseCategories,
   useRestoreExpenseCategory,
 } from "@/hooks/useExpenseCategories";
-import { cn } from "@/lib/utils";
 import type { ExpenseCategoryConfig } from "@/types";
 
 interface ExpenseCategoriesTableProps {
   onEditCategory?: (category: ExpenseCategoryConfig) => void;
+}
+
+function CategoryStatus({ isActive }: { isActive: boolean }) {
+  return isActive ? (
+    <StatusBadge tone="success">Active</StatusBadge>
+  ) : (
+    <StatusBadge tone="neutral">Archived</StatusBadge>
+  );
 }
 
 export function ExpenseCategoriesTable({ onEditCategory }: ExpenseCategoriesTableProps) {
@@ -50,87 +50,41 @@ export function ExpenseCategoriesTable({ onEditCategory }: ExpenseCategoriesTabl
   const archive = useArchiveExpenseCategory();
   const restore = useRestoreExpenseCategory();
 
+  const categoryActions = (category: ExpenseCategoryConfig): ActionMenuAction[] => [
+    { label: "Edit", onClick: () => onEditCategory?.(category) },
+    category.is_active
+      ? { label: "Archive", onClick: () => archive.mutate(category.id) }
+      : { label: "Restore", onClick: () => restore.mutate(category.id) },
+  ];
+
   const columns: ColumnDef<ExpenseCategoryConfig>[] = [
     {
       accessorKey: "name",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-4"
-        >
-          Category Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
+      header: ({ header }) => <SortableHeader header={header}>Category Name</SortableHeader>,
+      cell: ({ row }) => <div className="font-medium">{row.original.name}</div>,
     },
     {
       accessorKey: "display_order",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-4"
-        >
-          Order
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: ({ header }) => <SortableHeader header={header}>Order</SortableHeader>,
+      meta: { align: "right" },
       cell: ({ row }) => (
-        <span className="text-muted-foreground tabular-nums">{row.getValue("display_order")}</span>
+        <span className="text-muted-foreground">{row.original.display_order}</span>
       ),
     },
     {
       accessorKey: "is_active",
       header: "Status",
-      cell: ({ row }) => {
-        const isActive = row.getValue("is_active");
-        return isActive ? (
-          <StatusBadge tone="success">Active</StatusBadge>
-        ) : (
-          <StatusBadge tone="neutral">Archived</StatusBadge>
-        );
-      },
+      cell: ({ row }) => <CategoryStatus isActive={row.original.is_active} />,
     },
     {
       id: "actions",
-      cell: ({ row }) => {
-        const category = row.original;
-
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onEditCategory?.(category)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              {category.is_active ? (
-                <DropdownMenuItem
-                  onClick={() => archive.mutate(category.id)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Archive className="mr-2 h-4 w-4" />
-                  Archive
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem onClick={() => restore.mutate(category.id)}>
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  Restore
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
+      meta: { pinned: true, align: "right" },
+      cell: ({ row }) => (
+        <ActionMenu
+          label={`Actions for ${row.original.name}`}
+          actions={categoryActions(row.original)}
+        />
+      ),
     },
   ];
 
@@ -149,11 +103,7 @@ export function ExpenseCategoriesTable({ onEditCategory }: ExpenseCategoriesTabl
   });
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
-      </div>
-    );
+    return <TableSkeleton rows={4} columns={4} toolbar label="Loading expense categories" />;
   }
 
   if (isError) {
@@ -172,6 +122,7 @@ export function ExpenseCategoriesTable({ onEditCategory }: ExpenseCategoriesTabl
       {/* Search and filters */}
       <div className="flex items-center gap-4">
         <Input
+          aria-label="Search categories"
           placeholder="Search categories..."
           value={globalFilter ?? ""}
           onChange={(e) => setGlobalFilter(e.target.value)}
@@ -183,43 +134,36 @@ export function ExpenseCategoriesTable({ onEditCategory }: ExpenseCategoriesTabl
         </Button>
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className={cn(!row.original.is_active && "opacity-50")}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No expense categories configured.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable
+        table={table}
+        label="Expense categories"
+        renderCard={(row) => (
+          <ListCard>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 font-medium break-words">{row.original.name}</div>
+              <ActionMenu
+                label={`Actions for ${row.original.name}`}
+                actions={categoryActions(row.original)}
+              />
+            </div>
+            <ListCardRow
+              label="Status"
+              value={<CategoryStatus isActive={row.original.is_active} />}
+            />
+            <ListCardRow label="Order" value={row.original.display_order} />
+          </ListCard>
+        )}
+        emptyState={
+          <TableEmptyState
+            title="No expense categories"
+            description={
+              globalFilter
+                ? "No categories match your search."
+                : "Add a category to start sorting expenses."
+            }
+          />
+        }
+      />
     </div>
   );
 }

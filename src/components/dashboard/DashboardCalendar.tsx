@@ -4,9 +4,8 @@ import { format, getDay } from "date-fns";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import type { DayButton as DayButtonType } from "react-day-picker";
 
-import { Button } from "@/components/ui/button";
+import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/patterns";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCalendarBookings } from "@/hooks/useCalendarBookings";
 import { hasProperty, isObject } from "@/lib/type-guards";
 import { cn } from "@/lib/utils";
@@ -61,7 +60,7 @@ const DayButton = React.memo(function DayButton({
         {...props}
         variant="ghost"
         className={cn(
-          "relative h-20 w-full text-sm font-normal sm:h-24 md:h-28",
+          "relative h-20 w-full text-sm font-normal @sm/calendar:h-24 @2xl/calendar:h-28",
           compact ? "p-0.5" : "p-1",
           "min-w-0", // Allow shrinking below content size
           "transition-colors duration-150",
@@ -83,7 +82,7 @@ const DayButton = React.memo(function DayButton({
         }`}
       >
         <div className="flex h-full w-full min-w-0 flex-col items-center justify-start overflow-hidden">
-          <span className="text-xs font-medium sm:text-sm">{format(date, "d")}</span>
+          <span className="text-xs font-medium @sm/calendar:text-sm">{format(date, "d")}</span>
           {dayBookings.length > 0 && (
             <BookingIndicators
               bookings={dayBookings}
@@ -265,7 +264,11 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
         />
       )}
 
-      <CardContent className={cn("pt-0", headerVariant === "stacked" ? "p-0" : "p-4")}>
+      {/* Named, because the month grid's <table> is also a container (for the chips' cqi) and a
+          table can't answer width queries */}
+      <CardContent
+        className={cn("@container/calendar pt-0", headerVariant === "stacked" ? "p-0" : "p-4")}
+      >
         {isLoading ? (
           <div className="flex h-[480px] items-center justify-center">
             <div className="text-muted-foreground text-sm">Loading calendar...</div>
@@ -279,7 +282,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
             showOutsideDays={true}
             className={cn("w-full rounded-md border", headerVariant === "stacked" && "p-0")}
             classNames={{
-              months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 w-full",
+              months: "flex flex-col space-y-4 w-full",
               month: "space-y-3 w-full",
               month_caption: "hidden", // Hide default caption since we have custom navigation (v9 slot)
               caption: "hidden", // Back-compat alias for older react-day-picker
@@ -295,14 +298,14 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
                 "text-muted-foreground rounded-md min-w-0 flex-1 font-medium text-xs uppercase tracking-wider", // renamed from 'head_cell'
               week: "flex w-full mt-1", // renamed from 'row'
               day: cn(
-                "relative h-20 sm:h-24 md:h-28 min-w-0 flex-1 p-0 text-center text-sm",
+                "relative h-20 @sm/calendar:h-24 @2xl/calendar:h-28 min-w-0 flex-1 p-0 text-center text-sm",
                 "[&:has([aria-selected])]:bg-accent",
                 "first:[&:has([aria-selected])]:rounded-l-md",
                 "last:[&:has([aria-selected])]:rounded-r-md",
                 "focus-within:relative focus-within:z-20"
               ), // renamed from 'cell'
               day_button: cn(
-                "h-20 sm:h-24 md:h-28 w-full p-0 font-normal hover:bg-accent hover:text-accent-foreground",
+                "h-20 @sm/calendar:h-24 @2xl/calendar:h-28 w-full p-0 font-normal hover:bg-accent hover:text-accent-foreground",
                 "aria-selected:opacity-100"
               ), // renamed from 'day'
               selected:
