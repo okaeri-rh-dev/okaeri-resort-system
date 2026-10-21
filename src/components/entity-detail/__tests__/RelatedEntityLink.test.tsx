@@ -194,30 +194,20 @@ describe("RelatedEntityLink", () => {
   describe("Custom className", () => {
     it("applies custom className when provided", () => {
       render(
-        <RelatedEntityLink
-          type="booking"
-          id="booking-123"
-          label="Booking"
-          className="custom-class"
-        />
+        <RelatedEntityLink type="booking" id="booking-123" label="Booking" className="mt-4" />
       );
 
       const link = screen.getByTestId("router-link");
-      expect(link).toHaveClass("custom-class");
+      expect(link).toHaveClass("mt-4");
     });
 
     it("merges custom className with default classes", () => {
       render(
-        <RelatedEntityLink
-          type="booking"
-          id="booking-123"
-          label="Booking"
-          className="custom-class"
-        />
+        <RelatedEntityLink type="booking" id="booking-123" label="Booking" className="mt-4" />
       );
 
       const link = screen.getByTestId("router-link");
-      expect(link).toHaveClass("custom-class", "text-primary", "hover:underline");
+      expect(link).toHaveClass("mt-4", "text-primary", "hover:underline");
     });
   });
 

@@ -223,7 +223,7 @@ describe("ResponsiveDatePicker", () => {
       await waitFor(() => {
         // Find the sheet content element
         const sheetContent = screen.getByText("Select Date").closest('[role="dialog"]');
-        expect(sheetContent).toHaveClass("pb-safe");
+        expect(sheetContent).toHaveClass("pb-[calc(1.5rem+env(safe-area-inset-bottom))]");
       });
     });
   });

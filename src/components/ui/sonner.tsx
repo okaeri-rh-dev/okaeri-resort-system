@@ -10,6 +10,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme={theme}
+      // eslint-disable-next-line better-tailwindcss/no-unknown-classes -- marker class for the group-[.toaster]: selectors below
       className="toaster group"
       mobileOffset={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 72px)" }}
       toastOptions={{

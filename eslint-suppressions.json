@@ -1,17 +1,4 @@
 {
-  "src/App.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    }
-  },
-  "src/components/ErrorBoundary.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 15
-    },
-    "design/no-restricted-imports": {
-      "count": 2
-    }
-  },
   "src/components/accounts/AccountForm.tsx": {
     "better-tailwindcss/no-restricted-classes": {
       "count": 4
@@ -58,21 +45,6 @@
   },
   "src/components/audit/AuditLogViewer.tsx": {
     "design/no-restricted-imports": {
-      "count": 1
-    }
-  },
-  "src/components/auth/ForgotPasswordForm.tsx": {
-    "jsx-a11y/no-autofocus": {
-      "count": 1
-    }
-  },
-  "src/components/auth/PasswordStrengthIndicator.tsx": {
-    "design/no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "src/components/auth/ResetPasswordForm.tsx": {
-    "jsx-a11y/no-autofocus": {
       "count": 1
     }
   },
@@ -340,19 +312,6 @@
       "count": 4
     }
   },
-  "src/components/entity-detail/DetailPageSkeleton.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "design/no-restricted-imports": {
-      "count": 2
-    }
-  },
-  "src/components/entity-detail/__tests__/RelatedEntityLink.test.tsx": {
-    "better-tailwindcss/no-unknown-classes": {
-      "count": 2
-    }
-  },
   "src/components/expenses/ExpenseDetail/index.tsx": {
     "better-tailwindcss/no-restricted-classes": {
       "count": 2
@@ -532,14 +491,6 @@
       "count": 4
     }
   },
-  "src/components/pwa/InstallBanner.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 5
-    },
-    "design/no-restricted-imports": {
-      "count": 1
-    }
-  },
   "src/components/settings/ExpenseCategoriesTable.tsx": {
     "better-tailwindcss/no-restricted-classes": {
       "count": 1
@@ -592,19 +543,6 @@
     },
     "design/no-restricted-imports": {
       "count": 5
-    }
-  },
-  "src/components/ui/responsive-date-picker.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 6
-    },
-    "better-tailwindcss/no-unknown-classes": {
-      "count": 4
-    }
-  },
-  "src/components/ui/sonner.tsx": {
-    "better-tailwindcss/no-unknown-classes": {
-      "count": 1
     }
   },
   "src/components/units/UnitDetail/index.tsx": {
@@ -670,19 +608,6 @@
     },
     "design/no-restricted-imports": {
       "count": 2
-    }
-  },
-  "src/routes/__root.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 6
-    },
-    "design/no-restricted-imports": {
-      "count": 1
-    }
-  },
-  "src/routes/admin.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 8
     }
   },
   "src/routes/admin/accounts.tsx": {
@@ -851,16 +776,6 @@
   "src/routes/booking/index.tsx": {
     "design/no-restricted-imports": {
       "count": 1
-    }
-  },
-  "src/routes/privacy-policy.tsx": {
-    "design/no-restricted-imports": {
-      "count": 3
-    }
-  },
-  "src/routes/terms-and-conditions.tsx": {
-    "design/no-restricted-imports": {
-      "count": 3
     }
   }
 }
