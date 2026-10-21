@@ -50,10 +50,10 @@ Fewest taps and least confusion wins; parts may be mixed.
 
 - [x] Create a worktree on branch `proto/bookings-overhaul` from `main` (`../okaeri-proto-bookings`, base 55fdba34)
 - [x] Fixture of ~40 bookings, dates relative to today: every status, multi-cabin, walk-in, long names, unpaid balance, empty In-house case
-- [x] Staff-only route `/admin/prototype/bookings?v=1|2|3` (dev server: `npx vite --port 5174` in this worktree; 5173 is left for other sessions)
+- [x] Staff-only route `/admin/prototype/bookings?v=1|2|3` (run in this worktree: `npx wrangler pages dev . --compatibility-date=2025-09-29 --compatibility-flags=nodejs_compat --port 8789 --local` and `API_PORT=8789 npx vite --port 5174 --strictPort`; 5173/8788 stay free for other sessions)
 - [x] V1 Agenda
-- [ ] V2 Views + side pane
-- [ ] V3 Cabin timeline
+- [x] V2 Views + side pane
+- [x] V3 Cabin timeline
 - [ ] Run the 5 tasks on each variant at both widths; record results here
 - [ ] Pick the winner (user decision)
 - [ ] `/to-spec`, then `/to-tickets`
@@ -71,4 +71,4 @@ Fewest taps and least confusion wins; parts may be mixed.
 
 ## Resume state
 
-Grilling done 2026-10-21. 2026-10-21: worktree `../okaeri-proto-bookings`, fixture, route and V1 built; V2 next. This doc is untracked; it was written while the main checkout was on another session's branch (`fix/booking-edit-mobile-double-scroll`).
+Grilling done 2026-10-21. 2026-10-21: worktree `../okaeri-proto-bookings`, fixture, route and V1, V2, V3 built; evaluation next. This doc is untracked; it was written while the main checkout was on another session's branch (`fix/booking-edit-mobile-double-scroll`).

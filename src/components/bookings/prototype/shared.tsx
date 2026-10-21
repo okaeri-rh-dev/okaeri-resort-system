@@ -344,10 +344,10 @@ function ChoiceGroup<T extends string>({
 }
 
 /** The filters other than search, as toggle chips. Inline in V2 when wide; in a sheet elsewhere. */
-export function FilterChoices() {
+export function FilterChoices({ layout = "stack" }: { layout?: "stack" | "row" }) {
   const { search, setSearch } = useProtoSearch();
   return (
-    <div className="space-y-4">
+    <div className={layout === "row" ? "flex flex-wrap items-end gap-x-6 gap-y-3" : "space-y-4"}>
       <ChoiceGroup
         legend="Cabin"
         value={search.cabin}

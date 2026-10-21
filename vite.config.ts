@@ -112,7 +112,7 @@ export default defineConfig(({ mode }) => ({
     // Proxy API requests to Wrangler dev server
     proxy: {
       "/api": {
-        target: "http://localhost:8788",
+        target: `http://localhost:${process.env.API_PORT ?? 8788}`,
         changeOrigin: true,
       },
     },

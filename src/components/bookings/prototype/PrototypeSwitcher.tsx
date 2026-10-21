@@ -54,7 +54,7 @@ export function PrototypeSwitcher() {
       >
         <ChevronRight className="size-4" aria-hidden="true" />
       </button>
-      <span className="whitespace-nowrap tabular-nums opacity-70">
+      <span className="medium:inline hidden whitespace-nowrap tabular-nums opacity-70">
         · {bookings.length} bookings · {changedCount} changed ·
       </span>
       <button

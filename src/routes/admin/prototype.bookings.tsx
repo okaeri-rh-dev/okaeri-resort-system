@@ -8,6 +8,8 @@ import { z } from "zod";
 import { PrototypeSwitcher } from "@/components/bookings/prototype/PrototypeSwitcher";
 import { ProtoStoreProvider } from "@/components/bookings/prototype/store";
 import { V1Agenda } from "@/components/bookings/prototype/V1Agenda";
+import { V2Views } from "@/components/bookings/prototype/V2Views";
+import { V3Timeline } from "@/components/bookings/prototype/V3Timeline";
 import { requireStaff } from "@/lib/route-guards";
 
 const searchSchema = z.object({
@@ -41,9 +43,8 @@ function PrototypeBookingsPage() {
     <ProtoStoreProvider scenario={d ?? "full"}>
       <div className="pb-24">
         {v === 1 && <V1Agenda />}
-        {v !== 1 && (
-          <p className="text-muted-foreground py-12 text-center">V{v} is not built yet.</p>
-        )}
+        {v === 2 && <V2Views />}
+        {v === 3 && <V3Timeline />}
       </div>
       <PrototypeSwitcher />
     </ProtoStoreProvider>
