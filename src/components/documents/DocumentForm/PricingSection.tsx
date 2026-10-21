@@ -1,7 +1,6 @@
 import type { UseFormReturn } from "react-hook-form";
 
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { FormField, Input } from "@/components/patterns";
 import { formatCurrency } from "@/lib/formatters";
 import type { DocumentFormValues } from "@/lib/validation/document-schemas";
 
@@ -28,40 +27,32 @@ export function PricingSection({ form }: PricingSectionProps) {
         </div>
 
         {/* Discount */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3">
           <FormField
             control={form.control}
             name="pricing.discount_label"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel className="text-xs">Discount Label</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. Early bird" className="h-8 text-sm" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            label="Discount Label"
+            className="flex-1"
+          >
+            {(field) => <Input placeholder="e.g. Early bird" className="h-8 text-sm" {...field} />}
+          </FormField>
           <FormField
             control={form.control}
             name="pricing.discount_amount"
-            render={({ field }) => (
-              <FormItem className="w-32">
-                <FormLabel className="text-xs">Amount</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    className="h-8 text-right text-sm"
-                    {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+            label="Amount"
+            className="w-32"
+          >
+            {(field) => (
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                className="h-8 text-right text-sm"
+                {...field}
+                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+              />
             )}
-          />
+          </FormField>
         </div>
 
         {discountAmount > 0 && (
@@ -77,32 +68,28 @@ export function PricingSection({ form }: PricingSectionProps) {
         )}
 
         {/* VAT */}
-        <div className="flex items-center gap-3 border-t pt-3">
-          <div className="flex-1">
+        <div className="flex items-end gap-3 border-t pt-3">
+          <div className="flex h-8 flex-1 items-center">
             <span className="text-muted-foreground text-sm">
               VAT ({(vatRate * 100).toFixed(0)}%)
             </span>
           </div>
-          <FormField
-            control={form.control}
-            name="pricing.vat_rate"
-            render={({ field }) => (
-              <FormItem className="w-20">
-                <FormControl>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    className="h-8 text-right text-sm"
-                    {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                  />
-                </FormControl>
-              </FormItem>
+          <FormField control={form.control} name="pricing.vat_rate" label="Rate" className="w-20">
+            {(field) => (
+              <Input
+                type="number"
+                min="0"
+                max="1"
+                step="0.01"
+                className="h-8 text-right text-sm"
+                {...field}
+                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+              />
             )}
-          />
-          <span className="w-28 text-right text-sm tabular-nums">{formatCurrency(vatAmount)}</span>
+          </FormField>
+          <span className="flex h-8 w-28 items-center justify-end text-sm tabular-nums">
+            {formatCurrency(vatAmount)}
+          </span>
         </div>
 
         {/* Total */}

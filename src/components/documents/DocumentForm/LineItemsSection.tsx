@@ -3,16 +3,17 @@ import { useFieldArray, type UseFormReturn } from "react-hook-form";
 import { ulid } from "ulid";
 
 import { LINE_ITEM_TYPE_LABELS, UNIT_LABEL_OPTIONS } from "@/components/documents/constants";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
+  Button,
+  Card,
+  CardContent,
+  Input,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/patterns";
 import { formatCurrency } from "@/lib/formatters";
 import type { DocumentFormValues } from "@/lib/validation/document-schemas";
 
@@ -45,6 +46,13 @@ export function LineItemsSection({ form }: LineItemsSectionProps) {
     form.setValue(`line_items.${index}.amount`, qty * price);
   };
 
+  // The wide row and the card both render; controlled inputs keep the pair in step
+  const descriptionInputProps = (index: number) => ({
+    value: form.watch(`line_items.${index}.description`) ?? "",
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+      form.setValue(`line_items.${index}.description`, e.target.value),
+  });
+
   const handlePriceChange = (index: number, value: string) => {
     const price = parseFloat(value) || 0;
     form.setValue(`line_items.${index}.unit_price`, price);
@@ -53,7 +61,7 @@ export function LineItemsSection({ form }: LineItemsSectionProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="@container space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold tracking-wide uppercase">Line Items</h3>
         <Button type="button" variant="outline" size="sm" onClick={handleAddItem}>
@@ -74,7 +82,7 @@ export function LineItemsSection({ form }: LineItemsSectionProps) {
 
       {/* Desktop table header */}
       {fields.length > 0 && (
-        <div className="text-muted-foreground hidden grid-cols-[100px_1fr_80px_90px_110px_110px_40px] gap-2 text-xs font-medium lg:grid">
+        <div className="text-muted-foreground hidden grid-cols-[100px_1fr_80px_90px_110px_110px_40px] gap-2 text-xs font-medium @3xl:grid">
           <span>Type</span>
           <span>Description</span>
           <span>Qty</span>
@@ -92,7 +100,7 @@ export function LineItemsSection({ form }: LineItemsSectionProps) {
           return (
             <div key={field.id}>
               {/* Desktop row */}
-              <div className="hidden grid-cols-[100px_1fr_80px_90px_110px_110px_40px] items-start gap-2 lg:grid">
+              <div className="hidden grid-cols-[100px_1fr_80px_90px_110px_110px_40px] items-start gap-2 @3xl:grid">
                 <Select
                   value={form.watch(`line_items.${index}.type`)}
                   onValueChange={(val) => {
@@ -120,7 +128,7 @@ export function LineItemsSection({ form }: LineItemsSectionProps) {
                 <Input
                   className="h-9 text-sm"
                   placeholder="Description"
-                  {...form.register(`line_items.${index}.description`)}
+                  {...descriptionInputProps(index)}
                 />
 
                 <Input
@@ -174,7 +182,7 @@ export function LineItemsSection({ form }: LineItemsSectionProps) {
               </div>
 
               {/* Mobile card */}
-              <Card className="lg:hidden">
+              <Card padding="none" className="@3xl:hidden">
                 <CardContent className="space-y-3 p-4">
                   <div className="flex items-start justify-between gap-2">
                     <Select
@@ -209,15 +217,18 @@ export function LineItemsSection({ form }: LineItemsSectionProps) {
                     </Button>
                   </div>
 
-                  <Input
-                    placeholder="Description"
-                    {...form.register(`line_items.${index}.description`)}
-                  />
+                  <Input placeholder="Description" {...descriptionInputProps(index)} />
 
                   <div className="grid grid-cols-3 gap-2">
                     <div>
-                      <label className="text-muted-foreground mb-1 block text-xs">Qty</label>
+                      <label
+                        htmlFor={`line-item-${index}-quantity`}
+                        className="text-muted-foreground mb-1 block text-xs"
+                      >
+                        Qty
+                      </label>
                       <Input
+                        id={`line-item-${index}-quantity`}
                         type="number"
                         min="0.01"
                         step="0.01"
@@ -227,14 +238,19 @@ export function LineItemsSection({ form }: LineItemsSectionProps) {
                       />
                     </div>
                     <div>
-                      <label className="text-muted-foreground mb-1 block text-xs">Unit</label>
+                      <label
+                        htmlFor={`line-item-${index}-unit`}
+                        className="text-muted-foreground mb-1 block text-xs"
+                      >
+                        Unit
+                      </label>
                       <Select
                         value={form.watch(`line_items.${index}.unit_label`)}
                         onValueChange={(val) =>
                           form.setValue(`line_items.${index}.unit_label`, val)
                         }
                       >
-                        <SelectTrigger className="text-xs">
+                        <SelectTrigger id={`line-item-${index}-unit`} className="text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -247,8 +263,14 @@ export function LineItemsSection({ form }: LineItemsSectionProps) {
                       </Select>
                     </div>
                     <div>
-                      <label className="text-muted-foreground mb-1 block text-xs">Price</label>
+                      <label
+                        htmlFor={`line-item-${index}-price`}
+                        className="text-muted-foreground mb-1 block text-xs"
+                      >
+                        Price
+                      </label>
                       <Input
+                        id={`line-item-${index}-price`}
                         type="number"
                         min="0"
                         step="0.01"
