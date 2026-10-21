@@ -1562,7 +1562,7 @@ git commit -m "feat(api): weekly guest anonymization job"
 - Consumes: `anonymize_guest`, `delete_guest` (Tasks 1–2); `deletePaymentProofFiles` (Task 3); `requireRole`, `OWNER_OR_ABOVE`, `MANAGER_OR_ABOVE`, `UnauthorizedError`, `AuthenticatedData` (`functions/lib/rbac.ts`); `createMockContext`, `createMockRequest`, `generateTestJWT`, `mockEnv` (`src/__tests__/api/setup`).
 - Produces: `POST /api/admin/guests/:guestId/anonymize` (owner/admin) and `DELETE /api/admin/guests/:guestId` (manager+). Both return `{ success: true, deleted_files: number, failed_files: string[] }`, or `{ error, message }` with 401/403/404/409/500.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `src/__tests__/api/admin-guest-retention.test.ts`:
 
@@ -1677,12 +1677,14 @@ describe("DELETE /api/admin/guests/:guestId", () => {
 
 Check `createMockContext`'s signature in `src/__tests__/api/setup` before running; if it does not accept `undefined` for the user, pass the argument only when `role` is set.
 
-- [ ] **Step 2: Run it to verify it fails**
+Done note (2026-10-21): the test imports `createMockContext`/`createMockRequest` from `./utils/test-helpers` and builds `createMockEnv()` itself; importing `./setup` installs its global `@supabase/supabase-js` mock, which overrides the test's `rpc` spy.
+
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx vitest run src/__tests__/api/admin-guest-retention.test.ts`
 Expected: FAIL (modules not found).
 
-- [ ] **Step 3: Implement the shared runner**
+- [x] **Step 3: Implement the shared runner**
 
 `functions/lib/guest-retention.ts`:
 
@@ -1756,7 +1758,7 @@ export async function runGuestRetention(
 }
 ```
 
-- [ ] **Step 4: Implement both endpoints**
+- [x] **Step 4: Implement both endpoints**
 
 `functions/api/admin/guests/[guestId]/anonymize.ts`:
 
@@ -1782,12 +1784,12 @@ export const onRequestDelete = (context: GuestRetentionContext): Promise<Respons
   runGuestRetention(context, "delete_guest", MANAGER_OR_ABOVE);
 ```
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 Run: `npx vitest run src/__tests__/api/admin-guest-retention.test.ts && npx tsc --noEmit -p functions/tsconfig.json`
 Expected: PASS, no type errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add functions/lib/guest-retention.ts "functions/api/admin/guests/[guestId]/anonymize.ts" "functions/api/admin/guests/[guestId].ts" \
