@@ -129,7 +129,7 @@ export function AuditDiffViewer({ log, open, onOpenChange }: AuditDiffViewerProp
               <AlertCircle className="h-4 w-4" />
               <span className="text-sm">
                 {isAnonymized(log)
-                  ? "Details removed after the retention period"
+                  ? "Details removed"
                   : "No data changes recorded for this log entry"}
               </span>
             </div>

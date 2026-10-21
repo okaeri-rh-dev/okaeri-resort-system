@@ -1967,7 +1967,7 @@ git commit -m "feat(guest): anonymize and delete guests through the admin endpoi
 
 Read `DESIGN.md` before this task (CLAUDE.md requires it for UI work).
 
-- [ ] **Step 1: Write the failing blockers test**
+- [x] **Step 1: Write the failing blockers test**
 
 `src/lib/guests/__tests__/retention.test.ts`:
 
@@ -2026,7 +2026,7 @@ describe("anonymizeBlockers", () => {
 
 Run: `npx vitest run src/lib/guests/__tests__/retention.test.ts` → FAIL (module not found).
 
-- [ ] **Step 2: Implement it**
+- [x] **Step 2: Implement it**
 
 `src/lib/guests/retention.ts`:
 
@@ -2054,7 +2054,7 @@ export function anonymizeBlockers(bookings: RetentionBooking[], now: Date) {
 
 Run the test again → PASS.
 
-- [ ] **Step 3: Write the failing dialog test**
+- [x] **Step 3: Write the failing dialog test**
 
 `src/components/guests/GuestDetail/__tests__/AnonymizeGuestDialog.test.tsx`:
 
@@ -2123,7 +2123,7 @@ describe("AnonymizeGuestDialog", () => {
 
 Run: `npx vitest run src/components/guests/GuestDetail/__tests__/AnonymizeGuestDialog.test.tsx` → FAIL (module not found).
 
-- [ ] **Step 4: Implement the dialog**
+- [x] **Step 4: Implement the dialog**
 
 `src/components/guests/GuestDetail/AnonymizeGuestDialog.tsx`:
 
@@ -2220,7 +2220,7 @@ export function AnonymizeGuestDialog({
 
 Check `DESIGN.md` for the warning text token; if `text-warning-foreground` is not a defined token, use the warning `Callout` from `@/components/patterns` instead of the `<p>`. Run the dialog test → PASS.
 
-- [ ] **Step 5: Wire it into the guest detail page**
+- [x] **Step 5: Wire it into the guest detail page**
 
 In `src/components/guests/GuestDetail/index.tsx`:
 
@@ -2268,7 +2268,7 @@ Check `src/components/patterns/DetailPageLayout.tsx:61` renders `actions` togeth
 
 5. In the Email and Phone fields, show `<span className="text-muted-foreground">Removed</span>` when `isAnonymized` (before the existing `guest.email ? … : —` check).
 
-- [ ] **Step 6: Booking detail badge and the audit label**
+- [x] **Step 6: Booking detail badge and the audit label**
 
 In `src/components/bookings/BookingDetail/index.tsx`:
 
@@ -2290,16 +2290,28 @@ In `src/components/bookings/BookingDetail/index.tsx`:
 
 In `src/components/audit/AuditDiffViewer.tsx:132` change `"Details removed after the retention period"` to `"Details removed"`, and the same string in `src/components/audit/__tests__/AuditDiffViewer.test.tsx:502`.
 
-- [ ] **Step 7: Run the UI tests**
+- [x] **Step 7: Run the UI tests**
 
 Run: `npx vitest run src/lib/guests src/components/guests src/components/bookings src/components/audit && npx tsc --noEmit`
 Expected: PASS, no type errors.
 
-- [ ] **Step 8: Browser check (local, `run` skill: `supabase start`, vite + `npm run dev:wrangler`)**
+- [x] **Step 8: Browser check (local, `run` skill: `supabase start`, vite + `npm run dev:wrangler`)**
 
 As owner: open a seeded guest with only past, paid stays → "Anonymize guest" → type the name → Anonymize → toast, page shows "Removed guest", the badge, "Removed" contact fields, no Edit. Open one of their bookings → badge, no Edit, guest name "Removed guest". Audit section shows "Details removed". As manager: the guest page has no Anonymize action; Guests table Delete works on a guest with no active bookings. As staff: no Delete in the Guests table. Take a screenshot of each state, Read each one, and record what it shows in this step.
 
-- [ ] **Step 9: Commit**
+Done note (2026-10-21): the dialog imports from `@/components/patterns` (DESIGN.md: `@/components/ui/*` is private to patterns) and shows the open-balance warning as `<Callout tone="warning">`.
+
+Browser check results (2026-10-21, local stack from the worktree, fixtures "Ana Cruz" = one past CheckedOut/Completed booking ANA-001, "Ben Reyes" = no bookings; screenshots in the main checkout's `.playwright-mcp/retention-*.png`):
+
+- Owner, Ana's page before: "Anonymize guest" (outline) beside Edit; email and phone shown.
+- Dialog: irreversible-action text; red "Anonymize" enabled after typing "Ana Cruz"; no balance warning (paid).
+- After: title and breadcrumb "Removed guest", badge "Anonymized on Oct 21, 2026", Email/Phone "Removed", no Edit, no Anonymize, stats unchanged (1 booking, ₱5,000.00); toast "Guest anonymized. 0 payment proof file(s) deleted.". Wrangler: `POST /api/admin/guests/8241803b…/anonymize 200 OK`.
+- Booking ANA-001: badges "Checked Out" and "Anonymized on Oct 21, 2026", no Edit, Guest Name "Removed guest", total ₱5,000.00.
+- Audit Trail page, guest UPDATE row → View: changed fields listed by name only, "Details removed", metadata `anonymized_at`. DB: 9 audit rows for Ana's records, 9 marked, 0 containing her name/email/phone/notes.
+- Manager, Ben's page: Edit only, no Anonymize. Guests table menu has "Delete Guest"; delete → toast "Guest deleted successfully", Total Guests 148 → 147; `DELETE /api/admin/guests/30ef4fc6… 200 OK`; DB: guest gone, 0 audit rows with his email.
+- Staff: `/admin/guests` redirects to the Dashboard (route guard), so the table's Delete gate is not reachable for staff in the UI; it is defence in depth.
+
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/lib/guests src/components/guests/GuestDetail src/components/bookings/BookingDetail/index.tsx \
