@@ -82,15 +82,14 @@ describe("AppShell, admin", () => {
     expect(screen.queryByRole("button", { name: "More" })).not.toBeInTheDocument();
   });
 
-  it("opens the full destination list and the actions from More", async () => {
-    const signOut = vi.fn();
+  it("opens the full destination list from More, without the actions", async () => {
     renderAt(
       "/admin/dashboard",
       <AppShell
         surface="admin"
         brand={brand}
         destinations={managerDestinations}
-        actions={[{ label: "Sign Out", icon: LogOut, onSelect: signOut }]}
+        actions={[{ label: "Sign Out", icon: LogOut, onSelect: () => {} }]}
       >
         <p>Dashboard</p>
       </AppShell>
@@ -105,11 +104,10 @@ describe("AppShell, admin", () => {
         .getAllByRole("link")
         .map((link) => link.textContent)
     ).toEqual(managerDestinations.map((destination) => destination.label));
-    await userEvent.click(within(menu).getByRole("button", { name: "Sign Out" }));
-    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(within(menu).queryByRole("button", { name: "Sign Out" })).not.toBeInTheDocument();
   });
 
-  it("offers the actions from the account menu too", async () => {
+  it("offers the actions from the account menu in the header and at the rail foot", async () => {
     const signOut = vi.fn();
     renderAt(
       "/admin/dashboard",
@@ -123,9 +121,34 @@ describe("AppShell, admin", () => {
       </AppShell>
     );
 
-    await userEvent.click(await screen.findByRole("button", { name: "Account menu" }));
-    await userEvent.click(screen.getByRole("menuitem", { name: "Sign Out" }));
-    expect(signOut).toHaveBeenCalledTimes(1);
+    const header = await screen.findByRole("banner");
+    const triggers = screen.getAllByRole("button", { name: "Account menu" });
+    expect(triggers).toHaveLength(2);
+    expect(triggers.filter((trigger) => header.contains(trigger))).toHaveLength(1);
+
+    for (const trigger of triggers) {
+      await userEvent.click(trigger);
+      await userEvent.click(screen.getByRole("menuitem", { name: "Sign Out" }));
+    }
+    expect(signOut).toHaveBeenCalledTimes(2);
+  });
+
+  it("has no axe violations in the open account menu", async () => {
+    renderAt(
+      "/admin/dashboard",
+      <AppShell
+        surface="admin"
+        brand={brand}
+        destinations={staffDestinations}
+        actions={[{ label: "Sign Out", icon: LogOut, onSelect: () => {} }]}
+      >
+        <p>Dashboard</p>
+      </AppShell>
+    );
+
+    const header = await screen.findByRole("banner");
+    await userEvent.click(within(header).getByRole("button", { name: "Account menu" }));
+    expect(await axe(screen.getByRole("menu"))).toHaveNoViolations();
   });
 
   it("shows a named loading state while the destinations are unknown", async () => {

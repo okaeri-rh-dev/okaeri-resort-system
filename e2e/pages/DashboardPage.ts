@@ -29,7 +29,7 @@ export class DashboardPage {
   readonly newBookingButton: Locator;
 
   // Sidebar footer
-  readonly logoutButton: Locator;
+  readonly accountMenuButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -67,7 +67,7 @@ export class DashboardPage {
     // Quick actions
     this.newBookingButton = page.getByRole("button", { name: /new booking/i });
 
-    this.logoutButton = page.getByRole("button", { name: "Sign Out" });
+    this.accountMenuButton = page.getByRole("button", { name: "Account menu" });
   }
 
   /**
@@ -199,7 +199,8 @@ export class DashboardPage {
    * Perform logout
    */
   async logout() {
-    await this.logoutButton.click();
+    await this.accountMenuButton.click();
+    await this.page.getByRole("menuitem", { name: "Sign Out" }).click();
     await this.page.waitForURL(/\/admin\/login/);
   }
 
