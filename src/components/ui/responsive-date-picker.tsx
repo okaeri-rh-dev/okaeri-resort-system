@@ -76,14 +76,14 @@ export function ResponsiveDatePicker({
     <Button
       variant={buttonVariant}
       className={cn(
-        "w-full touch-manipulation pl-4 text-left text-base font-normal sm:text-sm",
+        "medium:text-sm w-full touch-manipulation pl-4 text-left text-base font-normal",
         !value && "text-muted-foreground",
         buttonClassName
       )}
       aria-label={ariaLabel}
     >
       {value ? format(value, formatStr) : <span>{placeholder}</span>}
-      <CalendarDays className="ml-auto h-5 w-5 opacity-50 sm:h-4 sm:w-4" aria-hidden="true" />
+      <CalendarDays className="medium:size-4 ml-auto size-5 opacity-50" aria-hidden="true" />
     </Button>
   );
 
@@ -92,7 +92,10 @@ export function ResponsiveDatePicker({
     return (
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>{triggerButton}</SheetTrigger>
-        <SheetContent side="bottom" className="pb-safe h-auto max-h-[80vh] overflow-y-auto px-4">
+        <SheetContent
+          side="bottom"
+          className="h-auto max-h-[80vh] overflow-y-auto px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
+        >
           <SheetHeader className="mb-4">
             <SheetTitle>Select Date</SheetTitle>
             <SheetDescription>Choose your preferred date from the calendar below</SheetDescription>
@@ -105,6 +108,7 @@ export function ResponsiveDatePicker({
               disabled={disabled}
               initialFocus
               fixedWeeks={true}
+              // eslint-disable-next-line better-tailwindcss/no-unknown-classes -- defined in responsive-date-picker.css, which the lint entry point does not load
               className={cn("mobile-calendar touch-manipulation", calendarClassName)}
             />
           </div>
@@ -209,7 +213,7 @@ export function ResponsiveDateRangePicker({
     <Button
       variant={buttonVariant}
       className={cn(
-        "w-full touch-manipulation pl-4 text-left text-base font-normal sm:text-sm",
+        "medium:text-sm w-full touch-manipulation pl-4 text-left text-base font-normal",
         !value?.from && "text-muted-foreground",
         buttonClassName
       )}
@@ -219,7 +223,7 @@ export function ResponsiveDateRangePicker({
     >
       <span className="truncate">{displayText}</span>
       <CalendarDays
-        className="ml-auto h-5 w-5 flex-shrink-0 opacity-50 sm:h-4 sm:w-4"
+        className="medium:size-4 ml-auto size-5 flex-shrink-0 opacity-50"
         aria-hidden="true"
       />
     </Button>
@@ -230,7 +234,10 @@ export function ResponsiveDateRangePicker({
     return (
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>{triggerButton}</SheetTrigger>
-        <SheetContent side="bottom" className="pb-safe h-auto max-h-[80vh] overflow-y-auto px-4">
+        <SheetContent
+          side="bottom"
+          className="h-auto max-h-[80vh] overflow-y-auto px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
+        >
           <SheetHeader className="mb-4">
             <SheetTitle>Select Date Range</SheetTitle>
             <SheetDescription>Choose your check-in and check-out dates</SheetDescription>
@@ -244,6 +251,7 @@ export function ResponsiveDateRangePicker({
               initialFocus
               numberOfMonths={1} // Single month on mobile for better UX
               fixedWeeks={true}
+              // eslint-disable-next-line better-tailwindcss/no-unknown-classes -- defined in responsive-date-picker.css, which the lint entry point does not load
               className={cn("mobile-calendar touch-manipulation", calendarClassName)}
             />
           </div>

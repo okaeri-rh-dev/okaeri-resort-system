@@ -3,10 +3,11 @@
 import { useState } from "react";
 
 import { format } from "date-fns";
-import { CalendarDays, Download, X, Zap } from "lucide-react";
+import { Download, X, Zap } from "lucide-react";
 
 import {
   Button,
+  DateRangePicker,
   FilterBar,
   FilterPopover,
   Select,
@@ -14,10 +15,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  StatusBadge,
   TableSearch,
+  type DateRange,
 } from "@/components/patterns";
-import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
 import { ACTION_DISPLAY_NAMES, ALL_AUDIT_TABLES, TABLE_DISPLAY_NAMES } from "@/lib/audit-constants";
 import { useExportAuditLogs } from "@/lib/audit-hooks";
 import { QuickFilterPreset, useAuditStore } from "@/stores/useAuditStore";
@@ -27,15 +28,6 @@ import {
   type AuditAction,
   type AuditLogFilters,
 } from "@/types/audit.types";
-
-// ============================================
-// TYPES
-// ============================================
-
-interface DateRange {
-  from: Date | undefined;
-  to: Date | undefined;
-}
 
 // ============================================
 // MAIN FILTERS COMPONENT
@@ -48,17 +40,6 @@ export function AuditFilters() {
   const applyQuickFilter = useAuditStore((state) => state.applyQuickFilter);
 
   const exportLogs = useExportAuditLogs();
-
-  // Date range state management (Apply/Clear pattern)
-  const [dateRange, setDateRange] = useState<DateRange>({
-    from: filters.startDate ? new Date(filters.startDate) : undefined,
-    to: filters.endDate ? new Date(filters.endDate) : undefined,
-  });
-  const [tempDateRange, setTempDateRange] = useState<DateRange>({
-    from: undefined,
-    to: undefined,
-  });
-  const [dateFilterOpen, setDateFilterOpen] = useState(false);
 
   // User email search query (for TableSearch component)
   const [searchQuery, setSearchQuery] = useState(filters.userEmail || "");
@@ -241,56 +222,23 @@ export function AuditFilters() {
     </FilterPopover>
   );
 
-  const DateFilter = () => (
-    <FilterPopover
-      fitContent
-      isActive={!!(filters.startDate || filters.endDate)}
-      open={dateFilterOpen}
-      onOpenChange={(open) => {
-        setDateFilterOpen(open);
-        if (open) {
-          setTempDateRange(dateRange);
-        }
-      }}
-      showActions={true}
-      onApply={() => {
-        setDateRange(tempDateRange);
-        const fromDate = tempDateRange?.from;
-        const toDate = tempDateRange?.to || fromDate;
-        setFilters({
-          ...filters,
-          startDate: fromDate?.toISOString(),
-          endDate: toDate?.toISOString(),
-          offset: 0,
-        });
-        setDateFilterOpen(false);
-      }}
-      onClear={() => {
-        setTempDateRange({ from: undefined, to: undefined });
-      }}
-      content={
-        <div className="space-y-3">
-          <div className="text-sm font-medium">Date Range</div>
-          <Calendar
-            mode="range"
-            selected={tempDateRange}
-            onSelect={(range) => {
-              if (range) {
-                setTempDateRange({ from: range.from, to: range.to });
-              } else {
-                setTempDateRange({ from: undefined, to: undefined });
-              }
-            }}
-            className="rounded-md border"
-            required={false}
-          />
-        </div>
+  const dateRange: DateRange | undefined = filters.startDate
+    ? {
+        from: new Date(filters.startDate),
+        to: filters.endDate ? new Date(filters.endDate) : undefined,
       }
-    >
-      <CalendarDays className="mr-1 h-3 w-3" />
-      Dates
-    </FilterPopover>
-  );
+    : undefined;
+
+  const applyDateRange = (range: DateRange | undefined) => {
+    const fromDate = range?.from;
+    const toDate = range?.to || fromDate;
+    setFilters({
+      ...filters,
+      startDate: fromDate?.toISOString(),
+      endDate: toDate?.toISOString(),
+      offset: 0,
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -348,7 +296,13 @@ export function AuditFilters() {
             <ActionFilter />
             {/* Event Type Filter - Only shown when source='app' */}
             {filters.source === "app" && <EventTypeFilter />}
-            <DateFilter />
+            <DateRangePicker
+              value={dateRange}
+              onChange={applyDateRange}
+              placeholder="Dates"
+              aria-label="Filter by date range"
+              className="w-56"
+            />
           </>
         }
         activeFilterCount={activeFilterCount()}
@@ -356,7 +310,6 @@ export function AuditFilters() {
           hasActiveFilters
             ? () => {
                 resetFilters();
-                setDateRange({ from: undefined, to: undefined });
                 setSearchQuery("");
               }
             : undefined
@@ -379,62 +332,47 @@ export function AuditFilters() {
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-foreground text-sm font-medium">Active Filters:</span>
           {filters.tableName && (
-            <Badge variant="secondary" className="gap-1">
+            <StatusBadge tone="neutral">
               Table:{" "}
               {TABLE_DISPLAY_NAMES[filters.tableName as keyof typeof TABLE_DISPLAY_NAMES] ||
                 filters.tableName}
-              <X
-                className="hover:text-destructive h-3 w-3 cursor-pointer"
-                onClick={() => updateFilter("tableName", undefined)}
-              />
-            </Badge>
+              <RemoveFilterButton onClick={() => updateFilter("tableName", undefined)} />
+            </StatusBadge>
           )}
           {filters.source && (
-            <Badge variant="secondary" className="gap-1">
+            <StatusBadge tone="neutral">
               Source: {filters.source === "db" ? "Database Triggers" : "Application Events"}
-              <X
-                className="hover:text-destructive h-3 w-3 cursor-pointer"
-                onClick={() => updateFilter("source", undefined)}
-              />
-            </Badge>
+              <RemoveFilterButton onClick={() => updateFilter("source", undefined)} />
+            </StatusBadge>
           )}
           {filters.eventType && (
-            <Badge variant="secondary" className="gap-1">
+            <StatusBadge tone="neutral">
               Event: {EVENT_TYPE_DISPLAY_NAMES[filters.eventType] || filters.eventType}
-              <X
-                className="hover:text-destructive h-3 w-3 cursor-pointer"
-                onClick={() => updateFilter("eventType", undefined)}
-              />
-            </Badge>
+              <RemoveFilterButton onClick={() => updateFilter("eventType", undefined)} />
+            </StatusBadge>
           )}
           {filters.action && (
-            <Badge variant="secondary" className="gap-1">
+            <StatusBadge tone="neutral">
               Action: {ACTION_DISPLAY_NAMES[filters.action as AuditAction]}
-              <X
-                className="hover:text-destructive h-3 w-3 cursor-pointer"
-                onClick={() => updateFilter("action", undefined)}
-              />
-            </Badge>
+              <RemoveFilterButton onClick={() => updateFilter("action", undefined)} />
+            </StatusBadge>
           )}
           {filters.userEmail && (
-            <Badge variant="secondary" className="gap-1">
+            <StatusBadge tone="neutral">
               User: {filters.userEmail}
-              <X
-                className="hover:text-destructive h-3 w-3 cursor-pointer"
+              <RemoveFilterButton
                 onClick={() => {
                   updateFilter("userEmail", undefined);
                   setSearchQuery("");
                 }}
               />
-            </Badge>
+            </StatusBadge>
           )}
           {filters.startDate && (
-            <Badge variant="secondary" className="gap-1">
+            <StatusBadge tone="neutral">
               From: {format(new Date(filters.startDate), "PP")}
-              <X
-                className="hover:text-destructive h-3 w-3 cursor-pointer"
+              <RemoveFilterButton
                 onClick={() => {
-                  setDateRange({ ...dateRange, from: undefined });
                   setFilters({
                     ...filters,
                     startDate: undefined,
@@ -442,15 +380,13 @@ export function AuditFilters() {
                   });
                 }}
               />
-            </Badge>
+            </StatusBadge>
           )}
           {filters.endDate && (
-            <Badge variant="secondary" className="gap-1">
+            <StatusBadge tone="neutral">
               To: {format(new Date(filters.endDate), "PP")}
-              <X
-                className="hover:text-destructive h-3 w-3 cursor-pointer"
+              <RemoveFilterButton
                 onClick={() => {
-                  setDateRange({ ...dateRange, to: undefined });
                   setFilters({
                     ...filters,
                     endDate: undefined,
@@ -458,10 +394,23 @@ export function AuditFilters() {
                   });
                 }}
               />
-            </Badge>
+            </StatusBadge>
           )}
         </div>
       )}
     </div>
+  );
+}
+
+function RemoveFilterButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Remove filter"
+      className="hover:text-destructive -my-1 ml-0.5 inline-flex size-6 items-center justify-center rounded-full transition-colors duration-150"
+    >
+      <X className="size-3" aria-hidden="true" />
+    </button>
   );
 }

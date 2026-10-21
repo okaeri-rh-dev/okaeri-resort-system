@@ -4,8 +4,8 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { NotFoundPage } from "@/components/NotFoundPage";
+import { Button, Toaster } from "@/components/patterns";
 import { UpdateToast } from "@/components/pwa/UpdateToast";
-import { Toaster } from "@/components/ui/sonner";
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -19,17 +19,14 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     <ErrorBoundary level="app">
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="mb-4 text-2xl font-bold text-red-600">Application Error</h1>
-          <p className="mb-4 text-gray-600">Something went wrong with the application.</p>
-          <pre className="max-w-md overflow-auto rounded bg-gray-100 p-4 text-left text-sm">
+          <h1 className="text-destructive mb-4 text-2xl font-bold">Application Error</h1>
+          <p className="text-muted-foreground mb-4">Something went wrong with the application.</p>
+          <pre className="bg-muted max-w-md overflow-auto rounded p-4 text-left text-sm">
             {error instanceof Error ? error.message : String(error)}
           </pre>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
+          <Button onClick={() => window.location.reload()} className="mt-4">
             Reload Application
-          </button>
+          </Button>
         </div>
       </div>
     </ErrorBoundary>

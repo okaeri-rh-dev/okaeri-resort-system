@@ -1,11 +1,16 @@
 import * as React from "react";
 
-import { AlertTriangle, Info, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CardSkeleton } from "@/components/ui/skeleton";
+import {
+  Button,
+  Callout,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Skeleton,
+} from "@/components/patterns";
 import { fetchRates } from "@/lib/api/guest-booking-client";
 import type { PricingConfig, UnitRequest } from "@/types/guest-booking-multi-unit";
 
@@ -39,7 +44,7 @@ export interface UnitRequestSelectorProps {
  * - Add/Remove unit functionality with validation
  * - Max units warning when limit reached
  * - Loading state with Skeleton components
- * - Error state with Alert component
+ * - Error state with a danger Callout
  *
  * Business Logic:
  * - Each array entry = exactly 1 unit
@@ -140,9 +145,20 @@ export const UnitRequestSelector: React.FC<UnitRequestSelectorProps> = ({
   // Loading state
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <CardSkeleton hasHeader={true} contentLines={4} />
-        <CardSkeleton hasHeader={true} contentLines={3} />
+      <div role="status" aria-label="Loading rates" className="space-y-4">
+        {[4, 3].map((lines) => (
+          <Card key={lines} className="space-y-4 p-4" padding="none">
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-2/3" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+            <div className="space-y-2">
+              {Array.from({ length: lines }, (_, line) => (
+                <Skeleton key={line} className={line === lines - 1 ? "h-4 w-1/2" : "h-4 w-full"} />
+              ))}
+            </div>
+          </Card>
+        ))}
       </div>
     );
   }
@@ -150,44 +166,38 @@ export const UnitRequestSelector: React.FC<UnitRequestSelectorProps> = ({
   // Error state
   if (error || !pricingConfig) {
     return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          {error || "Failed to load pricing information. Please refresh the page."}
-        </AlertDescription>
-      </Alert>
+      <Callout tone="danger">
+        {error || "Failed to load pricing information. Please refresh the page."}
+      </Callout>
     );
   }
 
   return (
     <div className="space-y-4">
       {/* Info banner with instructions and totals */}
-      <Alert className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
-        <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-        <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
-          <p className="mb-1">
-            Add cabins and specify guests for each. Admin assigns specific cabins after booking
-            confirmation.
-          </p>
-          <p className="font-medium">
-            Total: {totalUnits} cabin{totalUnits !== 1 ? "s" : ""}, {totalGuests} guest
-            {totalGuests !== 1 ? "s" : ""}
-          </p>
-        </AlertDescription>
-      </Alert>
+      <Callout tone="info">
+        <p className="mb-1">
+          Add cabins and specify guests for each. Admin assigns specific cabins after booking
+          confirmation.
+        </p>
+        <p className="font-medium">
+          Total: {totalUnits} cabin{totalUnits !== 1 ? "s" : ""}, {totalGuests} guest
+          {totalGuests !== 1 ? "s" : ""}
+        </p>
+      </Callout>
 
       {/* Static Rate Display Card */}
-      <Card className="border-neutral-200">
+      <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold">Current Rates (Reference Only)</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="@container space-y-4">
           {/* Rate grid - 2 columns on desktop, 1 on mobile */}
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 @md:grid-cols-2">
             {/* Base Rate */}
             <div className="space-y-1">
               <p className="text-muted-foreground text-sm">Base Rate</p>
-              <p className="font-mono text-lg font-semibold tabular-nums">
+              <p className="text-lg font-semibold tabular-nums">
                 ₱{pricingConfig.base_rate.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
                 /night
               </p>
@@ -196,7 +206,7 @@ export const UnitRequestSelector: React.FC<UnitRequestSelectorProps> = ({
             {/* Weekend Rate */}
             <div className="space-y-1">
               <p className="text-muted-foreground text-sm">Weekend Rate</p>
-              <p className="font-mono text-lg font-semibold tabular-nums">
+              <p className="text-lg font-semibold tabular-nums">
                 ₱{pricingConfig.weekend_rate.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
                 /night
               </p>
@@ -211,7 +221,7 @@ export const UnitRequestSelector: React.FC<UnitRequestSelectorProps> = ({
             {/* Extra Person Rate */}
             <div className="space-y-1">
               <p className="text-muted-foreground text-sm">Extra Person</p>
-              <p className="font-mono text-lg font-semibold tabular-nums">
+              <p className="text-lg font-semibold tabular-nums">
                 ₱
                 {pricingConfig.extra_person_rate.toLocaleString("en-PH", {
                   minimumFractionDigits: 2,
@@ -222,7 +232,7 @@ export const UnitRequestSelector: React.FC<UnitRequestSelectorProps> = ({
           </div>
 
           {/* Footer note */}
-          <p className="text-muted-foreground border-t border-neutral-100 pt-3 text-xs">
+          <p className="text-muted-foreground border-t pt-3 text-xs">
             Final pricing calculated based on your specific dates and unit requests.
           </p>
         </CardContent>
@@ -231,7 +241,7 @@ export const UnitRequestSelector: React.FC<UnitRequestSelectorProps> = ({
       {/* Unit Cards or Empty State */}
       {value.length === 0 ? (
         // Empty state - dashed border card with Add button
-        <Card className="border-2 border-dashed border-neutral-300 bg-neutral-50/30">
+        <Card className="bg-muted/30 border-2 border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="text-muted-foreground mb-4 text-center text-sm">
               No units selected. Click below to add your first unit request.
@@ -272,13 +282,10 @@ export const UnitRequestSelector: React.FC<UnitRequestSelectorProps> = ({
 
       {/* Max units warning */}
       {isMaxUnitsReached && (
-        <Alert className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950">
-          <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
-          <AlertDescription className="text-sm text-yellow-800 dark:text-yellow-200">
-            Maximum of {maxTotalUnits} cabins per booking reached. Contact us directly for larger
-            group bookings.
-          </AlertDescription>
-        </Alert>
+        <Callout tone="warning">
+          Maximum of {maxTotalUnits} cabins per booking reached. Contact us directly for larger
+          group bookings.
+        </Callout>
       )}
     </div>
   );

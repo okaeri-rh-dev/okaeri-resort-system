@@ -2,8 +2,7 @@
 
 import { Activity, Database, FileText, Users } from "lucide-react";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, Skeleton } from "@/components/patterns";
 import { ACTION_DISPLAY_NAMES, TABLE_DISPLAY_NAMES } from "@/lib/audit-constants";
 import type { AuditLogStats } from "@/types/audit.types";
 
@@ -41,14 +40,16 @@ export function AuditStatsPanel({ stats, isLoading }: AuditStatsPanelProps) {
   // Loading state - show skeleton cards
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i}>
-            <CardContent className="pt-6">
-              <Skeleton className="h-20 w-full" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="@container">
+        <div className="grid gap-4 @xl:grid-cols-2 @3xl:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="pt-6">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
@@ -57,72 +58,76 @@ export function AuditStatsPanel({ stats, isLoading }: AuditStatsPanelProps) {
   if (!stats) return null;
 
   return (
-    <div className="grid gap-4 md:grid-cols-4">
-      {/* Total Logs */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-foreground text-sm font-medium">Total Logs</p>
-              <p className="text-2xl font-bold">{stats.totalLogs.toLocaleString()}</p>
+    <div className="@container">
+      <div className="grid gap-4 @xl:grid-cols-2 @3xl:grid-cols-4">
+        {/* Total Logs */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-muted-foreground text-sm font-medium">Total Logs</p>
+                <p className="text-2xl font-bold tabular-nums">
+                  {stats.totalLogs.toLocaleString()}
+                </p>
+              </div>
+              <FileText className="text-muted-foreground h-8 w-8" />
             </div>
-            <FileText className="text-muted-foreground h-8 w-8" />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Most Active Table */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-foreground text-sm font-medium">Most Active Table</p>
-              <p className="text-2xl font-bold">{getMostActiveTable(stats.byTable)}</p>
-              <p className="text-muted-foreground text-xs">
-                {getMostActiveTableCount(stats.byTable)} logs
-              </p>
+        {/* Most Active Table */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-muted-foreground text-sm font-medium">Most Active Table</p>
+                <p className="text-2xl font-bold">{getMostActiveTable(stats.byTable)}</p>
+                <p className="text-muted-foreground text-xs">
+                  {getMostActiveTableCount(stats.byTable)} logs
+                </p>
+              </div>
+              <Database className="text-muted-foreground h-8 w-8" />
             </div>
-            <Database className="text-muted-foreground h-8 w-8" />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Most Common Action */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-foreground text-sm font-medium">Most Common Action</p>
-              <p className="text-2xl font-bold">{getMostCommonAction(stats.byAction)}</p>
-              <p className="text-muted-foreground text-xs">
-                {getMostCommonActionCount(stats.byAction)} times
-              </p>
+        {/* Most Common Action */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-muted-foreground text-sm font-medium">Most Common Action</p>
+                <p className="text-2xl font-bold">{getMostCommonAction(stats.byAction)}</p>
+                <p className="text-muted-foreground text-xs">
+                  {getMostCommonActionCount(stats.byAction)} times
+                </p>
+              </div>
+              <Activity className="text-muted-foreground h-8 w-8" />
             </div>
-            <Activity className="text-muted-foreground h-8 w-8" />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Top User */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-foreground text-sm font-medium">Most Active User</p>
-              <p
-                className="max-w-[150px] truncate text-lg font-bold"
-                title={getTopUserEmail(stats.byUser)}
-              >
-                {getTopUserEmail(stats.byUser)}
-              </p>
-              <p className="text-muted-foreground text-xs">
-                {getTopUserCount(stats.byUser)} actions
-              </p>
+        {/* Top User */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-muted-foreground text-sm font-medium">Most Active User</p>
+                <p
+                  className="max-w-[150px] truncate text-lg font-bold"
+                  title={getTopUserEmail(stats.byUser)}
+                >
+                  {getTopUserEmail(stats.byUser)}
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  {getTopUserCount(stats.byUser)} actions
+                </p>
+              </div>
+              <Users className="text-muted-foreground h-8 w-8" />
             </div>
-            <Users className="text-muted-foreground h-8 w-8" />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

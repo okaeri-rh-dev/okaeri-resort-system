@@ -2,8 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 
 import { AlertCircle, Home, RefreshCw } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button, Callout, Card, CardContent, CardHeader, CardTitle } from "@/components/patterns";
 
 interface Props {
   children: ReactNode;
@@ -61,26 +60,24 @@ export class ErrorBoundary extends Component<Props, State> {
       // App-level error boundary (most serious)
       if (level === "app") {
         return (
-          <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+          <div className="bg-background flex min-h-screen items-center justify-center p-4">
             <Card className="w-full max-w-md">
               <CardHeader className="text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-                  <AlertCircle className="h-6 w-6 text-red-600" />
+                <div className="bg-danger mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+                  <AlertCircle className="text-danger-foreground h-6 w-6" aria-hidden="true" />
                 </div>
-                <CardTitle className="text-xl font-semibold text-gray-900">
-                  Application Error
-                </CardTitle>
+                <CardTitle className="text-xl font-semibold">Application Error</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 text-center">
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   The application encountered an unexpected error. Please try refreshing the page.
                 </p>
                 {process.env.NODE_ENV === "development" && this.state.error && (
                   <details className="mt-4 text-left">
-                    <summary className="cursor-pointer text-sm text-gray-500">
+                    <summary className="text-muted-foreground cursor-pointer text-sm">
                       Error Details (Development Only)
                     </summary>
-                    <pre className="mt-2 overflow-auto rounded bg-gray-100 p-2 text-xs">
+                    <pre className="bg-muted mt-2 overflow-auto rounded p-2 text-xs">
                       {this.state.error.toString()}
                     </pre>
                   </details>
@@ -107,13 +104,15 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="flex min-h-[400px] items-center justify-center p-8">
             <Card className="w-full max-w-lg">
               <CardHeader className="text-center">
-                <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
+                <div className="bg-danger mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full">
+                  <AlertCircle className="text-danger-foreground h-5 w-5" aria-hidden="true" />
                 </div>
                 <CardTitle className="text-lg font-semibold">Page Error</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 text-center">
-                <p className="text-gray-600">This page couldn't load properly. Please try again.</p>
+                <p className="text-muted-foreground">
+                  This page couldn't load properly. Please try again.
+                </p>
                 <Button onClick={this.handleRetry} variant="outline">
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Retry
@@ -126,20 +125,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Component-level error boundary (least intrusive)
       return (
-        <div className="rounded-md border border-red-200 bg-red-50 p-4">
-          <div className="flex items-center">
-            <AlertCircle className="mr-2 h-5 w-5 text-red-500" />
-            <div>
-              <h3 className="text-sm font-medium text-red-800">Component Error</h3>
-              <p className="mt-1 text-sm text-red-700">
-                This component failed to load.{" "}
-                <button onClick={this.handleRetry} className="underline hover:no-underline">
-                  Try again
-                </button>
-              </p>
-            </div>
-          </div>
-        </div>
+        <Callout tone="danger" title="Component Error">
+          This component failed to load.{" "}
+          <button onClick={this.handleRetry} className="underline hover:no-underline">
+            Try again
+          </button>
+        </Callout>
       );
     }
 

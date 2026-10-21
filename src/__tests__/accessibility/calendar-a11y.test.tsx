@@ -453,7 +453,7 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
 
       // Calendar day cells should have minimum height for adequate touch targets
       const dayCell = screen.getAllByRole("gridcell")[7]; // First day of month
-      expect(dayCell).toHaveClass("min-h-[44px]"); // Ensures minimum 44px height for touch
+      expect(dayCell).toHaveClass("min-h-11"); // Ensures minimum 44px height for touch
     });
   });
 

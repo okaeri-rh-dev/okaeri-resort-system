@@ -1,7 +1,6 @@
 // src/components/entity-detail/DetailPageSkeleton.tsx
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, Skeleton } from "@/components/patterns";
 
 /**
  * Consistent loading states that preserve layout structure
@@ -42,13 +41,13 @@ export function DetailPageSkeleton() {
 
       {/* Section skeletons */}
       {[1, 2, 3].map((i) => (
-        <Card key={i} className="border-neutral-200">
+        <Card key={i}>
           <CardHeader>
             <Skeleton className="h-5 w-40" />
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="@container space-y-4">
             {[1, 2, 3].map((j) => (
-              <div key={j} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div key={j} className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
                 <div className="space-y-1">
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="h-4 w-32" />

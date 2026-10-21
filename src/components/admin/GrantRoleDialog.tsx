@@ -1,6 +1,6 @@
 // src/components/admin/GrantRoleDialog.tsx
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -9,7 +9,23 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Form,
+  FormField,
+  Input,
+  Label,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Textarea,
+} from "@/components/patterns";
 import {
   Command,
   CommandEmpty,
@@ -18,36 +34,11 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { usePendingUsers, type PendingUser } from "@/hooks/usePendingUsers";
 import { useGrantRole } from "@/hooks/useRoleManagement";
 import { AuditRole, getRoleDisplayName } from "@/lib/audit-roles";
+
+import { RoleSelect } from "./RoleSelect";
 
 // ============================================
 // VALIDATION SCHEMA
@@ -84,6 +75,7 @@ export function GrantRoleDialog({ open, onOpenChange, prefilledUser }: GrantRole
   const { data: pendingUsers, isLoading: isLoadingUsers } = usePendingUsers();
   const [userPickerOpen, setUserPickerOpen] = useState(false);
   const [manualEntry, setManualEntry] = useState(false);
+  const userPickerId = useId();
 
   const form = useForm<GrantRoleFormData>({
     resolver: zodResolver(grantRoleSchema),
@@ -143,7 +135,7 @@ export function GrantRoleDialog({ open, onOpenChange, prefilledUser }: GrantRole
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Grant User Role</DialogTitle>
           <DialogDescription>
@@ -156,13 +148,18 @@ export function GrantRoleDialog({ open, onOpenChange, prefilledUser }: GrantRole
             {/* Pending Users Picker */}
             {!manualEntry && (
               <div className="space-y-2">
-                <FormLabel>Select User</FormLabel>
+                <Label id={`${userPickerId}-label`} htmlFor={`${userPickerId}-trigger`}>
+                  Select User
+                </Label>
                 <Popover open={userPickerOpen} onOpenChange={setUserPickerOpen}>
                   <PopoverTrigger asChild>
                     <Button
+                      id={`${userPickerId}-trigger`}
                       variant="outline"
                       role="combobox"
                       aria-expanded={userPickerOpen}
+                      aria-controls={`${userPickerId}-list`}
+                      aria-labelledby={`${userPickerId}-label ${userPickerId}-trigger`}
                       className="w-full justify-between"
                     >
                       {selectedUserId
@@ -174,6 +171,7 @@ export function GrantRoleDialog({ open, onOpenChange, prefilledUser }: GrantRole
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
+                    id={`${userPickerId}-list`}
                     className="w-[var(--radix-popover-trigger-width)] p-0"
                     align="start"
                   >
@@ -221,45 +219,35 @@ export function GrantRoleDialog({ open, onOpenChange, prefilledUser }: GrantRole
             {manualEntry && (
               <>
                 {/* Email */}
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email Address</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="user@example.com"
-                          {...field}
-                          autoComplete="email"
-                          className="text-sm"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                <FormField control={form.control} name="email" label="Email Address">
+                  {(field) => (
+                    <Input
+                      type="email"
+                      placeholder="user@example.com"
+                      {...field}
+                      autoComplete="email"
+                      spellCheck={false}
+                      className="text-sm"
+                    />
                   )}
-                />
+                </FormField>
 
                 {/* User ID */}
                 <FormField
                   control={form.control}
                   name="userId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>User ID (UUID)</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="6e7aed61-41df-4949-ba63-47343e977ab8"
-                          {...field}
-                          className="font-mono text-sm"
-                        />
-                      </FormControl>
-                      <FormDescription>UUID from auth.users table</FormDescription>
-                      <FormMessage />
-                    </FormItem>
+                  label="User ID (UUID)"
+                  description="UUID from auth.users table"
+                >
+                  {(field) => (
+                    <Input
+                      placeholder="6e7aed61-41df-4949-ba63-47343e977ab8"
+                      {...field}
+                      spellCheck={false}
+                      className="text-sm tabular-nums"
+                    />
                   )}
-                />
+                </FormField>
 
                 <p className="text-muted-foreground text-xs">
                   <button
@@ -275,79 +263,46 @@ export function GrantRoleDialog({ open, onOpenChange, prefilledUser }: GrantRole
 
             {/* Read-only email display when selected from picker */}
             {!manualEntry && selectedUserId && (
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        readOnly
-                        className="text-muted-foreground bg-muted text-sm"
-                      />
-                    </FormControl>
-                  </FormItem>
+              <FormField control={form.control} name="email" label="Email">
+                {(field) => (
+                  <Input {...field} readOnly className="text-muted-foreground bg-muted text-sm" />
                 )}
-              />
+              </FormField>
             )}
 
             {/* Role Selection */}
             <FormField
               control={form.control}
               name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Role</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a role" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={AuditRole.ADMIN}>
-                        {getRoleDisplayName(AuditRole.ADMIN)} - Full system access
-                      </SelectItem>
-                      <SelectItem value={AuditRole.OWNER}>
-                        {getRoleDisplayName(AuditRole.OWNER)} - Business owner privileges
-                      </SelectItem>
-                      <SelectItem value={AuditRole.MANAGER}>
-                        {getRoleDisplayName(AuditRole.MANAGER)} - Operations management
-                      </SelectItem>
-                      <SelectItem value={AuditRole.STAFF}>
-                        {getRoleDisplayName(AuditRole.STAFF)} - Basic access
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>Choose the access level for this user</FormDescription>
-                  <FormMessage />
-                </FormItem>
+              label="Role"
+              description="Choose the access level for this user"
+            >
+              {({ value, onChange, onBlur, ref }) => (
+                <RoleSelect
+                  value={value}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  ref={ref}
+                  placeholder="Select a role"
+                />
               )}
-            />
+            </FormField>
 
             {/* Notes */}
             <FormField
               control={form.control}
               name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Reason for granting this role..."
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Optional notes about why this role was granted (for audit trail)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
+              label="Notes (Optional)"
+              description="Optional notes about why this role was granted (for audit trail)"
+            >
+              {(field) => (
+                <Textarea
+                  placeholder="Reason for granting this role..."
+                  className="resize-none"
+                  {...field}
+                />
               )}
-            />
+            </FormField>
 
             <DialogFooter>
               <Button
