@@ -140,3 +140,31 @@ export function useSetContactChannelActive() {
     },
   });
 }
+
+export function useReorderContactChannel() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      channel,
+      direction,
+    }: {
+      channel: ContactChannel;
+      direction: "up" | "down";
+    }): Promise<void> => {
+      const { error } = await db.contactChannels.reorder(channel.id, direction);
+      if (error) throw error;
+    },
+    onSuccess: (_, { channel, direction }) => {
+      queryClient.invalidateQueries({ queryKey: contactChannelKeys.all });
+      toast.success("Contact channel moved", {
+        description: `${toKindLabel(channel)} moved ${direction}.`,
+      });
+    },
+    onError: (error) => {
+      toast.error("Could not move contact channel", {
+        description: contactChannelErrorMessage(error),
+      });
+    },
+  });
+}

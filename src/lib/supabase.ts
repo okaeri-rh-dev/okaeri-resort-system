@@ -1116,6 +1116,10 @@ export const db = {
     setActive: (id: string, isActive: boolean) =>
       contactChannelsTable().update({ is_active: isActive }).eq("id", id).select().single(),
 
+    /** Swap a channel with its neighbour above or below (manager+, atomic) */
+    reorder: (id: string, direction: "up" | "down") =>
+      supabase.rpc("reorder_contact_channel", { p_id: id, p_direction: direction }),
+
     /** Get active contact channels in display order (guest pages) */
     active: () =>
       contactChannelsTable()

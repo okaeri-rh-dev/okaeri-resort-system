@@ -11,6 +11,7 @@ import { db } from "@/lib/supabase";
 
 import {
   useCreateContactChannel,
+  useReorderContactChannel,
   useSetContactChannelActive,
   type ContactChannel,
 } from "../useContactChannels";
@@ -20,6 +21,7 @@ vi.mock("@/lib/supabase", () => ({
     contactChannels: {
       create: vi.fn(),
       setActive: vi.fn(),
+      reorder: vi.fn(),
     },
   },
   handleSupabaseError: (error: { message: string }) => error.message,
@@ -42,6 +44,10 @@ const channel: ContactChannel = {
 
 function rowResponse(row: ContactChannel) {
   return { data: row, error: null } as unknown as PostgrestSingleResponse<never>;
+}
+
+function voidResponse() {
+  return { data: null, error: null } as unknown as PostgrestSingleResponse<never>;
 }
 
 function errorResponse(code: string, message: string) {
@@ -123,6 +129,38 @@ describe("useSetContactChannelActive", () => {
 
     expect(toast.error).toHaveBeenCalledWith("Could not show contact channel", {
       description: "permission denied for table contact_channels",
+    });
+  });
+});
+
+describe("useReorderContactChannel", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("moves the channel and refreshes every contact channel list", async () => {
+    vi.mocked(db.contactChannels.reorder).mockResolvedValue(voidResponse());
+    const { result, invalidateQueries } = renderWithClient(useReorderContactChannel);
+
+    await act(() => result.current.mutateAsync({ channel, direction: "down" }));
+
+    expect(db.contactChannels.reorder).toHaveBeenCalledWith(channel.id, "down");
+    expect(toast.success).toHaveBeenCalledWith("Contact channel moved", {
+      description: "Viber (Maria) moved down.",
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: contactChannelKeys.all });
+  });
+
+  it("shows the error when the move is refused", async () => {
+    vi.mocked(db.contactChannels.reorder).mockResolvedValue(
+      errorResponse("42501", "Only managers can reorder contact channels")
+    );
+    const { result } = renderWithClient(useReorderContactChannel);
+
+    await act(() =>
+      result.current.mutateAsync({ channel, direction: "up" }).catch(() => undefined)
+    );
+
+    expect(toast.error).toHaveBeenCalledWith("Could not move contact channel", {
+      description: "Only managers can reorder contact channels",
     });
   });
 });
