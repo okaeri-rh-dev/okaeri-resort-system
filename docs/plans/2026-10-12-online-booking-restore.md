@@ -54,7 +54,7 @@ Out of scope: `cleanup_expired_payment_proofs` (deferred item 3, needs a retenti
 - [x] 4b. Booking-failure path: when `create_guest_booking` fails after the proof upload, the guest sees a clear "nothing was booked" message (check what `multi-unit.ts` and the form show today).
 - [x] 5. E2E: extend the verify-payment tests to click Verify and assert `Partial`, then assign units.
 - [x] 6. Replica check (D3); drift baseline lines removed; `npm run verify`; PR.
-- [ ] 7. User: `supabase db push`; prod-drift check; one real test booking on prod (user).
+- [x] 7. (2026-10-21) User: `supabase db push`; prod-drift check; one real test booking on prod (user).
 
 ## Resume state (2026-10-13, implementation done, PR next)
 

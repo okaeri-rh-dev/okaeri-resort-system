@@ -19,7 +19,6 @@ import { shouldRunDatabaseTests } from "../setup/test-db";
 const UNAUDITED_TABLES: Record<string, string> = {
   audit_logs: "the audit store itself",
   audit_logs_archive: "archived audit rows, written only by archive_audit_logs",
-  bookings_conflict_backup: "one-off snapshot from a conflict cleanup, no writers",
   idempotency_keys: "short-lived request dedupe rows purged by cron; auditing would flood the log",
   booking_unit_availability:
     "derived from booking_units by its sync triggers; booking_units is audited",

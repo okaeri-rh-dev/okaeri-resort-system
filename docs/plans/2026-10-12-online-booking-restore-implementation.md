@@ -1852,7 +1852,7 @@ Use the `mattpocock-skills:pr` skill for the PR body. Verify the push: `git fetc
 
 ### Task 10: User — push the migration to prod and test once
 
-- [ ] **Step 1 (user):** after the PR merges, `! supabase db push` and confirm it lists only `20261013000000_online_booking.sql`.
-- [ ] **Step 2 (user):** `! npm run drift:prod`; expected: no differences beyond the baseline.
-- [ ] **Step 3 (user):** one real guest booking on prod for one cabin, verify it in `/admin/bookings/queue`, assign a cabin, then cancel and delete the booking.
-- [ ] **Step 4:** update memory `project_prod_schema_drift_migration_20251104184719.md` (fixed) and `project_guardrails_deferred_list.md` (item 4 done).
+- [x] **Step 1 (user):** after the PR merges, `! supabase db push` and confirm it lists only `20261013000000_online_booking.sql`.
+- [x] **Step 2 (user):** `! npm run drift:prod`; expected: no differences beyond the baseline.
+- [x] **Step 3 (user):** one real guest booking on prod for one cabin, verify it in `/admin/bookings/queue`, assign a cabin, then cancel and delete the booking. Done 2026-10-21: BK-202610-FS2AWN ended `Cancelled | Partial | assigned`; the UI has no booking Delete (removed 2026-10-11), so the booking, its guest and its audit rows were deleted with SQL by the user (check query: all 0).
+- [x] **Step 4:** update memory `project_prod_schema_drift_migration_20251104184719.md` (fixed) and `project_guardrails_deferred_list.md` (item 4 done).

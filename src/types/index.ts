@@ -40,6 +40,7 @@ export interface Guest {
   total_spent: number | null;
   created_at: string | null; // Database can return null
   updated_at: string | null; // Database can return null
+  anonymized_at?: string | null;
 }
 
 // ============================================
@@ -89,6 +90,7 @@ export interface Booking {
   payment_proof_url?: string | null;
   special_requests?: string | null;
   internal_notes?: string | null;
+  anonymized_at?: string | null;
   is_multi_unit?: boolean | null;
   is_walk_in?: boolean;
   unit_count?: number | null;

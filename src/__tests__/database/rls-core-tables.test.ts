@@ -40,8 +40,9 @@ const MATRIX: Record<string, Record<"select" | "insert" | "update" | "delete", R
   // staff can create/update bookings, delete via the create-error rollback, and
   // upload payment proofs (payments INSERT). Payment edit/verify/delete and
   // guest edit/delete are gated to their manager+ pages.
+  // guests DELETE has no client policy: deletes go through delete_guest (20261021000000).
   bookings: { select: STAFF_PLUS, insert: STAFF_PLUS, update: STAFF_PLUS, delete: STAFF_PLUS },
-  guests: { select: STAFF_PLUS, insert: STAFF_PLUS, update: MANAGER_PLUS, delete: MANAGER_PLUS },
+  guests: { select: STAFF_PLUS, insert: STAFF_PLUS, update: MANAGER_PLUS, delete: [] },
   payments: {
     select: STAFF_PLUS,
     insert: STAFF_PLUS,
@@ -76,14 +77,12 @@ async function makeUser(role: Role) {
   userIds[role] = data.user.id;
 
   if (ROLES_WITH_APP_ROLE.includes(role)) {
-    const { error: rErr } = await admin
-      .from("app_roles")
-      .insert({
-        user_id: data.user.id,
-        email,
-        role: role as Exclude<Role, "user">,
-        is_active: true,
-      });
+    const { error: rErr } = await admin.from("app_roles").insert({
+      user_id: data.user.id,
+      email,
+      role: role as Exclude<Role, "user">,
+      is_active: true,
+    });
     if (rErr) throw new Error(`app_roles insert(${role}) failed: ${rErr.message}`);
   }
 
