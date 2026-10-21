@@ -46,6 +46,26 @@ Run each variant at phone and laptop width against:
 
 Fewest taps and least confusion wins; parts may be mixed.
 
+### Results (2026-10-21)
+
+Scripted with `node src/components/bookings/prototype/evaluate.mjs` (headless Chromium, staff login, 1366×900 and 390×844). Each task checks its outcome (detail heading, toast, or text on the page). Tap counts were the same at both widths; typing a search counts as one tap. Task 1 was run twice: an upcoming guest (Bea) and a past guest (Nora, 46 days ago).
+
+| Task                           | V1 Agenda                                                         | V2 Views + pane                                            | V3 Timeline                                     |
+| ------------------------------ | ----------------------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------- |
+| 1a Find upcoming guest         | 2                                                                 | 2                                                          | 2                                               |
+| 1b Find past guest             | 3 (Show past)                                                     | 3 (Past tab)                                               | 6 (search covers only the range: 4× Earlier)    |
+| 2 Who arrives this week        | 0, but only 3 of 7 in "Arriving this week"; 4 sit in Needs action | 0; all 7 in Upcoming, mixed with later stays, no week line | 2 (7 days + Today); all 7 visible as bars       |
+| 3 Check in                     | 1                                                                 | 1                                                          | 1 (in the list below the grid; scroll on phone) |
+| 4 Verify pending guest booking | 2                                                                 | 2                                                          | 2                                               |
+| 5 Start a 2-cabin booking      | 6 (dates typed by hand)                                           | 6 (dates typed by hand)                                    | 3 (tap empty day presets cabin + date)          |
+
+What the screenshots showed, beyond taps:
+
+- V1: the most compact phone list; one action per row reads well. The "Needs action" group takes arrivals and pending bookings out of "Arriving this week", so task 2 is confusing.
+- V2: on a laptop with the side pane open, the list pane is under 600px, so `DataTable` drops to cards: two panes at 1366px means no table. Tabs scroll sideways on a phone. Filter chips are visible on wide screens.
+- V3: best for "what is free / who is here", and the only one where create is fast. Weak for search (range-bound) and the grid shows ~6 days on a phone with truncated names. Pending guest bookings need the extra "Unassigned" lane.
+- Not tested: dark mode, keyboard-only use, real long-list performance, screen readers.
+
 ## Tasks
 
 - [x] Create a worktree on branch `proto/bookings-overhaul` from `main` (`../okaeri-proto-bookings`, base 55fdba34)
@@ -54,7 +74,7 @@ Fewest taps and least confusion wins; parts may be mixed.
 - [x] V1 Agenda
 - [x] V2 Views + side pane
 - [x] V3 Cabin timeline
-- [ ] Run the 5 tasks on each variant at both widths; record results here
+- [x] Run the 5 tasks on each variant at both widths; record results here
 - [ ] Pick the winner (user decision)
 - [ ] `/to-spec`, then `/to-tickets`
 - [ ] Delete the prototype branch and worktree
@@ -71,4 +91,4 @@ Fewest taps and least confusion wins; parts may be mixed.
 
 ## Resume state
 
-Grilling done 2026-10-21. 2026-10-21: worktree `../okaeri-proto-bookings`, fixture, route and V1, V2, V3 built; evaluation next. This doc is untracked; it was written while the main checkout was on another session's branch (`fix/booking-edit-mobile-double-scroll`).
+Grilling done 2026-10-21. 2026-10-21: worktree `../okaeri-proto-bookings`, fixture, route and V1, V2, V3 built and evaluated; branch pushed to origin. Next: user picks the winner (or a mix) from the Results table. This doc is untracked; it was written while the main checkout was on another session's branch (`fix/booking-edit-mobile-double-scroll`).
