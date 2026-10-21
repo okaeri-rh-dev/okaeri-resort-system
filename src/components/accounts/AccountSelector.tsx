@@ -2,8 +2,7 @@ import React from "react";
 
 import { Building2, CreditCard, Wallet } from "lucide-react";
 
-import { SelectItem } from "@/components/patterns";
-import { SelectControl, type SelectControlProps } from "@/components/payments/SelectControl";
+import { SelectControl, SelectItem, type SelectControlProps } from "@/components/patterns";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { useActiveAccounts } from "@/stores/useAccountStore";

@@ -17,6 +17,7 @@ import {
   Form,
   FormField,
   Input,
+  SelectControl,
   SelectItem,
   Textarea,
 } from "@/components/patterns";
@@ -25,7 +26,7 @@ import { bookingEditSchema, type BookingEditInput } from "@/lib/validation/entit
 import { useUpdateBooking } from "@/stores/useBookingStore";
 import type { Booking, Unit } from "@/types/entity-detail.types";
 
-import { FormSelect, WalkInField } from "../form-fields";
+import { WalkInField } from "../form-fields";
 import { toBookingUpdate } from "./to-booking-update";
 
 export interface BookingEditPageProps {
@@ -172,9 +173,9 @@ export function BookingEditPage() {
             <CardContent className="space-y-4">
               <FormField control={form.control} name="unit_id" label="Cabin">
                 {(field) => (
-                  <FormSelect
+                  <SelectControl
                     value={field.value}
-                    onChange={field.onChange}
+                    onValueChange={field.onChange}
                     placeholder="Select a cabin"
                   >
                     {units?.map((unit) => (
@@ -187,7 +188,7 @@ export function BookingEditPage() {
                         </div>
                       </SelectItem>
                     ))}
-                  </FormSelect>
+                  </SelectControl>
                 )}
               </FormField>
 
@@ -220,16 +221,16 @@ export function BookingEditPage() {
               <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
                 <FormField control={form.control} name="payment_method" label="Payment Method">
                   {(field) => (
-                    <FormSelect
+                    <SelectControl
                       value={field.value}
-                      onChange={field.onChange}
+                      onValueChange={field.onChange}
                       placeholder="Select payment method"
                     >
                       <SelectItem value="Cash">Cash</SelectItem>
                       <SelectItem value="GCash">GCash</SelectItem>
                       <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
                       <SelectItem value="Card">Credit Card</SelectItem>
-                    </FormSelect>
+                    </SelectControl>
                   )}
                 </FormField>
               </div>

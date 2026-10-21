@@ -18,6 +18,7 @@ import {
   Input,
   NumberInput,
   Progress,
+  SelectControl,
   SelectItem,
   Separator,
   StatusBadge,
@@ -43,7 +44,7 @@ import { useCreateBooking } from "@/stores/useBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
 import type { MultiUnitBooking } from "@/types";
 
-import { FormSelect, WalkInField } from "./form-fields";
+import { WalkInField } from "./form-fields";
 import { FormSkeleton } from "./FormSkeleton";
 
 interface BookingFormProps {
@@ -336,7 +337,11 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
         }
       >
         {(field) => (
-          <FormSelect value={field.value} onChange={field.onChange} placeholder="Choose a unit">
+          <SelectControl
+            value={field.value}
+            onValueChange={field.onChange}
+            placeholder="Choose a unit"
+          >
             {units?.map((unit) => {
               const reason = unavailableReason(availability, unit.unit_id);
               return (
@@ -357,7 +362,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
                 </SelectItem>
               );
             })}
-          </FormSelect>
+          </SelectControl>
         )}
       </FormField>
 
@@ -512,9 +517,9 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
     <div className="space-y-6">
       <FormField control={form.control} name="payment_method" label="Payment Method">
         {(field) => (
-          <FormSelect
+          <SelectControl
             value={field.value}
-            onChange={field.onChange}
+            onValueChange={field.onChange}
             placeholder="Select payment method"
           >
             <SelectItem value="GCash">
@@ -526,7 +531,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
             <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
             <SelectItem value="Cash">Cash</SelectItem>
             <SelectItem value="Card">Credit/Debit Card</SelectItem>
-          </FormSelect>
+          </SelectControl>
         )}
       </FormField>
 

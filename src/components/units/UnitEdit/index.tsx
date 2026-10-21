@@ -17,9 +17,9 @@ import {
   Form,
   FormField,
   Input,
+  SelectControl,
   SelectItem,
 } from "@/components/patterns";
-import { SelectControl } from "@/components/payments/SelectControl";
 import { useEntityEdit } from "@/hooks/entity";
 import { usePricingConfig } from "@/hooks/usePricingConfig";
 import {

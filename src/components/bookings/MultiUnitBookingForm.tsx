@@ -37,6 +37,7 @@ import {
   Form,
   FormField,
   Input,
+  SelectControl,
   SelectItem,
   Textarea,
 } from "@/components/patterns";
@@ -58,7 +59,7 @@ import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
 import type { AdminMultiUnitBookingCreate, Unit } from "@/types";
 
-import { FormSelect, WalkInField } from "./form-fields";
+import { WalkInField } from "./form-fields";
 import { MultiUnitPricingSummary } from "./MultiUnitPricingSummary";
 import { MultiUnitSelector } from "./MultiUnitSelector";
 import { UnitCardList } from "./UnitCardList";
@@ -516,16 +517,16 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
 
                   <FormField control={form.control} name="payment_method" label="Payment Method">
                     {(field) => (
-                      <FormSelect
+                      <SelectControl
                         value={field.value}
-                        onChange={field.onChange}
+                        onValueChange={field.onChange}
                         placeholder="Select payment method"
                       >
                         <SelectItem value="GCash">GCash</SelectItem>
                         <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
                         <SelectItem value="Cash">Cash</SelectItem>
                         <SelectItem value="CreditCard">Credit Card</SelectItem>
-                      </FormSelect>
+                      </SelectControl>
                     )}
                   </FormField>
 

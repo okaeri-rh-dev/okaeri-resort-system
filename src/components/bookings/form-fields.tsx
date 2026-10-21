@@ -1,46 +1,8 @@
-import { useId, type ComponentProps, type ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 
 import { Controller, type Control, type FieldPath, type FieldValues } from "react-hook-form";
 
-import {
-  Checkbox,
-  Label,
-  Select,
-  SelectContent,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/patterns";
-
-type FormSelectProps = Omit<
-  ComponentProps<typeof SelectTrigger>,
-  "value" | "onChange" | "children"
-> & {
-  value?: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  children: ReactNode;
-};
-
-/**
- * A Select to return from a `FormField` render child. The field's id and ARIA land on the
- * trigger, so the label names it and the validation message describes it.
- */
-export function FormSelect({
-  value,
-  onChange,
-  placeholder,
-  children,
-  ...triggerProps
-}: FormSelectProps) {
-  return (
-    <Select value={value ?? ""} onValueChange={onChange}>
-      <SelectTrigger {...triggerProps}>
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>{children}</SelectContent>
-    </Select>
-  );
-}
+import { Checkbox, Label } from "@/components/patterns";
 
 interface WalkInFieldProps<TFieldValues extends FieldValues & { is_walk_in?: boolean }> {
   control: Control<TFieldValues>;

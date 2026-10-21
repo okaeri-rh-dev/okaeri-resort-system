@@ -11,10 +11,10 @@ import {
   FormField,
   Input,
   NumberInput,
+  SelectControl,
   SelectItem,
   Textarea,
 } from "@/components/patterns";
-import { SelectControl } from "@/components/payments/SelectControl";
 import { sanitizeFormData } from "@/lib/security/sanitize";
 import { useCreateAccount, useUpdateAccount } from "@/stores/useAccountStore";
 import type { Account, AccountType } from "@/types";

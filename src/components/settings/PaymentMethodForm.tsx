@@ -11,10 +11,10 @@ import {
   FormField,
   Input,
   NumberInput,
+  SelectControl,
   SelectItem,
   Textarea,
 } from "@/components/patterns";
-import { SelectControl } from "@/components/payments/SelectControl";
 import {
   useCreatePaymentMethod,
   useDeleteQrCode,

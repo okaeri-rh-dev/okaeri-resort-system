@@ -19,13 +19,14 @@ import {
   DialogTitle,
   Form,
   FormField,
+  SelectControl,
   Textarea,
 } from "@/components/patterns";
 import { useDeactivateRole, useUpdateRole } from "@/hooks/useRoleManagement";
 import { AuditRole, getRoleDisplayName, type AppRole } from "@/lib/audit-roles";
 import { supabaseAuth } from "@/lib/supabase";
 
-import { RoleSelect } from "./RoleSelect";
+import { RoleOptions } from "./RoleOptions";
 
 // ============================================
 // UPDATE ROLE DIALOG
@@ -118,13 +119,15 @@ export function UpdateRoleDialog({ role, open, onOpenChange }: UpdateRoleDialogP
               description="Choose the new access level for this user"
             >
               {({ value, onChange, onBlur, ref }) => (
-                <RoleSelect
+                <SelectControl
                   value={value}
-                  onChange={onChange}
+                  onValueChange={onChange}
                   onBlur={onBlur}
                   ref={ref}
                   placeholder="Select a new role"
-                />
+                >
+                  <RoleOptions />
+                </SelectControl>
               )}
             </FormField>
 

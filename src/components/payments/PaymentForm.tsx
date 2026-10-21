@@ -14,6 +14,7 @@ import {
   FormField,
   Input,
   Label,
+  SelectControl,
   SelectItem,
   Textarea,
 } from "@/components/patterns";
@@ -21,8 +22,6 @@ import { formatCurrency } from "@/lib/formatters";
 import { useBookings } from "@/stores/useBookingStore";
 import { useCreatePayment, useUpdatePayment } from "@/stores/usePaymentStore";
 import type { Payment } from "@/types";
-
-import { SelectControl } from "./SelectControl";
 
 // Validation schema
 const paymentFormSchema = z.object({

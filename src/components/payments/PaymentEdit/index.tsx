@@ -17,14 +17,13 @@ import {
   Form,
   FormField,
   Input,
+  SelectControl,
   SelectItem,
   Textarea,
 } from "@/components/patterns";
 import { paymentEditSchema, type PaymentEditInput } from "@/lib/validation/entity-schemas";
 import { useUpdatePayment } from "@/stores/usePaymentStore";
 import type { Payment } from "@/types/entity-detail.types";
-
-import { SelectControl } from "../SelectControl";
 
 export interface PaymentEditPageProps {
   payment?: Payment;

@@ -15,10 +15,10 @@ import {
   Input,
   Label,
   NumberInput,
+  SelectControl,
   SelectItem,
   Textarea,
 } from "@/components/patterns";
-import { SelectControl } from "@/components/payments/SelectControl";
 import { useActiveExpenseCategories } from "@/hooks/useExpenseCategories";
 import { sanitizeFormData } from "@/lib/security/sanitize";
 import { toISODateString } from "@/lib/timezone";

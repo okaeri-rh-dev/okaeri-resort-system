@@ -23,11 +23,11 @@ import {
   Form,
   FormField,
   Input,
+  SelectControl,
   SelectItem,
   StatusBadge,
   Switch,
 } from "@/components/patterns";
-import { SelectControl } from "@/components/payments/SelectControl";
 import {
   Table,
   TableBody,

@@ -24,6 +24,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  SelectControl,
   Textarea,
 } from "@/components/patterns";
 import {
@@ -38,7 +39,7 @@ import { usePendingUsers, type PendingUser } from "@/hooks/usePendingUsers";
 import { useGrantRole } from "@/hooks/useRoleManagement";
 import { AuditRole, getRoleDisplayName } from "@/lib/audit-roles";
 
-import { RoleSelect } from "./RoleSelect";
+import { RoleOptions } from "./RoleOptions";
 
 // ============================================
 // VALIDATION SCHEMA
@@ -278,13 +279,15 @@ export function GrantRoleDialog({ open, onOpenChange, prefilledUser }: GrantRole
               description="Choose the access level for this user"
             >
               {({ value, onChange, onBlur, ref }) => (
-                <RoleSelect
+                <SelectControl
                   value={value}
-                  onChange={onChange}
+                  onValueChange={onChange}
                   onBlur={onBlur}
                   ref={ref}
                   placeholder="Select a role"
-                />
+                >
+                  <RoleOptions />
+                </SelectControl>
               )}
             </FormField>
 

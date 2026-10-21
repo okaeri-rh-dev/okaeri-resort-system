@@ -17,10 +17,10 @@ import {
   FormField,
   Input,
   NumberInput,
+  SelectControl,
   SelectItem,
   Textarea,
 } from "@/components/patterns";
-import { SelectControl } from "@/components/payments/SelectControl";
 import { useEntityEdit } from "@/hooks/entity";
 import { useActiveExpenseCategories } from "@/hooks/useExpenseCategories";
 import { toISODateString } from "@/lib/timezone";
