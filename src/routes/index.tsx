@@ -12,7 +12,7 @@
  * Flow:
  * 1. Guest lands on homepage → Sees availability calendar
  * 2. Guest checks available dates → No login required
- * 3. Guest contacts manager → Via WhatsApp or phone
+ * 3. Guest contacts the resort → Via a Contact channel in the notice
  * 4. Manager sends booking link → After discussion
  *
  * @route /
@@ -23,6 +23,8 @@ import { lazy, Suspense, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 
+import { ContactChannelList } from "@/components/contact-channels/ContactChannelList";
+import { useActiveContactChannels } from "@/hooks/useContactChannels";
 import { GuestLayout } from "@/layouts/GuestLayout";
 
 // Lazy load the calendar component for better initial page load performance
@@ -37,6 +39,8 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
+  const { data: contactChannels = [] } = useActiveContactChannels();
+
   // Set document title and meta tags
   useEffect(() => {
     document.title = "Okaeri Resort - Beachfront Accommodation in La Union | Check Availability";
@@ -141,7 +145,8 @@ function HomePage() {
 
         {/* Compact Information Notice */}
         <div className="border-border bg-muted text-muted-foreground medium:text-sm mt-2 rounded border p-2 text-xs">
-          <strong>View-Only:</strong> Contact us to book available dates. WhatsApp: +63 917 XXX XXXX
+          <strong>View-Only:</strong> Contact us to book available dates.
+          <ContactChannelList channels={contactChannels} className="mt-2" />
         </div>
       </div>
     </GuestLayout>

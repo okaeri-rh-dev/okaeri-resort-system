@@ -5,7 +5,9 @@ import { BookingSummaryCard } from "@/components/booking-confirmation/BookingSum
 import { PaymentInstructions } from "@/components/booking-confirmation/PaymentInstructions";
 import { PrintButton } from "@/components/booking-confirmation/PrintButton";
 import { StatusTimeline } from "@/components/booking-confirmation/StatusTimeline";
+import { ContactChannelList } from "@/components/contact-channels/ContactChannelList";
 import { Button, Callout } from "@/components/patterns";
+import { useActiveContactChannels } from "@/hooks/useContactChannels";
 import { GuestLayout } from "@/layouts/GuestLayout";
 import { readConfirmationSnapshot } from "@/lib/bookings/confirmation-snapshot";
 import { isBookingReference } from "@/lib/bookings/reference";
@@ -26,6 +28,7 @@ export const Route = createFileRoute("/booking/confirmation/$bookingReference")(
 function BookingConfirmationComponent() {
   const { booking } = Route.useLoaderData();
   const { bookingReference } = Route.useParams();
+  const { data: contactChannels = [] } = useActiveContactChannels();
 
   if (!booking) {
     return <SavedBookingUnavailable bookingReference={bookingReference} />;
@@ -72,18 +75,13 @@ function BookingConfirmationComponent() {
             <PrintButton />
           </div>
 
-          {/* Contact Information - Not printed */}
-          <Callout tone="neutral" className="print:hidden">
-            If you have any questions or need to make changes to your booking, please contact us at{" "}
-            <a href="mailto:bookings@resort.com" className="font-medium underline">
-              bookings@resort.com
-            </a>{" "}
-            or call us at{" "}
-            <a href="tel:+1234567890" className="font-medium underline">
-              +1 (234) 567-890
-            </a>
-            .
-          </Callout>
+          {/* Contact channels - Not printed */}
+          {contactChannels.length > 0 && (
+            <Callout tone="info" className="print:hidden">
+              If you have any questions or need to make changes to your booking, please contact us.
+              <ContactChannelList channels={contactChannels} className="mt-2" />
+            </Callout>
+          )}
 
           {/* Back to Home Link - Not printed */}
           <div className="flex justify-center print:hidden">

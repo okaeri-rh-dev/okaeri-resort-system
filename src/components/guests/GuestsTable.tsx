@@ -229,7 +229,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
   onEditGuest,
   className,
 }) => {
-  const { isManager } = useUserRole();
+  const { isAdmin } = useUserRole();
 
   // Store state
   const { searchQuery, setSearchQuery } = useGuestStore();
@@ -422,7 +422,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
               label: "Call Guest",
               onClick: () => handleCall(guest),
             },
-            ...(isManager
+            ...(isAdmin
               ? [
                   {
                     label: "Delete Guest",
@@ -438,7 +438,7 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
         size: 80,
       }),
     ],
-    [onViewGuest, isManager]
+    [onViewGuest, isAdmin]
   );
 
   // Create table instance

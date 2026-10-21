@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { format } from "date-fns";
 
+import type { MoveDirection } from "@/lib/contact-channel";
 import { toManilaDateString } from "@/lib/timezone";
 import type { AuditEventContext, AuditLogFilters } from "@/types/audit.types";
 import type { Database, Json, TablesInsert, TablesUpdate } from "@/types/database.types";
@@ -64,6 +65,16 @@ export const supabaseAuth = supabase.auth;
 const paymentMethodsTable = () => supabase.from("payment_methods");
 
 const expenseCategoriesTable = () => supabase.from("expense_categories");
+
+const contactChannelsTable = () => supabase.from("contact_channels");
+
+// The same order reorder_contact_channel ranks by, so ties never flip between reads and moves.
+const contactChannelsInRankOrder = () =>
+  contactChannelsTable()
+    .select("*")
+    .order("display_order", { ascending: true })
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true });
 
 // Type for PostgrestError from Supabase
 interface PostgrestError {
@@ -1097,6 +1108,29 @@ export const db = {
     /** Reactivate a payment method */
     reactivate: (id: string) =>
       paymentMethodsTable().update({ is_active: true }).eq("id", id).select().single(),
+  },
+
+  // Contact channels (guest-facing contact list, managed on admin Settings)
+  contactChannels: {
+    /** Get all contact channels, hidden ones included, in display order (admin settings) */
+    all: () => contactChannelsInRankOrder(),
+
+    create: (data: TablesInsert<"contact_channels">) =>
+      contactChannelsTable().insert(data).select().single(),
+
+    update: (id: string, data: TablesUpdate<"contact_channels">) =>
+      contactChannelsTable().update(data).eq("id", id).select().single(),
+
+    /** Hide (false) or show (true) a channel on guest pages */
+    setActive: (id: string, isActive: boolean) =>
+      contactChannelsTable().update({ is_active: isActive }).eq("id", id).select().single(),
+
+    /** Swap a channel with its neighbour above or below (manager+, atomic) */
+    reorder: (id: string, direction: MoveDirection) =>
+      supabase.rpc("reorder_contact_channel", { p_id: id, p_direction: direction }),
+
+    /** Get active contact channels in display order (guest pages) */
+    active: () => contactChannelsInRankOrder().eq("is_active", true),
   },
 
   // Expense Categories configuration (expense form dropdowns)

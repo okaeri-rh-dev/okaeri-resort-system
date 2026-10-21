@@ -572,6 +572,39 @@ export type Database = {
           },
         ];
       };
+      contact_channels: {
+        Row: {
+          created_at: string;
+          display_order: number;
+          id: string;
+          is_active: boolean;
+          kind: string;
+          label: string | null;
+          updated_at: string;
+          value: string;
+        };
+        Insert: {
+          created_at?: string;
+          display_order?: number;
+          id?: string;
+          is_active?: boolean;
+          kind: string;
+          label?: string | null;
+          updated_at?: string;
+          value: string;
+        };
+        Update: {
+          created_at?: string;
+          display_order?: number;
+          id?: string;
+          is_active?: boolean;
+          kind?: string;
+          label?: string | null;
+          updated_at?: string;
+          value?: string;
+        };
+        Relationships: [];
+      };
       discount_rules: {
         Row: {
           conditions: NonNullable<Json>;
@@ -1438,6 +1471,7 @@ export type Database = {
           month_archived: string;
         }[];
       };
+      next_contact_channel_order: { Args: Record<PropertyKey, never>; Returns: number };
       normalize_booking_stays: {
         Args: { p_check_in_time?: string; p_check_out_time?: string };
         Returns: {
@@ -1446,6 +1480,7 @@ export type Database = {
         }[];
       };
       refresh_booking_payment_status: { Args: { p_booking_id: string }; Returns: undefined };
+      reorder_contact_channel: { Args: { p_direction: string; p_id: string }; Returns: undefined };
       restore_logs_from_archive: {
         Args: { end_date: string; start_date: string };
         Returns: number;

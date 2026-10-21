@@ -18,6 +18,11 @@ export const TEST_USERS = {
     password: process.env.TEST_ADMIN_PASSWORD || "test-password",
     role: "admin",
   },
+  manager: {
+    email: process.env.TEST_MANAGER_EMAIL || "manager@okaeri.test",
+    password: process.env.TEST_MANAGER_PASSWORD || "test-password",
+    role: "manager",
+  },
   staff: {
     email: process.env.TEST_STAFF_EMAIL || "staff@okaeri.test",
     password: process.env.TEST_STAFF_PASSWORD || "test-password",
