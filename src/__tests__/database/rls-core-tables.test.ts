@@ -33,15 +33,16 @@ const ALL: Role[] = ["user", ...ROLES_WITH_APP_ROLE];
 const STAFF_PLUS: Role[] = ["staff", "manager", "owner", "admin"];
 const MANAGER_PLUS: Role[] = ["manager", "owner", "admin"];
 const OWNER_PLUS: Role[] = ["owner", "admin"];
+const ADMIN_ONLY: Role[] = ["admin"];
 
 // Expected allowed-role sets per table + operation (the proposed matrix).
 const MATRIX: Record<string, Record<"select" | "insert" | "update" | "delete", Role[]>> = {
   // Levels reflect actual per-operation reachability (see migration header):
-  // staff can create/update bookings, delete via the create-error rollback, and
-  // upload payment proofs (payments INSERT). Payment edit/verify/delete and
-  // guest edit/delete are gated to their manager+ pages.
+  // staff can create/update bookings and upload payment proofs (payments INSERT).
+  // Payment edit/verify/delete and guest edit are gated to their manager+ pages.
+  // Booking hard delete is admin only (20261021100000); Cancel keeps the history.
   // guests DELETE has no client policy: deletes go through delete_guest (20261021000000).
-  bookings: { select: STAFF_PLUS, insert: STAFF_PLUS, update: STAFF_PLUS, delete: STAFF_PLUS },
+  bookings: { select: STAFF_PLUS, insert: STAFF_PLUS, update: STAFF_PLUS, delete: ADMIN_ONLY },
   guests: { select: STAFF_PLUS, insert: STAFF_PLUS, update: MANAGER_PLUS, delete: [] },
   payments: {
     select: STAFF_PLUS,

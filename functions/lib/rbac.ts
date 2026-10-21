@@ -22,6 +22,7 @@ export type UserRole = AppRoleName | "user";
 export const STAFF_OR_ABOVE: UserRole[] = ["staff", "manager", "owner", "admin"];
 export const MANAGER_OR_ABOVE: UserRole[] = ["manager", "owner", "admin"];
 export const OWNER_OR_ABOVE: UserRole[] = ["owner", "admin"];
+export const ADMIN_ONLY: UserRole[] = ["admin"];
 
 /**
  * The caller, as resolved by the root middleware and passed to routes on

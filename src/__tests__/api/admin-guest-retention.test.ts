@@ -89,12 +89,13 @@ describe("DELETE /api/admin/guests/:guestId", () => {
     remove.mockReset().mockResolvedValue({ data: [], error: null });
   });
 
-  it("forbids staff", async () => {
-    expect((await deleteAs("staff")).status).toBe(403);
+  it.each<UserRole>(["staff", "manager", "owner"])("forbids %s", async (role) => {
+    expect((await deleteAs(role)).status).toBe(403);
+    expect(rpc).not.toHaveBeenCalled();
   });
 
-  it("lets a manager delete through delete_guest", async () => {
-    const response = await deleteAs("manager");
+  it("lets an admin delete through delete_guest", async () => {
+    const response = await deleteAs("admin");
 
     expect(response.status).toBe(200);
     expect(rpc).toHaveBeenCalledWith("delete_guest", { p_guest_id: GUEST_ID });
@@ -103,6 +104,6 @@ describe("DELETE /api/admin/guests/:guestId", () => {
   it("maps active bookings to 409", async () => {
     rpc.mockResolvedValue({ data: null, error: { code: "PT409", message: "active bookings" } });
 
-    expect((await deleteAs("manager")).status).toBe(409);
+    expect((await deleteAs("admin")).status).toBe(409);
   });
 });
