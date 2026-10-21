@@ -6,46 +6,38 @@ import { BookingFormPage } from "./pages/BookingFormPage";
 
 /**
  * The guest booking flow reads in dark mode: every step of the booking form, the
- * confirmation page and the status lookup. The confirmation and status APIs are stubbed,
- * so these tests need only the dev server and wrangler (for rates and pricing).
+ * confirmation page and the status lookup. The confirmation snapshot is seeded and the
+ * status API is stubbed, so these tests need only the dev server and wrangler (for rates and pricing).
  */
 
 const CONFIRMATION_REF = "OKR-E2E-DARK";
 
-async function stubConfirmation(page: Page) {
-  await page.route(`**/api/guest-booking/${CONFIRMATION_REF}`, (route) =>
-    route.fulfill({
-      json: {
-        success: true,
-        booking: {
-          booking_id: "00000000-0000-0000-0000-00000000da7c",
-          booking_reference: CONFIRMATION_REF,
-          guest_name: TEST_GUEST.name,
-          email: TEST_GUEST.email,
-          phone_number: TEST_GUEST.phone,
-          check_in: "2026-12-04T06:00:00.000Z",
-          check_out: "2026-12-06T04:00:00.000Z",
-          unit_requests: [{ guests_per_unit: 2 }, { guests_per_unit: 4 }],
-          special_requests: "Late arrival, around 9 PM",
-          total_amount: 13000,
-          downpayment_amount: 6500,
-          discount_applied: { percent: 10, amount: 1300, rule_name: "Early bird" },
-          pricing_breakdown: {
-            base_total: 12000,
-            weekend_surcharge: 1300,
-            extra_person_fees: 1000,
-            subtotal: 14300,
-            discount_amount: 1300,
-            total: 13000,
-            nights: 2,
-          },
-          payment_proof_url: null,
-          status: "Pending",
-          created_at: "2026-10-21T02:00:00.000Z",
+/** Seeds the snapshot the booking form saves on submit; the page makes no booking request. */
+async function seedConfirmation(page: Page) {
+  await page.addInitScript((reference) => {
+    sessionStorage.setItem(
+      "bookingConfirmation",
+      JSON.stringify({
+        booking_reference: reference,
+        check_in: "2026-12-04T06:00:00.000Z",
+        check_out: "2026-12-06T04:00:00.000Z",
+        unit_requests: [{ guests_per_unit: 2 }, { guests_per_unit: 4 }],
+        special_requests: "Late arrival, around 9 PM",
+        downpayment_amount: 6500,
+        discount_applied: { percent: 10, amount: 1300, rule_name: "Early bird" },
+        pricing_breakdown: {
+          base_total: 12000,
+          weekend_surcharge: 1300,
+          extra_person_fees: 1000,
+          subtotal: 14300,
+          discount_amount: 1300,
+          total: 13000,
+          nights: 2,
         },
-      },
-    })
-  );
+        payment_proof_attached: false,
+      })
+    );
+  }, CONFIRMATION_REF);
 }
 
 async function stubStatusLookup(page: Page) {
@@ -108,7 +100,7 @@ test.describe("Dark mode guest booking form", () => {
 test.describe("Dark mode booking confirmation", () => {
   test.beforeEach(async ({ page }) => {
     await useDarkTheme(page);
-    await stubConfirmation(page);
+    await seedConfirmation(page);
   });
 
   for (const size of [COMPACT, EXPANDED]) {

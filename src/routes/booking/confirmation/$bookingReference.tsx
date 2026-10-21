@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
 
 import { BookingReferenceDisplay } from "@/components/booking-confirmation/BookingReferenceDisplay";
 import { BookingSummaryCard } from "@/components/booking-confirmation/BookingSummaryCard";
@@ -8,127 +7,15 @@ import { PrintButton } from "@/components/booking-confirmation/PrintButton";
 import { StatusTimeline } from "@/components/booking-confirmation/StatusTimeline";
 import { Button, Callout } from "@/components/patterns";
 import { GuestLayout } from "@/layouts/GuestLayout";
-
-/**
- * Booking confirmation data structure returned from the API
- */
-interface BookingConfirmationData {
-  booking_id: string;
-  booking_reference: string;
-  guest_name: string;
-  email: string;
-  phone_number: string;
-  check_in: string;
-  check_out: string;
-  unit_requests: Array<{
-    guests_per_unit: number;
-  }>;
-  special_requests?: string;
-  total_amount: number;
-  downpayment_amount: number;
-  discount_applied?: {
-    percent: number;
-    amount: number;
-    rule_name: string;
-  };
-  pricing_breakdown: {
-    base_total: number;
-    weekend_surcharge: number;
-    extra_person_fees: number;
-    subtotal: number;
-    discount_amount: number;
-    total: number;
-    nights: number;
-  };
-  payment_proof_url?: string | null;
-  status: string;
-  created_at: string;
-}
-
-/**
- * API response wrapper
- */
-interface BookingConfirmationResponse {
-  success: boolean;
-  booking: BookingConfirmationData;
-}
+import { readConfirmationSnapshot } from "@/lib/bookings/confirmation-snapshot";
+import { isBookingReference } from "@/lib/bookings/reference";
 
 /**
  * File-based route for booking confirmation page
  * Route path: /booking/confirmation/$bookingReference
  */
 export const Route = createFileRoute("/booking/confirmation/$bookingReference")({
-  /**
-   * Loader function to fetch booking confirmation data
-   * This runs before the component renders, providing type-safe data
-   */
-  loader: async ({ params }) => {
-    const { bookingReference } = params;
-
-    try {
-      const response = await fetch(`/api/guest-booking/${bookingReference}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("Booking not found");
-        }
-        throw new Error(`Failed to fetch booking: ${response.statusText}`);
-      }
-
-      const data: BookingConfirmationResponse = await response.json();
-
-      if (!data.success || !data.booking) {
-        throw new Error("Invalid booking data received");
-      }
-
-      return {
-        booking: data.booking,
-      };
-    } catch (error) {
-      console.error("[Booking Confirmation] Failed to fetch booking:", error);
-      throw error;
-    }
-  },
-
-  /**
-   * Loading component shown while data is being fetched
-   */
-  pendingComponent: () => (
-    <div className="container mx-auto flex min-h-screen items-center justify-center px-4 py-8">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="text-primary h-8 w-8 animate-spin" />
-        <p className="text-muted-foreground text-sm">Loading your booking confirmation...</p>
-      </div>
-    </div>
-  ),
-
-  /**
-   * Error component shown when booking cannot be loaded
-   */
-  errorComponent: ({ error }) => (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mx-auto max-w-md text-center">
-        <h1 className="text-foreground mb-4 text-2xl font-bold">Booking Not Found</h1>
-        <p className="text-muted-foreground mb-6">
-          {error instanceof Error && error.message === "Booking not found"
-            ? "We couldn't find a booking with this reference number. Please check the reference and try again."
-            : "An error occurred while loading your booking confirmation. Please try again later."}
-        </p>
-        <Button asChild>
-          <Link to="/guest-booking">Go to Booking Page</Link>
-        </Button>
-      </div>
-    </div>
-  ),
-
-  /**
-   * Main component that renders the booking confirmation page
-   */
+  loader: ({ params }) => ({ booking: readConfirmationSnapshot(params.bookingReference) }),
   component: BookingConfirmationComponent,
 });
 
@@ -140,8 +27,9 @@ function BookingConfirmationComponent() {
   const { booking } = Route.useLoaderData();
   const { bookingReference } = Route.useParams();
 
-  // Calculate whether payment proof has been uploaded
-  const paymentProofUploaded = !!booking.payment_proof_url;
+  if (!booking) {
+    return <SavedBookingUnavailable bookingReference={bookingReference} />;
+  }
 
   return (
     <GuestLayout>
@@ -166,7 +54,7 @@ function BookingConfirmationComponent() {
           <PaymentInstructions
             downpaymentAmount={booking.downpayment_amount}
             bookingReference={bookingReference}
-            paymentProofUploaded={paymentProofUploaded}
+            paymentProofUploaded={booking.payment_proof_attached}
           />
 
           {/* Booking Summary */}
@@ -203,6 +91,44 @@ function BookingConfirmationComponent() {
               <Link to="/">Back to Home</Link>
             </Button>
           </div>
+        </div>
+      </div>
+    </GuestLayout>
+  );
+}
+
+/** Shown on a refresh after the tab closed, on another device, or from a shared link. */
+function SavedBookingUnavailable({ bookingReference }: { bookingReference: string }) {
+  if (!isBookingReference(bookingReference)) {
+    return (
+      <GuestLayout width="form" pageHeader={{ title: "Booking reference not valid" }}>
+        <div className="space-y-6 text-center">
+          <p className="text-muted-foreground break-words">
+            &ldquo;{bookingReference}&rdquo; is not a booking reference. Check the reference and try
+            again.
+          </p>
+          <Button size="lg" asChild>
+            <Link to="/booking/check-status">Check booking status</Link>
+          </Button>
+        </div>
+      </GuestLayout>
+    );
+  }
+
+  return (
+    <GuestLayout width="form">
+      <div className="space-y-6">
+        <BookingReferenceDisplay reference={bookingReference} />
+        <Callout tone="neutral">
+          The booking details show only in the browser tab where you made the booking. To see your
+          booking, check its status with this reference and your email.
+        </Callout>
+        <div className="flex justify-center">
+          <Button size="lg" asChild>
+            <Link to="/booking/check-status" search={{ reference: bookingReference }}>
+              Check booking status
+            </Link>
+          </Button>
         </div>
       </div>
     </GuestLayout>

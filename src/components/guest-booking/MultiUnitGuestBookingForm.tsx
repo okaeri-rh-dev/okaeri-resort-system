@@ -21,6 +21,7 @@ import {
   Textarea,
 } from "@/components/patterns";
 import { PaymentMethodsDisplay } from "@/components/payments/PaymentMethodsDisplay";
+import { saveConfirmationSnapshot } from "@/lib/bookings/confirmation-snapshot";
 import { pickedDay } from "@/lib/bookings/stay";
 import { logger } from "@/lib/logger";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
@@ -267,21 +268,7 @@ export function MultiUnitGuestBookingForm() {
         }
       }
 
-      // Store booking data for confirmation page (backup in case of issues)
-      sessionStorage.setItem(
-        "lastBookingConfirmation",
-        JSON.stringify({
-          bookingReference:
-            isObject(result) &&
-            hasProperty(result, "booking") &&
-            isObject(result.booking) &&
-            hasProperty(result.booking, "booking_reference")
-              ? result.booking.booking_reference
-              : null,
-          bookingData: result,
-          timestamp: Date.now(),
-        })
-      );
+      saveConfirmationSnapshot(result, payload);
 
       // Navigate to confirmation page using TanStack Router
       if (
