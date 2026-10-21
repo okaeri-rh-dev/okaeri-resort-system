@@ -1,16 +1,18 @@
 import * as React from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-// Removed unused imports: format, X, Label
 import { Calendar, Edit2, Plus, Save, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -18,25 +20,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   Form,
-  FormControl,
-  FormDescription,
   FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
+  Input,
   SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+  StatusBadge,
+  Switch,
+  type StatusTone,
+} from "@/components/patterns";
+import { SelectControl } from "@/components/payments/SelectControl";
 import {
   Table,
   TableBody,
@@ -78,33 +70,13 @@ const seasonalRateSchema = z.object({
 
 type SeasonalRateInput = z.infer<typeof seasonalRateSchema>;
 
-// Color options for seasonal rates
-const COLOR_OPTIONS = [
-  {
-    value: "blue",
-    label: "Blue",
-    className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  },
-  {
-    value: "green",
-    label: "Green",
-    className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  },
-  {
-    value: "orange",
-    label: "Orange",
-    className: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-  },
-  {
-    value: "red",
-    label: "Red",
-    className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-  },
-  {
-    value: "purple",
-    label: "Purple",
-    className: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-  },
+// Badge colours for seasonal rates. The stored value stays as saved; each one shows as a tone.
+const COLOR_OPTIONS: Array<{ value: string; label: string; tone: StatusTone }> = [
+  { value: "blue", label: "Blue", tone: "info" },
+  { value: "green", label: "Green", tone: "success" },
+  { value: "orange", label: "Amber", tone: "warning" },
+  { value: "red", label: "Red", tone: "danger" },
+  { value: "purple", label: "Gray", tone: "neutral" },
 ];
 
 interface SeasonalRatesFormProps {
@@ -236,12 +208,8 @@ export function SeasonalRatesForm({
     });
   };
 
-  // Get badge color class
-  const getBadgeColorClass = (color?: string) => {
-    return (
-      COLOR_OPTIONS.find((opt) => opt.value === color)?.className || COLOR_OPTIONS[0].className
-    );
-  };
+  const getBadgeTone = (color?: string) =>
+    COLOR_OPTIONS.find((opt) => opt.value === color)?.tone ?? COLOR_OPTIONS[0].tone;
 
   // Format date for display
   const formatDateRange = (start: string, end: string) => {
@@ -274,13 +242,117 @@ export function SeasonalRatesForm({
   // Check if there are unsaved changes
   const hasChanges = JSON.stringify(localRates) !== JSON.stringify(rates);
 
+  // Shared form fields used in both Add and Edit dialogs
+  const renderFormFields = (isEditing: boolean) => (
+    <>
+      <FormField
+        control={form.control}
+        name="season_id"
+        label="Season ID"
+        description={
+          isEditing
+            ? "Season ID cannot be changed"
+            : "Unique identifier (lowercase, underscores only)"
+        }
+      >
+        {(field) => (
+          <Input
+            {...field}
+            disabled={isEditing}
+            placeholder="e.g., peak_summer"
+            autoComplete="off"
+            spellCheck={false}
+          />
+        )}
+      </FormField>
+
+      <FormField control={form.control} name="name" label="Display Name">
+        {(field) => <Input {...field} placeholder="e.g., Peak Summer Season" />}
+      </FormField>
+
+      <div className="grid grid-cols-2 gap-4">
+        <FormField control={form.control} name="start_date" label="Start Date (MM-DD)">
+          {(field) => <Input {...field} placeholder="03-01" inputMode="numeric" />}
+        </FormField>
+
+        <FormField control={form.control} name="end_date" label="End Date (MM-DD)">
+          {(field) => <Input {...field} placeholder="05-31" inputMode="numeric" />}
+        </FormField>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="multiplier"
+          label="Price Multiplier"
+          description={
+            form.watch("multiplier") > 1
+              ? `+${((form.watch("multiplier") - 1) * 100).toFixed(0)}% increase`
+              : form.watch("multiplier") < 1
+                ? `-${((1 - form.watch("multiplier")) * 100).toFixed(0)}% discount`
+                : "No change"
+          }
+        >
+          {(field) => (
+            <Input
+              {...field}
+              type="number"
+              step="0.1"
+              onChange={(e) => field.onChange(parseFloat(e.target.value))}
+            />
+          )}
+        </FormField>
+
+        <FormField
+          control={form.control}
+          name="priority"
+          label="Priority"
+          description="Higher priority wins if dates overlap"
+        >
+          {(field) => (
+            <Input
+              {...field}
+              type="number"
+              onChange={(e) => field.onChange(parseInt(e.target.value))}
+            />
+          )}
+        </FormField>
+      </div>
+
+      <FormField control={form.control} name="color" label="Badge Color">
+        {(field) => (
+          <SelectControl value={field.value} onValueChange={field.onChange}>
+            {COLOR_OPTIONS.map((color) => (
+              <SelectItem key={color.value} value={color.value}>
+                <StatusBadge tone={color.tone}>{color.label}</StatusBadge>
+              </SelectItem>
+            ))}
+          </SelectControl>
+        )}
+      </FormField>
+
+      <FormField control={form.control} name="description" label="Description (Optional)">
+        {(field) => <Input {...field} placeholder="e.g., Philippine summer vacation period" />}
+      </FormField>
+
+      <FormField
+        control={form.control}
+        name="is_active"
+        label="Active"
+        description="Enable this seasonal rate"
+      >
+        {(field) => <Switch checked={field.value} onCheckedChange={field.onChange} />}
+      </FormField>
+    </>
+  );
+
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="text-muted-foreground h-5 w-5" />
+              <Calendar className="text-muted-foreground h-5 w-5" aria-hidden="true" />
               Seasonal Rates
             </CardTitle>
             <CardDescription>
@@ -290,18 +362,18 @@ export function SeasonalRatesForm({
           <div className="flex gap-2">
             {hasChanges && (
               <Button onClick={handleSaveAll} disabled={isSaving} size="sm">
-                <Save className="mr-2 h-4 w-4" />
+                <Save className="mr-2 h-4 w-4" aria-hidden="true" />
                 Save All Changes
               </Button>
             )}
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="outline">
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
                   Add Season
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add Seasonal Rate</DialogTitle>
                   <DialogDescription>
@@ -310,176 +382,7 @@ export function SeasonalRatesForm({
                 </DialogHeader>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(handleAdd)} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="season_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Season ID</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="e.g., peak_summer" />
-                          </FormControl>
-                          <FormDescription>
-                            Unique identifier (lowercase, underscores only)
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Display Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="e.g., Peak Summer Season" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="start_date"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Start Date (MM-DD)</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="03-01" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="end_date"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>End Date (MM-DD)</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="05-31" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="multiplier"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Price Multiplier</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                type="number"
-                                step="0.1"
-                                onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              {field.value > 1
-                                ? `+${((field.value - 1) * 100).toFixed(0)}% increase`
-                                : field.value < 1
-                                  ? `-${((1 - field.value) * 100).toFixed(0)}% discount`
-                                  : "No change"}
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="priority"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Priority</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                type="number"
-                                onChange={(e) => field.onChange(parseInt(e.target.value))}
-                              />
-                            </FormControl>
-                            <FormDescription>Higher priority wins if dates overlap</FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="color"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Badge Color</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {COLOR_OPTIONS.map((color) => (
-                                <SelectItem key={color.value} value={color.value}>
-                                  <div className="flex items-center gap-2">
-                                    <Badge className={color.className} variant="secondary">
-                                      {color.label}
-                                    </Badge>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description (Optional)</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              placeholder="e.g., Philippine summer vacation period"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="is_active"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                          <div className="space-y-0.5">
-                            <FormLabel>Active</FormLabel>
-                            <FormDescription>Enable this seasonal rate</FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
+                    {renderFormFields(false)}
                     <DialogFooter>
                       <Button
                         type="button"
@@ -501,7 +404,7 @@ export function SeasonalRatesForm({
       <CardContent>
         {localRates.length === 0 ? (
           <div className="text-muted-foreground py-8 text-center">
-            <Calendar className="mx-auto mb-4 h-12 w-12 opacity-50" />
+            <Calendar className="mx-auto mb-4 h-12 w-12 opacity-50" aria-hidden="true" />
             <p>No seasonal rates configured</p>
             <p className="mt-2 text-sm">
               Add seasonal rates to automatically adjust pricing throughout the year
@@ -525,23 +428,25 @@ export function SeasonalRatesForm({
                 .map((rate) => (
                   <TableRow key={rate.season_id}>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Badge className={getBadgeColorClass(rate.color)} variant="secondary">
-                          {rate.name}
-                        </Badge>
-                      </div>
+                      <StatusBadge tone={getBadgeTone(rate.color)}>{rate.name}</StatusBadge>
                     </TableCell>
-                    <TableCell className="font-mono text-sm">
+                    <TableCell className="text-sm whitespace-nowrap tabular-nums">
                       {formatDateRange(rate.start_date, rate.end_date)}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 tabular-nums">
                         {rate.multiplier > 1 ? (
-                          <TrendingUp className="h-4 w-4 text-green-600" />
+                          <TrendingUp
+                            className="text-success-foreground h-4 w-4"
+                            aria-hidden="true"
+                          />
                         ) : rate.multiplier < 1 ? (
-                          <TrendingDown className="h-4 w-4 text-red-600" />
+                          <TrendingDown
+                            className="text-danger-foreground h-4 w-4"
+                            aria-hidden="true"
+                          />
                         ) : null}
-                        <span className="font-mono">{rate.multiplier}x</span>
+                        <span>{rate.multiplier}x</span>
                         <span className="text-muted-foreground text-sm">
                           (
                           {rate.multiplier > 1
@@ -553,22 +458,31 @@ export function SeasonalRatesForm({
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{rate.priority}</Badge>
-                    </TableCell>
+                    <TableCell className="tabular-nums">{rate.priority}</TableCell>
                     <TableCell>
                       <Switch
                         checked={rate.is_active}
                         onCheckedChange={() => handleToggleActive(rate)}
+                        aria-label={`${rate.name} active`}
                       />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(rate)}>
-                          <Edit2 className="h-4 w-4" />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditDialog(rate)}
+                          aria-label={`Edit ${rate.name}`}
+                        >
+                          <Edit2 className="h-4 w-4" aria-hidden="true" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(rate)}>
-                          <Trash2 className="text-destructive h-4 w-4" />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(rate)}
+                          aria-label={`Delete ${rate.name}`}
+                        >
+                          <Trash2 className="text-destructive h-4 w-4" aria-hidden="true" />
                         </Button>
                       </div>
                     </TableCell>
@@ -580,178 +494,14 @@ export function SeasonalRatesForm({
 
         {/* Edit Dialog */}
         <Dialog open={!!editingRate} onOpenChange={(open) => !open && setEditingRate(null)}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit Seasonal Rate</DialogTitle>
               <DialogDescription>Modify the seasonal pricing period settings</DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleEdit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="season_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Season ID</FormLabel>
-                      <FormControl>
-                        <Input {...field} disabled />
-                      </FormControl>
-                      <FormDescription>Season ID cannot be changed</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Display Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="start_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Start Date (MM-DD)</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="end_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>End Date (MM-DD)</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="multiplier"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Price Multiplier</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="number"
-                            step="0.1"
-                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          {field.value > 1
-                            ? `+${((field.value - 1) * 100).toFixed(0)}% increase`
-                            : field.value < 1
-                              ? `-${((1 - field.value) * 100).toFixed(0)}% discount`
-                              : "No change"}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="priority"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Priority</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="number"
-                            onChange={(e) => field.onChange(parseInt(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormDescription>Higher priority wins if dates overlap</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Badge Color</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {COLOR_OPTIONS.map((color) => (
-                            <SelectItem key={color.value} value={color.value}>
-                              <div className="flex items-center gap-2">
-                                <Badge className={color.className} variant="secondary">
-                                  {color.label}
-                                </Badge>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description (Optional)</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="is_active"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                      <div className="space-y-0.5">
-                        <FormLabel>Active</FormLabel>
-                        <FormDescription>Enable this seasonal rate</FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
+                {renderFormFields(true)}
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setEditingRate(null)}>
                     Cancel
