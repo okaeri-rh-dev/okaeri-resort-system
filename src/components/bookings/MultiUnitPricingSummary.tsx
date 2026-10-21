@@ -12,9 +12,14 @@
  * @module MultiUnitPricingSummary
  */
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import {
+  Callout,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Separator,
+} from "@/components/patterns";
 import { formatCurrency } from "@/lib/formatters";
 import type { BookingUnit } from "@/types/multi-unit-booking";
 
@@ -60,7 +65,7 @@ export function MultiUnitPricingSummary({
                 <span>
                   Cabin {index + 1}: {unit.unit_name}
                 </span>
-                <span className="font-mono">{formatCurrency(unit.pricing.unit_total)}</span>
+                <span className="tabular-nums">{formatCurrency(unit.pricing.unit_total)}</span>
               </div>
               <div className="text-muted-foreground pl-4 text-sm">
                 {unit.pricing.nights} night{unit.pricing.nights !== 1 ? "s" : ""} ×{" "}
@@ -79,16 +84,16 @@ export function MultiUnitPricingSummary({
         <div className="space-y-2">
           <div className="flex justify-between" aria-label={`Subtotal ${formatCurrency(subtotal)}`}>
             <span>Subtotal</span>
-            <span className="font-mono">{formatCurrency(subtotal)}</span>
+            <span className="tabular-nums">{formatCurrency(subtotal)}</span>
           </div>
 
           {discount > 0 && (
             <div
-              className="flex justify-between text-green-600"
+              className="text-success-foreground flex justify-between"
               aria-label={`Bulk discount ${formatCurrency(discount)}`}
             >
               <span>Bulk Discount</span>
-              <span className="font-mono">-{formatCurrency(discount)}</span>
+              <span className="tabular-nums">-{formatCurrency(discount)}</span>
             </div>
           )}
 
@@ -99,24 +104,20 @@ export function MultiUnitPricingSummary({
             aria-label={`Total amount ${formatCurrency(total)}`}
           >
             <span>TOTAL</span>
-            <span className="font-mono">{formatCurrency(total)}</span>
+            <span className="tabular-nums">{formatCurrency(total)}</span>
           </div>
         </div>
 
         {/* Bulk Discount Promotional Message */}
         {shouldShowBulkDiscountPromo && (
-          <Alert role="status" aria-live="polite">
-            <AlertDescription>💡 Book 3+ units to get a bulk discount!</AlertDescription>
-          </Alert>
+          <Callout tone="info">Book 3+ units to get a bulk discount!</Callout>
         )}
 
         {/* Discount Applied Message */}
         {discount > 0 && (
-          <Alert role="status" aria-live="polite">
-            <AlertDescription className="text-green-600">
-              ✓ Bulk discount applied! You saved {formatCurrency(discount)}
-            </AlertDescription>
-          </Alert>
+          <Callout tone="success">
+            Bulk discount applied! You saved {formatCurrency(discount)}
+          </Callout>
         )}
       </CardContent>
     </Card>
