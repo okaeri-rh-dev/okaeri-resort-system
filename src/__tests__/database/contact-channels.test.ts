@@ -6,10 +6,20 @@
  * @vitest-environment node
  */
 
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+
+import { db } from "@/lib/supabase";
 
 import { createRoleClients, type RoleClients } from "../setup/role-clients";
 import { testSupabaseAdmin as admin, shouldRunDatabaseTests } from "../setup/test-db";
+
+// The global test setup mocks the app client and points it at a fake URL; the list
+// tests query the local database through the real one (as anon).
+vi.unmock("@/lib/supabase");
+vi.hoisted(() => {
+  process.env.VITE_SUPABASE_URL = process.env.TEST_SUPABASE_URL;
+  process.env.VITE_SUPABASE_ANON_KEY = process.env.TEST_SUPABASE_ANON_KEY;
+});
 
 const TEST_HANDLE_PREFIX = "dbtest-cc-";
 const MANAGER_PLUS = ["manager", "owner", "admin"] as const;
@@ -172,6 +182,58 @@ describe("contact_channels", () => {
     const created = await createChannel(true);
 
     expect(created.display_order).toBe((last?.display_order ?? -1) + 1);
+  });
+
+  describe("db.contactChannels lists", () => {
+    // Rank order is display_order, then created_at, then id. Each group has a
+    // created_at tie broken by id. One group is inserted backwards and one forwards,
+    // so a list that leaves ties in storage order gets at least one group wrong.
+    async function createTiedChannels() {
+      const tiedAt = "2026-01-01T00:00:00Z";
+      const laterAt = "2026-01-02T00:00:00Z";
+      const group = (displayOrder: number, idSuffix: string) => [
+        {
+          id: `00000000-0000-4000-8000-${idSuffix}`,
+          created_at: tiedAt,
+          display_order: displayOrder,
+        },
+        {
+          id: `ffffffff-0000-4000-8000-${idSuffix}`,
+          created_at: tiedAt,
+          display_order: displayOrder,
+        },
+        {
+          id: `aaaaaaaa-0000-4000-8000-${idSuffix}`,
+          created_at: laterAt,
+          display_order: displayOrder,
+        },
+      ];
+      const first = group(9998, "000000000001");
+      const second = group(9999, "000000000002");
+
+      for (const row of [...[...first].reverse(), ...second]) {
+        const { error } = await admin
+          .from("contact_channels")
+          .insert({ ...row, kind: "messenger", value: nextHandle() });
+        if (error) throw new Error(`seed tied channel failed: ${error.message}`);
+      }
+      return [...first, ...second].map((row) => row.id);
+    }
+
+    it.each(["all", "active"] as const)(
+      "%s() breaks display_order ties by created_at, then id",
+      async (list) => {
+        if (!shouldRun) return;
+        const rankOrder = await createTiedChannels();
+
+        const { data, error } = await db.contactChannels[list]();
+
+        expect(error).toBeNull();
+        expect(data?.map((row) => row.id).filter((id) => rankOrder.includes(id))).toEqual(
+          rankOrder
+        );
+      }
+    );
   });
 
   describe("reorder_contact_channel", () => {

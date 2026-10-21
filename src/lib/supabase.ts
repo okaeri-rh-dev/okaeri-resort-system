@@ -68,6 +68,14 @@ const expenseCategoriesTable = () => supabase.from("expense_categories");
 
 const contactChannelsTable = () => supabase.from("contact_channels");
 
+// The same order reorder_contact_channel ranks by, so ties never flip between reads and moves.
+const contactChannelsInRankOrder = () =>
+  contactChannelsTable()
+    .select("*")
+    .order("display_order", { ascending: true })
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true });
+
 // Type for PostgrestError from Supabase
 interface PostgrestError {
   message: string;
@@ -1105,7 +1113,7 @@ export const db = {
   // Contact channels (guest-facing contact list, managed on admin Settings)
   contactChannels: {
     /** Get all contact channels, hidden ones included, in display order (admin settings) */
-    all: () => contactChannelsTable().select("*").order("display_order", { ascending: true }),
+    all: () => contactChannelsInRankOrder(),
 
     create: (data: TablesInsert<"contact_channels">) =>
       contactChannelsTable().insert(data).select().single(),
@@ -1122,11 +1130,7 @@ export const db = {
       supabase.rpc("reorder_contact_channel", { p_id: id, p_direction: direction }),
 
     /** Get active contact channels in display order (guest pages) */
-    active: () =>
-      contactChannelsTable()
-        .select("*")
-        .eq("is_active", true)
-        .order("display_order", { ascending: true }),
+    active: () => contactChannelsInRankOrder().eq("is_active", true),
   },
 
   // Expense Categories configuration (expense form dropdowns)
