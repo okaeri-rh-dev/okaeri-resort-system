@@ -1102,7 +1102,7 @@ git commit -m "feat(db): weekly guest anonymization and scrub-first guest delete
 
 - Produces: `deletePaymentProofFiles(supabase: SupabaseClient<Database>, paths: string[], logger: Logger): Promise<{ deleted: string[]; failed: string[] }>`; `cleanupPaymentProofs(env): Promise<{ deletedCount: number }>`; endpoint JSON gains `deleted_count`.
 
-- [ ] **Step 1: Write the failing helper test**
+- [x] **Step 1: Write the failing helper test**
 
 `src/__tests__/api/payment-proof-storage.test.ts`:
 
@@ -1156,12 +1156,12 @@ describe("deletePaymentProofFiles", () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx vitest run src/__tests__/api/payment-proof-storage.test.ts`
 Expected: FAIL (module not found).
 
-- [ ] **Step 3: Implement the helper**
+- [x] **Step 3: Implement the helper**
 
 `functions/lib/payment-proof-storage.ts`:
 
@@ -1200,7 +1200,7 @@ export async function deletePaymentProofFiles(
 
 If `createLogger`'s return type is not exported this way, use the logger type `functions/lib/logger.ts` exports; check that file first.
 
-- [ ] **Step 4: Use it in the cleanup job and return the count**
+- [x] **Step 4: Use it in the cleanup job and return the count**
 
 In `functions/scheduled/cleanup-payment-proofs.ts`: change the signature to `export async function cleanupPaymentProofs(env: Env): Promise<{ deletedCount: number }>`; replace the `if (filePaths.length > 0) { … }` storage block with:
 
@@ -1212,16 +1212,16 @@ change the completion log to `${deleted.length} files deleted`, and replace `ret
 
 In `functions/api/cron/cleanup-payment-proofs.ts` replace `await cleanupPaymentProofs(env);` with `const { deletedCount } = await cleanupPaymentProofs(env);` and add `deleted_count: deletedCount,` to the success JSON.
 
-- [ ] **Step 5: Extend the cleanup test**
+- [x] **Step 5: Extend the cleanup test**
 
 In `src/__tests__/api/cleanup-payment-proofs.test.ts`, in "deletes the files the SQL function returns", change the call to `await expect(cleanupPaymentProofs(env)).resolves.toEqual({ deletedCount: 2 });`. In "skips storage when nothing expired" expect `{ deletedCount: 0 }`.
 
-- [ ] **Step 6: Run the tests**
+- [x] **Step 6: Run the tests**
 
 Run: `npx vitest run src/__tests__/api/payment-proof-storage.test.ts src/__tests__/api/cleanup-payment-proofs.test.ts && npx tsc --noEmit -p functions/tsconfig.json`
 Expected: PASS, no type errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add functions/lib/payment-proof-storage.ts functions/scheduled/cleanup-payment-proofs.ts functions/api/cron/cleanup-payment-proofs.ts \

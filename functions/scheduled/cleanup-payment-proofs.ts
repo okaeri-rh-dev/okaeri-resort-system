@@ -23,6 +23,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 
 import { createLogger } from "../lib/logger";
+import { deletePaymentProofFiles } from "../lib/payment-proof-storage";
 
 interface Env {
   SUPABASE_URL: string;
@@ -35,9 +36,9 @@ interface Env {
  * Called by Cloudflare Pages cron trigger at 3:00 AM UTC every Sunday
  *
  * @param env - Environment variables (Supabase credentials)
- * @returns Promise<void> - Throws on failure after retries
+ * @returns The number of files deleted from storage; throws on failure after retries
  */
-export async function cleanupPaymentProofs(env: Env): Promise<void> {
+export async function cleanupPaymentProofs(env: Env): Promise<{ deletedCount: number }> {
   const MAX_RETRIES = 3;
   const RETRY_DELAY_MS = 2000; // 2 seconds base delay (fits within Cloudflare 30s Worker limit)
   const ALERT_THRESHOLD_COUNT = 50; // Alert if >50 files deleted
@@ -64,24 +65,7 @@ export async function cleanupPaymentProofs(env: Env): Promise<void> {
 
       const filePaths = (data ?? []).map((row) => row.file_path);
 
-      if (filePaths.length > 0) {
-        logger.info(`[STORAGE] Deleting ${filePaths.length} files from Supabase Storage...`);
-
-        const { error: storageError } = await supabase.storage
-          .from("payment-proofs")
-          .remove(filePaths);
-
-        if (storageError) {
-          // The database references are already cleared, so these files stay
-          // orphaned until someone removes them by hand.
-          logger.warn(
-            `[WARN] Storage deletion failed: ${storageError.message}. ` +
-              `Orphaned files: ${filePaths.join(", ")}`
-          );
-        } else {
-          logger.info(`[STORAGE] Successfully deleted ${filePaths.length} files from storage`);
-        }
-      }
+      const { deleted } = await deletePaymentProofFiles(supabase, filePaths, logger);
 
       // Alert if unusual cleanup volume
       // >50 deletions per week suggests:
@@ -100,10 +84,9 @@ export async function cleanupPaymentProofs(env: Env): Promise<void> {
         );
       }
 
-      logger.info(`[CRON] Payment proof cleanup completed: ${filePaths.length} files deleted`);
+      logger.info(`[CRON] Payment proof cleanup completed: ${deleted.length} files deleted`);
 
-      // Success - exit retry loop
-      return;
+      return { deletedCount: deleted.length };
     } catch (error) {
       logger.error(
         `[ERROR] Payment proof cleanup failed (attempt ${attempt}/${MAX_RETRIES})`,
@@ -135,6 +118,8 @@ export async function cleanupPaymentProofs(env: Env): Promise<void> {
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
+
+  throw new Error("unreachable");
 }
 
 /**
