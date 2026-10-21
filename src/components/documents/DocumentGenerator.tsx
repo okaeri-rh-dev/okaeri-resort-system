@@ -2,9 +2,17 @@ import { useCallback, useState } from "react";
 
 import { Download, Eye, FileText, Settings } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Button,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/patterns";
 import { useDocumentStore } from "@/stores/useDocumentStore";
 
 import { DocumentForm } from "./DocumentForm";
@@ -55,7 +63,9 @@ export function DocumentGenerator() {
         <div className="flex items-center gap-3">
           <FileText className="text-muted-foreground h-6 w-6" />
           <div>
-            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Document Generator</h1>
+            <h1 className="expanded:text-3xl text-2xl font-bold tracking-tight">
+              Document Generator
+            </h1>
             <p className="text-muted-foreground text-sm">Create quotations and invoices</p>
           </div>
         </div>
@@ -103,7 +113,7 @@ export function DocumentGenerator() {
 
           {/* Download PDF — visible on tablet+ */}
           <Button
-            className="hidden md:inline-flex"
+            className="expanded:inline-flex hidden"
             onClick={handleDownloadPDF}
             disabled={isGenerating || formData.line_items.length === 0}
           >
@@ -113,8 +123,8 @@ export function DocumentGenerator() {
         </div>
       </div>
 
-      {/* ========== Desktop Layout (≥1024px): Side-by-side ========== */}
-      <div className="hidden flex-1 gap-4 overflow-hidden lg:flex">
+      {/* ========== Desktop Layout (≥1200px): Side-by-side ========== */}
+      <div className="large:flex hidden flex-1 gap-4 overflow-hidden">
         {/* Left panel: Form */}
         <div className="w-[45%] overflow-y-auto rounded-lg border p-4">
           <DocumentForm />
@@ -125,8 +135,8 @@ export function DocumentGenerator() {
         </div>
       </div>
 
-      {/* ========== Tablet Layout (768–1023px): Tabs ========== */}
-      <div className="hidden flex-1 overflow-hidden md:block lg:hidden">
+      {/* ========== Tablet Layout (840–1199px): Tabs ========== */}
+      <div className="expanded:block large:hidden hidden flex-1 overflow-hidden">
         <Tabs defaultValue="edit" className="flex h-full flex-col">
           <TabsList className="w-full">
             <TabsTrigger value="edit" className="flex-1">
@@ -145,13 +155,13 @@ export function DocumentGenerator() {
         </Tabs>
       </div>
 
-      {/* ========== Mobile Layout (<768px): Form + Preview Sheet ========== */}
-      <div className="flex-1 overflow-y-auto md:hidden">
+      {/* ========== Mobile Layout (<840px): Form + Preview Sheet ========== */}
+      <div className="expanded:hidden flex-1 overflow-y-auto">
         <DocumentForm />
       </div>
 
       {/* Mobile sticky bottom bar */}
-      <div className="bg-background safe-area-bottom fixed right-0 bottom-0 left-0 z-40 flex items-center gap-2 border-t p-3 md:hidden">
+      <div className="bg-background safe-area-bottom expanded:hidden fixed right-0 bottom-0 left-0 z-40 flex items-center gap-2 border-t p-3">
         <Button
           variant="outline"
           className="min-h-[44px] flex-1"

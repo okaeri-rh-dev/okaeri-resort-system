@@ -76,7 +76,12 @@
   line-gap-override: 0%;
 }
 
-/* Hearth tokens (DESIGN.md, Colour). Hex reference: DESIGN.md, Hearth palette. */
+/*
+ * Hearth tokens (DESIGN.md, Colour). Hex reference: DESIGN.md, Hearth palette.
+ * `data-theme="light"` re-applies the light values inside a dark page, for surfaces that stay
+ * paper (the document preview).
+ */
+[data-theme="light"],
 :root {
   color-scheme: light;
   --radius: 0.625rem;
