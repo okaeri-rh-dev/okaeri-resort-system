@@ -10,6 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 
 import { saveConfirmationSnapshot } from "@/lib/bookings/confirmation-snapshot";
+import type { StatusResponse } from "@/lib/schema-transform";
 import { Route as CheckStatusRoute } from "@/routes/booking/check-status";
 import { Route as ConfirmationRoute } from "@/routes/booking/confirmation/$bookingReference";
 
@@ -156,7 +157,7 @@ describe("booking status lookup", () => {
         upload_status: "pending",
         special_requests: null,
         message: "Your booking is pending payment verification. We'll confirm within 24 hours.",
-      })
+      } satisfies StatusResponse)
     );
     renderAt(`/booking/check-status?reference=${REFERENCE}`);
 

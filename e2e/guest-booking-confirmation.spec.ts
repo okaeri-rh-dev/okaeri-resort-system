@@ -16,7 +16,6 @@ const LOOKUP_REFERENCE = generateGuestBookingReference();
 const LOOKUP_EMAIL = "e2e-status-lookup-test@example.com";
 
 function serviceClient() {
-  // Local-only, like the other specs that seed through the service role.
   return createClient(
     process.env.VITE_SUPABASE_URL || "http://127.0.0.1:54321",
     process.env.SUPABASE_SERVICE_ROLE_KEY ||

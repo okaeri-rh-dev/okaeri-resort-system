@@ -9,6 +9,8 @@
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { validateStatusResponse } from "@/lib/schema-transform";
+
 import { onRequestPost } from "../../../functions/api/guest-booking/status";
 import {
   cleanupTestData,
@@ -78,8 +80,8 @@ describe("POST /api/guest-booking/status against the real schema", () => {
       },
     } as never);
 
-    const body = (await response.json()) as { booking_reference?: string; unit_name?: string };
     expect(response.status).toBe(200);
+    const body = validateStatusResponse(await response.json());
     expect(body.booking_reference).toBe(bookingReference);
     expect(body.unit_name).toMatch(/^Status Cabin /);
   });
