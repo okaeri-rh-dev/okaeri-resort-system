@@ -2,21 +2,29 @@
 
 import React, { useState } from "react";
 
+import {
+  getCoreRowModel,
+  useReactTable,
+  type ColumnDef,
+  type ExpandedState,
+} from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
 import { ChevronDown, ChevronLeft, ChevronRight, Eye, ChevronRight as Next } from "lucide-react";
 
-import { Button, Callout, Skeleton, StatusBadge, type StatusTone } from "@/components/patterns";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Button,
+  Callout,
+  DataTable,
+  ListCard,
+  ListCardRow,
+  Skeleton,
+  StatusBadge,
+  type StatusTone,
+} from "@/components/patterns";
 import { PAGINATION_DEFAULTS, TABLE_DISPLAY_NAMES } from "@/lib/audit-constants";
 import { auditActorLabel } from "@/lib/audit-display";
 import { useAuditLogs } from "@/lib/audit-hooks";
+import { cn } from "@/lib/utils";
 import { useAuditStore } from "@/stores/useAuditStore";
 import type { AuditLog, AuditLogQueryResult } from "@/types/audit.types";
 
@@ -33,7 +41,7 @@ export function AuditLogViewer() {
   const setFilters = useAuditStore((state) => state.setFilters);
   const setSelectedLog = useAuditStore((state) => state.setSelectedLog);
 
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<ExpandedState>({});
   const [diffDialogOpen, setDiffDialogOpen] = useState(false);
   const [selectedLogForDiff, setSelectedLogForDiff] = useState<AuditLog | null>(null);
 
@@ -64,25 +72,70 @@ export function AuditLogViewer() {
     }
   };
 
-  // Row expansion toggle
-  const toggleRow = (auditId: string) => {
-    setExpandedRows((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(auditId)) {
-        newSet.delete(auditId);
-      } else {
-        newSet.add(auditId);
-      }
-      return newSet;
-    });
-  };
-
   // Open diff viewer dialog
   const openDiffViewer = (log: AuditLog) => {
     setSelectedLogForDiff(log);
     setSelectedLog(log);
     setDiffDialogOpen(true);
   };
+
+  const columns: ColumnDef<AuditLog>[] = [
+    {
+      id: "expand",
+      header: () => <span className="sr-only">Expand</span>,
+      cell: ({ row }) => (
+        <ExpandButton isExpanded={row.getIsExpanded()} onToggle={row.getToggleExpandedHandler()} />
+      ),
+      size: 48,
+    },
+    {
+      accessorKey: "created_at",
+      header: "Timestamp",
+      cell: ({ row }) => <LogTime log={row.original} />,
+    },
+    { id: "user", header: "User", cell: ({ row }) => <LogActor log={row.original} /> },
+    {
+      accessorKey: "table_name",
+      header: "Table",
+      cell: ({ row }) => <TableBadge log={row.original} />,
+    },
+    {
+      accessorKey: "action",
+      header: "Action",
+      cell: ({ row }) => <ActionBadge log={row.original} />,
+    },
+    {
+      accessorKey: "source",
+      header: "Source",
+      cell: ({ row }) => <SourceBadge source={row.original.source} />,
+    },
+    {
+      accessorKey: "record_id",
+      header: "Record ID",
+      cell: ({ row }) => <RecordId log={row.original} className="max-w-32" />,
+    },
+    {
+      id: "changed_fields",
+      header: "Changed Fields",
+      cell: ({ row }) => <ChangedFields log={row.original} />,
+    },
+    {
+      id: "actions",
+      header: () => <span className="sr-only">Actions</span>,
+      cell: ({ row }) => <ViewDiffButton log={row.original} onViewDiff={openDiffViewer} />,
+      meta: { pinned: true },
+    },
+  ];
+
+  const table = useReactTable({
+    data: (data as unknown as AuditLogQueryResult | undefined)?.data ?? [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (log) => log.audit_id,
+    getRowCanExpand: () => true,
+    state: { expanded },
+    onExpandedChange: setExpanded,
+  });
 
   // Loading state
   if (isLoading) {
@@ -109,38 +162,42 @@ export function AuditLogViewer() {
 
   return (
     <div className="space-y-4">
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">Expand</TableHead>
-              <TableHead>Timestamp</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Table</TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Source</TableHead>
-              <TableHead>Record ID</TableHead>
-              <TableHead>Changed Fields</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {queryResult.data.map((log) => (
-              <AuditLogRow
-                key={log.audit_id}
-                log={log}
-                isExpanded={expandedRows.has(log.audit_id)}
-                onToggle={() => toggleRow(log.audit_id)}
-                onViewDiff={() => openDiffViewer(log)}
+      <DataTable
+        table={table}
+        label="Audit logs"
+        renderExpandedRow={(row) => <ExpandedRowDetails log={row.original} />}
+        renderCard={(row) => (
+          <ListCard>
+            <div className="flex items-start justify-between gap-2">
+              <LogTime log={row.original} />
+              <ActionBadge log={row.original} />
+            </div>
+            <ListCardRow label="User" value={<LogActor log={row.original} />} />
+            <ListCardRow label="Table" value={<TableBadge log={row.original} />} />
+            <ListCardRow label="Source" value={<SourceBadge source={row.original.source} />} />
+            <ListCardRow label="Record ID" value={<RecordId log={row.original} />} />
+            <ListCardRow
+              label="Changed"
+              value={<ChangedFields log={row.original} className="justify-end" />}
+            />
+            <div className="flex items-center justify-between gap-2">
+              <ExpandButton
+                isExpanded={row.getIsExpanded()}
+                onToggle={row.getToggleExpandedHandler()}
               />
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+              <ViewDiffButton log={row.original} onViewDiff={openDiffViewer} />
+            </div>
+            {row.getIsExpanded() && (
+              <div className="bg-muted/50 rounded-md">
+                <ExpandedRowDetails log={row.original} />
+              </div>
+            )}
+          </ListCard>
+        )}
+      />
 
       {/* Pagination */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-muted-foreground text-sm">
           Showing {queryResult.data.length} of {queryResult.totalCount} logs
           {queryResult.currentPage > 1 &&
@@ -180,118 +237,96 @@ export function AuditLogViewer() {
 }
 
 // ============================================
-// TABLE ROW COMPONENT
+// ROW PARTS
 // ============================================
 
-interface AuditLogRowProps {
-  log: AuditLog;
-  isExpanded: boolean;
-  onToggle: () => void;
-  onViewDiff: () => void;
+function ExpandButton({ isExpanded, onToggle }: { isExpanded: boolean; onToggle: () => void }) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={onToggle}
+      aria-expanded={isExpanded}
+      aria-label={isExpanded ? "Hide details" : "Show details"}
+      className="h-8 w-8 p-0"
+    >
+      {isExpanded ? (
+        <ChevronDown className="h-4 w-4" aria-hidden="true" />
+      ) : (
+        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+      )}
+    </Button>
+  );
 }
 
-function AuditLogRow({ log, isExpanded, onToggle, onViewDiff }: AuditLogRowProps) {
-  const hasChanges = (log.old_data && log.new_data) || log.changed_fields;
+function LogTime({ log }: { log: AuditLog }) {
+  return (
+    <div className="text-sm tabular-nums">
+      <div>{log.created_at && new Date(log.created_at).toLocaleString()}</div>
+      <div className="text-muted-foreground text-xs">
+        {log.created_at && formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
+      </div>
+    </div>
+  );
+}
+
+function LogActor({ log }: { log: AuditLog }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-sm break-words">{auditActorLabel(log)}</div>
+      {log.user_id && (
+        <div className="text-muted-foreground max-w-40 truncate text-xs">{log.user_id}</div>
+      )}
+    </div>
+  );
+}
+
+function TableBadge({ log }: { log: AuditLog }) {
+  return (
+    <StatusBadge tone="neutral">
+      {TABLE_DISPLAY_NAMES[log.table_name as keyof typeof TABLE_DISPLAY_NAMES] || log.table_name}
+    </StatusBadge>
+  );
+}
+
+function RecordId({ log, className }: { log: AuditLog; className?: string }) {
+  return <div className={cn("max-w-40 truncate text-xs", className)}>{log.record_id || "—"}</div>;
+}
+
+function ChangedFields({ log, className }: { log: AuditLog; className?: string }) {
+  if (!log.changed_fields || log.changed_fields.length === 0) {
+    return <span className="text-muted-foreground">—</span>;
+  }
 
   return (
-    <>
-      {/* Main Row */}
-      <TableRow>
-        {/* Expand Button */}
-        <TableCell>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggle}
-            aria-expanded={isExpanded}
-            aria-label={isExpanded ? "Hide details" : "Show details"}
-            className="h-8 w-8 p-0"
-          >
-            {isExpanded ? (
-              <ChevronDown className="h-4 w-4" aria-hidden="true" />
-            ) : (
-              <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            )}
-          </Button>
-        </TableCell>
-
-        {/* Timestamp */}
-        <TableCell className="text-sm tabular-nums">
-          <div>{log.created_at && new Date(log.created_at).toLocaleString()}</div>
-          <div className="text-muted-foreground text-xs">
-            {log.created_at && formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
-          </div>
-        </TableCell>
-
-        {/* User */}
-        <TableCell>
-          <div className="text-sm">{auditActorLabel(log)}</div>
-          {log.user_id && (
-            <div className="text-muted-foreground max-w-[150px] truncate text-xs">
-              {log.user_id}
-            </div>
-          )}
-        </TableCell>
-
-        {/* Table Name */}
-        <TableCell>
-          <StatusBadge tone="neutral">
-            {TABLE_DISPLAY_NAMES[log.table_name as keyof typeof TABLE_DISPLAY_NAMES] ||
-              log.table_name}
-          </StatusBadge>
-        </TableCell>
-
-        {/* Action */}
-        <TableCell>
-          <ActionBadge log={log} />
-        </TableCell>
-
-        {/* Source */}
-        <TableCell>
-          <SourceBadge source={log.source} />
-        </TableCell>
-
-        {/* Record ID */}
-        <TableCell className="max-w-[120px] truncate text-xs">{log.record_id || "—"}</TableCell>
-
-        {/* Changed Fields */}
-        <TableCell>
-          {log.changed_fields && log.changed_fields.length > 0 ? (
-            <div className="flex flex-wrap gap-1">
-              {log.changed_fields.slice(0, 3).map((field) => (
-                <StatusBadge key={field} tone="neutral">
-                  {field}
-                </StatusBadge>
-              ))}
-              {log.changed_fields.length > 3 && (
-                <StatusBadge tone="neutral">+{log.changed_fields.length - 3} more</StatusBadge>
-              )}
-            </div>
-          ) : (
-            <span className="text-muted-foreground">—</span>
-          )}
-        </TableCell>
-
-        {/* Actions */}
-        <TableCell>
-          {hasChanges && (
-            <Button variant="ghost" size="sm" onClick={onViewDiff}>
-              <Eye className="mr-1 h-4 w-4" aria-hidden="true" />
-              View
-            </Button>
-          )}
-        </TableCell>
-      </TableRow>
-
-      {/* Expanded Row (Details) */}
-      {isExpanded && (
-        <TableRow>
-          <TableCell colSpan={9} className="bg-muted/50">
-            <ExpandedRowDetails log={log} />
-          </TableCell>
-        </TableRow>
+    <div className={cn("flex flex-wrap gap-1", className)}>
+      {log.changed_fields.slice(0, 3).map((field) => (
+        <StatusBadge key={field} tone="neutral">
+          {field}
+        </StatusBadge>
+      ))}
+      {log.changed_fields.length > 3 && (
+        <StatusBadge tone="neutral">+{log.changed_fields.length - 3} more</StatusBadge>
       )}
-    </>
+    </div>
+  );
+}
+
+function ViewDiffButton({
+  log,
+  onViewDiff,
+}: {
+  log: AuditLog;
+  onViewDiff: (log: AuditLog) => void;
+}) {
+  const hasChanges = (log.old_data && log.new_data) || log.changed_fields;
+  if (!hasChanges) return null;
+
+  return (
+    <Button variant="ghost" size="sm" onClick={() => onViewDiff(log)}>
+      <Eye className="mr-1 h-4 w-4" aria-hidden="true" />
+      View
+    </Button>
   );
 }
 
