@@ -412,12 +412,7 @@ export function PendingBookingsQueue() {
           table={table}
           label="Pending bookings"
           renderCard={(row) => <QueueCard booking={row.original} />}
-          emptyState={
-            <TableEmptyState
-              title="No pending bookings found"
-              description="New guest bookings show here until their cabins are assigned."
-            />
-          }
+          emptyState={<TableEmptyState title="No pending bookings found" />}
         />
       </CardContent>
     </Card>

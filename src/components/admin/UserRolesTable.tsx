@@ -167,13 +167,9 @@ export function UserRolesTable({ onUpdateRole, onDeactivateRole }: UserRolesTabl
               <TableEmptyState
                 variant="no-results"
                 title={`No roles found matching "${searchQuery}"`}
-                description="Try a different email, role or note."
               />
             ) : (
-              <TableEmptyState
-                title="No user roles assigned yet"
-                description="Grant a role to give someone access."
-              />
+              <TableEmptyState title="No user roles assigned yet" />
             )
           }
         />

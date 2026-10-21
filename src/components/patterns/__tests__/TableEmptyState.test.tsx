@@ -34,6 +34,13 @@ describe("TableEmptyState", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
+  it("renders a title alone when there is nothing more to say", () => {
+    render(<TableEmptyState title="No pending bookings found" />);
+
+    expect(screen.getByRole("heading", { name: "No pending bookings found" })).toBeVisible();
+    expect(screen.queryByRole("paragraph")).not.toBeInTheDocument();
+  });
+
   it.each(["no-data", "no-results", "error"] as const)(
     "has no axe violations for the %s variant",
     async (variant) => {
