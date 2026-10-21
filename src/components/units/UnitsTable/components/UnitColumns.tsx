@@ -107,39 +107,6 @@ export function useUnitColumns({
         size: 120,
       }),
 
-      // Pricing columns removed - now managed globally via Settings > Pricing Configuration
-
-      // // Unit type column with inline editing
-      // columnHelper.accessor("unit_type", {
-      //   header: "Type",
-      //   cell: ({ getValue, row }) => {
-      //     const unitTypes: Array<{ value: UnitType; label: string }> = [
-      //       { value: "Standard", label: "Standard" },
-      //       { value: "Deluxe", label: "Deluxe" },
-      //       { value: "Suite", label: "Suite" },
-      //       { value: "Villa", label: "Villa" },
-      //     ];
-
-      //     if (isEditMode) {
-      //       return (
-      //         <InlineSelect
-      //           value={getValue()}
-      //           options={unitTypes}
-      //           onSave={(value) => onUpdateUnit(row.original.unit_id, { unit_type: value })}
-      //         />
-      //       );
-      //     }
-
-      //     const typeLabel = unitTypes.find((t) => t.value === getValue())?.label;
-      //     return (
-      //       <div className="inline-flex rounded-md bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
-      //         {typeLabel || getValue()}
-      //       </div>
-      //     );
-      //   },
-      //   size: 120,
-      // }),
-
       // Status column with inline editing
       columnHelper.accessor("unit_status", {
         header: ({ header }: { header: Header<Unit, unknown> }) => (
