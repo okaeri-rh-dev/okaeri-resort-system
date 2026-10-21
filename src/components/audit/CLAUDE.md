@@ -8,3 +8,4 @@ Non-derivable conventions:
 - Severity levels: `INFO` (normal, default), `WARNING` (unusual but handled), `ERROR` (recoverable), `CRITICAL`.
 - Always strip sensitive fields from `changes.before` / `changes.after` before logging (`sanitizeForAudit` pattern — never log passwords, tokens, or card data).
 - Rows older than 24 months are anonymized weekly (`anonymize_audit_logs`) and carry `metadata.anonymized_at`. Use `auditActorLabel` / `isAnonymized` from `src/lib/audit-display.ts` instead of reading `user_email` directly.
+- Guest anonymization (`anonymize_guest`, 20261021000000) scrubs a guest's audit rows at any age with the same rules and marker.

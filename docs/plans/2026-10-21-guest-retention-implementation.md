@@ -2323,11 +2323,13 @@ git commit -m "feat(guest): anonymize action and anonymized state on detail page
 
 ### Task 8: Verify, docs, PR, prod
 
-- [ ] **Step 1: Full verification**
+- [x] **Step 1: Full verification**
 
 Run, one at a time: `npm run verify`, then `npm run test:db`, then `npm run build`. Expected: each exits 0. Quote the pass counts in the PR body. Check the Supabase stack is still up afterwards (CLAUDE.md, "Vitest global setup stops Supabase").
 
-- [ ] **Step 2: Docs**
+Done note (2026-10-21): `npm run verify` exit 0 (155 files, 1810 passed, 20 skipped); `npm run test:db` exit 0 (22 files, 144 passed); `npm run build` exit 0; Supabase REST still 200 afterwards.
+
+- [x] **Step 2: Docs**
 
 - `src/components/audit/CLAUDE.md`: add one line: "Guest anonymization (`anonymize_guest`, 20261021000000) scrubs a guest's audit rows at any age with the same rules and marker."
 - `docs/plans/2026-10-03-guardrails-design.md`: item 8 → DONE with the PR number; Resume state updated.
