@@ -65,7 +65,7 @@
 - Produces (SQL): `public.anonymize_booking(p_booking_id uuid) RETURNS TABLE(proof_path text)`; `public.anonymize_guest(p_guest_id uuid) RETURNS TABLE(proof_path text)` (raises `PT404`, `PT409`); internal `public._anonymize_audit_rows(uuid[]) RETURNS bigint`, `public._audit_ids_for_records(text[]) RETURNS uuid[]`, `public._payment_proof_path(text) RETURNS text`. `anonymize_audit_logs(interval)` keeps its signature and result.
 - Produces (columns): `guests.anonymized_at`, `bookings.anonymized_at` (`timestamptz`, NULL until anonymized).
 
-- [ ] **Step 1: Write the failing column-coverage test**
+- [x] **Step 1: Write the failing column-coverage test**
 
 `src/__tests__/database/retention-column-coverage.test.ts`:
 
@@ -192,12 +192,12 @@ describe("guest retention column coverage", () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx vitest run src/__tests__/database/retention-column-coverage.test.ts`
 Expected: FAIL for `guests` and `bookings` (`anonymized_at` is a stale entry). If another table fails with an unclassified column (local schema has columns the generated types do not show), STOP: classify it in this file and in the spec's column table, and ask the user if the column is personal.
 
-- [ ] **Step 3: Write the failing anonymization test**
+- [x] **Step 3: Write the failing anonymization test**
 
 `src/__tests__/database/guest-anonymization.test.ts` (Task 2 appends to it):
 
@@ -424,12 +424,14 @@ describe("anonymize_guest", () => {
 });
 ```
 
-- [ ] **Step 4: Run it to verify it fails**
+- [x] **Step 4: Run it to verify it fails**
 
 Run: `npx vitest run src/__tests__/database/guest-anonymization.test.ts`
 Expected: FAIL (`Could not find the function public.anonymize_guest`).
 
-- [ ] **Step 5: Write the migration (part 1)**
+Done note (2026-10-21): the audit fixture INSERTs also set `changed_fields = ARRAY['email']`; a `db` UPDATE row without it breaks the `valid_changed_fields` CHECK.
+
+- [x] **Step 5: Write the migration (part 1)**
 
 `supabase/migrations/20261021000000_guest_retention.sql`:
 
@@ -650,7 +652,7 @@ GRANT EXECUTE ON FUNCTION public.anonymize_booking(uuid) TO service_role;
 GRANT EXECUTE ON FUNCTION public.anonymize_guest(uuid) TO service_role;
 ```
 
-- [ ] **Step 6: Write the rollback (part 1)**
+- [x] **Step 6: Write the rollback (part 1)**
 
 `supabase/rollbacks/20261021000000_rollback_guest_retention.sql`:
 
@@ -758,7 +760,7 @@ CREATE POLICY "Admin only access to conflict backups" ON public.bookings_conflic
 COMMIT;
 ```
 
-- [ ] **Step 7: Apply locally, regenerate types, run both tests and the #2 test**
+- [x] **Step 7: Apply locally, regenerate types, run both tests and the #2 test**
 
 ```bash
 npx supabase db reset
@@ -770,14 +772,14 @@ npx vitest run src/__tests__/database/audit-anonymization.test.ts
 
 Expected: all PASS. `audit-anonymization.test.ts` proves the refactored `anonymize_audit_logs` behaves as before. Afterwards check the stack is up: `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:54321/rest/v1/` → `200`.
 
-- [ ] **Step 8: Remove the backup table from the audit allowlist and the types comment**
+- [x] **Step 8: Remove the backup table from the audit allowlist and the types comment**
 
 In `src/__tests__/database/audit-trigger-coverage.test.ts` delete the line `bookings_conflict_backup: "one-off snapshot from a conflict cleanup, no writers",`. In `src/types/database.types.ts:13` remove `bookings_conflict_backup is a snapshot with no …` from the comment (keep the rest of the sentence grammatical). Then:
 
 Run: `npx vitest run src/__tests__/database/audit-trigger-coverage.test.ts && npx tsc --noEmit`
 Expected: PASS, no type errors.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add supabase/migrations/20261021000000_guest_retention.sql supabase/rollbacks/20261021000000_rollback_guest_retention.sql \

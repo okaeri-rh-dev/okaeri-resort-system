@@ -452,6 +452,7 @@ export type Database = {
       };
       bookings: {
         Row: {
+          anonymized_at: string | null;
           base_amount: number | null;
           booking_id: string;
           booking_reference: string;
@@ -488,6 +489,7 @@ export type Database = {
           upload_status: string | null;
         };
         Insert: {
+          anonymized_at?: string | null;
           base_amount?: number | null;
           booking_id?: string;
           booking_reference: string;
@@ -524,6 +526,7 @@ export type Database = {
           upload_status?: string | null;
         };
         Update: {
+          anonymized_at?: string | null;
           base_amount?: number | null;
           booking_id?: string;
           booking_reference?: string;
@@ -568,81 +571,6 @@ export type Database = {
             referencedColumns: ["guest_id"];
           },
         ];
-      };
-      bookings_conflict_backup: {
-        Row: {
-          booking_id: string | null;
-          booking_reference: string | null;
-          booking_status: string | null;
-          check_in: string | null;
-          check_out: string | null;
-          contact_number: string | null;
-          created_at: string | null;
-          email: string | null;
-          guest_id: string | null;
-          guest_name: string | null;
-          internal_notes: string | null;
-          is_guest_booking: boolean | null;
-          num_guests: number | null;
-          payment_method: string | null;
-          payment_proof_url: string | null;
-          payment_status: string | null;
-          special_requests: string | null;
-          total_amount: number | null;
-          unit_id: string | null;
-          updated_at: string | null;
-          upload_expires_at: string | null;
-          upload_status: string | null;
-        };
-        Insert: {
-          booking_id?: string | null;
-          booking_reference?: string | null;
-          booking_status?: string | null;
-          check_in?: string | null;
-          check_out?: string | null;
-          contact_number?: string | null;
-          created_at?: string | null;
-          email?: string | null;
-          guest_id?: string | null;
-          guest_name?: string | null;
-          internal_notes?: string | null;
-          is_guest_booking?: boolean | null;
-          num_guests?: number | null;
-          payment_method?: string | null;
-          payment_proof_url?: string | null;
-          payment_status?: string | null;
-          special_requests?: string | null;
-          total_amount?: number | null;
-          unit_id?: string | null;
-          updated_at?: string | null;
-          upload_expires_at?: string | null;
-          upload_status?: string | null;
-        };
-        Update: {
-          booking_id?: string | null;
-          booking_reference?: string | null;
-          booking_status?: string | null;
-          check_in?: string | null;
-          check_out?: string | null;
-          contact_number?: string | null;
-          created_at?: string | null;
-          email?: string | null;
-          guest_id?: string | null;
-          guest_name?: string | null;
-          internal_notes?: string | null;
-          is_guest_booking?: boolean | null;
-          num_guests?: number | null;
-          payment_method?: string | null;
-          payment_proof_url?: string | null;
-          payment_status?: string | null;
-          special_requests?: string | null;
-          total_amount?: number | null;
-          unit_id?: string | null;
-          updated_at?: string | null;
-          upload_expires_at?: string | null;
-          upload_status?: string | null;
-        };
-        Relationships: [];
       };
       discount_rules: {
         Row: {
@@ -843,6 +771,7 @@ export type Database = {
       };
       guests: {
         Row: {
+          anonymized_at: string | null;
           created_at: string | null;
           email: string | null;
           guest_id: string;
@@ -853,6 +782,7 @@ export type Database = {
           updated_at: string | null;
         };
         Insert: {
+          anonymized_at?: string | null;
           created_at?: string | null;
           email?: string | null;
           guest_id?: string;
@@ -863,6 +793,7 @@ export type Database = {
           updated_at?: string | null;
         };
         Update: {
+          anonymized_at?: string | null;
           created_at?: string | null;
           email?: string | null;
           guest_id?: string;
@@ -1324,11 +1255,26 @@ export type Database = {
       };
     };
     Functions: {
+      _anonymize_audit_rows: { Args: { p_audit_ids: string[] }; Returns: number };
+      _audit_ids_for_records: { Args: { p_record_ids: string[] }; Returns: string[] };
+      _payment_proof_path: { Args: { p_url: string }; Returns: string };
       anonymize_audit_logs: {
         Args: { p_older_than?: string };
         Returns: {
           anonymized_count: number;
           audit_logs_bytes: number;
+        }[];
+      };
+      anonymize_booking: {
+        Args: { p_booking_id: string };
+        Returns: {
+          proof_path: string;
+        }[];
+      };
+      anonymize_guest: {
+        Args: { p_guest_id: string };
+        Returns: {
+          proof_path: string;
         }[];
       };
       archive_audit_logs: {
