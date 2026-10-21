@@ -27,7 +27,7 @@ export function FormStepIndicator({
   return (
     <nav aria-label="Progress">
       {/* Mobile: Compact Progress Bar */}
-      <div className="mb-6 md:hidden">
+      <div className="mb-6 @2xl:hidden">
         <div className="mb-3 flex items-center justify-between">
           <span className="text-foreground text-sm font-semibold">
             Step {currentStep} of {steps.length}
@@ -40,7 +40,7 @@ export function FormStepIndicator({
         {/* Progress bar */}
         <div className="bg-border h-2 overflow-hidden rounded-full">
           <div
-            className="bg-primary h-full transition-all duration-200 ease-out"
+            className="bg-primary h-full transition-[width] duration-200 ease-out"
             style={{ width: `${progressPercentage}%` }}
             role="progressbar"
             aria-valuenow={currentStep}
@@ -60,14 +60,14 @@ export function FormStepIndicator({
       </div>
 
       {/* Desktop: Full Stepper (Existing Design - Unchanged) */}
-      <ol role="list" className="mb-8 hidden md:flex md:space-y-0 md:space-x-8">
+      <ol className="mb-8 hidden @2xl:flex @2xl:space-x-8">
         {steps.map((step) => {
           const isCompleted = completedSteps.has(step.number);
           const isCurrent = currentStep === step.number;
           const isClickable = step.number < currentStep || isCompleted;
 
           return (
-            <li key={step.number} className="md:flex-1">
+            <li key={step.number} className="flex-1">
               <button
                 type="button"
                 onClick={() => isClickable && onStepClick?.(step.number)}

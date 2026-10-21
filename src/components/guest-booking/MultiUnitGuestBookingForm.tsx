@@ -4,24 +4,23 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import { useNavigate } from "@tanstack/react-router";
 // Removed unused imports: format, cn
-import { AlertCircle, ArrowLeft, ArrowRight, CreditCard, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CreditCard, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { DatePicker } from "@/components/patterns";
-import { PaymentMethodsDisplay } from "@/components/payments/PaymentMethodsDisplay";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Button,
+  Callout,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  DatePicker,
   Form,
-  FormControl,
   FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+  Input,
+  Textarea,
+} from "@/components/patterns";
+import { PaymentMethodsDisplay } from "@/components/payments/PaymentMethodsDisplay";
 import { pickedDay } from "@/lib/bookings/stay";
 import { logger } from "@/lib/logger";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
@@ -308,7 +307,7 @@ export function MultiUnitGuestBookingForm() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
+    <div className="@container mx-auto max-w-4xl space-y-8">
       <FormStepIndicator
         steps={STEPS}
         currentStep={currentStep}
@@ -316,11 +315,7 @@ export function MultiUnitGuestBookingForm() {
         onStepClick={handleStepClick}
       />
 
-      {submitError && (
-        <Alert variant="destructive">
-          <AlertDescription>{submitError}</AlertDescription>
-        </Alert>
-      )}
+      {submitError && <Callout tone="danger">{submitError}</Callout>}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -332,48 +327,40 @@ export function MultiUnitGuestBookingForm() {
                 <p className="text-muted-foreground">Choose your check-in and check-out dates</p>
               </div>
 
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-6 @2xl:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="check_in"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Check-In Date</FormLabel>
-                      <FormControl>
-                        <DatePicker
-                          value={field.value}
-                          onChange={field.onChange}
-                          isDateDisabled={(date) =>
-                            date < new Date(new Date().setHours(0, 0, 0, 0))
-                          }
-                          placeholder="Pick a date"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                  label="Check-In Date"
+                  className="flex flex-col"
+                >
+                  {(field) => (
+                    <DatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      isDateDisabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      placeholder="Pick a date"
+                    />
                   )}
-                />
+                </FormField>
 
                 <FormField
                   control={form.control}
                   name="check_out"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Check-Out Date</FormLabel>
-                      <FormControl>
-                        <DatePicker
-                          value={field.value}
-                          onChange={field.onChange}
-                          isDateDisabled={(date) =>
-                            !watchedValues.check_in || date <= watchedValues.check_in
-                          }
-                          placeholder="Pick a date"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                  label="Check-Out Date"
+                  className="flex flex-col"
+                >
+                  {(field) => (
+                    <DatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      isDateDisabled={(date) =>
+                        !watchedValues.check_in || date <= watchedValues.check_in
+                      }
+                      placeholder="Pick a date"
+                    />
                   )}
-                />
+                </FormField>
               </div>
             </div>
           )}
@@ -388,19 +375,9 @@ export function MultiUnitGuestBookingForm() {
                 </p>
               </div>
 
-              <FormField
-                control={form.control}
-                name="unit_requests"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cabin Requests</FormLabel>
-                    <FormControl>
-                      <UnitRequestSelector value={field.value} onChange={field.onChange} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="unit_requests" label="Cabin Requests">
+                {(field) => <UnitRequestSelector value={field.value} onChange={field.onChange} />}
+              </FormField>
             </div>
           )}
 
@@ -412,67 +389,33 @@ export function MultiUnitGuestBookingForm() {
                 <p className="text-muted-foreground">Provide your contact details</p>
               </div>
 
-              <FormField
-                control={form.control}
-                name="guest_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Juan Dela Cruz" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="guest_name" label="Full Name">
+                {(field) => <Input placeholder="Juan Dela Cruz" {...field} />}
+              </FormField>
 
-              <div className="grid gap-6 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="juan@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="grid gap-6 @2xl:grid-cols-2">
+                <FormField control={form.control} name="email" label="Email">
+                  {(field) => <Input type="email" placeholder="juan@example.com" {...field} />}
+                </FormField>
 
-                <FormField
-                  control={form.control}
-                  name="phone_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input type="tel" placeholder="+63 912 345 6789" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <FormField control={form.control} name="phone_number" label="Phone Number">
+                  {(field) => <Input type="tel" placeholder="+63 912 345 6789" {...field} />}
+                </FormField>
               </div>
 
               <FormField
                 control={form.control}
                 name="special_requests"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Special Requests (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Any special requests or requirements?"
-                        className="min-h-[100px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                label="Special Requests (Optional)"
+              >
+                {(field) => (
+                  <Textarea
+                    placeholder="Any special requests or requirements?"
+                    className="min-h-[100px]"
+                    {...field}
+                  />
                 )}
-              />
+              </FormField>
             </div>
           )}
 
@@ -488,14 +431,11 @@ export function MultiUnitGuestBookingForm() {
                 </p>
               </div>
 
-              {/* Development mode indicator */}
               {isDevelopment && (
-                <Alert className="border-yellow-400 bg-yellow-50">
-                  <AlertDescription className="text-yellow-800">
-                    🔧 Development Mode: Payment proof is optional for testing. In production, this
-                    will be required.
-                  </AlertDescription>
-                </Alert>
+                <Callout tone="warning">
+                  Development Mode: Payment proof is optional for testing. In production, this will
+                  be required.
+                </Callout>
               )}
 
               {/* Payment Instructions - Dynamic from database */}
@@ -509,35 +449,26 @@ export function MultiUnitGuestBookingForm() {
                 <CardContent className="space-y-4">
                   <PaymentMethodsDisplay variant="card" />
 
-                  <Alert className="mt-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Use your booking reference number as the payment description/note.
-                    </AlertDescription>
-                  </Alert>
+                  <Callout tone="info" className="mt-4">
+                    Use your booking reference number as the payment description/note.
+                  </Callout>
                 </CardContent>
               </Card>
 
               <FormField
                 control={form.control}
                 name="payment_proof_url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Payment screenshot {isDevelopment ? "(optional)" : "(required)"}
-                    </FormLabel>
-                    <FormControl>
-                      <PaymentProofUpload
-                        value={field.value}
-                        onChange={field.onChange}
-                        bookingReference={`TEMP-${idempotencyKey.slice(0, 8)}`}
-                        onUploadingChange={setIsProofUploading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                label={`Payment screenshot ${isDevelopment ? "(optional)" : "(required)"}`}
+              >
+                {(field) => (
+                  <PaymentProofUpload
+                    value={field.value}
+                    onChange={field.onChange}
+                    bookingReference={`TEMP-${idempotencyKey.slice(0, 8)}`}
+                    onUploadingChange={setIsProofUploading}
+                  />
                 )}
-              />
+              </FormField>
             </div>
           )}
 
@@ -595,7 +526,7 @@ export function MultiUnitGuestBookingForm() {
               <>
                 {/* Comprehensive Debug Panel - remove after fixing */}
                 {import.meta.env.DEV && (
-                  <div className="mb-4 rounded bg-gray-100 p-3 text-xs text-gray-500">
+                  <div className="bg-muted text-muted-foreground mb-4 rounded p-3 text-xs">
                     <div className="mb-2 font-bold">🔍 Debug Panel</div>
 
                     {/* Environment Info */}
@@ -647,24 +578,26 @@ export function MultiUnitGuestBookingForm() {
                     </div>
 
                     {/* Manual Validation Buttons */}
-                    <div className="flex gap-2">
-                      <button
+                    <div className="mt-2 flex gap-2">
+                      <Button
                         type="button"
+                        size="sm"
+                        variant="secondary"
                         onClick={() => {
                           void form.trigger();
                         }}
-                        className="mt-2 rounded bg-blue-500 px-2 py-1 text-xs text-white"
                       >
                         Force Validate
-                      </button>
+                      </Button>
 
-                      <button
+                      <Button
                         type="button"
+                        size="sm"
+                        variant="secondary"
                         onClick={testZodValidation}
-                        className="mt-2 rounded bg-green-500 px-2 py-1 text-xs text-white"
                       >
                         Test Raw Zod
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}

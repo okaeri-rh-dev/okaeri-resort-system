@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { MultiUnitGuestBookingForm } from "@/components/guest-booking";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Callout } from "@/components/patterns";
 import { GuestLayout } from "@/layouts/GuestLayout";
 
 export const Route = createFileRoute("/booking/")({
@@ -14,11 +14,7 @@ function GuestBookingPage() {
   if (!turnstileSiteKey) {
     return (
       <div className="container mx-auto py-8">
-        <Alert variant="destructive">
-          <AlertDescription>
-            CAPTCHA configuration is missing. Please contact support.
-          </AlertDescription>
-        </Alert>
+        <Callout tone="danger">CAPTCHA configuration is missing. Please contact support.</Callout>
       </div>
     );
   }

@@ -48,40 +48,6 @@
       "count": 1
     }
   },
-  "src/components/booking-confirmation/BookingReferenceDisplay.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 3
-    },
-    "design/no-restricted-imports": {
-      "count": 2
-    }
-  },
-  "src/components/booking-confirmation/BookingSummaryCard.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "design/no-restricted-imports": {
-      "count": 3
-    }
-  },
-  "src/components/booking-confirmation/PaymentInstructions.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "design/no-restricted-imports": {
-      "count": 3
-    }
-  },
-  "src/components/booking-confirmation/PrintButton.tsx": {
-    "design/no-restricted-imports": {
-      "count": 1
-    }
-  },
-  "src/components/booking-confirmation/StatusTimeline.tsx": {
-    "design/no-restricted-imports": {
-      "count": 1
-    }
-  },
   "src/components/bookings/BookingDetail/index.tsx": {
     "better-tailwindcss/no-restricted-classes": {
       "count": 7
@@ -162,33 +128,6 @@
     },
     "design/no-restricted-imports": {
       "count": 5
-    }
-  },
-  "src/components/calendar/AvailabilityLegend.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
-  "src/components/calendar/CalendarGrid.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 8
-    },
-    "better-tailwindcss/no-unknown-classes": {
-      "count": 1
-    },
-    "design/no-restricted-syntax": {
-      "count": 1
-    },
-    "jsx-a11y/click-events-have-key-events": {
-      "count": 1
-    },
-    "jsx-a11y/interactive-supports-focus": {
-      "count": 1
-    }
-  },
-  "src/components/calendar/PublicAvailabilityCalendar.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
     }
   },
   "src/components/dashboard/BookingIndicators.tsx": {
@@ -347,54 +286,6 @@
       "count": 1
     }
   },
-  "src/components/guest-booking/BookingReviewStep.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 7
-    },
-    "design/no-restricted-imports": {
-      "count": 5
-    }
-  },
-  "src/components/guest-booking/FormStepIndicator.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 5
-    },
-    "design/no-restricted-syntax": {
-      "count": 1
-    },
-    "jsx-a11y/no-redundant-roles": {
-      "count": 1
-    }
-  },
-  "src/components/guest-booking/MultiUnitGuestBookingForm.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 11
-    },
-    "design/no-restricted-imports": {
-      "count": 6
-    }
-  },
-  "src/components/guest-booking/PaymentSummary.tsx": {
-    "design/no-restricted-imports": {
-      "count": 4
-    }
-  },
-  "src/components/guest-booking/UnitRequestCard.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 10
-    },
-    "design/no-restricted-imports": {
-      "count": 5
-    }
-  },
-  "src/components/guest-booking/UnitRequestSelector.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 24
-    },
-    "design/no-restricted-imports": {
-      "count": 4
-    }
-  },
   "src/components/guests/GuestDetail/index.tsx": {
     "better-tailwindcss/no-restricted-classes": {
       "count": 2
@@ -417,33 +308,6 @@
     },
     "design/no-restricted-imports": {
       "count": 4
-    }
-  },
-  "src/components/payments/PaymentDetail/index.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "design/no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "src/components/payments/PaymentEdit/index.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 4
-    },
-    "design/no-restricted-imports": {
-      "count": 6
-    }
-  },
-  "src/components/payments/PaymentForm.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 4
-    },
-    "design/no-restricted-imports": {
-      "count": 7
-    },
-    "design/no-restricted-syntax": {
-      "count": 1
     }
   },
   "src/components/pricing/DiscountRulesForm.tsx": {
@@ -758,24 +622,6 @@
     },
     "design/no-restricted-imports": {
       "count": 2
-    }
-  },
-  "src/routes/booking/check-status.tsx": {
-    "design/no-restricted-imports": {
-      "count": 7
-    }
-  },
-  "src/routes/booking/confirmation/$bookingReference.tsx": {
-    "better-tailwindcss/no-unknown-classes": {
-      "count": 2
-    },
-    "design/no-restricted-imports": {
-      "count": 2
-    }
-  },
-  "src/routes/booking/index.tsx": {
-    "design/no-restricted-imports": {
-      "count": 1
     }
   }
 }
