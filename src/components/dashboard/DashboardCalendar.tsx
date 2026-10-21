@@ -2,10 +2,16 @@ import React, { useCallback, useMemo, useState } from "react";
 
 import { format, getDay } from "date-fns";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
-import type { DayButton as DayButtonType } from "react-day-picker";
 
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/patterns";
-import { Calendar } from "@/components/ui/calendar";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  InlineCalendar,
+  type CalendarDayButtonProps,
+} from "@/components/patterns";
 import { useCalendarBookings } from "@/hooks/useCalendarBookings";
 import { hasProperty, isObject } from "@/lib/type-guards";
 import { cn } from "@/lib/utils";
@@ -238,7 +244,7 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
 
   // Create the DayButton component callback at the top level to follow React hooks rules
   const dayButtonComponent = useCallback(
-    (props: React.ComponentProps<typeof DayButtonType>) => (
+    (props: CalendarDayButtonProps) => (
       <DayButton {...props} bookingsByDate={bookingsByDate} compact={compact} />
     ),
     [bookingsByDate, compact]
@@ -274,51 +280,12 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
             <div className="text-muted-foreground text-sm">Loading calendar...</div>
           </div>
         ) : (
-          <Calendar
-            mode="single"
-            selected={undefined}
+          <InlineCalendar
+            variant="month-grid"
             month={currentMonth}
             onMonthChange={setCurrentMonth}
-            showOutsideDays={true}
-            className={cn("w-full rounded-md border", headerVariant === "stacked" && "p-0")}
-            classNames={{
-              months: "flex flex-col space-y-4 w-full",
-              month: "space-y-3 w-full",
-              month_caption: "hidden", // Hide default caption since we have custom navigation (v9 slot)
-              caption: "hidden", // Back-compat alias for older react-day-picker
-              caption_label: "text-sm font-medium",
-              nav: "hidden", // Hide default nav since we have custom navigation
-              nav_button: cn("h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"),
-              nav_button_previous: "absolute left-1",
-              nav_button_next: "absolute right-1",
-              month_grid:
-                "w-full table-fixed border-collapse space-y-1 [container-type:inline-size]", // renamed from 'table'; table-fixed prevents the table from growing beyond its declared width
-              weekdays: "flex w-full", // renamed from 'head_row'
-              weekday:
-                "text-muted-foreground rounded-md min-w-0 flex-1 font-medium text-xs uppercase tracking-wider", // renamed from 'head_cell'
-              week: "flex w-full mt-1", // renamed from 'row'
-              day: cn(
-                "relative h-20 @sm/calendar:h-24 @2xl/calendar:h-28 min-w-0 flex-1 p-0 text-center text-sm",
-                "[&:has([aria-selected])]:bg-accent",
-                "first:[&:has([aria-selected])]:rounded-l-md",
-                "last:[&:has([aria-selected])]:rounded-r-md",
-                "focus-within:relative focus-within:z-20"
-              ), // renamed from 'cell'
-              day_button: cn(
-                "h-20 @sm/calendar:h-24 @2xl/calendar:h-28 w-full p-0 font-normal hover:bg-accent hover:text-accent-foreground",
-                "aria-selected:opacity-100"
-              ), // renamed from 'day'
-              selected:
-                "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground", // renamed from 'day_selected'
-              today: "bg-accent/50 text-accent-foreground font-semibold", // renamed from 'day_today'
-              outside: "text-muted-foreground", // renamed from 'day_outside'
-              disabled: "text-muted-foreground opacity-50", // renamed from 'day_disabled'
-              range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground", // renamed from 'day_range_middle'
-              hidden: "invisible", // renamed from 'day_hidden'
-            }}
-            components={{
-              DayButton: dayButtonComponent,
-            }}
+            dayButton={dayButtonComponent}
+            compact={headerVariant === "stacked"}
           />
         )}
       </CardContent>

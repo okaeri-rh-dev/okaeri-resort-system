@@ -19,16 +19,6 @@
       "count": 1
     }
   },
-  "src/components/bookings/BookingsTable/components/BookingFilters.tsx": {
-    "design/no-restricted-imports": {
-      "count": 1
-    }
-  },
-  "src/components/dashboard/DashboardCalendar.tsx": {
-    "design/no-restricted-imports": {
-      "count": 1
-    }
-  },
   "src/components/pricing/DiscountRulesForm.tsx": {
     "design/no-restricted-imports": {
       "count": 1
