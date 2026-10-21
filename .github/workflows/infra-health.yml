@@ -130,6 +130,8 @@ jobs:
           TEST_ADMIN_PASSWORD: test-password
           TEST_OWNER_EMAIL: owner@okaeri.test
           TEST_OWNER_PASSWORD: test-password
+          TEST_MANAGER_EMAIL: manager@okaeri.test
+          TEST_MANAGER_PASSWORD: test-password
           TEST_STAFF_EMAIL: staff@okaeri.test
           TEST_STAFF_PASSWORD: test-password
       - name: Upload Playwright report on failure

@@ -36,6 +36,13 @@ export async function loginAsOwner(page: Page): Promise<void> {
   await loginPage.loginAndWaitForDashboard(TEST_USERS.owner.email, TEST_USERS.owner.password);
 }
 
+/** Manager credentials default to the seed.sql user, so no env check is needed. */
+export async function loginAsManager(page: Page): Promise<void> {
+  const loginPage = new LoginPage(page);
+  await loginPage.goto();
+  await loginPage.loginAndWaitForDashboard(TEST_USERS.manager.email, TEST_USERS.manager.password);
+}
+
 /**
  * Helper to login as staff user
  */
