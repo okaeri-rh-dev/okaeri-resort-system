@@ -311,9 +311,9 @@ function BookingSummaryCard({
       <CardHeader>
         <CardTitle>Booking Summary</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="medium:grid-cols-3 grid grid-cols-2 gap-4">
-          <div className="medium:col-span-1 col-span-2 min-w-0">
+      <CardContent className="@container space-y-4">
+        <div className="grid grid-cols-2 gap-4 @lg:grid-cols-3">
+          <div className="col-span-2 min-w-0 @lg:col-span-1">
             <DetailField
               label="Guest"
               emphasis="strong"

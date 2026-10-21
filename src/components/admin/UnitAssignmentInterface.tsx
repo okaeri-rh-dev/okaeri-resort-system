@@ -331,8 +331,8 @@ export function UnitAssignmentInterface({
             Click to select cabins for assignment. All cabins must be selected before proceeding.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-4">
-          <div className="medium:grid-cols-2 large:grid-cols-3 grid grid-cols-1 gap-3">
+        <CardContent className="@container p-4">
+          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
             {availableUnits.map((unit) => {
               const isSelected = selectedUnits.has(unit.unit_id);
 
