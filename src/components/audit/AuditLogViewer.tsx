@@ -3,19 +3,9 @@
 import React, { useState } from "react";
 
 import { formatDistanceToNow } from "date-fns";
-import {
-  AlertCircle,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  ChevronRight as Next,
-} from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Eye, ChevronRight as Next } from "lucide-react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button, Callout, Skeleton, StatusBadge, type StatusTone } from "@/components/patterns";
 import {
   Table,
   TableBody,
@@ -101,12 +91,7 @@ export function AuditLogViewer() {
 
   // Error state
   if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>Failed to load audit logs: {error.message}</AlertDescription>
-      </Alert>
-    );
+    return <Callout tone="danger">Failed to load audit logs: {error.message}</Callout>;
   }
 
   // Empty state
@@ -214,17 +199,24 @@ function AuditLogRow({ log, isExpanded, onToggle, onViewDiff }: AuditLogRowProps
       <TableRow>
         {/* Expand Button */}
         <TableCell>
-          <Button variant="ghost" size="sm" onClick={onToggle} className="h-8 w-8 p-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggle}
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? "Hide details" : "Show details"}
+            className="h-8 w-8 p-0"
+          >
             {isExpanded ? (
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-4 w-4" aria-hidden="true" />
             ) : (
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             )}
           </Button>
         </TableCell>
 
         {/* Timestamp */}
-        <TableCell className="font-mono text-sm">
+        <TableCell className="text-sm tabular-nums">
           <div>{log.created_at && new Date(log.created_at).toLocaleString()}</div>
           <div className="text-muted-foreground text-xs">
             {log.created_at && formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
@@ -243,10 +235,10 @@ function AuditLogRow({ log, isExpanded, onToggle, onViewDiff }: AuditLogRowProps
 
         {/* Table Name */}
         <TableCell>
-          <Badge variant="outline">
+          <StatusBadge tone="neutral">
             {TABLE_DISPLAY_NAMES[log.table_name as keyof typeof TABLE_DISPLAY_NAMES] ||
               log.table_name}
-          </Badge>
+          </StatusBadge>
         </TableCell>
 
         {/* Action */}
@@ -260,23 +252,19 @@ function AuditLogRow({ log, isExpanded, onToggle, onViewDiff }: AuditLogRowProps
         </TableCell>
 
         {/* Record ID */}
-        <TableCell className="max-w-[120px] truncate font-mono text-xs">
-          {log.record_id || "—"}
-        </TableCell>
+        <TableCell className="max-w-[120px] truncate text-xs">{log.record_id || "—"}</TableCell>
 
         {/* Changed Fields */}
         <TableCell>
           {log.changed_fields && log.changed_fields.length > 0 ? (
             <div className="flex flex-wrap gap-1">
               {log.changed_fields.slice(0, 3).map((field) => (
-                <Badge key={field} variant="secondary" className="text-xs">
+                <StatusBadge key={field} tone="neutral">
                   {field}
-                </Badge>
+                </StatusBadge>
               ))}
               {log.changed_fields.length > 3 && (
-                <Badge variant="secondary" className="text-xs">
-                  +{log.changed_fields.length - 3} more
-                </Badge>
+                <StatusBadge tone="neutral">+{log.changed_fields.length - 3} more</StatusBadge>
               )}
             </div>
           ) : (
@@ -288,7 +276,7 @@ function AuditLogRow({ log, isExpanded, onToggle, onViewDiff }: AuditLogRowProps
         <TableCell>
           {hasChanges && (
             <Button variant="ghost" size="sm" onClick={onViewDiff}>
-              <Eye className="mr-1 h-4 w-4" />
+              <Eye className="mr-1 h-4 w-4" aria-hidden="true" />
               View
             </Button>
           )}
@@ -327,7 +315,7 @@ function ExpandedRowDetails({ log }: { log: AuditLog }): React.ReactElement {
         {category && (
           <div>
             <div className="mb-1 text-sm font-medium">Category</div>
-            <Badge>{category}</Badge>
+            <StatusBadge tone="neutral">{category}</StatusBadge>
           </div>
         )}
         {severity && (
@@ -342,7 +330,7 @@ function ExpandedRowDetails({ log }: { log: AuditLog }): React.ReactElement {
       {log.ip_address != null && (
         <div>
           <div className="mb-1 text-sm font-medium">IP Address</div>
-          <div className="text-muted-foreground font-mono text-sm">{String(log.ip_address)}</div>
+          <div className="text-muted-foreground text-sm tabular-nums">{String(log.ip_address)}</div>
         </div>
       )}
 
@@ -366,27 +354,22 @@ function ExpandedRowDetails({ log }: { log: AuditLog }): React.ReactElement {
 // ============================================
 
 function SourceBadge({ source }: { source: string }) {
-  const isDbSource = source === "db";
-
-  return (
-    <Badge variant={isDbSource ? "outline" : "secondary"} className={isDbSource ? "font-mono" : ""}>
-      {isDbSource ? "DB Trigger" : "App Event"}
-    </Badge>
-  );
+  return <StatusBadge tone="neutral">{source === "db" ? "DB Trigger" : "App Event"}</StatusBadge>;
 }
 
-function SeverityBadge({ severity }: { severity: string }): React.ReactElement {
-  const colors: Record<string, string> = {
-    info: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-    warning: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-    critical: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-    debug: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
-  };
+const tonesBySeverity: Record<string, StatusTone> = {
+  info: "info",
+  warning: "warning",
+  error: "danger",
+  critical: "danger",
+  debug: "neutral",
+};
 
+function SeverityBadge({ severity }: { severity: string }): React.ReactElement {
   return (
-    <Badge className={colors[severity.toLowerCase()] || ""}>
+    <StatusBadge tone={tonesBySeverity[severity.toLowerCase()] ?? "neutral"}>
       {severity.charAt(0).toUpperCase() + severity.slice(1).toLowerCase()}
-    </Badge>
+    </StatusBadge>
   );
 }
 
