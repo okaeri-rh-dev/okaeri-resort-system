@@ -139,4 +139,33 @@ describe("booking status lookup", () => {
     expect(await screen.findByLabelText("Booking Reference")).toHaveValue("");
     expect(screen.getByLabelText("Email Address")).toHaveValue("");
   });
+
+  it("shows the booking the status API returns", async () => {
+    fetchSpy.mockResolvedValue(
+      Response.json({
+        booking_reference: REFERENCE,
+        status: "Pending",
+        payment_status: "Pending",
+        check_in: "2099-12-10T06:00:00+00:00",
+        check_out: "2099-12-11T04:00:00+00:00",
+        total_amount: 7000,
+        num_guests: 2,
+        unit_name: "",
+        unit_type: "",
+        created_at: "2026-10-21T08:50:01.915793+00:00",
+        upload_status: "pending",
+        special_requests: null,
+        message: "Your booking is pending payment verification. We'll confirm within 24 hours.",
+      })
+    );
+    renderAt(`/booking/check-status?reference=${REFERENCE}`);
+
+    await userEvent.type(await screen.findByLabelText("Email Address"), "guest@example.com");
+    await userEvent.click(screen.getByRole("button", { name: "Search Booking" }));
+
+    expect(await screen.findByText("Booking Details")).toBeVisible();
+    expect(screen.getByText(`Reference: ${REFERENCE}`)).toBeVisible();
+    expect(screen.getByText("Cabins to be assigned")).toBeVisible();
+    expect(screen.getByText(/₱7,000\.00/)).toBeVisible();
+  });
 });

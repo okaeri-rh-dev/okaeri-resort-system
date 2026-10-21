@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { isGuestBookingReference } from "@/lib/bookings/reference";
 import { checkKVRateLimit, createAdvancedFingerprint } from "@/lib/kv-rate-limit";
+import type { StatusResponse } from "@/lib/schema-transform";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
 import { getClientIp, verifyTurnstile } from "@/lib/turnstile";
 
@@ -193,7 +194,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       upload_status: booking.upload_status || "pending",
       special_requests: booking.special_requests,
       message: getStatusMessage(booking.booking_status, booking.payment_status),
-    };
+    } satisfies StatusResponse;
 
     return new Response(JSON.stringify(statusResponse), {
       status: 200,

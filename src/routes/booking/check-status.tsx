@@ -202,7 +202,7 @@ function CheckBookingPage() {
                   <CardDescription>Reference: {booking.booking_reference}</CardDescription>
                 </div>
                 <div className="flex gap-2">
-                  <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
+                  <StatusBadge {...statusBadgeProps(booking.status, "Pending")} />
                   <StatusBadge {...statusBadgeProps(booking.payment_status, "Pending")} />
                 </div>
               </div>
@@ -213,8 +213,10 @@ function CheckBookingPage() {
                 <div className="flex items-center gap-3">
                   <MapPin className="text-muted-foreground h-5 w-5" />
                   <div>
-                    <p className="font-medium">{booking.unit.unit_name}</p>
-                    <p className="text-muted-foreground text-sm">{booking.unit.unit_type}</p>
+                    <p className="font-medium">{booking.unit_name || "Cabins to be assigned"}</p>
+                    {booking.unit_type && (
+                      <p className="text-muted-foreground text-sm">{booking.unit_type}</p>
+                    )}
                   </div>
                 </div>
 
@@ -246,7 +248,7 @@ function CheckBookingPage() {
                   </Callout>
                 )}
 
-                {booking.booking_status === "Confirmed" && (
+                {booking.status === "Confirmed" && (
                   <Callout tone="success">
                     Your booking is confirmed! We look forward to welcoming you.
                   </Callout>
