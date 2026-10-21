@@ -1,7 +1,6 @@
 import { Banknote, Building2, CreditCard, Smartphone, Wallet, type LucideIcon } from "lucide-react";
 
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Separator, Skeleton } from "@/components/patterns";
 import { useActivePaymentMethods } from "@/hooks/usePaymentMethods";
 import type { PaymentMethodConfig } from "@/types";
 
@@ -91,7 +90,7 @@ function CompactPaymentMethods({ methods }: { methods: PaymentMethodConfig[] }) 
             </h3>
             <div className="bg-muted space-y-2 rounded-lg p-4 text-sm">
               {method.account_name && (
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-4">
                   <span className="text-muted-foreground">
                     {method.method_type === "e-wallet" ? "Name:" : "Account Name:"}
                   </span>
@@ -99,15 +98,17 @@ function CompactPaymentMethods({ methods }: { methods: PaymentMethodConfig[] }) 
                 </div>
               )}
               {method.account_number && (
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-4">
                   <span className="text-muted-foreground">
                     {method.method_type === "e-wallet" ? "Number:" : "Account Number:"}
                   </span>
-                  <span className="font-mono font-medium">{method.account_number}</span>
+                  <span className="font-medium whitespace-nowrap tabular-nums">
+                    {method.account_number}
+                  </span>
                 </div>
               )}
               {method.bank_name && (
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-4">
                   <span className="text-muted-foreground">Bank:</span>
                   <span className="font-medium">{method.bank_name}</span>
                 </div>
@@ -118,6 +119,8 @@ function CompactPaymentMethods({ methods }: { methods: PaymentMethodConfig[] }) 
                 <img
                   src={method.qr_code_url}
                   alt={`${method.display_name} QR Code`}
+                  width={128}
+                  height={128}
                   className="h-32 w-32 rounded-lg border object-contain"
                 />
               </div>
@@ -145,7 +148,7 @@ function MethodDetails({ method }: { method: PaymentMethodConfig }) {
           <span className="text-muted-foreground">
             {method.method_type === "e-wallet" ? "Number:" : "Account Number:"}
           </span>{" "}
-          {method.account_number}
+          <span className="whitespace-nowrap tabular-nums">{method.account_number}</span>
         </p>
       )}
       {method.account_name && (
@@ -175,6 +178,8 @@ function QrCodeDisplay({ method }: { method: PaymentMethodConfig }) {
       <img
         src={method.qr_code_url}
         alt={`${method.display_name} QR Code`}
+        width={96}
+        height={96}
         className="h-24 w-24 rounded-lg border object-contain"
       />
     );
