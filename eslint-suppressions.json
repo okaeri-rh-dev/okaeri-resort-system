@@ -1,28 +1,4 @@
 {
-  "src/components/accounts/AccountForm.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 4
-    },
-    "design/no-restricted-imports": {
-      "count": 5
-    }
-  },
-  "src/components/accounts/AccountSelector.tsx": {
-    "design/no-restricted-imports": {
-      "count": 1
-    },
-    "design/no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "src/components/accounts/AccountsTable.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 17
-    },
-    "design/no-restricted-imports": {
-      "count": 6
-    }
-  },
   "src/components/admin/GrantRoleDialog.tsx": {
     "design/no-restricted-imports": {
       "count": 1
@@ -251,41 +227,6 @@
       "count": 4
     }
   },
-  "src/components/expenses/ExpenseDetail/index.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "better-tailwindcss/no-unknown-classes": {
-      "count": 4
-    },
-    "design/no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "src/components/expenses/ExpenseEdit.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "design/no-restricted-imports": {
-      "count": 8
-    }
-  },
-  "src/components/expenses/ExpenseForm.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 4
-    },
-    "design/no-restricted-imports": {
-      "count": 7
-    },
-    "design/no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "src/components/expenses/ExpensesTable/components/ExpenseFilters.tsx": {
-    "design/no-restricted-imports": {
-      "count": 1
-    }
-  },
   "src/components/guests/GuestDetail/index.tsx": {
     "better-tailwindcss/no-restricted-classes": {
       "count": 2
@@ -391,22 +332,6 @@
     },
     "design/no-restricted-syntax": {
       "count": 1
-    }
-  },
-  "src/components/transfers/TransferForm.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 5
-    },
-    "design/no-restricted-imports": {
-      "count": 6
-    }
-  },
-  "src/components/transfers/TransfersTable.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 10
-    },
-    "design/no-restricted-imports": {
-      "count": 5
     }
   },
   "src/components/units/UnitDetail/index.tsx": {
