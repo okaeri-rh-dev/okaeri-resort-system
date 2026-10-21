@@ -2,21 +2,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input, NumberInput } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { Button, Form, FormField, Input, NumberInput } from "@/components/patterns";
 import { useCreateExpenseCategory, useUpdateExpenseCategory } from "@/hooks/useExpenseCategories";
 import { sanitizeFormData } from "@/lib/security/sanitize";
 import type { ExpenseCategoryConfig } from "@/types";
+
+import { ActiveSwitchField } from "./ActiveSwitchField";
 
 const expenseCategorySchema = z.object({
   name: z.string().min(1, "Category name is required").max(100, "Category name too long"),
@@ -73,73 +64,47 @@ export function ExpenseCategoryForm({ category, onSuccess, onCancel }: ExpenseCa
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Category Name */}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="@container space-y-6">
         <FormField
           control={form.control}
           name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Category Name *</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Transportation, Equipment Rental" {...field} />
-              </FormControl>
-              <FormDescription>
-                Unique name for this expense category (max 100 chars)
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          label="Category Name *"
+          description="Unique name for this expense category (max 100 chars)"
+        >
+          {(field) => <Input placeholder="e.g., Transportation, Equipment Rental" {...field} />}
+        </FormField>
 
-        {/* Display Order */}
         <FormField
           control={form.control}
           name="display_order"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Display Order</FormLabel>
-              <FormControl>
-                <NumberInput
-                  min={0}
-                  max={999}
-                  allowDecimals={false}
-                  placeholder="0"
-                  value={field.value}
-                  onChange={(value) => field.onChange(value)}
-                  onBlur={(value) => {
-                    field.onChange(value || 0);
-                    field.onBlur();
-                  }}
-                />
-              </FormControl>
-              <FormDescription>Lower numbers appear first in dropdowns</FormDescription>
-              <FormMessage />
-            </FormItem>
+          label="Display Order"
+          description="Lower numbers appear first in dropdowns"
+        >
+          {({ value, onChange, onBlur, ...field }) => (
+            <NumberInput
+              {...field}
+              min={0}
+              max={999}
+              allowDecimals={false}
+              placeholder="0"
+              value={value}
+              onChange={(next) => onChange(next)}
+              onBlur={(next) => {
+                onChange(next || 0);
+                onBlur();
+              }}
+            />
           )}
-        />
+        </FormField>
 
-        {/* Active Toggle */}
-        <FormField
+        <ActiveSwitchField
           control={form.control}
           name="is_active"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">Active</FormLabel>
-                <FormDescription>
-                  When active, this category appears in expense form dropdowns
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch checked={field.value} onCheckedChange={field.onChange} />
-              </FormControl>
-            </FormItem>
-          )}
+          description="When active, this category appears in expense form dropdowns"
         />
 
         {/* Actions */}
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-2 @md:flex-row @md:justify-end">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
             Cancel
           </Button>

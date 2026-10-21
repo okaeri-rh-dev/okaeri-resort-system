@@ -5,26 +5,16 @@ import { ImagePlus, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   Form,
-  FormControl,
-  FormDescription,
   FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input, NumberInput } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
+  Input,
+  NumberInput,
   SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
+  Textarea,
+} from "@/components/patterns";
+import { SelectControl } from "@/components/payments/SelectControl";
 import {
   useCreatePaymentMethod,
   useDeleteQrCode,
@@ -33,6 +23,8 @@ import {
 } from "@/hooks/usePaymentMethods";
 import { sanitizeFormData } from "@/lib/security/sanitize";
 import type { PaymentMethodConfig, PaymentMethodType } from "@/types";
+
+import { ActiveSwitchField } from "./ActiveSwitchField";
 
 const METHOD_TYPES: { value: PaymentMethodType; label: string }[] = [
   { value: "e-wallet", label: "E-Wallet (GCash, Maya)" },
@@ -169,246 +161,138 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Method Type */}
-          <FormField
-            control={form.control}
-            name="method_type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Method Type *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {METHOD_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="@container space-y-6">
+        <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
+          <FormField control={form.control} name="method_type" label="Method Type *">
+            {({ value, onChange, ...field }) => (
+              <SelectControl
+                {...field}
+                value={value}
+                onValueChange={onChange}
+                placeholder="Select type"
+              >
+                {METHOD_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectControl>
             )}
-          />
+          </FormField>
 
-          {/* Provider Name */}
           <FormField
             control={form.control}
             name="provider_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Provider Name *</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., GCash, BDO, Maya" {...field} />
-                </FormControl>
-                <FormDescription>Short name for internal reference</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            label="Provider Name *"
+            description="Short name for internal reference"
+          >
+            {(field) => <Input placeholder="e.g., GCash, BDO, Maya" {...field} />}
+          </FormField>
         </div>
 
-        {/* Display Name */}
         <FormField
           control={form.control}
           name="display_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Display Name *</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., GCash, BDO Bank Transfer" {...field} />
-              </FormControl>
-              <FormDescription>Shown to guests on the booking page</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          label="Display Name *"
+          description="Shown to guests on the booking page"
+        >
+          {(field) => <Input placeholder="e.g., GCash, BDO Bank Transfer" {...field} />}
+        </FormField>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Account Name */}
-          <FormField
-            control={form.control}
-            name="account_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Account Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., Okaeri Resort" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
+          <FormField control={form.control} name="account_name" label="Account Name">
+            {(field) => <Input placeholder="e.g., Okaeri Resort" {...field} />}
+          </FormField>
 
-          {/* Account Number */}
-          <FormField
-            control={form.control}
-            name="account_number"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Account Number</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., 0917-123-4567" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <FormField control={form.control} name="account_number" label="Account Number">
+            {(field) => <Input placeholder="e.g., 0917-123-4567" {...field} />}
+          </FormField>
         </div>
 
-        {/* Bank Name (conditional) */}
         {methodType === "bank-transfer" && (
-          <FormField
-            control={form.control}
-            name="bank_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Bank Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., BDO Savings" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <FormField control={form.control} name="bank_name" label="Bank Name">
+            {(field) => <Input placeholder="e.g., BDO Savings" {...field} />}
+          </FormField>
         )}
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {/* Icon */}
-          <FormField
-            control={form.control}
-            name="icon_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Icon</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {ICON_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
+        <div className="grid grid-cols-1 gap-6 @lg:grid-cols-3">
+          <FormField control={form.control} name="icon_name" label="Icon">
+            {({ value, onChange, ...field }) => (
+              <SelectControl {...field} value={value} onValueChange={onChange}>
+                {ICON_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectControl>
             )}
-          />
+          </FormField>
 
-          {/* Icon Color */}
-          <FormField
-            control={form.control}
-            name="icon_color"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Icon Color</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {ICON_COLORS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
+          <FormField control={form.control} name="icon_color" label="Icon Color">
+            {({ value, onChange, ...field }) => (
+              <SelectControl {...field} value={value} onValueChange={onChange}>
+                {ICON_COLORS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectControl>
             )}
-          />
+          </FormField>
 
-          {/* Display Order */}
           <FormField
             control={form.control}
             name="display_order"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Display Order</FormLabel>
-                <FormControl>
-                  <NumberInput
-                    min={0}
-                    max={999}
-                    allowDecimals={false}
-                    placeholder="0"
-                    value={field.value}
-                    onChange={(value) => field.onChange(value)}
-                    onBlur={(value) => {
-                      field.onChange(value || 0);
-                      field.onBlur();
-                    }}
-                  />
-                </FormControl>
-                <FormDescription>Lower = higher</FormDescription>
-                <FormMessage />
-              </FormItem>
+            label="Display Order"
+            description="Lower = higher"
+          >
+            {({ value, onChange, onBlur, ...field }) => (
+              <NumberInput
+                {...field}
+                min={0}
+                max={999}
+                allowDecimals={false}
+                placeholder="0"
+                value={value}
+                onChange={(next) => onChange(next)}
+                onBlur={(next) => {
+                  onChange(next || 0);
+                  onBlur();
+                }}
+              />
             )}
-          />
+          </FormField>
         </div>
 
-        {/* Instructions */}
-        <FormField
-          control={form.control}
-          name="instructions"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Instructions</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Optional instructions for guests..."
-                  className="min-h-[60px]"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        <FormField control={form.control} name="instructions" label="Instructions">
+          {(field) => (
+            <Textarea
+              placeholder="Optional instructions for guests..."
+              className="min-h-16"
+              {...field}
+            />
           )}
-        />
+        </FormField>
 
-        {/* Active Toggle */}
-        <FormField
+        <ActiveSwitchField
           control={form.control}
           name="is_active"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">Active</FormLabel>
-                <FormDescription>
-                  When active, this payment method is visible to guests
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch checked={field.value} onCheckedChange={field.onChange} />
-              </FormControl>
-            </FormItem>
-          )}
+          description="When active, this payment method is visible to guests"
         />
 
         {/* QR Code Upload (only in edit mode - need an ID first) */}
         {isEditMode && (
           <div className="space-y-2">
-            <FormLabel>QR Code Image</FormLabel>
+            <p className="text-sm font-medium">QR Code Image</p>
             <div className="flex items-center gap-4">
               {qrPreview ? (
                 <div className="relative">
                   <img
                     src={qrPreview}
                     alt="QR Code"
-                    className="h-32 w-32 rounded-lg border object-contain"
+                    width={128}
+                    height={128}
+                    className="size-32 rounded-lg border object-contain"
                   />
                   <Button
                     type="button"
@@ -417,8 +301,9 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
                     className="absolute -top-2 -right-2 h-6 w-6"
                     onClick={handleQrDelete}
                     disabled={deleteQr.isPending}
+                    aria-label="Remove QR code"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-3 w-3" aria-hidden="true" />
                   </Button>
                 </div>
               ) : (
@@ -448,7 +333,7 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
         )}
 
         {/* Actions */}
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-2 @md:flex-row @md:justify-end">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
             Cancel
           </Button>

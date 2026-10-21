@@ -59,7 +59,9 @@ export const BookingIndicators = React.memo(function BookingIndicators({
 
         if (!booking) {
           // Invisible placeholder to maintain fixed positioning
-          return <div key={slot.unitCode} className="h-3 w-full sm:h-4" aria-hidden="true" />;
+          return (
+            <div key={slot.unitCode} className="h-3 w-full @sm/calendar:h-4" aria-hidden="true" />
+          );
         }
 
         const status = booking.booking_status ?? "Pending";
@@ -69,7 +71,7 @@ export const BookingIndicators = React.memo(function BookingIndicators({
         const chipText = isPending ? PENDING_CHIP_COLORS.text : slot.text;
 
         return (
-          <div key={slot.unitCode} className="h-3 w-full sm:h-4">
+          <div key={slot.unitCode} className="h-3 w-full @sm/calendar:h-4">
             <div
               className={cn(
                 "flex w-full min-w-0 items-center rounded-sm border py-0.5",
@@ -84,7 +86,7 @@ export const BookingIndicators = React.memo(function BookingIndicators({
               )}
               aria-label={`${slot.unitCode}: ${booking.guest_name}`}
             >
-              <span className="mr-1 hidden sm:inline">{slot.unitCode}</span>
+              <span className="mr-1 hidden @sm/calendar:inline">{slot.unitCode}</span>
               <span className="truncate font-sans">{booking.guest_name}</span>
             </div>
           </div>
@@ -108,7 +110,7 @@ export const BookingCountBadge = React.memo(function BookingCountBadge({
     <div
       className={cn(
         "absolute top-0.5 right-0.5 flex size-4 items-center justify-center",
-        "bg-primary text-primary-foreground rounded-full text-[9px] font-bold",
+        "bg-primary text-primary-foreground rounded-full text-xs font-bold",
         "shadow-sm",
         className
       )}

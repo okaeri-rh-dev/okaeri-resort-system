@@ -29,47 +29,8 @@
       "count": 1
     }
   },
-  "src/components/dashboard/BookingIndicators.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 4
-    }
-  },
-  "src/components/dashboard/Dashboard.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    }
-  },
   "src/components/dashboard/DashboardCalendar.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 7
-    },
     "design/no-restricted-imports": {
-      "count": 3
-    }
-  },
-  "src/components/dashboard/DashboardHeader.tsx": {
-    "design/no-restricted-imports": {
-      "count": 1
-    }
-  },
-  "src/components/dashboard/DesktopDashboard.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 9
-    },
-    "design/no-restricted-imports": {
-      "count": 2
-    }
-  },
-  "src/components/dashboard/MobileDashboard.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "design/no-restricted-imports": {
-      "count": 2
-    }
-  },
-  "src/components/dashboard/__tests__/BookingIndicators.test.tsx": {
-    "better-tailwindcss/no-unknown-classes": {
       "count": 1
     }
   },
@@ -80,44 +41,6 @@
   },
   "src/components/pricing/SeasonalRatesForm.tsx": {
     "design/no-restricted-imports": {
-      "count": 1
-    }
-  },
-  "src/components/settings/ExpenseCategoriesTable.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "design/no-restricted-imports": {
-      "count": 4
-    }
-  },
-  "src/components/settings/ExpenseCategoryForm.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "design/no-restricted-imports": {
-      "count": 4
-    }
-  },
-  "src/components/settings/PaymentMethodForm.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 5
-    },
-    "design/no-restricted-imports": {
-      "count": 6
-    },
-    "design/no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "src/components/settings/PaymentMethodsTable.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "design/no-restricted-imports": {
-      "count": 5
-    },
-    "design/no-restricted-syntax": {
       "count": 1
     }
   }
