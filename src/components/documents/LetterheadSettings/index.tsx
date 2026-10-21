@@ -1,17 +1,17 @@
 import { useState } from "react";
 
 import type { LetterheadConfig } from "@/components/documents/types";
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  Input,
+  Label,
+} from "@/components/patterns";
 import { useDocumentStore } from "@/stores/useDocumentStore";
 
 import { LogoUploader } from "./LogoUploader";
@@ -57,14 +57,14 @@ export function LetterheadSettings({ open, onOpenChange }: LetterheadSettingsPro
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="@container space-y-4 py-2">
           <LogoUploader
             logo_base64={local.logo_base64}
             onLogoChange={(val) => set("logo_base64", val)}
           />
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="sm:col-span-2">
+          <div className="grid gap-3 @md:grid-cols-2">
+            <div className="@md:col-span-2">
               <Label htmlFor="resort_name">Resort Name</Label>
               <Input
                 id="resort_name"
@@ -73,7 +73,7 @@ export function LetterheadSettings({ open, onOpenChange }: LetterheadSettingsPro
               />
             </div>
 
-            <div className="sm:col-span-2">
+            <div className="@md:col-span-2">
               <Label htmlFor="tagline">Tagline</Label>
               <Input
                 id="tagline"
@@ -83,7 +83,7 @@ export function LetterheadSettings({ open, onOpenChange }: LetterheadSettingsPro
               />
             </div>
 
-            <div className="sm:col-span-2">
+            <div className="@md:col-span-2">
               <Label htmlFor="address_line_1">Address Line 1</Label>
               <Input
                 id="address_line_1"
@@ -92,7 +92,7 @@ export function LetterheadSettings({ open, onOpenChange }: LetterheadSettingsPro
               />
             </div>
 
-            <div className="sm:col-span-2">
+            <div className="@md:col-span-2">
               <Label htmlFor="address_line_2">Address Line 2</Label>
               <Input
                 id="address_line_2"
@@ -154,7 +154,7 @@ export function LetterheadSettings({ open, onOpenChange }: LetterheadSettingsPro
               />
             </div>
 
-            <div className="sm:col-span-2">
+            <div className="@md:col-span-2">
               <Label htmlFor="tin">TIN (Tax Identification Number)</Label>
               <Input
                 id="tin"
@@ -166,7 +166,7 @@ export function LetterheadSettings({ open, onOpenChange }: LetterheadSettingsPro
           </div>
         </div>
 
-        <DialogFooter className="flex-col gap-2 sm:flex-row">
+        <DialogFooter className="gap-2">
           <Button type="button" variant="outline" onClick={handleReset}>
             Reset to Defaults
           </Button>
