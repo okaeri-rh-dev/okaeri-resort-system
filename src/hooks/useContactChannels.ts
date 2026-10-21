@@ -17,7 +17,7 @@ const UNIQUE_VIOLATION = "23505";
 
 function contactChannelErrorMessage(error: unknown): string {
   if (error && typeof error === "object" && "code" in error && error.code === UNIQUE_VIOLATION) {
-    return "This channel already exists";
+    return "This channel is already listed. Edit or show the existing one.";
   }
   return handleSupabaseError(error);
 }

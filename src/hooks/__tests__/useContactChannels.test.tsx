@@ -83,7 +83,7 @@ describe("useCreateContactChannel", () => {
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: contactChannelKeys.all });
   });
 
-  it("says the channel already exists when the kind and value are taken", async () => {
+  it("says how to fix a duplicate when the kind and value are taken", async () => {
     vi.mocked(db.contactChannels.create).mockResolvedValue(
       errorResponse(
         "23505",
@@ -95,7 +95,7 @@ describe("useCreateContactChannel", () => {
     await act(() => result.current.mutateAsync(newChannel).catch(() => undefined));
 
     expect(toast.error).toHaveBeenCalledWith("Could not add contact channel", {
-      description: "This channel already exists",
+      description: "This channel is already listed. Edit or show the existing one.",
     });
   });
 });

@@ -122,7 +122,9 @@ test.describe("Contact channels", () => {
     await page.getByRole("option", { name: "Instagram" }).click();
     await dialog.getByRole("textbox", { name: "Value" }).fill(`@${HANDLE}`);
     await dialog.getByRole("button", { name: "Add channel" }).click();
-    await expect(page.getByText("This channel already exists")).toBeVisible();
+    await expect(
+      page.getByText("This channel is already listed. Edit or show the existing one.")
+    ).toBeVisible();
     await dialog.getByRole("button", { name: "Cancel" }).click();
 
     await openGuestPage(page, "/");
