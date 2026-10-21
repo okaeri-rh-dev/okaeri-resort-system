@@ -3,8 +3,7 @@ import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { createColumnHelper, type Header } from "@tanstack/react-table";
 
-import { ActionMenu, SortableHeader, StatusBadge } from "@/components/patterns";
-import { Checkbox } from "@/components/ui/checkbox";
+import { ActionMenu, Checkbox, SortableHeader, StatusBadge } from "@/components/patterns";
 import { statusBadgeProps } from "@/lib/status-tone";
 import type { Unit, UnitStatus } from "@/types";
 
@@ -100,10 +99,11 @@ export function useUnitColumns({
       columnHelper.accessor("max_occupancy", {
         header: "Capacity",
         cell: ({ row }) => (
-          <div className="text-center text-sm tabular-nums">
+          <span className="whitespace-nowrap tabular-nums">
             {row.original.base_occupancy}/{row.original.max_occupancy} guests
-          </div>
+          </span>
         ),
+        meta: { align: "right" },
         size: 120,
       }),
 
@@ -132,7 +132,7 @@ export function useUnitColumns({
 
       //     const typeLabel = unitTypes.find((t) => t.value === getValue())?.label;
       //     return (
-      //       <div className="inline-flex rounded-md bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
+      //       <div className="inline-flex rounded-md bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
       //         {typeLabel || getValue()}
       //       </div>
       //     );
@@ -192,6 +192,7 @@ export function useUnitColumns({
 
           return <ActionMenu actions={actions} />;
         },
+        meta: { pinned: true },
         size: 80,
       }),
     ],

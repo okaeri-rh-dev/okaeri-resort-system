@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { Check, Edit2, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button, Input } from "@/components/patterns";
 import { cn } from "@/lib/utils";
 
 interface InlineEditProps {
@@ -14,6 +13,9 @@ interface InlineEditProps {
   className?: string;
   disabled?: boolean;
 }
+
+const readValueClasses =
+  "group flex w-full items-center justify-between gap-2 rounded px-2 py-1 text-left transition-colors duration-150 hover:bg-muted focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none disabled:cursor-default disabled:hover:bg-transparent";
 
 /**
  * Inline edit component for table cells
@@ -29,6 +31,11 @@ export const InlineEdit: React.FC<InlineEditProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value.toString());
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing) inputRef.current?.focus();
+  }, [isEditing]);
 
   const handleSave = () => {
     const newValue = type === "number" ? parseFloat(editValue) : editValue;
@@ -56,13 +63,13 @@ export const InlineEdit: React.FC<InlineEditProps> = ({
     return (
       <div className="flex items-center gap-1">
         <Input
+          ref={inputRef}
           type={type}
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}
           className={cn("h-8", className)}
           placeholder={placeholder}
-          autoFocus
           onBlur={handleCancel}
         />
         <Button
@@ -71,8 +78,9 @@ export const InlineEdit: React.FC<InlineEditProps> = ({
           onClick={handleSave}
           className="h-8 w-8 p-0"
           onMouseDown={(e) => e.preventDefault()}
+          aria-label="Save"
         >
-          <Check className="h-4 w-4 text-green-600" />
+          <Check className="text-success-foreground h-4 w-4" aria-hidden="true" />
         </Button>
         <Button
           size="sm"
@@ -80,27 +88,29 @@ export const InlineEdit: React.FC<InlineEditProps> = ({
           onClick={handleCancel}
           className="h-8 w-8 p-0"
           onMouseDown={(e) => e.preventDefault()}
+          aria-label="Cancel"
         >
-          <X className="h-4 w-4 text-red-600" />
+          <X className="text-danger-foreground h-4 w-4" aria-hidden="true" />
         </Button>
       </div>
     );
   }
 
   return (
-    <div
-      className={cn(
-        "group flex items-center justify-between",
-        !disabled && "cursor-pointer rounded px-2 py-1 hover:bg-gray-50",
-        className
-      )}
-      onClick={() => !disabled && setIsEditing(true)}
+    <button
+      type="button"
+      disabled={disabled}
+      className={cn(readValueClasses, className)}
+      onClick={() => setIsEditing(true)}
     >
       <span>{value}</span>
       {!disabled && (
-        <Edit2 className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
+        <Edit2
+          className="h-3 w-3 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+          aria-hidden="true"
+        />
       )}
-    </div>
+    </button>
   );
 };
 
@@ -124,6 +134,11 @@ export function InlineSelect<T extends string>({
 }: InlineSelectProps<T>) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
+  const selectRef = useRef<HTMLSelectElement>(null);
+
+  useEffect(() => {
+    if (isEditing) selectRef.current?.focus();
+  }, [isEditing]);
 
   const handleSave = (newValue: T) => {
     if (newValue !== value) {
@@ -135,6 +150,7 @@ export function InlineSelect<T extends string>({
   if (isEditing) {
     return (
       <select
+        ref={selectRef}
         value={editValue}
         onChange={(e) => {
           const newValue = e.target.value as T;
@@ -143,10 +159,9 @@ export function InlineSelect<T extends string>({
         }}
         onBlur={() => setIsEditing(false)}
         className={cn(
-          "focus:ring-primary h-8 rounded border border-gray-300 px-2 text-sm focus:ring-2 focus:outline-none",
+          "border-input bg-background focus-visible:ring-ring h-8 rounded border px-2 text-sm focus-visible:ring-2 focus-visible:outline-none",
           className
         )}
-        autoFocus
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -160,18 +175,19 @@ export function InlineSelect<T extends string>({
   const currentOption = options.find((opt) => opt.value === value);
 
   return (
-    <div
-      className={cn(
-        "group flex items-center justify-between",
-        !disabled && "cursor-pointer rounded px-2 py-1 hover:bg-gray-50",
-        className
-      )}
-      onClick={() => !disabled && setIsEditing(true)}
+    <button
+      type="button"
+      disabled={disabled}
+      className={cn(readValueClasses, className)}
+      onClick={() => setIsEditing(true)}
     >
       <span>{currentOption?.label || value}</span>
       {!disabled && (
-        <Edit2 className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
+        <Edit2
+          className="h-3 w-3 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+          aria-hidden="true"
+        />
       )}
-    </div>
+    </button>
   );
 }

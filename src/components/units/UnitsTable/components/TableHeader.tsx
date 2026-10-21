@@ -1,23 +1,22 @@
 import type { Table } from "@tanstack/react-table";
-import { Download, Eye, Filter, Plus, Search, Settings } from "lucide-react";
+import { Download, Eye, Filter, Plus, Settings } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+  TableSearch,
+} from "@/components/patterns";
+import { pluralize } from "@/lib/formatters";
 import type { Unit, UnitStatus } from "@/types";
 
 interface TableHeaderProps {
@@ -71,25 +70,22 @@ export function TableHeader({
   ];
 
   return (
-    <div className="mb-4 space-y-4">
+    <div className="@container mb-4 space-y-4">
       {/* Main actions row */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row">
-        <div className="flex flex-1 flex-col gap-2 sm:flex-row">
-          {/* Search input */}
-          <div className="relative max-w-sm flex-1">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
-            <Input
-              placeholder="Search units..."
-              value={globalFilter}
-              onChange={(e) => onGlobalFilterChange(e.target.value)}
-              className="pl-9"
-            />
-          </div>
+      <div className="flex flex-col justify-between gap-4 @3xl:flex-row">
+        <div className="flex flex-1 flex-col gap-2 @lg:flex-row">
+          <TableSearch
+            value={globalFilter}
+            onChange={onGlobalFilterChange}
+            placeholder="Search cabins..."
+            aria-label="Search cabins"
+            className="max-w-sm flex-1"
+          />
 
           {/* Type filter */}
           <Select value={typeFilter} onValueChange={onTypeFilterChange}>
-            <SelectTrigger className="w-full sm:w-[150px]">
-              <Filter className="mr-2 h-4 w-4" />
+            <SelectTrigger className="w-full @lg:w-40" aria-label="Filter by type">
+              <Filter className="mr-2 h-4 w-4" aria-hidden="true" />
               <SelectValue placeholder="Filter by type" />
             </SelectTrigger>
             <SelectContent>
@@ -103,8 +99,8 @@ export function TableHeader({
 
           {/* Status filter */}
           <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-            <SelectTrigger className="w-full sm:w-[150px]">
-              <Filter className="mr-2 h-4 w-4" />
+            <SelectTrigger className="w-full @lg:w-40" aria-label="Filter by status">
+              <Filter className="mr-2 h-4 w-4" aria-hidden="true" />
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
@@ -123,7 +119,7 @@ export function TableHeader({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
-                <Eye className="mr-2 h-4 w-4" />
+                <Eye className="mr-2 h-4 w-4" aria-hidden="true" />
                 View
               </Button>
             </DropdownMenuTrigger>
@@ -150,21 +146,21 @@ export function TableHeader({
 
           {/* Edit mode toggle */}
           <Button variant={isEditMode ? "default" : "outline"} size="sm" onClick={onEditModeToggle}>
-            <Settings className="mr-2 h-4 w-4" />
+            <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
             {isEditMode ? "Done" : "Edit"}
           </Button>
 
           {/* Export button */}
           <Button variant="outline" size="sm" onClick={onExport}>
-            <Download className="mr-2 h-4 w-4" />
+            <Download className="mr-2 h-4 w-4" aria-hidden="true" />
             Export
           </Button>
 
           {/* Add new button */}
           {onAddNew && (
             <Button size="sm" onClick={onAddNew}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Unit
+              <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+              Add Cabin
             </Button>
           )}
         </div>
@@ -172,9 +168,9 @@ export function TableHeader({
 
       {/* Batch actions row - shown when items are selected */}
       {selectedCount > 0 && (
-        <div className="flex flex-col gap-2 rounded-lg bg-blue-50 p-3 sm:flex-row sm:items-center sm:justify-between">
-          <span className="text-sm text-blue-700">
-            {selectedCount} unit{selectedCount > 1 ? "s" : ""} selected
+        <div className="bg-card flex flex-col gap-2 rounded-lg border p-3 @lg:flex-row @lg:items-center @lg:justify-between">
+          <span className="text-sm font-medium" role="status">
+            {selectedCount} {pluralize(selectedCount, "cabin")} selected
           </span>
           <div className="flex flex-wrap gap-2">
             {onBatchStatusUpdate && (
@@ -183,7 +179,6 @@ export function TableHeader({
                   size="sm"
                   variant="outline"
                   onClick={() => onBatchStatusUpdate("Available")}
-                  className="border-green-600 text-green-600 hover:bg-green-50"
                 >
                   Mark Available
                 </Button>
@@ -191,26 +186,15 @@ export function TableHeader({
                   size="sm"
                   variant="outline"
                   onClick={() => onBatchStatusUpdate("Maintenance")}
-                  className="border-orange-600 text-orange-600 hover:bg-orange-50"
                 >
                   Mark Maintenance
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onBatchStatusUpdate("Reserved")}
-                  className="border-blue-600 text-blue-600 hover:bg-blue-50"
-                >
+                <Button size="sm" variant="outline" onClick={() => onBatchStatusUpdate("Reserved")}>
                   Mark Reserved
                 </Button>
               </>
             )}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => table.toggleAllRowsSelected(false)}
-              className="text-gray-600"
-            >
+            <Button size="sm" variant="ghost" onClick={() => table.toggleAllRowsSelected(false)}>
               Clear Selection
             </Button>
           </div>
