@@ -361,7 +361,7 @@ function AdminShell({
         )}
       </div>
 
-      <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+      <main className="relative min-h-0 min-w-0 flex-1 overflow-y-auto">
         {banner}
         <Content {...content} surface="admin" className="medium:pb-6 pb-24" />
       </main>
