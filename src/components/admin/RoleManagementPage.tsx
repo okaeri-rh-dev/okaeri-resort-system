@@ -1,6 +1,6 @@
 // src/components/admin/RoleManagementPage.tsx
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
@@ -30,6 +30,9 @@ import { UserRolesTable } from "./UserRolesTable";
 // COMPONENT
 // ============================================
 
+// TanStack needs a stable `data` array: a new one each render loops through its page-index reset.
+const noPendingUsers: PendingUser[] = [];
+
 export function RoleManagementPage() {
   const [showGrantDialog, setShowGrantDialog] = useState(false);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
@@ -39,15 +42,16 @@ export function RoleManagementPage() {
 
   const { data: pendingUsers, isLoading: isLoadingPending } = usePendingUsers();
 
-  const handleUpdateRole = (role: AppRole) => {
+  // Stable, so re-renders here don't remount the role table's cells and close an open row menu.
+  const handleUpdateRole = useCallback((role: AppRole) => {
     setSelectedRole(role);
     setShowUpdateDialog(true);
-  };
+  }, []);
 
-  const handleDeactivateRole = (role: AppRole) => {
+  const handleDeactivateRole = useCallback((role: AppRole) => {
     setSelectedRole(role);
     setShowDeactivateDialog(true);
-  };
+  }, []);
 
   const handleGrantRoleForUser = (user: PendingUser) => {
     setPrefilledUser(user);
@@ -89,7 +93,7 @@ export function RoleManagementPage() {
   ];
 
   const pendingTable = useReactTable({
-    data: pendingUsers ?? [],
+    data: pendingUsers ?? noPendingUsers,
     columns: pendingColumns,
     getCoreRowModel: getCoreRowModel(),
     getRowId: (user) => user.id,

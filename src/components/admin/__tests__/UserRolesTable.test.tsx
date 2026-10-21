@@ -60,4 +60,19 @@ describe("UserRolesTable", () => {
     const row = within(table).getByRole("row", { name: /staff@okaeri\.test/ });
     expect(within(row).getByRole("button", { name: /Open menu/ })).toBeVisible();
   });
+
+  it("keeps a row menu open when the table re-renders", async () => {
+    stubPaneWidth(1280);
+    const onUpdateRole = vi.fn();
+    const onDeactivateRole = vi.fn();
+    const { rerender } = render(
+      <UserRolesTable onUpdateRole={onUpdateRole} onDeactivateRole={onDeactivateRole} />
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Open menu" }));
+    rerender(<UserRolesTable onUpdateRole={onUpdateRole} onDeactivateRole={onDeactivateRole} />);
+
+    await userEvent.click(screen.getByRole("menuitem", { name: "Update Role" }));
+    expect(onUpdateRole).toHaveBeenCalledWith(staffRole);
+  });
 });

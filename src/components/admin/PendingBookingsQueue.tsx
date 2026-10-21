@@ -11,7 +11,7 @@
  * Source: vault note [[04-admin-interface]]
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
@@ -242,43 +242,48 @@ export function PendingBookingsQueue() {
   // Filtering Logic
   // ============================================
 
-  const filteredBookings = bookings?.filter((booking) => {
-    // Search filter (booking reference or guest name)
-    if (filters.searchQuery) {
-      const query = filters.searchQuery.toLowerCase();
-      const matchesSearch =
-        booking.booking_reference.toLowerCase().includes(query) ||
-        booking.guest_name.toLowerCase().includes(query);
-      if (!matchesSearch) return false;
-    }
+  // TanStack needs a stable `data` array: a new one each render loops through its page-index reset.
+  const filteredBookings = useMemo(
+    () =>
+      (bookings ?? []).filter((booking) => {
+        // Search filter (booking reference or guest name)
+        if (filters.searchQuery) {
+          const query = filters.searchQuery.toLowerCase();
+          const matchesSearch =
+            booking.booking_reference.toLowerCase().includes(query) ||
+            booking.guest_name.toLowerCase().includes(query);
+          if (!matchesSearch) return false;
+        }
 
-    // Urgency level filter
-    if (filters.urgencyLevel !== "all" && booking.urgency_level !== filters.urgencyLevel) {
-      return false;
-    }
+        // Urgency level filter
+        if (filters.urgencyLevel !== "all" && booking.urgency_level !== filters.urgencyLevel) {
+          return false;
+        }
 
-    // Date range filter (check-in date)
-    if (filters.dateRange !== "all") {
-      const checkIn = new Date(booking.check_in_date);
-      const now = new Date();
+        // Date range filter (check-in date)
+        if (filters.dateRange !== "all") {
+          const checkIn = new Date(booking.check_in_date);
+          const now = new Date();
 
-      if (filters.dateRange === "today") {
-        const isToday = checkIn.toDateString() === now.toDateString();
-        if (!isToday) return false;
-      } else if (filters.dateRange === "week") {
-        const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-        if (checkIn > weekFromNow) return false;
-      } else if (filters.dateRange === "month") {
-        const monthFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-        if (checkIn > monthFromNow) return false;
-      }
-    }
+          if (filters.dateRange === "today") {
+            const isToday = checkIn.toDateString() === now.toDateString();
+            if (!isToday) return false;
+          } else if (filters.dateRange === "week") {
+            const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            if (checkIn > weekFromNow) return false;
+          } else if (filters.dateRange === "month") {
+            const monthFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+            if (checkIn > monthFromNow) return false;
+          }
+        }
 
-    return true;
-  });
+        return true;
+      }),
+    [bookings, filters]
+  );
 
   const table = useReactTable({
-    data: filteredBookings ?? [],
+    data: filteredBookings,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getRowId: (booking) => booking.booking_id,
@@ -341,7 +346,7 @@ export function PendingBookingsQueue() {
           <div>
             <CardTitle>Pending Bookings Queue</CardTitle>
             <CardDescription>
-              {filteredBookings?.length || 0} pending guest bookings
+              {filteredBookings.length} pending guest bookings
               {filters.urgencyLevel !== "all" &&
                 ` (${formatUrgencyLevel(filters.urgencyLevel)} priority)`}
             </CardDescription>
