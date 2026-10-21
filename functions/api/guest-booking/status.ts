@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { isGuestBookingReference } from "@/lib/bookings/reference";
 import { checkKVRateLimit, createAdvancedFingerprint } from "@/lib/kv-rate-limit";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
 import { getClientIp, verifyTurnstile } from "@/lib/turnstile";
@@ -15,7 +16,7 @@ interface Env {
 
 // Request validation schema
 const statusCheckSchema = z.object({
-  booking_reference: z.string().regex(/^BK-\d{4}-[A-Z0-9]{6}$/),
+  booking_reference: z.string().refine(isGuestBookingReference),
   email: z.string().email().toLowerCase(),
   turnstile_token: z.string().optional(), // Optional, required after rate limiting
 });

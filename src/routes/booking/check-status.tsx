@@ -23,7 +23,7 @@ import {
   StatusBadge,
 } from "@/components/patterns";
 import { GuestLayout } from "@/layouts/GuestLayout";
-import { isBookingReference } from "@/lib/bookings/reference";
+import { isGuestBookingReference } from "@/lib/bookings/reference";
 import { formatCurrency } from "@/lib/formatters";
 import { validateStatusResponse, type StatusResponse } from "@/lib/schema-transform";
 import { statusBadgeProps } from "@/lib/status-tone";
@@ -37,7 +37,7 @@ const searchSchema = z.object({
 type SearchFormData = z.infer<typeof searchSchema>;
 
 const checkStatusSearchSchema = z.object({
-  reference: z.string().refine(isBookingReference).optional().catch(undefined),
+  reference: z.string().refine(isGuestBookingReference).optional().catch(undefined),
 });
 
 export const Route = createFileRoute("/booking/check-status")({

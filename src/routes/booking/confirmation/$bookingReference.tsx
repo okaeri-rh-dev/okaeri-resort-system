@@ -10,7 +10,7 @@ import { Button, Callout } from "@/components/patterns";
 import { useActiveContactChannels } from "@/hooks/useContactChannels";
 import { GuestLayout } from "@/layouts/GuestLayout";
 import { readConfirmationSnapshot } from "@/lib/bookings/confirmation-snapshot";
-import { isBookingReference } from "@/lib/bookings/reference";
+import { isGuestBookingReference } from "@/lib/bookings/reference";
 
 /**
  * File-based route for booking confirmation page
@@ -97,7 +97,7 @@ function BookingConfirmationComponent() {
 
 /** Shown on a refresh after the tab closed, on another device, or from a shared link. */
 function SavedBookingUnavailable({ bookingReference }: { bookingReference: string }) {
-  if (!isBookingReference(bookingReference)) {
+  if (!isGuestBookingReference(bookingReference)) {
     return (
       <GuestLayout width="form" pageHeader={{ title: "Booking reference not valid" }}>
         <div className="space-y-6 text-center">

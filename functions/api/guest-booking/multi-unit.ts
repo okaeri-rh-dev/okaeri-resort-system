@@ -1,6 +1,7 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
+import { generateGuestBookingReference } from "@/lib/bookings/reference";
 import { toStayInstants } from "@/lib/bookings/stay";
 import { checkKVRateLimit } from "@/lib/kv-rate-limit";
 import { sanitizeNameWorker, sanitizeTextWorker } from "@/lib/security/sanitize-worker";
@@ -351,7 +352,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     };
 
     // 8. Create booking atomically via PostgreSQL function
-    const bookingReference = generateBookingReference();
+    const bookingReference = generateGuestBookingReference();
     const totalGuests = data.unit_requests.reduce((sum, r) => sum + r.guests_per_unit, 0);
 
     const { data: result, error: createError } = await supabase.rpc("create_guest_booking", {
@@ -504,16 +505,3 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     );
   }
 };
-
-/**
- * Generate unique booking reference
- * Format: BK-YYYYMM-XXXXXX
- * Example: BK-202503-A7B9C2
- */
-function generateBookingReference(): string {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `BK-${year}${month}-${random}`;
-}
