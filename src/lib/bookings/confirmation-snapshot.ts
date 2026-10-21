@@ -2,8 +2,8 @@ import { z } from "zod";
 
 import { toStayInstants, type ManilaDay } from "./stay";
 
-// The confirmation page has no public read endpoint (issue 92): it shows what the
-// submit response returned, kept in this tab's sessionStorage.
+// The confirmation page has no public read endpoint: it shows what the submit
+// response returned, kept in this tab's sessionStorage.
 const STORAGE_KEY = "bookingConfirmation";
 
 const discountSchema = z.object({

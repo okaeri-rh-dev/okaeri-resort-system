@@ -105,6 +105,12 @@ test.describe("Dark mode booking confirmation", () => {
 
   for (const size of [COMPACT, EXPANDED]) {
     test(`confirmation page reads in dark at ${size.width}`, async ({ page }) => {
+      const lookups: string[] = [];
+      page.on("request", (request) => {
+        if (request.url().includes(`/api/guest-booking/${CONFIRMATION_REF}`)) {
+          lookups.push(request.url());
+        }
+      });
       await page.setViewportSize(size);
       await page.goto(`/booking/confirmation/${CONFIRMATION_REF}`);
 
@@ -112,6 +118,7 @@ test.describe("Dark mode booking confirmation", () => {
       await expect(page.getByText("Payment Instructions")).toBeVisible();
       await expect(page.getByText("Early bird")).toBeVisible();
       await expectReadable(page);
+      expect(lookups).toEqual([]);
     });
   }
 });
