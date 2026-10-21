@@ -22,6 +22,18 @@ _Avoid_: Departure time, check-out time
 One Manila day from the check-in day up to, but not including, the check-out day. A booking's night count is the number of these days.
 _Avoid_: Day (when counting a stay)
 
+**Pending booking**:
+An online booking that waits for staff to verify its payment proof.
+_Avoid_: Unverified booking, request
+
+**Confirmed booking**:
+A booking that is neither pending nor cancelled. It stays confirmed after the guest checks in or out.
+_Avoid_: Active booking
+
+**Occupancy**:
+For one calendar month, the booked cabin nights of confirmed bookings divided by the number of units times the days in the month.
+_Avoid_: Utilisation, load
+
 **Unit**:
 A rentable accommodation (cabin or room) that a booking occupies. Guests and staff call units "cabins", so screen copy says "cabin"; the model says unit.
 _Avoid_: Room, property
