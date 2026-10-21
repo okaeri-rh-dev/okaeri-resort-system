@@ -88,7 +88,7 @@ test.describe("Booking Lifecycle", () => {
       await bookingForm.goToNextStep();
 
       // Should advance to step 4 (Payment Proof)
-      await expect(page.getByRole("heading", { name: /upload payment proof/i })).toBeVisible({
+      await expect(page.getByRole("heading", { name: /^payment screenshot$/i })).toBeVisible({
         timeout: TIMEOUTS.medium,
       });
     });

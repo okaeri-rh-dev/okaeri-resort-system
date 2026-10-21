@@ -45,7 +45,7 @@ const STEPS = [
   { number: 3, label: "Contact", description: "Your information" },
   {
     number: 4,
-    label: "Payment Proof",
+    label: "Payment",
     description: isDevelopment ? "Upload payment (optional)" : "Upload payment (required)",
   },
   { number: 5, label: "Review", description: "Confirm and submit" },
@@ -476,11 +476,11 @@ export function MultiUnitGuestBookingForm() {
             </div>
           )}
 
-          {/* Step 4: Payment Proof */}
+          {/* Step 4: Payment screenshot */}
           {currentStep === 4 && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold">Upload Payment Proof</h2>
+                <h2 className="text-2xl font-bold">Payment screenshot</h2>
                 <p className="text-muted-foreground">
                   {isDevelopment
                     ? "Attach your payment screenshot (optional - you can do this later)"

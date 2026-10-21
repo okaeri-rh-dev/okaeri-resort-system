@@ -6,11 +6,11 @@ import { ROUTES, TEST_GUEST, TIMEOUTS } from "../fixtures/test-data";
  * Page Object Model for the Public Multi-Unit Guest Booking Form
  *
  * Based on actual MultiUnitGuestBookingForm component structure:
- * - 5 steps: Dates → Cabins → Contact → Payment Proof → Review
+ * - 5 steps: Dates → Cabins → Contact → Payment → Review
  * - Step 1: Check-In/Check-Out dates using ResponsiveDatePicker
  * - Step 2: Cabin Requests using UnitRequestSelector
  * - Step 3: Contact info (Full Name, Email, Phone)
- * - Step 4: Payment Proof upload
+ * - Step 4: Payment screenshot upload
  * - Step 5: Review with terms checkbox and submit
  */
 export class BookingFormPage {
@@ -352,10 +352,10 @@ export class BookingFormPage {
   }
 
   /**
-   * Expect to be on step 4 (Payment Proof)
+   * Expect to be on step 4 (Payment screenshot)
    */
   async expectStep4Visible() {
-    await expect(this.page.getByRole("heading", { name: /upload payment proof/i })).toBeVisible();
+    await expect(this.page.getByRole("heading", { name: /^payment screenshot$/i })).toBeVisible();
   }
 
   /**
