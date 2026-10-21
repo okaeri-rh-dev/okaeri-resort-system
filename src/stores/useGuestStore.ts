@@ -2,8 +2,9 @@ import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/r
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+import { getAccessToken } from "@/hooks/useAuthToken";
 import { logger } from "@/lib/logger";
-import { invalidateGuests } from "@/lib/query-invalidation";
+import { afterGuestAnonymize, invalidateGuests } from "@/lib/query-invalidation";
 import { guestKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Booking, Guest } from "@/types";
@@ -252,29 +253,36 @@ export const useUpdateGuest = () => {
   });
 };
 
-// Delete guest mutation
+async function callGuestRetention(path: string, method: "POST" | "DELETE") {
+  const response = await fetch(path, {
+    method,
+    headers: { Authorization: `Bearer ${await getAccessToken()}` },
+  });
+  const body = (await response.json().catch(() => ({}))) as {
+    deleted_files?: number;
+    message?: string;
+  };
+  if (!response.ok) throw new Error(body.message ?? `Request failed (${response.status})`);
+  return { deleted_files: body.deleted_files ?? 0 };
+}
+
+// Erasure request (owner/admin): personal data is cleared, money and dates stay
+export const useAnonymizeGuest = () =>
+  useMutation({
+    mutationFn: (guestId: string) =>
+      callGuestRetention(`/api/admin/guests/${guestId}/anonymize`, "POST"),
+    onSuccess: () => {
+      afterGuestAnonymize();
+    },
+  });
+
+// Delete guest mutation: delete_guest refuses guests with Confirmed/CheckedIn bookings (409)
 export const useDeleteGuest = () => {
   const queryClient = useQueryClient();
   const removeOptimistic = useGuestStore((state) => state.removeOptimisticGuest);
 
   return useMutation({
-    mutationFn: async (guestId: string) => {
-      // Check for active bookings first
-      const { data: bookings } = await supabase
-        .from("bookings")
-        .select("booking_id")
-        .eq("guest_id", guestId)
-        .in("booking_status", ["Confirmed", "CheckedIn"])
-        .limit(1);
-
-      if (bookings?.length) {
-        throw new Error("Cannot delete guest with active bookings");
-      }
-
-      const { error } = await supabase.from("guests").delete().eq("guest_id", guestId);
-
-      if (error) throw new Error(handleSupabaseError(error));
-    },
+    mutationFn: (guestId: string) => callGuestRetention(`/api/admin/guests/${guestId}`, "DELETE"),
     onMutate: async (guestId) => {
       await queryClient.cancelQueries({ queryKey: guestKeys.all });
       removeOptimistic(guestId);
@@ -285,7 +293,7 @@ export const useDeleteGuest = () => {
       invalidateGuests();
     },
     onSuccess: () => {
-      invalidateGuests();
+      afterGuestAnonymize();
     },
   });
 };

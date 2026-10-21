@@ -1813,11 +1813,11 @@ git commit -m "feat(api): admin endpoints to anonymize and delete a guest"
 - Consumes: the Task 5 endpoints; `getAccessToken` (`src/hooks/useAuthToken.ts:88`).
 - Produces: `useAnonymizeGuest(): UseMutationResult<{ deleted_files: number }, Error, string>`; `useDeleteGuest()` keeps its signature (`mutate(guestId)`); `Guest.anonymized_at?: string | null`; `Booking.anonymized_at?: string | null`.
 
-- [ ] **Step 1: Add the optional fields**
+- [x] **Step 1: Add the optional fields**
 
 In `src/types/index.ts` add `anonymized_at?: string | null;` to `interface Guest` (after `updated_at`) and to `interface Booking` (after `internal_notes`). Optional keeps existing fixtures valid.
 
-- [ ] **Step 2: Write the failing mutation test**
+- [x] **Step 2: Write the failing mutation test**
 
 `src/stores/__tests__/guest-retention-mutations.test.tsx`:
 
@@ -1893,7 +1893,7 @@ describe("guest retention mutations", () => {
 Run: `npx vitest run src/stores/__tests__/guest-retention-mutations.test.tsx`
 Expected: FAIL (`useAnonymizeGuest` is not exported; delete calls Supabase, not fetch). If the store's zustand optimistic map needs a provider in tests, check an existing store test and copy its setup.
 
-- [ ] **Step 3: Implement the mutations**
+- [x] **Step 3: Implement the mutations**
 
 In `src/stores/useGuestStore.ts` add the import `import { getAccessToken } from "@/hooks/useAuthToken";` and, above `useDeleteGuest`:
 
@@ -1930,16 +1930,18 @@ In `useDeleteGuest`, replace the whole `mutationFn` body (the Supabase active-bo
 
 `delete_guest` enforces the active-bookings rule (409 with its message). Remove imports that become unused. Check that `invalidateGuests()` also invalidates `guestKeys.detail(...)`; if it does not, invalidate `guestKeys.all` in `useAnonymizeGuest`'s `onSuccess` with the hook's `queryClient`.
 
-- [ ] **Step 4: Show Delete to managers and above only**
+Done note (2026-10-21): the test spies `fetch` in `beforeEach` (`vi.spyOn(globalThis, "fetch")`); `__tests__/setup/msw-setup.ts` patches fetch in `beforeAll`, so a module-level `vi.stubGlobal` stub is wrapped and receives a `Request`. Both mutations call a new composite `afterGuestAnonymize()` (`src/lib/query-invalidation.ts`).
+
+- [x] **Step 4: Show Delete to managers and above only**
 
 In `src/components/guests/GuestsTable.tsx`: import `useUserRole` from `@/hooks`, read `const { isManager } = useUserRole();` in `GuestsTableComponent`, and include the "Delete Guest" action only when `isManager` (spread `...(isManager ? [{ label: "Delete Guest", … }] : [])`). Add `isManager` to the `useMemo` dependency list of the columns.
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 Run: `npx vitest run src/stores/__tests__/guest-retention-mutations.test.tsx src/components/guests && npx tsc --noEmit`
 Expected: PASS, no type errors. Fix any existing GuestsTable test that relied on Delete being visible without a role mock (mock `useUserRole` as in `booking-card.test.tsx`).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/types/index.ts src/stores/useGuestStore.ts src/stores/__tests__/guest-retention-mutations.test.tsx src/components/guests/GuestsTable.tsx
@@ -2340,4 +2342,5 @@ Push with `timeout: 600000` (CLAUDE.md, pre-push hook). Use the `mattpocock-skil
 - **`anonymize_audit_logs` now calls the shared `_anonymize_audit_rows` helper (2026-10-21, plan).** Why: one copy of the audit rules; `audit-anonymization.test.ts` proves the behaviour is unchanged. Revisit: n/a.
 - **`cleanup_expired_payment_proofs` keeps its own path regexp (2026-10-21, plan).** Why: changing it adds a prod function change outside this item; `_payment_proof_path` copies the same expression. Revisit: next time that function changes.
 - **Guest delete is manager+ in the UI too (2026-10-21, plan).** Why: the UI showed Delete to staff, whose request RLS rejected; the endpoint now enforces manager+. Revisit: if delete should be owner/admin only (spec Decisions).
+- **Anonymize and delete invalidate guests, bookings, payments, multi-unit bookings and upcoming (2026-10-21, implementation).** Why: both rewrite the guest's bookings and payments, and `invalidateGuests()` alone left cached booking names stale. Revisit: n/a.
 - **Run with `/mattpocock-skills:implement` in a worktree; one PR carries spec, plan and code (2026-10-21, user).** Why: no GitHub tickets exist, so `implement-spec` does not fit, and the tasks are mostly sequential; the docs branch `docs/guest-retention-design` is the worktree's base and is not pushed separately. Revisit: n/a.
