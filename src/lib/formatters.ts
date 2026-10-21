@@ -23,6 +23,10 @@ export const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
+/** The noun for a count, with a plain "s" plural: `${n} ${pluralize(n, "cabin")}`. */
+export const pluralize = (count: number, singular: string): string =>
+  count === 1 ? singular : `${singular}s`;
+
 /**
  * Format percentage with one decimal place
  */

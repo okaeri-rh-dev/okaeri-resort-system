@@ -23,14 +23,18 @@ One Manila day from the check-in day up to, but not including, the check-out day
 _Avoid_: Day (when counting a stay)
 
 **Unit**:
-A rentable accommodation (cabin or room) that a booking occupies.
-_Avoid_: Cabin (as a general term), room, property
+A rentable accommodation (cabin or room) that a booking occupies. Guests and staff call units "cabins", so screen copy says "cabin"; the model says unit.
+_Avoid_: Room, property
 
 ### Money received
 
 **Payment**:
 Money received from a guest toward one booking, with an amount, method, date and optional proof.
 _Avoid_: Transaction, receipt, deposit
+
+**Payment proof**:
+The screenshot of a GCash or bank transfer that a guest attaches when booking online, so staff can match it to money received. Screen copy calls it a "payment screenshot".
+_Avoid_: Receipt
 
 **Soft-deleted payment**:
 A payment marked as deleted: kept for history but no longer counted as money received.

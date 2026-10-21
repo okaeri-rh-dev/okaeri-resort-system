@@ -49,7 +49,7 @@ test.describe("Admin navigation form", () => {
     const menu = page.getByRole("dialog", { name: "Okaeri Resort" });
     await expect(menu.getByRole("link", { name: "Guests" })).toBeVisible();
     await expect(menu.getByRole("link", { name: "User Roles" })).toBeVisible();
-    await expect(menu.getByRole("button", { name: "Sign Out" })).toBeVisible();
+    await expect(menu.getByRole("button", { name: "Sign Out" })).toHaveCount(0);
 
     await menu.getByRole("link", { name: "Guests" }).click();
     await expect(page).toHaveURL(/\/admin\/guests/);
@@ -91,22 +91,21 @@ test.describe("Admin navigation form", () => {
     await expectNoSidewaysScroll(page);
   });
 
-  test("small phone: the menu sheet scrolls to its last action", async ({ page }) => {
+  test("small phone: the menu sheet scrolls to its last destination", async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
     await loginAsAdmin(page);
 
     await page.getByRole("button", { name: "More" }).click();
-    const signOut = page.getByRole("dialog", { name: "Okaeri Resort" }).getByRole("button", {
-      name: "Sign Out",
-    });
-    await expect(signOut).toBeInViewport();
+    await expect(
+      page.getByRole("dialog", { name: "Okaeri Resort" }).getByRole("radiogroup", { name: "Theme" })
+    ).toBeInViewport();
 
     const lastLink = page.getByRole("navigation", { name: "Menu" }).getByRole("link").last();
     await lastLink.scrollIntoViewIfNeeded();
     await expect(lastLink).toBeInViewport();
   });
 
-  test("landscape phone: the whole rail scrolls to its last destination and Sign Out", async ({
+  test("landscape phone: the whole rail scrolls to its last destination and the account menu", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 740, height: 360 });
@@ -116,7 +115,7 @@ test.describe("Admin navigation form", () => {
     await expect(nav.getByRole("link", { name: "Dashboard" })).toBeInViewport();
     for (const target of [
       nav.getByRole("link").last(),
-      page.getByRole("button", { name: "Sign Out" }),
+      page.getByRole("button", { name: "Account menu" }),
     ]) {
       await target.scrollIntoViewIfNeeded();
       await expect(target).toBeInViewport({ ratio: 1 });

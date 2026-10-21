@@ -8,8 +8,7 @@
  * - Information-dense layout optimized for rapid unit selection
  * - Real-time all-or-nothing validation feedback
  * - Keyboard navigation and WCAG accessibility compliance
- * - Mobile responsive grid (1/2/3 columns)
- * - Professional enterprise styling with high information density
+ * - Responsive grid (1/2/3 columns)
  *
  * Source: vault note [[013-unit-assignment-system README]]
  */
@@ -17,9 +16,8 @@
 import { useCallback, useState } from "react";
 
 import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
-import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,14 +27,20 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+  Button,
+  Callout,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Checkbox,
+} from "@/components/patterns";
 import { getAccessToken, useAuthToken } from "@/hooks/useAuthToken";
+import { pluralize } from "@/lib/formatters";
 import { afterBookingUpdate } from "@/lib/query-invalidation";
 import { availabilityKeys } from "@/lib/query-keys";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 // ============================================
 // Types
@@ -59,6 +63,7 @@ interface AvailableUnit {
 
 interface UnitAssignmentInterfaceProps {
   bookingId: string;
+  bookingReference: string;
   checkInDate: string; // YYYY-MM-DD
   checkOutDate: string; // YYYY-MM-DD
   unitRequests: UnitRequest[];
@@ -68,8 +73,6 @@ interface UnitAssignmentInterfaceProps {
 interface AssignmentValidation {
   isValid: boolean;
   message: string;
-  variant: "default" | "destructive" | "warning";
-  isSuccess: boolean;
 }
 
 const availableUnitsQuery = (checkInDate: string, checkOutDate: string) =>
@@ -107,6 +110,7 @@ const availableUnitsQuery = (checkInDate: string, checkOutDate: string) =>
 
 export function UnitAssignmentInterface({
   bookingId,
+  bookingReference,
   checkInDate,
   checkOutDate,
   unitRequests,
@@ -216,40 +220,28 @@ export function UnitAssignmentInterface({
   const getValidationStatus = (): AssignmentValidation => {
     const requiredCount = unitRequests.length;
     const selectedCount = selectedUnits.size;
+    const cabins = (count: number, qualifier = "") =>
+      `${count} ${qualifier}${pluralize(count, "cabin")}`;
 
     if (selectedCount === 0) {
-      return {
-        isValid: false,
-        message: `Select ${requiredCount} cabin${requiredCount > 1 ? "s" : ""} to proceed`,
-        variant: "destructive",
-        isSuccess: false,
-      };
+      return { isValid: false, message: `Select ${cabins(requiredCount)} to proceed` };
     }
 
     if (selectedCount < requiredCount) {
       return {
         isValid: false,
-        message: `Must select ALL ${requiredCount} cabins (currently selected: ${selectedCount})`,
-        variant: "destructive",
-        isSuccess: false,
+        message: `Select ${cabins(requiredCount - selectedCount, "more ")}`,
       };
     }
 
     if (selectedCount > requiredCount) {
       return {
         isValid: false,
-        message: `Too many cabins selected. Need exactly ${requiredCount}, but selected ${selectedCount}`,
-        variant: "destructive",
-        isSuccess: false,
+        message: `Too many cabins selected. Deselect ${cabins(selectedCount - requiredCount)}`,
       };
     }
 
-    return {
-      isValid: true,
-      message: "All cabins selected - ready to assign",
-      variant: "default",
-      isSuccess: true,
-    };
+    return { isValid: true, message: "All cabins selected, ready to assign" };
   };
 
   // ============================================
@@ -278,84 +270,38 @@ export function UnitAssignmentInterface({
 
   const validation = getValidationStatus();
   const requiredCount = unitRequests.length;
-  const totalGuests = unitRequests.reduce((sum, req) => sum + req.guests_per_unit, 0);
   const isAssignmentDisabled = !validation.isValid || isAssigning;
 
   // ============================================
   // Render States
   // ============================================
 
-  // Auth loading state
   if (isAuthLoading) {
-    return (
-      <Card className="border-neutral-200">
-        <CardContent className="flex items-center justify-center py-12">
-          <div className="flex items-center gap-3 text-neutral-600">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-sm font-medium">Authenticating...</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <LoadingCard label="Authenticating…" />;
   }
 
-  // Auth error state
   if (authError) {
     return (
-      <Card className="border-neutral-200">
-        <CardContent className="py-8">
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              {authError.message || "Authentication failed. Please sign in again."}
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+      <Callout tone="danger">
+        {authError.message || "Authentication failed. Please sign in again."}
+      </Callout>
     );
   }
 
   if (isLoadingUnits) {
-    return (
-      <Card className="border-neutral-200">
-        <CardContent className="flex items-center justify-center py-12">
-          <div className="flex items-center gap-3 text-neutral-600">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-sm font-medium">Loading available cabins...</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <LoadingCard label="Loading available cabins…" />;
   }
 
   if (fetchError) {
-    return (
-      <Card className="border-neutral-200">
-        <CardContent className="py-8">
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Failed to load available cabins. {fetchError.message}
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
+    return <Callout tone="danger">Failed to load available cabins. {fetchError.message}</Callout>;
   }
 
   if (!availableUnits || availableUnits.length === 0) {
     return (
-      <Card className="border-neutral-200">
-        <CardContent className="py-8">
-          <Alert variant="warning">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              No cabins available for the selected dates ({checkInDate} to {checkOutDate}). Please
-              contact the guest to reschedule.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+      <Callout tone="warning">
+        No cabins available for the selected dates ({checkInDate} to {checkOutDate}). Please contact
+        the guest to reschedule.
+      </Callout>
     );
   }
 
@@ -365,82 +311,28 @@ export function UnitAssignmentInterface({
 
   return (
     <div className="space-y-4">
-      {/* Unit Requests Summary Card */}
-      <Card className="border-neutral-200 p-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <p className="text-sm text-neutral-600">Total Cabins Requested</p>
-            <p className="font-mono text-2xl font-semibold text-neutral-900">{requiredCount}</p>
-          </div>
-          <div>
-            <p className="text-sm text-neutral-600">Total Guests</p>
-            <p className="font-mono text-2xl font-semibold text-neutral-900">{totalGuests}</p>
-          </div>
-          <div>
-            <p className="text-sm text-neutral-600">Date Range</p>
-            <p className="text-sm font-medium text-neutral-900">
-              {checkInDate} to {checkOutDate}
-            </p>
-          </div>
-        </div>
-
-        {/* Unit Breakdown */}
-        <div className="mt-4 border-t border-neutral-200 pt-4">
-          <p className="mb-2 text-sm font-medium text-neutral-700">Individual Cabin Breakdown:</p>
-          <div className="flex flex-wrap gap-2">
-            {unitRequests.map((req, index) => (
-              <div
-                key={req.id}
-                className="inline-flex items-center gap-2 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-1.5"
-              >
-                <span className="text-xs font-medium text-neutral-700">Cabin {index + 1}:</span>
-                <span className="font-mono text-xs font-semibold text-neutral-900">
-                  {req.guests_per_unit} guest{req.guests_per_unit > 1 ? "s" : ""}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>
-
-      {/* All-or-Nothing Status Indicator */}
-      <Alert
-        variant={validation.variant}
-        className={validation.isSuccess ? "border-green-200 bg-green-50 text-green-900" : ""}
-      >
-        {validation.isSuccess ? (
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
-        ) : (
-          <AlertTriangle className="h-4 w-4" />
-        )}
-        <AlertDescription className="flex items-center justify-between">
+      <Callout tone={validation.isValid ? "success" : "warning"}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="font-medium">{validation.message}</span>
-          <span className="font-mono text-sm font-semibold">
+          <span className="font-semibold tabular-nums">
             {selectedUnits.size}/{requiredCount} selected
           </span>
-        </AlertDescription>
-      </Alert>
+        </div>
+      </Callout>
 
-      {/* Assignment Error Display */}
-      {assignmentError && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>{assignmentError}</AlertDescription>
-        </Alert>
-      )}
+      {assignmentError && <Callout tone="danger">{assignmentError}</Callout>}
 
-      {/* Available Units Grid */}
-      <Card className="overflow-hidden border-neutral-200 p-0">
-        <CardHeader className="border-b border-neutral-200 bg-neutral-50 p-4">
+      <Card padding="none" className="overflow-hidden">
+        <CardHeader className="border-b p-4">
           <CardTitle className="text-base font-semibold">
-            Available Cabins ({availableUnits.length})
+            Available Cabins (<span className="tabular-nums">{availableUnits.length}</span>)
           </CardTitle>
-          <CardDescription className="text-sm">
+          <CardDescription>
             Click to select cabins for assignment. All cabins must be selected before proceeding.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <CardContent className="@container p-4">
+          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
             {availableUnits.map((unit) => {
               const isSelected = selectedUnits.has(unit.unit_id);
 
@@ -454,14 +346,11 @@ export function UnitAssignmentInterface({
                   onClick={() => handleUnitToggle(unit.unit_id)}
                   onKeyDown={(e) => handleKeyboardToggle(e, unit.unit_id)}
                   className={cn(
-                    "relative cursor-pointer rounded-lg border-2 p-4 transition-all",
-                    "hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none",
-                    isSelected
-                      ? "border-blue-600 bg-blue-50/50 shadow-sm"
-                      : "border-neutral-200 bg-white hover:border-neutral-300"
+                    "bg-card text-card-foreground relative cursor-pointer rounded-lg border-2 p-4 transition-colors duration-150",
+                    "focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+                    isSelected ? "border-primary bg-accent" : "hover:border-input border-border"
                   )}
                 >
-                  {/* Selection Checkbox */}
                   <div className="absolute top-3 right-3">
                     <Checkbox
                       checked={isSelected}
@@ -472,46 +361,26 @@ export function UnitAssignmentInterface({
                     />
                   </div>
 
-                  {/* Unit Information */}
                   <div className="pr-8">
-                    <p className="font-mono text-lg font-semibold text-neutral-900">
-                      Cabin {unit.unit_number}
+                    <p className="text-lg font-semibold">Cabin {unit.unit_number}</p>
+                    <p className="text-muted-foreground mt-1 text-sm font-medium">
+                      {unit.unit_type}
                     </p>
-                    <p className="mt-1 text-sm font-medium text-neutral-700">{unit.unit_type}</p>
 
-                    <div className="mt-3 space-y-1 border-t border-neutral-200 pt-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-neutral-600">Max Capacity</span>
-                        <span className="font-mono text-xs font-semibold text-neutral-900">
-                          {unit.max_capacity} guests
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-neutral-600">Rate/Night</span>
-                        <span className="font-mono text-xs font-semibold text-neutral-900">
-                          ₱{unit.rate_per_night.toLocaleString()}
-                        </span>
-                      </div>
-
-                      {unit.floor_level !== null && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-neutral-600">Floor</span>
-                          <span className="font-mono text-xs font-semibold text-neutral-900">
-                            {unit.floor_level}
-                          </span>
-                        </div>
+                    <dl className="mt-3 space-y-1 border-t pt-3 text-xs">
+                      <UnitFact label="Max Capacity">
+                        <span className="tabular-nums">{unit.max_capacity}</span> guests
+                      </UnitFact>
+                      <UnitFact label="Rate/Night">
+                        <span className="tabular-nums">{formatCurrency(unit.rate_per_night)}</span>
+                      </UnitFact>
+                      {unit.floor_level != null && (
+                        <UnitFact label="Floor">
+                          <span className="tabular-nums">{unit.floor_level}</span>
+                        </UnitFact>
                       )}
-
-                      {unit.view_type && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-neutral-600">View</span>
-                          <span className="text-xs font-medium text-neutral-900">
-                            {unit.view_type}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                      {unit.view_type && <UnitFact label="View">{unit.view_type}</UnitFact>}
+                    </dl>
                   </div>
                 </div>
               );
@@ -520,8 +389,7 @@ export function UnitAssignmentInterface({
         </CardContent>
       </Card>
 
-      {/* Assignment Button */}
-      <div className="border-t border-neutral-200 bg-neutral-50 p-4">
+      <div className="bg-muted rounded-lg border p-4">
         <Button
           onClick={handleAssignment}
           disabled={isAssignmentDisabled}
@@ -530,31 +398,29 @@ export function UnitAssignmentInterface({
         >
           {isAssigning ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Assigning Cabins...
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              Assigning Cabins…
             </>
           ) : (
             <>
-              <CheckCircle2 className="h-4 w-4" />
-              Assign {requiredCount} Cabin{requiredCount > 1 ? "s" : ""} to Booking
+              <CheckCircle2 className="size-4" aria-hidden="true" />
+              Assign {requiredCount} {pluralize(requiredCount, "Cabin")} to Booking
             </>
           )}
         </Button>
 
-        {/* Helper Text */}
-        <p className="mt-2 text-center text-xs text-neutral-600">
+        <p className="text-muted-foreground mt-2 text-center text-xs">
           This action will immediately assign the selected cabins and send confirmation to the guest
         </p>
       </div>
 
-      {/* Assignment Confirmation Dialog */}
       <AlertDialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Cabin Assignment</AlertDialogTitle>
             <AlertDialogDescription>
-              This will assign {selectedUnits.size} cabin(s) to booking {bookingId}. This action
-              cannot be undone.
+              This will assign {selectedUnits.size} {pluralize(selectedUnits.size, "cabin")} to
+              booking {bookingReference}. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -563,6 +429,26 @@ export function UnitAssignmentInterface({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+function LoadingCard({ label }: { label: string }) {
+  return (
+    <Card role="status">
+      <CardContent className="text-muted-foreground flex items-center justify-center gap-3 py-12">
+        <Loader2 className="size-5 animate-spin" aria-hidden="true" />
+        <span className="text-sm font-medium">{label}</span>
+      </CardContent>
+    </Card>
+  );
+}
+
+function UnitFact({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="font-semibold">{children}</dd>
     </div>
   );
 }

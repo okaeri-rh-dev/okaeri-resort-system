@@ -248,7 +248,7 @@ test.describe("Public Booking Flow", () => {
 
     test("shows payment proof section", async ({ page }) => {
       // Should see payment proof heading
-      await expect(page.getByRole("heading", { name: /upload payment proof/i })).toBeVisible();
+      await expect(page.getByRole("heading", { name: /^payment screenshot$/i })).toBeVisible();
     });
 
     test("shows file upload for payment proof", async ({ page }) => {

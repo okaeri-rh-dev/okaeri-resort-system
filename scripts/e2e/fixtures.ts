@@ -13,6 +13,7 @@ export const E2E_USER = {
 // Static UUIDs so seed is idempotent and cleanup can target them directly.
 export const E2E_GUEST_ID = "00000000-0000-0000-0000-0000000000e2";
 export const E2E_UNIT_ID = "00000000-0000-0000-0000-000000000ee2";
+export const E2E_ASSIGN_PAID_BOOKING_ID = "00000000-0000-0000-0000-00000000a5e2";
 
 export const E2E_GUEST = {
   guest_id: E2E_GUEST_ID,
@@ -35,6 +36,7 @@ export const E2E_UNIT = {
 };
 
 export interface E2EBookingFixture {
+  booking_id?: string;
   booking_reference: string;
   booking_status: "Pending" | "Confirmed" | "Cancelled";
   payment_status: "Pending" | "Completed";
@@ -44,6 +46,9 @@ export interface E2EBookingFixture {
   num_guests: number;
   // Multi-cabin guest booking with no cabins assigned yet; shows in the booking queue
   awaiting_unit_assignment?: boolean;
+  // Keeps an awaiting booking out of the booking queue (not a guest booking), so specs that act
+  // on the first queued booking never pick it
+  hidden_from_queue?: boolean;
   // Object key in the payment-proofs bucket; seed uploads a placeholder image
   payment_proof_url?: string;
 }
@@ -55,6 +60,7 @@ export const E2E_REF = {
   CONF_PAID: "E2E-CONF-PAID",
   CANCELLED: "E2E-CANCELLED",
   QUEUE: "E2E-QUEUE",
+  ASSIGN_PAID: "E2E-ASSIGN-PAID",
 } as const;
 
 export const E2E_BOOKINGS: E2EBookingFixture[] = [
@@ -104,6 +110,18 @@ export const E2E_BOOKINGS: E2EBookingFixture[] = [
     num_guests: 4,
     awaiting_unit_assignment: true,
     payment_proof_url: "E2E-QUEUE_proof.png",
+  },
+  {
+    booking_id: E2E_ASSIGN_PAID_BOOKING_ID,
+    booking_reference: E2E_REF.ASSIGN_PAID,
+    booking_status: "Pending",
+    payment_status: "Completed",
+    check_in: "2099-07-15",
+    check_out: "2099-07-16",
+    total_amount: 5000,
+    num_guests: 4,
+    awaiting_unit_assignment: true,
+    hidden_from_queue: true,
   },
 ];
 

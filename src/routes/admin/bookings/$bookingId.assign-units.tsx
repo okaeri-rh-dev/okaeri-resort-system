@@ -25,10 +25,12 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  DetailField,
   Skeleton,
 } from "@/components/patterns";
 import { useAuthToken } from "@/hooks/useAuthToken";
 import { isPaymentReceived, manilaDayOf } from "@/lib/bookings";
+import { pluralize } from "@/lib/formatters";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { adminBookingDetailQuery } from "@/stores/useBookingStore";
 import type { PaymentStatus } from "@/types";
@@ -295,6 +297,74 @@ function ErrorState({ error, bookingId }: { error: Error | null; bookingId: stri
   );
 }
 
+function BookingSummaryCard({
+  booking,
+  unitRequests,
+}: {
+  booking: BookingDetail;
+  unitRequests: UnitRequest[];
+}) {
+  const totalGuests = unitRequests.reduce((sum, request) => sum + request.guests_per_unit, 0);
+
+  return (
+    <Card padding="none">
+      <CardHeader>
+        <CardTitle>Booking Summary</CardTitle>
+      </CardHeader>
+      <CardContent className="@container space-y-4">
+        <div className="grid grid-cols-2 gap-4 @lg:grid-cols-3">
+          <div className="col-span-2 min-w-0 @lg:col-span-1">
+            <DetailField
+              label="Guest"
+              emphasis="strong"
+              value={
+                <>
+                  {booking.guest_name}
+                  <span className="text-muted-foreground block text-xs font-normal">
+                    {booking.guest_contact}
+                  </span>
+                </>
+              }
+            />
+          </div>
+          <DetailField
+            label="Check-in"
+            value={formatDate(new Date(booking.check_in))}
+            emphasis="strong"
+          />
+          <DetailField
+            label="Check-out"
+            value={formatDate(new Date(booking.check_out))}
+            emphasis="strong"
+          />
+          <DetailField
+            label="Total Amount"
+            value={formatCurrency(booking.total_amount)}
+            emphasis="figure"
+          />
+          <DetailField label="Cabins requested" value={unitRequests.length} emphasis="figure" />
+          <DetailField label="Guests" value={totalGuests} emphasis="figure" />
+        </div>
+
+        {unitRequests.length > 1 && (
+          <div className="border-t pt-4">
+            <p className="text-muted-foreground mb-2 text-sm">Guests per cabin</p>
+            <ul className="flex flex-wrap gap-2">
+              {unitRequests.map((request, index) => (
+                <li key={request.id} className="bg-muted rounded-md border px-3 py-1.5 text-xs">
+                  <span className="font-medium">Cabin {index + 1}:</span>{" "}
+                  <span className="font-semibold tabular-nums">{request.guests_per_unit}</span>{" "}
+                  {pluralize(request.guests_per_unit, "guest")}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ============================================
 // Main Component
 // ============================================
@@ -323,9 +393,7 @@ function AssignUnitsPage() {
       `Cabins successfully assigned to booking ${booking?.booking_reference}. The guest will receive a confirmation email shortly.`
     );
 
-    // Navigate back to admin queue
-    // Using window.location for simplicity and to ensure fresh data load
-    window.location.href = "/admin/queue";
+    void navigate({ to: "/admin/bookings/queue" });
   };
 
   // ============================================
@@ -365,6 +433,8 @@ function AssignUnitsPage() {
     );
   }
 
+  const unitRequests = booking.unit_requests ?? [];
+
   // ============================================
   // Main Render
   // ============================================
@@ -391,31 +461,7 @@ function AssignUnitsPage() {
         </div>
       </div>
 
-      {/* Booking Summary Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Booking Summary</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
-          <div>
-            <div className="text-muted-foreground text-sm">Guest</div>
-            <div className="font-medium">{booking.guest_name}</div>
-            <div className="text-muted-foreground text-xs">{booking.guest_contact}</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground text-sm">Check-in</div>
-            <div className="font-medium">{formatDate(new Date(booking.check_in))}</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground text-sm">Check-out</div>
-            <div className="font-medium">{formatDate(new Date(booking.check_out))}</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground text-sm">Total Amount</div>
-            <div className="font-medium tabular-nums">{formatCurrency(booking.total_amount)}</div>
-          </div>
-        </CardContent>
-      </Card>
+      <BookingSummaryCard booking={booking} unitRequests={unitRequests} />
 
       {/* Payment Status Badge */}
       <Callout tone="success" title="Payment Verified">
@@ -425,9 +471,10 @@ function AssignUnitsPage() {
       {/* Unit Assignment Interface */}
       <UnitAssignmentInterface
         bookingId={bookingId}
+        bookingReference={booking.booking_reference}
         checkInDate={manilaDayOf(booking.check_in)}
         checkOutDate={manilaDayOf(booking.check_out)}
-        unitRequests={booking.unit_requests || []}
+        unitRequests={unitRequests}
         onAssignmentSuccess={handleAssignmentSuccess}
       />
     </div>
