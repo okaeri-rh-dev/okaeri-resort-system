@@ -2,29 +2,21 @@
 
 import { useState } from "react";
 
-import { History, MoreHorizontal, Search, UserX } from "lucide-react";
+import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
+import { Search } from "lucide-react";
 
 import { RoleChangeHistory } from "@/components/admin/RoleChangeHistory";
 import {
-  Button,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  ActionMenu,
+  DataTable,
   Input,
-  Skeleton,
+  ListCard,
+  ListCardRow,
   StatusBadge,
+  TableEmptyState,
+  TableSkeleton,
+  type ActionMenuAction,
 } from "@/components/patterns";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useAllRoles } from "@/hooks/useRoleManagement";
 import { getRoleDisplayName, type AppRole } from "@/lib/audit-roles";
 import { formatDate } from "@/lib/utils";
@@ -64,6 +56,61 @@ export function UserRolesTable({ onUpdateRole, onDeactivateRole }: UserRolesTabl
     setShowHistory(true);
   };
 
+  const roleActions = (role: AppRole): ActionMenuAction[] => [
+    { label: "View Change History", onClick: () => handleViewHistory(role) },
+    { label: "Update Role", onClick: () => onUpdateRole(role) },
+    ...(role.is_active
+      ? [
+          {
+            label: "Deactivate",
+            onClick: () => onDeactivateRole(role),
+            variant: "destructive" as const,
+          },
+        ]
+      : []),
+  ];
+
+  const columns: ColumnDef<AppRole>[] = [
+    { accessorKey: "email", header: "Email", cell: ({ row }) => <UserEmail role={row.original} /> },
+    {
+      accessorKey: "role",
+      header: "Role",
+      cell: ({ row }) => <RoleBadge role={row.original.role} />,
+    },
+    {
+      accessorKey: "is_active",
+      header: "Status",
+      cell: ({ row }) => <ActiveBadge isActive={row.original.is_active} />,
+    },
+    {
+      accessorKey: "granted_at",
+      header: "Granted",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {formatDate(new Date(row.original.granted_at))}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: () => <span className="sr-only">Actions</span>,
+      cell: ({ row }) => (
+        <ActionMenu
+          actions={roleActions(row.original)}
+          label={`Open menu for ${row.original.email}`}
+        />
+      ),
+      meta: { pinned: true },
+    },
+  ];
+
+  const table = useReactTable({
+    data: filteredRoles ?? [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (role) => role.user_id,
+  });
+
   if (error) {
     return (
       <div className="border-destructive bg-destructive/10 rounded-lg border p-4">
@@ -88,117 +135,45 @@ export function UserRolesTable({ onUpdateRole, onDeactivateRole }: UserRolesTabl
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Granted</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              // Loading skeleton
-              <>
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <TableRow key={i}>
-                    <TableCell>
-                      <Skeleton className="h-4 w-48" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-6 w-20" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-6 w-16" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-32" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-8 w-8" />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </>
-            ) : filteredRoles && filteredRoles.length > 0 ? (
-              filteredRoles.map((role) => (
-                <TableRow key={role.user_id}>
-                  <TableCell className="font-medium">
-                    <div>
-                      <div>{role.email}</div>
-                      {role.notes && (
-                        <div className="text-muted-foreground text-xs">{role.notes}</div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <RoleBadge role={role.role} />
-                  </TableCell>
-                  <TableCell>
-                    {role.is_active ? (
-                      <StatusBadge tone="success">Active</StatusBadge>
-                    ) : (
-                      <StatusBadge tone="neutral">Inactive</StatusBadge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {formatDate(new Date(role.granted_at))}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleViewHistory(role)}>
-                          <History className="mr-2 h-4 w-4" />
-                          View Change History
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onUpdateRole(role)}>
-                          Update Role
-                        </DropdownMenuItem>
-                        {role.is_active && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => onDeactivateRole(role)}
-                              className="text-destructive"
-                            >
-                              <UserX className="mr-2 h-4 w-4" />
-                              Deactivate
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
+      {isLoading ? (
+        <TableSkeleton rows={5} columns={5} label="Loading user roles" />
+      ) : (
+        <DataTable
+          table={table}
+          label="User roles"
+          renderCard={(row) => (
+            <ListCard>
+              <div className="flex items-start justify-between gap-2">
+                <UserEmail role={row.original} />
+                <ActionMenu
+                  actions={roleActions(row.original)}
+                  label={`Open menu for ${row.original.email}`}
+                />
+              </div>
+              <ListCardRow label="Role" value={<RoleBadge role={row.original.role} />} />
+              <ListCardRow
+                label="Status"
+                value={<ActiveBadge isActive={row.original.is_active} />}
+              />
+              <ListCardRow label="Granted" value={formatDate(new Date(row.original.granted_at))} />
+            </ListCard>
+          )}
+          emptyState={
+            searchQuery ? (
+              <TableEmptyState
+                variant="no-results"
+                title={`No roles found matching "${searchQuery}"`}
+                description="Try a different email, role or note."
+              />
             ) : (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
-                  {searchQuery ? (
-                    <div className="text-muted-foreground">
-                      No roles found matching "{searchQuery}"
-                    </div>
-                  ) : (
-                    <div className="text-muted-foreground">No user roles assigned yet</div>
-                  )}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              <TableEmptyState
+                title="No user roles assigned yet"
+                description="Grant a role to give someone access."
+              />
+            )
+          }
+        />
+      )}
 
       {/* Results count */}
       {filteredRoles && filteredRoles.length > 0 && (
@@ -227,4 +202,23 @@ function RoleBadge({ role }: { role: string }) {
   const displayName = getRoleDisplayName(role as any);
 
   return <StatusBadge tone="neutral">{displayName}</StatusBadge>;
+}
+
+function UserEmail({ role }: { role: AppRole }) {
+  return (
+    <div className="min-w-0 font-medium">
+      <div className="break-words">{role.email}</div>
+      {role.notes && (
+        <div className="text-muted-foreground text-xs font-normal break-words">{role.notes}</div>
+      )}
+    </div>
+  );
+}
+
+function ActiveBadge({ isActive }: { isActive: boolean }) {
+  return isActive ? (
+    <StatusBadge tone="success">Active</StatusBadge>
+  ) : (
+    <StatusBadge tone="neutral">Inactive</StatusBadge>
+  );
 }

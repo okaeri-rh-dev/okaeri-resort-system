@@ -14,6 +14,7 @@
 import { useState } from "react";
 
 import { queryOptions, useQuery } from "@tanstack/react-query";
+import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { Search, SlidersHorizontal } from "lucide-react";
 
 import {
@@ -23,23 +24,19 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  DataTable,
   Input,
+  ListCard,
+  ListCardRow,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
   StatusBadge,
+  TableEmptyState,
   type StatusTone,
 } from "@/components/patterns";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { isPaymentReceived } from "@/lib/bookings";
 import { multiUnitBookingKeys } from "@/lib/query-keys";
 import { statusBadgeProps } from "@/lib/status-tone";
@@ -71,6 +68,126 @@ interface QueueFilters {
   searchQuery: string;
   urgencyLevel: UrgencyLevel | "all";
   dateRange: "all" | "today" | "week" | "month";
+}
+
+// ============================================
+// Rows
+// ============================================
+
+const toneByUrgency: Record<UrgencyLevel, StatusTone> = {
+  critical: "danger",
+  high: "warning",
+  medium: "info",
+  low: "neutral",
+};
+
+function UrgencyBadge({ booking }: { booking: PendingBooking }) {
+  return (
+    <div className="flex items-center gap-2">
+      <StatusBadge tone={toneByUrgency[booking.urgency_level]}>
+        {formatUrgencyLevel(booking.urgency_level)}
+      </StatusBadge>
+      <span className="text-muted-foreground text-sm tabular-nums">{booking.urgency_score}</span>
+    </div>
+  );
+}
+
+function GuestName({ booking }: { booking: PendingBooking }) {
+  return (
+    <div className="flex min-w-0 flex-col">
+      <span className="font-medium break-words">{booking.guest_name}</span>
+      <span className="text-muted-foreground text-xs break-words">{booking.guest_contact}</span>
+    </div>
+  );
+}
+
+function QueueAction({ booking }: { booking: PendingBooking }) {
+  const paymentReceived = isPaymentReceived(booking.payment_status);
+
+  return (
+    <Button
+      size="sm"
+      title={
+        paymentReceived
+          ? "Proceed to assign specific units for this booking"
+          : "Review payment proof and verify or reject payment"
+      }
+      onClick={() => {
+        window.location.href = paymentReceived
+          ? `/admin/bookings/${booking.booking_id}/assign-units`
+          : `/admin/verify-payment/${booking.booking_id}`;
+      }}
+    >
+      {paymentReceived ? "Assign Cabins" : "Review Payment"}
+    </Button>
+  );
+}
+
+const columns: ColumnDef<PendingBooking>[] = [
+  { id: "urgency", header: "Urgency", cell: ({ row }) => <UrgencyBadge booking={row.original} /> },
+  {
+    accessorKey: "booking_reference",
+    header: "Reference",
+    cell: ({ row }) => <span className="whitespace-nowrap">{row.original.booking_reference}</span>,
+  },
+  { id: "guest", header: "Guest", cell: ({ row }) => <GuestName booking={row.original} /> },
+  {
+    accessorKey: "check_in_date",
+    header: "Check-in",
+    cell: ({ row }) => (
+      <span className="whitespace-nowrap">{formatDate(new Date(row.original.check_in_date))}</span>
+    ),
+  },
+  { accessorKey: "requested_unit_count", header: "Cabins", meta: { align: "center" } },
+  {
+    accessorKey: "total_amount",
+    header: "Amount",
+    cell: ({ row }) => (
+      <span className="whitespace-nowrap">{formatCurrency(row.original.total_amount)}</span>
+    ),
+    meta: { align: "right" },
+  },
+  {
+    accessorKey: "payment_status",
+    header: "Payment",
+    cell: ({ row }) => (
+      <StatusBadge {...statusBadgeProps(row.original.payment_status, "Pending")} />
+    ),
+  },
+  {
+    accessorKey: "created_at",
+    header: "Pending",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">{formatRelativeTime(row.original.created_at)}</span>
+    ),
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => <QueueAction booking={row.original} />,
+    meta: { align: "right", pinned: true },
+  },
+];
+
+function QueueCard({ booking }: { booking: PendingBooking }) {
+  return (
+    <ListCard>
+      <div className="flex items-start justify-between gap-2">
+        <GuestName booking={booking} />
+        <UrgencyBadge booking={booking} />
+      </div>
+      <ListCardRow label="Reference" value={booking.booking_reference} />
+      <ListCardRow label="Check-in" value={formatDate(new Date(booking.check_in_date))} />
+      <ListCardRow label="Cabins" value={booking.requested_unit_count} />
+      <ListCardRow label="Amount" value={formatCurrency(booking.total_amount)} />
+      <ListCardRow
+        label="Payment"
+        value={<StatusBadge {...statusBadgeProps(booking.payment_status, "Pending")} />}
+      />
+      <ListCardRow label="Pending" value={formatRelativeTime(booking.created_at)} />
+      <QueueAction booking={booking} />
+    </ListCard>
+  );
 }
 
 // ============================================
@@ -160,29 +277,12 @@ export function PendingBookingsQueue() {
     return true;
   });
 
-  // ============================================
-  // Badge Helpers
-  // ============================================
-
-  const getUrgencyBadge = (level: UrgencyLevel, score: number) => {
-    const toneByLevel: Record<UrgencyLevel, StatusTone> = {
-      critical: "danger",
-      high: "warning",
-      medium: "info",
-      low: "neutral",
-    };
-
-    return (
-      <div className="flex items-center gap-2">
-        <StatusBadge tone={toneByLevel[level]}>{formatUrgencyLevel(level)}</StatusBadge>
-        <span className="text-muted-foreground text-sm tabular-nums">{score}</span>
-      </div>
-    );
-  };
-
-  const getPaymentBadge = (status: PaymentStatus) => (
-    <StatusBadge {...statusBadgeProps(status, "Pending")} />
-  );
+  const table = useReactTable({
+    data: filteredBookings ?? [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (booking) => booking.booking_id,
+  });
 
   // ============================================
   // Loading & Error States
@@ -303,87 +403,17 @@ export function PendingBookingsQueue() {
           </Select>
         </div>
 
-        {/* Queue Table */}
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Urgency</TableHead>
-                <TableHead>Reference</TableHead>
-                <TableHead>Guest</TableHead>
-                <TableHead>Check-in</TableHead>
-                <TableHead>Cabins</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead>Payment</TableHead>
-                <TableHead>Pending</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredBookings?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-muted-foreground py-8 text-center">
-                    No pending bookings found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredBookings?.map((booking) => (
-                  <TableRow key={booking.booking_id}>
-                    <TableCell>
-                      {getUrgencyBadge(booking.urgency_level, booking.urgency_score)}
-                    </TableCell>
-                    <TableCell className="text-sm whitespace-nowrap">
-                      {booking.booking_reference}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{booking.guest_name}</span>
-                        <span className="text-muted-foreground text-xs">
-                          {booking.guest_contact}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{formatDate(new Date(booking.check_in_date))}</TableCell>
-                    <TableCell className="text-center tabular-nums">
-                      {booking.requested_unit_count}
-                    </TableCell>
-                    <TableCell className="text-right whitespace-nowrap tabular-nums">
-                      {formatCurrency(booking.total_amount)}
-                    </TableCell>
-                    <TableCell>{getPaymentBadge(booking.payment_status)}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {formatRelativeTime(booking.created_at)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        title={
-                          isPaymentReceived(booking.payment_status)
-                            ? "Proceed to assign specific units for this booking"
-                            : "Review payment proof and verify or reject payment"
-                        }
-                        onClick={() => {
-                          // If payment received, go to assignment; otherwise, review payment first
-                          if (isPaymentReceived(booking.payment_status)) {
-                            // Navigate to unit assignment
-                            window.location.href = `/admin/bookings/${booking.booking_id}/assign-units`;
-                          } else {
-                            // Navigate to payment review page
-                            window.location.href = `/admin/verify-payment/${booking.booking_id}`;
-                          }
-                        }}
-                      >
-                        {isPaymentReceived(booking.payment_status)
-                          ? "Assign Cabins"
-                          : "Review Payment"}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <DataTable
+          table={table}
+          label="Pending bookings"
+          renderCard={(row) => <QueueCard booking={row.original} />}
+          emptyState={
+            <TableEmptyState
+              title="No pending bookings found"
+              description="New guest bookings show here until their cabins are assigned."
+            />
+          }
+        />
       </CardContent>
     </Card>
   );
