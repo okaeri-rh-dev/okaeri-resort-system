@@ -45,7 +45,7 @@ interface ExpenseDetailPageProps {
  *
  * Uses Professional Enterprise Design System with:
  * - High information density with minimal whitespace
- * - Monospace fonts for financial data
+ * - Tabular figures for financial data
  * - Responsive 2-column desktop / 1-column mobile layouts
  * - Professional badges for categories
  * - Consistent spacing and typography
@@ -69,48 +69,52 @@ export function ExpenseDetailPage({ expense, expenseId }: ExpenseDetailPageProps
     >
       {/* 1. Expense Overview Section */}
       <DetailSection title="Expense Overview" icon={<DollarSign className="h-5 w-5" />}>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <DetailField label="Amount" value={formatCurrency(expense.amount)} emphasis="total" />
-          <DetailField
-            label="Category"
-            value={<StatusBadge tone="neutral">{expense.category}</StatusBadge>}
-          />
-          <DetailField
-            label="Expense Date"
-            value={formatFullDate(expense.date)}
-            emphasis="strong"
-          />
-          {expense.created_by_name && (
-            <DetailField label="Created By" value={expense.created_by_name} emphasis="strong" />
-          )}
+        <div className="@container">
+          <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
+            <DetailField label="Amount" value={formatCurrency(expense.amount)} emphasis="total" />
+            <DetailField
+              label="Category"
+              value={<StatusBadge tone="neutral">{expense.category}</StatusBadge>}
+            />
+            <DetailField
+              label="Expense Date"
+              value={formatFullDate(expense.date)}
+              emphasis="strong"
+            />
+            {expense.created_by_name && (
+              <DetailField label="Created By" value={expense.created_by_name} emphasis="strong" />
+            )}
+          </div>
         </div>
       </DetailSection>
 
       {/* 2. Description Section */}
       {expense.description && (
         <DetailSection title="Description" icon={<FileText className="h-5 w-5" />}>
-          <div className="prose prose-sm max-w-none">
-            <p className="text-foreground text-sm whitespace-pre-wrap">{expense.description}</p>
-          </div>
+          <p className="text-foreground text-sm break-words whitespace-pre-wrap">
+            {expense.description}
+          </p>
         </DetailSection>
       )}
 
       {/* 3. Related Unit Section (Conditional) */}
       {expense.unit && expense.unit_id && (
         <DetailSection title="Related Cabin" icon={<Home className="h-5 w-5" />}>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <DetailField
-              label="Cabin"
-              value={
-                <RelatedEntityLink
-                  type="unit"
-                  id={expense.unit_id}
-                  label={expense.unit.unit_name}
-                  badge={expense.unit.unit_code}
-                />
-              }
-            />
-            <DetailField label="Cabin Type" value={expense.unit.unit_type} emphasis="strong" />
+          <div className="@container">
+            <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
+              <DetailField
+                label="Cabin"
+                value={
+                  <RelatedEntityLink
+                    type="unit"
+                    id={expense.unit_id}
+                    label={expense.unit.unit_name}
+                    badge={expense.unit.unit_code}
+                  />
+                }
+              />
+              <DetailField label="Cabin Type" value={expense.unit.unit_type} emphasis="strong" />
+            </div>
           </div>
         </DetailSection>
       )}
@@ -123,6 +127,8 @@ export function ExpenseDetailPage({ expense, expenseId }: ExpenseDetailPageProps
               <img
                 src={expense.receipt_url}
                 alt="Expense receipt"
+                width={672}
+                height={896}
                 className="border-border h-auto w-full rounded-md border"
               />
             </div>
@@ -150,9 +156,7 @@ export function ExpenseDetailPage({ expense, expenseId }: ExpenseDetailPageProps
       {/* 5. Internal Notes Section (Conditional) */}
       {expense.notes && (
         <DetailSection title="Internal Notes" icon={<StickyNote className="h-5 w-5" />}>
-          <div className="prose prose-sm max-w-none">
-            <p className="text-foreground text-sm whitespace-pre-wrap">{expense.notes}</p>
-          </div>
+          <p className="text-foreground text-sm break-words whitespace-pre-wrap">{expense.notes}</p>
         </DetailSection>
       )}
 

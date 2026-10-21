@@ -345,7 +345,7 @@ describe("Mobile Responsive Design", () => {
       );
 
       // Check for vertical stacking classes
-      const dateContainer = document.querySelector(".space-y-4.sm\\:grid");
+      const dateContainer = document.querySelector(".grid.gap-4");
       expect(dateContainer).toBeInTheDocument();
     });
   });

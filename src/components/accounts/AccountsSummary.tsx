@@ -90,13 +90,13 @@ export const AccountsSummary: React.FC<AccountsSummaryProps> = ({
         <CardTitle className="text-lg">Total Balance</CardTitle>
         <CardDescription>Across {accounts.length} active accounts</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="@container">
         {/* Total Balance */}
         <div className="mb-4">
           <span
             className={cn(
               "text-3xl font-bold tabular-nums",
-              totals.totalBalance < 0 && "text-destructive"
+              totals.totalBalance < 0 && "text-danger-foreground"
             )}
           >
             {totals.totalBalance < 0 ? "-" : ""}
@@ -106,14 +106,14 @@ export const AccountsSummary: React.FC<AccountsSummaryProps> = ({
 
         {/* Money In/Out */}
         {showDetails && (
-          <div className="mb-4 grid grid-cols-2 gap-4">
+          <div className="mb-4 grid grid-cols-1 gap-4 @xs:grid-cols-2">
             <div className="flex items-center gap-2">
               <div className="bg-success text-success-foreground flex h-8 w-8 items-center justify-center rounded-lg">
                 <TrendingUp className="h-4 w-4" aria-hidden="true" />
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Received</p>
-                <p className="text-foreground font-semibold tabular-nums">
+                <p className="text-foreground font-semibold whitespace-nowrap tabular-nums">
                   +{formatCurrency(Math.abs(totals.totalPayments))}
                 </p>
               </div>
@@ -124,7 +124,7 @@ export const AccountsSummary: React.FC<AccountsSummaryProps> = ({
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Spent</p>
-                <p className="text-foreground font-semibold tabular-nums">
+                <p className="text-foreground font-semibold whitespace-nowrap tabular-nums">
                   -{formatCurrency(Math.abs(totals.totalExpenses))}
                 </p>
               </div>
@@ -156,9 +156,12 @@ export const AccountsSummary: React.FC<AccountsSummaryProps> = ({
                     </span>
                   </div>
                   <span
-                    className={cn("font-medium tabular-nums", balance < 0 && "text-destructive")}
+                    className={cn(
+                      "font-medium tabular-nums",
+                      balance < 0 && "text-danger-foreground"
+                    )}
                   >
-                    {formatCurrency(Math.abs(balance))}
+                    {formatCurrency(balance)}
                   </span>
                 </div>
               );
@@ -194,7 +197,9 @@ export const AccountsSummaryCompact: React.FC<AccountsSummaryCompactProps> = ({ 
       )}
     >
       <span className="text-muted-foreground text-sm">Total Balance</span>
-      <span className={cn("font-semibold tabular-nums", totalBalance < 0 && "text-destructive")}>
+      <span
+        className={cn("font-semibold tabular-nums", totalBalance < 0 && "text-danger-foreground")}
+      >
         {totalBalance < 0 ? "-" : ""}
         {formatCurrency(Math.abs(totalBalance))}
       </span>

@@ -6,10 +6,13 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -17,25 +20,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   Form,
-  FormControl,
-  FormDescription,
   FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
+  Input,
   SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+  StatusBadge,
+  Switch,
+} from "@/components/patterns";
+import { SelectControl } from "@/components/payments/SelectControl";
 import {
   Table,
   TableBody,
@@ -44,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatCurrency } from "@/lib/formatters";
 import type { Json } from "@/types/database.types";
 
 // Types
@@ -120,9 +113,9 @@ function formatDiscountValue(type: string, value: number): string {
     case "percentage":
       return `${value}%`;
     case "fixed":
-      return `PHP ${value.toLocaleString()}`;
+      return formatCurrency(value);
     case "per_night":
-      return `PHP ${value.toLocaleString()}/night`;
+      return `${formatCurrency(value)}/night`;
     default:
       return String(value);
   }
@@ -270,200 +263,129 @@ export function DiscountRulesForm({ rules = [], onSave, isLoading }: DiscountRul
   // Shared form fields used in both Add and Edit dialogs
   const renderFormFields = () => (
     <>
-      <FormField
-        control={form.control}
-        name="name"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Name</FormLabel>
-            <FormControl>
-              <Input {...field} placeholder="e.g., Week Stay Discount" />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <FormField control={form.control} name="name" label="Name">
+        {(field) => <Input {...field} placeholder="e.g., Week Stay Discount" />}
+      </FormField>
 
-      <FormField
-        control={form.control}
-        name="description"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Description (Optional)</FormLabel>
-            <FormControl>
-              <Input {...field} placeholder="e.g., 5% off for 7+ nights" />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <FormField control={form.control} name="description" label="Description (Optional)">
+        {(field) => <Input {...field} placeholder="e.g., 5% off for 7+ nights" />}
+      </FormField>
 
       <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="discount_type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Discount Type</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="percentage">Percentage</SelectItem>
-                  <SelectItem value="fixed">Fixed Amount</SelectItem>
-                  <SelectItem value="per_night">Per Night</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
+        <FormField control={form.control} name="discount_type" label="Discount Type">
+          {(field) => (
+            <SelectControl value={field.value} onValueChange={field.onChange}>
+              <SelectItem value="percentage">Percentage</SelectItem>
+              <SelectItem value="fixed">Fixed Amount</SelectItem>
+              <SelectItem value="per_night">Per Night</SelectItem>
+            </SelectControl>
           )}
-        />
+        </FormField>
 
         <FormField
           control={form.control}
           name="discount_value"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Discount Value</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  type="number"
-                  step="0.01"
-                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                />
-              </FormControl>
-              <FormDescription>
-                {form.watch("discount_type") === "percentage" ? "% off" : "PHP amount"}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+          label="Discount Value"
+          description={form.watch("discount_type") === "percentage" ? "% off" : "Amount in ₱"}
+        >
+          {(field) => (
+            <Input
+              {...field}
+              type="number"
+              step="0.01"
+              onChange={(e) => field.onChange(parseFloat(e.target.value))}
+            />
           )}
-        />
+        </FormField>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="condition_type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Condition Type</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="min_nights">Minimum Nights</SelectItem>
-                  <SelectItem value="advance_booking">Advance Booking</SelectItem>
-                  <SelectItem value="unit_count">Unit Count</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
+        <FormField control={form.control} name="condition_type" label="Condition Type">
+          {(field) => (
+            <SelectControl value={field.value} onValueChange={field.onChange}>
+              <SelectItem value="min_nights">Minimum Nights</SelectItem>
+              <SelectItem value="advance_booking">Advance Booking</SelectItem>
+              <SelectItem value="unit_count">Unit Count</SelectItem>
+            </SelectControl>
           )}
-        />
+        </FormField>
 
         <FormField
           control={form.control}
           name="condition_value"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Condition Value</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  type="number"
-                  onChange={(e) => field.onChange(parseInt(e.target.value))}
-                />
-              </FormControl>
-              <FormDescription>
-                {form.watch("condition_type") === "min_nights"
-                  ? "nights"
-                  : form.watch("condition_type") === "advance_booking"
-                    ? "days ahead"
-                    : "units"}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+          label="Condition Value"
+          description={
+            form.watch("condition_type") === "min_nights"
+              ? "nights"
+              : form.watch("condition_type") === "advance_booking"
+                ? "days ahead"
+                : "units"
+          }
+        >
+          {(field) => (
+            <Input
+              {...field}
+              type="number"
+              onChange={(e) => field.onChange(parseInt(e.target.value))}
+            />
           )}
-        />
+        </FormField>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <FormField
           control={form.control}
           name="max_discount"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Max Discount (Optional)</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  type="number"
-                  step="0.01"
-                  value={field.value ?? ""}
-                  onChange={(e) =>
-                    field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)
-                  }
-                />
-              </FormControl>
-              <FormDescription>Cap the discount amount (PHP)</FormDescription>
-              <FormMessage />
-            </FormItem>
+          label="Max Discount (Optional)"
+          description="Cap the discount amount (₱)"
+        >
+          {(field) => (
+            <Input
+              {...field}
+              type="number"
+              step="0.01"
+              value={field.value ?? ""}
+              onChange={(e) =>
+                field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)
+              }
+            />
           )}
-        />
+        </FormField>
 
         <FormField
           control={form.control}
           name="priority"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Priority</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  type="number"
-                  onChange={(e) => field.onChange(parseInt(e.target.value))}
-                />
-              </FormControl>
-              <FormDescription>Lower number = higher priority</FormDescription>
-              <FormMessage />
-            </FormItem>
+          label="Priority"
+          description="Lower number = higher priority"
+        >
+          {(field) => (
+            <Input
+              {...field}
+              type="number"
+              onChange={(e) => field.onChange(parseInt(e.target.value))}
+            />
           )}
-        />
+        </FormField>
       </div>
 
       <FormField
         control={form.control}
         name="is_active"
-        render={({ field }) => (
-          <FormItem className="flex items-center justify-between rounded-lg border p-3">
-            <div className="space-y-0.5">
-              <FormLabel>Active</FormLabel>
-              <FormDescription>Enable this discount rule</FormDescription>
-            </div>
-            <FormControl>
-              <Switch checked={field.value} onCheckedChange={field.onChange} />
-            </FormControl>
-          </FormItem>
-        )}
-      />
+        label="Active"
+        description="Enable this discount rule"
+      >
+        {(field) => <Switch checked={field.value} onCheckedChange={field.onChange} />}
+      </FormField>
     </>
   );
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Percent className="text-muted-foreground h-5 w-5" />
+              <Percent className="text-muted-foreground h-5 w-5" aria-hidden="true" />
               Discount Rules
             </CardTitle>
             <CardDescription>
@@ -473,18 +395,18 @@ export function DiscountRulesForm({ rules = [], onSave, isLoading }: DiscountRul
           <div className="flex gap-2">
             {hasChanges && (
               <Button onClick={handleSaveAll} disabled={isSaving || isLoading} size="sm">
-                <Save className="mr-2 h-4 w-4" />
+                <Save className="mr-2 h-4 w-4" aria-hidden="true" />
                 Save All Changes
               </Button>
             )}
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="outline">
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
                   Add Rule
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add Discount Rule</DialogTitle>
                   <DialogDescription>
@@ -515,7 +437,7 @@ export function DiscountRulesForm({ rules = [], onSave, isLoading }: DiscountRul
       <CardContent>
         {localRules.length === 0 ? (
           <div className="text-muted-foreground py-8 text-center">
-            <Percent className="mx-auto mb-4 h-12 w-12 opacity-50" />
+            <Percent className="mx-auto mb-4 h-12 w-12 opacity-50" aria-hidden="true" />
             <p>No discount rules configured</p>
             <p className="mt-2 text-sm">
               Add discount rules to automatically apply discounts based on conditions
@@ -541,37 +463,48 @@ export function DiscountRulesForm({ rules = [], onSave, isLoading }: DiscountRul
                   <TableRow key={rule.id || rule.name}>
                     <TableCell>
                       <div>
-                        <span className="font-medium">{rule.name}</span>
+                        <span className="font-medium break-words">{rule.name}</span>
                         {rule.description && (
-                          <p className="text-muted-foreground text-sm">{rule.description}</p>
+                          <p className="text-muted-foreground text-sm break-words">
+                            {rule.description}
+                          </p>
                         )}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">
+                      <StatusBadge tone="neutral">
                         {DISCOUNT_TYPE_LABELS[rule.discount_type] || rule.discount_type}
-                      </Badge>
+                      </StatusBadge>
                     </TableCell>
-                    <TableCell className="font-mono text-sm">
+                    <TableCell className="text-sm whitespace-nowrap tabular-nums">
                       {formatDiscountValue(rule.discount_type, rule.discount_value)}
                     </TableCell>
                     <TableCell className="text-sm">{formatCondition(rule.conditions)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{rule.priority}</Badge>
-                    </TableCell>
+                    <TableCell className="tabular-nums">{rule.priority}</TableCell>
                     <TableCell>
                       <Switch
                         checked={rule.is_active}
                         onCheckedChange={() => handleToggleActive(rule)}
+                        aria-label={`${rule.name} active`}
                       />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(rule)}>
-                          <Edit2 className="h-4 w-4" />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditDialog(rule)}
+                          aria-label={`Edit ${rule.name}`}
+                        >
+                          <Edit2 className="h-4 w-4" aria-hidden="true" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(rule)}>
-                          <Trash2 className="text-destructive h-4 w-4" />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(rule)}
+                          aria-label={`Delete ${rule.name}`}
+                        >
+                          <Trash2 className="text-destructive h-4 w-4" aria-hidden="true" />
                         </Button>
                       </div>
                     </TableCell>
@@ -583,7 +516,7 @@ export function DiscountRulesForm({ rules = [], onSave, isLoading }: DiscountRul
 
         {/* Edit Dialog */}
         <Dialog open={!!editingRule} onOpenChange={(open) => !open && setEditingRule(null)}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit Discount Rule</DialogTitle>
               <DialogDescription>Modify the discount rule settings</DialogDescription>

@@ -5,20 +5,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Calculator, DollarSign, Home, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { Callout } from "@/components/patterns";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Button,
+  Callout,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   Form,
-  FormControl,
-  FormDescription,
   FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { NumberInput } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
+  NumberInput,
+  Separator,
+} from "@/components/patterns";
 import { usePricingConfig, useUpdatePricingConfig } from "@/hooks/usePricingConfig";
 import { formatCurrency } from "@/lib/utils";
 import { pricingConfigSchema, type PricingConfigInput } from "@/lib/validation/pricing-schema";
@@ -156,316 +154,284 @@ export function PricingConfigForm({ onSuccess, onCancel, className }: PricingCon
           pricing has been centralized for consistent guest experience.
         </Callout>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Left Column: Form Fields */}
-          <div className="space-y-6 lg:col-span-2">
-            {/* Rate Configuration Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="text-muted-foreground h-5 w-5" />
-                  Rate Configuration
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {/* Base Rate */}
-                  <FormField
-                    control={form.control}
-                    name="base_rate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Base Rate (Weekdays)</FormLabel>
-                        <FormControl>
-                          <NumberInput
-                            min={500}
-                            max={100000}
-                            allowDecimals={true}
-                            className="pl-10"
-                            placeholder="3000.00"
-                            startIcon={<span className="text-sm font-medium">₱</span>}
-                            value={field.value}
-                            onChange={(value) => field.onChange(value)}
-                            onBlur={(value) => {
-                              field.onChange(value || 500);
-                              field.onBlur();
-                            }}
-                          />
-                        </FormControl>
-                        <FormDescription>
+        <div className="@container">
+          <div className="grid grid-cols-1 gap-6 @4xl:grid-cols-3">
+            {/* Left Column: Form Fields */}
+            <div className="space-y-6 @4xl:col-span-2">
+              {/* Rate Configuration Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="text-muted-foreground h-5 w-5" aria-hidden="true" />
+                    Rate Configuration
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="@container space-y-4">
+                  <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="base_rate"
+                      label="Base Rate (Weekdays)"
+                      description={
+                        <>
                           Rate per night (Sunday - Thursday)
                           {watchedValues.base_rate > 0 && (
-                            <span className="text-muted-foreground mt-1 block text-xs font-medium tabular-nums">
+                            <span className="mt-1 block text-xs font-medium tabular-nums">
                               {formatCurrency(watchedValues.base_rate)} per night
                             </span>
                           )}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Weekend Rate */}
-                  <FormField
-                    control={form.control}
-                    name="weekend_rate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Weekend Rate (Fri-Sat)</FormLabel>
-                        <FormControl>
-                          <NumberInput
-                            min={500}
-                            max={100000}
-                            allowDecimals={true}
-                            className="pl-10"
-                            placeholder="3500.00"
-                            startIcon={<span className="text-sm font-medium">₱</span>}
-                            value={field.value}
-                            onChange={(value) => field.onChange(value)}
-                            onBlur={(value) => {
-                              field.onChange(value || 500);
-                              field.onBlur();
-                            }}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Rate per night (Friday & Saturday)
-                          {watchedValues.weekend_rate > 0 && (
-                            <span className="text-muted-foreground mt-1 block text-xs font-medium tabular-nums">
-                              {formatCurrency(watchedValues.weekend_rate)} per night
-                            </span>
-                          )}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Additional Fees Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="text-muted-foreground h-5 w-5" />
-                  Additional Fees
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <FormField
-                  control={form.control}
-                  name="extra_person_rate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Extra Person Rate</FormLabel>
-                      <FormControl>
+                        </>
+                      }
+                    >
+                      {(field) => (
                         <NumberInput
-                          min={0}
-                          max={10000}
+                          min={500}
+                          max={100000}
                           allowDecimals={true}
-                          className="pl-10"
-                          placeholder="500.00"
+                          placeholder="3000.00"
                           startIcon={<span className="text-sm font-medium">₱</span>}
                           value={field.value}
                           onChange={(value) => field.onChange(value)}
                           onBlur={(value) => {
-                            field.onChange(value ?? 0);
+                            field.onChange(value || 500);
                             field.onBlur();
                           }}
                         />
-                      </FormControl>
-                      <FormDescription>
-                        Additional charge per guest per night (beyond base occupancy)
-                        {watchedValues.extra_person_rate > 0 && (
-                          <span className="text-muted-foreground mt-1 block text-xs font-medium tabular-nums">
-                            {formatCurrency(watchedValues.extra_person_rate)} per guest per night
-                          </span>
-                        )}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
+                      )}
+                    </FormField>
 
-            {/* Capacity Settings Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Home className="text-muted-foreground h-5 w-5" />
-                  Capacity Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {/* Base Occupancy */}
-                  <FormField
-                    control={form.control}
-                    name="base_occupancy"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Base Occupancy</FormLabel>
-                        <FormControl>
-                          <NumberInput
-                            min={1}
-                            max={20}
-                            allowDecimals={false}
-                            placeholder="2"
-                            value={field.value}
-                            onChange={(value) => field.onChange(value)}
-                            onBlur={(value) => {
-                              field.onChange(value || 1);
-                              field.onBlur();
-                            }}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Standard number of guests included in base rate
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Max Capacity */}
-                  <FormField
-                    control={form.control}
-                    name="max_capacity_per_unit"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Max Capacity Per Unit</FormLabel>
-                        <FormControl>
-                          <NumberInput
-                            min={1}
-                            max={50}
-                            allowDecimals={false}
-                            placeholder="10"
-                            value={field.value}
-                            onChange={(value) => field.onChange(value)}
-                            onBlur={(value) => {
-                              field.onChange(value || 1);
-                              field.onBlur();
-                            }}
-                          />
-                        </FormControl>
-                        <FormDescription>Maximum guests allowed per unit</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Payment Terms Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calculator className="text-muted-foreground h-5 w-5" />
-                  Payment Terms
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <FormField
-                  control={form.control}
-                  name="downpayment_percent"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Downpayment Percentage</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <NumberInput
-                            min={0}
-                            max={100}
-                            allowDecimals={false}
-                            className="pr-10"
-                            placeholder="50"
-                            value={field.value}
-                            onChange={(value) => field.onChange(value)}
-                            onBlur={(value) => {
-                              field.onChange(value ?? 0);
-                              field.onBlur();
-                            }}
-                          />
-                          <span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-sm">
-                            %
-                          </span>
-                        </div>
-                      </FormControl>
-                      <FormDescription>
-                        Percentage of total required as downpayment (0-100%)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column: Preview */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Sample Calculation</CardTitle>
-                  <p className="text-muted-foreground text-sm">
-                    {preview.nights} nights, {preview.guests} guests
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {/* Breakdown */}
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        Base ({preview.nights - 2} weekday nights)
-                      </span>
-                      <span className="tabular-nums">{formatCurrency(preview.baseTotal)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Weekend (2 nights)</span>
-                      <span className="tabular-nums">{formatCurrency(preview.weekendTotal)}</span>
-                    </div>
-                    {preview.extraPersonTotal > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          Extra guests ({preview.guests - watchedValues.base_occupancy})
-                        </span>
-                        <span className="tabular-nums">
-                          {formatCurrency(preview.extraPersonTotal)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <Separator />
-
-                  {/* Totals */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between font-semibold">
-                      <span>Subtotal</span>
-                      <span className="tabular-nums">{formatCurrency(preview.subtotal)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm font-medium">
-                      <span>Downpayment ({watchedValues.downpayment_percent}%)</span>
-                      <span className="tabular-nums">{formatCurrency(preview.downpayment)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Remaining Balance</span>
-                      <span className="tabular-nums">{formatCurrency(preview.remaining)}</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-background/50 rounded-lg border p-3">
-                    <p className="text-muted-foreground text-xs">
-                      This preview shows how rates are calculated. Actual bookings may vary based on
-                      specific dates and guest counts.
-                    </p>
+                    <FormField
+                      control={form.control}
+                      name="weekend_rate"
+                      label="Weekend Rate (Fri-Sat)"
+                      description={
+                        <>
+                          Rate per night (Friday & Saturday)
+                          {watchedValues.weekend_rate > 0 && (
+                            <span className="mt-1 block text-xs font-medium tabular-nums">
+                              {formatCurrency(watchedValues.weekend_rate)} per night
+                            </span>
+                          )}
+                        </>
+                      }
+                    >
+                      {(field) => (
+                        <NumberInput
+                          min={500}
+                          max={100000}
+                          allowDecimals={true}
+                          placeholder="3500.00"
+                          startIcon={<span className="text-sm font-medium">₱</span>}
+                          value={field.value}
+                          onChange={(value) => field.onChange(value)}
+                          onBlur={(value) => {
+                            field.onChange(value || 500);
+                            field.onBlur();
+                          }}
+                        />
+                      )}
+                    </FormField>
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Additional Fees Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="text-muted-foreground h-5 w-5" aria-hidden="true" />
+                    Additional Fees
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="extra_person_rate"
+                    label="Extra Person Rate"
+                    description={
+                      <>
+                        Additional charge per guest per night (beyond base occupancy)
+                        {watchedValues.extra_person_rate > 0 && (
+                          <span className="mt-1 block text-xs font-medium tabular-nums">
+                            {formatCurrency(watchedValues.extra_person_rate)} per guest per night
+                          </span>
+                        )}
+                      </>
+                    }
+                  >
+                    {(field) => (
+                      <NumberInput
+                        min={0}
+                        max={10000}
+                        allowDecimals={true}
+                        placeholder="500.00"
+                        startIcon={<span className="text-sm font-medium">₱</span>}
+                        value={field.value}
+                        onChange={(value) => field.onChange(value)}
+                        onBlur={(value) => {
+                          field.onChange(value ?? 0);
+                          field.onBlur();
+                        }}
+                      />
+                    )}
+                  </FormField>
+                </CardContent>
+              </Card>
+
+              {/* Capacity Settings Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Home className="text-muted-foreground h-5 w-5" aria-hidden="true" />
+                    Capacity Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="@container space-y-4">
+                  <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="base_occupancy"
+                      label="Base Occupancy"
+                      description="Standard number of guests included in base rate"
+                    >
+                      {(field) => (
+                        <NumberInput
+                          min={1}
+                          max={20}
+                          allowDecimals={false}
+                          placeholder="2"
+                          value={field.value}
+                          onChange={(value) => field.onChange(value)}
+                          onBlur={(value) => {
+                            field.onChange(value || 1);
+                            field.onBlur();
+                          }}
+                        />
+                      )}
+                    </FormField>
+
+                    <FormField
+                      control={form.control}
+                      name="max_capacity_per_unit"
+                      label="Max Capacity Per Unit"
+                      description="Maximum guests allowed per unit"
+                    >
+                      {(field) => (
+                        <NumberInput
+                          min={1}
+                          max={50}
+                          allowDecimals={false}
+                          placeholder="10"
+                          value={field.value}
+                          onChange={(value) => field.onChange(value)}
+                          onBlur={(value) => {
+                            field.onChange(value || 1);
+                            field.onBlur();
+                          }}
+                        />
+                      )}
+                    </FormField>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Payment Terms Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calculator className="text-muted-foreground h-5 w-5" aria-hidden="true" />
+                    Payment Terms
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="downpayment_percent"
+                    label="Downpayment Percentage"
+                    description="Percentage of total required as downpayment (0-100%)"
+                  >
+                    {(field) => (
+                      <NumberInput
+                        min={0}
+                        max={100}
+                        allowDecimals={false}
+                        placeholder="50"
+                        endIcon={<span className="text-sm">%</span>}
+                        value={field.value}
+                        onChange={(value) => field.onChange(value)}
+                        onBlur={(value) => {
+                          field.onChange(value ?? 0);
+                          field.onBlur();
+                        }}
+                      />
+                    )}
+                  </FormField>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Column: Preview */}
+            <div className="@4xl:col-span-1">
+              <div className="sticky top-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Sample Calculation</CardTitle>
+                    <p className="text-muted-foreground text-sm">
+                      {preview.nights} nights, {preview.guests} guests
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {/* Breakdown */}
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          Base ({preview.nights - 2} weekday nights)
+                        </span>
+                        <span className="tabular-nums">{formatCurrency(preview.baseTotal)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Weekend (2 nights)</span>
+                        <span className="tabular-nums">{formatCurrency(preview.weekendTotal)}</span>
+                      </div>
+                      {preview.extraPersonTotal > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            Extra guests ({preview.guests - watchedValues.base_occupancy})
+                          </span>
+                          <span className="tabular-nums">
+                            {formatCurrency(preview.extraPersonTotal)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    {/* Totals */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between font-semibold">
+                        <span>Subtotal</span>
+                        <span className="tabular-nums">{formatCurrency(preview.subtotal)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm font-medium">
+                        <span>Downpayment ({watchedValues.downpayment_percent}%)</span>
+                        <span className="tabular-nums">{formatCurrency(preview.downpayment)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Remaining Balance</span>
+                        <span className="tabular-nums">{formatCurrency(preview.remaining)}</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-muted rounded-lg border p-3">
+                      <p className="text-muted-foreground text-xs">
+                        This preview shows how rates are calculated. Actual bookings may vary based
+                        on specific dates and guest counts.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         </div>
