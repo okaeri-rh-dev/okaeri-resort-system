@@ -168,12 +168,12 @@ export function PaymentEditPage() {
                 name="proof_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Proof of Payment URL (Optional)</FormLabel>
+                    <FormLabel>Payment proof URL (optional)</FormLabel>
                     <FormControl>
                       <Input placeholder="https://..." {...field} />
                     </FormControl>
                     <FormDescription>
-                      URL to payment screenshot or receipt (image upload coming soon)
+                      Link to the payment proof image (image upload coming soon)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

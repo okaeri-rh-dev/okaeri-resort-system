@@ -52,7 +52,7 @@ export function PaymentInstructions({
         {!paymentProofUploaded && (
           <Alert>
             <AlertDescription>
-              After payment, please upload your payment proof. You can do this now or later by
+              After payment, please upload your payment screenshot. You can do this now or later by
               contacting us with your booking reference.
             </AlertDescription>
           </Alert>
