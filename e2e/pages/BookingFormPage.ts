@@ -105,7 +105,7 @@ export class BookingFormPage {
     this.specialRequestsInput = page.getByLabel(/special requests/i);
 
     // Step 4: Payment Proof
-    this.paymentProofLabel = page.getByText(/payment receipt/i);
+    this.paymentProofLabel = page.getByText(/payment screenshot/i);
     this.fileUploadInput = page.locator('input[type="file"]');
     this.uploadedFilePreview = page.locator('[class*="preview"], img[alt*="preview"]');
 

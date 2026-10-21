@@ -2,6 +2,8 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { E2E_REF, E2E_UNIT_ID, E2E_USER } from "../scripts/e2e/fixtures";
 import { findLowContrastText } from "./fixtures/contrast";
+import { TEST_GUEST } from "./fixtures/test-data";
+import { BookingFormPage } from "./pages/BookingFormPage";
 import { LoginPage } from "./pages/LoginPage";
 
 /**
@@ -72,6 +74,62 @@ test.describe("Dark mode surfaces", () => {
     await page.setViewportSize(COMPACT);
     await page.goto("/calendar");
     await expect(page.getByRole("grid").first()).toBeVisible();
+    await expectReadable(page);
+  });
+});
+
+const PNG_SCREENSHOT = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+
+/** Stubs the signed-URL request and holds the storage PUT until `finishUpload` is called. */
+async function stubScreenshotUpload(page: Page) {
+  let finishUpload = () => {};
+  const uploadFinished = new Promise<void>((resolve) => (finishUpload = resolve));
+
+  await page.route("**/api/guest-booking/upload-url", (route) =>
+    route.fulfill({
+      json: {
+        success: true,
+        upload_url: "/e2e-stub-storage/gcash.png",
+        file_path: "TEMP-E2E_1761000000.png",
+      },
+    })
+  );
+  await page.route("**/e2e-stub-storage/**", async (route) => {
+    await uploadFinished;
+    await route.fulfill({ status: 200, body: "" });
+  });
+
+  return finishUpload;
+}
+
+test.describe("Dark mode guest payment step", () => {
+  test("uploaded payment screenshot reads in dark on a phone", async ({ page }) => {
+    await useDarkTheme(page);
+    await page.setViewportSize(COMPACT);
+    const finishUpload = await stubScreenshotUpload(page);
+
+    const form = new BookingFormPage(page);
+    await form.goto();
+    await form.goToNextStep();
+    await form.goToNextStep();
+    await form.fillContactInfo(TEST_GUEST);
+    await form.goToNextStep();
+    await form.expectStep4Visible();
+
+    await form.fileUploadInput.setInputFiles({
+      name: "gcash.png",
+      mimeType: "image/png",
+      buffer: PNG_SCREENSHOT,
+    });
+    await expect(page.getByText(/uploading…/i)).toBeVisible();
+    await expect(form.nextButton).toBeDisabled();
+
+    finishUpload();
+    await expect(page.getByText("Uploaded", { exact: true })).toBeVisible();
+    await expect(page.getByText("gcash.png")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Remove" })).toBeEnabled();
+    await expect(form.nextButton).toBeEnabled();
+    await expect(page.getByText("Invalid payment proof")).toBeHidden();
     await expectReadable(page);
   });
 });

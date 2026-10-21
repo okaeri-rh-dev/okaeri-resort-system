@@ -1,45 +1,92 @@
-import { useCallback, useState } from "react";
+import { useRef, useState } from "react";
 
-import { AlertCircle, CheckCircle, FileImage, FileText, Loader2, Upload, X } from "lucide-react";
+import { CheckCircle, FileImage, FileText, Loader2, RotateCcw, Upload, X } from "lucide-react";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import {
-  compressImage,
-  formatFileSize,
-  validateFile,
-  type FileValidationError,
-} from "@/lib/file-validation-client";
+import { Button, Callout, Progress } from "@/components/patterns";
+import { compressImage, formatFileSize, validateFile } from "@/lib/file-validation-client";
+import { cn } from "@/lib/utils";
 
 export interface PaymentProofUploadProps {
-  bookingReference: string; // For file path naming
-  onUploadComplete?: (filePath: string) => void; // Made optional for React Hook Form compatibility
+  /** Used to name the stored file. */
+  bookingReference: string;
+  onUploadComplete?: (filePath: string) => void;
   onUploadError?: (error: string) => void;
   disabled?: boolean;
-  // React Hook Form integration props
-  value?: string | null; // Current file path value
-  onChange?: (value: string | null) => void; // Callback when value changes
+  /** The stored file path (React Hook Form controlled value). */
+  value?: string | null;
+  onChange?: (value: string | null) => void;
+  /** Reports true while a chosen screenshot is being checked or uploaded, false once it settles. */
+  onUploadingChange?: (uploading: boolean) => void;
+}
+
+type UploadStatus = "empty" | "validating" | "uploading" | "uploaded" | "failed";
+
+interface CompressionInfo {
+  originalSize: number;
+  ratio: number;
+}
+
+async function requestUploadUrl(bookingReference: string, file: File) {
+  const response = await fetch("/api/guest-booking/upload-url", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      booking_reference: bookingReference,
+      file_name: file.name,
+      file_type: file.type,
+      file_size: file.size,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to get upload URL");
+  }
+
+  const data = (await response.json()) as {
+    success: boolean;
+    upload_url?: string;
+    file_path?: string;
+    error?: string;
+  };
+
+  if (!data.success) {
+    throw new Error(data.error || "Upload URL generation failed");
+  }
+  if (!data.upload_url || !data.file_path) {
+    throw new Error("Invalid response from upload URL endpoint");
+  }
+
+  return { uploadUrl: data.upload_url, filePath: data.file_path };
+}
+
+function putFile(uploadUrl: string, file: File, onProgress: (percentage: number) => void) {
+  return new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    });
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+      } else {
+        reject(new Error(`Upload failed with status ${xhr.status}`));
+      }
+    });
+    xhr.addEventListener("error", () => reject(new Error("Upload failed")));
+    xhr.addEventListener("abort", () => reject(new Error("Upload cancelled")));
+
+    xhr.open("PUT", uploadUrl);
+    xhr.setRequestHeader("Content-Type", file.type);
+    xhr.send(file);
+  });
 }
 
 /**
- * PaymentProofUpload Component
- *
- * Secure file upload component with:
- * - Drag-and-drop interface
- * - Magic number validation
- * - Client-side image compression
- * - Upload progress tracking
- * - Signed URL integration
- * - React Hook Form compatible (value/onChange props)
- *
- * @param bookingReference - Temporary booking reference for file naming
- * @param onUploadComplete - Callback when upload succeeds (receives file_path)
- * @param onUploadError - Optional callback when upload fails
- * @param disabled - Disable upload while form is submitting
- * @param value - Current file path (for React Hook Form controlled component)
- * @param onChange - Callback when file path changes (for React Hook Form)
+ * The guest's payment screenshot field. Choosing (or dropping) a file validates it, compresses
+ * images, and uploads it straight away to a signed storage URL; `onChange` receives the stored path.
  */
 export function PaymentProofUpload({
   bookingReference,
@@ -48,343 +95,227 @@ export function PaymentProofUpload({
   disabled,
   value,
   onChange,
+  onUploadingChange,
 }: PaymentProofUploadProps) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadedFilePath, setUploadedFilePath] = useState<string | null>(value || null);
-  const [isValidating, setIsValidating] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [status, setStatus] = useState<UploadStatus>(value ? "uploaded" : "empty");
+  const [file, setFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [error, setError] = useState<FileValidationError | null>(null);
-  const [compressionInfo, setCompressionInfo] = useState<{
-    originalSize: number;
-    compressedSize: number;
-    ratio: number;
-  } | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [compressionInfo, setCompressionInfo] = useState<CompressionInfo | null>(null);
+  const isBusy = status === "validating" || status === "uploading";
 
-  // Handle file selection (click or drag-and-drop)
-  const handleFileSelect = useCallback(async (file: File) => {
-    setError(null);
-    setIsValidating(true);
-    setCompressionInfo(null);
+  const upload = async (fileToUpload: File) => {
+    setStatus("uploading");
+    setUploadProgress(0);
+    setErrorMessage(null);
 
     try {
-      // 1. Validate file (type, size, magic number)
-      const validationError = await validateFile(file);
+      const { uploadUrl, filePath } = await requestUploadUrl(bookingReference, fileToUpload);
+      await putFile(uploadUrl, fileToUpload, setUploadProgress);
+      setStatus("uploaded");
+      onUploadComplete?.(filePath);
+      onChange?.(filePath);
+    } catch (err) {
+      console.error("[UPLOAD] Upload error:", err);
+      const message = err instanceof Error ? err.message : "Upload failed";
+      setStatus("failed");
+      setErrorMessage(message);
+      onUploadError?.(message);
+    }
+  };
+
+  const handleFileSelect = async (chosenFile: File) => {
+    setStatus("validating");
+    setErrorMessage(null);
+    setCompressionInfo(null);
+    onUploadingChange?.(true);
+
+    try {
+      const validationError = await validateFile(chosenFile);
       if (validationError) {
-        setError(validationError);
-        setIsValidating(false);
+        setStatus(value ? "uploaded" : "empty");
+        setErrorMessage(validationError.message);
         return;
       }
 
-      // 2. Compress image if needed
-      const result = await compressImage(file);
-
-      if (result.wasCompressed) {
+      const compressed = await compressImage(chosenFile);
+      if (compressed.wasCompressed) {
         setCompressionInfo({
-          originalSize: result.originalSize,
-          compressedSize: result.compressedSize,
-          ratio: result.compressionRatio,
+          originalSize: compressed.originalSize,
+          ratio: compressed.compressionRatio,
         });
       }
 
-      // 3. Set file for upload
-      setSelectedFile(result.file);
-      setError(null);
+      setFile(compressed.file);
+      await upload(compressed.file);
     } catch (err) {
       console.error("[UPLOAD] File validation error:", err);
-      setError({
-        type: "VALIDATION_FAILED",
-        message: "Failed to validate file. Please try again.",
-        severity: "error",
-      });
+      setStatus("empty");
+      setErrorMessage("Failed to check the file. Please choose it again.");
     } finally {
-      setIsValidating(false);
-    }
-  }, []);
-
-  // Handle file input change
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      void handleFileSelect(file);
+      onUploadingChange?.(false);
     }
   };
 
-  // Handle drag-and-drop
-  const handleDrop = useCallback(
-    (event: React.DragEvent<HTMLDivElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const file = event.dataTransfer.files?.[0];
-      if (file && !disabled) {
-        void handleFileSelect(file);
-      }
-    },
-    [disabled, handleFileSelect]
-  );
-
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-  };
-
-  // Upload file to Supabase Storage
-  const handleUpload = async () => {
-    if (!selectedFile) return;
-
-    setIsUploading(true);
-    setUploadProgress(0);
-    setError(null);
-
+  const handleRetry = async () => {
+    if (!file) return;
+    onUploadingChange?.(true);
     try {
-      // Step 1: Get signed upload URL from API
-      const urlResponse = await fetch("/api/guest-booking/upload-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          booking_reference: bookingReference,
-          file_name: selectedFile.name,
-          file_type: selectedFile.type,
-          file_size: selectedFile.size,
-        }),
-      });
-
-      if (!urlResponse.ok) {
-        throw new Error("Failed to get upload URL");
-      }
-
-      const urlData = (await urlResponse.json()) as {
-        success: boolean;
-        upload_url?: string;
-        file_path?: string;
-        error?: string;
-      };
-
-      if (!urlData.success) {
-        throw new Error(urlData.error || "Upload URL generation failed");
-      }
-
-      const { upload_url, file_path } = urlData;
-
-      if (!upload_url || !file_path) {
-        throw new Error("Invalid response from upload URL endpoint");
-      }
-
-      // Step 2: Upload file to signed URL using XMLHttpRequest (for progress tracking)
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-
-        // Track upload progress
-        xhr.upload.addEventListener("progress", (event) => {
-          if (event.lengthComputable) {
-            const percentage = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress(percentage);
-          }
-        });
-
-        xhr.addEventListener("load", () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
-          } else {
-            reject(new Error(`Upload failed with status ${xhr.status}`));
-          }
-        });
-
-        xhr.addEventListener("error", () => {
-          reject(new Error("Upload failed"));
-        });
-
-        xhr.addEventListener("abort", () => {
-          reject(new Error("Upload cancelled"));
-        });
-
-        xhr.open("PUT", upload_url);
-        xhr.setRequestHeader("Content-Type", selectedFile.type);
-        xhr.send(selectedFile);
-      });
-
-      // Step 3: Success - store file path
-      setUploadedFilePath(file_path);
-      onUploadComplete?.(file_path);
-      onChange?.(file_path); // Notify React Hook Form
-    } catch (err) {
-      console.error("[UPLOAD] Upload error:", err);
-      const errorMessage = err instanceof Error ? err.message : "Upload failed";
-      setError({
-        type: "VALIDATION_FAILED",
-        message: errorMessage,
-        severity: "error",
-      });
-      onUploadError?.(errorMessage);
+      await upload(file);
     } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
+      onUploadingChange?.(false);
     }
   };
 
-  // Remove selected file
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const chosenFile = event.target.files?.[0];
+    event.target.value = "";
+    if (chosenFile) {
+      void handleFileSelect(chosenFile);
+    }
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const droppedFile = event.dataTransfer.files?.[0];
+    if (droppedFile && !disabled && !isBusy) {
+      void handleFileSelect(droppedFile);
+    }
+  };
+
   const handleRemove = () => {
-    setSelectedFile(null);
-    setUploadedFilePath(null);
-    setError(null);
+    setStatus("empty");
+    setFile(null);
+    setErrorMessage(null);
     setCompressionInfo(null);
-    onChange?.(null); // Notify React Hook Form of removal
+    onChange?.(null);
   };
 
-  // Render uploaded file preview
-  const renderPreview = () => {
-    if (!uploadedFilePath) return null;
+  const openFilePicker = () => fileInputRef.current?.click();
 
-    const isImage = selectedFile?.type.startsWith("image/");
+  const FileIcon = file?.type === "application/pdf" ? FileText : FileImage;
 
-    return (
-      <Card className="mt-4">
-        <CardContent className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            {isImage ? (
-              <FileImage className="h-8 w-8 text-green-600" />
-            ) : (
-              <FileText className="h-8 w-8 text-green-600" />
-            )}
-            <div>
-              <p className="text-sm font-medium">{selectedFile?.name}</p>
-              <p className="text-muted-foreground text-xs">
-                {formatFileSize(selectedFile?.size || 0)}
-                {compressionInfo && (
-                  <span className="ml-2 text-green-600">
-                    (Compressed by {compressionInfo.ratio.toFixed(0)}%)
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-600" />
-            <Button variant="ghost" size="icon" onClick={handleRemove} disabled={disabled}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
+  const fileDetails = (
+    <div className="flex min-w-0 items-center gap-3">
+      <FileIcon className="text-muted-foreground size-8 shrink-0" aria-hidden="true" />
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium">{file?.name ?? "Payment screenshot"}</p>
+        {file && (
+          <p className="text-muted-foreground text-xs tabular-nums">
+            {formatFileSize(file.size)}
+            {compressionInfo &&
+              ` · compressed by ${compressionInfo.ratio.toFixed(0)}% from ${formatFileSize(compressionInfo.originalSize)}`}
+          </p>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-4">
-      {/* Error Display */}
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Upload Error</AlertTitle>
-          <AlertDescription>{error.message}</AlertDescription>
-        </Alert>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,application/pdf"
+        aria-label="Payment screenshot file"
+        onChange={handleInputChange}
+        className="hidden"
+        disabled={disabled || isBusy}
+      />
+
+      {errorMessage && status !== "failed" && (
+        <Callout tone="danger" title="Screenshot not accepted">
+          {errorMessage}
+        </Callout>
       )}
 
-      {/* File uploaded - show preview */}
-      {uploadedFilePath ? (
-        renderPreview()
-      ) : (
-        <>
-          {/* Drag-and-Drop Zone */}
-          <div
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            className={`rounded-lg border-2 border-dashed p-8 text-center transition-colors ${disabled ? "cursor-not-allowed opacity-50" : "hover:border-primary cursor-pointer"} ${selectedFile ? "border-green-500 bg-green-50" : "border-gray-300"} `}
-          >
-            {isValidating ? (
-              <div className="flex flex-col items-center gap-2">
-                <Loader2 className="text-primary h-8 w-8 animate-spin" />
-                <p className="text-muted-foreground text-sm">Validating file...</p>
-              </div>
-            ) : selectedFile ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-center gap-2">
-                  {selectedFile.type.startsWith("image/") ? (
-                    <FileImage className="h-8 w-8 text-green-600" />
-                  ) : (
-                    <FileText className="h-8 w-8 text-green-600" />
-                  )}
-                  <div className="text-left">
-                    <p className="text-sm font-medium">{selectedFile.name}</p>
-                    <p className="text-muted-foreground text-xs">
-                      {formatFileSize(selectedFile.size)}
-                      {compressionInfo && (
-                        <span className="ml-2 text-green-600">
-                          Compressed from {formatFileSize(compressionInfo.originalSize)}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                {compressionInfo && (
-                  <Alert>
-                    <AlertDescription className="text-xs">
-                      Image compressed by {compressionInfo.ratio.toFixed(0)}% for faster upload
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="flex gap-2">
-                  <Button onClick={handleUpload} disabled={isUploading || disabled}>
-                    {isUploading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Uploading... {uploadProgress}%
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleRemove}
-                    disabled={isUploading || disabled}
-                  >
-                    <X className="mr-2 h-4 w-4" />
-                    Remove
-                  </Button>
-                </div>
-
-                {isUploading && <Progress value={uploadProgress} className="w-full" />}
-              </div>
-            ) : (
-              <label htmlFor="file-input" className="cursor-pointer">
-                <Upload className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-                <p className="mb-2 text-sm font-medium">
-                  Drop payment proof here or click to browse
-                  {import.meta.env.PROD && <span className="ml-1 text-red-500">*</span>}
-                </p>
-                <p className="text-muted-foreground text-xs">JPEG, PNG, or PDF (max 5MB)</p>
-                <input
-                  id="file-input"
-                  type="file"
-                  accept="image/jpeg,image/png,application/pdf"
-                  onChange={handleInputChange}
-                  className="hidden"
-                  disabled={disabled}
-                />
-              </label>
-            )}
-          </div>
-
-          {/* Info Alert */}
-          {!selectedFile && !error && (
-            <Alert>
-              <AlertDescription className="text-xs">
-                Upload a screenshot or photo of your payment (bank transfer, GCash, etc.).
-                {import.meta.env.DEV
-                  ? " Optional in development mode."
-                  : " Required for booking confirmation."}{" "}
-                Images are automatically compressed for faster upload.
-              </AlertDescription>
-            </Alert>
+      {status === "empty" && (
+        <div
+          onDrop={handleDrop}
+          onDragOver={(event) => event.preventDefault()}
+          className={cn(
+            "border-input bg-card rounded-lg border-2 border-dashed p-6 text-center",
+            disabled && "opacity-50"
           )}
-        </>
+        >
+          <Upload className="text-muted-foreground mx-auto mb-3 size-10" aria-hidden="true" />
+          <p className="mb-1 text-sm font-medium">Drop your payment screenshot here</p>
+          <p className="text-muted-foreground mb-4 text-xs">JPEG, PNG or PDF, up to 5MB</p>
+          <Button type="button" variant="outline" onClick={openFilePicker} disabled={disabled}>
+            <Upload aria-hidden="true" />
+            Choose screenshot
+          </Button>
+        </div>
+      )}
+
+      {status === "validating" && (
+        <div className="bg-card flex items-center gap-3 rounded-lg border p-4" role="status">
+          <Loader2 className="text-primary size-5 animate-spin" aria-hidden="true" />
+          <p className="text-muted-foreground text-sm">Checking your screenshot…</p>
+        </div>
+      )}
+
+      {status === "uploading" && (
+        <div className="bg-card space-y-3 rounded-lg border p-4">
+          {fileDetails}
+          <div role="status" className="flex items-center gap-2 text-sm">
+            <Loader2 className="text-primary size-4 animate-spin" aria-hidden="true" />
+            <span className="tabular-nums">Uploading… {uploadProgress}%</span>
+          </div>
+          <Progress value={uploadProgress} aria-label="Upload progress" className="h-2" />
+        </div>
+      )}
+
+      {status === "uploaded" && (
+        <div className="bg-card space-y-3 rounded-lg border p-4">
+          <div className="flex items-center justify-between gap-3">
+            {fileDetails}
+            <span className="text-success-foreground flex shrink-0 items-center gap-1 text-sm font-medium">
+              <CheckCircle className="size-4" aria-hidden="true" />
+              Uploaded
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" onClick={openFilePicker} disabled={disabled}>
+              <RotateCcw aria-hidden="true" />
+              Replace
+            </Button>
+            <Button type="button" variant="outline" onClick={handleRemove} disabled={disabled}>
+              <X aria-hidden="true" />
+              Remove
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {status === "failed" && (
+        <div className="bg-card space-y-3 rounded-lg border p-4">
+          {fileDetails}
+          <Callout tone="danger" title="Upload failed">
+            {errorMessage}
+          </Callout>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={() => void handleRetry()} disabled={disabled}>
+              <RotateCcw aria-hidden="true" />
+              Try again
+            </Button>
+            <Button type="button" variant="outline" onClick={handleRemove} disabled={disabled}>
+              <X aria-hidden="true" />
+              Remove
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {status === "empty" && !errorMessage && (
+        <p className="text-muted-foreground text-xs">
+          Attach a screenshot of your GCash or bank transfer.
+          {import.meta.env.DEV
+            ? " Optional in development mode."
+            : " We need it to confirm your booking."}{" "}
+          Large images are compressed before upload.
+        </p>
       )}
     </div>
   );

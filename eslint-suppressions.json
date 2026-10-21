@@ -513,14 +513,6 @@
       "count": 6
     }
   },
-  "src/components/guest-booking/PaymentProofUpload.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 11
-    },
-    "design/no-restricted-imports": {
-      "count": 4
-    }
-  },
   "src/components/guest-booking/PaymentSummary.tsx": {
     "design/no-restricted-imports": {
       "count": 4
