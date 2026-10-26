@@ -4,6 +4,7 @@ import {
   ArrowLeftRight,
   Building2,
   Calendar,
+  CalendarOff,
   CreditCard,
   Download,
   FileText,
@@ -48,6 +49,7 @@ const destinations: AdminDestination[] = [
     pinned: true,
   },
   { label: "Cabins", icon: Building2, to: "/admin/units", requiredRole: AuditRole.MANAGER },
+  { label: "Blocked dates (proto)", icon: CalendarOff, to: "/admin/blocked-dates" },
   { label: "Expenses", icon: ReceiptText, to: "/admin/expenses", requiredRole: AuditRole.MANAGER },
   { label: "Accounts", icon: CreditCard, to: "/admin/accounts", requiredRole: AuditRole.MANAGER },
   {
