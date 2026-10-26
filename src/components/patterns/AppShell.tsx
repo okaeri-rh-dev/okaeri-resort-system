@@ -1,13 +1,14 @@
 import { useState, type ReactNode } from "react";
 
-import { Link } from "@tanstack/react-router";
-import { CircleUser, Menu, MoreHorizontal, type LucideIcon } from "lucide-react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { ChevronDown, CircleUser, Menu, MoreHorizontal, type LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -36,6 +37,38 @@ export interface ShellDestination {
   pinned?: boolean;
   /** Active on this path only, not on its child routes. */
   exact?: boolean;
+  /** PROTOTYPE: the `ShellGroup.id` this destination sits under; ungrouped items lead the nav. */
+  group?: string;
+  /** PROTOTYPE: search params, so two items can share one route. */
+  search?: Record<string, string>;
+}
+
+/** PROTOTYPE: a heading in the expanded rail and menu sheet, a flyout in the collapsed rail. */
+export interface ShellGroup {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  /** Closed by default unless it holds the current page. */
+  collapsible?: boolean;
+}
+
+interface NavSection {
+  group?: ShellGroup;
+  items: ShellDestination[];
+}
+
+/** Groups with no visible items drop out, so role filtering needs no extra rule. */
+function toSections(destinations: ShellDestination[], groups: ShellGroup[]): NavSection[] {
+  const sections: NavSection[] = [{ items: destinations.filter((d) => !d.group) }];
+  for (const group of groups) {
+    sections.push({ group, items: destinations.filter((d) => d.group === group.id) });
+  }
+  return sections.filter((section) => section.items.length > 0);
+}
+
+function isActive(destination: ShellDestination, pathname: string): boolean {
+  if (destination.exact) return pathname === destination.to;
+  return pathname === destination.to || pathname.startsWith(`${destination.to}/`);
 }
 
 export interface ShellAction {
@@ -56,6 +89,8 @@ export interface AppShellProps {
   brand: ShellBrand;
   /** The nav contents, already filtered to what the viewer may reach. */
   destinations: ShellDestination[];
+  /** PROTOTYPE: groups for `ShellDestination.group`. Omit for a flat nav. */
+  navGroups?: ShellGroup[];
   /** Account-level commands such as Sign Out (admin only), behind the account menu at every width. */
   actions?: ShellAction[];
   /** The light / dark / system setting. The shell places its controls for each nav form. */
@@ -187,7 +222,99 @@ function ItemLabel({
 
 /** Active on the destination's path, and on its child routes unless it is `exact`. */
 function matchOptions(destination: ShellDestination) {
-  return { exact: destination.exact ?? false };
+  return { exact: destination.exact ?? false, includeSearch: destination.search !== undefined };
+}
+
+function DestinationLink({
+  destination,
+  className,
+  children,
+}: {
+  destination: ShellDestination;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <Link
+      to={destination.to}
+      search={destination.search as never}
+      activeOptions={matchOptions(destination)}
+      className={className}
+    >
+      {children}
+    </Link>
+  );
+}
+
+const groupHeading =
+  "text-sidebar-foreground flex min-h-9 w-full items-center gap-2 px-3 pt-3 text-xs font-semibold opacity-70";
+
+function SectionBlock({
+  section,
+  pathname,
+  children,
+}: {
+  section: NavSection;
+  pathname: string;
+  children: ReactNode;
+}) {
+  const holdsActive = section.items.some((d) => isActive(d, pathname));
+  const [open, setOpen] = useState(!section.group?.collapsible || holdsActive);
+  if (!section.group) return <ul className="space-y-1">{children}</ul>;
+
+  return (
+    <div>
+      {section.group.collapsible ? (
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => setOpen(!open)}
+          className={cn(groupHeading, "hover:opacity-100")}
+        >
+          <span className="flex-1 text-left">{section.group.label}</span>
+          <ChevronDown
+            className={cn("size-4 transition-transform", !open && "-rotate-90")}
+            aria-hidden="true"
+          />
+        </button>
+      ) : (
+        <p className={groupHeading}>{section.group.label}</p>
+      )}
+      {open && <ul className="mt-1 space-y-1">{children}</ul>}
+    </div>
+  );
+}
+
+/** The collapsed rail: one icon per group, opening its items to the right. */
+function RailFlyout({
+  group,
+  section,
+  pathname,
+}: {
+  group: ShellGroup;
+  section: NavSection;
+  pathname: string;
+}) {
+  const holdsActive = section.items.some((d) => isActive(d, pathname));
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className={railItem} data-status={holdsActive ? "active" : undefined}>
+          <ItemLabel form="rail" icon={group.icon} label={group.label} />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="right" align="start">
+        <DropdownMenuLabel>{group.label}</DropdownMenuLabel>
+        {section.items.map((destination) => (
+          <DropdownMenuItem key={destination.label} asChild>
+            <DestinationLink destination={destination}>
+              <ItemLabel form="dropdown" icon={destination.icon} label={destination.label} />
+            </DestinationLink>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 /** Account-level actions behind one trigger: the compact header and the rail foot. */
@@ -219,10 +346,32 @@ function AccountMenu({ actions, form }: { actions: ShellAction[]; form: "header"
 function SheetDestinations({
   destinations,
   linkClassName,
+  navGroups,
 }: {
   destinations: ShellDestination[];
   linkClassName: string;
+  navGroups?: ShellGroup[];
 }) {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  if (navGroups) {
+    return (
+      <div className="space-y-2">
+        {toSections(destinations, navGroups).map((section) => (
+          <SectionBlock key={section.group?.id ?? "top"} section={section} pathname={pathname}>
+            {section.items.map((destination) => (
+              <li key={destination.label}>
+                <SheetClose asChild>
+                  <DestinationLink destination={destination} className={linkClassName}>
+                    <ItemLabel form="sheet" icon={destination.icon} label={destination.label} />
+                  </DestinationLink>
+                </SheetClose>
+              </li>
+            ))}
+          </SectionBlock>
+        ))}
+      </div>
+    );
+  }
   return (
     <ul className="space-y-1">
       {destinations.map((destination) => (
@@ -256,6 +405,7 @@ const adminSheetLink = cn(
 function AdminShell({
   brand,
   destinations,
+  navGroups,
   actions = [],
   theme,
   navLoading,
@@ -266,6 +416,7 @@ function AdminShell({
   const needsMore = destinations.length > BAR_SLOTS;
   const inBar = (destination: ShellDestination) => !needsMore || destination.pinned;
   const hasFooter = actions.length > 0 || theme !== undefined;
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
     <div className="bg-background medium:flex-row flex h-dvh flex-col">
@@ -319,6 +470,67 @@ function AdminShell({
                 <Skeleton key={index} className="bg-sidebar-accent medium:flex-none h-12 flex-1" />
               ))}
             </div>
+          ) : navGroups ? (
+            <>
+              <ul className="medium:hidden flex gap-1 px-2 py-1">
+                {destinations.filter(inBar).map((destination) => (
+                  <li key={destination.label} className="min-w-0 flex-1">
+                    <DestinationLink destination={destination} className={railItem}>
+                      <ItemLabel form="rail" icon={destination.icon} label={destination.label} />
+                    </DestinationLink>
+                  </li>
+                ))}
+                {needsMore && (
+                  <li className="min-w-0 flex-1">
+                    <button type="button" onClick={() => setMenuOpen(true)} className={railItem}>
+                      <ItemLabel form="rail" icon={MoreHorizontal} label="More" />
+                    </button>
+                  </li>
+                )}
+              </ul>
+              <ul className="max-medium:hidden large:hidden flex flex-1 flex-col gap-1 px-2 py-3">
+                {toSections(destinations, navGroups).map((section) =>
+                  section.group ? (
+                    <li key={section.group.id}>
+                      <RailFlyout group={section.group} section={section} pathname={pathname} />
+                    </li>
+                  ) : (
+                    section.items.map((destination) => (
+                      <li key={destination.label}>
+                        <DestinationLink destination={destination} className={railItem}>
+                          <ItemLabel
+                            form="rail"
+                            icon={destination.icon}
+                            label={destination.label}
+                          />
+                        </DestinationLink>
+                      </li>
+                    ))
+                  )
+                )}
+              </ul>
+              <div className="large:flex hidden flex-1 flex-col gap-2 px-4 py-3">
+                {toSections(destinations, navGroups).map((section) => (
+                  <SectionBlock
+                    key={section.group?.id ?? "top"}
+                    section={section}
+                    pathname={pathname}
+                  >
+                    {section.items.map((destination) => (
+                      <li key={destination.label}>
+                        <DestinationLink destination={destination} className={railItem}>
+                          <ItemLabel
+                            form="rail"
+                            icon={destination.icon}
+                            label={destination.label}
+                          />
+                        </DestinationLink>
+                      </li>
+                    ))}
+                  </SectionBlock>
+                ))}
+              </div>
+            </>
           ) : (
             <ul className="medium:flex-1 medium:flex-col medium:py-3 large:px-4 flex gap-1 px-2 py-1">
               {destinations.map((destination) => (
@@ -382,7 +594,11 @@ function AdminShell({
             </SheetDescription>
           </div>
           <nav aria-label="Menu" className="min-h-0 flex-1 overflow-y-auto p-4">
-            <SheetDestinations destinations={destinations} linkClassName={adminSheetLink} />
+            <SheetDestinations
+              destinations={destinations}
+              linkClassName={adminSheetLink}
+              navGroups={navGroups}
+            />
           </nav>
           {theme && (
             <div className="border-sidebar-border shrink-0 border-t p-4">

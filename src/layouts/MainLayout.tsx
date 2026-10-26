@@ -20,6 +20,8 @@ import {
 
 import { AppShell, type ShellAction, type ShellDestination } from "@/components/patterns";
 import { InstallBanner } from "@/components/pwa/InstallBanner";
+import { PrototypeSwitcher } from "@/layouts/prototype/PrototypeSwitcher";
+import { useProtoMenu } from "@/layouts/prototype/use-proto-menu";
 import { AuditRole, clearRoleCache } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
 import { hasRoleLevel } from "@/lib/route-guards";
@@ -111,9 +113,14 @@ export function MainLayout({ children }: MainLayoutProps) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const protoMenu = useProtoMenu();
+  const menuRole = protoMenu.previewRole ?? userRole;
   const visibleDestinations = useMemo(
-    () => destinations.filter((destination) => canSee(destination, userRole)),
-    [userRole]
+    () =>
+      import.meta.env.PROD
+        ? destinations.filter((destination) => canSee(destination, userRole))
+        : protoMenu.variant.destinations.filter((destination) => canSee(destination, menuRole)),
+    [userRole, menuRole, protoMenu.variant]
   );
 
   const handleSignOut = async () => {
@@ -137,12 +144,14 @@ export function MainLayout({ children }: MainLayoutProps) {
       surface="admin"
       brand={{ name: "Okaeri Resort", tagline: "Management System", to: "/admin/dashboard" }}
       destinations={visibleDestinations}
+      navGroups={import.meta.env.PROD ? undefined : protoMenu.variant.groups}
       navLoading={roleLoading}
       actions={actions}
       theme={{ value: theme, onChange: setTheme }}
       banner={<InstallBanner />}
     >
       {children}
+      <PrototypeSwitcher state={protoMenu.state} setState={protoMenu.setState} />
     </AppShell>
   );
 }
