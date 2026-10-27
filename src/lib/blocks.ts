@@ -1,21 +1,24 @@
 import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
 
-const shortDate = (night: string) => format(parseISO(night), "EEE d MMM");
+const SHORT_NIGHT = "EEE d MMM";
+
+/** "Thu 29 Oct" for a yyyy-MM-dd night. */
+export const shortNight = (night: string) => format(parseISO(night), SHORT_NIGHT);
 
 /** "Thu 29 Oct – Fri 6 Nov · 9 nights" for an inclusive range of nights. */
 export function blockNightsLabel(firstNight: string, lastNight: string): string {
   const count = differenceInCalendarDays(parseISO(lastNight), parseISO(firstNight)) + 1;
   const range =
     firstNight === lastNight
-      ? shortDate(firstNight)
-      : `${shortDate(firstNight)} – ${shortDate(lastNight)}`;
+      ? shortNight(firstNight)
+      : `${shortNight(firstNight)} – ${shortNight(lastNight)}`;
   return `${range} · ${count} ${count === 1 ? "night" : "nights"}`;
 }
 
 /** The form's summary of what a block leaves open on either side. */
 export function describeBlockNights(firstNight: string, lastNight: string): string {
-  const nextCheckIn = shortDate(format(addDays(parseISO(lastNight), 1), "yyyy-MM-dd"));
-  return `${blockNightsLabel(firstNight, lastNight)}. Guests can still check out on ${shortDate(firstNight)}. The next check-in is ${nextCheckIn}.`;
+  const nextCheckIn = format(addDays(parseISO(lastNight), 1), SHORT_NIGHT);
+  return `${blockNightsLabel(firstNight, lastNight)}. Guests can still check out on ${shortNight(firstNight)}. The next check-in is ${nextCheckIn}.`;
 }
 
 export type BlockPhase = "upcoming" | "running" | "over";

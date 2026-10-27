@@ -74,8 +74,8 @@ export function useCreateBlocks() {
   const afterBlockChange = useAfterBlockChange();
 
   return useMutation({
-    mutationFn: async ({ unitIds, ...block }: NewBlockInput): Promise<Block[]> => {
-      const { data, error } = await db.blackouts.create({ unitIds, ...block });
+    mutationFn: async (input: NewBlockInput): Promise<Block[]> => {
+      const { data, error } = await db.blackouts.create(input);
       if (error) throw error;
       return data;
     },

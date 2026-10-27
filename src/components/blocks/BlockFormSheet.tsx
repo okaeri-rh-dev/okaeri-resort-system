@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, parseISO } from "date-fns";
 import { Loader2 } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, type FieldErrors } from "react-hook-form";
 import { z } from "zod";
 
 import {
@@ -28,7 +28,6 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  StatusBadge,
   Textarea,
 } from "@/components/patterns";
 import {
@@ -43,10 +42,12 @@ import {
   blockNightsLabel,
   blockPhase,
   describeBlockNights,
+  shortNight,
   type BlockFormMode,
 } from "@/lib/blocks";
-import { toManilaDateString } from "@/lib/timezone";
 import type { Tables } from "@/types/database.types";
+
+import { WholeResortBadge } from "./BlockList";
 
 type Unit = Pick<Tables<"units">, "unit_id" | "unit_name">;
 
@@ -56,21 +57,22 @@ export type BlockFormTarget = { block: Block } | { wholeResort: boolean };
 interface BlockFormSheetProps {
   target: BlockFormTarget | null;
   units: Unit[];
+  cabinName: (unitId: string) => string;
+  /** The Manila date (yyyy-MM-dd) */
+  today: string;
   canManage: boolean;
   onClose: () => void;
 }
 
-export function BlockFormSheet({ target, units, canManage, onClose }: BlockFormSheetProps) {
+export function BlockFormSheet({ target, ...props }: BlockFormSheetProps) {
   return (
-    <Sheet open={target !== null} onOpenChange={(open) => !open && onClose()}>
+    <Sheet open={target !== null} onOpenChange={(open) => !open && props.onClose()}>
       <SheetContent className="medium:max-w-md flex w-full flex-col gap-0 overflow-y-auto p-0">
         {target && (
           <BlockFormBody
             key={"block" in target ? target.block.blackout_id : String(target.wholeResort)}
             target={target}
-            units={units}
-            canManage={canManage}
-            onClose={onClose}
+            {...props}
           />
         )}
       </SheetContent>
@@ -102,6 +104,14 @@ const blockFormSchema = z
 
 type BlockFormValues = z.infer<typeof blockFormSchema>;
 
+// The date pickers and the cabin checkboxes take no ref, so submit focuses the first error by hand.
+const errorFocusTargets: Array<[keyof BlockFormValues, string]> = [
+  ["unitIds", "#block-whole-resort"],
+  ["firstNight", '[aria-label="First blocked night"]'],
+  ["lastNight", '[aria-label="Last blocked night"]'],
+  ["reason", "textarea"],
+];
+
 const titles: Record<BlockFormMode, string> = {
   create: "Block dates",
   edit: "Edit block",
@@ -112,12 +122,15 @@ const titles: Record<BlockFormMode, string> = {
 function BlockFormBody({
   target,
   units,
+  cabinName,
+  today,
   canManage,
   onClose,
-}: Omit<BlockFormSheetProps, "target"> & { target: BlockFormTarget }) {
+}: BlockFormSheetProps & { target: BlockFormTarget }) {
   const block = "block" in target ? target.block : undefined;
-  const today = toManilaDateString(new Date());
   const mode = blockFormMode(block, today, canManage);
+  const isOver = block !== undefined && blockPhase(block, today) === "over";
+  const formRef = useRef<HTMLFormElement>(null);
 
   const createBlocks = useCreateBlocks();
   const updateBlock = useUpdateBlock();
@@ -127,6 +140,7 @@ function BlockFormBody({
 
   const form = useForm<BlockFormValues>({
     resolver: zodResolver(blockFormSchema),
+    shouldFocusError: false,
     defaultValues: {
       wholeResort: block ? block.unit_id === null : "wholeResort" in target && target.wholeResort,
       unitIds: block?.unit_id ? [block.unit_id] : [],
@@ -140,10 +154,6 @@ function BlockFormBody({
   const firstNight = form.watch("firstNight");
   const lastNight = form.watch("lastNight");
   const datesChosen = firstNight && lastNight && lastNight >= firstNight;
-  const cabinName = (unitId: string | null) =>
-    unitId === null
-      ? "Whole resort"
-      : (units.find((unit) => unit.unit_id === unitId)?.unit_name ?? "Cabin");
 
   // New nights start today at the earliest; the database already locks past and running nights.
   const isBeforeToday = (date: Date) => toNight(date) < today;
@@ -192,13 +202,24 @@ function BlockFormBody({
     }
   };
 
+  const focusFirstError = (errors: FieldErrors<BlockFormValues>) => {
+    const selector = errorFocusTargets.find(([name]) => errors[name])?.[1];
+    if (selector) formRef.current?.querySelector<HTMLElement>(selector)?.focus();
+  };
+
   const isSaving = createBlocks.isPending || updateBlock.isPending;
+  const isBusy = isSaving || deleteBlock.isPending;
   const title = mode === "create" && wholeResort ? "Close the resort" : titles[mode];
   const saveLabel = block ? "Save changes" : wholeResort ? "Close the resort" : "Block dates";
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-1 flex-col" noValidate>
+      <form
+        ref={formRef}
+        onSubmit={form.handleSubmit(onSubmit, focusFirstError)}
+        className="flex flex-1 flex-col"
+        noValidate
+      >
         <SheetHeader className="border-b p-4">
           <SheetTitle>{title}</SheetTitle>
           <SheetDescription>
@@ -207,10 +228,8 @@ function BlockFormBody({
         </SheetHeader>
 
         <div className="flex-1 space-y-4 p-4">
-          {block && blockPhase(block, today) === "over" && (
-            <Callout tone="neutral">This block is over. It can't be changed.</Callout>
-          )}
-          {mode === "read-only" && !canManage && (
+          {isOver && <Callout tone="neutral">This block is over. It can't be changed.</Callout>}
+          {!isOver && !canManage && (
             <Callout tone="neutral">Ask a manager to change blocked dates.</Callout>
           )}
           {mode === "last-night-only" && (
@@ -225,11 +244,7 @@ function BlockFormBody({
             <div className="space-y-1">
               <p className="text-sm font-medium">Cabin</p>
               <p className="text-sm">
-                {block?.unit_id === null ? (
-                  <StatusBadge tone="danger">Whole resort</StatusBadge>
-                ) : (
-                  cabinName(block?.unit_id ?? null)
-                )}
+                {block?.unit_id ? cabinName(block.unit_id) : <WholeResortBadge />}
               </p>
               {mode !== "read-only" && (
                 <p className="text-muted-foreground text-xs">
@@ -252,9 +267,7 @@ function BlockFormBody({
                 {mode === "last-night-only" && block ? (
                   <div className="space-y-2">
                     <p className="text-sm font-medium">First blocked night</p>
-                    <p className="py-2 text-sm tabular-nums">
-                      {format(parseISO(block.start_date), "EEE d MMM")}
-                    </p>
+                    <p className="py-2 text-sm tabular-nums">{shortNight(block.start_date)}</p>
                   </div>
                 ) : (
                   <FormField control={form.control} name="firstNight" label="First blocked night">
@@ -322,15 +335,18 @@ function BlockFormBody({
                 variant="outline"
                 className="medium:mr-auto"
                 onClick={() => setConfirmDelete(true)}
-                disabled={isSaving}
+                disabled={isBusy}
               >
+                {deleteBlock.isPending && (
+                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                )}
                 Delete block
               </Button>
             )}
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isBusy}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSaving}>
+            <Button type="submit" disabled={isBusy}>
               {isSaving && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
               {saveLabel}
             </Button>
@@ -344,7 +360,7 @@ function BlockFormBody({
             <AlertDialogTitle>Delete this block?</AlertDialogTitle>
             <AlertDialogDescription>
               {block &&
-                `${cabinName(block.unit_id)}, ${blockNightsLabel(block.start_date, block.end_date)}. `}
+                `${block.unit_id ? cabinName(block.unit_id) : "Whole resort"}, ${blockNightsLabel(block.start_date, block.end_date)}. `}
               Guests can book these nights again.
             </AlertDialogDescription>
           </AlertDialogHeader>

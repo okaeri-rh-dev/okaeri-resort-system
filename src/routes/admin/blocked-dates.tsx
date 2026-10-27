@@ -14,6 +14,8 @@ import { requireStaff } from "@/lib/route-guards";
 import { toManilaDateString } from "@/lib/timezone";
 import { allUnitsQuery } from "@/stores/useUnitStore";
 
+const NEW_BLOCK_SHEETS = ["new", "closure"];
+
 const blockedDatesSearchSchema = z.object({
   past: z.boolean().optional(),
   /** The open sheet: "new", "closure" or a block id */
@@ -33,7 +35,16 @@ function BlockedDatesPage() {
   const navigate = useNavigate({ from: Route.fullPath });
   const showPast = search.past === true;
   const { isManager, isLoading: isLoadingRole } = useUserRole();
-  const { data: blocks = [], isLoading, error, refetch } = useBlocks({ includePast: showPast });
+  const opensBlock = search.sheet !== undefined && !NEW_BLOCK_SHEETS.includes(search.sheet);
+  // A link to a past block must find it even while the past list is folded
+  const {
+    data: blocks = [],
+    isLoading,
+    error,
+    refetch,
+  } = useBlocks({
+    includePast: showPast || opensBlock,
+  });
   const { data: units = [] } = useQuery(allUnitsQuery());
 
   const today = toManilaDateString(new Date());
@@ -50,7 +61,7 @@ function BlockedDatesPage() {
   const current = blocks
     .filter((block) => blockPhase(block, today) !== "over")
     .sort((a, b) => byNights(a, b) || cabinOrder(a) - cabinOrder(b));
-  const past = blocks
+  const past = (showPast ? blocks : [])
     .filter((block) => blockPhase(block, today) === "over")
     .sort((a, b) => byNights(b, a) || cabinOrder(a) - cabinOrder(b));
 
@@ -58,15 +69,12 @@ function BlockedDatesPage() {
     void navigate({ search: (prev) => ({ ...prev, ...next }), replace: true });
   const openSheet = (sheet: string) => setSearch({ sheet });
 
-  const sheetBlock = blocks.find((block) => block.blackout_id === search.sheet);
-  const target: BlockFormTarget | null =
-    search.sheet === "new" && isManager
-      ? { wholeResort: false }
-      : search.sheet === "closure" && isManager
-        ? { wholeResort: true }
-        : sheetBlock
-          ? { block: sheetBlock }
-          : null;
+  const sheetTarget = (): BlockFormTarget | null => {
+    if (search.sheet === "new") return isManager ? { wholeResort: false } : null;
+    if (search.sheet === "closure") return isManager ? { wholeResort: true } : null;
+    const block = blocks.find(({ blackout_id }) => blackout_id === search.sheet);
+    return block ? { block } : null;
+  };
 
   const actions =
     !isLoadingRole && isManager ? (
@@ -138,8 +146,10 @@ function BlockedDatesPage() {
       </div>
 
       <BlockFormSheet
-        target={target}
+        target={sheetTarget()}
         units={sortedUnits}
+        cabinName={cabinName}
+        today={today}
         canManage={isManager}
         onClose={() => setSearch({ sheet: undefined })}
       />

@@ -32,11 +32,7 @@ export function BlockList({ blocks, today, cabinName, onOpen, empty }: BlockList
               {blockNightsLabel(block.start_date, block.end_date)}
             </span>
             <span className="medium:w-32 min-w-0 truncate">
-              {block.unit_id === null ? (
-                <StatusBadge tone="danger">Whole resort</StatusBadge>
-              ) : (
-                cabinName(block.unit_id)
-              )}
+              {block.unit_id === null ? <WholeResortBadge /> : cabinName(block.unit_id)}
             </span>
             <span className="text-muted-foreground min-w-0 flex-1 truncate">{block.reason}</span>
             {phaseBadges[blockPhase(block, today)]}
@@ -45,4 +41,8 @@ export function BlockList({ blocks, today, cabinName, onOpen, empty }: BlockList
       ))}
     </ul>
   );
+}
+
+export function WholeResortBadge() {
+  return <StatusBadge tone="danger">Whole resort</StatusBadge>;
 }
