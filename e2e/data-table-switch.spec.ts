@@ -18,12 +18,15 @@ async function openBookings(page: Page) {
   await expect(page.getByText(E2E_REF.PENDING)).toBeVisible();
 }
 
+// The menu's "Bookings" group is also a list named "Bookings", so look only in the page.
+const bookingCards = (page: Page) => page.getByRole("main").getByRole("list", { name: "Bookings" });
+
 test.describe("DataTable switch on the bookings list", () => {
   test("compact window shows booking cards and no table", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openBookings(page);
 
-    const cards = page.getByRole("list", { name: "Bookings" });
+    const cards = bookingCards(page);
     await expect(cards).toBeVisible();
     await expect(
       cards.getByRole("button", { name: `View booking ${E2E_REF.PENDING}` })
@@ -42,7 +45,7 @@ test.describe("DataTable switch on the bookings list", () => {
 
     const table = page.getByRole("table", { name: "Bookings" });
     await expect(table).toBeVisible();
-    await expect(page.getByRole("list", { name: "Bookings" })).toHaveCount(0);
+    await expect(bookingCards(page)).toHaveCount(0);
 
     const headerRow = table.getByRole("row").first();
     expect((await headerRow.boundingBox())?.height).toBe(40);
@@ -75,7 +78,7 @@ test.describe("DataTable switch on the bookings list", () => {
     await expect(page.getByRole("table", { name: "Bookings" })).toBeVisible();
 
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(page.getByRole("list", { name: "Bookings" })).toBeVisible();
+    await expect(bookingCards(page)).toBeVisible();
     await expect(page.getByRole("table")).toHaveCount(0);
   });
 });
