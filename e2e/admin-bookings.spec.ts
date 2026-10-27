@@ -317,7 +317,12 @@ test.describe("Unit Assignment", () => {
 
     // Should either show unit assignment form or redirect/error
     // depending on booking status
-    await expect(page.getByText(/assign|units|cabin|error|not found/i).first()).toBeVisible();
+    await expect(
+      page
+        .getByRole("main")
+        .getByText(/assign|units|cabin|error|not found/i)
+        .first()
+    ).toBeVisible();
   });
 });
 

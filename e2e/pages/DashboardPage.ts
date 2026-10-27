@@ -199,6 +199,10 @@ export class DashboardPage {
    * Perform logout
    */
   async logout() {
+    // The rail grows when the role-filtered nav replaces its placeholder, moving the account menu
+    await expect(
+      this.page.getByRole("navigation", { name: "Main" }).getByRole("link").first()
+    ).toBeVisible();
     await this.accountMenuButton.click();
     await this.page.getByRole("menuitem", { name: "Sign Out" }).click();
     await this.page.waitForURL(/\/admin\/login/);
