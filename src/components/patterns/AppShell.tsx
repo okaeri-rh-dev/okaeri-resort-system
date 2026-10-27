@@ -1,6 +1,6 @@
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { CircleUser, Menu, MoreHorizontal, type LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -36,6 +37,31 @@ export interface ShellDestination {
   pinned?: boolean;
   /** Active on this path only, not on its child routes. */
   exact?: boolean;
+  /** The `ShellGroup.id` it sits under. Ungrouped destinations lead the nav. */
+  group?: string;
+}
+
+/** A named set of destinations: a heading in the expanded rail and menu sheets, a flyout in the collapsed rail. */
+export interface ShellGroup {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+}
+
+interface NavSection {
+  group?: ShellGroup;
+  destinations: ShellDestination[];
+}
+
+/** Ungrouped destinations first, then each group in order. A group with no destinations drops out. */
+function toSections(destinations: ShellDestination[], groups: ShellGroup[]): NavSection[] {
+  return [
+    { destinations: destinations.filter((destination) => !destination.group) },
+    ...groups.map((group) => ({
+      group,
+      destinations: destinations.filter((destination) => destination.group === group.id),
+    })),
+  ].filter((section) => section.destinations.length > 0);
 }
 
 export interface ShellAction {
@@ -56,6 +82,8 @@ export interface AppShellProps {
   brand: ShellBrand;
   /** The nav contents, already filtered to what the viewer may reach. */
   destinations: ShellDestination[];
+  /** Groups for `ShellDestination.group`, in order (admin only). Omit for a flat nav. */
+  navGroups?: ShellGroup[];
   /** Account-level commands such as Sign Out (admin only), behind the account menu at every width. */
   actions?: ShellAction[];
   /** The light / dark / system setting. The shell places its controls for each nav form. */
@@ -78,6 +106,9 @@ export interface AppShellProps {
  * Admin: a bottom bar on compact windows (pinned destinations plus More, or every destination
  * when there are five or fewer), a collapsed rail from `medium` and an expanded rail with labels
  * from `large`. Guest: a top bar with inline links from `medium` and a menu sheet on compact.
+ * With `navGroups` (admin), ungrouped destinations lead; each group is a heading over its items in
+ * the expanded rail and the menu sheet, and one item that opens a flyout in the collapsed rail.
+ * Groups with no destinations drop out. The bottom bar stays flat.
  * With `theme`, a Light / Dark / Auto choice sits at the rail foot (icons, words from `large`), in
  * the guest top bar from `medium` (icons) and at the end of both menu sheets (words). Compact bars
  * get a one-tap dark mode switch instead; compact admin with no More gets the icon choice.
@@ -92,6 +123,7 @@ export interface AppShellProps {
  *   surface="admin"
  *   brand={{ name: "Okaeri Resort", to: "/admin/dashboard" }}
  *   destinations={destinations}
+ *   navGroups={[{ id: "money", label: "Money", icon: Wallet }]}
  *   actions={[{ label: "Sign Out", icon: LogOut, onSelect: signOut }]}
  *   theme={{ value: theme, onChange: setTheme }}
  * >
@@ -190,6 +222,120 @@ function matchOptions(destination: ShellDestination) {
   return { exact: destination.exact ?? false };
 }
 
+/** The same rule as `matchOptions`, for a group item that is not itself a link. */
+function isActive(destination: ShellDestination, pathname: string): boolean {
+  const path = pathname.replace(/\/+$/, "");
+  if (path === destination.to) return true;
+  return !destination.exact && path.startsWith(`${destination.to}/`);
+}
+
+function RailLink({ destination }: { destination: ShellDestination }) {
+  return (
+    <Link to={destination.to} activeOptions={matchOptions(destination)} className={railItem}>
+      <ItemLabel form="rail" icon={destination.icon} label={destination.label} />
+    </Link>
+  );
+}
+
+/** A group's heading over its items, the list named by the heading for assistive tech. */
+function GroupList({
+  label,
+  className,
+  children,
+}: {
+  label: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  const headingId = useId();
+  return (
+    <div className={className}>
+      <p
+        id={headingId}
+        className="flex min-h-9 items-end px-3 pb-1 text-xs font-semibold opacity-70"
+      >
+        {label}
+      </p>
+      <ul aria-labelledby={headingId} className="space-y-1">
+        {children}
+      </ul>
+    </div>
+  );
+}
+
+/** A group in the collapsed rail: one item that opens the group's links to the right. */
+function RailFlyout({ group, destinations }: NavSection & { group: ShellGroup }) {
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const holdsCurrentPage = destinations.some((destination) => isActive(destination, pathname));
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className={railItem}
+          aria-current={holdsCurrentPage ? "true" : undefined}
+          data-status={holdsCurrentPage ? "active" : undefined}
+        >
+          <ItemLabel form="rail" icon={group.icon} label={group.label} />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="right" align="start">
+        <DropdownMenuLabel>{group.label}</DropdownMenuLabel>
+        {destinations.map((destination) => (
+          <DropdownMenuItem key={destination.to} asChild>
+            <Link
+              to={destination.to}
+              activeOptions={matchOptions(destination)}
+              className="data-[status=active]:bg-accent data-[status=active]:text-accent-foreground"
+            >
+              <ItemLabel form="dropdown" icon={destination.icon} label={destination.label} />
+            </Link>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/** The rail from `medium`: ungrouped links, then per group a flyout (collapsed) or a heading (`large`). */
+function GroupedRail({ sections }: { sections: NavSection[] }) {
+  return (
+    <ul className="max-medium:hidden large:px-4 flex flex-1 flex-col gap-1 px-2 py-3">
+      {sections.map(({ group, destinations }) =>
+        group ? (
+          <li key={group.id}>
+            <div className="large:hidden">
+              <RailFlyout group={group} destinations={destinations} />
+            </div>
+            <GroupList label={group.label} className="max-large:hidden">
+              {destinations.map((destination) => (
+                <li key={destination.to}>
+                  <RailLink destination={destination} />
+                </li>
+              ))}
+            </GroupList>
+          </li>
+        ) : (
+          destinations.map((destination) => (
+            <li key={destination.to}>
+              <RailLink destination={destination} />
+            </li>
+          ))
+        )
+      )}
+    </ul>
+  );
+}
+
+function MoreButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className={railItem}>
+      <ItemLabel form="rail" icon={MoreHorizontal} label="More" />
+    </button>
+  );
+}
+
 /** Account-level actions behind one trigger: the compact header and the rail foot. */
 function AccountMenu({ actions, form }: { actions: ShellAction[]; form: "header" | "rail" }) {
   return (
@@ -216,30 +362,26 @@ function AccountMenu({ actions, form }: { actions: ShellAction[]; form: "header"
   );
 }
 
-function SheetDestinations({
+function SheetLinks({
   destinations,
   linkClassName,
 }: {
   destinations: ShellDestination[];
   linkClassName: string;
 }) {
-  return (
-    <ul className="space-y-1">
-      {destinations.map((destination) => (
-        <li key={destination.to}>
-          <SheetClose asChild>
-            <Link
-              to={destination.to}
-              activeOptions={matchOptions(destination)}
-              className={linkClassName}
-            >
-              <ItemLabel form="sheet" icon={destination.icon} label={destination.label} />
-            </Link>
-          </SheetClose>
-        </li>
-      ))}
-    </ul>
-  );
+  return destinations.map((destination) => (
+    <li key={destination.to}>
+      <SheetClose asChild>
+        <Link
+          to={destination.to}
+          activeOptions={matchOptions(destination)}
+          className={linkClassName}
+        >
+          <ItemLabel form="sheet" icon={destination.icon} label={destination.label} />
+        </Link>
+      </SheetClose>
+    </li>
+  ));
 }
 
 const sheetItem = cn(
@@ -256,6 +398,7 @@ const adminSheetLink = cn(
 function AdminShell({
   brand,
   destinations,
+  navGroups,
   actions = [],
   theme,
   navLoading,
@@ -266,6 +409,7 @@ function AdminShell({
   const needsMore = destinations.length > BAR_SLOTS;
   const inBar = (destination: ShellDestination) => !needsMore || destination.pinned;
   const hasFooter = actions.length > 0 || theme !== undefined;
+  const sections = navGroups && toSections(destinations, navGroups);
 
   return (
     <div className="bg-background medium:flex-row flex h-dvh flex-col">
@@ -319,6 +463,25 @@ function AdminShell({
                 <Skeleton key={index} className="bg-sidebar-accent medium:flex-none h-12 flex-1" />
               ))}
             </div>
+          ) : sections ? (
+            <>
+              <ul className="medium:hidden flex gap-1 px-2 py-1">
+                {sections
+                  .flatMap((section) => section.destinations)
+                  .filter(inBar)
+                  .map((destination) => (
+                    <li key={destination.to} className="min-w-0 flex-1">
+                      <RailLink destination={destination} />
+                    </li>
+                  ))}
+                {needsMore && (
+                  <li className="min-w-0 flex-1">
+                    <MoreButton onClick={() => setMenuOpen(true)} />
+                  </li>
+                )}
+              </ul>
+              <GroupedRail sections={sections} />
+            </>
           ) : (
             <ul className="medium:flex-1 medium:flex-col medium:py-3 large:px-4 flex gap-1 px-2 py-1">
               {destinations.map((destination) => (
@@ -340,9 +503,7 @@ function AdminShell({
               ))}
               {needsMore && (
                 <li className="medium:hidden min-w-0 flex-1">
-                  <button type="button" onClick={() => setMenuOpen(true)} className={railItem}>
-                    <ItemLabel form="rail" icon={MoreHorizontal} label="More" />
-                  </button>
+                  <MoreButton onClick={() => setMenuOpen(true)} />
                 </li>
               )}
             </ul>
@@ -382,7 +543,31 @@ function AdminShell({
             </SheetDescription>
           </div>
           <nav aria-label="Menu" className="min-h-0 flex-1 overflow-y-auto p-4">
-            <SheetDestinations destinations={destinations} linkClassName={adminSheetLink} />
+            {sections ? (
+              <div className="space-y-2">
+                {sections.map(({ group, destinations: sectionDestinations }) =>
+                  group ? (
+                    <GroupList key={group.id} label={group.label}>
+                      <SheetLinks
+                        destinations={sectionDestinations}
+                        linkClassName={adminSheetLink}
+                      />
+                    </GroupList>
+                  ) : (
+                    <ul key="ungrouped" className="space-y-1">
+                      <SheetLinks
+                        destinations={sectionDestinations}
+                        linkClassName={adminSheetLink}
+                      />
+                    </ul>
+                  )
+                )}
+              </div>
+            ) : (
+              <ul className="space-y-1">
+                <SheetLinks destinations={destinations} linkClassName={adminSheetLink} />
+              </ul>
+            )}
           </nav>
           {theme && (
             <div className="border-sidebar-border shrink-0 border-t p-4">
@@ -464,10 +649,9 @@ function GuestShell({ brand, destinations, theme, banner, ...content }: AppShell
             </SheetDescription>
           </div>
           <nav aria-label="Menu" className="min-h-0 flex-1 overflow-y-auto p-4">
-            <SheetDestinations
-              destinations={destinations}
-              linkClassName={cn(sheetItem, topBarLink)}
-            />
+            <ul className="space-y-1">
+              <SheetLinks destinations={destinations} linkClassName={cn(sheetItem, topBarLink)} />
+            </ul>
           </nav>
           {theme && (
             <div className="border-border shrink-0 border-t p-4">
