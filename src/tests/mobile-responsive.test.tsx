@@ -50,7 +50,6 @@ const mockUnits = [
     unit_id: "1",
     unit_name: "Deluxe Room A1",
     unit_type: "Deluxe" as const,
-    unit_status: "Available" as const,
     base_rate: 2500,
     weekend_rate: 3000,
     max_occupancy: 4,

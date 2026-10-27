@@ -27,7 +27,6 @@ import { exportUnitsToCSV } from "./utils/export";
  *
  * A modular, feature-rich table for managing resort units with:
  * - Inline editing capabilities
- * - Batch operations
  * - Advanced filtering and search
  * - Export functionality
  * - Responsive design
@@ -56,7 +55,6 @@ function UnitsTableComponent({
     isEditMode,
     setIsEditMode,
     selectedCount,
-    handleBatchStatusUpdate,
   } = useUnitsTable({ pageSize, onAddUnit, onViewUnit, onEditUnit });
 
   const handleExport = useCallback(() => {
@@ -101,7 +99,6 @@ function UnitsTableComponent({
         onExport={handleExport}
         onAddNew={onAddUnit}
         selectedCount={selectedCount}
-        onBatchStatusUpdate={handleBatchStatusUpdate}
       />
 
       <DataTable
@@ -146,7 +143,7 @@ function UnitCard({ row }: { row: Row<Unit> }) {
         {renderCell(row, "actions")}
       </div>
       <ListCardRow label="Capacity" value={renderCell(row, "max_occupancy")} />
-      <ListCardRow label="Status" value={renderCell(row, "unit_status")} />
+      <ListCardRow label="Tonight" value={renderCell(row, "tonight")} />
     </ListCard>
   );
 }

@@ -1,31 +1,30 @@
 import type { StatusTone } from "@/components/patterns";
-import type { BookingStatus, PaymentStatus, UnitStatus } from "@/types";
+import type { BookingStatus, CabinState, PaymentStatus } from "@/types";
 
 /** "Paid" is a legacy payment status some rows still carry. */
-type ToneStatus = BookingStatus | PaymentStatus | UnitStatus | "Paid";
+type ToneStatus = BookingStatus | PaymentStatus | CabinState | "Paid";
 
-// Booking, payment and cabin statuses share one pill vocabulary (DESIGN.md, Colour)
+// Booking and payment statuses and cabin states share one pill vocabulary (DESIGN.md, Colour)
 const tonesByStatus: Record<ToneStatus, StatusTone> = {
   Confirmed: "success",
   CheckedIn: "success",
   Paid: "success",
   Completed: "success",
-  Available: "success",
+  Free: "success",
   Pending: "warning",
   Partial: "warning",
-  Reserved: "warning",
   Cancelled: "danger",
   Refunded: "danger",
-  Maintenance: "danger",
+  Blocked: "danger",
   CheckedOut: "neutral",
-  Occupied: "neutral",
+  Booked: "neutral",
 };
 
 const tonesByLowercaseStatus = new Map(
   Object.entries(tonesByStatus).map(([status, tone]) => [status.toLowerCase(), tone])
 );
 
-/** The `StatusBadge` tone for a booking, payment or cabin status. Unknown statuses are neutral. */
+/** The `StatusBadge` tone for a booking or payment status, or a cabin state. Unknown statuses are neutral. */
 export function statusTone(status: string): StatusTone {
   return tonesByLowercaseStatus.get(status.toLowerCase()) ?? "neutral";
 }

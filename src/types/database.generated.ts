@@ -1471,6 +1471,14 @@ export type Database = {
           unit_type: string;
         }[];
       };
+      get_cabin_states: {
+        Args: { p_date: string };
+        Returns: {
+          block_reason: string;
+          state: string;
+          unit_id: string;
+        }[];
+      };
       get_current_audit_role: { Args: Record<PropertyKey, never>; Returns: string };
       get_public_aggregate_availability: {
         Args: { p_end_date: string; p_start_date: string };

@@ -5,7 +5,7 @@ import { Building2, Calendar, TrendingUp, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, Skeleton } from "@/components/patterns";
 import { useBookings } from "@/stores/useBookingStore";
 import { useGuests } from "@/stores/useGuestStore";
-import { useUnits } from "@/stores/useUnitStore";
+import { useCabinStatesTonight } from "@/stores/useUnitStore";
 
 interface StatCard {
   title: string;
@@ -15,19 +15,18 @@ interface StatCard {
 }
 
 export function DashboardStats() {
-  const { data: units, isLoading: unitsLoading } = useUnits();
+  const { data: cabinStates, isLoading: statesLoading } = useCabinStatesTonight();
   const { data: bookings, isLoading: bookingsLoading } = useBookings();
   const { data: guests, isLoading: guestsLoading } = useGuests();
 
-  const isLoading = unitsLoading || bookingsLoading || guestsLoading;
+  const isLoading = statesLoading || bookingsLoading || guestsLoading;
 
   // Calculate basic Phase 1 statistics with memoization
   const stats = useMemo((): StatCard[] => {
     if (isLoading) return [];
 
-    // Available units (basic count)
-    const availableUnits = units?.filter((u) => u.unit_status === "Available").length || 0;
-    const totalUnits = units?.length || 0;
+    const cabinNights = [...(cabinStates?.values() ?? [])];
+    const freeTonight = cabinNights.filter((night) => night.state === "Free").length;
 
     // Active bookings (currently checked in)
     const activeBookings = bookings?.filter((b) => b.booking_status === "CheckedIn").length || 0;
@@ -40,9 +39,9 @@ export function DashboardStats() {
 
     return [
       {
-        title: "Available Cabins",
-        value: `${availableUnits}/${totalUnits}`,
-        description: "Cabins ready for booking",
+        title: "Free tonight",
+        value: `${freeTonight}/${cabinNights.length}`,
+        description: "Cabins not blocked or booked",
         icon: Building2,
       },
       {
@@ -64,7 +63,7 @@ export function DashboardStats() {
         icon: Users,
       },
     ];
-  }, [units, bookings, guests, isLoading]);
+  }, [cabinStates, bookings, guests, isLoading]);
 
   if (isLoading) {
     return (

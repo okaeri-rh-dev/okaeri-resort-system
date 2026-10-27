@@ -52,7 +52,6 @@ const createMockUnit = (overrides: Record<string, unknown> = {}) => ({
   unit_code: "DEL-1",
   unit_name: "Deluxe Room 1",
   unit_type: "Deluxe",
-  unit_status: "Available",
   base_occupancy: 2,
   max_occupancy: 4,
   base_rate: 5000,

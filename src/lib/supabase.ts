@@ -146,7 +146,8 @@ export const db = {
     update: (id: string, data: Database["public"]["Tables"]["units"]["Update"]) =>
       supabase.from("units").update(data).eq("unit_id", id).select().single(),
     delete: (id: string) => supabase.from("units").delete().eq("unit_id", id),
-    available: () => supabase.from("units").select("*").eq("unit_status", "Available"),
+    /** Blocked (with the reason), Booked or Free for each cabin on one night (ADR 0005). */
+    statesOn: (date: string) => supabase.rpc("get_cabin_states", { p_date: date }),
   },
 
   bookings: {

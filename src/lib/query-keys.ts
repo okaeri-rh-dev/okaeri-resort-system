@@ -42,6 +42,7 @@ export const unitKeys = {
   unfiltered: () => [...unitKeys.all, "unfiltered"] as const,
   details: () => [...unitKeys.all, "detail"] as const,
   detail: (unitId: string) => [...unitKeys.details(), unitId] as const,
+  states: (date: string) => [...unitKeys.all, "states", date] as const,
 };
 
 export const bookingKeys = {

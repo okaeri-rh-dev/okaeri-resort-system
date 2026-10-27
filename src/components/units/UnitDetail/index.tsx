@@ -20,6 +20,7 @@ import {
 } from "@/components/patterns";
 import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { statusBadgeProps } from "@/lib/status-tone";
+import { useCabinStatesTonight } from "@/stores/useUnitStore";
 import type { Booking, Unit } from "@/types";
 
 /**
@@ -43,7 +44,7 @@ interface UnitDetailPageProps {
  * Unit Detail Page Component
  *
  * Displays comprehensive unit information in a professional enterprise layout:
- * - Unit specifications (code, type, occupancy, status)
+ * - Unit specifications (code, type, occupancy, state tonight)
  * - Global pricing reference (unit-level pricing removed)
  * - Amenities list
  * - Current/upcoming bookings with related entity links
@@ -63,6 +64,9 @@ interface UnitDetailPageProps {
 export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
   // Fetch global pricing configuration
   const { data: pricingConfig } = usePricingConfig();
+  const { data: cabinStates } = useCabinStatesTonight();
+  const tonight = cabinStates?.get(unitId);
+  const tonightBadge = tonight && <StatusBadge {...statusBadgeProps(tonight.state, "Free")} />;
 
   return (
     <DetailPageLayout
@@ -72,7 +76,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
         { label: "Cabins", to: "/admin/units" },
         { label: `${unit.unit_name} (${unit.unit_code})` },
       ]}
-      status={<StatusBadge {...statusBadgeProps(unit.unit_status, "Available")} />}
+      status={tonightBadge}
       editRoute={{
         to: "/admin/units/$unitId/edit",
         params: { unitId },
@@ -93,8 +97,17 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
               emphasis="strong"
             />
             <DetailField
-              label="Status"
-              value={<StatusBadge {...statusBadgeProps(unit.unit_status, "Available")} />}
+              label="Tonight"
+              value={
+                tonight && (
+                  <div className="space-y-1">
+                    {tonightBadge}
+                    {tonight.blockReason && (
+                      <p className="text-muted-foreground text-xs">{tonight.blockReason}</p>
+                    )}
+                  </div>
+                )
+              }
             />
           </div>
         </div>

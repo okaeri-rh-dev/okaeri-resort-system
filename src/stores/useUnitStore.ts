@@ -4,8 +4,8 @@ import { devtools, persist } from "zustand/middleware";
 
 import { unitKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
-import type { Unit, UnitFilters, UnitStatus } from "@/types";
-import type { TablesUpdate } from "@/types/database.types";
+import { toManilaDateString } from "@/lib/timezone";
+import type { CabinNight, CabinState, Unit, UnitFilters } from "@/types";
 
 // ============================================
 // ZUSTAND STORE
@@ -130,9 +130,6 @@ const unitListQuery = (filters: UnitStore["filters"]) =>
       let query = supabase.from("units").select("*");
 
       // Apply filters
-      if (filters.status) {
-        query = query.eq("unit_status", filters.status);
-      }
       if (filters.type) {
         query = query.eq("unit_type", filters.type);
       }
@@ -327,24 +324,23 @@ export const useDeleteUnit = () => {
 //   });
 // };
 
-// Batch update units status
-export const useBatchUpdateUnitsStatus = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ unitIds, status }: { unitIds: string[]; status: UnitStatus }) => {
-      const { error } = await supabase
-        .from("units")
-        .update({
-          unit_status: status,
-          updated_at: new Date().toISOString(),
-        } satisfies TablesUpdate<"units">)
-        .in("unit_id", unitIds);
-
+// Each cabin's state on one night, keyed by unit id
+const cabinStatesQuery = (date: string) =>
+  queryOptions({
+    queryKey: unitKeys.states(date),
+    queryFn: async () => {
+      const { data, error } = await db.units.statesOn(date);
       if (error) throw new Error(handleSupabaseError(error));
+      return new Map<string, CabinNight>(
+        data.map((row) => [
+          row.unit_id,
+          { state: row.state as CabinState, blockReason: row.block_reason },
+        ])
+      );
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: unitKeys.all });
-    },
+    staleTime: 30000,
+    refetchInterval: 60000,
   });
-};
+
+export const useCabinStatesTonight = () =>
+  useQuery(cabinStatesQuery(toManilaDateString(new Date())));
