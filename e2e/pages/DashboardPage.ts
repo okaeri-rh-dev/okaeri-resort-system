@@ -10,7 +10,7 @@ export class DashboardPage {
   readonly page: Page;
 
   // KPI Cards
-  readonly availableCabinsCard: Locator;
+  readonly freeTonightCard: Locator;
   readonly activeBookingsCard: Locator;
   readonly totalBookingsCard: Locator;
   readonly totalGuestsCard: Locator;
@@ -35,8 +35,8 @@ export class DashboardPage {
     this.page = page;
 
     // KPI Cards - finding cards by their title text
-    this.availableCabinsCard = page
-      .locator("text=Available Cabins")
+    this.freeTonightCard = page
+      .locator("text=Free tonight")
       .locator("xpath=ancestor::*[contains(@class, 'card') or contains(@class, 'Card')]")
       .first();
     this.activeBookingsCard = page
@@ -111,7 +111,7 @@ export class DashboardPage {
     // Wait for a marker of the active dashboard variant to be visible
     const marker = this.isMobileDashboardViewport()
       ? "text=Tomorrow's Schedule"
-      : "text=Available Cabins";
+      : "text=Free tonight";
     await this.page.waitForSelector(marker, {
       timeout: TIMEOUTS.navigation,
     });
@@ -133,10 +133,10 @@ export class DashboardPage {
   }
 
   /**
-   * Get available cabins count
+   * Get the count of cabins free tonight
    */
-  async getAvailableCabinsCount(): Promise<number> {
-    const value = await this.getKpiValue(this.availableCabinsCard);
+  async getFreeTonightCount(): Promise<number> {
+    const value = await this.getKpiValue(this.freeTonightCard);
     return parseInt(value, 10) || 0;
   }
 
@@ -220,7 +220,7 @@ export class DashboardPage {
       return;
     }
     // DesktopDashboard variant: KPI section is visible
-    await expect(this.page.locator("text=Available Cabins")).toBeVisible();
+    await expect(this.page.locator("text=Free tonight")).toBeVisible();
     await expect(this.page.locator("text=Active Bookings")).toBeVisible();
   }
 }

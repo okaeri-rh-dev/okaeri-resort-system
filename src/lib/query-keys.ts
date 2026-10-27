@@ -1,5 +1,6 @@
 // src/lib/query-keys.ts
 
+import type { ManilaDay } from "@/lib/bookings/stay";
 import type { AuditFilters, EntityType } from "@/types/entity-detail.types";
 
 export const guestKeys = {
@@ -42,6 +43,8 @@ export const unitKeys = {
   unfiltered: () => [...unitKeys.all, "unfiltered"] as const,
   details: () => [...unitKeys.all, "detail"] as const,
   detail: (unitId: string) => [...unitKeys.details(), unitId] as const,
+  allStates: () => [...unitKeys.all, "states"] as const,
+  states: (date: ManilaDay) => [...unitKeys.allStates(), date] as const,
 };
 
 export const bookingKeys = {

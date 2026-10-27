@@ -18,8 +18,10 @@ import {
   DetailSection,
   StatusBadge,
 } from "@/components/patterns";
+import { CabinTonight } from "@/components/units/CabinTonight";
 import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { statusBadgeProps } from "@/lib/status-tone";
+import { useCabinStatesTonight } from "@/stores/useUnitStore";
 import type { Booking, Unit } from "@/types";
 
 /**
@@ -43,7 +45,7 @@ interface UnitDetailPageProps {
  * Unit Detail Page Component
  *
  * Displays comprehensive unit information in a professional enterprise layout:
- * - Unit specifications (code, type, occupancy, status)
+ * - Unit specifications (code, type, occupancy, state tonight)
  * - Global pricing reference (unit-level pricing removed)
  * - Amenities list
  * - Current/upcoming bookings with related entity links
@@ -63,6 +65,8 @@ interface UnitDetailPageProps {
 export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
   // Fetch global pricing configuration
   const { data: pricingConfig } = usePricingConfig();
+  const { data: cabinStates } = useCabinStatesTonight();
+  const tonight = cabinStates?.get(unitId);
 
   return (
     <DetailPageLayout
@@ -72,7 +76,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
         { label: "Cabins", to: "/admin/units" },
         { label: `${unit.unit_name} (${unit.unit_code})` },
       ]}
-      status={<StatusBadge {...statusBadgeProps(unit.unit_status, "Available")} />}
+      status={tonight && <StatusBadge {...statusBadgeProps(tonight.state, "Free")} />}
       editRoute={{
         to: "/admin/units/$unitId/edit",
         params: { unitId },
@@ -92,10 +96,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
               value={`${unit.max_occupancy} guests`}
               emphasis="strong"
             />
-            <DetailField
-              label="Status"
-              value={<StatusBadge {...statusBadgeProps(unit.unit_status, "Available")} />}
-            />
+            <DetailField label="Tonight" value={tonight && <CabinTonight cabinNight={tonight} />} />
           </div>
         </div>
       </DetailSection>

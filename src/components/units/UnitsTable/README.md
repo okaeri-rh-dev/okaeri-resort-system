@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Units Table provides **comprehensive unit management** with advanced features including **inline editing**, **batch operations**, and **real-time status updates** for the Okaeri Resort System. This table implements the **Professional Enterprise Design System** with row selection, sortable columns, and a powerful edit mode for efficient bulk updates.
+The Units Table provides **comprehensive unit management** with advanced features including **inline editing** and each cabin's **state tonight** (Blocked, Booked or Free) for the Okaeri Resort System. This table implements the **Professional Enterprise Design System** with row selection, sortable columns, and a powerful edit mode for efficient bulk updates.
 
 ## 🏗️ Module Architecture
 
@@ -24,7 +24,7 @@ UnitsTable/
 
 ### UnitsTable
 
-**Purpose**: Display and manage resort units with inline editing and batch operations.
+**Purpose**: Display and manage resort units with inline editing and their state tonight.
 
 #### Props
 
@@ -70,7 +70,7 @@ function UnitsPage() {
 // - Base rate becomes number input
 // - Extra person rate becomes number input
 // - Unit type becomes dropdown select
-// - Status becomes dropdown select
+// - Tonight stays read-only: it is derived, never edited
 ```
 
 ### Inline Edit Components
@@ -93,20 +93,6 @@ function UnitsPage() {
   type="number"
   placeholder="0.00"
   className="text-right"
-/>
-```
-
-**Dropdown Select Editing**:
-```tsx
-<InlineSelect
-  value={unit.unit_status}
-  options={[
-    { value: 'Available', label: 'Available' },
-    { value: 'Occupied', label: 'Occupied' },
-    { value: 'Maintenance', label: 'Maintenance' },
-    { value: 'Reserved', label: 'Reserved' },
-  ]}
-  onSave={(value) => updateUnit(unit.unit_id, { unit_status: value })}
 />
 ```
 
@@ -176,10 +162,11 @@ const columns = [
     size: 120,
   },
   {
-    accessorKey: 'unit_status',
-    header: 'Status',
-    cell: (value) => <StatusBadge status={value} />,
-    size: 120,
+    id: 'tonight',
+    header: 'Tonight',
+    // Blocked (with the block reason under the badge), Booked or Free
+    cell: (row) => <StatusBadge {...statusBadgeProps(cabinStates.get(row.unit_id)?.state, 'Free')} />,
+    size: 160,
   },
 ]
 ```
@@ -202,7 +189,7 @@ const columns = [
 - **Format**: `2/4 guests` (base/max)
 - **Alignment**: Center
 
-## 🎯 Batch Operations
+## 🎯 Row Selection and Cabin State
 
 ### Row Selection
 
@@ -223,37 +210,12 @@ const columns = [
 const selectedCount = table.getSelectedRowModel().rows.length
 ```
 
-### Batch Status Update
+### Cabin State Tonight
 
-```tsx
-<TableHeaderControls
-  selectedCount={selectedCount}
-  onBatchStatusUpdate={(status) => {
-    const selectedIds = table.getSelectedRowModel().rows.map(r => r.original.unit_id)
-    updateMultipleUnits(selectedIds, { unit_status: status })
-  }}
-/>
-
-// Update multiple units at once
-async function updateMultipleUnits(unitIds: string[], updates: Partial<Unit>) {
-  const promises = unitIds.map(id => db.units.update(id, updates))
-  await Promise.all(promises)
-
-  // Log to audit trail
-  await logAuditEvent({
-    action: 'units.batch_update',
-    entity_type: 'unit',
-    metadata: {
-      unit_ids: unitIds,
-      updates,
-      count: unitIds.length,
-    },
-  })
-
-  toast.success(`Updated ${unitIds.length} units successfully`)
-  queryClient.invalidateQueries(['units'])
-}
-```
+A cabin has no stored status (ADR 0005). `useCabinStatesTonight()` calls the
+`get_cabin_states` RPC for tonight (Manila) and returns, per unit, Blocked (with the
+block reasons), Booked or Free. To take a cabin out of use, add a block on the
+Blocked dates page; nothing on this table sets a cabin's state.
 
 ## 🔍 Filtering System
 
@@ -263,7 +225,7 @@ async function updateMultipleUnits(unitIds: string[], updates: Partial<Unit>) {
 interface Filters {
   globalFilter: string;           // Search all columns
   typeFilter: UnitType | 'all';   // Filter by unit type
-  statusFilter: UnitStatus | 'all'; // Filter by status
+  statusFilter: CabinState | 'all'; // Filter by state tonight
 }
 ```
 
@@ -279,7 +241,6 @@ interface Filters {
 // - Unit code
 // - Unit name
 // - Unit type
-// - Status
 ```
 
 **Type Filter**:
@@ -293,14 +254,13 @@ interface Filters {
 </Select>
 ```
 
-**Status Filter**:
+**Tonight Filter**:
 ```tsx
 <Select value={statusFilter} onValueChange={setStatusFilter}>
-  <SelectItem value="all">All Statuses</SelectItem>
-  <SelectItem value="Available">Available</SelectItem>
-  <SelectItem value="Occupied">Occupied</SelectItem>
-  <SelectItem value="Maintenance">Maintenance</SelectItem>
-  <SelectItem value="Reserved">Reserved</SelectItem>
+  <SelectItem value="all">All tonight</SelectItem>
+  <SelectItem value="Blocked">Blocked</SelectItem>
+  <SelectItem value="Booked">Booked</SelectItem>
+  <SelectItem value="Free">Free</SelectItem>
 </Select>
 ```
 
@@ -319,7 +279,6 @@ export function exportUnitsToCSV(units: Unit[]) {
     'Base Rate': unit.base_rate.toFixed(2),
     'Extra Person Rate': (unit.extra_person_rate || 0).toFixed(2),
     'Weekend Rate': (unit.weekend_rate || unit.base_rate).toFixed(2),
-    'Status': unit.unit_status,
   }))
 
   const csv = generateCSV(csvData)
@@ -330,9 +289,9 @@ export function exportUnitsToCSV(units: Unit[]) {
 ### CSV Format
 
 ```csv
-Unit Code,Unit Name,Type,Base Occupancy,Max Occupancy,Base Rate,Extra Person Rate,Weekend Rate,Status
-BCH-1,Beachfront Cottage 1,Standard,2,4,2000.00,500.00,2500.00,Available
-DEL-1,Deluxe Room 1,Deluxe,2,3,3000.00,750.00,3500.00,Occupied
+Unit Code,Unit Name,Type,Base Occupancy,Max Occupancy,Base Rate,Extra Person Rate,Weekend Rate
+BCH-1,Beachfront Cottage 1,Standard,2,4,2000.00,500.00,2500.00
+DEL-1,Deluxe Room 1,Deluxe,2,3,3000.00,750.00,3500.00
 ```
 
 ## 🎨 Status Badges
@@ -343,13 +302,12 @@ DEL-1,Deluxe Room 1,Deluxe,2,3,3000.00,750.00,3500.00,Occupied
 import { StatusBadge } from '@/components/patterns'
 import { statusTone } from '@/lib/status-tone'
 
-<StatusBadge tone={statusTone(unit.unit_status)}>{unit.unit_status}</StatusBadge>
+<StatusBadge tone={statusTone(cabinNight.state)}>{cabinNight.state}</StatusBadge>
 
 // Renders:
-// - Available: Green badge
-// - Occupied: Blue badge
-// - Maintenance: Yellow badge
-// - Reserved: Orange badge
+// - Free: success
+// - Booked: neutral
+// - Blocked: danger, with the block reason as muted text below
 ```
 
 ### Type Badge
@@ -373,7 +331,6 @@ describe('UnitsTable', () => {
         unit_code: 'BCH-1',
         unit_name: 'Beachfront Cottage 1',
         unit_type: 'Standard',
-        unit_status: 'Available',
         base_occupancy: 2,
         max_occupancy: 4,
         base_rate: 2000,
@@ -408,27 +365,6 @@ describe('UnitsTable', () => {
     })
   })
 
-  it('performs batch status update', async () => {
-    render(<UnitsTable />)
-
-    // Select multiple units
-    const checkboxes = screen.getAllByRole('checkbox')
-    fireEvent.click(checkboxes[1])  // Select first unit
-    fireEvent.click(checkboxes[2])  // Select second unit
-
-    // Open batch actions
-    const batchButton = screen.getByRole('button', { name: /batch/i })
-    fireEvent.click(batchButton)
-
-    // Set to Maintenance
-    const maintenanceOption = screen.getByText('Maintenance')
-    fireEvent.click(maintenanceOption)
-
-    await waitFor(() => {
-      expect(screen.getByText(/updated 2 units/i)).toBeInTheDocument()
-    })
-  })
-
   it('exports to CSV', async () => {
     const mockDownload = vi.fn()
     global.URL.createObjectURL = vi.fn()
@@ -451,11 +387,10 @@ describe('UnitsTable', () => {
 2. ✅ **Auto-save on blur** for better UX
 3. ✅ **Show loading states** during updates
 4. ✅ **Rollback on error** to maintain data integrity
-5. ✅ **Log batch operations** to audit trail
+5. ✅ **Never store a cabin state**: block the dates instead
 6. ✅ **Provide visual feedback** with toast notifications
 7. ✅ **Validate before save** to prevent invalid data
 8. ✅ **Use optimistic updates** when possible
-9. ✅ **Clear selections** after batch operations
 10. ✅ **Export current filter state** not all data
 
 ## 📚 Related Documentation
@@ -463,7 +398,6 @@ describe('UnitsTable', () => {
 - [Patterns kit](/src/components/patterns/CLAUDE.md) - Shared table patterns (`@/components/patterns`)
 - [Unit Store](/src/stores/useUnitStore.ts) - State management
 - [Availability Engine](/src/lib/availability.ts) - Unit availability logic
-- [Audit Trail](/src/components/audit/README.md) - Batch operation logging
 
 ## 🔧 Configuration
 
@@ -480,17 +414,10 @@ export const UNIT_TYPES = [
 export type UnitType = typeof UNIT_TYPES[number]
 ```
 
-### Unit Statuses
+### Cabin States
 
 ```typescript
-export const UNIT_STATUSES = [
-  'Available',
-  'Occupied',
-  'Maintenance',
-  'Reserved',
-] as const
-
-export type UnitStatus = typeof UNIT_STATUSES[number]
+export type CabinState = "Blocked" | "Booked" | "Free";
 ```
 
 ### Default Values
@@ -503,7 +430,6 @@ const DEFAULT_UNIT = {
   extra_person_rate: 500,
   weekend_rate: 2500,
   unit_type: 'Standard',
-  unit_status: 'Available',
 }
 ```
 
@@ -512,7 +438,6 @@ const DEFAULT_UNIT = {
 - **Initial Load**: ~150ms
 - **Edit Mode Toggle**: < 50ms
 - **Inline Save**: ~200ms per field
-- **Batch Update (10 units)**: ~500ms
 - **Export 100 units**: ~300ms
 - **Component Size**: ~15KB minified
 
@@ -571,22 +496,6 @@ const DEFAULT_UNIT = {
 />
 ```
 
-### Issue: Batch operation updates wrong units
-
-**Cause**: Not clearing selection or using stale data
-
-**Solution**:
-```typescript
-async function batchUpdate(status: UnitStatus) {
-  const selectedIds = table.getSelectedRowModel().rows.map(r => r.original.unit_id)
-
-  await updateMultipleUnits(selectedIds, { unit_status: status })
-
-  // Clear selection after update
-  table.resetRowSelection()
-}
-```
-
 ### Issue: Edit mode changes not persisting
 
 **Cause**: Not invalidating queries after update
@@ -609,8 +518,6 @@ const updateMutation = useMutation({
 - [x] Input validation before save
 - [x] SQL injection prevention
 - [x] XSS prevention in unit names
-- [x] Rate limiting on batch operations
-- [x] Confirmation for batch updates
 - [x] Rollback on error
 
 ## 🔄 Future Enhancements
@@ -623,5 +530,4 @@ const updateMutation = useMutation({
 - [ ] Unit location map
 - [ ] Historical pricing chart
 - [ ] Booking calendar integration
-- [ ] Quick filters (Available Today, Needs Maintenance)
 - [ ] Custom column visibility

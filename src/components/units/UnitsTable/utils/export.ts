@@ -21,7 +21,6 @@ function basicCSVExport(units: Unit[]) {
     "Base Rate",
     "Weekend Rate",
     "Extra Person Rate",
-    "Status",
   ];
 
   const rows = units.map((unit) => [
@@ -33,7 +32,6 @@ function basicCSVExport(units: Unit[]) {
     formatCurrency(unit.base_rate),
     formatCurrency(unit.weekend_rate || 0),
     formatCurrency(unit.extra_person_rate || 0),
-    unit.unit_status,
   ]);
 
   const csvContent = [

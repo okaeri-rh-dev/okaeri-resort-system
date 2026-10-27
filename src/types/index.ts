@@ -6,7 +6,14 @@ import type { BookingStatus, PaymentStatus } from "./booking-status";
 // UNIT TYPES
 // ============================================
 export type UnitType = "Standard" | "Deluxe" | "Suite" | "Villa";
-export type UnitStatus = "Available" | "Occupied" | "Maintenance" | "Reserved";
+/** A cabin's state on one night, derived from blocks and bookings (ADR 0005). */
+export type CabinState = "Blocked" | "Booked" | "Free";
+
+export interface CabinNight {
+  state: CabinState;
+  /** The block reasons when Blocked, else null. */
+  blockReason: string | null;
+}
 
 export interface Unit {
   unit_id: string;
@@ -18,7 +25,6 @@ export interface Unit {
   base_rate: number;
   weekend_rate: number;
   extra_person_rate: number;
-  unit_status: string | null; // Database returns nullable string
   amenities: string[] | null;
   cleaning_fee?: number | null;
   description?: string | null;
@@ -269,7 +275,6 @@ export interface BookingFilters {
 }
 
 export interface UnitFilters {
-  status?: UnitStatus;
   type?: UnitType;
   min_rate?: number;
   max_rate?: number;

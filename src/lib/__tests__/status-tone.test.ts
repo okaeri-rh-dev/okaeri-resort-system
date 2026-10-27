@@ -8,15 +8,14 @@ describe("statusTone", () => {
     ["CheckedIn", "success"],
     ["Paid", "success"],
     ["Completed", "success"],
-    ["Available", "success"],
+    ["Free", "success"],
     ["Pending", "warning"],
     ["Partial", "warning"],
-    ["Reserved", "warning"],
     ["Cancelled", "danger"],
     ["Refunded", "danger"],
-    ["Maintenance", "danger"],
+    ["Blocked", "danger"],
     ["CheckedOut", "neutral"],
-    ["Occupied", "neutral"],
+    ["Booked", "neutral"],
     ["Hold", "neutral"],
   ])("maps %s to %s", (status, tone) => {
     expect(statusTone(status)).toBe(tone);
@@ -39,9 +38,9 @@ describe("statusBadgeProps", () => {
   });
 
   it.each([null, undefined, ""])("falls back when the status is %j", (status) => {
-    expect(statusBadgeProps(status, "Available")).toEqual({
+    expect(statusBadgeProps(status, "Free")).toEqual({
       tone: "success",
-      children: "Available",
+      children: "Free",
     });
   });
 });

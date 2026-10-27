@@ -52,7 +52,6 @@ export function adaptUnitFromDB(dbUnit: DbUnit): Unit {
     base_rate: dbUnit.base_rate,
     weekend_rate: dbUnit.weekend_rate,
     extra_person_rate: dbUnit.extra_person_rate,
-    unit_status: dbUnit.unit_status,
     amenities,
     created_at: dbUnit.created_at,
     updated_at: dbUnit.updated_at,

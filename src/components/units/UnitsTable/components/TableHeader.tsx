@@ -17,7 +17,7 @@ import {
   TableSearch,
 } from "@/components/patterns";
 import { pluralize } from "@/lib/formatters";
-import type { Unit, UnitStatus } from "@/types";
+import type { Unit } from "@/types";
 
 interface TableHeaderProps {
   table: Table<Unit>;
@@ -25,14 +25,13 @@ interface TableHeaderProps {
   onGlobalFilterChange: (value: string) => void;
   typeFilter: string;
   onTypeFilterChange: (value: string) => void;
-  statusFilter: string;
-  onStatusFilterChange: (value: string) => void;
+  tonightFilter: string;
+  onTonightFilterChange: (value: string) => void;
   isEditMode: boolean;
   onEditModeToggle: () => void;
   onExport: () => void;
   onAddNew?: () => void;
   selectedCount: number;
-  onBatchStatusUpdate?: (status: UnitStatus) => void;
 }
 
 /**
@@ -44,14 +43,13 @@ export function TableHeader({
   onGlobalFilterChange,
   typeFilter,
   onTypeFilterChange,
-  statusFilter,
-  onStatusFilterChange,
+  tonightFilter,
+  onTonightFilterChange,
   isEditMode,
   onEditModeToggle,
   onExport,
   onAddNew,
   selectedCount,
-  onBatchStatusUpdate,
 }: TableHeaderProps) {
   const unitTypes: Array<{ value: string; label: string }> = [
     { value: "all", label: "All Types" },
@@ -61,12 +59,11 @@ export function TableHeader({
     { value: "Villa", label: "Villa" },
   ];
 
-  const unitStatuses: Array<{ value: string; label: string }> = [
-    { value: "all", label: "All Statuses" },
-    { value: "Available", label: "Available" },
-    { value: "Occupied", label: "Occupied" },
-    { value: "Maintenance", label: "Maintenance" },
-    { value: "Reserved", label: "Reserved" },
+  const tonightOptions: Array<{ value: string; label: string }> = [
+    { value: "all", label: "Any state" },
+    { value: "Blocked", label: "Blocked" },
+    { value: "Booked", label: "Booked" },
+    { value: "Free", label: "Free" },
   ];
 
   return (
@@ -97,16 +94,16 @@ export function TableHeader({
             </SelectContent>
           </Select>
 
-          {/* Status filter */}
-          <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-            <SelectTrigger className="w-full @lg:w-40" aria-label="Filter by status">
+          {/* Tonight filter */}
+          <Select value={tonightFilter} onValueChange={onTonightFilterChange}>
+            <SelectTrigger className="w-full @lg:w-40" aria-label="Filter by state tonight">
               <Filter className="mr-2 h-4 w-4" aria-hidden="true" />
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder="Filter by state tonight" />
             </SelectTrigger>
             <SelectContent>
-              {unitStatuses.map((status) => (
-                <SelectItem key={status.value} value={status.value}>
-                  {status.label}
+              {tonightOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -173,27 +170,6 @@ export function TableHeader({
             {selectedCount} {pluralize(selectedCount, "cabin")} selected
           </span>
           <div className="flex flex-wrap gap-2">
-            {onBatchStatusUpdate && (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onBatchStatusUpdate("Available")}
-                >
-                  Mark Available
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onBatchStatusUpdate("Maintenance")}
-                >
-                  Mark Maintenance
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => onBatchStatusUpdate("Reserved")}>
-                  Mark Reserved
-                </Button>
-              </>
-            )}
             <Button size="sm" variant="ghost" onClick={() => table.toggleAllRowsSelected(false)}>
               Clear Selection
             </Button>

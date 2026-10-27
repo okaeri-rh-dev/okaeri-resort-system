@@ -116,7 +116,6 @@ export interface Unit {
   description?: string
   amenities: string[]
   images: string[]
-  status: UnitStatus
   floor?: number
   building?: string
   view_type?: ViewType
@@ -132,11 +131,8 @@ export type UnitType =
   | 'villa'
   | 'penthouse'
 
-export type UnitStatus =
-  | 'available'
-  | 'occupied'
-  | 'maintenance'
-  | 'blocked'
+// Derived from blocks and bookings, never stored (ADR 0005)
+export type CabinState = 'Blocked' | 'Booked' | 'Free'
 
 // Expense Types
 export interface Expense {

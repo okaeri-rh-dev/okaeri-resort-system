@@ -98,7 +98,6 @@ export function UnitForm({ unit, onSuccess, onCancel, className }: UnitFormProps
       } else {
         await createUnitMutation.mutateAsync({
           ...unitData,
-          unit_status: "Available" as const,
           amenities: null,
         });
         toast.success("Cabin created successfully!");

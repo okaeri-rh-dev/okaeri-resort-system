@@ -14,12 +14,12 @@ import {
 import { toast } from "sonner";
 
 import {
-  useBatchUpdateUnitsStatus,
+  useCabinStatesTonight,
   useDeleteUnit,
   useUnits,
   useUpdateUnit,
 } from "@/stores/useUnitStore";
-import type { Unit, UnitStatus } from "@/types";
+import type { Unit } from "@/types";
 
 import { useUnitColumns } from "../components/UnitColumns";
 
@@ -38,10 +38,16 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
   const { pageSize = 10, onAddUnit, onViewUnit, onEditUnit } = options;
 
   // Query hooks
-  const { data: units = [], isLoading, error } = useUnits();
+  const { data: units = [], isLoading: unitsLoading, error: unitsError } = useUnits();
+  const {
+    data: cabinStates,
+    isLoading: statesLoading,
+    error: statesError,
+  } = useCabinStatesTonight();
+  const isLoading = unitsLoading || statesLoading;
+  const error = unitsError ?? statesError;
   const updateUnitMutation = useUpdateUnit();
   const deleteUnitMutation = useDeleteUnit();
-  const batchUpdateMutation = useBatchUpdateUnitsStatus();
 
   // Table state
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -56,7 +62,7 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
 
   // Custom filters
   const [typeFilter, setTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [tonightFilter, setTonightFilter] = useState("all");
 
   // Filter units based on custom filters
   const filteredUnits = useMemo(() => {
@@ -66,12 +72,12 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
       filtered = filtered.filter((unit) => unit.unit_type === typeFilter);
     }
 
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((unit) => unit.unit_status === statusFilter);
+    if (tonightFilter !== "all") {
+      filtered = filtered.filter((unit) => cabinStates?.get(unit.unit_id)?.state === tonightFilter);
     }
 
     return filtered;
-  }, [units, typeFilter, statusFilter]);
+  }, [units, cabinStates, typeFilter, tonightFilter]);
 
   // Stabilize the update handler with a ref to avoid recreating columns
   const updateMutationRef = useRef(updateUnitMutation);
@@ -117,31 +123,9 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
     [] // No dependencies - uses ref for mutation
   );
 
-  // Stabilize the batch mutation with a ref
-  const batchMutationRef = useRef(batchUpdateMutation);
-  batchMutationRef.current = batchUpdateMutation;
-
-  // Handle batch status update
-  const handleBatchStatusUpdate = useCallback(
-    async (status: UnitStatus) => {
-      // With ID-based selection, keys are unit IDs
-      const selectedIds = Object.keys(rowSelection).filter((unitId) => rowSelection[unitId]);
-
-      if (selectedIds.length === 0) return;
-
-      try {
-        await batchMutationRef.current.mutateAsync({ unitIds: selectedIds, status });
-        setRowSelection({}); // Clear selection after batch update
-      } catch (error) {
-        console.error("Failed to update units status:", error);
-        toast.error("Failed to update unit status. Please try again.");
-      }
-    },
-    [rowSelection]
-  );
-
   // Get columns configuration
   const columns = useUnitColumns({
+    cabinStates,
     onUpdateUnit: handleUpdateUnit,
     isEditMode,
     onViewUnit,
@@ -217,8 +201,8 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
     setGlobalFilter,
     typeFilter,
     setTypeFilter,
-    statusFilter,
-    setStatusFilter,
+    tonightFilter,
+    setTonightFilter,
 
     // Edit mode
     isEditMode,
@@ -231,12 +215,10 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
     // Actions
     handleUpdateUnit,
     handleDeleteUnit,
-    handleBatchStatusUpdate,
     onAddUnit,
 
     // Mutations state
     isUpdating: updateUnitMutation.isPending,
     isDeleting: deleteUnitMutation.isPending,
-    isBatchUpdating: batchUpdateMutation.isPending,
   };
 }
