@@ -4,6 +4,7 @@ import {
   ArrowLeftRight,
   Building2,
   Calendar,
+  CalendarRange,
   CreditCard,
   Download,
   FileText,
@@ -16,9 +17,15 @@ import {
   Shield,
   UserCog,
   Users,
+  Wallet,
 } from "lucide-react";
 
-import { AppShell, type ShellAction, type ShellDestination } from "@/components/patterns";
+import {
+  AppShell,
+  type ShellAction,
+  type ShellDestination,
+  type ShellGroup,
+} from "@/components/patterns";
 import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { AuditRole, clearRoleCache } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
@@ -34,37 +41,103 @@ interface AdminDestination extends ShellDestination {
   onlyRoles?: AuditRole[];
 }
 
+const navGroups: ShellGroup[] = [
+  { id: "bookings", label: "Bookings", icon: Calendar },
+  { id: "cabins", label: "Cabins", icon: Building2 },
+  { id: "money", label: "Money", icon: Wallet },
+  { id: "admin", label: "Admin", icon: Settings },
+];
+
 // Pinned destinations fill the compact bottom bar when a role has more than five
 const destinations: AdminDestination[] = [
   { label: "Dashboard", icon: Home, to: "/admin/dashboard", pinned: true },
-  { label: "Bookings", icon: Calendar, to: "/admin/bookings", pinned: true, exact: true },
-  { label: "Booking Queue", icon: ListChecks, to: "/admin/bookings/queue", pinned: true },
-  { label: "Guests", icon: Users, to: "/admin/guests", requiredRole: AuditRole.MANAGER },
+  {
+    label: "Bookings",
+    icon: Calendar,
+    to: "/admin/bookings",
+    group: "bookings",
+    pinned: true,
+    exact: true,
+  },
+  {
+    label: "Booking Queue",
+    icon: ListChecks,
+    to: "/admin/bookings/queue",
+    group: "bookings",
+    pinned: true,
+  },
   {
     label: "Payments",
     icon: Receipt,
     to: "/admin/payments",
+    group: "bookings",
     requiredRole: AuditRole.MANAGER,
     pinned: true,
   },
-  { label: "Cabins", icon: Building2, to: "/admin/units", requiredRole: AuditRole.MANAGER },
-  { label: "Expenses", icon: ReceiptText, to: "/admin/expenses", requiredRole: AuditRole.MANAGER },
-  { label: "Accounts", icon: CreditCard, to: "/admin/accounts", requiredRole: AuditRole.MANAGER },
+  {
+    label: "Guests",
+    icon: Users,
+    to: "/admin/guests",
+    group: "bookings",
+    requiredRole: AuditRole.MANAGER,
+  },
+  {
+    label: "Cabins",
+    icon: Building2,
+    to: "/admin/units",
+    group: "cabins",
+    requiredRole: AuditRole.MANAGER,
+  },
+  { label: "Availability", icon: CalendarRange, to: "/admin/availability", group: "cabins" },
+  {
+    label: "Expenses",
+    icon: ReceiptText,
+    to: "/admin/expenses",
+    group: "money",
+    requiredRole: AuditRole.MANAGER,
+  },
+  {
+    label: "Accounts",
+    icon: CreditCard,
+    to: "/admin/accounts",
+    group: "money",
+    requiredRole: AuditRole.MANAGER,
+  },
   {
     label: "Transfers",
     icon: ArrowLeftRight,
     to: "/admin/transfers",
+    group: "money",
     requiredRole: AuditRole.MANAGER,
   },
-  { label: "Documents", icon: FileText, to: "/admin/documents", requiredRole: AuditRole.MANAGER },
-  { label: "Settings", icon: Settings, to: "/admin/settings", requiredRole: AuditRole.MANAGER },
+  {
+    label: "Documents",
+    icon: FileText,
+    to: "/admin/documents",
+    group: "money",
+    requiredRole: AuditRole.MANAGER,
+  },
+  {
+    label: "Settings",
+    icon: Settings,
+    to: "/admin/settings",
+    group: "admin",
+    requiredRole: AuditRole.MANAGER,
+  },
   {
     label: "Audit Trail",
     icon: Shield,
     to: "/admin/audit-logs",
+    group: "admin",
     onlyRoles: [AuditRole.OWNER, AuditRole.ADMIN],
   },
-  { label: "User Roles", icon: UserCog, to: "/admin/roles", onlyRoles: [AuditRole.ADMIN] },
+  {
+    label: "User Roles",
+    icon: UserCog,
+    to: "/admin/roles",
+    group: "admin",
+    onlyRoles: [AuditRole.ADMIN],
+  },
 ];
 
 function canSee(destination: AdminDestination, role: AuditRole | null): boolean {
@@ -137,6 +210,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       surface="admin"
       brand={{ name: "Okaeri Resort", tagline: "Management System", to: "/admin/dashboard" }}
       destinations={visibleDestinations}
+      navGroups={navGroups}
       navLoading={roleLoading}
       actions={actions}
       theme={{ value: theme, onChange: setTheme }}

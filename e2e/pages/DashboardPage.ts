@@ -88,8 +88,8 @@ export class DashboardPage {
   }
 
   /**
-   * Click a destination in the main nav (bottom bar or rail). On compact windows the
-   * unpinned destinations sit behind More, which opens the full list.
+   * Click a destination in the main nav (bottom bar or rail). When it is not shown directly
+   * (unpinned on compact, grouped in the collapsed rail), More or Open menu opens the full list.
    */
   private async clickNavLink(name: RegExp) {
     const nav = this.page.getByRole("navigation", { name: "Main" });
@@ -98,7 +98,7 @@ export class DashboardPage {
     if (await link.first().isVisible()) {
       await link.first().click();
     } else {
-      await this.page.getByRole("button", { name: "More" }).click();
+      await this.page.getByRole("button", { name: /^(More|Open menu)$/ }).click();
       await this.page.getByRole("dialog").getByRole("link", { name }).first().click();
     }
   }
