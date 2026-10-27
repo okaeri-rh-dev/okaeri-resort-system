@@ -32,7 +32,7 @@ beforeEach(() => {
   } as unknown as ReturnType<typeof supabase.auth.onAuthStateChange>);
 });
 
-async function renderMenuFor(role: AuditRole) {
+async function renderMenuFor(role: AuditRole, path = "/admin/dashboard") {
   vi.mocked(getUserAuditRole).mockResolvedValue(role);
   const rootRoute = createRootRoute({
     component: () => (
@@ -43,7 +43,7 @@ async function renderMenuFor(role: AuditRole) {
   });
   const router = createRouter({
     routeTree: rootRoute,
-    history: createMemoryHistory({ initialEntries: ["/admin/dashboard"] }),
+    history: createMemoryHistory({ initialEntries: [path] }),
   });
   render(<RouterProvider router={router} />);
 
@@ -109,5 +109,18 @@ describe("admin menu groups per role", () => {
     for (const group of groupNames(nav)) {
       expect(groupLinks(nav, group)).not.toContain("Dashboard");
     }
+  });
+
+  it("marks Bookings, not Booking Queue, on a booking's detail page", async () => {
+    const nav = await renderMenuFor(AuditRole.MANAGER, "/admin/bookings/booking-1");
+
+    const bookings = within(nav).getByRole("list", { name: "Bookings" });
+    expect(within(bookings).getByRole("link", { name: "Bookings" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+    expect(within(bookings).getByRole("link", { name: "Booking Queue" })).not.toHaveAttribute(
+      "aria-current"
+    );
   });
 });

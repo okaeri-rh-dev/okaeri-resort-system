@@ -51,14 +51,7 @@ const navGroups: ShellGroup[] = [
 // Pinned destinations fill the compact bottom bar when a role has more than five
 const destinations: AdminDestination[] = [
   { label: "Dashboard", icon: Home, to: "/admin/dashboard", pinned: true },
-  {
-    label: "Bookings",
-    icon: Calendar,
-    to: "/admin/bookings",
-    group: "bookings",
-    pinned: true,
-    exact: true,
-  },
+  { label: "Bookings", icon: Calendar, to: "/admin/bookings", group: "bookings", pinned: true },
   {
     label: "Booking Queue",
     icon: ListChecks,

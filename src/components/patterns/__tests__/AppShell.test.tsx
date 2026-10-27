@@ -216,14 +216,7 @@ const navGroups: ShellGroup[] = [
 
 const groupedDestinations: ShellDestination[] = [
   { label: "Dashboard", to: "/admin/dashboard", icon: Home, pinned: true },
-  {
-    label: "Bookings",
-    to: "/admin/bookings",
-    icon: Calendar,
-    pinned: true,
-    exact: true,
-    group: "bookings",
-  },
+  { label: "Bookings", to: "/admin/bookings", icon: Calendar, pinned: true, group: "bookings" },
   {
     label: "Booking Queue",
     to: "/admin/bookings/queue",
@@ -334,13 +327,47 @@ describe("AppShell, admin grouped nav", () => {
     );
   });
 
-  it("keeps an exact destination's group active only through its other items", async () => {
-    renderGrouped("/admin/bookings/new");
+  it("marks the destination with the longest matching path, not its parent", async () => {
+    renderGrouped("/admin/bookings/queue");
 
     const nav = await screen.findByRole("navigation", { name: "Main" });
-    expect(within(nav).getByRole("button", { name: "Bookings" })).not.toHaveAttribute(
+    const bookings = within(nav).getByRole("list", { name: "Bookings" });
+    expect(within(bookings).getByRole("link", { name: "Booking Queue" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+    expect(within(bookings).getByRole("link", { name: "Bookings" })).not.toHaveAttribute(
       "aria-current"
     );
+  });
+
+  it("marks the parent destination and its group on a child route no destination owns", async () => {
+    renderGrouped("/admin/bookings/booking-1/edit");
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    const bookings = within(nav).getByRole("list", { name: "Bookings" });
+    expect(within(bookings).getByRole("link", { name: "Bookings" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+    expect(within(bookings).getByRole("link", { name: "Booking Queue" })).not.toHaveAttribute(
+      "aria-current"
+    );
+    expect(within(nav).getByRole("button", { name: "Bookings" })).toHaveAttribute(
+      "aria-current",
+      "true"
+    );
+  });
+
+  it("marks the current destination even when the page has search params", async () => {
+    renderGrouped("/admin/availability?view=month");
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    expect(
+      within(within(nav).getByRole("list", { name: "Cabins" })).getByRole("link", {
+        name: "Availability",
+      })
+    ).toHaveAttribute("aria-current", "page");
   });
 
   it("keeps the compact bar flat: pinned destinations, then More", async () => {

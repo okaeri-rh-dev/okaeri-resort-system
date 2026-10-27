@@ -1,4 +1,11 @@
-import { useId, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useId,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 
 import { Link, useLocation } from "@tanstack/react-router";
 import { CircleUser, Menu, MoreHorizontal, type LucideIcon } from "lucide-react";
@@ -35,7 +42,10 @@ export interface ShellDestination {
   icon: LucideIcon;
   /** Keeps the destination in the compact bottom bar when the list needs a More slot. */
   pinned?: boolean;
-  /** Active on this path only, not on its child routes. */
+  /**
+   * Active on this path only, not on its child routes. Rarely needed: when paths nest, the
+   * destination with the longest matching path is the active one.
+   */
   exact?: boolean;
   /** The `ShellGroup.id` it sits under. Ungrouped destinations lead the nav. */
   group?: string;
@@ -225,23 +235,54 @@ function ItemLabel({
   );
 }
 
-/** Active on the destination's path, and on its child routes unless it is `exact`. */
-function matchOptions(destination: ShellDestination) {
-  return { exact: destination.exact ?? false };
+function matchesPath(destination: ShellDestination, path: string): boolean {
+  if (path === destination.to) return true;
+  return !destination.exact && path.startsWith(`${destination.to.replace(/\/$/, "")}/`);
 }
 
-/** The same rule as `matchOptions`, for a group item that is not itself a link. */
-function isActive(destination: ShellDestination, pathname: string): boolean {
-  const path = pathname.replace(/\/+$/, "");
-  if (path === destination.to) return true;
-  return !destination.exact && path.startsWith(`${destination.to}/`);
+/**
+ * The destination that holds the current page: of those whose path matches it (child routes
+ * included unless `exact`), the one with the longest path. So `/bookings/queue` beats `/bookings`
+ * on the queue, and `/bookings` holds a booking's detail page.
+ */
+function useCurrentDestination(destinations: ShellDestination[]): RoutePath | undefined {
+  const path = useLocation({ select: (location) => location.pathname.replace(/(.)\/+$/, "$1") });
+  return destinations
+    .filter((destination) => matchesPath(destination, path))
+    .reduce<RoutePath | undefined>(
+      (current, destination) =>
+        current === undefined || destination.to.length > current.length ? destination.to : current,
+      undefined
+    );
+}
+
+const CurrentDestinationContext = createContext<RoutePath | undefined>(undefined);
+
+/** A destination link, active when it holds the current page. */
+function NavLink({
+  destination,
+  children,
+  ...props
+}: { destination: ShellDestination } & Omit<ComponentProps<"a">, "href">) {
+  const isCurrent = useContext(CurrentDestinationContext) === destination.to;
+  return (
+    <Link
+      {...props}
+      to={destination.to}
+      activeOptions={{ exact: true, includeSearch: false }}
+      aria-current={isCurrent ? "page" : undefined}
+      data-status={isCurrent ? "active" : undefined}
+    >
+      {children}
+    </Link>
+  );
 }
 
 function RailLink({ destination }: { destination: ShellDestination }) {
   return (
-    <Link to={destination.to} activeOptions={matchOptions(destination)} className={railItem}>
+    <NavLink destination={destination} className={railItem}>
       <ItemLabel form="rail" icon={destination.icon} label={destination.label} />
-    </Link>
+    </NavLink>
   );
 }
 
@@ -273,8 +314,8 @@ function GroupList({
 
 /** A group in the collapsed rail: one item that opens the group's links to the right. */
 function RailFlyout({ group, destinations }: NavSection & { group: ShellGroup }) {
-  const pathname = useLocation({ select: (location) => location.pathname });
-  const holdsCurrentPage = destinations.some((destination) => isActive(destination, pathname));
+  const current = useContext(CurrentDestinationContext);
+  const holdsCurrentPage = destinations.some((destination) => destination.to === current);
 
   return (
     <DropdownMenu>
@@ -292,13 +333,12 @@ function RailFlyout({ group, destinations }: NavSection & { group: ShellGroup })
         <DropdownMenuLabel>{group.label}</DropdownMenuLabel>
         {destinations.map((destination) => (
           <DropdownMenuItem key={destination.to} asChild>
-            <Link
-              to={destination.to}
-              activeOptions={matchOptions(destination)}
+            <NavLink
+              destination={destination}
               className="data-[status=active]:bg-accent data-[status=active]:text-accent-foreground"
             >
               <ItemLabel form="dropdown" icon={destination.icon} label={destination.label} />
-            </Link>
+            </NavLink>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
@@ -380,13 +420,9 @@ function SheetLinks({
   return destinations.map((destination) => (
     <li key={destination.to}>
       <SheetClose asChild>
-        <Link
-          to={destination.to}
-          activeOptions={matchOptions(destination)}
-          className={linkClassName}
-        >
+        <NavLink destination={destination} className={linkClassName}>
           <ItemLabel form="sheet" icon={destination.icon} label={destination.label} />
-        </Link>
+        </NavLink>
       </SheetClose>
     </li>
   ));
@@ -418,173 +454,178 @@ function AdminShell({
   const inBar = (destination: ShellDestination) => !needsMore || destination.pinned;
   const hasFooter = actions.length > 0 || theme !== undefined;
   const sections = navGroups && toSections(destinations, navGroups);
+  const current = useCurrentDestination(destinations);
 
   return (
-    <div className="bg-background medium:flex-row flex h-dvh flex-col">
-      <header className="bg-card border-border medium:hidden flex h-14 shrink-0 items-center justify-between border-b px-4">
-        <Link to={brand.to} className="font-display text-foreground text-lg font-bold">
-          {brand.name}
-        </Link>
-        <div className="flex items-center gap-2">
-          {theme &&
-            (needsMore ? (
-              <DarkModeSwitch theme={theme} />
-            ) : (
-              <ThemeSegments theme={theme} tone="surface" form="icons" />
-            ))}
-          {actions.length > 0 && <AccountMenu actions={actions} form="header" />}
-        </div>
-      </header>
-
-      <div
-        className={cn(
-          "bg-sidebar text-sidebar-foreground border-sidebar-border safe-area-bottom fixed inset-x-0 bottom-0 z-40 border-t",
-          "medium:static medium:flex medium:h-full medium:w-20 medium:shrink-0 medium:flex-col medium:overflow-y-auto medium:border-t-0 medium:border-r",
-          "large:w-72"
-        )}
-      >
-        <div className="medium:block large:px-6 large:pt-6 large:pb-2 hidden px-2 pt-3">
-          <Button
-            variant="ghost"
-            onClick={() => setMenuOpen(true)}
-            aria-label="Open menu"
-            className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground large:hidden mx-auto flex size-12"
-          >
-            <Menu className="size-5" aria-hidden="true" />
-          </Button>
-          <div className="large:block hidden">
-            <Link to={brand.to} className="font-display text-2xl font-bold">
-              {brand.name}
-            </Link>
-            {brand.tagline && <p className="mt-1 text-sm opacity-80">{brand.tagline}</p>}
-          </div>
-        </div>
-
-        <nav aria-label="Main" className="medium:flex medium:flex-1 medium:flex-col">
-          {navLoading ? (
-            <div
-              role="status"
-              aria-label="Loading navigation"
-              className="medium:flex-1 medium:flex-col large:px-4 flex gap-2 p-2"
-            >
-              {Array.from({ length: BAR_SLOTS }, (_, index) => (
-                <Skeleton key={index} className="bg-sidebar-accent medium:flex-none h-12 flex-1" />
+    <CurrentDestinationContext.Provider value={current}>
+      <div className="bg-background medium:flex-row flex h-dvh flex-col">
+        <header className="bg-card border-border medium:hidden flex h-14 shrink-0 items-center justify-between border-b px-4">
+          <Link to={brand.to} className="font-display text-foreground text-lg font-bold">
+            {brand.name}
+          </Link>
+          <div className="flex items-center gap-2">
+            {theme &&
+              (needsMore ? (
+                <DarkModeSwitch theme={theme} />
+              ) : (
+                <ThemeSegments theme={theme} tone="surface" form="icons" />
               ))}
+            {actions.length > 0 && <AccountMenu actions={actions} form="header" />}
+          </div>
+        </header>
+
+        <div
+          className={cn(
+            "bg-sidebar text-sidebar-foreground border-sidebar-border safe-area-bottom fixed inset-x-0 bottom-0 z-40 border-t",
+            "medium:static medium:flex medium:h-full medium:w-20 medium:shrink-0 medium:flex-col medium:overflow-y-auto medium:border-t-0 medium:border-r",
+            "large:w-72"
+          )}
+        >
+          <div className="medium:block large:px-6 large:pt-6 large:pb-2 hidden px-2 pt-3">
+            <Button
+              variant="ghost"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+              className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground large:hidden mx-auto flex size-12"
+            >
+              <Menu className="size-5" aria-hidden="true" />
+            </Button>
+            <div className="large:block hidden">
+              <Link to={brand.to} className="font-display text-2xl font-bold">
+                {brand.name}
+              </Link>
+              {brand.tagline && <p className="mt-1 text-sm opacity-80">{brand.tagline}</p>}
             </div>
-          ) : sections ? (
-            <>
-              <ul className="medium:hidden flex gap-1 px-2 py-1">
-                {sections
-                  .flatMap((section) => section.destinations)
-                  .filter(inBar)
-                  .map((destination) => (
-                    <li key={destination.to} className="min-w-0 flex-1">
-                      <RailLink destination={destination} />
+          </div>
+
+          <nav aria-label="Main" className="medium:flex medium:flex-1 medium:flex-col">
+            {navLoading ? (
+              <div
+                role="status"
+                aria-label="Loading navigation"
+                className="medium:flex-1 medium:flex-col large:px-4 flex gap-2 p-2"
+              >
+                {Array.from({ length: BAR_SLOTS }, (_, index) => (
+                  <Skeleton
+                    key={index}
+                    className="bg-sidebar-accent medium:flex-none h-12 flex-1"
+                  />
+                ))}
+              </div>
+            ) : sections ? (
+              <>
+                <ul className="medium:hidden flex gap-1 px-2 py-1">
+                  {sections
+                    .flatMap((section) => section.destinations)
+                    .filter(inBar)
+                    .map((destination) => (
+                      <li key={destination.to} className="min-w-0 flex-1">
+                        <RailLink destination={destination} />
+                      </li>
+                    ))}
+                  {needsMore && (
+                    <li className="min-w-0 flex-1">
+                      <MoreButton onClick={() => setMenuOpen(true)} />
                     </li>
-                  ))}
+                  )}
+                </ul>
+                <GroupedRail sections={sections} />
+              </>
+            ) : (
+              <ul className="medium:flex-1 medium:flex-col medium:py-3 large:px-4 flex gap-1 px-2 py-1">
+                {destinations.map((destination) => (
+                  <li
+                    key={destination.to}
+                    className={cn(
+                      "medium:flex-none min-w-0 flex-1",
+                      !inBar(destination) && "max-medium:hidden"
+                    )}
+                  >
+                    <NavLink destination={destination} className={railItem}>
+                      <ItemLabel form="rail" icon={destination.icon} label={destination.label} />
+                    </NavLink>
+                  </li>
+                ))}
                 {needsMore && (
-                  <li className="min-w-0 flex-1">
+                  <li className="medium:hidden min-w-0 flex-1">
                     <MoreButton onClick={() => setMenuOpen(true)} />
                   </li>
                 )}
               </ul>
-              <GroupedRail sections={sections} />
-            </>
-          ) : (
-            <ul className="medium:flex-1 medium:flex-col medium:py-3 large:px-4 flex gap-1 px-2 py-1">
-              {destinations.map((destination) => (
-                <li
-                  key={destination.to}
-                  className={cn(
-                    "medium:flex-none min-w-0 flex-1",
-                    !inBar(destination) && "max-medium:hidden"
-                  )}
-                >
-                  <Link
-                    to={destination.to}
-                    activeOptions={matchOptions(destination)}
-                    className={railItem}
-                  >
-                    <ItemLabel form="rail" icon={destination.icon} label={destination.label} />
-                  </Link>
-                </li>
-              ))}
-              {needsMore && (
-                <li className="medium:hidden min-w-0 flex-1">
-                  <MoreButton onClick={() => setMenuOpen(true)} />
-                </li>
-              )}
-            </ul>
-          )}
-        </nav>
-
-        {hasFooter && (
-          <div className="border-sidebar-border medium:flex large:px-4 hidden flex-col gap-1 border-t p-2">
-            {theme && (
-              <div className="large:pb-1 py-1">
-                <ThemeSegments theme={theme} tone="sidebar" form="rail" />
-              </div>
-            )}
-            {actions.length > 0 && <AccountMenu actions={actions} form="rail" />}
-          </div>
-        )}
-      </div>
-
-      <main className="relative min-h-0 min-w-0 flex-1 overflow-y-auto">
-        {banner}
-        <Content {...content} surface="admin" className="medium:pb-6 pb-24" />
-      </main>
-
-      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-        <SheetContent
-          side="left"
-          className="bg-sidebar text-sidebar-foreground border-sidebar-border flex w-72 flex-col gap-0 p-0"
-        >
-          <div className="border-sidebar-border shrink-0 border-b p-6">
-            <SheetTitle className="font-display text-sidebar-foreground text-xl font-bold">
-              {brand.name}
-            </SheetTitle>
-            <SheetDescription
-              className={cn("text-sidebar-foreground mt-1 opacity-80", !brand.tagline && "sr-only")}
-            >
-              {brand.tagline ?? "Every destination"}
-            </SheetDescription>
-          </div>
-          <nav aria-label="Menu" className="min-h-0 flex-1 overflow-y-auto p-4">
-            {sections ? (
-              <div className="space-y-2">
-                {sections.map(({ group, destinations: sectionDestinations }) =>
-                  group ? (
-                    <GroupList key={group.id} label={group.label}>
-                      <SheetLinks
-                        destinations={sectionDestinations}
-                        linkClassName={adminSheetLink}
-                      />
-                    </GroupList>
-                  ) : (
-                    <ul key="ungrouped" className="space-y-1">
-                      <SheetLinks
-                        destinations={sectionDestinations}
-                        linkClassName={adminSheetLink}
-                      />
-                    </ul>
-                  )
-                )}
-              </div>
-            ) : (
-              <ul className="space-y-1">
-                <SheetLinks destinations={destinations} linkClassName={adminSheetLink} />
-              </ul>
             )}
           </nav>
-          {theme && (
-            <div className="border-sidebar-border shrink-0 border-t p-4">
-              <ThemeSegments theme={theme} tone="sidebar" form="labelled" />
+
+          {hasFooter && (
+            <div className="border-sidebar-border medium:flex large:px-4 hidden flex-col gap-1 border-t p-2">
+              {theme && (
+                <div className="large:pb-1 py-1">
+                  <ThemeSegments theme={theme} tone="sidebar" form="rail" />
+                </div>
+              )}
+              {actions.length > 0 && <AccountMenu actions={actions} form="rail" />}
             </div>
           )}
-        </SheetContent>
-      </Sheet>
-    </div>
+        </div>
+
+        <main className="relative min-h-0 min-w-0 flex-1 overflow-y-auto">
+          {banner}
+          <Content {...content} surface="admin" className="medium:pb-6 pb-24" />
+        </main>
+
+        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+          <SheetContent
+            side="left"
+            className="bg-sidebar text-sidebar-foreground border-sidebar-border flex w-72 flex-col gap-0 p-0"
+          >
+            <div className="border-sidebar-border shrink-0 border-b p-6">
+              <SheetTitle className="font-display text-sidebar-foreground text-xl font-bold">
+                {brand.name}
+              </SheetTitle>
+              <SheetDescription
+                className={cn(
+                  "text-sidebar-foreground mt-1 opacity-80",
+                  !brand.tagline && "sr-only"
+                )}
+              >
+                {brand.tagline ?? "Every destination"}
+              </SheetDescription>
+            </div>
+            <nav aria-label="Menu" className="min-h-0 flex-1 overflow-y-auto p-4">
+              {sections ? (
+                <div className="space-y-2">
+                  {sections.map(({ group, destinations: sectionDestinations }) =>
+                    group ? (
+                      <GroupList key={group.id} label={group.label}>
+                        <SheetLinks
+                          destinations={sectionDestinations}
+                          linkClassName={adminSheetLink}
+                        />
+                      </GroupList>
+                    ) : (
+                      <ul key="ungrouped" className="space-y-1">
+                        <SheetLinks
+                          destinations={sectionDestinations}
+                          linkClassName={adminSheetLink}
+                        />
+                      </ul>
+                    )
+                  )}
+                </div>
+              ) : (
+                <ul className="space-y-1">
+                  <SheetLinks destinations={destinations} linkClassName={adminSheetLink} />
+                </ul>
+              )}
+            </nav>
+            {theme && (
+              <div className="border-sidebar-border shrink-0 border-t p-4">
+                <ThemeSegments theme={theme} tone="sidebar" form="labelled" />
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
+      </div>
+    </CurrentDestinationContext.Provider>
   );
 }
 
@@ -596,78 +637,77 @@ const topBarLink = cn(
 
 function GuestShell({ brand, destinations, theme, banner, ...content }: AppShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const current = useCurrentDestination(destinations);
 
   return (
-    <div className="bg-background flex min-h-dvh flex-col">
-      <header className="bg-card border-border sticky top-0 z-40 border-b">
-        <div className="medium:px-6 mx-auto flex h-14 w-full max-w-300 items-center justify-between gap-4 px-4">
-          <Link to={brand.to} className="font-display text-foreground text-lg font-bold">
-            {brand.name}
-          </Link>
-          <div className="flex items-center gap-2">
-            <nav aria-label="Main" className="medium:block hidden">
-              <ul className="flex items-center gap-1">
-                {destinations.map((destination) => (
-                  <li key={destination.to}>
-                    <Link
-                      to={destination.to}
-                      activeOptions={matchOptions(destination)}
-                      className={topBarLink}
-                    >
-                      {destination.label}
-                    </Link>
-                  </li>
-                ))}
+    <CurrentDestinationContext.Provider value={current}>
+      <div className="bg-background flex min-h-dvh flex-col">
+        <header className="bg-card border-border sticky top-0 z-40 border-b">
+          <div className="medium:px-6 mx-auto flex h-14 w-full max-w-300 items-center justify-between gap-4 px-4">
+            <Link to={brand.to} className="font-display text-foreground text-lg font-bold">
+              {brand.name}
+            </Link>
+            <div className="flex items-center gap-2">
+              <nav aria-label="Main" className="medium:block hidden">
+                <ul className="flex items-center gap-1">
+                  {destinations.map((destination) => (
+                    <li key={destination.to}>
+                      <NavLink destination={destination} className={topBarLink}>
+                        {destination.label}
+                      </NavLink>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+              {theme && (
+                <>
+                  <div className="medium:hidden">
+                    <DarkModeSwitch theme={theme} />
+                  </div>
+                  <div className="medium:block hidden">
+                    <ThemeSegments theme={theme} tone="surface" form="icons" />
+                  </div>
+                </>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMenuOpen(true)}
+                aria-label="Open menu"
+                className="medium:hidden"
+              >
+                <Menu className="size-5" aria-hidden="true" />
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1">
+          {banner}
+          <Content {...content} surface="guest" />
+        </main>
+
+        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+          <SheetContent side="right" className="flex w-72 flex-col gap-0 p-0">
+            <div className="border-border shrink-0 border-b p-6">
+              <SheetTitle className="font-display text-xl font-bold">{brand.name}</SheetTitle>
+              <SheetDescription className={cn("mt-1", !brand.tagline && "sr-only")}>
+                {brand.tagline ?? "Pages"}
+              </SheetDescription>
+            </div>
+            <nav aria-label="Menu" className="min-h-0 flex-1 overflow-y-auto p-4">
+              <ul className="space-y-1">
+                <SheetLinks destinations={destinations} linkClassName={cn(sheetItem, topBarLink)} />
               </ul>
             </nav>
             {theme && (
-              <>
-                <div className="medium:hidden">
-                  <DarkModeSwitch theme={theme} />
-                </div>
-                <div className="medium:block hidden">
-                  <ThemeSegments theme={theme} tone="surface" form="icons" />
-                </div>
-              </>
+              <div className="border-border shrink-0 border-t p-4">
+                <ThemeSegments theme={theme} tone="surface" form="labelled" />
+              </div>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMenuOpen(true)}
-              aria-label="Open menu"
-              className="medium:hidden"
-            >
-              <Menu className="size-5" aria-hidden="true" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1">
-        {banner}
-        <Content {...content} surface="guest" />
-      </main>
-
-      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-        <SheetContent side="right" className="flex w-72 flex-col gap-0 p-0">
-          <div className="border-border shrink-0 border-b p-6">
-            <SheetTitle className="font-display text-xl font-bold">{brand.name}</SheetTitle>
-            <SheetDescription className={cn("mt-1", !brand.tagline && "sr-only")}>
-              {brand.tagline ?? "Pages"}
-            </SheetDescription>
-          </div>
-          <nav aria-label="Menu" className="min-h-0 flex-1 overflow-y-auto p-4">
-            <ul className="space-y-1">
-              <SheetLinks destinations={destinations} linkClassName={cn(sheetItem, topBarLink)} />
-            </ul>
-          </nav>
-          {theme && (
-            <div className="border-border shrink-0 border-t p-4">
-              <ThemeSegments theme={theme} tone="surface" form="labelled" />
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
-    </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+    </CurrentDestinationContext.Provider>
   );
 }
