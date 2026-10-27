@@ -8,11 +8,21 @@ import {
 } from "@tanstack/react-router";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Calendar, Home, ListChecks, LogOut, Receipt, Settings, Users } from "lucide-react";
+import {
+  Building2,
+  Calendar,
+  CalendarRange,
+  Home,
+  ListChecks,
+  LogOut,
+  Receipt,
+  Settings,
+  Users,
+} from "lucide-react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
 
-import { AppShell, type ShellDestination } from "@/components/patterns";
+import { AppShell, type ShellDestination, type ShellGroup } from "@/components/patterns";
 
 // The setup file's vi.fn() ResizeObserver is reset between tests; Radix menus measure with it
 beforeAll(() => {
@@ -195,6 +205,253 @@ describe("AppShell, admin", () => {
 
     await screen.findByRole("navigation", { name: "Main" });
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+const navGroups: ShellGroup[] = [
+  { id: "bookings", label: "Bookings", icon: Calendar },
+  { id: "cabins", label: "Cabins", icon: Building2 },
+  { id: "admin", label: "Admin", icon: Settings },
+];
+
+const groupedDestinations: ShellDestination[] = [
+  { label: "Dashboard", to: "/admin/dashboard", icon: Home, pinned: true },
+  { label: "Bookings", to: "/admin/bookings", icon: Calendar, pinned: true, group: "bookings" },
+  {
+    label: "Booking Queue",
+    to: "/admin/bookings/queue",
+    icon: ListChecks,
+    pinned: true,
+    group: "bookings",
+  },
+  { label: "Payments", to: "/admin/payments", icon: Receipt, pinned: true, group: "bookings" },
+  { label: "Settings", to: "/admin/settings", icon: Settings, group: "admin" },
+  { label: "Cabins", to: "/admin/units", icon: Building2, group: "cabins" },
+  { label: "Availability", to: "/admin/availability", icon: CalendarRange, group: "cabins" },
+];
+
+function linkLabels(container: HTMLElement) {
+  return within(container)
+    .getAllByRole("link")
+    .map((link) => link.textContent);
+}
+
+function expectInOrder(elements: HTMLElement[]) {
+  for (let index = 1; index < elements.length; index++) {
+    expect(
+      elements[index - 1].compareDocumentPosition(elements[index]) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  }
+}
+
+function renderGrouped(path: string, destinations = groupedDestinations) {
+  return renderAt(
+    path,
+    <AppShell surface="admin" brand={brand} destinations={destinations} navGroups={navGroups}>
+      <p>Body</p>
+    </AppShell>
+  );
+}
+
+describe("AppShell, admin grouped nav", () => {
+  it("lists each group under its heading, in group order, after the ungrouped items", async () => {
+    renderGrouped("/admin/dashboard");
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    const bookings = within(nav).getByRole("list", { name: "Bookings" });
+    const cabins = within(nav).getByRole("list", { name: "Cabins" });
+    const admin = within(nav).getByRole("list", { name: "Admin" });
+
+    expect(linkLabels(bookings)).toEqual(["Bookings", "Booking Queue", "Payments"]);
+    expect(linkLabels(cabins)).toEqual(["Cabins", "Availability"]);
+    expect(linkLabels(admin)).toEqual(["Settings"]);
+
+    const dashboard = within(nav).getAllByRole("link", { name: "Dashboard" }).at(-1)!;
+    expectInOrder([dashboard, bookings, cabins, admin]);
+  });
+
+  it("opens a group's links from its collapsed-rail item and navigates", async () => {
+    const user = userEvent.setup();
+    renderGrouped("/admin/bookings/queue");
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    const trigger = within(nav).getByRole("button", { name: "Bookings" });
+    expect(trigger).toHaveAttribute("aria-haspopup", "menu");
+
+    await user.click(trigger);
+    const flyout = screen.getByRole("menu", { name: "Bookings" });
+    expect(
+      within(flyout)
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent)
+    ).toEqual(["Bookings", "Booking Queue", "Payments"]);
+    expect(within(flyout).getByRole("menuitem", { name: "Booking Queue" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+
+    await user.click(within(flyout).getByRole("menuitem", { name: "Payments" }));
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(
+      within(within(nav).getByRole("list", { name: "Bookings" })).getByRole("link", {
+        name: "Payments",
+      })
+    ).toHaveAttribute("aria-current", "page");
+  });
+
+  it("opens a flyout with the keyboard and moves through its links with the arrow keys", async () => {
+    const user = userEvent.setup();
+    renderGrouped("/admin/dashboard");
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    within(nav).getByRole("button", { name: "Cabins" }).focus();
+    await user.keyboard("{Enter}");
+
+    const flyout = screen.getByRole("menu", { name: "Cabins" });
+    expect(within(flyout).getByRole("menuitem", { name: "Cabins" })).toHaveFocus();
+    await user.keyboard("{ArrowDown}");
+    expect(within(flyout).getByRole("menuitem", { name: "Availability" })).toHaveFocus();
+  });
+
+  it("marks the collapsed-rail group that holds the current page, child routes included", async () => {
+    renderGrouped("/admin/units/cabin-1");
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    expect(within(nav).getByRole("button", { name: "Cabins" })).toHaveAttribute(
+      "aria-current",
+      "true"
+    );
+    expect(within(nav).getByRole("button", { name: "Bookings" })).not.toHaveAttribute(
+      "aria-current"
+    );
+  });
+
+  it("marks the destination with the longest matching path, not its parent", async () => {
+    renderGrouped("/admin/bookings/queue");
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    const bookings = within(nav).getByRole("list", { name: "Bookings" });
+    expect(within(bookings).getByRole("link", { name: "Booking Queue" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+    expect(within(bookings).getByRole("link", { name: "Bookings" })).not.toHaveAttribute(
+      "aria-current"
+    );
+  });
+
+  it("marks the parent destination and its group on a child route no destination owns", async () => {
+    renderGrouped("/admin/bookings/booking-1/edit");
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    const bookings = within(nav).getByRole("list", { name: "Bookings" });
+    expect(within(bookings).getByRole("link", { name: "Bookings" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+    expect(within(bookings).getByRole("link", { name: "Booking Queue" })).not.toHaveAttribute(
+      "aria-current"
+    );
+    expect(within(nav).getByRole("button", { name: "Bookings" })).toHaveAttribute(
+      "aria-current",
+      "true"
+    );
+  });
+
+  it("marks the current destination even when the page has search params", async () => {
+    renderGrouped("/admin/availability?view=month");
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    expect(
+      within(within(nav).getByRole("list", { name: "Cabins" })).getByRole("link", {
+        name: "Availability",
+      })
+    ).toHaveAttribute("aria-current", "page");
+  });
+
+  it("keeps the compact bar flat: pinned destinations, then More", async () => {
+    renderGrouped("/admin/dashboard");
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    const bar = within(nav).getByRole("button", { name: "More" }).closest("ul")!;
+    expect(linkLabels(bar)).toEqual(["Dashboard", "Bookings", "Booking Queue", "Payments"]);
+    expect(within(bar).queryByRole("list", { name: /./ })).not.toBeInTheDocument();
+  });
+
+  it("puts every destination in the compact bar when there are five or fewer", async () => {
+    renderGrouped(
+      "/admin/dashboard",
+      groupedDestinations.filter((destination) => destination.group !== "admin").slice(0, 5)
+    );
+
+    await screen.findByRole("navigation", { name: "Main" });
+    expect(screen.queryByRole("button", { name: "More" })).not.toBeInTheDocument();
+  });
+
+  it("shows the same headings in the menu sheet and closes it on a tap", async () => {
+    const user = userEvent.setup();
+    renderGrouped("/admin/dashboard");
+
+    await user.click(await screen.findByRole("button", { name: "More" }));
+    const sheet = screen.getByRole("dialog", { name: "Okaeri Resort" });
+    const menuNav = within(sheet).getByRole("navigation", { name: "Menu" });
+    expect(linkLabels(menuNav)[0]).toBe("Dashboard");
+    expect(linkLabels(within(menuNav).getByRole("list", { name: "Bookings" }))).toEqual([
+      "Bookings",
+      "Booking Queue",
+      "Payments",
+    ]);
+    expect(linkLabels(within(menuNav).getByRole("list", { name: "Cabins" }))).toEqual([
+      "Cabins",
+      "Availability",
+    ]);
+    expect(linkLabels(within(menuNav).getByRole("list", { name: "Admin" }))).toEqual(["Settings"]);
+    expect(await axe(sheet)).toHaveNoViolations();
+
+    await user.click(within(menuNav).getByRole("link", { name: "Availability" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("drops a group with no destinations and keeps a one-item group's heading", async () => {
+    renderGrouped(
+      "/admin/dashboard",
+      groupedDestinations.filter((destination) => destination.group !== "cabins")
+    );
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    expect(within(nav).queryByRole("list", { name: "Cabins" })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole("button", { name: "Cabins" })).not.toBeInTheDocument();
+    expect(within(nav).getByRole("list", { name: "Admin" })).toBeInTheDocument();
+  });
+
+  it("keeps a destination with an unknown group in the nav, with the ungrouped items", async () => {
+    renderGrouped("/admin/dashboard", [
+      ...groupedDestinations,
+      { label: "Expenses", to: "/admin/expenses", icon: Receipt, group: "monye" },
+    ]);
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    const expenses = within(nav).getAllByRole("link", { name: "Expenses" }).at(-1)!;
+    expectInOrder([expenses, within(nav).getByRole("list", { name: "Bookings" })]);
+  });
+
+  it("has no axe violations in the grouped rail", async () => {
+    const { container } = renderGrouped("/admin/bookings");
+
+    await screen.findByRole("navigation", { name: "Main" });
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("opens a flyout for a one-item group", async () => {
+    const user = userEvent.setup();
+    renderGrouped("/admin/dashboard");
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    await user.click(within(nav).getByRole("button", { name: "Admin" }));
+    const flyout = screen.getByRole("menu", { name: "Admin" });
+    expect(within(flyout).getByRole("menuitem", { name: "Settings" })).toBeInTheDocument();
+    expect(await axe(flyout)).toHaveNoViolations();
   });
 });
 

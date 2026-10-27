@@ -38,6 +38,14 @@ _Avoid_: Utilisation, load
 A rentable accommodation (cabin or room) that a booking occupies. Guests and staff call units "cabins", so screen copy says "cabin"; the model says unit.
 _Avoid_: Room, property
 
+**Block**:
+A range of nights when one unit, or every unit, cannot be booked, with a reason such as maintenance or aircon cleaning. Like a booking, it covers nights, so a guest can still check out on a block's first day. Blocks may overlap. Screen copy says "blocked dates".
+_Avoid_: Blackout, hold, out of order
+
+**Resort closure**:
+A block that covers every unit, including units added after it was made.
+_Avoid_: Shutdown, holiday
+
 ### Money received
 
 **Payment**:

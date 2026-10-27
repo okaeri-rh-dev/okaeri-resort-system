@@ -42,10 +42,12 @@ Breakpoints use the window size class names (`medium:`, `expanded:`, `large:`, `
 
 Navigation per class:
 
-| Surface | Compact                                                                                                                        | Medium, expanded                     | Large, xlarge             |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ | ------------------------- |
-| Admin   | Bottom bar: Dashboard, Bookings, Booking Queue, Payments, More (opens the modal rail). Roles with ≤5 destinations get no More. | Collapsed rail; groups open a flyout | Expanded rail with labels |
-| Guest   | Top bar with a menu sheet                                                                                                      | Top bar with inline links            | (centred at max width)    |
+| Surface | Compact                                                                                                                        | Medium, expanded                     | Large, xlarge                     |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ | --------------------------------- |
+| Admin   | Bottom bar: Dashboard, Bookings, Booking Queue, Payments, More (opens the menu sheet). Roles with ≤5 destinations get no More. | Collapsed rail; groups open a flyout | Expanded rail with group headings |
+| Guest   | Top bar with a menu sheet                                                                                                      | Top bar with inline links            | (centred at max width)            |
+
+Admin destinations sit in four groups under Dashboard, which has no heading: **Bookings** (Bookings, Booking Queue, Payments, Guests), **Cabins** (Cabins, Availability), **Money** (Expenses, Accounts, Transfers, Documents) and **Admin** (Settings, Audit Trail, User Roles). Headings in the expanded rail and the menu sheets are always open. A role sees only the groups that hold an item it can open, and a one-item group keeps its heading. The bottom bar shows no headings. Rationale: [Side-menu grouping](https://github.com/okaeri-rh-dev/okaeri-resort-system/issues/155).
 
 The rail and the menu sheets scroll as one column when the window is short.
 
