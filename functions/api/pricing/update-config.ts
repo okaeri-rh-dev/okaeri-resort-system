@@ -246,7 +246,7 @@ export const onRequestPut = async (context: { request: Request; env: Env }): Pro
         {
           error: "VALIDATION_ERROR",
           message: "Invalid pricing configuration data",
-          details: error.errors,
+          details: error.issues,
         },
         { status: 400, headers: corsHeaders }
       );

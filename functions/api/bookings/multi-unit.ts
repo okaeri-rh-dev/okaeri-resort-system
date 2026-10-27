@@ -59,18 +59,18 @@ const multiUnitBookingSchema = z
           (val) => val === "" || /^[+]?[0-9\s\-()]{10,20}$/.test(val),
           "Invalid contact number"
         ),
-      guest_id: z.string().uuid().optional(),
+      guest_id: z.guid().optional(),
     }),
     check_in: manilaDay,
     check_out: manilaDay,
     units: z
       .array(
         z.object({
-          unit_id: z.string().uuid(),
+          unit_id: z.guid(),
           num_guests: z.number().int().min(1).max(20),
           guest_assignment: z
             .object({
-              guest_ids: z.array(z.string().uuid()),
+              guest_ids: z.array(z.guid()),
               guest_names: z.array(z.string()).optional(),
             })
             .optional(),
@@ -150,7 +150,7 @@ export const onRequestPost = async (context: {
             code: "VALIDATION_ERROR",
             message: "Invalid request data",
             details: {
-              validation_errors: validationResult.error.errors.map((err) => ({
+              validation_errors: validationResult.error.issues.map((err) => ({
                 field: err.path.join("."),
                 message: err.message,
               })),

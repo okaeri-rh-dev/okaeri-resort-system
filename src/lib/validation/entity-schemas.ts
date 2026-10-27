@@ -4,6 +4,8 @@ import { z } from "zod";
 
 import { sanitizeText } from "@/lib/security/sanitize";
 
+import { typeError } from "./type-error";
+
 // ============================================
 // BOOKING EDIT SCHEMA
 // ============================================
@@ -17,16 +19,16 @@ export const bookingEditSchema = z
     guest_name: z.string().min(1, "Guest name is required").max(200, "Name too long"),
     email: z.string().email("Invalid email address"),
     contact_number: z.string().min(10, "Valid phone number required").max(20, "Phone too long"),
-    check_in: z.date({ required_error: "Check-in date is required" }),
-    check_out: z.date({ required_error: "Check-out date is required" }),
-    unit_id: z.string().uuid("Valid unit required"),
+    check_in: z.date({ error: typeError("Check-in date is required") }),
+    check_out: z.date({ error: typeError("Check-out date is required") }),
+    unit_id: z.guid("Valid unit required"),
     num_guests: z
-      .number({ required_error: "Number of guests is required" })
+      .number({ error: typeError("Number of guests is required") })
       .int()
       .min(1, "At least 1 guest required")
       .max(20, "Maximum 20 guests"),
     payment_method: z.enum(["Cash", "GCash", "BankTransfer", "Card"], {
-      required_error: "Payment method is required",
+      error: typeError("Payment method is required"),
     }),
     special_requests: z
       .string()
@@ -56,7 +58,7 @@ export const unitEditWithoutPricingSchema = z.object({
     .transform((val) => val.toUpperCase()),
   unit_type: z.string().min(1, "Unit type is required").max(50, "Type too long"),
   max_occupancy: z
-    .number({ required_error: "Max occupancy is required" })
+    .number({ error: typeError("Max occupancy is required") })
     .int()
     .min(1, "At least 1 guest capacity")
     .max(20, "Maximum 20 guests"),
@@ -92,9 +94,9 @@ export type GuestEditInput = z.infer<typeof guestEditSchema>;
  * Validation schema for payment edit/create forms
  */
 export const paymentEditSchema = z.object({
-  amount: z.number({ required_error: "Amount is required" }).positive("Amount must be positive"),
+  amount: z.number({ error: typeError("Amount is required") }).positive("Amount must be positive"),
   payment_method: z.enum(["Cash", "GCash", "BankTransfer", "Card"], {
-    required_error: "Payment method is required",
+    error: typeError("Payment method is required"),
   }),
   proof_url: z.string().url("Invalid URL").optional().or(z.literal("")),
   notes: z
@@ -119,11 +121,11 @@ export const expenseEditSchema = z.object({
     .min(1, "Description is required")
     .max(200, "Description too long")
     .transform((val) => sanitizeText(val)),
-  amount: z.number({ required_error: "Amount is required" }).positive("Amount must be positive"),
-  expense_date: z.date({ required_error: "Date is required" }),
+  amount: z.number({ error: typeError("Amount is required") }).positive("Amount must be positive"),
+  expense_date: z.date({ error: typeError("Date is required") }),
   category: z.string().min(1, "Category is required").max(50, "Category too long"),
   receipt_url: z.string().url("Invalid URL").optional().or(z.literal("")),
-  unit_id: z.string().uuid("Valid unit ID required").optional(),
+  unit_id: z.guid("Valid unit ID required").optional(),
   notes: z
     .string()
     .max(1000, "Notes too long")

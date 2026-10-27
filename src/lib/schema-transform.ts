@@ -52,7 +52,7 @@ export function transformToAPIFormat(formData: GuestBookingFormData): Record<str
 export const apiResponseSchema = z.object({
   success: z.boolean(),
   booking: z.object({
-    booking_id: z.string().uuid(),
+    booking_id: z.guid(),
     booking_reference: z.string(),
     total_amount: z.number(),
   }),

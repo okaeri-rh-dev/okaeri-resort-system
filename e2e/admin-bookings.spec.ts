@@ -199,7 +199,12 @@ test.describe("Admin Bookings Management", () => {
       await bookingsTable.clickBookingRow(refs[0]);
 
       // Verify detail page has guest info section
-      await expect(page.getByText(/guest|name|email|phone/i).first()).toBeVisible();
+      await expect(
+        page
+          .getByRole("main")
+          .getByText(/guest|name|email|phone/i)
+          .first()
+      ).toBeVisible();
     });
   });
 
@@ -262,7 +267,12 @@ test.describe("Bookings Queue (Payment Verification)", () => {
     await page.goto(ROUTES.admin.bookingsQueue);
 
     // Page should load (may show empty state)
-    await expect(page.getByText(/queue|pending|payment/i).first()).toBeVisible();
+    await expect(
+      page
+        .getByRole("main")
+        .getByText(/queue|pending|payment/i)
+        .first()
+    ).toBeVisible();
   });
 
   test("queue shows pending bookings awaiting verification", async ({ page }) => {

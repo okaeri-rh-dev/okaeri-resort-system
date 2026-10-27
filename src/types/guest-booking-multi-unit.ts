@@ -46,7 +46,7 @@ export const multiUnitBookingSchema = z
     special_requests: z.string().max(1000, "Special requests too long").optional(),
     turnstile_token: z.string().min(1, "CAPTCHA token required"),
     terms_accepted: z.boolean().refine((val) => val === true, "Must accept terms"),
-    idempotency_key: z.string().uuid().optional(),
+    idempotency_key: z.guid().optional(),
     payment_proof_url: z.string().min(1, "Payment proof is required").optional(), // Chunk 008: Payment proof upload
   })
   .refine((data) => data.check_out > data.check_in, {

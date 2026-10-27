@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { typeError } from "./validation/type-error";
+
 // ============================================
 // UTILITY VALIDATION FUNCTIONS
 // ============================================
@@ -52,8 +54,7 @@ export const nameSchema = z
 
 // Date validation
 export const dateSchema = z.date({
-  required_error: messages.required,
-  invalid_type_error: "Please select a valid date",
+  error: typeError(messages.required, "Please select a valid date"),
 });
 
 // Future date validation
@@ -79,7 +80,7 @@ export const unitFormSchema = z.object({
   unit_code: unitCodeSchema,
 
   unit_type: z.enum(["Standard", "Deluxe", "Suite", "Villa"] as const, {
-    required_error: "Please select a unit type",
+    error: typeError("Please select a unit type"),
   }),
 
   base_occupancy: z

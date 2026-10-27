@@ -22,7 +22,7 @@ const pricingCalculateRequestSchema = z
       .string()
       .refine((date) => !isNaN(Date.parse(date)), "Invalid check-out date format"),
     guest_count: z.number().int().min(1).max(50).optional(), // Optional - can be calculated from unit_requests
-    unit_id: z.string().uuid().optional(),
+    unit_id: z.guid().optional(),
     // For custom pricing (e.g., when unit doesn't exist yet)
     custom_pricing: z
       .object({
@@ -36,7 +36,7 @@ const pricingCalculateRequestSchema = z
     unit_requests: z
       .array(
         z.object({
-          unit_id: z.string().uuid().optional(), // Optional for guest bookings (admin assigns later)
+          unit_id: z.guid().optional(), // Optional for guest bookings (admin assigns later)
           guest_count: z.number().int().min(1),
         })
       )
