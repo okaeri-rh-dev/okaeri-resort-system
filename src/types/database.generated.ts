@@ -1341,6 +1341,10 @@ export type Database = {
       at_manila_time: { Args: { p_instant: string; p_time: string }; Returns: string };
       attach_audit_trigger: { Args: { p_table_name: string }; Returns: undefined };
       can_view_all_audit_logs: { Args: Record<PropertyKey, never>; Returns: boolean };
+      cancel_bookings_and_save_block: {
+        Args: { p_block: Json; p_booking_ids: string[] };
+        Returns: Json;
+      };
       check_multi_unit_availability: {
         Args: {
           p_check_in: string;
@@ -1392,6 +1396,27 @@ export type Database = {
       };
       derive_booking_payment_status: { Args: { p_booking_id: string }; Returns: string };
       detach_audit_trigger: { Args: { p_table_name: string }; Returns: undefined };
+      find_block_conflicts: {
+        Args: {
+          p_first_night: string;
+          p_kept_first_night?: string;
+          p_kept_last_night?: string;
+          p_last_night: string;
+          p_unit_ids: string[];
+        };
+        Returns: {
+          booking_id: string;
+          booking_reference: string;
+          booking_status: string;
+          check_in: string;
+          check_out: string;
+          guest_name: string;
+          is_checked_in: boolean;
+          is_partial: boolean;
+          partial_reason: string;
+          unit_names: string[];
+        }[];
+      };
       generate_booking_reference: { Args: Record<PropertyKey, never>; Returns: string };
       generate_transfer_reference: { Args: Record<PropertyKey, never>; Returns: string };
       get_account_balance: {
@@ -1411,6 +1436,26 @@ export type Database = {
           total_payments: number;
           transfers_in: number;
           transfers_out: number;
+        }[];
+      };
+      get_block_conflicts: {
+        Args: {
+          p_block_id?: string;
+          p_first_night: string;
+          p_last_night: string;
+          p_unit_ids?: string[];
+        };
+        Returns: {
+          booking_id: string;
+          booking_reference: string;
+          booking_status: string;
+          check_in: string;
+          check_out: string;
+          guest_name: string;
+          is_checked_in: boolean;
+          is_partial: boolean;
+          partial_reason: string;
+          unit_names: string[];
         }[];
       };
       get_booking_units: {
@@ -1465,6 +1510,7 @@ export type Database = {
         Args: { p_first_night: string; p_last_night: string; p_unit_id: string };
         Returns: boolean;
       };
+      lock_block_units: { Args: { p_unit_ids: string[] }; Returns: undefined };
       lock_units: { Args: { p_unit_ids: string[] }; Returns: undefined };
       monthly_archive_until: {
         Args: { dry_run?: boolean; final_cutoff_date: string };
