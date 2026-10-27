@@ -57,6 +57,7 @@ export function invalidateAvailability() {
   queryClient.invalidateQueries({ queryKey: availabilityKeys.availableUnits.all });
   queryClient.invalidateQueries({ queryKey: availabilityKeys.calendar.all });
   queryClient.invalidateQueries({ queryKey: availabilityKeys.multiUnit.all });
+  queryClient.invalidateQueries({ queryKey: unitKeys.allStates() });
 }
 
 export function invalidateMultiUnitBookings() {
