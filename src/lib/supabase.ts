@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import type { MoveDirection } from "@/lib/contact-channel";
 import { toManilaDateString } from "@/lib/timezone";
 import type { AuditEventContext, AuditLogFilters } from "@/types/audit.types";
-import type { Database, Json, TablesInsert, TablesUpdate } from "@/types/database.types";
+import type { Database, Json, Tables, TablesInsert, TablesUpdate } from "@/types/database.types";
 
 import { requireEnv } from "./env";
 
@@ -44,6 +44,30 @@ type NewBlock = Pick<
 > & {
   unitIds: string[] | null;
 };
+
+type BlockEdit = Partial<
+  Pick<TablesUpdate<"availability_blackouts">, "start_date" | "end_date" | "reason">
+> & {
+  blackoutId: string;
+};
+
+interface BlockNights {
+  /** null = resort closure */
+  unitIds: string[] | null;
+  firstNight: string;
+  lastNight: string;
+  /** The block being edited: only nights it does not already cover can conflict. */
+  blockId?: string;
+}
+
+export type BlockConflict =
+  Database["public"]["Functions"]["get_block_conflicts"]["Returns"][number];
+
+export interface CancelAndSaveResult {
+  status: "saved" | "conflicts_changed" | "checked_in";
+  conflicts: BlockConflict[];
+  blocks: Tables<"availability_blackouts">[];
+}
 
 // Expense Categories types
 // Same situation as payment_methods - using local type bridge
@@ -325,6 +349,35 @@ export const db = {
     update: (id: string, data: Database["public"]["Tables"]["availability_blackouts"]["Update"]) =>
       supabase.from("availability_blackouts").update(data).eq("blackout_id", id).select().single(),
     delete: (id: string) => supabase.from("availability_blackouts").delete().eq("blackout_id", id),
+    conflicts: ({ unitIds, firstNight, lastNight, blockId }: BlockNights) =>
+      supabase.rpc("get_block_conflicts", {
+        p_unit_ids: unitIds ?? undefined,
+        p_first_night: firstNight,
+        p_last_night: lastNight,
+        p_block_id: blockId,
+      }),
+    /** Cancels the confirmed bookings and saves the block atomically; nothing saves unless status is "saved". */
+    cancelAndSave: async (block: NewBlock | BlockEdit, confirmedBookingIds: string[]) => {
+      const blockArg =
+        "blackoutId" in block
+          ? {
+              blackout_id: block.blackoutId,
+              start_date: block.start_date,
+              end_date: block.end_date,
+              reason: block.reason,
+            }
+          : {
+              unit_ids: block.unitIds,
+              start_date: block.start_date,
+              end_date: block.end_date,
+              reason: block.reason,
+            };
+      const { data, error } = await supabase.rpc("cancel_bookings_and_save_block", {
+        p_block: blockArg,
+        p_booking_ids: confirmedBookingIds,
+      });
+      return { data: data as unknown as CancelAndSaveResult | null, error };
+    },
     inDateRange: (startDate: string, endDate: string) =>
       supabase
         .from("availability_blackouts")

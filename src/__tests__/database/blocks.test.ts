@@ -466,7 +466,10 @@ describe("blocks", () => {
       if (!shouldRun) return;
       const unitId = await newUnit();
       const { bookingId } = await createBooking([unitId], "2030-09-01", "2030-09-03");
-      await addBlock(unitId, "2030-09-02", "2030-09-02");
+      // The block save guard refuses this block now; insert it as a row from before the guard.
+      runPsql(
+        `SET session_replication_role = replica; INSERT INTO public.availability_blackouts (unit_id, start_date, end_date, reason) VALUES ('${unitId}', '2030-09-02', '2030-09-02', '${REASON_PREFIX} legacy');`
+      );
 
       const { error } = await roles.byRole.staff
         .from("bookings")
@@ -539,6 +542,30 @@ describe("blocks", () => {
         reason: `${REASON_PREFIX} closure`,
       });
       expect(closure.data?.map((block) => block.unit_id)).toEqual([null]);
+    });
+
+    it("conflicts lists the bookings on the nights, and cancelAndSave clears them", async () => {
+      if (!shouldRun) return;
+      const unitId = await newUnit();
+      const { bookingId } = await createBooking([unitId], "2032-02-10", "2032-02-12");
+      const block = {
+        unitIds: [unitId],
+        start_date: "2032-02-11",
+        end_date: "2032-02-11",
+        reason: `${REASON_PREFIX} helper`,
+      };
+
+      const conflicts = await db.blackouts.conflicts({
+        unitIds: block.unitIds,
+        firstNight: block.start_date,
+        lastNight: block.end_date,
+      });
+      expect(conflicts.data?.map((conflict) => conflict.booking_id)).toEqual([bookingId]);
+
+      const saved = await db.blackouts.cancelAndSave(block, [bookingId!]);
+      expect(saved.error).toBeNull();
+      expect(saved.data?.status).toBe("saved");
+      expect(saved.data?.blocks.map((saved) => saved.unit_id)).toEqual([unitId]);
     });
 
     it("list shows current and upcoming blocks, and past ones on request", async () => {
