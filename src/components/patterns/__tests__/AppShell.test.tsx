@@ -307,6 +307,20 @@ describe("AppShell, admin grouped nav", () => {
     ).toHaveAttribute("aria-current", "page");
   });
 
+  it("opens a flyout with the keyboard and moves through its links with the arrow keys", async () => {
+    const user = userEvent.setup();
+    renderGrouped("/admin/dashboard");
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    within(nav).getByRole("button", { name: "Cabins" }).focus();
+    await user.keyboard("{Enter}");
+
+    const flyout = screen.getByRole("menu", { name: "Cabins" });
+    expect(within(flyout).getByRole("menuitem", { name: "Cabins" })).toHaveFocus();
+    await user.keyboard("{ArrowDown}");
+    expect(within(flyout).getByRole("menuitem", { name: "Availability" })).toHaveFocus();
+  });
+
   it("marks the collapsed-rail group that holds the current page, child routes included", async () => {
     renderGrouped("/admin/units/cabin-1");
 
@@ -365,9 +379,7 @@ describe("AppShell, admin grouped nav", () => {
       "Cabins",
       "Availability",
     ]);
-    expect(linkLabels(within(menuNav).getByRole("list", { name: "Admin" }))).toEqual([
-      "Settings",
-    ]);
+    expect(linkLabels(within(menuNav).getByRole("list", { name: "Admin" }))).toEqual(["Settings"]);
     expect(await axe(sheet)).toHaveNoViolations();
 
     await user.click(within(menuNav).getByRole("link", { name: "Availability" }));
@@ -384,6 +396,17 @@ describe("AppShell, admin grouped nav", () => {
     expect(within(nav).queryByRole("list", { name: "Cabins" })).not.toBeInTheDocument();
     expect(within(nav).queryByRole("button", { name: "Cabins" })).not.toBeInTheDocument();
     expect(within(nav).getByRole("list", { name: "Admin" })).toBeInTheDocument();
+  });
+
+  it("keeps a destination with an unknown group in the nav, with the ungrouped items", async () => {
+    renderGrouped("/admin/dashboard", [
+      ...groupedDestinations,
+      { label: "Expenses", to: "/admin/expenses", icon: Receipt, group: "monye" },
+    ]);
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    const expenses = within(nav).getAllByRole("link", { name: "Expenses" }).at(-1)!;
+    expectInOrder([expenses, within(nav).getByRole("list", { name: "Bookings" })]);
   });
 
   it("has no axe violations in the grouped rail", async () => {

@@ -53,10 +53,18 @@ interface NavSection {
   destinations: ShellDestination[];
 }
 
-/** Ungrouped destinations first, then each group in order. A group with no destinations drops out. */
+/**
+ * Ungrouped destinations first, then each group in order. A group with no destinations drops out.
+ * A destination whose group is not in `groups` counts as ungrouped, so it stays in the nav.
+ */
 function toSections(destinations: ShellDestination[], groups: ShellGroup[]): NavSection[] {
+  const groupIds = new Set(groups.map((group) => group.id));
   return [
-    { destinations: destinations.filter((destination) => !destination.group) },
+    {
+      destinations: destinations.filter(
+        (destination) => !destination.group || !groupIds.has(destination.group)
+      ),
+    },
     ...groups.map((group) => ({
       group,
       destinations: destinations.filter((destination) => destination.group === group.id),
