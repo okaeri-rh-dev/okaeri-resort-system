@@ -4,6 +4,7 @@ import {
   ArrowLeftRight,
   Building2,
   Calendar,
+  CalendarOff,
   CalendarRange,
   CreditCard,
   Download,
@@ -82,6 +83,7 @@ const destinations: AdminDestination[] = [
     requiredRole: AuditRole.MANAGER,
   },
   { label: "Availability", icon: CalendarRange, to: "/admin/availability", group: "cabins" },
+  { label: "Blocked dates", icon: CalendarOff, to: "/admin/blocked-dates", group: "cabins" },
   {
     label: "Expenses",
     icon: ReceiptText,

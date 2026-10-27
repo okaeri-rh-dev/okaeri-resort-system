@@ -151,6 +151,8 @@ export const availabilityKeys = {
   },
   blackouts: {
     all: ["unit-blackouts"] as const,
+    list: (includePast: boolean) =>
+      [...availabilityKeys.blackouts.all, "list", { includePast }] as const,
     byUnit: (unitId: string) => [...availabilityKeys.blackouts.all, unitId] as const,
     range: (unitId: string, startDate?: string, endDate?: string) =>
       [...availabilityKeys.blackouts.byUnit(unitId), startDate, endDate] as const,
