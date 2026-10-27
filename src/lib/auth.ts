@@ -29,6 +29,7 @@ const VALID_ROUTES = [
   "/admin/expenses",
   "/admin/payments",
   "/admin/availability",
+  "/admin/blocked-dates",
   "/admin/settings",
 ];
 
