@@ -12,6 +12,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest
 
 import { toStayInstants, type ManilaDay } from "@/lib/bookings/stay";
 import { db, supabase } from "@/lib/supabase";
+import type { TablesUpdate } from "@/types/database.types";
 
 import { runPsql } from "../setup/psql";
 import { createRoleClients, type RoleClients } from "../setup/role-clients";
@@ -35,6 +36,8 @@ const REASON_PREFIX = "dbtest-block";
 
 let shouldRun = false;
 let roles: RoleClients;
+// From the database clock: src/test/setup.ts pins Date.now() to 2025.
+let manilaToday: ManilaDay;
 const unitIds: string[] = [];
 const bookingIds: string[] = [];
 
@@ -129,11 +132,15 @@ describe("blocks", () => {
     shouldRun = await shouldRunDatabaseTests();
     if (!shouldRun) return;
     roles = await createRoleClients("blocks");
+    [manilaToday] = runPsql("SELECT (now() AT TIME ZONE 'Asia/Manila')::date");
   }, 60000);
 
   afterEach(async () => {
     if (!shouldRun) return;
-    await admin.from("availability_blackouts").delete().like("reason", `${REASON_PREFIX}%`);
+    // Replica mode skips the lock trigger, which refuses deletes of past and running blocks.
+    runPsql(
+      `SET session_replication_role = replica; DELETE FROM public.availability_blackouts WHERE reason LIKE '${REASON_PREFIX}%';`
+    );
     if (bookingIds.length) await admin.from("bookings").delete().in("booking_id", bookingIds);
     bookingIds.length = 0;
   });
@@ -202,7 +209,8 @@ describe("blocks", () => {
 
       const missing = await manager
         .from("availability_blackouts")
-        .insert({ ...nights } as unknown as { reason: string } & typeof nights);
+        // @ts-expect-error reason is required
+        .insert({ ...nights });
       expect(missing.error?.code).toBe("23502");
     });
   });
@@ -297,19 +305,7 @@ describe("blocks", () => {
   });
 
   describe("locks", () => {
-    // From the database clock: src/test/setup.ts pins Date.now() to 2025.
-    let manilaToday: ManilaDay;
-    const today = () => manilaToday;
-
-    beforeAll(() => {
-      if (!shouldRun) return;
-      [manilaToday] = runPsql("SELECT (now() AT TIME ZONE 'Asia/Manila')::date");
-    });
-
-    const updateBlock = (
-      blockId: string,
-      patch: { start_date?: string; end_date?: string; reason?: string; unit_id?: string | null }
-    ) =>
+    const updateBlock = (blockId: string, patch: TablesUpdate<"availability_blackouts">) =>
       roles.byRole.manager
         .from("availability_blackouts")
         .update(patch)
@@ -325,30 +321,41 @@ describe("blocks", () => {
 
     it("a past block cannot change or be deleted", async () => {
       if (!shouldRun) return;
-      const block = await addBlock(await newUnit(), plusDays(today(), -5), plusDays(today(), -1));
+      const block = await addBlock(
+        await newUnit(),
+        plusDays(manilaToday, -5),
+        plusDays(manilaToday, -1)
+      );
 
       expect(
         (await updateBlock(block.blackout_id, { reason: `${REASON_PREFIX} late note` })).error?.code
       ).toBe(LOCKED_BLOCK_CODE);
       expect(
-        (await updateBlock(block.blackout_id, { end_date: plusDays(today(), 3) })).error?.code
+        (await updateBlock(block.blackout_id, { end_date: plusDays(manilaToday, 3) })).error?.code
       ).toBe(LOCKED_BLOCK_CODE);
       expect((await deleteBlock(block.blackout_id)).error?.code).toBe(LOCKED_BLOCK_CODE);
     });
 
     it("a running block can change only its last night, and not to before today", async () => {
       if (!shouldRun) return;
-      const block = await addBlock(await newUnit(), plusDays(today(), -2), plusDays(today(), 2));
+      const block = await addBlock(
+        await newUnit(),
+        plusDays(manilaToday, -2),
+        plusDays(manilaToday, 2)
+      );
 
       expect(
-        (await updateBlock(block.blackout_id, { end_date: plusDays(today(), 6) })).data
+        (await updateBlock(block.blackout_id, { end_date: plusDays(manilaToday, 6) })).data
       ).toHaveLength(1);
-      expect((await updateBlock(block.blackout_id, { end_date: today() })).data).toHaveLength(1);
+      expect((await updateBlock(block.blackout_id, { end_date: manilaToday })).data).toHaveLength(
+        1
+      );
       expect(
-        (await updateBlock(block.blackout_id, { end_date: plusDays(today(), -1) })).error?.code
+        (await updateBlock(block.blackout_id, { end_date: plusDays(manilaToday, -1) })).error?.code
       ).toBe(LOCKED_BLOCK_CODE);
       expect(
-        (await updateBlock(block.blackout_id, { start_date: plusDays(today(), -1) })).error?.code
+        (await updateBlock(block.blackout_id, { start_date: plusDays(manilaToday, -1) })).error
+          ?.code
       ).toBe(LOCKED_BLOCK_CODE);
       expect(
         (await updateBlock(block.blackout_id, { reason: `${REASON_PREFIX} new reason` })).error
@@ -359,17 +366,21 @@ describe("blocks", () => {
 
     it("a block whose first night is today counts as running", async () => {
       if (!shouldRun) return;
-      const block = await addBlock(await newUnit(), today(), plusDays(today(), 2));
+      const block = await addBlock(await newUnit(), manilaToday, plusDays(manilaToday, 2));
 
       expect(
-        (await updateBlock(block.blackout_id, { start_date: plusDays(today(), 1) })).error?.code
+        (await updateBlock(block.blackout_id, { start_date: plusDays(manilaToday, 1) })).error?.code
       ).toBe(LOCKED_BLOCK_CODE);
       expect((await deleteBlock(block.blackout_id)).error?.code).toBe(LOCKED_BLOCK_CODE);
     });
 
     it("the cabin on a block never changes", async () => {
       if (!shouldRun) return;
-      const block = await addBlock(await newUnit(), plusDays(today(), 5), plusDays(today(), 7));
+      const block = await addBlock(
+        await newUnit(),
+        plusDays(manilaToday, 5),
+        plusDays(manilaToday, 7)
+      );
 
       expect((await updateBlock(block.blackout_id, { unit_id: await newUnit() })).error?.code).toBe(
         LOCKED_BLOCK_CODE
@@ -381,11 +392,15 @@ describe("blocks", () => {
 
     it("an upcoming block can change dates and reason, and can be deleted", async () => {
       if (!shouldRun) return;
-      const block = await addBlock(await newUnit(), plusDays(today(), 5), plusDays(today(), 7));
+      const block = await addBlock(
+        await newUnit(),
+        plusDays(manilaToday, 5),
+        plusDays(manilaToday, 7)
+      );
 
       const changed = await updateBlock(block.blackout_id, {
-        start_date: plusDays(today(), 3),
-        end_date: plusDays(today(), 9),
+        start_date: plusDays(manilaToday, 3),
+        end_date: plusDays(manilaToday, 9),
         reason: `${REASON_PREFIX} moved`,
       });
       expect(changed.data).toHaveLength(1);
@@ -479,12 +494,10 @@ describe("blocks", () => {
   });
 
   describe("typed helpers", () => {
-    let manilaToday: ManilaDay;
     let managerId: string;
 
     beforeAll(async () => {
       if (!shouldRun) return;
-      [manilaToday] = runPsql("SELECT (now() AT TIME ZONE 'Asia/Manila')::date");
       vi.setSystemTime(parseISO(`${manilaToday}T12:00:00+08:00`));
 
       const email = `blocks-helpers-${crypto.randomUUID()}@example.com`;

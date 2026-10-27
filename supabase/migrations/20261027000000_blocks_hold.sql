@@ -4,6 +4,8 @@
 -- end_date are the first and last blocked night, both inclusive. A booking's nights
 -- run from its Manila check-in day up to, not including, its check-out day (ADR 0002).
 
+BEGIN;
+
 -- ============================================================================
 -- Block table shape
 -- ============================================================================
@@ -74,7 +76,7 @@ SET search_path = ''
 AS $$
 DECLARE
     v_first_night date := (NEW.check_in AT TIME ZONE 'Asia/Manila')::date;
-    v_last_night date := (NEW.check_out AT TIME ZONE 'Asia/Manila')::date - 1;
+    v_last_night date := GREATEST(v_first_night, (NEW.check_out AT TIME ZONE 'Asia/Manila')::date - 1);
 BEGIN
     IF NEW.booking_status IN ('Cancelled', 'CheckedOut') THEN
         RETURN NEW;
@@ -252,7 +254,6 @@ $function$;
 -- ============================================================================
 -- Access: staff read; manager, owner and admin write. Guests read only the
 -- public availability counts (get_public_aggregate_availability, SECURITY DEFINER).
--- Roles are listed: the app_roles helpers are exact-match, not hierarchical.
 -- ============================================================================
 
 DROP POLICY IF EXISTS "availability_blackouts_select_public" ON public.availability_blackouts;
@@ -266,35 +267,20 @@ REVOKE ALL ON public.availability_blackouts FROM anon;
 
 CREATE POLICY "availability_blackouts_select_staff" ON public.availability_blackouts
     FOR SELECT TO authenticated
-    USING (EXISTS (
-        SELECT 1 FROM public.app_roles
-        WHERE user_id = auth.uid() AND is_active AND role IN ('staff', 'manager', 'owner', 'admin')
-    ));
+    USING (public.is_staff_or_above());
 
 CREATE POLICY "availability_blackouts_insert_manager" ON public.availability_blackouts
     FOR INSERT TO authenticated
-    WITH CHECK (EXISTS (
-        SELECT 1 FROM public.app_roles
-        WHERE user_id = auth.uid() AND is_active AND role IN ('manager', 'owner', 'admin')
-    ));
+    WITH CHECK (public.is_manager_or_above());
 
 CREATE POLICY "availability_blackouts_update_manager" ON public.availability_blackouts
     FOR UPDATE TO authenticated
-    USING (EXISTS (
-        SELECT 1 FROM public.app_roles
-        WHERE user_id = auth.uid() AND is_active AND role IN ('manager', 'owner', 'admin')
-    ))
-    WITH CHECK (EXISTS (
-        SELECT 1 FROM public.app_roles
-        WHERE user_id = auth.uid() AND is_active AND role IN ('manager', 'owner', 'admin')
-    ));
+    USING (public.is_manager_or_above())
+    WITH CHECK (public.is_manager_or_above());
 
 CREATE POLICY "availability_blackouts_delete_manager" ON public.availability_blackouts
     FOR DELETE TO authenticated
-    USING (EXISTS (
-        SELECT 1 FROM public.app_roles
-        WHERE user_id = auth.uid() AND is_active AND role IN ('manager', 'owner', 'admin')
-    ));
+    USING (public.is_manager_or_above());
 
 -- created_by stays VARCHAR for old rows; new rows record the signed-in user's id.
 CREATE OR REPLACE FUNCTION public.set_block_created_by()
@@ -322,8 +308,7 @@ CREATE TRIGGER update_availability_blackouts_updated_at
 -- Locks, by today in Manila. A past block (last night before today) is fixed.
 -- A running block (first night on or before today) can change only its last
 -- night, not to before today, and cannot be deleted. The cabin never changes.
--- The service role (test cleanup, maintenance) and a cascade from a deleted unit
--- are let through.
+-- A cascade from a deleted unit is let through.
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION public.enforce_block_locks()
@@ -334,7 +319,7 @@ AS $$
 DECLARE
     v_today date := (now() AT TIME ZONE 'Asia/Manila')::date;
 BEGIN
-    IF auth.role() = 'service_role' OR pg_trigger_depth() > 1 THEN
+    IF pg_trigger_depth() > 1 THEN
         RETURN COALESCE(NEW, OLD);
     END IF;
 
@@ -382,3 +367,5 @@ BEGIN
     END IF;
 END;
 $$;
+
+COMMIT;
