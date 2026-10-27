@@ -12,6 +12,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
+import { BLOCKED_UNIT_MESSAGE, BlockedUnitError } from "@/lib/bookings/availability";
 import { createBooking, type PricedUnit } from "@/lib/bookings/create";
 import { isManilaDay, toStayInstants } from "@/lib/bookings/stay";
 import type { Database } from "@/types/database.types";
@@ -208,13 +209,16 @@ export const onRequestPost = async (context: {
 
     const bookable = new Set(availabilityCheck.filter((u) => u.is_available).map((u) => u.unit_id));
     const unavailableUnits = requestedUnitIds.filter((unitId) => !bookable.has(unitId));
+    const isBlocked = availabilityCheck.some((u) => u.reason === "Blocked");
     if (unavailableUnits.length > 0) {
       return Response.json(
         {
           success: false,
           error: {
-            code: "UNIT_UNAVAILABLE",
-            message: "One or more units are not available for the selected dates",
+            code: isBlocked ? "UNIT_BLOCKED" : "UNIT_UNAVAILABLE",
+            message: isBlocked
+              ? BLOCKED_UNIT_MESSAGE
+              : "One or more units are not available for the selected dates",
             details: {
               unavailable_units: unavailableUnits,
             },
@@ -289,6 +293,13 @@ export const onRequestPost = async (context: {
       }
     );
   } catch (error) {
+    if (error instanceof BlockedUnitError) {
+      return Response.json(
+        { success: false, error: { code: "UNIT_BLOCKED", message: error.message } },
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (error instanceof UnpricedBookingError) {
       return Response.json(
         {
@@ -334,7 +345,7 @@ async function checkMultiUnitAvailability(
   unitIds: string[],
   checkIn: string,
   checkOut: string
-): Promise<Array<{ unit_id: string; is_available: boolean }>> {
+): Promise<Array<{ unit_id: string; is_available: boolean; reason: string | null }>> {
   const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
       autoRefreshToken: false,
@@ -349,7 +360,7 @@ async function checkMultiUnitAvailability(
   });
 
   if (error) throw error;
-  return data as Array<{ unit_id: string; is_available: boolean }>;
+  return data;
 }
 
 /**

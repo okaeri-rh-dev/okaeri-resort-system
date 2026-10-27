@@ -216,7 +216,7 @@ export function PublicAvailabilityCalendar() {
               <CalendarIcon className="text-muted-foreground h-5 w-5" />
               <h1 className="text-foreground text-lg font-semibold">Okaeri Availability</h1>
             </div>
-            <span className="text-muted-foreground text-xs">3 Cabins</span>
+            <span className="text-muted-foreground text-xs">{data.totalUnits} Cabins</span>
           </div>
         </div>
 

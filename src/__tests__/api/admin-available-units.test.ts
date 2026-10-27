@@ -43,10 +43,15 @@ const cabin: UnitRow = {
   weekend_rate: 4000,
 };
 
+let unitFilters: string[] = [];
+
 function unitsQuery() {
   const query = {
     select: () => query,
-    eq: () => query,
+    eq: (column: string) => {
+      unitFilters.push(column);
+      return query;
+    },
     order: async (column: string) =>
       unitColumns.includes(column as keyof UnitRow)
         ? { data: [cabin], error: null }
@@ -55,44 +60,35 @@ function unitsQuery() {
   return query;
 }
 
-type BookedRow = { unit_id: string; booking_status: string };
-let bookedRows: BookedRow[] = [];
-let overlapBounds: { lt?: [string, string]; gt?: [string, string] } = {};
-
-// Overlapping booking_unit_availability rows; applies the status filter and records the bounds.
-function availabilityQuery() {
-  let rows = bookedRows;
-  const query = {
-    select: () => query,
-    in: (column: string, values: string[]) => {
-      rows = rows.filter((row) => values.includes(row[column as keyof BookedRow]));
-      return query;
-    },
-    lt: (column: string, value: string) => {
-      overlapBounds.lt = [column, value];
-      return query;
-    },
-    gt: async (column: string, value: string) => {
-      overlapBounds.gt = [column, value];
-      return { data: rows.map(({ unit_id }) => ({ unit_id })), error: null };
-    },
-  };
-  return query;
-}
+type AvailabilityParams = { p_unit_ids: string[]; p_check_in: string; p_check_out: string };
+let availabilityParams: AvailabilityParams | undefined;
+let unavailable: Record<string, "Blocked" | "Booked"> = {};
 
 const fakeSupabase = {
   auth: { getUser: async () => ({ data: { user: { id: "staff-1" } }, error: null }) },
   from: (table: string) => {
     if (table === "units") return unitsQuery();
-    if (table === "booking_unit_availability") return availabilityQuery();
     throw new Error(`unexpected table ${table}`);
+  },
+  rpc: async (name: string, params: AvailabilityParams) => {
+    if (name !== "check_multi_unit_availability") throw new Error(`unexpected rpc ${name}`);
+    availabilityParams = params;
+    return {
+      data: params.p_unit_ids.map((unit_id) => ({
+        unit_id,
+        is_available: !unavailable[unit_id],
+        reason: unavailable[unit_id] ?? null,
+      })),
+      error: null,
+    };
   },
 };
 
 describe("GET /api/admin/available-units", () => {
   beforeEach(() => {
-    bookedRows = [];
-    overlapBounds = {};
+    unitFilters = [];
+    availabilityParams = undefined;
+    unavailable = {};
     vi.resetModules();
     vi.doMock("@supabase/supabase-js", () => ({ createClient: vi.fn(() => fakeSupabase) }));
     vi.doMock("../../../functions/lib/audit-logger-workers", () => ({
@@ -131,10 +127,10 @@ describe("GET /api/admin/available-units", () => {
     ]);
   });
 
-  it.each(["Confirmed", "CheckedIn"])(
-    "excludes a unit with an overlapping %s stay",
-    async (status) => {
-      bookedRows = [{ unit_id: "unit-1", booking_status: status }];
+  it.each(["Blocked", "Booked"] as const)(
+    "leaves out a unit the availability check marks %s",
+    async (reason) => {
+      unavailable = { "unit-1": reason };
 
       const response = await getAvailableUnits();
 
@@ -144,19 +140,14 @@ describe("GET /api/admin/available-units", () => {
     }
   );
 
-  it("keeps a unit whose overlapping booking is still Pending", async () => {
-    bookedRows = [{ unit_id: "unit-1", booking_status: "Pending" }];
-
-    const response = await getAvailableUnits();
-
-    const body = (await response.json()) as { units: unknown[] };
-    expect(body.units).toHaveLength(1);
-  });
-
-  it("compares against the stay at 14:00 / 12:00 Manila", async () => {
+  it("checks every unit, whatever its cabin status, for the stay at 14:00 / 12:00 Manila", async () => {
     await getAvailableUnits();
 
-    expect(overlapBounds.lt).toEqual(["check_in", "2026-12-22T04:00:00.000Z"]);
-    expect(overlapBounds.gt).toEqual(["check_out", "2026-12-20T06:00:00.000Z"]);
+    expect(unitFilters).not.toContain("unit_status");
+    expect(availabilityParams).toEqual({
+      p_unit_ids: ["unit-1"],
+      p_check_in: "2026-12-20T06:00:00.000Z",
+      p_check_out: "2026-12-22T04:00:00.000Z",
+    });
   });
 });

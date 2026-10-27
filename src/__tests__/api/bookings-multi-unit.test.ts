@@ -418,6 +418,26 @@ describe("POST /api/bookings/multi-unit", () => {
     expect(response.status).toBe(409);
   });
 
+  it("should return 409 with the form's Blocked message when a unit is blocked", async () => {
+    const response = await postWith(
+      createBookingMocks({
+        units: testUnits,
+        availabilityResults: [
+          { unit_id: testUnits[0].unit_id, is_available: false, reason: "Blocked" },
+          { unit_id: testUnits[1].unit_id, is_available: true, reason: null },
+        ],
+      }),
+      validBookingData
+    );
+
+    expect(response.status).toBe(409);
+    const data = (await response.json()) as BusinessErrorResponse;
+    expect(data.error).toMatchObject({
+      code: "UNIT_BLOCKED",
+      message: "This unit is not free for these days (Blocked)",
+    });
+  });
+
   it("should check availability on the 14:00 / 12:00 Manila instants", async () => {
     const mockClient = createBookingMocks({ units: testUnits });
     await postWith(mockClient, validBookingData);

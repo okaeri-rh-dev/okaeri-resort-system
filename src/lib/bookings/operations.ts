@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { BookingStatus } from "@/types/booking-status";
 import type { Database, Tables, TablesInsert, TablesUpdate } from "@/types/database.types";
 
+import { BlockedUnitError, isBlockedNightError } from "./availability";
 import { toStayInstants, type ManilaDay } from "./stay";
 
 type Client = SupabaseClient<Database>;
@@ -26,6 +27,7 @@ function rowFrom<T>({ data, error }: Result<T>): NonNullable<T> {
   if (error?.code === EXCLUSION_VIOLATION) {
     throw new Error("This unit is already booked for some of these days");
   }
+  if (isBlockedNightError(error)) throw new BlockedUnitError();
   if (error) throw new Error(error.message);
   if (data === null || data === undefined) throw new Error("The booking was not returned");
   return data;

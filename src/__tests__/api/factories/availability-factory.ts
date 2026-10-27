@@ -20,6 +20,7 @@ export interface AvailabilityMockOptions {
   availabilityResults?: Array<{
     unit_id: string;
     is_available: boolean;
+    reason?: "Blocked" | "Booked" | null;
     conflicting_bookings: number;
     next_available_date: string | null;
   }>;
@@ -72,6 +73,7 @@ export function createAvailabilityMocks(options: AvailabilityMockOptions = {}) {
         return (params.p_unit_ids as string[]).map((id) => ({
           unit_id: id,
           is_available: allUnavailable ? false : allAvailable,
+          reason: allUnavailable ? "Booked" : null,
           conflicting_bookings: allUnavailable ? 1 : 0,
           next_available_date: allUnavailable ? "2025-12-25T06:00:00Z" : null,
         }));

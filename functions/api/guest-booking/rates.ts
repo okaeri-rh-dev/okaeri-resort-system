@@ -51,11 +51,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       );
     }
 
-    // Get total available units dynamically
     const { count: totalUnits } = await supabase
       .from("units")
-      .select("*", { count: "exact", head: true })
-      .eq("unit_status", "Available");
+      .select("*", { count: "exact", head: true });
 
     return Response.json(
       {

@@ -46,10 +46,8 @@ interface Env {
   TURNSTILE_SECRET_KEY?: string;
 }
 
-interface AvailabilityDay {
-  date: string;
-  available_count: number;
-}
+type AvailabilityDay =
+  Database["public"]["Functions"]["get_public_aggregate_availability"]["Returns"][number];
 
 type AvailabilityStatus = "full" | "moderate" | "limited" | "booked";
 
@@ -274,14 +272,15 @@ export async function onRequest(context: {
     // RESPONSE TRANSFORMATION
     // ============================================================================
 
-    const availability = (data as AvailabilityDay[]).map((day) => ({
+    const totalUnits = data[0]?.total_units ?? 0;
+    const availability = data.map((day: AvailabilityDay) => ({
       date: day.date,
       availableCount: day.available_count,
-      status: getAvailabilityStatus(day.available_count),
+      status: getAvailabilityStatus(day.available_count, totalUnits),
     }));
 
     const response: AvailabilityResponse = {
-      totalUnits: 3,
+      totalUnits,
       dateRange: {
         start: startDate,
         end: endDate,
@@ -344,13 +343,10 @@ export async function onRequest(context: {
   }
 }
 
-/**
- * Map available count to status string. The resort has 3 cabins; a larger count (extra test
- * cabins) still reads as full availability.
- */
-export function getAvailabilityStatus(count: number): AvailabilityStatus {
-  if (count >= 3) return "full"; // All 3 units available
-  if (count === 2) return "moderate"; // 2 units available
-  if (count === 1) return "limited"; // Only 1 unit available
-  return "booked"; // Fully booked (0 available)
+/** Grades a night's free cabins against the resort's cabin count. */
+export function getAvailabilityStatus(count: number, totalUnits: number): AvailabilityStatus {
+  if (count <= 0) return "booked";
+  if (count >= totalUnits) return "full";
+  if (count === 1) return "limited";
+  return "moderate";
 }

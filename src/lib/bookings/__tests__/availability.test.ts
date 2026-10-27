@@ -9,6 +9,7 @@ const results: UnitAvailability[] = [
     unit_id: "free",
     unit_name: "Cabin 1",
     is_available: true,
+    reason: null,
     conflicting_bookings: 0,
     next_available_date: null,
   },
@@ -16,6 +17,15 @@ const results: UnitAvailability[] = [
     unit_id: "booked",
     unit_name: "Cabin 3",
     is_available: false,
+    reason: "Booked",
+    conflicting_bookings: 1,
+    next_available_date: "2026-12-23T04:00:00.000Z",
+  },
+  {
+    unit_id: "blocked",
+    unit_name: "Cabin 2",
+    is_available: false,
+    reason: "Blocked",
     conflicting_bookings: 1,
     next_available_date: "2026-12-23T04:00:00.000Z",
   },
@@ -38,7 +48,11 @@ describe("unavailableReason", () => {
     expect(unavailableReason(results, "booked")).toBe("Booked until Dec 23");
   });
 
-  it("marks a unit missing from the result (not Available) as not bookable", () => {
-    expect(unavailableReason(results, "maintenance")).toBe("Not available");
+  it("says Blocked for a blocked unit, even when it is also booked", () => {
+    expect(unavailableReason(results, "blocked")).toBe("Blocked");
+  });
+
+  it("marks a unit missing from the result as not bookable", () => {
+    expect(unavailableReason(results, "unknown")).toBe("Not available");
   });
 });

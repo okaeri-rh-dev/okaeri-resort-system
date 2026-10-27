@@ -35,6 +35,9 @@ import { calculateBookingPrice } from "../../lib/pricing";
 
 // Environment type for Cloudflare Pages
 // Subset of the jsonb built by create_guest_booking (turnstile variant, 20251110171900)
+// SQLSTATE raised by create_guest_booking when a night lacks unblocked cabins
+const BLOCKED_NIGHT_CODE = "BLOCK";
+
 interface CreateGuestBookingResult {
   booking: { booking_id: string; booking_reference: string };
 }
@@ -227,8 +230,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // Validation 2: Booking size vs system capacity
     const { count: systemUnitCount } = await supabase
       .from("units")
-      .select("*", { count: "exact", head: true })
-      .eq("unit_status", "Available");
+      .select("*", { count: "exact", head: true });
 
     if (data.unit_requests.length > (systemUnitCount || 0)) {
       return Response.json(
@@ -241,8 +243,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     }
 
-    // Note: We do NOT validate availability (whether units are currently booked)
-    // Admin handles availability during unit assignment
+    // Bookings are not checked here: staff assign cabins later. create_guest_booking
+    // refuses nights with fewer unblocked cabins than requested.
 
     // 6. Calculate pricing using Workers pricing library
     // Calculate for each unit and aggregate
@@ -373,6 +375,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       p_unit_requests: unitRequestsJson,
       p_guest_data: null, // Guest data is included in p_booking_data for simplified interface
     });
+
+    if (createError?.code === BLOCKED_NIGHT_CODE) {
+      return Response.json(
+        {
+          success: false,
+          error: "These dates are unavailable. Please choose other dates.",
+          error_code: ERROR_CODES.DATES_UNAVAILABLE,
+        },
+        { status: 409, headers: corsHeaders }
+      );
+    }
 
     if (createError || !result) {
       // ============================================================
