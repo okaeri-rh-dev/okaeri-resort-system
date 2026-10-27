@@ -201,11 +201,9 @@ export async function onRequest(context: {
       request
     );
 
-    // Query all units with Available status
     const { data: allUnits, error: unitsError } = await supabase
       .from("units")
       .select("*")
-      .eq("unit_status", "Available")
       .order("unit_code");
 
     if (unitsError) {
@@ -221,21 +219,23 @@ export async function onRequest(context: {
       });
     }
 
-    // A cabin is taken when a Confirmed or CheckedIn stay overlaps [check-in, check-out)
+    // A cabin is free when no block covers a night and no Confirmed or CheckedIn stay overlaps
     const stay = toStayInstants(checkInDate, checkOutDate);
-    const { data: bookedUnits, error: bookingsError } = await supabase
-      .from("booking_unit_availability")
-      .select("unit_id")
-      .in("booking_status", ["Confirmed", "CheckedIn"])
-      .lt("check_in", stay.check_out)
-      .gt("check_out", stay.check_in);
+    const { data: availability, error: availabilityError } = await supabase.rpc(
+      "check_multi_unit_availability",
+      {
+        p_unit_ids: allUnits.map((unit) => unit.unit_id),
+        p_check_in: stay.check_in,
+        p_check_out: stay.check_out,
+      }
+    );
 
-    if (bookingsError) {
-      console.error("[available-units] Error fetching bookings:", bookingsError);
+    if (availabilityError) {
+      console.error("[available-units] Error checking availability:", availabilityError);
       const errorResponse: ErrorResponse = {
         success: false,
         error: "Internal server error",
-        details: "Failed to check bookings",
+        details: "Failed to check availability",
       };
       return new Response(JSON.stringify(errorResponse), {
         status: 500,
@@ -243,12 +243,12 @@ export async function onRequest(context: {
       });
     }
 
-    // Create a set of booked unit IDs for efficient lookup
-    const bookedUnitIds = new Set(bookedUnits?.map((bu) => bu.unit_id) || []);
+    const freeUnitIds = new Set(
+      availability.filter((unit) => unit.is_available).map((unit) => unit.unit_id)
+    );
 
-    // Filter out booked units from available units
-    const availableUnits: AvailableUnit[] = (allUnits || [])
-      .filter((unit) => !bookedUnitIds.has(unit.unit_id))
+    const availableUnits: AvailableUnit[] = allUnits
+      .filter((unit) => freeUnitIds.has(unit.unit_id))
       .map((unit) => ({
         unit_id: unit.unit_id,
         unit_number: unit.unit_code,

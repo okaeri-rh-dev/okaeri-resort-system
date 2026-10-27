@@ -27,7 +27,7 @@ import {
 import { PricingStatusBadge } from "@/components/pricing/PricingStatusBadge";
 import { useMultiUnitAvailability } from "@/hooks/useMultiUnitBookingQueries";
 import { usePricingCalculation } from "@/hooks/usePricingCalculation";
-import { pickedDay, unavailableReason } from "@/lib/bookings";
+import { pickedDay, unavailableReason, unitNotFreeMessage } from "@/lib/bookings";
 import { formatCurrency } from "@/lib/formatters";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
 import { hasProperty, isObject } from "@/lib/type-guards";
@@ -195,9 +195,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
           }
           const reason = unavailableReason(availability, values.unit_id);
           if (reason) {
-            form.setError("unit_id", {
-              message: `This unit is not free for these days (${reason})`,
-            });
+            form.setError("unit_id", { message: unitNotFreeMessage(reason) });
             return false;
           }
           return true;

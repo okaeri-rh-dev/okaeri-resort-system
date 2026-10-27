@@ -7,6 +7,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import {
+  BLOCKED_UNIT_MESSAGE,
   cancelBooking,
   createBooking,
   setBookingStatus,
@@ -41,6 +42,13 @@ const stayFor = (unitId: string, checkIn: string, checkOut: string): NewBooking 
   payment_method: "Cash",
   is_walk_in: false,
 });
+
+const blockNight = async (unitId: string, night: string) => {
+  const { error } = await supabase
+    .from("availability_blackouts")
+    .insert({ unit_id: unitId, start_date: night, end_date: night, reason: "Repairs" });
+  if (error) throw new Error(`seed block failed: ${error.message}`);
+};
 
 const confirm = (bookingId: string) =>
   supabase.from("bookings").update({ booking_status: "Confirmed" }).eq("booking_id", bookingId);
@@ -145,6 +153,44 @@ describe("createBooking", () => {
     await expect(setBookingStatus(supabase, overlapping.booking_id, "Confirmed")).rejects.toThrow(
       "This unit is already booked for some of these days"
     );
+  });
+});
+
+describe("booking onto a blocked night", () => {
+  let shouldRun = false;
+
+  beforeAll(async () => {
+    shouldRun = await shouldRunDatabaseTests();
+  });
+
+  beforeEach(async () => {
+    if (shouldRun) await cleanupTestData({ includeTestFixtures: true });
+  });
+
+  it("createBooking refuses with the message the form shows for a blocked unit", async () => {
+    if (!shouldRun) return;
+    const unit = await createTestUnit();
+    await blockNight(unit.unit_id, "2027-01-05");
+
+    await expect(
+      createBooking(supabase, stayFor(unit.unit_id, "2027-01-04", "2027-01-06"))
+    ).rejects.toThrow(BLOCKED_UNIT_MESSAGE);
+  });
+
+  it("updateBooking refuses a move onto a blocked night with the same message", async () => {
+    if (!shouldRun) return;
+    const unit = await createTestUnit();
+    const booking = await createBooking(
+      supabase,
+      stayFor(unit.unit_id, "2027-01-01", "2027-01-03")
+    );
+    await blockNight(unit.unit_id, "2027-01-05");
+
+    await expect(
+      updateBooking(supabase, booking.booking_id, {
+        stay: { check_in: "2027-01-04", check_out: "2027-01-06" },
+      })
+    ).rejects.toThrow(BLOCKED_UNIT_MESSAGE);
   });
 });
 

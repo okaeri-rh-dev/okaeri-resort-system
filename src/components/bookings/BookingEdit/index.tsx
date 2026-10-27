@@ -1,5 +1,7 @@
 // src/components/bookings/BookingEdit/index.tsx
 
+import { useMemo } from "react";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoaderData, useNavigate, useParams } from "@tanstack/react-router";
 import { parseISO } from "date-fns";
@@ -21,7 +23,8 @@ import {
   SelectItem,
   Textarea,
 } from "@/components/patterns";
-import { manilaDayOf } from "@/lib/bookings";
+import { useMultiUnitAvailability } from "@/hooks/useMultiUnitBookingQueries";
+import { manilaDayOf, pickedDay, unavailableReason, unitNotFreeMessage } from "@/lib/bookings";
 import { bookingEditSchema, type BookingEditInput } from "@/lib/validation/entity-schemas";
 import { useUpdateBooking } from "@/stores/useBookingStore";
 import type { Booking, Unit } from "@/types/entity-detail.types";
@@ -59,11 +62,33 @@ export function BookingEditPage() {
     },
   });
 
+  const checkIn = form.watch("check_in");
+  const checkOut = form.watch("check_out");
+  const checkInDay = checkIn ? pickedDay(checkIn) : "";
+  const checkOutDay = checkOut && checkIn && checkOut > checkIn ? pickedDay(checkOut) : "";
+  const unitIds = useMemo(() => units?.map((unit) => unit.unit_id) ?? [], [units]);
+  const { data: availability, isFetching: isCheckingAvailability } = useMultiUnitAvailability(
+    unitIds,
+    checkInDay,
+    checkOutDay,
+    { excludeBookingId: bookingId }
+  );
+
   // Setup mutation with navigation on success
   const updateBooking = useUpdateBooking();
 
   // Form submission handler
   const onSubmit: SubmitHandler<BookingEditInput> = (data) => {
+    if (checkInDay && checkOutDay && isCheckingAvailability) {
+      form.setError("unit_id", { message: "Still checking availability…" });
+      return;
+    }
+    const reason = unavailableReason(availability, data.unit_id);
+    if (reason) {
+      form.setError("unit_id", { message: unitNotFreeMessage(reason) });
+      return;
+    }
+
     updateBooking.mutate(
       { bookingId, changes: toBookingUpdate(data) },
       {
@@ -178,16 +203,28 @@ export function BookingEditPage() {
                     onValueChange={field.onChange}
                     placeholder="Select a cabin"
                   >
-                    {units?.map((unit) => (
-                      <SelectItem key={unit.unit_id} value={unit.unit_id}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{unit.unit_name}</span>
-                          <span className="text-muted-foreground text-xs">
-                            {unit.unit_type} • Max {unit.max_occupancy} guests
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {units?.map((unit) => {
+                      const reason = unavailableReason(availability, unit.unit_id);
+                      return (
+                        <SelectItem
+                          key={unit.unit_id}
+                          value={unit.unit_id}
+                          disabled={reason !== null}
+                        >
+                          <div className="flex w-full items-center justify-between">
+                            <div className="flex flex-col">
+                              <span className="font-medium">{unit.unit_name}</span>
+                              <span className="text-muted-foreground text-xs">
+                                {unit.unit_type} • Max {unit.max_occupancy} guests
+                              </span>
+                            </div>
+                            {reason && (
+                              <span className="text-muted-foreground ml-2 text-xs">{reason}</span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectControl>
                 )}
               </FormField>

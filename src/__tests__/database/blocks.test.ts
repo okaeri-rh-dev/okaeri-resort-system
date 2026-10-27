@@ -484,14 +484,18 @@ describe("blocks", () => {
       const blockedUnitId = await newUnit();
       const freeUnitId = await newUnit();
       await addBlock(blockedUnitId, "2030-10-10", "2030-10-10");
-      await addBlock(null, "2031-04-10", "2031-04-10");
 
       const overBlock = await createGuestRequest("2030-10-09", "2030-10-11");
       const blocked = await assignUnits(overBlock, blockedUnitId);
       expect(blocked.error?.code).toBe(BLOCKED_NIGHT_CODE);
       expect((await assignUnits(overBlock, freeUnitId)).error).toBeNull();
 
+      // The request step refuses a closure night, and a closure refuses a waiting
+      // request, so the closure goes in after the request with the triggers off.
       const overClosure = await createGuestRequest("2031-04-09", "2031-04-11");
+      runPsql(
+        `SET session_replication_role = replica; INSERT INTO public.availability_blackouts (unit_id, start_date, end_date, reason) VALUES (NULL, '2031-04-10', '2031-04-10', '${REASON_PREFIX} closure');`
+      );
       expect((await assignUnits(overClosure, freeUnitId)).error?.code).toBe(BLOCKED_NIGHT_CODE);
     });
   });

@@ -11,6 +11,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+import type { UnitAvailability } from "@/lib/bookings/availability";
 import { isManilaDay, toStayInstants } from "@/lib/bookings/stay";
 import type { Database } from "@/types/database.types";
 
@@ -20,15 +21,7 @@ interface Env {
   RATE_LIMIT_KV: KVNamespace;
 }
 
-/**
- * Availability check result from database
- */
-interface AvailabilityResult {
-  unit_id: string;
-  is_available: boolean;
-  conflicting_bookings: number;
-  next_available_date: string | null;
-}
+type AvailabilityResult = Omit<UnitAvailability, "unit_name">;
 
 /**
  * Main handler for multi-unit availability checking
@@ -80,7 +73,7 @@ export const onRequestGet = async (context: { request: Request; env: Env }): Pro
 
     // ✅ Generate cache key
     const sortedUnitIds = [...unitIds].sort();
-    const cacheKey = `availability:${sortedUnitIds.join(",")}:${checkIn}:${checkOut}`;
+    const cacheKey = `availability:${sortedUnitIds.join(",")}:${checkIn}:${checkOut}:${excludeBookingId ?? ""}`;
 
     // ✅ Check KV cache first (1 minute TTL)
     if (env.RATE_LIMIT_KV) {
@@ -150,6 +143,7 @@ export const onRequestGet = async (context: { request: Request; env: Env }): Pro
         unit_name: unitInfo?.unit_name || "Unknown",
         unit_code: unitInfo?.unit_code || "",
         is_available: item.is_available,
+        reason: item.reason,
         conflicting_bookings: item.conflicting_bookings || 0,
         next_available_date: item.next_available_date || null,
       };

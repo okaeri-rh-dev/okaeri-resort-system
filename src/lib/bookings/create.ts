@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database, Tables, TablesInsert } from "@/types/database.types";
 
+import { BlockedUnitError, isBlockedNightError } from "./availability";
 import { toStayInstants, type ManilaDay } from "./stay";
 
 type Client = SupabaseClient<Database>;
@@ -59,6 +60,7 @@ export async function createBooking(
     p_units: booking.units,
     p_guest_id: guestId,
   });
+  if (isBlockedNightError(error)) throw new BlockedUnitError();
   if (error) throw new Error(error.message);
 
   const { data, error: fetchError } = await client

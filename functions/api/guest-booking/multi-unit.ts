@@ -1,6 +1,7 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
+import { isBlockedNightError } from "@/lib/bookings/availability";
 import { generateGuestBookingReference } from "@/lib/bookings/reference";
 import { toStayInstants } from "@/lib/bookings/stay";
 import { checkKVRateLimit } from "@/lib/kv-rate-limit";
@@ -227,8 +228,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // Validation 2: Booking size vs system capacity
     const { count: systemUnitCount } = await supabase
       .from("units")
-      .select("*", { count: "exact", head: true })
-      .eq("unit_status", "Available");
+      .select("*", { count: "exact", head: true });
 
     if (data.unit_requests.length > (systemUnitCount || 0)) {
       return Response.json(
@@ -241,8 +241,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     }
 
-    // Note: We do NOT validate availability (whether units are currently booked)
-    // Admin handles availability during unit assignment
+    // Bookings are not checked here: staff assign cabins later. create_guest_booking
+    // refuses nights with fewer unblocked cabins than requested.
 
     // 6. Calculate pricing using Workers pricing library
     // Calculate for each unit and aggregate
@@ -373,6 +373,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       p_unit_requests: unitRequestsJson,
       p_guest_data: null, // Guest data is included in p_booking_data for simplified interface
     });
+
+    if (isBlockedNightError(createError)) {
+      return Response.json(
+        {
+          success: false,
+          error: "These dates are unavailable. Please choose other dates.",
+          error_code: ERROR_CODES.DATES_UNAVAILABLE,
+        },
+        { status: 409, headers: corsHeaders }
+      );
+    }
 
     if (createError || !result) {
       // ============================================================

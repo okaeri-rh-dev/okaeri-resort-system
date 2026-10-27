@@ -12,6 +12,8 @@
  * ```
  */
 
+import type { UnavailableReason } from "@/lib/bookings/availability";
+
 // ============================================================
 // AVAILABILITY API RESPONSES
 // ============================================================
@@ -26,6 +28,7 @@ export interface AvailabilityResponse {
     results: Array<{
       unit_id: string;
       is_available: boolean;
+      reason: UnavailableReason | null;
       conflicting_bookings: number;
       next_available_date: string | null;
       unit_name?: string;

@@ -5,6 +5,8 @@
  * Supports happy path, unavailable units, and error scenarios.
  */
 
+import type { UnavailableReason } from "@/lib/bookings/availability";
+
 import { createMockSupabaseClient } from "../helpers/mock-supabase";
 import { testBookingResponse, testBookingUnits, testUnits } from "../utils/fixtures";
 
@@ -26,6 +28,7 @@ export interface BookingMockOptions {
   availabilityResults?: Array<{
     unit_id: string;
     is_available: boolean;
+    reason?: UnavailableReason | null;
     conflicting_bookings?: number;
     next_available_date?: string | null;
   }>;
@@ -129,6 +132,7 @@ export function createBookingMocks(options: BookingMockOptions = {}) {
         return unitIds.map((id) => ({
           unit_id: id,
           is_available: allUnavailable ? false : allAvailable,
+          reason: allUnavailable ? "Booked" : null,
           conflicting_bookings: allUnavailable ? 1 : 0,
           next_available_date: allUnavailable ? "2025-12-25T06:00:00Z" : null,
         }));

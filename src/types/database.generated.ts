@@ -1356,6 +1356,7 @@ export type Database = {
           conflicting_bookings: number;
           is_available: boolean;
           next_available_date: string;
+          reason: string;
           unit_id: string;
         }[];
       };
@@ -1476,6 +1477,7 @@ export type Database = {
         Returns: {
           available_count: number;
           date: string;
+          total_units: number;
         }[];
       };
       get_seasonal_rate_for_date: {

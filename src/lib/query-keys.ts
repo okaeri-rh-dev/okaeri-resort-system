@@ -146,8 +146,8 @@ export const availabilityKeys = {
     all: ["multi-unit-availability"] as const,
     search: (checkIn: string, checkOut: string, filters: object) =>
       [...availabilityKeys.multiUnit.all, checkIn, checkOut, filters] as const,
-    units: (unitIds: string[], checkIn: string, checkOut: string) =>
-      [...availabilityKeys.multiUnit.all, unitIds, checkIn, checkOut] as const,
+    units: (unitIds: string[], checkIn: string, checkOut: string, excludeBookingId?: string) =>
+      [...availabilityKeys.multiUnit.all, unitIds, checkIn, checkOut, excludeBookingId] as const,
   },
   blackouts: {
     all: ["unit-blackouts"] as const,
