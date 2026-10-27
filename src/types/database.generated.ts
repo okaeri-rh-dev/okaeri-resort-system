@@ -287,33 +287,30 @@ export type Database = {
       availability_blackouts: {
         Row: {
           blackout_id: string;
-          blackout_type: string;
           created_at: string | null;
           created_by: string | null;
           end_date: string;
-          reason: string | null;
+          reason: string;
           start_date: string;
           unit_id: string | null;
           updated_at: string | null;
         };
         Insert: {
           blackout_id?: string;
-          blackout_type: string;
           created_at?: string | null;
           created_by?: string | null;
           end_date: string;
-          reason?: string | null;
+          reason: string;
           start_date: string;
           unit_id?: string | null;
           updated_at?: string | null;
         };
         Update: {
           blackout_id?: string;
-          blackout_type?: string;
           created_at?: string | null;
           created_by?: string | null;
           end_date?: string;
-          reason?: string | null;
+          reason?: string;
           start_date?: string;
           unit_id?: string | null;
           updated_at?: string | null;
@@ -1464,6 +1461,11 @@ export type Database = {
       is_manager_or_above: { Args: { check_user_id?: string }; Returns: boolean };
       is_staff: { Args: { check_user_id: string }; Returns: boolean };
       is_staff_or_above: { Args: { check_user_id?: string }; Returns: boolean };
+      is_unit_blocked: {
+        Args: { p_first_night: string; p_last_night: string; p_unit_id: string };
+        Returns: boolean;
+      };
+      lock_units: { Args: { p_unit_ids: string[] }; Returns: undefined };
       monthly_archive_until: {
         Args: { dry_run?: boolean; final_cutoff_date: string };
         Returns: {
