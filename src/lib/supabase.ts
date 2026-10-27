@@ -340,7 +340,9 @@ export const db = {
       supabase.from("availability_blackouts").select("*").eq("unit_id", unitId),
     /** One block per cabin, or one resort closure when `unitIds` is null. */
     create: ({ unitIds, ...block }: NewBlock) => {
-      const rows: TablesInsert<"availability_blackouts">[] = (unitIds ?? [null]).map((unitId) => ({
+      // Sorted so each row's trigger locks its unit in unit-id order, as the booking guard does.
+      const sortedUnitIds = unitIds ? [...unitIds].sort() : [null];
+      const rows: TablesInsert<"availability_blackouts">[] = sortedUnitIds.map((unitId) => ({
         ...block,
         unit_id: unitId,
       }));
@@ -357,24 +359,19 @@ export const db = {
         p_block_id: blockId,
       }),
     /** Cancels the confirmed bookings and saves the block atomically; nothing saves unless status is "saved". */
-    cancelAndSave: async (block: NewBlock | BlockEdit, confirmedBookingIds: string[]) => {
+    cancelAndSave: async (block: NewBlock | BlockEdit, seenConflictIds: string[]) => {
+      const nights = {
+        start_date: block.start_date,
+        end_date: block.end_date,
+        reason: block.reason,
+      };
       const blockArg =
         "blackoutId" in block
-          ? {
-              blackout_id: block.blackoutId,
-              start_date: block.start_date,
-              end_date: block.end_date,
-              reason: block.reason,
-            }
-          : {
-              unit_ids: block.unitIds,
-              start_date: block.start_date,
-              end_date: block.end_date,
-              reason: block.reason,
-            };
+          ? { blackout_id: block.blackoutId, ...nights }
+          : { unit_ids: block.unitIds, ...nights };
       const { data, error } = await supabase.rpc("cancel_bookings_and_save_block", {
         p_block: blockArg,
-        p_booking_ids: confirmedBookingIds,
+        p_booking_ids: seenConflictIds,
       });
       return { data: data as unknown as CancelAndSaveResult | null, error };
     },

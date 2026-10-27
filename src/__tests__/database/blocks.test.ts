@@ -466,7 +466,7 @@ describe("blocks", () => {
       if (!shouldRun) return;
       const unitId = await newUnit();
       const { bookingId } = await createBooking([unitId], "2030-09-01", "2030-09-03");
-      // The block save guard refuses this block now; insert it as a row from before the guard.
+      // Rows from before the block save guard: insert the block without triggers.
       runPsql(
         `SET session_replication_role = replica; INSERT INTO public.availability_blackouts (unit_id, start_date, end_date, reason) VALUES ('${unitId}', '2030-09-02', '2030-09-02', '${REASON_PREFIX} legacy');`
       );

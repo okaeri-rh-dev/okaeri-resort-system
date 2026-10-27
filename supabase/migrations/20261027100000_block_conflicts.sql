@@ -148,7 +148,9 @@ DECLARE
     v_kept_last_night date;
 BEGIN
     IF TG_OP = 'UPDATE' THEN
-        IF NEW.start_date >= OLD.start_date AND NEW.end_date <= OLD.end_date THEN
+        IF NEW.unit_id IS NOT DISTINCT FROM OLD.unit_id
+           AND NEW.start_date >= OLD.start_date
+           AND NEW.end_date <= OLD.end_date THEN
             RETURN NEW;
         END IF;
         v_kept_first_night := OLD.start_date;
@@ -276,6 +278,11 @@ BEGIN
     ELSE
         IF jsonb_typeof(p_block->'unit_ids') = 'array' THEN
             v_unit_ids := ARRAY(SELECT jsonb_array_elements_text(p_block->'unit_ids')::uuid);
+            IF cardinality(v_unit_ids) = 0
+               OR cardinality(v_unit_ids) <> (SELECT count(DISTINCT id) FROM unnest(v_unit_ids) AS id) THEN
+                RAISE EXCEPTION 'unit_ids must name each cabin once, or be null for a resort closure'
+                    USING ERRCODE = '22023';
+            END IF;
         END IF;
         v_first_night := (p_block->>'start_date')::date;
         v_last_night := (p_block->>'end_date')::date;
@@ -335,7 +342,7 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.cancel_bookings_and_save_block(jsonb, uuid[]) IS
-    'Cancels the confirmed conflicting bookings and saves the block in one transaction. Refuses all if the conflicts changed or a guest is checked in.';
+    'Cancels the conflicting bookings the manager saw and saves the block in one transaction. Refuses all if the conflicts changed or a guest is checked in.';
 
 REVOKE ALL ON FUNCTION public.cancel_bookings_and_save_block(jsonb, uuid[]) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.cancel_bookings_and_save_block(jsonb, uuid[]) TO authenticated;

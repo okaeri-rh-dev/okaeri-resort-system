@@ -10,6 +10,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { toStayInstants, type ManilaDay } from "@/lib/bookings/stay";
+import type { CancelAndSaveResult } from "@/lib/supabase";
 import type { Database, Json } from "@/types/database.types";
 
 import { runPsql, runPsqlAsync } from "../setup/psql";
@@ -343,12 +344,6 @@ describe("block conflicts", () => {
   });
 
   describe("cancel and save", () => {
-    type SaveResult = {
-      status: "saved" | "conflicts_changed" | "checked_in";
-      conflicts: { booking_id: string }[];
-      blocks: { blackout_id: string; unit_id: string | null }[];
-    };
-
     const cancelAndSave = async (
       block: Json,
       confirmedIds: string[],
@@ -358,7 +353,7 @@ describe("block conflicts", () => {
         p_block: block,
         p_booking_ids: confirmedIds,
       });
-      return { result: data as SaveResult | null, error };
+      return { result: data as CancelAndSaveResult | null, error };
     };
 
     const bookingRows = async (ids: string[]) => {
@@ -480,6 +475,22 @@ describe("block conflicts", () => {
 
       expect(result?.status).toBe("checked_in");
       expect((await bookingRows([checkedIn])).get(checkedIn)?.booking_status).toBe("CheckedIn");
+      expect(await blocksOn(unitId)).toEqual([]);
+    });
+
+    it("refuses an empty or repeated cabin list", async () => {
+      if (!shouldRun) return;
+      const { unit_id: unitId } = await newUnit();
+      const nights = {
+        start_date: "2034-01-20",
+        end_date: "2034-01-20",
+        reason: `${REASON_PREFIX} bad units`,
+      };
+
+      const empty = await cancelAndSave({ unit_ids: [], ...nights }, []);
+      expect(empty.error?.code).toBe("22023");
+      const repeated = await cancelAndSave({ unit_ids: [unitId, unitId], ...nights }, []);
+      expect(repeated.error?.code).toBe("22023");
       expect(await blocksOn(unitId)).toEqual([]);
     });
 
