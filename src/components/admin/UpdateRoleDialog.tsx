@@ -25,6 +25,7 @@ import {
 import { useDeactivateRole, useUpdateRole } from "@/hooks/useRoleManagement";
 import { AuditRole, getRoleDisplayName, type AppRole } from "@/lib/audit-roles";
 import { supabaseAuth } from "@/lib/supabase";
+import { typeError } from "@/lib/validation/type-error";
 
 import { RoleOptions } from "./RoleOptions";
 
@@ -33,9 +34,7 @@ import { RoleOptions } from "./RoleOptions";
 // ============================================
 
 const updateRoleSchema = z.object({
-  newRole: z.nativeEnum(AuditRole, {
-    required_error: "Role is required",
-  }),
+  newRole: z.nativeEnum(AuditRole, { error: typeError("Role is required") }),
   notes: z.string().optional(),
 });
 

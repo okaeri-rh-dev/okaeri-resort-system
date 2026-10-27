@@ -22,6 +22,7 @@ import {
   useUploadQrCode,
 } from "@/hooks/usePaymentMethods";
 import { sanitizeFormData } from "@/lib/security/sanitize";
+import { typeError } from "@/lib/validation/type-error";
 import type { PaymentMethodConfig, PaymentMethodType } from "@/types";
 
 import { ActiveSwitchField } from "./ActiveSwitchField";
@@ -52,7 +53,7 @@ const ICON_COLORS = [
 
 const paymentMethodSchema = z.object({
   method_type: z.enum(["e-wallet", "bank-transfer", "cash", "other"], {
-    required_error: "Please select a method type",
+    error: typeError("Please select a method type"),
   }),
   provider_name: z.string().min(1, "Provider name is required").max(100, "Provider name too long"),
   display_name: z.string().min(1, "Display name is required").max(150, "Display name too long"),

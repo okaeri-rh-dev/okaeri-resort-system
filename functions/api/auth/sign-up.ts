@@ -93,7 +93,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
         JSON.stringify({
           error: "VALIDATION_ERROR",
           message: "Invalid request data",
-          details: validationResult.error.errors.map((e) => ({
+          details: validationResult.error.issues.map((e) => ({
             field: e.path.join("."),
             message: e.message,
           })),

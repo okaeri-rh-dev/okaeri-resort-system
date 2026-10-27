@@ -29,6 +29,7 @@ import { hasProperty, isObject } from "@/lib/type-guards";
 import {
   multiUnitBookingSchema,
   STEP_FIELDS,
+  type MultiUnitBookingFormValues,
   type MultiUnitBookingRequest,
 } from "@/lib/validation/booking-schema";
 
@@ -70,7 +71,7 @@ export function MultiUnitGuestBookingForm() {
   const isDev = import.meta.env.DEV;
   const skipTurnstile = import.meta.env.VITE_SKIP_TURNSTILE === "true";
 
-  const form = useForm<MultiUnitBookingRequest>({
+  const form = useForm<MultiUnitBookingFormValues, unknown, MultiUnitBookingRequest>({
     resolver: zodResolver(multiUnitBookingSchema),
     defaultValues: {
       guest_name: "",
@@ -155,7 +156,7 @@ export function MultiUnitGuestBookingForm() {
     }
 
     // Trigger validation for step fields with proper typing
-    const isValid = await form.trigger(fields as unknown as (keyof MultiUnitBookingRequest)[]);
+    const isValid = await form.trigger(fields as unknown as (keyof MultiUnitBookingFormValues)[]);
     return isValid;
   };
 

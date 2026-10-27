@@ -26,6 +26,7 @@ import {
 import { usePendingUsers, type PendingUser } from "@/hooks/usePendingUsers";
 import { useGrantRole } from "@/hooks/useRoleManagement";
 import { AuditRole, getRoleDisplayName } from "@/lib/audit-roles";
+import { typeError } from "@/lib/validation/type-error";
 
 import { RoleOptions } from "./RoleOptions";
 
@@ -34,11 +35,9 @@ import { RoleOptions } from "./RoleOptions";
 // ============================================
 
 const grantRoleSchema = z.object({
-  userId: z.string().uuid("Must be a valid UUID from auth.users").min(1, "User ID is required"),
+  userId: z.guid("Must be a valid UUID from auth.users").min(1, "User ID is required"),
   email: z.string().email("Must be a valid email address").min(1, "Email is required"),
-  role: z.nativeEnum(AuditRole, {
-    required_error: "Role is required",
-  }),
+  role: z.nativeEnum(AuditRole, { error: typeError("Role is required") }),
   notes: z.string().optional(),
 });
 
