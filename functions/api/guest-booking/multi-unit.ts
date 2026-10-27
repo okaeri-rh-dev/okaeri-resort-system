@@ -1,6 +1,7 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
+import { isBlockedNightError } from "@/lib/bookings/availability";
 import { generateGuestBookingReference } from "@/lib/bookings/reference";
 import { toStayInstants } from "@/lib/bookings/stay";
 import { checkKVRateLimit } from "@/lib/kv-rate-limit";
@@ -35,9 +36,6 @@ import { calculateBookingPrice } from "../../lib/pricing";
 
 // Environment type for Cloudflare Pages
 // Subset of the jsonb built by create_guest_booking (turnstile variant, 20251110171900)
-// SQLSTATE raised by create_guest_booking when a night lacks unblocked cabins
-const BLOCKED_NIGHT_CODE = "BLOCK";
-
 interface CreateGuestBookingResult {
   booking: { booking_id: string; booking_reference: string };
 }
@@ -376,7 +374,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       p_guest_data: null, // Guest data is included in p_booking_data for simplified interface
     });
 
-    if (createError?.code === BLOCKED_NIGHT_CODE) {
+    if (isBlockedNightError(createError)) {
       return Response.json(
         {
           success: false,

@@ -14,6 +14,7 @@ BEGIN;
 DROP FUNCTION IF EXISTS public.check_multi_unit_availability(uuid[], timestamptz, timestamptz, uuid);
 
 -- SECURITY DEFINER: callers cannot read blocks, and only flags come back, never a reason text.
+-- Staff only: guests must not see which cabin is blocked.
 CREATE FUNCTION public.check_multi_unit_availability(
     p_unit_ids uuid[],
     p_check_in timestamptz,
@@ -68,9 +69,9 @@ $$;
 COMMENT ON FUNCTION public.check_multi_unit_availability(uuid[], timestamptz, timestamptz, uuid) IS
     'Per unit: free, or unavailable with reason Blocked (a block or resort closure on a night) or Booked (a Confirmed or CheckedIn stay overlaps).';
 
-REVOKE ALL ON FUNCTION public.check_multi_unit_availability(uuid[], timestamptz, timestamptz, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.check_multi_unit_availability(uuid[], timestamptz, timestamptz, uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.check_multi_unit_availability(uuid[], timestamptz, timestamptz, uuid)
-    TO anon, authenticated, service_role;
+    TO authenticated, service_role;
 
 -- ============================================================================
 -- Guest calendar counts
@@ -115,12 +116,7 @@ BEGIN
     SELECT
         night.date,
         count(u.unit_id) FILTER (
-            WHERE NOT EXISTS (
-                SELECT 1
-                FROM public.availability_blackouts b
-                WHERE (b.unit_id = u.unit_id OR b.unit_id IS NULL)
-                  AND night.date BETWEEN b.start_date AND b.end_date
-            )
+            WHERE NOT public.is_unit_blocked(u.unit_id, night.date, night.date)
             AND NOT EXISTS (
                 SELECT 1
                 FROM public.booking_unit_availability bua

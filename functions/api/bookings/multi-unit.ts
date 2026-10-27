@@ -345,7 +345,7 @@ async function checkMultiUnitAvailability(
   unitIds: string[],
   checkIn: string,
   checkOut: string
-): Promise<Array<{ unit_id: string; is_available: boolean; reason: string | null }>> {
+) {
   const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
       autoRefreshToken: false,

@@ -46,9 +46,6 @@ interface Env {
   TURNSTILE_SECRET_KEY?: string;
 }
 
-type AvailabilityDay =
-  Database["public"]["Functions"]["get_public_aggregate_availability"]["Returns"][number];
-
 type AvailabilityStatus = "full" | "moderate" | "limited" | "booked";
 
 interface AvailabilityResponse {
@@ -273,7 +270,7 @@ export async function onRequest(context: {
     // ============================================================================
 
     const totalUnits = data[0]?.total_units ?? 0;
-    const availability = data.map((day: AvailabilityDay) => ({
+    const availability = data.map((day) => ({
       date: day.date,
       availableCount: day.available_count,
       status: getAvailabilityStatus(day.available_count, totalUnits),

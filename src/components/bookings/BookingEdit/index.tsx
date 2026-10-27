@@ -79,7 +79,7 @@ export function BookingEditPage() {
 
   // Form submission handler
   const onSubmit: SubmitHandler<BookingEditInput> = (data) => {
-    if (isCheckingAvailability) {
+    if (checkInDay && checkOutDay && isCheckingAvailability) {
       form.setError("unit_id", { message: "Still checking availability…" });
       return;
     }
@@ -206,13 +206,21 @@ export function BookingEditPage() {
                     {units?.map((unit) => {
                       const reason = unavailableReason(availability, unit.unit_id);
                       return (
-                        <SelectItem key={unit.unit_id} value={unit.unit_id}>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{unit.unit_name}</span>
-                            <span className="text-muted-foreground text-xs">
-                              {unit.unit_type} • Max {unit.max_occupancy} guests
-                              {reason ? ` • ${reason}` : ""}
-                            </span>
+                        <SelectItem
+                          key={unit.unit_id}
+                          value={unit.unit_id}
+                          disabled={reason !== null}
+                        >
+                          <div className="flex w-full items-center justify-between">
+                            <div className="flex flex-col">
+                              <span className="font-medium">{unit.unit_name}</span>
+                              <span className="text-muted-foreground text-xs">
+                                {unit.unit_type} • Max {unit.max_occupancy} guests
+                              </span>
+                            </div>
+                            {reason && (
+                              <span className="text-muted-foreground ml-2 text-xs">{reason}</span>
+                            )}
                           </div>
                         </SelectItem>
                       );

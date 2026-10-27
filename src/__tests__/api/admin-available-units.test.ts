@@ -7,6 +7,7 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { UnavailableReason } from "@/lib/bookings/availability";
 import type { Database } from "@/types/database.types";
 
 type UnitRow = Database["public"]["Tables"]["units"]["Row"];
@@ -62,7 +63,7 @@ function unitsQuery() {
 
 type AvailabilityParams = { p_unit_ids: string[]; p_check_in: string; p_check_out: string };
 let availabilityParams: AvailabilityParams | undefined;
-let unavailable: Record<string, "Blocked" | "Booked"> = {};
+let unavailable: Record<string, UnavailableReason> = {};
 
 const fakeSupabase = {
   auth: { getUser: async () => ({ data: { user: { id: "staff-1" } }, error: null }) },

@@ -179,6 +179,20 @@ describe("availability reads honour blocks", () => {
 
       expect(data).toMatchObject([{ unit_id: maintenanceUnit, is_available: true, reason: null }]);
     });
+
+    it("anon cannot call it, so guests never see which cabin is blocked", async () => {
+      if (!shouldRun) return;
+      const unitId = await newUnit();
+      const stay = toStayInstants("2034-03-10", "2034-03-12");
+
+      const { error } = await anon.rpc("check_multi_unit_availability", {
+        p_unit_ids: [unitId],
+        p_check_in: stay.check_in,
+        p_check_out: stay.check_out,
+      });
+
+      expect(error?.code).toBe("42501");
+    });
   });
 
   describe("get_public_aggregate_availability", () => {

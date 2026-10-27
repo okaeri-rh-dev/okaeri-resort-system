@@ -4,6 +4,8 @@
  * Creates Supabase client mocks for testing multi-unit availability checks
  */
 
+import type { UnavailableReason } from "@/lib/bookings/availability";
+
 import { createMockSupabaseClient } from "../helpers/mock-supabase";
 import { testUnits } from "../utils/fixtures";
 
@@ -20,7 +22,7 @@ export interface AvailabilityMockOptions {
   availabilityResults?: Array<{
     unit_id: string;
     is_available: boolean;
-    reason?: "Blocked" | "Booked" | null;
+    reason?: UnavailableReason | null;
     conflicting_bookings: number;
     next_available_date: string | null;
   }>;
