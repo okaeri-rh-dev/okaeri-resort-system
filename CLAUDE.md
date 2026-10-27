@@ -8,9 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   1. Run with an explicit long timeout (`timeout: 600000`), or
   2. Run with `run_in_background: true` and monitor until it exits.
 - After every push, verify it landed before reporting success: `git fetch origin && git rev-parse HEAD origin/main` — the two hashes must match. A started hook is not a completed push.
-- `main` needs green CI (Lint, Type-check, Unit tests, Knip) to merge, and direct pushes to it are rejected. Merge PRs with `gh pr merge --auto --merge`; it waits for the required checks.
+- `main` needs green CI (Lint, Type-check, Unit tests, Knip, e2e) to merge, and direct pushes to it are rejected. Merge PRs with `gh pr merge --auto --merge`; it waits for the required checks.
 - If the hook fails or hangs on pre-existing/unrelated failures: run `npm run verify` directly; if it passes, ASK the user before `git push --no-verify`. Never use `--no-verify` on your own.
-- DB tests (need `supabase start`) and Playwright E2E are not part of the hook; they run in CI (`.github/workflows/infra-health.yml`) and explicitly when relevant.
+- DB tests (need `supabase start`) and Playwright E2E are not part of the hook; they run in the `e2e` job of `.github/workflows/infra-health.yml` on every PR that changes app, DB or test files (`e2e-scope` decides; a skipped job passes the check), and again on push to main. The job takes about 25 minutes.
 
 ## Deployment Secrets & 401 Debugging
 

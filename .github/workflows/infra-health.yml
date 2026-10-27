@@ -6,15 +6,22 @@ on:
     paths-ignore:
       - "docs/**"
       - "**/*.md"
+  # No paths filter here: e2e is a required check, and a workflow that never starts leaves
+  # the PR waiting. e2e-scope skips the e2e job instead; a skipped job passes the check.
+  pull_request:
   schedule:
     - cron: "0 22 * * 0" # weekly, Sun 22:00 UTC — catches drift during idle weeks
   workflow_dispatch:
+
+concurrency:
+  group: infra-health-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # Lint + unit already run in the deploy quality gate on every push; keep this
   # copy for the weekly and manual runs only.
   health:
-    if: github.event_name != 'push'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -40,7 +47,7 @@ jobs:
   # Weekly prod drift: prod's public-schema catalog vs the migrations (scripts/drift-check.sh).
   # Not on push: a migration committed before `supabase db push` would fail it every time.
   prod-drift:
-    if: github.event_name != 'push'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -64,8 +71,37 @@ jobs:
   # Enabled 2026-07-05 after the migration-filename repair and E2E root-cause
   # fixes (loopback exemption for IP auto-blocking, Playwright global-setup
   # user seeding, viewport-aware DashboardPage).
+  # A PR runs e2e only when it changes something the app, the DB or the tests run on.
+  e2e-scope:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.scope.outputs.run }}
+    steps:
+      - uses: actions/checkout@v7
+        if: github.event_name == 'pull_request'
+        with:
+          fetch-depth: 0
+      - id: scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          runtime='^(src|e2e|supabase|functions|scripts|public)/|^package(-lock)?\.json$|^index\.html$|^tsconfig[^/]*\.json$|^[^/]*\.config\.[cm]?[jt]s$|^wrangler\.|^\.nvmrc$|^\.github/workflows/infra-health\.yml$'
+          changed=$(git diff --name-only "$BASE_SHA...$HEAD_SHA")
+          if echo "$changed" | grep -Eq "$runtime"; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No app, DB or test files changed; skipping e2e."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
   e2e:
-    if: true
+    needs: e2e-scope
+    if: needs.e2e-scope.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
