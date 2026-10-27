@@ -65,12 +65,12 @@ function groupNames(nav: HTMLElement) {
 }
 
 describe("admin menu groups per role", () => {
-  it("shows staff the Bookings and Cabins groups only, with Availability", async () => {
+  it("shows staff the Bookings and Cabins groups only, with Availability and Blocked dates", async () => {
     const nav = await renderMenuFor(AuditRole.STAFF);
 
     expect(groupNames(nav)).toEqual(["Bookings", "Cabins"]);
     expect(groupLinks(nav, "Bookings")).toEqual(["Bookings", "Booking Queue"]);
-    expect(groupLinks(nav, "Cabins")).toEqual(["Availability"]);
+    expect(groupLinks(nav, "Cabins")).toEqual(["Availability", "Blocked dates"]);
     expect(screen.queryByRole("button", { name: "More" })).not.toBeInTheDocument();
   });
 
@@ -84,7 +84,7 @@ describe("admin menu groups per role", () => {
       "Payments",
       "Guests",
     ]);
-    expect(groupLinks(nav, "Cabins")).toEqual(["Cabins", "Availability"]);
+    expect(groupLinks(nav, "Cabins")).toEqual(["Cabins", "Availability", "Blocked dates"]);
     expect(groupLinks(nav, "Money")).toEqual(["Expenses", "Accounts", "Transfers", "Documents"]);
     expect(groupLinks(nav, "Admin")).toEqual(["Settings"]);
   });

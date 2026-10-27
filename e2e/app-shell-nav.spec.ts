@@ -166,8 +166,14 @@ test.describe("Admin navigation form", () => {
     await loginAsStaff(page);
 
     const { nav } = await mainNavBox(page);
-    await expect(nav.getByRole("link")).toHaveCount(4);
-    for (const name of ["Dashboard", "Bookings", "Booking Queue", "Availability"]) {
+    await expect(nav.getByRole("link")).toHaveCount(5);
+    for (const name of [
+      "Dashboard",
+      "Bookings",
+      "Booking Queue",
+      "Availability",
+      "Blocked dates",
+    ]) {
       await expect(nav.getByRole("link", { name, exact: true })).toBeVisible();
     }
     await expect(page.getByRole("button", { name: "More" })).toHaveCount(0);

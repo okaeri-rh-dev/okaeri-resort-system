@@ -26,6 +26,7 @@ React hooks shared across components. Entity CRUD (bookings, guests, payments, e
 | `useMultiUnitBookingQueries.ts` | `useMultiUnitAvailability`, `useCreateMultiUnitBooking`                                       |
 | `useMultiUnitRealtime.ts`       | `useMultiUnitAvailabilitySubscription`: invalidates availability on booking changes           |
 | `useAvailabilityRealtime.ts`    | `useAvailabilityRealtime`: availability changes that affect multi-unit bookings               |
+| `useBlocks.ts`                  | `useBlocks` (current and upcoming, past on request), create/update/delete block mutations    |
 | `useIdempotencyKey.ts`          | `useIdempotencyKey`: persisted key for retry-safe mutations                                   |
 | `useCalendarBookings.ts`        | `useCalendarBookings` plus `getBookingStatusPriority`, `formatCurrency` for the calendar view |
 
