@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/r
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+import type { ManilaDay } from "@/lib/bookings/stay";
 import { unitKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import { toManilaDateString } from "@/lib/timezone";
@@ -325,7 +326,7 @@ export const useDeleteUnit = () => {
 // };
 
 // Each cabin's state on one night, keyed by unit id
-const cabinStatesQuery = (date: string) =>
+const cabinStatesQuery = (date: ManilaDay) =>
   queryOptions({
     queryKey: unitKeys.states(date),
     queryFn: async () => {
@@ -334,6 +335,7 @@ const cabinStatesQuery = (date: string) =>
       return new Map<string, CabinNight>(
         data.map((row) => [
           row.unit_id,
+          // The RPC returns only Blocked, Booked or Free; the generated type says string
           { state: row.state as CabinState, blockReason: row.block_reason },
         ])
       );

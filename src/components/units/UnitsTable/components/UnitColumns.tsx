@@ -3,8 +3,8 @@ import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { createColumnHelper, type Header } from "@tanstack/react-table";
 
-import { ActionMenu, Checkbox, SortableHeader, StatusBadge } from "@/components/patterns";
-import { statusBadgeProps } from "@/lib/status-tone";
+import { ActionMenu, Checkbox, SortableHeader } from "@/components/patterns";
+import { CabinTonight } from "@/components/units/CabinTonight";
 import type { CabinNight, Unit } from "@/types";
 
 import { InlineEdit } from "./InlineEdit";
@@ -117,15 +117,7 @@ export function useUnitColumns({
         ),
         cell: ({ row }) => {
           const cabinNight = cabinStates?.get(row.original.unit_id);
-          if (!cabinNight) return null;
-          return (
-            <div className="space-y-1">
-              <StatusBadge {...statusBadgeProps(cabinNight.state, "Free")} />
-              {cabinNight.blockReason && (
-                <p className="text-muted-foreground text-xs">{cabinNight.blockReason}</p>
-              )}
-            </div>
-          );
+          return cabinNight ? <CabinTonight cabinNight={cabinNight} /> : null;
         },
         size: 160,
       }),

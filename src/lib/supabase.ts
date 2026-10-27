@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { format } from "date-fns";
 
+import type { ManilaDay } from "@/lib/bookings/stay";
 import type { MoveDirection } from "@/lib/contact-channel";
 import { toManilaDateString } from "@/lib/timezone";
 import type { AuditEventContext, AuditLogFilters } from "@/types/audit.types";
@@ -147,7 +148,7 @@ export const db = {
       supabase.from("units").update(data).eq("unit_id", id).select().single(),
     delete: (id: string) => supabase.from("units").delete().eq("unit_id", id),
     /** Blocked (with the reason), Booked or Free for each cabin on one night (ADR 0005). */
-    statesOn: (date: string) => supabase.rpc("get_cabin_states", { p_date: date }),
+    statesOn: (date: ManilaDay) => supabase.rpc("get_cabin_states", { p_date: date }),
   },
 
   bookings: {

@@ -62,7 +62,7 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
 
   // Custom filters
   const [typeFilter, setTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [tonightFilter, setTonightFilter] = useState("all");
 
   // Filter units based on custom filters
   const filteredUnits = useMemo(() => {
@@ -72,12 +72,12 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
       filtered = filtered.filter((unit) => unit.unit_type === typeFilter);
     }
 
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((unit) => cabinStates?.get(unit.unit_id)?.state === statusFilter);
+    if (tonightFilter !== "all") {
+      filtered = filtered.filter((unit) => cabinStates?.get(unit.unit_id)?.state === tonightFilter);
     }
 
     return filtered;
-  }, [units, cabinStates, typeFilter, statusFilter]);
+  }, [units, cabinStates, typeFilter, tonightFilter]);
 
   // Stabilize the update handler with a ref to avoid recreating columns
   const updateMutationRef = useRef(updateUnitMutation);
@@ -201,8 +201,8 @@ export function useUnitsTable(options: UseUnitsTableOptions = {}) {
     setGlobalFilter,
     typeFilter,
     setTypeFilter,
-    statusFilter,
-    setStatusFilter,
+    tonightFilter,
+    setTonightFilter,
 
     // Edit mode
     isEditMode,

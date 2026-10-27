@@ -25,8 +25,8 @@ interface TableHeaderProps {
   onGlobalFilterChange: (value: string) => void;
   typeFilter: string;
   onTypeFilterChange: (value: string) => void;
-  statusFilter: string;
-  onStatusFilterChange: (value: string) => void;
+  tonightFilter: string;
+  onTonightFilterChange: (value: string) => void;
   isEditMode: boolean;
   onEditModeToggle: () => void;
   onExport: () => void;
@@ -43,8 +43,8 @@ export function TableHeader({
   onGlobalFilterChange,
   typeFilter,
   onTypeFilterChange,
-  statusFilter,
-  onStatusFilterChange,
+  tonightFilter,
+  onTonightFilterChange,
   isEditMode,
   onEditModeToggle,
   onExport,
@@ -59,8 +59,8 @@ export function TableHeader({
     { value: "Villa", label: "Villa" },
   ];
 
-  const cabinStates: Array<{ value: string; label: string }> = [
-    { value: "all", label: "All tonight" },
+  const tonightOptions: Array<{ value: string; label: string }> = [
+    { value: "all", label: "Any state" },
     { value: "Blocked", label: "Blocked" },
     { value: "Booked", label: "Booked" },
     { value: "Free", label: "Free" },
@@ -95,15 +95,15 @@ export function TableHeader({
           </Select>
 
           {/* Tonight filter */}
-          <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-            <SelectTrigger className="w-full @lg:w-40" aria-label="Filter by tonight">
+          <Select value={tonightFilter} onValueChange={onTonightFilterChange}>
+            <SelectTrigger className="w-full @lg:w-40" aria-label="Filter by state tonight">
               <Filter className="mr-2 h-4 w-4" aria-hidden="true" />
-              <SelectValue placeholder="Filter by tonight" />
+              <SelectValue placeholder="Filter by state tonight" />
             </SelectTrigger>
             <SelectContent>
-              {cabinStates.map((cabinState) => (
-                <SelectItem key={cabinState.value} value={cabinState.value}>
-                  {cabinState.label}
+              {tonightOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>

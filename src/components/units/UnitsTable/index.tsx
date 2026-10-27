@@ -50,8 +50,8 @@ function UnitsTableComponent({
     setGlobalFilter,
     typeFilter,
     setTypeFilter,
-    statusFilter,
-    setStatusFilter,
+    tonightFilter,
+    setTonightFilter,
     isEditMode,
     setIsEditMode,
     selectedCount,
@@ -92,8 +92,8 @@ function UnitsTableComponent({
         onGlobalFilterChange={setGlobalFilter}
         typeFilter={typeFilter}
         onTypeFilterChange={setTypeFilter}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
+        tonightFilter={tonightFilter}
+        onTonightFilterChange={setTonightFilter}
         isEditMode={isEditMode}
         onEditModeToggle={() => setIsEditMode(!isEditMode)}
         onExport={handleExport}

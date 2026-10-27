@@ -18,6 +18,7 @@ import {
   DetailSection,
   StatusBadge,
 } from "@/components/patterns";
+import { CabinTonight } from "@/components/units/CabinTonight";
 import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { statusBadgeProps } from "@/lib/status-tone";
 import { useCabinStatesTonight } from "@/stores/useUnitStore";
@@ -66,7 +67,6 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
   const { data: pricingConfig } = usePricingConfig();
   const { data: cabinStates } = useCabinStatesTonight();
   const tonight = cabinStates?.get(unitId);
-  const tonightBadge = tonight && <StatusBadge {...statusBadgeProps(tonight.state, "Free")} />;
 
   return (
     <DetailPageLayout
@@ -76,7 +76,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
         { label: "Cabins", to: "/admin/units" },
         { label: `${unit.unit_name} (${unit.unit_code})` },
       ]}
-      status={tonightBadge}
+      status={tonight && <StatusBadge {...statusBadgeProps(tonight.state, "Free")} />}
       editRoute={{
         to: "/admin/units/$unitId/edit",
         params: { unitId },
@@ -96,19 +96,7 @@ export function UnitDetailPage({ unit, unitId }: UnitDetailPageProps) {
               value={`${unit.max_occupancy} guests`}
               emphasis="strong"
             />
-            <DetailField
-              label="Tonight"
-              value={
-                tonight && (
-                  <div className="space-y-1">
-                    {tonightBadge}
-                    {tonight.blockReason && (
-                      <p className="text-muted-foreground text-xs">{tonight.blockReason}</p>
-                    )}
-                  </div>
-                )
-              }
-            />
+            <DetailField label="Tonight" value={tonight && <CabinTonight cabinNight={tonight} />} />
           </div>
         </div>
       </DetailSection>
