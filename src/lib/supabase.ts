@@ -38,6 +38,13 @@ interface PaymentMethodInsert {
 
 type PaymentMethodUpdate = Partial<PaymentMethodInsert>;
 
+type NewBlock = Pick<
+  TablesInsert<"availability_blackouts">,
+  "start_date" | "end_date" | "reason"
+> & {
+  unitIds: string[] | null;
+};
+
 // Expense Categories types
 // Same situation as payment_methods - using local type bridge
 interface ExpenseCategoryInsert {
@@ -297,13 +304,24 @@ export const db = {
       supabase.from("pricing_config").update(data).eq("id", "default").select().single(),
   },
 
-  // Blackout period management
+  // Blocks (GLOSSARY.md); a NULL unit_id is a resort closure
   blackouts: {
     all: () => supabase.from("availability_blackouts").select("*"),
+    list: ({ includePast = false } = {}) => {
+      const query = supabase.from("availability_blackouts").select("*");
+      const listed = includePast ? query : query.gte("end_date", toManilaDateString(new Date()));
+      return listed.order("start_date").order("end_date");
+    },
     byUnit: (unitId: string) =>
       supabase.from("availability_blackouts").select("*").eq("unit_id", unitId),
-    create: (data: Database["public"]["Tables"]["availability_blackouts"]["Insert"]) =>
-      supabase.from("availability_blackouts").insert(data).select().single(),
+    /** One block per cabin, or one resort closure when `unitIds` is null. */
+    create: ({ unitIds, ...block }: NewBlock) => {
+      const rows: TablesInsert<"availability_blackouts">[] = (unitIds ?? [null]).map((unitId) => ({
+        ...block,
+        unit_id: unitId,
+      }));
+      return supabase.from("availability_blackouts").insert(rows).select();
+    },
     update: (id: string, data: Database["public"]["Tables"]["availability_blackouts"]["Update"]) =>
       supabase.from("availability_blackouts").update(data).eq("blackout_id", id).select().single(),
     delete: (id: string) => supabase.from("availability_blackouts").delete().eq("blackout_id", id),
