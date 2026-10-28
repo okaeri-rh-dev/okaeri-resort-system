@@ -164,12 +164,12 @@ export function DocumentGenerator() {
       </div>
 
       {/* ========== Mobile Layout (<840px): Form + Preview Sheet ========== */}
-      <div className="expanded:hidden flex-1 overflow-y-auto">
+      <div className="expanded:hidden flex-1 overflow-y-auto pb-20">
         <DocumentForm />
       </div>
 
-      {/* Mobile sticky bottom bar */}
-      <div className="bg-background safe-area-bottom expanded:hidden fixed right-0 bottom-0 left-0 z-40 flex items-center gap-2 border-t p-3">
+      {/* Mobile sticky bottom bar: above the admin bottom bar on compact, at the screen foot from medium */}
+      <div className="bg-background expanded:hidden medium:bottom-0 medium:pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] fixed right-0 bottom-(--admin-bottom-bar-height) left-0 z-40 flex items-center gap-2 border-t p-3">
         <Button
           variant="outline"
           className="min-h-[44px] flex-1"

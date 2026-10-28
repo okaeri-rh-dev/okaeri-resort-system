@@ -2,6 +2,8 @@ import {
   createContext,
   useContext,
   useId,
+  useLayoutEffect,
+  useRef,
   useState,
   type ComponentProps,
   type ReactNode,
@@ -433,6 +435,29 @@ const sheetItem = cn(
   "focus-visible:ring-2 focus-visible:outline-hidden"
 );
 
+/**
+ * Writes the compact bottom bar's rendered height, safe area included, to `--admin-bottom-bar-height`
+ * on the shell root, so a page's own fixed bottom bar can sit directly above it.
+ */
+function usePublishedBottomBarHeight() {
+  const shellRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const shell = shellRef.current;
+    const bar = barRef.current;
+    if (!shell || !bar) return;
+    const publish = () =>
+      shell.style.setProperty("--admin-bottom-bar-height", `${bar.offsetHeight}px`);
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(bar);
+    return () => observer.disconnect();
+  }, []);
+
+  return { shellRef, barRef };
+}
+
 const adminSheetLink = cn(
   sheetItem,
   "hover:bg-sidebar-accent focus-visible:ring-sidebar-ring",
@@ -455,10 +480,11 @@ function AdminShell({
   const hasFooter = actions.length > 0 || theme !== undefined;
   const sections = navGroups && toSections(destinations, navGroups);
   const current = useCurrentDestination(destinations);
+  const { shellRef, barRef } = usePublishedBottomBarHeight();
 
   return (
     <CurrentDestinationContext.Provider value={current}>
-      <div className="bg-background medium:flex-row flex h-dvh flex-col">
+      <div ref={shellRef} className="bg-background medium:flex-row flex h-dvh flex-col">
         <header className="bg-card border-border medium:hidden flex h-14 shrink-0 items-center justify-between border-b px-4">
           <Link to={brand.to} className="font-display text-foreground text-lg font-bold">
             {brand.name}
@@ -475,6 +501,7 @@ function AdminShell({
         </header>
 
         <div
+          ref={barRef}
           className={cn(
             "bg-sidebar text-sidebar-foreground border-sidebar-border safe-area-bottom fixed inset-x-0 bottom-0 z-40 border-t",
             "medium:static medium:flex medium:h-full medium:w-20 medium:shrink-0 medium:flex-col medium:overflow-y-auto medium:border-t-0 medium:border-r",

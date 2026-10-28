@@ -73,3 +73,20 @@ describe("DocumentGenerator letterhead contact defaults", () => {
     expect(dialog.getByLabelText("Email")).toHaveValue("stay@okaeri-resort.example");
   });
 });
+
+describe("DocumentGenerator mobile action bar", () => {
+  beforeEach(() => {
+    vi.mocked(useActiveContactChannels).mockReturnValue({
+      data: channels,
+      isSuccess: true,
+    } as unknown as ReturnType<typeof useActiveContactChannels>);
+  });
+
+  // jsdom has no layout, so this pins the bar to the shell's published bottom bar height
+  it("sits above the admin bottom bar on compact windows", () => {
+    renderGenerator();
+
+    const bar = screen.getByRole("button", { name: "Preview" }).parentElement;
+    expect(bar).toHaveClass("bottom-(--admin-bottom-bar-height)", "medium:bottom-0");
+  });
+});
