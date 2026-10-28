@@ -28,6 +28,8 @@ export class BookingsTablePage {
   readonly tableRows: Locator;
   readonly tableBodyRows: Locator;
   readonly tableHeaders: Locator;
+  readonly noBookingsState: Locator;
+  readonly noMatchesState: Locator;
   readonly emptyState: Locator;
   readonly loadingState: Locator;
 
@@ -64,8 +66,9 @@ export class BookingsTablePage {
     this.tableRows = page.getByRole("row");
     this.tableBodyRows = page.locator("table tbody tr");
     this.tableHeaders = page.getByRole("columnheader");
-    // TableEmptyState component shows "No bookings found"
-    this.emptyState = page.getByText("No bookings found");
+    this.noBookingsState = page.getByText("No bookings yet");
+    this.noMatchesState = page.getByText("No bookings found");
+    this.emptyState = this.noBookingsState.or(this.noMatchesState);
     this.loadingState = page.locator(".animate-pulse, .animate-spin");
 
     // Action buttons

@@ -127,17 +127,10 @@ test.describe("Admin Bookings Management", () => {
       const bookingsTable = new BookingsTablePage(page);
       await bookingsTable.goto();
 
-      // Get initial row count
-      const initialCount = await bookingsTable.getRowCount();
-
-      // Search for something specific
       await bookingsTable.search("nonexistent-booking-xyz-999");
 
-      // Should show fewer results or empty state
-      const filteredCount = await bookingsTable.getRowCount();
-      const hasEmptyState = await bookingsTable.emptyState.isVisible().catch(() => false);
-
-      expect(filteredCount < initialCount || hasEmptyState).toBeTruthy();
+      await expect(bookingsTable.emptyState).toBeVisible();
+      expect(await bookingsTable.getRowCount()).toBe(0);
     });
 
     test("can clear search", async ({ page }) => {
@@ -394,7 +387,13 @@ test.describe("Responsive Design", () => {
     const bookingsTable = new BookingsTablePage(page);
     await bookingsTable.goto();
 
-    await bookingsTable.expectBookingListVisible();
+    await expect(bookingsTable.table).toBeHidden();
+    await expect(
+      page
+        .getByRole("button", { name: /^View booking / })
+        .or(bookingsTable.noBookingsState)
+        .first()
+    ).toBeVisible();
   });
 
   test("search works on mobile", async ({ page }) => {
