@@ -1537,6 +1537,12 @@ export type Database = {
           normalized_bookings: number;
         }[];
       };
+      referenced_payment_proof_paths: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          file_path: string;
+        }[];
+      };
       refresh_booking_payment_status: { Args: { p_booking_id: string }; Returns: undefined };
       reorder_contact_channel: { Args: { p_direction: string; p_id: string }; Returns: undefined };
       restore_logs_from_archive: {
