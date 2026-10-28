@@ -1,14 +1,19 @@
 import { StatusBadge } from "@/components/patterns";
 import type { Block } from "@/hooks/useBlocks";
 import { blockNightsLabel, blockPhase } from "@/lib/blocks";
+import { cn } from "@/lib/utils";
 
 interface BlockListProps {
   blocks: Block[];
   today: string;
   cabinName: (unitId: string) => string;
-  onOpen: (block: Block) => void;
+  /** Leave out to show the rows without opening the form */
+  onOpen?: (block: Block) => void;
   empty: string;
 }
+
+const rowClassName =
+  "coarse:min-h-11 flex w-full flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-left text-sm";
 
 const phaseBadges = {
   running: <StatusBadge tone="warning">Now</StatusBadge>,
@@ -21,13 +26,9 @@ export function BlockList({ blocks, today, cabinName, onOpen, empty }: BlockList
 
   return (
     <ul className="bg-card divide-y rounded-lg border">
-      {blocks.map((block) => (
-        <li key={block.blackout_id}>
-          <button
-            type="button"
-            onClick={() => onOpen(block)}
-            className="hover:bg-accent focus-visible:ring-ring coarse:min-h-11 flex w-full flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-left text-sm transition-colors duration-150 focus-visible:ring-2 focus-visible:outline-none"
-          >
+      {blocks.map((block) => {
+        const row = (
+          <>
             <span className="medium:w-64 w-full font-medium tabular-nums">
               {blockNightsLabel(block.start_date, block.end_date)}
             </span>
@@ -36,9 +37,27 @@ export function BlockList({ blocks, today, cabinName, onOpen, empty }: BlockList
             </span>
             <span className="text-muted-foreground min-w-0 flex-1 truncate">{block.reason}</span>
             {phaseBadges[blockPhase(block, today)]}
-          </button>
-        </li>
-      ))}
+          </>
+        );
+        return (
+          <li key={block.blackout_id}>
+            {onOpen ? (
+              <button
+                type="button"
+                onClick={() => onOpen(block)}
+                className={cn(
+                  rowClassName,
+                  "hover:bg-accent focus-visible:ring-ring transition-colors duration-150 focus-visible:ring-2 focus-visible:outline-none"
+                )}
+              >
+                {row}
+              </button>
+            ) : (
+              <div className={rowClassName}>{row}</div>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }

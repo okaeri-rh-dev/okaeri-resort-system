@@ -145,6 +145,8 @@ export const availabilityKeys = {
   calendar: {
     all: ["availability-calendar"] as const,
     byUnit: (unitId: string) => [...availabilityKeys.calendar.all, unitId] as const,
+    stays: (firstNight: string, lastNight: string) =>
+      [...availabilityKeys.calendar.all, "stays", firstNight, lastNight] as const,
   },
   multiUnit: {
     all: ["multi-unit-availability"] as const,
@@ -157,6 +159,8 @@ export const availabilityKeys = {
     all: ["unit-blackouts"] as const,
     list: (includePast: boolean) =>
       [...availabilityKeys.blackouts.all, "list", { includePast }] as const,
+    inNights: (firstNight: string, lastNight: string) =>
+      [...availabilityKeys.blackouts.all, "nights", firstNight, lastNight] as const,
     conflicts: (nights: BlockNights) =>
       [...availabilityKeys.blackouts.all, "conflicts", nights] as const,
     byUnit: (unitId: string) => [...availabilityKeys.blackouts.all, unitId] as const,

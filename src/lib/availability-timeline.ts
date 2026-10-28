@@ -1,0 +1,63 @@
+import { manilaDayOf } from "@/lib/bookings/stay";
+import type { Tables } from "@/types/database.types";
+
+/** One cabin's part of a booking. `check_in` and `check_out` are timestamps. */
+export type TimelineStay = Pick<
+  Tables<"booking_unit_availability">,
+  "unit_id" | "booking_id" | "check_in" | "check_out"
+>;
+
+type TimelineBlock = Pick<Tables<"availability_blackouts">, "unit_id" | "start_date" | "end_date">;
+
+export type TimelineCell<Stay, Block> =
+  { kind: "free" } | { kind: "booked"; stay: Stay } | { kind: "blocked"; block: Block };
+
+/** A night of a stay is a Manila day from the check-in day up to, not including, the check-out day. */
+const stayHasNight = (stay: TimelineStay, night: string) =>
+  manilaDayOf(stay.check_in) <= night && night < manilaDayOf(stay.check_out);
+
+/**
+ * What a timeline row shows on one night. `unitId` null is the Whole resort row, which shows
+ * resort closures only. A block shows over a booking, though the guards keep a night from being both.
+ */
+export function timelineCell<Stay extends TimelineStay, Block extends TimelineBlock>(
+  unitId: string | null,
+  night: string,
+  { blocks, stays }: { blocks: Block[]; stays: Stay[] }
+): TimelineCell<Stay, Block> {
+  const block = blocks.find(
+    (candidate) =>
+      (candidate.unit_id === null || candidate.unit_id === unitId) &&
+      candidate.start_date <= night &&
+      night <= candidate.end_date
+  );
+  if (block) return { kind: "blocked", block };
+  if (unitId === null) return { kind: "free" };
+
+  const stay = stays.find(
+    (candidate) => candidate.unit_id === unitId && stayHasNight(candidate, night)
+  );
+  return stay ? { kind: "booked", stay } : { kind: "free" };
+}
+
+/** A night picked on the timeline. `unitId` null is the Whole resort row. */
+export interface TimelineNight {
+  unitId: string | null;
+  night: string;
+}
+
+export interface TimelineRange {
+  unitId: string | null;
+  firstNight: string;
+  lastNight: string;
+}
+
+/** The first tap holds a night; a second tap in the same row gives the range between the two. */
+export function tapFreeNight(
+  pending: TimelineNight | null,
+  tapped: TimelineNight
+): { pending: TimelineNight } | { range: TimelineRange } {
+  if (!pending || pending.unitId !== tapped.unitId) return { pending: tapped };
+  const [firstNight, lastNight] = [pending.night, tapped.night].sort();
+  return { range: { unitId: tapped.unitId, firstNight, lastNight } };
+}

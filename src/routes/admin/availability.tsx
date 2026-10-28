@@ -1,26 +1,51 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
 
-import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 
+import { AvailabilityTimeline } from "@/components/blocks/AvailabilityTimeline";
+import { BlockFormSheet, type BlockFormTarget } from "@/components/blocks/BlockFormSheet";
+import { BlockList } from "@/components/blocks/BlockList";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/patterns";
+import {
+  Button,
+  Callout,
+  PageHeader,
+  Skeleton,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/patterns";
+import { useBlocks, type Block } from "@/hooks/useBlocks";
+import { useUserRole } from "@/hooks/useUserRole";
+import { blockPhase } from "@/lib/blocks";
+import { isManilaDay } from "@/lib/bookings/stay";
 import { requireStaff } from "@/lib/route-guards";
-import { useBookings } from "@/stores/useBookingStore";
+import { toManilaDateString } from "@/lib/timezone";
+import { allUnitsQuery } from "@/stores/useUnitStore";
 
-// Lazy load heavy components
 const UnitsTable = lazy(() =>
   import("@/components/units/UnitsTable").then((m) => ({ default: m.UnitsTable }))
 );
-const DashboardCalendar = lazy(() =>
-  import("@/components/dashboard/DashboardCalendar").then((m) => ({ default: m.DashboardCalendar }))
-);
+
+const WHOLE_RESORT = "resort";
+const manilaDay = z.string().refine(isManilaDay);
 
 const availabilitySearchSchema = z.object({
-  view: z.string().optional(),
-  date: z.string().optional(),
-  unit: z.string().optional(),
+  view: z.enum(["calendar", "units"]).optional().catch(undefined),
+  /** The first night on the timeline */
+  date: manilaDay.optional().catch(undefined),
+  /** The open sheet: "new" or a block id */
+  sheet: z.string().optional(),
+  /** A new block's row and nights, picked on the timeline: a unit id or "resort" */
+  cabin: z.string().optional(),
+  first: manilaDay.optional().catch(undefined),
+  last: manilaDay.optional().catch(undefined),
 });
+
+type AvailabilitySearch = z.infer<typeof availabilitySearchSchema>;
 
 export const Route = createFileRoute("/admin/availability")({
   validateSearch: availabilitySearchSchema,
@@ -31,39 +56,131 @@ export const Route = createFileRoute("/admin/availability")({
 });
 
 function AvailabilityPage() {
-  const [activeTab, setActiveTab] = useState("calendar");
-  const { data: bookings, isLoading: isLoadingBookings } = useBookings();
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { isManager, isLoading: isLoadingRole } = useUserRole();
+  const canManage = !isLoadingRole && isManager;
+  const today = toManilaDateString(new Date());
+
+  const opensBlock = search.sheet !== undefined && search.sheet !== "new";
+  // A block tapped on an earlier window can be over, so the list reaches back to find it
+  const {
+    data: blocks = [],
+    isLoading: isLoadingBlocks,
+    error: blocksError,
+    refetch: refetchBlocks,
+  } = useBlocks({ includePast: opensBlock });
+  const { data: units = [] } = useQuery(allUnitsQuery());
+
+  const sortedUnits = [...units].sort((a, b) =>
+    a.unit_name.localeCompare(b.unit_name, undefined, { numeric: true })
+  );
+  const cabinName = (unitId: string) =>
+    units.find((unit) => unit.unit_id === unitId)?.unit_name ?? "Cabin";
+  const cabinOrder = (block: Block) =>
+    block.unit_id === null ? -1 : sortedUnits.findIndex((unit) => unit.unit_id === block.unit_id);
+  const upcoming = blocks
+    .filter((block) => blockPhase(block, today) !== "over")
+    .sort(
+      (a, b) =>
+        a.start_date.localeCompare(b.start_date) ||
+        a.end_date.localeCompare(b.end_date) ||
+        cabinOrder(a) - cabinOrder(b)
+    );
+
+  const setSearch = (next: AvailabilitySearch) =>
+    void navigate({ search: (prev) => ({ ...prev, ...next }), replace: true });
+  const closeSheet = () =>
+    setSearch({ sheet: undefined, cabin: undefined, first: undefined, last: undefined });
+
+  // Staff cannot open the form from this page; managers open blocks and new blocks
+  const sheetTarget = (): BlockFormTarget | null => {
+    if (!canManage || !search.sheet) return null;
+    if (search.sheet === "new") {
+      const wholeResort = search.cabin === WHOLE_RESORT;
+      return {
+        wholeResort,
+        unitIds: search.cabin && !wholeResort ? [search.cabin] : undefined,
+        firstNight: search.first,
+        lastNight: search.last,
+      };
+    }
+    const block = blocks.find(({ blackout_id }) => blackout_id === search.sheet);
+    return block ? { block } : null;
+  };
 
   return (
     <ErrorBoundary level="page">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Availability</h1>
-            <p className="text-muted-foreground">
-              Manage unit availability and view booking calendar
-            </p>
-          </div>
-        </div>
+        <PageHeader title="Availability" description="Bookings and blocked dates per cabin." />
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs
+          value={search.view ?? "calendar"}
+          onValueChange={(view) => setSearch({ view: view === "units" ? "units" : undefined })}
+          className="space-y-6"
+        >
           <TabsList>
-            <TabsTrigger value="calendar">Calendar View</TabsTrigger>
+            <TabsTrigger value="calendar">Calendar</TabsTrigger>
             <TabsTrigger value="units">Cabins Overview</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="calendar" className="space-y-4">
+          <TabsContent value="calendar" className="space-y-6">
             <ErrorBoundary level="component">
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center py-12">
-                    <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-                  </div>
+              <AvailabilityTimeline
+                units={sortedUnits}
+                today={today}
+                startNight={search.date ?? today}
+                onStartNightChange={(night) =>
+                  setSearch({ date: night === today ? undefined : night })
                 }
-              >
-                <DashboardCalendar bookings={bookings} isLoading={isLoadingBookings} />
-              </Suspense>
+                canManage={canManage}
+                onOpenBlock={(block) => setSearch({ sheet: block.blackout_id })}
+                onPickRange={({ unitId, firstNight, lastNight }) =>
+                  setSearch({
+                    sheet: "new",
+                    cabin: unitId ?? WHOLE_RESORT,
+                    first: firstNight,
+                    last: lastNight,
+                  })
+                }
+              />
             </ErrorBoundary>
+
+            <section className="space-y-2" aria-labelledby="upcoming-blocks-heading">
+              <h2 id="upcoming-blocks-heading" className="font-display text-lg font-semibold">
+                Upcoming blocks
+              </h2>
+              {!isLoadingRole && !isManager && (
+                <p className="text-muted-foreground text-sm">
+                  Ask a manager to change blocked dates.
+                </p>
+              )}
+              {blocksError ? (
+                <Callout tone="danger" title="Could not load blocked dates">
+                  <p>Check your connection, then try again.</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => void refetchBlocks()}
+                  >
+                    Try again
+                  </Button>
+                </Callout>
+              ) : isLoadingBlocks ? (
+                <Skeleton className="h-24 w-full rounded-lg" />
+              ) : (
+                <BlockList
+                  blocks={upcoming}
+                  today={today}
+                  cabinName={cabinName}
+                  onOpen={
+                    canManage ? (block) => setSearch({ sheet: block.blackout_id }) : undefined
+                  }
+                  empty="No current or upcoming blocked dates."
+                />
+              )}
+            </section>
           </TabsContent>
 
           <TabsContent value="units" className="space-y-4">
@@ -81,6 +198,15 @@ function AvailabilityPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <BlockFormSheet
+        target={sheetTarget()}
+        units={sortedUnits}
+        cabinName={cabinName}
+        today={today}
+        canManage={canManage}
+        onClose={closeSheet}
+      />
     </ErrorBoundary>
   );
 }

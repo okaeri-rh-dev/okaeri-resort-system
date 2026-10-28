@@ -60,8 +60,21 @@ type SavedBlock =
   | { create: NewBlockInput }
   | { blockId: string; changes: Partial<Pick<Block, "start_date" | "end_date" | "reason">> };
 
+/** A new block, with the cabins and nights already picked on the timeline (yyyy-MM-dd). */
+interface NewBlockTarget {
+  wholeResort: boolean;
+  unitIds?: string[];
+  firstNight?: string;
+  lastNight?: string;
+}
+
 /** What the sheet opens on: an existing block, or a new one for cabins or the whole resort. */
-export type BlockFormTarget = { block: Block } | { wholeResort: boolean };
+export type BlockFormTarget = { block: Block } | NewBlockTarget;
+
+const targetKey = (target: BlockFormTarget) =>
+  "block" in target
+    ? target.block.blackout_id
+    : [target.wholeResort, target.unitIds, target.firstNight, target.lastNight].join("|");
 
 interface BlockFormSheetProps {
   target: BlockFormTarget | null;
@@ -77,13 +90,7 @@ export function BlockFormSheet({ target, ...props }: BlockFormSheetProps) {
   return (
     <Sheet open={target !== null} onOpenChange={(open) => !open && props.onClose()}>
       <SheetContent className="medium:max-w-md flex w-full flex-col gap-0 overflow-y-auto p-0">
-        {target && (
-          <BlockFormBody
-            key={"block" in target ? target.block.blackout_id : String(target.wholeResort)}
-            target={target}
-            {...props}
-          />
-        )}
+        {target && <BlockFormBody key={targetKey(target)} target={target} {...props} />}
       </SheetContent>
     </Sheet>
   );
@@ -150,14 +157,17 @@ function BlockFormBody({
   const [confirmCancelAndSave, setConfirmCancelAndSave] = useState(false);
   const [conflictsChanged, setConflictsChanged] = useState(false);
 
+  const newBlock = "block" in target ? undefined : target;
+  const firstNightDefault = block?.start_date ?? newBlock?.firstNight;
+  const lastNightDefault = block?.end_date ?? newBlock?.lastNight;
   const form = useForm<BlockFormValues>({
     resolver: zodResolver(blockFormSchema),
     shouldFocusError: false,
     defaultValues: {
-      wholeResort: block ? block.unit_id === null : "wholeResort" in target && target.wholeResort,
-      unitIds: block?.unit_id ? [block.unit_id] : [],
-      firstNight: block ? parseISO(block.start_date) : undefined,
-      lastNight: block ? parseISO(block.end_date) : undefined,
+      wholeResort: block ? block.unit_id === null : newBlock?.wholeResort,
+      unitIds: block?.unit_id ? [block.unit_id] : (newBlock?.unitIds ?? []),
+      firstNight: firstNightDefault ? parseISO(firstNightDefault) : undefined,
+      lastNight: lastNightDefault ? parseISO(lastNightDefault) : undefined,
       reason: block?.reason ?? "",
     },
   });
