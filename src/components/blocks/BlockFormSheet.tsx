@@ -396,7 +396,7 @@ function BlockFormBody({
 
           {conflicts.length > 0 && (
             <div className="space-y-2">
-              <BlockConflictList conflicts={conflicts} />
+              <BlockConflictList conflicts={conflicts} hasCheckedIn={hasCheckedIn} />
               {!hasCheckedIn && (
                 <Button
                   type="button"

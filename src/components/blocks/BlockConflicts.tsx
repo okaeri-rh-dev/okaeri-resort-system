@@ -17,9 +17,13 @@ import { conflictsHeading, stayLabel } from "@/lib/blocks";
 import { statusBadgeProps } from "@/lib/status-tone";
 import type { BlockConflict } from "@/lib/supabase";
 
-export function BlockConflictList({ conflicts }: { conflicts: BlockConflict[] }) {
-  const hasCheckedIn = conflicts.some((conflict) => conflict.is_checked_in);
-
+export function BlockConflictList({
+  conflicts,
+  hasCheckedIn,
+}: {
+  conflicts: BlockConflict[];
+  hasCheckedIn: boolean;
+}) {
   return (
     <section className="space-y-2" aria-label="Bookings on these nights">
       <Callout tone="warning" title={conflictsHeading(conflicts.length)}>
