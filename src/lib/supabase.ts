@@ -52,7 +52,7 @@ type BlockEdit = Partial<
   blackoutId: string;
 };
 
-interface BlockNights {
+export interface BlockNights {
   /** null = resort closure */
   unitIds: string[] | null;
   firstNight: string;

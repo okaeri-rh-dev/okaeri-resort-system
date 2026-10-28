@@ -1,6 +1,7 @@
 // src/lib/query-keys.ts
 
 import type { ManilaDay } from "@/lib/bookings/stay";
+import type { BlockNights } from "@/lib/supabase";
 import type { AuditFilters, EntityType } from "@/types/entity-detail.types";
 
 export const guestKeys = {
@@ -156,6 +157,8 @@ export const availabilityKeys = {
     all: ["unit-blackouts"] as const,
     list: (includePast: boolean) =>
       [...availabilityKeys.blackouts.all, "list", { includePast }] as const,
+    conflicts: (nights: BlockNights) =>
+      [...availabilityKeys.blackouts.all, "conflicts", nights] as const,
     byUnit: (unitId: string) => [...availabilityKeys.blackouts.all, unitId] as const,
     range: (unitId: string, startDate?: string, endDate?: string) =>
       [...availabilityKeys.blackouts.byUnit(unitId), startDate, endDate] as const,

@@ -32,10 +32,13 @@ import {
 } from "@/components/patterns";
 import {
   blockErrorMessage,
+  useBlockConflicts,
+  useCancelBookingsAndSaveBlock,
   useCreateBlocks,
   useDeleteBlock,
   useUpdateBlock,
   type Block,
+  type NewBlockInput,
 } from "@/hooks/useBlocks";
 import {
   blockFormMode,
@@ -45,11 +48,17 @@ import {
   shortNight,
   type BlockFormMode,
 } from "@/lib/blocks";
+import type { BlockNights } from "@/lib/supabase";
 import type { Tables } from "@/types/database.types";
 
+import { BlockConflictList, CancelAndSaveDialog } from "./BlockConflicts";
 import { WholeResortBadge } from "./BlockList";
 
 type Unit = Pick<Tables<"units">, "unit_id" | "unit_name">;
+
+type SavedBlock =
+  | { create: NewBlockInput }
+  | { blockId: string; changes: Partial<Pick<Block, "start_date" | "end_date" | "reason">> };
 
 /** What the sheet opens on: an existing block, or a new one for cabins or the whole resort. */
 export type BlockFormTarget = { block: Block } | { wholeResort: boolean };
@@ -135,8 +144,11 @@ function BlockFormBody({
   const createBlocks = useCreateBlocks();
   const updateBlock = useUpdateBlock();
   const deleteBlock = useDeleteBlock();
+  const cancelAndSave = useCancelBookingsAndSaveBlock();
   const [refusal, setRefusal] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmCancelAndSave, setConfirmCancelAndSave] = useState(false);
+  const [conflictsChanged, setConflictsChanged] = useState(false);
 
   const form = useForm<BlockFormValues>({
     resolver: zodResolver(blockFormSchema),
@@ -151,41 +163,81 @@ function BlockFormBody({
   });
 
   const wholeResort = form.watch("wholeResort");
+  const unitIds = form.watch("unitIds");
   const firstNight = form.watch("firstNight");
   const lastNight = form.watch("lastNight");
   const datesChosen = firstNight && lastNight && lastNight >= firstNight;
+
+  const blockUnitIds = block
+    ? block.unit_id
+      ? [block.unit_id]
+      : null
+    : wholeResort
+      ? null
+      : [...unitIds].sort();
+  const conflictNights: BlockNights | null =
+    mode !== "read-only" && datesChosen && blockUnitIds?.length !== 0
+      ? {
+          unitIds: blockUnitIds,
+          firstNight: toNight(firstNight),
+          lastNight: toNight(lastNight),
+          blockId: block?.blackout_id,
+        }
+      : null;
+  const { conflicts, error: conflictsError } = useBlockConflicts(conflictNights);
+  const hasCheckedIn = conflicts.some((conflict) => conflict.is_checked_in);
 
   // New nights start today at the earliest; the database already locks past and running nights.
   const isBeforeToday = (date: Date) => toNight(date) < today;
   const isBeforeFirstNight = (date: Date) =>
     isBeforeToday(date) || (firstNight !== undefined && date < firstNight);
 
+  // A new block, or only the fields this mode may change
+  const savedBlock = ({
+    wholeResort,
+    unitIds,
+    firstNight,
+    lastNight,
+    reason,
+  }: BlockFormValues): SavedBlock | null => {
+    if (!firstNight || !lastNight) return null;
+    const nights = { start_date: toNight(firstNight), end_date: toNight(lastNight) };
+    if (!block) return { create: { unitIds: wholeResort ? null : unitIds, ...nights, reason } };
+    const changes =
+      mode === "last-night-only" ? { end_date: nights.end_date } : { ...nights, reason };
+    return { blockId: block.blackout_id, changes };
+  };
+
   const onSubmit = async (values: BlockFormValues) => {
-    if (!values.firstNight || !values.lastNight) return;
-    const nights = {
-      start_date: toNight(values.firstNight),
-      end_date: toNight(values.lastNight),
-    };
+    const saved = savedBlock(values);
+    if (!saved) return;
     setRefusal(null);
+    setConflictsChanged(false);
     try {
-      if (!block) {
-        await createBlocks.mutateAsync({
-          unitIds: values.wholeResort ? null : values.unitIds,
-          ...nights,
-          reason: values.reason,
-        });
-      } else if (mode === "last-night-only") {
-        await updateBlock.mutateAsync({
-          id: block.blackout_id,
-          changes: { end_date: nights.end_date },
-        });
+      if ("create" in saved) {
+        await createBlocks.mutateAsync(saved.create);
       } else {
-        await updateBlock.mutateAsync({
-          id: block.blackout_id,
-          changes: { ...nights, reason: values.reason },
-        });
+        await updateBlock.mutateAsync({ id: saved.blockId, changes: saved.changes });
       }
       onClose();
+    } catch (error) {
+      setRefusal(blockErrorMessage(error));
+    }
+  };
+
+  const onCancelAndSave = async () => {
+    const saved = savedBlock(form.getValues());
+    if (!saved || !conflictNights) return;
+    setRefusal(null);
+    setConflictsChanged(false);
+    try {
+      const result = await cancelAndSave.mutateAsync({
+        block: "create" in saved ? saved.create : { blackoutId: saved.blockId, ...saved.changes },
+        seenConflictIds: conflicts.map((conflict) => conflict.booking_id),
+        nights: conflictNights,
+      });
+      if (result.status === "saved") onClose();
+      else setConflictsChanged(true);
     } catch (error) {
       setRefusal(blockErrorMessage(error));
     }
@@ -208,7 +260,7 @@ function BlockFormBody({
   };
 
   const isSaving = createBlocks.isPending || updateBlock.isPending;
-  const isBusy = isSaving || deleteBlock.isPending;
+  const isBusy = isSaving || deleteBlock.isPending || cancelAndSave.isPending;
   const title = mode === "create" && wholeResort ? "Close the resort" : titles[mode];
   const saveLabel = block ? "Save changes" : wholeResort ? "Close the resort" : "Block dates";
 
@@ -325,6 +377,41 @@ function BlockFormBody({
               {refusal}
             </Callout>
           )}
+
+          {conflictsChanged && (
+            <Callout tone="danger" title="Nothing was saved">
+              The bookings on these nights changed since you checked. Look at the new list, then try
+              again.
+            </Callout>
+          )}
+
+          {conflictsError && (
+            <Callout tone="danger" title="Could not check bookings on these nights">
+              Check your connection. Saving still refuses a block over a booking.
+            </Callout>
+          )}
+
+          {conflicts.length > 0 && (
+            <div className="space-y-2">
+              <BlockConflictList conflicts={conflicts} hasCheckedIn={hasCheckedIn} />
+              {!hasCheckedIn && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={form.handleSubmit(() => setConfirmCancelAndSave(true), focusFirstError)}
+                  disabled={isBusy}
+                >
+                  {cancelAndSave.isPending && (
+                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                  )}
+                  {conflicts.length === 1
+                    ? "Cancel this booking and save the block"
+                    : "Cancel these bookings and save the block"}
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         {mode !== "read-only" && (
@@ -344,15 +431,22 @@ function BlockFormBody({
               </Button>
             )}
             <Button type="button" variant="outline" onClick={onClose} disabled={isBusy}>
-              Cancel
+              Close
             </Button>
-            <Button type="submit" disabled={isBusy}>
+            <Button type="submit" disabled={isBusy || conflicts.length > 0}>
               {isSaving && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
               {saveLabel}
             </Button>
           </div>
         )}
       </form>
+
+      <CancelAndSaveDialog
+        open={confirmCancelAndSave}
+        onOpenChange={setConfirmCancelAndSave}
+        conflicts={conflicts}
+        onConfirm={() => void onCancelAndSave()}
+      />
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>

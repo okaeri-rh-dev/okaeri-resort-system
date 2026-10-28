@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { blockFormMode, blockPhase, describeBlockNights } from "@/lib/blocks";
+import {
+  blockFormMode,
+  blockPhase,
+  conflictsHeading,
+  describeBlockNights,
+  stayLabel,
+} from "@/lib/blocks";
 
 describe("describeBlockNights", () => {
   it("states the range, the night count, the last check-out and the next check-in", () => {
@@ -57,5 +63,27 @@ describe("blockFormMode", () => {
   it("opens every block read-only for staff", () => {
     expect(blockFormMode(upcoming, today, false)).toBe("read-only");
     expect(blockFormMode(running, today, false)).toBe("read-only");
+  });
+});
+
+describe("stayLabel", () => {
+  it("names the Manila check-in and check-out days of a booking", () => {
+    // 14:00 Manila is 06:00 UTC
+    expect(stayLabel("2026-10-29T06:00:00+00:00", "2026-10-31T04:00:00+00:00")).toBe(
+      "Thu 29 Oct – Sat 31 Oct"
+    );
+  });
+
+  it("uses the Manila day when the UTC day is the day before", () => {
+    expect(stayLabel("2026-10-28T17:00:00+00:00", "2026-10-29T17:00:00+00:00")).toBe(
+      "Thu 29 Oct – Fri 30 Oct"
+    );
+  });
+});
+
+describe("conflictsHeading", () => {
+  it("counts the bookings that use the blocked nights", () => {
+    expect(conflictsHeading(1)).toBe("1 booking uses these nights");
+    expect(conflictsHeading(3)).toBe("3 bookings use these nights");
   });
 });

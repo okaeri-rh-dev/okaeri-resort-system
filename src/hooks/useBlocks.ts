@@ -1,15 +1,22 @@
 import {
   keepPreviousData,
   queryOptions,
+  skipToken,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { invalidateAvailability } from "@/lib/query-invalidation";
+import { afterBookingCancel, invalidateAvailability } from "@/lib/query-invalidation";
 import { availabilityKeys } from "@/lib/query-keys";
-import { db, handleSupabaseError } from "@/lib/supabase";
+import {
+  db,
+  handleSupabaseError,
+  type BlockConflict,
+  type BlockNights,
+  type CancelAndSaveResult,
+} from "@/lib/supabase";
 import type { Tables, TablesUpdate } from "@/types/database.types";
 
 export type Block = Tables<"availability_blackouts">;
@@ -115,6 +122,73 @@ export function useDeleteBlock() {
     onSuccess: () => {
       afterBlockChange();
       toast.success("Block deleted");
+    },
+  });
+}
+
+/**
+ * Live bookings on the nights of a block being drawn. Pass null until the cabins and both
+ * nights are chosen. When editing, set `blockId`: only nights the block adds can conflict.
+ */
+export function useBlockConflicts(nights: BlockNights | null) {
+  const { data, error } = useQuery(blockConflictsQuery(nights));
+  return { conflicts: nights ? (data ?? []) : [], error };
+}
+
+const blockConflictsQuery = (nights: BlockNights | null) =>
+  queryOptions({
+    queryKey: availabilityKeys.blackouts.conflicts(nights ?? NO_NIGHTS),
+    queryFn: nights
+      ? async (): Promise<BlockConflict[]> => {
+          const { data, error } = await db.blackouts.conflicts(nights);
+          if (error) throw error;
+          return data;
+        }
+      : skipToken,
+    // A cancel-and-save confirms this list, so a return to earlier dates or cabins reads it again
+    staleTime: 0,
+    // Keeps the last list on screen while new dates load, so the warning does not flicker
+    placeholderData: keepPreviousData,
+  });
+
+const NO_NIGHTS: BlockNights = { unitIds: null, firstNight: "", lastNight: "" };
+
+type BlockToSave = Parameters<typeof db.blackouts.cancelAndSave>[0];
+
+/**
+ * Cancels the bookings the manager saw and saves the block in one step. When the database
+ * refuses because the bookings changed, the new list replaces the one in the form.
+ */
+export function useCancelBookingsAndSaveBlock() {
+  const queryClient = useQueryClient();
+  const afterBlockChange = useAfterBlockChange();
+
+  return useMutation({
+    mutationFn: async ({
+      block,
+      seenConflictIds,
+    }: {
+      block: BlockToSave;
+      seenConflictIds: string[];
+      nights: BlockNights;
+    }): Promise<CancelAndSaveResult> => {
+      const { data, error } = await db.blackouts.cancelAndSave(block, seenConflictIds);
+      if (error) throw error;
+      if (!data) throw new Error("The block was not saved. Try again.");
+      return data;
+    },
+    onSuccess: (result, { nights }) => {
+      if (result.status !== "saved") {
+        queryClient.setQueryData(availabilityKeys.blackouts.conflicts(nights), result.conflicts);
+        return;
+      }
+      afterBlockChange();
+      afterBookingCancel();
+      toast.success(
+        result.blocks.some((block) => block.unit_id === null)
+          ? "Bookings cancelled and resort closed"
+          : "Bookings cancelled and dates blocked"
+      );
     },
   });
 }
