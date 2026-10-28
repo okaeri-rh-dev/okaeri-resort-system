@@ -55,6 +55,52 @@ export const Box = () => <div className={cn(variants(), "text-blue-600")} />;
     ]);
   });
 
+  it("flags palette classes in a classNames object prop", async () => {
+    const messages = await lint(
+      `export const A = () => <DayPicker classNames={{ weekday: "text-slate-600" }} />;`
+    );
+
+    expect(
+      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+    ).toEqual([expect.stringContaining('"text-slate-600"')]);
+  });
+
+  it("flags palette classes in a *ClassNames class map", async () => {
+    const messages = await lint(
+      `const monthGridClassNames = { day: "bg-blue-500", week: { row: "text-gray-700" } };
+export const A = () => <DayPicker classNames={monthGridClassNames} />;
+`
+    );
+
+    expect(
+      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+    ).toEqual([
+      expect.stringContaining('"bg-blue-500"'),
+      expect.stringContaining('"text-gray-700"'),
+    ]);
+  });
+
+  it("accepts semantic classes in classNames props and *ClassNames maps", async () => {
+    expect(
+      await ruleIds(
+        `const monthGridClassNames = { day: "bg-primary text-primary-foreground" };
+export const A = () => (
+  <>
+    <DayPicker classNames={{ weekday: "text-muted-foreground" }} />
+    <DayPicker classNames={monthGridClassNames} />
+  </>
+);
+`
+      )
+    ).not.toContain(rule);
+  });
+
+  it("flags unknown classes in a classNames object prop", async () => {
+    expect(
+      await ruleIds(`export const A = () => <DayPicker classNames={{ day: "card-elevated" }} />;`)
+    ).toContain("better-tailwindcss/no-unknown-classes");
+  });
+
   it.each([
     "text-white",
     "bg-black/50",
