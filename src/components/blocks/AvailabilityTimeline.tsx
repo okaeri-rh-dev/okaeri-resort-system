@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
+import { Link } from "@tanstack/react-router";
 import { addDays, format, parseISO } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { hatchedFill } from "@/components/calendar/availability-fill";
-import { Button, Skeleton } from "@/components/patterns";
+import { Button, Popover, PopoverContent, PopoverTrigger, Skeleton } from "@/components/patterns";
 import { useAvailabilityTimeline, type TimelineStayRow } from "@/hooks/useAvailabilityTimeline";
 import type { Block } from "@/hooks/useBlocks";
 import {
@@ -13,11 +14,12 @@ import {
   type TimelineNight,
   type TimelineRange,
 } from "@/lib/availability-timeline";
-import { shortNight } from "@/lib/blocks";
+import { blockNightsLabel, shortNight, stayLabel } from "@/lib/blocks";
 import { manilaDayOf } from "@/lib/bookings/stay";
 import { cn } from "@/lib/utils";
 import type { Tables } from "@/types/database.types";
 
+import { WholeResortBadge } from "./BlockList";
 import { LoadErrorCallout } from "./LoadErrorCallout";
 
 const TIMELINE_NIGHTS = 14;
@@ -69,14 +71,22 @@ export function AvailabilityTimeline({
   const rowLabel = (unitId: string | null) =>
     rows.find((row) => row.unitId === unitId)?.label ?? "Cabin";
 
+  const [crossedTakenNight, setCrossedTakenNight] = useState(false);
+
   const tapFree = (tapped: TimelineNight) => {
-    const next = tapFreeNight(pending, tapped);
+    const next = tapFreeNight(pending, tapped, { blocks, stays });
     if ("pending" in next) {
+      setCrossedTakenNight(pending?.unitId === tapped.unitId);
       setPending(next.pending);
       return;
     }
     setPending(null);
+    setCrossedTakenNight(false);
     onPickRange(next.range);
+  };
+  const clearPending = () => {
+    setPending(null);
+    setCrossedTakenNight(false);
   };
 
   const renderCell = (unitId: string | null, label: string, night: string) => {
@@ -86,23 +96,23 @@ export function AvailabilityTimeline({
 
     if (cell.kind === "blocked") {
       const { block } = cell;
-      const blockedLabel = `${nightLabel}: blocked, ${block.reason}`;
-      return canManage ? (
-        <button
-          type="button"
-          title={block.reason}
-          aria-label={`${blockedLabel}. Open block`}
-          onClick={() => onOpenBlock(block)}
-          className={cn(
-            cellClassName,
-            hatchedFill,
-            "hover:ring-primary focus-visible:ring-ring transition-shadow duration-150 hover:ring-2 focus-visible:ring-2 focus-visible:outline-none"
+      return (
+        <CellDetails
+          label={`${nightLabel}: blocked, ${block.reason}. Show details`}
+          className={hatchedFill}
+        >
+          <p className="font-medium">Blocked</p>
+          <p>{block.unit_id === null ? <WholeResortBadge /> : rowLabel(block.unit_id)}</p>
+          <p className="tabular-nums">{blockNightsLabel(block.start_date, block.end_date)}</p>
+          <p className="text-muted-foreground break-words">{block.reason}</p>
+          {canManage ? (
+            <Button size="sm" className="w-full" onClick={() => onOpenBlock(block)}>
+              Open block
+            </Button>
+          ) : (
+            <p className="text-muted-foreground">Ask a manager to change blocked dates.</p>
           )}
-        />
-      ) : (
-        <div title={block.reason} className={cn(cellClassName, hatchedFill)}>
-          <span className="sr-only">{blockedLabel}</span>
-        </div>
+        </CellDetails>
       );
     }
 
@@ -112,13 +122,23 @@ export function AvailabilityTimeline({
       const guestName = stay.booking?.guest_name ?? "";
       const isCheckInNight = manilaDayOf(stay.check_in) === night;
       return (
-        <div
-          title={`${reference} · ${guestName}`}
-          className={cn(cellClassName, "bg-info text-info-foreground font-medium")}
+        <CellDetails
+          label={`${nightLabel}: booked, ${reference} ${guestName}. Show details`}
+          className="bg-info text-info-foreground font-medium"
+          content={isCheckInNight ? guestName.charAt(0) : undefined}
         >
-          <span aria-hidden="true">{isCheckInNight ? guestName.charAt(0) : ""}</span>
-          <span className="sr-only">{`${nightLabel}: booked, ${reference} ${guestName}`}</span>
-        </div>
+          <p className="font-medium">Booked</p>
+          <p className="break-words">{guestName}</p>
+          <p className="text-muted-foreground">
+            {reference} · {stay.booking_status}
+          </p>
+          <p className="tabular-nums">{stayLabel(stay.check_in, stay.check_out)}</p>
+          <Button asChild size="sm" variant="outline" className="w-full">
+            <Link to="/admin/bookings/$bookingId" params={{ bookingId: stay.booking_id }}>
+              Open booking
+            </Link>
+          </Button>
+        </CellDetails>
       );
     }
 
@@ -183,13 +203,9 @@ export function AvailabilityTimeline({
         <p className="text-muted-foreground text-sm" aria-live="polite">
           {pending ? (
             <>
+              {crossedTakenNight && "Those nights include a booked or blocked night. "}
               {`${rowLabel(pending.unitId)}, first night ${shortNight(pending.night)}. Tap the last night in the same row. `}
-              <Button
-                variant="link"
-                size="sm"
-                className="h-auto p-0"
-                onClick={() => setPending(null)}
-              >
+              <Button variant="link" size="sm" className="h-auto p-0" onClick={clearPending}>
                 Clear
               </Button>
             </>
@@ -272,5 +288,37 @@ export function AvailabilityTimeline({
         </li>
       </ul>
     </div>
+  );
+}
+
+/** A booked or blocked cell; tapping it shows the details, which a hover hint can't on touch. */
+function CellDetails({
+  label,
+  className,
+  content,
+  children,
+}: {
+  label: string;
+  className: string;
+  content?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label={label}
+          className={cn(
+            cellClassName,
+            className,
+            "hover:ring-primary focus-visible:ring-ring transition-shadow duration-150 hover:ring-2 focus-visible:ring-2 focus-visible:outline-none"
+          )}
+        >
+          {content && <span aria-hidden="true">{content}</span>}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 space-y-2 text-sm">{children}</PopoverContent>
+    </Popover>
   );
 }

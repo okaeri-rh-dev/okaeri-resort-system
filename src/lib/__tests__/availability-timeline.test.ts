@@ -75,8 +75,10 @@ describe("timelineCell", () => {
 });
 
 describe("tapFreeNight", () => {
+  const EMPTY = { blocks: [], stays: [] };
+
   it("holds the first tapped night", () => {
-    expect(tapFreeNight(null, { unitId: CABIN_1, night: "2026-11-05" })).toEqual({
+    expect(tapFreeNight(null, { unitId: CABIN_1, night: "2026-11-05" }, EMPTY)).toEqual({
       pending: { unitId: CABIN_1, night: "2026-11-05" },
     });
   });
@@ -84,7 +86,7 @@ describe("tapFreeNight", () => {
   it("gives the nights between two taps in one row, in date order", () => {
     const pending = { unitId: CABIN_1, night: "2026-11-05" };
 
-    expect(tapFreeNight(pending, { unitId: CABIN_1, night: "2026-11-02" })).toEqual({
+    expect(tapFreeNight(pending, { unitId: CABIN_1, night: "2026-11-02" }, EMPTY)).toEqual({
       range: { unitId: CABIN_1, firstNight: "2026-11-02", lastNight: "2026-11-05" },
     });
   });
@@ -92,7 +94,7 @@ describe("tapFreeNight", () => {
   it("gives one night when the same night is tapped twice", () => {
     const pending = { unitId: null, night: "2026-11-05" };
 
-    expect(tapFreeNight(pending, { unitId: null, night: "2026-11-05" })).toEqual({
+    expect(tapFreeNight(pending, { unitId: null, night: "2026-11-05" }, EMPTY)).toEqual({
       range: { unitId: null, firstNight: "2026-11-05", lastNight: "2026-11-05" },
     });
   });
@@ -100,8 +102,35 @@ describe("tapFreeNight", () => {
   it("starts again from a tap in another row", () => {
     const pending = { unitId: CABIN_1, night: "2026-11-05" };
 
-    expect(tapFreeNight(pending, { unitId: null, night: "2026-11-06" })).toEqual({
+    expect(tapFreeNight(pending, { unitId: null, night: "2026-11-06" }, EMPTY)).toEqual({
       pending: { unitId: null, night: "2026-11-06" },
+    });
+  });
+
+  it("starts again from the second tap when a booked night lies between the taps", () => {
+    const timeline = { blocks: [], stays: [stay("2026-11-03", "2026-11-04")] };
+    const pending = { unitId: CABIN_1, night: "2026-11-02" };
+
+    expect(tapFreeNight(pending, { unitId: CABIN_1, night: "2026-11-05" }, timeline)).toEqual({
+      pending: { unitId: CABIN_1, night: "2026-11-05" },
+    });
+  });
+
+  it("starts again from the second tap when a resort closure lies between the taps", () => {
+    const timeline = { blocks: [block(null, "2026-11-03", "2026-11-03")], stays: [] };
+    const pending = { unitId: CABIN_1, night: "2026-11-05" };
+
+    expect(tapFreeNight(pending, { unitId: CABIN_1, night: "2026-11-02" }, timeline)).toEqual({
+      pending: { unitId: CABIN_1, night: "2026-11-02" },
+    });
+  });
+
+  it("gives the range when a booking ends on the first tapped night's check-out day", () => {
+    const timeline = { blocks: [], stays: [stay("2026-11-01", "2026-11-02")] };
+    const pending = { unitId: CABIN_1, night: "2026-11-02" };
+
+    expect(tapFreeNight(pending, { unitId: CABIN_1, night: "2026-11-04" }, timeline)).toEqual({
+      range: { unitId: CABIN_1, firstNight: "2026-11-02", lastNight: "2026-11-04" },
     });
   });
 });

@@ -1,4 +1,4 @@
-import { manilaDayOf } from "@/lib/bookings/stay";
+import { dayAfter, manilaDayOf } from "@/lib/bookings/stay";
 import type { Tables } from "@/types/database.types";
 
 /** One cabin's part of a booking. `check_in` and `check_out` are timestamps. */
@@ -52,12 +52,26 @@ export interface TimelineRange {
   lastNight: string;
 }
 
-/** The first tap holds a night; a second tap in the same row gives the range between the two. */
+/**
+ * The first tap holds a night; a second tap in the same row gives the range between the two.
+ * A booked or blocked night between the taps makes the second tap the new first night.
+ */
 export function tapFreeNight(
   pending: TimelineNight | null,
-  tapped: TimelineNight
+  tapped: TimelineNight,
+  timeline: { blocks: TimelineBlock[]; stays: TimelineStay[] }
 ): { pending: TimelineNight } | { range: TimelineRange } {
   if (!pending || pending.unitId !== tapped.unitId) return { pending: tapped };
   const [firstNight, lastNight] = [pending.night, tapped.night].sort();
+  const crossesTakenNight = nightsFrom(firstNight, lastNight).some(
+    (night) => timelineCell(tapped.unitId, night, timeline).kind !== "free"
+  );
+  if (crossesTakenNight) return { pending: tapped };
   return { range: { unitId: tapped.unitId, firstNight, lastNight } };
 }
+
+const nightsFrom = (firstNight: string, lastNight: string) => {
+  const nights = [firstNight];
+  while (nights[nights.length - 1] < lastNight) nights.push(dayAfter(nights[nights.length - 1]));
+  return nights;
+};
