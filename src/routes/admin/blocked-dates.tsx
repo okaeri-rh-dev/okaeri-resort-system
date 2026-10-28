@@ -1,18 +1,17 @@
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { z } from "zod";
 
 import { BlockFormSheet, type BlockFormTarget } from "@/components/blocks/BlockFormSheet";
 import { BlockList } from "@/components/blocks/BlockList";
+import { LoadErrorCallout } from "@/components/blocks/LoadErrorCallout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Button, Callout, PageHeader, Skeleton } from "@/components/patterns";
-import { useBlocks, type Block } from "@/hooks/useBlocks";
+import { Button, PageHeader, Skeleton } from "@/components/patterns";
+import { useBlockCabins, useBlocks } from "@/hooks/useBlocks";
 import { useUserRole } from "@/hooks/useUserRole";
 import { blockPhase } from "@/lib/blocks";
 import { requireStaff } from "@/lib/route-guards";
 import { toManilaDateString } from "@/lib/timezone";
-import { allUnitsQuery } from "@/stores/useUnitStore";
 
 const NEW_BLOCK_SHEETS = ["new", "closure"];
 
@@ -45,25 +44,14 @@ function BlockedDatesPage() {
   } = useBlocks({
     includePast: showPast || opensBlock,
   });
-  const { data: units = [] } = useQuery(allUnitsQuery());
+  const { sortedUnits, cabinName, sortBlocks } = useBlockCabins();
 
   const today = toManilaDateString(new Date());
-  const sortedUnits = [...units].sort((a, b) =>
-    a.unit_name.localeCompare(b.unit_name, undefined, { numeric: true })
+  const current = sortBlocks(blocks.filter((block) => blockPhase(block, today) !== "over"));
+  const past = sortBlocks(
+    (showPast ? blocks : []).filter((block) => blockPhase(block, today) === "over"),
+    { newestFirst: true }
   );
-  const cabinName = (unitId: string) =>
-    units.find((unit) => unit.unit_id === unitId)?.unit_name ?? "Cabin";
-  // Same nights: the whole resort first, then cabins in name order
-  const cabinOrder = (block: Block) =>
-    block.unit_id === null ? -1 : sortedUnits.findIndex((unit) => unit.unit_id === block.unit_id);
-  const byNights = (a: Block, b: Block) =>
-    a.start_date.localeCompare(b.start_date) || a.end_date.localeCompare(b.end_date);
-  const current = blocks
-    .filter((block) => blockPhase(block, today) !== "over")
-    .sort((a, b) => byNights(a, b) || cabinOrder(a) - cabinOrder(b));
-  const past = (showPast ? blocks : [])
-    .filter((block) => blockPhase(block, today) === "over")
-    .sort((a, b) => byNights(b, a) || cabinOrder(a) - cabinOrder(b));
 
   const setSearch = (next: z.infer<typeof blockedDatesSearchSchema>) =>
     void navigate({ search: (prev) => ({ ...prev, ...next }), replace: true });
@@ -102,12 +90,7 @@ function BlockedDatesPage() {
         )}
 
         {error ? (
-          <Callout tone="danger" title="Could not load blocked dates">
-            <p>Check your connection, then try again.</p>
-            <Button variant="outline" size="sm" className="mt-2" onClick={() => void refetch()}>
-              Try again
-            </Button>
-          </Callout>
+          <LoadErrorCallout title="Could not load blocked dates" onRetry={() => void refetch()} />
         ) : isLoading ? (
           <BlockListSkeleton />
         ) : (

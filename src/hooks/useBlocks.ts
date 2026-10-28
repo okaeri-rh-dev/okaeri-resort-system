@@ -17,6 +17,7 @@ import {
   type BlockNights,
   type CancelAndSaveResult,
 } from "@/lib/supabase";
+import { allUnitsQuery } from "@/stores/useUnitStore";
 import type { Tables, TablesUpdate } from "@/types/database.types";
 
 export type Block = Tables<"availability_blackouts">;
@@ -67,6 +68,28 @@ const blocksQuery = (includePast: boolean) =>
 /** Current and upcoming blocks, with past ones when `includePast` is set. */
 export function useBlocks({ includePast = false } = {}) {
   return useQuery(blocksQuery(includePast));
+}
+
+/** The cabins in name order, and how blocks name and sort them. */
+export function useBlockCabins() {
+  const { data: units = [] } = useQuery(allUnitsQuery());
+
+  const sortedUnits = [...units].sort((a, b) =>
+    a.unit_name.localeCompare(b.unit_name, undefined, { numeric: true })
+  );
+  const cabinName = (unitId: string) =>
+    units.find((unit) => unit.unit_id === unitId)?.unit_name ?? "Cabin";
+  // Same nights: the whole resort first, then cabins in name order
+  const cabinOrder = (block: Block) =>
+    block.unit_id === null ? -1 : sortedUnits.findIndex((unit) => unit.unit_id === block.unit_id);
+  const byNights = (a: Block, b: Block) =>
+    a.start_date.localeCompare(b.start_date) || a.end_date.localeCompare(b.end_date);
+  const sortBlocks = (blocks: Block[], { newestFirst = false } = {}) =>
+    [...blocks].sort(
+      (a, b) => (newestFirst ? byNights(b, a) : byNights(a, b)) || cabinOrder(a) - cabinOrder(b)
+    );
+
+  return { sortedUnits, cabinName, sortBlocks };
 }
 
 function useAfterBlockChange() {

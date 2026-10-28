@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { format } from "date-fns";
 
-import type { ManilaDay } from "@/lib/bookings/stay";
+import { dayAfter, manilaDayStart, type ManilaDay } from "@/lib/bookings/stay";
 import type { MoveDirection } from "@/lib/contact-channel";
 import { toManilaDateString } from "@/lib/timezone";
 import type { AuditEventContext, AuditLogFilters } from "@/types/audit.types";
@@ -178,6 +178,17 @@ export const db = {
         )
         .eq("booking_id", id)
         .single(),
+
+    /** Each cabin's part of the bookings that hold a night from `firstNight` through `lastNight`. */
+    unitStaysInNights: (firstNight: ManilaDay, lastNight: ManilaDay) =>
+      supabase
+        .from("booking_unit_availability")
+        .select(
+          "unit_id, booking_id, check_in, check_out, booking_status, booking:bookings(booking_reference, guest_name)"
+        )
+        .neq("booking_status", "Cancelled")
+        .lt("check_in", manilaDayStart(dayAfter(lastNight)))
+        .gt("check_out", manilaDayStart(firstNight)),
 
     // Fetch bookings by unit (via junction table)
     byUnit: (unitId: string) =>
