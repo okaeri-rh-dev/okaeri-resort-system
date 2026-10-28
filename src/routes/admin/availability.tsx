@@ -1,16 +1,14 @@
 import { lazy, Suspense } from "react";
 
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 
 import { AvailabilityTimeline } from "@/components/blocks/AvailabilityTimeline";
 import { BlockFormSheet, type BlockFormTarget } from "@/components/blocks/BlockFormSheet";
 import { BlockList } from "@/components/blocks/BlockList";
+import { LoadErrorCallout } from "@/components/blocks/LoadErrorCallout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
-  Button,
-  Callout,
   PageHeader,
   Skeleton,
   Tabs,
@@ -18,13 +16,12 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/patterns";
-import { useBlocks, type Block } from "@/hooks/useBlocks";
+import { useBlockCabins, useBlocks } from "@/hooks/useBlocks";
 import { useUserRole } from "@/hooks/useUserRole";
 import { blockPhase } from "@/lib/blocks";
 import { isManilaDay } from "@/lib/bookings/stay";
 import { requireStaff } from "@/lib/route-guards";
 import { toManilaDateString } from "@/lib/timezone";
-import { allUnitsQuery } from "@/stores/useUnitStore";
 
 const UnitsTable = lazy(() =>
   import("@/components/units/UnitsTable").then((m) => ({ default: m.UnitsTable }))
@@ -70,23 +67,8 @@ function AvailabilityPage() {
     error: blocksError,
     refetch: refetchBlocks,
   } = useBlocks({ includePast: opensBlock });
-  const { data: units = [] } = useQuery(allUnitsQuery());
-
-  const sortedUnits = [...units].sort((a, b) =>
-    a.unit_name.localeCompare(b.unit_name, undefined, { numeric: true })
-  );
-  const cabinName = (unitId: string) =>
-    units.find((unit) => unit.unit_id === unitId)?.unit_name ?? "Cabin";
-  const cabinOrder = (block: Block) =>
-    block.unit_id === null ? -1 : sortedUnits.findIndex((unit) => unit.unit_id === block.unit_id);
-  const upcoming = blocks
-    .filter((block) => blockPhase(block, today) !== "over")
-    .sort(
-      (a, b) =>
-        a.start_date.localeCompare(b.start_date) ||
-        a.end_date.localeCompare(b.end_date) ||
-        cabinOrder(a) - cabinOrder(b)
-    );
+  const { sortedUnits, cabinName, sortBlocks } = useBlockCabins();
+  const upcoming = sortBlocks(blocks.filter((block) => blockPhase(block, today) !== "over"));
 
   const setSearch = (next: AvailabilitySearch) =>
     void navigate({ search: (prev) => ({ ...prev, ...next }), replace: true });
@@ -156,17 +138,10 @@ function AvailabilityPage() {
                 </p>
               )}
               {blocksError ? (
-                <Callout tone="danger" title="Could not load blocked dates">
-                  <p>Check your connection, then try again.</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => void refetchBlocks()}
-                  >
-                    Try again
-                  </Button>
-                </Callout>
+                <LoadErrorCallout
+                  title="Could not load blocked dates"
+                  onRetry={() => void refetchBlocks()}
+                />
               ) : isLoadingBlocks ? (
                 <Skeleton className="h-24 w-full rounded-lg" />
               ) : (

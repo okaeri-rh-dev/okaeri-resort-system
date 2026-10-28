@@ -4,7 +4,7 @@ import { addDays, format, parseISO } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { hatchedFill } from "@/components/calendar/availability-fill";
-import { Button, Callout, Skeleton } from "@/components/patterns";
+import { Button, Skeleton } from "@/components/patterns";
 import { useAvailabilityTimeline, type TimelineStayRow } from "@/hooks/useAvailabilityTimeline";
 import type { Block } from "@/hooks/useBlocks";
 import {
@@ -17,6 +17,8 @@ import { shortNight } from "@/lib/blocks";
 import { manilaDayOf } from "@/lib/bookings/stay";
 import { cn } from "@/lib/utils";
 import type { Tables } from "@/types/database.types";
+
+import { LoadErrorCallout } from "./LoadErrorCallout";
 
 const TIMELINE_NIGHTS = 14;
 const STEP_NIGHTS = 7;
@@ -198,12 +200,10 @@ export function AvailabilityTimeline({
       )}
 
       {error ? (
-        <Callout tone="danger" title="Could not load bookings and blocks">
-          <p>Check your connection, then try again.</p>
-          <Button variant="outline" size="sm" className="mt-2" onClick={() => void refetch()}>
-            Try again
-          </Button>
-        </Callout>
+        <LoadErrorCallout
+          title="Could not load bookings and blocks"
+          onRetry={() => void refetch()}
+        />
       ) : (
         <div className="bg-card overflow-x-auto rounded-lg border">
           <table className="w-full min-w-max border-collapse text-xs">
