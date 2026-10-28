@@ -31,6 +31,13 @@ const channels = [
   channel({ id: "email", kind: "email", value: "stay@okaeri-resort.example", display_order: 3 }),
 ];
 
+beforeEach(() => {
+  vi.mocked(useActiveContactChannels).mockReturnValue({
+    data: channels,
+    isSuccess: true,
+  } as unknown as ReturnType<typeof useActiveContactChannels>);
+});
+
 function renderGenerator() {
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -44,10 +51,6 @@ describe("DocumentGenerator letterhead contact defaults", () => {
     localStorage.removeItem("document-storage");
     useDocumentStore.getState().resetLetterhead({ phone: "", email: "" });
     useDocumentStore.setState({ contactDefaultsApplied: false });
-    vi.mocked(useActiveContactChannels).mockReturnValue({
-      data: channels,
-      isSuccess: true,
-    } as unknown as ReturnType<typeof useActiveContactChannels>);
   });
 
   it("uses the first visible mobile and email channels on a new device", async () => {
@@ -78,10 +81,6 @@ describe("DocumentGenerator tablet tabs", () => {
   beforeEach(() => {
     localStorage.removeItem("document-storage");
     useDocumentStore.getState().resetForm();
-    vi.mocked(useActiveContactChannels).mockReturnValue({
-      data: channels,
-      isSuccess: true,
-    } as unknown as ReturnType<typeof useActiveContactChannels>);
   });
 
   it("shows an edit in the preview when switching to Preview right after typing", async () => {
@@ -98,13 +97,6 @@ describe("DocumentGenerator tablet tabs", () => {
 });
 
 describe("DocumentGenerator mobile action bar", () => {
-  beforeEach(() => {
-    vi.mocked(useActiveContactChannels).mockReturnValue({
-      data: channels,
-      isSuccess: true,
-    } as unknown as ReturnType<typeof useActiveContactChannels>);
-  });
-
   // jsdom has no layout, so this pins the bar to the shell's published bottom bar height
   it("sits above the admin bottom bar on compact windows", () => {
     renderGenerator();
