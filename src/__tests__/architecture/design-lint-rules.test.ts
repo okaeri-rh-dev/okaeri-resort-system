@@ -80,6 +80,16 @@ export const A = () => <DayPicker classNames={monthGridClassNames} />;
     ]);
   });
 
+  it("flags palette classes in sonner toastOptions.classNames", async () => {
+    const messages = await lint(
+      `export const A = () => <Sonner toastOptions={{ duration: 4000, classNames: { toast: "bg-white" } }} />;`
+    );
+
+    expect(
+      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+    ).toEqual([expect.stringContaining('"bg-white"')]);
+  });
+
   it("accepts semantic classes in classNames props and *ClassNames maps", async () => {
     expect(
       await ruleIds(
@@ -93,12 +103,6 @@ export const A = () => (
 `
       )
     ).not.toContain(rule);
-  });
-
-  it("flags unknown classes in a classNames object prop", async () => {
-    expect(
-      await ruleIds(`export const A = () => <DayPicker classNames={{ day: "card-elevated" }} />;`)
-    ).toContain("better-tailwindcss/no-unknown-classes");
   });
 
   it.each([
@@ -146,6 +150,12 @@ export const Box = () => <div className={cn("bg-background text-foreground", "ca
     expect(
       messages.filter((message) => message.ruleId === rule).map((message) => message.message)
     ).toEqual(["Unknown class detected: card-elevated"]);
+  });
+
+  it("flags unknown classes in a classNames object prop", async () => {
+    expect(
+      await ruleIds(`export const A = () => <DayPicker classNames={{ day: "card-elevated" }} />;`)
+    ).toContain(rule);
   });
 
   it("accepts the Hearth token utilities and dark: variants", async () => {

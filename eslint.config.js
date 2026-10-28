@@ -432,13 +432,18 @@ export default tseslint.config([
     settings: {
       "better-tailwindcss": {
         entryPoint: "src/index.css",
-        // react-day-picker style class maps: classNames={{ day: "..." }} and monthGridClassNames = { ... }
+        // Class maps: classNames props, *ClassNames variables and sonner's toastOptions.classNames
         selectors: [
           ...getDefaultSelectors(),
           {
             kind: SelectorKind.Attribute,
             name: "^classNames$",
             match: [{ type: MatcherType.ObjectValue }],
+          },
+          {
+            kind: SelectorKind.Attribute,
+            name: "^toastOptions$",
+            match: [{ type: MatcherType.ObjectValue, path: "^classNames\\..+$" }],
           },
           {
             kind: SelectorKind.Variable,
