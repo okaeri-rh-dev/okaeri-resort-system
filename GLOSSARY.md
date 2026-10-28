@@ -30,6 +30,10 @@ _Avoid_: Unverified booking, request
 A booking that is neither pending nor cancelled. It stays confirmed after the guest checks in or out.
 _Avoid_: Active booking
 
+**Live booking**:
+A booking in Pending, Confirmed or CheckedIn. Only live bookings conflict with a block: a checked-out or cancelled booking never does.
+_Avoid_: Open booking, current booking
+
 **Occupancy**:
 For one calendar month, the booked cabin nights of confirmed bookings divided by the number of units times the days in the month.
 _Avoid_: Utilisation, load

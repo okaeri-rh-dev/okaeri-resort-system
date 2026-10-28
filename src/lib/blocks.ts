@@ -1,9 +1,15 @@
 import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
 
+import { toManilaDateString } from "@/lib/timezone";
+
 const SHORT_NIGHT = "EEE d MMM";
 
 /** "Thu 29 Oct" for a yyyy-MM-dd night. */
 export const shortNight = (night: string) => format(parseISO(night), SHORT_NIGHT);
+
+/** "Thu 29 Oct – Sat 31 Oct": the Manila check-in and check-out days of a booking. */
+export const stayLabel = (checkIn: string, checkOut: string) =>
+  `${shortNight(toManilaDateString(new Date(checkIn)))} – ${shortNight(toManilaDateString(new Date(checkOut)))}`;
 
 /** "Thu 29 Oct – Fri 6 Nov · 9 nights" for an inclusive range of nights. */
 export function blockNightsLabel(firstNight: string, lastNight: string): string {
@@ -45,3 +51,7 @@ export function blockFormMode(
   if (!canManage || phase === "over") return "read-only";
   return phase === "running" ? "last-night-only" : "edit";
 }
+
+/** The warning over the bookings a block would sit on. */
+export const conflictsHeading = (count: number) =>
+  `${count} ${count === 1 ? "booking uses" : "bookings use"} these nights`;
