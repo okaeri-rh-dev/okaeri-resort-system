@@ -12,7 +12,7 @@ import {
 } from "@/components/patterns";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { useAccountBalances } from "@/stores/useAccountStore";
+import { useActiveAccountBalances } from "@/stores/useAccountStore";
 import type { AccountType } from "@/types";
 
 // Icon mapping
@@ -31,7 +31,7 @@ export const AccountsSummary: React.FC<AccountsSummaryProps> = ({
   className,
   showDetails = true,
 }) => {
-  const { data: accounts = [], isLoading, isError } = useAccountBalances();
+  const { data: accounts = [], isLoading, isError } = useActiveAccountBalances();
 
   // Calculate totals
   const totals = React.useMemo(() => {
@@ -179,7 +179,7 @@ interface AccountsSummaryCompactProps {
 }
 
 export const AccountsSummaryCompact: React.FC<AccountsSummaryCompactProps> = ({ className }) => {
-  const { data: accounts = [], isLoading } = useAccountBalances();
+  const { data: accounts = [], isLoading } = useActiveAccountBalances();
 
   const totalBalance = React.useMemo(() => {
     return accounts.reduce((sum, account) => sum + account.current_balance, 0);

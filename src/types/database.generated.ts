@@ -1428,12 +1428,17 @@ export type Database = {
           account_id: string;
           account_name: string;
           account_type: string;
+          created_at: string;
           current_balance: number;
+          description: string;
+          display_order: number;
           initial_balance: number;
+          is_active: boolean;
           total_expenses: number;
           total_payments: number;
           transfers_in: number;
           transfers_out: number;
+          updated_at: string;
         }[];
       };
       get_block_conflicts: {
