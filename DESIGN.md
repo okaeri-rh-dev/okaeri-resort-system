@@ -84,7 +84,7 @@ Colour comes only from semantic tokens ([ADR 0003](docs/adr/0003-semantic-only-c
 - **Status is a tinted pill**: `bg-success text-success-foreground` and likewise for `warning`, `info` and `danger`. Neutral uses `muted`. Status always carries a text label.
 - **`danger` and `destructive` are different roles.** `danger` is the tinted pill (Cancelled). `destructive` is the solid fill for an irreversible action button.
 - **`brand`** (sand) marks identity: the logo, the active nav item, the calendar ramp. **`primary`** (timber) is for interaction: buttons, links, focus rings, downpayment emphasis.
-- **Availability** uses `availability-high`, `-medium` and `-low` for 3, 2 and 1 cabins left. Booked days are `muted` with a hatch. The "3 left" / "Full" text carries the meaning, and colour backs it up.
+- **Availability** uses `availability-high`, `-medium` and `-low` for 3, 2 and 1 cabins left. Booked days are `muted` with a hatch. The "3 left" / "Full" text carries the meaning, and colour backs it up. On the admin Availability timeline, the hatch marks blocked nights and bookings use the `info` tint; a legend names both.
 - **The admin sidebar** uses the `sidebar-*` tokens in both themes. It isn't a dark-mode island.
 - Overlays use `bg-overlay`; cards use `shadow-card`, floating surfaces `shadow-popover`.
 

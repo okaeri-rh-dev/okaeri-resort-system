@@ -94,7 +94,7 @@ export function AvailabilityTimeline({
           className={cn(
             cellClassName,
             hatchedFill,
-            "focus-visible:ring-ring transition-opacity duration-150 hover:opacity-70 focus-visible:ring-2 focus-visible:outline-none"
+            "hover:ring-primary focus-visible:ring-ring transition-shadow duration-150 hover:ring-2 focus-visible:ring-2 focus-visible:outline-none"
           )}
         />
       ) : (
