@@ -59,15 +59,23 @@ export function useDocumentForm() {
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const subscription = form.watch((values) => {
+    let pendingValues: DocumentFormValues | null = null;
+
+    const flushPendingSync = () => {
       if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-      syncTimeoutRef.current = setTimeout(() => {
-        setFormData(values as DocumentFormValues);
-      }, FORM_SYNC_DEBOUNCE_MS);
+      syncTimeoutRef.current = null;
+      if (pendingValues) setFormData(pendingValues);
+      pendingValues = null;
+    };
+
+    const subscription = form.watch((values) => {
+      pendingValues = values as DocumentFormValues;
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+      syncTimeoutRef.current = setTimeout(flushPendingSync, FORM_SYNC_DEBOUNCE_MS);
     });
     return () => {
       subscription.unsubscribe();
-      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+      flushPendingSync();
     };
   }, [form, setFormData]);
 
