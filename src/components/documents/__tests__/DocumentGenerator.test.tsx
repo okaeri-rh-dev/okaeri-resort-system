@@ -74,6 +74,29 @@ describe("DocumentGenerator letterhead contact defaults", () => {
   });
 });
 
+describe("DocumentGenerator tablet tabs", () => {
+  beforeEach(() => {
+    localStorage.removeItem("document-storage");
+    useDocumentStore.getState().resetForm();
+    vi.mocked(useActiveContactChannels).mockReturnValue({
+      data: channels,
+      isSuccess: true,
+    } as unknown as ReturnType<typeof useActiveContactChannels>);
+  });
+
+  it("shows an edit in the preview when switching to Preview right after typing", async () => {
+    const user = userEvent.setup();
+    renderGenerator();
+
+    const editPanel = within(screen.getByRole("tabpanel", { name: "Edit" }));
+    await user.type(editPanel.getByLabelText(/Name/), "Maria Santos");
+    await user.click(screen.getByRole("tab", { name: "Preview" }));
+
+    const previewPanel = within(screen.getByRole("tabpanel", { name: "Preview" }));
+    expect(previewPanel.getByText("Maria Santos")).toBeInTheDocument();
+  });
+});
+
 describe("DocumentGenerator mobile action bar", () => {
   beforeEach(() => {
     vi.mocked(useActiveContactChannels).mockReturnValue({
