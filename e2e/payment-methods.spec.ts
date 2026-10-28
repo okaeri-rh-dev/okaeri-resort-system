@@ -4,24 +4,13 @@
  * The spec deletes the method it adds, before and after it runs.
  */
 import { expect, test } from "@playwright/test";
-import { createClient } from "@supabase/supabase-js";
 
 import { loginAsAdmin } from "./fixtures/auth";
+import { serviceClient } from "./fixtures/service-client";
 
 const PROVIDER = "E2E Wallet";
 const DISPLAY_NAME = "E2E Wallet Transfer";
 const RENAMED = "E2E Wallet Renamed";
-
-function serviceClient() {
-  // Local-only, like the other specs that seed through the service role.
-  return createClient(
-    process.env.VITE_SUPABASE_URL || "http://127.0.0.1:54321",
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.TEST_SUPABASE_SERVICE_ROLE_KEY ||
-      "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz",
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
 
 test.describe("Payment methods", () => {
   const db = serviceClient();

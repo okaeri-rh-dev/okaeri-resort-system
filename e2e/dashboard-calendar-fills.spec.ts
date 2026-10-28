@@ -1,10 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
-import { createClient } from "@supabase/supabase-js";
 import { addDays, format, getDay, isSameDay, startOfMonth } from "date-fns";
 
 import { E2E_UNIT_ID } from "../scripts/e2e/fixtures";
 import { loginAsAdmin } from "./fixtures/auth";
 import { fillContrast } from "./fixtures/contrast";
+import { serviceClient } from "./fixtures/service-client";
 
 /**
  * The dashboard calendar tints weekends and booked days in both themes. In light, `muted` is
@@ -12,13 +12,7 @@ import { fillContrast } from "./fixtures/contrast";
  * month on the E2E unit (`npm run seed:e2e`) and removes it afterwards.
  */
 
-const db = createClient(
-  process.env.VITE_SUPABASE_URL || "http://127.0.0.1:54321",
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.TEST_SUPABASE_SERVICE_ROLE_KEY ||
-    "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz",
-  { auth: { autoRefreshToken: false, persistSession: false } }
-);
+const db = serviceClient();
 
 const reference = `E2E-CAL-${Date.now().toString(36).toUpperCase()}`;
 const today = new Date();

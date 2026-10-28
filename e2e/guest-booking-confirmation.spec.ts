@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
-import { createClient } from "@supabase/supabase-js";
 
 import { generateGuestBookingReference } from "../src/lib/bookings/reference";
+import { serviceClient } from "./fixtures/service-client";
 import { TEST_GUEST } from "./fixtures/test-data";
 import { BookingFormPage } from "./pages/BookingFormPage";
 
@@ -14,16 +14,6 @@ import { BookingFormPage } from "./pages/BookingFormPage";
 const REFERENCE = "BK-202612-E2EC0N";
 const LOOKUP_REFERENCE = generateGuestBookingReference();
 const LOOKUP_EMAIL = "e2e-status-lookup-test@example.com";
-
-function serviceClient() {
-  return createClient(
-    process.env.VITE_SUPABASE_URL || "http://127.0.0.1:54321",
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.TEST_SUPABASE_SERVICE_ROLE_KEY ||
-      "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz",
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
 
 async function stubSubmit(page: Page) {
   await page.route("**/api/guest-booking/multi-unit", (route) =>
