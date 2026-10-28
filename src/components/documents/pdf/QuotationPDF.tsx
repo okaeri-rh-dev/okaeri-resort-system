@@ -34,8 +34,8 @@ export function QuotationPDF({ document: doc }: QuotationPDFProps) {
             <Text>
               {letterhead.city}, {letterhead.province} {letterhead.zip_code}
             </Text>
-            <Text>{letterhead.phone}</Text>
-            <Text>{letterhead.email}</Text>
+            {letterhead.phone && <Text>{letterhead.phone}</Text>}
+            {letterhead.email && <Text>{letterhead.email}</Text>}
             {letterhead.website && <Text>{letterhead.website}</Text>}
             {letterhead.tin && <Text>TIN: {letterhead.tin}</Text>}
           </View>

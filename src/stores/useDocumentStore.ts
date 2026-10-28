@@ -14,6 +14,7 @@ import type {
   DocumentPricing,
   DocumentType,
   LetterheadConfig,
+  LetterheadContacts,
 } from "@/components/documents/types";
 import { toManilaDateString } from "@/lib/timezone";
 
@@ -27,6 +28,8 @@ interface DocumentStore {
   // Persisted state
   letterhead: LetterheadConfig;
   documentCounter: number;
+  /** Set once the Contact channel phone and email have filled the letterhead on this device. */
+  contactDefaultsApplied: boolean;
 
   // Transient state
   formData: DocumentFormData;
@@ -35,7 +38,9 @@ interface DocumentStore {
 
   // Letterhead actions
   updateLetterhead: (partial: Partial<LetterheadConfig>) => void;
-  resetLetterhead: () => void;
+  resetLetterhead: (contacts: LetterheadContacts) => void;
+  /** Fills empty phone and email once per device; later blanks are kept. */
+  applyContactDefaults: (contacts: LetterheadContacts) => void;
 
   // Form actions
   setFormData: (partial: Partial<DocumentFormData>) => void;
@@ -118,6 +123,56 @@ function createInitialFormData(): DocumentFormData {
 }
 
 // ============================================
+// PERSISTENCE
+// ============================================
+
+const DOCUMENT_STORE_VERSION = 1;
+
+type PersistedDocumentState = Pick<
+  DocumentStore,
+  "letterhead" | "documentCounter" | "contactDefaultsApplied"
+>;
+
+// Version 0 shipped made-up contact details; staff-edited values must survive the upgrade.
+const VERSION_0_PLACEHOLDERS: Partial<Record<keyof LetterheadConfig, string>> = {
+  address_line_1: "123 Resort Road",
+  city: "Nasugbu",
+  province: "Batangas",
+  zip_code: "4231",
+  phone: "0917 000 0000",
+  email: "info@okaeriresort.com",
+  website: "www.okaeriresort.com",
+};
+
+function replaceVersion0Placeholders(letterhead: LetterheadConfig): LetterheadConfig {
+  const migrated = { ...letterhead };
+  for (const [field, placeholder] of Object.entries(VERSION_0_PLACEHOLDERS)) {
+    const key = field as keyof LetterheadConfig;
+    if (migrated[key] === placeholder) migrated[key] = DEFAULT_LETTERHEAD[key] ?? "";
+  }
+  // The Plus Code belongs to the new address, so it only joins a placeholder address.
+  if (
+    letterhead.address_line_1 === VERSION_0_PLACEHOLDERS.address_line_1 &&
+    !letterhead.address_line_2
+  ) {
+    migrated.address_line_2 = DEFAULT_LETTERHEAD.address_line_2;
+  }
+  return migrated;
+}
+
+function migrateDocumentState(persisted: unknown, version: number): PersistedDocumentState {
+  const state = persisted as PersistedDocumentState;
+  if (version === 0) {
+    return {
+      ...state,
+      letterhead: replaceVersion0Placeholders(state.letterhead),
+      contactDefaultsApplied: false,
+    };
+  }
+  return state;
+}
+
+// ============================================
 // STORE
 // ============================================
 
@@ -128,6 +183,7 @@ export const useDocumentStore = create<DocumentStore>()(
         // Persisted state
         letterhead: { ...DEFAULT_LETTERHEAD },
         documentCounter: 0,
+        contactDefaultsApplied: false,
 
         // Transient state
         formData: createInitialFormData(),
@@ -142,8 +198,29 @@ export const useDocumentStore = create<DocumentStore>()(
             "updateLetterhead"
           ),
 
-        resetLetterhead: () =>
-          set({ letterhead: { ...DEFAULT_LETTERHEAD } }, false, "resetLetterhead"),
+        resetLetterhead: (contacts) =>
+          set(
+            { letterhead: { ...DEFAULT_LETTERHEAD, ...contacts }, contactDefaultsApplied: true },
+            false,
+            "resetLetterhead"
+          ),
+
+        applyContactDefaults: (contacts) => {
+          const { letterhead, contactDefaultsApplied } = get();
+          if (contactDefaultsApplied || (!contacts.phone && !contacts.email)) return;
+          set(
+            {
+              letterhead: {
+                ...letterhead,
+                phone: letterhead.phone || contacts.phone,
+                email: letterhead.email || contacts.email,
+              },
+              contactDefaultsApplied: true,
+            },
+            false,
+            "applyContactDefaults"
+          );
+        },
 
         // Form actions
         setFormData: (partial) =>
@@ -327,9 +404,12 @@ export const useDocumentStore = create<DocumentStore>()(
       }),
       {
         name: "document-storage",
-        partialize: (state) => ({
+        version: DOCUMENT_STORE_VERSION,
+        migrate: migrateDocumentState,
+        partialize: (state): PersistedDocumentState => ({
           letterhead: state.letterhead,
           documentCounter: state.documentCounter,
+          contactDefaultsApplied: state.contactDefaultsApplied,
         }),
       }
     ),

@@ -59,8 +59,8 @@ export const DocumentPage = memo(function DocumentPage({
           <p>
             {letterhead.city}, {letterhead.province} {letterhead.zip_code}
           </p>
-          <p>{letterhead.phone}</p>
-          <p>{letterhead.email}</p>
+          {letterhead.phone && <p>{letterhead.phone}</p>}
+          {letterhead.email && <p>{letterhead.email}</p>}
           {letterhead.website && <p>{letterhead.website}</p>}
           {letterhead.tin && <p className="mt-1">TIN: {letterhead.tin}</p>}
         </div>
