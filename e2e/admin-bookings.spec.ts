@@ -129,7 +129,7 @@ test.describe("Admin Bookings Management", () => {
 
       await bookingsTable.search("nonexistent-booking-xyz-999");
 
-      await expect(bookingsTable.emptyState).toBeVisible();
+      await bookingsTable.expectEmptyState();
       expect(await bookingsTable.getRowCount()).toBe(0);
     });
 
@@ -389,10 +389,7 @@ test.describe("Responsive Design", () => {
 
     await expect(bookingsTable.table).toBeHidden();
     await expect(
-      page
-        .getByRole("button", { name: /^View booking / })
-        .or(bookingsTable.noBookingsState)
-        .first()
+      bookingsTable.bookingCards.or(bookingsTable.noBookingsState).first()
     ).toBeVisible();
   });
 
