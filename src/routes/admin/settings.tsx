@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from "react";
 
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
+import { z } from "zod";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
@@ -52,10 +53,19 @@ const ContactChannelForm = lazy(() =>
   }))
 );
 
+const DEFAULT_TAB = "payment-methods";
+
+const settingsTabSchema = z.enum([DEFAULT_TAB, "expense-categories", "contact-channels"]);
+
+const settingsSearchSchema = z.object({
+  tab: settingsTabSchema.optional().catch(undefined),
+});
+
 export const Route = createFileRoute("/admin/settings")({
   beforeLoad: async () => {
     await requireManager();
   },
+  validateSearch: settingsSearchSchema,
   component: SettingsPage,
 });
 
@@ -66,6 +76,17 @@ const LoadingSpinner = () => (
 );
 
 function SettingsPage() {
+  const { tab = DEFAULT_TAB } = Route.useSearch();
+  const navigate = Route.useNavigate();
+
+  const handleTabChange = (value: string) => {
+    const nextTab = settingsTabSchema.parse(value);
+    void navigate({
+      search: { tab: nextTab === DEFAULT_TAB ? undefined : nextTab },
+      replace: true,
+    });
+  };
+
   // Payment Methods state
   const [showForm, setShowForm] = useState(false);
   const [editingMethod, setEditingMethod] = useState<PaymentMethodConfig | null>(null);
@@ -117,7 +138,7 @@ function SettingsPage() {
         </div>
 
         {/* Tabbed Settings */}
-        <Tabs defaultValue="payment-methods">
+        <Tabs value={tab} onValueChange={handleTabChange}>
           <TabsList>
             <TabsTrigger value="payment-methods">Payment Methods</TabsTrigger>
             <TabsTrigger value="expense-categories">Expense Categories</TabsTrigger>
