@@ -7,7 +7,7 @@
  * - Checked-out bookings: 90 days after check-out date
  * - Cancelled bookings: 30 days after cancellation (updated_at)
  * Both live in the cleanup_expired_payment_proofs SQL function.
- * - Guest uploads (TEMP-) that nothing references: 7 days after upload (sweepOrphanedPaymentProofs)
+ * - Guest uploads (TEMP-) that nothing references: 30 days after upload (sweepOrphanedPaymentProofs)
  *
  * Free Tier Impact:
  * - Reduces Supabase Storage usage (1GB free limit)
@@ -38,11 +38,15 @@ interface Env {
  * Called by Cloudflare Pages cron trigger at 3:00 AM UTC every Sunday
  *
  * @param env - Environment variables (Supabase credentials)
- * @returns The number of expired and orphaned files deleted from storage; throws on failure
+ * @returns The number of expired and orphaned files deleted from storage. Throws when the
+ * expired cleanup fails; a failed orphan sweep is returned as orphanSweepError so the expired
+ * count is still reported.
  */
-export async function cleanupPaymentProofs(
-  env: Env
-): Promise<{ deletedCount: number; orphanDeletedCount: number }> {
+export async function cleanupPaymentProofs(env: Env): Promise<{
+  deletedCount: number;
+  orphanDeletedCount: number;
+  orphanSweepError: string | null;
+}> {
   const logger = createLogger(env);
 
   logger.info("[CRON] Starting payment proof cleanup");
@@ -56,13 +60,18 @@ export async function cleanupPaymentProofs(
 
   const deletedCount = await cleanupExpiredPaymentProofs(supabase, logger);
 
-  const orphanSweep = await sweepOrphanedPaymentProofs(supabase, logger, new Date());
-  logger.info(
-    `[CRON] Orphaned payment proof sweep completed: ${orphanSweep.deleted.length} files deleted, ` +
-      `${orphanSweep.failed.length} failed`
-  );
-
-  return { deletedCount, orphanDeletedCount: orphanSweep.deleted.length };
+  try {
+    const orphanSweep = await sweepOrphanedPaymentProofs(supabase, logger, new Date());
+    logger.info(
+      `[CRON] Orphaned payment proof sweep completed: ${orphanSweep.deleted.length} files deleted, ` +
+        `${orphanSweep.failed.length} failed`
+    );
+    return { deletedCount, orphanDeletedCount: orphanSweep.deleted.length, orphanSweepError: null };
+  } catch (error) {
+    logger.error("[ERROR] Orphaned payment proof sweep failed", error);
+    const orphanSweepError = error instanceof Error ? error.message : String(error);
+    return { deletedCount, orphanDeletedCount: 0, orphanSweepError };
+  }
 }
 
 async function cleanupExpiredPaymentProofs(

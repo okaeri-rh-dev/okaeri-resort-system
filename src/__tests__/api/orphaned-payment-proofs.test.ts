@@ -15,7 +15,7 @@ const supabase = {
 const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
 
 const now = new Date("2026-10-25T03:00:00Z");
-const eightDaysAgo = "2026-10-17T03:00:00Z";
+const thirtyOneDaysAgo = "2026-09-24T03:00:00Z";
 
 function storedFiles(files: { name: string; created_at: string }[]) {
   list.mockImplementation((_prefix: string, options: { limit: number; offset: number }) =>
@@ -39,8 +39,8 @@ describe("sweepOrphanedPaymentProofs", () => {
     referencedPaths([]);
   });
 
-  it("deletes a TEMP- upload older than 7 days that nothing references", async () => {
-    storedFiles([{ name: "TEMP-abc12345_1760000000000.png", created_at: eightDaysAgo }]);
+  it("deletes a TEMP- upload older than 30 days that nothing references", async () => {
+    storedFiles([{ name: "TEMP-abc12345_1760000000000.png", created_at: thirtyOneDaysAgo }]);
 
     const result = await sweepOrphanedPaymentProofs(supabase, logger, now);
 
@@ -62,10 +62,10 @@ describe("sweepOrphanedPaymentProofs", () => {
     expect(result.deleted).toEqual([]);
   });
 
-  it("keeps a TEMP- upload that is 7 days old or newer", async () => {
+  it("keeps a TEMP- upload that is 30 days old or newer", async () => {
     storedFiles([
-      { name: "TEMP-fresh001_1761000000000.png", created_at: "2026-10-24T03:00:00Z" },
-      { name: "TEMP-edge0001_1761000000000.png", created_at: "2026-10-18T03:00:00Z" },
+      { name: "TEMP-fresh001_1761000000000.png", created_at: "2026-10-17T03:00:00Z" },
+      { name: "TEMP-edge0001_1761000000000.png", created_at: "2026-09-25T03:00:00Z" },
     ]);
 
     const result = await sweepOrphanedPaymentProofs(supabase, logger, now);
@@ -77,7 +77,7 @@ describe("sweepOrphanedPaymentProofs", () => {
   it("pages through the whole bucket", async () => {
     const files = Array.from({ length: 250 }, (_, i) => ({
       name: `TEMP-page${String(i).padStart(4, "0")}_1760000000000.png`,
-      created_at: eightDaysAgo,
+      created_at: thirtyOneDaysAgo,
     }));
     storedFiles(files);
 
@@ -90,7 +90,7 @@ describe("sweepOrphanedPaymentProofs", () => {
   it("logs a failed delete with its paths and keeps deleting the rest", async () => {
     const files = Array.from({ length: 150 }, (_, i) => ({
       name: `TEMP-fail${String(i).padStart(4, "0")}_1760000000000.png`,
-      created_at: eightDaysAgo,
+      created_at: thirtyOneDaysAgo,
     }));
     storedFiles(files);
     remove
@@ -110,7 +110,7 @@ describe("sweepOrphanedPaymentProofs", () => {
   it("stops at 500 deletes per run and logs that it stopped at the cap", async () => {
     const files = Array.from({ length: 520 }, (_, i) => ({
       name: `TEMP-cap${String(i).padStart(4, "0")}_1760000000000.png`,
-      created_at: eightDaysAgo,
+      created_at: thirtyOneDaysAgo,
     }));
     storedFiles(files);
 
@@ -122,8 +122,8 @@ describe("sweepOrphanedPaymentProofs", () => {
 
   it("does not touch files without the TEMP- prefix", async () => {
     storedFiles([
-      { name: "OKR-2026-0042_1760000000000.png", created_at: eightDaysAgo },
-      { name: "temp-lowercase_1760000000000.png", created_at: eightDaysAgo },
+      { name: "OKR-2026-0042_1760000000000.png", created_at: thirtyOneDaysAgo },
+      { name: "temp-lowercase_1760000000000.png", created_at: thirtyOneDaysAgo },
     ]);
 
     const result = await sweepOrphanedPaymentProofs(supabase, logger, now);

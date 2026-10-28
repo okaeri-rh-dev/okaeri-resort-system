@@ -6,7 +6,7 @@ import type { Logger } from "./logger";
 import { deletePaymentProofFiles } from "./payment-proof-storage";
 
 const GUEST_UPLOAD_PREFIX = "TEMP-";
-const MIN_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const MIN_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const LIST_PAGE_SIZE = 100;
 const DELETE_BATCH_SIZE = 100;
 // Keeps one run well inside the Worker time limit; the rest wait for next week.

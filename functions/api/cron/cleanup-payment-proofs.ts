@@ -35,18 +35,24 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     console.warn("[CRON] Starting payment proof cleanup via HTTP trigger");
 
     // Call the existing cleanup function
-    const { deletedCount, orphanDeletedCount } = await cleanupPaymentProofs(env);
+    const { deletedCount, orphanDeletedCount, orphanSweepError } = await cleanupPaymentProofs(env);
+    const success = orphanSweepError === null;
 
     const duration = Date.now() - startTime;
 
-    return Response.json({
-      success: true,
-      message: "Payment proof cleanup completed successfully",
-      deleted_count: deletedCount,
-      orphan_deleted_count: orphanDeletedCount,
-      duration_ms: duration,
-      timestamp: new Date().toISOString(),
-    });
+    return Response.json(
+      {
+        success,
+        message: success
+          ? "Payment proof cleanup completed successfully"
+          : `Orphaned payment proof sweep failed: ${orphanSweepError}`,
+        deleted_count: deletedCount,
+        orphan_deleted_count: orphanDeletedCount,
+        duration_ms: duration,
+        timestamp: new Date().toISOString(),
+      },
+      { status: success ? 200 : 500 }
+    );
   } catch (error) {
     const duration = Date.now() - startTime;
     console.error("[CRON] Payment proof cleanup failed:", error);

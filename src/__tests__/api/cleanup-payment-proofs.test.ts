@@ -40,6 +40,7 @@ describe("cleanupPaymentProofs", () => {
     await expect(cleanupPaymentProofs(env)).resolves.toEqual({
       deletedCount: 2,
       orphanDeletedCount: 0,
+      orphanSweepError: null,
     });
 
     expect(rpc).toHaveBeenCalledWith("cleanup_expired_payment_proofs");
@@ -52,6 +53,7 @@ describe("cleanupPaymentProofs", () => {
     await expect(cleanupPaymentProofs(env)).resolves.toEqual({
       deletedCount: 0,
       orphanDeletedCount: 0,
+      orphanSweepError: null,
     });
 
     expect(remove).not.toHaveBeenCalled();
@@ -67,8 +69,20 @@ describe("cleanupPaymentProofs", () => {
     await expect(cleanupPaymentProofs(env)).resolves.toEqual({
       deletedCount: 0,
       orphanDeletedCount: 1,
+      orphanSweepError: null,
     });
 
     expect(remove).toHaveBeenCalledWith(["TEMP-abc12345_1700000000000.png"]);
+  });
+
+  it("keeps the expired count and reports the error when the orphan sweep fails", async () => {
+    expiredProofs(["REF_1.png"]);
+    list.mockResolvedValue({ data: null, error: { message: "bucket unavailable" } });
+
+    await expect(cleanupPaymentProofs(env)).resolves.toEqual({
+      deletedCount: 1,
+      orphanDeletedCount: 0,
+      orphanSweepError: "Storage list error: bucket unavailable",
+    });
   });
 });
