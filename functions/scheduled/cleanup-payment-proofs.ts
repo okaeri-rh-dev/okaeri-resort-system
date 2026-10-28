@@ -7,6 +7,7 @@
  * - Checked-out bookings: 90 days after check-out date
  * - Cancelled bookings: 30 days after cancellation (updated_at)
  * Both live in the cleanup_expired_payment_proofs SQL function.
+ * - Guest uploads (TEMP-) that nothing references: 7 days after upload (sweepOrphanedPaymentProofs)
  *
  * Free Tier Impact:
  * - Reduces Supabase Storage usage (1GB free limit)
@@ -22,7 +23,8 @@ import { createClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database.types";
 
-import { createLogger } from "../lib/logger";
+import { createLogger, type Logger } from "../lib/logger";
+import { sweepOrphanedPaymentProofs } from "../lib/orphaned-payment-proofs";
 import { deletePaymentProofFiles } from "../lib/payment-proof-storage";
 
 interface Env {
@@ -36,15 +38,36 @@ interface Env {
  * Called by Cloudflare Pages cron trigger at 3:00 AM UTC every Sunday
  *
  * @param env - Environment variables (Supabase credentials)
- * @returns The number of files deleted from storage; throws on failure after retries
+ * @returns The number of expired and orphaned files deleted from storage; throws on failure
  */
-export async function cleanupPaymentProofs(env: Env): Promise<{ deletedCount: number }> {
-  const MAX_RETRIES = 3;
-  const RETRY_DELAY_MS = 2000; // 2 seconds base delay (fits within Cloudflare 30s Worker limit)
-  const ALERT_THRESHOLD_COUNT = 50; // Alert if >50 files deleted
+export async function cleanupPaymentProofs(
+  env: Env
+): Promise<{ deletedCount: number; orphanDeletedCount: number }> {
   const logger = createLogger(env);
 
   logger.info("[CRON] Starting payment proof cleanup");
+
+  const deletedCount = await cleanupExpiredPaymentProofs(env, logger);
+
+  const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+  const orphans = await sweepOrphanedPaymentProofs(supabase, logger, new Date());
+  logger.info(
+    `[CRON] Orphaned payment proof sweep completed: ${orphans.deleted.length} files deleted, ` +
+      `${orphans.failed.length} failed`
+  );
+
+  return { deletedCount, orphanDeletedCount: orphans.deleted.length };
+}
+
+async function cleanupExpiredPaymentProofs(env: Env, logger: Logger): Promise<number> {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY_MS = 2000; // 2 seconds base delay (fits within Cloudflare 30s Worker limit)
+  const ALERT_THRESHOLD_COUNT = 50; // Alert if >50 files deleted
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -86,7 +109,7 @@ export async function cleanupPaymentProofs(env: Env): Promise<{ deletedCount: nu
 
       logger.info(`[CRON] Payment proof cleanup completed: ${deleted.length} files deleted`);
 
-      return { deletedCount: deleted.length };
+      return deleted.length;
     } catch (error) {
       logger.error(
         `[ERROR] Payment proof cleanup failed (attempt ${attempt}/${MAX_RETRIES})`,

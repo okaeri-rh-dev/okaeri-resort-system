@@ -35,7 +35,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     console.warn("[CRON] Starting payment proof cleanup via HTTP trigger");
 
     // Call the existing cleanup function
-    const { deletedCount } = await cleanupPaymentProofs(env);
+    const { deletedCount, orphanDeletedCount } = await cleanupPaymentProofs(env);
 
     const duration = Date.now() - startTime;
 
@@ -43,6 +43,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       success: true,
       message: "Payment proof cleanup completed successfully",
       deleted_count: deletedCount,
+      orphan_deleted_count: orphanDeletedCount,
       duration_ms: duration,
       timestamp: new Date().toISOString(),
     });
