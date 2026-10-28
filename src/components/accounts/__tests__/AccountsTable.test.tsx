@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useAccountBalances } from "@/stores/useAccountStore";
@@ -67,8 +68,10 @@ describe("AccountsTable", () => {
     expect(renderedNames()).toEqual(["BDO Payroll", "GCash Wallet"]);
   });
 
-  it("shows inactive accounts too when asked", () => {
-    render(<AccountsTable showInactive />);
+  it("shows inactive accounts too when Show inactive is on", async () => {
+    render(<AccountsTable />);
+
+    await userEvent.click(screen.getByRole("switch", { name: "Show inactive" }));
 
     expect(renderedNames()).toEqual(["Closed Savings", "BDO Payroll", "GCash Wallet"]);
   });
