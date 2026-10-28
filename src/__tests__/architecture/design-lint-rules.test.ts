@@ -30,6 +30,12 @@ async function lint(
   return result.messages;
 }
 
+async function ruleMessages(code: string, rule: string): Promise<string[]> {
+  return (await lint(code))
+    .filter((message) => message.ruleId === rule)
+    .map((message) => message.message);
+}
+
 async function ruleIds(code: string, overrideConfig?: Linter.Config): Promise<string[]> {
   return (await lint(code, overrideConfig)).map((message) => message.ruleId ?? "fatal");
 }
@@ -38,16 +44,15 @@ describe("palette classes and font-mono", () => {
   const rule = "better-tailwindcss/no-restricted-classes";
 
   it("flags palette classes inside cn() and cva()", async () => {
-    const messages = await lint(
-      `import { cva } from "class-variance-authority";
+    expect(
+      await ruleMessages(
+        `import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 const variants = cva("bg-red-500", { variants: { tone: { quiet: "text-slate-700" } } });
 export const Box = () => <div className={cn(variants(), "text-blue-600")} />;
-`
-    );
-
-    expect(
-      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+`,
+        rule
+      )
     ).toEqual([
       expect.stringContaining('"bg-red-500"'),
       expect.stringContaining('"text-slate-700"'),
@@ -56,24 +61,22 @@ export const Box = () => <div className={cn(variants(), "text-blue-600")} />;
   });
 
   it("flags palette classes in a classNames object prop", async () => {
-    const messages = await lint(
-      `export const A = () => <DayPicker classNames={{ weekday: "text-slate-600" }} />;`
-    );
-
     expect(
-      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+      await ruleMessages(
+        `export const A = () => <DayPicker classNames={{ weekday: "text-slate-600" }} />;`,
+        rule
+      )
     ).toEqual([expect.stringContaining('"text-slate-600"')]);
   });
 
   it("flags palette classes in a *ClassNames class map", async () => {
-    const messages = await lint(
-      `const monthGridClassNames = { day: "bg-blue-500", week: { row: "text-gray-700" } };
-export const A = () => <DayPicker classNames={monthGridClassNames} />;
-`
-    );
-
     expect(
-      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+      await ruleMessages(
+        `const monthGridClassNames = { day: "bg-blue-500", week: { row: "text-gray-700" } };
+export const A = () => <DayPicker classNames={monthGridClassNames} />;
+`,
+        rule
+      )
     ).toEqual([
       expect.stringContaining('"bg-blue-500"'),
       expect.stringContaining('"text-gray-700"'),
@@ -81,12 +84,11 @@ export const A = () => <DayPicker classNames={monthGridClassNames} />;
   });
 
   it("flags palette classes in sonner toastOptions.classNames", async () => {
-    const messages = await lint(
-      `export const A = () => <Sonner toastOptions={{ duration: 4000, classNames: { toast: "bg-white" } }} />;`
-    );
-
     expect(
-      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+      await ruleMessages(
+        `export const A = () => <Sonner toastOptions={{ duration: 4000, classNames: { toast: "bg-white" } }} />;`,
+        rule
+      )
     ).toEqual([expect.stringContaining('"bg-white"')]);
   });
 
@@ -141,14 +143,13 @@ describe("unknown classes", () => {
   const rule = "better-tailwindcss/no-unknown-classes";
 
   it("flags a class Tailwind can't resolve", async () => {
-    const messages = await lint(
-      `import { cn } from "@/lib/utils";
-export const Box = () => <div className={cn("bg-background text-foreground", "card-elevated")} />;
-`
-    );
-
     expect(
-      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+      await ruleMessages(
+        `import { cn } from "@/lib/utils";
+export const Box = () => <div className={cn("bg-background text-foreground", "card-elevated")} />;
+`,
+        rule
+      )
     ).toEqual(["Unknown class detected: card-elevated"]);
   });
 
@@ -197,10 +198,8 @@ describe("arbitrary text sizes", () => {
   const rule = "better-tailwindcss/no-restricted-classes";
 
   it("names the class and the 12px floor", async () => {
-    const messages = await lint(`export const A = () => <div className="text-[10px]" />;`);
-
     expect(
-      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+      await ruleMessages(`export const A = () => <div className="text-[10px]" />;`, rule)
     ).toEqual([expect.stringMatching(/"text-\[10px\]".*text-xs/)]);
   });
 
@@ -232,10 +231,8 @@ describe("arbitrary durations", () => {
   const rule = "better-tailwindcss/no-restricted-classes";
 
   it("names the class and the two speeds", async () => {
-    const messages = await lint(`export const A = () => <div className="duration-[250ms]" />;`);
-
     expect(
-      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
+      await ruleMessages(`export const A = () => <div className="duration-[250ms]" />;`, rule)
     ).toEqual([expect.stringMatching(/"duration-\[250ms\]".*duration-150.*duration-200/)]);
   });
 
@@ -270,11 +267,9 @@ describe("default breakpoints", () => {
   const rule = "better-tailwindcss/no-restricted-classes";
 
   it("names the class and the window size classes", async () => {
-    const messages = await lint(`export const A = () => <div className="md:flex" />;`);
-
-    expect(
-      messages.filter((message) => message.ruleId === rule).map((message) => message.message)
-    ).toEqual([expect.stringMatching(/"md:flex".*medium.*expanded.*@container/)]);
+    expect(await ruleMessages(`export const A = () => <div className="md:flex" />;`, rule)).toEqual(
+      [expect.stringMatching(/"md:flex".*medium.*expanded.*@container/)]
+    );
   });
 
   it.each([
