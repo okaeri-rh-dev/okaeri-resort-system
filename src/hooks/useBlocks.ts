@@ -145,6 +145,8 @@ const blockConflictsQuery = (nights: BlockNights | null) =>
           return data;
         }
       : skipToken,
+    // A cancel-and-save confirms this list, so a return to earlier dates or cabins reads it again
+    staleTime: 0,
     // Keeps the last list on screen while new dates load, so the warning does not flicker
     placeholderData: keepPreviousData,
   });

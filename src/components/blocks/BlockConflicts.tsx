@@ -41,13 +41,13 @@ export function BlockConflictList({ conflicts }: { conflicts: BlockConflict[] })
               {stayLabel(conflict.check_in, conflict.check_out)}
             </p>
             {conflict.is_partial && (
-              <p className="text-xs">
+              <div className="text-xs">
                 <StatusBadge tone="neutral">Partial</StatusBadge>{" "}
                 <span className="text-muted-foreground">
                   {conflict.partial_reason}. Cancel and save cancels the whole booking. To keep part
                   of it, edit the booking.
                 </span>
-              </p>
+              </div>
             )}
             {conflict.is_checked_in && (
               <p className="text-xs font-medium">Guest is checked in: change the block dates.</p>
