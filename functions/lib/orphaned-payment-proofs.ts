@@ -13,15 +13,15 @@ const DELETE_BATCH_SIZE = 100;
 const MAX_DELETES_PER_RUN = 500;
 
 /**
- * Deletes guest payment screenshots that no booking or payment links to.
+ * Deletes guest payment proofs that no booking or payment links to.
  * The guest form uploads before the booking exists, so removed, replaced and abandoned
- * uploads stay in the bucket under their TEMP- name (issue 93).
+ * uploads stay in the bucket under their TEMP- name.
  */
 export async function sweepOrphanedPaymentProofs(
   supabase: SupabaseClient<Database>,
   logger: Pick<Logger, "info" | "warn">,
   now: Date
-): Promise<{ deleted: string[]; failed: string[]; stoppedAtCap: boolean }> {
+): Promise<{ deleted: string[]; failed: string[] }> {
   const { data: referenced, error } = await supabase.rpc("referenced_payment_proof_paths");
   if (error) throw new Error(`Database error: ${error.message}`);
   const referencedPaths = new Set((referenced ?? []).map((row) => row.file_path));
@@ -35,8 +35,7 @@ export async function sweepOrphanedPaymentProofs(
     .map((file) => file.name)
     .filter((name) => !referencedPaths.has(name));
 
-  const stoppedAtCap = orphans.length > MAX_DELETES_PER_RUN;
-  if (stoppedAtCap) {
+  if (orphans.length > MAX_DELETES_PER_RUN) {
     logger.warn(
       `[WARN] ${orphans.length} orphaned payment proofs found; stopped at the cap of ${MAX_DELETES_PER_RUN} this run`
     );
@@ -51,7 +50,7 @@ export async function sweepOrphanedPaymentProofs(
     deleted.push(...result.deleted);
     failed.push(...result.failed);
   }
-  return { deleted, failed, stoppedAtCap };
+  return { deleted, failed };
 }
 
 // Collects every page before anything is deleted, so deletes cannot shift the offsets.

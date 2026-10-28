@@ -46,11 +46,7 @@ describe("sweepOrphanedPaymentProofs", () => {
 
     expect(rpc).toHaveBeenCalledWith("referenced_payment_proof_paths");
     expect(remove).toHaveBeenCalledWith(["TEMP-abc12345_1760000000000.png"]);
-    expect(result).toEqual({
-      deleted: ["TEMP-abc12345_1760000000000.png"],
-      failed: [],
-      stoppedAtCap: false,
-    });
+    expect(result).toEqual({ deleted: ["TEMP-abc12345_1760000000000.png"], failed: [] });
   });
 
   it("never deletes a TEMP- upload that a booking or payment references, at any age", async () => {
@@ -121,7 +117,6 @@ describe("sweepOrphanedPaymentProofs", () => {
     const result = await sweepOrphanedPaymentProofs(supabase, logger, now);
 
     expect(result.deleted).toHaveLength(500);
-    expect(result.stoppedAtCap).toBe(true);
     expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("cap"));
   });
 

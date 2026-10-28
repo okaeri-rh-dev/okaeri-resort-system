@@ -1,6 +1,6 @@
 /**
  * referenced_payment_proof_paths() lists every payment-proof file a booking or payment
- * still links to, as bucket paths. The orphaned-proof sweep never deletes these (issue 93).
+ * still links to, as bucket paths. The orphaned-proof sweep never deletes these.
  *
  * @vitest-environment node
  */

@@ -19,7 +19,7 @@
  * Retry Strategy: 3 attempts with exponential backoff (1min, 2min, 3min)
  */
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database.types";
 
@@ -47,38 +47,34 @@ export async function cleanupPaymentProofs(
 
   logger.info("[CRON] Starting payment proof cleanup");
 
-  const deletedCount = await cleanupExpiredPaymentProofs(env, logger);
-
   const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
   });
-  const orphans = await sweepOrphanedPaymentProofs(supabase, logger, new Date());
+
+  const deletedCount = await cleanupExpiredPaymentProofs(supabase, logger);
+
+  const orphanSweep = await sweepOrphanedPaymentProofs(supabase, logger, new Date());
   logger.info(
-    `[CRON] Orphaned payment proof sweep completed: ${orphans.deleted.length} files deleted, ` +
-      `${orphans.failed.length} failed`
+    `[CRON] Orphaned payment proof sweep completed: ${orphanSweep.deleted.length} files deleted, ` +
+      `${orphanSweep.failed.length} failed`
   );
 
-  return { deletedCount, orphanDeletedCount: orphans.deleted.length };
+  return { deletedCount, orphanDeletedCount: orphanSweep.deleted.length };
 }
 
-async function cleanupExpiredPaymentProofs(env: Env, logger: Logger): Promise<number> {
+async function cleanupExpiredPaymentProofs(
+  supabase: SupabaseClient<Database>,
+  logger: Logger
+): Promise<number> {
   const MAX_RETRIES = 3;
   const RETRY_DELAY_MS = 2000; // 2 seconds base delay (fits within Cloudflare 30s Worker limit)
   const ALERT_THRESHOLD_COUNT = 50; // Alert if >50 files deleted
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      // Create Supabase admin client with service role key
-      const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      });
-
       // Clears the expired references and returns each file's path in the bucket
       const { data, error } = await supabase.rpc("cleanup_expired_payment_proofs");
 

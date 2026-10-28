@@ -1,6 +1,6 @@
 -- Payment-proof files that a booking or payment still links to, as bucket paths.
--- The weekly cleanup-payment-proofs cron deletes old TEMP- uploads that are not in this set
--- (issue 93); Postgres cannot delete storage objects, so the compare and delete run in the Worker.
+-- The weekly cleanup-payment-proofs cron deletes old TEMP- uploads that are not in this set.
+-- Postgres cannot delete storage objects, so the compare and delete run in the Worker.
 CREATE OR REPLACE FUNCTION public.referenced_payment_proof_paths()
 RETURNS TABLE(file_path text)
 LANGUAGE sql
