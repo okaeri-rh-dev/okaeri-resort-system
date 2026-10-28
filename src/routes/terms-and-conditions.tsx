@@ -18,7 +18,8 @@ export const Route = createFileRoute("/terms-and-conditions")({
 });
 
 function TermsAndConditionsPage() {
-  const { data: contactChannels } = useActiveContactChannels();
+  const { data, isError } = useActiveContactChannels();
+  const contactChannels = isError ? [] : data;
 
   return (
     <GuestLayout width="form">

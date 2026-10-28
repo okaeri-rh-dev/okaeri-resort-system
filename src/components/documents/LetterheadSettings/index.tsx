@@ -25,7 +25,7 @@ interface LetterheadSettingsProps {
 
 export function LetterheadSettings({ open, onOpenChange }: LetterheadSettingsProps) {
   const { letterhead, updateLetterhead, resetLetterhead } = useDocumentStore();
-  const { data: contactChannels = [] } = useActiveContactChannels();
+  const { data: contactChannels } = useActiveContactChannels();
 
   // Local state for the form to batch updates on save
   const [local, setLocal] = useState(letterhead);
@@ -42,6 +42,7 @@ export function LetterheadSettings({ open, onOpenChange }: LetterheadSettingsPro
   };
 
   const handleReset = () => {
+    if (!contactChannels) return;
     resetLetterhead(toLetterheadContacts(contactChannels));
     setLocal(useDocumentStore.getState().letterhead);
   };
@@ -170,7 +171,7 @@ export function LetterheadSettings({ open, onOpenChange }: LetterheadSettingsPro
         </div>
 
         <DialogFooter className="gap-2">
-          <Button type="button" variant="outline" onClick={handleReset}>
+          <Button type="button" variant="outline" onClick={handleReset} disabled={!contactChannels}>
             Reset to Defaults
           </Button>
           <Button type="button" onClick={handleSave}>

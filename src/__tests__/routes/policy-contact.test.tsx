@@ -97,12 +97,22 @@ describe("Terms and conditions contact information", () => {
     expect(section.queryByText(/Business Hours/)).not.toBeInTheDocument();
   });
 
-  it("says contact details are not available when no channel is visible", async () => {
+  it("says no way to reach the resort is listed when no channel is visible", async () => {
     givenChannels([]);
     renderAt("/terms-and-conditions");
 
     const section = await contactSection(/Contact Information/);
-    expect(section.getByText("Contact details are not available yet.")).toBeInTheDocument();
+    expect(section.getByText("Ways to reach the resort are not listed yet.")).toBeInTheDocument();
+  });
+  it("shows the notice instead of nothing when the channels fail to load", async () => {
+    vi.mocked(useActiveContactChannels).mockReturnValue({
+      data: undefined,
+      isError: true,
+    } as unknown as ReturnType<typeof useActiveContactChannels>);
+    renderAt("/terms-and-conditions");
+
+    const section = await contactSection(/Contact Information/);
+    expect(section.getByText("Ways to reach the resort are not listed yet.")).toBeInTheDocument();
   });
 });
 
@@ -132,11 +142,11 @@ describe("Privacy policy Data Protection Officer block", () => {
     expect(section.getByRole("link", { name: "Viber: +63 917 123 4567" })).toBeInTheDocument();
   });
 
-  it("says contact details are not available when no channel is visible", async () => {
+  it("says no way to reach the resort is listed when no channel is visible", async () => {
     givenChannels([]);
     renderAt("/privacy-policy");
 
     const section = await contactSection(/Contact Information/);
-    expect(section.getByText("Contact details are not available yet.")).toBeInTheDocument();
+    expect(section.getByText("Ways to reach the resort are not listed yet.")).toBeInTheDocument();
   });
 });

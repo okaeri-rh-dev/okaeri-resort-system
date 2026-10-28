@@ -128,6 +128,18 @@ describe("useDocumentStore", () => {
       expect(result.current.contactDefaultsApplied).toBe(true);
     });
 
+    it("waits for a mobile or email channel before using up the one fill", () => {
+      const { result } = renderHook(() => useDocumentStore());
+
+      act(() => {
+        result.current.applyContactDefaults(NO_CONTACTS);
+        result.current.applyContactDefaults(CHANNEL_CONTACTS);
+      });
+
+      expect(result.current.letterhead.phone).toBe("+63 917 123 4567");
+      expect(result.current.letterhead.email).toBe("stay@okaeri-resort.example");
+    });
+
     it("fills empty phone and email from contact defaults once", () => {
       const { result } = renderHook(() => useDocumentStore());
 

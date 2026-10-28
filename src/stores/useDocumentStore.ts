@@ -207,7 +207,7 @@ export const useDocumentStore = create<DocumentStore>()(
 
         applyContactDefaults: (contacts) => {
           const { letterhead, contactDefaultsApplied } = get();
-          if (contactDefaultsApplied) return;
+          if (contactDefaultsApplied || (!contacts.phone && !contacts.email)) return;
           set(
             {
               letterhead: {

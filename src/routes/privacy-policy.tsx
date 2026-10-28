@@ -25,7 +25,8 @@ function toPrivacyContactChannels(channels: ContactChannel[]): ContactChannel[] 
 }
 
 function PrivacyPolicyPage() {
-  const { data: contactChannels } = useActiveContactChannels();
+  const { data, isError } = useActiveContactChannels();
+  const contactChannels = isError ? [] : data;
   const privacyContactChannels = contactChannels && toPrivacyContactChannels(contactChannels);
 
   return (
