@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { PolicyContactChannels } from "@/components/contact-channels/PolicyContactChannels";
 import {
   Callout,
   Card,
@@ -9,6 +10,7 @@ import {
   CardTitle,
   Separator,
 } from "@/components/patterns";
+import { useActiveContactChannels } from "@/hooks/useContactChannels";
 import { GuestLayout } from "@/layouts/GuestLayout";
 
 export const Route = createFileRoute("/terms-and-conditions")({
@@ -16,6 +18,8 @@ export const Route = createFileRoute("/terms-and-conditions")({
 });
 
 function TermsAndConditionsPage() {
+  const { data: contactChannels } = useActiveContactChannels();
+
   return (
     <GuestLayout width="form">
       <div>
@@ -375,13 +379,7 @@ function TermsAndConditionsPage() {
                   <p>For questions or concerns regarding these Terms and Conditions:</p>
                   <div className="bg-muted mt-2 rounded-md p-4">
                     <p className="font-semibold">Okaeri Resort</p>
-                    <p className="text-muted-foreground mt-2 text-sm">
-                      Email: info@okaeriresort.com
-                    </p>
-                    <p className="text-muted-foreground text-sm">Phone: [Resort Contact Number]</p>
-                    <p className="text-muted-foreground text-sm">
-                      Business Hours: Monday - Sunday, 8:00 AM - 8:00 PM (Philippine Time)
-                    </p>
+                    <PolicyContactChannels channels={contactChannels} className="mt-2" />
                   </div>
                 </div>
               </section>

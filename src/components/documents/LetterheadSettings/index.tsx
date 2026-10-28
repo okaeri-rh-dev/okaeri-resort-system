@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { toLetterheadContacts } from "@/components/documents/letterhead-contacts";
 import type { LetterheadConfig } from "@/components/documents/types";
 import {
   Button,
@@ -12,6 +13,7 @@ import {
   Input,
   Label,
 } from "@/components/patterns";
+import { useActiveContactChannels } from "@/hooks/useContactChannels";
 import { useDocumentStore } from "@/stores/useDocumentStore";
 
 import { LogoUploader } from "./LogoUploader";
@@ -23,6 +25,7 @@ interface LetterheadSettingsProps {
 
 export function LetterheadSettings({ open, onOpenChange }: LetterheadSettingsProps) {
   const { letterhead, updateLetterhead, resetLetterhead } = useDocumentStore();
+  const { data: contactChannels = [] } = useActiveContactChannels();
 
   // Local state for the form to batch updates on save
   const [local, setLocal] = useState(letterhead);
@@ -39,7 +42,7 @@ export function LetterheadSettings({ open, onOpenChange }: LetterheadSettingsPro
   };
 
   const handleReset = () => {
-    resetLetterhead();
+    resetLetterhead(toLetterheadContacts(contactChannels));
     setLocal(useDocumentStore.getState().letterhead);
   };
 

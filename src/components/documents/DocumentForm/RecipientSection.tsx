@@ -1,6 +1,7 @@
 import type { UseFormReturn } from "react-hook-form";
 
 import { FormField, Input } from "@/components/patterns";
+import { PH_MOBILE_PLACEHOLDER } from "@/lib/contact-channel";
 import type { DocumentFormValues } from "@/lib/validation/document-schemas";
 
 interface RecipientSectionProps {
@@ -27,7 +28,7 @@ export function RecipientSection({ form }: RecipientSectionProps) {
         </FormField>
 
         <FormField control={form.control} name="recipient.phone" label="Phone">
-          {(field) => <Input placeholder="0917 000 0000" {...field} />}
+          {(field) => <Input placeholder={PH_MOBILE_PLACEHOLDER} {...field} />}
         </FormField>
 
         <FormField

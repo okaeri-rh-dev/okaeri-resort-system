@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Download, Eye, FileText, Settings } from "lucide-react";
 
@@ -13,10 +13,12 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/patterns";
+import { useActiveContactChannels } from "@/hooks/useContactChannels";
 import { useDocumentStore } from "@/stores/useDocumentStore";
 
 import { DocumentForm } from "./DocumentForm";
 import { DocumentPreview } from "./DocumentPreview";
+import { toLetterheadContacts } from "./letterhead-contacts";
 import { LetterheadSettings } from "./LetterheadSettings";
 import { useGeneratePDF } from "./pdf/useGeneratePDF";
 import type { GeneratedDocument } from "./types";
@@ -29,7 +31,13 @@ export function DocumentGenerator() {
     setDocumentType,
     generateDocumentNumber,
     setFormData,
+    applyContactDefaults,
   } = useDocumentStore();
+  const { data: contactChannels } = useActiveContactChannels();
+
+  useEffect(() => {
+    if (contactChannels) applyContactDefaults(toLetterheadContacts(contactChannels));
+  }, [contactChannels, applyContactDefaults]);
 
   const { generate } = useGeneratePDF();
 
