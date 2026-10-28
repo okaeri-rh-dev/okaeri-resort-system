@@ -20,7 +20,7 @@ vi.mock("@/components/settings/ContactChannelsTable", () => ({
   ContactChannelsTable: () => null,
 }));
 
-function renderAt(path: string) {
+function renderAt(...entries: string[]) {
   const rootRoute = createRootRoute();
   const routeTree = rootRoute.addChildren([
     SettingsRoute.update({
@@ -29,10 +29,15 @@ function renderAt(path: string) {
       getParentRoute: () => rootRoute,
     } as never),
   ]);
-  const history = createMemoryHistory({ initialEntries: [path] });
+  const history = createMemoryHistory({
+    initialEntries: entries,
+    initialIndex: entries.length - 1,
+  });
   const router = createRouter({ routeTree, history });
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
       <RouterProvider router={router} />
     </QueryClientProvider>
   );
@@ -75,5 +80,18 @@ describe("/admin/settings tab search param", () => {
     await waitFor(() => expect(router.state.location.search).toEqual({}));
 
     expect(history.length).toBe(entriesBefore);
+  });
+
+  it("leaves the settings page on Back after several tab changes", async () => {
+    const user = userEvent.setup();
+    const { router, history } = renderAt("/admin", "/admin/settings");
+
+    await user.click(await screen.findByRole("tab", { name: "Expense Categories" }));
+    await user.click(screen.getByRole("tab", { name: "Contact Channels" }));
+    await waitFor(() => expect(router.state.location.search).toEqual({ tab: "contact-channels" }));
+
+    history.back();
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/admin"));
   });
 });
