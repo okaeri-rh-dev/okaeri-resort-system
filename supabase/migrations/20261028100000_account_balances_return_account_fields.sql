@@ -83,6 +83,6 @@ BEGIN
 END;
 $function$;
 
-COMMENT ON FUNCTION public.get_all_account_balances IS 'Running balances for all accounts (active and inactive) as of a specific date';
+COMMENT ON FUNCTION public.get_all_account_balances(timestamp with time zone) IS 'Running balances for all accounts (active and inactive) as of a specific date';
 
 GRANT EXECUTE ON FUNCTION public.get_all_account_balances(timestamp with time zone) TO anon, authenticated, service_role;

@@ -143,6 +143,11 @@ const accountDetailQuery = (accountId: string) =>
 
 // Fetch single account
 
+const ACCOUNT_TYPES: readonly AccountType[] = ["Bank", "E-Wallet", "Cash"];
+
+const isAccountType = (value: string): value is AccountType =>
+  ACCOUNT_TYPES.some((accountType) => accountType === value);
+
 const accountBalancesQuery = (asOfDate?: Date) =>
   queryOptions({
     queryKey: accountKeys.balancesAsOf(asOfDate?.toISOString()),
@@ -152,8 +157,12 @@ const accountBalancesQuery = (asOfDate?: Date) =>
       });
 
       if (error) throw new Error(handleSupabaseError(error));
-      // accounts_account_type_check limits account_type to the AccountType values
-      return (data ?? []).map((row) => ({ ...row, account_type: row.account_type as AccountType }));
+      return (data ?? []).map((row) => {
+        if (!isAccountType(row.account_type)) {
+          throw new Error(`Unknown account type: ${row.account_type}`);
+        }
+        return { ...row, account_type: row.account_type };
+      });
     },
     staleTime: 30000, // 30 seconds - balances can change frequently
     refetchOnWindowFocus: true,
