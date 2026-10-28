@@ -53,9 +53,15 @@ const ContactChannelForm = lazy(() =>
   }))
 );
 
-const DEFAULT_TAB = "payment-methods";
+const settingsTabSchema = z.enum(["payment-methods", "expense-categories", "contact-channels"]);
+const SETTINGS_TAB = settingsTabSchema.enum;
+const DEFAULT_TAB = SETTINGS_TAB["payment-methods"];
 
-const settingsTabSchema = z.enum([DEFAULT_TAB, "expense-categories", "contact-channels"]);
+const SETTINGS_TAB_LABELS: Record<z.infer<typeof settingsTabSchema>, string> = {
+  "payment-methods": "Payment Methods",
+  "expense-categories": "Expense Categories",
+  "contact-channels": "Contact Channels",
+};
 
 const settingsSearchSchema = z.object({
   tab: settingsTabSchema.optional().catch(undefined),
@@ -140,12 +146,14 @@ function SettingsPage() {
         {/* Tabbed Settings */}
         <Tabs value={tab} onValueChange={handleTabChange}>
           <TabsList>
-            <TabsTrigger value="payment-methods">Payment Methods</TabsTrigger>
-            <TabsTrigger value="expense-categories">Expense Categories</TabsTrigger>
-            <TabsTrigger value="contact-channels">Contact Channels</TabsTrigger>
+            {settingsTabSchema.options.map((value) => (
+              <TabsTrigger key={value} value={value}>
+                {SETTINGS_TAB_LABELS[value]}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
-          <TabsContent value="payment-methods" className="space-y-4">
+          <TabsContent value={SETTINGS_TAB["payment-methods"]} className="space-y-4">
             {/* Section Header with Add Button */}
             <div className="medium:flex-row medium:items-center medium:justify-between flex flex-col gap-4">
               <div>
@@ -168,7 +176,7 @@ function SettingsPage() {
             </ErrorBoundary>
           </TabsContent>
 
-          <TabsContent value="expense-categories" className="space-y-4">
+          <TabsContent value={SETTINGS_TAB["expense-categories"]} className="space-y-4">
             {/* Section Header with Add Button */}
             <div className="medium:flex-row medium:items-center medium:justify-between flex flex-col gap-4">
               <div>
@@ -191,7 +199,7 @@ function SettingsPage() {
             </ErrorBoundary>
           </TabsContent>
 
-          <TabsContent value="contact-channels" className="space-y-4">
+          <TabsContent value={SETTINGS_TAB["contact-channels"]} className="space-y-4">
             <div className="medium:flex-row medium:items-center medium:justify-between flex flex-col gap-4">
               <div>
                 <h2 className="text-xl font-semibold">Contact Channels</h2>
