@@ -84,3 +84,21 @@ test.describe("PWA install banner", () => {
     await expect(page.getByRole("region", { name: /install okaeri/i })).toBeVisible();
   });
 });
+
+test.describe("PWA install banner without an install prompt", () => {
+  test.skip(
+    ({ userAgent }) => /iPhone|iPad/.test(userAgent ?? ""),
+    "iOS Safari offers Add to Home Screen without an install prompt"
+  );
+
+  test("account menu has no Install app item after dismissal", async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("pwa-install-dismissed-permanently", "true");
+    });
+    await loginAsAdmin(page);
+
+    await page.getByRole("button", { name: "Account menu" }).click();
+    await expect(page.getByRole("menuitem", { name: "Sign Out" })).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: /install app/i })).toHaveCount(0);
+  });
+});
