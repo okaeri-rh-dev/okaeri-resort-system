@@ -24,10 +24,13 @@ export class BookingsTablePage {
 
   // Table elements
   readonly table: Locator;
+  readonly bookingCards: Locator;
   readonly bookingList: Locator;
   readonly tableRows: Locator;
   readonly tableBodyRows: Locator;
   readonly tableHeaders: Locator;
+  readonly noBookingsState: Locator;
+  readonly noMatchesState: Locator;
   readonly emptyState: Locator;
   readonly loadingState: Locator;
 
@@ -60,12 +63,14 @@ export class BookingsTablePage {
 
     // Table elements
     this.table = page.getByRole("table");
-    this.bookingList = this.table.or(page.getByRole("button", { name: /^View booking / }));
+    this.bookingCards = page.getByRole("button", { name: /^View booking / });
+    this.bookingList = this.table.or(this.bookingCards);
     this.tableRows = page.getByRole("row");
     this.tableBodyRows = page.locator("table tbody tr");
     this.tableHeaders = page.getByRole("columnheader");
-    // TableEmptyState component shows "No bookings found"
-    this.emptyState = page.getByText("No bookings found");
+    this.noBookingsState = page.getByText("No bookings yet");
+    this.noMatchesState = page.getByText("No bookings found");
+    this.emptyState = this.noBookingsState.or(this.noMatchesState);
     this.loadingState = page.locator(".animate-pulse, .animate-spin");
 
     // Action buttons
