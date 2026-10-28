@@ -32,7 +32,7 @@ import { AuditRole, clearRoleCache } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
 import { hasRoleLevel } from "@/lib/route-guards";
 import { supabase } from "@/lib/supabase";
-import { useInstallPromptStore } from "@/stores/useInstallPromptStore";
+import { useCanShowInstallBanner, useInstallPromptStore } from "@/stores/useInstallPromptStore";
 import { useUIStore } from "@/stores/useUIStore";
 
 interface AdminDestination extends ShellDestination {
@@ -154,8 +154,10 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   const installDismissalState = useInstallPromptStore((s) => s.dismissalState);
   const resetInstallPrompt = useInstallPromptStore((s) => s.reset);
+  const canShowInstallBanner = useCanShowInstallBanner();
   const showInstallEscape =
-    installDismissalState === "permanent" || installDismissalState === "snoozed";
+    canShowInstallBanner &&
+    (installDismissalState === "permanent" || installDismissalState === "snoozed");
 
   const checkPermissions = useEffectEvent(async () => {
     try {

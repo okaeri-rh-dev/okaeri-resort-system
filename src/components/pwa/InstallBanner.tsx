@@ -1,16 +1,7 @@
 import { Download, X } from "lucide-react";
 
 import { Button } from "@/components/patterns";
-import { useInstallPromptStore } from "@/stores/useInstallPromptStore";
-
-function isIosSafari(): boolean {
-  if (typeof window === "undefined") return false;
-  const ua = window.navigator.userAgent;
-  const iOS = /iPad|iPhone|iPod/.test(ua);
-  const webkit = /WebKit/.test(ua);
-  const notChrome = !/CriOS|FxiOS|EdgiOS/.test(ua);
-  return iOS && webkit && notChrome;
-}
+import { useCanShowInstallBanner, useInstallPromptStore } from "@/stores/useInstallPromptStore";
 
 export function InstallBanner() {
   const installPromptEvent = useInstallPromptStore((s) => s.installPromptEvent);
@@ -18,13 +9,12 @@ export function InstallBanner() {
   const triggerInstall = useInstallPromptStore((s) => s.triggerInstall);
   const snoozeForDays = useInstallPromptStore((s) => s.snoozeForDays);
   const dismissPermanently = useInstallPromptStore((s) => s.dismissPermanently);
+  const canShowInstallBanner = useCanShowInstallBanner();
 
-  if (dismissalState !== "visible") return null;
+  if (dismissalState !== "visible" || !canShowInstallBanner) return null;
 
   const hasNativePrompt = installPromptEvent !== null;
-  const ios = !hasNativePrompt && isIosSafari();
-
-  if (!hasNativePrompt && !ios) return null;
+  const ios = !hasNativePrompt;
 
   return (
     <div
