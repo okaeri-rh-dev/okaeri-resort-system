@@ -29,7 +29,6 @@ interface PaymentMethodInsert {
   qr_code_url?: string | null;
   qr_code_storage_path?: string | null;
   icon_name?: string | null;
-  icon_color?: string | null;
   display_order?: number | null;
   instructions?: string | null;
   is_active?: boolean | null;

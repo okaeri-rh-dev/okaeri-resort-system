@@ -136,7 +136,7 @@ function CompactPaymentMethods({ methods }: { methods: PaymentMethodConfig[] }) 
 function MethodIcon({ method, size = "sm" }: { method: PaymentMethodConfig; size?: "sm" | "md" }) {
   const Icon = getIcon(method.icon_name);
   const sizeClass = size === "sm" ? "h-4 w-4" : "h-5 w-5";
-  return <Icon className={`${sizeClass} ${method.icon_color}`} />;
+  return <Icon className={sizeClass} aria-hidden="true" />;
 }
 
 /** Renders account details (name, number, bank) */

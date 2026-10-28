@@ -159,7 +159,6 @@ export interface PaymentMethodConfig {
   qr_code_url: string | null;
   qr_code_storage_path: string | null;
   icon_name: string;
-  icon_color: string;
   display_order: number;
   instructions: string | null;
   is_active: boolean;

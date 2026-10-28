@@ -5,9 +5,9 @@
  */
 
 import { expect, test } from "@playwright/test";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { loginAsAdmin } from "./fixtures/auth";
+import { serviceClient } from "./fixtures/service-client";
 
 /** Set before the confirm click; still true after it only if the app navigated in place. */
 type MarkedWindow = Window & { sameDocument?: boolean };
@@ -18,18 +18,8 @@ const PNG_1X1 = Buffer.from(
   "base64"
 );
 
-function admin(): SupabaseClient {
-  return createClient(
-    process.env.VITE_SUPABASE_URL || "http://127.0.0.1:54321",
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.TEST_SUPABASE_SERVICE_ROLE_KEY ||
-      "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz",
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
-
 test.describe("Online booking: verify then assign", () => {
-  const db = admin();
+  const db = serviceClient();
   const reference = `E2E-OB-${Date.now().toString(36).toUpperCase()}`;
   const proofPath = `TEMP-${reference}.png`;
   let bookingId = "";

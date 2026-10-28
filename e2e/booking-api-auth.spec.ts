@@ -14,13 +14,11 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
+import { serviceClient } from "./fixtures/service-client";
+
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || "http://127.0.0.1:54321";
 const ANON_KEY =
   process.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
-const SERVICE_ROLE_KEY =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.TEST_SUPABASE_SERVICE_ROLE_KEY ||
-  "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz";
 
 const ROUTE = "/api/bookings/multi-unit";
 const STAFF = { email: "staff@okaeri.test", password: "test-password" };
@@ -28,9 +26,7 @@ const NO_ROLE = { email: "booking-api-no-role@e2e.local", password: "no-role-pas
 const UNIT_C1 = "b88857ce-bbc1-474b-ac02-86e8a416c22e";
 const GUEST_EMAIL = `booking-api-${Date.now()}@e2e.local`;
 
-const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+const admin = serviceClient();
 
 async function accessToken(email: string, password: string): Promise<string> {
   const client = createClient(SUPABASE_URL, ANON_KEY, {
