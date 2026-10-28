@@ -64,7 +64,7 @@ describe("payment_methods", () => {
     await roles.cleanup();
   });
 
-  it("admin creates and edits a method without an icon colour", async () => {
+  it("admin creates and edits a method with the form payload", async () => {
     if (!shouldRun) return;
     const client = roles.byRole.admin;
 
