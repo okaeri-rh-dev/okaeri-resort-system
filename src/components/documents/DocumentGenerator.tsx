@@ -164,7 +164,8 @@ export function DocumentGenerator() {
       </div>
 
       {/* ========== Mobile Layout (<840px): Form + Preview Sheet ========== */}
-      <div className="expanded:hidden flex-1 overflow-y-auto pb-20">
+      {/* Clears the action bar below, safe area included; the shell pads for the admin bottom bar */}
+      <div className="expanded:hidden flex-1 overflow-y-auto pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]">
         <DocumentForm />
       </div>
 
