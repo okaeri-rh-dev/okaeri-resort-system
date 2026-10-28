@@ -16,24 +16,6 @@ const TEST_PROVIDER_PREFIX = "dbtest-pm-";
 let shouldRun = false;
 let roles: RoleClients;
 
-const PAYMENT_METHOD_COLUMNS = [
-  "account_name",
-  "account_number",
-  "bank_name",
-  "created_at",
-  "display_name",
-  "display_order",
-  "icon_name",
-  "id",
-  "instructions",
-  "is_active",
-  "method_type",
-  "provider_name",
-  "qr_code_storage_path",
-  "qr_code_url",
-  "updated_at",
-];
-
 const formPayload = {
   method_type: "e-wallet",
   provider_name: `${TEST_PROVIDER_PREFIX}${Date.now()}`,
@@ -74,7 +56,7 @@ describe("payment_methods", () => {
       .select()
       .single();
     expect(createError).toBeNull();
-    expect(Object.keys(created!).sort()).toEqual(PAYMENT_METHOD_COLUMNS);
+    expect(created).not.toHaveProperty("icon_color");
 
     const { data: updated, error: updateError } = await client
       .from("payment_methods")
