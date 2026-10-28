@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from "react";
 
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
+import { z } from "zod";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
@@ -52,10 +53,25 @@ const ContactChannelForm = lazy(() =>
   }))
 );
 
+const settingsTabSchema = z.enum(["payment-methods", "expense-categories", "contact-channels"]);
+const SETTINGS_TAB = settingsTabSchema.enum;
+const DEFAULT_TAB = SETTINGS_TAB["payment-methods"];
+
+const SETTINGS_TAB_LABELS: Record<z.infer<typeof settingsTabSchema>, string> = {
+  "payment-methods": "Payment Methods",
+  "expense-categories": "Expense Categories",
+  "contact-channels": "Contact Channels",
+};
+
+const settingsSearchSchema = z.object({
+  tab: settingsTabSchema.optional().catch(undefined),
+});
+
 export const Route = createFileRoute("/admin/settings")({
   beforeLoad: async () => {
     await requireManager();
   },
+  validateSearch: settingsSearchSchema,
   component: SettingsPage,
 });
 
@@ -66,6 +82,17 @@ const LoadingSpinner = () => (
 );
 
 function SettingsPage() {
+  const { tab = DEFAULT_TAB } = Route.useSearch();
+  const navigate = Route.useNavigate();
+
+  const handleTabChange = (value: string) => {
+    const nextTab = settingsTabSchema.parse(value);
+    void navigate({
+      search: { tab: nextTab === DEFAULT_TAB ? undefined : nextTab },
+      replace: true,
+    });
+  };
+
   // Payment Methods state
   const [showForm, setShowForm] = useState(false);
   const [editingMethod, setEditingMethod] = useState<PaymentMethodConfig | null>(null);
@@ -117,14 +144,16 @@ function SettingsPage() {
         </div>
 
         {/* Tabbed Settings */}
-        <Tabs defaultValue="payment-methods">
+        <Tabs value={tab} onValueChange={handleTabChange}>
           <TabsList>
-            <TabsTrigger value="payment-methods">Payment Methods</TabsTrigger>
-            <TabsTrigger value="expense-categories">Expense Categories</TabsTrigger>
-            <TabsTrigger value="contact-channels">Contact Channels</TabsTrigger>
+            {settingsTabSchema.options.map((value) => (
+              <TabsTrigger key={value} value={value}>
+                {SETTINGS_TAB_LABELS[value]}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
-          <TabsContent value="payment-methods" className="space-y-4">
+          <TabsContent value={SETTINGS_TAB["payment-methods"]} className="space-y-4">
             {/* Section Header with Add Button */}
             <div className="medium:flex-row medium:items-center medium:justify-between flex flex-col gap-4">
               <div>
@@ -147,7 +176,7 @@ function SettingsPage() {
             </ErrorBoundary>
           </TabsContent>
 
-          <TabsContent value="expense-categories" className="space-y-4">
+          <TabsContent value={SETTINGS_TAB["expense-categories"]} className="space-y-4">
             {/* Section Header with Add Button */}
             <div className="medium:flex-row medium:items-center medium:justify-between flex flex-col gap-4">
               <div>
@@ -170,7 +199,7 @@ function SettingsPage() {
             </ErrorBoundary>
           </TabsContent>
 
-          <TabsContent value="contact-channels" className="space-y-4">
+          <TabsContent value={SETTINGS_TAB["contact-channels"]} className="space-y-4">
             <div className="medium:flex-row medium:items-center medium:justify-between flex flex-col gap-4">
               <div>
                 <h2 className="text-xl font-semibold">Contact Channels</h2>
