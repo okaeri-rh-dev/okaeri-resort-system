@@ -146,7 +146,7 @@ These checks can't be automated; check each one in the diff. Source for the rest
 5. Long user content (guest names, notes, references) wraps or truncates: `min-w-0`, `truncate`, `break-words`.
 6. Filters, tabs, pagination and open panels live in the URL (route `validateSearch`).
 7. Destructive actions confirm through `AlertDialog` or offer undo. Booking and payment state updates after the server confirms, never optimistically.
-8. Submit stays enabled until submission starts, then shows a spinner and keeps its label while in flight.
+8. Submit stays enabled until submission starts, then shows a spinner and keeps its label while in flight. The exception is a refusal the form already shows, such as bookings on the nights of a block: submit stays disabled and the form says why.
 9. Errors sit next to their field, and submit focuses the first one.
 10. Inputs set the right `type`, `inputMode` and `autoComplete`. Emails, codes and booking references turn `spellCheck` off.
 11. Long or multi-step forms warn about unsaved changes (`useBlocker`).

@@ -38,6 +38,7 @@ import {
   useDeleteBlock,
   useUpdateBlock,
   type Block,
+  type NewBlockInput,
 } from "@/hooks/useBlocks";
 import {
   blockFormMode,
@@ -54,6 +55,10 @@ import { BlockConflictList, CancelAndSaveDialog } from "./BlockConflicts";
 import { WholeResortBadge } from "./BlockList";
 
 type Unit = Pick<Tables<"units">, "unit_id" | "unit_name">;
+
+type SavedBlock =
+  | { create: NewBlockInput }
+  | { blockId: string; changes: Partial<Pick<Block, "start_date" | "end_date" | "reason">> };
 
 /** What the sheet opens on: an existing block, or a new one for cabins or the whole resort. */
 export type BlockFormTarget = { block: Block } | { wholeResort: boolean };
@@ -187,31 +192,32 @@ function BlockFormBody({
   const isBeforeFirstNight = (date: Date) =>
     isBeforeToday(date) || (firstNight !== undefined && date < firstNight);
 
+  // A new block, or only the fields this mode may change
+  const savedBlock = ({
+    wholeResort,
+    unitIds,
+    firstNight,
+    lastNight,
+    reason,
+  }: BlockFormValues): SavedBlock | null => {
+    if (!firstNight || !lastNight) return null;
+    const nights = { start_date: toNight(firstNight), end_date: toNight(lastNight) };
+    if (!block) return { create: { unitIds: wholeResort ? null : unitIds, ...nights, reason } };
+    const changes =
+      mode === "last-night-only" ? { end_date: nights.end_date } : { ...nights, reason };
+    return { blockId: block.blackout_id, changes };
+  };
+
   const onSubmit = async (values: BlockFormValues) => {
-    if (!values.firstNight || !values.lastNight) return;
-    const nights = {
-      start_date: toNight(values.firstNight),
-      end_date: toNight(values.lastNight),
-    };
+    const saved = savedBlock(values);
+    if (!saved) return;
     setRefusal(null);
     setConflictsChanged(false);
     try {
-      if (!block) {
-        await createBlocks.mutateAsync({
-          unitIds: values.wholeResort ? null : values.unitIds,
-          ...nights,
-          reason: values.reason,
-        });
-      } else if (mode === "last-night-only") {
-        await updateBlock.mutateAsync({
-          id: block.blackout_id,
-          changes: { end_date: nights.end_date },
-        });
+      if ("create" in saved) {
+        await createBlocks.mutateAsync(saved.create);
       } else {
-        await updateBlock.mutateAsync({
-          id: block.blackout_id,
-          changes: { ...nights, reason: values.reason },
-        });
+        await updateBlock.mutateAsync({ id: saved.blockId, changes: saved.changes });
       }
       onClose();
     } catch (error) {
@@ -220,22 +226,13 @@ function BlockFormBody({
   };
 
   const onCancelAndSave = async () => {
-    const values = form.getValues();
-    if (!conflictNights || !values.firstNight || !values.lastNight) return;
-    const nights = {
-      start_date: toNight(values.firstNight),
-      end_date: toNight(values.lastNight),
-    };
-    const blockToSave = !block
-      ? { unitIds: values.wholeResort ? null : values.unitIds, ...nights, reason: values.reason }
-      : mode === "last-night-only"
-        ? { blackoutId: block.blackout_id, end_date: nights.end_date }
-        : { blackoutId: block.blackout_id, ...nights, reason: values.reason };
+    const saved = savedBlock(form.getValues());
+    if (!saved || !conflictNights) return;
     setRefusal(null);
     setConflictsChanged(false);
     try {
       const result = await cancelAndSave.mutateAsync({
-        block: blockToSave,
+        block: "create" in saved ? saved.create : { blackoutId: saved.blockId, ...saved.changes },
         seenConflictIds: conflicts.map((conflict) => conflict.booking_id),
         nights: conflictNights,
       });
@@ -434,7 +431,7 @@ function BlockFormBody({
               </Button>
             )}
             <Button type="button" variant="outline" onClick={onClose} disabled={isBusy}>
-              Cancel
+              Close
             </Button>
             <Button type="submit" disabled={isBusy || conflicts.length > 0}>
               {isSaving && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
