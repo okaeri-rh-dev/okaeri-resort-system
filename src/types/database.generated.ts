@@ -929,7 +929,6 @@ export type Database = {
           created_at: string | null;
           display_name: string;
           display_order: number | null;
-          icon_color: string | null;
           icon_name: string | null;
           id: string;
           instructions: string | null;
@@ -947,7 +946,6 @@ export type Database = {
           created_at?: string | null;
           display_name: string;
           display_order?: number | null;
-          icon_color?: string | null;
           icon_name?: string | null;
           id?: string;
           instructions?: string | null;
@@ -965,7 +963,6 @@ export type Database = {
           created_at?: string | null;
           display_name?: string;
           display_order?: number | null;
-          icon_color?: string | null;
           icon_name?: string | null;
           id?: string;
           instructions?: string | null;

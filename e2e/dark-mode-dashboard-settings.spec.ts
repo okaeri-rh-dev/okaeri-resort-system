@@ -169,7 +169,7 @@ test.describe("Dashboard and settings read in light and dark", () => {
         await page.getByRole("button", { name: "Add Payment Method" }).click();
         const dialog = page.getByRole("dialog");
         await expect(dialog.getByLabel("Method Type *")).toBeVisible();
-        await expect(dialog.getByLabel("Icon Color")).toBeVisible();
+        await expect(dialog.getByLabel("Icon", { exact: true })).toBeVisible();
         await expectReadable(page, '[role="dialog"]');
       });
 

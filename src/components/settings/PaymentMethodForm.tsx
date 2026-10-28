@@ -42,15 +42,6 @@ const ICON_OPTIONS = [
   { value: "Banknote", label: "Cash/Banknote" },
 ];
 
-const ICON_COLORS = [
-  { value: "text-blue-600", label: "Blue" },
-  { value: "text-blue-800", label: "Dark Blue" },
-  { value: "text-green-600", label: "Green" },
-  { value: "text-purple-600", label: "Purple" },
-  { value: "text-amber-600", label: "Amber" },
-  { value: "text-gray-600", label: "Gray" },
-];
-
 const paymentMethodSchema = z.object({
   method_type: z.enum(["e-wallet", "bank-transfer", "cash", "other"], {
     error: typeError("Please select a method type"),
@@ -61,7 +52,6 @@ const paymentMethodSchema = z.object({
   account_number: z.string().max(100, "Account number too long").optional().or(z.literal("")),
   bank_name: z.string().max(100, "Bank name too long").optional().or(z.literal("")),
   icon_name: z.string().min(1, "Icon is required"),
-  icon_color: z.string().min(1, "Icon color is required"),
   display_order: z.number().int().min(0).max(999),
   instructions: z.string().max(500, "Instructions too long").optional().or(z.literal("")),
   is_active: z.boolean(),
@@ -97,7 +87,6 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
       account_number: method?.account_number || "",
       bank_name: method?.bank_name || "",
       icon_name: method?.icon_name || "CreditCard",
-      icon_color: method?.icon_color || "text-gray-600",
       display_order: method?.display_order ?? 0,
       instructions: method?.instructions || "",
       is_active: method?.is_active ?? true,
@@ -109,7 +98,7 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
   const onSubmit = async (data: PaymentMethodFormData) => {
     // Sanitize text fields
     const sanitizedData = sanitizeFormData(data, {
-      skipFields: ["method_type", "display_order", "is_active", "icon_name", "icon_color"],
+      skipFields: ["method_type", "display_order", "is_active", "icon_name"],
     });
 
     const payload = {
@@ -120,7 +109,6 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
       account_number: sanitizedData.account_number?.trim() || null,
       bank_name: sanitizedData.bank_name?.trim() || null,
       icon_name: sanitizedData.icon_name,
-      icon_color: sanitizedData.icon_color,
       display_order: sanitizedData.display_order,
       instructions: sanitizedData.instructions?.trim() || null,
       is_active: sanitizedData.is_active,
@@ -216,23 +204,11 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
           </FormField>
         )}
 
-        <div className="grid grid-cols-1 gap-6 @lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
           <FormField control={form.control} name="icon_name" label="Icon">
             {({ value, onChange, ...field }) => (
               <SelectControl {...field} value={value} onValueChange={onChange}>
                 {ICON_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectControl>
-            )}
-          </FormField>
-
-          <FormField control={form.control} name="icon_color" label="Icon Color">
-            {({ value, onChange, ...field }) => (
-              <SelectControl {...field} value={value} onValueChange={onChange}>
-                {ICON_COLORS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
                   </SelectItem>
