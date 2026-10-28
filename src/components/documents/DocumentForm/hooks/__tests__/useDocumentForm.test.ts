@@ -21,7 +21,9 @@ describe("useDocumentForm store sync", () => {
     const { result, unmount } = renderHook(() => useDocumentForm());
 
     act(() => result.current.form.setValue("recipient.name", "Maria Santos"));
-    act(() => vi.advanceTimersByTime(FORM_SYNC_DEBOUNCE_MS - 1));
+    act(() => {
+      vi.advanceTimersByTime(FORM_SYNC_DEBOUNCE_MS - 1);
+    });
     expect(useDocumentStore.getState().formData.recipient.name).toBe("");
 
     unmount();
@@ -36,11 +38,15 @@ describe("useDocumentForm store sync", () => {
 
     for (const name of ["M", "Ma", "Mar", "Mari", "Maria"]) {
       act(() => result.current.form.setValue("recipient.name", name));
-      act(() => vi.advanceTimersByTime(FORM_SYNC_DEBOUNCE_MS / 3));
+      act(() => {
+        vi.advanceTimersByTime(FORM_SYNC_DEBOUNCE_MS / 3);
+      });
     }
     expect(storeWrites).not.toHaveBeenCalled();
 
-    act(() => vi.advanceTimersByTime(FORM_SYNC_DEBOUNCE_MS));
+    act(() => {
+      vi.advanceTimersByTime(FORM_SYNC_DEBOUNCE_MS);
+    });
 
     expect(storeWrites).toHaveBeenCalledTimes(1);
     expect(useDocumentStore.getState().formData.recipient.name).toBe("Maria");
