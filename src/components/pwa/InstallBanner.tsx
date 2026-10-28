@@ -14,7 +14,7 @@ export function InstallBanner() {
   if (dismissalState !== "visible" || !canShowInstallBanner) return null;
 
   const hasNativePrompt = installPromptEvent !== null;
-  const ios = !hasNativePrompt;
+  const showIosSteps = !hasNativePrompt;
 
   return (
     <div
@@ -25,7 +25,7 @@ export function InstallBanner() {
       <Download className="text-primary h-5 w-5 flex-shrink-0" aria-hidden="true" />
       <div className="flex-1 text-sm">
         <p className="font-medium">Install Okaeri for quick access</p>
-        {ios ? (
+        {showIosSteps ? (
           <p className="text-muted-foreground medium:text-sm text-xs">
             Tap the <span aria-label="Share">Share</span> button in Safari, then choose "Add to Home
             Screen".

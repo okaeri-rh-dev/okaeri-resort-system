@@ -86,6 +86,11 @@ test.describe("PWA install banner", () => {
 });
 
 test.describe("PWA install banner without an install prompt", () => {
+  test.skip(
+    ({ userAgent }) => /iPhone|iPad/.test(userAgent ?? ""),
+    "iOS Safari offers Add to Home Screen without an install prompt"
+  );
+
   test("account menu has no Install app item after dismissal", async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem("pwa-install-dismissed-permanently", "true");

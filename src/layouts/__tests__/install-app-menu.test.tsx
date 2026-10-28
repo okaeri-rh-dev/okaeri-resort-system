@@ -4,7 +4,7 @@ import {
   createRouter,
   RouterProvider,
 } from "@tanstack/react-router";
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -79,12 +79,27 @@ async function openAccountMenu() {
 }
 
 describe("Install app account menu item", () => {
-  it("is hidden after dismissal when the browser has no install prompt and is not iOS Safari", async () => {
-    useInstallPromptStore.getState().dismissPermanently();
+  it.each([
+    ["Maybe later", () => useInstallPromptStore.getState().snoozeForDays(7)],
+    ["Don't show again", () => useInstallPromptStore.getState().dismissPermanently()],
+  ])(
+    "is hidden after %s when the browser has no install prompt and is not iOS Safari",
+    async (_choice, dismiss) => {
+      dismiss();
 
+      await openAccountMenu();
+
+      expect(screen.queryByRole("menuitem", { name: "Install app" })).not.toBeInTheDocument();
+    }
+  );
+
+  it("appears when the install prompt arrives after the menu has rendered", async () => {
+    useInstallPromptStore.getState().dismissPermanently();
     await openAccountMenu();
 
-    expect(screen.queryByRole("menuitem", { name: "Install app" })).not.toBeInTheDocument();
+    act(() => useInstallPromptStore.getState().captureEvent(makePromptEvent()));
+
+    expect(await screen.findByRole("menuitem", { name: "Install app" })).toBeInTheDocument();
   });
 
   it("brings back the banner with an Install button when an install prompt was captured", async () => {
