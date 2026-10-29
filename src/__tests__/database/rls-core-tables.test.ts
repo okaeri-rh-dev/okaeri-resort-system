@@ -51,7 +51,12 @@ const MATRIX: Record<string, Record<"select" | "insert" | "update" | "delete", R
     delete: MANAGER_PLUS,
   },
   units: { select: STAFF_PLUS, insert: OWNER_PLUS, update: OWNER_PLUS, delete: OWNER_PLUS },
-  expenses: { select: OWNER_PLUS, insert: OWNER_PLUS, update: OWNER_PLUS, delete: OWNER_PLUS },
+  expenses: {
+    select: MANAGER_PLUS,
+    insert: MANAGER_PLUS,
+    update: MANAGER_PLUS,
+    delete: OWNER_PLUS,
+  },
   maintenance_logs: {
     select: STAFF_PLUS,
     insert: STAFF_PLUS,
