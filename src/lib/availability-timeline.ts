@@ -16,6 +16,10 @@ export type TimelineCell<Stay, Block> =
 const stayHasNight = (stay: TimelineStay, night: string) =>
   manilaDayOf(stay.check_in) <= night && night < manilaDayOf(stay.check_out);
 
+/** A block covers its first through its last night. */
+const blockHasNight = (block: TimelineBlock, night: string) =>
+  block.start_date <= night && night <= block.end_date;
+
 /**
  * What a timeline row shows on one night. `unitId` null is the Whole resort row, which shows
  * resort closures only. A block shows over a booking, though the guards keep a night from being both.
@@ -28,8 +32,7 @@ export function timelineCell<Stay extends TimelineStay, Block extends TimelineBl
   const block = blocks.find(
     (candidate) =>
       (candidate.unit_id === null || candidate.unit_id === unitId) &&
-      candidate.start_date <= night &&
-      night <= candidate.end_date
+      blockHasNight(candidate, night)
   );
   if (block) return { kind: "blocked", block };
   if (unitId === null) return { kind: "free" };
@@ -40,24 +43,44 @@ export function timelineCell<Stay extends TimelineStay, Block extends TimelineBl
   return stay ? { kind: "booked", stay } : { kind: "free" };
 }
 
-/** Who a night's blocks shut out: "Whole resort", or the blocked cabins in name order. */
+export interface BlockedNightLabel {
+  /** "Whole resort", or the blocked cabins in name order */
+  label: string;
+  /** For a narrow cell: "2 cabins" in place of the names */
+  shortLabel: string;
+}
+
+/** Who a night's blocks shut out, or null when the night is not blocked. */
 export function blockedNightLabel(
   blocks: TimelineBlock[],
   night: string,
   cabinName: (unitId: string) => string
-): string | null {
-  const blocksOnNight = blocks.filter(
-    (block) => block.start_date <= night && night <= block.end_date
-  );
+): BlockedNightLabel | null {
+  const blocksOnNight = blocks.filter((block) => blockHasNight(block, night));
   if (blocksOnNight.length === 0) return null;
-  if (blocksOnNight.some((block) => block.unit_id === null)) return "Whole resort";
+  if (blocksOnNight.some((block) => block.unit_id === null)) {
+    return { label: "Whole resort", shortLabel: "Whole resort" };
+  }
 
-  const cabinNames = new Set(
-    blocksOnNight.flatMap((block) => (block.unit_id ? [cabinName(block.unit_id)] : []))
-  );
-  return [...cabinNames]
-    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
-    .join(", ");
+  const cabinNames = [
+    ...new Set(blocksOnNight.flatMap((block) => (block.unit_id ? [cabinName(block.unit_id)] : []))),
+  ].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const label = cabinNames.join(", ");
+  return { label, shortLabel: cabinNames.length > 1 ? `${cabinNames.length} cabins` : label };
+}
+
+/** The blocked label of each night from `firstNight` through `lastNight`, keyed by night. */
+export function blockedNightLabels(
+  blocks: TimelineBlock[],
+  { firstNight, lastNight }: { firstNight: string; lastNight: string },
+  cabinName: (unitId: string) => string
+): Record<string, BlockedNightLabel> {
+  const labels: Record<string, BlockedNightLabel> = {};
+  for (const night of nightsFrom(firstNight, lastNight)) {
+    const label = blockedNightLabel(blocks, night, cabinName);
+    if (label) labels[night] = label;
+  }
+  return labels;
 }
 
 /** A night picked on the timeline. `unitId` null is the Whole resort row. */

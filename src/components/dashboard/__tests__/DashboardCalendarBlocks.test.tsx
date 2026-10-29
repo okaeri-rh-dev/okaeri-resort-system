@@ -14,6 +14,20 @@ const blocks = vi.hoisted(() => [
     reason: "Aircon cleaning",
   },
   {
+    blackout_id: "b3",
+    unit_id: "unit-2",
+    start_date: "2026-11-10",
+    end_date: "2026-11-10",
+    reason: "Painting",
+  },
+  {
+    blackout_id: "b4",
+    unit_id: "unit-1",
+    start_date: "2026-11-10",
+    end_date: "2026-11-10",
+    reason: "Painting",
+  },
+  {
     blackout_id: "b2",
     unit_id: null,
     start_date: "2026-11-20",
@@ -26,7 +40,13 @@ vi.mock("@/lib/supabase", () => ({
   db: {
     blackouts: { inDateRange: async () => ({ data: blocks, error: null }) },
     units: {
-      all: async () => ({ data: [{ unit_id: "unit-1", unit_name: "Cabin 1" }], error: null }),
+      all: async () => ({
+        data: [
+          { unit_id: "unit-1", unit_name: "Cabin 1" },
+          { unit_id: "unit-2", unit_name: "Cabin 2" },
+        ],
+        error: null,
+      }),
     },
   },
   handleSupabaseError: (error: unknown) => String(error),
@@ -69,6 +89,17 @@ describe("DashboardCalendar blocked days", () => {
       name: "November 20, 2026, blocked: Whole resort",
     });
     expect(within(dayButton).getByText("Whole resort")).toBeVisible();
+  });
+
+  it("names every blocked cabin, and counts them for a narrow cell", async () => {
+    renderCalendar();
+
+    const dayButton = await screen.findByRole("button", {
+      name: "November 10, 2026, blocked: Cabin 1, Cabin 2",
+    });
+    expect(within(dayButton).getByText("Blocked")).toBeInTheDocument();
+    expect(within(dayButton).getByText("Cabin 1, Cabin 2")).toBeInTheDocument();
+    expect(within(dayButton).getByText("2 cabins")).toBeInTheDocument();
   });
 
   it("does not open the block form from the chip", async () => {
