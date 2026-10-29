@@ -40,6 +40,26 @@ export function timelineCell<Stay extends TimelineStay, Block extends TimelineBl
   return stay ? { kind: "booked", stay } : { kind: "free" };
 }
 
+/** Who a night's blocks shut out: "Whole resort", or the blocked cabins in name order. */
+export function blockedNightLabel(
+  blocks: TimelineBlock[],
+  night: string,
+  cabinName: (unitId: string) => string
+): string | null {
+  const blocksOnNight = blocks.filter(
+    (block) => block.start_date <= night && night <= block.end_date
+  );
+  if (blocksOnNight.length === 0) return null;
+  if (blocksOnNight.some((block) => block.unit_id === null)) return "Whole resort";
+
+  const cabinNames = new Set(
+    blocksOnNight.flatMap((block) => (block.unit_id ? [cabinName(block.unit_id)] : []))
+  );
+  return [...cabinNames]
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    .join(", ");
+}
+
 /** A night picked on the timeline. `unitId` null is the Whole resort row. */
 export interface TimelineNight {
   unitId: string | null;

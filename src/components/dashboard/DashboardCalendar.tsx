@@ -1,8 +1,10 @@
 import React, { useCallback, useMemo, useState } from "react";
 
-import { format, getDay } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { endOfMonth, endOfWeek, format, getDay, startOfMonth, startOfWeek } from "date-fns";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 
+import { hatchedFill } from "@/components/calendar/availability-fill";
 import {
   Button,
   Card,
@@ -12,9 +14,12 @@ import {
   InlineCalendar,
   type CalendarDayButtonProps,
 } from "@/components/patterns";
+import { blocksInNightsQuery } from "@/hooks/useAvailabilityTimeline";
 import { useCalendarBookings } from "@/hooks/useCalendarBookings";
+import { blockedNightLabel } from "@/lib/availability-timeline";
 import { hasProperty, isObject } from "@/lib/type-guards";
 import { cn } from "@/lib/utils";
+import { allUnitsQuery } from "@/stores/useUnitStore";
 import type { Booking } from "@/types";
 
 import { BookingIndicators } from "./BookingIndicators";
@@ -40,6 +45,7 @@ interface DayButtonProps {
   day: { date: Date };
   modifiers?: unknown;
   bookingsByDate: { [key: string]: Booking[] };
+  blockedLabelOn: (night: string) => string | null;
   compact?: boolean;
   [key: string]: unknown; // For other props passed by Calendar
 }
@@ -48,12 +54,14 @@ const DayButton = React.memo(function DayButton({
   day,
   modifiers,
   bookingsByDate,
+  blockedLabelOn,
   compact = false,
   ...props
 }: DayButtonProps) {
   const date = day.date;
   const dateKey = format(date, "yyyy-MM-dd");
   const dayBookings = bookingsByDate[dateKey] || [];
+  const blockedLabel = blockedLabelOn(dateKey);
   const isToday = format(date, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
   const isWeekend = getDay(date) === 0 || getDay(date) === 6; // Sunday = 0, Saturday = 6
   const bookingCountClass = getDayBackgroundClass(dayBookings.length);
@@ -85,7 +93,7 @@ const DayButton = React.memo(function DayButton({
           dayBookings.length > 0
             ? `, ${dayBookings.length} booking${dayBookings.length !== 1 ? "s" : ""}`
             : ""
-        }`}
+        }${blockedLabel ? `, blocked: ${blockedLabel}` : ""}`}
       >
         <div className="flex h-full w-full min-w-0 flex-col items-center justify-start overflow-hidden">
           <span className="text-xs font-medium @sm/calendar:text-sm">{format(date, "d")}</span>
@@ -96,11 +104,31 @@ const DayButton = React.memo(function DayButton({
               className="mt-1 w-full min-w-0"
             />
           )}
+          {blockedLabel && <BlockedChip label={blockedLabel} compact={compact} />}
         </div>
       </Button>
     </BookingTooltip>
   );
 });
+
+/** Shows who a block shuts out; changing it is done on the Blocked dates page. */
+function BlockedChip({ label, compact }: { label: string; compact: boolean }) {
+  return (
+    <div
+      className={cn(
+        "border-border text-foreground mt-0.5 flex w-full min-w-0 items-center rounded-sm border py-0.5",
+        compact ? "px-0.5" : "px-1",
+        "truncate leading-tight font-medium",
+        // eslint-disable-next-line better-tailwindcss/no-restricted-classes -- sized like the booking chips beside it, which scale with the cell's width (cqi) (#36)
+        "text-[clamp(7px,2cqi,10px)]",
+        hatchedFill
+      )}
+    >
+      <span className="mr-1 hidden @sm/calendar:inline">Blocked</span>
+      <span className="truncate">{label}</span>
+    </div>
+  );
+}
 
 interface CalendarHeaderProps {
   currentMonth: Date;
@@ -220,6 +248,19 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
     currentMonth
   );
   const compact = headerVariant === "stacked";
+  const firstVisibleNight = format(startOfWeek(startOfMonth(currentMonth)), "yyyy-MM-dd");
+  const lastVisibleNight = format(endOfWeek(endOfMonth(currentMonth)), "yyyy-MM-dd");
+  const { data: blocks } = useQuery(blocksInNightsQuery(firstVisibleNight, lastVisibleNight));
+  const { data: units } = useQuery(allUnitsQuery());
+  const blockedLabelOn = useCallback(
+    (night: string) =>
+      blockedNightLabel(
+        blocks ?? [],
+        night,
+        (unitId) => units?.find((unit) => unit.unit_id === unitId)?.unit_name ?? "Cabin"
+      ),
+    [blocks, units]
+  );
 
   // Navigation handlers
   const handlePreviousMonth = () => {
@@ -245,9 +286,14 @@ export const DashboardCalendar = React.memo(function DashboardCalendar({
   // Create the DayButton component callback at the top level to follow React hooks rules
   const dayButtonComponent = useCallback(
     (props: CalendarDayButtonProps) => (
-      <DayButton {...props} bookingsByDate={bookingsByDate} compact={compact} />
+      <DayButton
+        {...props}
+        bookingsByDate={bookingsByDate}
+        blockedLabelOn={blockedLabelOn}
+        compact={compact}
+      />
     ),
-    [bookingsByDate, compact]
+    [bookingsByDate, blockedLabelOn, compact]
   );
 
   return (

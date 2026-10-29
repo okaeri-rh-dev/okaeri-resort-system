@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { tapFreeNight, timelineCell, type TimelineStay } from "@/lib/availability-timeline";
+import {
+  blockedNightLabel,
+  tapFreeNight,
+  timelineCell,
+  type TimelineStay,
+} from "@/lib/availability-timeline";
 
 const CABIN_1 = "unit-1";
 const CABIN_2 = "unit-2";
@@ -132,5 +137,39 @@ describe("tapFreeNight", () => {
     expect(tapFreeNight(pending, { unitId: CABIN_1, night: "2026-11-04" }, timeline)).toEqual({
       range: { unitId: CABIN_1, firstNight: "2026-11-02", lastNight: "2026-11-04" },
     });
+  });
+});
+
+describe("blockedNightLabel", () => {
+  const cabinName = (unitId: string) =>
+    ({ [CABIN_1]: "Cabin 1", [CABIN_2]: "Cabin 2" })[unitId] ?? "Cabin";
+
+  it("names the cabin from the first through the last blocked night", () => {
+    const blocks = [block(CABIN_1, "2026-11-02", "2026-11-03")];
+    const label = (night: string) => blockedNightLabel(blocks, night, cabinName);
+
+    expect(label("2026-11-01")).toBeNull();
+    expect(label("2026-11-02")).toBe("Cabin 1");
+    expect(label("2026-11-03")).toBe("Cabin 1");
+    expect(label("2026-11-04")).toBeNull();
+  });
+
+  it("says Whole resort on a resort closure night, even when a cabin block overlaps it", () => {
+    const blocks = [
+      block(CABIN_1, "2026-11-02", "2026-11-02"),
+      block(null, "2026-11-02", "2026-11-02"),
+    ];
+
+    expect(blockedNightLabel(blocks, "2026-11-02", cabinName)).toBe("Whole resort");
+  });
+
+  it("names each blocked cabin once, in name order", () => {
+    const blocks = [
+      block(CABIN_2, "2026-11-02", "2026-11-02"),
+      block(CABIN_1, "2026-11-01", "2026-11-03"),
+      block(CABIN_2, "2026-11-02", "2026-11-05"),
+    ];
+
+    expect(blockedNightLabel(blocks, "2026-11-02", cabinName)).toBe("Cabin 1, Cabin 2");
   });
 });

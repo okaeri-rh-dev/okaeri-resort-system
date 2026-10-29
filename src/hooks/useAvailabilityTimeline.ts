@@ -21,7 +21,7 @@ const staysQuery = (firstNight: string, lastNight: string) =>
     placeholderData: keepPreviousData,
   });
 
-const blocksInNightsQuery = (firstNight: string, lastNight: string) =>
+export const blocksInNightsQuery = (firstNight: string, lastNight: string) =>
   queryOptions({
     queryKey: availabilityKeys.blackouts.inNights(firstNight, lastNight),
     queryFn: async (): Promise<Block[]> => {
