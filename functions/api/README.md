@@ -508,9 +508,6 @@ VITE_SUPABASE_URL=https://xxx.supabase.co
 # Turnstile
 TURNSTILE_SECRET_KEY=0x4xxx
 
-# Email
-RESEND_API_KEY=re_xxx
-
 # Environment
 ENVIRONMENT=production|development
 APP_VERSION=1.0.0

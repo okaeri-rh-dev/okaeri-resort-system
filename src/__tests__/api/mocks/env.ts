@@ -17,7 +17,6 @@ export interface TestEnv {
   SUPABASE_JWT_SECRET: string;
   CRON_SECRET: string;
   TURNSTILE_SECRET_KEY: string;
-  RESEND_API_KEY: string;
   RATE_LIMIT_KV: KVNamespace;
   BLOCKED_IPS_KV: KVNamespace;
   ENVIRONMENT: "production" | "development";
@@ -35,7 +34,6 @@ export const createMockEnv = (): TestEnv => ({
   SUPABASE_JWT_SECRET: "test-jwt-secret-key-for-hmac-256-signing",
   CRON_SECRET: "test-cron-secret",
   TURNSTILE_SECRET_KEY: "test-turnstile-secret",
-  RESEND_API_KEY: "test-resend-key",
   RATE_LIMIT_KV: createMockKV(),
   BLOCKED_IPS_KV: createMockKV(),
   ENVIRONMENT: "development",

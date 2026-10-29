@@ -36,7 +36,6 @@ ENVIRONMENT = "production"
 # npx wrangler secret put SUPABASE_ANON_KEY
 # npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 # npx wrangler secret put TURNSTILE_SECRET_KEY
-# npx wrangler secret put RESEND_API_KEY
 # npx wrangler secret put CRON_SECRET  # For GitHub Actions scheduled cleanup
 
 # Preview environment configuration

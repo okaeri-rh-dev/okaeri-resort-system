@@ -57,7 +57,6 @@ This file contains backend secrets that are only accessible to your Cloudflare F
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 SUPABASE_JWT_SECRET=your-jwt-secret
 TURNSTILE_SECRET_KEY=your-turnstile-secret
-RESEND_API_KEY=re_your-resend-key
 ENVIRONMENT=development
 ```
 
@@ -260,7 +259,6 @@ When ready to deploy:
 ```bash
 npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 npx wrangler secret put TURNSTILE_SECRET_KEY
-npx wrangler secret put RESEND_API_KEY
 npx wrangler secret put SUPABASE_JWT_SECRET
 ```
 

@@ -88,7 +88,6 @@ VITE_TURNSTILE_SITE_KEY=your-site-key
 TURNSTILE_SECRET_KEY=your-secret-key
 
 # Optional
-RESEND_API_KEY=your-resend-key
 CLOUDFLARE_ZONE_ID=your-zone-id
 CLOUDFLARE_API_TOKEN=your-api-token
 DOMAIN=your-domain.pages.dev

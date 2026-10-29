@@ -122,7 +122,7 @@ console.log("\n🔐 Checking environment variables:");
 const devVarsPath = path.join(projectRoot, ".dev.vars");
 if (fs.existsSync(devVarsPath)) {
   const devVars = fs.readFileSync(devVarsPath, "utf8");
-  const requiredVars = ["SUPABASE_SERVICE_ROLE_KEY", "TURNSTILE_SECRET_KEY", "RESEND_API_KEY"];
+  const requiredVars = ["SUPABASE_SERVICE_ROLE_KEY", "TURNSTILE_SECRET_KEY"];
   requiredVars.forEach((varName) => {
     if (devVars.includes(varName)) {
       const hasPlaceholder = devVars.includes(`${varName}=your-`);
