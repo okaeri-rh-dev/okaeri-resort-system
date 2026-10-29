@@ -546,46 +546,6 @@ class AuthService {
   resetFailedAttempts(email: string): void {
     this.failedAttempts.delete(email);
   }
-
-  /**
-   * Initialize auth for the application
-   */
-  async initialize() {
-    // Check for existing session on app load
-    const session = await this.getSession();
-
-    if (session) {
-      // Start session refresh with random intervals
-      this.scheduleSessionRefresh();
-    }
-
-    // Listen for auth changes
-    this.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) {
-        this.scheduleSessionRefresh();
-      } else if (event === "SIGNED_OUT") {
-        this.stopSessionRefresh();
-        // Perform comprehensive secure cleanup
-        secureCleanup();
-      } else if (event === "TOKEN_REFRESHED" && session) {
-        // Ensure refresh timer is running after token refresh
-        this.stopSessionRefresh();
-        this.scheduleSessionRefresh();
-      }
-
-      // Notify App.tsx so router context stays in sync (skip token refreshes
-      // to avoid unnecessary role cache invalidation)
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-        window.dispatchEvent(
-          new CustomEvent("authStateChange", {
-            detail: { isAuthenticated: !!session },
-          })
-        );
-      }
-    });
-
-    return session;
-  }
 }
 
 // Export singleton instance
