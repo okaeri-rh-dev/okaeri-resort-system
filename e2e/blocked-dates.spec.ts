@@ -1,6 +1,7 @@
 /**
  * Blocked dates end to end: a manager blocks booked nights with cancel-and-save, staff see the
- * blocks read-only, and guests see a resort-closure night as fully booked. The spec seeds its own
+ * blocks read-only, and a manager closes the resort for a night that guests then see as fully
+ * booked. The spec seeds its own
  * cabin, so its blocks and bookings never touch other specs' data.
  */
 
@@ -65,7 +66,6 @@ test.describe("Blocked dates", () => {
 
   let unitId = "";
   let bookingId = "";
-  let closureId = "";
 
   test.beforeAll(async () => {
     const unit = await db
@@ -107,23 +107,10 @@ test.describe("Blocked dates", () => {
       reason: staffReason,
     });
     expect(staffBlock.error).toBeNull();
-
-    const closure = await db
-      .from("availability_blackouts")
-      .insert({
-        unit_id: null,
-        start_date: closureNight,
-        end_date: closureNight,
-        reason: closureReason,
-      })
-      .select("blackout_id")
-      .single();
-    expect(closure.error).toBeNull();
-    closureId = closure.data!.blackout_id;
   });
 
   test.afterAll(async () => {
-    if (closureId) await db.from("availability_blackouts").delete().eq("blackout_id", closureId);
+    await db.from("availability_blackouts").delete().eq("reason", closureReason);
     if (unitId) await db.from("availability_blackouts").delete().eq("unit_id", unitId);
     if (bookingId) await db.from("bookings").delete().eq("booking_id", bookingId);
     if (unitId) await db.from("units").delete().eq("unit_id", unitId);
@@ -190,8 +177,27 @@ test.describe("Blocked dates", () => {
     await expect(sheet.getByRole("button", { name: "Delete block" })).toHaveCount(0);
   });
 
-  test("guests see a resort-closure night as fully booked", async ({ page }) => {
-    const calendar = new PublicCalendarPage(page);
+  test("a manager closes the resort and guests see the night as fully booked", async ({
+    page,
+    browser,
+  }) => {
+    await loginAsManager(page);
+    await page.goto("/admin/blocked-dates");
+    await page.getByRole("button", { name: "Close the resort" }).click();
+
+    const sheet = page.getByRole("dialog", { name: "Close the resort" });
+    await expect(sheet.getByRole("checkbox", { name: /Whole resort/ })).toBeChecked();
+    await pickNight(page, "First blocked night", closureNight);
+    await pickNight(page, "Last blocked night", closureNight);
+    await sheet.getByRole("textbox", { name: "Reason" }).fill(closureReason);
+    await sheet.getByRole("button", { name: "Close the resort" }).click();
+
+    await expect(sheet).toBeHidden();
+    await expect(blockEntry(page, closureReason)).toContainText("Whole resort");
+
+    const guestContext = await browser.newContext({ timezoneId: "Asia/Manila" });
+    const guestPage = await guestContext.newPage();
+    const calendar = new PublicCalendarPage(guestPage);
     await calendar.goto();
 
     if (closureNight.slice(0, 7) !== manilaToday.slice(0, 7)) await calendar.goToNextMonth();
@@ -202,12 +208,13 @@ test.describe("Blocked dates", () => {
       "yyyy-MM-dd"
     );
     await expect(
-      page.getByRole("gridcell", { name: `${calendarDay(closureNight)} - Fully booked` })
+      guestPage.getByRole("gridcell", { name: `${calendarDay(closureNight)} - Fully booked` })
     ).toBeVisible();
     await expect(
-      page.getByRole("gridcell", {
+      guestPage.getByRole("gridcell", {
         name: new RegExp(`^${calendarDay(openNight)} - \\d+ available$`),
       })
     ).toBeVisible();
+    await guestContext.close();
   });
 });
