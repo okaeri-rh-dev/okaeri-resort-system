@@ -7,15 +7,25 @@
 import { expect, test, type Page } from "@playwright/test";
 import { addDays, format, parseISO } from "date-fns";
 
+import { toManilaDateString } from "../src/lib/timezone";
 import { loginAsManager, loginAsStaff } from "./fixtures/auth";
 import { serviceClient } from "./fixtures/service-client";
 import { PublicCalendarPage } from "./pages/PublicCalendarPage";
 
-const MANILA_OFFSET_MS = 8 * 60 * 60 * 1000;
-const manilaToday = new Date(Date.now() + MANILA_OFFSET_MS).toISOString().slice(0, 10);
+// Column limits: bookings.booking_reference and units.unit_code
+const BOOKING_REFERENCE_MAX = 20;
+const UNIT_CODE_MAX = 10;
+
+const manilaToday = toManilaDateString(new Date());
 const nightAfterToday = (days: number) =>
   format(addDays(parseISO(manilaToday), days), "yyyy-MM-dd");
 const shortNight = (night: string) => format(parseISO(night), "EEE d MMM");
+const calendarDay = (night: string) => format(parseISO(night), "MMMM d, yyyy");
+
+const blockEntry = (page: Page, reason: string) =>
+  page
+    .getByRole("region", { name: "Current and upcoming blocks" })
+    .getByRole("button", { name: new RegExp(reason) });
 
 /**
  * Opens a block-form date field and picks the night, moving to the next month when needed.
@@ -36,12 +46,14 @@ async function pickNight(page: Page, field: string, night: string) {
 test.describe("Blocked dates", () => {
   // One worker runs the tests in order, so the seed in beforeAll runs once
   test.describe.configure({ mode: "default" });
+  // The guest calendar opens on the browser's month, so the browser runs on Manila time
+  test.use({ timezoneId: "Asia/Manila" });
 
   const db = serviceClient();
   const suffix =
     `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`.toUpperCase();
   const cabinName = `E2E Block Cabin ${suffix}`;
-  const bookingReference = `E2E-BLK-${suffix}`.slice(0, 20);
+  const bookingReference = `E2E-BLK-${suffix}`.slice(0, BOOKING_REFERENCE_MAX);
   const managerReason = `E2E aircon cleaning ${suffix}`;
   const staffReason = `E2E roof repair ${suffix}`;
   const closureReason = `E2E resort closure ${suffix}`;
@@ -60,7 +72,7 @@ test.describe("Blocked dates", () => {
       .from("units")
       .insert({
         unit_name: cabinName,
-        unit_code: `B${suffix}`.slice(0, 10),
+        unit_code: `B${suffix}`.slice(0, UNIT_CODE_MAX),
         unit_type: "Standard",
         base_occupancy: 2,
         max_occupancy: 4,
@@ -139,11 +151,7 @@ test.describe("Blocked dates", () => {
     await confirm.getByRole("button", { name: "Cancel and save" }).click();
 
     await expect(sheet).toBeHidden();
-    await expect(
-      page.getByRole("region", { name: "Current and upcoming blocks" }).getByRole("button", {
-        name: new RegExp(managerReason),
-      })
-    ).toBeVisible();
+    await expect(blockEntry(page, managerReason)).toBeVisible();
     await expect
       .poll(async () => {
         const { data } = await db
@@ -171,27 +179,35 @@ test.describe("Blocked dates", () => {
 
     await expect(page.getByRole("heading", { name: "Blocked dates", level: 1 })).toBeVisible();
     await expect(page.getByText("Ask a manager to change blocked dates.")).toBeVisible();
-    await expect(
-      page.getByRole("region", { name: "Current and upcoming blocks" }).getByRole("button", {
-        name: new RegExp(staffReason),
-      })
-    ).toBeVisible();
     await expect(page.getByRole("button", { name: "Block dates" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Close the resort" })).toHaveCount(0);
+
+    await blockEntry(page, staffReason).click();
+    const sheet = page.getByRole("dialog", { name: "Blocked dates" });
+    await expect(sheet).toContainText(staffReason);
+    await expect(sheet.getByText("Ask a manager to change blocked dates.")).toBeVisible();
+    await expect(sheet.getByRole("button", { name: "Save changes" })).toHaveCount(0);
+    await expect(sheet.getByRole("button", { name: "Delete block" })).toHaveCount(0);
   });
 
   test("guests see a resort-closure night as fully booked", async ({ page }) => {
     const calendar = new PublicCalendarPage(page);
     await calendar.goto();
 
-    const night = parseISO(closureNight);
-    if (format(night, "yyyy-MM") !== manilaToday.slice(0, 7)) await calendar.goToNextMonth();
+    if (closureNight.slice(0, 7) !== manilaToday.slice(0, 7)) await calendar.goToNextMonth();
 
-    const label = night.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-    await expect(page.getByRole("gridcell", { name: `${label} - Fully booked` })).toBeVisible();
+    // A neighbour night in the same month still has free cabins
+    const openNight = format(
+      addDays(parseISO(closureNight), closureNight.endsWith("-01") ? 1 : -1),
+      "yyyy-MM-dd"
+    );
+    await expect(
+      page.getByRole("gridcell", { name: `${calendarDay(closureNight)} - Fully booked` })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("gridcell", {
+        name: new RegExp(`^${calendarDay(openNight)} - \\d+ available$`),
+      })
+    ).toBeVisible();
   });
 });
