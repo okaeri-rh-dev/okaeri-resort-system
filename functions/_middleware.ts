@@ -294,9 +294,7 @@ async function verifySupabaseJWT(
 export function isPublicPath(pathname: string): boolean {
   const publicPaths = [
     "/api/public/",
-    "/api/availability/check",
     "/api/availability/multi-unit",
-    "/api/units",
     "/api/pricing/calculate", // Guest booking pricing calculation
     "/api/health",
     "/api/guest-booking/multi-unit",

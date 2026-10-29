@@ -11,7 +11,7 @@ echo
 
 # Test API endpoints
 echo "1. Testing API endpoints..."
-STATUS=$(curl -s -o /dev/null -w "%{http_code}" $PROD_URL/health)
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" $PROD_URL/api/health)
 if [ "$STATUS" = "200" ]; then
   echo "  ✅ Health endpoint: OK"
 else
