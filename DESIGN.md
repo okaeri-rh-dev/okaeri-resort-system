@@ -51,6 +51,8 @@ Admin destinations sit in four groups under Dashboard, which has no heading: **B
 
 The rail and the menu sheets scroll as one column when the window is short.
 
+A page's own fixed bottom bar on admin sits at `bottom-(--admin-bottom-bar-height)` on compact and `medium:bottom-0` from medium. The shell measures that height, safe area included, so the page bar adds the safe area only from medium.
+
 Theme control per nav form. It is never in the account menu. The choice is a pill of three segments, Light / Dark / Auto; the dark mode switch is one tap between light and dark.
 
 | Surface | Compact                                                                                                                 | Medium, expanded                                                                     | Large, xlarge                    |

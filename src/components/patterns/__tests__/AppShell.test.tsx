@@ -80,6 +80,20 @@ describe("AppShell, admin", () => {
     expect(screen.getByRole("main")).toHaveTextContent("Bookings list");
   });
 
+  it("publishes the bottom bar's height so fixed page bars can sit above it", async () => {
+    const offsetHeight = vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(73);
+    renderAt(
+      "/admin/documents",
+      <AppShell surface="admin" brand={brand} destinations={staffDestinations}>
+        <p>Documents</p>
+      </AppShell>
+    );
+
+    const main = await screen.findByRole("main");
+    expect(main.parentElement?.style.getPropertyValue("--admin-bottom-bar-height")).toBe("73px");
+    offsetHeight.mockRestore();
+  });
+
   it("has no More slot when the role has five or fewer destinations", async () => {
     renderAt(
       "/admin/dashboard",
