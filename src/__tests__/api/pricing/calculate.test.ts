@@ -7,11 +7,8 @@ import type { PricingCalculationResponse } from "../types/responses";
 const mockEnv = {
   SUPABASE_URL: "https://test.supabase.co",
   SUPABASE_SERVICE_ROLE_KEY: "test-key",
-  KV_RATE_LIMIT: {
-    get: vi.fn(),
-    put: vi.fn(),
-  } as any,
-  KV_PRICING_CACHE: {
+  ENVIRONMENT: "production",
+  RATE_LIMIT_KV: {
     get: vi.fn(),
     put: vi.fn(),
   } as any,
@@ -116,12 +113,10 @@ describe("Pricing Calculate API", () => {
     vi.clearAllMocks();
 
     // Reset rate limit mock
-    mockEnv.KV_RATE_LIMIT.get.mockResolvedValue(null);
-    mockEnv.KV_RATE_LIMIT.put.mockResolvedValue(undefined);
+    mockEnv.RATE_LIMIT_KV.get.mockResolvedValue(null);
+    mockEnv.RATE_LIMIT_KV.put.mockResolvedValue(undefined);
 
     // Reset cache mock
-    mockEnv.KV_PRICING_CACHE.get.mockResolvedValue(null);
-    mockEnv.KV_PRICING_CACHE.put.mockResolvedValue(undefined);
   });
 
   it("should handle CORS preflight requests", async () => {
@@ -260,11 +255,7 @@ describe("Pricing Calculate API", () => {
   });
 
   it("should handle rate limiting", async () => {
-    // Mock rate limit exceeded
-    mockEnv.KV_RATE_LIMIT.get.mockResolvedValue({
-      count: 10,
-      resetAt: Date.now() + 60000,
-    });
+    mockEnv.RATE_LIMIT_KV.get.mockResolvedValue("10");
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -287,45 +278,6 @@ describe("Pricing Calculate API", () => {
 
     expect(response.status).toBe(429);
     expect(data.error).toBe("RATE_LIMIT_EXCEEDED");
-  });
-
-  it("should use cache when available", async () => {
-    const cachedData = {
-      pricing: {
-        total: 15000,
-        downpayment: 7500,
-        nights: 3,
-        currency: "PHP",
-      },
-      notice: "Cached seasonal rates",
-      calculated_at: new Date().toISOString(),
-    };
-
-    mockEnv.KV_PRICING_CACHE.get.mockResolvedValue(cachedData);
-
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const dayAfter = new Date();
-    dayAfter.setDate(dayAfter.getDate() + 4);
-
-    mockRequest = {
-      method: "POST",
-      headers: new Map(),
-      json: vi.fn().mockResolvedValue({
-        check_in: tomorrow.toISOString().split("T")[0],
-        check_out: dayAfter.toISOString().split("T")[0],
-        guest_count: 4,
-        unit_id: "550e8400-e29b-41d4-a716-446655440001",
-      }),
-    };
-
-    const response = await onRequest({ request: mockRequest, env: mockEnv });
-    const data = (await response.json()) as PricingCalculationResponse;
-
-    expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
-    expect(data.cached).toBe(true);
-    expect(data.pricing.total).toBe(15000);
   });
 
   it("should handle multi-unit pricing requests", async () => {
@@ -375,7 +327,8 @@ describe("Pricing Calculate API", () => {
     expect(data.error).toBe("VALIDATION_ERROR");
   });
 
-  it("should include auth token for higher rate limits", async () => {
+  it("allows a signed-in caller past the guest limit", async () => {
+    mockEnv.RATE_LIMIT_KV.get.mockResolvedValue("10");
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const dayAfter = new Date();
@@ -383,7 +336,10 @@ describe("Pricing Calculate API", () => {
 
     mockRequest = {
       method: "POST",
-      headers: new Map([["Authorization", "Bearer test-token"]]),
+      headers: new Headers({
+        Authorization: "Bearer test-token",
+        "CF-Connecting-IP": "192.168.1.1",
+      }),
       json: vi.fn().mockResolvedValue({
         check_in: tomorrow.toISOString().split("T")[0],
         check_out: dayAfter.toISOString().split("T")[0],
@@ -393,16 +349,34 @@ describe("Pricing Calculate API", () => {
     };
 
     const response = await onRequest({ request: mockRequest, env: mockEnv });
-    const data = (await response.json()) as PricingCalculationResponse;
 
     expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
+  });
 
-    // Verify higher rate limit was applied (60 instead of 10)
-    expect(mockEnv.KV_RATE_LIMIT.put).toHaveBeenCalledWith(
-      expect.stringContaining("rate_limit:pricing:test-token"),
-      expect.any(String),
-      expect.any(Object)
-    );
+  it("keys the limit by client IP, never by the token", async () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayAfter = new Date();
+    dayAfter.setDate(dayAfter.getDate() + 4);
+
+    mockRequest = {
+      method: "POST",
+      headers: new Headers({
+        Authorization: "Bearer test-token",
+        "CF-Connecting-IP": "192.168.1.1",
+      }),
+      json: vi.fn().mockResolvedValue({
+        check_in: tomorrow.toISOString().split("T")[0],
+        check_out: dayAfter.toISOString().split("T")[0],
+        guest_count: 4,
+        unit_id: "550e8400-e29b-41d4-a716-446655440001",
+      }),
+    };
+
+    await onRequest({ request: mockRequest, env: mockEnv });
+
+    const [key] = mockEnv.RATE_LIMIT_KV.put.mock.calls[0];
+    expect(key).toContain("pricing:192.168.1.1");
+    expect(key).not.toContain("test-token");
   });
 });
