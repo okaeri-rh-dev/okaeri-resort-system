@@ -149,8 +149,8 @@ describe("blockedNightLabel", () => {
     const label = (night: string) => blockedNightLabel(blocks, night, cabinName);
 
     expect(label("2026-11-01")).toBeNull();
-    expect(label("2026-11-02")).toEqual({ label: "Cabin 1", shortLabel: "Cabin 1" });
-    expect(label("2026-11-03")).toEqual({ label: "Cabin 1", shortLabel: "Cabin 1" });
+    expect(label("2026-11-02")).toBe("Cabin 1");
+    expect(label("2026-11-03")).toBe("Cabin 1");
     expect(label("2026-11-04")).toBeNull();
   });
 
@@ -160,22 +160,16 @@ describe("blockedNightLabel", () => {
       block(null, "2026-11-02", "2026-11-02"),
     ];
 
-    expect(blockedNightLabel(blocks, "2026-11-02", cabinName)).toEqual({
-      label: "Whole resort",
-      shortLabel: "Whole resort",
-    });
+    expect(blockedNightLabel(blocks, "2026-11-02", cabinName)).toBe("Whole resort");
   });
 
-  it("names each blocked cabin once, in name order, and counts them in the short label", () => {
+  it("names each blocked cabin once, in name order", () => {
     const blocks = [
       block(CABIN_2, "2026-11-02", "2026-11-02"),
       block(CABIN_1, "2026-11-01", "2026-11-03"),
       block(CABIN_2, "2026-11-02", "2026-11-05"),
     ];
 
-    expect(blockedNightLabel(blocks, "2026-11-02", cabinName)).toEqual({
-      label: "Cabin 1, Cabin 2",
-      shortLabel: "2 cabins",
-    });
+    expect(blockedNightLabel(blocks, "2026-11-02", cabinName)).toBe("Cabin 1, Cabin 2");
   });
 });

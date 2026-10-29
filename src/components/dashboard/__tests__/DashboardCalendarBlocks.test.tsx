@@ -91,7 +91,7 @@ describe("DashboardCalendar blocked days", () => {
     expect(within(dayButton).getByText("Whole resort")).toBeVisible();
   });
 
-  it("names every blocked cabin, and counts them for a narrow cell", async () => {
+  it("names every blocked cabin on the night", async () => {
     renderCalendar();
 
     const dayButton = await screen.findByRole("button", {
@@ -99,7 +99,6 @@ describe("DashboardCalendar blocked days", () => {
     });
     expect(within(dayButton).getByText("Blocked")).toBeInTheDocument();
     expect(within(dayButton).getByText("Cabin 1, Cabin 2")).toBeInTheDocument();
-    expect(within(dayButton).getByText("2 cabins")).toBeInTheDocument();
   });
 
   it("does not open the block form from the chip", async () => {

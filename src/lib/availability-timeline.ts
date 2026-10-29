@@ -43,30 +43,22 @@ export function timelineCell<Stay extends TimelineStay, Block extends TimelineBl
   return stay ? { kind: "booked", stay } : { kind: "free" };
 }
 
-export interface BlockedNightLabel {
-  /** "Whole resort", or the blocked cabins in name order */
-  label: string;
-  /** For a narrow cell: "2 cabins" in place of the names */
-  shortLabel: string;
-}
-
-/** Who a night's blocks shut out, or null when the night is not blocked. */
+/** Who a night's blocks shut out: "Whole resort", or the blocked cabins in name order. */
 export function blockedNightLabel(
   blocks: TimelineBlock[],
   night: string,
   cabinName: (unitId: string) => string
-): BlockedNightLabel | null {
+): string | null {
   const blocksOnNight = blocks.filter((block) => blockHasNight(block, night));
   if (blocksOnNight.length === 0) return null;
-  if (blocksOnNight.some((block) => block.unit_id === null)) {
-    return { label: "Whole resort", shortLabel: "Whole resort" };
-  }
+  if (blocksOnNight.some((block) => block.unit_id === null)) return "Whole resort";
 
-  const cabinNames = [
-    ...new Set(blocksOnNight.flatMap((block) => (block.unit_id ? [cabinName(block.unit_id)] : []))),
-  ].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  const label = cabinNames.join(", ");
-  return { label, shortLabel: cabinNames.length > 1 ? `${cabinNames.length} cabins` : label };
+  const cabinNames = new Set(
+    blocksOnNight.flatMap((block) => (block.unit_id ? [cabinName(block.unit_id)] : []))
+  );
+  return [...cabinNames]
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    .join(", ");
 }
 
 /** The blocked label of each night from `firstNight` through `lastNight`, keyed by night. */
@@ -74,8 +66,8 @@ export function blockedNightLabels(
   blocks: TimelineBlock[],
   { firstNight, lastNight }: { firstNight: string; lastNight: string },
   cabinName: (unitId: string) => string
-): Record<string, BlockedNightLabel> {
-  const labels: Record<string, BlockedNightLabel> = {};
+): Record<string, string> {
+  const labels: Record<string, string> = {};
   for (const night of nightsFrom(firstNight, lastNight)) {
     const label = blockedNightLabel(blocks, night, cabinName);
     if (label) labels[night] = label;

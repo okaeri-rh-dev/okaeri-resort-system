@@ -17,7 +17,7 @@ import {
 import { blocksInNightsQuery } from "@/hooks/useAvailabilityTimeline";
 import { useBlockCabins } from "@/hooks/useBlocks";
 import { useCalendarBookings } from "@/hooks/useCalendarBookings";
-import { blockedNightLabels, type BlockedNightLabel } from "@/lib/availability-timeline";
+import { blockedNightLabels } from "@/lib/availability-timeline";
 import { hasProperty, isObject } from "@/lib/type-guards";
 import { cn } from "@/lib/utils";
 import type { Booking } from "@/types";
@@ -45,7 +45,7 @@ interface DayButtonProps {
   day: { date: Date };
   modifiers?: unknown;
   bookingsByDate: { [key: string]: Booking[] };
-  blockedLabelByNight: Record<string, BlockedNightLabel>;
+  blockedLabelByNight: Record<string, string>;
   compact?: boolean;
   [key: string]: unknown; // For other props passed by Calendar
 }
@@ -61,7 +61,7 @@ const DayButton = React.memo(function DayButton({
   const date = day.date;
   const dateKey = format(date, "yyyy-MM-dd");
   const dayBookings = bookingsByDate[dateKey] || [];
-  const blocked = blockedLabelByNight[dateKey];
+  const blockedLabel = blockedLabelByNight[dateKey];
   const isToday = format(date, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
   const isWeekend = getDay(date) === 0 || getDay(date) === 6; // Sunday = 0, Saturday = 6
   const bookingCountClass = getDayBackgroundClass(dayBookings.length);
@@ -93,7 +93,7 @@ const DayButton = React.memo(function DayButton({
           dayBookings.length > 0
             ? `, ${dayBookings.length} booking${dayBookings.length !== 1 ? "s" : ""}`
             : ""
-        }${blocked ? `, blocked: ${blocked.label}` : ""}`}
+        }${blockedLabel ? `, blocked: ${blockedLabel}` : ""}`}
       >
         <div className="flex h-full w-full min-w-0 flex-col items-center justify-start overflow-hidden">
           <span className="text-xs font-medium @sm/calendar:text-sm">{format(date, "d")}</span>
@@ -104,7 +104,7 @@ const DayButton = React.memo(function DayButton({
               className="mt-1 w-full min-w-0"
             />
           )}
-          {blocked && <BlockedChip blocked={blocked} compact={compact} />}
+          {blockedLabel && <BlockedChip label={blockedLabel} compact={compact} />}
         </div>
       </Button>
     </BookingTooltip>
@@ -112,7 +112,7 @@ const DayButton = React.memo(function DayButton({
 });
 
 /** Shows who a block shuts out; changing it is done on the Blocked dates page. */
-function BlockedChip({ blocked, compact }: { blocked: BlockedNightLabel; compact: boolean }) {
+function BlockedChip({ label, compact }: { label: string; compact: boolean }) {
   return (
     <div
       className={cn(
@@ -124,15 +124,9 @@ function BlockedChip({ blocked, compact }: { blocked: BlockedNightLabel; compact
         hatchedFill
       )}
     >
-      <span className="mr-1 shrink-0">Blocked</span>
-      {blocked.shortLabel === blocked.label ? (
-        <span className="truncate">{blocked.label}</span>
-      ) : (
-        <>
-          <span className="hidden truncate @sm/calendar:inline">{blocked.label}</span>
-          <span className="truncate @sm/calendar:hidden">{blocked.shortLabel}</span>
-        </>
-      )}
+      <span className="shrink-0">Blocked</span>
+      {/* A narrow cell has no room for the cabins; the day's aria-label still names them */}
+      <span className="ml-1 hidden truncate @sm/calendar:inline">{label}</span>
     </div>
   );
 }
