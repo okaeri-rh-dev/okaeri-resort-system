@@ -1,6 +1,9 @@
 import type { AvailabilityDay } from "./CalendarGrid";
 
-/** A hatched muted fill: booked days on the guest calendar, blocked nights on the admin timeline. */
+/**
+ * A hatched muted fill: booked days on the guest calendar, blocked nights on the admin timeline
+ * and the Blocked chip on the dashboard calendar.
+ */
 export const hatchedFill =
   "bg-muted bg-[repeating-linear-gradient(135deg,var(--border)_0_2px,transparent_2px_6px)]";
 
