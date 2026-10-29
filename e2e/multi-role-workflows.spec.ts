@@ -80,28 +80,12 @@ test.describe("Multi-Role Workflows", () => {
         return;
       }
 
-      // Staff should not see review payment buttons, or they should be disabled
       const reviewButtons = await queuePage.reviewPaymentButtons.all();
+      if (reviewButtons.length === 0) return;
 
-      // Either no buttons visible, or clicking should be prevented
-      if (reviewButtons.length > 0) {
-        // Check if buttons are disabled or lead to access denied
-        await reviewButtons[0].click();
-
-        // Should either stay on page, show error, or redirect
-        const hasAccessDenied =
-          (await page.getByText(/access denied|unauthorized|permission/i).isVisible()) ||
-          page.url().includes("queue"); // Stayed on queue page
-
-        // Staff might be able to navigate but can't take action
-        if (page.url().includes("verify-payment")) {
-          const verifyPage = new PaymentVerificationPage(page);
-          // Verify button should not be visible or should be disabled
-          await verifyPage.expectVerifyButtonHidden();
-        } else {
-          expect(hasAccessDenied).toBeTruthy();
-        }
-      }
+      // The verify-payment route is manager+, so staff land on the dashboard
+      await reviewButtons[0].click();
+      await expect(page).toHaveURL(/\/admin\/dashboard/);
     });
 
     test("staff cannot assign units", async ({ page }) => {
