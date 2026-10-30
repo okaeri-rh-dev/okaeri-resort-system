@@ -361,13 +361,6 @@ export type Database = {
             foreignKeyName: "booking_unit_availability_booking_id_fkey";
             columns: ["booking_id"];
             isOneToOne: false;
-            referencedRelation: "booking_pricing_analytics";
-            referencedColumns: ["booking_id"];
-          },
-          {
-            foreignKeyName: "booking_unit_availability_booking_id_fkey";
-            columns: ["booking_id"];
-            isOneToOne: false;
             referencedRelation: "bookings";
             referencedColumns: ["booking_id"];
           },
@@ -424,13 +417,6 @@ export type Database = {
           weekend_surcharge?: number | null;
         };
         Relationships: [
-          {
-            foreignKeyName: "booking_units_booking_id_fkey";
-            columns: ["booking_id"];
-            isOneToOne: false;
-            referencedRelation: "booking_pricing_analytics";
-            referencedColumns: ["booking_id"];
-          },
           {
             foreignKeyName: "booking_units_booking_id_fkey";
             columns: ["booking_id"];
@@ -787,13 +773,6 @@ export type Database = {
             foreignKeyName: "guest_booking_unit_requests_booking_id_fkey";
             columns: ["booking_id"];
             isOneToOne: false;
-            referencedRelation: "booking_pricing_analytics";
-            referencedColumns: ["booking_id"];
-          },
-          {
-            foreignKeyName: "guest_booking_unit_requests_booking_id_fkey";
-            columns: ["booking_id"];
-            isOneToOne: false;
             referencedRelation: "bookings";
             referencedColumns: ["booking_id"];
           },
@@ -855,13 +834,6 @@ export type Database = {
           key?: string;
         };
         Relationships: [
-          {
-            foreignKeyName: "idempotency_keys_booking_id_fkey";
-            columns: ["booking_id"];
-            isOneToOne: false;
-            referencedRelation: "booking_pricing_analytics";
-            referencedColumns: ["booking_id"];
-          },
           {
             foreignKeyName: "idempotency_keys_booking_id_fkey";
             columns: ["booking_id"];
@@ -1019,13 +991,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "accounts";
             referencedColumns: ["account_id"];
-          },
-          {
-            foreignKeyName: "payments_booking_id_fkey";
-            columns: ["booking_id"];
-            isOneToOne: false;
-            referencedRelation: "booking_pricing_analytics";
-            referencedColumns: ["booking_id"];
           },
           {
             foreignKeyName: "payments_booking_id_fkey";
@@ -1194,57 +1159,6 @@ export type Database = {
           component: string | null;
           count: number | null;
           details: string | null;
-        };
-        Relationships: [];
-      };
-      booking_pricing_analytics: {
-        Row: {
-          booking_id: string | null;
-          booking_reference: string | null;
-          check_in: string | null;
-          check_out: string | null;
-          created_at: string | null;
-          currency: string | null;
-          downpayment_calculated: number | null;
-          extra_person_total: number | null;
-          has_seasonal_rates: boolean | null;
-          nights: number | null;
-          pricing_calculated_at: string | null;
-          season_names: Json | null;
-          subtotal: number | null;
-          total_amount: number | null;
-        };
-        Insert: {
-          booking_id?: string | null;
-          booking_reference?: string | null;
-          check_in?: string | null;
-          check_out?: string | null;
-          created_at?: string | null;
-          currency?: never;
-          downpayment_calculated?: never;
-          extra_person_total?: never;
-          has_seasonal_rates?: never;
-          nights?: never;
-          pricing_calculated_at?: never;
-          season_names?: never;
-          subtotal?: never;
-          total_amount?: number | null;
-        };
-        Update: {
-          booking_id?: string | null;
-          booking_reference?: string | null;
-          check_in?: string | null;
-          check_out?: string | null;
-          created_at?: string | null;
-          currency?: never;
-          downpayment_calculated?: never;
-          extra_person_total?: never;
-          has_seasonal_rates?: never;
-          nights?: never;
-          pricing_calculated_at?: never;
-          season_names?: never;
-          subtotal?: never;
-          total_amount?: number | null;
         };
         Relationships: [];
       };

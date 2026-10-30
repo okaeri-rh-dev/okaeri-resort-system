@@ -79,6 +79,11 @@ test.describe("Online booking: verify then assign", () => {
     await loginAsAdmin(page);
 
     await page.goto(`/admin/verify-payment/${bookingId}`);
+    const proofImage = page.getByRole("img", { name: "Payment proof" });
+    await expect(proofImage).toBeVisible();
+    expect(await proofImage.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(
+      0
+    );
     await page.getByRole("button", { name: "Verify Payment" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Verify Payment" }).click();
 
