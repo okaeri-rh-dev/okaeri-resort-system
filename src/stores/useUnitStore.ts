@@ -103,7 +103,7 @@ export const unitDetailQuery = (unitId: string) =>
     queryKey: unitKeys.detail(unitId),
     queryFn: async () => {
       const { data, error } = await db.units.byId(unitId);
-      if (error) throwDetailLoadError(error, "unit");
+      if (error) throwDetailLoadError(error, "cabin");
       return { ...data, amenities: data.amenities as string[] | null };
     },
     staleTime: 30000,

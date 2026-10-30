@@ -1,7 +1,7 @@
 import { isNotFound } from "@tanstack/react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import { isNoRowError, throwDetailLoadError } from "@/lib/detail-load-error";
+import { isNotFoundError, throwDetailLoadError } from "@/lib/detail-load-error";
 import { queryClient } from "@/lib/query-client";
 
 const noRow = { code: "PGRST116", message: "Cannot coerce the result to a single JSON object" };
@@ -16,7 +16,7 @@ function thrownBy(error: unknown) {
   }
 }
 
-describe("isNoRowError", () => {
+describe("isNotFoundError", () => {
   it.each([
     ["no row", noRow, true],
     ["non-UUID id", badUuid, true],
@@ -24,7 +24,7 @@ describe("isNoRowError", () => {
     ["plain Error", new Error("boom"), false],
     ["null", null, false],
   ])("%s → %s", (_label, error, expected) => {
-    expect(isNoRowError(error)).toBe(expected);
+    expect(isNotFoundError(error)).toBe(expected);
   });
 });
 
