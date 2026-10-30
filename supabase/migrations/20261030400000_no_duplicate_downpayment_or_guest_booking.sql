@@ -61,6 +61,7 @@ BEGIN
 
             RETURN jsonb_build_object(
                 'success', true,
+                'is_duplicate', true,
                 'booking', jsonb_build_object('booking_id', v_booking_id, 'booking_reference', v_booking_reference)
             );
         END IF;

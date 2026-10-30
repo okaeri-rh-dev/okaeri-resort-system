@@ -434,6 +434,9 @@ describe("duplicate writes", () => {
       (result) => (result.data as { booking: { booking_id: string } }).booking.booking_id
     );
     expect(bookingIds[0]).toBe(bookingIds[1]);
+    expect(
+      results.map((result) => (result.data as { is_duplicate?: boolean }).is_duplicate ?? false)
+    ).toEqual(expect.arrayContaining([true, false]));
     const { count } = await supabase
       .from("bookings")
       .select("*", { count: "exact", head: true })

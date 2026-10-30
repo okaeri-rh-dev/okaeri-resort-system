@@ -36,9 +36,10 @@ import { calculateBookingPrice } from "../../lib/pricing";
  */
 
 // Environment type for Cloudflare Pages
-// Subset of the jsonb built by create_guest_booking (turnstile variant, 20251110171900)
+// Subset of the jsonb built by create_guest_booking (20261030400000)
 interface CreateGuestBookingResult {
   booking: { booking_id: string; booking_reference: string };
+  is_duplicate?: boolean;
 }
 
 function isCreateGuestBookingResult(result: Json): result is Json & CreateGuestBookingResult {
@@ -425,6 +426,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     if (!isCreateGuestBookingResult(result)) {
       throw new Error("create_guest_booking returned an unexpected result");
+    }
+
+    // A concurrent submit with the same key got past step 4 first
+    if (result.is_duplicate === true) {
+      const duplicateResponse: DuplicateMultiUnitBookingResponse = {
+        success: true,
+        booking: result.booking,
+        message: "Booking already created (duplicate detected)",
+        is_duplicate: true,
+      };
+      return Response.json(duplicateResponse, { status: 200 });
     }
 
     // 9. Build response
