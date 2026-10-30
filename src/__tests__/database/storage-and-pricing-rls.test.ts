@@ -1,6 +1,7 @@
 /**
- * Role-based access on the payment-proofs and receipts buckets, seasonal_rates,
- * and the dropped booking_pricing_analytics view (20261030100000).
+ * Role-based access on the payment-proofs, receipts and payment-methods buckets,
+ * seasonal_rates, and the dropped booking_pricing_analytics view
+ * (20261030100000, 20261030200000).
  *
  * @vitest-environment node
  */
@@ -16,6 +17,7 @@ const STAFF_PLUS: Role[] = ["staff", "manager", "owner", "admin"];
 const MANAGER_PLUS: Role[] = ["manager", "owner", "admin"];
 
 const BUCKETS = ["payment-proofs", "receipts"] as const;
+const PAYMENT_METHODS_BUCKET = "payment-methods";
 const FOLDER = `rls-test-${Date.now()}`;
 const pngBlob = () => new Blob(["rls"], { type: "image/png" });
 
@@ -41,7 +43,7 @@ describe("storage and pricing RLS", () => {
 
   afterAll(async () => {
     if (!shouldRun) return;
-    for (const bucket of BUCKETS) {
+    for (const bucket of [...BUCKETS, PAYMENT_METHODS_BUCKET]) {
       const { data } = await admin.storage.from(bucket).list(FOLDER);
       if (data?.length)
         await admin.storage.from(bucket).remove(data.map((o) => `${FOLDER}/${o.name}`));
@@ -92,6 +94,39 @@ describe("storage and pricing RLS", () => {
       });
     });
   }
+
+  describe(PAYMENT_METHODS_BUCKET, () => {
+    const bucket = PAYMENT_METHODS_BUCKET;
+
+    it("anyone, including anon, can download a QR code", async () => {
+      if (!shouldRun) return;
+      const path = await seedObject(bucket);
+      for (const client of [roleClients.anon, ...ALL.map((role) => clients[role])]) {
+        const { error } = await client.storage.from(bucket).download(path);
+        expect(error).toBeNull();
+      }
+    });
+
+    it("upload, update and delete need manager or above", async () => {
+      if (!shouldRun) return;
+      for (const role of ["anon", ...ALL] as const) {
+        const storage = (role === "anon" ? roleClients.anon : clients[role]).storage.from(bucket);
+        const allowed = (MANAGER_PLUS as string[]).includes(role);
+
+        const { error: uploadError } = await storage.upload(
+          `${FOLDER}/${role}-${seq++}.png`,
+          pngBlob()
+        );
+        expect(uploadError === null, `${role} upload ${bucket}`).toBe(allowed);
+
+        const { error: updateError } = await storage.update(await seedObject(bucket), pngBlob());
+        expect(updateError === null, `${role} update ${bucket}`).toBe(allowed);
+
+        const { data: removed } = await storage.remove([await seedObject(bucket)]);
+        expect((removed?.length ?? 0) > 0, `${role} delete ${bucket}`).toBe(allowed);
+      }
+    });
+  });
 
   it("a guest can upload a payment proof through a signed upload URL", async () => {
     if (!shouldRun) return;
