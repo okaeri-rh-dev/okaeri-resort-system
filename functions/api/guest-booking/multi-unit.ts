@@ -11,7 +11,8 @@ import type { Database, Json } from "@/types/database.types";
 import {
   ERROR_CODES,
   multiUnitBookingSchema,
-  type MultiUnitBookingResponse,
+  type CreatedMultiUnitBookingResponse,
+  type DuplicateMultiUnitBookingResponse,
 } from "@/types/guest-booking-multi-unit";
 
 import { toGuestBookingData } from "../../lib/guest-booking-data";
@@ -179,15 +180,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     if (existing && existing.bookings) {
       // Return existing booking (duplicate detected)
-      return Response.json(
-        {
-          success: true,
-          booking: existing.bookings,
-          message: "Booking already created (duplicate detected)",
-          is_duplicate: true,
-        },
-        { status: 200, headers: corsHeaders }
-      );
+      const duplicateResponse: DuplicateMultiUnitBookingResponse = {
+        success: true,
+        booking: existing.bookings,
+        message: "Booking already created (duplicate detected)",
+        is_duplicate: true,
+      };
+      return Response.json(duplicateResponse, { status: 200, headers: corsHeaders });
     }
 
     // 5. Fetch pricing configuration and validate capacity
@@ -457,7 +456,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     // 9. Build response
     const { booking } = result;
-    const response: MultiUnitBookingResponse = {
+    const response: CreatedMultiUnitBookingResponse = {
       success: true,
       booking: {
         booking_id: booking.booking_id,

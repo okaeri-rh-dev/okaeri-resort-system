@@ -66,6 +66,7 @@ function saveBooking(reference: string) {
         nights: 2,
       },
       message: "Booking created.",
+      is_duplicate: false,
     },
     { check_in: "2026-12-04", check_out: "2026-12-06", special_requests: "Late arrival" }
   );
