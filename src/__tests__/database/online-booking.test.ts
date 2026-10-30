@@ -374,3 +374,89 @@ describe("assign_units_to_booking", () => {
     await supabase.auth.admin.deleteUser(userId);
   });
 });
+
+describe("duplicate writes", () => {
+  let shouldRun = false;
+
+  beforeAll(async () => {
+    shouldRun = await shouldRunDatabaseTests();
+  });
+
+  beforeEach(async () => {
+    if (shouldRun) await cleanupTestData({ includeTestFixtures: true });
+  });
+
+  afterAll(async () => {
+    if (shouldRun) await cleanupTestData({ includeTestFixtures: true });
+  });
+
+  it("a second active online downpayment for a booking is refused", async () => {
+    if (!shouldRun) return;
+    const bookingId = await createGuestBooking([2]);
+    const downpayment = {
+      booking_id: bookingId,
+      amount: 3500,
+      status: "Active",
+      notes: "Online booking downpayment",
+    };
+
+    const results = await Promise.all([
+      supabase.from("payments").insert(downpayment),
+      supabase.from("payments").insert(downpayment),
+    ]);
+
+    expect(results.map((result) => result.error?.code ?? null).sort()).toEqual(["23505", null]);
+    const { count } = await supabase
+      .from("payments")
+      .select("*", { count: "exact", head: true })
+      .eq("booking_id", bookingId);
+    expect(count).toBe(1);
+  });
+
+  it("two submits with one idempotency key create one booking", async () => {
+    if (!shouldRun) return;
+    const args = guestBookingArgs([2]);
+    const secondArgs = {
+      ...args,
+      p_booking_data: {
+        ...args.p_booking_data,
+        booking_reference: `${args.p_booking_data.booking_reference}b`,
+      },
+    };
+
+    const results = await Promise.all([
+      supabase.rpc("create_guest_booking", args),
+      supabase.rpc("create_guest_booking", secondArgs),
+    ]);
+
+    expect(results.map((result) => result.error)).toEqual([null, null]);
+    const bookingIds = results.map(
+      (result) => (result.data as { booking: { booking_id: string } }).booking.booking_id
+    );
+    expect(bookingIds[0]).toBe(bookingIds[1]);
+    const { count } = await supabase
+      .from("bookings")
+      .select("*", { count: "exact", head: true })
+      .like("booking_reference", `${args.p_booking_data.booking_reference}%`);
+    expect(count).toBe(1);
+  });
+
+  it("a submit with an expired idempotency key creates a new booking", async () => {
+    if (!shouldRun) return;
+    const args = guestBookingArgs([2]);
+    const firstBookingId = await createGuestBooking([2]);
+    const { error: seedError } = await supabase.from("idempotency_keys").insert({
+      key: args.p_booking_data.idempotency_key,
+      booking_id: firstBookingId,
+      expires_at: new Date(Date.now() - 1000).toISOString(),
+    });
+    expect(seedError).toBeNull();
+
+    const { data, error } = await supabase.rpc("create_guest_booking", args);
+
+    expect(error).toBeNull();
+    expect((data as { booking: { booking_id: string } }).booking.booking_id).not.toBe(
+      firstBookingId
+    );
+  });
+});

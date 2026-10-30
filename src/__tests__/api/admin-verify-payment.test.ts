@@ -19,6 +19,7 @@ let booking: BookingRow | null;
 let statusAfterInsert: string;
 let inserts: Record<string, unknown[]>;
 let updates: string[];
+let paymentInsertError: { code: string } | null;
 
 function table(name: string) {
   const query = {
@@ -28,7 +29,7 @@ function table(name: string) {
     single: async () => ({ data: { payment_status: statusAfterInsert }, error: null }),
     insert: async (row: unknown) => {
       (inserts[name] ??= []).push(row);
-      return { error: null };
+      return { error: name === "payments" ? paymentInsertError : null };
     },
     update: () => {
       updates.push(name);
@@ -63,6 +64,7 @@ describe("POST /api/admin/verify-payment", () => {
     statusAfterInsert = "Partial";
     inserts = {};
     updates = [];
+    paymentInsertError = null;
     vi.resetModules();
     vi.stubGlobal(
       "fetch",
@@ -130,5 +132,14 @@ describe("POST /api/admin/verify-payment", () => {
     const response = await post({ booking_id: bookingId, action: "verify" });
 
     expect(response.status).toBe(409);
+  });
+
+  it("returns 409 when another verify already recorded the downpayment", async () => {
+    paymentInsertError = { code: "23505" };
+
+    const response = await post({ booking_id: bookingId, action: "verify" });
+
+    expect(response.status).toBe(409);
+    expect(inserts.audit_logs).toBeUndefined();
   });
 });

@@ -13,7 +13,7 @@
  * @returns {401} Missing or invalid authentication token
  * @returns {403} User does not have admin role
  * @returns {404} Booking not found
- * @returns {409} Payment already processed (not in Pending state)
+ * @returns {409} Payment already processed, or the downpayment is already recorded
  * @returns {500} Internal server error
  */
 
@@ -262,6 +262,19 @@ export async function onRequest(context: {
         status: "Active",
         notes: "Online booking downpayment",
       } satisfies TablesInsert<"payments">);
+
+      if (paymentError?.code === "23505") {
+        return new Response(
+          JSON.stringify({
+            error: "Conflict",
+            message: "This downpayment is already recorded",
+          }),
+          {
+            status: 409,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
 
       if (paymentError) {
         console.error("Failed to record payment:", paymentError);
