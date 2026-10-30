@@ -12,6 +12,7 @@ import {
 } from "@/lib/payments";
 import { afterBookingPaymentChange } from "@/lib/query-invalidation";
 import { paymentKeys } from "@/lib/query-keys";
+import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { handleSupabaseError, supabase, supabaseAuth } from "@/lib/supabase";
 import { toManilaDateString } from "@/lib/timezone";
 import type { PaymentMethod, PaymentStatus } from "@/types";
@@ -99,7 +100,7 @@ export const paymentDetailQuery = (paymentId: string) =>
         .eq("payment_id", paymentId)
         .single();
 
-      if (error) throw new Error(`Failed to load payment: ${handleSupabaseError(error)}`);
+      if (error) throwDetailLoadError(error, "payment");
       return data;
     },
     staleTime: 30000,

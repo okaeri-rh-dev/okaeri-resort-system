@@ -5,6 +5,7 @@ import { devtools, persist } from "zustand/middleware";
 import { afterExpenseChange } from "@/lib/query-invalidation";
 import { expenseKeys } from "@/lib/query-keys";
 import { uploadReceipt } from "@/lib/storage-security";
+import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import { toISODateString } from "@/lib/timezone";
 import type { Expense } from "@/types";
@@ -118,7 +119,7 @@ export const expenseDetailQuery = (expenseId: string) =>
     queryKey: expenseKeys.detail(expenseId),
     queryFn: async () => {
       const { data, error } = await db.expenses.byId(expenseId);
-      if (error) throw new Error(`Failed to load expense: ${handleSupabaseError(error)}`);
+      if (error) throwDetailLoadError(error, "expense");
       return { ...data, date: data.expense_date };
     },
     staleTime: 30000,

@@ -4,6 +4,7 @@ import { devtools, persist } from "zustand/middleware";
 
 import type { ManilaDay } from "@/lib/bookings/stay";
 import { unitKeys } from "@/lib/query-keys";
+import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import { toManilaDateString } from "@/lib/timezone";
 import type { CabinNight, CabinState, Unit, UnitFilters } from "@/types";
@@ -102,7 +103,7 @@ export const unitDetailQuery = (unitId: string) =>
     queryKey: unitKeys.detail(unitId),
     queryFn: async () => {
       const { data, error } = await db.units.byId(unitId);
-      if (error) throw new Error(`Failed to load unit: ${handleSupabaseError(error)}`);
+      if (error) throwDetailLoadError(error, "unit");
       return { ...data, amenities: data.amenities as string[] | null };
     },
     staleTime: 30000,
