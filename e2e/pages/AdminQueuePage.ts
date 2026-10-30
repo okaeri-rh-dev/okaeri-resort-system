@@ -225,12 +225,11 @@ export class AdminQueuePage {
 
   /**
    * Get the urgency score for a specific booking
-   * Score is displayed next to badge in font-mono text
+   * Score is displayed next to the urgency badge
    */
   async getUrgencyScore(bookingRef: string): Promise<number> {
     const row = this.getQueueItemByReference(bookingRef);
-    // Score shown in first cell with font-mono class
-    const scoreText = await row.locator(".font-mono").first().textContent();
+    const scoreText = await row.locator(".tabular-nums").first().textContent();
     return parseInt(scoreText?.match(/\d+/)?.[0] || "0", 10);
   }
 
@@ -250,21 +249,11 @@ export class AdminQueuePage {
   }
 
   /**
-   * Get all booking references currently in queue
-   * References are in font-mono styled cells
+   * Get all booking references currently in queue (second column)
    */
   async getAllBookingReferences(): Promise<string[]> {
-    const refs: string[] = [];
-    const rows = await this.queueItems.all();
-    for (const row of rows) {
-      // Reference is typically in second column with font-mono
-      const refCell = row.locator("td").nth(1).locator(".font-mono");
-      const text = await refCell.textContent().catch(() => null);
-      if (text) {
-        refs.push(text.trim());
-      }
-    }
-    return refs;
+    const refs = await this.queueItems.locator("td:nth-child(2)").allTextContents();
+    return refs.map((ref) => ref.trim());
   }
 
   // ================== Actions ==================
@@ -371,7 +360,7 @@ export class AdminQueuePage {
     const scores: number[] = [];
 
     for (const row of rows) {
-      const scoreText = await row.locator(".font-mono").first().textContent();
+      const scoreText = await row.locator(".tabular-nums").first().textContent();
       const score = parseInt(scoreText?.match(/\d+/)?.[0] || "0", 10);
       scores.push(score);
     }
