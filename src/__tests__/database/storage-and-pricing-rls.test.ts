@@ -20,7 +20,7 @@ const MANAGER_PLUS: Role[] = ["manager", "owner", "admin"];
 
 const BUCKETS = ["payment-proofs", "receipts"] as const;
 const FOLDER = `rls-test-${Date.now()}`;
-const file = () => new Blob(["rls"], { type: "image/png" });
+const pngBlob = () => new Blob(["rls"], { type: "image/png" });
 
 const clients: Partial<Record<Role, SupabaseClient>> = {};
 const userIds: string[] = [];
@@ -53,7 +53,7 @@ async function makeUser(role: Role) {
 
 async function seedObject(bucket: string) {
   const path = `${FOLDER}/seed-${seq++}.png`;
-  const { error } = await admin.storage.from(bucket).upload(path, file());
+  const { error } = await admin.storage.from(bucket).upload(path, pngBlob());
   if (error) throw new Error(`seed upload to ${bucket} failed: ${error.message}`);
   return path;
 }
@@ -97,7 +97,7 @@ describe("storage and pricing RLS", () => {
         for (const role of ALL) {
           const { error } = await clients[role]!.storage.from(bucket).upload(
             `${FOLDER}/${role}-${seq++}.png`,
-            file()
+            pngBlob()
           );
           expect(error === null, `${role} upload ${bucket}: ${error?.message}`).toBe(
             STAFF_PLUS.includes(role)
@@ -111,7 +111,7 @@ describe("storage and pricing RLS", () => {
           const storage = clients[role]!.storage.from(bucket);
           const allowed = MANAGER_PLUS.includes(role);
 
-          const { error: updateError } = await storage.update(await seedObject(bucket), file());
+          const { error: updateError } = await storage.update(await seedObject(bucket), pngBlob());
           expect(updateError === null, `${role} update ${bucket}`).toBe(allowed);
 
           const { data: removed } = await storage.remove([await seedObject(bucket)]);
@@ -132,12 +132,12 @@ describe("storage and pricing RLS", () => {
     const guest = createClient(URL, ANON);
     const { error } = await guest.storage
       .from("payment-proofs")
-      .uploadToSignedUrl(path, signed!.token, file());
+      .uploadToSignedUrl(path, signed!.token, pngBlob());
     expect(error).toBeNull();
   });
 
   describe("seasonal_rates", () => {
-    const row = () => ({
+    const seasonalRateRow = () => ({
       season_id: `rls_test_${seq++}`,
       name: "RLS test season",
       start_date: "01-01",
@@ -155,10 +155,14 @@ describe("storage and pricing RLS", () => {
         const { data: read } = await table().select("season_id").limit(1);
         expect((read?.length ?? 0) > 0, `${role} select`).toBe(allowedRead);
 
-        const { error: insertError } = await table().insert(row());
+        const { error: insertError } = await table().insert(seasonalRateRow());
         expect(insertError === null, `${role} insert`).toBe(allowedWrite);
 
-        const { data: seeded } = await admin.from("seasonal_rates").insert(row()).select().single();
+        const { data: seeded } = await admin
+          .from("seasonal_rates")
+          .insert(seasonalRateRow())
+          .select()
+          .single();
         const { data: updated } = await table()
           .update({ name: "RLS updated" })
           .eq("id", seeded!.id)
