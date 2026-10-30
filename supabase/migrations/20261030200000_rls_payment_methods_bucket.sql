@@ -12,12 +12,11 @@ DROP POLICY IF EXISTS "Auth upload payment-methods" ON storage.objects;
 DROP POLICY IF EXISTS "Auth update payment-methods" ON storage.objects;
 DROP POLICY IF EXISTS "Auth delete payment-methods" ON storage.objects;
 
-DROP POLICY IF EXISTS "Anyone can read payment methods" ON storage.objects;
 DROP POLICY IF EXISTS "Managers can upload payment methods" ON storage.objects;
 DROP POLICY IF EXISTS "Managers can update payment methods" ON storage.objects;
 DROP POLICY IF EXISTS "Managers can delete payment methods" ON storage.objects;
 
-CREATE POLICY "Anyone can read payment methods" ON storage.objects
+CREATE POLICY "Public read payment-methods" ON storage.objects
     FOR SELECT TO public
     USING (bucket_id = 'payment-methods');
 

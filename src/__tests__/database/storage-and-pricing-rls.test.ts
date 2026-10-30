@@ -17,6 +17,7 @@ const STAFF_PLUS: Role[] = ["staff", "manager", "owner", "admin"];
 const MANAGER_PLUS: Role[] = ["manager", "owner", "admin"];
 
 const BUCKETS = ["payment-proofs", "receipts"] as const;
+const PAYMENT_METHODS_BUCKET = "payment-methods";
 const FOLDER = `rls-test-${Date.now()}`;
 const pngBlob = () => new Blob(["rls"], { type: "image/png" });
 
@@ -42,7 +43,7 @@ describe("storage and pricing RLS", () => {
 
   afterAll(async () => {
     if (!shouldRun) return;
-    for (const bucket of [...BUCKETS, "payment-methods"]) {
+    for (const bucket of [...BUCKETS, PAYMENT_METHODS_BUCKET]) {
       const { data } = await admin.storage.from(bucket).list(FOLDER);
       if (data?.length)
         await admin.storage.from(bucket).remove(data.map((o) => `${FOLDER}/${o.name}`));
@@ -94,8 +95,8 @@ describe("storage and pricing RLS", () => {
     });
   }
 
-  describe("payment-methods", () => {
-    const bucket = "payment-methods";
+  describe(PAYMENT_METHODS_BUCKET, () => {
+    const bucket = PAYMENT_METHODS_BUCKET;
 
     it("anyone, including anon, can download a QR code", async () => {
       if (!shouldRun) return;
