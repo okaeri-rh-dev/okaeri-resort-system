@@ -14,6 +14,7 @@
 import { track404Error, trackRequest } from "@/lib/anomaly-detection";
 import { isIPBlocked } from "@/lib/auto-blocking";
 
+import { secretsMatch } from "./lib/cron-auth";
 import type { AuthenticatedData } from "./lib/rbac";
 import { lookupUserRole } from "./lib/role-lookup";
 
@@ -281,6 +282,11 @@ async function verifySupabaseJWT(
       throw new Error("Token expired");
     }
 
+    // The anon and service-role keys share the signing secret; only signed-in users have both
+    if (!payload.sub || payload.aud !== "authenticated") {
+      throw new Error("Not a user session token");
+    }
+
     return payload;
   } catch (error) {
     console.error("JWT verification failed:", error);
@@ -333,7 +339,7 @@ function verifyCronSecret(
     return { valid: false, status: 401, error: "Missing or invalid Authorization header" };
   }
 
-  if (authHeader.substring(7) !== env.CRON_SECRET) {
+  if (!secretsMatch(authHeader.substring(7), env.CRON_SECRET)) {
     return { valid: false, status: 401, error: "Invalid or expired token" };
   }
 

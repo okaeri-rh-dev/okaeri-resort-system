@@ -34,6 +34,10 @@ describe("verifyCronAuth", () => {
     });
   });
 
+  it.each(["secre", "secrets", "secreT"])("rejects the near miss %s", (token) => {
+    expect(verifyCronAuth(requestWith(`Bearer ${token}`), "secret").valid).toBe(false);
+  });
+
   it("accepts the configured token", () => {
     expect(verifyCronAuth(requestWith("Bearer secret"), "secret")).toEqual({ valid: true });
   });

@@ -35,6 +35,7 @@ interface Env {
   SUPABASE_SERVICE_ROLE_KEY: string;
   TURNSTILE_SECRET_KEY: string;
   ENVIRONMENT?: string;
+  SITE_URL?: string;
 }
 
 // Request validation schema
@@ -107,8 +108,8 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       },
     });
 
-    // Determine redirect URL from request origin
-    const origin = request.headers.get("Origin") || "https://okaeri-resort.pages.dev";
+    // Never the Origin header: a spoofed one would mail the confirmation link to another site
+    const siteUrl = env.SITE_URL ?? new URL(request.url).origin;
 
     // Create user account
     const { error } = await supabase.auth.signUp({
@@ -116,7 +117,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       password,
       options: {
         data: { full_name },
-        emailRedirectTo: origin + "/login?confirmed=true",
+        emailRedirectTo: `${siteUrl}/login?confirmed=true`,
       },
     });
 
