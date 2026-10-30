@@ -6,6 +6,7 @@ import { getAccessToken } from "@/hooks/useAuthToken";
 import { logger } from "@/lib/logger";
 import { afterGuestRetention, invalidateGuests } from "@/lib/query-invalidation";
 import { guestKeys } from "@/lib/query-keys";
+import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Booking, Guest } from "@/types";
 
@@ -116,7 +117,7 @@ export const guestDetailQuery = (guestId: string) =>
     queryKey: guestKeys.detail(guestId),
     queryFn: async () => {
       const { data, error } = await db.guests.withBookings(guestId);
-      if (error) throw new Error(`Failed to load guest: ${handleSupabaseError(error)}`);
+      if (error) throwDetailLoadError(error, "guest");
       return data;
     },
     staleTime: 30000,

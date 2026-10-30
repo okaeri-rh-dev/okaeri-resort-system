@@ -33,6 +33,7 @@ import {
   afterBookingUpdate,
 } from "@/lib/query-invalidation";
 import { bookingKeys } from "@/lib/query-keys";
+import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Booking, BookingFilters, BookingStatus, TableState } from "@/types";
 
@@ -248,7 +249,7 @@ export const bookingDetailQuery = (bookingId: string) =>
     queryKey: bookingKeys.detail(bookingId),
     queryFn: async () => {
       const { data, error } = await db.bookings.byId(bookingId);
-      if (error) throw new Error(`Failed to load booking: ${handleSupabaseError(error)}`);
+      if (error) throwDetailLoadError(error, "booking");
       return data;
     },
     staleTime: 30000,
