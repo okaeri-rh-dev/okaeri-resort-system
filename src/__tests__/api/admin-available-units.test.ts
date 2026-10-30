@@ -22,7 +22,6 @@ const unitColumns: Array<keyof UnitRow> = [
   "unit_code",
   "unit_id",
   "unit_name",
-  "unit_status",
   "unit_type",
   "updated_at",
   "weekend_rate",
@@ -38,7 +37,6 @@ const cabin: UnitRow = {
   unit_code: "C1",
   unit_id: "unit-1",
   unit_name: "Cabin 1",
-  unit_status: "Available",
   unit_type: "cabin",
   updated_at: null,
   weekend_rate: 4000,
@@ -141,10 +139,10 @@ describe("GET /api/admin/available-units", () => {
     }
   );
 
-  it("checks every unit, whatever its cabin status, for the stay at 14:00 / 12:00 Manila", async () => {
+  it("checks every unit for the stay at 14:00 / 12:00 Manila", async () => {
     await getAvailableUnits();
 
-    expect(unitFilters).not.toContain("unit_status");
+    expect(unitFilters).toEqual([]);
     expect(availabilityParams).toEqual({
       p_unit_ids: ["unit-1"],
       p_check_in: "2026-12-20T06:00:00.000Z",

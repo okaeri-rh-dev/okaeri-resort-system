@@ -30,7 +30,6 @@ const stubUnit = (unitCode: string) => ({
   base_rate: 2500,
   weekend_rate: 3000,
   extra_person_rate: 500,
-  unit_status: "Available",
   amenities: [],
   created_at: "2026-10-01T00:00:00Z",
   updated_at: "2026-10-01T00:00:00Z",

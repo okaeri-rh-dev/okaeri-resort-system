@@ -1131,7 +1131,6 @@ export type Database = {
           unit_code: string;
           unit_id: string;
           unit_name: string;
-          unit_status: string | null;
           unit_type: string;
           updated_at: string | null;
           weekend_rate: number;
@@ -1146,7 +1145,6 @@ export type Database = {
           unit_code: string;
           unit_id?: string;
           unit_name: string;
-          unit_status?: string | null;
           unit_type: string;
           updated_at?: string | null;
           weekend_rate: number;
@@ -1161,7 +1159,6 @@ export type Database = {
           unit_code?: string;
           unit_id?: string;
           unit_name?: string;
-          unit_status?: string | null;
           unit_type?: string;
           updated_at?: string | null;
           weekend_rate?: number;

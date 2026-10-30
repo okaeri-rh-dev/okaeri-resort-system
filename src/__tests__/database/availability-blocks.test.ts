@@ -1,6 +1,6 @@
 /**
  * Availability reads honour blocks: the admin availability check, the public
- * guest calendar counts and the guest request step. None of them read unit_status.
+ * guest calendar counts and the guest request step.
  *
  * Requires a local Supabase (supabase start).
  *
@@ -171,15 +171,6 @@ describe("availability reads honour blocks", () => {
       });
     });
 
-    it("does not read the cabin status: a free cabin in Maintenance is available", async () => {
-      if (!shouldRun) return;
-      const maintenanceUnit = await newUnit({ unit_status: "Maintenance" });
-
-      const { data } = await checkAvailability([maintenanceUnit], "2034-03-10", "2034-03-12");
-
-      expect(data).toMatchObject([{ unit_id: maintenanceUnit, is_available: true, reason: null }]);
-    });
-
     it("anon cannot call it, so guests never see which cabin is blocked", async () => {
       if (!shouldRun) return;
       const unitId = await newUnit();
@@ -221,17 +212,17 @@ describe("availability reads honour blocks", () => {
       expect(counts[plusDays(first, 2)]).toBeGreaterThan(0);
     });
 
-    it("counts every cabin, booked ones off, whatever the cabin status", async () => {
+    it("counts every cabin, booked ones off", async () => {
       if (!shouldRun) return;
       const night = plusDays(manilaToday, 220);
       const before = await publicCounts(night, night);
 
-      const maintenanceUnit = await newUnit({ unit_status: "Maintenance" });
-      const withMaintenanceUnit = await publicCounts(night, night);
-      await createBooking(maintenanceUnit, night, plusDays(night, 1));
+      const newCabin = await newUnit();
+      const withNewCabin = await publicCounts(night, night);
+      await createBooking(newCabin, night, plusDays(night, 1));
       const withItBooked = await publicCounts(night, night);
 
-      expect(withMaintenanceUnit[night] - before[night]).toBe(1);
+      expect(withNewCabin[night] - before[night]).toBe(1);
       expect(withItBooked[night]).toBe(before[night]);
     });
 
@@ -263,8 +254,8 @@ describe("availability reads honour blocks", () => {
 
     it("refuses more cabins than are unblocked on a night, by unblocked count, not bookings", async () => {
       if (!shouldRun) return;
-      // The one unblocked cabin is in Maintenance and booked: neither counts against it.
-      const spareUnit = await newUnit({ unit_status: "Maintenance" });
+      // The one unblocked cabin is booked: that does not count against it.
+      const spareUnit = await newUnit();
       blockAllUnitsBut(spareUnit, "2035-05-11", "2035-05-11");
       await createBooking(spareUnit, "2035-05-10", "2035-05-12");
 

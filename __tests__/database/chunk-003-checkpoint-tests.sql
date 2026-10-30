@@ -32,10 +32,10 @@ BEGIN
     RETURNING guest_id INTO v_test_guest_id;
 
     -- Create test units (if not exist)
-    INSERT INTO units (unit_id, unit_code, unit_name, unit_type, unit_status)
+    INSERT INTO units (unit_id, unit_code, unit_name, unit_type)
     VALUES
-        ('11111111-0000-0000-0000-000000000001'::UUID, 'TEST-UNIT-1', 'Test Unit 1', 'Standard', 'Available'),
-        ('22222222-0000-0000-0000-000000000001'::UUID, 'TEST-UNIT-2', 'Test Unit 2', 'Standard', 'Available')
+        ('11111111-0000-0000-0000-000000000001'::UUID, 'TEST-UNIT-1', 'Test Unit 1', 'Standard'),
+        ('22222222-0000-0000-0000-000000000001'::UUID, 'TEST-UNIT-2', 'Test Unit 2', 'Standard')
     ON CONFLICT (unit_code) DO NOTHING;
 
     RAISE NOTICE 'Test fixtures created successfully';

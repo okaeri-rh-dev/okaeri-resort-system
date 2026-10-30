@@ -20,10 +20,10 @@ INSERT INTO "public"."app_roles" ("user_id", "email", "role", "granted_by", "not
 	('00000000-0000-4000-8000-000000000003', 'manager@okaeri.test', 'manager', NULL, 'Local seed user'),
 	('00000000-0000-4000-8000-000000000004', 'staff@okaeri.test', 'staff', NULL, 'Local seed user');
 
-INSERT INTO "public"."units" ("unit_id", "unit_name", "unit_code", "unit_type", "max_occupancy", "base_rate", "weekend_rate", "unit_status", "amenities", "base_occupancy", "extra_person_rate") VALUES
-	('b88857ce-bbc1-474b-ac02-86e8a416c22e', 'Cabin 1', 'C1', 'Standard', 8, 9000.00, 9000.00, 'Available', '["WiFi", "Air Conditioning", "Mini Fridge", "Cable TV"]', 6, 1000.00),
-	('4ca070ec-f5b8-4ce9-8901-ffafdad7a76f', 'Cabin 2', 'C2', 'Standard', 8, 9000.00, 9000.00, 'Available', '["WiFi", "Air Conditioning", "Kitchen", "Cable TV", "Sofa Bed"]', 6, 1000.00),
-	('60ca3cec-b690-4673-8dc5-897f7b7c18e8', 'Cabin 3', 'C3', 'Standard', 8, 9000.00, 9000.00, 'Available', '["WiFi", "Air Conditioning", "Full Kitchen", "Cable TV", "Living Room", "Balcony"]', 6, 1000.00);
+INSERT INTO "public"."units" ("unit_id", "unit_name", "unit_code", "unit_type", "max_occupancy", "base_rate", "weekend_rate", "amenities", "base_occupancy", "extra_person_rate") VALUES
+	('b88857ce-bbc1-474b-ac02-86e8a416c22e', 'Cabin 1', 'C1', 'Standard', 8, 9000.00, 9000.00, '["WiFi", "Air Conditioning", "Mini Fridge", "Cable TV"]', 6, 1000.00),
+	('4ca070ec-f5b8-4ce9-8901-ffafdad7a76f', 'Cabin 2', 'C2', 'Standard', 8, 9000.00, 9000.00, '["WiFi", "Air Conditioning", "Kitchen", "Cable TV", "Sofa Bed"]', 6, 1000.00),
+	('60ca3cec-b690-4673-8dc5-897f7b7c18e8', 'Cabin 3', 'C3', 'Standard', 8, 9000.00, 9000.00, '["WiFi", "Air Conditioning", "Full Kitchen", "Cable TV", "Living Room", "Balcony"]', 6, 1000.00);
 
 INSERT INTO "storage"."buckets" ("id", "name", "public", "allowed_mime_types") VALUES
 	('receipts', 'receipts', false, NULL),

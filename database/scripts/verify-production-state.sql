@@ -270,7 +270,6 @@ SELECT
     unit_code,
     unit_name,
     unit_type,
-    unit_status,
     base_occupancy,
     max_occupancy,
     base_rate,

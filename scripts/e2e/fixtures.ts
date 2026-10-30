@@ -32,7 +32,6 @@ export const E2E_UNIT = {
   base_rate: 2500,
   weekend_rate: 3000,
   extra_person_rate: 500,
-  unit_status: "Available",
 };
 
 export interface E2EBookingFixture {

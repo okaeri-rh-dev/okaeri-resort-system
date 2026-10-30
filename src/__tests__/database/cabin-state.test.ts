@@ -148,15 +148,6 @@ describe("derived cabin state", () => {
     expect((await statesOn("2034-05-10"))[unitId].state).toBe("Free");
   });
 
-  it("does not read the cabin status: a free cabin in Maintenance is Free", async () => {
-    if (!shouldRun) return;
-    const maintenanceUnit = await newUnit({ unit_status: "Maintenance" });
-
-    expect(await statesOn("2034-05-11")).toEqual({
-      [maintenanceUnit]: { state: "Free", block_reason: null },
-    });
-  });
-
   it("staff and above can read it; anon cannot", async () => {
     if (!shouldRun) return;
     for (const client of Object.values(roles.byRole)) {
