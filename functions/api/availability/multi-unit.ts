@@ -18,7 +18,6 @@ import type { Database } from "@/types/database.types";
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
-  RATE_LIMIT_KV: KVNamespace;
 }
 
 type AvailabilityResult = Omit<UnitAvailability, "unit_name">;
@@ -70,31 +69,6 @@ export const onRequestGet = async (context: { request: Request; env: Env }): Pro
       );
     }
     const { check_in: checkInUTC, check_out: checkOutUTC } = toStayInstants(checkIn, checkOut);
-
-    // ✅ Generate cache key
-    const sortedUnitIds = [...unitIds].sort();
-    const cacheKey = `availability:${sortedUnitIds.join(",")}:${checkIn}:${checkOut}:${excludeBookingId ?? ""}`;
-
-    // ✅ Check KV cache first (1 minute TTL)
-    if (env.RATE_LIMIT_KV) {
-      try {
-        const cached = await env.RATE_LIMIT_KV.get(cacheKey);
-        if (cached) {
-          const cachedData = JSON.parse(cached);
-          return Response.json(cachedData, {
-            headers: {
-              "Content-Type": "application/json",
-              "X-Cache": "HIT",
-              "Cache-Control": "public, max-age=60",
-              "X-Processing-Time": "0ms",
-            },
-          });
-        }
-      } catch (cacheError) {
-        console.warn("[Availability] Cache read error:", cacheError);
-        // Continue to database query if cache fails
-      }
-    }
 
     // Call database function (from Phase 1)
     // Use Authorization header to authenticate as the logged-in user
@@ -169,24 +143,12 @@ export const onRequestGet = async (context: { request: Request; env: Env }): Pro
       },
     };
 
-    // ✅ Cache result for 1 minute
-    if (env.RATE_LIMIT_KV) {
-      try {
-        await env.RATE_LIMIT_KV.put(cacheKey, JSON.stringify(responseData), {
-          expirationTtl: 60, // 1 minute
-        });
-      } catch (cacheError) {
-        console.warn("[Availability] Cache write error:", cacheError);
-        // Continue even if caching fails
-      }
-    }
-
     return Response.json(responseData, {
       headers: {
         "Content-Type": "application/json",
-        "X-Cache": "MISS",
         "X-Processing-Time": `${processingTime}ms`,
-        "Cache-Control": "public, max-age=60",
+        // Signed-in answers include per-cabin Blocked/Booked reasons
+        "Cache-Control": authHeader ? "private, no-store" : "public, max-age=60",
       },
     });
   } catch (error) {

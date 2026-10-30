@@ -106,9 +106,8 @@ export const onRequestPost = async (context: {
   request: Request;
   env: Env;
   data: AuthenticatedData;
-  waitUntil: (promise: Promise<unknown>) => void;
 }): Promise<Response> => {
-  const { request, env, waitUntil } = context;
+  const { request, env } = context;
   const authenticatedUser = context.data.user;
   const startTime = Date.now();
 
@@ -235,18 +234,6 @@ export const onRequestPost = async (context: {
 
     // Log audit event (Phase 4.5: Compliance requirement)
     await logBookingCreated(supabase, booking, userId, request);
-
-    // ✅ Invalidate availability cache for booked units (Phase 4.5)
-    // Use waitUntil to not block the response
-    const cacheKeys = sanitizedData.units.map(
-      (unit) => `availability:${unit.unit_id}:${sanitizedData.check_in}:${sanitizedData.check_out}`
-    );
-
-    waitUntil(
-      Promise.all(cacheKeys.map((key) => env.RATE_LIMIT_KV.delete(key))).catch((error) => {
-        console.error("Cache invalidation failed:", error);
-      })
-    );
 
     // Cache result for idempotency (24 hours)
     if (idempotencyKey) {
