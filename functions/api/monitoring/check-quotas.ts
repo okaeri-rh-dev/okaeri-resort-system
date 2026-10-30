@@ -2,10 +2,12 @@
  * Quota Monitoring and Alert Function
  *
  * Checks various service quotas and sends alerts when thresholds are exceeded.
- * Runs periodically via cron or can be called manually.
+ * Called manually by an owner or admin.
  */
 
 import { toUTCDateString } from "@/lib/timezone";
+
+import { OWNER_OR_ABOVE, type AuthenticatedData, type UserRole } from "../../lib/rbac";
 
 interface Env {
   RATE_LIMIT_KV: KVNamespace;
@@ -23,10 +25,18 @@ interface Alert {
   percentage: number;
 }
 
-export async function onRequest(context: EventContext<Env, never, Record<string, unknown>>) {
+export async function onRequest(context: EventContext<Env, never, AuthenticatedData>) {
   const { env, request } = context;
 
-  // Allow both GET (for manual checks) and POST (for cron)
+  // It can fire webhook and email alerts, so only the owners may trigger it
+  if (!OWNER_OR_ABOVE.includes(context.data.user?.role as UserRole)) {
+    return Response.json(
+      { error: "Forbidden", message: "Owner access or higher is required" },
+      { status: 403 }
+    );
+  }
+
+  // Allow both GET and POST for manual checks
   if (request.method !== "GET" && request.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
   }

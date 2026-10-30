@@ -13,9 +13,9 @@ Serverless Cloudflare Pages Functions. Implementation, validation, and middlewar
 
 ### Protected Endpoints (Auth Required)
 
-| Endpoint                       | Method | Purpose         | Rate Limit |
-| ------------------------------ | ------ | --------------- | ---------- |
-| `/api/audit/log-with-ip`       | POST   | Log audit event | 100/hour   |
-| `/api/monitoring/check-quotas` | GET    | Check quotas    | 60/hour    |
+| Endpoint                       | Method | Purpose               | Rate Limit |
+| ------------------------------ | ------ | --------------------- | ---------- |
+| `/api/audit/log-with-ip`       | POST   | Log audit event       | 100/hour   |
+| `/api/monitoring/check-quotas` | GET    | Check quotas (owner+) | 60/hour    |
 
 Auth on protected routes is an HS256 JWT verified in `_middleware.ts` against the LEGACY Supabase JWT secret — blanket 401s across all protected routes are almost always a secret problem, not a code problem (use the `deploy-secrets` skill).

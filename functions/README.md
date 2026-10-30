@@ -284,7 +284,7 @@ kv_namespaces = [
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/audit/log-with-ip` | POST | Log audit event with IP |
-| `/api/monitoring/check-quotas` | GET | Check all quota statuses |
+| `/api/monitoring/check-quotas` | GET | Check all quota statuses (owner or admin) |
 
 ### Cron Jobs
 

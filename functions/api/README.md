@@ -37,7 +37,7 @@ api/
 | Endpoint | Method | Description | Rate Limit |
 |----------|--------|-------------|------------|
 | `/api/audit/log-with-ip` | POST | Log audit event with IP | 100/hour |
-| `/api/monitoring/check-quotas` | GET | Check all quota statuses | 60/hour |
+| `/api/monitoring/check-quotas` | GET | Check all quota statuses (owner or admin) | 60/hour |
 
 ## 🔐 Security Architecture
 
