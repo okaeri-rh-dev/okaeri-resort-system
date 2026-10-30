@@ -282,7 +282,6 @@ export async function createTestUnit(
     base_rate: overrides?.base_rate || 1250.0,
     weekend_rate: overrides?.weekend_rate || 1500.0,
     extra_person_rate: overrides?.extra_person_rate || 300.0,
-    unit_status: overrides?.unit_status || "Available",
     ...overrides,
   };
 

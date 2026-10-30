@@ -310,7 +310,7 @@ function updatePatch(table: string): Record<string, unknown> {
     case "payments":
       return { notes: "RLS upd" };
     case "units":
-      return { unit_status: "Available" };
+      return { unit_type: "Standard" };
     case "expenses":
       return { notes: "RLS upd" };
     case "maintenance_logs":

@@ -151,7 +151,6 @@ export async function createTestUnit(overrides: Partial<Tables["units"]["Insert"
       max_occupancy: overrides.max_occupancy || 4,
       base_occupancy: overrides.base_occupancy || 2,
       extra_person_rate: overrides.extra_person_rate || 500,
-      unit_status: overrides.unit_status || "Available",
       // description field removed - not in database schema
       ...overrides,
     })

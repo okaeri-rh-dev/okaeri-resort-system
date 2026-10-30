@@ -18,7 +18,6 @@ CREATE TABLE IF NOT EXISTS units (
     base_rate DECIMAL(10,2) NOT NULL CHECK (base_rate >= 0),
     weekend_rate DECIMAL(10,2) NOT NULL CHECK (weekend_rate >= 0),
     extra_person_rate DECIMAL(10,2) NOT NULL CHECK (extra_person_rate >= 0),
-    unit_status VARCHAR(20) DEFAULT 'Available' CHECK (unit_status IN ('Available', 'Occupied', 'Maintenance', 'Reserved')),
     amenities JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -120,7 +119,6 @@ CREATE INDEX idx_bookings_unit_dates ON bookings(unit_id, check_in, check_out);
 CREATE INDEX idx_bookings_status ON bookings(booking_status);
 CREATE INDEX idx_bookings_guest ON bookings(guest_id);
 CREATE INDEX idx_bookings_dates ON bookings(check_in, check_out);
-CREATE INDEX idx_units_status ON units(unit_status);
 CREATE INDEX idx_guests_email ON guests(email);
 CREATE INDEX idx_payments_booking ON payments(booking_id);
 
