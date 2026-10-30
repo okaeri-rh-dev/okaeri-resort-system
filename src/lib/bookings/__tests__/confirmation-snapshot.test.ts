@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import type { MultiUnitBookingResponse } from "@/types/guest-booking-multi-unit";
+import type { CreatedMultiUnitBookingResponse } from "@/types/guest-booking-multi-unit";
 
 import { readConfirmationSnapshot, saveConfirmationSnapshot } from "../confirmation-snapshot";
 
-const createdResponse: MultiUnitBookingResponse = {
+const createdResponse: CreatedMultiUnitBookingResponse = {
   success: true,
   booking: {
     booking_id: "00000000-0000-0000-0000-000000000092",

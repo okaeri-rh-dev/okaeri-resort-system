@@ -55,35 +55,56 @@ export const multiUnitBookingSchema = z
   });
 
 // ============================================
-// Response Types
+// Response Schemas
 // ============================================
 
-export interface MultiUnitBookingResponse {
-  success: boolean;
-  booking: {
-    booking_id: string;
-    booking_reference: string;
-    total_amount: number;
-    downpayment_amount: number;
-    discount_applied?: {
-      percent: number;
-      amount: number;
-      rule_name: string;
-    };
-  };
-  unit_requests: Array<{ guests_per_unit: number }>;
-  pricing_breakdown: {
-    base_total: number;
-    weekend_surcharge: number;
-    extra_person_fees: number;
-    subtotal: number;
-    discount_amount: number;
-    total: number;
-    nights: number;
-  };
-  message: string;
-  is_duplicate?: boolean;
-}
+export const createdMultiUnitBookingResponseSchema = z.object({
+  success: z.literal(true),
+  booking: z.object({
+    booking_id: z.string(),
+    booking_reference: z.string(),
+    total_amount: z.number(),
+    downpayment_amount: z.number(),
+    discount_applied: z
+      .object({
+        percent: z.number(),
+        amount: z.number(),
+        rule_name: z.string(),
+      })
+      .optional(),
+  }),
+  unit_requests: z.array(unitRequestSchema),
+  pricing_breakdown: z.object({
+    base_total: z.number(),
+    weekend_surcharge: z.number(),
+    extra_person_fees: z.number(),
+    subtotal: z.number(),
+    discount_amount: z.number(),
+    total: z.number(),
+    nights: z.number(),
+  }),
+  message: z.string(),
+  is_duplicate: z.literal(false),
+});
+
+// Same idempotency key within 48 hours: the Worker returns the stored bookings row, with no pricing.
+const duplicateMultiUnitBookingResponseSchema = z.object({
+  success: z.literal(true),
+  booking: z.looseObject({ booking_reference: z.string() }),
+  message: z.string(),
+  is_duplicate: z.literal(true),
+});
+
+export const multiUnitBookingResponseSchema = z.discriminatedUnion("is_duplicate", [
+  createdMultiUnitBookingResponseSchema,
+  duplicateMultiUnitBookingResponseSchema,
+]);
+
+export type MultiUnitBookingResponse = z.infer<typeof multiUnitBookingResponseSchema>;
+export type CreatedMultiUnitBookingResponse = z.infer<typeof createdMultiUnitBookingResponseSchema>;
+export type DuplicateMultiUnitBookingResponse = z.infer<
+  typeof duplicateMultiUnitBookingResponseSchema
+>;
 
 export interface PricingConfig {
   base_rate: number;
