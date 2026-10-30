@@ -1,4 +1,10 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
@@ -188,6 +194,7 @@ const expenseListQuery = ({
         updated_at: expense.updated_at || "",
       })) as Expense[];
     },
+    placeholderData: keepPreviousData,
     staleTime: 60000, // 1 minute
     refetchOnWindowFocus: true,
   });
