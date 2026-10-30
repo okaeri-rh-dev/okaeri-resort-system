@@ -11,9 +11,10 @@
  * @vitest-environment node
  */
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { createRoleClients, type RoleClients } from "../setup/role-clients";
 import {
   testSupabaseAdmin as admin,
   cleanupTestData,
@@ -22,9 +23,6 @@ import {
   createTestUnit,
   shouldRunDatabaseTests,
 } from "../setup/test-db";
-
-const URL = process.env.TEST_SUPABASE_URL || "http://127.0.0.1:54321";
-const ANON = process.env.TEST_SUPABASE_ANON_KEY || "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
 
 type Role = "user" | "staff" | "manager" | "owner" | "admin";
 const ROLES_WITH_APP_ROLE: Role[] = ["staff", "manager", "owner", "admin"];
@@ -65,38 +63,12 @@ const MATRIX: Record<string, Record<"select" | "insert" | "update" | "delete", R
   },
 };
 
-const clients: Partial<Record<Role, SupabaseClient>> = {};
-const userIds: Partial<Record<Role, string>> = {};
+let roleClients: RoleClients;
+// Untyped so the matrix can address tables by string name.
+let clients: Record<Role, SupabaseClient>;
 const seeded: Record<string, { pk: string; id: string }> = {};
 
 let shouldRun = false;
-
-async function makeUser(role: Role) {
-  const email = `rls-${role}-${Date.now()}@example.com`;
-  const password = "Test-Password-123!";
-  const { data, error } = await admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-  });
-  if (error || !data.user) throw new Error(`createUser(${role}) failed: ${error?.message}`);
-  userIds[role] = data.user.id;
-
-  if (ROLES_WITH_APP_ROLE.includes(role)) {
-    const { error: rErr } = await admin.from("app_roles").insert({
-      user_id: data.user.id,
-      email,
-      role: role as Exclude<Role, "user">,
-      is_active: true,
-    });
-    if (rErr) throw new Error(`app_roles insert(${role}) failed: ${rErr.message}`);
-  }
-
-  const c = createClient(URL, ANON);
-  const { error: sErr } = await c.auth.signInWithPassword({ email, password });
-  if (sErr) throw new Error(`signIn(${role}) failed: ${sErr.message}`);
-  clients[role] = c;
-}
 
 describe("RLS role-based access on core tables", () => {
   beforeAll(async () => {
@@ -104,7 +76,8 @@ describe("RLS role-based access on core tables", () => {
     if (!shouldRun) return;
 
     await cleanupTestData({ includeTestFixtures: true });
-    for (const role of ALL) await makeUser(role);
+    roleClients = await createRoleClients("rls");
+    clients = { user: roleClients.noRole, ...roleClients.byRole };
 
     // Seed one row per table via the admin (service-role) client, which bypasses RLS.
     const unit = await createTestUnit({});
@@ -150,9 +123,7 @@ describe("RLS role-based access on core tables", () => {
 
   afterAll(async () => {
     if (!shouldRun) return;
-    const ids = Object.values(userIds).filter(Boolean);
-    if (ids.length) await admin.from("app_roles").delete().in("user_id", ids);
-    for (const id of ids) await admin.auth.admin.deleteUser(id).catch(() => {});
+    await roleClients.cleanup();
     // Remove the RLS seed rows cleanupTestData does not pattern-match.
     await admin.from("expenses").delete().eq("description", "RLS seed");
     await admin.from("maintenance_logs").delete().eq("issue_description", "RLS seed");
@@ -165,7 +136,7 @@ describe("RLS role-based access on core tables", () => {
       it("SELECT visibility matches the matrix", async () => {
         if (!shouldRun) return;
         for (const role of ALL) {
-          const { data } = await clients[role]!.from(table).select("*").limit(5);
+          const { data } = await clients[role].from(table).select("*").limit(5);
           const canRead = (data?.length ?? 0) > 0;
           expect(
             canRead,
@@ -179,7 +150,7 @@ describe("RLS role-based access on core tables", () => {
         for (const role of ALL) {
           // Minimal row: we only care whether RLS blocked it (code 42501), not
           // whether the row is otherwise valid.
-          const { error } = await clients[role]!.from(table).insert(insertRow(table));
+          const { error } = await clients[role].from(table).insert(insertRow(table));
           const rlsAllowed = error?.code !== "42501";
           expect(
             rlsAllowed,
@@ -194,7 +165,8 @@ describe("RLS role-based access on core tables", () => {
         for (const role of ALL) {
           // RLS denies UPDATE by filtering the row out (0 rows affected), not by
           // erroring — so a returned row means the update was permitted.
-          const { data } = await clients[role]!.from(table)
+          const { data } = await clients[role]
+            .from(table)
             .update(updatePatch(table))
             .eq(pk, id)
             .select();
@@ -212,7 +184,7 @@ describe("RLS role-based access on core tables", () => {
         for (const role of ALL) {
           // Fresh throwaway row per attempt (admin bypasses RLS to create it).
           const id = await createThrowaway(table);
-          const { data } = await clients[role]!.from(table).delete().eq(pk, id).select();
+          const { data } = await clients[role].from(table).delete().eq(pk, id).select();
           const deleted = (data?.length ?? 0) > 0;
           expect(
             deleted,
