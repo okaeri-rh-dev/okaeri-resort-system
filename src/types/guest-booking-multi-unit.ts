@@ -100,7 +100,6 @@ export const multiUnitBookingResponseSchema = z.discriminatedUnion("is_duplicate
   duplicateMultiUnitBookingResponseSchema,
 ]);
 
-export type MultiUnitBookingResponse = z.infer<typeof multiUnitBookingResponseSchema>;
 export type CreatedMultiUnitBookingResponse = z.infer<typeof createdMultiUnitBookingResponseSchema>;
 export type DuplicateMultiUnitBookingResponse = z.infer<
   typeof duplicateMultiUnitBookingResponseSchema
