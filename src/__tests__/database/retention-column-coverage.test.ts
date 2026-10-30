@@ -89,6 +89,7 @@ const COLUMNS: Record<string, { clear: string[]; keep: string[] }> = {
       "payment_date",
       "payment_method",
       "status",
+      "kind",
       "created_at",
     ],
   },

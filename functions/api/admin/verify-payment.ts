@@ -260,6 +260,7 @@ export async function onRequest(context: {
         payment_method: booking.payment_method,
         proof_url: booking.payment_proof_url,
         status: "Active",
+        kind: "online_downpayment",
         notes: "Online booking downpayment",
       } satisfies TablesInsert<"payments">);
 

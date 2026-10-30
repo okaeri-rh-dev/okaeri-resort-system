@@ -93,6 +93,7 @@ describe("POST /api/admin/verify-payment", () => {
         payment_method: "GCash",
         proof_url: "TEMP-abc_1.png",
         status: "Active",
+        kind: "online_downpayment",
         notes: "Online booking downpayment",
       },
     ]);

@@ -397,8 +397,8 @@ describe("duplicate writes", () => {
       booking_id: bookingId,
       amount: 3500,
       status: "Active",
-      notes: "Online booking downpayment",
-    };
+      kind: "online_downpayment",
+    } as const;
 
     const results = await Promise.all([
       supabase.from("payments").insert(downpayment),
@@ -411,6 +411,27 @@ describe("duplicate writes", () => {
       .select("*", { count: "exact", head: true })
       .eq("booking_id", bookingId);
     expect(count).toBe(1);
+  });
+
+  it("a manual payment with the downpayment's notes does not block the downpayment", async () => {
+    if (!shouldRun) return;
+    const bookingId = await createGuestBooking([2]);
+    const { error: manualError } = await supabase.from("payments").insert({
+      booking_id: bookingId,
+      amount: 1000,
+      status: "Active",
+      notes: "Online booking downpayment",
+    });
+    expect(manualError).toBeNull();
+
+    const { error } = await supabase.from("payments").insert({
+      booking_id: bookingId,
+      amount: 3500,
+      status: "Active",
+      kind: "online_downpayment",
+    });
+
+    expect(error).toBeNull();
   });
 
   it("two submits with one idempotency key create one booking", async () => {

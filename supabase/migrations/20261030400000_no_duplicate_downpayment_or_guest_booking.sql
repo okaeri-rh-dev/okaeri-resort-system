@@ -1,15 +1,22 @@
 -- No duplicate writes (TASK-7).
 -- 1. One active online-booking downpayment per booking: two verifies at the same
---    time made the status trigger sum both rows. verify-payment maps 23505 to 409.
+--    time made the status trigger sum both rows. payments.kind marks the downpayment,
+--    because notes is free text that managers edit.
 -- 2. create_guest_booking claims the idempotency key before it inserts the booking,
 --    so a double submit waits for the first and returns its booking. The key's FK
 --    is deferred because the key row now comes before its booking row.
 
 BEGIN;
 
+ALTER TABLE public.payments
+    ADD COLUMN kind TEXT NOT NULL DEFAULT 'manual'
+    CHECK (kind IN ('manual', 'online_downpayment'));
+
+UPDATE public.payments SET kind = 'online_downpayment' WHERE notes = 'Online booking downpayment';
+
 CREATE UNIQUE INDEX payments_one_online_downpayment
     ON public.payments (booking_id)
-    WHERE status = 'Active' AND notes = 'Online booking downpayment';
+    WHERE status = 'Active' AND kind = 'online_downpayment';
 
 ALTER TABLE public.idempotency_keys
     ALTER CONSTRAINT idempotency_keys_booking_id_fkey DEFERRABLE INITIALLY DEFERRED;

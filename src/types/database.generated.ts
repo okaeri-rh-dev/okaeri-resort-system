@@ -953,6 +953,7 @@ export type Database = {
           amount: number;
           booking_id: string | null;
           created_at: string | null;
+          kind: string;
           notes: string | null;
           payment_date: string | null;
           payment_id: string;
@@ -965,6 +966,7 @@ export type Database = {
           amount: number;
           booking_id?: string | null;
           created_at?: string | null;
+          kind?: string;
           notes?: string | null;
           payment_date?: string | null;
           payment_id?: string;
@@ -977,6 +979,7 @@ export type Database = {
           amount?: number;
           booking_id?: string | null;
           created_at?: string | null;
+          kind?: string;
           notes?: string | null;
           payment_date?: string | null;
           payment_id?: string;
