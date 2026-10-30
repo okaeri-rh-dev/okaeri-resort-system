@@ -187,7 +187,6 @@ CREATE TABLE units (
     price_per_night DECIMAL(10,2) NOT NULL CHECK (price_per_night > 0),
     features JSONB DEFAULT '{}',
     images JSONB DEFAULT '[]',
-    status VARCHAR(50) DEFAULT 'available', -- 'available', 'maintenance', 'blocked'
     sort_order INTEGER DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
@@ -198,7 +197,6 @@ CREATE TABLE units (
 
 -- Indexes
 CREATE INDEX idx_units_property ON units(property_id);
-CREATE INDEX idx_units_status ON units(status);
 CREATE INDEX idx_units_type ON units(type);
 CREATE INDEX idx_units_price ON units(price_per_night);
 ```
