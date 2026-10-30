@@ -47,40 +47,9 @@ const loginSchema = z.object({
   turnstile_token: z.string().min(1, "Security verification required"),
 });
 
-// CORS headers helper
-function getCorsHeaders(origin?: string | null) {
-  const allowedOrigins = [
-    "https://okaeri-resort.pages.dev",
-    /^https:\/\/[a-z0-9-]+\.okaeri-resort\.pages\.dev$/,
-    "http://localhost:5173",
-    "http://localhost:8788",
-    "http://127.0.0.1:5173",
-  ];
-
-  const isAllowed =
-    origin &&
-    allowedOrigins.some((allowed) =>
-      typeof allowed === "string" ? allowed === origin : allowed.test(origin)
-    );
-
-  return {
-    "Access-Control-Allow-Origin": isAllowed && origin ? origin : "https://okaeri-resort.pages.dev",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Max-Age": "86400",
-  };
-}
-
-// Handle OPTIONS request
-export async function onRequestOptions(context: { request: Request }): Promise<Response> {
-  const corsHeaders = getCorsHeaders(context.request.headers.get("Origin"));
-  return new Response(null, { status: 204, headers: corsHeaders });
-}
-
 // Handle POST request for login
 export async function onRequestPost(context: { request: Request; env: Env }): Promise<Response> {
   const { request, env } = context;
-  const corsHeaders = getCorsHeaders(request.headers.get("Origin"));
 
   try {
     // Get client IP for Turnstile and logging
@@ -103,7 +72,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
         }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -128,7 +97,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
         }),
         {
           status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -161,7 +130,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
         }),
         {
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -194,7 +163,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       }
     );
   } catch (error) {
@@ -207,7 +176,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       }
     );
   }

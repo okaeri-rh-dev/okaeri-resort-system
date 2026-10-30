@@ -3,8 +3,9 @@ import { z } from "zod";
 import { isGuestBookingReference } from "@/lib/bookings/reference";
 import { checkKVRateLimit, createAdvancedFingerprint } from "@/lib/kv-rate-limit";
 import type { StatusResponse } from "@/lib/schema-transform";
-import { createSupabaseAdmin } from "@/lib/supabase-admin";
 import { getClientIp, verifyTurnstile } from "@/lib/turnstile";
+
+import { createSupabaseAdmin } from "../../lib/supabase-admin";
 
 // Environment type
 interface Env {
@@ -22,36 +23,9 @@ const statusCheckSchema = z.object({
   turnstile_token: z.string().optional(), // Optional, required after rate limiting
 });
 
-// CORS headers helper
-function getCorsHeaders(origin?: string | null) {
-  const allowedOrigins = [
-    "https://okaeri-resort.pages.dev",
-    /^https:\/\/[a-z0-9-]+\.okaeri-resort\.pages\.dev$/,
-  ];
-
-  const isAllowed =
-    origin &&
-    allowedOrigins.some((allowed) =>
-      typeof allowed === "string" ? allowed === origin : allowed.test(origin)
-    );
-
-  return {
-    "Access-Control-Allow-Origin": isAllowed ? origin : "https://okaeri-resort.pages.dev",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-  };
-}
-
-// Handle OPTIONS request
-export async function onRequestOptions(context: { request: Request }): Promise<Response> {
-  const corsHeaders = getCorsHeaders(context.request.headers.get("Origin"));
-  return new Response(null, { headers: corsHeaders });
-}
-
 // Handle POST request for status check
 export async function onRequestPost(context: { request: Request; env: Env }): Promise<Response> {
   const { request, env } = context;
-  const corsHeaders = getCorsHeaders(request.headers.get("Origin"));
 
   try {
     // Enhanced rate limiting with fingerprinting
@@ -80,7 +54,6 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
         {
           status: 429,
           headers: {
-            ...corsHeaders,
             "Content-Type": "application/json",
             "Retry-After": String(rateLimitResult.retryAfter),
             "X-RateLimit-Remaining": "0",
@@ -101,7 +74,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
         }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -124,7 +97,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
           }),
           {
             status: 403,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json" },
           }
         );
       }
@@ -169,7 +142,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
         }),
         {
           status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -198,7 +171,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
 
     return new Response(JSON.stringify(statusResponse), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("Status check error:", error);
@@ -209,7 +182,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       }
     );
   }

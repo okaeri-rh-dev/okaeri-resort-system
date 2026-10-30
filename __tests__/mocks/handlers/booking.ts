@@ -272,56 +272,6 @@ export const bookingHandlers = [
     }
   }),
 
-  // POST /api/guest-booking/preview-pricing - Calculate pricing
-  http.post("http://localhost:8788/api/guest-booking/preview-pricing", async ({ request }) => {
-    try {
-      const body: any = await request.json();
-
-      // Validate required fields
-      if (!body.check_in || !body.check_out || !body.unit_requests) {
-        return HttpResponse.json(
-          {
-            success: false,
-            error: "Missing required fields for pricing calculation",
-          },
-          { status: 400 }
-        );
-      }
-
-      // Validate date range (check_out must be after check_in)
-      const checkInDate = new Date(body.check_in);
-      const checkOutDate = new Date(body.check_out);
-      if (checkOutDate <= checkInDate) {
-        return HttpResponse.json(
-          {
-            success: false,
-            error: "Invalid date range: check_out must be after check_in",
-          },
-          { status: 400 }
-        );
-      }
-
-      // Calculate pricing
-      const pricing = calculatePricing(body.check_in, body.check_out, body.unit_requests);
-
-      return HttpResponse.json(
-        {
-          success: true,
-          pricing,
-        },
-        { status: 200 }
-      );
-    } catch (_error) {
-      return HttpResponse.json(
-        {
-          success: false,
-          error: "Failed to calculate pricing",
-        },
-        { status: 500 }
-      );
-    }
-  }),
-
   // GET /api/guest-booking/rates - Get static rates
   http.get("http://localhost:8788/api/guest-booking/rates", () => {
     return HttpResponse.json({

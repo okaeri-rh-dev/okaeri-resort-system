@@ -38,13 +38,7 @@ interface UploadUrlResponse {
   error?: string;
 }
 
-/**
- * CORS headers for cross-origin requests
- */
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+const JSON_HEADERS = {
   "Content-Type": "application/json",
 };
 
@@ -76,14 +70,6 @@ export async function onRequest(context: {
 }): Promise<Response> {
   const { request, env } = context;
 
-  // Handle CORS preflight
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: CORS_HEADERS,
-    });
-  }
-
   // Only accept POST requests
   if (request.method !== "POST") {
     return new Response(
@@ -93,7 +79,7 @@ export async function onRequest(context: {
       } as UploadUrlResponse),
       {
         status: 405,
-        headers: CORS_HEADERS,
+        headers: JSON_HEADERS,
       }
     );
   }
@@ -112,7 +98,7 @@ export async function onRequest(context: {
         } as UploadUrlResponse),
         {
           status: 400,
-          headers: CORS_HEADERS,
+          headers: JSON_HEADERS,
         }
       );
     }
@@ -126,7 +112,7 @@ export async function onRequest(context: {
         } as UploadUrlResponse),
         {
           status: 400,
-          headers: CORS_HEADERS,
+          headers: JSON_HEADERS,
         }
       );
     }
@@ -141,7 +127,7 @@ export async function onRequest(context: {
         } as UploadUrlResponse),
         {
           status: 400,
-          headers: CORS_HEADERS,
+          headers: JSON_HEADERS,
         }
       );
     }
@@ -178,7 +164,7 @@ export async function onRequest(context: {
         } as UploadUrlResponse),
         {
           status: 500,
-          headers: CORS_HEADERS,
+          headers: JSON_HEADERS,
         }
       );
     }
@@ -193,7 +179,7 @@ export async function onRequest(context: {
       } as UploadUrlResponse),
       {
         status: 200,
-        headers: CORS_HEADERS,
+        headers: JSON_HEADERS,
       }
     );
   } catch (error) {
@@ -206,7 +192,7 @@ export async function onRequest(context: {
       } as UploadUrlResponse),
       {
         status: 500,
-        headers: CORS_HEADERS,
+        headers: JSON_HEADERS,
       }
     );
   }

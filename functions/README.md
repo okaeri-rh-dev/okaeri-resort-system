@@ -418,7 +418,7 @@ describe('Guest Booking API', () => {
 4. **Log security events** to audit trail
 5. **Use HTTPS only** in production
 6. **Validate Content-Type** headers
-7. **Set proper CORS** headers
+7. **Leave CORS to the global middleware** (no per-route CORS headers or OPTIONS handlers)
 8. **Monitor for suspicious patterns**
 
 ## 📈 Performance Tips

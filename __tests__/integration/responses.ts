@@ -22,11 +22,6 @@ export interface GuestBookingResponse extends ErrorFields {
   is_duplicate?: boolean;
 }
 
-export interface PreviewPricingResponse extends ErrorFields {
-  success: boolean;
-  pricing: MockPricing;
-}
-
 export interface RatesResponse {
   success: boolean;
   rates: MockPricing["rates"] & { max_capacity_per_unit: number };

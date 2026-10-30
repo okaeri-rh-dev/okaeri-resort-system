@@ -37,13 +37,6 @@ interface ErrorResponse {
   details?: string;
 }
 
-// CORS headers for all responses
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
-
 // Date validation regex for YYYY-MM-DD format
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -74,19 +67,11 @@ export async function onRequest(context: {
 }): Promise<Response> {
   const { request, env } = context;
 
-  // Handle OPTIONS preflight request
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
-  }
-
   // Only allow GET requests
   if (request.method !== "GET") {
     return new Response(JSON.stringify({ success: false, error: "Method not allowed" }), {
       status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -105,7 +90,7 @@ export async function onRequest(context: {
       };
       return new Response(JSON.stringify(errorResponse), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -118,7 +103,7 @@ export async function onRequest(context: {
       };
       return new Response(JSON.stringify(errorResponse), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -131,7 +116,7 @@ export async function onRequest(context: {
       };
       return new Response(JSON.stringify(errorResponse), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -145,7 +130,7 @@ export async function onRequest(context: {
       };
       return new Response(JSON.stringify(errorResponse), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -174,7 +159,7 @@ export async function onRequest(context: {
       };
       return new Response(JSON.stringify(errorResponse), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -215,7 +200,7 @@ export async function onRequest(context: {
       };
       return new Response(JSON.stringify(errorResponse), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -239,7 +224,7 @@ export async function onRequest(context: {
       };
       return new Response(JSON.stringify(errorResponse), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -273,7 +258,7 @@ export async function onRequest(context: {
 
     return new Response(JSON.stringify(response), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("[available-units] Unexpected error:", error);
@@ -284,7 +269,7 @@ export async function onRequest(context: {
     };
     return new Response(JSON.stringify(errorResponse), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
     });
   }
 }

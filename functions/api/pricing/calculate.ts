@@ -60,29 +60,17 @@ const pricingCalculateRequestSchema = z
     path: ["guest_count"],
   });
 
-// CORS headers
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
-
 export async function onRequest(context: {
   request: CloudflareRequest;
   env: Env;
 }): Promise<Response> {
   const { request, env } = context;
 
-  // Handle CORS preflight
-  if (request.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
   // Only allow POST
   if (request.method !== "POST") {
     return new Response(
       JSON.stringify({ error: "METHOD_NOT_ALLOWED", message: "Only POST method is allowed" }),
-      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 405, headers: { "Content-Type": "application/json" } }
     );
   }
 
@@ -99,7 +87,7 @@ export async function onRequest(context: {
           message: "Invalid request parameters",
           errors: validationResult.error.flatten().fieldErrors,
         }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
@@ -128,7 +116,6 @@ export async function onRequest(context: {
         {
           status: 429,
           headers: {
-            ...corsHeaders,
             "Content-Type": "application/json",
             "Retry-After": rateLimit.retryAfter.toString(),
           },
@@ -233,7 +220,7 @@ export async function onRequest(context: {
             error: "UNIT_NOT_FOUND",
             message: `Unit ${data.unit_id} not found`,
           }),
-          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 404, headers: { "Content-Type": "application/json" } }
         );
       }
 
@@ -325,7 +312,7 @@ export async function onRequest(context: {
           error: "INVALID_REQUEST",
           message: "Must provide unit_id, custom_pricing, unit_requests, or guest_count",
         }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
@@ -343,7 +330,6 @@ export async function onRequest(context: {
       {
         status: 200,
         headers: {
-          ...corsHeaders,
           "Content-Type": "application/json",
           "Cache-Control": "private, max-age=300", // Browser cache for 5 minutes
         },
@@ -358,7 +344,7 @@ export async function onRequest(context: {
         message: error instanceof Error ? error.message : "Failed to calculate pricing",
         debug: process.env.NODE_ENV === "development" ? error : undefined,
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }

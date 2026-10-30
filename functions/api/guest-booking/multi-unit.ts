@@ -57,39 +57,13 @@ interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   TURNSTILE_SECRET_KEY: string;
-  ALLOWED_ORIGINS?: string;
   RATE_LIMIT_KV: KVNamespace;
   ENVIRONMENT?: string;
 }
 
-// CORS helper
-function getCorsHeaders(origin?: string | null, allowedOriginsStr?: string) {
-  const allowedOrigins = allowedOriginsStr
-    ? allowedOriginsStr.split(",")
-    : ["http://localhost:5173", "https://okaeri-resort.pages.dev"];
-
-  const isAllowed = origin && allowedOrigins.includes(origin);
-
-  return {
-    "Access-Control-Allow-Origin": isAllowed ? origin : allowedOrigins[0],
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, X-Idempotency-Key",
-  };
-}
-
-// Handle OPTIONS preflight
-export const onRequestOptions: PagesFunction<Env> = async (context) => {
-  const corsHeaders = getCorsHeaders(
-    context.request.headers.get("Origin"),
-    context.env.ALLOWED_ORIGINS
-  );
-  return new Response(null, { headers: corsHeaders });
-};
-
 // Handle POST request
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
-  const corsHeaders = getCorsHeaders(request.headers.get("Origin"), env.ALLOWED_ORIGINS);
 
   try {
     // 1. Parse and validate request
@@ -104,7 +78,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           error_code: ERROR_CODES.VALIDATION_ERROR,
           details: validation.error.flatten(),
         },
-        { status: 400, headers: corsHeaders }
+        { status: 400 }
       );
     }
 
@@ -127,7 +101,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           error: "Security verification failed",
           error_code: ERROR_CODES.TURNSTILE_VERIFICATION_FAILED,
         },
-        { status: 403, headers: corsHeaders }
+        { status: 403 }
       );
     }
 
@@ -149,7 +123,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         {
           status: 429,
           headers: {
-            ...corsHeaders,
             "X-RateLimit-Limit": "5",
             "X-RateLimit-Remaining": rateLimit.remaining.toString(),
             "X-RateLimit-Reset": rateLimit.retryAfter.toString(),
@@ -186,7 +159,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         message: "Booking already created (duplicate detected)",
         is_duplicate: true,
       };
-      return Response.json(duplicateResponse, { status: 200, headers: corsHeaders });
+      return Response.json(duplicateResponse, { status: 200 });
     }
 
     // 5. Fetch pricing configuration and validate capacity
@@ -204,7 +177,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           error: "Configuration not found. Please contact support.",
           error_code: ERROR_CODES.INTERNAL_ERROR,
         },
-        { status: 500, headers: corsHeaders }
+        { status: 500 }
       );
     }
 
@@ -219,7 +192,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             error: `Maximum ${maxCapacity} guests per unit`,
             error_code: ERROR_CODES.CAPACITY_EXCEEDED,
           },
-          { status: 400, headers: corsHeaders }
+          { status: 400 }
         );
       }
     }
@@ -236,7 +209,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           error: `Maximum ${systemUnitCount} units available in system`,
           error_code: ERROR_CODES.UNIT_LIMIT_EXCEEDED,
         },
-        { status: 400, headers: corsHeaders }
+        { status: 400 }
       );
     }
 
@@ -324,7 +297,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             error_code: ERROR_CODES.DATABASE_ERROR,
             details: "Invalid total amount calculated",
           },
-          { status: 500, headers: corsHeaders }
+          { status: 500 }
         );
       }
 
@@ -338,7 +311,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           error_code: ERROR_CODES.DATABASE_ERROR,
           details: pricingError instanceof Error ? pricingError.message : "Unknown pricing error",
         },
-        { status: 500, headers: corsHeaders }
+        { status: 500 }
       );
     }
 
@@ -380,7 +353,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           error: "These dates are unavailable. Please choose other dates.",
           error_code: ERROR_CODES.DATES_UNAVAILABLE,
         },
-        { status: 409, headers: corsHeaders }
+        { status: 409 }
       );
     }
 
@@ -446,7 +419,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             booking_reference: bookingReference,
           },
         },
-        { status: 500, headers: corsHeaders }
+        { status: 500 }
       );
     }
 
@@ -489,7 +462,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     return Response.json(response, {
       status: 201,
-      headers: corsHeaders,
     });
   } catch (error: unknown) {
     // BUG-003 FIX: Improved error handling for unexpected errors
@@ -511,7 +483,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           message: errorMessage,
         },
       },
-      { status: 500, headers: corsHeaders }
+      { status: 500 }
     );
   }
 };
