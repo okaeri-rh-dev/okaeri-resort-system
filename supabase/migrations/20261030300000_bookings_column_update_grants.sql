@@ -19,3 +19,9 @@ GRANT UPDATE (
 
 -- Fires on booking_units writes, including the cascade of a booking delete.
 ALTER FUNCTION public.update_booking_totals() SECURITY DEFINER;
+
+-- As definer, that trigger would let a staff booking_units insert rewrite the
+-- total; the app adds units only through definer RPCs, so inserts match UPDATE/DELETE.
+DROP POLICY IF EXISTS booking_units_insert_staff ON public.booking_units;
+CREATE POLICY booking_units_insert_manager ON public.booking_units
+    FOR INSERT WITH CHECK (public.is_manager_or_above());

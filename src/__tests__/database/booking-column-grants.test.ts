@@ -1,6 +1,6 @@
 /**
  * Signed-in users may update only the booking columns the app edits; money and
- * payment columns change only through server-side writers.
+ * payment columns change only through server-side writers (20261030300000).
  *
  * @vitest-environment node
  */
@@ -69,6 +69,18 @@ describe("booking column grants", () => {
       .from("bookings")
       .update({ payment_status: "Completed" })
       .eq("booking_id", bookingId);
+    expect(error?.code).toBe("42501");
+  });
+
+  it("staff cannot add a booking unit, which would rewrite the total", async () => {
+    if (!shouldRun) return;
+    const { unit_id } = await createTestUnit({});
+    const { error } = await roleClients.byRole.staff.from("booking_units").insert({
+      booking_id: bookingId,
+      unit_id,
+      unit_price: 99999,
+      subtotal: 99999,
+    });
     expect(error?.code).toBe("42501");
   });
 
