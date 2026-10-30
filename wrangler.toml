@@ -31,6 +31,8 @@ id = "cb662ba13b324c35becf9da771b8dc9d"
 # Production environment variables
 [env.production.vars]
 ENVIRONMENT = "production"
+# Base of password-reset and sign-up confirmation links; elsewhere the request's own origin is used
+SITE_URL = "https://okaeri-resort.pages.dev"
 # Secrets should be set via Cloudflare Pages dashboard or wrangler:
 # npx wrangler secret put SUPABASE_URL
 # npx wrangler secret put SUPABASE_ANON_KEY

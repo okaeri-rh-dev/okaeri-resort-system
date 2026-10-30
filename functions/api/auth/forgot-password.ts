@@ -121,11 +121,8 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       },
     });
 
-    // Determine the redirect URL for password reset
-    // Use SITE_URL env var or derive from request origin
-    const origin =
-      request.headers.get("Origin") || env.SITE_URL || "https://okaeri-resort.pages.dev";
-    const redirectTo = `${origin}/reset-password`;
+    // Never the Origin header: a spoofed one would mail the reset token to another site
+    const redirectTo = `${env.SITE_URL ?? new URL(request.url).origin}/reset-password`;
 
     // Request password reset
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
