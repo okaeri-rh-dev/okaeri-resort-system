@@ -57,52 +57,10 @@ interface Context {
 }
 
 /**
- * Validate and get CORS headers for the request origin
- *
- * Allows requests from:
- * - Production: okaeri-resort.pages.dev
- * - Preview branches: *.okaeri-resort.pages.dev
- *
- * Security: Prevents unauthorized cross-origin requests
- */
-function getCorsHeaders(request: Request): Record<string, string> {
-  const origin = request.headers.get("Origin");
-  const allowedOrigins = [
-    "https://okaeri-resort.pages.dev", // Production
-    /^https:\/\/[a-z0-9-]+\.okaeri-resort\.pages\.dev$/, // Preview branches
-  ];
-
-  // Check if origin matches allowed patterns
-  const isAllowed =
-    origin &&
-    allowedOrigins.some((allowed) =>
-      typeof allowed === "string" ? allowed === origin : allowed.test(origin)
-    );
-
-  return {
-    "Access-Control-Allow-Origin": isAllowed ? origin : "https://okaeri-resort.pages.dev",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  };
-}
-
-/**
- * Handle OPTIONS requests for CORS preflight
- * This must be a separate export for Cloudflare Pages Functions routing
- */
-export async function onRequestOptions(context: Context): Promise<Response> {
-  const corsHeaders = getCorsHeaders(context.request);
-  return new Response(null, { status: 204, headers: corsHeaders });
-}
-
-/**
  * Handle POST requests to log audit events with IP capture
  */
 export async function onRequestPost(context: Context): Promise<Response> {
   const { request, env } = context;
-
-  // Get CORS headers for this request's origin
-  const corsHeaders = getCorsHeaders(request);
 
   try {
     // Parse request body
@@ -116,7 +74,7 @@ export async function onRequestPost(context: Context): Promise<Response> {
         }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -138,7 +96,7 @@ export async function onRequestPost(context: Context): Promise<Response> {
     if (!token) {
       return new Response(JSON.stringify({ error: "Unauthorized: Missing auth token" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -151,7 +109,7 @@ export async function onRequestPost(context: Context): Promise<Response> {
         }),
         {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -191,7 +149,7 @@ export async function onRequestPost(context: Context): Promise<Response> {
         }),
         {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -203,7 +161,7 @@ export async function onRequestPost(context: Context): Promise<Response> {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       }
     );
   } catch (error) {
@@ -215,7 +173,7 @@ export async function onRequestPost(context: Context): Promise<Response> {
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       }
     );
   }

@@ -112,13 +112,6 @@ export const onRequestPost = async (context: {
   const authenticatedUser = context.data.user;
   const startTime = Date.now();
 
-  // CORS headers
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Idempotency-Key",
-  };
-
   try {
     try {
       requireRole(authenticatedUser, STAFF_OR_ABOVE);
@@ -134,7 +127,7 @@ export const onRequestPost = async (context: {
         },
         {
           status: unauthenticated ? 401 : 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -158,7 +151,7 @@ export const onRequestPost = async (context: {
             },
           },
         },
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
@@ -174,7 +167,6 @@ export const onRequestPost = async (context: {
         return Response.json(JSON.parse(cached), {
           status: 200,
           headers: {
-            ...corsHeaders,
             "Content-Type": "application/json",
             "X-Idempotency-Replay": "true",
           },
@@ -224,7 +216,7 @@ export const onRequestPost = async (context: {
             },
           },
         },
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 409, headers: { "Content-Type": "application/json" } }
       );
     }
 
@@ -286,7 +278,6 @@ export const onRequestPost = async (context: {
       {
         status: 201,
         headers: {
-          ...corsHeaders,
           "Content-Type": "application/json",
           "X-Processing-Time": `${processingTime}ms`,
         },
@@ -296,7 +287,7 @@ export const onRequestPost = async (context: {
     if (error instanceof BlockedUnitError) {
       return Response.json(
         { success: false, error: { code: "UNIT_BLOCKED", message: error.message } },
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 409, headers: { "Content-Type": "application/json" } }
       );
     }
 
@@ -310,7 +301,7 @@ export const onRequestPost = async (context: {
             details: { server_total: error.serverTotal },
           },
         },
-        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 422, headers: { "Content-Type": "application/json" } }
       );
     }
 
@@ -325,7 +316,7 @@ export const onRequestPost = async (context: {
           details: process.env.NODE_ENV === "development" ? { error: String(error) } : undefined,
         },
       },
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 };

@@ -119,20 +119,6 @@ describe("Pricing Calculate API", () => {
     // Reset cache mock
   });
 
-  it("should handle CORS preflight requests", async () => {
-    mockRequest = {
-      method: "OPTIONS",
-      headers: new Map(),
-      json: vi.fn(),
-    };
-
-    const response = await onRequest({ request: mockRequest, env: mockEnv });
-
-    expect(response.status).toBe(200);
-    expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
-    expect(response.headers.get("Access-Control-Allow-Methods")).toBe("POST, OPTIONS");
-  });
-
   it("should reject non-POST methods", async () => {
     mockRequest = {
       method: "GET",

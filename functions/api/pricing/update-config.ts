@@ -44,26 +44,6 @@ const pricingConfigUpdateSchema = z.object({
 });
 
 /**
- * CORS Headers
- */
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "PUT, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Max-Age": "86400",
-};
-
-/**
- * Handle OPTIONS preflight request
- */
-export const onRequestOptions = async (): Promise<Response> => {
-  return new Response(null, {
-    status: 204,
-    headers: corsHeaders,
-  });
-};
-
-/**
  * Handle PUT request to update pricing configuration
  */
 export const onRequestPut = async (context: { request: Request; env: Env }): Promise<Response> => {
@@ -79,7 +59,7 @@ export const onRequestPut = async (context: { request: Request; env: Env }): Pro
           error: "UNAUTHORIZED",
           message: "Missing or invalid authorization header",
         },
-        { status: 401, headers: corsHeaders }
+        { status: 401 }
       );
     }
 
@@ -100,7 +80,7 @@ export const onRequestPut = async (context: { request: Request; env: Env }): Pro
           error: "UNAUTHORIZED",
           message: "Invalid or expired session",
         },
-        { status: 401, headers: corsHeaders }
+        { status: 401 }
       );
     }
 
@@ -112,7 +92,7 @@ export const onRequestPut = async (context: { request: Request; env: Env }): Pro
           error: "FORBIDDEN",
           message: "Insufficient permissions. Admin, manager, or owner role required.",
         },
-        { status: 403, headers: corsHeaders }
+        { status: 403 }
       );
     }
 
@@ -138,7 +118,6 @@ export const onRequestPut = async (context: { request: Request; env: Env }): Pro
           {
             status: 429,
             headers: {
-              ...corsHeaders,
               "Retry-After": String(retryAfter),
             },
           }
@@ -171,7 +150,7 @@ export const onRequestPut = async (context: { request: Request; env: Env }): Pro
           error: "INTERNAL_ERROR",
           message: "Failed to fetch current pricing configuration",
         },
-        { status: 500, headers: corsHeaders }
+        { status: 500 }
       );
     }
 
@@ -206,7 +185,7 @@ export const onRequestPut = async (context: { request: Request; env: Env }): Pro
           message: "Failed to update pricing configuration",
           debug: updateError?.message, // Include error details for debugging
         },
-        { status: 500, headers: corsHeaders }
+        { status: 500 }
       );
     }
 
@@ -234,7 +213,6 @@ export const onRequestPut = async (context: { request: Request; env: Env }): Pro
       },
       {
         status: 200,
-        headers: corsHeaders,
       }
     );
   } catch (error) {
@@ -248,7 +226,7 @@ export const onRequestPut = async (context: { request: Request; env: Env }): Pro
           message: "Invalid pricing configuration data",
           details: error.issues,
         },
-        { status: 400, headers: corsHeaders }
+        { status: 400 }
       );
     }
 
@@ -258,7 +236,7 @@ export const onRequestPut = async (context: { request: Request; env: Env }): Pro
         error: "INTERNAL_ERROR",
         message: "An unexpected error occurred",
       },
-      { status: 500, headers: corsHeaders }
+      { status: 500 }
     );
   }
 };

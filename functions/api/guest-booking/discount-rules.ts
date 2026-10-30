@@ -30,12 +30,6 @@ function findMinNightsCondition(conditions: Json) {
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { env } = context;
 
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Content-Type": "application/json",
-    "Cache-Control": "public, max-age=1800", // 30 minutes
-  };
-
   try {
     const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
@@ -54,7 +48,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       console.error("[DISCOUNTS] Database error:", error);
       return Response.json(
         { success: false, error: "Failed to fetch discount rules" },
-        { status: 500, headers: corsHeaders }
+        { status: 500 }
       );
     }
 
@@ -73,13 +67,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         discount_rules: data,
         display_message: displayMessage,
       },
-      { status: 200, headers: corsHeaders }
+      { status: 200 }
     );
   } catch (error: unknown) {
     console.error("[DISCOUNTS] Unexpected error:", error);
     return Response.json(
       { success: false, error: "Failed to fetch discount rules" },
-      { status: 500, headers: corsHeaders }
+      { status: 500 }
     );
   }
 };

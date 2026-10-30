@@ -78,44 +78,13 @@ export async function onRequest(context: {
   const { request, env, waitUntil } = context;
 
   // ============================================================================
-  // CORS HEADERS (Specific Origins Only)
-  // ============================================================================
-
-  const allowedOrigins = [
-    "https://okaeri-resort.com",
-    "https://www.okaeri-resort.com",
-    env.ENVIRONMENT === "development" ? "http://localhost:5173" : null,
-  ].filter(Boolean) as string[];
-
-  const origin = request.headers.get("Origin");
-  const corsOrigin = origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
-
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": corsOrigin,
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Credentials": "false",
-  };
-
-  // ============================================================================
-  // PREFLIGHT REQUEST HANDLING
-  // ============================================================================
-
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      headers: corsHeaders,
-      status: 204,
-    });
-  }
-
-  // ============================================================================
   // METHOD VALIDATION
   // ============================================================================
 
   if (request.method !== "GET") {
     return new Response(JSON.stringify({ error: "Method not allowed" } as ErrorResponse), {
       status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -148,7 +117,7 @@ export async function onRequest(context: {
         } as ErrorResponse),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -165,7 +134,7 @@ export async function onRequest(context: {
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return new Response(JSON.stringify({ error: "Invalid date values" } as ErrorResponse), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -174,7 +143,7 @@ export async function onRequest(context: {
         JSON.stringify({ error: "End date must be after or equal to start date" } as ErrorResponse),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -196,7 +165,7 @@ export async function onRequest(context: {
         } as ErrorResponse),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -210,7 +179,7 @@ export async function onRequest(context: {
         JSON.stringify({ error: "Cannot query more than 1 year in the future" } as ErrorResponse),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -220,7 +189,7 @@ export async function onRequest(context: {
     if (daysDiff > 180) {
       return new Response(JSON.stringify({ error: "Date range cannot exceed 180 days" } as ErrorResponse), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -241,7 +210,7 @@ export async function onRequest(context: {
       if (!isValid) {
         return new Response(JSON.stringify({ error: "Bot verification failed" } as ErrorResponse), {
           status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         });
       }
     }
@@ -261,7 +230,7 @@ export async function onRequest(context: {
       console.error("[Availability API] Database error:", error);
       return new Response(JSON.stringify({ error: "Failed to fetch availability data" } as ErrorResponse), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -321,7 +290,6 @@ export async function onRequest(context: {
 
     return new Response(JSON.stringify(response), {
       headers: {
-        ...corsHeaders,
         "Content-Type": "application/json",
         // CDN caching: 5 minutes fresh, 2 minutes stale-while-revalidate
         "Cache-Control": "public, s-maxage=300, stale-while-revalidate=120",
@@ -335,7 +303,7 @@ export async function onRequest(context: {
     console.error("[Availability API] Unexpected error:", error);
     return new Response(JSON.stringify({ error: "Internal server error" } as ErrorResponse), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
     });
   }
 }

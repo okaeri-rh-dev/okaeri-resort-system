@@ -87,13 +87,6 @@ describe("admin _middleware authorization", () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it("returns 204 for CORS preflight without touching auth", async () => {
-    const { context, next } = makeContext({ method: "OPTIONS", authHeader: "" });
-    const res = await onRequest(context);
-    expect(res.status).toBe(204);
-    expect(next).not.toHaveBeenCalled();
-  });
-
   it("returns 401 when the JWT is invalid/expired", async () => {
     mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: { message: "bad jwt" } });
     const { context, next } = makeContext();

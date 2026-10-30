@@ -304,4 +304,4 @@ const { data: signedUrl } = await supabase.storage
   - `/database/storage-policies.sql` - Storage RLS policies
   - `/database/enable-rls.sql` - Database RLS setup
   - `/src/lib/storage-security.ts` - Client-side validation
-  - `/src/lib/supabase-admin.ts` - Server-side storage functions
+  - `/functions/lib/supabase-admin.ts` - Service-role Supabase client

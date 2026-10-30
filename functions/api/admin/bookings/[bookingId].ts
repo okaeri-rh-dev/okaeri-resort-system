@@ -54,25 +54,6 @@ interface ErrorResponse {
 }
 
 /**
- * CORS headers for cross-origin requests
- */
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
-
-/**
- * Handles OPTIONS preflight requests
- */
-function handleOptions(): Response {
-  return new Response(null, {
-    headers: corsHeaders,
-    status: 204,
-  });
-}
-
-/**
  * Creates error response with consistent structure
  */
 function errorResponse(message: string, status: number, details?: string): Response {
@@ -84,7 +65,6 @@ function errorResponse(message: string, status: number, details?: string): Respo
   return new Response(JSON.stringify(body), {
     status,
     headers: {
-      ...corsHeaders,
       "Content-Type": "application/json",
     },
   });
@@ -97,7 +77,6 @@ function successResponse(booking: BookingDetailResponse): Response {
   return new Response(JSON.stringify(booking), {
     status: 200,
     headers: {
-      ...corsHeaders,
       "Content-Type": "application/json",
     },
   });
@@ -267,11 +246,6 @@ export async function onRequest(context: {
   const { request, env, params } = context;
 
   try {
-    // Handle OPTIONS preflight
-    if (request.method === "OPTIONS") {
-      return handleOptions();
-    }
-
     // Only allow GET requests
     if (request.method !== "GET") {
       return errorResponse("Method not allowed", 405);

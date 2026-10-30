@@ -178,20 +178,6 @@ describe("POST /api/bookings/multi-unit", () => {
     expect(response.headers.get("X-Processing-Time")).toMatch(/\d+ms/);
   });
 
-  it("should include CORS headers in response", async () => {
-    const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
-    const request = createStaffRequest({
-      method: "POST",
-      body: JSON.stringify(validBookingData),
-    });
-
-    const context = createStaffContext(request);
-    const response = await onRequestPost(context as never);
-
-    expect(response.headers.get("Access-Control-Allow-Origin")).toBeDefined();
-    expect(response.headers.get("Access-Control-Allow-Methods")).toContain("POST");
-  });
-
   it("should return booking with units array", async () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
     const request = createStaffRequest({
