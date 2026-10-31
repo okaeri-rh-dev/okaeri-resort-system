@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { E2E_REF, E2E_USER } from "../scripts/e2e/fixtures";
-import { LoginPage } from "./pages/LoginPage";
+import { E2E_REF } from "../scripts/e2e/fixtures";
+import { loginAsOwner } from "./fixtures/auth";
 
 /**
  * DataTable table ↔ card switch on the admin bookings list.
@@ -11,9 +11,7 @@ import { LoginPage } from "./pages/LoginPage";
  */
 
 async function openBookings(page: Page) {
-  const loginPage = new LoginPage(page);
-  await loginPage.goto();
-  await loginPage.loginAndWaitForDashboard(E2E_USER.email, E2E_USER.password);
+  await loginAsOwner(page);
   await page.goto("/admin/bookings");
   await expect(page.getByText(E2E_REF.PENDING)).toBeVisible();
 }

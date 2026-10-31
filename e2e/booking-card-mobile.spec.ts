@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { E2E_REF, E2E_USER } from "../scripts/e2e/fixtures";
-import { LoginPage } from "./pages/LoginPage";
+import { E2E_REF } from "../scripts/e2e/fixtures";
+import { loginAsOwner } from "./fixtures/auth";
 
 /**
  * Mobile booking card E2E spec.
@@ -10,7 +10,7 @@ import { LoginPage } from "./pages/LoginPage";
  * docs/plans/2026-05-24-mobile-booking-card-density-design.md.
  *
  * Assumes the orchestrator (scripts/e2e/run-hooked.sh) has seeded
- * the E2E-* fixtures and a dedicated owner user. Do not run directly
+ * the E2E-* fixtures. Do not run directly
  * via `npm run test:e2e` — use `npm run test:e2e:hooked` or, during
  * iteration, `npm run e2e:dev` against a manually-seeded DB.
  */
@@ -22,9 +22,7 @@ const cardFor = (page: Page, ref: string) =>
 
 test.describe("Mobile booking card", () => {
   test.beforeEach(async ({ page }) => {
-    const loginPage = new LoginPage(page);
-    await loginPage.goto();
-    await loginPage.loginAndWaitForDashboard(E2E_USER.email, E2E_USER.password);
+    await loginAsOwner(page);
     await page.goto("/admin/bookings");
     // Cards lazy-load via TanStack Query; wait for our fixture to surface.
     await expect(page.getByText(E2E_REF.PENDING)).toBeVisible();
