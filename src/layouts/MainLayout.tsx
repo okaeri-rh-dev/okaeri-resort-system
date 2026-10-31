@@ -30,6 +30,7 @@ import {
 import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { AuditRole, clearRoleCache } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 import { hasRoleLevel } from "@/lib/route-guards";
 import { supabase } from "@/lib/supabase";
 import { useCanShowInstallBanner, useInstallPromptStore } from "@/stores/useInstallPromptStore";
@@ -163,6 +164,9 @@ export function MainLayout({ children }: MainLayoutProps) {
     try {
       const { getUserAuditRole } = await import("@/lib/audit-roles");
       setUserRole(await getUserAuditRole());
+    } catch (error) {
+      // Keep the last known role; a failed lookup is not "no role"
+      logger.error("Failed to load user role for menu", { error });
     } finally {
       setRoleLoading(false);
     }

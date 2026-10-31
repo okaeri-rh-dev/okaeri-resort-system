@@ -32,8 +32,7 @@ beforeEach(() => {
   } as unknown as ReturnType<typeof supabase.auth.onAuthStateChange>);
 });
 
-async function renderMenuFor(role: AuditRole, path = "/admin/dashboard") {
-  vi.mocked(getUserAuditRole).mockResolvedValue(role);
+function renderLayout(path = "/admin/dashboard") {
   const rootRoute = createRootRoute({
     component: () => (
       <MainLayout>
@@ -46,6 +45,11 @@ async function renderMenuFor(role: AuditRole, path = "/admin/dashboard") {
     history: createMemoryHistory({ initialEntries: [path] }),
   });
   render(<RouterProvider router={router} />);
+}
+
+async function renderMenuFor(role: AuditRole, path = "/admin/dashboard") {
+  vi.mocked(getUserAuditRole).mockResolvedValue(role);
+  renderLayout(path);
 
   const nav = await screen.findByRole("navigation", { name: "Main" });
   await within(nav).findByRole("list", { name: "Bookings" });
@@ -122,5 +126,14 @@ describe("admin menu groups per role", () => {
     expect(within(bookings).getByRole("link", { name: "Booking Queue" })).not.toHaveAttribute(
       "aria-current"
     );
+  });
+});
+
+describe("admin menu when the role lookup fails", () => {
+  it("still renders the menu without an unhandled rejection", async () => {
+    vi.mocked(getUserAuditRole).mockRejectedValue(new Error("Failed to get user role"));
+    renderLayout();
+
+    expect(await screen.findByRole("navigation", { name: "Main" })).toBeInTheDocument();
   });
 });

@@ -1,5 +1,7 @@
 // src/lib/audit-roles.ts
 
+import { isAuthSessionMissingError } from "@supabase/supabase-js";
+
 import type { Database, TablesInsert, TablesUpdate } from "@/types/database.types";
 
 import { supabase } from "./supabase";
@@ -53,7 +55,8 @@ export function clearRoleCache(): void {
  * Results are cached for 60s to avoid redundant network requests
  * during navigation (route guards, layout checks, etc.).
  *
- * @returns AuditRole or null if no role assigned
+ * @returns AuditRole, or null if signed out or no role assigned
+ * @throws when the lookup fails (errors are not cached)
  *
  * @example
  * const role = await getUserAuditRole();
@@ -67,34 +70,26 @@ export async function getUserAuditRole(): Promise<AuditRole | null> {
     return roleCache.role;
   }
 
-  try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-    if (!user) return null;
+  if (userError && !isAuthSessionMissingError(userError)) throw userError;
+  if (!user) return null;
 
-    // Use the SQL function for single source of truth
-    const { data, error } = await supabase.rpc("get_current_audit_role");
+  // Use the SQL function for single source of truth
+  const { data, error } = await supabase.rpc("get_current_audit_role");
 
-    if (error) {
-      console.error("[Audit] Failed to get user role:", error.message);
-      // Don't cache errors — transient failures shouldn't lock users out
-      return null;
-    }
+  // Throw, not null: callers treat null as "no role" and send the user to Pending Approval
+  if (error) throw new Error(`Failed to get user role: ${error.message}`, { cause: error });
 
-    // SQL function returns 'none' for no role
-    const role = !data || data === "none" ? null : (data as AuditRole);
+  // SQL function returns 'none' for no role
+  const role = !data || data === "none" ? null : (data as AuditRole);
 
-    // Cache successful responses
-    roleCache = { role, timestamp: Date.now() };
+  roleCache = { role, timestamp: Date.now() };
 
-    return role;
-  } catch (error) {
-    console.error("[Audit] Error getting user role:", error);
-    // Don't cache errors
-    return null;
-  }
+  return role;
 }
 
 /**
@@ -103,6 +98,7 @@ export async function getUserAuditRole(): Promise<AuditRole | null> {
  *
  * @param requiredRole - Minimum role required
  * @returns true if user has sufficient permissions
+ * @throws when the role lookup fails
  *
  * @example
  * if (await hasAuditRole(AuditRole.MANAGER)) {
@@ -110,18 +106,10 @@ export async function getUserAuditRole(): Promise<AuditRole | null> {
  * }
  */
 export async function hasAuditRole(requiredRole: AuditRole): Promise<boolean> {
-  try {
-    const userRole = await getUserAuditRole();
-    if (!userRole) return false;
+  const userRole = await getUserAuditRole();
+  if (!userRole) return false;
 
-    const userLevel = ROLE_HIERARCHY[userRole];
-    const requiredLevel = ROLE_HIERARCHY[requiredRole];
-
-    return userLevel >= requiredLevel;
-  } catch (error) {
-    console.error("[Audit] Error checking role:", error);
-    return false;
-  }
+  return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[requiredRole];
 }
 
 /**
