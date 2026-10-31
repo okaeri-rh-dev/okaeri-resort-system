@@ -160,7 +160,11 @@ export const onRequestPost = async (context: {
     const idempotencyKey = request.headers.get("Idempotency-Key");
 
     if (idempotencyKey) {
-      const cached = await env.RATE_LIMIT_KV.get(`idempotency:${idempotencyKey}`);
+      // A missed replay is safe: the database rejects a second booking of the same cabins and dates
+      const cached = await env.RATE_LIMIT_KV.get(`idempotency:${idempotencyKey}`).catch((error) => {
+        console.error("Idempotency KV read failed:", error);
+        return null;
+      });
       if (cached) {
         // Return cached result (200, not 201)
         return Response.json(JSON.parse(cached), {
@@ -237,6 +241,7 @@ export const onRequestPost = async (context: {
 
     // Cache result for idempotency (24 hours)
     if (idempotencyKey) {
+      // The booking already exists, so a failed cache write must not turn into an error
       await env.RATE_LIMIT_KV.put(
         `idempotency:${idempotencyKey}`,
         JSON.stringify({
@@ -248,7 +253,9 @@ export const onRequestPost = async (context: {
           },
         }),
         { expirationTtl: 86400 } // 24 hours
-      );
+      ).catch((error) => {
+        console.error("Idempotency KV write failed:", error);
+      });
     }
 
     const processingTime = Date.now() - startTime;
