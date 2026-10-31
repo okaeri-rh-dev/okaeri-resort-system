@@ -17,7 +17,8 @@ export async function useDarkTheme(page: Page) {
 
 /** Fails with the offending text runs when any text under `root` is below WCAG AA contrast. */
 export async function expectReadable(page: Page, root = "main") {
-  expect(await findLowContrastText(page, root)).toEqual([]);
+  // Polls so a colour transition still running under CI load does not fail the check.
+  await expect.poll(() => findLowContrastText(page, root)).toEqual([]);
 }
 
 export interface ContrastFailure {
