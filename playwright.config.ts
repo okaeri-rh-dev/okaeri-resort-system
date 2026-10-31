@@ -43,31 +43,43 @@ export default defineConfig({
 
   // Configure projects for different browsers
   projects: [
+    // Logs in once per role; the login helpers in e2e/fixtures/auth.ts restore these sessions.
+    {
+      name: "setup",
+      testMatch: /auth\.setup\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      dependencies: ["setup"],
     },
     {
       name: "firefox",
       use: { ...devices["Desktop Firefox"] },
+      dependencies: ["setup"],
     },
     {
       name: "webkit",
       use: { ...devices["Desktop Safari"] },
+      dependencies: ["setup"],
     },
     // Mobile viewports
     {
       name: "Mobile Chrome",
       use: { ...devices["Pixel 5"] },
+      dependencies: ["setup"],
     },
     {
       name: "Mobile Safari",
       use: { ...devices["iPhone 12"] },
+      dependencies: ["setup"],
     },
     // Tablet viewport
     {
       name: "Tablet Safari",
       use: { ...devices["iPad (gen 7)"] },
+      dependencies: ["setup"],
     },
   ],
 

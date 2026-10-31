@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-import { ROUTES, TEST_USERS } from "./fixtures/test-data";
+import { loginAsAdmin, loginAsStaff } from "./fixtures/auth";
+import { ROUTES } from "./fixtures/test-data";
 import { BookingsTablePage } from "./pages/BookingsTablePage";
 import { DashboardPage } from "./pages/DashboardPage";
-import { LoginPage } from "./pages/LoginPage";
 
 /**
  * Admin Booking Management Tests
@@ -17,13 +17,6 @@ import { LoginPage } from "./pages/LoginPage";
  * Note: Most tests require authentication. They will be skipped
  * if test credentials are not configured.
  */
-
-// Helper to login before tests
-async function loginAsAdmin(page: import("@playwright/test").Page) {
-  const loginPage = new LoginPage(page);
-  await loginPage.goto();
-  await loginPage.loginAndWaitForDashboard(TEST_USERS.admin.email, TEST_USERS.admin.password);
-}
 
 test.describe("Admin Bookings Management", () => {
   // Skip all tests in this describe block if no credentials
@@ -335,9 +328,7 @@ test.describe("Role-Based Access", () => {
       test.skip();
     }
 
-    const loginPage = new LoginPage(page);
-    await loginPage.goto();
-    await loginPage.loginAndWaitForDashboard(TEST_USERS.staff.email, TEST_USERS.staff.password);
+    await loginAsStaff(page);
 
     // Navigate to bookings
     await page.goto(ROUTES.admin.bookings);
@@ -351,9 +342,7 @@ test.describe("Role-Based Access", () => {
       test.skip();
     }
 
-    const loginPage = new LoginPage(page);
-    await loginPage.goto();
-    await loginPage.loginAndWaitForDashboard(TEST_USERS.admin.email, TEST_USERS.admin.password);
+    await loginAsAdmin(page);
 
     // Navigate to bookings
     const bookingsTable = new BookingsTablePage(page);
