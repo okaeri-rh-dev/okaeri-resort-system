@@ -253,3 +253,6 @@ qa-test-*.png
 qa-*.png
 audit-*.png
 payment_proof_test.png
+
+# Playwright sessions saved by e2e/auth.setup.ts
+e2e/.auth/

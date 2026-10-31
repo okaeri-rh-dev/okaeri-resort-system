@@ -198,10 +198,8 @@ test.describe("Authentication", () => {
   });
 
   test.describe("Logout", () => {
-    test.skip(
-      !process.env.TEST_ADMIN_EMAIL || !process.env.TEST_ADMIN_PASSWORD,
-      "Test credentials not configured"
-    );
+    // Both tests sign out the same user, and a sign-out ends all of its sessions.
+    test.describe.configure({ mode: "serial" });
 
     test("user can logout and lands on admin login", async ({ page }) => {
       const loginPage = new LoginPage(page);
@@ -209,7 +207,7 @@ test.describe("Authentication", () => {
 
       // Login first
       await loginPage.goto();
-      await loginPage.loginAndWaitForDashboard(TEST_USERS.admin.email, TEST_USERS.admin.password);
+      await loginPage.loginAndWaitForDashboard(TEST_USERS.logout.email, TEST_USERS.logout.password);
 
       await dashboardPage.logout();
 
@@ -222,7 +220,7 @@ test.describe("Authentication", () => {
 
       // Login
       await loginPage.goto();
-      await loginPage.loginAndWaitForDashboard(TEST_USERS.admin.email, TEST_USERS.admin.password);
+      await loginPage.loginAndWaitForDashboard(TEST_USERS.logout.email, TEST_USERS.logout.password);
 
       await dashboardPage.logout();
 
