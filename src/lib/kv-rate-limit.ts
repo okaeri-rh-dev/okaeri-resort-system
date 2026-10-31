@@ -2,8 +2,8 @@
  * Cloudflare KV-based rate limiting with coarse-window strategy
  * Free tier: 100k reads/day, 1k writes/day (critical constraint)
  *
- * Strategy: Use hourly time windows instead of per-request writes
- * Result: ~24 writes/day per unique IP vs ~N writes/day with sliding window
+ * Strategy: fixed time windows, one KV write per allowed request (up to `limit` per window).
+ * KV errors fail open, so the limiter never turns a full quota into an outage.
  *
  * Security Enhancement: When rate limit is exceeded, violations are tracked
  * and progressive blocking is applied:
@@ -52,9 +52,15 @@ export async function checkKVRateLimit(
   const windowKey = Math.floor(now / windowSeconds);
   const key = `rate-limit:${identifier}:${windowKey}`;
 
-  // Get current count for this window (single read)
-  const current = await kv.get(key);
-  const count = current ? parseInt(current) : 0;
+  // shortcut: while KV fails (e.g. the daily write quota is gone until 00:00 UTC), nothing is limited; add a WAF rule if abused
+  let count: number;
+  try {
+    const current = await kv.get(key);
+    count = current ? parseInt(current) : 0;
+  } catch (error) {
+    console.error("Rate limit KV read failed, allowing request:", error);
+    return { allowed: true, remaining: limit, retryAfter: 0 };
+  }
 
   // Check if limit exceeded
   if (count >= limit) {
@@ -81,10 +87,13 @@ export async function checkKVRateLimit(
     };
   }
 
-  // Increment counter (single write per window, not per request)
-  await kv.put(key, String(count + 1), {
-    expirationTtl: windowSeconds + 60, // Auto-cleanup after window + buffer
-  });
+  try {
+    await kv.put(key, String(count + 1), {
+      expirationTtl: windowSeconds + 60, // Auto-cleanup after window + buffer
+    });
+  } catch (error) {
+    console.error("Rate limit KV write failed, allowing request:", error);
+  }
 
   return {
     allowed: true,
@@ -104,7 +113,7 @@ export async function createAdvancedFingerprint(request: Request): Promise<strin
   const ip =
     headers.get("CF-Connecting-IP") || headers.get("X-Forwarded-For")?.split(",")[0] || "unknown";
 
-  // Collect fingerprinting factors
+  // Only headers that stay the same across one client's requests (no CF-Ray or Connection)
   const factors = [
     ip,
     headers.get("User-Agent") || "",
@@ -115,10 +124,7 @@ export async function createAdvancedFingerprint(request: Request): Promise<strin
     headers.get("Sec-CH-UA-Platform") || "",
     headers.get("Sec-CH-UA-Mobile") || "",
     headers.get("DNT") || "",
-    headers.get("Connection") || "",
-    // Add CF-specific headers for better accuracy
     headers.get("CF-IPCountry") || "",
-    headers.get("CF-Ray") || "",
   ].filter(Boolean); // Remove empty values
 
   // Create SHA-256 hash for consistent length and uniqueness

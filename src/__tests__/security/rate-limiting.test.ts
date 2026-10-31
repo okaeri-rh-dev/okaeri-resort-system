@@ -77,6 +77,26 @@ describe("Rate Limiting", () => {
       expect(mockKV.get).toHaveBeenCalledWith(`rate-limit:test-ip:${windowKey}`);
     });
 
+    it("allows the request and logs when KV writes fail (daily quota used up)", async () => {
+      mockKV.get = vi.fn().mockResolvedValue("1");
+      mockKV.put = vi.fn().mockRejectedValue(new Error("KV put() limit exceeded for the day."));
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await checkKVRateLimit(mockKV, "test-ip", { limit: 5, windowSeconds: 3600 });
+
+      expect(result.allowed).toBe(true);
+      expect(consoleError).toHaveBeenCalled();
+    });
+
+    it("allows the request when KV reads fail", async () => {
+      mockKV.get = vi.fn().mockRejectedValue(new Error("KV unavailable"));
+      vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await checkKVRateLimit(mockKV, "test-ip", { limit: 5, windowSeconds: 3600 });
+
+      expect(result.allowed).toBe(true);
+    });
+
     it("should set appropriate TTL on keys", async () => {
       mockKV.get = vi.fn().mockResolvedValue(null);
 

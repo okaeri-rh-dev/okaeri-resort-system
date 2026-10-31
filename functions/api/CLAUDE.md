@@ -4,12 +4,12 @@ Serverless Cloudflare Pages Functions. Implementation, validation, and middlewar
 
 ### Public Endpoints (No Auth)
 
-| Endpoint                     | Method | Purpose        | Rate Limit     |
-| ---------------------------- | ------ | -------------- | -------------- |
-| `/api/health`                | GET    | Health check   | None           |
-| `/api/guest-booking`         | POST   | Create booking | 5/hour per IP  |
-| `/api/guest-booking/confirm` | POST   | Confirm upload | 5/hour per IP  |
-| `/api/guest-booking/status`  | GET    | Check status   | 10/hour per IP |
+| Endpoint                     | Method | Purpose        | Rate Limit                     |
+| ---------------------------- | ------ | -------------- | ------------------------------ |
+| `/api/health`                | GET    | Health check   | None                           |
+| `/api/guest-booking`         | POST   | Create booking | 5/hour per IP                  |
+| `/api/guest-booking/confirm` | POST   | Confirm upload | 5/hour per IP                  |
+| `/api/guest-booking/status`  | POST   | Check status   | 20/hour per client fingerprint |
 
 ### Protected Endpoints (Auth Required)
 

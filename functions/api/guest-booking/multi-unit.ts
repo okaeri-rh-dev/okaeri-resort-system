@@ -1,4 +1,3 @@
-import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
 import { isBlockedNightError } from "@/lib/bookings/availability";
@@ -63,7 +62,7 @@ interface Env {
 }
 
 // Handle POST request
-export const onRequestPost: PagesFunction<Env> = async (context) => {
+export const onRequestPost = async (context: { request: Request; env: Env }) => {
   const { request, env } = context;
 
   try {

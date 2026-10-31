@@ -256,6 +256,27 @@ describe("GET /api/availability/multi-unit", () => {
     expect(response.headers.get("Cache-Control")).toContain("max-age=60");
   });
 
+  it("never caches a signed-in user's answer for others", async () => {
+    const { onRequestGet } = await import("../../../functions/api/availability/multi-unit");
+    const request = createMockRequest("https://api.example.com/api/availability/multi-unit", {
+      method: "GET",
+      headers: { Authorization: "Bearer staff-session-token" },
+      query: {
+        "units[]": testUnits[0].unit_id,
+        check_in: "2025-12-20",
+        check_out: "2025-12-22",
+      },
+    });
+
+    const context = createMockContext(request, mockEnv);
+    const response = await onRequestGet(context as never);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toContain("private");
+    expect(mockEnv.RATE_LIMIT_KV.get).not.toHaveBeenCalled();
+    expect(mockEnv.RATE_LIMIT_KV.put).not.toHaveBeenCalled();
+  });
+
   // ========== VALIDATION ERROR TESTS ==========
 
   it("should return 400 for missing units[] parameter", async () => {

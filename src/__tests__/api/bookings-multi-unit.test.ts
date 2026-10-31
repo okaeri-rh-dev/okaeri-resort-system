@@ -164,6 +164,25 @@ describe("POST /api/bookings/multi-unit", () => {
     expect(data2.data.booking_id).toBe(data1.data.booking_id);
   });
 
+  it("still returns the created booking when KV is down", async () => {
+    const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
+    vi.mocked(mockEnv.RATE_LIMIT_KV.get).mockRejectedValue(new Error("KV unavailable"));
+    vi.mocked(mockEnv.RATE_LIMIT_KV.put).mockRejectedValue(
+      new Error("KV put() limit exceeded for the day.")
+    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const request = createStaffRequest({
+      method: "POST",
+      headers: { "Idempotency-Key": generateIdempotencyKey() },
+      body: JSON.stringify(validBookingData),
+    });
+
+    const response = await onRequestPost(createStaffContext(request) as never);
+
+    expect(response.status).toBe(201);
+  });
+
   it("should include processing time header", async () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
     const request = createStaffRequest({

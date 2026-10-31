@@ -7,11 +7,12 @@
  * - Environment-aware CORS configuration
  * - Request fingerprinting for rate limiting
  * - Progressive IP auto-blocking based on violations
- * - Anomaly detection for request spikes and path scanning
  * - A+ security rating on securityheaders.com
+ *
+ * No per-request KV writes here: the free tier allows 1,000 a day.
+ * shortcut: no spike or path-scan detection in the app, add a Cloudflare WAF rate-limit rule if needed.
  */
 
-import { track404Error, trackRequest } from "@/lib/anomaly-detection";
 import { isIPBlocked } from "@/lib/auto-blocking";
 
 import { secretsMatch } from "./lib/cron-auth";
@@ -25,7 +26,6 @@ interface Env {
   SUPABASE_JWT_SECRET?: string;
   SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
-  ALERT_WEBHOOK_URL?: string;
   // Shared secret for machine-to-machine cron endpoints (/api/cron/*),
   // triggered by the GitHub Actions "Scheduled Cleanup Tasks" workflow.
   CRON_SECRET?: string;
@@ -383,15 +383,12 @@ export async function onRequest(
     request.headers.get("CF-Connecting-IP") ||
     request.headers.get("X-Forwarded-For")?.split(",")[0] ||
     "unknown";
-  const userAgent = request.headers.get("User-Agent") || "unknown";
 
   // Loopback = local dev / E2E via `wrangler pages dev`. Exempt it from IP
-  // blocking and anomaly tracking: production requests always arrive through
-  // Cloudflare with CF-Connecting-IP set to the real client address (never
-  // loopback), so this branch is unreachable in production. Without it, one
-  // E2E run (>100 /api requests in 10 min from 127.0.0.1) trips REQUEST_SPIKE
-  // auto-blocking and every subsequent login 403s for an hour
-  // ("Your IP has been temporarily blocked due to suspicious activity").
+  // blocking: production requests always arrive through Cloudflare with
+  // CF-Connecting-IP set to the real client address (never loopback), so this
+  // branch is unreachable in production. Without it, one blocked E2E run makes
+  // every later login 403 for an hour.
   const isLoopbackIp = clientIp === "127.0.0.1" || clientIp === "::1";
 
   // ============================================
@@ -426,21 +423,6 @@ export async function onRequest(
       // Fail open - don't block on security check errors
       console.error("IP block check error:", error);
     }
-  }
-
-  // ============================================
-  // SECURITY CHECK 2: Anomaly Detection
-  // ============================================
-  // Track request patterns and detect anomalies (non-blocking)
-  if (env.RATE_LIMIT_KV && !isLoopbackIp) {
-    // Fire and forget - don't block on anomaly tracking
-    trackRequest(env.RATE_LIMIT_KV, clientIp, {
-      path: url.pathname,
-      userAgent,
-      alertWebhookUrl: env.ALERT_WEBHOOK_URL,
-    }).catch((error) => {
-      console.error("Anomaly tracking error:", error);
-    });
   }
 
   // Cron endpoints (/api/cron/*) authenticate machine-to-machine with a shared
@@ -562,19 +544,6 @@ export async function onRequest(
       statusText: response.statusText,
       headers: new Headers(response.headers),
     });
-
-    // ============================================
-    // SECURITY CHECK 3: Track 404 Errors for Path Scanning
-    // ============================================
-    // Track 404 errors to detect path scanning attacks (non-blocking)
-    if (response.status === 404 && env.RATE_LIMIT_KV) {
-      track404Error(env.RATE_LIMIT_KV, clientIp, url.pathname, {
-        userAgent,
-        alertWebhookUrl: env.ALERT_WEBHOOK_URL,
-      }).catch((error) => {
-        console.error("404 tracking error:", error);
-      });
-    }
 
     // Apply security headers
     Object.entries(securityHeaders).forEach(([key, value]) => {
