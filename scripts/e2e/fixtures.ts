@@ -3,13 +3,6 @@
 
 export const E2E_REFERENCE_PREFIX = "E2E-";
 
-// Dedicated auth user for the E2E spec. Created by seed, removed by cleanup.
-export const E2E_USER = {
-  email: "e2e-owner@e2e.local",
-  password: "e2e-test-password-12345",
-  role: "owner" as const,
-};
-
 // Static UUIDs so seed is idempotent and cleanup can target them directly.
 export const E2E_GUEST_ID = "00000000-0000-0000-0000-0000000000e2";
 export const E2E_UNIT_ID = "00000000-0000-0000-0000-000000000ee2";

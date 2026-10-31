@@ -1,26 +1,15 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import {
-  E2E_ASSIGN_PAID_BOOKING_ID,
-  E2E_REF,
-  E2E_UNIT_ID,
-  E2E_USER,
-} from "../scripts/e2e/fixtures";
+import { E2E_ASSIGN_PAID_BOOKING_ID, E2E_REF, E2E_UNIT_ID } from "../scripts/e2e/fixtures";
+import { loginAsOwner } from "./fixtures/auth";
 import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
 import { TEST_GUEST } from "./fixtures/test-data";
 import { BookingFormPage } from "./pages/BookingFormPage";
-import { LoginPage } from "./pages/LoginPage";
 
 /**
  * Dark mode is readable on the surfaces #71 fixed: no text under WCAG AA against what is
  * painted behind it. Needs the E2E-* fixtures (`npm run seed:e2e`).
  */
-
-async function loginAsE2EOwner(page: Page) {
-  const loginPage = new LoginPage(page);
-  await loginPage.goto();
-  await loginPage.loginAndWaitForDashboard(E2E_USER.email, E2E_USER.password);
-}
 
 test.describe("Dark mode surfaces", () => {
   test.beforeEach(async ({ page }) => {
@@ -29,7 +18,7 @@ test.describe("Dark mode surfaces", () => {
 
   test("admin bookings table fits the expanded pane and reads in dark", async ({ page }) => {
     await page.setViewportSize(EXPANDED);
-    await loginAsE2EOwner(page);
+    await loginAsOwner(page);
     await page.goto("/admin/bookings");
     await expect(page.getByRole("link", { name: E2E_REF.PENDING })).toBeVisible();
 
@@ -42,7 +31,7 @@ test.describe("Dark mode surfaces", () => {
 
   test("admin booking cards read in dark", async ({ page }) => {
     await page.setViewportSize(COMPACT);
-    await loginAsE2EOwner(page);
+    await loginAsOwner(page);
     await page.goto("/admin/bookings");
     await expect(page.getByText(E2E_REF.PENDING)).toBeVisible();
     await expectReadable(page);
@@ -50,7 +39,7 @@ test.describe("Dark mode surfaces", () => {
 
   test("admin dashboard reads in dark", async ({ page }) => {
     await page.setViewportSize(EXPANDED);
-    await loginAsE2EOwner(page);
+    await loginAsOwner(page);
     await expect(page.getByText("Total Bookings")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Booking Calendar" })).toBeVisible();
     await expectReadable(page);
@@ -58,7 +47,7 @@ test.describe("Dark mode surfaces", () => {
 
   test("admin cabins read in dark", async ({ page }) => {
     await page.setViewportSize(EXPANDED);
-    await loginAsE2EOwner(page);
+    await loginAsOwner(page);
     await page.goto(`/admin/units/${E2E_UNIT_ID}`);
     await expect(page.getByText("Current Global Rates")).toBeVisible();
     await expectReadable(page);
@@ -66,7 +55,7 @@ test.describe("Dark mode surfaces", () => {
 
   test("assign cabins reads in dark", async ({ page }) => {
     await page.setViewportSize(EXPANDED);
-    await loginAsE2EOwner(page);
+    await loginAsOwner(page);
     await page.goto(`/admin/bookings/${E2E_ASSIGN_PAID_BOOKING_ID}/assign-units`);
     await expect(page.getByText(E2E_REF.ASSIGN_PAID)).toBeVisible();
 

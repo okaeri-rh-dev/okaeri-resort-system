@@ -4,17 +4,10 @@ import {
   E2E_PAYMENT_PROOF_PATHS,
   E2E_REFERENCE_PREFIX,
   E2E_UNIT_ID,
-  E2E_USER,
 } from "./fixtures";
 import { getServiceRoleClient } from "./supabase-client";
 
 type Supabase = ReturnType<typeof getServiceRoleClient>;
-
-async function findUserIdByEmail(supabase: Supabase, email: string): Promise<string | null> {
-  const { data, error } = await supabase.auth.admin.listUsers();
-  if (error) throw new Error(`auth.listUsers failed: ${error.message}`);
-  return data.users.find((u) => u.email === email)?.id ?? null;
-}
 
 async function cleanup(): Promise<void> {
   const supabase = getServiceRoleClient();
@@ -79,25 +72,6 @@ async function cleanup(): Promise<void> {
     .delete({ count: "exact" })
     .eq("guest_id", E2E_GUEST_ID);
   summary.guests = guestCount ?? 0;
-
-  // app_roles + auth user
-  const userId = await findUserIdByEmail(supabase, E2E_USER.email);
-  if (userId) {
-    const { count: roleCount } = await supabase
-      .from("app_roles")
-      .delete({ count: "exact" })
-      .eq("user_id", userId);
-    summary.app_roles = roleCount ?? 0;
-
-    const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userId);
-    summary.auth_users = deleteUserError ? 0 : 1;
-    if (deleteUserError) {
-      console.warn(`! could not delete auth user: ${deleteUserError.message}`);
-    }
-  } else {
-    summary.app_roles = 0;
-    summary.auth_users = 0;
-  }
 
   const total = Object.values(summary).reduce((a, b) => a + b, 0);
   const breakdown = Object.entries(summary)

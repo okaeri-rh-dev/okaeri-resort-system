@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-import { E2E_REF, E2E_USER } from "../scripts/e2e/fixtures";
+import { E2E_REF } from "../scripts/e2e/fixtures";
+import { loginAsOwner } from "./fixtures/auth";
 import { COMPACT } from "./fixtures/contrast";
-import { LoginPage } from "./pages/LoginPage";
 
 /**
  * On a phone, the booking edit form scrolls inside the shell's <main> only. Radix Select puts a
@@ -14,9 +14,7 @@ test("booking edit on a phone has one scroller and shows the form actions at its
   page,
 }) => {
   await page.setViewportSize(COMPACT);
-  const loginPage = new LoginPage(page);
-  await loginPage.goto();
-  await loginPage.loginAndWaitForDashboard(E2E_USER.email, E2E_USER.password);
+  await loginAsOwner(page);
 
   await page.goto("/admin/bookings");
   await page
