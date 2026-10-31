@@ -103,7 +103,9 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       }
 
       // Reset rate limit on successful CAPTCHA (give them more attempts)
-      await env.RATE_LIMIT_KV.delete(rateLimitKey);
+      await env.RATE_LIMIT_KV.delete(rateLimitKey).catch((error) => {
+        console.error("Rate limit reset failed:", error);
+      });
     }
 
     // Create Supabase admin client

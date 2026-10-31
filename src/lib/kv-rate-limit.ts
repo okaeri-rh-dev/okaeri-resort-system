@@ -52,6 +52,7 @@ export async function checkKVRateLimit(
   const windowKey = Math.floor(now / windowSeconds);
   const key = `rate-limit:${identifier}:${windowKey}`;
 
+  // shortcut: while KV fails (e.g. the daily write quota is gone until 00:00 UTC), nothing is limited; add a WAF rule if abused
   let count: number;
   try {
     const current = await kv.get(key);
@@ -86,7 +87,6 @@ export async function checkKVRateLimit(
     };
   }
 
-  // shortcut: once the daily KV write quota is gone, nothing is limited until 00:00 UTC; add a WAF rule if abused
   try {
     await kv.put(key, String(count + 1), {
       expirationTtl: windowSeconds + 60, // Auto-cleanup after window + buffer
