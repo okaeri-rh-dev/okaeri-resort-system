@@ -177,6 +177,24 @@ test.describe("Authentication", () => {
       // After successful login, should redirect back to intended page
       // Note: This behavior depends on implementation
     });
+
+    test("a failed role lookup shows the error screen, not Pending Approval", async ({ page }) => {
+      test.skip(
+        !process.env.TEST_ADMIN_EMAIL || !process.env.TEST_ADMIN_PASSWORD,
+        "Test credentials not configured"
+      );
+      const loginPage = new LoginPage(page);
+      await loginPage.goto();
+      await loginPage.loginAndWaitForDashboard(TEST_USERS.admin.email, TEST_USERS.admin.password);
+
+      await page.route("**/rest/v1/rpc/get_current_audit_role", (route) =>
+        route.fulfill({ status: 500, json: { message: "boom" } })
+      );
+      await page.goto(ROUTES.admin.dashboard);
+
+      await expect(page.getByRole("heading", { name: "Authentication Error" })).toBeVisible();
+      await expect(page).not.toHaveURL(/pending-approval/);
+    });
   });
 
   test.describe("Logout", () => {

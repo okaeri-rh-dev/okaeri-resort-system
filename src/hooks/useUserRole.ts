@@ -64,7 +64,8 @@ export function useUserRole() {
   const isAdmin = role === AuditRole.ADMIN;
 
   // Can edit bookings, payments, etc. (manager+)
-  const canEdit = !isStaff && role !== null;
+  // role is undefined while loading or after a failed lookup
+  const canEdit = !isStaff && role != null;
 
   // Can delete records (owner+)
   const canDelete = isOwner || isAdmin;

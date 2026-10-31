@@ -1,21 +1,12 @@
 // src/routes/_authenticated/audit-logs.tsx
 
-import { useEffect, useState } from "react";
-
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { AuditFilters } from "@/components/audit/AuditFilters";
 import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
 import { AuditStatsPanel } from "@/components/audit/AuditStatsPanel";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import {
-  Callout,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/patterns";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/patterns";
 import { useAuditStats } from "@/lib/audit-hooks";
 import { isCurrentUserOwner } from "@/lib/audit-logger";
 import { useAuditStore } from "@/stores/useAuditStore";
@@ -55,39 +46,6 @@ function AuditLogsPage() {
   const toggleFilters = useAuditStore((state) => state.toggleFilters);
 
   const { data: stats, isLoading: statsLoading } = useAuditStats(filters);
-
-  const [isOwner, setIsOwner] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
-
-  useEffect(() => {
-    // Verify access on mount (double-check for security)
-    void isCurrentUserOwner()
-      .then(setIsOwner)
-      .finally(() => setIsChecking(false));
-  }, []);
-
-  // Loading state while checking permissions
-  if (isChecking) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="flex items-center justify-center py-12">
-          <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-        </div>
-      </div>
-    );
-  }
-
-  // Access denied fallback (should not reach here due to beforeLoad)
-  if (!isOwner) {
-    return (
-      <div className="container mx-auto py-8">
-        <Callout tone="danger">
-          You do not have permission to access audit logs. This area is restricted to owners and
-          managers.
-        </Callout>
-      </div>
-    );
-  }
 
   return (
     <ErrorBoundary level="page">
