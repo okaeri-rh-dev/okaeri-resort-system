@@ -165,6 +165,8 @@ describe("Dashboard", () => {
     data.bookings = [
       booking("pending", "Maria Santos", "2026-11-10", "2026-11-12", {
         status: "Pending",
+        is_guest_booking: true,
+        unit_assignment_status: "pending",
         total_amount: 6000,
         payments: [
           { amount: 2000, status: "Active" },
@@ -176,8 +178,15 @@ describe("Dashboard", () => {
         payment_status: "Completed",
         payments: [{ amount: 6000, status: "Active" }],
       }),
+      booking("staff", "Ana Cruz", "2026-11-10", "2026-11-12", {
+        unitCode: "C3",
+        status: "Pending",
+      }),
     ];
     renderDashboard();
+
+    const staffRow = await screen.findByRole("link", { name: /Ana Cruz/ });
+    expect(within(staffRow).queryByText("Waiting for verification")).not.toBeInTheDocument();
 
     const pendingRow = await screen.findByRole("link", { name: /Maria Santos/ });
     expect(pendingRow).toHaveAttribute("href", "/admin/bookings/pending");
@@ -191,9 +200,15 @@ describe("Dashboard", () => {
   });
 
   it("links to the queue when bookings wait for verification", async () => {
+    const inQueue = {
+      status: "Pending" as const,
+      is_guest_booking: true,
+      unit_assignment_status: "pending",
+    };
     data.bookings = [
-      booking("p1", "Maria Santos", "2026-11-20", "2026-11-22", { status: "Pending" }),
-      booking("p2", "Jose Rizal", "2026-12-20", "2026-12-22", { status: "Pending" }),
+      booking("p1", "Maria Santos", "2026-11-20", "2026-11-22", inQueue),
+      booking("p2", "Jose Rizal", "2026-12-20", "2026-12-22", inQueue),
+      booking("s1", "Ana Cruz", "2026-11-25", "2026-11-27", { status: "Pending" }),
     ];
     renderDashboard();
 

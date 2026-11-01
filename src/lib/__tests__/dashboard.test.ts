@@ -157,12 +157,17 @@ describe("outstandingBalance", () => {
 });
 
 describe("pendingCount", () => {
-  it("counts the bookings that wait for verification", () => {
+  it("counts the guest bookings that wait in the queue for units", () => {
+    const waiting = { is_guest_booking: true, unit_assignment_status: "pending" };
     const bookings = [
+      booking("2026-11-10T06:00:00Z", "2026-11-12T04:00:00Z", { status: "Pending", ...waiting }),
+      booking("2026-12-10T06:00:00Z", "2026-12-12T04:00:00Z", { status: "Pending", ...waiting }),
       booking("2026-11-10T06:00:00Z", "2026-11-12T04:00:00Z", { status: "Pending" }),
-      booking("2026-12-10T06:00:00Z", "2026-12-12T04:00:00Z", { status: "Pending" }),
-      booking("2026-11-10T06:00:00Z", "2026-11-12T04:00:00Z", { status: "Confirmed" }),
-      booking("2026-11-10T06:00:00Z", "2026-11-12T04:00:00Z", { status: "Cancelled" }),
+      booking("2026-11-10T06:00:00Z", "2026-11-12T04:00:00Z", {
+        status: "Pending",
+        is_guest_booking: true,
+        unit_assignment_status: "assigned",
+      }),
     ];
 
     expect(pendingCount(bookings)).toBe(2);

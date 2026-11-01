@@ -99,6 +99,8 @@ export interface Booking {
   anonymized_at?: string | null;
   is_multi_unit?: boolean | null;
   is_walk_in?: boolean;
+  is_guest_booking?: boolean | null;
+  unit_assignment_status?: string | null;
   unit_count?: number | null;
   pricing_metadata?: {
     hasSeasonalRates?: boolean;
