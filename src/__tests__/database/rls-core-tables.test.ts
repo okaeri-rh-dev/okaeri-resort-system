@@ -40,7 +40,8 @@ const MATRIX: Record<string, Record<"select" | "insert" | "update" | "delete", R
   // Payment edit/verify/delete and guest edit are gated to their manager+ pages.
   // Booking hard delete is admin only (20261021100000); Cancel keeps the history.
   // guests DELETE has no client policy: deletes go through delete_guest (20261021000000).
-  bookings: { select: STAFF_PLUS, insert: STAFF_PLUS, update: STAFF_PLUS, delete: ADMIN_ONLY },
+  // Bookings are created only by the service role (20261101100000).
+  bookings: { select: STAFF_PLUS, insert: [], update: STAFF_PLUS, delete: ADMIN_ONLY },
   guests: { select: STAFF_PLUS, insert: STAFF_PLUS, update: MANAGER_PLUS, delete: [] },
   payments: {
     select: STAFF_PLUS,
