@@ -134,7 +134,11 @@ const columns: ColumnDef<PendingBooking>[] = [
       <span className="whitespace-nowrap">{formatDate(new Date(row.original.check_in_date))}</span>
     ),
   },
-  { accessorKey: "requested_unit_count", header: "Cabins", meta: { align: "center" } },
+  {
+    accessorKey: "requested_unit_count",
+    header: "Cabins",
+    meta: { align: "center", priority: "low" },
+  },
   {
     accessorKey: "total_amount",
     header: "Amount",
@@ -149,6 +153,7 @@ const columns: ColumnDef<PendingBooking>[] = [
     cell: ({ row }) => (
       <StatusBadge {...statusBadgeProps(row.original.payment_status, "Pending")} />
     ),
+    meta: { priority: "low" },
   },
   {
     accessorKey: "created_at",

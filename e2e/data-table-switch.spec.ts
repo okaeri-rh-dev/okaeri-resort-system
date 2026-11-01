@@ -79,4 +79,29 @@ test.describe("DataTable switch on the bookings list", () => {
     await expect(bookingCards(page)).toBeVisible();
     await expect(page.getByRole("table")).toHaveCount(0);
   });
+
+  test("the booking queue at 1280px hides its low-priority columns, so the pinned column covers no header", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await loginAsOwner(page);
+    await page.goto("/admin/bookings/queue");
+
+    const table = page.getByRole("table", { name: "Pending bookings" });
+    await expect(table.getByText(E2E_REF.QUEUE)).toBeVisible();
+    await expect(table.getByRole("columnheader", { name: "Pending" })).toBeVisible();
+    await expect(table.getByRole("columnheader", { name: "Payment" })).toHaveCount(0);
+    await expect(table.getByRole("columnheader", { name: "Cabins" })).toHaveCount(0);
+
+    const headers = await table.getByRole("columnheader").all();
+    const pinnedBox = (await headers.at(-1)!.boundingBox())!;
+    for (const header of headers.slice(0, -1)) {
+      const box = (await header.boundingBox())!;
+      expect(box.x + box.width).toBeLessThanOrEqual(pinnedBox.x + 1);
+    }
+
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await expect(table.getByRole("columnheader", { name: "Payment" })).toBeVisible();
+    await expect(table.getByRole("columnheader", { name: "Cabins" })).toBeVisible();
+  });
 });
