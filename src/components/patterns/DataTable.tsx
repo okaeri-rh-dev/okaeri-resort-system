@@ -94,22 +94,32 @@ export function DataTable<TData>({
 
   const tableRef = useRef<HTMLTableElement>(null);
   // The pane width the full table needs, stored while every column shows so the decision does
-  // not flicker at the edge. Ids, not array identity: some callers rebuild `columns` each render.
-  const [fullTable, setFullTable] = useState<{ signature: string; paneWidth: number } | null>(null);
+  // not flicker at the edge. Ids, not array identity: some callers rebuild `columns` or `data`
+  // each render, which would loop.
+  // shortcut: a same-id refetch with narrower content keeps the columns hidden until the pane
+  // reaches the stored width; key on data identity once every caller memoizes `data`.
+  const [fullTableFit, setFullTableFit] = useState<{
+    columnAndRowIds: string;
+    paneWidth: number;
+  } | null>(null);
   const leafColumns = table.getAllLeafColumns();
   const hasLowPriority = leafColumns.some((column) => column.columnDef.meta?.priority === "low");
-  const signature = [...leafColumns, ...rows].map(({ id }) => id).join(" ");
+  const columnAndRowIds = [...leafColumns, ...rows].map(({ id }) => id).join(" ");
   const hideLowPriority =
-    width !== null && fullTable?.signature === signature && width < fullTable.paneWidth;
+    width !== null &&
+    fullTableFit?.columnAndRowIds === columnAndRowIds &&
+    width < fullTableFit.paneWidth;
+  // Filtered here, not through TanStack's `columnVisibility`, which is the caller's state.
   const isShown = (column: Column<TData>) =>
     !(hideLowPriority && column.columnDef.meta?.priority === "low");
 
   useLayoutEffect(() => {
+    // The `overflow-auto` div that the `Table` primitive wraps around `<table>`.
     const scroller = tableRef.current?.parentElement;
     if (!hasLowPriority || hideLowPriority || !scroller || width === null) return;
 
     const overflow = scroller.scrollWidth - scroller.clientWidth;
-    if (overflow > 0) setFullTable({ signature, paneWidth: width + overflow });
+    if (overflow > 0) setFullTableFit({ columnAndRowIds, paneWidth: width + overflow });
   });
 
   let content: ReactNode = null;
@@ -155,13 +165,12 @@ export function DataTable<TData>({
             ))}
           </TableHeader>
           <TableBody>
-            {rows.map((row) => (
-              <Fragment key={row.id}>
-                <TableRow className="group h-10 duration-150">
-                  {row
-                    .getVisibleCells()
-                    .filter((cell) => isShown(cell.column))
-                    .map((cell) => (
+            {rows.map((row) => {
+              const cells = row.getVisibleCells().filter((cell) => isShown(cell.column));
+              return (
+                <Fragment key={row.id}>
+                  <TableRow className="group h-10 duration-150">
+                    {cells.map((cell) => (
                       <TableCell
                         key={cell.id}
                         style={{ textAlign: cell.column.columnDef.meta?.align }}
@@ -173,19 +182,17 @@ export function DataTable<TData>({
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     ))}
-                </TableRow>
-                {renderExpandedRow && row.getIsExpanded() && (
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableCell
-                      colSpan={row.getVisibleCells().filter((cell) => isShown(cell.column)).length}
-                      className="p-0"
-                    >
-                      {renderExpandedRow(row)}
-                    </TableCell>
                   </TableRow>
-                )}
-              </Fragment>
-            ))}
+                  {renderExpandedRow && row.getIsExpanded() && (
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableCell colSpan={cells.length} className="p-0">
+                        {renderExpandedRow(row)}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </Fragment>
+              );
+            })}
           </TableBody>
         </TablePrimitive>
         {rows.length === 0 && emptyState ? <div className="p-8">{emptyState}</div> : null}
