@@ -56,7 +56,14 @@ function renderCalendar() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <DashboardCalendar bookings={[]} />
+      <DashboardCalendar
+        bookings={[]}
+        month={new Date(2026, 10, 1)}
+        onMonthChange={() => {}}
+        today="2026-11-10"
+        selectedDay="2026-11-10"
+        onSelectDay={() => {}}
+      />
     </QueryClientProvider>
   );
 }

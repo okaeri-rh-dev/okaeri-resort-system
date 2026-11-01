@@ -20,6 +20,10 @@ A daily look on the phone: who checks in, who checks out, which cabin, and what 
 - No quick actions on the dashboard.
 - Layout: variant C on phone and desktop (2026-10-21, after the prototype). Calendar with the day panel under it on the phone, beside it on desktop; today open by default; a tap or click changes the day; previous/next day buttons on the panel. No bottom sheet and no separate Today/Tomorrow list. Why: shortest phone page, and it uses the desktop width best.
 - Confirmed-booking count stays only as a small line under the month name next to occupancy ("20% occupancy · 8 confirmed"), not as its own tile. Why: it does not help a daily task; occupancy already shows how busy the month is.
+- Implementation (#149, 2026-11-01): the dashboard reads every booking, not the Bookings page's saved filters. Why: a filter left on there made the numbers and the day panel wrong. Revisit if the full list gets slow.
+- Implementation (#149): the day panel names the day's blocks ("Blocked: Cabin 1"), and the hover card does not. Why: the panel is the only day detail on a phone (follow-up 2 on #149).
+- Implementation (#149): the hover card never opens from focus, so keyboard users get the day from the panel, not the card. Why: a tap focuses the day, and focus cannot tell touch from keyboard.
+- Implementation (#149): the "Today" button on the desktop calendar header is gone, with the row header. Why: one header for all sizes; today is the panel's default. Revisit if the family misses it.
 - Booking-status pill in dashboard rows: shown only for pending bookings, labelled "Waiting for verification"; the payment-status pill stays as it is (2026-10-21). Why: both pills said "Pending" in one row (not verified vs. unpaid). Screen copy only; GLOSSARY terms do not change.
 - Fix during implementation: dates use the device-local day (`format(new Date(...))`), must use the Manila day (ADR 0002). Check-in/check-out logic is duplicated in `MobileDashboard` and `DesktopDashboard`: one shared component.
 

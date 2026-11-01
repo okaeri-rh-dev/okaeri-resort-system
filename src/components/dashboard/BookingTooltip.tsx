@@ -12,10 +12,9 @@ import {
 import { getBookingStatusPriority } from "@/hooks/useCalendarBookings";
 import { formatCurrency } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
-import { cn } from "@/lib/utils";
 import type { Booking } from "@/types";
 
-import { UNIT_SLOT_MAP } from "./unit-calendar-config";
+import { CabinChips } from "./BookingRow";
 
 interface BookingTooltipProps {
   bookings: Booking[];
@@ -51,7 +50,10 @@ export const BookingTooltip = React.memo(function BookingTooltip({
 
   return (
     <HoverCard openDelay={150} closeDelay={100}>
-      <HoverCardTrigger asChild>{children}</HoverCardTrigger>
+      {/* A mouse preview only: a tap focuses the day, and focus must not open the card */}
+      <HoverCardTrigger asChild onFocus={(event) => event.preventDefault()}>
+        {children}
+      </HoverCardTrigger>
       {/* Portal so the popover escapes the calendar table's containing block.
           The table has `container-type: inline-size` (for BookingIndicators' cqi
           font-size) which implicitly applies `contain: layout`, making the table
@@ -105,25 +107,7 @@ const BookingTooltipItem = React.memo(function BookingTooltipItem({
       {/* Unit(s) and Status */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          {booking.booking_units && booking.booking_units.length > 0 ? (
-            booking.booking_units.map((bu) => {
-              const unitCode = bu.unit?.unit_code;
-              const slotConfig = unitCode ? UNIT_SLOT_MAP.get(unitCode) : undefined;
-              return (
-                <span
-                  key={bu.booking_unit_id ?? bu.unit_id}
-                  className={cn(
-                    "rounded px-1.5 py-0.5 text-xs font-semibold",
-                    slotConfig && cn(slotConfig.bg, slotConfig.text, slotConfig.border, "border")
-                  )}
-                >
-                  {unitCode || bu.unit?.unit_name || "—"}
-                </span>
-              );
-            })
-          ) : (
-            <span className="text-xs font-semibold">—</span>
-          )}
+          <CabinChips booking={booking} />
           <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
         </div>
         <span className="text-xs font-semibold tabular-nums">

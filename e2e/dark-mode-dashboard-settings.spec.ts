@@ -5,9 +5,9 @@ import { COMPACT, EXPANDED, expectReadable, useTheme } from "./fixtures/contrast
 
 /**
  * The dashboard and settings screens read in light and dark (#110): no text under WCAG AA
- * against what is painted behind it. Needs the seeded admin. Bookings are stubbed so tomorrow's
- * schedule, the calendar chips and every recent-booking status render whatever the shared
- * database holds; settings use the seeded payment methods and expense categories.
+ * against what is painted behind it. Needs the seeded admin. Bookings are stubbed so the day
+ * panel, the queue line and the calendar chips render whatever the shared database holds;
+ * settings use the seeded payment methods and expense categories.
  */
 
 const THEMES = ["light", "dark"] as const;
@@ -99,7 +99,7 @@ async function stubBookings(page: Page) {
   );
 }
 
-/** The dashboard renders its mobile and desktop layouts together and hides one with CSS. */
+/** The first shown match: a booking's chip repeats on each night of its stay. */
 const visible = (locator: Locator) => locator.locator("visible=true").first();
 
 test.describe("Dashboard and settings read in light and dark", () => {
@@ -117,8 +117,8 @@ test.describe("Dashboard and settings read in light and dark", () => {
         await stubBookings(page);
         await page.setViewportSize(EXPANDED);
         await loginAsAdmin(page);
-        await expect(page.getByRole("heading", { name: "Recent Bookings" })).toBeVisible();
-        await expect(visible(page.getByText("Ben Cruz"))).toBeVisible();
+        await expect(page.getByRole("region", { name: /^Today/ })).toBeVisible();
+        await expect(page.getByRole("link", { name: /Ana Reyes/ })).toBeVisible();
         await expect(visible(page.getByLabel("C3: Ana Reyes"))).toBeVisible();
         // A wide calendar pane names the cabin on each chip
         await expect(visible(page.getByText("C3", { exact: true }))).toBeVisible();
@@ -129,8 +129,9 @@ test.describe("Dashboard and settings read in light and dark", () => {
         await stubBookings(page);
         await page.setViewportSize(COMPACT);
         await loginAsAdmin(page);
-        await expect(visible(page.getByText("Tomorrow's Schedule"))).toBeVisible();
-        await expect(visible(page.getByText("Maria Santos"))).toBeVisible();
+        await expect(page.getByText("1 booking waiting for verification")).toBeVisible();
+        await expect(page.getByRole("link", { name: /Ana Reyes/ })).toBeVisible();
+        await expect(page.getByText("Waiting for verification", { exact: true })).toBeVisible();
         await expectReadable(page);
       });
 

@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 /**
  * Static configuration for calendar unit slot layout.
  * Each unit gets a fixed vertical lane (C1=top, C2=middle, C3=bottom)
@@ -39,6 +41,16 @@ export const UNIT_SLOTS: UnitSlotConfig[] = [
     mobileBar: "bg-unit-lane-3-accent",
   },
 ];
+
+/** The one chip style of a calendar day: booking chips and the Blocked chip */
+export const calendarChipClass = (compact: boolean) =>
+  cn(
+    "flex w-full min-w-0 items-center rounded-sm border py-0.5",
+    compact ? "px-0.5" : "px-1",
+    "truncate leading-tight font-medium",
+    // eslint-disable-next-line better-tailwindcss/no-restricted-classes -- chips scale with the calendar cell's width (cqi) so every booking fits a cell; no fixed step can (#36)
+    "text-[clamp(7px,2cqi,10px)]"
+  );
 
 /** Map from unit code to slot config for O(1) lookup */
 export const UNIT_SLOT_MAP = new Map(UNIT_SLOTS.map((s) => [s.unitCode, s]));

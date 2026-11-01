@@ -19,6 +19,7 @@ export type DbBookingUnit = Tables<"booking_units"> & {
 export type DbBooking = Tables<"bookings"> & {
   booking_units?: DbBookingUnit[];
   guest?: DbGuest | null;
+  payments?: Pick<Tables<"payments">, "amount" | "status">[];
 };
 
 // ============================================
@@ -139,5 +140,6 @@ export function adaptBookingFromDB(dbBooking: DbBooking): Booking {
     // Convert related entities (NEW: junction table pattern)
     booking_units: dbBooking.booking_units?.map(adaptBookingUnitFromDB) || [],
     guest: dbBooking.guest ? adaptGuestFromDB(dbBooking.guest) : null,
+    payments: dbBooking.payments,
   };
 }

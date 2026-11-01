@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { RESORT_OPERATION_HOURS } from "@/config/settings";
 import {
   dayAfter,
+  dayBefore,
   manilaDayOf,
   manilaDayStart,
   nightsBetween,
@@ -54,6 +55,11 @@ describe("stay convention", () => {
   it("gives the first instant of a Manila day and the next day", () => {
     expect(manilaDayStart("2026-10-15")).toBe("2026-10-14T16:00:00.000Z");
     expect(dayAfter("2026-12-31")).toBe("2027-01-01");
+  });
+
+  it("steps back across a month, a year and a daylight-saving change", () => {
+    expect(dayBefore("2027-01-01")).toBe("2026-12-31");
+    expect(dayBefore("2026-03-09")).toBe("2026-03-08");
   });
 });
 
