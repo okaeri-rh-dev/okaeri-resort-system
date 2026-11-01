@@ -64,6 +64,8 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
  */
 const SIGNED_URL_EXPIRY = 300;
 
+const UPLOAD_FAILED_MESSAGE = "Could not prepare the upload. Please try again.";
+
 export async function onRequest(context: {
   request: CloudflareRequest;
   env: Env;
@@ -160,7 +162,7 @@ export async function onRequest(context: {
       return new Response(
         JSON.stringify({
           success: false,
-          error: `Storage error: ${error.message || "Failed to generate upload URL"}`,
+          error: UPLOAD_FAILED_MESSAGE,
         } as UploadUrlResponse),
         {
           status: 500,
@@ -184,11 +186,10 @@ export async function onRequest(context: {
     );
   } catch (error) {
     console.error("[UPLOAD_URL] Unexpected error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({
         success: false,
-        error: `Server error: ${errorMessage}`,
+        error: UPLOAD_FAILED_MESSAGE,
       } as UploadUrlResponse),
       {
         status: 500,
