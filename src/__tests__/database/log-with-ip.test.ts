@@ -15,7 +15,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { onRequestPost } from "../../../functions/api/audit/log-with-ip";
 import { testSupabaseAdmin as admin, shouldRunDatabaseTests } from "../setup/test-db";
 
-const URL = process.env.TEST_SUPABASE_URL || "http://127.0.0.1:54321";
+const SUPABASE_URL = process.env.TEST_SUPABASE_URL || "http://127.0.0.1:54321";
 const ANON = process.env.TEST_SUPABASE_ANON_KEY || "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
 const SERVICE_ROLE_KEY = process.env.TEST_SUPABASE_SERVICE_ROLE_KEY || "";
 
@@ -42,7 +42,7 @@ function postAuditEvent(token: string) {
         category: "authentication",
       }),
     }),
-    env: { SUPABASE_URL: URL, SUPABASE_SERVICE_ROLE_KEY: SERVICE_ROLE_KEY },
+    env: { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: SERVICE_ROLE_KEY },
   });
 }
 
@@ -61,7 +61,7 @@ describe("POST /api/audit/log-with-ip", () => {
     userId = data.user.id;
 
     const { data: session, error: signInError } = await createClient(
-      URL,
+      SUPABASE_URL,
       ANON
     ).auth.signInWithPassword({ email, password: PASSWORD });
     if (signInError || !session.session) throw new Error(`signIn failed: ${signInError?.message}`);

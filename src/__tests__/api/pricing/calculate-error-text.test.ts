@@ -1,14 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { mockEnv } from "../setup";
-
-const queryChain = (result: unknown): unknown =>
-  new Proxy(() => {}, {
-    get: (_target, prop) =>
-      prop === "then"
-        ? (resolve: (value: unknown) => void) => resolve(result)
-        : () => queryChain(result),
-  });
+import { mockEnv, queryChain } from "../setup";
 
 describe("POST /api/pricing/calculate when the price lookup fails", () => {
   beforeEach(() => {

@@ -295,7 +295,6 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
             success: false,
             error: "Pricing calculation failed",
             error_code: ERROR_CODES.DATABASE_ERROR,
-            details: "Invalid total amount calculated",
           },
           { status: 500 }
         );
@@ -382,7 +381,6 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
       });
 
       // Parse database error for specific error codes
-      const errorMessage = createError?.message || "Unknown database error";
       const errorCode = createError?.code;
 
       // Determine appropriate error response based on PostgreSQL error code
@@ -399,7 +397,6 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
       } else if (errorCode === "23502") {
         // Not null violation - missing required field
         userMessage = "Missing required booking information.";
-        console.error("[BOOKING] Missing field:", errorMessage);
       }
 
       return Response.json(

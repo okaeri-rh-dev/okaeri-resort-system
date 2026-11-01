@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { mockEnv } from "./setup";
+import { mockEnv, queryChain } from "./setup";
 
 const DB_ERROR = {
   message: 'Booking creation failed: null value in column "guest_id" of relation "bookings"',
@@ -8,14 +8,6 @@ const DB_ERROR = {
   hint: "Check the guests table",
   details: "Failing row contains (secret)",
 };
-
-const queryChain = (result: unknown): unknown =>
-  new Proxy(() => {}, {
-    get: (_target, prop) =>
-      prop === "then"
-        ? (resolve: (value: unknown) => void) => resolve(result)
-        : () => queryChain(result),
-  });
 
 const supabaseStub = {
   from: (table: string) =>
