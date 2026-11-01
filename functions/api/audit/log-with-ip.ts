@@ -11,14 +11,9 @@
  *
  * Request body:
  * {
- *   tableName: string;
- *   recordId?: string;
- *   description: string;
- *   category: string;
- *   severity?: "INFO" | "WARNING" | "CRITICAL" | "DEBUG";
+ *   tableName: "authentication";
+ *   description: one of PASSWORD_EVENTS;
  *   metadata?: Record<string, unknown>;
- *   oldData?: Record<string, unknown>;
- *   newData?: Record<string, unknown>;
  * }
  *
  * Response:
@@ -42,14 +37,12 @@ interface Env {
 
 interface AuditLogRequest {
   tableName: string;
-  recordId?: string;
   description: string;
-  category: string;
-  severity?: "INFO" | "WARNING" | "CRITICAL" | "DEBUG";
   metadata?: { [key: string]: Json | undefined };
-  oldData?: { [key: string]: Json | undefined };
-  newData?: { [key: string]: Json | undefined };
 }
+
+// The service role writes any row, so accept only the events auth-password-reset sends
+const PASSWORD_EVENTS = ["Password updated successfully", "Password update failed"];
 
 interface Context {
   request: Request;
@@ -66,11 +59,10 @@ export async function onRequestPost(context: Context): Promise<Response> {
     // Parse request body
     const body: AuditLogRequest = await request.json();
 
-    // Validate required fields
-    if (!body.tableName || !body.description || !body.category) {
+    if (body.tableName !== "authentication" || !PASSWORD_EVENTS.includes(body.description)) {
       return new Response(
         JSON.stringify({
-          error: "Missing required fields: tableName, description, category",
+          error: "Unsupported audit event",
         }),
         {
           status: 400,
@@ -115,16 +107,13 @@ export async function onRequestPost(context: Context): Promise<Response> {
 
     // Build audit log data (Layer 2 convention)
     const auditLogData = {
-      table_name: body.tableName,
-      record_id: body.recordId || null,
+      table_name: "authentication",
       action: "INSERT", // Layer 2 convention: always INSERT
       source: "app", // Layer 2 source marker
       description: body.description,
-      category: body.category,
-      severity: body.severity || "INFO",
+      category: "AUTHENTICATION",
+      severity: "WARNING",
       metadata: body.metadata || null,
-      old_data: body.oldData || null,
-      new_data: body.newData || null,
       ip_address: clientIP,
       user_agent: userAgent,
       user_id: user.id,

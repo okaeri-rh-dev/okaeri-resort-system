@@ -23,7 +23,7 @@ const KNOWN_UNGATED: Record<string, string> = {
   "functions/api/auth/sign-up.ts":
     "Missing from isPublicPath, so the middleware rejects the anonymous sign-up form with 401. Left as is (2026-10-05); see the guardrails plan.",
   "functions/api/audit/log-with-ip.ts":
-    "Any signed-in user logs their own password change, so no role check. It verifies the token and stamps user_id / user_email from it (2026-11-01).",
+    "Any signed-in user logs their own password change, so no role check. It verifies the token, stamps user_id / user_email from it, and accepts only the password events (2026-11-01).",
 };
 
 function apiFiles(dir: string): string[] {

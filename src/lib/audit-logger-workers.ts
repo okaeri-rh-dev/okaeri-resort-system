@@ -8,41 +8,18 @@ import { supabase } from "./supabase";
 /**
  * Log audit event with IP capture via Cloudflare Workers
  *
- * Use this ONLY for critical security events where IP forensics matter:
- * - Authentication (login, logout, failed attempts)
- * - Financial operations (refunds, chargebacks)
- * - Data deletions
- * - Sensitive data exports
+ * The endpoint accepts only the password events in PASSWORD_EVENTS
+ * (functions/api/audit/log-with-ip.ts); add a new event there first.
+ * It sets the category and severity itself.
  *
  * Table writes need no call: the audit trigger logs them
  *
- * @param context - Audit event context with business information
- * @returns Promise resolving to success/error status
- *
  * @example
- * // Log critical authentication event with IP
  * await logAuditEventWithIP({
  *   tableName: 'authentication',
- *   description: 'Failed login attempt',
+ *   description: 'Password update failed',
  *   category: AuditCategory.AUTHENTICATION,
- *   severity: AuditSeverity.WARNING,
- *   metadata: {
- *     email: 'user@example.com',
- *     reason: 'Invalid password'
- *   }
- * });
- *
- * @example
- * // Log refund with IP
- * await logAuditEventWithIP({
- *   tableName: 'payments',
- *   recordId: paymentId,
- *   description: `Refund processed: ₱${amount.toLocaleString()}`,
- *   category: AuditCategory.PAYMENT,
- *   severity: AuditSeverity.WARNING,
- *   metadata: { amount, reason },
- *   oldData: { payment_status: 'completed' },
- *   newData: { payment_status: 'refunded' }
+ *   metadata: { event: 'password_update_failed' }
  * });
  */
 export async function logAuditEventWithIP(
