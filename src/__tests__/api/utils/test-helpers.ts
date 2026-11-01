@@ -147,3 +147,12 @@ export async function generateExpiredJWT(
 export function generateIdempotencyKey(prefix = "test"): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 }
+
+/** A Supabase query builder stub: every chained call resolves to `result` */
+export const queryChain = (result: unknown): unknown =>
+  new Proxy(() => {}, {
+    get: (_target, prop) =>
+      prop === "then"
+        ? (resolve: (value: unknown) => void) => resolve(result)
+        : () => queryChain(result),
+  });

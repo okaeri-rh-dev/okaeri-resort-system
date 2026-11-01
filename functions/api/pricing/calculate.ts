@@ -341,8 +341,7 @@ export async function onRequest(context: {
     return new Response(
       JSON.stringify({
         error: "CALCULATION_ERROR",
-        message: error instanceof Error ? error.message : "Failed to calculate pricing",
-        debug: process.env.NODE_ENV === "development" ? error : undefined,
+        message: "Failed to calculate pricing",
       }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );

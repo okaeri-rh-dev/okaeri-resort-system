@@ -1,15 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { mockEnv } from "./setup";
-
-// Every query chain ends in a result the handler accepts as "nothing found / all fine"
-const queryChain = (result: unknown): unknown =>
-  new Proxy(() => {}, {
-    get: (_target, prop) =>
-      prop === "then"
-        ? (resolve: (value: unknown) => void) => resolve(result)
-        : () => queryChain(result),
-  });
+import { mockEnv, queryChain } from "./setup";
 
 const supabaseStub = {
   from: (table: string) =>

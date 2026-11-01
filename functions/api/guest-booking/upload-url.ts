@@ -68,6 +68,8 @@ const TEMP_REFERENCE_PATTERN = /^TEMP-[0-9a-f]{8}$/;
  */
 const SIGNED_URL_EXPIRY = 300;
 
+const UPLOAD_FAILED_MESSAGE = "Could not prepare the upload. Please try again.";
+
 export async function onRequest(context: { request: Request; env: Env }): Promise<Response> {
   const { request, env } = context;
 
@@ -192,7 +194,7 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
       return new Response(
         JSON.stringify({
           success: false,
-          error: `Storage error: ${error.message || "Failed to generate upload URL"}`,
+          error: UPLOAD_FAILED_MESSAGE,
         } as UploadUrlResponse),
         {
           status: 500,
@@ -216,11 +218,10 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
     );
   } catch (error) {
     console.error("[UPLOAD_URL] Unexpected error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({
         success: false,
-        error: `Server error: ${errorMessage}`,
+        error: UPLOAD_FAILED_MESSAGE,
       } as UploadUrlResponse),
       {
         status: 500,

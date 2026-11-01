@@ -295,7 +295,6 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
             success: false,
             error: "Pricing calculation failed",
             error_code: ERROR_CODES.DATABASE_ERROR,
-            details: "Invalid total amount calculated",
           },
           { status: 500 }
         );
@@ -309,7 +308,6 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
           success: false,
           error: "Pricing calculation failed",
           error_code: ERROR_CODES.DATABASE_ERROR,
-          details: pricingError instanceof Error ? pricingError.message : "Unknown pricing error",
         },
         { status: 500 }
       );
@@ -383,7 +381,6 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
       });
 
       // Parse database error for specific error codes
-      const errorMessage = createError?.message || "Unknown database error";
       const errorCode = createError?.code;
 
       // Determine appropriate error response based on PostgreSQL error code
@@ -400,10 +397,6 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
       } else if (errorCode === "23502") {
         // Not null violation - missing required field
         userMessage = "Missing required booking information.";
-        console.error("[BOOKING] Missing field:", errorMessage);
-      } else if (errorCode === "P0001") {
-        // Raised exception from PL/pgSQL
-        userMessage = errorMessage.replace("Booking creation failed: ", "");
       }
 
       return Response.json(
@@ -411,13 +404,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
           success: false,
           error: userMessage,
           error_code: errorType,
-          details: {
-            message: errorMessage,
-            code: errorCode,
-            hint: createError?.hint,
-            // Include booking reference for support inquiries
-            booking_reference: bookingReference,
-          },
+          booking_reference: bookingReference,
         },
         { status: 500 }
       );
@@ -490,9 +477,6 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
         success: false,
         error: "Your booking was not saved. Please try again later.",
         error_code: ERROR_CODES.INTERNAL_ERROR,
-        details: {
-          message: errorMessage,
-        },
       },
       { status: 500 }
     );
