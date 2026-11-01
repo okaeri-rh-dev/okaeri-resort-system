@@ -24,7 +24,9 @@ export function movementsOn(bookings: Booking[], day: ManilaDay): DayMovements {
   };
 }
 
-export const isPending = (booking: Booking) => booking.booking_status === "Pending";
+// Same rule as the pending-bookings queue (functions/api/admin/pending-bookings.ts)
+export const isPending = (booking: Booking) =>
+  booking.is_guest_booking === true && booking.unit_assignment_status === "pending";
 
 export const pendingCount = (bookings: Booking[]) => bookings.filter(isPending).length;
 
