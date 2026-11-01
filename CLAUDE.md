@@ -28,6 +28,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ## Testing Notes (non-obvious only)
 
 - Database and performance tests require a local Supabase instance: run `supabase start` first. These tests use `@vitest-environment node` (bypasses CORS) with `beforeEach` cleanup; `TEST_SUPABASE_URL` / `TEST_SUPABASE_SERVICE_ROLE_KEY` default to the local instance in `vitest.config.ts`.
+- Apply a new migration to the local DB with `supabase migration up --local`, never `psql -f`: `psql` writes no `schema_migrations` row, and the gap makes later `migration up` runs fail with `MigrationMissingRemoteError` (issue 243).
 
 ## Phase Suffixes
 
