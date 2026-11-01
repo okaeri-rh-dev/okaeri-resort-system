@@ -1,4 +1,4 @@
-import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
+import { addDays, differenceInCalendarDays, format, parseISO, subDays } from "date-fns";
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 
 import { RESORT_OPERATION_HOURS, RESORT_TIMEZONE } from "@/config/settings";
@@ -42,3 +42,6 @@ export const manilaDayStart = (day: ManilaDay) => atManilaTime(day, "00:00");
 
 export const dayAfter = (day: ManilaDay): ManilaDay =>
   format(addDays(parseISO(day), 1), "yyyy-MM-dd");
+
+export const dayBefore = (day: ManilaDay): ManilaDay =>
+  format(subDays(parseISO(day), 1), "yyyy-MM-dd");

@@ -4,19 +4,13 @@ import { ROUTES, TIMEOUTS } from "../fixtures/test-data";
 
 /**
  * Page Object Model for the Admin Dashboard
- * Handles dashboard navigation, KPI cards, and quick actions
+ * Handles dashboard navigation and quick actions
  */
 export class DashboardPage {
   readonly page: Page;
 
-  // KPI Cards
-  readonly freeTonightCard: Locator;
-  readonly activeBookingsCard: Locator;
-  readonly totalBookingsCard: Locator;
-  readonly totalGuestsCard: Locator;
-
-  // Calendar
-  readonly calendarComponent: Locator;
+  /** The day panel, open on today */
+  readonly todayPanel: Locator;
 
   // Navigation links
   readonly bookingsLink: Locator;
@@ -34,28 +28,7 @@ export class DashboardPage {
   constructor(page: Page) {
     this.page = page;
 
-    // KPI Cards - finding cards by their title text
-    this.freeTonightCard = page
-      .locator("text=Free tonight")
-      .locator("xpath=ancestor::*[contains(@class, 'card') or contains(@class, 'Card')]")
-      .first();
-    this.activeBookingsCard = page
-      .locator("text=Active Bookings")
-      .locator("xpath=ancestor::*[contains(@class, 'card') or contains(@class, 'Card')]")
-      .first();
-    this.totalBookingsCard = page
-      .locator("text=Total Bookings")
-      .locator("xpath=ancestor::*[contains(@class, 'card') or contains(@class, 'Card')]")
-      .first();
-    this.totalGuestsCard = page
-      .locator("text=Total Guests")
-      .locator("xpath=ancestor::*[contains(@class, 'card') or contains(@class, 'Card')]")
-      .first();
-
-    // Calendar component
-    this.calendarComponent = page.locator(
-      '[data-testid="dashboard-calendar"], [class*="calendar"]'
-    );
+    this.todayPanel = page.getByRole("region", { name: /^Today/ });
 
     // Navigation - using link roles with navigation menu
     this.bookingsLink = page.getByRole("link", { name: /bookings/i }).first();
@@ -79,15 +52,6 @@ export class DashboardPage {
   }
 
   /**
-   * True when the viewport uses the mobile dashboard variant (< md / 768px).
-   * The app renders MobileDashboard and DesktopDashboard side by side and
-   * toggles visibility with `md:hidden` / `hidden md:block`.
-   */
-  private isMobileDashboardViewport(): boolean {
-    return (this.page.viewportSize()?.width ?? 1280) < 768;
-  }
-
-  /**
    * Click a destination in the main nav (bottom bar or rail). When it is not shown directly
    * (unpinned on compact, grouped in the collapsed rail), More or Open menu opens the full list.
    */
@@ -108,13 +72,7 @@ export class DashboardPage {
    */
   async waitForPageLoad() {
     await this.page.waitForLoadState("networkidle");
-    // Wait for a marker of the active dashboard variant to be visible
-    const marker = this.isMobileDashboardViewport()
-      ? "text=Tomorrow's Schedule"
-      : "text=Free tonight";
-    await this.page.waitForSelector(marker, {
-      timeout: TIMEOUTS.navigation,
-    });
+    await expect(this.todayPanel).toBeVisible({ timeout: TIMEOUTS.navigation });
   }
 
   /**
@@ -122,30 +80,6 @@ export class DashboardPage {
    */
   async expectToBeOnDashboard() {
     await expect(this.page).toHaveURL(/\/admin\/dashboard/);
-  }
-
-  /**
-   * Get the value from a KPI card
-   */
-  async getKpiValue(card: Locator): Promise<string> {
-    const valueElement = card.locator('[class*="text-2xl"], [class*="font-bold"]').first();
-    return valueElement.innerText();
-  }
-
-  /**
-   * Get the count of cabins free tonight
-   */
-  async getFreeTonightCount(): Promise<number> {
-    const value = await this.getKpiValue(this.freeTonightCard);
-    return parseInt(value, 10) || 0;
-  }
-
-  /**
-   * Get active bookings count
-   */
-  async getActiveBookingsCount(): Promise<number> {
-    const value = await this.getKpiValue(this.activeBookingsCard);
-    return parseInt(value, 10) || 0;
   }
 
   /**
@@ -212,15 +146,6 @@ export class DashboardPage {
    * Verify dashboard shows expected data (basic smoke test)
    */
   async verifyDashboardLoaded() {
-    if (this.isMobileDashboardViewport()) {
-      // MobileDashboard variant: no KPI cards; assert its stable section.
-      // Both dashboard variants render this card; MobileDashboard comes first
-      // in the DOM and is the visible one below the md breakpoint.
-      await expect(this.page.getByText("Tomorrow's Schedule").first()).toBeVisible();
-      return;
-    }
-    // DesktopDashboard variant: KPI section is visible
-    await expect(this.page.locator("text=Free tonight")).toBeVisible();
-    await expect(this.page.locator("text=Active Bookings")).toBeVisible();
+    await expect(this.todayPanel).toBeVisible();
   }
 }

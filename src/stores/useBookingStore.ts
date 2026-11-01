@@ -326,7 +326,8 @@ const bookingListQuery = ({
           *,
           unit:units(*)
         ),
-        guest:guests(*)
+        guest:guests(*),
+        payments(amount, status)
       `);
 
       // Apply filters
@@ -395,6 +396,10 @@ export const useBookings = () => {
     placeholderData: keepPreviousData,
   });
 };
+
+/** Every booking, whatever the Bookings page filters are. */
+export const useAllBookings = () =>
+  useQuery(bookingListQuery({ filters: {}, searchQuery: "", sortBy: "date", sortOrder: "desc" }));
 
 // Fetch single booking
 

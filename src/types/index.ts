@@ -121,6 +121,8 @@ export interface Booking {
   // Relations (NEW: junction table pattern)
   booking_units?: BookingUnitRecord[];
   guest?: Guest | null;
+  /** Only amount and status: what the outstanding balance needs */
+  payments?: { amount: number; status: string }[];
   // Deprecated: Direct unit relation removed (use booking_units instead)
   // unit?: Unit;
 }
