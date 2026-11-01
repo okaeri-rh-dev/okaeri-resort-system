@@ -108,11 +108,13 @@ export function AuditLogViewer() {
       accessorKey: "source",
       header: "Source",
       cell: ({ row }) => <SourceBadge source={row.original.source} />,
+      meta: { priority: "low" },
     },
     {
       accessorKey: "record_id",
       header: "Record ID",
       cell: ({ row }) => <RecordId log={row.original} className="max-w-32" />,
+      meta: { priority: "low" },
     },
     {
       id: "changed_fields",
