@@ -391,6 +391,7 @@ const columns = [
   searchQuery={searchQuery}
   setSearchQuery={setSearchQuery}
   resetFilters={resetFilters}
+  hasActiveFilters={hasActiveFilters}
   onExport={handleExport}
 />
 ```

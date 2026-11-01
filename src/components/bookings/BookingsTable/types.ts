@@ -21,6 +21,7 @@ export interface BookingFiltersProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   resetFilters: () => void;
+  hasActiveFilters: boolean;
   onExport: () => void;
   /** Number of bookings after filtering */
   resultCount?: number;

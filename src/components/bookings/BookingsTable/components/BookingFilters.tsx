@@ -25,6 +25,7 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
   searchQuery,
   setSearchQuery,
   resetFilters,
+  hasActiveFilters,
   onExport,
   resultCount,
   totalCount,
@@ -38,17 +39,6 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
     to: undefined,
   });
   const [dateFilterOpen, setDateFilterOpen] = useState(false);
-
-  // Check if any filters are actually active (have non-undefined values)
-  const hasActiveFilters = (): boolean => {
-    const hasFilterValues =
-      filters.status !== undefined ||
-      filters.payment_status !== undefined ||
-      filters.date_from !== undefined ||
-      filters.date_to !== undefined ||
-      filters.is_walk_in !== undefined;
-    return hasFilterValues || searchQuery.trim().length > 0;
-  };
 
   // Count active filter types (excluding search)
   const activeFilterCount = (): number => {
@@ -217,7 +207,7 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
     resultCount !== undefined &&
     totalCount !== undefined && (
       <span className="text-muted-foreground text-sm">
-        {hasActiveFilters() ? (
+        {hasActiveFilters ? (
           <>
             <span className="text-foreground font-medium">{resultCount}</span> of {totalCount}{" "}
             bookings
@@ -248,7 +238,7 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
         </>
       }
       activeFilterCount={activeFilterCount()}
-      onClearFilters={hasActiveFilters() ? resetFilters : undefined}
+      onClearFilters={hasActiveFilters ? resetFilters : undefined}
       summary={<ResultCount />}
       actions={
         <Button variant="outline" size="sm" onClick={onExport}>
