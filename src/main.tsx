@@ -10,7 +10,7 @@ import { logger } from "@/lib/logger";
 import { registerSwReload } from "@/lib/pwa-reload";
 import { useInstallPromptStore } from "@/stores/useInstallPromptStore";
 
-// PWA install-prompt wiring + multi-tab auto-reload on SW activation
+// PWA install-prompt wiring + safe-point reload on SW updates
 if (typeof window !== "undefined") {
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
@@ -26,10 +26,7 @@ if (typeof window !== "undefined") {
     useInstallPromptStore.getState().markInstalled();
   }
 
-  // When a new SW takes control, reload open tabs so they run against the fresh
-  // precached assets. registerSwReload() gates the reload on tab visibility: a
-  // hidden tab defers until refocused, avoiding the blank-page-on-return caused by
-  // reloading a backgrounded (and possibly frozen) tab.
+  // Reloads onto a new SW build at a safe point, never mid-form (see pwa-reload).
   registerSwReload();
 }
 
