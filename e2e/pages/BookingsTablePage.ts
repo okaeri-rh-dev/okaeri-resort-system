@@ -59,6 +59,7 @@ export class BookingsTablePage {
     this.dateRangeFilter = page.getByRole("button", { name: "Dates" });
     this.clearFiltersButton = page.getByRole("button", {
       name: "Clear Filters",
+      exact: true,
     });
 
     // Table elements
@@ -353,13 +354,6 @@ export class BookingsTablePage {
    */
   async expectBookingListVisible() {
     await expect(this.bookingList.first()).toBeVisible();
-  }
-
-  /**
-   * Verify empty state is shown
-   */
-  async expectEmptyState() {
-    await expect(this.emptyState).toBeVisible();
   }
 
   /**

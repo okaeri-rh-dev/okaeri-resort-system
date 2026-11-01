@@ -13,6 +13,7 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
     bookings,
     totalCount,
     filteredCount,
+    hasActiveFilters,
     isLoading,
     error,
     filters,
@@ -66,20 +67,20 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
         )}
         emptyState={
           <TableEmptyState
-            variant={totalCount === 0 ? "no-data" : "no-results"}
-            title={totalCount === 0 ? "No bookings yet" : "No bookings found"}
+            variant={hasActiveFilters ? "no-results" : "no-data"}
+            title={hasActiveFilters ? "No bookings found" : "No bookings yet"}
             description={
-              totalCount === 0
-                ? "Get started by creating your first booking."
-                : "No bookings match your current filters. Try adjusting your search."
+              hasActiveFilters
+                ? "No bookings match your current filters. Try adjusting your search."
+                : "Get started by creating your first booking."
             }
             action={
-              totalCount === 0
-                ? undefined
-                : {
+              hasActiveFilters
+                ? {
                     label: "Clear Filters",
                     onClick: resetFilters,
                   }
+                : undefined
             }
           />
         }
