@@ -34,7 +34,6 @@ async function requestUploadUrl(bookingReference: string, file: File) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       booking_reference: bookingReference,
-      file_name: file.name,
       file_type: file.type,
       file_size: file.size,
     }),
