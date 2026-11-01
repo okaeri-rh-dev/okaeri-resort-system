@@ -5,7 +5,7 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { NotFoundPage } from "@/components/NotFoundPage";
 import { Button, Toaster } from "@/components/patterns";
-import { UpdateToast } from "@/components/pwa/UpdateToast";
+import { ServiceWorkerUpdater } from "@/components/pwa/ServiceWorkerUpdater";
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -39,7 +39,7 @@ function RootComponent() {
       <div className="min-h-screen">
         <Outlet />
         <Toaster />
-        <UpdateToast />
+        <ServiceWorkerUpdater />
         {/* Not under browser automation: the floating button covers the bottom bar and rail */}
         {import.meta.env.DEV && !navigator.webdriver && <TanStackRouterDevtools />}
       </div>
