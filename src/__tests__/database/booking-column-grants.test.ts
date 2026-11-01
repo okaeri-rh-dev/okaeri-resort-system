@@ -1,6 +1,7 @@
 /**
  * Signed-in users may update only the booking columns the app edits; money and
  * payment columns change only through server-side writers (20261030300000).
+ * Bookings are created only by those writers too (20261101100000).
  *
  * @vitest-environment node
  */
@@ -28,6 +29,7 @@ const SERVER_ONLY_PATCHES: TablesUpdate<"bookings">[] = [
 
 let roleClients: RoleClients;
 let bookingId: string;
+let guestId: string;
 let shouldRun = false;
 
 describe("booking column grants", () => {
@@ -37,9 +39,11 @@ describe("booking column grants", () => {
 
     await cleanupTestData({ includeTestFixtures: true });
     roleClients = await createRoleClients("grants");
+    const guest = await createTestGuest({});
+    guestId = guest.guest_id;
     const booking = await createTestBooking({
       unit: await createTestUnit({}),
-      guest: await createTestGuest({}),
+      guest,
       booking_reference: `GRT${Date.now() % 1000000}`,
       payment_status: "Pending",
       unit_price: 5000,
@@ -62,6 +66,25 @@ describe("booking column grants", () => {
       .eq("booking_id", bookingId);
     expect(error?.code).toBe("42501");
   });
+
+  it.each(["staff", "admin", "anon"] as const)(
+    "%s cannot insert a booking directly",
+    async (role) => {
+      if (!shouldRun) return;
+      const client = role === "anon" ? roleClients.anon : roleClients.byRole[role];
+      const { error } = await client.from("bookings").insert({
+        booking_reference: `GRI${role}${Date.now() % 1000000}`,
+        guest_id: guestId,
+        guest_name: "Insert Grant Test",
+        check_in: "2027-02-10",
+        check_out: "2027-02-11",
+        num_guests: 2,
+        payment_status: "Completed",
+        total_amount: 0.01,
+      });
+      expect(error?.code).toBe("42501");
+    }
+  );
 
   it("admin cannot update payment_status directly either", async () => {
     if (!shouldRun) return;

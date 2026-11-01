@@ -206,20 +206,6 @@ export const db = {
         .eq("unit_id", unitId),
 
     byGuest: (guestId: string) => supabase.from("bookings").select("*").eq("guest_id", guestId),
-    create: async (
-      data: Omit<Database["public"]["Tables"]["bookings"]["Insert"], "booking_reference">
-    ) => {
-      // Generate booking reference
-      const { data: reference } = await supabase.rpc("generate_booking_reference");
-      return supabase
-        .from("bookings")
-        .insert({
-          ...data,
-          booking_reference: reference || `BK-${Date.now()}`,
-        } satisfies TablesInsert<"bookings">)
-        .select()
-        .single();
-    },
     update: (id: string, data: Database["public"]["Tables"]["bookings"]["Update"]) =>
       supabase.from("bookings").update(data).eq("booking_id", id).select().single(),
 
