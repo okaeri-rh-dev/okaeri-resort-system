@@ -125,6 +125,9 @@ export const useBookingsTable = () => {
     return filtered;
   }, [bookings, searchQuery, filters]);
 
+  const hasActiveFilters =
+    searchQuery !== "" || Object.values(filters).some((value) => value !== undefined);
+
   // Create table instance
   const table = useReactTable({
     data: filteredBookings,
@@ -156,6 +159,7 @@ export const useBookingsTable = () => {
     bookings: filteredBookings,
     totalCount: bookings.length,
     filteredCount: filteredBookings.length,
+    hasActiveFilters,
     isLoading,
     error,
     filters,

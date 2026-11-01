@@ -119,11 +119,17 @@ test.describe("Admin Bookings Management", () => {
     test("search filters table results", async ({ page }) => {
       const bookingsTable = new BookingsTablePage(page);
       await bookingsTable.goto();
+      const bookingRows = bookingsTable.tableBodyRows.or(bookingsTable.bookingCards);
+      const initialRowCount = await bookingRows.count();
 
       await bookingsTable.search("nonexistent-booking-xyz-999");
 
-      await bookingsTable.expectEmptyState();
+      await expect(bookingsTable.noMatchesState).toBeVisible();
       expect(await bookingsTable.getRowCount()).toBe(0);
+
+      await bookingsTable.clearFiltersButton.click();
+      await expect(bookingsTable.searchInput).toHaveValue("");
+      await expect(bookingRows).toHaveCount(initialRowCount);
     });
 
     test("can clear search", async ({ page }) => {
