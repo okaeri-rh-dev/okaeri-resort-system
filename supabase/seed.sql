@@ -26,8 +26,7 @@ INSERT INTO "public"."units" ("unit_id", "unit_name", "unit_code", "unit_type", 
 	('60ca3cec-b690-4673-8dc5-897f7b7c18e8', 'Cabin 3', 'C3', 'Standard', 8, 9000.00, 9000.00, '["WiFi", "Air Conditioning", "Full Kitchen", "Cable TV", "Living Room", "Balcony"]', 6, 1000.00);
 
 INSERT INTO "storage"."buckets" ("id", "name", "public", "allowed_mime_types") VALUES
-	('receipts', 'receipts', false, NULL),
-	('payment-proofs', 'payment-proofs', false, '{image/*}');
+	('receipts', 'receipts', false, NULL);
 
 -- Fake Contact channels; the last one is hidden from guests.
 INSERT INTO "public"."contact_channels" ("kind", "value", "label", "is_active", "display_order") VALUES

@@ -9,8 +9,7 @@ function postUploadUrl() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      booking_reference: "BK-202611-ABC123",
-      file_name: "proof.png",
+      booking_reference: "TEMP-1a2b3c4d",
       file_type: "image/png",
       file_size: 1024,
     }),
