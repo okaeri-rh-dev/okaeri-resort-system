@@ -147,8 +147,6 @@ export const onRequestGet = async (context: { request: Request; env: Env }): Pro
       headers: {
         "Content-Type": "application/json",
         "X-Processing-Time": `${processingTime}ms`,
-        // Signed-in answers include per-cabin Blocked/Booked reasons
-        "Cache-Control": authHeader ? "private, no-store" : "public, max-age=60",
       },
     });
   } catch (error) {

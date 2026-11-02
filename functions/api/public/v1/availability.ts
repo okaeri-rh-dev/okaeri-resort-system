@@ -2,7 +2,7 @@
  * Public Availability Calendar API Endpoint
  *
  * Returns aggregated availability counts for Okaeri Resort's units.
- * This is a public, unauthenticated endpoint with aggressive caching.
+ * This is a public, unauthenticated endpoint.
  *
  * VIEW-ONLY: No pricing information, no guest data, no booking details.
  * Supports manager-mediated booking (guest contacts manager after viewing).
@@ -282,20 +282,9 @@ export async function onRequest(context: {
       })()
     );
 
-    // ============================================================================
-    // CDN CACHING HEADERS
-    // ============================================================================
-
-    const etag = `"availability-${startDate}-${endDate}-${Math.floor(Date.now() / 300000)}"`;
-
     return new Response(JSON.stringify(response), {
       headers: {
         "Content-Type": "application/json",
-        // CDN caching: 5 minutes fresh, 2 minutes stale-while-revalidate
-        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=120",
-        ETag: etag,
-        // Vary header ensures proper caching by query params
-        Vary: "Accept-Encoding",
       },
       status: 200,
     });

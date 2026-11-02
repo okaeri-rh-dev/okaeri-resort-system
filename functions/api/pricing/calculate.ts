@@ -331,7 +331,6 @@ export async function onRequest(context: {
         status: 200,
         headers: {
           "Content-Type": "application/json",
-          "Cache-Control": "private, max-age=300", // Browser cache for 5 minutes
         },
       }
     );
