@@ -112,12 +112,11 @@ jobs:
           cache: npm
       - uses: supabase/setup-cli@v3
         with:
-          version: 2.122.0 # pinned: a CLI release must not fail a required check; prod-drift runs latest as the early warning
+          version: 2.122.0 # pinned: a CLI release must not fail a required check
       - run: npm ci
       - name: Start local Supabase (applies all migrations — fails on bad history)
         run: supabase start
-      # Machine-readable env extraction — never regex the human `supabase status`
-      # output (see CLAUDE.md "Supabase CLI output parsing").
+      # Machine-readable env extraction — never regex the human `supabase status` output.
       - name: Provision env files from `supabase status -o env`
         run: |
           supabase status -o env | grep -E '^[A-Z0-9_]+=' > /tmp/sb.env
@@ -145,7 +144,7 @@ jobs:
           EOF
       - name: DB tests
         run: npx vitest run src/__tests__/database __tests__/database src/__tests__/performance/multi-unit-availability.test.ts
-      # Non-blocking for now: the CLI is unpinned, so generator output can change between versions.
+      # Non-blocking: generator output changes between CLI versions, and the committed types may predate the pin.
       # If only the CLI changed: upgrade the local CLI, run `npm run gen:types`, and commit the result.
       - name: Type drift (database.generated.ts matches the migrations)
         continue-on-error: true
