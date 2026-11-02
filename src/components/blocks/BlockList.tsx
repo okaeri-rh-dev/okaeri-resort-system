@@ -31,15 +31,23 @@ export function BlockList({
   empty,
   isStale = false,
 }: BlockListProps) {
-  if (blocks.length === 0) return <p className="text-muted-foreground text-sm">{empty}</p>;
+  const staleClass = cn("transition-opacity duration-150", isStale && "opacity-60");
+
+  if (blocks.length === 0) {
+    return (
+      <p
+        aria-busy={isStale || undefined}
+        className={cn("text-muted-foreground text-sm", staleClass)}
+      >
+        {empty}
+      </p>
+    );
+  }
 
   return (
     <ul
       aria-busy={isStale || undefined}
-      className={cn(
-        "bg-card divide-y rounded-lg border transition-opacity duration-150",
-        isStale && "opacity-60"
-      )}
+      className={cn("bg-card divide-y rounded-lg border", staleClass)}
     >
       {blocks.map((block) => {
         const row = (

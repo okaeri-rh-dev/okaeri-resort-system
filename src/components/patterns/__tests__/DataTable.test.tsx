@@ -152,19 +152,17 @@ describe("DataTable", () => {
   });
 
   it.each([
-    { form: "table", width: 840, role: "table" },
-    { form: "cards", width: 390, role: "list" },
-  ] as const)("dims the stale rows and marks them busy as $form", ({ width, role }) => {
-    const { rerender } = render(<StaysTable isStale />);
+    { form: "table", width: 840, rows: stays, content: "Maria Santos" },
+    { form: "cards", width: 390, rows: stays, content: "Maria Santos" },
+    { form: "empty cards", width: 390, rows: [], content: "No stays yet" },
+  ])("marks stale rows busy until new ones arrive as $form", ({ width, rows, content }) => {
+    const { rerender } = render(<StaysTable rows={rows} isStale />);
     ResizeObserverStub.resizeAllTo(width);
 
-    const list = screen.getByRole(role, { name: "Stays" });
-    expect(list).toHaveAttribute("aria-busy", "true");
-    expect(list).toHaveClass("opacity-60");
+    expect(screen.getByText(content).closest("[aria-busy]")).toHaveAttribute("aria-busy", "true");
 
-    rerender(<StaysTable />);
-    expect(list).not.toHaveAttribute("aria-busy");
-    expect(list).not.toHaveClass("opacity-60");
+    rerender(<StaysTable rows={rows} />);
+    expect(screen.getByText(content).closest("[aria-busy]")).toBeNull();
   });
 
   it("keeps the column headers above the empty state in table form", () => {

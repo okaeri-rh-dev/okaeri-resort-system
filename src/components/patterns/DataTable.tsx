@@ -125,19 +125,13 @@ export function DataTable<TData>({
     if (overflow > 0) setFullTableFit({ columnAndRowIds, paneWidth: width + overflow });
   });
 
-  const staleClass = cn("transition-opacity duration-150", isStale && "opacity-60");
-
   let content: ReactNode = null;
   if (width !== null && width < CARD_LAYOUT_MAX_WIDTH) {
     content =
       rows.length === 0 ? (
         emptyState
       ) : (
-        <ul
-          aria-label={label}
-          aria-busy={isStale || undefined}
-          className={cn("space-y-4", staleClass)}
-        >
+        <ul aria-label={label} className="space-y-4">
           {rows.map((row) => (
             <li key={row.id}>{renderCard(row)}</li>
           ))}
@@ -146,12 +140,7 @@ export function DataTable<TData>({
   } else if (width !== null) {
     content = (
       <div className="border-border bg-card overflow-hidden rounded-md border">
-        <TablePrimitive
-          ref={tableRef}
-          aria-label={label}
-          aria-busy={isStale || undefined}
-          className={cn("tabular-nums", staleClass)}
-        >
+        <TablePrimitive ref={tableRef} aria-label={label} className="tabular-nums">
           <TableHeader className="bg-muted">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
@@ -215,7 +204,15 @@ export function DataTable<TData>({
   }
 
   return (
-    <div ref={containerRef} className={cn("w-full min-w-0", className)}>
+    <div
+      ref={containerRef}
+      aria-busy={isStale || undefined}
+      className={cn(
+        "w-full min-w-0 transition-opacity duration-150",
+        isStale && "opacity-60",
+        className
+      )}
+    >
       {content}
     </div>
   );
