@@ -141,6 +141,70 @@ describe("get_all_account_balances", () => {
     expect(account).toMatchObject({ total_payments: 300, current_balance: 300 });
   });
 
+  it("counts entries by Manila calendar day, not by time of day", async () => {
+    if (!shouldRun) return;
+    const dayCodes = [`TD-${suffix}`, `TS-${suffix}`];
+    const { data: accounts, error } = await supabase
+      .from("accounts")
+      .insert(
+        dayCodes.map((code) => ({
+          account_name: `Test Day ${code}`,
+          account_code: code,
+          account_type: "Cash",
+          initial_balance: 0,
+        }))
+      )
+      .select("account_id");
+    if (error) throw error;
+    const [dayAccountId, sourceAccountId] = accounts.map((row) => row.account_id);
+
+    try {
+      const booking = await createTestBooking();
+      const results = await Promise.all([
+        supabase.from("payments").insert({
+          booking_id: booking.booking_id,
+          account_id: dayAccountId,
+          payment_method: "Cash",
+          amount: 300,
+          status: "Active",
+          payment_date: "2026-05-10T12:00:00+08:00",
+        }),
+        supabase.from("expenses").insert({
+          account_id: dayAccountId,
+          category: "Utilities",
+          description: "Same-day expense",
+          amount: 50,
+          expense_date: "2026-05-10",
+        }),
+        supabase.from("account_transfers").insert({
+          transfer_reference: `TR-${suffix}`,
+          from_account_id: sourceAccountId,
+          to_account_id: dayAccountId,
+          amount: 20,
+          transfer_date: "2026-05-10T15:00:00+08:00",
+        }),
+      ]);
+      for (const result of results) expect(result.error).toBeNull();
+
+      const { data } = await supabase.rpc("get_all_account_balances", {
+        p_as_of_date: "2026-05-10T07:00:00+08:00",
+      });
+      const account = data!.find((row) => row.account_id === dayAccountId);
+
+      expect(account).toMatchObject({
+        total_payments: 300,
+        total_expenses: 50,
+        transfers_in: 20,
+        current_balance: 270,
+      });
+    } finally {
+      await supabase.from("account_transfers").delete().eq("to_account_id", dayAccountId);
+      await supabase.from("expenses").delete().eq("account_id", dayAccountId);
+      await supabase.from("payments").delete().eq("account_id", dayAccountId);
+      await supabase.from("accounts").delete().in("account_code", dayCodes);
+    }
+  });
+
   it("cannot be called by an anonymous caller", async () => {
     if (!shouldRun) return;
     const anon = createClient(SUPABASE_URL, ANON_KEY);
