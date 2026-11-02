@@ -69,6 +69,7 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
   const isEditMode = !!method;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [qrPreview, setQrPreview] = useState<string | null>(method?.qr_code_url || null);
+  const [qrStoragePath, setQrStoragePath] = useState(method?.qr_code_storage_path || null);
 
   const createMethod = useCreatePaymentMethod();
   const updateMethod = useUpdatePaymentMethod();
@@ -133,7 +134,8 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
     reader.readAsDataURL(file);
 
     try {
-      await uploadQr.mutateAsync({ id: method.id, file });
+      const updated = await uploadQr.mutateAsync({ id: method.id, file });
+      setQrStoragePath(updated.qr_code_storage_path);
     } catch {
       // Revert preview on failure
       setQrPreview(method?.qr_code_url || null);
@@ -141,9 +143,10 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
   };
 
   const handleQrDelete = async () => {
-    if (!method?.id || !method.qr_code_storage_path) return;
-    await deleteQr.mutateAsync({ id: method.id, storagePath: method.qr_code_storage_path });
+    if (!method?.id || !qrStoragePath) return;
+    await deleteQr.mutateAsync({ id: method.id, storagePath: qrStoragePath });
     setQrPreview(null);
+    setQrStoragePath(null);
   };
 
   const isLoading = createMethod.isPending || updateMethod.isPending;
