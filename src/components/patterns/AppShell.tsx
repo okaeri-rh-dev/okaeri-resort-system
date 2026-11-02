@@ -437,25 +437,28 @@ const sheetItem = cn(
 
 /**
  * Writes the compact bottom bar's rendered height, safe area included, to `--admin-bottom-bar-height`
- * on the shell root, so a page's own fixed bottom bar can sit directly above it.
+ * on the document root, so a page's own fixed bottom bar and the toasts can sit directly above it.
+ * From medium the bar is the full-height rail, so nothing is published.
  */
-function usePublishedBottomBarHeight() {
-  const shellRef = useRef<HTMLDivElement>(null);
+function usePublishedBottomBarHeight(isCompact: boolean) {
   const barRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    const shell = shellRef.current;
     const bar = barRef.current;
-    if (!shell || !bar) return;
+    if (!isCompact || !bar) return;
+    const root = document.documentElement;
     const publish = () =>
-      shell.style.setProperty("--admin-bottom-bar-height", `${bar.offsetHeight}px`);
+      root.style.setProperty("--admin-bottom-bar-height", `${bar.offsetHeight}px`);
     publish();
     const observer = new ResizeObserver(publish);
     observer.observe(bar);
-    return () => observer.disconnect();
-  }, []);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--admin-bottom-bar-height");
+    };
+  }, [isCompact]);
 
-  return { shellRef, barRef };
+  return barRef;
 }
 
 const adminSheetLink = cn(
@@ -480,11 +483,12 @@ function AdminShell({
   const hasFooter = actions.length > 0 || theme !== undefined;
   const sections = navGroups && toSections(destinations, navGroups);
   const current = useCurrentDestination(destinations);
-  const { shellRef, barRef } = usePublishedBottomBarHeight();
+  const isCompact = useContext(CompactWindowContext);
+  const barRef = usePublishedBottomBarHeight(isCompact);
 
   return (
     <CurrentDestinationContext.Provider value={current}>
-      <div ref={shellRef} className="bg-background medium:flex-row flex h-dvh flex-col">
+      <div className="bg-background medium:flex-row flex h-dvh flex-col">
         <header className="bg-card border-border medium:hidden flex h-14 shrink-0 items-center justify-between border-b px-4">
           <Link to={brand.to} className="font-display text-foreground text-lg font-bold">
             {brand.name}
