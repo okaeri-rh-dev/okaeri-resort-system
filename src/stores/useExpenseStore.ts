@@ -14,6 +14,7 @@ import { uploadReceipt } from "@/lib/storage-security";
 import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import { toISODateString } from "@/lib/timezone";
+import { ilikeAnyFilter } from "@/lib/search-filter";
 import type { Expense } from "@/types";
 import type { TablesInsert, TablesUpdate } from "@/types/database.types";
 
@@ -162,11 +163,7 @@ const expenseListQuery = ({
 
       // Apply search
       if (searchQuery) {
-        query = query.or(`
-          description.ilike.%${searchQuery}%,
-          category.ilike.%${searchQuery}%,
-          notes.ilike.%${searchQuery}%
-        `);
+        query = query.or(ilikeAnyFilter(["description", "category", "notes"], searchQuery));
       }
 
       // Apply sorting

@@ -35,6 +35,7 @@ import {
 import { bookingKeys } from "@/lib/query-keys";
 import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
+import { ilikeAnyFilter } from "@/lib/search-filter";
 import type { Booking, BookingFilters, BookingStatus, TableState } from "@/types";
 
 // import { useWorkflowStore } from "./useWorkflowStore"; // Phase 3-4
@@ -290,9 +291,6 @@ const cachedBooking = (queryClient: QueryClient, bookingId: string): Booking | u
 // Fetch all bookings with filters
 const BOOKING_SEARCH_COLUMNS = ["guest_name", "booking_reference", "email", "contact_number"];
 
-export const bookingSearchFilter = (searchQuery: string) =>
-  BOOKING_SEARCH_COLUMNS.map((column) => `${column}.ilike.%${searchQuery}%`).join(",");
-
 const bookingListQuery = ({
   filters,
   searchQuery,
@@ -350,7 +348,7 @@ const bookingListQuery = ({
         query = query.lt("check_in", manilaDayStart(dayAfter(filterDay(filters.date_to))));
       }
       if (searchQuery) {
-        query = query.or(bookingSearchFilter(searchQuery));
+        query = query.or(ilikeAnyFilter(BOOKING_SEARCH_COLUMNS, searchQuery));
       }
 
       // Apply sorting

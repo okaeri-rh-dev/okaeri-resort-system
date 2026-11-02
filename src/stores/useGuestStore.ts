@@ -8,6 +8,7 @@ import { afterGuestRetention, invalidateGuests } from "@/lib/query-invalidation"
 import { guestKeys } from "@/lib/query-keys";
 import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
+import { ilikeAnyFilter } from "@/lib/search-filter";
 import type { Booking, Guest } from "@/types";
 
 // ============================================
@@ -136,9 +137,7 @@ const guestListQuery = ({
 
       // Apply search
       if (searchQuery) {
-        query = query.or(
-          `guest_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%`
-        );
+        query = query.or(ilikeAnyFilter(["guest_name", "email", "phone_number"], searchQuery));
       }
 
       // Apply sorting

@@ -4,6 +4,7 @@ import { devtools, persist } from "zustand/middleware";
 
 import { accountKeys, transferKeys } from "@/lib/query-keys";
 import { handleSupabaseError, supabase } from "@/lib/supabase";
+import { ilikeAnyFilter } from "@/lib/search-filter";
 import type { AccountTransfer } from "@/types";
 import type { TablesInsert } from "@/types/database.types";
 
@@ -148,10 +149,7 @@ const transferListQuery = (params: {
 
       // Apply search
       if (searchQuery) {
-        query = query.or(`
-          transfer_reference.ilike.%${searchQuery}%,
-          notes.ilike.%${searchQuery}%
-        `);
+        query = query.or(ilikeAnyFilter(["transfer_reference", "notes"], searchQuery));
       }
 
       // Apply sorting
