@@ -10,6 +10,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database.types";
 
+import { acquireDbLock, dbLockPath } from "./db-lock";
 import { seedPricingConfig } from "./seeds/pricing-config";
 
 // Load environment variables for database connection
@@ -134,6 +135,13 @@ export default async function globalSetup() {
   // Non-DB runs (pre-push) must not wait on, or restart, the shared Supabase stack.
   if (process.env.SKIP_DB_SETUP === "1") return;
 
+  // Other vitest runs share this stack, and their cleanup deletes this run's rows.
+  const releaseDbLock = await acquireDbLock(dbLockPath(TEST_SUPABASE_URL), {
+    onWait: (holderPid) =>
+      // eslint-disable-next-line no-console
+      console.log(`⏳ Waiting for vitest run ${holderPid} to finish with the test database...`),
+  });
+
   // eslint-disable-next-line no-console
   console.log("\n" + "=".repeat(80));
   // eslint-disable-next-line no-console
@@ -158,4 +166,6 @@ export default async function globalSetup() {
   console.log("STARTING TEST EXECUTION");
   // eslint-disable-next-line no-console
   console.log("=".repeat(80) + "\n");
+
+  return releaseDbLock;
 }
