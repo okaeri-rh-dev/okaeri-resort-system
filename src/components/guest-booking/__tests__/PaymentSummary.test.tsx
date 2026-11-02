@@ -25,8 +25,8 @@ beforeEach(() => {
 });
 
 describe("PaymentSummary", () => {
-  const checkIn = new Date("2025-02-01");
-  const checkOut = new Date("2025-02-08");
+  const checkIn = "2025-02-01";
+  const checkOut = "2025-02-08";
   const unitRequests = [{ guests_per_unit: 2 }, { guests_per_unit: 3 }];
 
   // Create a wrapper with QueryClient for each test
@@ -84,6 +84,22 @@ describe("PaymentSummary", () => {
     // Check total and downpayment
     expect(screen.getByText(/₱29,355/)).toBeInTheDocument(); // Total
     expect(screen.getByText(/₱14,677\.5/)).toBeInTheDocument(); // Downpayment
+  });
+
+  it("prices each cabin on its own, as the booking endpoint does", async () => {
+    render(
+      <PaymentSummary
+        unitRequests={[{ guests_per_unit: 2 }, { guests_per_unit: 2 }]}
+        checkIn={checkIn}
+        checkOut={checkOut}
+      />,
+      { wrapper: createWrapper() }
+    );
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.unit_requests).toEqual([{ guest_count: 2 }, { guest_count: 2 }]);
   });
 
   it("displays notice when provided", async () => {
