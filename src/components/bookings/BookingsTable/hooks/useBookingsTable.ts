@@ -47,7 +47,7 @@ export const useBookingsTable = () => {
   const cancelBooking = useCancelBooking();
 
   // Data
-  const { data: bookings = [], isLoading, error } = useBookings();
+  const { data: bookings = [], isLoading, isPlaceholderData, error } = useBookings();
 
   // Payment upload handler
   const handleUploadPayment = useCallback(
@@ -161,6 +161,7 @@ export const useBookingsTable = () => {
     filteredCount: filteredBookings.length,
     hasActiveFilters,
     isLoading,
+    isPlaceholderData,
     error,
     filters,
     setFilters,

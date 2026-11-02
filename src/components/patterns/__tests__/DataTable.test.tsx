@@ -40,13 +40,14 @@ function StayCard({ row }: { row: Row<StayRow> }) {
   );
 }
 
-function StaysTable({ rows = stays }: { rows?: StayRow[] }) {
+function StaysTable({ rows = stays, isStale }: { rows?: StayRow[]; isStale?: boolean }) {
   const table = useReactTable({ data: rows, columns, getCoreRowModel: getCoreRowModel() });
 
   return (
     <DataTable
       table={table}
       label="Stays"
+      isStale={isStale}
       renderCard={(row) => <StayCard row={row} />}
       emptyState={<p>No stays yet</p>}
     />
@@ -148,6 +149,20 @@ describe("DataTable", () => {
 
     expect(screen.getByText("No stays yet")).toBeVisible();
     expect(screen.queryByRole("listitem")).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { form: "table", width: 840, rows: stays, content: "Maria Santos" },
+    { form: "cards", width: 390, rows: stays, content: "Maria Santos" },
+    { form: "empty cards", width: 390, rows: [], content: "No stays yet" },
+  ])("marks stale rows busy until new ones arrive as $form", ({ width, rows, content }) => {
+    const { rerender } = render(<StaysTable rows={rows} isStale />);
+    ResizeObserverStub.resizeAllTo(width);
+
+    expect(screen.getByText(content).closest("[aria-busy]")).toHaveAttribute("aria-busy", "true");
+
+    rerender(<StaysTable rows={rows} />);
+    expect(screen.getByText(content).closest("[aria-busy]")).toBeNull();
   });
 
   it("keeps the column headers above the empty state in table form", () => {

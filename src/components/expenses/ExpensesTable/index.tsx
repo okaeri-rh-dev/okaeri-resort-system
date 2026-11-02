@@ -20,6 +20,7 @@ function ExpensesTableComponent({ onViewExpense, onEditExpense, className }: Exp
     expenses,
     totalUnfilteredCount,
     isLoading,
+    isPlaceholderData,
     error,
     filters,
     setFilters,
@@ -72,6 +73,7 @@ function ExpensesTableComponent({ onViewExpense, onEditExpense, className }: Exp
       <DataTable
         table={table}
         label="Expenses"
+        isStale={isPlaceholderData}
         renderCard={(row) => (
           <ExpenseCard
             expense={row.original}

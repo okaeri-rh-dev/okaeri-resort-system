@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
+import { staleProps } from "./stale-props";
 import { useContainerWidth } from "./useContainerWidth";
 
 declare module "@tanstack/react-table" {
@@ -49,6 +50,8 @@ export interface DataTableProps<TData> {
   emptyState?: ReactNode;
   /** In table form, a full-width row under each expanded row (`row.getIsExpanded()`). */
   renderExpandedRow?: (row: Row<TData>) => ReactNode;
+  /** Rows are a previous result while new ones load (`isPlaceholderData`): dims them and sets `aria-busy`. */
+  isStale?: boolean;
   /** Placement only. */
   className?: string;
 }
@@ -86,6 +89,7 @@ export function DataTable<TData>({
   label,
   emptyState,
   renderExpandedRow,
+  isStale = false,
   className,
 }: DataTableProps<TData>) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -201,7 +205,7 @@ export function DataTable<TData>({
   }
 
   return (
-    <div ref={containerRef} className={cn("w-full min-w-0", className)}>
+    <div ref={containerRef} {...staleProps(isStale, "w-full min-w-0", className)}>
       {content}
     </div>
   );

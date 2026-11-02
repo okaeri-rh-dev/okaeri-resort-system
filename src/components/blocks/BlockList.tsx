@@ -1,4 +1,4 @@
-import { StatusBadge } from "@/components/patterns";
+import { staleProps, StatusBadge } from "@/components/patterns";
 import type { Block } from "@/hooks/useBlocks";
 import { blockNightsLabel, blockPhase } from "@/lib/blocks";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,8 @@ interface BlockListProps {
   /** Leave out to show the rows without opening the form */
   onOpen?: (block: Block) => void;
   empty: string;
+  /** Rows are a previous result while new ones load (`isPlaceholderData`) */
+  isStale?: boolean;
 }
 
 const rowClassName =
@@ -21,11 +23,20 @@ const phaseBadges = {
   over: <StatusBadge tone="neutral">Over</StatusBadge>,
 };
 
-export function BlockList({ blocks, today, cabinName, onOpen, empty }: BlockListProps) {
-  if (blocks.length === 0) return <p className="text-muted-foreground text-sm">{empty}</p>;
+export function BlockList({
+  blocks,
+  today,
+  cabinName,
+  onOpen,
+  empty,
+  isStale = false,
+}: BlockListProps) {
+  if (blocks.length === 0) {
+    return <p {...staleProps(isStale, "text-muted-foreground text-sm")}>{empty}</p>;
+  }
 
   return (
-    <ul className="bg-card divide-y rounded-lg border">
+    <ul {...staleProps(isStale, "bg-card divide-y rounded-lg border")}>
       {blocks.map((block) => {
         const row = (
           <>

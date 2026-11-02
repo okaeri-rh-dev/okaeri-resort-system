@@ -64,6 +64,7 @@ function AvailabilityPage() {
   const {
     data: blocks = [],
     isLoading: isLoadingBlocks,
+    isPlaceholderData: isStaleBlocks,
     error: blocksError,
     refetch: refetchBlocks,
   } = useBlocks({ includePast: opensBlock });
@@ -153,6 +154,7 @@ function AvailabilityPage() {
                     canManage ? (block) => setSearch({ sheet: block.blackout_id }) : undefined
                   }
                   empty="No current or upcoming blocked dates."
+                  isStale={isStaleBlocks}
                 />
               )}
             </section>
