@@ -246,13 +246,13 @@ test.describe("Booking Lifecycle", () => {
       }
 
       // Find first booking with review payment action
-      const reviewButtons = await queuePage.reviewPaymentButtons.all();
-      if (reviewButtons.length === 0) {
+      const reviewLinks = await queuePage.reviewPaymentLinks.all();
+      if (reviewLinks.length === 0) {
         test.skip();
         return;
       }
 
-      await reviewButtons[0].click();
+      await reviewLinks[0].click();
 
       // Should navigate to payment verification
       await expect(page).toHaveURL(/verify-payment|payment/);
@@ -269,13 +269,13 @@ test.describe("Booking Lifecycle", () => {
         return;
       }
 
-      const reviewButtons = await queuePage.reviewPaymentButtons.all();
-      if (reviewButtons.length === 0) {
+      const reviewLinks = await queuePage.reviewPaymentLinks.all();
+      if (reviewLinks.length === 0) {
         test.skip();
         return;
       }
 
-      await reviewButtons[0].click();
+      await reviewLinks[0].click();
 
       const verifyPage = new PaymentVerificationPage(page);
       await verifyPage.expectPageLoaded();
@@ -294,13 +294,13 @@ test.describe("Booking Lifecycle", () => {
         return;
       }
 
-      const reviewButtons = await queuePage.reviewPaymentButtons.all();
-      if (reviewButtons.length === 0) {
+      const reviewLinks = await queuePage.reviewPaymentLinks.all();
+      if (reviewLinks.length === 0) {
         test.skip();
         return;
       }
 
-      await reviewButtons[0].click();
+      await reviewLinks[0].click();
 
       const verifyPage = new PaymentVerificationPage(page);
       await verifyPage.expectPageLoaded();
@@ -331,13 +331,13 @@ test.describe("Booking Lifecycle", () => {
         return;
       }
 
-      const assignButtons = await queuePage.assignUnitsButtons.all();
-      if (assignButtons.length === 0) {
+      const assignLinks = await queuePage.assignUnitsLinks.all();
+      if (assignLinks.length === 0) {
         test.skip();
         return;
       }
 
-      await assignButtons[0].click();
+      await assignLinks[0].click();
       await expect(page).toHaveURL(/assign-units/);
     });
 
@@ -350,13 +350,13 @@ test.describe("Booking Lifecycle", () => {
         return;
       }
 
-      const assignButtons = await queuePage.assignUnitsButtons.all();
-      if (assignButtons.length === 0) {
+      const assignLinks = await queuePage.assignUnitsLinks.all();
+      if (assignLinks.length === 0) {
         test.skip();
         return;
       }
 
-      await assignButtons[0].click();
+      await assignLinks[0].click();
 
       const assignPage = new UnitAssignmentPage(page);
       await assignPage.expectPageLoaded();
@@ -375,13 +375,13 @@ test.describe("Booking Lifecycle", () => {
         return;
       }
 
-      const assignButtons = await queuePage.assignUnitsButtons.all();
-      if (assignButtons.length === 0) {
+      const assignLinks = await queuePage.assignUnitsLinks.all();
+      if (assignLinks.length === 0) {
         test.skip();
         return;
       }
 
-      await assignButtons[0].click();
+      await assignLinks[0].click();
 
       const assignPage = new UnitAssignmentPage(page);
       await assignPage.expectPageLoaded();

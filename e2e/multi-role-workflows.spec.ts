@@ -80,11 +80,11 @@ test.describe("Multi-Role Workflows", () => {
         return;
       }
 
-      const reviewButtons = await queuePage.reviewPaymentButtons.all();
-      if (reviewButtons.length === 0) return;
+      const reviewLinks = await queuePage.reviewPaymentLinks.all();
+      if (reviewLinks.length === 0) return;
 
       // The verify-payment route is manager+, so staff land on the dashboard
-      await reviewButtons[0].click();
+      await reviewLinks[0].click();
       await expect(page).toHaveURL(/\/admin\/dashboard/);
     });
 
@@ -97,10 +97,10 @@ test.describe("Multi-Role Workflows", () => {
         return;
       }
 
-      const assignButtons = await queuePage.assignUnitsButtons.all();
+      const assignLinks = await queuePage.assignUnitsLinks.all();
 
-      if (assignButtons.length > 0) {
-        await assignButtons[0].click();
+      if (assignLinks.length > 0) {
+        await assignLinks[0].click();
 
         if (page.url().includes("assign-units")) {
           const assignPage = new UnitAssignmentPage(page);
@@ -178,13 +178,13 @@ test.describe("Multi-Role Workflows", () => {
         return;
       }
 
-      const reviewButtons = await queuePage.reviewPaymentButtons.all();
-      if (reviewButtons.length === 0) {
+      const reviewLinks = await queuePage.reviewPaymentLinks.all();
+      if (reviewLinks.length === 0) {
         test.skip();
         return;
       }
 
-      await reviewButtons[0].click();
+      await reviewLinks[0].click();
 
       const verifyPage = new PaymentVerificationPage(page);
       await verifyPage.expectPageLoaded();
@@ -202,13 +202,13 @@ test.describe("Multi-Role Workflows", () => {
         return;
       }
 
-      const assignButtons = await queuePage.assignUnitsButtons.all();
-      if (assignButtons.length === 0) {
+      const assignLinks = await queuePage.assignUnitsLinks.all();
+      if (assignLinks.length === 0) {
         test.skip();
         return;
       }
 
-      await assignButtons[0].click();
+      await assignLinks[0].click();
 
       const assignPage = new UnitAssignmentPage(page);
       await assignPage.expectPageLoaded();
@@ -307,13 +307,13 @@ test.describe("Multi-Role Workflows", () => {
         return;
       }
 
-      const reviewButtons = await queuePage.reviewPaymentButtons.all();
-      if (reviewButtons.length === 0) {
+      const reviewLinks = await queuePage.reviewPaymentLinks.all();
+      if (reviewLinks.length === 0) {
         test.skip();
         return;
       }
 
-      await reviewButtons[0].click();
+      await reviewLinks[0].click();
 
       const verifyPage = new PaymentVerificationPage(page);
       await verifyPage.expectPageLoaded();

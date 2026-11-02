@@ -14,6 +14,7 @@
 import { useMemo, useState } from "react";
 
 import { queryOptions, useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { Search, SlidersHorizontal } from "lucide-react";
 
@@ -98,23 +99,19 @@ function GuestName({ booking }: { booking: PendingBooking }) {
 }
 
 function QueueAction({ booking }: { booking: PendingBooking }) {
-  const paymentReceived = isPaymentReceived(booking.payment_status);
+  const params = { bookingId: booking.booking_id };
 
   return (
-    <Button
-      size="sm"
-      title={
-        paymentReceived
-          ? "Proceed to assign specific units for this booking"
-          : "Review payment proof and verify or reject payment"
-      }
-      onClick={() => {
-        window.location.href = paymentReceived
-          ? `/admin/bookings/${booking.booking_id}/assign-units`
-          : `/admin/verify-payment/${booking.booking_id}`;
-      }}
-    >
-      {paymentReceived ? "Assign Cabins" : "Review Payment"}
+    <Button size="sm" asChild>
+      {isPaymentReceived(booking.payment_status) ? (
+        <Link to="/admin/bookings/$bookingId/assign-units" params={params}>
+          Assign Cabins
+        </Link>
+      ) : (
+        <Link to="/admin/verify-payment/$bookingId" params={params}>
+          Review Payment
+        </Link>
+      )}
     </Button>
   );
 }

@@ -145,7 +145,7 @@ test.describe("Dark mode admin and audit screens", () => {
     await loginAsAdmin(page);
     await page.goto("/admin/bookings/queue");
     const queueRow = page.getByRole("row").filter({ hasText: "E2E-STUB-01" });
-    await queueRow.getByRole("button", { name: "Review Payment" }).click();
+    await queueRow.getByRole("link", { name: "Review Payment" }).click();
     await expect(page).toHaveURL(/\/admin\/verify-payment\//);
     await expect(page.getByText("Payment pending verification")).toBeVisible();
     await expect(page.getByRole("img", { name: "Payment proof" })).toBeVisible();
