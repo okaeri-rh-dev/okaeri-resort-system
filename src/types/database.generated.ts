@@ -34,6 +34,7 @@ export type Database = {
           transfer_id: string;
           transfer_reference: string;
         };
+        ComputedFields: never;
         Insert: {
           amount: number;
           created_at?: string | null;
@@ -84,6 +85,7 @@ export type Database = {
           is_active: boolean | null;
           updated_at: string | null;
         };
+        ComputedFields: never;
         Insert: {
           account_code: string;
           account_id?: string;
@@ -120,6 +122,7 @@ export type Database = {
           role: string;
           user_id: string;
         };
+        ComputedFields: never;
         Insert: {
           email: string;
           granted_at?: string;
@@ -164,6 +167,7 @@ export type Database = {
           user_id: string | null;
           user_role: string | null;
         };
+        ComputedFields: never;
         Insert: {
           action: string;
           audit_id?: string;
@@ -236,6 +240,7 @@ export type Database = {
           user_id: string | null;
           user_role: string | null;
         };
+        ComputedFields: never;
         Insert: {
           action: string;
           audit_id?: string;
@@ -295,6 +300,7 @@ export type Database = {
           unit_id: string | null;
           updated_at: string | null;
         };
+        ComputedFields: never;
         Insert: {
           blackout_id?: string;
           created_at?: string | null;
@@ -336,6 +342,7 @@ export type Database = {
           unit_id: string;
           updated_at: string | null;
         };
+        ComputedFields: never;
         Insert: {
           availability_id?: string;
           booking_id: string;
@@ -388,6 +395,7 @@ export type Database = {
           updated_at: string | null;
           weekend_surcharge: number | null;
         };
+        ComputedFields: never;
         Insert: {
           assigned_guests?: number | null;
           booking_id: string;
@@ -471,6 +479,7 @@ export type Database = {
           upload_expires_at: string | null;
           upload_status: string | null;
         };
+        ComputedFields: never;
         Insert: {
           anonymized_at?: string | null;
           base_amount?: number | null;
@@ -566,6 +575,7 @@ export type Database = {
           updated_at: string;
           value: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           display_order?: number;
@@ -602,6 +612,7 @@ export type Database = {
           priority: number | null;
           updated_at: string | null;
         };
+        ComputedFields: never;
         Insert: {
           conditions: NonNullable<Json>;
           created_at?: string | null;
@@ -639,6 +650,7 @@ export type Database = {
           name: string;
           updated_at: string | null;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string | null;
           display_order?: number | null;
@@ -670,6 +682,7 @@ export type Database = {
           receipt_url: string | null;
           updated_at: string | null;
         };
+        ComputedFields: never;
         Insert: {
           account_id?: string | null;
           amount: number;
@@ -713,6 +726,7 @@ export type Database = {
           is_primary: boolean | null;
           room_preferences: string | null;
         };
+        ComputedFields: never;
         Insert: {
           assignment_id?: string;
           booking_unit_id: string;
@@ -754,6 +768,7 @@ export type Database = {
           id: string;
           updated_at: string | null;
         };
+        ComputedFields: never;
         Insert: {
           booking_id: string;
           created_at?: string | null;
@@ -790,6 +805,7 @@ export type Database = {
           total_spent: number | null;
           updated_at: string | null;
         };
+        ComputedFields: never;
         Insert: {
           anonymized_at?: string | null;
           created_at?: string | null;
@@ -821,6 +837,7 @@ export type Database = {
           expires_at: string | null;
           key: string;
         };
+        ComputedFields: never;
         Insert: {
           booking_id: string;
           created_at?: string | null;
@@ -857,6 +874,7 @@ export type Database = {
           unit_id: string | null;
           updated_at: string | null;
         };
+        ComputedFields: never;
         Insert: {
           cost?: number | null;
           created_at?: string | null;
@@ -911,6 +929,7 @@ export type Database = {
           qr_code_url: string | null;
           updated_at: string | null;
         };
+        ComputedFields: never;
         Insert: {
           account_name?: string | null;
           account_number?: string | null;
@@ -961,6 +980,7 @@ export type Database = {
           proof_url: string | null;
           status: string;
         };
+        ComputedFields: never;
         Insert: {
           account_id?: string | null;
           amount: number;
@@ -1017,6 +1037,7 @@ export type Database = {
           updated_at: string | null;
           weekend_rate: number;
         };
+        ComputedFields: never;
         Insert: {
           base_occupancy?: number;
           base_rate: number;
@@ -1058,6 +1079,7 @@ export type Database = {
           start_date: string;
           updated_at: string | null;
         };
+        ComputedFields: never;
         Insert: {
           color?: string | null;
           created_at?: string | null;
@@ -1103,6 +1125,7 @@ export type Database = {
           updated_at: string | null;
           weekend_rate: number;
         };
+        ComputedFields: never;
         Insert: {
           amenities?: Json | null;
           base_occupancy: number;
@@ -1143,6 +1166,7 @@ export type Database = {
           status: string | null;
           total_size: string | null;
         };
+        ComputedFields: never;
         Relationships: [];
       };
       audit_index_stats: {
@@ -1155,6 +1179,7 @@ export type Database = {
           tablename: unknown;
           times_used: number | null;
         };
+        ComputedFields: never;
         Relationships: [];
       };
       audit_system_status: {
@@ -1163,15 +1188,17 @@ export type Database = {
           count: number | null;
           details: string | null;
         };
+        ComputedFields: never;
         Relationships: [];
       };
       public_unit_availability: {
         Row: {
-          booking_status: string | null;
-          check_in: string | null;
-          check_out: string | null;
-          unit_id: string | null;
+          booking_status: string;
+          check_in: string;
+          check_out: string;
+          unit_id: string;
         };
+        ComputedFields: never;
         Insert: {
           booking_status?: string | null;
           check_in?: string | null;

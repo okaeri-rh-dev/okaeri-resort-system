@@ -144,10 +144,8 @@ jobs:
           EOF
       - name: DB tests
         run: npx vitest run src/__tests__/database __tests__/database src/__tests__/performance/multi-unit-availability.test.ts
-      # Non-blocking: generator output changes between CLI versions, and the committed types may predate the pin.
-      # If only the CLI changed: upgrade the local CLI, run `npm run gen:types`, and commit the result.
+      # Fails after a CLI pin bump too: upgrade the local CLI, run `npm run gen:types`, and commit the result.
       - name: Type drift (database.generated.ts matches the migrations)
-        continue-on-error: true
         run: npm run gen:types && git diff --exit-code src/types/database.generated.ts
       # Non-blocking until the SQL-function errors in the guardrails plan are fixed.
       - name: SQL function lint (plpgsql_check)
