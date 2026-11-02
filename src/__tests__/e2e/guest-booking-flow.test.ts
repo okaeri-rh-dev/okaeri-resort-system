@@ -5,7 +5,6 @@
  * - Form submission
  * - Idempotency
  * - File upload
- * - Status checking
  */
 
 import { afterEach, beforeEach, describe, expect, it, type Mock } from "vitest";
@@ -67,11 +66,9 @@ type FlowResponse = {
   error?: string;
   message?: string;
   fields?: unknown;
-  requiresCaptcha?: boolean;
   retryAfter?: number;
   is_duplicate?: boolean;
   booking: { booking_id: string; booking_reference: string };
-  data: { reference: string; status: string };
 };
 
 describe("Guest Booking Flow E2E Tests", () => {
@@ -350,138 +347,6 @@ describe("Guest Booking Flow E2E Tests", () => {
       expect(response.ok).toBe(false);
       expect(response.status).toBe(400);
       expect(result.error).toBe("INVALID_FILE_TYPE");
-    });
-  });
-
-  // TODO: Add MSW handlers for booking status endpoint
-  describe.skip("Status Checking", () => {
-    it("should retrieve booking status with reference and email", async () => {
-      const statusParams = {
-        reference: "BK-202502-ABCD1234",
-        email: "john.doe@example.com",
-      };
-
-      (global.fetch as Mock).mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          success: true,
-          data: {
-            reference: "BK-202502-ABCD1234",
-            status: "confirmed",
-            checkIn: "2025-02-01",
-            checkOut: "2025-02-05",
-            totalAmount: 5000,
-            paymentStatus: "paid",
-          },
-        }),
-      });
-
-      const params = new URLSearchParams(statusParams);
-      const response = await fetch(`${baseUrl}/api/guest-booking/status?${params}`, {
-        method: "GET",
-      });
-
-      const result = (await response.json()) as FlowResponse;
-
-      expect(response.ok).toBe(true);
-      expect(result.success).toBe(true);
-      expect(result.data.reference).toBe(statusParams.reference);
-      expect(result.data.status).toBe("confirmed");
-    });
-
-    it("should require both reference and email for status check", async () => {
-      (global.fetch as Mock).mockResolvedValueOnce({
-        ok: false,
-        status: 400,
-        json: async () => ({
-          error: "MISSING_PARAMETERS",
-          message: "Both booking reference and email are required",
-        }),
-      });
-
-      const response = await fetch(`${baseUrl}/api/guest-booking/status?reference=BK-123`, {
-        method: "GET",
-      });
-
-      const result = (await response.json()) as FlowResponse;
-
-      expect(response.ok).toBe(false);
-      expect(response.status).toBe(400);
-      expect(result.error).toBe("MISSING_PARAMETERS");
-    });
-
-    it("should show progressive CAPTCHA after rate limit", async () => {
-      const statusParams = {
-        reference: "BK-202502-TEST1234",
-        email: "test@example.com",
-      };
-
-      // Simulate 20 requests to trigger progressive CAPTCHA
-      for (let i = 0; i < 20; i++) {
-        (global.fetch as Mock).mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          json: async () => ({ success: true }),
-        });
-
-        const params = new URLSearchParams(statusParams);
-        await fetch(`${baseUrl}/api/guest-booking/status?${params}`, {
-          method: "GET",
-        });
-      }
-
-      // 21st request should require CAPTCHA
-      (global.fetch as Mock).mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        json: async () => ({
-          error: "RATE_LIMITED",
-          message: "Too many status checks",
-          retryAfter: 3600,
-          requiresCaptcha: true,
-        }),
-      });
-
-      const params = new URLSearchParams(statusParams);
-      const response = await fetch(`${baseUrl}/api/guest-booking/status?${params}`, {
-        method: "GET",
-      });
-
-      const result = (await response.json()) as FlowResponse;
-
-      expect(response.status).toBe(429);
-      expect(result.requiresCaptcha).toBe(true);
-    });
-
-    it("should reset rate limit with successful CAPTCHA", async () => {
-      const statusParams = {
-        reference: "BK-202502-CAPT5678",
-        email: "captcha@example.com",
-        turnstile_token: "valid-captcha-token",
-      };
-
-      (global.fetch as Mock).mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          success: true,
-          data: {
-            reference: "BK-202502-CAPT5678",
-            status: "pending",
-          },
-        }),
-      });
-
-      const params = new URLSearchParams(statusParams);
-      const response = await fetch(`${baseUrl}/api/guest-booking/status?${params}`, {
-        method: "GET",
-      });
-
-      const result = (await response.json()) as FlowResponse;
-
-      expect(response.ok).toBe(true);
-      expect(result.success).toBe(true);
     });
   });
 
