@@ -131,13 +131,12 @@ export function UserRolesTable({ onUpdateRole, onDeactivateRole }: UserRolesTabl
     <div className="space-y-4">
       {/* Search Filter */}
       <div className="flex items-center gap-2">
-        <div className="relative flex-1">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+        <div className="flex-1">
           <Input
+            startIcon={<Search className="h-4 w-4" aria-hidden="true" />}
             placeholder="Search by email, role, or notes..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
           />
         </div>
       </div>

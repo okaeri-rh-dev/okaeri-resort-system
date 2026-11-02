@@ -357,13 +357,12 @@ export function PendingBookingsQueue() {
         {/* Filter Controls */}
         <div className="flex flex-col gap-4 @xl:flex-row">
           {/* Search */}
-          <div className="relative flex-1">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+          <div className="flex-1">
             <Input
+              startIcon={<Search className="h-4 w-4" aria-hidden="true" />}
               placeholder="Search by reference or guest name..."
               value={filters.searchQuery}
               onChange={(e) => setFilters({ ...filters, searchQuery: e.target.value })}
-              className="pl-10"
             />
           </div>
 
