@@ -15,6 +15,7 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
     filteredCount,
     hasActiveFilters,
     isLoading,
+    isPlaceholderData,
     error,
     filters,
     setFilters,
@@ -58,6 +59,7 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
       <DataTable
         table={table}
         label="Bookings"
+        isStale={isPlaceholderData}
         renderCard={(row) => (
           <BookingCard
             booking={row.original}

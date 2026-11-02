@@ -39,6 +39,7 @@ function BlockedDatesPage() {
   const {
     data: blocks = [],
     isLoading,
+    isPlaceholderData,
     error,
     refetch,
   } = useBlocks({
@@ -101,6 +102,7 @@ function BlockedDatesPage() {
               cabinName={cabinName}
               onOpen={(block) => openSheet(block.blackout_id)}
               empty="No current or upcoming blocked dates."
+              isStale={isPlaceholderData}
             />
           </section>
         )}
@@ -122,6 +124,7 @@ function BlockedDatesPage() {
                 cabinName={cabinName}
                 onOpen={(block) => openSheet(block.blackout_id)}
                 empty="No past blocks."
+                isStale={isPlaceholderData}
               />
             )}
           </section>
