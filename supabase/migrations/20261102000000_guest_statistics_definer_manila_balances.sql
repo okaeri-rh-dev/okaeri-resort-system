@@ -65,6 +65,8 @@ CREATE OR REPLACE FUNCTION public.get_all_account_balances(p_as_of_date timestam
  STABLE
  SET search_path TO ''
 AS $function$
+DECLARE
+    v_as_of_day date := (p_as_of_date AT TIME ZONE 'Asia/Manila')::date;
 BEGIN
     RETURN QUERY
     SELECT
@@ -95,26 +97,26 @@ BEGIN
         FROM public.payments p
         WHERE p.account_id IS NOT NULL
           AND p.status = 'Active'
-          AND (p.payment_date IS NULL OR (p.payment_date AT TIME ZONE 'Asia/Manila')::date <= (p_as_of_date AT TIME ZONE 'Asia/Manila')::date)
+          AND (p.payment_date IS NULL OR (p.payment_date AT TIME ZONE 'Asia/Manila')::date <= v_as_of_day)
         GROUP BY p.account_id
     ) pay ON pay.account_id = a.account_id
     LEFT JOIN (
         SELECT e.account_id, SUM(e.amount) AS total
         FROM public.expenses e
         WHERE e.account_id IS NOT NULL
-          AND (e.expense_date IS NULL OR e.expense_date <= (p_as_of_date AT TIME ZONE 'Asia/Manila')::date)
+          AND (e.expense_date IS NULL OR e.expense_date <= v_as_of_day)
         GROUP BY e.account_id
     ) exp ON exp.account_id = a.account_id
     LEFT JOIN (
         SELECT t.to_account_id, SUM(t.amount) AS total
         FROM public.account_transfers t
-        WHERE (t.transfer_date AT TIME ZONE 'Asia/Manila')::date <= (p_as_of_date AT TIME ZONE 'Asia/Manila')::date
+        WHERE (t.transfer_date AT TIME ZONE 'Asia/Manila')::date <= v_as_of_day
         GROUP BY t.to_account_id
     ) trf_in ON trf_in.to_account_id = a.account_id
     LEFT JOIN (
         SELECT t.from_account_id, SUM(t.amount) AS total
         FROM public.account_transfers t
-        WHERE (t.transfer_date AT TIME ZONE 'Asia/Manila')::date <= (p_as_of_date AT TIME ZONE 'Asia/Manila')::date
+        WHERE (t.transfer_date AT TIME ZONE 'Asia/Manila')::date <= v_as_of_day
         GROUP BY t.from_account_id
     ) trf_out ON trf_out.from_account_id = a.account_id
     ORDER BY a.display_order, a.account_name;

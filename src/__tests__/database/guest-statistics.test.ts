@@ -1,7 +1,7 @@
 /**
- * The guest statistics trigger keeps total_bookings and total_spent right for
- * every role that can change a booking, and for both guests when a booking
- * moves to another guest.
+ * The guest statistics trigger keeps total_bookings and total_spent right when
+ * staff change a booking, and for both guests when a booking moves to another
+ * guest (20261102000000).
  *
  * @vitest-environment node
  */

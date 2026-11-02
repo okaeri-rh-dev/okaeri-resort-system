@@ -143,11 +143,11 @@ describe("get_all_account_balances", () => {
 
   it("counts entries by Manila calendar day, not by time of day", async () => {
     if (!shouldRun) return;
-    const dayCodes = [`TD-${suffix}`, `TS-${suffix}`];
+    const dayAccountCodes = [`TD-${suffix}`, `TS-${suffix}`];
     const { data: accounts, error } = await supabase
       .from("accounts")
       .insert(
-        dayCodes.map((code) => ({
+        dayAccountCodes.map((code) => ({
           account_name: `Test Day ${code}`,
           account_code: code,
           account_type: "Cash",
@@ -156,7 +156,7 @@ describe("get_all_account_balances", () => {
       )
       .select("account_id");
     if (error) throw error;
-    const [dayAccountId, sourceAccountId] = accounts.map((row) => row.account_id);
+    const [dayAccountId, transferSourceAccountId] = accounts.map((row) => row.account_id);
 
     try {
       const booking = await createTestBooking();
@@ -178,7 +178,7 @@ describe("get_all_account_balances", () => {
         }),
         supabase.from("account_transfers").insert({
           transfer_reference: `TR-${suffix}`,
-          from_account_id: sourceAccountId,
+          from_account_id: transferSourceAccountId,
           to_account_id: dayAccountId,
           amount: 20,
           transfer_date: "2026-05-10T15:00:00+08:00",
@@ -201,7 +201,7 @@ describe("get_all_account_balances", () => {
       await supabase.from("account_transfers").delete().eq("to_account_id", dayAccountId);
       await supabase.from("expenses").delete().eq("account_id", dayAccountId);
       await supabase.from("payments").delete().eq("account_id", dayAccountId);
-      await supabase.from("accounts").delete().in("account_code", dayCodes);
+      await supabase.from("accounts").delete().in("account_code", dayAccountCodes);
     }
   });
 
