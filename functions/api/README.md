@@ -13,7 +13,7 @@ api/
 ├── guest-booking.ts              # Main guest booking endpoint (POST)
 ├── guest-booking/
 │   ├── confirm.ts               # Confirm upload completion (POST)
-│   └── status.ts                # Check booking status (GET)
+│   └── status.ts                # Check booking status (POST)
 ├── audit/
 │   └── log-with-ip.ts          # IP-aware audit logging (POST)
 ├── monitoring/
@@ -30,7 +30,7 @@ api/
 | `/api/health` | GET | Health check | None |
 | `/api/guest-booking` | POST | Create guest booking | 5/hour per IP |
 | `/api/guest-booking/confirm` | POST | Confirm file upload | 5/hour per IP |
-| `/api/guest-booking/status` | GET | Check booking status | 10/hour per IP |
+| `/api/guest-booking/status` | POST | Check booking status, JSON body `{ booking_reference, email, turnstile_token? }` | 20/hour per client fingerprint |
 
 ### Protected Endpoints (Auth Required)
 
