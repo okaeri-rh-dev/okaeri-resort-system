@@ -137,8 +137,9 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
       const updated = await uploadQr.mutateAsync({ id: method.id, file });
       setQrStoragePath(updated.qr_code_storage_path);
     } catch {
-      // Revert preview on failure
-      setQrPreview(method?.qr_code_url || null);
+      // Upload is only offered with no QR code shown, so a failure goes back to none
+      reader.abort();
+      setQrPreview(null);
     }
   };
 

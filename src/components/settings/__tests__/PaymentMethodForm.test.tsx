@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -15,17 +15,23 @@ vi.mock("@/hooks/usePaymentMethods", () => ({
   useDeleteQrCode: vi.fn(),
 }));
 
-const gcash = {
+const gcash: PaymentMethodConfig = {
   id: "gcash",
   method_type: "e-wallet",
   provider_name: "GCash",
   display_name: "GCash",
-  icon_name: "Smartphone",
-  display_order: 0,
-  is_active: true,
+  account_name: null,
+  account_number: null,
+  bank_name: null,
   qr_code_url: null,
   qr_code_storage_path: null,
-} as unknown as PaymentMethodConfig;
+  icon_name: "Smartphone",
+  display_order: 0,
+  instructions: null,
+  is_active: true,
+  created_at: null,
+  updated_at: null,
+};
 
 const upload = vi.fn();
 const remove = vi.fn();
@@ -46,7 +52,34 @@ describe("PaymentMethodForm QR code", () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  it("shows no QR code when an upload fails after a remove", async () => {
+    upload.mockRejectedValue(new Error("upload failed"));
+    const user = userEvent.setup();
+    render(
+      <PaymentMethodForm
+        method={{
+          ...gcash,
+          qr_code_url: "https://example.test/old.png",
+          qr_code_storage_path: "qr-codes/gcash-0.png",
+        }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Remove QR code" }));
+    await user.upload(
+      screen.getByLabelText("Upload QR code image"),
+      new File(["qr"], "qr.png", { type: "image/png" }),
+    );
+
+    await waitFor(() => expect(upload).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(screen.queryByRole("img", { name: "QR Code" })).not.toBeInTheDocument(),
+    );
+    expect(screen.getByRole("button", { name: "Upload QR Code" })).toBeInTheDocument();
   });
 
   it("removes a QR code uploaded in the same form session", async () => {
