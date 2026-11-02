@@ -80,18 +80,51 @@ describe("AppShell, admin", () => {
     expect(screen.getByRole("main")).toHaveTextContent("Bookings list");
   });
 
-  it("publishes the bottom bar's height so fixed page bars can sit above it", async () => {
-    const offsetHeight = vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(73);
-    renderAt(
-      "/admin/documents",
-      <AppShell surface="admin" brand={brand} destinations={staffDestinations}>
-        <p>Documents</p>
-      </AppShell>
-    );
+  describe("bottom bar height", () => {
+    function renderShell(compact: boolean) {
+      vi.mocked(window.matchMedia).mockImplementation(
+        (query: string) =>
+          ({
+            matches: compact,
+            media: query,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+          }) as unknown as MediaQueryList
+      );
+      return renderAt(
+        "/admin/documents",
+        <AppShell surface="admin" brand={brand} destinations={staffDestinations}>
+          <p>Documents</p>
+        </AppShell>
+      );
+    }
+    const publishedHeight = () =>
+      document.documentElement.style.getPropertyValue("--admin-bottom-bar-height");
 
-    const main = await screen.findByRole("main");
-    expect(main.parentElement?.style.getPropertyValue("--admin-bottom-bar-height")).toBe("73px");
-    offsetHeight.mockRestore();
+    it("is published on the page root so page bars and toasts can sit above the bar", async () => {
+      const offsetHeight = vi
+        .spyOn(HTMLElement.prototype, "offsetHeight", "get")
+        .mockReturnValue(73);
+      const { unmount } = renderShell(true);
+
+      await screen.findByRole("main");
+      expect(publishedHeight()).toBe("73px");
+
+      unmount();
+      expect(publishedHeight()).toBe("");
+      offsetHeight.mockRestore();
+    });
+
+    it("is not published from medium, where the bar is the full-height rail", async () => {
+      const offsetHeight = vi
+        .spyOn(HTMLElement.prototype, "offsetHeight", "get")
+        .mockReturnValue(900);
+      renderShell(false);
+
+      await screen.findByRole("main");
+      expect(publishedHeight()).toBe("");
+      offsetHeight.mockRestore();
+    });
   });
 
   it("has no More slot when the role has five or fewer destinations", async () => {

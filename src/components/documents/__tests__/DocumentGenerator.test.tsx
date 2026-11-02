@@ -104,4 +104,11 @@ describe("DocumentGenerator mobile action bar", () => {
     const bar = screen.getByRole("button", { name: "Preview" }).parentElement;
     expect(bar).toHaveClass("bottom-(--admin-bottom-bar-height)", "medium:bottom-0");
   });
+
+  it("starts beside the collapsed rail on medium windows", () => {
+    renderGenerator();
+
+    const bar = screen.getByRole("button", { name: "Preview" }).parentElement;
+    expect(bar).toHaveClass("medium:left-20");
+  });
 });
