@@ -2,7 +2,7 @@
  * Public Availability Calendar API Endpoint
  *
  * Returns aggregated availability counts for Okaeri Resort's units.
- * This is a public, unauthenticated endpoint with aggressive caching.
+ * This is a public, unauthenticated endpoint.
  *
  * VIEW-ONLY: No pricing information, no guest data, no booking details.
  * Supports manager-mediated booking (guest contacts manager after viewing).

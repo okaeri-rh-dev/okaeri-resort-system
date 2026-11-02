@@ -461,17 +461,12 @@ Total: ~791 lines of code across 4 components
 
 ### Network Performance
 
-1. **CDN Caching:**
-   - API endpoint uses 5-minute CDN cache
-   - Repeated requests serve cached response
-   - Cache-Control headers optimize browser caching
-
-2. **TanStack Query Benefits:**
+1. **TanStack Query Benefits:**
    - In-memory cache prevents redundant fetches
    - Background refetch updates stale data silently
    - Placeholder data shows previous month during fetch
 
-3. **Optimized Date Ranges:**
+2. **Optimized Date Ranges:**
    - Single API call fetches entire calendar grid (including overflow)
    - No separate calls for adjacent month dates
    - Minimal data payload (only necessary fields)
