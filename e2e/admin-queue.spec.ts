@@ -364,11 +364,11 @@ test.describe("Admin Booking Queue", () => {
       }
 
       // Check for review payment buttons
-      const reviewButtons = await queuePage.reviewPaymentButtons.all();
+      const reviewLinks = await queuePage.reviewPaymentLinks.all();
 
       // If there are pending bookings, some should have review buttons
-      if (reviewButtons.length > 0) {
-        await expect(reviewButtons[0]).toBeVisible();
+      if (reviewLinks.length > 0) {
+        await expect(reviewLinks[0]).toBeVisible();
       }
     });
 
@@ -382,12 +382,12 @@ test.describe("Admin Booking Queue", () => {
       }
 
       // Check for assign units buttons
-      const assignButtons = await queuePage.assignUnitsButtons.all();
+      const assignLinks = await queuePage.assignUnitsLinks.all();
 
       // Assign buttons should be visible for bookings with verified payment
       // but no units assigned yet
-      if (assignButtons.length > 0) {
-        await expect(assignButtons[0]).toBeVisible();
+      if (assignLinks.length > 0) {
+        await expect(assignLinks[0]).toBeVisible();
       }
     });
 
@@ -405,27 +405,27 @@ test.describe("Admin Booking Queue", () => {
       const markerSurvived = () => page.evaluate(() => "queueNavMarker" in window);
 
       // Try review payment action
-      const reviewButtons = await queuePage.reviewPaymentButtons.all();
-      if (reviewButtons.length > 0) {
-        await reviewButtons[0].click();
+      const reviewLinks = await queuePage.reviewPaymentLinks.all();
+      if (reviewLinks.length > 0) {
+        await reviewLinks[0].click();
         await expect(page).toHaveURL(/verify-payment|payment/);
         expect(await markerSurvived()).toBe(true);
         return;
       }
 
       // Try assign units action
-      const assignButtons = await queuePage.assignUnitsButtons.all();
-      if (assignButtons.length > 0) {
-        await assignButtons[0].click();
+      const assignLinks = await queuePage.assignUnitsLinks.all();
+      if (assignLinks.length > 0) {
+        await assignLinks[0].click();
         await expect(page).toHaveURL(/assign-units/);
         expect(await markerSurvived()).toBe(true);
         return;
       }
 
       // Try view details action
-      const viewButtons = await queuePage.viewDetailsButtons.all();
-      if (viewButtons.length > 0) {
-        await viewButtons[0].click();
+      const viewLinks = await queuePage.viewDetailsLinks.all();
+      if (viewLinks.length > 0) {
+        await viewLinks[0].click();
         await expect(page).toHaveURL(/bookings\//);
       }
     });
@@ -524,9 +524,9 @@ test.describe("Admin Booking Queue", () => {
           }
 
           // Check if action buttons have adequate touch target
-          const reviewButtons = await queuePage.reviewPaymentButtons.all();
-          if (reviewButtons.length > 0) {
-            const buttonBox = await reviewButtons[0].boundingBox();
+          const reviewLinks = await queuePage.reviewPaymentLinks.all();
+          if (reviewLinks.length > 0) {
+            const buttonBox = await reviewLinks[0].boundingBox();
             expect(buttonBox?.height).toBeGreaterThanOrEqual(44);
           }
         });
