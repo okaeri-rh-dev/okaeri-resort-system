@@ -400,11 +400,16 @@ test.describe("Admin Booking Queue", () => {
         return;
       }
 
+      // A full reload would clear this marker
+      await page.evaluate(() => Object.assign(window, { queueNavMarker: true }));
+      const markerSurvived = () => page.evaluate(() => "queueNavMarker" in window);
+
       // Try review payment action
       const reviewButtons = await queuePage.reviewPaymentButtons.all();
       if (reviewButtons.length > 0) {
         await reviewButtons[0].click();
         await expect(page).toHaveURL(/verify-payment|payment/);
+        expect(await markerSurvived()).toBe(true);
         return;
       }
 
@@ -413,6 +418,7 @@ test.describe("Admin Booking Queue", () => {
       if (assignButtons.length > 0) {
         await assignButtons[0].click();
         await expect(page).toHaveURL(/assign-units/);
+        expect(await markerSurvived()).toBe(true);
         return;
       }
 

@@ -87,14 +87,14 @@ export class AdminQueuePage {
     this.mediumBadges = page.locator("table tbody").getByText("Medium");
     this.lowBadges = page.locator("table tbody").getByText("Low");
 
-    // Action buttons - exact text from component
-    this.reviewPaymentButtons = page.getByRole("button", {
+    // Action links - exact text from component
+    this.reviewPaymentButtons = page.getByRole("link", {
       name: "Review Payment",
     });
-    this.assignUnitsButtons = page.getByRole("button", {
+    this.assignUnitsButtons = page.getByRole("link", {
       name: "Assign Cabins",
     });
-    this.viewDetailsButtons = page.getByRole("link", { name: /view|details/i });
+    this.viewDetailsButtons = page.getByRole("link", { name: /^view|details/i });
 
     // Refresh controls
     this.refreshButton = page.getByRole("button", { name: /refresh/i });
@@ -263,7 +263,7 @@ export class AdminQueuePage {
    */
   async clickReviewPayment(bookingRef: string): Promise<void> {
     const row = this.getQueueItemByReference(bookingRef);
-    const button = row.getByRole("button", { name: "Review Payment" });
+    const button = row.getByRole("link", { name: "Review Payment" });
     await button.click();
     await this.page.waitForURL(/\/verify-payment/);
   }
@@ -273,7 +273,7 @@ export class AdminQueuePage {
    */
   async clickAssignUnits(bookingRef: string): Promise<void> {
     const row = this.getQueueItemByReference(bookingRef);
-    const button = row.getByRole("button", { name: "Assign Cabins" });
+    const button = row.getByRole("link", { name: "Assign Cabins" });
     await button.click();
     await this.page.waitForURL(/\/assign-units/);
   }
@@ -382,9 +382,9 @@ export class AdminQueuePage {
     const buttonNames = {
       reviewPayment: "Review Payment",
       assignUnits: "Assign Cabins",
-      viewDetails: /view|details/i,
+      viewDetails: /^view|details/i,
     };
-    const button = row.getByRole("button", { name: buttonNames[action] });
+    const button = row.getByRole("link", { name: buttonNames[action] });
     await expect(button).toBeVisible();
   }
 
@@ -400,7 +400,7 @@ export class AdminQueuePage {
       reviewPayment: "Review Payment",
       assignUnits: "Assign Cabins",
     };
-    const button = row.getByRole("button", { name: buttonNames[action] });
+    const button = row.getByRole("link", { name: buttonNames[action] });
     await expect(button).not.toBeVisible();
   }
 }
