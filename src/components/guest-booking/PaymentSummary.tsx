@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 
-import { format } from "date-fns";
-
 import {
   Callout,
   Card,
@@ -13,21 +11,14 @@ import {
 } from "@/components/patterns";
 import { PricingStatusBadge } from "@/components/pricing/PricingStatusBadge";
 import { usePricingCalculation } from "@/hooks/usePricingCalculation";
+import type { ManilaDay } from "@/lib/bookings/stay";
 import type { MultiUnitPricingResult, PricingResult } from "@/types/api/pricing";
 import type { UnitRequest } from "@/types/guest-booking-multi-unit";
 
-/**
- * Extended UnitRequest that may include a unit_id when provided by the form.
- * The base UnitRequest only has guests_per_unit, but forms may pass unit_id.
- */
-interface UnitRequestWithOptionalId extends UnitRequest {
-  unit_id?: string;
-}
-
 export interface PaymentSummaryProps {
-  unitRequests: UnitRequestWithOptionalId[];
-  checkIn: Date | undefined;
-  checkOut: Date | undefined;
+  unitRequests: UnitRequest[];
+  checkIn: ManilaDay | undefined;
+  checkOut: ManilaDay | undefined;
 }
 
 export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSummaryProps) {
@@ -48,6 +39,8 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
     },
   });
 
+  const totalGuests = unitRequests.reduce((sum, req) => sum + req.guests_per_unit, 0);
+
   useEffect(() => {
     // Clear pricing if required fields are missing
     if (unitRequests.length === 0 || !checkIn || !checkOut) {
@@ -56,56 +49,15 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
       return;
     }
 
-    // Format dates for API
-    const checkInStr = format(checkIn, "yyyy-MM-dd");
-    const checkOutStr = format(checkOut, "yyyy-MM-dd");
-
     // Debounce API call by 500ms
     const timer = setTimeout(() => {
-      // Calculate total guest count
-      const totalGuests = unitRequests.reduce((sum, req) => sum + req.guests_per_unit, 0);
-
-      // Build pricing request based on what data we have
-      if (unitRequests.length > 1) {
-        // Multi-unit booking - map requests properly (don't send empty strings for unit_id)
-        const unitRequestsForApi = unitRequests
-          .filter((req): req is UnitRequestWithOptionalId & { unit_id: string } => !!req.unit_id)
-          .map((req) => ({
-            unit_id: req.unit_id,
-            guest_count: req.guests_per_unit,
-          }));
-
-        // If no unit IDs present, build without unit_requests
-        if (unitRequestsForApi.length > 0) {
-          calculatePricing.mutate({
-            check_in: checkInStr,
-            check_out: checkOutStr,
-            guest_count: totalGuests, // Include total at top level
-            unit_requests: unitRequestsForApi,
-          });
-        } else {
-          calculatePricing.mutate({
-            check_in: checkInStr,
-            check_out: checkOutStr,
-            guest_count: totalGuests,
-          });
-        }
-      } else if (unitRequests[0]?.unit_id) {
-        // Single unit with specific unit ID
-        calculatePricing.mutate({
-          check_in: checkInStr,
-          check_out: checkOutStr,
-          guest_count: totalGuests,
-          unit_id: unitRequests[0].unit_id,
-        });
-      } else {
-        // Single unit, no specific unit - use simple guest count pricing
-        calculatePricing.mutate({
-          check_in: checkInStr,
-          check_out: checkOutStr,
-          guest_count: totalGuests,
-        });
-      }
+      // One request per cabin, so the preview prices cabins like the booking endpoint does
+      calculatePricing.mutate({
+        check_in: checkIn,
+        check_out: checkOut,
+        guest_count: totalGuests,
+        unit_requests: unitRequests.map((req) => ({ guest_count: req.guests_per_unit })),
+      });
     }, 500);
 
     // Cleanup function to clear timer
@@ -155,26 +107,13 @@ export function PaymentSummary({ unitRequests, checkIn, checkOut }: PaymentSumma
     return null;
   }
 
-  // Extract pricing data (handles both single and multi-unit responses)
-  const isMultiUnit = "units" in pricingData;
-  const pricing = isMultiUnit
-    ? {
-        nights: pricingData.nights,
-        total: pricingData.total,
-        downpayment: pricingData.downpayment,
-        total_units: pricingData.units.length,
-        total_guests: pricingData.units.reduce(
-          (sum: number, u) => sum + u.pricing.extraPersons + 2,
-          0
-        ),
-      }
-    : {
-        nights: pricingData.nights,
-        total: pricingData.total,
-        downpayment: pricingData.downpayment,
-        total_units: 1,
-        total_guests: pricingData.extraPersons + 2,
-      };
+  const pricing = {
+    nights: pricingData.nights,
+    total: pricingData.total,
+    downpayment: pricingData.downpayment,
+    total_units: unitRequests.length,
+    total_guests: totalGuests,
+  };
 
   return (
     <div className="space-y-4">

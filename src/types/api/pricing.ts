@@ -31,7 +31,7 @@ export interface PricingCalculateRequest {
 
   /** Multiple unit requests for multi-unit bookings */
   unit_requests?: Array<{
-    unit_id: string;
+    unit_id?: string;
     guest_count: number;
   }>;
 }

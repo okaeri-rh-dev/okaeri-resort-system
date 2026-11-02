@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createClient } from "@supabase/supabase-js";
+
+import { toStayInstants } from "@/lib/bookings/stay";
+
 import { onRequest } from "../../../../functions/api/pricing/calculate";
+import { calculateBookingPrice } from "../../../../functions/lib/pricing";
 import type { PricingCalculationResponse } from "../types/responses";
 
 // Mock environment
@@ -292,6 +297,35 @@ describe("Pricing Calculate API", () => {
     expect(data.success).toBe(true);
     expect(data.pricing.units).toHaveLength(2);
     expect(data.pricing.total).toBe(43000); // 20000 + 23000 (2 extra persons × 500 × 3 nights)
+  });
+
+  it("prices guest cabin requests one by one, as the booking endpoint stores them", async () => {
+    mockRequest = {
+      method: "POST",
+      headers: new Map(),
+      json: vi.fn().mockResolvedValue({
+        // One weeknight (Tue), outside every season
+        check_in: "2027-06-08",
+        check_out: "2027-06-09",
+        unit_requests: [{ guest_count: 2 }, { guest_count: 2 }],
+      }),
+    };
+
+    const response = await onRequest({ request: mockRequest, env: mockEnv });
+    const data = (await response.json()) as PricingCalculationResponse;
+
+    // The booking endpoint prices each cabin like this and stores the sum
+    const stay = toStayInstants("2027-06-08", "2027-06-09");
+    const cabin = await calculateBookingPrice(createClient("", ""), {
+      checkIn: new Date(stay.check_in),
+      checkOut: new Date(stay.check_out),
+      guestCount: 2,
+    });
+
+    // The mock season doubles each night: 2 cabins × ₱3,000 × 2, not one 4-guest cabin (₱7,000)
+    expect(data.pricing.total).toBe(12000);
+    expect(data.pricing.total).toBe(2 * cabin.total);
+    expect(data.pricing.downpayment).toBe(2 * cabin.downpayment);
   });
 
   it("should validate date ranges", async () => {
