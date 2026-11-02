@@ -79,6 +79,8 @@ test.describe("PWA install banner", () => {
     await banner.getByRole("button", { name: /don't show again/i }).click();
     await expect(banner).toHaveCount(0);
 
+    // The loaded nav pushes the rail's Account menu below the fold, taking an open menu with it.
+    await expect(page.getByRole("status", { name: "Loading navigation" })).toHaveCount(0);
     await page.getByRole("button", { name: "Account menu" }).click();
     await page.getByRole("menuitem", { name: /install app/i }).click();
     await expect(page.getByRole("region", { name: /install okaeri/i })).toBeVisible();
