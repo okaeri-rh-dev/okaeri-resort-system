@@ -54,7 +54,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: supabase/setup-cli@v3
         with:
-          version: latest
+          version: latest # unpinned on purpose: the early warning for the e2e pin
       - name: Start local Supabase (applies all migrations)
         run: supabase start
       - name: Compare prod catalog with the migrations
@@ -112,7 +112,7 @@ jobs:
           cache: npm
       - uses: supabase/setup-cli@v3
         with:
-          version: latest # deliberately unpinned: CLI-upgrade breakage should fail HERE, not mid-session
+          version: 2.122.0 # pinned: a CLI release must not fail a required check; prod-drift runs latest as the early warning
       - run: npm ci
       - name: Start local Supabase (applies all migrations — fails on bad history)
         run: supabase start

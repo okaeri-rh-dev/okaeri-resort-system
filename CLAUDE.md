@@ -30,6 +30,8 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 - Database and performance tests require a local Supabase instance: run `supabase start` first. These tests use `@vitest-environment node` (bypasses CORS) with `beforeEach` cleanup; `TEST_SUPABASE_URL` / `TEST_SUPABASE_SERVICE_ROLE_KEY` default to the local instance in `vitest.config.ts`.
 - Vitest global setup holds a machine-wide lock on the local Supabase stack for the whole run (it can restart the stack, and DB test cleanup deletes every booking), so a second run from any checkout or worktree logs "Waiting for vitest run …" and starts when the first ends. Watch mode (`npm test`) holds the lock until the watcher closes. Non-DB runs set `SKIP_DB_SETUP=1` (pre-push does) to skip the lock.
 - Apply a new migration to the local DB with `supabase migration up --local`, never `psql -f`: `psql` writes no `schema_migrations` row, and the gap makes later `migration up` runs fail with `MigrationMissingRemoteError` (issue 243).
+- Scripts read the local stack with `supabase status -o env` (never the human output), and DB types come from `npm run gen:types` (`supabase gen types --local` exits 1 on CLI v2.122.0).
+- The required `e2e` job pins the Supabase CLI (`version:` of `supabase/setup-cli` in `infra-health.yml`); the weekly `prod-drift` job runs `latest`. When `prod-drift` is green on a newer CLI, bump the pin by hand.
 
 ## Phase Suffixes
 
@@ -47,11 +49,9 @@ Rules:
 
 Current entries:
 
-- **Supabase CLI output parsing** — helper scripts that regex `supabase status` human output break on CLI upgrades (bit household-hub at v2.105.0). Any new script must use `supabase status -o env` (machine-readable) instead. Known-good CLI version at last check: v2.101.0.
 - **A fresh worktree has no `supabase/.temp/`** (gitignored), so (a) `supabase db reset` runs every storage migration, which drops the `(bucket_id, name)` unique index that the pinned storage-api still upserts on (`StorageApiError: database error, code: 42P10`), and (b) the worktree is not linked: `supabase db push` fails with `DbConfigIpv6Error`. Workaround: copy `storage-migration`, `storage-version`, `postgres-version`, `rest-version`, `gotrue-version`, `project-ref`, `pooler-url` and `linked-project.json` from the main checkout's `supabase/.temp/` into the worktree (not `start-secrets`), then reset or push again. A prod `supabase db push` runs from a checkout that has the migration: the main checkout may be on another branch.
 - **PWA escape-hatch E2E flakes on desktop Chromium** — in `e2e/pwa-install-banner.spec.ts`, "account menu Install app escape hatch re-shows the banner" fails only under parallel local workers (8 of 20 on main with `--repeat-each=20`; 20 of 20 pass with `--workers=1`, and CI runs one worker, so CI is not affected). The `locator.click` on "Install app" times out with "element is outside of the viewport", because the desktop Account menu is at the foot of the scrolling nav rail. Workaround: re-run the spec with `--workers=1`.
 - **`e2e/dark-mode-dashboard-settings.spec.ts` "mobile dashboard" always fails** (issue 256): its stub booking lacks `is_guest_booking` and `unit_assignment_status`, which `isPending` needs since 8830e92b, so the "waiting for verification" banner never shows. The spec is left out of `scripts/e2e/run-hooked.sh`. When fixed, add it to the chromium line there.
-- **`supabase gen types --local` fails password auth** (CLI v2.109.1: `password authentication failed for user "postgres"`; v2.119.0 exits 1 with no message). Workaround: `npm run gen:types`, which passes `--db-url` from `supabase status -o env`.
 
 ## Important Notes
 
