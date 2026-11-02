@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
+import { staleProps } from "./stale-props";
 import { useContainerWidth } from "./useContainerWidth";
 
 declare module "@tanstack/react-table" {
@@ -204,15 +205,7 @@ export function DataTable<TData>({
   }
 
   return (
-    <div
-      ref={containerRef}
-      aria-busy={isStale || undefined}
-      className={cn(
-        "w-full min-w-0 transition-opacity duration-150",
-        isStale && "opacity-60",
-        className
-      )}
-    >
+    <div ref={containerRef} {...staleProps(isStale, "w-full min-w-0", className)}>
       {content}
     </div>
   );

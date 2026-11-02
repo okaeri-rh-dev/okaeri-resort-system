@@ -1,4 +1,4 @@
-import { StatusBadge } from "@/components/patterns";
+import { staleProps, StatusBadge } from "@/components/patterns";
 import type { Block } from "@/hooks/useBlocks";
 import { blockNightsLabel, blockPhase } from "@/lib/blocks";
 import { cn } from "@/lib/utils";
@@ -31,24 +31,12 @@ export function BlockList({
   empty,
   isStale = false,
 }: BlockListProps) {
-  const staleClass = cn("transition-opacity duration-150", isStale && "opacity-60");
-
   if (blocks.length === 0) {
-    return (
-      <p
-        aria-busy={isStale || undefined}
-        className={cn("text-muted-foreground text-sm", staleClass)}
-      >
-        {empty}
-      </p>
-    );
+    return <p {...staleProps(isStale, "text-muted-foreground text-sm")}>{empty}</p>;
   }
 
   return (
-    <ul
-      aria-busy={isStale || undefined}
-      className={cn("bg-card divide-y rounded-lg border", staleClass)}
-    >
+    <ul {...staleProps(isStale, "bg-card divide-y rounded-lg border")}>
       {blocks.map((block) => {
         const row = (
           <>
