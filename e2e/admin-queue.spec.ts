@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { E2E_REF } from "../scripts/e2e/fixtures";
 import { loginAsAdmin } from "./fixtures/auth";
 import { BOOKING_DATES, calculateUrgencyScore, getUrgencyLevel } from "./fixtures/booking-data";
 import { TIMEOUTS, VIEWPORTS } from "./fixtures/test-data";
@@ -391,44 +392,23 @@ test.describe("Admin Booking Queue", () => {
       }
     });
 
-    test("clicking action button navigates correctly", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
+    for (const { reference, action, url } of [
+      { reference: E2E_REF.QUEUE, action: "Review Payment", url: /verify-payment/ },
+      { reference: E2E_REF.QUEUE_PAID, action: "Assign Cabins", url: /assign-units/ },
+    ]) {
+      test(`clicking ${action} navigates without a full reload`, async ({ page }) => {
+        const queuePage = new AdminQueuePage(page);
+        await queuePage.goto();
 
-      if (await queuePage.emptyState.isVisible()) {
-        test.skip();
-        return;
-      }
+        // A full reload would clear this marker
+        await page.evaluate(() => Object.assign(window, { queueNavMarker: true }));
 
-      // A full reload would clear this marker
-      await page.evaluate(() => Object.assign(window, { queueNavMarker: true }));
-      const markerSurvived = () => page.evaluate(() => "queueNavMarker" in window);
-
-      // Try review payment action
-      const reviewLinks = await queuePage.reviewPaymentLinks.all();
-      if (reviewLinks.length > 0) {
-        await reviewLinks[0].click();
-        await expect(page).toHaveURL(/verify-payment|payment/);
-        expect(await markerSurvived()).toBe(true);
-        return;
-      }
-
-      // Try assign units action
-      const assignLinks = await queuePage.assignUnitsLinks.all();
-      if (assignLinks.length > 0) {
-        await assignLinks[0].click();
-        await expect(page).toHaveURL(/assign-units/);
-        expect(await markerSurvived()).toBe(true);
-        return;
-      }
-
-      // Try view details action
-      const viewLinks = await queuePage.viewDetailsLinks.all();
-      if (viewLinks.length > 0) {
-        await viewLinks[0].click();
-        await expect(page).toHaveURL(/bookings\//);
-      }
-    });
+        const row = page.getByRole("row").filter({ hasText: reference });
+        await row.getByRole("link", { name: action }).click();
+        await expect(page).toHaveURL(url);
+        expect(await page.evaluate(() => "queueNavMarker" in window)).toBe(true);
+      });
+    }
   });
 
   test.describe("Clear Filters", () => {

@@ -52,8 +52,8 @@ export class UnitAssignmentPage {
     this.page = page;
 
     // Page container
-    this.container = page.locator('[data-testid="unit-assignment"], [class*="unit-assignment"]');
-    this.pageTitle = page.getByRole("heading", { name: /assign.*unit|unit.*assignment/i });
+    this.pageTitle = page.getByRole("heading", { name: "Assign Cabins", level: 1 });
+    this.container = this.pageTitle;
 
     // Booking info
     this.bookingReference = page.locator(
@@ -66,7 +66,7 @@ export class UnitAssignmentPage {
     );
 
     // Unit selection
-    this.unitsGrid = page.locator('[data-testid="units-grid"], [class*="units-grid"]');
+    this.unitsGrid = page.getByText(/^Available Cabins \(\d+\)$/);
     this.unitCards = page.locator('[data-testid="unit-card"], [class*="unit-card"]');
     this.availableUnits = page.locator(
       '[data-available="true"], [class*="unit-card"]:not([data-unavailable])'
@@ -77,8 +77,9 @@ export class UnitAssignmentPage {
     );
 
     // Selection counters
-    this.selectedCount = page.locator('[data-testid="selected-count"], [class*="selected-count"]');
-    this.requiredCount = page.locator('[data-testid="required-count"], [class*="required-count"]');
+    // "0/2 selected": selected count before the slash, required count after it
+    this.selectedCount = page.getByText(/^\d+\/\d+ selected$/);
+    this.requiredCount = this.selectedCount;
     this.selectionStatus = page.locator(
       '[data-testid="selection-status"], [class*="selection-status"]'
     );
@@ -92,7 +93,7 @@ export class UnitAssignmentPage {
 
     // Actions
     this.confirmAssignmentButton = page.getByRole("button", {
-      name: /confirm|assign|save/i,
+      name: /^Assign \d+ Cabins? to Booking$/,
     });
     this.cancelButton = page.getByRole("button", { name: /cancel|back/i });
     this.clearSelectionButton = page.getByRole("button", {
@@ -207,8 +208,8 @@ export class UnitAssignmentPage {
   async getRequiredCount(): Promise<number> {
     const countText = await this.requiredCount.textContent();
     if (countText) {
-      const match = countText.match(/\d+/);
-      return match ? parseInt(match[0], 10) : 0;
+      const match = countText.match(/\/(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
     }
     return 0;
   }
