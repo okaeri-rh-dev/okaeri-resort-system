@@ -215,3 +215,22 @@ export function getRandomUnitId(): string {
   }
   return randomItem(testUnitIds);
 }
+
+export interface StatusLookup {
+  booking_reference: string;
+  email: string;
+}
+
+/**
+ * Reference/email pairs of real bookings for status checks, read from TEST_BOOKINGS
+ * ("BK-202611-ABC123:guest@example.com,...").
+ */
+export function getStatusLookups(): StatusLookup[] {
+  if (!__ENV.TEST_BOOKINGS) {
+    throw new Error("Set TEST_BOOKINGS to reference:email pairs of existing bookings");
+  }
+  return __ENV.TEST_BOOKINGS.split(",").map((pair) => {
+    const [booking_reference, email] = pair.split(":");
+    return { booking_reference, email };
+  });
+}

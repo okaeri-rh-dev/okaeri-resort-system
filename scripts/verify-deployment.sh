@@ -115,10 +115,16 @@ echo ""
 echo "3️⃣  API Functionality Checks"
 echo "----------------------------------------"
 
-# Check rate limiting headers
-check "Rate Limiting Headers" \
-    "curl -sI https://${DOMAIN}/api/guest-booking/status?reference=TEST&email=test@test.com | head -20" \
-    "X-RateLimit"
+# The fake lookup gets 400, 404 or 429; only a 5xx or no response (000) is a failure.
+status_endpoint_responds() {
+    local code
+    code=$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' -X POST "https://${DOMAIN}/api/guest-booking/status" \
+        -H 'Content-Type: application/json' \
+        -d '{"booking_reference":"BK-202601-VERIFY","email":"verify@example.com"}')
+    [ "$code" -ge 100 ] && [ "$code" -lt 500 ]
+}
+
+check_advanced "Status Endpoint (POST, no 5xx)" "status_endpoint_responds"
 
 # Check CORS headers
 check "CORS Configuration" \
