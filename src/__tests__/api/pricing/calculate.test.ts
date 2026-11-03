@@ -86,6 +86,29 @@ vi.mock("@supabase/supabase-js", () => ({
   })),
 }));
 
+// The booking endpoint prices each cabin like this and stores the sum
+const priceAsBookingEndpoint = async (
+  checkInDay: string,
+  checkOutDay: string,
+  guestCount: number
+) => {
+  const stay = toStayInstants(checkInDay, checkOutDay);
+  return calculateBookingPrice({
+    checkIn: new Date(stay.check_in),
+    checkOut: new Date(stay.check_out),
+    guestCount,
+    config: {
+      base_rate: 3000,
+      weekend_rate: 3500,
+      extra_person_rate: 500,
+      base_occupancy: 2,
+      downpayment_percent: 50,
+      currency: "PHP",
+    },
+    seasons: await fetchActiveSeasons(createClient("", "")),
+  });
+};
+
 describe("Pricing Calculate API", () => {
   let mockRequest: any;
 
@@ -285,22 +308,7 @@ describe("Pricing Calculate API", () => {
     const response = await onRequest({ request: mockRequest, env: mockEnv });
     const data = (await response.json()) as PricingCalculationResponse;
 
-    // The booking endpoint prices each cabin like this and stores the sum
-    const stay = toStayInstants("2027-06-08", "2027-06-09");
-    const cabin = calculateBookingPrice({
-      checkIn: new Date(stay.check_in),
-      checkOut: new Date(stay.check_out),
-      guestCount: 2,
-      config: {
-        base_rate: 3000,
-        weekend_rate: 3500,
-        extra_person_rate: 500,
-        base_occupancy: 2,
-        downpayment_percent: 50,
-        currency: "PHP",
-      },
-      seasons: await fetchActiveSeasons(createClient("", "")),
-    });
+    const cabin = await priceAsBookingEndpoint("2027-06-08", "2027-06-09", 2);
 
     // The mock season doubles each night: 2 cabins × ₱3,000 × 2, not one 4-guest cabin (₱7,000)
     expect(data.pricing.total).toBe(12000);
@@ -325,21 +333,7 @@ describe("Pricing Calculate API", () => {
       const response = await onRequest({ request: mockRequest, env: mockEnv });
       const data = (await response.json()) as PricingCalculationResponse;
 
-      const stay = toStayInstants("2027-06-04", "2027-06-06");
-      const booked = calculateBookingPrice({
-        checkIn: new Date(stay.check_in),
-        checkOut: new Date(stay.check_out),
-        guestCount: 2,
-        config: {
-          base_rate: 3000,
-          weekend_rate: 3500,
-          extra_person_rate: 500,
-          base_occupancy: 2,
-          downpayment_percent: 50,
-          currency: "PHP",
-        },
-        seasons: await fetchActiveSeasons(createClient("", "")),
-      });
+      const booked = await priceAsBookingEndpoint("2027-06-04", "2027-06-06", 2);
 
       expect(data.pricing.nights).toBe(2);
       expect(data.pricing.nightlyBreakdown?.filter((night) => night.isWeekend)).toHaveLength(2);

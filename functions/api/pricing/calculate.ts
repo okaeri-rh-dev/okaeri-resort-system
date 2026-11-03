@@ -2,7 +2,7 @@ import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
-import { isManilaDay, isWithinMaxStay, MAX_STAY_ISSUE, toStayInstants } from "@/lib/bookings/stay";
+import { manilaDaySchema, toStayInstants, withStayRules } from "@/lib/bookings/stay";
 import { checkKVRateLimit, getClientIp } from "@/lib/kv-rate-limit";
 import type { Database } from "@/types/database.types";
 
@@ -22,10 +22,10 @@ interface Env {
 }
 
 // Request validation schema
-const pricingCalculateRequestSchema = z
-  .object({
-    check_in: z.string().refine(isManilaDay, "Expected a YYYY-MM-DD day"),
-    check_out: z.string().refine(isManilaDay, "Expected a YYYY-MM-DD day"),
+const pricingCalculateRequestSchema = withStayRules(
+  z.object({
+    check_in: manilaDaySchema,
+    check_out: manilaDaySchema,
     guest_count: z.number().int().min(1).max(50).optional(), // Optional - can be calculated from unit_requests
     unit_id: z.guid().optional(),
     // For custom pricing (e.g., when unit doesn't exist yet)
@@ -47,10 +47,7 @@ const pricingCalculateRequestSchema = z
       )
       .optional(),
   })
-  .refine((data) => data.check_out > data.check_in, {
-    message: "Check-out date must be after check-in date",
-  })
-  .refine(isWithinMaxStay, MAX_STAY_ISSUE)
+)
   .refine(
     (data) => {
       // Must have either: unit_id, custom_pricing, unit_requests, or guest_count for base pricing

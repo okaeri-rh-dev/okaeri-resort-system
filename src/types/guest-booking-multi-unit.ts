@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { isManilaDay, isWithinMaxStay, manilaDayOf, MAX_STAY_ISSUE } from "@/lib/bookings/stay";
+import { manilaDayOf, manilaDaySchema, withStayRules } from "@/lib/bookings/stay";
 
 // ============================================
 // Request Schemas (Zod Validation)
@@ -25,17 +25,17 @@ export type UnitRequest = z.infer<typeof unitRequestSchema>;
  * Multi-unit booking request schema
  * Validates entire booking payload
  */
-export const multiUnitBookingSchema = z
-  .object({
+export const multiUnitBookingSchema = withStayRules(
+  z.object({
     guest_name: z.string().min(2, "Name too short").max(100, "Name too long"),
     email: z.string().email("Invalid email").toLowerCase(),
     phone_number: z.string().regex(/^\+?[0-9\s\-()]{10,20}$/, "Invalid phone number format"),
 
-    check_in: z
-      .string()
-      .refine(isManilaDay, "Expected a YYYY-MM-DD day")
-      .refine((day) => day >= manilaDayOf(new Date()), "Check-in must be today or in the future"),
-    check_out: z.string().refine(isManilaDay, "Expected a YYYY-MM-DD day"),
+    check_in: manilaDaySchema.refine(
+      (day) => day >= manilaDayOf(new Date()),
+      "Check-in must be today or in the future"
+    ),
+    check_out: manilaDaySchema,
 
     // Array: each entry = 1 unit (NO quantity field)
     unit_requests: z
@@ -49,11 +49,7 @@ export const multiUnitBookingSchema = z
     idempotency_key: z.guid().optional(),
     payment_proof_url: z.string().min(1, "Payment proof is required").optional(), // Chunk 008: Payment proof upload
   })
-  .refine((data) => data.check_out > data.check_in, {
-    message: "Check-out must be after check-in",
-    path: ["check_out"],
-  })
-  .refine(isWithinMaxStay, MAX_STAY_ISSUE);
+);
 
 // ============================================
 // Response Schemas
