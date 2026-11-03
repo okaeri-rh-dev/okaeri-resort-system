@@ -45,20 +45,12 @@ const STAYS = [
 const GUEST_COUNTS = [2, 4];
 
 function stubSupabase(): SupabaseClient {
-  const query = (table: string) => {
-    const chain = {
-      select: () => chain,
-      eq: () => chain,
-      lte: () => chain,
-      gte: () => chain,
-      single: async () =>
-        table === "pricing_config"
-          ? { data: PRICING_CONFIG, error: null }
-          : { data: null, error: { message: "no rows" } },
-    };
-    return chain;
+  const noSeasons = {
+    select: () => noSeasons,
+    eq: () => noSeasons,
+    then: (resolve: (value: unknown) => void) => resolve({ data: [], error: null }),
   };
-  return { from: query } as unknown as SupabaseClient;
+  return { from: () => noSeasons } as unknown as SupabaseClient;
 }
 
 function formUnit(): BookingUnit {
@@ -137,6 +129,7 @@ describe("pricing parity", () => {
           checkIn: new Date(stay.checkIn),
           checkOut: new Date(stay.checkOut),
           guestCount: guests,
+          config: PRICING_CONFIG,
         });
 
         expect({ form: formTotal, stored: storedTotal, quote: quote.total }).toEqual({

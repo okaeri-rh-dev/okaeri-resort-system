@@ -15,7 +15,7 @@ import {
 } from "@/types/guest-booking-multi-unit";
 
 import { toGuestBookingData } from "../../lib/guest-booking-data";
-import { calculateBookingPrice } from "../../lib/pricing";
+import { calculateBookingPrice, toCentavo } from "../../lib/pricing";
 
 /**
  * POST /api/guest-booking/multi-unit
@@ -255,25 +255,27 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
             checkIn,
             checkOut,
             guestCount: unitRequest.guests_per_unit,
+            config,
           })
         )
       );
 
+      const sumOf = (amountOf: (unitPricing: (typeof unitPricingResults)[number]) => number) =>
+        toCentavo(unitPricingResults.reduce((sum, p) => sum + amountOf(p), 0));
+
       // Aggregate pricing across all units
       const aggregatedPricing = {
         nights: unitPricingResults[0]?.nights || 0,
-        base_total: unitPricingResults.reduce((sum, p) => sum + p.subtotal, 0),
-        weekend_surcharge: unitPricingResults.reduce((sum, p) => {
-          // Calculate weekend surcharge from nightly breakdown
-          const weekendTotal = p.nightlyBreakdown
+        base_total: sumOf((p) => p.subtotal),
+        weekend_surcharge: sumOf((p) =>
+          p.nightlyBreakdown
             .filter((n) => n.isWeekend)
-            .reduce((s, n) => s + (n.finalRate - n.baseRate), 0);
-          return sum + weekendTotal;
-        }, 0),
-        extra_person_fees: unitPricingResults.reduce((sum, p) => sum + p.extraPersonTotal, 0),
-        subtotal: unitPricingResults.reduce((sum, p) => sum + p.subtotal + p.extraPersonTotal, 0),
-        total: unitPricingResults.reduce((sum, p) => sum + p.total, 0),
-        downpayment_required: unitPricingResults.reduce((sum, p) => sum + p.downpayment, 0),
+            .reduce((s, n) => s + (n.baseRate - config.base_rate) * n.seasonalMultiplier, 0)
+        ),
+        extra_person_fees: sumOf((p) => p.extraPersonTotal),
+        subtotal: sumOf((p) => p.subtotal + p.extraPersonTotal),
+        total: sumOf((p) => p.total),
+        downpayment_required: sumOf((p) => p.downpayment),
         currency: unitPricingResults[0]?.currency || "PHP",
         // Discounts not implemented in pricing lib - will return null
         discount: null as { percent: number; amount: number; rule_name: string } | null,

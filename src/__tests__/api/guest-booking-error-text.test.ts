@@ -23,7 +23,8 @@ describe("POST /api/guest-booking/multi-unit when the database rejects the booki
   beforeEach(() => {
     vi.resetModules();
     vi.doMock("@supabase/supabase-js", () => ({ createClient: () => supabaseStub }));
-    vi.doMock("../../../functions/lib/pricing", () => ({
+    vi.doMock("../../../functions/lib/pricing", async (importOriginal) => ({
+      ...(await importOriginal<object>()),
       calculateBookingPrice: async () => ({
         nights: 2,
         subtotal: 6000,

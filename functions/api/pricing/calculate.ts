@@ -1,11 +1,13 @@
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
+import { differenceInCalendarDays } from "date-fns";
 import { z } from "zod";
 
+import { MAX_STAY_NIGHTS } from "@/lib/bookings/stay";
 import { checkKVRateLimit, getClientIp } from "@/lib/kv-rate-limit";
 import type { Database } from "@/types/database.types";
 
-import { calculateBookingPrice } from "../../lib/pricing";
+import { calculateBookingPrice, toCentavo } from "../../lib/pricing";
 
 // Environment types
 interface Env {
@@ -46,6 +48,12 @@ const pricingCalculateRequestSchema = z
   .refine((data) => new Date(data.check_out) > new Date(data.check_in), {
     message: "Check-out date must be after check-in date",
   })
+  .refine(
+    (data) =>
+      differenceInCalendarDays(new Date(data.check_out), new Date(data.check_in)) <=
+      MAX_STAY_NIGHTS,
+    { message: `Stays are limited to ${MAX_STAY_NIGHTS} nights`, path: ["check_out"] }
+  )
   .refine(
     (data) => {
       // Must have either: unit_id, custom_pricing, unit_requests, or guest_count for base pricing
@@ -126,22 +134,23 @@ export async function onRequest(context: {
     // Initialize Supabase client
     const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
+    const { data: config, error: configError } = await supabase
+      .from("pricing_config")
+      .select("*")
+      .eq("id", "default")
+      .single();
+
+    if (configError || !config) {
+      throw new Error(`Pricing config lookup failed: ${configError?.message ?? "no row"}`);
+    }
+
     // Handle different pricing scenarios
     let pricingResult;
     let notice = null;
 
     if (data.unit_requests) {
       // Multi-unit booking (with or without specific unit IDs)
-
-      // Get default pricing config for guest bookings without unit IDs
-      const { data: pricingConfig } = await supabase
-        .from("pricing_config")
-        .select("*")
-        .eq("id", "default")
-        .single();
-
       const pricingPromises = data.unit_requests.map(async (unitRequest) => {
-        let unitData = null;
         let unitName = "Unit (To be assigned)";
 
         // If unit_id is provided, fetch specific unit
@@ -155,19 +164,14 @@ export async function onRequest(context: {
           if (error || !unit) {
             throw new Error(`Unit ${unitRequest.unit_id} not found`);
           }
-          unitData = unit;
           unitName = unit.unit_name;
         }
 
-        // Use global pricing config as primary source, fall back to unit-specific rates
         const pricing = await calculateBookingPrice(supabase, {
           checkIn: new Date(data.check_in),
           checkOut: new Date(data.check_out),
           guestCount: unitRequest.guest_count,
-          baseRate: pricingConfig?.base_rate ?? unitData?.base_rate ?? 3000,
-          weekendRate: pricingConfig?.weekend_rate ?? unitData?.weekend_rate ?? 3500,
-          extraPersonRate: pricingConfig?.extra_person_rate ?? unitData?.extra_person_rate ?? 500,
-          baseOccupancy: pricingConfig?.base_occupancy ?? unitData?.base_occupancy ?? 2,
+          config,
         });
 
         return {
@@ -180,8 +184,10 @@ export async function onRequest(context: {
       const unitPricings = await Promise.all(pricingPromises);
 
       // Aggregate totals
-      const totalAmount = unitPricings.reduce((sum, up) => sum + up.pricing.total, 0);
-      const totalDownpayment = unitPricings.reduce((sum, up) => sum + up.pricing.downpayment, 0);
+      const totalAmount = toCentavo(unitPricings.reduce((sum, up) => sum + up.pricing.total, 0));
+      const totalDownpayment = toCentavo(
+        unitPricings.reduce((sum, up) => sum + up.pricing.downpayment, 0)
+      );
       const hasSeasonalRates = unitPricings.some((up) =>
         up.pricing.nightlyBreakdown.some((night) => night.seasonalMultiplier !== 1.0)
       );
@@ -224,21 +230,11 @@ export async function onRequest(context: {
         );
       }
 
-      // Get global pricing config as primary source
-      const { data: pricingConfig } = await supabase
-        .from("pricing_config")
-        .select("*")
-        .eq("id", "default")
-        .single();
-
       pricingResult = await calculateBookingPrice(supabase, {
         checkIn: new Date(data.check_in),
         checkOut: new Date(data.check_out),
         guestCount,
-        baseRate: pricingConfig?.base_rate ?? unit.base_rate ?? 3000,
-        weekendRate: pricingConfig?.weekend_rate ?? unit.weekend_rate ?? 3500,
-        extraPersonRate: pricingConfig?.extra_person_rate ?? unit.extra_person_rate ?? 500,
-        baseOccupancy: pricingConfig?.base_occupancy ?? unit.base_occupancy ?? 2,
+        config,
       });
 
       // Check for seasonal rates
@@ -262,7 +258,7 @@ export async function onRequest(context: {
         checkIn: new Date(data.check_in),
         checkOut: new Date(data.check_out),
         guestCount,
-        ...data.custom_pricing,
+        config: { ...config, ...data.custom_pricing },
       });
 
       const hasSeasonalRates = pricingResult.nightlyBreakdown.some(
@@ -274,21 +270,11 @@ export async function onRequest(context: {
       }
     } else if (data.guest_count) {
       // Guest booking with only guest count (no specific units)
-      // Use default pricing configuration
-      const { data: pricingConfig } = await supabase
-        .from("pricing_config")
-        .select("*")
-        .eq("id", "default")
-        .single();
-
       pricingResult = await calculateBookingPrice(supabase, {
         checkIn: new Date(data.check_in),
         checkOut: new Date(data.check_out),
         guestCount,
-        baseRate: pricingConfig?.base_rate || 3000,
-        weekendRate: pricingConfig?.weekend_rate || 3500,
-        extraPersonRate: pricingConfig?.extra_person_rate || 500,
-        baseOccupancy: pricingConfig?.base_occupancy || 2,
+        config,
       });
 
       const hasSeasonalRates = pricingResult.nightlyBreakdown.some(

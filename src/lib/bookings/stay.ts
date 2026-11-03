@@ -35,6 +35,8 @@ export const pickedDay = (date: Date): ManilaDay => format(date, "yyyy-MM-dd");
 export const manilaDayOf = (instant: string | Date): ManilaDay =>
   formatInTimeZone(new Date(instant), RESORT_TIMEZONE, "yyyy-MM-dd");
 
+export const MAX_STAY_NIGHTS = 60;
+
 export const nightsBetween = (checkInDay: ManilaDay, checkOutDay: ManilaDay) =>
   differenceInCalendarDays(parseISO(checkOutDay), parseISO(checkInDay));
 

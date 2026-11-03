@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { isManilaDay, manilaDayOf } from "@/lib/bookings/stay";
+import { isManilaDay, manilaDayOf, MAX_STAY_NIGHTS, nightsBetween } from "@/lib/bookings/stay";
 
 // ============================================
 // Request Schemas (Zod Validation)
@@ -51,6 +51,10 @@ export const multiUnitBookingSchema = z
   })
   .refine((data) => data.check_out > data.check_in, {
     message: "Check-out must be after check-in",
+    path: ["check_out"],
+  })
+  .refine((data) => nightsBetween(data.check_in, data.check_out) <= MAX_STAY_NIGHTS, {
+    message: `Stays are limited to ${MAX_STAY_NIGHTS} nights`,
     path: ["check_out"],
   });
 
