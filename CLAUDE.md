@@ -31,7 +31,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 - Vitest global setup holds a machine-wide lock on the local Supabase stack for the whole run (it can restart the stack, and DB test cleanup deletes every booking), so a second run from any checkout or worktree logs "Waiting for vitest run …" and starts when the first ends. Watch mode (`npm test`) holds the lock until the watcher closes. Non-DB runs set `SKIP_DB_SETUP=1` (pre-push does) to skip the lock.
 - Run `npm run worktree:setup` once in every new worktree (it runs `supabase link`, so a person runs or approves it). Without the gitignored `supabase/.temp/` it writes, `supabase db reset` fails with `42P10` and `supabase db push` fails with `DbConfigIpv6Error`. A prod `supabase db push` runs from a checkout that has the migration: the main checkout may be on another branch.
 - Apply a new migration to the local DB with `supabase migration up --local`, never `psql -f`: `psql` writes no `schema_migrations` row, and the gap makes later `migration up` runs fail with `MigrationMissingRemoteError` (issue 243).
-- Scripts read the local stack with `supabase status -o env` (never the human output), and DB types come from `npm run gen:types` (`supabase gen types --local` exits 1 on CLI v2.122.0).
+- Scripts read the local stack with `supabase status -o env` (never the human output), and DB types come from `npm run gen:types` (`supabase gen types --local` exits 1 on CLI v2.122.1).
 - When `prod-drift` (CLI `latest`) is green on a newer CLI, bump the `setup-cli` pin in the `e2e` job of `infra-health.yml` by hand, and commit `npm run gen:types` output from that CLI (the blocking Type drift step checks it).
 
 ## Phase Suffixes

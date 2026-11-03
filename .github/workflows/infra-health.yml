@@ -112,7 +112,7 @@ jobs:
           cache: npm
       - uses: supabase/setup-cli@v3
         with:
-          version: 2.122.0 # pinned: a CLI release must not fail a required check
+          version: 2.122.1 # pinned: a CLI release must not fail a required check
       - run: npm ci
       - name: Start local Supabase (applies all migrations — fails on bad history)
         run: supabase start
