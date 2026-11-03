@@ -56,7 +56,8 @@
     "test:watch": "vitest watch",
     "type-check": "tsc --noEmit && tsc --noEmit -p functions/tsconfig.json && tsc --noEmit -p tsconfig.e2e.json && tsc --noEmit -p tsconfig.tests.json",
     "verify": "npm run type-check && npm run lint && npm run test:run",
-    "verify:fix": "npm run lint:fix && npm run format"
+    "verify:fix": "npm run lint:fix && npm run format",
+    "worktree:setup": "sh scripts/worktree-setup.sh"
   },
   "allowScripts": {
     "@swc/core": true,

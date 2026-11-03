@@ -29,6 +29,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 - Database and performance tests require a local Supabase instance: run `supabase start` first. These tests use `@vitest-environment node` (bypasses CORS) with `beforeEach` cleanup; `TEST_SUPABASE_URL` / `TEST_SUPABASE_SERVICE_ROLE_KEY` default to the local instance in `vitest.config.ts`.
 - Vitest global setup holds a machine-wide lock on the local Supabase stack for the whole run (it can restart the stack, and DB test cleanup deletes every booking), so a second run from any checkout or worktree logs "Waiting for vitest run …" and starts when the first ends. Watch mode (`npm test`) holds the lock until the watcher closes. Non-DB runs set `SKIP_DB_SETUP=1` (pre-push does) to skip the lock.
+- Run `npm run worktree:setup` once in every new worktree (it runs `supabase link`, so a person runs or approves it). Without the gitignored `supabase/.temp/` it writes, `supabase db reset` fails with `42P10` and `supabase db push` fails with `DbConfigIpv6Error`. A prod `supabase db push` runs from a checkout that has the migration: the main checkout may be on another branch.
 - Apply a new migration to the local DB with `supabase migration up --local`, never `psql -f`: `psql` writes no `schema_migrations` row, and the gap makes later `migration up` runs fail with `MigrationMissingRemoteError` (issue 243).
 - Scripts read the local stack with `supabase status -o env` (never the human output), and DB types come from `npm run gen:types` (`supabase gen types --local` exits 1 on CLI v2.122.0).
 - When `prod-drift` (CLI `latest`) is green on a newer CLI, bump the `setup-cli` pin in the `e2e` job of `infra-health.yml` by hand, and commit `npm run gen:types` output from that CLI (the blocking Type drift step checks it).
@@ -49,7 +50,7 @@ Rules:
 
 Current entries:
 
-- **A fresh worktree has no `supabase/.temp/`** (gitignored), so (a) `supabase db reset` runs every storage migration, which drops the `(bucket_id, name)` unique index that the pinned storage-api still upserts on (`StorageApiError: database error, code: 42P10`), and (b) the worktree is not linked: `supabase db push` fails with `DbConfigIpv6Error`. Workaround: copy `storage-migration`, `storage-version`, `postgres-version`, `rest-version`, `gotrue-version`, `project-ref`, `pooler-url` and `linked-project.json` from the main checkout's `supabase/.temp/` into the worktree (not `start-secrets`), then reset or push again. A prod `supabase db push` runs from a checkout that has the migration: the main checkout may be on another branch.
+None.
 
 ## Important Notes
 
