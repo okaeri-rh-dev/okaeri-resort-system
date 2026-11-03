@@ -13,6 +13,7 @@ const CONFIG = {
 };
 
 let pricingConfigLoads = 0;
+let seasonQueries = 0;
 interface StoredBookingData {
   total_amount: number;
   downpayment_required: number;
@@ -34,7 +35,10 @@ const supabaseStub = {
           : { data: null, error: { message: "timeout" } }
       );
     }
-    if (table === "seasonal_rates") return queryChain({ data: [], error: null });
+    if (table === "seasonal_rates") {
+      seasonQueries++;
+      return queryChain({ data: [], error: null });
+    }
     return queryChain({ data: null, count: 5, error: null });
   },
   rpc,
@@ -60,6 +64,7 @@ describe("POST /api/guest-booking/multi-unit pricing", () => {
   beforeEach(() => {
     vi.resetModules();
     pricingConfigLoads = 0;
+    seasonQueries = 0;
     rpc.mockClear();
     vi.doMock("@supabase/supabase-js", () => ({ createClient: () => supabaseStub }));
   });
@@ -78,6 +83,21 @@ describe("POST /api/guest-booking/multi-unit pricing", () => {
     expect(bookingData.total_amount).toBe(19500.24);
     expect(bookingData.downpayment_required).toBe(9750.12);
     expect(bookingData.pricing_snapshot.weekend_surcharge).toBe(1499.76);
+    expect(seasonQueries).toBe(1);
+  });
+
+  it("fails without storing a booking when the config cannot be loaded", async () => {
+    pricingConfigLoads = 1;
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { onRequestPost } = await import("../../../functions/api/guest-booking/multi-unit");
+
+    const response = await onRequestPost({
+      request: bookingRequest("2099-01-08", "2099-01-10"),
+      env: mockEnv,
+    });
+
+    expect(response.status).toBe(500);
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   it("accepts a stay of exactly 60 nights", async () => {

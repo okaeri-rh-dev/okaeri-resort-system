@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 
-import { calculateBookingPrice } from "../../../../functions/lib/pricing";
+import { calculateBookingPrice, fetchActiveSeasons } from "../../../../functions/lib/pricing";
 import { queryChain } from "../setup";
 
 const CONFIG = {
@@ -19,29 +19,22 @@ const SEASONS = [
   { name: "Christmas", start_date: "12-20", end_date: "01-02", multiplier: 2, priority: 20 },
 ];
 
-let seasonQueries = 0;
-
-function stubSupabase(seasonsResult: unknown = { data: [], error: null }) {
-  seasonQueries = 0;
-  return {
-    from: (table: string) => {
-      if (table !== "seasonal_rates") throw new Error(`unexpected query on ${table}`);
-      seasonQueries++;
-      return queryChain(seasonsResult);
-    },
-  } as unknown as SupabaseClient;
-}
+const seasonsTable = (result: unknown) =>
+  ({ from: () => queryChain(result) }) as unknown as SupabaseClient;
 
 // Local midnight, as eachDayOfInterval sees it. 2026-10-08 is a Thursday.
 const day = (isoDay: string) => new Date(`${isoDay}T00:00:00`);
 
+const oneNight = { checkIn: day("2026-03-26"), checkOut: day("2026-03-27"), guestCount: 2 };
+
 describe("calculateBookingPrice", () => {
-  it("prices from the config it is given, without loading one", async () => {
-    const price = await calculateBookingPrice(stubSupabase(), {
+  it("prices from the config it is given", () => {
+    const price = calculateBookingPrice({
       checkIn: day("2026-10-08"),
       checkOut: day("2026-10-10"),
       guestCount: 3,
       config: CONFIG,
+      seasons: [],
     });
 
     // Thu ₱3,000 + Fri ₱3,500 + 1 extra guest × ₱500 × 2 nights
@@ -49,12 +42,13 @@ describe("calculateBookingPrice", () => {
     expect(price.downpayment).toBe(3750);
   });
 
-  it("applies the highest-priority season per night with one query for the stay", async () => {
-    const price = await calculateBookingPrice(stubSupabase({ data: SEASONS, error: null }), {
+  it("applies the highest-priority season per night", () => {
+    const price = calculateBookingPrice({
       checkIn: day("2026-03-24"),
       checkOut: day("2026-03-26"),
       guestCount: 2,
       config: CONFIG,
+      seasons: SEASONS,
     });
 
     // Tue in Peak Summer ₱3,000 × 1.5; Wed in Holy Week (inside Peak Summer) ₱3,000 × 1.8
@@ -63,58 +57,42 @@ describe("calculateBookingPrice", () => {
       "Holy Week",
     ]);
     expect(price.total).toBe(9900);
-    expect(seasonQueries).toBe(1);
   });
 
-  it("applies a season that wraps into the next year", async () => {
-    const price = await calculateBookingPrice(stubSupabase({ data: SEASONS, error: null }), {
+  it("applies a season that wraps into the next year", () => {
+    const price = calculateBookingPrice({
       checkIn: day("2026-12-31"),
       checkOut: day("2027-01-01"),
       guestCount: 2,
       config: CONFIG,
+      seasons: SEASONS,
     });
 
     expect(price.total).toBe(6000);
   });
 
-  const oneNight = { checkIn: day("2026-03-26"), checkOut: day("2026-03-27"), guestCount: 2 };
+  it("fails when two seasons tie on the top priority for a night", () => {
+    const tied = [...SEASONS, { ...SEASONS[1], name: "Town Fiesta" }];
 
-  it("fails when the seasons query fails", async () => {
-    const failing = stubSupabase({ data: null, error: { code: "57014", message: "timeout" } });
-
-    await expect(calculateBookingPrice(failing, { ...oneNight, config: CONFIG })).rejects.toThrow(
-      /timeout/
+    expect(() => calculateBookingPrice({ ...oneNight, config: CONFIG, seasons: tied })).toThrow(
+      /Holy Week.*Town Fiesta/
     );
   });
 
-  it("fails when two seasons tie on the top priority for a night", async () => {
-    const tied = [...SEASONS, { ...SEASONS[1], name: "Town Fiesta" }];
+  it("measures the weekend surcharge against the base rate, with the season applied", () => {
+    // Fri 2026-03-27 in Holy Week: (₱3,500 − ₱3,000) × 1.8
+    const price = calculateBookingPrice({
+      checkIn: day("2026-03-27"),
+      checkOut: day("2026-03-28"),
+      guestCount: 2,
+      config: CONFIG,
+      seasons: SEASONS,
+    });
 
-    await expect(
-      calculateBookingPrice(stubSupabase({ data: tied, error: null }), {
-        ...oneNight,
-        config: CONFIG,
-      })
-    ).rejects.toThrow(/Holy Week.*Town Fiesta/);
+    expect(price.weekendSurcharge).toBe(900);
   });
 
-  // Prod has no seasonal_rates table yet
-  it.each(["42P01", "PGRST205"])(
-    "prices without seasons when the table is missing (%s)",
-    async (code) => {
-      vi.spyOn(console, "warn").mockImplementation(() => {});
-      const missing = stubSupabase({
-        data: null,
-        error: { code, message: "relation does not exist" },
-      });
-
-      const price = await calculateBookingPrice(missing, { ...oneNight, config: CONFIG });
-
-      expect(price.total).toBe(3000);
-    }
-  );
-
-  it("rounds amounts to the centavo", async () => {
+  it("rounds amounts to the centavo", () => {
     const season = {
       name: "Fiesta",
       start_date: "03-26",
@@ -123,13 +101,36 @@ describe("calculateBookingPrice", () => {
       priority: 1,
     };
 
-    const price = await calculateBookingPrice(stubSupabase({ data: [season], error: null }), {
+    const price = calculateBookingPrice({
       ...oneNight,
       config: { ...CONFIG, base_rate: 3333, downpayment_percent: 33 },
+      seasons: [season],
     });
 
     expect(price.total).toBe(3666.3);
     expect(price.downpayment).toBe(1209.88);
     expect(price.balance).toBe(2456.42);
   });
+});
+
+describe("fetchActiveSeasons", () => {
+  it("fails when the query fails", async () => {
+    const failing = seasonsTable({ data: null, error: { code: "57014", message: "timeout" } });
+
+    await expect(fetchActiveSeasons(failing)).rejects.toThrow(/timeout/);
+  });
+
+  // Prod has no seasonal_rates table yet
+  it.each(["42P01", "PGRST205"])(
+    "returns no seasons when the table is missing (%s)",
+    async (code) => {
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      const missing = seasonsTable({
+        data: null,
+        error: { code, message: "relation does not exist" },
+      });
+
+      await expect(fetchActiveSeasons(missing)).resolves.toEqual([]);
+    }
+  );
 });

@@ -31,19 +31,30 @@ type SeasonalRate = Pick<
 
 export const toCentavo = (amount: number) => Math.round(amount * 100) / 100;
 
+export async function loadPricingConfig(supabase: SupabaseClient<Database>) {
+  const { data, error } = await supabase
+    .from("pricing_config")
+    .select("*")
+    .eq("id", "default")
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Pricing config lookup failed: ${error?.message ?? "no row"}`);
+  }
+  return data;
+}
+
 /**
  * Calculate the total price for a booking with seasonal adjustments
  */
-export async function calculateBookingPrice(
-  supabase: SupabaseClient<Database>,
-  params: {
-    checkIn: Date;
-    checkOut: Date;
-    guestCount: number;
-    config: PricingConfig;
-  }
-) {
-  const { checkIn, checkOut, guestCount, config } = params;
+export function calculateBookingPrice(params: {
+  checkIn: Date;
+  checkOut: Date;
+  guestCount: number;
+  config: PricingConfig;
+  seasons: SeasonalRate[];
+}) {
+  const { checkIn, checkOut, guestCount, config, seasons } = params;
   const {
     base_rate: baseRate,
     weekend_rate: weekendRate,
@@ -52,7 +63,6 @@ export async function calculateBookingPrice(
   } = config;
 
   const nights = eachDayOfInterval({ start: checkIn, end: addDays(checkOut, -1) });
-  const seasons = await fetchActiveSeasons(supabase);
 
   const nightlyBreakdown = nights.map((date) => {
     const weekendNight = isWeekendNight(date);
@@ -73,6 +83,12 @@ export async function calculateBookingPrice(
   // Calculate subtotal
   const subtotal = toCentavo(nightlyBreakdown.reduce((sum, night) => sum + night.finalRate, 0));
 
+  const weekendSurcharge = toCentavo(
+    nightlyBreakdown
+      .filter((night) => night.isWeekend)
+      .reduce((sum, night) => sum + (night.baseRate - baseRate) * night.seasonalMultiplier, 0)
+  );
+
   // Calculate extra person charges
   const extraPersons = Math.max(0, guestCount - baseOccupancy);
   const extraPersonTotal = toCentavo(extraPersons * extraPersonRate * nights.length);
@@ -85,6 +101,7 @@ export async function calculateBookingPrice(
     nights: nights.length,
     nightlyBreakdown,
     subtotal,
+    weekendSurcharge,
     extraPersons,
     extraPersonTotal,
     total,
@@ -96,7 +113,9 @@ export async function calculateBookingPrice(
 
 const MISSING_TABLE_CODES = ["42P01", "PGRST205"];
 
-async function fetchActiveSeasons(supabase: SupabaseClient<Database>): Promise<SeasonalRate[]> {
+export async function fetchActiveSeasons(
+  supabase: SupabaseClient<Database>
+): Promise<SeasonalRate[]> {
   const { data, error } = await supabase
     .from("seasonal_rates")
     .select("name, start_date, end_date, multiplier, priority")

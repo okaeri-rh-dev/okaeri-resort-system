@@ -6,11 +6,9 @@
  * - the quote / guest-booking calculator (functions/lib/pricing.ts).
  *
  * Seasonal multipliers are out of scope: only functions/lib/pricing.ts applies
- * them (see the guardrails plan, Decisions & Deferrals), so its stub returns
- * no seasonal rate.
+ * them (see the guardrails plan, Decisions & Deferrals), so it gets no seasons.
  */
 
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 
 import { isWeekendNight } from "@/lib/pricing/weekend-night";
@@ -43,15 +41,6 @@ const STAYS = [
 ];
 
 const GUEST_COUNTS = [2, 4];
-
-function stubSupabase(): SupabaseClient {
-  const noSeasons = {
-    select: () => noSeasons,
-    eq: () => noSeasons,
-    then: (resolve: (value: unknown) => void) => resolve({ data: [], error: null }),
-  };
-  return { from: () => noSeasons } as unknown as SupabaseClient;
-}
 
 function formUnit(): BookingUnit {
   return {
@@ -125,11 +114,12 @@ describe("pricing parity", () => {
           PRICING_CONFIG
         ).subtotal;
 
-        const quote = await calculateBookingPrice(stubSupabase(), {
+        const quote = calculateBookingPrice({
           checkIn: new Date(stay.checkIn),
           checkOut: new Date(stay.checkOut),
           guestCount: guests,
           config: PRICING_CONFIG,
+          seasons: [],
         });
 
         expect({ form: formTotal, stored: storedTotal, quote: quote.total }).toEqual({

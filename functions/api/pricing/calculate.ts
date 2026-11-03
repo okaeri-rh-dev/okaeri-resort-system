@@ -1,13 +1,17 @@
 import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
-import { differenceInCalendarDays } from "date-fns";
 import { z } from "zod";
 
-import { MAX_STAY_NIGHTS } from "@/lib/bookings/stay";
+import { isWithinMaxStay, MAX_STAY_ISSUE } from "@/lib/bookings/stay";
 import { checkKVRateLimit, getClientIp } from "@/lib/kv-rate-limit";
 import type { Database } from "@/types/database.types";
 
-import { calculateBookingPrice, toCentavo } from "../../lib/pricing";
+import {
+  calculateBookingPrice,
+  fetchActiveSeasons,
+  loadPricingConfig,
+  toCentavo,
+} from "../../lib/pricing";
 
 // Environment types
 interface Env {
@@ -48,12 +52,7 @@ const pricingCalculateRequestSchema = z
   .refine((data) => new Date(data.check_out) > new Date(data.check_in), {
     message: "Check-out date must be after check-in date",
   })
-  .refine(
-    (data) =>
-      differenceInCalendarDays(new Date(data.check_out), new Date(data.check_in)) <=
-      MAX_STAY_NIGHTS,
-    { message: `Stays are limited to ${MAX_STAY_NIGHTS} nights`, path: ["check_out"] }
-  )
+  .refine(isWithinMaxStay, MAX_STAY_ISSUE)
   .refine(
     (data) => {
       // Must have either: unit_id, custom_pricing, unit_requests, or guest_count for base pricing
@@ -134,15 +133,10 @@ export async function onRequest(context: {
     // Initialize Supabase client
     const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
-    const { data: config, error: configError } = await supabase
-      .from("pricing_config")
-      .select("*")
-      .eq("id", "default")
-      .single();
-
-    if (configError || !config) {
-      throw new Error(`Pricing config lookup failed: ${configError?.message ?? "no row"}`);
-    }
+    const [config, seasons] = await Promise.all([
+      loadPricingConfig(supabase),
+      fetchActiveSeasons(supabase),
+    ]);
 
     // Handle different pricing scenarios
     let pricingResult;
@@ -167,11 +161,12 @@ export async function onRequest(context: {
           unitName = unit.unit_name;
         }
 
-        const pricing = await calculateBookingPrice(supabase, {
+        const pricing = calculateBookingPrice({
           checkIn: new Date(data.check_in),
           checkOut: new Date(data.check_out),
           guestCount: unitRequest.guest_count,
           config,
+          seasons,
         });
 
         return {
@@ -230,11 +225,12 @@ export async function onRequest(context: {
         );
       }
 
-      pricingResult = await calculateBookingPrice(supabase, {
+      pricingResult = calculateBookingPrice({
         checkIn: new Date(data.check_in),
         checkOut: new Date(data.check_out),
         guestCount,
         config,
+        seasons,
       });
 
       // Check for seasonal rates
@@ -254,11 +250,12 @@ export async function onRequest(context: {
       }
     } else if (data.custom_pricing) {
       // Custom pricing (no unit specified)
-      pricingResult = await calculateBookingPrice(supabase, {
+      pricingResult = calculateBookingPrice({
         checkIn: new Date(data.check_in),
         checkOut: new Date(data.check_out),
         guestCount,
         config: { ...config, ...data.custom_pricing },
+        seasons,
       });
 
       const hasSeasonalRates = pricingResult.nightlyBreakdown.some(
@@ -270,11 +267,12 @@ export async function onRequest(context: {
       }
     } else if (data.guest_count) {
       // Guest booking with only guest count (no specific units)
-      pricingResult = await calculateBookingPrice(supabase, {
+      pricingResult = calculateBookingPrice({
         checkIn: new Date(data.check_in),
         checkOut: new Date(data.check_out),
         guestCount,
         config,
+        seasons,
       });
 
       const hasSeasonalRates = pricingResult.nightlyBreakdown.some(

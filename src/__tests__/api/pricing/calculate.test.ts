@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toStayInstants } from "@/lib/bookings/stay";
 
 import { onRequest } from "../../../../functions/api/pricing/calculate";
-import { calculateBookingPrice } from "../../../../functions/lib/pricing";
+import { calculateBookingPrice, fetchActiveSeasons } from "../../../../functions/lib/pricing";
 import type { PricingCalculationResponse } from "../types/responses";
 
 // Mock environment
@@ -287,7 +287,7 @@ describe("Pricing Calculate API", () => {
 
     // The booking endpoint prices each cabin like this and stores the sum
     const stay = toStayInstants("2027-06-08", "2027-06-09");
-    const cabin = await calculateBookingPrice(createClient("", ""), {
+    const cabin = calculateBookingPrice({
       checkIn: new Date(stay.check_in),
       checkOut: new Date(stay.check_out),
       guestCount: 2,
@@ -299,6 +299,7 @@ describe("Pricing Calculate API", () => {
         downpayment_percent: 50,
         currency: "PHP",
       },
+      seasons: await fetchActiveSeasons(createClient("", "")),
     });
 
     // The mock season doubles each night: 2 cabins × ₱3,000 × 2, not one 4-guest cabin (₱7,000)
