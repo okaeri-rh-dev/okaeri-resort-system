@@ -8,13 +8,14 @@ import {
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { afterExpenseChange } from "@/lib/query-invalidation";
 import { expenseKeys } from "@/lib/query-keys";
+import { ilikeAnyFilter } from "@/lib/search-filter";
 import { uploadReceipt } from "@/lib/storage-security";
-import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import { toISODateString } from "@/lib/timezone";
-import { ilikeAnyFilter } from "@/lib/search-filter";
 import type { Expense } from "@/types";
 import type { TablesInsert, TablesUpdate } from "@/types/database.types";
 
@@ -199,8 +200,11 @@ const expenseListQuery = ({
 
 export const useExpenses = () => {
   const { filters, searchQuery, sortBy, sortOrder } = useExpenseStore();
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
 
-  return useQuery(expenseListQuery({ filters, searchQuery, sortBy, sortOrder }));
+  return useQuery(
+    expenseListQuery({ filters, searchQuery: debouncedSearchQuery, sortBy, sortOrder })
+  );
 };
 
 // Fetch single expense

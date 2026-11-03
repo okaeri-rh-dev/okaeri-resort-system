@@ -11,7 +11,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { getAccessToken } from "@/hooks/useAuthToken";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
 import {
   cancelBooking,
   dayAfter,
@@ -23,6 +23,7 @@ import {
 } from "@/lib/bookings";
 import { requestBooking } from "@/lib/bookings/request";
 import { adaptBookingFromDB } from "@/lib/database-adapters";
+import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { formatCurrency } from "@/lib/formatters";
 import { recordProofPayment } from "@/lib/payments";
 import {
@@ -33,9 +34,8 @@ import {
   afterBookingUpdate,
 } from "@/lib/query-invalidation";
 import { bookingKeys } from "@/lib/query-keys";
-import { throwDetailLoadError } from "@/lib/detail-load-error";
-import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import { ilikeAnyFilter } from "@/lib/search-filter";
+import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Booking, BookingFilters, BookingStatus, TableState } from "@/types";
 
 // import { useWorkflowStore } from "./useWorkflowStore"; // Phase 3-4
@@ -382,8 +382,6 @@ const bookingListQuery = ({
     staleTime: 300000, // 5 minutes - increased from 30s
     // Removed refetchInterval - manual refresh preferred for dashboard
   });
-
-const SEARCH_DEBOUNCE_MS = 300;
 
 export const useBookings = () => {
   const { filters, searchQuery, sortBy, sortOrder } = useBookingStore();

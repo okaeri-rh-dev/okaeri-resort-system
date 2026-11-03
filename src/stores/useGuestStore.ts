@@ -3,12 +3,13 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { getAccessToken } from "@/hooks/useAuthToken";
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { logger } from "@/lib/logger";
 import { afterGuestRetention, invalidateGuests } from "@/lib/query-invalidation";
 import { guestKeys } from "@/lib/query-keys";
-import { throwDetailLoadError } from "@/lib/detail-load-error";
-import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import { ilikeAnyFilter } from "@/lib/search-filter";
+import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Booking, Guest } from "@/types";
 
 // ============================================
@@ -169,8 +170,9 @@ const guestListQuery = ({
 
 export const useGuests = () => {
   const { searchQuery, sortBy, sortOrder } = useGuestStore();
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
 
-  return useQuery(guestListQuery({ searchQuery, sortBy, sortOrder }));
+  return useQuery(guestListQuery({ searchQuery: debouncedSearchQuery, sortBy, sortOrder }));
 };
 
 // Fetch single guest with booking history
