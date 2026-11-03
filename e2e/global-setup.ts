@@ -19,6 +19,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isLocalSupabaseUrl } from "./fixtures/local-supabase-url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -51,16 +52,12 @@ export default function globalSetup(): void {
     envTest.VITE_SUPABASE_URL ??
     "http://127.0.0.1:54321";
 
-  let hostname: string;
-  try {
-    hostname = new URL(supabaseUrl).hostname;
-  } catch {
+  if (!URL.canParse(supabaseUrl)) {
     console.warn(`[global-setup] Unparseable Supabase URL "${supabaseUrl}" — skipping seeding.`);
     return;
   }
 
-  const isLocal = hostname === "127.0.0.1" || hostname === "localhost" || hostname === "::1";
-  if (!isLocal) {
+  if (!isLocalSupabaseUrl(supabaseUrl)) {
     console.warn(
       `[global-setup] Supabase URL ${supabaseUrl} is not local — skipping test-user seeding.`
     );
