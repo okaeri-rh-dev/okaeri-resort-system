@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { E2E_REF } from "../scripts/e2e/fixtures";
 import { loginAsAdmin } from "./fixtures/auth";
 import {
   BOOKING_DATES,
@@ -326,18 +327,7 @@ test.describe("Booking Lifecycle", () => {
       const queuePage = new AdminQueuePage(page);
       await queuePage.goto();
 
-      if (await queuePage.emptyState.isVisible()) {
-        test.skip();
-        return;
-      }
-
-      const assignLinks = await queuePage.assignUnitsLinks.all();
-      if (assignLinks.length === 0) {
-        test.skip();
-        return;
-      }
-
-      await assignLinks[0].click();
+      await queuePage.openAssignCabins(E2E_REF.QUEUE_PAID);
       await expect(page).toHaveURL(/assign-units/);
     });
 
@@ -345,18 +335,7 @@ test.describe("Booking Lifecycle", () => {
       const queuePage = new AdminQueuePage(page);
       await queuePage.goto();
 
-      if (await queuePage.emptyState.isVisible()) {
-        test.skip();
-        return;
-      }
-
-      const assignLinks = await queuePage.assignUnitsLinks.all();
-      if (assignLinks.length === 0) {
-        test.skip();
-        return;
-      }
-
-      await assignLinks[0].click();
+      await queuePage.openAssignCabins(E2E_REF.QUEUE_PAID);
 
       const assignPage = new UnitAssignmentPage(page);
       await assignPage.expectPageLoaded();
@@ -370,18 +349,7 @@ test.describe("Booking Lifecycle", () => {
       const queuePage = new AdminQueuePage(page);
       await queuePage.goto();
 
-      if (await queuePage.emptyState.isVisible()) {
-        test.skip();
-        return;
-      }
-
-      const assignLinks = await queuePage.assignUnitsLinks.all();
-      if (assignLinks.length === 0) {
-        test.skip();
-        return;
-      }
-
-      await assignLinks[0].click();
+      await queuePage.openAssignCabins(E2E_REF.QUEUE_PAID);
 
       const assignPage = new UnitAssignmentPage(page);
       await assignPage.expectPageLoaded();
