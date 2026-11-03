@@ -50,7 +50,6 @@ Rules:
 Current entries:
 
 - **A fresh worktree has no `supabase/.temp/`** (gitignored), so (a) `supabase db reset` runs every storage migration, which drops the `(bucket_id, name)` unique index that the pinned storage-api still upserts on (`StorageApiError: database error, code: 42P10`), and (b) the worktree is not linked: `supabase db push` fails with `DbConfigIpv6Error`. Workaround: copy `storage-migration`, `storage-version`, `postgres-version`, `rest-version`, `gotrue-version`, `project-ref`, `pooler-url` and `linked-project.json` from the main checkout's `supabase/.temp/` into the worktree (not `start-secrets`), then reset or push again. A prod `supabase db push` runs from a checkout that has the migration: the main checkout may be on another branch.
-- **`e2e/dark-mode-dashboard-settings.spec.ts` "mobile dashboard" always fails** (issue 256): its stub booking lacks `is_guest_booking` and `unit_assignment_status`, which `isPending` needs since 8830e92b, so the "waiting for verification" banner never shows. The spec is left out of `scripts/e2e/run-hooked.sh`. When fixed, add it to the chromium line there.
 
 ## Important Notes
 
