@@ -38,6 +38,16 @@ export const manilaDayOf = (instant: string | Date): ManilaDay =>
 export const nightsBetween = (checkInDay: ManilaDay, checkOutDay: ManilaDay) =>
   differenceInCalendarDays(parseISO(checkOutDay), parseISO(checkInDay));
 
+export const MAX_STAY_NIGHTS = 60;
+
+export const isWithinMaxStay = (stay: { check_in: string; check_out: string }) =>
+  nightsBetween(stay.check_in, stay.check_out) <= MAX_STAY_NIGHTS;
+
+export const MAX_STAY_ISSUE = {
+  message: `Stays are limited to ${MAX_STAY_NIGHTS} nights`,
+  path: ["check_out"],
+};
+
 export const manilaDayStart = (day: ManilaDay) => atManilaTime(day, "00:00");
 
 export const dayAfter = (day: ManilaDay): ManilaDay =>

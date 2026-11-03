@@ -15,7 +15,12 @@ import {
 } from "@/types/guest-booking-multi-unit";
 
 import { toGuestBookingData } from "../../lib/guest-booking-data";
-import { calculateBookingPrice } from "../../lib/pricing";
+import {
+  calculateBookingPrice,
+  fetchActiveSeasons,
+  loadPricingConfig,
+  toCentavo,
+} from "../../lib/pricing";
 
 /**
  * POST /api/guest-booking/multi-unit
@@ -163,23 +168,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
     }
 
     // 5. Fetch pricing configuration and validate capacity
-    const { data: config, error: configError } = await supabase
-      .from("pricing_config")
-      .select("*")
-      .eq("id", "default")
-      .single();
-
-    if (configError || !config) {
-      console.error("[PRICING_CONFIG] Error:", configError);
-      return Response.json(
-        {
-          success: false,
-          error: "Configuration not found. Please contact support.",
-          error_code: ERROR_CODES.INTERNAL_ERROR,
-        },
-        { status: 500 }
-      );
-    }
+    const config = await loadPricingConfig(supabase);
 
     // Validation 1: Guest capacity per unit (physical limit)
     const maxCapacity = config.max_capacity_per_unit;
@@ -249,31 +238,29 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
 
     try {
       // Calculate pricing for each unit separately
-      const unitPricingResults = await Promise.all(
-        data.unit_requests.map((unitRequest) =>
-          calculateBookingPrice(supabase, {
-            checkIn,
-            checkOut,
-            guestCount: unitRequest.guests_per_unit,
-          })
-        )
+      const seasons = await fetchActiveSeasons(supabase);
+      const unitPricingResults = data.unit_requests.map((unitRequest) =>
+        calculateBookingPrice({
+          checkIn,
+          checkOut,
+          guestCount: unitRequest.guests_per_unit,
+          config,
+          seasons,
+        })
       );
+
+      const sumOf = (amountOf: (unitPricing: (typeof unitPricingResults)[number]) => number) =>
+        toCentavo(unitPricingResults.reduce((sum, p) => sum + amountOf(p), 0));
 
       // Aggregate pricing across all units
       const aggregatedPricing = {
         nights: unitPricingResults[0]?.nights || 0,
-        base_total: unitPricingResults.reduce((sum, p) => sum + p.subtotal, 0),
-        weekend_surcharge: unitPricingResults.reduce((sum, p) => {
-          // Calculate weekend surcharge from nightly breakdown
-          const weekendTotal = p.nightlyBreakdown
-            .filter((n) => n.isWeekend)
-            .reduce((s, n) => s + (n.finalRate - n.baseRate), 0);
-          return sum + weekendTotal;
-        }, 0),
-        extra_person_fees: unitPricingResults.reduce((sum, p) => sum + p.extraPersonTotal, 0),
-        subtotal: unitPricingResults.reduce((sum, p) => sum + p.subtotal + p.extraPersonTotal, 0),
-        total: unitPricingResults.reduce((sum, p) => sum + p.total, 0),
-        downpayment_required: unitPricingResults.reduce((sum, p) => sum + p.downpayment, 0),
+        base_total: sumOf((p) => p.subtotal),
+        weekend_surcharge: sumOf((p) => p.weekendSurcharge),
+        extra_person_fees: sumOf((p) => p.extraPersonTotal),
+        subtotal: sumOf((p) => p.subtotal + p.extraPersonTotal),
+        total: sumOf((p) => p.total),
+        downpayment_required: sumOf((p) => p.downpayment),
         currency: unitPricingResults[0]?.currency || "PHP",
         // Discounts not implemented in pricing lib - will return null
         discount: null as { percent: number; amount: number; rule_name: string } | null,

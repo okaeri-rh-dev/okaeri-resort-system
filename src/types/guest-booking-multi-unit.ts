@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { isManilaDay, manilaDayOf } from "@/lib/bookings/stay";
+import { isManilaDay, isWithinMaxStay, manilaDayOf, MAX_STAY_ISSUE } from "@/lib/bookings/stay";
 
 // ============================================
 // Request Schemas (Zod Validation)
@@ -52,7 +52,8 @@ export const multiUnitBookingSchema = z
   .refine((data) => data.check_out > data.check_in, {
     message: "Check-out must be after check-in",
     path: ["check_out"],
-  });
+  })
+  .refine(isWithinMaxStay, MAX_STAY_ISSUE);
 
 // ============================================
 // Response Schemas

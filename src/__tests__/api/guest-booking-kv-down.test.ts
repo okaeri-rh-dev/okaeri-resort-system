@@ -19,8 +19,9 @@ describe("POST /api/guest-booking/multi-unit when KV is out of write quota", () 
   beforeEach(() => {
     vi.resetModules();
     vi.doMock("@supabase/supabase-js", () => ({ createClient: () => supabaseStub }));
-    vi.doMock("../../../functions/lib/pricing", () => ({
-      calculateBookingPrice: async () => ({
+    vi.doMock("../../../functions/lib/pricing", async (importOriginal) => ({
+      ...(await importOriginal<object>()),
+      calculateBookingPrice: () => ({
         nights: 2,
         subtotal: 6000,
         nightlyBreakdown: [],

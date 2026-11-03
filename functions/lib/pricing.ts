@@ -14,172 +14,24 @@ import type { Database } from "@/types/database.types";
 
 import { isWeekendNight } from "../../src/lib/pricing/weekend-night";
 
-interface PricingConfig {
-  id: string;
-  base_rate: number;
-  weekend_rate: number;
-  extra_person_rate: number;
-  base_occupancy: number;
-  max_capacity_per_unit: number;
-  downpayment_percent: number;
-  currency: string;
-  created_at: string | null;
-  updated_at: string | null;
-}
+type PricingConfig = Pick<
+  Database["public"]["Tables"]["pricing_config"]["Row"],
+  | "base_rate"
+  | "weekend_rate"
+  | "extra_person_rate"
+  | "base_occupancy"
+  | "downpayment_percent"
+  | "currency"
+>;
 
-interface SeasonalRate {
-  id: string;
-  name: string;
-  start_date: string;
-  end_date: string;
-  multiplier: number;
-  is_active: boolean;
-  created_at: string | null;
-  updated_at: string | null;
-}
+type SeasonalRate = Pick<
+  Database["public"]["Tables"]["seasonal_rates"]["Row"],
+  "name" | "start_date" | "end_date" | "multiplier" | "priority"
+>;
 
-/**
- * Calculate the total price for a booking with seasonal adjustments
- */
-export async function calculateBookingPrice(
-  supabase: SupabaseClient<Database>,
-  params: {
-    checkIn: Date;
-    checkOut: Date;
-    guestCount: number;
-    baseRate?: number;
-    weekendRate?: number;
-    extraPersonRate?: number;
-    baseOccupancy?: number;
-  }
-) {
-  const {
-    checkIn,
-    checkOut,
-    guestCount,
-    baseRate: overrideBaseRate,
-    weekendRate: overrideWeekendRate,
-    extraPersonRate: overrideExtraPersonRate,
-    baseOccupancy: overrideBaseOccupancy,
-  } = params;
+export const toCentavo = (amount: number) => Math.round(amount * 100) / 100;
 
-  // Fetch pricing config (use overrides if provided, for unit-specific rates)
-  const pricingConfig = await fetchPricingConfig(supabase);
-
-  const baseRate = overrideBaseRate ?? pricingConfig.base_rate;
-  const weekendRate = overrideWeekendRate ?? pricingConfig.weekend_rate;
-  const extraPersonRate = overrideExtraPersonRate ?? pricingConfig.extra_person_rate;
-  const baseOccupancy = overrideBaseOccupancy ?? pricingConfig.base_occupancy;
-
-  // Get all dates in the booking period
-  const nights = eachDayOfInterval({ start: checkIn, end: addDays(checkOut, -1) });
-
-  // Calculate nightly rates with seasonal adjustments
-  const nightlyBreakdown = await Promise.all(
-    nights.map(async (date) => {
-      const weekendNight = isWeekendNight(date);
-      const baseNightRate = weekendNight ? weekendRate : baseRate;
-
-      // Get seasonal multiplier for this date
-      const seasonalMultiplier = await getSeasonalMultiplier(supabase, date);
-
-      const finalRate = baseNightRate * seasonalMultiplier;
-
-      return {
-        date: format(date, "yyyy-MM-dd"),
-        isWeekend: weekendNight,
-        baseRate: baseNightRate,
-        seasonalMultiplier,
-        finalRate,
-        seasonName: await getSeasonName(supabase, date),
-      };
-    })
-  );
-
-  // Calculate subtotal
-  const subtotal = nightlyBreakdown.reduce((sum, night) => sum + night.finalRate, 0);
-
-  // Calculate extra person charges
-  const extraPersons = Math.max(0, guestCount - baseOccupancy);
-  const extraPersonTotal = extraPersons * extraPersonRate * nights.length;
-
-  // Calculate totals
-  const total = subtotal + extraPersonTotal;
-  const downpayment = total * (pricingConfig.downpayment_percent / 100);
-
-  return {
-    nights: nights.length,
-    nightlyBreakdown,
-    subtotal,
-    extraPersons,
-    extraPersonTotal,
-    total,
-    downpayment,
-    balance: total - downpayment,
-    currency: pricingConfig.currency,
-  };
-}
-
-/**
- * Get the seasonal multiplier for a specific date
- */
-async function getSeasonalMultiplier(
-  supabase: SupabaseClient<Database>,
-  date: Date
-): Promise<number> {
-  try {
-    const seasonalRate = await getSeasonalRateForDate(supabase, date);
-    return seasonalRate?.multiplier || 1.0;
-  } catch (error) {
-    console.error("Error fetching seasonal rate:", error);
-    return 1.0; // Default to no adjustment if error
-  }
-}
-
-/**
- * Get the season name for a specific date
- */
-async function getSeasonName(
-  supabase: SupabaseClient<Database>,
-  date: Date
-): Promise<string | null> {
-  try {
-    const seasonalRate = await getSeasonalRateForDate(supabase, date);
-    return seasonalRate?.name || null;
-  } catch (error) {
-    console.error("Error fetching season name:", error);
-    return null;
-  }
-}
-
-/**
- * Get seasonal rate for a specific date
- */
-async function getSeasonalRateForDate(
-  supabase: SupabaseClient<Database>,
-  date: Date
-): Promise<SeasonalRate | null> {
-  const dateStr = format(date, "yyyy-MM-dd");
-
-  const { data, error } = await supabase
-    .from("seasonal_rates")
-    .select("*")
-    .eq("is_active", true)
-    .lte("start_date", dateStr)
-    .gte("end_date", dateStr)
-    .single();
-
-  if (error || !data) {
-    return null;
-  }
-
-  return data as SeasonalRate;
-}
-
-/**
- * Fetch pricing configuration from database
- */
-async function fetchPricingConfig(supabase: SupabaseClient<Database>): Promise<PricingConfig> {
+export async function loadPricingConfig(supabase: SupabaseClient<Database>) {
   const { data, error } = await supabase
     .from("pricing_config")
     .select("*")
@@ -187,20 +39,109 @@ async function fetchPricingConfig(supabase: SupabaseClient<Database>): Promise<P
     .single();
 
   if (error || !data) {
-    // Return defaults if no config exists
-    return {
-      id: "default",
-      base_rate: 3000,
-      weekend_rate: 3500,
-      extra_person_rate: 500,
-      base_occupancy: 2,
-      max_capacity_per_unit: 10,
-      downpayment_percent: 50,
-      currency: "PHP",
-      created_at: null,
-      updated_at: null,
-    };
+    throw new Error(`Pricing config lookup failed: ${error?.message ?? "no row"}`);
   }
+  return data;
+}
 
-  return data as PricingConfig;
+/**
+ * Calculate the total price for a booking with seasonal adjustments
+ */
+export function calculateBookingPrice(params: {
+  checkIn: Date;
+  checkOut: Date;
+  guestCount: number;
+  config: PricingConfig;
+  seasons: SeasonalRate[];
+}) {
+  const { checkIn, checkOut, guestCount, config, seasons } = params;
+  const {
+    base_rate: baseRate,
+    weekend_rate: weekendRate,
+    extra_person_rate: extraPersonRate,
+    base_occupancy: baseOccupancy,
+  } = config;
+
+  const nights = eachDayOfInterval({ start: checkIn, end: addDays(checkOut, -1) });
+
+  const nightlyBreakdown = nights.map((date) => {
+    const weekendNight = isWeekendNight(date);
+    const baseNightRate = weekendNight ? weekendRate : baseRate;
+    const season = seasonForNight(seasons, date);
+    const seasonalMultiplier = season?.multiplier ?? 1;
+
+    return {
+      date: format(date, "yyyy-MM-dd"),
+      isWeekend: weekendNight,
+      baseRate: baseNightRate,
+      seasonalMultiplier,
+      finalRate: toCentavo(baseNightRate * seasonalMultiplier),
+      seasonName: season?.name ?? null,
+    };
+  });
+
+  // Calculate subtotal
+  const subtotal = toCentavo(nightlyBreakdown.reduce((sum, night) => sum + night.finalRate, 0));
+
+  const weekendSurcharge = toCentavo(
+    nightlyBreakdown
+      .filter((night) => night.isWeekend)
+      .reduce((sum, night) => sum + (night.baseRate - baseRate) * night.seasonalMultiplier, 0)
+  );
+
+  // Calculate extra person charges
+  const extraPersons = Math.max(0, guestCount - baseOccupancy);
+  const extraPersonTotal = toCentavo(extraPersons * extraPersonRate * nights.length);
+
+  // Calculate totals
+  const total = toCentavo(subtotal + extraPersonTotal);
+  const downpayment = toCentavo(total * (config.downpayment_percent / 100));
+
+  return {
+    nights: nights.length,
+    nightlyBreakdown,
+    subtotal,
+    weekendSurcharge,
+    extraPersons,
+    extraPersonTotal,
+    total,
+    downpayment,
+    balance: toCentavo(total - downpayment),
+    currency: config.currency,
+  };
+}
+
+const MISSING_TABLE_CODES = ["42P01", "PGRST205"];
+
+export async function fetchActiveSeasons(
+  supabase: SupabaseClient<Database>
+): Promise<SeasonalRate[]> {
+  const { data, error } = await supabase
+    .from("seasonal_rates")
+    .select("name, start_date, end_date, multiplier, priority")
+    .eq("is_active", true);
+
+  // shortcut: prod has no seasonal_rates table, so a missing table means no seasons; remove once deferred item 5 (guardrails plan) is decided
+  if (error && MISSING_TABLE_CODES.includes(error.code)) {
+    console.warn("[PRICING] seasonal_rates table missing, pricing without seasons");
+    return [];
+  }
+  if (error) throw new Error(`Seasonal rates lookup failed: ${error.message}`);
+  return data;
+}
+
+// Seasons recur every year: start_date and end_date are MM-DD, and a season may wrap past Dec 31
+function seasonForNight(seasons: SeasonalRate[], night: Date): SeasonalRate | null {
+  const monthDay = format(night, "MM-dd");
+  const covering = seasons.filter(({ start_date: start, end_date: end }) =>
+    start <= end ? monthDay >= start && monthDay <= end : monthDay >= start || monthDay <= end
+  );
+  covering.sort((a, b) => b.priority - a.priority);
+  const [top, runnerUp] = covering;
+  if (top && runnerUp && top.priority === runnerUp.priority) {
+    throw new Error(
+      `Seasons ${top.name} and ${runnerUp.name} overlap on ${monthDay} with equal priority`
+    );
+  }
+  return top ?? null;
 }

@@ -1,11 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
 import { createClient } from "@supabase/supabase-js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { toStayInstants } from "@/lib/bookings/stay";
 
 import { onRequest } from "../../../../functions/api/pricing/calculate";
-import { calculateBookingPrice } from "../../../../functions/lib/pricing";
+import { calculateBookingPrice, fetchActiveSeasons } from "../../../../functions/lib/pricing";
 import type { PricingCalculationResponse } from "../types/responses";
 
 // Mock environment
@@ -59,47 +58,23 @@ vi.mock("@supabase/supabase-js", () => ({
         };
       }
       if (table === "seasonal_rates") {
+        // One season covering the whole year doubles every night
+        const seasons = {
+          data: [
+            {
+              name: "Christmas & New Year",
+              start_date: "01-01",
+              end_date: "12-31",
+              multiplier: 2.0,
+              priority: 20,
+            },
+          ],
+          error: null,
+        };
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
-          lte: vi.fn().mockReturnThis(),
-          gte: vi.fn().mockReturnThis(),
-          order: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({
-            data: {
-              season_id: "christmas_new_year",
-              name: "Christmas & New Year",
-              start_date: "12-20",
-              end_date: "01-02",
-              multiplier: 2.0,
-              priority: 20,
-              is_active: true,
-            },
-            error: null,
-          }),
-          then: vi.fn().mockResolvedValue({
-            data: [
-              {
-                season_id: "christmas_new_year",
-                name: "Christmas & New Year",
-                start_date: "12-20",
-                end_date: "01-02",
-                multiplier: 2.0,
-                priority: 20,
-                is_active: true,
-              },
-              {
-                season_id: "peak_summer",
-                name: "Peak Summer Season",
-                start_date: "03-01",
-                end_date: "05-31",
-                multiplier: 1.5,
-                priority: 10,
-                is_active: true,
-              },
-            ],
-            error: null,
-          }),
+          then: (resolve: (value: unknown) => void) => resolve(seasons),
         };
       }
       return {
@@ -214,17 +189,13 @@ describe("Pricing Calculate API", () => {
   });
 
   it("should calculate pricing with custom parameters", async () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const dayAfter = new Date();
-    dayAfter.setDate(dayAfter.getDate() + 4);
-
     mockRequest = {
       method: "POST",
       headers: new Map(),
       json: vi.fn().mockResolvedValue({
-        check_in: tomorrow.toISOString().split("T")[0],
-        check_out: dayAfter.toISOString().split("T")[0],
+        // Thu, Fri and Sat nights
+        check_in: "2099-01-08",
+        check_out: "2099-01-11",
         guest_count: 2,
         custom_pricing: {
           base_rate: 2500,
@@ -241,7 +212,7 @@ describe("Pricing Calculate API", () => {
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
     expect(data.pricing).toBeDefined();
-    expect(data.pricing.total).toBe(20000); // No extra persons
+    expect(data.pricing.total).toBe(17000); // (₱2,500 + ₱3,000 × 2) doubled, no extra persons
     expect(data.notice).toContain("Seasonal rates applied");
   });
 
@@ -316,10 +287,19 @@ describe("Pricing Calculate API", () => {
 
     // The booking endpoint prices each cabin like this and stores the sum
     const stay = toStayInstants("2027-06-08", "2027-06-09");
-    const cabin = await calculateBookingPrice(createClient("", ""), {
+    const cabin = calculateBookingPrice({
       checkIn: new Date(stay.check_in),
       checkOut: new Date(stay.check_out),
       guestCount: 2,
+      config: {
+        base_rate: 3000,
+        weekend_rate: 3500,
+        extra_person_rate: 500,
+        base_occupancy: 2,
+        downpayment_percent: 50,
+        currency: "PHP",
+      },
+      seasons: await fetchActiveSeasons(createClient("", "")),
     });
 
     // The mock season doubles each night: 2 cabins × ₱3,000 × 2, not one 4-guest cabin (₱7,000)

@@ -8,8 +8,9 @@ describe("POST /api/pricing/calculate when the price lookup fails", () => {
     vi.doMock("@supabase/supabase-js", () => ({
       createClient: () => ({ from: () => queryChain({ data: null, error: null }) }),
     }));
-    vi.doMock("../../../../functions/lib/pricing", () => ({
-      calculateBookingPrice: async () => {
+    vi.doMock("../../../../functions/lib/pricing", async (importOriginal) => ({
+      ...(await importOriginal<object>()),
+      fetchActiveSeasons: async () => {
         throw new Error('permission denied for table "seasonal_rates"');
       },
     }));
