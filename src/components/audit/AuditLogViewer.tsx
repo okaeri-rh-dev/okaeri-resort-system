@@ -1,6 +1,6 @@
 // src/components/audit/AuditLogViewer.tsx
 
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 
 import {
   getCoreRowModel,
@@ -75,62 +75,70 @@ export function AuditLogViewer() {
     }
   };
 
-  // Open diff viewer dialog
-  const openDiffViewer = (log: AuditLog) => {
-    setSelectedLogForDiff(log);
-    setSelectedLog(log);
-    setDiffDialogOpen(true);
-  };
+  const openDiffViewer = useCallback(
+    (log: AuditLog) => {
+      setSelectedLogForDiff(log);
+      setSelectedLog(log);
+      setDiffDialogOpen(true);
+    },
+    [setSelectedLog]
+  );
 
-  const columns: ColumnDef<AuditLog>[] = [
-    {
-      id: "expand",
-      header: () => <span className="sr-only">Expand</span>,
-      cell: ({ row }) => (
-        <ExpandButton isExpanded={row.getIsExpanded()} onToggle={row.getToggleExpandedHandler()} />
-      ),
-      size: 48,
-    },
-    {
-      accessorKey: "created_at",
-      header: "Timestamp",
-      cell: ({ row }) => <LogTime log={row.original} />,
-    },
-    { id: "user", header: "User", cell: ({ row }) => <LogActor log={row.original} /> },
-    {
-      accessorKey: "table_name",
-      header: "Table",
-      cell: ({ row }) => <TableBadge log={row.original} />,
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => <ActionBadge log={row.original} />,
-    },
-    {
-      accessorKey: "source",
-      header: "Source",
-      cell: ({ row }) => <SourceBadge source={row.original.source} />,
-      meta: { priority: "low" },
-    },
-    {
-      accessorKey: "record_id",
-      header: "Record ID",
-      cell: ({ row }) => <RecordId log={row.original} className="max-w-32" />,
-      meta: { priority: "low" },
-    },
-    {
-      id: "changed_fields",
-      header: "Changed Fields",
-      cell: ({ row }) => <ChangedFields log={row.original} />,
-    },
-    {
-      id: "actions",
-      header: () => <span className="sr-only">Actions</span>,
-      cell: ({ row }) => <ViewDiffButton log={row.original} onViewDiff={openDiffViewer} />,
-      meta: { pinned: true },
-    },
-  ];
+  const columns = useMemo<ColumnDef<AuditLog>[]>(
+    () => [
+      {
+        id: "expand",
+        header: () => <span className="sr-only">Expand</span>,
+        cell: ({ row }) => (
+          <ExpandButton
+            isExpanded={row.getIsExpanded()}
+            onToggle={row.getToggleExpandedHandler()}
+          />
+        ),
+        size: 48,
+      },
+      {
+        accessorKey: "created_at",
+        header: "Timestamp",
+        cell: ({ row }) => <LogTime log={row.original} />,
+      },
+      { id: "user", header: "User", cell: ({ row }) => <LogActor log={row.original} /> },
+      {
+        accessorKey: "table_name",
+        header: "Table",
+        cell: ({ row }) => <TableBadge log={row.original} />,
+      },
+      {
+        accessorKey: "action",
+        header: "Action",
+        cell: ({ row }) => <ActionBadge log={row.original} />,
+      },
+      {
+        accessorKey: "source",
+        header: "Source",
+        cell: ({ row }) => <SourceBadge source={row.original.source} />,
+        meta: { priority: "low" },
+      },
+      {
+        accessorKey: "record_id",
+        header: "Record ID",
+        cell: ({ row }) => <RecordId log={row.original} className="max-w-32" />,
+        meta: { priority: "low" },
+      },
+      {
+        id: "changed_fields",
+        header: "Changed Fields",
+        cell: ({ row }) => <ChangedFields log={row.original} />,
+      },
+      {
+        id: "actions",
+        header: () => <span className="sr-only">Actions</span>,
+        cell: ({ row }) => <ViewDiffButton log={row.original} onViewDiff={openDiffViewer} />,
+        meta: { pinned: true },
+      },
+    ],
+    [openDiffViewer]
+  );
 
   const table = useReactTable({
     data: data?.data ?? NO_LOGS,
