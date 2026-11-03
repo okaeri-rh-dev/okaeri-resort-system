@@ -309,8 +309,7 @@ describe("Pricing Calculate API", () => {
   });
 
   it("prices a Fri–Sun stay as Manila nights, like the booking endpoint, west of UTC", async () => {
-    const originalTimeZone = process.env.TZ;
-    process.env.TZ = "America/Sao_Paulo";
+    vi.stubEnv("TZ", "America/Sao_Paulo");
     try {
       mockRequest = {
         method: "POST",
@@ -348,7 +347,7 @@ describe("Pricing Calculate API", () => {
       expect(data.pricing.total).toBe(14000);
       expect(data.pricing.total).toBe(booked.total);
     } finally {
-      process.env.TZ = originalTimeZone;
+      vi.unstubAllEnvs();
     }
   });
 
