@@ -52,6 +52,7 @@ export const E2E_REF = {
   CONF_PAID: "E2E-CONF-PAID",
   CANCELLED: "E2E-CANCELLED",
   QUEUE: "E2E-QUEUE",
+  QUEUE_PAID: "E2E-PAID-QUEUE",
   ASSIGN_PAID: "E2E-ASSIGN-PAID",
 } as const;
 
@@ -102,6 +103,16 @@ export const E2E_BOOKINGS: E2EBookingFixture[] = [
     num_guests: 4,
     awaiting_unit_assignment: true,
     payment_proof_url: "E2E-QUEUE_proof.png",
+  },
+  {
+    booking_reference: E2E_REF.QUEUE_PAID,
+    booking_status: "Pending",
+    payment_status: "Completed",
+    check_in: "2099-07-20",
+    check_out: "2099-07-21",
+    total_amount: 5000,
+    num_guests: 4,
+    awaiting_unit_assignment: true,
   },
   {
     booking_id: E2E_ASSIGN_PAID_BOOKING_ID,

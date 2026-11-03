@@ -112,6 +112,14 @@ export class AdminQueuePage {
   }
 
   /**
+   * Open the Assign Cabins page from a queued booking's row
+   */
+  async openAssignCabins(reference: string): Promise<void> {
+    const row = this.page.getByRole("row").filter({ hasText: reference });
+    await row.getByRole("link", { name: "Assign Cabins" }).click();
+  }
+
+  /**
    * Wait for page to fully load
    */
   async waitForPageLoad(): Promise<void> {
