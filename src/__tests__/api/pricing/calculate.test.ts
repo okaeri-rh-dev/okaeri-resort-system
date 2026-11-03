@@ -308,6 +308,66 @@ describe("Pricing Calculate API", () => {
     expect(data.pricing.downpayment).toBe(2 * cabin.downpayment);
   });
 
+  it("prices a Fri–Sun stay as Manila nights, like the booking endpoint, west of UTC", async () => {
+    const originalTimeZone = process.env.TZ;
+    process.env.TZ = "America/Sao_Paulo";
+    try {
+      mockRequest = {
+        method: "POST",
+        headers: new Map(),
+        json: vi.fn().mockResolvedValue({
+          // Fri 2027-06-04 to Sun 2027-06-06
+          check_in: "2027-06-04",
+          check_out: "2027-06-06",
+          guest_count: 2,
+        }),
+      };
+
+      const response = await onRequest({ request: mockRequest, env: mockEnv });
+      const data = (await response.json()) as PricingCalculationResponse;
+
+      const stay = toStayInstants("2027-06-04", "2027-06-06");
+      const booked = calculateBookingPrice({
+        checkIn: new Date(stay.check_in),
+        checkOut: new Date(stay.check_out),
+        guestCount: 2,
+        config: {
+          base_rate: 3000,
+          weekend_rate: 3500,
+          extra_person_rate: 500,
+          base_occupancy: 2,
+          downpayment_percent: 50,
+          currency: "PHP",
+        },
+        seasons: await fetchActiveSeasons(createClient("", "")),
+      });
+
+      expect(data.pricing.nights).toBe(2);
+      expect(data.pricing.nightlyBreakdown?.filter((night) => night.isWeekend)).toHaveLength(2);
+      // Two weekend nights at ₱3,500, doubled by the mock season
+      expect(data.pricing.total).toBe(14000);
+      expect(data.pricing.total).toBe(booked.total);
+    } finally {
+      process.env.TZ = originalTimeZone;
+    }
+  });
+
+  it("rejects a stay date that is not a YYYY-MM-DD day", async () => {
+    mockRequest = {
+      method: "POST",
+      headers: new Map(),
+      json: vi.fn().mockResolvedValue({
+        check_in: "2027-06-04T00:00:00Z",
+        check_out: "2027-06-06",
+        guest_count: 2,
+      }),
+    };
+
+    const response = await onRequest({ request: mockRequest, env: mockEnv });
+
+    expect(response.status).toBe(400);
+  });
+
   it("should validate date ranges", async () => {
     mockRequest = {
       method: "POST",

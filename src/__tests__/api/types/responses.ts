@@ -57,6 +57,8 @@ export interface PricingCalculationResponse {
     units?: unknown[];
     total: number;
     downpayment: number;
+    nights?: number;
+    nightlyBreakdown?: { date: string; isWeekend: boolean }[];
   };
   notice?: string | null;
   cached?: boolean;
