@@ -63,6 +63,8 @@ const stubBooking = (
     internal_notes: null,
     is_multi_unit: false,
     is_walk_in: false,
+    is_guest_booking: status === "Pending",
+    unit_assignment_status: status === "Pending" ? "pending" : "assigned",
     unit_count: 1,
     created_at: "2026-10-20T08:00:00Z",
     updated_at: "2026-10-20T08:00:00Z",

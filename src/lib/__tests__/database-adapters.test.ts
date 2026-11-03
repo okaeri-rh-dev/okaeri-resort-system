@@ -17,4 +17,15 @@ describe("adaptBookingFromDB", () => {
   it.each([true, false])("keeps is_walk_in = %s", (isWalkIn) => {
     expect(adaptBookingFromDB({ ...walkInRow, is_walk_in: isWalkIn }).is_walk_in).toBe(isWalkIn);
   });
+
+  it("keeps the fields the verification queue reads", () => {
+    const booking = adaptBookingFromDB({
+      ...walkInRow,
+      is_guest_booking: true,
+      unit_assignment_status: "pending",
+    });
+
+    expect(booking.is_guest_booking).toBe(true);
+    expect(booking.unit_assignment_status).toBe("pending");
+  });
 });
