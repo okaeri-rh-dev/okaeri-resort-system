@@ -2,7 +2,7 @@ import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
-import { isWithinMaxStay, MAX_STAY_ISSUE } from "@/lib/bookings/stay";
+import { manilaDaySchema, toStayInstants, withStayRules } from "@/lib/bookings/stay";
 import { checkKVRateLimit, getClientIp } from "@/lib/kv-rate-limit";
 import type { Database } from "@/types/database.types";
 
@@ -22,12 +22,10 @@ interface Env {
 }
 
 // Request validation schema
-const pricingCalculateRequestSchema = z
-  .object({
-    check_in: z.string().refine((date) => !isNaN(Date.parse(date)), "Invalid check-in date format"),
-    check_out: z
-      .string()
-      .refine((date) => !isNaN(Date.parse(date)), "Invalid check-out date format"),
+const pricingCalculateRequestSchema = withStayRules(
+  z.object({
+    check_in: manilaDaySchema,
+    check_out: manilaDaySchema,
     guest_count: z.number().int().min(1).max(50).optional(), // Optional - can be calculated from unit_requests
     unit_id: z.guid().optional(),
     // For custom pricing (e.g., when unit doesn't exist yet)
@@ -49,10 +47,7 @@ const pricingCalculateRequestSchema = z
       )
       .optional(),
   })
-  .refine((data) => new Date(data.check_out) > new Date(data.check_in), {
-    message: "Check-out date must be after check-in date",
-  })
-  .refine(isWithinMaxStay, MAX_STAY_ISSUE)
+)
   .refine(
     (data) => {
       // Must have either: unit_id, custom_pricing, unit_requests, or guest_count for base pricing
@@ -101,6 +96,9 @@ export async function onRequest(context: {
     const data = validationResult.data;
     // The schema requires guest_count whenever unit_requests is absent, so the 0 is unreachable
     const guestCount = data.guest_count ?? 0;
+    const stay = toStayInstants(data.check_in, data.check_out);
+    const checkIn = new Date(stay.check_in);
+    const checkOut = new Date(stay.check_out);
 
     // Extract auth token (optional for public guest booking)
     const authHeader = request.headers?.get("Authorization");
@@ -162,8 +160,8 @@ export async function onRequest(context: {
         }
 
         const pricing = calculateBookingPrice({
-          checkIn: new Date(data.check_in),
-          checkOut: new Date(data.check_out),
+          checkIn,
+          checkOut,
           guestCount: unitRequest.guest_count,
           config,
           seasons,
@@ -226,8 +224,8 @@ export async function onRequest(context: {
       }
 
       pricingResult = calculateBookingPrice({
-        checkIn: new Date(data.check_in),
-        checkOut: new Date(data.check_out),
+        checkIn,
+        checkOut,
         guestCount,
         config,
         seasons,
@@ -251,8 +249,8 @@ export async function onRequest(context: {
     } else if (data.custom_pricing) {
       // Custom pricing (no unit specified)
       pricingResult = calculateBookingPrice({
-        checkIn: new Date(data.check_in),
-        checkOut: new Date(data.check_out),
+        checkIn,
+        checkOut,
         guestCount,
         config: { ...config, ...data.custom_pricing },
         seasons,
@@ -268,8 +266,8 @@ export async function onRequest(context: {
     } else if (data.guest_count) {
       // Guest booking with only guest count (no specific units)
       pricingResult = calculateBookingPrice({
-        checkIn: new Date(data.check_in),
-        checkOut: new Date(data.check_out),
+        checkIn,
+        checkOut,
         guestCount,
         config,
         seasons,

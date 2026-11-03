@@ -1,5 +1,6 @@
 import { addDays, differenceInCalendarDays, format, parseISO, subDays } from "date-fns";
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
+import { z } from "zod";
 
 import { RESORT_OPERATION_HOURS, RESORT_TIMEZONE } from "@/config/settings";
 
@@ -40,13 +41,24 @@ export const nightsBetween = (checkInDay: ManilaDay, checkOutDay: ManilaDay) =>
 
 export const MAX_STAY_NIGHTS = 60;
 
-export const isWithinMaxStay = (stay: { check_in: string; check_out: string }) =>
+type StayDays = { check_in: ManilaDay; check_out: ManilaDay };
+
+const isWithinMaxStay = (stay: StayDays) =>
   nightsBetween(stay.check_in, stay.check_out) <= MAX_STAY_NIGHTS;
 
-export const MAX_STAY_ISSUE = {
-  message: `Stays are limited to ${MAX_STAY_NIGHTS} nights`,
-  path: ["check_out"],
-};
+export const manilaDaySchema = z.string().refine(isManilaDay, "Expected a YYYY-MM-DD day");
+
+/** The stay rules every request with stay days shares. */
+export const withStayRules = <T extends z.ZodType<StayDays>>(schema: T) =>
+  schema
+    .refine((stay) => stay.check_out > stay.check_in, {
+      message: "Check-out must be after check-in",
+      path: ["check_out"],
+    })
+    .refine(isWithinMaxStay, {
+      message: `Stays are limited to ${MAX_STAY_NIGHTS} nights`,
+      path: ["check_out"],
+    });
 
 export const manilaDayStart = (day: ManilaDay) => atManilaTime(day, "00:00");
 
