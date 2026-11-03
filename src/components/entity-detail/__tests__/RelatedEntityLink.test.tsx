@@ -5,17 +5,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import { RelatedEntityLink } from "../RelatedEntityLink";
 
-// Mock TanStack Router Link
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({ to, params, children, className }: any) => (
-    <a
-      href={`${to}?${new URLSearchParams(params).toString()}`}
-      className={className}
-      data-testid="router-link"
-    >
-      {children}
-    </a>
-  ),
+vi.mock("@tanstack/react-router", async () => ({
+  Link: (await import("@/test/router-link-stub")).RouterLinkStub,
 }));
 
 describe("RelatedEntityLink", () => {
@@ -159,35 +150,35 @@ describe("RelatedEntityLink", () => {
       render(<RelatedEntityLink type="booking" id="booking-123" label="Booking" />);
 
       const link = screen.getByTestId("router-link");
-      expect(link).toHaveAttribute("href", expect.stringContaining("bookingId=booking-123"));
+      expect(link).toHaveAttribute("href", "/admin/bookings/booking-123");
     });
 
     it("generates correct route for unit", () => {
       render(<RelatedEntityLink type="unit" id="unit-456" label="Unit" />);
 
       const link = screen.getByTestId("router-link");
-      expect(link).toHaveAttribute("href", expect.stringContaining("unitId=unit-456"));
+      expect(link).toHaveAttribute("href", "/admin/units/unit-456");
     });
 
     it("generates correct route for guest", () => {
       render(<RelatedEntityLink type="guest" id="guest-789" label="Guest" />);
 
       const link = screen.getByTestId("router-link");
-      expect(link).toHaveAttribute("href", expect.stringContaining("guestId=guest-789"));
+      expect(link).toHaveAttribute("href", "/admin/guests/guest-789");
     });
 
     it("generates correct route for payment", () => {
       render(<RelatedEntityLink type="payment" id="payment-101" label="Payment" />);
 
       const link = screen.getByTestId("router-link");
-      expect(link).toHaveAttribute("href", expect.stringContaining("paymentId=payment-101"));
+      expect(link).toHaveAttribute("href", "/admin/payments/payment-101");
     });
 
     it("generates correct route for expense", () => {
       render(<RelatedEntityLink type="expense" id="expense-202" label="Expense" />);
 
       const link = screen.getByTestId("router-link");
-      expect(link).toHaveAttribute("href", expect.stringContaining("expenseId=expense-202"));
+      expect(link).toHaveAttribute("href", "/admin/expenses/expense-202");
     });
   });
 

@@ -1,27 +1,11 @@
-import type { ReactNode } from "react";
-
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
 
 import { Button, DetailPageLayout, DetailSection, StatusBadge } from "@/components/patterns";
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    to,
-    params,
-    children,
-    className,
-  }: {
-    to: string;
-    params?: Record<string, string>;
-    children: ReactNode;
-    className?: string;
-  }) => (
-    <a href={`${to}?${new URLSearchParams(params ?? {}).toString()}`} className={className}>
-      {children}
-    </a>
-  ),
+vi.mock("@tanstack/react-router", async () => ({
+  Link: (await import("@/test/router-link-stub")).RouterLinkStub,
 }));
 
 describe("DetailPageLayout", () => {
@@ -75,7 +59,7 @@ describe("DetailPageLayout", () => {
     expect(within(actions).getByRole("button", { name: "Record payment" })).toBeVisible();
     expect(within(actions).getByRole("link", { name: "Edit" })).toHaveAttribute(
       "href",
-      expect.stringContaining("bookingId=b1")
+      "/admin/bookings/b1/edit"
     );
   });
 

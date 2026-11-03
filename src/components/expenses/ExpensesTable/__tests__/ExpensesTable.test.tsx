@@ -42,8 +42,8 @@ vi.mock("@/lib/supabase", () => {
   };
 });
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children }: { children: React.ReactNode }) => <a href="#expense">{children}</a>,
+vi.mock("@tanstack/react-router", async () => ({
+  Link: (await import("@/test/router-link-stub")).RouterLinkStub,
 }));
 
 vi.mock("@/hooks/useExpenseCategories", () => ({
