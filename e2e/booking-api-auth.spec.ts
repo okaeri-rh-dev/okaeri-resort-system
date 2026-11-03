@@ -14,6 +14,7 @@
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
+import { isLocalSupabaseUrl } from "./fixtures/local-supabase-url";
 import { serviceClient } from "./fixtures/service-client";
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || "http://127.0.0.1:54321";
@@ -49,9 +50,8 @@ test.describe("POST /api/bookings/multi-unit auth (Pages runtime)", () => {
   let createdBookingId: string | null = null;
 
   test.beforeAll(async () => {
-    const { hostname } = new URL(SUPABASE_URL);
     test.skip(
-      !["127.0.0.1", "localhost", "::1"].includes(hostname),
+      !isLocalSupabaseUrl(SUPABASE_URL),
       "Creates users and bookings: local Supabase only."
     );
 

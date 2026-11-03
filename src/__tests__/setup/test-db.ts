@@ -13,6 +13,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database.types";
+import { isLocalSupabaseUrl } from "../../../e2e/fixtures/local-supabase-url";
 
 // ✅ Use dedicated test database or local Supabase instance
 const TEST_SUPABASE_URL =
@@ -306,11 +307,7 @@ export async function createTestMultiUnitBooking(unitCount: number = 2) {
 
 // Export a helper to check if tests should run
 export async function shouldRunDatabaseTests(): Promise<boolean> {
-  // Check if URL is localhost (handles both localhost and 127.0.0.1)
-  const isLocalhost =
-    !TEST_SUPABASE_URL ||
-    TEST_SUPABASE_URL.includes("localhost:54321") ||
-    TEST_SUPABASE_URL.includes("127.0.0.1:54321");
+  const isLocalhost = !TEST_SUPABASE_URL || isLocalSupabaseUrl(TEST_SUPABASE_URL);
 
   if (isLocalhost && !TEST_SERVICE_KEY) {
     return false;
