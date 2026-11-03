@@ -75,7 +75,6 @@ export function AuditLogViewer() {
     }
   };
 
-  // Open diff viewer dialog
   const openDiffViewer = useCallback(
     (log: AuditLog) => {
       setSelectedLogForDiff(log);
