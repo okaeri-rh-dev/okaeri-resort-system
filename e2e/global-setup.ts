@@ -8,7 +8,7 @@
  *
  * Safety:
  * - Seeding only runs when the resolved Supabase URL is local
- *   (127.0.0.1 / localhost / ::1). Remote targets are never seeded.
+ *   (127.0.0.1 / localhost / [::1]). Remote targets are never seeded.
  * - `scripts/seed-test-users.mjs` is idempotent (existing users are left intact).
  * - Failure to seed is a WARNING, not a hard stop: specs that need no auth
  *   users (and CI, which has no .env.test and skips credentialed tests)
