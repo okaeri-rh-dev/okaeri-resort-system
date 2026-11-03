@@ -1,28 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { stubPaneWidth } from "@/test/pane-width";
 
 import { PendingBookingsQueue } from "../PendingBookingsQueue";
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    to,
-    params,
-    children,
-    className,
-  }: {
-    to: string;
-    params: Record<string, string>;
-    children: ReactNode;
-    className?: string;
-  }) => (
-    <a href={to.replace(/\$(\w+)/g, (_, key: string) => params[key])} className={className}>
-      {children}
-    </a>
-  ),
+vi.mock("@tanstack/react-router", async () => ({
+  Link: (await import("@/test/router-link-stub")).RouterLinkStub,
 }));
 
 vi.mock("@/lib/supabase", () => ({
@@ -85,7 +70,9 @@ describe("PendingBookingsQueue", () => {
   it("links a paid booking to cabin assignment", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => Response.json({ bookings: [{ ...queuedBooking, payment_status: "Completed" }] }))
+      vi.fn(async () =>
+        Response.json({ bookings: [{ ...queuedBooking, payment_status: "Completed" }] })
+      )
     );
     stubPaneWidth(390);
     renderQueue();

@@ -11,8 +11,8 @@ import { stubPaneWidth } from "@/test/pane-width";
 
 import { BookingsTable } from "..";
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: () => null,
+vi.mock("@tanstack/react-router", async () => ({
+  Link: (await import("@/test/router-link-stub")).RouterLinkStub,
   useNavigate: () => vi.fn(),
 }));
 
