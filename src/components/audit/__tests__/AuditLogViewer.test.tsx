@@ -73,4 +73,15 @@ describe("AuditLogViewer", () => {
     await userEvent.click(within(row).getByRole("button", { name: "Show details" }));
     expect(within(table).getByText("Booking confirmed")).toBeVisible();
   });
+
+  it("keeps its table cells mounted when a row expands", async () => {
+    stubPaneWidth(1280);
+    render(<AuditLogViewer />);
+
+    const row = screen.getByRole("row", { name: /Updated/ });
+    const viewButton = within(row).getByRole("button", { name: "View" });
+    await userEvent.click(within(row).getByRole("button", { name: "Show details" }));
+
+    expect(within(row).getByRole("button", { name: "View" })).toBe(viewButton);
+  });
 });
