@@ -80,6 +80,17 @@ describe("POST /api/guest-booking/multi-unit pricing", () => {
     expect(bookingData.pricing_snapshot.weekend_surcharge).toBe(1499.76);
   });
 
+  it("accepts a stay of exactly 60 nights", async () => {
+    const { onRequestPost } = await import("../../../functions/api/guest-booking/multi-unit");
+
+    const response = await onRequestPost({
+      request: bookingRequest("2099-01-01", "2099-03-02"),
+      env: mockEnv,
+    });
+
+    expect(response.status).toBe(201);
+  });
+
   it("rejects a stay over 60 nights", async () => {
     const { onRequestPost } = await import("../../../functions/api/guest-booking/multi-unit");
 
