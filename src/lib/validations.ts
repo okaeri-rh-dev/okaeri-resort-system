@@ -155,6 +155,14 @@ export const bookingStep3Schema = z.object({
   payment_method: z.enum(["GCash", "BankTransfer", "Cash", "Card"] as const),
 });
 
+/** An Airbnb booking's total is the payout staff type in (ADR 0006). */
+export const payoutSchema = z.number().positive("The payout must be more than zero").optional();
+
+export const hasPayoutIfAirbnb = (data: { booking_source: string; payout?: number }) =>
+  data.booking_source !== "Airbnb" || data.payout !== undefined;
+
+export const payoutRequired = { message: "Enter the Airbnb payout", path: ["payout"] };
+
 // Complete booking form schema (all steps combined)
 export const completeBookingSchema = bookingStep1BaseSchema
   .merge(
@@ -165,12 +173,18 @@ export const completeBookingSchema = bookingStep1BaseSchema
         .string()
         .refine((val) => val === "" || philippinePhoneRegex.test(val), messages.phone),
       booking_source: z.enum(STAFF_BOOKING_SOURCES),
+      payout: payoutSchema,
     })
   )
-  .merge(bookingStep3Schema)
+  .merge(bookingStep3Schema.partial({ payment_method: true }))
   .refine((data) => data.check_out > data.check_in, {
     message: messages.endAfterStart,
     path: ["check_out"],
+  })
+  .refine(hasPayoutIfAirbnb, payoutRequired)
+  .refine((data) => data.booking_source === "Airbnb" || data.payment_method, {
+    message: "Select a payment method",
+    path: ["payment_method"],
   });
 
 // ============================================

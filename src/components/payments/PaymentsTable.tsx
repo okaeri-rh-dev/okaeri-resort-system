@@ -427,6 +427,7 @@ const PaymentsTableComponent: React.FC<PaymentsTableProps> = ({
                       <SelectItem value="GCash">GCash</SelectItem>
                       <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
                       <SelectItem value="Card">Card</SelectItem>
+                      <SelectItem value="Airbnb payout">Airbnb payout</SelectItem>
                       <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>

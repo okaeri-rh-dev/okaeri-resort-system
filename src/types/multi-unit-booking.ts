@@ -143,6 +143,8 @@ export interface AdminMultiUnitBookingCreate {
   special_requests?: string;
   internal_notes?: string;
   booking_source?: StaffBookingSource;
+  /** Required for an Airbnb booking: its total (ADR 0006). */
+  payout?: number;
   source?: string;
   idempotency_key?: string;
 }
