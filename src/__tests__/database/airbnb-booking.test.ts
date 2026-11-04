@@ -7,8 +7,9 @@
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { createBooking, manilaDayOf, type StaffBookingSource } from "@/lib/bookings";
+import { createBooking, manilaDayOf, updateBooking, type StaffBookingSource } from "@/lib/bookings";
 
+import { createRoleClients, type RoleClients } from "../setup/role-clients";
 import {
   cleanupTestData,
   createTestUnit,
@@ -17,6 +18,7 @@ import {
 } from "../setup/test-db";
 
 let shouldRun = false;
+let roleClients: RoleClients;
 let dayOffset = 500;
 
 async function newBooking(booking_source: StaffBookingSource, subtotals: number[]) {
@@ -54,11 +56,15 @@ async function paymentsOf(bookingId: string) {
 describe("Airbnb booking", () => {
   beforeAll(async () => {
     shouldRun = await shouldRunDatabaseTests();
-    if (shouldRun) await cleanupTestData({ includeTestFixtures: true });
+    if (!shouldRun) return;
+    await cleanupTestData({ includeTestFixtures: true });
+    roleClients = await createRoleClients("airbnb");
   }, 60000);
 
   afterAll(async () => {
-    if (shouldRun) await cleanupTestData({ includeTestFixtures: true });
+    if (!shouldRun) return;
+    await roleClients.cleanup();
+    await cleanupTestData({ includeTestFixtures: true });
   });
 
   it("starts Confirmed and fully paid by one Airbnb payout dated the entry day", async () => {
@@ -87,5 +93,82 @@ describe("Airbnb booking", () => {
 
     expect(booking).toMatchObject({ booking_status: "Pending", payment_status: "Pending" });
     expect(await paymentsOf(booking.booking_id)).toEqual([]);
+  });
+
+  it("its payout payment follows a manager's new total", async () => {
+    if (!shouldRun) return;
+    const booking = await newBooking("Airbnb", [4000]);
+
+    const updated = await updateBooking(roleClients.byRole.manager, booking.booking_id, {
+      total_amount: 1500.5,
+    });
+
+    expect(updated.payment_status).toBe("Completed");
+    expect(await paymentsOf(booking.booking_id)).toEqual([
+      expect.objectContaining({
+        amount: 1500.5,
+        payment_method: "Airbnb payout",
+        status: "Active",
+      }),
+    ]);
+  });
+
+  it("a total of zero soft-deletes its payout payment, and a new total restores it", async () => {
+    if (!shouldRun) return;
+    const booking = await newBooking("Airbnb", [4000]);
+    const manager = roleClients.byRole.manager;
+
+    const cancelled = await updateBooking(manager, booking.booking_id, { total_amount: 0 });
+    expect(cancelled.payment_status).toBe("Pending");
+    expect(await paymentsOf(booking.booking_id)).toEqual([
+      expect.objectContaining({ amount: 4000, status: "Deleted" }),
+    ]);
+
+    const restored = await updateBooking(manager, booking.booking_id, { total_amount: 2000 });
+    expect(restored.payment_status).toBe("Completed");
+    expect(await paymentsOf(booking.booking_id)).toEqual([
+      expect.objectContaining({ amount: 2000, status: "Active" }),
+    ]);
+  });
+
+  it("a new total follows the active payout, not one staff deleted", async () => {
+    if (!shouldRun) return;
+    const booking = await newBooking("Airbnb", [4000]);
+    const deleted = await service
+      .from("payments")
+      .update({ status: "Deleted" })
+      .eq("booking_id", booking.booking_id);
+    if (deleted.error) throw deleted.error;
+    const manual = await service
+      .from("payments")
+      .insert({ booking_id: booking.booking_id, amount: 4000, payment_method: "Airbnb payout" });
+    if (manual.error) throw manual.error;
+
+    const updated = await updateBooking(roleClients.byRole.manager, booking.booking_id, {
+      total_amount: 3000,
+    });
+
+    expect(updated.payment_status).toBe("Completed");
+    expect(await paymentsOf(booking.booking_id)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ amount: 4000, status: "Deleted" }),
+        expect.objectContaining({ amount: 3000, status: "Active" }),
+      ])
+    );
+  });
+
+  it("a new total leaves a Direct booking's payments alone", async () => {
+    if (!shouldRun) return;
+    const booking = await newBooking("Direct", [2500]);
+    const { error } = await service
+      .from("payments")
+      .insert({ booking_id: booking.booking_id, amount: 1000, payment_method: "Cash" });
+    if (error) throw error;
+
+    await updateBooking(roleClients.byRole.manager, booking.booking_id, { total_amount: 3000 });
+
+    expect(await paymentsOf(booking.booking_id)).toEqual([
+      expect.objectContaining({ amount: 1000, payment_method: "Cash", status: "Active" }),
+    ]);
   });
 });
