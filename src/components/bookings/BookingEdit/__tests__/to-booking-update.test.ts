@@ -17,6 +17,7 @@ const editInput: BookingEditInput = {
   payment_method: "GCash",
   special_requests: "Late arrival",
   booking_source: "Direct",
+  total_amount: 5000,
 };
 
 describe("toBookingUpdate", () => {
@@ -25,13 +26,13 @@ describe("toBookingUpdate", () => {
   });
 
   it("sends the picked days as the stay", () => {
-    const update = toBookingUpdate(editInput);
+    const update = toBookingUpdate(editInput, 5000);
 
     expect(update.stay).toEqual({ check_in: "2026-10-15", check_out: "2026-10-17" });
   });
 
   it("sends only bookings columns", () => {
-    const update = toBookingUpdate(editInput);
+    const update = toBookingUpdate(editInput, 5000);
 
     expect(Object.keys(update).sort()).toEqual(
       [
@@ -45,5 +46,9 @@ describe("toBookingUpdate", () => {
         "stay",
       ].sort()
     );
+  });
+
+  it("sends the total only when it changed", () => {
+    expect(toBookingUpdate({ ...editInput, total_amount: 4200.5 }, 5000).total_amount).toBe(4200.5);
   });
 });

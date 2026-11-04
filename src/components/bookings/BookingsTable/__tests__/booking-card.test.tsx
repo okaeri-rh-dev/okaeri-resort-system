@@ -28,13 +28,29 @@ vi.mock("@tanstack/react-router", () => ({
 
 interface RoleFlags {
   canEdit: boolean;
+  canEditBookings: boolean;
   canDelete: boolean;
   canConfirmBookings: boolean;
 }
 
-const ownerRole: RoleFlags = { canEdit: true, canDelete: true, canConfirmBookings: true };
-const managerRole: RoleFlags = { canEdit: true, canDelete: false, canConfirmBookings: true };
-const staffRole: RoleFlags = { canEdit: false, canDelete: false, canConfirmBookings: false };
+const ownerRole: RoleFlags = {
+  canEdit: true,
+  canEditBookings: true,
+  canDelete: true,
+  canConfirmBookings: true,
+};
+const managerRole: RoleFlags = {
+  canEdit: true,
+  canEditBookings: true,
+  canDelete: false,
+  canConfirmBookings: true,
+};
+const staffRole: RoleFlags = {
+  canEdit: false,
+  canEditBookings: true,
+  canDelete: false,
+  canConfirmBookings: false,
+};
 
 let currentRole: RoleFlags = ownerRole;
 
@@ -150,7 +166,7 @@ describe("BookingCard primary action", () => {
   it("hides Confirm primary when user lacks canConfirmBookings on a Pending booking", () => {
     renderCard({
       booking: { booking_status: "Pending", payment_status: "Pending" },
-      role: { canEdit: true, canDelete: false, canConfirmBookings: false },
+      role: { ...managerRole, canConfirmBookings: false },
     });
     // No Confirm primary, falls through to Upload Payment because payment incomplete
     expect(screen.queryByRole("button", { name: /^confirm$/i })).not.toBeInTheDocument();
@@ -199,7 +215,7 @@ describe("BookingCard ⋯ menu role gating", () => {
     const user = userEvent.setup();
     renderCard({
       booking: { booking_status: "Pending" },
-      role: { canEdit: true, canDelete: false, canConfirmBookings: false },
+      role: { ...managerRole, canConfirmBookings: false },
     });
     const moreButtons = screen.getAllByRole("button");
     const trigger = moreButtons.find((b) => b.querySelector("svg.lucide-ellipsis"));
@@ -210,16 +226,18 @@ describe("BookingCard ⋯ menu role gating", () => {
     expect(screen.queryByText(/^Confirm$/)).not.toBeInTheDocument();
   });
 
-  it("renders no ⋯ menu when user has no actions (staff with completed payment)", () => {
+  it("offers staff Edit but not Cancel", async () => {
+    const user = userEvent.setup();
     renderCard({
       booking: { booking_status: "Confirmed", payment_status: "Completed" },
       role: staffRole,
     });
-    // Staff has no actions: canEdit=false, canDelete=false, canConfirmBookings=false,
-    // payment is Completed so Upload Payment is also unavailable
-    const moreButtons = screen.queryAllByRole("button");
-    const trigger = moreButtons.find((b) => b.querySelector("svg.lucide-ellipsis"));
-    expect(trigger).toBeUndefined();
+    const trigger = screen
+      .getAllByRole("button")
+      .find((b) => b.querySelector("svg.lucide-ellipsis"));
+    await user.click(trigger!);
+    expect(await screen.findByText("Edit Booking")).toBeInTheDocument();
+    expect(screen.queryByText("Cancel")).not.toBeInTheDocument();
   });
 });
 

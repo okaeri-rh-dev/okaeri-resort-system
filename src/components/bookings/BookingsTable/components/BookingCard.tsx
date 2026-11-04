@@ -80,7 +80,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   updateBookingStatus,
 }) => {
   const navigate = useNavigate();
-  const { canEdit, canConfirmBookings } = useUserRole();
+  const { canEdit, canEditBookings, canConfirmBookings } = useUserRole();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   const units = booking.booking_units || [];
@@ -121,7 +121,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   const showActionZone = showConfirmPrimary || showPaymentPrimary;
 
   const menuActions = [
-    ...(canEdit ? [{ label: "Edit Booking", onClick: handleEdit }] : []),
+    ...(canEditBookings ? [{ label: "Edit Booking", onClick: handleEdit }] : []),
     ...(paymentIncomplete && !isCancelled
       ? [{ label: "Upload Payment", onClick: onUploadPayment }]
       : []),

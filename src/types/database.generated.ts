@@ -1495,6 +1495,7 @@ export type Database = {
         Args: { end_date: string; start_date: string };
         Returns: number;
       };
+      set_booking_total: { Args: { p_booking_id: string; p_total: number }; Returns: undefined };
     };
     Enums: {
       [_ in never]: never;

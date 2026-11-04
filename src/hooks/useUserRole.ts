@@ -67,6 +67,9 @@ export function useUserRole() {
   // role is undefined while loading or after a failed lookup
   const canEdit = !isStaff && role != null;
 
+  // Any role edits booking details; the total stays manager+ (set_booking_total)
+  const canEditBookings = role != null;
+
   // Can delete records (owner+)
   const canDelete = isOwner || isAdmin;
 
@@ -92,6 +95,7 @@ export function useUserRole() {
 
     // Action permission flags
     canEdit,
+    canEditBookings,
     canDelete,
     canSoftDelete,
     canConfirmBookings,

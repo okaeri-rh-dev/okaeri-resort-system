@@ -18,6 +18,8 @@ export type BookingChanges = Partial<{
   payment_method: string | null;
   special_requests: string | null;
   booking_source: BookingSource;
+  /** Manager and above only; split across the cabins by the database. */
+  total_amount: number;
 }> & { stay?: { check_in: ManilaDay; check_out: ManilaDay } };
 
 type Result<T> = { data: T | null; error: { message: string; code?: string } | null };
@@ -39,15 +41,25 @@ export async function updateBooking(
   bookingId: string,
   changes: BookingChanges
 ): Promise<BookingRow> {
-  const { stay, ...columns } = changes;
+  const { stay, total_amount, ...columns } = changes;
   const update: TablesUpdate<"bookings"> = { ...columns };
 
   if (stay) Object.assign(update, toStayInstants(stay.check_in, stay.check_out));
   if (changes.email) update.guest_id = await guestIdForEmail(client, changes.email, changes);
 
-  return rowFrom(
-    await client.from("bookings").update(update).eq("booking_id", bookingId).select().single()
-  );
+  if (Object.keys(update).length > 0 || total_amount === undefined) {
+    const row = rowFrom(
+      await client.from("bookings").update(update).eq("booking_id", bookingId).select().single()
+    );
+    if (total_amount === undefined) return row;
+  }
+
+  const { error } = await client.rpc("set_booking_total", {
+    p_booking_id: bookingId,
+    p_total: total_amount,
+  });
+  if (error) throw new Error(error.message);
+  return rowFrom(await client.from("bookings").select().eq("booking_id", bookingId).single());
 }
 
 async function guestIdForEmail(

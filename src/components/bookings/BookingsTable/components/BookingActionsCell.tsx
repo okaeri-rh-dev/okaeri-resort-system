@@ -37,7 +37,7 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
   handleUploadPayment,
 }) => {
   const navigate = useNavigate();
-  const { canEdit, canConfirmBookings } = useUserRole();
+  const { canEdit, canEditBookings, canConfirmBookings } = useUserRole();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   const confirmCancel = useCallback(() => {
@@ -47,8 +47,7 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
 
   // Build all possible actions
   const allActions = [
-    // Edit - requires canEdit permission
-    ...(canEdit
+    ...(canEditBookings
       ? [
           {
             label: "Edit Booking",

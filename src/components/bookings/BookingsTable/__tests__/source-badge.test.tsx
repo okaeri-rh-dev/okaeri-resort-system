@@ -16,6 +16,7 @@ vi.mock("@tanstack/react-router", () => ({
 vi.mock("@/hooks", () => ({
   useUserRole: () => ({
     canEdit: true,
+    canEditBookings: true,
     canDelete: true,
     canConfirmBookings: true,
   }),

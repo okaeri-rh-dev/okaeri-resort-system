@@ -60,6 +60,7 @@ describe("booking source validation across booking schemas", () => {
     unit_id: "22222222-2222-2222-2222-222222222222",
     num_guests: 1,
     payment_method: "Cash" as const,
+    total_amount: 5000,
   };
 
   it("bookingEditSchema keeps a Website source", () => {
