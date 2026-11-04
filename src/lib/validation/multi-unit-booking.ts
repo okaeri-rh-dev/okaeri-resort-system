@@ -9,7 +9,13 @@
 import { z } from "zod";
 
 import { STAFF_BOOKING_SOURCES } from "@/lib/bookings/source";
-import { emailRegex, philippinePhoneRegex } from "@/lib/validations";
+import {
+  emailRegex,
+  hasPayoutIfAirbnb,
+  payoutRequiredIssue,
+  payoutSchema,
+  philippinePhoneRegex,
+} from "@/lib/validations";
 
 /**
  * Base Multi-Unit Booking Form Schema (without refinements)
@@ -38,6 +44,7 @@ const baseMultiUnitBookingSchema = z.object({
   internal_notes: z.string().max(1000).optional(),
 
   booking_source: z.enum(STAFF_BOOKING_SOURCES),
+  payout: payoutSchema,
 });
 
 /**
@@ -45,13 +52,12 @@ const baseMultiUnitBookingSchema = z.object({
  *
  * Validates the entire multi-unit booking form data across all 4 steps
  */
-export const multiUnitBookingSchema = baseMultiUnitBookingSchema.refine(
-  (data) => new Date(data.check_out) > new Date(data.check_in),
-  {
+export const multiUnitBookingSchema = baseMultiUnitBookingSchema
+  .refine((data) => new Date(data.check_out) > new Date(data.check_in), {
     message: "Check-out date must be after check-in date",
     path: ["check_out"],
-  }
-);
+  })
+  .refine(hasPayoutIfAirbnb, payoutRequiredIssue);
 
 export type MultiUnitBookingFormData = z.infer<typeof multiUnitBookingSchema>;
 

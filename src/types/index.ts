@@ -61,7 +61,7 @@ export {
   type PaymentStatus,
 } from "./booking-status";
 export { APP_ROLE_NAMES } from "./app-role";
-export type PaymentMethod = "Cash" | "GCash" | "BankTransfer" | "Card" | "Other";
+export type PaymentMethod = "Cash" | "GCash" | "BankTransfer" | "Card" | "Airbnb payout" | "Other";
 export type PaymentRecordStatus = "Active" | "Deleted" | "Refunded";
 
 // Database booking unit junction table record

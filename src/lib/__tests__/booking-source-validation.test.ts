@@ -16,9 +16,30 @@ describe("booking source validation across booking schemas", () => {
     payment_method: "Cash" as const,
   };
 
-  it.each(["Walk-in", "Direct", "Airbnb"])("completeBookingSchema accepts %s", (source) => {
+  it.each(["Walk-in", "Direct"])("completeBookingSchema accepts %s", (source) => {
     const parsed = completeBookingSchema.parse({ ...baseCompleteInput, booking_source: source });
     expect(parsed.booking_source).toBe(source);
+  });
+
+  it("completeBookingSchema accepts Airbnb with a payout and no payment method", () => {
+    const { payment_method: _, ...input } = baseCompleteInput;
+    const parsed = completeBookingSchema.parse({
+      ...input,
+      booking_source: "Airbnb",
+      payout: 4800,
+    });
+    expect(parsed.payout).toBe(4800);
+  });
+
+  it.each([{}, { payout: 0 }])("completeBookingSchema rejects Airbnb with %o", (fields) => {
+    expect(() =>
+      completeBookingSchema.parse({ ...baseCompleteInput, booking_source: "Airbnb", ...fields })
+    ).toThrow();
+  });
+
+  it("completeBookingSchema still needs a payment method for other sources", () => {
+    const { payment_method: _, ...input } = baseCompleteInput;
+    expect(() => completeBookingSchema.parse({ ...input, booking_source: "Direct" })).toThrow();
   });
 
   it("completeBookingSchema rejects Website", () => {
@@ -40,9 +61,19 @@ describe("booking source validation across booking schemas", () => {
     payment_method: "Cash" as const,
   };
 
-  it("multiUnitBookingSchema accepts Airbnb", () => {
-    const parsed = multiUnitBookingSchema.parse({ ...baseMultiInput, booking_source: "Airbnb" });
+  it("multiUnitBookingSchema accepts Airbnb with a payout", () => {
+    const parsed = multiUnitBookingSchema.parse({
+      ...baseMultiInput,
+      booking_source: "Airbnb",
+      payout: 9000,
+    });
     expect(parsed.booking_source).toBe("Airbnb");
+  });
+
+  it("multiUnitBookingSchema rejects Airbnb without a payout", () => {
+    expect(() =>
+      multiUnitBookingSchema.parse({ ...baseMultiInput, booking_source: "Airbnb" })
+    ).toThrow();
   });
 
   it("multiUnitBookingSchema rejects Website", () => {

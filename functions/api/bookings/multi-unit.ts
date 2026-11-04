@@ -16,6 +16,7 @@ import { BLOCKED_UNIT_MESSAGE, BlockedUnitError } from "@/lib/bookings/availabil
 import { createBooking, type PricedUnit } from "@/lib/bookings/create";
 import { STAFF_BOOKING_SOURCES } from "@/lib/bookings/source";
 import { isManilaDay, toStayInstants } from "@/lib/bookings/stay";
+import { hasPayoutIfAirbnb, payoutRequiredIssue, payoutSchema } from "@/lib/validations";
 import type { Database } from "@/types/database.types";
 
 import {
@@ -94,11 +95,13 @@ const multiUnitBookingSchema = z
     // Clients from before booking_source send only this flag.
     is_walk_in: z.boolean().optional().default(false),
     source: z.enum(["web", "mobile", "admin"]).optional(),
+    payout: payoutSchema,
   })
   .refine((data) => data.check_out > data.check_in, {
     message: "Check-out must be after check-in",
     path: ["check_out"],
-  });
+  })
+  .refine(hasPayoutIfAirbnb, payoutRequiredIssue);
 
 type MultiUnitBookingRequest = z.infer<typeof multiUnitBookingSchema>;
 
@@ -443,7 +446,10 @@ async function createMultiUnitBooking(
 
   if (serverTotal <= 0) throw new UnpricedBookingError(serverTotal);
 
-  const units: PricedUnit[] = unitsWithPricing;
+  const units: PricedUnit[] =
+    data.booking_source === "Airbnb" && data.payout !== undefined
+      ? scaleToPayout(unitsWithPricing, data.payout)
+      : unitsWithPricing;
 
   return createBooking(supabase, {
     guest: {
@@ -459,5 +465,38 @@ async function createMultiUnitBooking(
     special_requests: data.special_requests ?? null,
     internal_notes: data.internal_notes ?? null,
     booking_source: data.booking_source ?? (data.is_walk_in ? "Walk-in" : "Direct"),
+  });
+}
+
+/**
+ * Splits the payout across cabins in proportion to their engine subtotals, as
+ * set_booking_total does: shares round down to centavos and the largest cabin takes
+ * the remainder, so the subtotals sum exactly to the payout.
+ */
+function scaleToPayout(units: PricedUnit[], payout: number): PricedUnit[] {
+  const toCentavos = (amount: number) => Math.round(amount * 100);
+  const payoutCentavos = toCentavos(payout);
+  const engineCentavos = units.reduce((sum, unit) => sum + toCentavos(unit.subtotal), 0);
+  const largest = units.reduce(
+    (max, unit, i) => (unit.subtotal >= units[max].subtotal ? i : max),
+    0
+  );
+
+  const shares = units.map((unit) =>
+    Math.floor((payoutCentavos * toCentavos(unit.subtotal)) / engineCentavos)
+  );
+  shares[largest] += payoutCentavos - shares.reduce((sum, share) => sum + share, 0);
+
+  return units.map((unit, i) => {
+    const ratio = shares[i] / toCentavos(unit.subtotal);
+    const weekend = Math.floor(toCentavos(unit.weekend_surcharge) * ratio);
+    const extra = Math.floor(toCentavos(unit.extra_person_charge) * ratio);
+    return {
+      ...unit,
+      subtotal: shares[i] / 100,
+      weekend_surcharge: weekend / 100,
+      extra_person_charge: extra / 100,
+      unit_price: (shares[i] - weekend - extra) / 100,
+    };
   });
 }

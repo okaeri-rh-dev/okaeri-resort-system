@@ -467,7 +467,7 @@ describe("POST /api/bookings/multi-unit", () => {
   });
 
   it.each([
-    [{ booking_source: "Airbnb" }, "Airbnb"],
+    [{ booking_source: "Airbnb", payout: 5000 }, "Airbnb"],
     [{ is_walk_in: true }, "Walk-in"],
     [{}, "Direct"],
   ])("should store the booking source from %o as %s", async (fields, source) => {
@@ -480,6 +480,43 @@ describe("POST /api/bookings/multi-unit", () => {
       })
     );
   });
+
+  it("should split an Airbnb payout across cabins in proportion to the engine price", async () => {
+    const createdSubtotals = async (body: unknown) => {
+      const mockClient = createBookingMocks({ units: testUnits });
+      await postWith(mockClient, body);
+      const [, params] = mockClient.rpc.mock.calls.find(
+        ([name]) => name === "create_multi_unit_booking"
+      )!;
+      return (params as { p_units: { subtotal: number }[] }).p_units.map((u) => u.subtotal);
+    };
+    const engine = await createdSubtotals(validBookingData);
+    const airbnb = await createdSubtotals({
+      ...validBookingData,
+      booking_source: "Airbnb",
+      payout: 10000.01,
+    });
+
+    const engineTotal = engine[0] + engine[1];
+    expect(engine[0]).not.toBe(engine[1]);
+    expect(Math.round(airbnb[0] * 100) + Math.round(airbnb[1] * 100)).toBe(1000001);
+    airbnb.forEach((subtotal, i) => {
+      expect(Math.abs(subtotal - (10000.01 * engine[i]) / engineTotal)).toBeLessThanOrEqual(0.01);
+      expect(Math.round(subtotal * 100)).toBeCloseTo(subtotal * 100, 6);
+    });
+  });
+
+  it.each([{}, { payout: 0 }, { payout: -5 }, { payout: 100_000_000 }])(
+    "should return 400 for an Airbnb booking with payout %o",
+    async (fields) => {
+      const response = await postWith(createBookingMocks({ units: testUnits }), {
+        ...validBookingData,
+        booking_source: "Airbnb",
+        ...fields,
+      });
+      expect(response.status).toBe(400);
+    }
+  );
 
   it("should return 400 when staff send the Website source", async () => {
     const response = await postWith(createBookingMocks({ units: testUnits }), {

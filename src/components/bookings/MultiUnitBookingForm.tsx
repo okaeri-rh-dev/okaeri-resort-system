@@ -59,7 +59,7 @@ import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
 import type { AdminMultiUnitBookingCreate, Unit } from "@/types";
 
-import { BookingSourceField } from "./form-fields";
+import { BookingSourceField, PayoutField } from "./form-fields";
 import { MultiUnitPricingSummary } from "./MultiUnitPricingSummary";
 import { MultiUnitSelector } from "./MultiUnitSelector";
 import { UnitCardList } from "./UnitCardList";
@@ -121,6 +121,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
   // Watch form values for real-time availability
   const checkIn = form.watch("check_in");
   const checkOut = form.watch("check_out");
+  const isAirbnb = form.watch("booking_source") === "Airbnb";
 
   // Extract form.setValue into useEffectEvent to remove form from dependencies
   const adjustCheckOutDate = useEffectEvent((checkInDate: Date, checkOutDate: Date) => {
@@ -294,11 +295,15 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
           guest_assignment: unit.guest_assignment,
           unit_notes: unit.guest_assignment?.special_requests,
         })),
-        payment: {
-          method: data.payment_method,
-          amount: data.payment_amount || getTotalAmount(),
-          proof_url: data.payment_proof_url,
-        },
+        ...(data.booking_source === "Airbnb"
+          ? { payout: data.payout }
+          : {
+              payment: {
+                method: data.payment_method,
+                amount: data.payment_amount || getTotalAmount(),
+                proof_url: data.payment_proof_url,
+              },
+            }),
         special_requests: data.special_requests,
         internal_notes: data.internal_notes,
         booking_source: data.booking_source,
@@ -512,20 +517,24 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
 
                   <MultiUnitPricingSummary units={selectedUnits} />
 
-                  <FormField control={form.control} name="payment_method" label="Payment Method">
-                    {(field) => (
-                      <SelectControl
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        placeholder="Select payment method"
-                      >
-                        <SelectItem value="GCash">GCash</SelectItem>
-                        <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
-                        <SelectItem value="Cash">Cash</SelectItem>
-                        <SelectItem value="CreditCard">Credit Card</SelectItem>
-                      </SelectControl>
-                    )}
-                  </FormField>
+                  {isAirbnb ? (
+                    <PayoutField control={form.control} />
+                  ) : (
+                    <FormField control={form.control} name="payment_method" label="Payment Method">
+                      {(field) => (
+                        <SelectControl
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder="Select payment method"
+                        >
+                          <SelectItem value="GCash">GCash</SelectItem>
+                          <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
+                          <SelectItem value="Cash">Cash</SelectItem>
+                          <SelectItem value="CreditCard">Credit Card</SelectItem>
+                        </SelectControl>
+                      )}
+                    </FormField>
+                  )}
 
                   <FormField
                     control={form.control}

@@ -44,7 +44,7 @@ import { useCreateBooking } from "@/stores/useBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
 import type { MultiUnitBooking } from "@/types";
 
-import { BookingSourceField } from "./form-fields";
+import { BookingSourceField, PayoutField } from "./form-fields";
 import { FormSkeleton } from "./FormSkeleton";
 
 interface BookingFormProps {
@@ -119,6 +119,8 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
   const contactNumber = form.watch("contact_number");
   const paymentMethod = form.watch("payment_method");
   const specialRequests = form.watch("special_requests");
+  const isAirbnb = form.watch("booking_source") === "Airbnb";
+  const payout = form.watch("payout");
 
   const selectedUnit = units?.find((unit) => unit.unit_id === unitId);
 
@@ -210,6 +212,8 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
           return true;
 
         case 3:
+          if (values.booking_source === "Airbnb")
+            return form.trigger(["payout", "special_requests"]);
           await bookingStep3Schema.parseAsync({
             special_requests: values.special_requests,
             payment_method: values.payment_method,
@@ -273,7 +277,11 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
         check_in: pickedDay(data.check_in),
         check_out: pickedDay(data.check_out),
         units: [{ unit_id: data.unit_id, num_guests: data.num_guests }],
-        payment: { method: data.payment_method, amount: calculatedTotal },
+        ...(data.booking_source === "Airbnb"
+          ? { payout: data.payout }
+          : data.payment_method && {
+              payment: { method: data.payment_method, amount: calculatedTotal },
+            }),
         special_requests: sanitizedData.special_requests || data.special_requests || undefined,
         booking_source: data.booking_source,
         source: "admin",
@@ -509,25 +517,29 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
 
   const renderStep3 = () => (
     <div className="space-y-6">
-      <FormField control={form.control} name="payment_method" label="Payment Method">
-        {(field) => (
-          <SelectControl
-            value={field.value}
-            onValueChange={field.onChange}
-            placeholder="Select payment method"
-          >
-            <SelectItem value="GCash">
-              <div className="flex items-center">
-                <CreditCard className="mr-2 size-4" aria-hidden="true" />
-                GCash
-              </div>
-            </SelectItem>
-            <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
-            <SelectItem value="Cash">Cash</SelectItem>
-            <SelectItem value="Card">Credit/Debit Card</SelectItem>
-          </SelectControl>
-        )}
-      </FormField>
+      {isAirbnb ? (
+        <PayoutField control={form.control} />
+      ) : (
+        <FormField control={form.control} name="payment_method" label="Payment Method">
+          {(field) => (
+            <SelectControl
+              value={field.value}
+              onValueChange={field.onChange}
+              placeholder="Select payment method"
+            >
+              <SelectItem value="GCash">
+                <div className="flex items-center">
+                  <CreditCard className="mr-2 size-4" aria-hidden="true" />
+                  GCash
+                </div>
+              </SelectItem>
+              <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
+              <SelectItem value="Cash">Cash</SelectItem>
+              <SelectItem value="Card">Credit/Debit Card</SelectItem>
+            </SelectControl>
+          )}
+        </FormField>
+      )}
 
       <FormField
         control={form.control}
@@ -576,7 +588,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
             </div>
             <div>
               <h4 className="font-medium">Payment</h4>
-              <p className="text-muted-foreground">{paymentMethod}</p>
+              <p className="text-muted-foreground">{isAirbnb ? "Airbnb payout" : paymentMethod}</p>
             </div>
           </div>
 
@@ -664,9 +676,11 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
 
           <div className="flex items-center justify-between text-lg font-semibold">
             <span>Total Amount:</span>
-            <span className="tabular-nums">{formatCurrency(calculatedTotal)}</span>
+            <span className="tabular-nums">
+              {formatCurrency(isAirbnb ? (payout ?? 0) : calculatedTotal)}
+            </span>
           </div>
-          {downpaymentAmount > 0 && (
+          {!isAirbnb && downpaymentAmount > 0 && (
             <div className="text-muted-foreground flex items-center justify-between text-sm">
               <span>Downpayment Required:</span>
               <span className="tabular-nums">{formatCurrency(downpaymentAmount)}</span>
