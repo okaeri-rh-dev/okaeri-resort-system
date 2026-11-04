@@ -35,6 +35,7 @@ const COLUMNS: Record<string, { clear: string[]; keep: string[] }> = {
     keep: [
       "booking_id",
       "booking_reference",
+      "booking_source",
       "guest_id",
       "booking_status",
       "payment_status",

@@ -62,6 +62,7 @@ const stubBooking = (
     special_requests: null,
     internal_notes: null,
     is_multi_unit: false,
+    booking_source: status === "Pending" ? "Website" : "Direct",
     is_walk_in: false,
     is_guest_booking: status === "Pending",
     unit_assignment_status: status === "Pending" ? "pending" : "assigned",

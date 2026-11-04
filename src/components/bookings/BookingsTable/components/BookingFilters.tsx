@@ -14,7 +14,7 @@ import {
   SelectValue,
   TableSearch,
 } from "@/components/patterns";
-import { pickedDay } from "@/lib/bookings";
+import { BOOKING_SOURCES, pickedDay, type BookingSource } from "@/lib/bookings";
 import type { BookingStatus, PaymentStatus } from "@/types";
 
 import type { BookingFiltersProps, DateRange } from "../types";
@@ -46,12 +46,9 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
     if (filters.status !== undefined) count++;
     if (filters.payment_status !== undefined) count++;
     if (filters.date_from !== undefined || filters.date_to !== undefined) count++;
-    if (filters.is_walk_in !== undefined) count++;
+    if (filters.booking_source !== undefined) count++;
     return count;
   };
-
-  const walkInLabel =
-    filters.is_walk_in === true ? "Walk-ins" : filters.is_walk_in === false ? "Reserved" : "";
 
   // Filter controls (shared between mobile and desktop)
   const StatusFilter = () => (
@@ -124,25 +121,19 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
     </FilterPopover>
   );
 
-  const WalkInFilter = () => (
+  const SourceFilter = () => (
     <FilterPopover
-      isActive={filters.is_walk_in !== undefined}
-      badgeLabel={walkInLabel}
+      isActive={!!filters.booking_source}
+      badgeLabel={filters.booking_source}
       content={
         <div className="space-y-2">
           <div className="text-sm font-medium">Booking Source</div>
           <Select
-            value={
-              filters.is_walk_in === true
-                ? "walk_in"
-                : filters.is_walk_in === false
-                  ? "reserved"
-                  : "all"
-            }
+            value={filters.booking_source || "all"}
             onValueChange={(value: string) =>
               setFilters({
                 ...filters,
-                is_walk_in: value === "walk_in" ? true : value === "reserved" ? false : undefined,
+                booking_source: value === "all" ? undefined : (value as BookingSource),
               })
             }
           >
@@ -150,15 +141,18 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All bookings</SelectItem>
-              <SelectItem value="walk_in">Walk-ins only</SelectItem>
-              <SelectItem value="reserved">Reserved only</SelectItem>
+              <SelectItem value="all">All Sources</SelectItem>
+              {BOOKING_SOURCES.map((source) => (
+                <SelectItem key={source} value={source}>
+                  {source}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
       }
     >
-      Walk-in
+      Source
     </FilterPopover>
   );
 
@@ -233,7 +227,7 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
         <>
           <StatusFilter />
           <PaymentFilter />
-          <WalkInFilter />
+          <SourceFilter />
           <DateFilter />
         </>
       }

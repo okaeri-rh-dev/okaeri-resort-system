@@ -28,6 +28,7 @@ import { utcToResortTime } from "@/utils/date-helpers";
 
 import type { BookingCardProps } from "../types";
 import { CabinChip } from "./CabinChip";
+import { SourceBadge } from "./SourceBadge";
 
 const formatStayRange = (checkIn: string, checkOut: string): string => {
   try {
@@ -151,7 +152,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-foreground text-base font-semibold">{booking.guest_name}</span>
-              {booking.is_walk_in && <StatusBadge tone="warning">Walk-in</StatusBadge>}
+              <SourceBadge source={booking.booking_source} />
             </div>
             <div className="text-muted-foreground text-xs tabular-nums">
               {booking.booking_reference}

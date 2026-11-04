@@ -11,6 +11,6 @@ export function toBookingUpdate(input: BookingEditInput): BookingChanges {
     num_guests: input.num_guests,
     payment_method: input.payment_method,
     special_requests: input.special_requests,
-    is_walk_in: input.is_walk_in,
+    booking_source: input.booking_source,
   };
 }

@@ -447,6 +447,7 @@ export type Database = {
           base_amount: number | null;
           booking_id: string;
           booking_reference: string;
+          booking_source: string;
           booking_status: string | null;
           check_in: string;
           check_out: string;
@@ -485,6 +486,7 @@ export type Database = {
           base_amount?: number | null;
           booking_id?: string;
           booking_reference: string;
+          booking_source?: string;
           booking_status?: string | null;
           check_in: string;
           check_out: string;
@@ -522,6 +524,7 @@ export type Database = {
           base_amount?: number | null;
           booking_id?: string;
           booking_reference?: string;
+          booking_source?: string;
           booking_status?: string | null;
           check_in?: string;
           check_out?: string;

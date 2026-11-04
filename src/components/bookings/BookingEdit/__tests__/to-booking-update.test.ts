@@ -16,7 +16,7 @@ const editInput: BookingEditInput = {
   num_guests: 2,
   payment_method: "GCash",
   special_requests: "Late arrival",
-  is_walk_in: false,
+  booking_source: "Direct",
 };
 
 describe("toBookingUpdate", () => {
@@ -38,7 +38,7 @@ describe("toBookingUpdate", () => {
         "contact_number",
         "email",
         "guest_name",
-        "is_walk_in",
+        "booking_source",
         "num_guests",
         "payment_method",
         "special_requests",

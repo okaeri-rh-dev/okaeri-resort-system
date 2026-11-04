@@ -29,7 +29,7 @@ import { bookingEditSchema, type BookingEditInput } from "@/lib/validation/entit
 import { useUpdateBooking } from "@/stores/useBookingStore";
 import type { Booking, Unit } from "@/types/entity-detail.types";
 
-import { WalkInField } from "../form-fields";
+import { BookingSourceField } from "../form-fields";
 import { toBookingUpdate } from "./to-booking-update";
 
 export interface BookingEditPageProps {
@@ -58,7 +58,7 @@ export function BookingEditPage() {
       payment_method:
         (booking.payment_method as "Cash" | "GCash" | "BankTransfer" | "Card") || "Cash",
       special_requests: booking.special_requests || "",
-      is_walk_in: booking.is_walk_in ?? false,
+      booking_source: booking.booking_source,
     },
   });
 
@@ -124,9 +124,9 @@ export function BookingEditPage() {
               <CardTitle className="text-lg">Guest Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <WalkInField
+              <BookingSourceField
                 control={form.control}
-                description="Check this if the guest arrived on-site without a prior reservation. Reporting flag only."
+                isWebsite={booking.booking_source === "Website"}
               />
 
               <FormField control={form.control} name="guest_name" label="Guest Name">

@@ -59,7 +59,7 @@ import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
 import type { AdminMultiUnitBookingCreate, Unit } from "@/types";
 
-import { WalkInField } from "./form-fields";
+import { BookingSourceField } from "./form-fields";
 import { MultiUnitPricingSummary } from "./MultiUnitPricingSummary";
 import { MultiUnitSelector } from "./MultiUnitSelector";
 import { UnitCardList } from "./UnitCardList";
@@ -109,7 +109,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
       payment_method: "GCash",
       special_requests: "",
       internal_notes: "",
-      is_walk_in: false,
+      booking_source: "Direct",
     },
   });
 
@@ -301,7 +301,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
         },
         special_requests: data.special_requests,
         internal_notes: data.internal_notes,
-        is_walk_in: data.is_walk_in ?? false,
+        booking_source: data.booking_source,
         source: "web",
         idempotency_key: idempotencyKey,
       };
@@ -448,10 +448,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
               {/* Step 2: Guest Information */}
               {step === 2 && (
                 <div className="space-y-4">
-                  <WalkInField
-                    control={form.control}
-                    description="Check this if the guest arrived on-site without a prior reservation. Reporting flag only."
-                  />
+                  <BookingSourceField control={form.control} />
 
                   <FormField
                     control={form.control}

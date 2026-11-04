@@ -4,6 +4,7 @@ import type { BookingStatus } from "@/types/booking-status";
 import type { Database, Tables, TablesInsert, TablesUpdate } from "@/types/database.types";
 
 import { BlockedUnitError, isBlockedNightError } from "./availability";
+import type { BookingSource } from "./source";
 import { toStayInstants, type ManilaDay } from "./stay";
 
 type Client = SupabaseClient<Database>;
@@ -16,7 +17,7 @@ export type BookingChanges = Partial<{
   num_guests: number;
   payment_method: string | null;
   special_requests: string | null;
-  is_walk_in: boolean;
+  booking_source: BookingSource;
 }> & { stay?: { check_in: ManilaDay; check_out: ManilaDay } };
 
 type Result<T> = { data: T | null; error: { message: string; code?: string } | null };

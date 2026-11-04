@@ -107,9 +107,8 @@ export const useBookingsTable = () => {
       filtered = filtered.filter((b) => b.payment_status === filters.payment_status);
     }
 
-    // Apply walk-in filter
-    if (filters.is_walk_in !== undefined) {
-      filtered = filtered.filter((b) => (b.is_walk_in ?? false) === filters.is_walk_in);
+    if (filters.booking_source) {
+      filtered = filtered.filter((b) => b.booking_source === filters.booking_source);
     }
 
     // Apply date range filter

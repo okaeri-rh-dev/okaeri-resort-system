@@ -466,6 +466,29 @@ describe("POST /api/bookings/multi-unit", () => {
     );
   });
 
+  it.each([
+    [{ booking_source: "Airbnb" }, "Airbnb"],
+    [{ is_walk_in: true }, "Walk-in"],
+    [{}, "Direct"],
+  ])("should store the booking source from %o as %s", async (fields, source) => {
+    const mockClient = createBookingMocks({ units: testUnits });
+    await postWith(mockClient, { ...validBookingData, ...fields });
+    expect(mockClient.rpc).toHaveBeenCalledWith(
+      "create_multi_unit_booking",
+      expect.objectContaining({
+        p_booking_data: expect.objectContaining({ booking_source: source }),
+      })
+    );
+  });
+
+  it("should return 400 when staff send the Website source", async () => {
+    const response = await postWith(createBookingMocks({ units: testUnits }), {
+      ...validBookingData,
+      booking_source: "Website",
+    });
+    expect(response.status).toBe(400);
+  });
+
   it("should return 422 instead of trusting the client total when the server prices at zero", async () => {
     vi.resetModules();
 

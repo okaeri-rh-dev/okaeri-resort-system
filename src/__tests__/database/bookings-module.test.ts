@@ -40,7 +40,7 @@ const stayFor = (unitId: string, checkIn: string, checkOut: string): NewBooking 
     },
   ],
   payment_method: "Cash",
-  is_walk_in: false,
+  booking_source: "Direct",
 });
 
 const blockNight = async (unitId: string, night: string) => {

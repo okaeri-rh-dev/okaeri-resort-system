@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Tables, TablesInsert } from "@/types/database.types";
 
 import { BlockedUnitError, isBlockedNightError } from "./availability";
+import type { StaffBookingSource } from "./source";
 import { toStayInstants, type ManilaDay } from "./stay";
 
 type Client = SupabaseClient<Database>;
@@ -30,7 +31,7 @@ export type NewBooking = {
   payment_method: string | null;
   special_requests?: string | null;
   internal_notes?: string | null;
-  is_walk_in: boolean;
+  booking_source: StaffBookingSource;
 };
 
 export type BookingWithUnits = Tables<"bookings"> & {
@@ -53,7 +54,7 @@ export async function createBooking(
       payment_method: booking.payment_method,
       special_requests: booking.special_requests ?? null,
       internal_notes: booking.internal_notes ?? null,
-      is_walk_in: booking.is_walk_in,
+      booking_source: booking.booking_source,
       booking_status: "Pending",
       payment_status: "Pending",
     },
