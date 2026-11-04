@@ -8,6 +8,12 @@ export class DuplicateConfirmationCodeError extends Error {
   }
 }
 
+/** Only an Airbnb booking keeps a code; a blank code is stored as none. */
+export const storedConfirmationCode = (booking: {
+  booking_source?: string;
+  airbnb_confirmation_code?: string;
+}) => (booking.booking_source === "Airbnb" && booking.airbnb_confirmation_code) || null;
+
 const UNIQUE_VIOLATION = "23505";
 
 export const isDuplicateConfirmationCode = (error: { code?: string; message?: string } | null) =>

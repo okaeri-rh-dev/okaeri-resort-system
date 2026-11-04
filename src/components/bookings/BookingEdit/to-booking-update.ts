@@ -1,4 +1,4 @@
-import { pickedDay, type BookingChanges } from "@/lib/bookings";
+import { pickedDay, storedConfirmationCode, type BookingChanges } from "@/lib/bookings";
 import type { BookingEditInput } from "@/lib/validation/entity-schemas";
 
 // unit_id is edited through the booking_units junction table, not the bookings row
@@ -13,7 +13,6 @@ export function toBookingUpdate(input: BookingEditInput, currentTotal: number): 
     payment_method: input.payment_method,
     special_requests: input.special_requests,
     booking_source: input.booking_source,
-    airbnb_confirmation_code:
-      (input.booking_source === "Airbnb" && input.airbnb_confirmation_code) || null,
+    airbnb_confirmation_code: storedConfirmationCode(input),
   };
 }

@@ -280,7 +280,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
         ...(data.booking_source === "Airbnb"
           ? {
               payout: data.payout,
-              airbnb_confirmation_code: data.airbnb_confirmation_code || undefined,
+              airbnb_confirmation_code: data.airbnb_confirmation_code,
             }
           : data.payment_method && {
               payment: { method: data.payment_method, amount: calculatedTotal },

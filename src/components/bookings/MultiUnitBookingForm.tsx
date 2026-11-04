@@ -298,7 +298,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
         ...(data.booking_source === "Airbnb"
           ? {
               payout: data.payout,
-              airbnb_confirmation_code: data.airbnb_confirmation_code || undefined,
+              airbnb_confirmation_code: data.airbnb_confirmation_code,
             }
           : {
               payment: {

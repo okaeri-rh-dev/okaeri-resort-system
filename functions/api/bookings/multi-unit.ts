@@ -13,7 +13,10 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import { BLOCKED_UNIT_MESSAGE, BlockedUnitError } from "@/lib/bookings/availability";
-import { DuplicateConfirmationCodeError } from "@/lib/bookings/confirmation-code";
+import {
+  DuplicateConfirmationCodeError,
+  storedConfirmationCode,
+} from "@/lib/bookings/confirmation-code";
 import { createBooking, type PricedUnit } from "@/lib/bookings/create";
 import { STAFF_BOOKING_SOURCES } from "@/lib/bookings/source";
 import { isManilaDay, toStayInstants } from "@/lib/bookings/stay";
@@ -479,8 +482,7 @@ async function createMultiUnitBooking(
     special_requests: data.special_requests ?? null,
     internal_notes: data.internal_notes ?? null,
     booking_source: data.booking_source ?? (data.is_walk_in ? "Walk-in" : "Direct"),
-    airbnb_confirmation_code:
-      (data.booking_source === "Airbnb" && data.airbnb_confirmation_code) || null,
+    airbnb_confirmation_code: storedConfirmationCode(data),
   });
 }
 
