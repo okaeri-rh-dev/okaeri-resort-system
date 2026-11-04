@@ -12,7 +12,7 @@ import { STAFF_BOOKING_SOURCES } from "@/lib/bookings/source";
 import {
   emailRegex,
   hasPayoutIfAirbnb,
-  payoutRequired,
+  payoutRequiredIssue,
   payoutSchema,
   philippinePhoneRegex,
 } from "@/lib/validations";
@@ -57,7 +57,7 @@ export const multiUnitBookingSchema = baseMultiUnitBookingSchema
     message: "Check-out date must be after check-in date",
     path: ["check_out"],
   })
-  .refine(hasPayoutIfAirbnb, payoutRequired);
+  .refine(hasPayoutIfAirbnb, payoutRequiredIssue);
 
 export type MultiUnitBookingFormData = z.infer<typeof multiUnitBookingSchema>;
 

@@ -16,6 +16,7 @@ import { BLOCKED_UNIT_MESSAGE, BlockedUnitError } from "@/lib/bookings/availabil
 import { createBooking, type PricedUnit } from "@/lib/bookings/create";
 import { STAFF_BOOKING_SOURCES } from "@/lib/bookings/source";
 import { isManilaDay, toStayInstants } from "@/lib/bookings/stay";
+import { hasPayoutIfAirbnb, payoutRequiredIssue, payoutSchema } from "@/lib/validations";
 import type { Database } from "@/types/database.types";
 
 import {
@@ -94,17 +95,13 @@ const multiUnitBookingSchema = z
     // Clients from before booking_source send only this flag.
     is_walk_in: z.boolean().optional().default(false),
     source: z.enum(["web", "mobile", "admin"]).optional(),
-    // An Airbnb booking's total is the payout (ADR 0006).
-    payout: z.number().positive().optional(),
+    payout: payoutSchema,
   })
   .refine((data) => data.check_out > data.check_in, {
     message: "Check-out must be after check-in",
     path: ["check_out"],
   })
-  .refine((data) => data.booking_source !== "Airbnb" || data.payout !== undefined, {
-    message: "An Airbnb booking needs its payout",
-    path: ["payout"],
-  });
+  .refine(hasPayoutIfAirbnb, payoutRequiredIssue);
 
 type MultiUnitBookingRequest = z.infer<typeof multiUnitBookingSchema>;
 

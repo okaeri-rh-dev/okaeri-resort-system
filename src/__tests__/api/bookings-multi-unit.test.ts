@@ -506,7 +506,7 @@ describe("POST /api/bookings/multi-unit", () => {
     });
   });
 
-  it.each([{}, { payout: 0 }, { payout: -5 }])(
+  it.each([{}, { payout: 0 }, { payout: -5 }, { payout: 100_000_000 }])(
     "should return 400 for an Airbnb booking with payout %o",
     async (fields) => {
       const response = await postWith(createBookingMocks({ units: testUnits }), {
