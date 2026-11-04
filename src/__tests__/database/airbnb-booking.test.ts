@@ -272,6 +272,17 @@ describe("Airbnb booking", () => {
     expect(await paymentsOf(booking.booking_id)).toEqual([]);
   });
 
+  it("a change of source to Airbnb on a total of zero creates no payout", async () => {
+    if (!shouldRun) return;
+    const booking = await newBooking("Direct", [0]);
+
+    await updateBooking(roleClients.byRole.staff, booking.booking_id, {
+      booking_source: "Airbnb",
+    });
+
+    expect(await paymentsOf(booking.booking_id)).toEqual([]);
+  });
+
   it("stores its confirmation code and rejects a code already used", async () => {
     if (!shouldRun) return;
     const booking = await newBooking("Airbnb", [4000], "HMDUPE001");

@@ -3,8 +3,8 @@
 -- (docs/adr/0006). The payments trigger re-derives payment_status (ADR 0001).
 BEGIN;
 
--- The payout a booking's automatic payment lives in: the active one first, then the
--- oldest. Refunded payouts are never touched.
+-- A booking's automatic "Airbnb payout" payment: the active one, else the oldest.
+-- Refunded payouts are never touched.
 CREATE OR REPLACE FUNCTION public.airbnb_payout_id(p_booking_id uuid)
 RETURNS uuid
 LANGUAGE sql
