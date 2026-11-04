@@ -413,8 +413,8 @@ test.describe("Multi-Role Workflows", () => {
       const detailPage = new BookingDetailPage(page);
       await detailPage.expectPageLoaded();
 
-      // Staff should not see edit button
-      await detailPage.expectEditButtonHidden();
+      // Staff edit booking details; only the total is manager-only (#310)
+      await detailPage.expectEditButtonVisible();
     });
 
     test("admin sees all action buttons", async ({ page }) => {

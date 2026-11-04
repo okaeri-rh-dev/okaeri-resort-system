@@ -36,6 +36,9 @@ export const bookingEditSchema = z
       .transform((val) => sanitizeText(val))
       .optional(),
     booking_source: z.enum(BOOKING_SOURCES),
+    total_amount: z
+      .number({ error: typeError("Total is required") })
+      .min(0, "Total cannot be negative"),
   })
   .refine((data) => data.check_out > data.check_in, {
     message: "Check-out must be after check-in",

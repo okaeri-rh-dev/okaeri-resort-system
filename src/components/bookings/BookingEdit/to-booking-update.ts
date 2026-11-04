@@ -2,8 +2,9 @@ import { pickedDay, type BookingChanges } from "@/lib/bookings";
 import type { BookingEditInput } from "@/lib/validation/entity-schemas";
 
 // unit_id is edited through the booking_units junction table, not the bookings row
-export function toBookingUpdate(input: BookingEditInput): BookingChanges {
+export function toBookingUpdate(input: BookingEditInput, currentTotal: number): BookingChanges {
   return {
+    ...(input.total_amount !== currentTotal && { total_amount: input.total_amount }),
     guest_name: input.guest_name,
     email: input.email,
     contact_number: input.contact_number,

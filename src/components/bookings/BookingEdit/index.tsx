@@ -23,6 +23,7 @@ import {
   SelectItem,
   Textarea,
 } from "@/components/patterns";
+import { useUserRole } from "@/hooks";
 import { useMultiUnitAvailability } from "@/hooks/useMultiUnitBookingQueries";
 import { manilaDayOf, pickedDay, unavailableReason, unitNotFreeMessage } from "@/lib/bookings";
 import { bookingEditSchema, type BookingEditInput } from "@/lib/validation/entity-schemas";
@@ -41,6 +42,7 @@ export function BookingEditPage() {
   const { bookingId } = useParams({ from: "/admin/bookings/$bookingId/edit" });
   const { booking, units } = useLoaderData({ from: "/admin/bookings/$bookingId/edit" });
   const navigate = useNavigate();
+  const { isManager } = useUserRole();
 
   // Initialize form with default values from booking
   // NOTE: Single-unit editing only - extracts first unit from booking_units array
@@ -59,6 +61,7 @@ export function BookingEditPage() {
         (booking.payment_method as "Cash" | "GCash" | "BankTransfer" | "Card") || "Cash",
       special_requests: booking.special_requests || "",
       booking_source: booking.booking_source,
+      total_amount: booking.total_amount,
     },
   });
 
@@ -90,7 +93,7 @@ export function BookingEditPage() {
     }
 
     updateBooking.mutate(
-      { bookingId, changes: toBookingUpdate(data) },
+      { bookingId, changes: toBookingUpdate(data, booking.total_amount) },
       {
         onSuccess: () => void navigate({ to: "/admin/bookings/$bookingId", params: { bookingId } }),
       }
@@ -268,6 +271,32 @@ export function BookingEditPage() {
                       <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
                       <SelectItem value="Card">Credit Card</SelectItem>
                     </SelectControl>
+                  )}
+                </FormField>
+
+                <FormField
+                  control={form.control}
+                  name="total_amount"
+                  label="Total"
+                  description={
+                    isManager
+                      ? "₱ Split across the cabins in proportion"
+                      : "Only a manager can change the total"
+                  }
+                >
+                  {(field) => (
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      min={0}
+                      readOnly={!isManager}
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(e.target.value === "" ? undefined : Number(e.target.value))
+                      }
+                    />
                   )}
                 </FormField>
               </div>
