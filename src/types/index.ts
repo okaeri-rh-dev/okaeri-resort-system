@@ -100,7 +100,7 @@ export interface Booking {
   internal_notes?: string | null;
   anonymized_at?: string | null;
   is_multi_unit?: boolean | null;
-  booking_source?: string;
+  booking_source?: BookingSource;
   is_walk_in?: boolean;
   is_guest_booking?: boolean | null;
   unit_assignment_status?: string | null;

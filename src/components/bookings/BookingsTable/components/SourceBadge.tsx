@@ -1,13 +1,9 @@
-import { StatusBadge, type StatusTone } from "@/components/patterns";
-
-const SOURCE_TONES: Record<string, StatusTone> = {
-  "Walk-in": "warning",
-  Airbnb: "info",
-  Website: "neutral",
-};
+import { StatusBadge } from "@/components/patterns";
+import type { BookingSource } from "@/lib/bookings";
+import { sourceTone } from "@/lib/status-tone";
 
 /** One badge for Walk-in, Airbnb and Website bookings; Direct shows none. */
-export function SourceBadge({ source }: { source: string | undefined }) {
-  const tone = source && SOURCE_TONES[source];
+export function SourceBadge({ source }: { source: BookingSource | undefined }) {
+  const tone = source && sourceTone(source);
   return tone ? <StatusBadge tone={tone}>{source}</StatusBadge> : null;
 }

@@ -23,7 +23,8 @@ LANGUAGE plpgsql
 SET search_path = ''
 AS $$
 BEGIN
-    -- Writers from before booking_source set only a flag and get the default.
+    -- Writers from before booking_source set only a flag and get the default,
+    -- so on insert a set flag wins over Direct.
     IF TG_OP = 'INSERT' AND NEW.booking_source = 'Direct' THEN
         NEW.booking_source := CASE
             WHEN NEW.is_guest_booking THEN 'Website'

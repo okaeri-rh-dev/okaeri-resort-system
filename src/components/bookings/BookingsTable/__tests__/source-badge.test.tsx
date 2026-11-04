@@ -62,7 +62,7 @@ const renderCard = (overrides: Partial<Booking>) =>
   );
 
 describe("BookingCard source badge", () => {
-  it.each(["Walk-in", "Airbnb", "Website"])("shows one %s badge", (source) => {
+  it.each(["Walk-in", "Airbnb", "Website"] as const)("shows one %s badge", (source) => {
     renderCard({ booking_source: source });
     expect(screen.getAllByText(source)).toHaveLength(1);
   });

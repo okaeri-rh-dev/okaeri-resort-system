@@ -1,4 +1,5 @@
 import type { StatusTone } from "@/components/patterns";
+import type { BookingSource } from "@/lib/bookings/source";
 import type { BookingStatus, CabinState, PaymentStatus } from "@/types";
 
 /** "Paid" is a legacy payment status some rows still carry. */
@@ -45,4 +46,16 @@ function statusLabel(status: string) {
 export function statusBadgeProps(status: string | null | undefined, fallback: ToneStatus) {
   const label = status || fallback;
   return { tone: statusTone(label), children: statusLabel(label) };
+}
+
+const tonesBySource: Record<BookingSource, StatusTone | null> = {
+  "Walk-in": "warning",
+  Airbnb: "info",
+  Website: "neutral",
+  Direct: null,
+};
+
+/** The source badge tone, or null for a Direct booking, which shows no badge. */
+export function sourceTone(source: BookingSource): StatusTone | null {
+  return tonesBySource[source];
 }
