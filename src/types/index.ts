@@ -1,5 +1,7 @@
 // Core type definitions for Okaeri Resort System
 
+import type { BookingSource } from "@/lib/bookings/source";
+
 import type { BookingStatus, PaymentStatus } from "./booking-status";
 
 // ============================================
@@ -98,6 +100,7 @@ export interface Booking {
   internal_notes?: string | null;
   anonymized_at?: string | null;
   is_multi_unit?: boolean | null;
+  booking_source?: string;
   is_walk_in?: boolean;
   is_guest_booking?: boolean | null;
   unit_assignment_status?: string | null;
@@ -270,11 +273,7 @@ export interface BookingFilters {
   date_from?: string;
   date_to?: string;
   search?: string;
-  /**
-   * Filter by walk-in flag.
-   * `true` = only walk-ins, `false` = only non-walk-ins, `undefined` = both.
-   */
-  is_walk_in?: boolean;
+  booking_source?: BookingSource;
 }
 
 export interface UnitFilters {

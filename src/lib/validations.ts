@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { STAFF_BOOKING_SOURCES } from "./bookings/source";
 import { typeError } from "./validation/type-error";
 
 // ============================================
@@ -163,7 +164,7 @@ export const completeBookingSchema = bookingStep1BaseSchema
       contact_number: z
         .string()
         .refine((val) => val === "" || philippinePhoneRegex.test(val), messages.phone),
-      is_walk_in: z.boolean(),
+      booking_source: z.enum(STAFF_BOOKING_SOURCES),
     })
   )
   .merge(bookingStep3Schema)

@@ -117,7 +117,7 @@ describe("booking column grants", () => {
       num_guests: 2,
       payment_method: "Cash",
       special_requests: "none",
-      is_walk_in: true,
+      booking_source: "Walk-in",
       stay: { check_in: "2027-01-10", check_out: "2027-01-11" },
     });
     const cancelled = await cancelBooking(staff, bookingId);

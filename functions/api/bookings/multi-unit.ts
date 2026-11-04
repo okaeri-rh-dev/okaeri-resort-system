@@ -14,6 +14,7 @@ import { z } from "zod";
 
 import { BLOCKED_UNIT_MESSAGE, BlockedUnitError } from "@/lib/bookings/availability";
 import { createBooking, type PricedUnit } from "@/lib/bookings/create";
+import { STAFF_BOOKING_SOURCES } from "@/lib/bookings/source";
 import { isManilaDay, toStayInstants } from "@/lib/bookings/stay";
 import type { Database } from "@/types/database.types";
 
@@ -89,6 +90,8 @@ const multiUnitBookingSchema = z
       .optional(),
     special_requests: z.string().max(1000).optional(),
     internal_notes: z.string().max(1000).optional(),
+    booking_source: z.enum(STAFF_BOOKING_SOURCES).optional(),
+    // Clients from before booking_source send only this flag.
     is_walk_in: z.boolean().optional().default(false),
     source: z.enum(["web", "mobile", "admin"]).optional(),
   })
@@ -455,6 +458,6 @@ async function createMultiUnitBooking(
     payment_method: data.payment?.method ?? null,
     special_requests: data.special_requests ?? null,
     internal_notes: data.internal_notes ?? null,
-    is_walk_in: data.is_walk_in,
+    booking_source: data.booking_source ?? (data.is_walk_in ? "Walk-in" : "Direct"),
   });
 }

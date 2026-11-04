@@ -22,8 +22,16 @@ _Avoid_: Departure time, check-out time
 One Manila day from the check-in day up to, but not including, the check-out day. A booking's night count is the number of these days.
 _Avoid_: Day (when counting a stay)
 
+**Booking source**:
+Where a booking came from, one of: Website (the guest booked on the public site), Walk-in (the guest arrived without a prior reservation), Direct (the guest reserved by phone or Messenger) or Airbnb. Staff pick Walk-in, Direct or Airbnb; Website is set only by the public site.
+_Avoid_: Channel (that word means a contact channel), origin, platform
+
+**Airbnb booking**:
+A booking made on Airbnb and entered by staff by hand. Airbnb has already confirmed it, its total is the payout the resort receives, it counts as fully paid once entered, and it may carry Airbnb's confirmation code.
+_Avoid_: OTA booking, external booking
+
 **Pending booking**:
-An online booking that waits for staff to verify its payment proof.
+A booking that waits for payment before staff confirm it: an online booking waits for staff to verify its payment proof, and a staff-made booking (such as a walk-in) waits for its deposit.
 _Avoid_: Unverified booking, request
 
 **Confirmed booking**:

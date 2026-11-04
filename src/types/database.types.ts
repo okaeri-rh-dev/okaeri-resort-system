@@ -2,6 +2,8 @@
 // text columns narrowed to the values their CHECK constraints allow.
 // Import database types from this module, not from database.generated.ts.
 
+import type { BookingSource } from "@/lib/bookings/source";
+
 import type { AppRoleName } from "./app-role";
 import type { BookingStatus, PaymentStatus } from "./booking-status";
 import type { ContactChannelKind } from "./contact-channel-kind";
@@ -16,6 +18,7 @@ type NarrowedColumns = {
   bookings: {
     booking_status: BookingStatus;
     payment_status: PaymentStatus;
+    booking_source: BookingSource;
   };
   booking_unit_availability: { booking_status: BookingStatus };
   public_unit_availability: { booking_status: BookingStatus };

@@ -44,7 +44,7 @@ import { useCreateBooking } from "@/stores/useBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
 import type { MultiUnitBooking } from "@/types";
 
-import { WalkInField } from "./form-fields";
+import { BookingSourceField } from "./form-fields";
 import { FormSkeleton } from "./FormSkeleton";
 
 interface BookingFormProps {
@@ -102,7 +102,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
       contact_number: "",
       special_requests: "",
       payment_method: undefined,
-      is_walk_in: false,
+      booking_source: "Direct",
       ...initialData,
     },
     mode: "onBlur",
@@ -275,7 +275,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
         units: [{ unit_id: data.unit_id, num_guests: data.num_guests }],
         payment: { method: data.payment_method, amount: calculatedTotal },
         special_requests: sanitizedData.special_requests || data.special_requests || undefined,
-        is_walk_in: data.is_walk_in ?? false,
+        booking_source: data.booking_source,
         source: "admin",
       });
       toast.success(`Booking ${booking.booking_reference} created`);
@@ -466,10 +466,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
 
   const renderStep2 = () => (
     <div className="space-y-6">
-      <WalkInField
-        control={form.control}
-        description="Check this if the guest arrived on-site without a prior reservation. Reporting flag only — does not change pricing, payment, or confirmation behavior."
-      />
+      <BookingSourceField control={form.control} />
 
       <FormField control={form.control} name="guest_name" label="Full Name">
         {(field) => <Input placeholder="Enter guest's full name" autoComplete="off" {...field} />}

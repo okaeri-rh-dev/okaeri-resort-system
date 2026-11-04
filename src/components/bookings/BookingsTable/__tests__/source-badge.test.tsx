@@ -41,6 +41,7 @@ const baseBooking: Booking = {
   special_requests: null,
   internal_notes: null,
   is_multi_unit: false,
+  booking_source: "Direct",
   is_walk_in: false,
   unit_count: 1,
   pricing_metadata: null,
@@ -60,28 +61,14 @@ const renderCard = (overrides: Partial<Booking>) =>
     />
   );
 
-describe("BookingCard walk-in badge", () => {
-  it("renders the Walk-in badge when is_walk_in is true", () => {
-    renderCard({ is_walk_in: true });
-    expect(screen.getByText("Walk-in")).toBeInTheDocument();
+describe("BookingCard source badge", () => {
+  it.each(["Walk-in", "Airbnb", "Website"])("shows one %s badge", (source) => {
+    renderCard({ booking_source: source });
+    expect(screen.getAllByText(source)).toHaveLength(1);
   });
 
-  it("does not render the Walk-in badge when is_walk_in is false", () => {
-    renderCard({ is_walk_in: false });
-    expect(screen.queryByText("Walk-in")).not.toBeInTheDocument();
-  });
-
-  it("does not render the Walk-in badge when is_walk_in is omitted (legacy bookings)", () => {
-    const legacy = { ...baseBooking };
-    delete (legacy as { is_walk_in?: boolean }).is_walk_in;
-    render(
-      <BookingCard
-        booking={legacy}
-        onUploadPayment={() => undefined}
-        onCancel={() => undefined}
-        updateBookingStatus={noopMutation}
-      />
-    );
-    expect(screen.queryByText("Walk-in")).not.toBeInTheDocument();
+  it("shows no source badge on a Direct booking", () => {
+    renderCard({ booking_source: "Direct" });
+    expect(screen.queryByText("Direct")).not.toBeInTheDocument();
   });
 });

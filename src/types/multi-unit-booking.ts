@@ -7,6 +7,8 @@
  * @module MultiUnitBookingTypes
  */
 
+import type { StaffBookingSource } from "@/lib/bookings/source";
+
 // ============================================
 // BOOKING UNIT TYPES
 // ============================================
@@ -140,7 +142,7 @@ export interface AdminMultiUnitBookingCreate {
   };
   special_requests?: string;
   internal_notes?: string;
-  is_walk_in?: boolean;
+  booking_source?: StaffBookingSource;
   source?: string;
   idempotency_key?: string;
 }

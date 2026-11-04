@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 
+import { BOOKING_SOURCES } from "@/lib/bookings/source";
 import { sanitizeText } from "@/lib/security/sanitize";
 
 import { typeError } from "./type-error";
@@ -34,7 +35,7 @@ export const bookingEditSchema = z
       .string()
       .transform((val) => sanitizeText(val))
       .optional(),
-    is_walk_in: z.boolean(),
+    booking_source: z.enum(BOOKING_SOURCES),
   })
   .refine((data) => data.check_out > data.check_in, {
     message: "Check-out must be after check-in",

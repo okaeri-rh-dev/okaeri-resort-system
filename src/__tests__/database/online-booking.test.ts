@@ -106,13 +106,14 @@ describe("create_guest_booking", () => {
     const { data: booking, error } = await supabase
       .from("bookings")
       .select(
-        "is_guest_booking, unit_assignment_status, requested_unit_count, unit_count, num_guests, total_amount, downpayment_required, pricing_snapshot, payment_proof_url, payment_status, booking_status, check_in, guest_booking_unit_requests(guests_per_unit)"
+        "booking_source, is_guest_booking, unit_assignment_status, requested_unit_count, unit_count, num_guests, total_amount, downpayment_required, pricing_snapshot, payment_proof_url, payment_status, booking_status, check_in, guest_booking_unit_requests(guests_per_unit)"
       )
       .eq("booking_id", bookingId)
       .single();
     expect(error).toBeNull();
 
     expect(booking).toMatchObject({
+      booking_source: "Website",
       is_guest_booking: true,
       unit_assignment_status: "pending",
       requested_unit_count: 2,

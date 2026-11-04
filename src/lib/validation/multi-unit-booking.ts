@@ -8,6 +8,7 @@
 
 import { z } from "zod";
 
+import { STAFF_BOOKING_SOURCES } from "@/lib/bookings/source";
 import { emailRegex, philippinePhoneRegex } from "@/lib/validations";
 
 /**
@@ -36,8 +37,7 @@ const baseMultiUnitBookingSchema = z.object({
   special_requests: z.string().max(1000).optional(),
   internal_notes: z.string().max(1000).optional(),
 
-  // Reporting flags
-  is_walk_in: z.boolean(),
+  booking_source: z.enum(STAFF_BOOKING_SOURCES),
 });
 
 /**
