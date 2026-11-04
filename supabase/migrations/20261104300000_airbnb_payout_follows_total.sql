@@ -86,7 +86,7 @@ BEGIN
           AND b.booking_source = 'Airbnb'
           AND pay.payment_method = 'Airbnb payout'
           AND pay.status <> 'Refunded'
-        ORDER BY pay.created_at, pay.payment_id
+        ORDER BY pay.status = 'Active' DESC, pay.created_at, pay.payment_id
         LIMIT 1
     );
 END;

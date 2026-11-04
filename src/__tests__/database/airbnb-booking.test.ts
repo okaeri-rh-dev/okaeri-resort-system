@@ -118,7 +118,8 @@ describe("Airbnb booking", () => {
     const booking = await newBooking("Airbnb", [4000]);
     const manager = roleClients.byRole.manager;
 
-    await updateBooking(manager, booking.booking_id, { total_amount: 0 });
+    const cancelled = await updateBooking(manager, booking.booking_id, { total_amount: 0 });
+    expect(cancelled.payment_status).toBe("Pending");
     expect(await paymentsOf(booking.booking_id)).toEqual([
       expect.objectContaining({ amount: 4000, status: "Deleted" }),
     ]);
@@ -128,6 +129,32 @@ describe("Airbnb booking", () => {
     expect(await paymentsOf(booking.booking_id)).toEqual([
       expect.objectContaining({ amount: 2000, status: "Active" }),
     ]);
+  });
+
+  it("a new total follows the active payout, not one staff deleted", async () => {
+    if (!shouldRun) return;
+    const booking = await newBooking("Airbnb", [4000]);
+    const deleted = await service
+      .from("payments")
+      .update({ status: "Deleted" })
+      .eq("booking_id", booking.booking_id);
+    if (deleted.error) throw deleted.error;
+    const manual = await service
+      .from("payments")
+      .insert({ booking_id: booking.booking_id, amount: 4000, payment_method: "Airbnb payout" });
+    if (manual.error) throw manual.error;
+
+    const updated = await updateBooking(roleClients.byRole.manager, booking.booking_id, {
+      total_amount: 3000,
+    });
+
+    expect(updated.payment_status).toBe("Completed");
+    expect(await paymentsOf(booking.booking_id)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ amount: 4000, status: "Deleted" }),
+        expect.objectContaining({ amount: 3000, status: "Active" }),
+      ])
+    );
   });
 
   it("a new total leaves a Direct booking's payments alone", async () => {
