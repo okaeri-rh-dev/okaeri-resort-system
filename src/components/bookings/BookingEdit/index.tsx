@@ -30,7 +30,7 @@ import { bookingEditSchema, type BookingEditInput } from "@/lib/validation/entit
 import { useUpdateBooking } from "@/stores/useBookingStore";
 import type { Booking, Unit } from "@/types/entity-detail.types";
 
-import { BookingSourceField } from "../form-fields";
+import { BookingSourceField, ConfirmationCodeField } from "../form-fields";
 import { toBookingUpdate } from "./to-booking-update";
 
 export interface BookingEditPageProps {
@@ -61,6 +61,7 @@ export function BookingEditPage() {
         (booking.payment_method as "Cash" | "GCash" | "BankTransfer" | "Card") || "Cash",
       special_requests: booking.special_requests || "",
       booking_source: booking.booking_source,
+      airbnb_confirmation_code: booking.airbnb_confirmation_code ?? "",
       total_amount: booking.total_amount,
     },
   });
@@ -131,6 +132,10 @@ export function BookingEditPage() {
                 control={form.control}
                 isWebsite={booking.booking_source === "Website"}
               />
+
+              {form.watch("booking_source") === "Airbnb" && (
+                <ConfirmationCodeField control={form.control} />
+              )}
 
               <FormField control={form.control} name="guest_name" label="Guest Name">
                 {(field) => <Input placeholder="Enter guest name" autoComplete="off" {...field} />}

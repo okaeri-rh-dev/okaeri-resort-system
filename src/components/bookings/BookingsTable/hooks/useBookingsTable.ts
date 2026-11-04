@@ -93,6 +93,7 @@ export const useBookingsTable = () => {
           booking.guest_name?.toLowerCase().includes(query) ||
           booking.email?.toLowerCase().includes(query) ||
           booking.booking_reference?.toLowerCase().includes(query) ||
+          booking.airbnb_confirmation_code?.toLowerCase().includes(query) ||
           booking.contact_number?.includes(query)
       );
     }

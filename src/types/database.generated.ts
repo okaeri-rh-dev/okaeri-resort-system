@@ -443,6 +443,7 @@ export type Database = {
       };
       bookings: {
         Row: {
+          airbnb_confirmation_code: string | null;
           anonymized_at: string | null;
           base_amount: number | null;
           booking_id: string;
@@ -482,6 +483,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          airbnb_confirmation_code?: string | null;
           anonymized_at?: string | null;
           base_amount?: number | null;
           booking_id?: string;
@@ -520,6 +522,7 @@ export type Database = {
           upload_status?: string | null;
         };
         Update: {
+          airbnb_confirmation_code?: string | null;
           anonymized_at?: string | null;
           base_amount?: number | null;
           booking_id?: string;

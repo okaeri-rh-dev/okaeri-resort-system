@@ -44,7 +44,7 @@ import { useCreateBooking } from "@/stores/useBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
 import type { MultiUnitBooking } from "@/types";
 
-import { BookingSourceField, PayoutField } from "./form-fields";
+import { BookingSourceField, ConfirmationCodeField, PayoutField } from "./form-fields";
 import { FormSkeleton } from "./FormSkeleton";
 
 interface BookingFormProps {
@@ -213,7 +213,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
 
         case 3:
           if (values.booking_source === "Airbnb")
-            return form.trigger(["payout", "special_requests"]);
+            return form.trigger(["payout", "airbnb_confirmation_code", "special_requests"]);
           await bookingStep3Schema.parseAsync({
             special_requests: values.special_requests,
             payment_method: values.payment_method,
@@ -278,7 +278,10 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
         check_out: pickedDay(data.check_out),
         units: [{ unit_id: data.unit_id, num_guests: data.num_guests }],
         ...(data.booking_source === "Airbnb"
-          ? { payout: data.payout }
+          ? {
+              payout: data.payout,
+              airbnb_confirmation_code: data.airbnb_confirmation_code || undefined,
+            }
           : data.payment_method && {
               payment: { method: data.payment_method, amount: calculatedTotal },
             }),
@@ -518,7 +521,10 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
   const renderStep3 = () => (
     <div className="space-y-6">
       {isAirbnb ? (
-        <PayoutField control={form.control} />
+        <>
+          <PayoutField control={form.control} />
+          <ConfirmationCodeField control={form.control} />
+        </>
       ) : (
         <FormField control={form.control} name="payment_method" label="Payment Method">
           {(field) => (

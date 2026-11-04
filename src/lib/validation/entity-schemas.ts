@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { BOOKING_SOURCES } from "@/lib/bookings/source";
 import { sanitizeText } from "@/lib/security/sanitize";
+import { confirmationCodeSchema } from "@/lib/validations";
 
 import { typeError } from "./type-error";
 
@@ -36,6 +37,7 @@ export const bookingEditSchema = z
       .transform((val) => sanitizeText(val))
       .optional(),
     booking_source: z.enum(BOOKING_SOURCES),
+    airbnb_confirmation_code: confirmationCodeSchema,
     total_amount: z
       .number({ error: typeError("Total is required") })
       .min(0, "Total cannot be negative"),

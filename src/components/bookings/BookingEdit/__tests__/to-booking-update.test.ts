@@ -40,6 +40,7 @@ describe("toBookingUpdate", () => {
         "email",
         "guest_name",
         "booking_source",
+        "airbnb_confirmation_code",
         "num_guests",
         "payment_method",
         "special_requests",
@@ -51,5 +52,18 @@ describe("toBookingUpdate", () => {
   it("sends the total only when it changed", () => {
     expect(toBookingUpdate({ ...editInput, total_amount: 4200.5 }, 5000).total_amount).toBe(4200.5);
     expect(toBookingUpdate(editInput, 5000)).not.toHaveProperty("total_amount");
+  });
+
+  it.each([
+    ["Airbnb", "HMABC123", "HMABC123"],
+    ["Airbnb", "", null],
+    ["Direct", "HMABC123", null],
+  ] as const)("sends a %s booking's code %o as %o", (booking_source, code, sent) => {
+    const update = toBookingUpdate(
+      { ...editInput, booking_source, airbnb_confirmation_code: code },
+      5000
+    );
+
+    expect(update.airbnb_confirmation_code).toBe(sent);
   });
 });

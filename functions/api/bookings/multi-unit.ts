@@ -13,10 +13,16 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import { BLOCKED_UNIT_MESSAGE, BlockedUnitError } from "@/lib/bookings/availability";
+import { DuplicateConfirmationCodeError } from "@/lib/bookings/confirmation-code";
 import { createBooking, type PricedUnit } from "@/lib/bookings/create";
 import { STAFF_BOOKING_SOURCES } from "@/lib/bookings/source";
 import { isManilaDay, toStayInstants } from "@/lib/bookings/stay";
-import { hasPayoutIfAirbnb, payoutRequiredIssue, payoutSchema } from "@/lib/validations";
+import {
+  confirmationCodeSchema,
+  hasPayoutIfAirbnb,
+  payoutRequiredIssue,
+  payoutSchema,
+} from "@/lib/validations";
 import type { Database } from "@/types/database.types";
 
 import {
@@ -96,6 +102,7 @@ const multiUnitBookingSchema = z
     is_walk_in: z.boolean().optional().default(false),
     source: z.enum(["web", "mobile", "admin"]).optional(),
     payout: payoutSchema,
+    airbnb_confirmation_code: confirmationCodeSchema,
   })
   .refine((data) => data.check_out > data.check_in, {
     message: "Check-out must be after check-in",
@@ -291,6 +298,13 @@ export const onRequestPost = async (context: {
       );
     }
 
+    if (error instanceof DuplicateConfirmationCodeError) {
+      return Response.json(
+        { success: false, error: { code: "DUPLICATE_CONFIRMATION_CODE", message: error.message } },
+        { status: 409, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     if (error instanceof UnpricedBookingError) {
       return Response.json(
         {
@@ -465,6 +479,8 @@ async function createMultiUnitBooking(
     special_requests: data.special_requests ?? null,
     internal_notes: data.internal_notes ?? null,
     booking_source: data.booking_source ?? (data.is_walk_in ? "Walk-in" : "Direct"),
+    airbnb_confirmation_code:
+      (data.booking_source === "Airbnb" && data.airbnb_confirmation_code) || null,
   });
 }
 

@@ -481,6 +481,24 @@ describe("POST /api/bookings/multi-unit", () => {
     );
   });
 
+  it.each([
+    [
+      { booking_source: "Airbnb", payout: 5000, airbnb_confirmation_code: " hmabc123 " },
+      "HMABC123",
+    ],
+    [{ booking_source: "Airbnb", payout: 5000, airbnb_confirmation_code: "" }, null],
+    [{ booking_source: "Direct", airbnb_confirmation_code: "HMABC123" }, null],
+  ])("should store the confirmation code from %o as %s", async (fields, code) => {
+    const mockClient = createBookingMocks({ units: testUnits });
+    await postWith(mockClient, { ...validBookingData, ...fields });
+    expect(mockClient.rpc).toHaveBeenCalledWith(
+      "create_multi_unit_booking",
+      expect.objectContaining({
+        p_booking_data: expect.objectContaining({ airbnb_confirmation_code: code }),
+      })
+    );
+  });
+
   it("should split an Airbnb payout across cabins in proportion to the engine price", async () => {
     const createdSubtotals = async (body: unknown) => {
       const mockClient = createBookingMocks({ units: testUnits });

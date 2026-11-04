@@ -167,6 +167,13 @@ export const hasPayoutIfAirbnb = (data: { booking_source?: string; payout?: numb
 
 export const payoutRequiredIssue = { message: "Enter the Airbnb payout", path: ["payout"] };
 
+export const confirmationCodeSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .max(50, "Use 50 characters or fewer for the confirmation code")
+  .optional();
+
 // Complete booking form schema (all steps combined)
 export const completeBookingSchema = bookingStep1BaseSchema
   .merge(
@@ -178,6 +185,7 @@ export const completeBookingSchema = bookingStep1BaseSchema
         .refine((val) => val === "" || philippinePhoneRegex.test(val), messages.phone),
       booking_source: z.enum(STAFF_BOOKING_SOURCES),
       payout: payoutSchema,
+      airbnb_confirmation_code: confirmationCodeSchema,
     })
   )
   .merge(bookingStep3Schema.partial({ payment_method: true }))

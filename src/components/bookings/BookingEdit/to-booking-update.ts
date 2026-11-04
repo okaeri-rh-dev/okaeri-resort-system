@@ -13,5 +13,7 @@ export function toBookingUpdate(input: BookingEditInput, currentTotal: number): 
     payment_method: input.payment_method,
     special_requests: input.special_requests,
     booking_source: input.booking_source,
+    airbnb_confirmation_code:
+      (input.booking_source === "Airbnb" && input.airbnb_confirmation_code) || null,
   };
 }
