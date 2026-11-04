@@ -26,12 +26,16 @@ type Result<T> = { data: T | null; error: { message: string; code?: string } | n
 
 const EXCLUSION_VIOLATION = "23P01";
 
-function rowFrom<T>({ data, error }: Result<T>): NonNullable<T> {
+function throwIfError(error: Result<unknown>["error"]) {
   if (error?.code === EXCLUSION_VIOLATION) {
     throw new Error("This unit is already booked for some of these days");
   }
   if (isBlockedNightError(error)) throw new BlockedUnitError();
   if (error) throw new Error(error.message);
+}
+
+function rowFrom<T>({ data, error }: Result<T>): NonNullable<T> {
+  throwIfError(error);
   if (data === null || data === undefined) throw new Error("The booking was not returned");
   return data;
 }
@@ -47,19 +51,12 @@ export async function updateBooking(
   if (stay) Object.assign(update, toStayInstants(stay.check_in, stay.check_out));
   if (changes.email) update.guest_id = await guestIdForEmail(client, changes.email, changes);
 
-  // shortcut: details and total save in two writes, so a failed total change keeps the details; move both into one RPC if that matters.
-  if (Object.keys(update).length > 0 || total_amount === undefined) {
-    const row = rowFrom(
-      await client.from("bookings").update(update).eq("booking_id", bookingId).select().single()
-    );
-    if (total_amount === undefined) return row;
-  }
-
-  const { error } = await client.rpc("set_booking_total", {
+  const { error } = await client.rpc("update_booking", {
     p_booking_id: bookingId,
+    p_changes: update,
     p_total: total_amount,
   });
-  if (error) throw new Error(error.message);
+  throwIfError(error);
   return rowFrom(await client.from("bookings").select().eq("booking_id", bookingId).single());
 }
 

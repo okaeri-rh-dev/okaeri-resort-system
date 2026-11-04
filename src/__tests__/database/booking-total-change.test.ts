@@ -93,6 +93,26 @@ describe("changing a booking's total", () => {
     expect(await cabinSubtotals(bookingId)).toEqual([2000, 4000]);
   });
 
+  it("a rejected total also rejects the details saved with it", async () => {
+    if (!shouldRun) return;
+    const bookingId = await twoCabinBooking();
+
+    await expect(
+      updateBooking(roleClients.byRole.staff, bookingId, {
+        special_requests: "Saved with the total",
+        total_amount: 1000,
+      })
+    ).rejects.toThrow(/only a manager/i);
+
+    const { data, error } = await admin
+      .from("bookings")
+      .select("special_requests")
+      .eq("booking_id", bookingId)
+      .single();
+    if (error) throw error;
+    expect(data.special_requests).not.toBe("Saved with the total");
+  });
+
   it("payment status follows the new total", async () => {
     if (!shouldRun) return;
     const bookingId = await twoCabinBooking();

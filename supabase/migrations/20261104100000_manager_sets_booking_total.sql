@@ -83,4 +83,39 @@ COMMENT ON FUNCTION public.set_booking_total(uuid, numeric) IS
 REVOKE ALL ON FUNCTION public.set_booking_total(uuid, numeric) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.set_booking_total(uuid, numeric) TO authenticated;
 
+-- Saves a booking edit and an optional new total in one transaction. Runs as the
+-- caller, so the bookings column grants and RLS still decide what it may change;
+-- keys outside the editable columns are ignored.
+CREATE OR REPLACE FUNCTION public.update_booking(
+    p_booking_id uuid,
+    p_changes jsonb,
+    p_total numeric DEFAULT NULL
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $$
+BEGIN
+    UPDATE public.bookings b
+    SET (guest_id, guest_name, email, contact_number, num_guests, check_in, check_out,
+         payment_method, special_requests, booking_source)
+      = (SELECT c.guest_id, c.guest_name, c.email, c.contact_number, c.num_guests, c.check_in,
+                c.check_out, c.payment_method, c.special_requests, c.booking_source
+         FROM jsonb_populate_record(b, p_changes) c)
+    WHERE b.booking_id = p_booking_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Booking % not found', p_booking_id USING ERRCODE = 'P0002';
+    END IF;
+
+    IF p_total IS NOT NULL THEN
+        PERFORM public.set_booking_total(p_booking_id, p_total);
+    END IF;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.update_booking(uuid, jsonb, numeric) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.update_booking(uuid, jsonb, numeric) TO authenticated;
+
 COMMIT;
