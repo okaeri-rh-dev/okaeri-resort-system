@@ -101,6 +101,7 @@ export interface Booking {
   anonymized_at?: string | null;
   is_multi_unit?: boolean | null;
   booking_source?: BookingSource;
+  airbnb_confirmation_code?: string | null;
   is_walk_in?: boolean;
   is_guest_booking?: boolean | null;
   unit_assignment_status?: string | null;

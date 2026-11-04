@@ -13,6 +13,7 @@ import { devtools, persist } from "zustand/middleware";
 import { getAccessToken } from "@/hooks/useAuthToken";
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
 import {
+  BOOKING_SEARCH_COLUMNS,
   cancelBooking,
   dayAfter,
   filterDay,
@@ -289,8 +290,6 @@ const cachedBooking = (queryClient: QueryClient, bookingId: string): Booking | u
 };
 
 // Fetch all bookings with filters
-const BOOKING_SEARCH_COLUMNS = ["guest_name", "booking_reference", "email", "contact_number"];
-
 const bookingListQuery = ({
   filters,
   searchQuery,

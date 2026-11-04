@@ -7,7 +7,15 @@
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { createBooking, manilaDayOf, updateBooking, type StaffBookingSource } from "@/lib/bookings";
+import {
+  BOOKING_SEARCH_COLUMNS,
+  createBooking,
+  DUPLICATE_CONFIRMATION_CODE_MESSAGE,
+  manilaDayOf,
+  updateBooking,
+  type StaffBookingSource,
+} from "@/lib/bookings";
+import { ilikeAnyFilter } from "@/lib/search-filter";
 
 import { createRoleClients, type RoleClients } from "../setup/role-clients";
 import {
@@ -21,7 +29,11 @@ let shouldRun = false;
 let roleClients: RoleClients;
 let dayOffset = 500;
 
-async function newBooking(booking_source: StaffBookingSource, subtotals: number[]) {
+async function newBooking(
+  booking_source: StaffBookingSource,
+  subtotals: number[],
+  airbnb_confirmation_code?: string
+) {
   dayOffset += 3;
   const checkIn = new Date(Date.now() + dayOffset * 24 * 60 * 60 * 1000);
   const units = await Promise.all(
@@ -41,6 +53,7 @@ async function newBooking(booking_source: StaffBookingSource, subtotals: number[
     units,
     payment_method: null,
     booking_source,
+    airbnb_confirmation_code,
   });
 }
 
@@ -170,5 +183,50 @@ describe("Airbnb booking", () => {
     expect(await paymentsOf(booking.booking_id)).toEqual([
       expect.objectContaining({ amount: 1000, payment_method: "Cash", status: "Active" }),
     ]);
+  });
+
+  it("stores its confirmation code and rejects a code already used", async () => {
+    if (!shouldRun) return;
+    const booking = await newBooking("Airbnb", [4000], "HMDUPE001");
+
+    expect(booking.airbnb_confirmation_code).toBe("HMDUPE001");
+    await expect(newBooking("Airbnb", [4000], "HMDUPE001")).rejects.toThrow(
+      DUPLICATE_CONFIRMATION_CODE_MESSAGE
+    );
+  });
+
+  it("staff add a code in an edit, but not one another booking has", async () => {
+    if (!shouldRun) return;
+    await newBooking("Airbnb", [4000], "HMTAKEN01");
+    const booking = await newBooking("Airbnb", [4000]);
+    const staff = roleClients.byRole.staff;
+
+    const updated = await updateBooking(staff, booking.booking_id, {
+      airbnb_confirmation_code: "HMEDIT001",
+    });
+    expect(updated.airbnb_confirmation_code).toBe("HMEDIT001");
+
+    await expect(
+      updateBooking(staff, booking.booking_id, { airbnb_confirmation_code: "HMTAKEN01" })
+    ).rejects.toThrow(DUPLICATE_CONFIRMATION_CODE_MESSAGE);
+  });
+
+  it("many bookings can have no code", async () => {
+    if (!shouldRun) return;
+    await newBooking("Airbnb", [4000]);
+    await expect(newBooking("Airbnb", [4000])).resolves.toBeDefined();
+  });
+
+  it("the bookings search finds a booking by its confirmation code", async () => {
+    if (!shouldRun) return;
+    const booking = await newBooking("Airbnb", [4000], "HMSEARCH1");
+
+    const { data, error } = await roleClients.byRole.staff
+      .from("bookings")
+      .select("booking_id")
+      .or(ilikeAnyFilter(BOOKING_SEARCH_COLUMNS, "hmsearch"));
+
+    expect(error).toBeNull();
+    expect(data).toEqual([{ booking_id: booking.booking_id }]);
   });
 });

@@ -10,6 +10,7 @@ import { z } from "zod";
 
 import { STAFF_BOOKING_SOURCES } from "@/lib/bookings/source";
 import {
+  confirmationCodeSchema,
   emailRegex,
   hasPayoutIfAirbnb,
   payoutRequiredIssue,
@@ -45,6 +46,7 @@ const baseMultiUnitBookingSchema = z.object({
 
   booking_source: z.enum(STAFF_BOOKING_SOURCES),
   payout: payoutSchema,
+  airbnb_confirmation_code: confirmationCodeSchema,
 });
 
 /**

@@ -4,6 +4,7 @@ import type { BookingStatus } from "@/types/booking-status";
 import type { Database, Tables, TablesInsert, TablesUpdate } from "@/types/database.types";
 
 import { BlockedUnitError, isBlockedNightError } from "./availability";
+import { DuplicateConfirmationCodeError, isDuplicateConfirmationCode } from "./confirmation-code";
 import type { BookingSource } from "./source";
 import { toStayInstants, type ManilaDay } from "./stay";
 
@@ -18,9 +19,18 @@ export type BookingChanges = Partial<{
   payment_method: string | null;
   special_requests: string | null;
   booking_source: BookingSource;
+  airbnb_confirmation_code: string | null;
   /** Manager and above only; split across the cabins by the database. */
   total_amount: number;
 }> & { stay?: { check_in: ManilaDay; check_out: ManilaDay } };
+
+export const BOOKING_SEARCH_COLUMNS = [
+  "guest_name",
+  "booking_reference",
+  "email",
+  "contact_number",
+  "airbnb_confirmation_code",
+];
 
 type Result<T> = { data: T | null; error: { message: string; code?: string } | null };
 
@@ -31,6 +41,7 @@ function throwIfError(error: Result<unknown>["error"]) {
     throw new Error("This unit is already booked for some of these days");
   }
   if (isBlockedNightError(error)) throw new BlockedUnitError();
+  if (isDuplicateConfirmationCode(error)) throw new DuplicateConfirmationCodeError();
   if (error) throw new Error(error.message);
 }
 

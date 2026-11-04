@@ -59,7 +59,7 @@ import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
 import type { AdminMultiUnitBookingCreate, Unit } from "@/types";
 
-import { BookingSourceField, PayoutField } from "./form-fields";
+import { BookingSourceField, ConfirmationCodeField, PayoutField } from "./form-fields";
 import { MultiUnitPricingSummary } from "./MultiUnitPricingSummary";
 import { MultiUnitSelector } from "./MultiUnitSelector";
 import { UnitCardList } from "./UnitCardList";
@@ -296,7 +296,10 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
           unit_notes: unit.guest_assignment?.special_requests,
         })),
         ...(data.booking_source === "Airbnb"
-          ? { payout: data.payout }
+          ? {
+              payout: data.payout,
+              airbnb_confirmation_code: data.airbnb_confirmation_code,
+            }
           : {
               payment: {
                 method: data.payment_method,
@@ -330,11 +333,11 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
       }
     } catch (error) {
       console.error("Booking creation failed:", error);
-      toast.error(
-        error instanceof OfflineBookingError
-          ? error.message
-          : "Failed to create booking. Please try again."
-      );
+      if (error instanceof OfflineBookingError) toast.error(error.message);
+      else
+        toast.error("Failed to create booking", {
+          description: error instanceof Error ? error.message : "Please try again.",
+        });
     }
   };
 
@@ -518,7 +521,10 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
                   <MultiUnitPricingSummary units={selectedUnits} />
 
                   {isAirbnb ? (
-                    <PayoutField control={form.control} />
+                    <>
+                      <PayoutField control={form.control} />
+                      <ConfirmationCodeField control={form.control} />
+                    </>
                   ) : (
                     <FormField control={form.control} name="payment_method" label="Payment Method">
                       {(field) => (

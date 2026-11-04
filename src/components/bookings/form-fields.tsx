@@ -36,6 +36,28 @@ export function BookingSourceField<
   );
 }
 
+export function ConfirmationCodeField<
+  TFieldValues extends FieldValues & { airbnb_confirmation_code?: string },
+>({ control }: { control: Control<TFieldValues> }) {
+  return (
+    <FormField
+      control={control}
+      name={"airbnb_confirmation_code" as FieldPath<TFieldValues>}
+      label="Airbnb confirmation code"
+      description="Optional. For example HMABC123."
+    >
+      {(field) => (
+        <Input
+          autoComplete="off"
+          autoCapitalize="characters"
+          {...field}
+          value={field.value ?? ""}
+        />
+      )}
+    </FormField>
+  );
+}
+
 /** An Airbnb booking's total: the payout staff type in (ADR 0006). */
 export function PayoutField<TFieldValues extends FieldValues & { payout?: number }>({
   control,
