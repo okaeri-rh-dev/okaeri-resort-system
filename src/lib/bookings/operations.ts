@@ -47,6 +47,7 @@ export async function updateBooking(
   if (stay) Object.assign(update, toStayInstants(stay.check_in, stay.check_out));
   if (changes.email) update.guest_id = await guestIdForEmail(client, changes.email, changes);
 
+  // shortcut: details and total save in two writes, so a failed total change keeps the details; move both into one RPC if that matters.
   if (Object.keys(update).length > 0 || total_amount === undefined) {
     const row = rowFrom(
       await client.from("bookings").update(update).eq("booking_id", bookingId).select().single()

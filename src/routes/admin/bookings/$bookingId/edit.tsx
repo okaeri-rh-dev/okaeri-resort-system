@@ -22,7 +22,7 @@ export const Route = createFileRoute("/admin/bookings/$bookingId/edit")({
     const canEdit = await hasAuditRole(AuditRole.STAFF);
 
     if (!canEdit) {
-      throw new Error("You do not have permission to edit bookings. Staff role required.");
+      throw new Error("You do not have permission to edit bookings.");
     }
   },
 

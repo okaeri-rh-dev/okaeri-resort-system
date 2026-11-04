@@ -292,7 +292,10 @@ export function BookingEditPage() {
                       min={0}
                       readOnly={!isManager}
                       {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(e.target.value === "" ? undefined : Number(e.target.value))
+                      }
                     />
                   )}
                 </FormField>

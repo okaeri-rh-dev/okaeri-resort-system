@@ -50,5 +50,6 @@ describe("toBookingUpdate", () => {
 
   it("sends the total only when it changed", () => {
     expect(toBookingUpdate({ ...editInput, total_amount: 4200.5 }, 5000).total_amount).toBe(4200.5);
+    expect(toBookingUpdate(editInput, 5000)).not.toHaveProperty("total_amount");
   });
 });

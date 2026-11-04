@@ -71,6 +71,18 @@ describe("changing a booking's total", () => {
     expect(await cabinSubtotals(bookingId)).toEqual([333.33, 666.67]);
   });
 
+  it("a total of zero sets every cabin to zero", async () => {
+    if (!shouldRun) return;
+    const bookingId = await twoCabinBooking();
+
+    const updated = await updateBooking(roleClients.byRole.manager, bookingId, {
+      total_amount: 0,
+    });
+
+    expect(updated.total_amount).toBe(0);
+    expect(await cabinSubtotals(bookingId)).toEqual([0, 0]);
+  });
+
   it("staff cannot change the total", async () => {
     if (!shouldRun) return;
     const bookingId = await twoCabinBooking();

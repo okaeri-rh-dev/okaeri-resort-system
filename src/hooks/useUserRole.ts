@@ -63,7 +63,7 @@ export function useUserRole() {
   // Only admin can do administrative tasks
   const isAdmin = role === AuditRole.ADMIN;
 
-  // Can edit bookings, payments, etc. (manager+)
+  // Can edit payments and cancel bookings (manager+)
   // role is undefined while loading or after a failed lookup
   const canEdit = !isStaff && role != null;
 
