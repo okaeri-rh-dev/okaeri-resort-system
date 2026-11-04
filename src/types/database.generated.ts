@@ -1232,6 +1232,7 @@ export type Database = {
       _anonymize_audit_rows: { Args: { p_audit_ids: string[] }; Returns: number };
       _audit_ids_for_records: { Args: { p_record_ids: string[] }; Returns: string[] };
       _payment_proof_path: { Args: { p_url: string }; Returns: string };
+      airbnb_payout_id: { Args: { p_booking_id: string }; Returns: string };
       anonymize_audit_logs: {
         Args: { p_older_than?: string };
         Returns: {

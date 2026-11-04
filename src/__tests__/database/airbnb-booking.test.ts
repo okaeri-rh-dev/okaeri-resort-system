@@ -185,6 +185,93 @@ describe("Airbnb booking", () => {
     ]);
   });
 
+  it("a change of source to Airbnb pays the booking by one payout for its total", async () => {
+    if (!shouldRun) return;
+    const booking = await newBooking("Direct", [2500.5]);
+
+    const updated = await updateBooking(roleClients.byRole.staff, booking.booking_id, {
+      booking_source: "Airbnb",
+    });
+
+    expect(updated.payment_status).toBe("Completed");
+    const payments = await paymentsOf(booking.booking_id);
+    expect(payments).toEqual([
+      expect.objectContaining({
+        amount: 2500.5,
+        payment_method: "Airbnb payout",
+        status: "Active",
+      }),
+    ]);
+    expect(manilaDayOf(payments[0].payment_date!)).toBe(manilaDayOf(updated.updated_at!));
+  });
+
+  it("a change of source from Airbnb soft-deletes the payout and keeps other payments", async () => {
+    if (!shouldRun) return;
+    const booking = await newBooking("Airbnb", [4000]);
+    const { error } = await service
+      .from("payments")
+      .insert({ booking_id: booking.booking_id, amount: 500, payment_method: "Cash" });
+    if (error) throw error;
+
+    const updated = await updateBooking(roleClients.byRole.staff, booking.booking_id, {
+      booking_source: "Direct",
+    });
+
+    expect(updated.payment_status).toBe("Partial");
+    expect(await paymentsOf(booking.booking_id)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          amount: 4000,
+          payment_method: "Airbnb payout",
+          status: "Deleted",
+        }),
+        expect.objectContaining({ amount: 500, payment_method: "Cash", status: "Active" }),
+      ])
+    );
+  });
+
+  it("a change back to Airbnb reactivates the one payout at the current total", async () => {
+    if (!shouldRun) return;
+    const booking = await newBooking("Airbnb", [4000]);
+    const manager = roleClients.byRole.manager;
+
+    await updateBooking(manager, booking.booking_id, { booking_source: "Direct" });
+    await updateBooking(manager, booking.booking_id, { total_amount: 3500 });
+    const updated = await updateBooking(manager, booking.booking_id, { booking_source: "Airbnb" });
+
+    expect(updated.payment_status).toBe("Completed");
+    expect(await paymentsOf(booking.booking_id)).toEqual([
+      expect.objectContaining({ amount: 3500, payment_method: "Airbnb payout", status: "Active" }),
+    ]);
+  });
+
+  it("one edit of total and source to Airbnb ends with the payout at the new total", async () => {
+    if (!shouldRun) return;
+    const booking = await newBooking("Direct", [4000]);
+
+    const updated = await updateBooking(roleClients.byRole.manager, booking.booking_id, {
+      booking_source: "Airbnb",
+      total_amount: 3200,
+    });
+
+    expect(updated.payment_status).toBe("Completed");
+    expect(await paymentsOf(booking.booking_id)).toEqual([
+      expect.objectContaining({ amount: 3200, payment_method: "Airbnb payout", status: "Active" }),
+    ]);
+  });
+
+  it("a change between sources other than Airbnb leaves payments alone", async () => {
+    if (!shouldRun) return;
+    const booking = await newBooking("Direct", [2500]);
+
+    const updated = await updateBooking(roleClients.byRole.staff, booking.booking_id, {
+      booking_source: "Walk-in",
+    });
+
+    expect(updated.payment_status).toBe("Pending");
+    expect(await paymentsOf(booking.booking_id)).toEqual([]);
+  });
+
   it("stores its confirmation code and rejects a code already used", async () => {
     if (!shouldRun) return;
     const booking = await newBooking("Airbnb", [4000], "HMDUPE001");
