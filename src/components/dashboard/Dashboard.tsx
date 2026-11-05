@@ -13,7 +13,7 @@ import { useAllBookings } from "@/stores/useBookingStore";
 
 import { DashboardCalendar } from "./DashboardCalendar";
 import { DashboardHeader } from "./DashboardHeader";
-import { DayPanel } from "./DayPanel";
+import { DayPane } from "./DayPane";
 
 export function Dashboard() {
   const { data: bookings, isLoading, dataUpdatedAt, isFetching } = useAllBookings();
@@ -23,6 +23,9 @@ export function Dashboard() {
   const { day: selectedDay } = useSearch({ strict: false });
   const today = manilaDayOf(new Date());
   const [month, setMonth] = useState(() => startOfMonth(parseISO(selectedDay ?? today)));
+  // The pane keeps showing the last day while it slides out
+  const [paneDay, setPaneDay] = useState(selectedDay);
+  if (selectedDay && selectedDay !== paneDay) setPaneDay(selectedDay);
 
   const refresh = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: bookingKeys.all });
@@ -68,11 +71,12 @@ export function Dashboard() {
         onSelectDay={selectDay}
         numbers={`${Math.round(numbers.occupancy * 100)}% occupancy · ${numbers.confirmedCount} confirmed`}
       />
-      {selectedDay && (
-        <DayPanel
+      {paneDay && (
+        <DayPane
           bookings={allBookings}
           isLoading={isLoading}
-          day={selectedDay}
+          open={selectedDay !== undefined}
+          day={paneDay}
           today={today}
           onSelectDay={selectDay}
           onClose={() => selectDay(undefined)}

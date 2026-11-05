@@ -16,16 +16,25 @@ import type { Booking } from "@/types";
 
 import { BookingRow } from "./BookingRow";
 
-interface DayPanelProps {
+interface DayPaneProps {
   bookings: Booking[];
   isLoading: boolean;
+  open: boolean;
   day: ManilaDay;
   today: ManilaDay;
   onSelectDay: (day: ManilaDay) => void;
   onClose: () => void;
 }
 
-export function DayPanel({ bookings, isLoading, day, today, onSelectDay, onClose }: DayPanelProps) {
+export function DayPane({
+  bookings,
+  isLoading,
+  open,
+  day,
+  today,
+  onSelectDay,
+  onClose,
+}: DayPaneProps) {
   const { checkIns, checkOuts, staying } = movementsOn(bookings, day);
   const { data: blocks } = useQuery(blocksInNightsQuery(day, day));
   const { cabinName } = useBlockCabins();
@@ -33,8 +42,15 @@ export function DayPanel({ bookings, isLoading, day, today, onSelectDay, onClose
   const date = parseISO(day);
 
   return (
-    <Sheet open onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="pane" aria-describedby={undefined}>
+    // Not modal, so a click on another calendar day reaches the calendar and changes the day
+    <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()} modal={false}>
+      <SheetContent
+        side="pane"
+        aria-describedby={undefined}
+        onInteractOutside={(event) => {
+          if ((event.target as Element).closest("[data-calendar-day]")) event.preventDefault();
+        }}
+      >
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2 pr-10">
             <SheetTitle asChild>

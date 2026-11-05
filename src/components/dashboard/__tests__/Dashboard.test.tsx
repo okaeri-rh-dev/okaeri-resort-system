@@ -181,6 +181,30 @@ describe("Dashboard", () => {
     expect(router.state.location.search).toEqual({});
   });
 
+  it("keeps the pane open on a click on another day", async () => {
+    const user = userEvent.setup();
+    data.bookings = [booking("in", "Maria Santos", "2026-11-14", "2026-11-16")];
+    renderDashboard("/admin/dashboard?day=2026-11-10");
+
+    await screen.findByRole("dialog", { name: /^Today/ });
+    await user.click(screen.getByRole("button", { name: /^November 14, 2026/ }));
+
+    expect(screen.getByRole("dialog", { name: /^Saturday Nov 14/ })).toHaveTextContent(
+      "Maria Santos"
+    );
+  });
+
+  it("closes the pane on a click anywhere else", async () => {
+    const user = userEvent.setup();
+    const router = renderDashboard("/admin/dashboard?day=2026-11-10");
+
+    await screen.findByRole("dialog", { name: /^Today/ });
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(router.state.location.search).toEqual({});
+  });
+
   it("steps through days with the previous and next day buttons", async () => {
     const user = userEvent.setup();
     renderDashboard();

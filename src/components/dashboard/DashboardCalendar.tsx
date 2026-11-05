@@ -86,6 +86,7 @@ function DayButton({ day, modifiers, ...props }: CalendarDayButtonProps) {
     <BookingTooltip bookings={dayBookings} date={date}>
       <Button
         {...props}
+        data-calendar-day
         onClick={() => onSelectDay(dateKey)}
         aria-pressed={isSelected}
         variant="ghost"
