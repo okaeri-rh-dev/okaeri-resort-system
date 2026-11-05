@@ -9,15 +9,18 @@ import { useProtoStore } from "./store-context";
 const VARIANT_NAMES = { 1: "Agenda", 2: "Views + side pane", 3: "Cabin timeline" } as const;
 type VariantKey = keyof typeof VARIANT_NAMES;
 const KEYS = [1, 2, 3] as const;
+const FLOW_NAMES = { 1: "Stepper page", 2: "One page", 3: "Sheet, calendar first" } as const;
 
 export function PrototypeSwitcher() {
   const { search, setSearch } = useProtoSearch();
   const { bookings, changedCount, reset } = useProtoStore();
-  const current = search.v;
+  const inFlow = !!search.new;
+  const current = inFlow ? search.flow : search.v;
 
   const step = (delta: number) => {
-    const index = (KEYS.indexOf(current) + delta + KEYS.length) % KEYS.length;
-    setSearch({ v: KEYS[index] as VariantKey, sel: undefined, panel: undefined });
+    const next = KEYS[(KEYS.indexOf(current) + delta + KEYS.length) % KEYS.length] as VariantKey;
+    if (inFlow) setSearch({ flow: next, step: undefined });
+    else setSearch({ v: next, sel: undefined, panel: undefined });
   };
 
   useEffect(() => {
@@ -34,7 +37,7 @@ export function PrototypeSwitcher() {
   if (import.meta.env.PROD) return null;
 
   return (
-    <div className="bg-foreground text-background shadow-popover expanded:bottom-4 fixed bottom-24 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full px-2 py-1 text-xs">
+    <div className="bg-foreground text-background shadow-popover fixed top-2 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full px-2 py-1 text-xs">
       <button
         type="button"
         aria-label="Previous variant"
@@ -44,7 +47,9 @@ export function PrototypeSwitcher() {
         <ChevronLeft className="size-4" aria-hidden="true" />
       </button>
       <span className="font-medium whitespace-nowrap tabular-nums">
-        V{current} {VARIANT_NAMES[current]}
+        {inFlow
+          ? `New booking F${current} ${FLOW_NAMES[current]}`
+          : `V${current} ${VARIANT_NAMES[current]}`}
       </span>
       <button
         type="button"

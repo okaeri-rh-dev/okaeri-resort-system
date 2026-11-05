@@ -60,6 +60,10 @@ export function ProtoStoreProvider({
       reject: (id) => update(id, "Payment rejected", () => ({ status: "Cancelled" })),
       recordPayment: (id) => update(id, "Payment recorded", (b) => ({ paid: b.total })),
       cancel: (id) => update(id, "Cancelled", () => ({ status: "Cancelled" })),
+      add: (booking) => {
+        setState((prev) => ({ ...prev, bookings: [booking, ...prev.bookings] }));
+        setChanged((prev) => new Set(prev).add(booking.id));
+      },
       reset: () => {
         setState({ scenario, bookings: buildFixture(scenario) });
         setChanged(new Set());

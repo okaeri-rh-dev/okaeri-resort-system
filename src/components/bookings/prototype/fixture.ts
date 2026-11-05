@@ -5,7 +5,7 @@
 import { addDays, differenceInCalendarDays, format, parseISO, startOfDay } from "date-fns";
 
 export type ProtoStatus = "Pending" | "Confirmed" | "CheckedIn" | "CheckedOut" | "Cancelled";
-export type ProtoSource = "guest" | "walk-in";
+export type ProtoSource = "guest" | "walk-in" | "direct" | "airbnb";
 
 export interface ProtoBooking {
   id: string;

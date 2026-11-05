@@ -5,7 +5,6 @@
  */
 import { useState } from "react";
 
-import { addDays, format, parseISO } from "date-fns";
 import { Filter, ImageIcon, Plus } from "lucide-react";
 
 import {
@@ -19,8 +18,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   Button,
-  Input,
-  Label,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -31,14 +28,13 @@ import {
 } from "@/components/patterns";
 import { formatCurrency } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
-import { cn } from "@/lib/utils";
 
+import { F3Sheet } from "./F3Sheet";
 import {
   activeFilterCount,
   balanceOf,
   cabinIsFree,
   CABINS,
-  dayKey,
   formatStay,
   hasBalanceDue,
   nightsOf,
@@ -431,119 +427,8 @@ export function NewBookingButton({ className }: { className?: string }) {
   );
 }
 
-/** Entry point + cabin step of the one New booking flow. `?newCabin` / `?newFrom` preset it (V3). */
+/** The new booking flow over the list: only F3 is a sheet; F1 and F2 replace the list (route). */
 export function NewBookingSheet() {
-  const { search, setSearch } = useProtoSearch();
-  const store = useProtoStore();
-  const open = !!search.new;
-  const close = () => setSearch({ new: undefined, newCabin: undefined, newFrom: undefined });
-
-  return (
-    <Sheet open={open} onOpenChange={(next) => !next && close()}>
-      <SheetContent className="medium:max-w-md w-full overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>New booking</SheetTitle>
-          <SheetDescription>Step 1 of 3: dates and cabins</SheetDescription>
-        </SheetHeader>
-        {open && (
-          <CabinStep
-            key={`${search.newCabin}-${search.newFrom}`}
-            bookings={store.bookings}
-            presetCabin={search.newCabin}
-            presetFrom={search.newFrom}
-            onDone={close}
-          />
-        )}
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-function CabinStep({
-  bookings,
-  presetCabin,
-  presetFrom,
-  onDone,
-}: {
-  bookings: ProtoBooking[];
-  presetCabin?: string;
-  presetFrom?: string;
-  onDone: () => void;
-}) {
-  const [checkIn, setCheckIn] = useState(presetFrom ?? dayKey(0));
-  const [checkOut, setCheckOut] = useState(() =>
-    format(addDays(parseISO(presetFrom ?? dayKey(0)), 1), "yyyy-MM-dd")
-  );
-  const [picked, setPicked] = useState<string[]>(presetCabin ? [presetCabin] : []);
-  const validRange = checkIn < checkOut;
-
-  const toggle = (code: string) =>
-    setPicked((prev) => (prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]));
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="proto-check-in">Check-in</Label>
-          <Input
-            id="proto-check-in"
-            type="date"
-            value={checkIn}
-            onChange={(e) => setCheckIn(e.target.value)}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="proto-check-out">Check-out</Label>
-          <Input
-            id="proto-check-out"
-            type="date"
-            value={checkOut}
-            onChange={(e) => setCheckOut(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Cabins (pick one or more)</legend>
-        <ul className="space-y-2">
-          {CABINS.map((cabin) => {
-            const free = validRange && cabinIsFree(bookings, cabin.code, checkIn, checkOut);
-            const selected = picked.includes(cabin.code);
-            return (
-              <li key={cabin.code}>
-                <button
-                  type="button"
-                  disabled={!free}
-                  aria-pressed={selected}
-                  onClick={() => toggle(cabin.code)}
-                  className={cn(
-                    "border-border coarse:min-h-11 flex w-full items-center justify-between rounded-lg border p-3 text-left text-sm duration-150 disabled:opacity-50",
-                    selected && "border-primary bg-accent"
-                  )}
-                >
-                  <span className="font-medium">{cabin.name}</span>
-                  <span className="text-muted-foreground">
-                    {free ? (selected ? "Added" : "Free · tap to add") : "Booked"}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </fieldset>
-
-      <Button
-        className="w-full"
-        disabled={!validRange || picked.length === 0}
-        onClick={() => {
-          toast(`Prototype stops here: ${picked.length} cabin(s), ${checkIn} → ${checkOut}`, {
-            description: "Next steps would be guest details, then payment.",
-          });
-          onDone();
-        }}
-      >
-        Continue with {picked.length} {picked.length === 1 ? "cabin" : "cabins"}
-      </Button>
-    </div>
-  );
+  const { search } = useProtoSearch();
+  return search.flow === 3 ? <F3Sheet /> : null;
 }

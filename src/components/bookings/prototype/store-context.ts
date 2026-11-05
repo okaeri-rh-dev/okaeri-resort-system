@@ -13,6 +13,7 @@ export interface ProtoStore {
   reject: (id: string) => void;
   recordPayment: (id: string) => void;
   cancel: (id: string) => void;
+  add: (booking: ProtoBooking) => void;
   reset: () => void;
 }
 
