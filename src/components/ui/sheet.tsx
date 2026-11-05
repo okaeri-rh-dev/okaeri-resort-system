@@ -40,6 +40,9 @@ const sheetVariants = cva(
         left: "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-3/4 border-r medium:max-w-sm",
         right:
           "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l medium:max-w-sm",
+        // A supporting pane over the page (DESIGN.md, Panes): a bottom sheet up to medium, at most
+        // 70% high so the page above stays in view; a side pane from expanded
+        pane: "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom expanded:inset-y-0 expanded:left-auto expanded:h-full expanded:max-h-none expanded:w-90 expanded:border-t-0 expanded:border-l expanded:pb-6 expanded:data-[state=closed]:slide-out-to-bottom-0 expanded:data-[state=closed]:slide-out-to-right expanded:data-[state=open]:slide-in-from-bottom-0 expanded:data-[state=open]:slide-in-from-right large:w-103 inset-x-0 bottom-0 max-h-[70dvh] overflow-y-auto border-t pb-[calc(1.5rem+env(safe-area-inset-bottom))]",
       },
     },
     defaultVariants: {

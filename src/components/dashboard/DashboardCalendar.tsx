@@ -40,7 +40,7 @@ interface DashboardCalendarProps {
   month: Date;
   onMonthChange: (month: Date) => void;
   today: ManilaDay;
-  selectedDay: ManilaDay;
+  selectedDay: ManilaDay | undefined;
   onSelectDay: (day: ManilaDay) => void;
   /** A line under the month name, such as the month's numbers */
   numbers?: ReactNode;
@@ -59,7 +59,7 @@ interface DayCellData {
   bookingsByDate: { [key: string]: Booking[] };
   blockedLabelByNight: Record<string, string>;
   today: ManilaDay;
-  selectedDay: ManilaDay;
+  selectedDay: ManilaDay | undefined;
   onSelectDay: (day: ManilaDay) => void;
 }
 
@@ -86,6 +86,7 @@ function DayButton({ day, modifiers, ...props }: CalendarDayButtonProps) {
     <BookingTooltip bookings={dayBookings} date={date}>
       <Button
         {...props}
+        data-calendar-day
         onClick={() => onSelectDay(dateKey)}
         aria-pressed={isSelected}
         variant="ghost"

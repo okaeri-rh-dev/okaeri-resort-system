@@ -9,8 +9,8 @@ import { ROUTES, TIMEOUTS } from "../fixtures/test-data";
 export class DashboardPage {
   readonly page: Page;
 
-  /** The day panel, open on today */
-  readonly todayPanel: Locator;
+  /** The month's numbers under the calendar header */
+  readonly monthNumbers: Locator;
 
   // Navigation links
   readonly bookingsLink: Locator;
@@ -28,7 +28,7 @@ export class DashboardPage {
   constructor(page: Page) {
     this.page = page;
 
-    this.todayPanel = page.getByRole("region", { name: /^Today/ });
+    this.monthNumbers = page.getByText(/% occupancy · \d+ confirmed/);
 
     // Navigation - using link roles with navigation menu
     this.bookingsLink = page.getByRole("link", { name: /bookings/i }).first();
@@ -72,7 +72,7 @@ export class DashboardPage {
    */
   async waitForPageLoad() {
     await this.page.waitForLoadState("networkidle");
-    await expect(this.todayPanel).toBeVisible({ timeout: TIMEOUTS.navigation });
+    await expect(this.monthNumbers).toBeVisible({ timeout: TIMEOUTS.navigation });
   }
 
   /**
@@ -146,6 +146,6 @@ export class DashboardPage {
    * Verify dashboard shows expected data (basic smoke test)
    */
   async verifyDashboardLoaded() {
-    await expect(this.todayPanel).toBeVisible();
+    await expect(this.monthNumbers).toBeVisible();
   }
 }
